@@ -1,0 +1,27 @@
+    {% extends "base.html" %}
+
+{% block content %}
+<div class="row-fluid">
+    <div class="box-content">
+    <table id="ordens" class="table table-striped table-bordered bootstrap-datatable datatable">
+    <thead>
+        <tr>
+            <th>Divisão</th>
+            <th>Objetivo</th>
+            <th>Valor atual</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for divisao in divisoes %}
+    <tr>
+        <td><a href="{% url 'detalhar_divisao' divisao.id %}">{{divisao.nome}}</a></td>
+        <td>R${{divisao.valor_objetivo}}</td>
+        <td>{{divisao.valor_atual|floatformat:"2"}} ({{divisao.quantidade_percentual|floatformat:"2"}}%)</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+    </table>
+    </div>
+</div>
+
+{% endblock %}

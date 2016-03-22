@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row-fluid">
+    <div class="box-content">
+    <table id="taxas" class="table table-striped table-bordered bootstrap-datatable datatable">
+    <thead>
+        <tr>
+            <th>Valor</th>
+            <th>Início Vigência</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for taxa in taxas_custodia %}
+    <tr>
+        <td>R${{ taxa.valor_mensal }}</td>
+        <td>{{ taxa.mes_vigencia }}/{{ taxa.ano_vigencia }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+    </table>
+    </div>
+</div>
+
+{% endblock %}

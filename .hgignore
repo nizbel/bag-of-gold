@@ -1,0 +1,9 @@
+syntax: regexp
+.git/*
+backup-*
+syntax: glob
+.project
+.pydevproject
+.settings/org.eclipse.core.resources.prefs
+README.md
+*.pyc
