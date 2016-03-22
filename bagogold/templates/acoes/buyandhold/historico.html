@@ -7,11 +7,11 @@
     <div class="sparkLineStats span4 widget green" style="height:400px" ontablet="span5" ondesktop="span4">
 
         <ul class="unstyled">
-            <li class="row-fluid"><div class="span" id="graf_valor" style="width:220px;height:110px"></div> 
+            <li class="row-fluid"><div class="span" id="graf_patrimonio" style="width:220px;height:110px"></div> 
                 Patrimônio: 
                 <span class="number">R${{ dados.patrimonio|floatformat:2 }}</span>
             </li>
-            <li class="row-fluid"><div class="span" id="graf_proventos" style="width:220px;height:110px"></div> 
+            <li class="row-fluid"><div class="span" id="graf_custodia" style="width:220px;height:110px"></div> 
                 Total custódia: 
                 <span class="number">R${{ dados.total_custodia|floatformat:2 }}</span>
             </li>
@@ -35,21 +35,21 @@
     <div class="sparkLineStats span4 widget green" style="height:400px" ontablet="span5" ondesktop="span4">
 
         <ul class="unstyled">
-            <li class="row-fluid"><div class="span" style="width:220px;height:110px"></div> 
-                Total prov.: 
-                <span class="number">R${{ dados.total_proventos|floatformat:2 }}</span>
-            </li>
-            <li class="row-fluid"><div class="span" style="width:220px;height:110px"></div> 
+            <li class="row-fluid"><div class="span" id="graf_poupanca_proventos" style="width:220px;height:110px"></div> 
                 Poupança prov.: 
                 <span class="number">R${{ dados.poupanca_proventos|floatformat:2 }}</span>
             </li>
-            <li class="row-fluid"><div class="span" style="width:220px;height:110px"></div> 
-                Total gasto: 
-                <span class="number">R${{ dados.total_gasto|floatformat:2 }}</span>
+            <li class="row-fluid"><div class="span" id="graf_dividendos_mensal" style="width:220px;height:110px"></div> 
+                Dividendos: 
+                <span class="number">R${{ dados.dividendos_mensal|floatformat:2 }}</span>
+            </li>
+            <li class="row-fluid"><div class="span" id="graf_jscp_mensal" style="width:220px;height:110px"></div> 
+                JSCP: 
+                <span class="number">R${{ dados.jscp_mensal|floatformat:2 }}</span>
             </li>
             <li class="row-fluid">
-                Lucro/Prej.: 
-                <span class="number">R${{ dados.lucro|floatformat:2 }} ({{ dados.lucro_percentual|floatformat:2 }}%)</span>
+                Total prov.: 
+                <span class="number">R${{ dados.total_proventos|floatformat:2 }}</span>
             </li>
         </ul>
         
@@ -117,6 +117,14 @@
 
 <script>
 $( document ).ready(function() {
+	$.plot($("#graf_patrimonio"), [ {color: "#FFFFFF", lines: {show:true}, data: {{ graf_patrimonio|safe }} }
+	                              ],
+	                              {grid: {show: false}}    
+	    );
+	$.plot($("#graf_gasto"), [ {color: "#FFFFFF", lines: {show:true}, data: {{ graf_total_gasto|safe }} } 
+	                              ],
+	                              {grid: {show: false}}   
+	    );
     $.plot($("#graf_patr_gasto"), [ {label: "Patrimônio", lines: {show:true}, data: {{ graf_patrimonio|safe }} }, 
                                 {label: "Total gasto", lines: {show:true}, data: {{ graf_total_gasto|safe }} } 
                               ],
@@ -124,6 +132,18 @@ $( document ).ready(function() {
                             	}  
     );
     
+    $.plot($("#graf_poupanca_proventos"), [ {color: "#FFFFFF", lines: {show:true}, data: {{ graf_poupanca_proventos|safe }} }
+                                ],
+                                {grid: {show: false}}    
+    );
+    $.plot($("#graf_dividendos_mensal"), [ {color: "#FFFFFF", lines: {show:true}, data: {{ graf_dividendos_mensal|safe }} }
+                                ],
+                                {grid: {show: false}}    
+        );
+    $.plot($("#graf_jscp_mensal"), [ {color: "#FFFFFF", lines: {show:true}, data: {{ graf_jscp_mensal|safe }} } 
+                                ],
+                                {grid: {show: false}}   
+        );
     $.plot($("#graf_proventos_mes"), [ {color: "#33AA33", label: "Proventos", bars: {show:true, align:"center", barWidth: 8 * 24 * 60 * 60 * 600, lineWidth: 1, order: 1}, data: {{ graf_proventos_mes|safe }} }, 
                                        {color: "#8811AA", label: "Média 6 meses", bars: {show:true, align:"center", barWidth: 8 * 24 * 60 * 60 * 600, lineWidth: 1, order: 2}, data: {{ graf_media_proventos_6_meses|safe }} }, 
                                   ],
