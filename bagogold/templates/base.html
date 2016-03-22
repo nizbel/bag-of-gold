@@ -70,8 +70,6 @@
     
     <script src={% static "js/jquery.cleditor.min.js" %}></script>
 
-    <script src={% static "js/jquery.noty.js" %}></script>
-
     <script src={% static "js/jquery.elfinder.min.js" %}></script>
 
     <script src={% static "js/jquery.raty.min.js" %}></script>
@@ -104,22 +102,6 @@
 </head>
 
 <body>
-{% if messages %}
-<ul class="noty_cont noty_layout_topRight">
-    {% for message in messages %}
-    <li>
-        <div style="cursor: pointer; display: block;" 
-        class="noty_bar noty_theme_default noty_layout_topRight noty_closable noty_{% if message.tags %}{{ message.tags }}{% endif %}">
-            <div class="noty_message">
-                <span class="noty_text">{{ message }}</span>
-                <div style="display: block;" class="noty_close">
-                </div>
-            </div>
-        </div>
-    </li>
-    {% endfor %}
-</ul>
-{% endif %}
 <div class="container-fluid-full">
 <div class="row-fluid">
     <!-- start: Main Menu -->
@@ -156,6 +138,7 @@
                         <li><a class="submenu" href="{% url "historico_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico</span></a></li>
                         <li><a class="submenu" href="{% url "inserir_operacao_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir operação</span></a></li>
                         <li><a class="submenu" href="{% url "inserir_provento_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir provento</span></a></li>
+                        <li><a class="submenu" href="{% url "painel_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Painel</span></a></li>
                     </ul>   
                 </li>
                 <li>
@@ -163,6 +146,8 @@
                     <ul>
                         <li><a class="submenu" href="{% url "historico_td" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico</span></a></li>
                         <li><a class="submenu" href="{% url "inserir_operacao_td" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir operação</span></a></li>
+                        <li><a class="submenu" href="{% url "painel_td" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Painel</span></a></li>
+                        
                     </ul>  
                 </li>
                 <li>
@@ -170,6 +155,9 @@
                     <ul>
                         <li><a class="submenu" href="{% url "historico_lc" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico</span></a></li>
                         <li><a class="submenu" href="{% url "inserir_operacao_lc" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir operação</span></a></li>
+                        <li><a class="submenu" href="{% url "inserir_lc" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir Letra de Crédito</span></a></li>
+                        <li><a class="submenu" href="{% url "listar_lc" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar Letras de Crédito</span></a></li>
+                        <li><a class="submenu" href="{% url "modificar_carencia_lc" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Modificar carência LC</span></a></li>
                         <li><a class="submenu" href="{% url "modificar_porcentagem_di_lc" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Modificar porcentagem DI</span></a></li>
                     </ul>  
                 </li>
@@ -188,11 +176,22 @@
     <!-- end: Main Menu -->
     <!-- start: Content -->
     <div id="content" class="span10">
-    
-    
         <ul class="breadcrumb">
             Breadcrumb
         </ul>
+        
+        {% if messages %}
+        <div class="row-fluid">
+            <div class="box-content alerts">
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %}">
+                    <button type="button" class="close" data-dismiss="alert">×</button>
+                    <strong>{% if message.tags %}{{ message.tags }}{% endif %}</strong> {{ message }}
+                </div>
+            {% endfor %}
+            </div>
+        </div>
+        {% endif %}
 
         <div class="row-fluid">
             {% block content %}

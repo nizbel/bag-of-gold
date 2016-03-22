@@ -1,0 +1,57 @@
+# -*- coding: utf-8 -*-
+from django import forms
+from django.db import models
+
+class Divisao (models.Model):
+    nome = models.CharField(u'Nome da divisão', max_length=50)
+    valor_objetivo = models.DecimalField(u'Objetivo', max_digits=11, decimal_places=2, blank=True, default=0)
+    
+    def __unicode__(self):
+        return self.nome
+    
+    def objetivo_indefinido(self):
+        return (self.valor_objetivo == 0)
+    
+class DivisaoOperacaoLC (models.Model):
+    divisao = models.ForeignKey('Divisao')
+    operacao = models.ForeignKey('OperacaoLetraCredito')
+    """
+    Guarda a quantidade da operação que pertence a divisão
+    """
+    quantidade = models.DecimalField('Quantidade',  max_digits=11, decimal_places=2)
+    
+    class Meta:
+        unique_together=('divisao', 'operacao')
+    
+class DivisaoOperacaoAcoes (models.Model):
+    divisao = models.ForeignKey('Divisao')
+    operacao = models.ForeignKey('OperacaoAcao')
+    """
+    Guarda a quantidade de ações que pertence a divisão
+    """
+    quantidade = models.IntegerField('Quantidade')
+    
+    class Meta:
+        unique_together=('divisao', 'operacao')
+    
+class DivisaoOperacaoTD (models.Model):
+    divisao = models.ForeignKey('Divisao')
+    operacao = models.ForeignKey('OperacaoTitulo')
+    """
+    Guarda a quantidade de títulos que pertence a divisão
+    """
+    quantidade = models.DecimalField(u'Quantidade', max_digits=7, decimal_places=2) 
+    
+    class Meta:
+        unique_together=('divisao', 'operacao')
+        
+class DivisaoOperacaoFII (models.Model):
+    divisao = models.ForeignKey('Divisao')
+    operacao = models.ForeignKey('OperacaoFII')
+    """
+    Guarda a quantidade de FIIs que pertence a divisão
+    """
+    quantidade = models.IntegerField('Quantidade')
+    
+    class Meta:
+        unique_together=('divisao', 'operacao')
