@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+    {{ form.media }}
+{% endblock %}
+
+{% block content %}
+    <h1>Editar operação FII</h1>
+    <div class="row-fluid">
+        <div class="box span12">
+            <div class="box-content">
+                <form method="POST" class="post-form form-horizontal">{% csrf_token %}
+                    {{ form.as_p }}
+                    <div class="form-actions">
+                        <button type="submit" name="save" value="1" class="btn">Salvar</button>
+                        <button type="submit" name="delete" value="1" class="btn btn-danger">Excluir</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
