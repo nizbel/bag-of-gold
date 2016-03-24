@@ -72,11 +72,14 @@ def calcular_valor_lc_ate_dia_por_divisao(dia, divisao_id):
     Parâmetros: Data final, id da divisão
     Retorno: Valor de cada letra de crédito da divisão na data escolhida
     """
-    operacoes_divisao_id = DivisaoOperacaoLC.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).values('id')
-    operacoes = OperacaoLetraCredito.objects.exclude(data__isnull=True).filter(id__in=operacoes_divisao_id).order_by('data')  
+    operacoes_divisao= DivisaoOperacaoLC.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id)
+    # Se nao houver operacoes retornar vazio
+    if not operacoes_divisao:
+        return {}
+    operacoes = OperacaoLetraCredito.objects.exclude(data__isnull=True).filter(id__in=operacoes_divisao.values_list('operacao__id', flat=True)).order_by('data')  
     historico_porcentagem = HistoricoPorcentagemLetraCredito.objects.filter(Q(data__lte=dia) | Q(data__isnull=True)).order_by('-data')
     for operacao in operacoes:
-        operacao.atual = operacao.quantidade
+        operacao.atual = operacoes_divisao.get(operacao__id=operacao.id).quantidade
         try:
             operacao.taxa = historico_porcentagem.filter(data__lte=operacao.data, letra_credito=operacao.letra_credito)[0].porcentagem_di
         except:
@@ -121,6 +124,7 @@ def calcular_valor_lc_ate_dia_por_divisao(dia, divisao_id):
     for letra_credito_id in letras_credito.keys():
         for operacao in operacoes:
             if operacao.letra_credito.id == letra_credito_id:
+                print 'letra %s: %s' % (letra_credito_id, operacao.atual)
                 letras_credito[letra_credito_id] += operacao.atual
     
     return letras_credito
