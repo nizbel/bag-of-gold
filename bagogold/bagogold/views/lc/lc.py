@@ -63,7 +63,10 @@ def historico(request):
     # Prepara o campo valor atual
     for operacao in operacoes:
         operacao.atual = operacao.quantidade
-        operacao.taxa = historico_porcentagem.filter(data__lte=operacao.data, letra_credito=operacao.letra_credito).order_by('-data')[0].porcentagem_di
+        try:
+            operacao.taxa = historico_porcentagem.filter(data__lte=operacao.data, letra_credito=operacao.letra_credito)[0].porcentagem_di
+        except:
+            operacao.taxa = historico_porcentagem.get(data__isnull=True, letra_credito=operacao.letra_credito).porcentagem_di
         if operacao.tipo_operacao == 'C':
             operacao.tipo = 'Compra'
         else:
