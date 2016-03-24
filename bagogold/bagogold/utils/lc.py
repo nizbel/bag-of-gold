@@ -3,6 +3,7 @@ from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI, \
     HistoricoPorcentagemLetraCredito
 from decimal import Decimal
+from django.db.models import Q
 
 def calcular_valor_lc_ate_dia(dia):
     """ 
@@ -11,10 +12,13 @@ def calcular_valor_lc_ate_dia(dia):
     Retorno: Valor de cada letra de crédito na data escolhida
     """
     operacoes = OperacaoLetraCredito.objects.exclude(data__isnull=True).exclude(data__gte=dia).order_by('data')  
-    historico_porcentagem = HistoricoPorcentagemLetraCredito.objects.filter(data__lte=dia) 
+    historico_porcentagem = HistoricoPorcentagemLetraCredito.objects.filter(Q(data__lte=dia) | Q(data__isnull=True)).order_by('-data')
     for operacao in operacoes:
         operacao.atual = operacao.quantidade
-        operacao.taxa = historico_porcentagem.filter(data__lte=operacao.data).order_by('-data')[0].porcentagem_di
+        try:
+            operacao.taxa = historico_porcentagem.filter(data__lte=operacao.data, letra_credito=operacao.letra_credito)[0].porcentagem_di
+        except:
+            operacao.taxa = historico_porcentagem.get(data__isnull=True, letra_credito=operacao.letra_credito).porcentagem_di
     
     if len(operacoes) == 0:
         return {}
@@ -70,10 +74,13 @@ def calcular_valor_lc_ate_dia_por_divisao(dia, divisao_id):
     """
     operacoes_divisao_id = DivisaoOperacaoLC.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).values('id')
     operacoes = OperacaoLetraCredito.objects.exclude(data__isnull=True).filter(id__in=operacoes_divisao_id).order_by('data')  
-    historico_porcentagem = HistoricoPorcentagemLetraCredito.objects.filter(data__lte=dia) 
+    historico_porcentagem = HistoricoPorcentagemLetraCredito.objects.filter(Q(data__lte=dia) | Q(data__isnull=True)).order_by('-data')
     for operacao in operacoes:
         operacao.atual = operacao.quantidade
-        operacao.taxa = historico_porcentagem.filter(data__lte=operacao.data).order_by('-data')[0].porcentagem_di
+        try:
+            operacao.taxa = historico_porcentagem.filter(data__lte=operacao.data, letra_credito=operacao.letra_credito)[0].porcentagem_di
+        except:
+            operacao.taxa = historico_porcentagem.get(data__isnull=True, letra_credito=operacao.letra_credito).porcentagem_di
     
     # Pegar data inicial
     data_inicial = operacoes[0].data
