@@ -31,7 +31,8 @@ class OperacaoLetraCredito (models.Model):
             return False
     
 class OperacaoVendaLetraCredito (models.Model):
-    operacao_compra = models.ForeignKey('OperacaoLetraCredito', limit_choices_to={'tipo_operacao': 'C'})
+    operacao_compra = models.ForeignKey('OperacaoLetraCredito', limit_choices_to={'tipo_operacao': 'C'}, related_name='operacao_compra')
+    operacao_venda = models.ForeignKey('OperacaoLetraCredito', limit_choices_to={'tipo_operacao': 'V'}, related_name='operacao_venda')
     
 class HistoricoPorcentagemLetraCredito (models.Model):
     porcentagem_di = models.DecimalField(u'Porcentagem do DI', max_digits=5, decimal_places=2)
