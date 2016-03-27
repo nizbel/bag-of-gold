@@ -10,29 +10,41 @@ class LetraCredito (models.Model):
         return self.nome
     
 class OperacaoLetraCredito (models.Model):
-    quantidade = models.DecimalField(u'Quantidade investida', max_digits=11, decimal_places=2)
+    quantidade = models.DecimalField(u'Quantidade investida/resgatada', max_digits=11, decimal_places=2)
     data = models.DateField(u'Data da operação')
     tipo_operacao = models.CharField(u'Tipo de operação', max_length=1)
     letra_credito = models.ForeignKey('LetraCredito')
     
     def __unicode__(self):
-        return '(%s) %s de %s em %s' % (self.tipo_operacao, self.quantidade, self.letra_credito, self.data)
+        return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.letra_credito, self.data)
     
-    def venda_permitida(self):
+    def qtd_disponivel_venda(self):
+        vendas = OperacaoVendaLetraCredito.objects.filter(operacao_compra=self).values_list('operacao_venda__id', flat=True)
+        qtd_vendida = 0
+        for venda in OperacaoLetraCredito.objects.filter(id__in=vendas):
+            qtd_vendida += venda.quantidade
+        return self.quantidade - qtd_vendida
+    
+    def venda_permitida(self, data_venda=None):
+        if data_venda == None:
+            data_venda = datetime.date.today()
         if self.tipo_operacao == 'C':
-            historico = HistoricoCarenciaLetraCredito.objects.exclude(data=None).filter(data__lte=self.data).order_by('-data')
+            historico = HistoricoCarenciaLetraCredito.objects.exclude(data=None).filter(data__lte=self.data_venda).order_by('-data')
             if historico:
                 # Verifica o período de carência pegando a data mais recente antes da operação de compra
-                return (historico[0].carencia <= (datetime.date.today() - self.data).days)
+                return (historico[0].carencia <= (data_venda - self.data).days)
             else:
                 carencia = HistoricoCarenciaLetraCredito.objects.get(letra_credito=self.letra_credito).carencia
-                return (carencia <= (datetime.date.today() - self.data).days)
+                return (carencia <= (data_venda - self.data).days)
         else:
             return False
     
 class OperacaoVendaLetraCredito (models.Model):
     operacao_compra = models.ForeignKey('OperacaoLetraCredito', limit_choices_to={'tipo_operacao': 'C'}, related_name='operacao_compra')
     operacao_venda = models.ForeignKey('OperacaoLetraCredito', limit_choices_to={'tipo_operacao': 'V'}, related_name='operacao_venda')
+    
+    class Meta:
+        unique_together=('operacao_compra', 'operacao_venda')
     
 class HistoricoPorcentagemLetraCredito (models.Model):
     porcentagem_di = models.DecimalField(u'Porcentagem do DI', max_digits=5, decimal_places=2)
