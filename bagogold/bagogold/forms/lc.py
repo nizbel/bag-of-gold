@@ -15,6 +15,8 @@ class LetraCreditoForm(forms.ModelForm):
         fields = ('nome',)
 
 class OperacaoLetraCreditoForm(forms.ModelForm):
+    # Campo verificado apenas no caso de venda de operação de lc
+    operacao_compra = forms.ModelChoiceField(queryset=OperacaoLetraCredito.objects.filter(tipo_operacao='C'), required=False)
     
     class Meta:
         model = OperacaoLetraCredito
@@ -24,6 +26,36 @@ class OperacaoLetraCreditoForm(forms.ModelForm):
                                             'placeholder':'Selecione uma data'}),
                  'tipo_operacao': widgets.Select(choices=ESCOLHAS_TIPO_OPERACAO),}
         
+    def __init__(self, *args, **kwargs):
+        # first call parent's constructor
+        super(OperacaoLetraCreditoForm, self).__init__(*args, **kwargs)
+        # there's a `fields` property now
+        self.fields['letra_credito'].required = False
+        
+    def clean_letra_credito(self):
+        tipo_operacao = self.cleaned_data['tipo_operacao']
+        if tipo_operacao == 'V':
+            letra_credito = self.cleaned_data['operacao_compra'].letra_credito
+        else:
+            letra_credito = self.cleaned_data['letra_credito']
+        if letra_credito is None:
+            raise forms.ValidationError('Insira letra de crédito válida')
+            
+        return letra_credito
+    
+    def clean_operacao_compra(self):
+        tipo_operacao = self.cleaned_data['tipo_operacao']
+        if tipo_operacao == 'V':
+            operacao_compra = self.cleaned_data['operacao_compra']
+            # Testar se operacao_compra é válido
+            if operacao_compra is None:
+                raise forms.ValidationError('Selecione operação de compra válida')
+            quantidade = self.cleaned_data['quantidade']
+            if quantidade > operacao_compra.qtd_disponivel_venda():
+                raise forms.ValidationError('Não é possível vender mais do que o disponível na operação de compra')
+            
+            return operacao_compra
+        return None
     
     
 class HistoricoPorcentagemLetraCreditoForm(forms.ModelForm):
