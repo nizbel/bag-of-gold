@@ -72,5 +72,23 @@
          // increment form count so our view knows to populate 
          // that many fields for validation
      })
+     
+     if ($('#id_tipo_operacao').val() == 'C') {
+               $("#id_operacao_compra").parent().hide();
+               $("#id_letra_credito").parent().show();
+           } else {
+               $("#id_operacao_compra").parent().show();
+               $("#id_letra_credito").parent().hide();
+           }
+     // Adiciona alterações para o form dependendo do tipo de operação
+     $("#id_tipo_operacao").change(function() {
+    	   if ($(this).val() == 'C') {
+    		   $("#id_operacao_compra").parent().hide();
+    		   $("#id_letra_credito").parent().show();
+    	   } else {
+               $("#id_operacao_compra").parent().show();
+               $("#id_letra_credito").parent().hide();
+    	   }
+     })
     </script>
 {% endblock %}
