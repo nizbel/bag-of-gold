@@ -46,7 +46,7 @@ class OperacaoFIIForm(forms.ModelForm):
                  'consolidada': widgets.Select(choices=ESCOLHAS_CONSOLIDADO),}
         
     class Media:
-        js = ('js/acoes.js',)
+        js = ('js/bagogold/acoes.js',)
         
     def clean(self):
         data = super(OperacaoFIIForm, self).clean()
