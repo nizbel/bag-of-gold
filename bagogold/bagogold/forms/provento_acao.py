@@ -23,7 +23,7 @@ class ProventoAcaoForm(forms.ModelForm):
                  'tipo_provento': widgets.Select(choices=ESCOLHAS_TIPO_PROVENTO),}
         
     class Media:
-        js = ('js/acoes.js',)
+        js = ('js/bagogold/acoes.js',)
     
     def clean(self):
         dados = super(ProventoAcaoForm, self).clean()

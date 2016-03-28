@@ -1,36 +1,11 @@
-{% extends "base.html" %}
-
-{% block extra_head %}
-    {{ form_operacao_lc.media }}
-{% endblock %}
-
-{% block content %}
-    <h1>Editar operação Letra de Crédito</h1>
-        <form method="POST" class="post-form form-horizontal">{% csrf_token %}
-            <div id="forms">
-                {{ form_operacao_lc.as_p }}
-                <h2>Divisões <button id="add-another" class="btn btn-primary" type="button">+</button></h2>
-                {{ formset_divisao.management_form }}
-                {% for form_divisao in formset_divisao %}
-                    <h3>Divisão {{ forloop.counter }}</h3>
-                    {{ form_divisao.as_p }}
-                {% endfor %}
-            </div>
-            <div class="form-actions">
-                <button type="submit" name="save" value="1" class="btn">Salvar</button>
-                <button type="submit" name="delete" value="1" class="btn btn-danger">Excluir</button>
-            </div>
-        </form>
-    
-    
-    <script type="text/javascript">
-    form_count = $("input[name=divisaooperacaolc_set-TOTAL_FORMS]").val();
+$(document).ready(function() {
+	form_count = $("input[name=divisaooperacaolc_set-TOTAL_FORMS]").val();
     // get extra form count so we know what index to use for the next item.
      $("#add-another").click(function() {
-    	 divisao_id = parseInt(form_count) + 1;
-    	 titulo = $("<h3>Divisão " + divisao_id + "</h3>");
-    	 
-    	 label_divisao = $("<label for=id_divisaooperacaolc_set-" + form_count + "-divisao>Divisão:</label>");
+         divisao_id = parseInt(form_count) + 1;
+         titulo = $("<h3>Divisão " + divisao_id + "</h3>");
+         
+         label_divisao = $("<label for=id_divisaooperacaolc_set-" + form_count + "-divisao>Divisão:</label>");
          divisao = $("#id_divisaooperacaolc_set-0-divisao").clone();
          divisao.attr("name", "divisaooperacaolc_set-" + form_count + "-divisao");
          divisao.attr('id', "id_divisaooperacaolc_set-" + form_count + "-divisao");
@@ -74,7 +49,24 @@
          // increment form count so our view knows to populate 
          // that many fields for validation
      })
-    </script>
-{% endblock %}
-
-    
+	
+	
+	if ($('#id_tipo_operacao').val() == 'C') {
+        $("#id_operacao_compra").parent().hide();
+        $("#id_letra_credito").parent().show();
+    } else {
+        $("#id_operacao_compra").parent().show();
+        $("#id_letra_credito").parent().hide();
+    }
+	
+	// Adiciona alterações para o form dependendo do tipo de operação
+	$("#id_tipo_operacao").change(function() {
+	   if ($(this).val() == 'C') {
+		   $("#id_operacao_compra").parent().hide();
+		   $("#id_letra_credito").parent().show();
+	   } else {
+        $("#id_operacao_compra").parent().show();
+        $("#id_letra_credito").parent().hide();
+	   }
+	})
+});
