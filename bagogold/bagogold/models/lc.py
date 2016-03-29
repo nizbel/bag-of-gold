@@ -18,6 +18,12 @@ class OperacaoLetraCredito (models.Model):
     def __unicode__(self):
         return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.letra_credito, self.data)
     
+    def operacao_compra_relacionada(self):
+        if self.tipo_operacao == 'V':
+            return OperacaoVendaLetraCredito.objects.get(operacao_venda=self).operacao_compra
+        else:
+            return None
+    
     def qtd_disponivel_venda(self):
         vendas = OperacaoVendaLetraCredito.objects.filter(operacao_compra=self).values_list('operacao_venda__id', flat=True)
         qtd_vendida = 0
