@@ -17,8 +17,8 @@ def calcular_valor_lc_ate_dia(dia):
     operacoes = list(operacoes_queryset)
     historico_porcentagem = HistoricoPorcentagemLetraCredito.objects.filter(Q(data__lte=dia) | Q(data__isnull=True)).order_by('-data')
     for operacao in operacoes:
-        operacao.atual = operacao.quantidade
         if operacao.tipo_operacao == 'C':
+            operacao.atual = operacao.quantidade
             try:
                 operacao.taxa = historico_porcentagem.filter(data__lte=operacao.data, letra_credito=operacao.letra_credito)[0].porcentagem_di
             except:
@@ -86,17 +86,21 @@ def calcular_valor_lc_ate_dia_por_divisao(dia, divisao_id):
     Retorno: Valor de cada letra de crédito da divisão na data escolhida {id_letra: valor_na_data, }
     """
     operacoes_divisao_id = DivisaoOperacaoLC.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).values('id')
-    operacoes = OperacaoLetraCredito.objects.exclude(data__isnull=True).filter(id__in=operacoes_divisao_id).order_by('data')  
+    if len(operacoes_divisao_id) == 0:
+        return {}
+    operacoes_queryset = OperacaoLetraCredito.objects.exclude(data__isnull=True).filter(id__in=operacoes_divisao_id).order_by('-tipo_operacao', 'data') 
+    operacoes = list(operacoes_queryset)
     historico_porcentagem = HistoricoPorcentagemLetraCredito.objects.filter(Q(data__lte=dia) | Q(data__isnull=True)).order_by('-data')
     for operacao in operacoes:
-        operacao.atual = operacao.quantidade
-        try:
-            operacao.taxa = historico_porcentagem.filter(data__lte=operacao.data, letra_credito=operacao.letra_credito)[0].porcentagem_di
-        except:
-            operacao.taxa = historico_porcentagem.get(data__isnull=True, letra_credito=operacao.letra_credito).porcentagem_di
+        if operacao.tipo_operacao == 'C':
+            operacao.atual = operacao.quantidade
+            try:
+                operacao.taxa = historico_porcentagem.filter(data__lte=operacao.data, letra_credito=operacao.letra_credito)[0].porcentagem_di
+            except:
+                operacao.taxa = historico_porcentagem.get(data__isnull=True, letra_credito=operacao.letra_credito).porcentagem_di
     
     # Pegar data inicial
-    data_inicial = operacoes[0].data
+    data_inicial = operacoes_queryset.order_by('data')[0].data
     
     data_final = HistoricoTaxaDI.objects.filter(data__lte=dia).order_by('-data')[0].data
     
@@ -106,13 +110,25 @@ def calcular_valor_lc_ate_dia_por_divisao(dia, divisao_id):
     
     while data_iteracao <= data_final:
         # Processar operações
-        operacoes_do_dia = operacoes.filter(data=data_iteracao)
+        operacoes_do_dia = operacoes_queryset.filter(data=data_iteracao)
         for operacao in operacoes_do_dia:          
             if operacao.letra_credito.id not in letras_credito.keys():
                 letras_credito[operacao.letra_credito.id] = 0
                 
-            # TODO Implementar vendas
-                
+            # Vendas
+            if operacao.tipo_operacao == 'V':
+                # Remover quantidade da operação de compra
+                for operacao_c in operacoes:
+                    if (operacao_c.id == OperacaoVendaLetraCredito.objects.get(operacao_venda=operacao).id):
+                        operacao.atual = (operacao.quantidade/operacao_c.quantidade) * operacao_c.atual
+                        operacao_c.atual -= operacao.atual
+                        str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
+                        operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+                        operacoes.remove(operacao)
+                        if operacao_c.atual == 0:
+                            operacoes.remove(operacao_c)
+                        break
+                    
         # Calcular o valor atualizado do patrimonio diariamente
         taxa_do_dia = HistoricoTaxaDI.objects.get(data=data_iteracao).taxa
         for operacao in operacoes:
