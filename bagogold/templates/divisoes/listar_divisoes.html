@@ -16,7 +16,7 @@
     <tr>
         <td><a href="{% url 'detalhar_divisao' divisao.id %}">{{divisao.nome}}</a></td>
         <td>R${{divisao.valor_objetivo}}</td>
-        <td>{{divisao.valor_atual|floatformat:"2"}} ({{divisao.quantidade_percentual|floatformat:"2"}}%)</td>
+        <td>R${{divisao.valor_atual|floatformat:"2"}} ({{divisao.quantidade_percentual|floatformat:"2"}}%)</td>
     </tr>
     {% endfor %}
     </tbody>
