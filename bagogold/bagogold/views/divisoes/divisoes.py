@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.forms.divisoes import DivisaoForm
-from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC
-from bagogold.bagogold.models.lc import HistoricoTaxaDI, HistoricoPorcentagemLetraCredito, \
-    LetraCredito
-from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia
+from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
+    DivisaoOperacaoFII
+from bagogold.bagogold.models.lc import HistoricoTaxaDI, \
+    HistoricoPorcentagemLetraCredito, LetraCredito
+from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia, \
+    calcular_valor_lc_ate_dia_por_divisao
 from decimal import Decimal
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
@@ -62,20 +64,15 @@ def listar_divisoes(request):
     for divisao in divisoes:
         divisao.valor_atual = 0
         # TODO calcular valor atual
-        lc_divisao = DivisaoOperacaoLC.objects.filter(divisao__id=divisao.id)
-        for lc in lc_divisao:
-            # Pegar taxa da época da operação
-            lc.operacao.taxa = HistoricoPorcentagemLetraCredito.objects.filter(data__lte=lc.operacao.data).order_by('-data')[0].porcentagem_di
-            lc.total = lc.quantidade
-            taxas = HistoricoTaxaDI.objects.filter(data__gte=lc.operacao.data)
-            # Calcular o valor atualizado do patrimonio diariamente
-            for item in taxas:
-                lc.total = Decimal((pow((float(1) + float(item.taxa)/float(100)), float(1)/float(252)) - float(1)) * float(lc.operacao.taxa/100) + float(1)) * lc.total
-                # Arredondar na última iteração
-                if (item.data == taxas[len(taxas) - 1].data):
-                    str_auxiliar = str(lc.total.quantize(Decimal('.0001')))
-                    lc.total = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-            divisao.valor_atual += lc.total
+        # Fundos de investimento imobiliário
+        fii_divisao = DivisaoOperacaoFII.objects.filter(divisao__id=divisao.id)
+        for fii in fii_divisao:
+            print 'oi'
+        # Letras de crédito
+        lc_divisao = calcular_valor_lc_ate_dia_por_divisao(datetime.date.today(), divisao.id)
+        for total_lc in lc_divisao.values():
+            print total_lc
+            divisao.valor_atual += total_lc
         
         if not divisao.objetivo_indefinido():
             divisao.quantidade_percentual = divisao.valor_atual / divisao.valor_objetivo * 100
