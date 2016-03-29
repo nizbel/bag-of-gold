@@ -16,11 +16,11 @@ class LetraCreditoForm(forms.ModelForm):
 
 class OperacaoLetraCreditoForm(forms.ModelForm):
     # Campo verificado apenas no caso de venda de operação de lc
-    operacao_compra = forms.ModelChoiceField(queryset=OperacaoLetraCredito.objects.filter(tipo_operacao='C'), required=False)
+    operacao_compra = forms.ModelChoiceField(label='Operação de compra',queryset=OperacaoLetraCredito.objects.filter(tipo_operacao='C'), required=False)
     
     class Meta:
         model = OperacaoLetraCredito
-        fields = ('operacao_compra', 'quantidade', 'data', 'tipo_operacao',
+        fields = ('tipo_operacao', 'quantidade', 'data', 'operacao_compra',
                   'letra_credito')
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),
@@ -32,12 +32,15 @@ class OperacaoLetraCreditoForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         # first call parent's constructor
         super(OperacaoLetraCreditoForm, self).__init__(*args, **kwargs)
-        print dir(self.fields)
-        self.fields.keys = ['tipo_operacao', 'quantidade', 'data', 'operacao_compra', 'letra_credito']
         # there's a `fields` property now
         self.fields['letra_credito'].required = False
+#         if self.instance.pk is not None:
+#             # Verificar se é uma compra
+#             if self.instance.tipo_operacao == 'V':
+#                 self.operacao_compra.v
     
     def clean_operacao_compra(self):
+        print 'test'
         tipo_operacao = self.cleaned_data['tipo_operacao']
         if tipo_operacao == 'V':
             operacao_compra = self.cleaned_data.get('operacao_compra')

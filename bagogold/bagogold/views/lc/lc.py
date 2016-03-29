@@ -23,13 +23,14 @@ import datetime
 def editar_operacao_lc(request, id):
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoLetraCredito, DivisaoOperacaoLC, fields=('divisao', 'quantidade'),
-                                            extra=1, formset=DivisaoOperacaoLCFormSet)
+                                            extra=0, formset=DivisaoOperacaoLCFormSet)
     operacao_lc = OperacaoLetraCredito.objects.get(pk=id)
     
     if request.method == 'POST':
         if request.POST.get("save"):
             form_operacao_lc = OperacaoLetraCreditoForm(request.POST, instance=operacao_lc)
-            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lc)
+            operacao_compra = form_operacao_lc.cleaned_data['operacao_compra']
+            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lc, operacao_compra=operacao_compra)
             
             if form_operacao_lc.is_valid():
                 if formset_divisao.is_valid():
@@ -50,12 +51,14 @@ def editar_operacao_lc(request, id):
             divisao_lc = DivisaoOperacaoLC.objects.filter(operacao=operacao_lc)
             for divisao in divisao_lc:
                 divisao.delete()
+            if operacao_lc.tipo_operacao == 'V':
+                OperacaoVendaLetraCredito.objects.get(operacao_venda=operacao_lc).delete()
             operacao_lc.delete()
             messages.success(request, 'Operação excluída com sucesso')
             return HttpResponseRedirect(reverse('historico_lc'))
  
     else:
-        form_operacao_lc = OperacaoLetraCreditoForm(instance=operacao_lc)
+        form_operacao_lc = OperacaoLetraCreditoForm(instance=operacao_lc, initial={'operacao_compra': operacao_lc.operacao_compra_relacionada(),})
         formset_divisao = DivisaoFormSet(instance=operacao_lc)
             
     return render_to_response('lc/editar_operacao_lc.html', {'form_operacao_lc': form_operacao_lc, 'formset_divisao': formset_divisao},
@@ -64,22 +67,23 @@ def editar_operacao_lc(request, id):
     
 @login_required
 def historico(request):
-    operacoes = OperacaoLetraCredito.objects.exclude(data__isnull=True).order_by('data') 
+    # Processa primeiro operações de venda (V), depois compra (C)
+    operacoes = OperacaoLetraCredito.objects.exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
     historico_porcentagem = HistoricoPorcentagemLetraCredito.objects.all() 
     # Prepara o campo valor atual
     for operacao in operacoes:
         operacao.atual = operacao.quantidade
-        try:
-            operacao.taxa = historico_porcentagem.filter(data__lte=operacao.data, letra_credito=operacao.letra_credito)[0].porcentagem_di
-        except:
-            operacao.taxa = historico_porcentagem.get(data__isnull=True, letra_credito=operacao.letra_credito).porcentagem_di
         if operacao.tipo_operacao == 'C':
             operacao.tipo = 'Compra'
+            try:
+                operacao.taxa = historico_porcentagem.filter(data__lte=operacao.data, letra_credito=operacao.letra_credito)[0].porcentagem_di
+            except:
+                operacao.taxa = historico_porcentagem.get(data__isnull=True, letra_credito=operacao.letra_credito).porcentagem_di
         else:
             operacao.tipo = 'Venda'
     
     # Pegar data inicial
-    data_inicial = operacoes[0].data
+    data_inicial = operacoes.order_by('data')[0].data
     
     # Pegar data final
     data_final = HistoricoTaxaDI.objects.filter().order_by('-data')[0].data
@@ -92,35 +96,44 @@ def historico(request):
     # Gráfico de acompanhamento de gastos vs patrimonio
     graf_gasto_total = list()
     graf_patrimonio = list()
-    
+    print dir(operacoes)
     while data_iteracao <= data_final:
-        # Processar operações
-        operacoes_do_dia = operacoes.filter(data=data_iteracao)
-        for operacao in operacoes_do_dia:          
-            # Verificar se se trata de compra ou venda
-            if operacao.tipo_operacao == 'C':
-                operacao.total = operacao.quantidade
-                total_gasto += operacao.total
-                    
-            elif operacao.tipo_operacao == 'V':
-                operacao.total = operacao.quantidade
-                total_gasto -= operacao.total
-                
         taxa_do_dia = HistoricoTaxaDI.objects.get(data=data_iteracao).taxa
         # Calcular o valor atualizado do patrimonio diariamente
         total_patrimonio = 0
-        # Calcular o valor atualizado para cada operacao
-        for operacao in operacoes:
-            if (operacao.data <= data_iteracao):
-                operacao.atual = Decimal((pow((float(1) + float(taxa_do_dia)/float(100)), float(1)/float(252)) - float(1)) * float(operacao.taxa/100) + float(1)) * operacao.atual
-                # Arredondar na última iteração
-                if (data_iteracao == data_final):
-                    str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
-                    operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-                total_patrimonio += operacao.atual
         
+        # Processar operações
+        for operacao in operacoes:     
+            if (operacao.data <= data_iteracao):     
+                # Verificar se se trata de compra ou venda
+                if operacao.tipo_operacao == 'C':
+                        if (operacao.data == data_iteracao):
+                            operacao.total = operacao.quantidade
+                            total_gasto += operacao.total
+                        # Calcular o valor atualizado para cada operacao
+                        operacao.atual = Decimal((pow((float(1) + float(taxa_do_dia)/float(100)), float(1)/float(252)) - float(1)) * float(operacao.taxa/100) + float(1)) * operacao.atual
+                        # Arredondar na última iteração
+                        if (data_iteracao == data_final):
+                            str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
+                            operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+                        total_patrimonio += operacao.atual
+                        
+                elif operacao.tipo_operacao == 'V':
+                    if (operacao.data == data_iteracao):
+                        # Remover quantidade da operação de compra
+                        for operacao_c in operacoes:
+                            if (operacao_c.id == OperacaoVendaLetraCredito.objects.get(operacao_venda=operacao).id):
+                                # Configurar taxa para a mesma quantidade da compra
+                                operacao.taxa = operacao_c.taxa
+                                operacao.atual = (operacao.quantidade/operacao_c.quantidade) * operacao_c.atual
+                                operacao_c.atual -= operacao.atual
+                                str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
+                                operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+                                break
+                    # Adicionar valor da venda ao patrimonio total        
+                    total_patrimonio += operacao.atual
                 
-        if len(operacoes_do_dia) > 0 or data_iteracao == data_final:
+        if len(operacoes.filter(data=data_iteracao)) > 0 or data_iteracao == data_final:
             graf_gasto_total += [[str(calendar.timegm(data_iteracao.timetuple()) * 1000), float(total_gasto)]]
             graf_patrimonio += [[str(calendar.timegm(data_iteracao.timetuple()) * 1000), float(total_patrimonio)]]
         
@@ -130,7 +143,7 @@ def historico(request):
             data_iteracao = proximas_datas[0].data
         else:
             break
-                 
+
     dados = {}
     dados['total_gasto'] = total_gasto
     dados['patrimonio'] = total_patrimonio
