@@ -14,6 +14,7 @@ class OperacaoLetraCredito (models.Model):
     data = models.DateField(u'Data da operação')
     tipo_operacao = models.CharField(u'Tipo de operação', max_length=1)
     letra_credito = models.ForeignKey('LetraCredito')
+    investidor = models.ForeignKey('Investidor')
     
     def __unicode__(self):
         return '(%s) %s de %s em %s' % (self.tipo_operacao, self.quantidade, self.letra_credito, self.data)

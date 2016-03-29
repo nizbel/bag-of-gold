@@ -22,6 +22,7 @@ class OperacaoFII (models.Model):
     tipo_operacao = models.CharField(u'Tipo de operação', max_length=1)
     fii = models.ForeignKey('FII')
     consolidada = models.NullBooleanField(u'Consolidada?', blank=True)
+    investidor = models.ForeignKey('Investidor')
      
     def __unicode__(self):
         return '(' + self.tipo_operacao + ') ' +str(self.quantidade) + ' ' + self.acao.ticker + ' a R$' + str(self.preco_unitario)

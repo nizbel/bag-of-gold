@@ -54,6 +54,7 @@ class OperacaoAcao (models.Model):
     B = Buy and Hold; T = Trading
     """
     destinacao = models.CharField(u'Destinação', max_length=1)
+    investidor = models.ForeignKey('Investidor')
      
     def __unicode__(self):
         return '(' + self.tipo_operacao + ') ' +str(self.quantidade) + ' ' + self.acao.ticker + ' a R$' + str(self.preco_unitario) + ' em ' + str(self.data)
@@ -81,5 +82,6 @@ class TaxaCustodiaAcao (models.Model):
     valor_mensal = models.DecimalField(u'Valor mensal', max_digits=11, decimal_places=2)
     ano_vigencia = models.IntegerField(u'Ano de início de vigência')
     mes_vigencia = models.IntegerField(u'Mês de início de vigência')
+    investidor = models.ForeignKey('Investidor')
     
     
