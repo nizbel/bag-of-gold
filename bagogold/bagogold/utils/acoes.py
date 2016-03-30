@@ -204,7 +204,6 @@ def quantidade_acoes_ate_dia(ticker, dia):
                 Dia final
     Retorno: Quantidade de ações
     """
-    
     operacoes = OperacaoAcao.objects.filter(destinacao='B', acao__ticker=ticker, data__lte=dia).exclude(data__isnull=True).order_by('data')
     # Pega os proventos em ações recebidos por outras ações
     proventos_em_acoes = AcaoProvento.objects.filter(acao_recebida__ticker=ticker).order_by('provento__data_ex')
