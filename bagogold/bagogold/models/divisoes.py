@@ -12,6 +12,18 @@ class Divisao (models.Model):
     def objetivo_indefinido(self):
         return (self.valor_objetivo == 0)
     
+    def divisao_principal(self):
+        # TODO alterar quando adicionar investidor
+        try:
+            DivisaoPrincipal.objects.get(id=self.id)
+            return True
+        except DivisaoPrincipal.DoesNotExist:
+            return False
+    
+class DivisaoPrincipal (models.Model):
+    divisao = models.ForeignKey('Divisao')
+    # TODO adicionar ligação com usuario
+    
 class DivisaoOperacaoLC (models.Model):
     divisao = models.ForeignKey('Divisao')
     operacao = models.ForeignKey('OperacaoLetraCredito')
