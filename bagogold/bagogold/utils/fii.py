@@ -3,7 +3,7 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII
 from bagogold.bagogold.models.fii import OperacaoFII
 
 
-def quantidade_fiis_ate_dia(dia):
+def calcular_qtd_fiis_ate_dia(dia):
     """ 
     Calcula a quantidade de FIIs até dia determinado
     Parâmetros: Dia final
@@ -15,19 +15,19 @@ def quantidade_fiis_ate_dia(dia):
     qtd_fii = {}
     
     for operacao in operacoes:
-        if operacao.ticker not in qtd_fii:
-            qtd_fii[operacao.ticker] = 0
+        if operacao.fii.ticker not in qtd_fii:
+            qtd_fii[operacao.fii.ticker] = 0
             
         # Verificar se se trata de compra ou venda
         if operacao.tipo_operacao == 'C':
-            qtd_fii[operacao.ticker] += operacao.quantidade
+            qtd_fii[operacao.fii.ticker] += operacao.quantidade
             
         elif operacao.tipo_operacao == 'V':
-            qtd_fii[operacao.ticker] -= operacao.quantidade
+            qtd_fii[operacao.fii.ticker] -= operacao.quantidade
         
     return qtd_fii
 
-def quantidade_fiis_ate_dia_por_ticker(ticker, dia):
+def calcular_qtd_fiis_ate_dia_por_ticker(dia, ticker):
     """ 
     Calcula a quantidade de FIIs até dia determinado para um ticker determinado
     Parâmetros: Ticker do FII
@@ -49,7 +49,7 @@ def quantidade_fiis_ate_dia_por_ticker(ticker, dia):
         
     return qtd_fii
 
-def quantidade_fiis_ate_dia_por_divisao(divisao_id, dia):
+def calcular_qtd_fiis_ate_dia_por_divisao(dia, divisao_id):
     """ 
     Calcula a quantidade de FIIs até dia determinado
     Parâmetros: Id da divisão
@@ -67,14 +67,14 @@ def quantidade_fiis_ate_dia_por_divisao(divisao_id, dia):
         # Preparar a quantidade da operação pela quantidade que foi destinada a essa divisão
         operacao.quantidade = DivisaoOperacaoFII.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade
         
-        if operacao.ticker not in qtd_fii:
-            qtd_fii[operacao.ticker] = 0
+        if operacao.fii.ticker not in qtd_fii:
+            qtd_fii[operacao.fii.ticker] = 0
             
         # Verificar se se trata de compra ou venda
         if operacao.tipo_operacao == 'C':
-            qtd_fii[operacao.ticker] += operacao.quantidade
+            qtd_fii[operacao.fii.ticker] += operacao.quantidade
             
         elif operacao.tipo_operacao == 'V':
-            qtd_fii[operacao.ticker] -= operacao.quantidade
+            qtd_fii[operacao.fii.ticker] -= operacao.quantidade
         
     return qtd_fii
