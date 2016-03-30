@@ -15,10 +15,10 @@ class Divisao (models.Model):
     def divisao_principal(self):
         # TODO alterar quando adicionar investidor
         try:
-           divisao = DivisaoPrincipal.objects.get(id=self.id)
-           return True
+            DivisaoPrincipal.objects.get(id=self.id)
+            return True
         except DivisaoPrincipal.DoesNotExist:
-           return False
+            return False
     
 class DivisaoPrincipal (models.Model):
     divisao = models.ForeignKey('Divisao')
