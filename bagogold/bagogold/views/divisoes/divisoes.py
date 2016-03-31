@@ -2,7 +2,8 @@
 from bagogold.bagogold.forms.divisoes import DivisaoForm
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
     DivisaoOperacaoFII
-from bagogold.bagogold.models.fii import ValorDiarioFII, HistoricoFII
+from bagogold.bagogold.models.fii import ValorDiarioFII, HistoricoFII, \
+    OperacaoFII
 from bagogold.bagogold.models.lc import HistoricoTaxaDI, \
     HistoricoPorcentagemLetraCredito, LetraCredito
 from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia_por_divisao
@@ -37,12 +38,27 @@ def detalhar_divisao(request, id):
         lc_nome = LetraCredito.objects.get(id=lc_id).nome
         composicao['lc'].composicao[lc_id].nome = lc_nome
         composicao['lc'].composicao[lc_id].patrimonio = valores_letras_credito_dia[lc_id]
+        composicao['lc'].composicao[lc_id].composicao = {}
+        # Pegar operações dos LCs
+        for operacao_divisao in DivisaoOperacaoLC.objects.filter(divisao=divisao, operacao__letra_credito__id=lc_id):
+            composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id] = Object()
+            composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].nome = operacao_divisao.operacao.tipo_operacao
+            composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].data = operacao_divisao.operacao.data
+            composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].quantidade = operacao_divisao.quantidade
+            try:
+                composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].valor_unitario = HistoricoPorcentagemLetraCredito.objects.filter(letra_credito=operacao_divisao.operacao.letra_credito, \
+                                                                                                                                        data__lte=operacao_divisao.operacao.data).order_by('-data')[0].porcentagem_di
+            except:
+                composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].valor_unitario = HistoricoPorcentagemLetraCredito.objects.get(data__isnull=True, letra_credito=operacao_divisao.operacao.letra_credito).porcentagem_di
+            
+            composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].patrimonio = operacao_divisao.quantidade
     
     # Adicionar FIIs
     composicao['fii'] = Object()
     composicao['fii'].nome = 'Fundos de Invest. Imob.'
     composicao['fii'].patrimonio = 0
     composicao['fii'].composicao = {}
+    # Pegar FIIs contidos na divisão
     qtd_fiis_dia = calcular_qtd_fiis_ate_dia_por_divisao(datetime.date.today(), divisao.id)
     for ticker in qtd_fiis_dia.keys():
         try:
@@ -53,6 +69,16 @@ def detalhar_divisao(request, id):
         composicao['fii'].composicao[ticker] = Object()
         composicao['fii'].composicao[ticker].nome = ticker
         composicao['fii'].composicao[ticker].patrimonio = qtd_fiis_dia[ticker] * fii_valor
+        composicao['fii'].composicao[ticker].composicao = {}
+        # Pegar operações dos FIIs
+        for operacao_divisao in DivisaoOperacaoFII.objects.filter(divisao=divisao, operacao__fii__ticker=ticker):
+            composicao['fii'].composicao[ticker].composicao[operacao_divisao.operacao.id] = Object()
+            composicao['fii'].composicao[ticker].composicao[operacao_divisao.operacao.id].nome = operacao_divisao.operacao.tipo_operacao
+            composicao['fii'].composicao[ticker].composicao[operacao_divisao.operacao.id].data = operacao_divisao.operacao.data
+            composicao['fii'].composicao[ticker].composicao[operacao_divisao.operacao.id].quantidade = operacao_divisao.quantidade
+            composicao['fii'].composicao[ticker].composicao[operacao_divisao.operacao.id].valor_unitario = HistoricoFII.objects.get(data=operacao_divisao.operacao.data, fii=operacao_divisao.operacao.fii).preco_unitario
+            composicao['fii'].composicao[ticker].composicao[operacao_divisao.operacao.id].patrimonio = operacao_divisao.quantidade * \
+                composicao['fii'].composicao[ticker].composicao[operacao_divisao.operacao.id].valor_unitario
     
     # Calcular valor total da divisão
     for item in composicao.values():
@@ -61,6 +87,9 @@ def detalhar_divisao(request, id):
     # Calcular valor percentual para cada item da composição da divisão
     for item in composicao.values():
         item.percentual = item.patrimonio / divisao.valor_total * 100
+        # Calcular valor percentual para cada operação
+        for operacao in item.composicao.values():
+            operacao.percentual = operacao.patrimonio / item.patrimonio * 100
         
     return render_to_response('divisoes/detalhar_divisao.html', {'divisao': divisao, 'composicao': composicao},
                                context_instance=RequestContext(request))
