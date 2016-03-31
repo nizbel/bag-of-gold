@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD
 from bagogold.bagogold.models.td import OperacaoTitulo, Titulo, HistoricoTitulo
 from decimal import Decimal
 from django.db.models import Sum, Case, When, IntegerField, F
@@ -34,7 +35,7 @@ def criar_data_inicio_titulos():
         titulo.data_inicio = HistoricoTitulo.objects.filter(titulo=titulo).order_by('data')[0].data
         titulo.save()
 
-def quantidade_titulos_ate_dia(titulo_id, dia):
+def quantidade_titulos_ate_dia_por_titulo(titulo_id, dia):
     """ 
     Calcula a quantidade de títulos até dia determinado
     Parâmetros: ID do título
@@ -53,5 +54,35 @@ def quantidade_titulos_ate_dia(titulo_id, dia):
             
         elif item.tipo_operacao == 'V':
             qtd_titulos -= item.quantidade
+        
+    return qtd_titulos
+
+def calcular_qtd_titulos_ate_dia_por_divisao(dia, divisao_id):
+    """ 
+    Calcula a quantidade de títulos até dia determinado por divisão
+    Parâmetros: Dia final
+                ID da divisão
+    Retorno: Quantidade de títulos {titulo_id: qtd}
+    """
+    operacoes_divisao_id = DivisaoOperacaoTD.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).values('operacao__id')
+    if len(operacoes_divisao_id) == 0:
+        return {}
+    operacoes = OperacaoTitulo.objects.filter(id__in=operacoes_divisao_id).exclude(data__isnull=True).order_by('data')
+    
+    qtd_titulos = {}
+    
+    for operacao in operacoes:
+        # Preparar a quantidade da operação pela quantidade que foi destinada a essa divisão
+        operacao.quantidade = DivisaoOperacaoTD.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade
+        
+        if operacao.titulo.id not in qtd_titulos:
+            qtd_titulos[operacao.titulo.id] = 0
+            
+        # Verificar se se trata de compra ou venda
+        if operacao.tipo_operacao == 'C':
+            qtd_titulos[operacao.titulo.id] += operacao.quantidade
+            
+        elif operacao.tipo_operacao == 'V':
+            qtd_titulos[operacao.titulo.id] -= operacao.quantidade
         
     return qtd_titulos
