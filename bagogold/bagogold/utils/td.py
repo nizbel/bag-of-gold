@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.td import OperacaoTitulo, Titulo, HistoricoTitulo
+from bagogold.bagogold.utils.misc import calcular_iof_regressivo
 from decimal import Decimal
 from django.db.models import Sum, Case, When, IntegerField, F
 from itertools import chain
@@ -15,7 +16,8 @@ def calcular_imposto_venda_td(dias, valor_venda, rendimento):
     Retorno: quantidade de imposto
     """
     if dias < 30:
-        return min(0.01 * valor_venda + 0.225 * rendimento, rendimento)
+        valor_iof = calcular_iof_regressivo(dias)
+        return min(valor_iof * valor_venda + 0.225 * rendimento, rendimento)
     if dias <= 180:
         return 0.225 * rendimento
     elif dias <= 360:

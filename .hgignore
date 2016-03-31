@@ -7,3 +7,4 @@ syntax: glob
 .settings/org.eclipse.core.resources.prefs
 README.md
 *.pyc
+*.orig
