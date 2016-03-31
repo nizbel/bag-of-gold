@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.forms.divisoes import DivisaoForm
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
-    DivisaoOperacaoFII
+    DivisaoOperacaoFII, DivisaoOperacaoTD
 from bagogold.bagogold.models.fii import ValorDiarioFII, HistoricoFII, \
     OperacaoFII
 from bagogold.bagogold.models.lc import HistoricoTaxaDI, \
     HistoricoPorcentagemLetraCredito, LetraCredito
+from bagogold.bagogold.models.td import ValorDiarioTitulo, HistoricoTitulo, \
+    Titulo
 from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia_por_divisao
 from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia, \
     calcular_valor_lc_ate_dia_por_divisao
+from bagogold.bagogold.utils.td import calcular_qtd_titulos_ate_dia_por_divisao
 from decimal import Decimal
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
@@ -35,8 +38,7 @@ def detalhar_divisao(request, id):
     for lc_id in valores_letras_credito_dia.keys():
         composicao['lc'].patrimonio += valores_letras_credito_dia[lc_id]
         composicao['lc'].composicao[lc_id] = Object()
-        lc_nome = LetraCredito.objects.get(id=lc_id).nome
-        composicao['lc'].composicao[lc_id].nome = lc_nome
+        composicao['lc'].composicao[lc_id].nome = LetraCredito.objects.get(id=lc_id).nome
         composicao['lc'].composicao[lc_id].patrimonio = valores_letras_credito_dia[lc_id]
         composicao['lc'].composicao[lc_id].composicao = {}
         # Pegar operações dos LCs
@@ -80,6 +82,32 @@ def detalhar_divisao(request, id):
             composicao['fii'].composicao[ticker].composicao[operacao_divisao.operacao.id].patrimonio = operacao_divisao.quantidade * \
                 composicao['fii'].composicao[ticker].composicao[operacao_divisao.operacao.id].valor_unitario
     
+    # Adicionar TDs
+    composicao['td'] = Object()
+    composicao['td'].nome = 'Tesouro Direto'
+    composicao['td'].patrimonio = 0
+    composicao['td'].composicao = {}
+    # Pegar TDs contidos na divisão
+    qtd_tds_dia = calcular_qtd_titulos_ate_dia_por_divisao(datetime.date.today(), divisao.id)
+    for titulo_id in qtd_tds_dia.keys():
+        try:
+            td_valor = ValorDiarioTitulo.objects.filter(titulo__id=titulo_id, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).order_by('-data_hora')[0].preco_venda
+        except:
+            td_valor = HistoricoTitulo.objects.filter(titulo__id=titulo_id).order_by('-data')[0].preco_venda
+        composicao['td'].patrimonio += qtd_tds_dia[titulo_id] * td_valor
+        composicao['td'].composicao[titulo_id] = Object()
+        composicao['td'].composicao[titulo_id].nome = Titulo.objects.get(id=titulo_id).nome
+        composicao['td'].composicao[titulo_id].patrimonio = qtd_tds_dia[titulo_id] * td_valor
+        composicao['td'].composicao[titulo_id].composicao = {}
+        # Pegar operações dos TDs
+        for operacao_divisao in DivisaoOperacaoTD.objects.filter(divisao=divisao, operacao__titulo__id=titulo_id):
+            composicao['td'].composicao[titulo_id].composicao[operacao_divisao.operacao.id] = Object()
+            composicao['td'].composicao[titulo_id].composicao[operacao_divisao.operacao.id].nome = operacao_divisao.operacao.tipo_operacao
+            composicao['td'].composicao[titulo_id].composicao[operacao_divisao.operacao.id].data = operacao_divisao.operacao.data
+            composicao['td'].composicao[titulo_id].composicao[operacao_divisao.operacao.id].quantidade = operacao_divisao.quantidade
+            composicao['td'].composicao[titulo_id].composicao[operacao_divisao.operacao.id].valor_unitario = td_valor
+            composicao['td'].composicao[titulo_id].composicao[operacao_divisao.operacao.id].patrimonio = operacao_divisao.quantidade * td_valor
+    
     # Calcular valor total da divisão
     for item in composicao.values():
         divisao.valor_total += item.patrimonio
@@ -111,6 +139,7 @@ def listar_divisoes(request):
     for divisao in divisoes:
         divisao.valor_atual = 0
         # TODO calcular valor atual
+        
         # Fundos de investimento imobiliário
         fii_divisao = calcular_qtd_fiis_ate_dia_por_divisao(datetime.date.today(), divisao.id)
         for ticker in fii_divisao.keys():
@@ -119,11 +148,22 @@ def listar_divisoes(request):
             except:
                 fii_valor = HistoricoFII.objects.filter(fii__ticker=ticker).order_by('-data')[0].preco_unitario
             divisao.valor_atual += (fii_divisao[ticker] * fii_valor)
+        
         # Letras de crédito
         lc_divisao = calcular_valor_lc_ate_dia_por_divisao(datetime.date.today(), divisao.id)
         for total_lc in lc_divisao.values():
-            print total_lc
             divisao.valor_atual += total_lc
+        
+        # Tesouro Direto
+        td_divisao = calcular_qtd_titulos_ate_dia_por_divisao(datetime.date.today(), divisao.id)
+        for titulo_id in td_divisao.keys():
+            try:
+                td_valor = ValorDiarioTitulo.objects.filter(titulo__id=titulo_id, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).order_by('-data_hora')[0].preco_venda
+            except:
+                td_valor = HistoricoTitulo.objects.filter(titulo__id=titulo_id).order_by('-data')[0].preco_venda
+            print 'valor:', divisao.valor_atual
+            divisao.valor_atual += (td_divisao[titulo_id] * td_valor)
+            print 'valor:', divisao.valor_atual
         
         if not divisao.objetivo_indefinido():
             divisao.quantidade_percentual = divisao.valor_atual / divisao.valor_objetivo * 100

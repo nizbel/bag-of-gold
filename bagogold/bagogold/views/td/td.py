@@ -5,7 +5,7 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
     ValorDiarioTitulo, Titulo
 from bagogold.bagogold.testTD import buscar_valores_diarios
-from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia, \
+from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia_por_titulo, \
     calcular_imposto_venda_td
 from copy import deepcopy
 from django.contrib import messages
