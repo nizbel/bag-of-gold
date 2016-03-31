@@ -117,6 +117,8 @@ def historico(request):
                         
                 elif operacao.tipo_operacao == 'V':
                     if (operacao.data == data_iteracao):
+                        operacao.total = operacao.quantidade
+                        total_gasto -= operacao.total
                         # Remover quantidade da operação de compra
                         for operacao_c in operacoes:
                             if (operacao_c.id == OperacaoVendaLetraCredito.objects.get(operacao_venda=operacao).id):
@@ -127,8 +129,6 @@ def historico(request):
                                 str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
                                 operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
                                 break
-                    # Adicionar valor da venda ao patrimonio total        
-                    total_patrimonio += operacao.atual
                 
         if len(operacoes.filter(data=data_iteracao)) > 0 or data_iteracao == data_final:
             graf_gasto_total += [[str(calendar.timegm(data_iteracao.timetuple()) * 1000), float(total_gasto)]]
