@@ -18,11 +18,23 @@ class OperacaoLetraCredito (models.Model):
     def __unicode__(self):
         return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.letra_credito, self.data)
     
+    def carencia(self):
+        try:
+            return HistoricoCarenciaLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito)[0].carencia
+        except:
+            return HistoricoCarenciaLetraCredito.objects.get(data__isnull=True, letra_credito=self.letra_credito).carencia
+    
     def operacao_compra_relacionada(self):
         if self.tipo_operacao == 'V':
             return OperacaoVendaLetraCredito.objects.get(operacao_venda=self).operacao_compra
         else:
             return None
+    
+    def porcentagem_di(self):
+        try:
+            return HistoricoPorcentagemLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito)[0].porcentagem_di
+        except:
+            return HistoricoPorcentagemLetraCredito.objects.get(data__isnull=True, letra_credito=self.letra_credito).porcentagem_di
     
     def qtd_disponivel_venda(self):
         vendas = OperacaoVendaLetraCredito.objects.filter(operacao_compra=self).values_list('operacao_venda__id', flat=True)

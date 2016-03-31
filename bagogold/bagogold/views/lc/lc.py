@@ -75,10 +75,7 @@ def historico(request):
         operacao.atual = operacao.quantidade
         if operacao.tipo_operacao == 'C':
             operacao.tipo = 'Compra'
-            try:
-                operacao.taxa = historico_porcentagem.filter(data__lte=operacao.data, letra_credito=operacao.letra_credito)[0].porcentagem_di
-            except:
-                operacao.taxa = historico_porcentagem.get(data__isnull=True, letra_credito=operacao.letra_credito).porcentagem_di
+            operacao.taxa = operacao.porcentagem_di()
         else:
             operacao.tipo = 'Venda'
     
@@ -277,7 +274,7 @@ def listar_lc(request):
             lc.carencia_atual = HistoricoCarenciaLetraCredito.objects.get(letra_credito=lc).carencia
         # Preparar o valor mais atual de rendimento
         historico_rendimento = HistoricoPorcentagemLetraCredito.objects.filter(letra_credito=lc).exclude(data=None).order_by('-data')
-        print historico_rendimento
+#         print historico_rendimento
         if historico_rendimento:
             lc.rendimento_atual = historico_rendimento[0].porcentagem_di
         else:
