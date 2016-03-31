@@ -67,3 +67,24 @@ class DivisaoOperacaoLCFormSet(forms.models.BaseInlineFormSet):
                         if self.instance.quantidade < self.operacao_compra.quantidade:
                             if DivisaoOperacaoLC.objects.get(divisao=form_divisao.cleaned_data['divisao'], operacao=self.operacao_compra).quantidade < div_qtd:
                                 raise forms.ValidationError('Venda de quantidade acima da disponível para divisão %s' % (form_divisao.cleaned_data['divisao']))
+
+# Inline FormSet para operações em tesouro direto
+class DivisaoOperacaoTDFormSet(forms.models.BaseInlineFormSet):
+    def clean(self):
+        qtd_total_div = 0
+        contador_forms = 0
+        divisoes = list()
+        for form_divisao in self.forms:
+            contador_forms += 1
+            if form_divisao.is_valid():
+                print form_divisao.cleaned_data.get('quantidade')
+                if not (form_divisao.instance.id == None and not form_divisao.has_changed()):
+                    # Verificar quantidade
+                    div_qtd = form_divisao.cleaned_data['quantidade']
+                    if div_qtd != None and div_qtd > 0:
+                        qtd_total_div += div_qtd
+                    else:
+                        raise forms.ValidationError('Quantidade da divisão %s é inválida, quantidade deve ser maior que 0' % (contador_forms))
+                
+                    if self.instance.quantidade < qtd_total_div:
+                        raise forms.ValidationError('Quantidade total alocada para as divisões é maior que quantidade da operação')
