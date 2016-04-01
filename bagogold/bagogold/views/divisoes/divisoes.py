@@ -109,8 +109,11 @@ def detalhar_divisao(request, id):
             composicao['td'].composicao[titulo_id].composicao[operacao_divisao.operacao.id].patrimonio = operacao_divisao.quantidade * td_valor
     
     # Calcular valor total da divisão
-    for item in composicao.values():
-        divisao.valor_total += item.patrimonio
+    for key, item in composicao.items():
+        if item.patrimonio == 0:
+            del composicao[key]
+        else:
+            divisao.valor_total += item.patrimonio
         
     # Calcular valor percentual para cada item da composição da divisão
     for item in composicao.values():
