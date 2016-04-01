@@ -1,13 +1,17 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.forms.divisoes import DivisaoOperacaoTDFormSet
 from bagogold.bagogold.forms.td import OperacaoTituloForm
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
     ValorDiarioTitulo, Titulo
 from bagogold.bagogold.testTD import buscar_valores_diarios
-from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia, \
+from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia_por_titulo, \
     calcular_imposto_venda_td
 from copy import deepcopy
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
+from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
@@ -20,21 +24,43 @@ import math
 
 @login_required
 def editar_operacao_td(request, id):
-    operacao = OperacaoTitulo.objects.get(pk=id)
+    # Preparar formset para divisoes
+    DivisaoFormSet = inlineformset_factory(OperacaoTitulo, DivisaoOperacaoTD, fields=('divisao', 'quantidade'),
+                                            extra=1, formset=DivisaoOperacaoTDFormSet)
+    operacao_td = OperacaoTitulo.objects.get(pk=id)
+    
     if request.method == 'POST':
         if request.POST.get("save"):
-            form = OperacaoTituloForm(request.POST, instance=operacao)
-            if form.is_valid():
-                form.save()
-            return HttpResponseRedirect(reverse('historico_td'))
+            form_operacao_td = OperacaoTituloForm(request.POST, instance=operacao_td)
+            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_td)
+            
+            if form_operacao_td.is_valid():
+                if formset_divisao.is_valid():
+                    operacao_td.save()
+                    formset_divisao.save()
+                    messages.success(request, 'Operação alterada com sucesso')
+                    return HttpResponseRedirect(reverse('historico_td'))
+            for erros in form_operacao_td.errors.values():
+                for erro in erros:
+                    messages.error(request, erro)
+            for erro in formset_divisao.non_form_errors():
+                messages.error(request, erro)
+            return render_to_response('td/editar_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao }, 
+                                      context_instance=RequestContext(request))
         elif request.POST.get("delete"):
-            operacao.delete()
+            divisao_td = DivisaoOperacaoTD.objects.filter(operacao=operacao_td)
+            for divisao in divisao_td:
+                divisao.delete()
+            operacao_td.delete()
+            messages.success(request, 'Operação apagada com sucesso')
             return HttpResponseRedirect(reverse('historico_td'))
 
     else:
-        form = OperacaoTituloForm(instance=operacao)
+        form_operacao_td = OperacaoTituloForm(instance=operacao_td)
+        formset_divisao = DivisaoFormSet(instance=operacao_td)
             
-    return render_to_response('td/editar_operacao_td.html', {'form': form}, context_instance=RequestContext(request))   
+    return render_to_response('td/editar_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao }, 
+                              context_instance=RequestContext(request))   
 
     
 @login_required
@@ -137,15 +163,31 @@ def historico_td(request):
     
 @login_required
 def inserir_operacao_td(request):
+    # Preparar formset para divisoes
+    DivisaoFormSet = inlineformset_factory(OperacaoTitulo, DivisaoOperacaoTD, fields=('divisao', 'quantidade'),
+                                            extra=1, formset=DivisaoOperacaoTDFormSet)
+    
     if request.method == 'POST':
-        form = OperacaoTituloForm(request.POST)
-        if form.is_valid():
-            form.save()
+        form_operacao_td = OperacaoTituloForm(request.POST)
+        if form_operacao_td.is_valid():
+            operacao_td = form_operacao_td.save(commit=False)
+            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_td)
+            if formset_divisao.is_valid():
+                operacao_td.save()
+                formset_divisao.save()
+                messages.success(request, 'Operação inserida com sucesso')
             return HttpResponseRedirect(reverse('historico_td'))
+            for erro in formset_divisao.non_form_errors():
+                messages.error(request, erro)
+            return render_to_response('td/inserir_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao }, 
+                                      context_instance=RequestContext(request))
+        
     else:
-        form = OperacaoTituloForm()
+        form_operacao_td = OperacaoTituloForm()
+        formset_divisao = DivisaoFormSet()
             
-    return render_to_response('td/inserir_operacao_td.html', {'form': form}, context_instance=RequestContext(request))
+    return render_to_response('td/inserir_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao }, 
+                                      context_instance=RequestContext(request))
 
 @login_required
 def painel(request):

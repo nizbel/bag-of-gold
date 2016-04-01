@@ -23,7 +23,7 @@ import datetime
 def editar_operacao_lc(request, id):
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoLetraCredito, DivisaoOperacaoLC, fields=('divisao', 'quantidade'),
-                                            extra=0, formset=DivisaoOperacaoLCFormSet)
+                                            extra=1, formset=DivisaoOperacaoLCFormSet)
     operacao_lc = OperacaoLetraCredito.objects.get(pk=id)
     
     if request.method == 'POST':
