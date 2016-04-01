@@ -24,6 +24,9 @@ class OperacaoTituloForm(forms.ModelForm):
                  'tipo_operacao': widgets.Select(choices=ESCOLHAS_TIPO_OPERACAO),
                  'consolidada': widgets.Select(choices=ESCOLHAS_CONSOLIDADO),}
 
+    class Media:
+        js = ('js/bagogold/td.js',)
+
     def clean(self):
         dados = super(OperacaoTituloForm, self).clean()
         data = dados.get('data')

@@ -4,7 +4,7 @@
 <h1>{{ divisao.nome }}</h1>
 <div class="row-fluid">
     <div class="box-content">
-    <table id="composicao_divisao" class="table table-striped table-bordered bootstrap-datatable datatable">
+    <table class="table table-striped table-bordered bootstrap-datatable datatable">
     <thead>
         <tr>
             <th>Tipo de investimento</th>
@@ -12,22 +12,26 @@
         </tr>
     </thead>
     <tbody>
-    {% for item in composicao.values %}
+    {% for key, item in composicao.items %}
     <tr>
-            <td><a href="#" onclick="mostrarComposicao({{ patrimonio_ano.0 }});">{{item.nome}}</a></td>
-            <td>R${{item.patrimonio|floatformat:"2"}} ({{item.percentual|floatformat:"2"}}%)</td>
+        <td><a href="#" onclick="mostrarComposicao('{{ key }}');">{{item.nome}}</a></td>
+        <td>R${{item.patrimonio|floatformat:"2"}} ({{item.percentual|floatformat:"2"}}%)</td>
     </tr>
     {% endfor %}
     <tfoot>
         <tr>
-            <td><b>Total</b></td>
-            <td><b>R${{divisao.valor_total|floatformat:"2"}}</b></td>
+            <th>Total</th>
+            <th>R${{divisao.valor_total|floatformat:"2"}}</th>
         </tr>
     </tfoot>
     </tbody>
     </table>
+    </div>
+</div>
     
-    <table id="composicao_item" class="table table-striped table-bordered bootstrap-datatable datatable">
+<div class="row-fluid">
+    <div id="composicao_item" class="hidden box-content">
+    <table class="table table-striped table-bordered bootstrap-datatable datatable">
     <thead>
         <tr>
             <th>Nome</th>
@@ -35,16 +39,18 @@
         </tr>
     </thead>
     <tbody>
-    {% for item in composicao.values %}
-    <tr>
-            <td><a href="#" onclick="mostrarComposicao({{ patrimonio_ano.0 }});">{{item.nome}}</a></td>
-            <td>R${{item.patrimonio|floatformat:"2"}} ({{item.percentual|floatformat:"2"}}%)</td>
+    {% for key, item in composicao.items %}
+        {% for key_composicao, item_composicao in item.composicao.items %}
+    <tr name="{{key}}" class="hidden">
+        <td><a href="#" onclick="mostrarOperacoes('{{key}}_{{ key_composicao }}');">{{item_composicao.nome}}</a></td>
+        <td>R${{item_composicao.patrimonio|floatformat:"2"}} ({{item_composicao.percentual|floatformat:"2"}}%)</td>
     </tr>
+        {% endfor %}
     {% endfor %}
     <tfoot>
         <tr>
-            <td><b>Total</b></td>
-            <td><b>R${{divisao.valor_total|floatformat:"2"}}</b></td>
+            <th>Total</th>
+            <th id="item_total">R$0</th>
         </tr>
     </tfoot>
     </tbody>
@@ -52,4 +58,61 @@
     </div>
 </div>
 
+<div class="row-fluid">
+    <div id="composicao_operacao" class="hidden box-content">
+    <table class="table table-striped table-bordered bootstrap-datatable datatable">
+    <thead>
+        <tr>
+            <th>Tipo</th>
+            <th>Quantidade</th>
+            <th>Data</th>
+            <th>Valor unit.</th>
+            <th>Valor total</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for key, item in composicao.items %}
+        {% for key_composicao, item_composicao in item.composicao.items %}
+            {% for key_operacao, item_operacao in item_composicao.composicao.items %}
+    <tr name="operacao_{{key}}_{{key_composicao}}" class="">
+        <td>{{item_operacao.nome}}</a></td>
+        <td>{{item_operacao.quantidade}}</a></td>
+        <td>{{item_operacao.data}}</a></td>
+        <td>{{item_operacao.valor_unitario}}</a></td>
+        <td>R${{item_operacao.patrimonio|floatformat:"2"}} ({{item_operacao.percentual|floatformat:"2"}}%)</td>
+    </tr>
+            {% endfor %}
+        {% endfor %}
+    {% endfor %}
+    <tfoot>
+        <tr>
+            <th>Total</th>
+            <th id="operacao_total" colspan="4">R$0</th>
+        </tr>
+    </tfoot>
+    </tbody>
+    </table>
+    </div>
+</div>
+
+<script>
+//Mostrar composição do tipo de investimento
+function mostrarComposicao(key) {
+	$('#composicao_operacao').addClass('hidden');
+    $('#composicao_item').removeClass('hidden');
+    $('#composicao_item > div > table > tbody > tr[name!=' + key + ']').addClass('hidden');
+    $('#composicao_item > div > table > tbody > tr[name=' + key + ']').removeClass('hidden');
+    // TODO preparar total
+//     ($('#item_total').html());
+}
+
+//Mostrar operações do investimento escolhido
+function mostrarOperacoes(key) {
+    $('#composicao_operacao').removeClass('hidden');
+    $('#composicao_operacao > div > table > tbody > tr[name!=operacao_' + key + ']').addClass('hidden');
+    $('#composicao_operacao > div > table > tbody > tr[name=operacao_' + key + ']').removeClass('hidden');
+    // TODO preparar total
+//     ($('#item_total').html());
+}
+</script>
 {% endblock %}
