@@ -35,7 +35,7 @@ class DivisaoOperacaoLC (models.Model):
     class Meta:
         unique_together=('divisao', 'operacao')
     
-class DivisaoOperacaoAcoes (models.Model):
+class DivisaoOperacaoAcao (models.Model):
     divisao = models.ForeignKey('Divisao')
     operacao = models.ForeignKey('OperacaoAcao')
     """

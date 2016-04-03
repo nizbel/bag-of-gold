@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.forms.divisoes import DivisaoOperacaoAcaoFormSet
 from bagogold.bagogold.forms.operacao_acao import OperacaoAcaoForm, \
     UsoProventosOperacaoAcaoForm
 from bagogold.bagogold.forms.provento_acao import ProventoAcaoForm
 from bagogold.bagogold.forms.taxa_custodia_acao import TaxaCustodiaAcaoForm
-from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, ValorDiarioAcao, \
-    Provento, UsoProventosOperacaoAcao, TaxaCustodiaAcao, Acao, AcaoProvento
+from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, \
+    ValorDiarioAcao, Provento, UsoProventosOperacaoAcao, TaxaCustodiaAcao, Acao, \
+    AcaoProvento
 from bagogold.bagogold.utils.acoes import calcular_provento_por_mes, \
     calcular_media_proventos_6_meses, calcular_operacoes_sem_proventos_por_mes, \
     calcular_uso_proventos_por_mes, quantidade_acoes_ate_dia
@@ -25,6 +27,9 @@ import json
 
 @login_required
 def editar_operacao_acao(request, id):
+    # Preparar formset para divisoes
+    DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'),
+                                            extra=1, formset=DivisaoOperacaoAcaoFormSet)
     operacao_acao = OperacaoAcao.objects.get(pk=id)
     try:
         uso_proventos = UsoProventosOperacaoAcao.objects.get(operacao=operacao_acao)
