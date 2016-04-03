@@ -44,6 +44,10 @@ class UsoProventosOperacaoAcaoForm(forms.ModelForm):
     class Meta:
         model = UsoProventosOperacaoAcao
         fields = ('qtd_utilizada', )
+        
+    def __init__(self, *args, **kwargs):
+        super(UsoProventosOperacaoAcaoForm, self).__init__(*args, **kwargs)
+        self.fields['qtd_utilizada'].required = False
             
     def clean(self):
         data = super(UsoProventosOperacaoAcaoForm, self).clean()

@@ -77,4 +77,8 @@ def calcular_qtd_fiis_ate_dia_por_divisao(dia, divisao_id):
         elif operacao.tipo_operacao == 'V':
             qtd_fii[operacao.fii.ticker] -= operacao.quantidade
         
+    for key, item in qtd_fii.items():
+        if qtd_fii[key] == 0:
+            del qtd_fii[key]
+            
     return qtd_fii
