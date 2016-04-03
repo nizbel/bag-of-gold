@@ -186,7 +186,13 @@
             {% for message in messages %}
                 <div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %}">
                     <button type="button" class="close" data-dismiss="alert">×</button>
-                    <strong>{% if message.tags %}{{ message.tags }}{% endif %}</strong> {{ message }}
+                    {% if message.tags %}
+                        {% if message.tags == 'success' %}
+                            <i class="icon-ok"></i>
+                        {% elif message.tags == 'error' %}
+                            <i class=" icon-ban-circle"></i>
+                        {% endif %}
+                    {% endif %} {{ message }}
                 </div>
             {% endfor %}
             </div>
