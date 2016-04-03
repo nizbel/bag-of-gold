@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.acoes import OperacaoAcao, UsoProventosOperacaoAcao
+from bagogold.bagogold.models.acoes import OperacaoAcao, \
+    UsoProventosOperacaoAcao
+from decimal import Decimal
 from django import forms
 from django.forms import widgets
 
@@ -31,7 +33,7 @@ class OperacaoAcaoForm(forms.ModelForm):
         data = super(OperacaoAcaoForm, self).clean()
         preco_unitario = str(data.get('preco_unitario'))
         preco_unitario = preco_unitario.replace(",", ".")
-        preco_unitario = float(preco_unitario)
+        preco_unitario = Decimal(preco_unitario)
         data['preco_unitario'] = preco_unitario
 
         return data
@@ -46,9 +48,11 @@ class UsoProventosOperacaoAcaoForm(forms.ModelForm):
     def clean(self):
         data = super(UsoProventosOperacaoAcaoForm, self).clean()
         if data.get('qtd_utilizada') is not None:
+            if data.get('qtd_utilizada') < 0:
+                raise forms.ValidationError('Quantidade de proventos utilizada não pode ser negativa')
             qtd_utilizada = str(data.get('qtd_utilizada'))
             qtd_utilizada = qtd_utilizada.replace(",", ".")
-            qtd_utilizada = float(qtd_utilizada)
+            qtd_utilizada = Decimal(qtd_utilizada)
             data['qtd_utilizada'] = qtd_utilizada
 
         return data

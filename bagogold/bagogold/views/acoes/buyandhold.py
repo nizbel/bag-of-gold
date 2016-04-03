@@ -7,14 +7,16 @@ from bagogold.bagogold.forms.taxa_custodia_acao import TaxaCustodiaAcaoForm
 from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, \
     ValorDiarioAcao, Provento, UsoProventosOperacaoAcao, TaxaCustodiaAcao, Acao, \
     AcaoProvento
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao
 from bagogold.bagogold.utils.acoes import calcular_provento_por_mes, \
     calcular_media_proventos_6_meses, calcular_operacoes_sem_proventos_por_mes, \
     calcular_uso_proventos_por_mes, quantidade_acoes_ate_dia
 from decimal import Decimal
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.db.models import Q
-from django.db.models.functions import Concat
+from django.forms import inlineformset_factory
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
@@ -38,23 +40,38 @@ def editar_operacao_acao(request, id):
     if request.method == 'POST':
         if request.POST.get("save"):
             form_operacao_acao = OperacaoAcaoForm(request.POST, instance=operacao_acao)
+            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_acao)
             if uso_proventos is not None:
                 form_uso_proventos = UsoProventosOperacaoAcaoForm(request.POST, instance=uso_proventos)
             else:
                 form_uso_proventos = UsoProventosOperacaoAcaoForm(request.POST)
             if form_operacao_acao.is_valid():
-                operacao_acao.save()
                 if form_uso_proventos.is_valid():
-                    uso_proventos = form_uso_proventos.save(commit=False)
-                    if uso_proventos.qtd_utilizada > 0:
-                        uso_proventos.operacao = operacao_acao
-                        uso_proventos.save()
-                return HttpResponseRedirect(reverse('historico_bh'))
+                    if formset_divisao.is_valid():
+                        operacao_acao.save()
+                        uso_proventos = form_uso_proventos.save(commit=False)
+                        if uso_proventos.qtd_utilizada > 0:
+                            uso_proventos.operacao_acao = operacao_acao
+                            uso_proventos.save()
+                        formset_divisao.save()
+                        messages.success(request, 'Operação alterada com sucesso')
+                        return HttpResponseRedirect(reverse('historico_bh'))
+            for erros in form_operacao_acao.errors.values():
+                for erro in erros:
+                    messages.error(request, erro)
+            for erro in formset_divisao.non_form_errors():
+                messages.error(request, erro)
+            return render_to_response('acoes/buyandhold/editar_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,
+                                                                       'formset_divisao': formset_divisao }, context_instance=RequestContext(request))
         elif request.POST.get("delete"):
             if uso_proventos is not None:
                 uso_proventos.delete()
+            divisao_fii = DivisaoOperacaoAcao.objects.filter(operacao=operacao_fii)
+            for divisao in divisao_fii:
+                divisao.delete()
             operacao_acao.delete()
-            return HttpResponseRedirect(reverse('historico_bh'))
+            messages.success(request, 'Operação apagada com sucesso')
+            return HttpResponseRedirect(reverse('historico_fii'))
 
     else:
         form_operacao_acao = OperacaoAcaoForm(instance=operacao_acao)
@@ -62,9 +79,10 @@ def editar_operacao_acao(request, id):
             form_uso_proventos = UsoProventosOperacaoAcaoForm(instance=uso_proventos)
         else:
             form_uso_proventos = UsoProventosOperacaoAcaoForm()
+        formset_divisao = DivisaoFormSet(instance=operacao_acao)
             
-    return render_to_response('acoes/buyandhold/editar_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos},
-                              context_instance=RequestContext(request))  
+    return render_to_response('acoes/buyandhold/editar_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,
+                                                                       'formset_divisao': formset_divisao }, context_instance=RequestContext(request))
 
 @login_required
 def editar_provento_acao(request, id):
