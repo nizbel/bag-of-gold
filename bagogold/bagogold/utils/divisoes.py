@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.models.acoes import OperacaoAcao
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD, \
-    DivisaoPrincipal, DivisaoOperacaoLC, DivisaoOperacaoFII
+    DivisaoPrincipal, DivisaoOperacaoLC, DivisaoOperacaoFII, DivisaoOperacaoAcao
 from bagogold.bagogold.models.fii import OperacaoFII
 from bagogold.bagogold.models.lc import OperacaoLetraCredito
 from bagogold.bagogold.models.td import OperacaoTitulo
@@ -11,8 +12,13 @@ def preencher_operacoes_div_principal(operacao):
     Adiciona a divisão principal à quantidades não alocadas da operação
     """
     # Verificar qual o tipo de investimento da operação
+    # Ação (B&H)
+    if isinstance(operacao, OperacaoAcao):
+        modelo_operacao_div = apps.get_model('bagogold', 'DivisaoOperacaoAcao')
+        divisoes_operacao = DivisaoOperacaoAcao.objects.filter(operacao=operacao)
+        div_principal = DivisaoPrincipal.objects.get().divisao 
     # FII
-    if isinstance(operacao, OperacaoFII):
+    elif isinstance(operacao, OperacaoFII):
         modelo_operacao_div = apps.get_model('bagogold', 'DivisaoOperacaoFII')
         divisoes_operacao = DivisaoOperacaoFII.objects.filter(operacao=operacao)
         div_principal = DivisaoPrincipal.objects.get().divisao

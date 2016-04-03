@@ -510,27 +510,38 @@ def historico(request):
     
 @login_required
 def inserir_operacao_acao(request):
+    # Preparar formset para divisoes
+    DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'),
+                                            extra=1, formset=DivisaoOperacaoAcaoFormSet)
+    
     if request.method == 'POST':
         form_operacao_acao = OperacaoAcaoForm(request.POST)
         form_uso_proventos = UsoProventosOperacaoAcaoForm(request.POST)
         if form_operacao_acao.is_valid():
             operacao_acao = form_operacao_acao.save(commit=False)
+            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_acao)
             operacao_acao.destinacao = 'B'
-            operacao_acao.save()
             if form_uso_proventos.is_valid():
-                uso_proventos = form_uso_proventos.save(commit=False)
-                if uso_proventos.qtd_utilizada > 0:
-                    uso_proventos.operacao = operacao_acao
-#                     print uso_proventos.qtd_utilizada
-                    uso_proventos.save()
-            return HttpResponseRedirect(reverse('historico_bh'))
+                if formset_divisao.is_valid():
+                    operacao_acao.save()
+                    uso_proventos = form_uso_proventos.save(commit=False)
+                    if uso_proventos.qtd_utilizada > 0:
+                        uso_proventos.operacao = operacao_acao
+                        uso_proventos.save()
+                    formset_divisao.save()
+                    messages.success(request, 'Operação inserida com sucesso')
+                    return HttpResponseRedirect(reverse('historico_bh'))
+            for erro in formset_divisao.non_form_errors():
+                messages.error(request, erro)
+            return render_to_response('acoes/buyandhold/inserir_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,
+                                                                       'formset_divisao': formset_divisao }, context_instance=RequestContext(request))
     else:
         form_operacao_acao = OperacaoAcaoForm()
         form_uso_proventos = UsoProventosOperacaoAcaoForm()
+        formset_divisao = DivisaoFormSet()
             
-    return render_to_response('acoes/buyandhold/inserir_operacao_acao.html', {'form_operacao_acao': form_operacao_acao,
-                                                                              'form_uso_proventos': form_uso_proventos},
-                               context_instance=RequestContext(request))
+    return render_to_response('acoes/buyandhold/inserir_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,
+                                                                       'formset_divisao': formset_divisao }, context_instance=RequestContext(request))
     
 @login_required
 def inserir_provento_acao(request):
