@@ -1,11 +1,20 @@
 # -*- coding: utf-8 -*-
 from django.db import models
+import datetime
  
 class FII (models.Model):
     ticker = models.CharField(u'Ticker da ação', max_length=10) 
     
     def __unicode__(self):
         return self.ticker
+    
+    def valor_no_dia(self, dia):
+        if dia == datetime.date.today():
+            try:
+                return ValorDiarioFII.objects.filter(fii__ticker=self.ticker, data_hora__day=dia.day, data_hora__month=dia.month).order_by('-data_hora')[0].preco_unitario
+            except:
+                pass
+        return HistoricoFII.objects.filter(fii__ticker=self.ticker, data__lte=dia).order_by('-data')[0].preco_unitario
     
 class ProventoFII (models.Model):
     fii = models.ForeignKey('FII')
