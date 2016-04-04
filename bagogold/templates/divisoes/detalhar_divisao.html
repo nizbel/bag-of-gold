@@ -31,7 +31,7 @@
     
 <div class="row-fluid">
     <div id="composicao_item" class="hidden box-content">
-    <table class="table table-striped table-bordered bootstrap-datatable datatable">
+    <table id="tab_composicao" class="table table-striped table-bordered bootstrap-datatable datatable">
     <thead>
         <tr>
             <th>Nome</th>
@@ -41,7 +41,7 @@
     <tbody>
     {% for key, item in composicao.items %}
         {% for key_composicao, item_composicao in item.composicao.items %}
-    <tr name="{{key}}" class="hidden">
+    <tr name="{{key}}">
         <td><a href="#" onclick="mostrarOperacoes('{{key}}_{{ key_composicao }}');">{{item_composicao.nome}}</a></td>
         <td>R${{item_composicao.patrimonio|floatformat:"2"}} ({{item_composicao.percentual|floatformat:"2"}}%)</td>
     </tr>
@@ -60,7 +60,7 @@
 
 <div class="row-fluid">
     <div id="composicao_operacao" class="hidden box-content">
-    <table class="table table-striped table-bordered bootstrap-datatable datatable">
+    <table id="tab_operacao" class="table table-striped table-bordered bootstrap-datatable datatable mostrar-operacoes">
     <thead>
         <tr>
             <th>Tipo</th>
@@ -74,7 +74,7 @@
     {% for key, item in composicao.items %}
         {% for key_composicao, item_composicao in item.composicao.items %}
             {% for key_operacao, item_operacao in item_composicao.composicao.items %}
-    <tr name="operacao_{{key}}_{{key_composicao}}" class="">
+    <tr class="operacao-{{key}}_{{key_composicao}}">
         <td>{{item_operacao.nome}}</a></td>
         <td>{{item_operacao.quantidade}}</a></td>
         <td>{{item_operacao.data}}</a></td>
@@ -86,8 +86,8 @@
     {% endfor %}
     <tfoot>
         <tr>
-            <th>Total</th>
-            <th id="operacao_total" colspan="4">R$0</th>
+            <th colspan="4">Total</th>
+            <th id="operacao_total">R$0</th>
         </tr>
     </tfoot>
     </tbody>
@@ -98,21 +98,68 @@
 <script>
 //Mostrar composição do tipo de investimento
 function mostrarComposicao(key) {
+	// Esconder proxima tabela de detalhamento
 	$('#composicao_operacao').addClass('hidden');
-    $('#composicao_item').removeClass('hidden');
-    $('#composicao_item > div > table > tbody > tr[name!=' + key + ']').addClass('hidden');
-    $('#composicao_item > div > table > tbody > tr[name=' + key + ']').removeClass('hidden');
-    // TODO preparar total
-//     ($('#item_total').html());
+	// Alterar classe escolhida
+    $('#tab_composicao').toggleClass('mostrar-' + key);
+	// Mostrar ou esconder tabela atual
+	if ($('#tab_composicao').is('.mostrar-acoes, .mostrar-fii, .mostrar-lc, .mostrar-td')) {
+	    $('#composicao_item').removeClass('hidden');
+    } else {
+    	$('#composicao_item').addClass('hidden');
+    }
+    var table = $('#tab_composicao').dataTable({"bRetrieve": true});
+    table.fnDraw();
+    var data = table._('tr', {"filter":"applied"});
+    // Preparar total
+    var total_composicao = 0;
+	$(data).each( function ( index, row ) {
+    	total_composicao += parseFloat(row[1].match(/R\$[\d\.]*/)[0].replace("R$", ""));
+    	total_composicao = Math.round(total_composicao * 100) / 100;
+    });
+    $('#item_total').html('R$' + total_composicao);
 }
 
 //Mostrar operações do investimento escolhido
 function mostrarOperacoes(key) {
+	console.log("MOSTRAR OPERACOES");
+    // Alterar classe escolhida
+    $('#tab_operacao').toggleClass('operacao-' + key);
+	// Mostrar ou esconder tabela atual
     $('#composicao_operacao').removeClass('hidden');
-    $('#composicao_operacao > div > table > tbody > tr[name!=operacao_' + key + ']').addClass('hidden');
-    $('#composicao_operacao > div > table > tbody > tr[name=operacao_' + key + ']').removeClass('hidden');
-    // TODO preparar total
-//     ($('#item_total').html());
+//     $('#composicao_operacao > div > table > tbody > tr[name!=operacao_' + key + ']').addClass('hidden');
+//     $('#composicao_operacao > div > table > tbody > tr[name=operacao_' + key + ']').removeClass('hidden');
+    var table = $('#tab_operacao').dataTable({"bRetrieve": true});
+    table.fnDraw();
+    var data = table._('tr', {"filter":"applied"});
+    // Preparar total
+    var total_operacao = 0;
+    $(data).each( function ( index, row ) {
+    	if (row[0] == 'C') {
+    	    total_operacao += parseFloat(row[4].match(/R\$[\d\.]*/)[0].replace("R$", ""));
+    	} else {
+            total_operacao -= parseFloat(row[4].match(/R\$[\d\.]*/)[0].replace("R$", ""));
+    	}
+    	total_operacao = Math.round(total_operacao * 100) / 100;
+    });
+    $('#operacao_total').html('R$' + total_operacao);
 }
+
+$.fn.dataTableExt.afnFiltering.push(function (oSettings, aData, iDataIndex) {
+    if ($(oSettings.nTable).is('.mostrar-acoes, .mostrar-fii, .mostrar-lc, .mostrar-td')) {
+    	var mostrar = (aData[0].match(/acoes\_/) != null && $(oSettings.nTable).hasClass('mostrar-acoes')) || (aData[0].match(/fii\_/) != null && $(oSettings.nTable).hasClass('mostrar-fii')) ||
+    	   (aData[0].match(/lc\_/) != null && $(oSettings.nTable).hasClass('mostrar-lc')) || (aData[0].match(/td\_/) != null && $(oSettings.nTable).hasClass('mostrar-td'));
+        return mostrar;
+    } else return true;
+});
+
+$.fn.dataTableExt.afnFiltering.push(function (oSettings, aData, iDataIndex) {
+    if ($(oSettings.nTable).hasClass('mostrar-operacoes')) {
+    	var classe_linha = oSettings.aoData[iDataIndex].nTr.className.split(" ");
+    	var mostrar = ($(oSettings.nTable).hasClass(classe_linha[0]));
+        console.log(classe_linha + "..." + mostrar);
+        return mostrar;
+    } else return true;
+});
 </script>
 {% endblock %}
