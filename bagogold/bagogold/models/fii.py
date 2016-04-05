@@ -2,7 +2,7 @@
 from django.db import models
  
 class FII (models.Model):
-    ticker = models.CharField(u'Ticker da ação', max_length=10) 
+    ticker = models.CharField(u'Ticker da ação', max_length=10, unique=True) 
     
     def __unicode__(self):
         return self.ticker

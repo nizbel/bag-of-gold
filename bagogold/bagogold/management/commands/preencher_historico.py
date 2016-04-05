@@ -6,6 +6,7 @@ from bagogold.bagogold.tfs import preencher_historico_acao, buscar_historico, \
 from django.core.management.base import BaseCommand
 from threading import Thread
 import sys
+import time
 
 
 class PreencheHistoricoAcaoThread(Thread):
@@ -17,7 +18,7 @@ class PreencheHistoricoAcaoThread(Thread):
         try:
             preencher_historico_acao(self.ticker, buscar_historico(self.ticker))
         except:
-#             print sys.exc_info()[1]
+            print sys.exc_info()[1]
             pass
         
 class PreencheHistoricoFIIThread(Thread):
@@ -29,7 +30,7 @@ class PreencheHistoricoFIIThread(Thread):
         try:
             preencher_historico_fii(self.ticker, buscar_historico(self.ticker))
         except:
-#             print sys.exc_info()[1]
+            print sys.exc_info()[1]
             pass
                     
 
@@ -48,6 +49,7 @@ class Command(BaseCommand):
             t = PreencheHistoricoFIIThread(fii.ticker)
             threads.append(t)
             t.start()
+            time.sleep(3)
         for t in threads:
             t.join()
 
