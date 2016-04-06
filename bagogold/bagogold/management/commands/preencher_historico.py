@@ -17,8 +17,10 @@ class PreencheHistoricoAcaoThread(Thread):
     def run(self):
         try:
             preencher_historico_acao(self.ticker, buscar_historico(self.ticker))
-        except:
-            print sys.exc_info()[1]
+        except Exception as ex:
+            template = "An exception of type {0} occured. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print self.ticker, "Thread:", message
             pass
         
 class PreencheHistoricoFIIThread(Thread):
@@ -29,8 +31,10 @@ class PreencheHistoricoFIIThread(Thread):
     def run(self):
         try:
             preencher_historico_fii(self.ticker, buscar_historico(self.ticker))
-        except:
-            print sys.exc_info()[1]
+        except Exception as ex:
+            template = "An exception of type {0} occured. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print self.ticker, "Thread:", message
             pass
                     
 
@@ -38,18 +42,34 @@ class Command(BaseCommand):
     help = 'Preenche histórico para ações e FIIs'
 
     def handle(self, *args, **options):
-        threads = []
         #Ação
-        for acao in Acao.objects.all():
-            t = PreencheHistoricoAcaoThread(acao.ticker)
-            threads.append(t)
-            t.start()
+        # O incremento mostra quantas threads correrão por vez
+        incremento = 32
+        acoes = Acao.objects.all()
+        contador = 0
+        while contador <= len(acoes):
+            threads = []
+            for acao in acoes[contador : min(contador+incremento,len(acoes))]:
+                t = PreencheHistoricoAcaoThread(acao.ticker)
+                threads.append(t)
+                t.start()
+            for t in threads:
+                t.join()
+            contador += incremento
+            
         # FII
-        for fii in FII.objects.all():
-            t = PreencheHistoricoFIIThread(fii.ticker)
-            threads.append(t)
-            t.start()
-            time.sleep(3)
-        for t in threads:
-            t.join()
+        fiis = FII.objects.all()
+        contador = 0
+        while contador <= len(fiis):
+            threads = []
+            for fii in fiis[contador : min(contador+incremento,len(fiis))]:
+                t = PreencheHistoricoFIIThread(fii.ticker)
+                threads.append(t)
+                t.start()
+            for t in threads:
+                t.join()
+            contador += incremento
+#             time.sleep(3)
+#         for t in threads:
+#             t.join()
 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.acoes import Acao, OperacaoAcao, Provento, HistoricoAcao
+from bagogold.bagogold.models.acoes import Acao, HistoricoAcao
 from bagogold.bagogold.models.fii import FII, HistoricoFII
 from decimal import Decimal
 from django.contrib.auth.models import User
@@ -9,7 +9,6 @@ from yahoo_finance import Share
 import datetime
 import pyexcel
 import simplejson
-import time
 
 # Para buscar valor de multiplas acoes
 try:
@@ -40,9 +39,13 @@ def buscar_historico(ticker):
                 dados_data['Date'] = dados_papel[linha][0]
                 dados_data['Close'] = dados_papel[linha][4]
                 historico.append(dados_data)
-    except:
+    except Exception as ex:
+#         template = "An exception of type {0} occured. Arguments:\n{1!r}"
+#         message = template.format(type(ex).__name__, ex.args)
+#         print ticker, ":", message
         papel = Share('%s.SA' % (ticker))
         historico = papel.get_historical('2010-01-01', datetime.datetime.now().strftime('%Y-%m-%d'))
+#         print historico
     
     return historico
         
@@ -133,3 +136,4 @@ def buscar_historico_geral():
     for dados in resultado['query']['results']['quote']:
         valores_diarios[dados['Symbol']] = dados['LastTradePriceOnly']
     return valores_diarios
+
