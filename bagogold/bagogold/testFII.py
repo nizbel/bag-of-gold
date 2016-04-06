@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.fii import FII
+from cStringIO import StringIO
+from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
+from pdfminer.converter import TextConverter
+from pdfminer.layout import LAParams
+from pdfminer.pdfpage import PDFPage
 from random import randint
 from threading import Thread
 from urllib2 import Request, urlopen, URLError, HTTPError
@@ -86,3 +91,74 @@ def busca_ticker(sigla, num_tentativas):
             print 'FII:', cod_negociacao, 'ja existia'
     else:
         print sigla, ": Não possui código"
+        
+def buscar_rendimentos_fii(ticker):
+    """
+    Busca distribuições de rendimentos de FII no site da Bovespa
+    """
+    fii_url = 'http://bvmf.bmfbovespa.com.br/Fundos-Listados/FundosListadosDetalhe.aspx?Sigla=%s&tipoFundo=Imobiliario&aba=abaDocumento&idioma=pt-br' % ticker
+    req = Request(fii_url)
+    try:
+        response = urlopen(req)
+    except HTTPError as e:
+        print 'The server couldn\'t fulfill the request.'
+        print 'Error code: ', e.code
+    except URLError as e:
+        print 'We failed to reach a server.'
+        print 'Reason: ', e.reason
+    else:
+        print 'Host: %s' % (req.get_host())
+        data = response.read()
+        inicio = data.find('<div id="tbArqListados">')
+        fim = data.find('</div>', inicio)
+        string_importante = (data[inicio:fim])
+#         http://bvmf.bmfbovespa.com.br/sig/FormConsultaPdfDocumentoFundos.asp?strSigla=BBPO&amp;strData=
+        urls = re.findall('href=\"(.*?)\".*?>Distribuição de Rendimento referente', string_importante,flags=re.IGNORECASE)
+        for url in urls:
+            url = url.replace('&amp;', '&')
+#             print url
+            ler_demonstrativo_rendimentos(url, ticker)
+        
+        
+
+def ler_demonstrativo_rendimentos(pdf_url, ticker):
+#     http://bvmf.bmfbovespa.com.br/sig/FormConsultaPdfDocumentoFundos.asp?strSigla=BBPO&strData=2016-04-01T11:55:11.357
+#     pdf_url = 'http://bvmf.bmfbovespa.com.br/sig/FormConsultaPdfDocumentoFundos.asp?strSigla=BBPO11&strData=2015-12-01T10:27:19.467'
+    req = Request(pdf_url)
+    try:
+        response = urlopen(req)
+    except HTTPError as e:
+        print 'The server couldn\'t fulfill the request.'
+        print 'Error code: ', e.code
+    except URLError as e:
+        print 'We failed to reach a server.'
+        print 'Reason: ', e.reason
+    else:
+        try:
+            arquivo_rendimentos = StringIO(response.read())
+            rsrcmgr = PDFResourceManager()
+            retstr = StringIO()
+            codec = 'utf-8'
+            laparams = LAParams()
+            device = TextConverter(rsrcmgr, retstr, codec=codec, laparams=laparams)
+            interpreter = PDFPageInterpreter(rsrcmgr, device)
+            password = ""
+            maxpages = 0
+            caching = True
+            pagenos=set()
+            
+            for page in PDFPage.get_pages(arquivo_rendimentos, pagenos, maxpages=maxpages, password=password,caching=caching, check_extractable=True):
+                interpreter.process_page(page)
+             
+            arquivo_rendimentos.close()
+            device.close()
+            text = retstr.getvalue()
+            retstr.close()
+            datas = re.findall('(\d{1,2}[\.\/]\d{1,2}[\.\/]\d\d\d\d)', text)
+            valor = re.findall('(\d+\s*?,\s*?\d+)', text)
+#             if len(datas) == 0:
+            print ticker, '-> datas:', datas, 'valor', valor
+        except Exception as ex:
+            template = "An exception of type {0} occured. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print pdf_url, "->", message

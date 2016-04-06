@@ -50,6 +50,7 @@ def aconselhamento_fii(request):
     
     comparativos = list()
     for fii in fiis:
+        print fii
         total_proventos = 0
         # Calcular media de proventos dos ultimos 6 recebimentos
         proventos = ProventoFII.objects.filter(fii=fii).order_by('-data_ex')
@@ -71,12 +72,18 @@ def aconselhamento_fii(request):
             preenchido = False
         if (not preenchido):
             # Pegar último dia util com negociação da ação para calculo do patrimonio
-            ultimo_dia_util = datetime.date.today()
-            while not HistoricoFII.objects.filter(data=ultimo_dia_util, fii=fii):
-                ultimo_dia_util -= datetime.timedelta(days=1)
-            valor_atual = HistoricoFII.objects.get(fii=fii, data=ultimo_dia_util).preco_unitario
-        # Percentual do retorno sobre o valor do fundo
-        percentual_retorno_semestral = (total_proventos/valor_atual)
+#             ultimo_dia_util = datetime.date.today()
+#             while not HistoricoFII.objects.filter(data=ultimo_dia_util, fii=fii):
+#                 ultimo_dia_util -= datetime.timedelta(days=1)
+            try:
+                valor_atual = HistoricoFII.objects.filter(fii=fii).order_by('-data')[0].preco_unitario
+                # Percentual do retorno sobre o valor do fundo
+                percentual_retorno_semestral = (total_proventos/valor_atual)
+            except:
+                valor_atual = 0
+                # Percentual do retorno sobre o valor do fundo
+                percentual_retorno_semestral = 0
+        
         # Taxa diaria pela quantidade de dias
         percentual_retorno_semestral = math.pow(1 + percentual_retorno_semestral, 1/float(qtd_dias_periodo)) - 1
         # Taxa semestral (base 180 dias)
