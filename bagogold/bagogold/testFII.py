@@ -4,13 +4,14 @@ from cStringIO import StringIO
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.converter import TextConverter
 from pdfminer.layout import LAParams
-from pdfminer.pdfpage import PDFPage
+from pdfminer.pdfpage import PDFPage, PDFTextExtractionNotAllowed
 from random import randint
 from threading import Thread
 from urllib2 import Request, urlopen, URLError, HTTPError
 import datetime
 import re
 import simplejson
+from subprocess import call
 import sys
 import time
 
@@ -96,7 +97,7 @@ def buscar_rendimentos_fii(ticker):
     """
     Busca distribuições de rendimentos de FII no site da Bovespa
     """
-    fii_url = 'http://bvmf.bmfbovespa.com.br/Fundos-Listados/FundosListadosDetalhe.aspx?Sigla=%s&tipoFundo=Imobiliario&aba=abaDocumento&idioma=pt-br' % ticker
+    fii_url = 'http://bvmf.bmfbovespa.com.br/Fundos-Listados/FundosListadosDetalhe.aspx?Sigla=%s&tipoFundo=Imobiliario&aba=abaDocumento&idioma=pt-br' % ticker[0:4]
     req = Request(fii_url)
     try:
         response = urlopen(req)
@@ -107,17 +108,27 @@ def buscar_rendimentos_fii(ticker):
         print 'We failed to reach a server.'
         print 'Reason: ', e.reason
     else:
-        print 'Host: %s' % (req.get_host())
+#         print 'Host: %s' % (req.get_host())
         data = response.read()
+        if 'Sistema indisponivel' in data:
+            return buscar_rendimentos_fii(ticker)
         inicio = data.find('<div id="tbArqListados">')
+#         print 'inicio', inicio
         fim = data.find('</div>', inicio)
         string_importante = (data[inicio:fim])
 #         http://bvmf.bmfbovespa.com.br/sig/FormConsultaPdfDocumentoFundos.asp?strSigla=BBPO&amp;strData=
-        urls = re.findall('href=\"(.*?)\".*?>Distribuição de Rendimento referente', string_importante,flags=re.IGNORECASE)
+        urls = re.findall('href=\"(.*?)\".*?>Distribuição', string_importante,flags=re.IGNORECASE)
+        urls += re.findall('href=\"(.*?)\".*?>Amortização', string_importante,flags=re.IGNORECASE)
+        # Teste
+        pdfs_convertidos = 0
+        total = 0
+#         print len(urls)
         for url in urls:
             url = url.replace('&amp;', '&')
 #             print url
-            ler_demonstrativo_rendimentos(url, ticker)
+            pdfs_convertidos += ler_demonstrativo_rendimentos(url, ticker)
+            total += 1
+        return (pdfs_convertidos, total)
         
         
 
@@ -157,8 +168,14 @@ def ler_demonstrativo_rendimentos(pdf_url, ticker):
             datas = re.findall('(\d{1,2}[\.\/]\d{1,2}[\.\/]\d\d\d\d)', text)
             valor = re.findall('(\d+\s*?,\s*?\d+)', text)
 #             if len(datas) == 0:
-            print ticker, '-> datas:', datas, 'valor', valor
-        except Exception as ex:
+            print pdf_url, ticker, '-> datas:', datas, 'valor', valor
+            return 1
+        except PDFTextExtractionNotAllowed as e:
+            print 'Using qpdf'
+            
+            call('qpdf --password=%s --decrypt %s %s' %('', pdf_filename, pdf_filename_decr), shell=True)
+        except Exception as e:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
+            message = template.format(type(e).__name__, e.args)
             print pdf_url, "->", message
+    return 0
