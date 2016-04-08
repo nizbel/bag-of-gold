@@ -5,8 +5,6 @@ from bagogold.bagogold.testFII import buscar_rendimentos_fii, \
 from django.core.management.base import BaseCommand
 from threading import Thread
 
-resultados = {}
-
 class BuscaRendimentosFIIThread(Thread):
     def __init__(self, ticker):
         self.ticker = ticker 
@@ -14,12 +12,10 @@ class BuscaRendimentosFIIThread(Thread):
 
     def run(self):
         try:
-            resultado = buscar_rendimentos_fii(self.ticker)
-            print 'Resultado', self.ticker, resultado
-            resultados[self.ticker] = resultado
-        except Exception as ex:
+            buscar_rendimentos_fii(self.ticker)
+        except Exception as e:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
+            message = template.format(type(e).__name__, e.args)
             print self.ticker, "Thread:", message
             pass
 
@@ -28,8 +24,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # O incremento mostra quantas threads correrão por vez
-        incremento = 400
-        fiis = FII.objects.filter(ticker='PABY11')
+        incremento = 16
+        fiis = FII.objects.filter(ticker__in=['BBPO11','RNGO11','HGRE11','BRCR11'])
         contador = 0
         while contador <= len(fiis):
             threads = []
@@ -40,12 +36,3 @@ class Command(BaseCommand):
             for t in threads:
                 t.join()
             contador += incremento
-        
-        print '-----------------------------------RESULTADOS----------------------------------'
-        total_processado = 0
-        total = 0
-        for ticker, resultado in resultados.items():
-            print ticker, resultado
-            total_processado += resultado[0]
-            total += resultado[1]
-        print total_processado, total, float(total_processado) / total * 100

@@ -12,6 +12,7 @@ class ProventoFII (models.Model):
     valor_unitario = models.DecimalField(u'Valor unitário', max_digits=13, decimal_places=9)
     data_ex = models.DateField(u'Data EX')
     data_pagamento = models.DateField(u'Data do pagamento')
+    url_documento = models.CharField(u'URL do documento', blank=True, null=True, max_length=200)
     
 class OperacaoFII (models.Model):
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)  
