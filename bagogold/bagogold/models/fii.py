@@ -14,6 +14,9 @@ class ProventoFII (models.Model):
     data_pagamento = models.DateField(u'Data do pagamento')
     url_documento = models.CharField(u'URL do documento', blank=True, null=True, max_length=200)
     
+    class Meta:
+        unique_together=(('data_ex', 'data_pagamento'), ('fii',))
+    
 class OperacaoFII (models.Model):
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)  
     quantidade = models.IntegerField(u'Quantidade') 
