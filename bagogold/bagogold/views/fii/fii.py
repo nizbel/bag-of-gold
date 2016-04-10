@@ -179,7 +179,7 @@ def historico_fii(request):
     for operacao in operacoes:
         operacao.valor_unitario = operacao.preco_unitario
     
-    proventos = ProventoFII.objects.exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).filter(data_ex__gt=operacoes[0].data).order_by('data_ex')  
+    proventos = ProventoFII.objects.exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).filter(data_ex__gt=operacoes[0].data, fii__in=operacoes.values_list('fii', flat=True)).order_by('data_ex')  
     for provento in proventos:
         provento.data = provento.data_ex
         provento.tipo = 'Provento'
@@ -252,7 +252,11 @@ def historico_fii(request):
         else:
             houve_operacao_hoje = True
             for fii in qtd_papeis.keys():
-                patrimonio += (Decimal(qtd_papeis[fii]) * ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).order_by('-data_hora')[0].preco_unitario)
+                # Tenta pegar valor diario, se nao houver, pegar historico do ultimo dia util
+                try:
+                    patrimonio += (Decimal(qtd_papeis[fii]) * ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).order_by('-data_hora')[0].preco_unitario)
+                except:
+                    patrimonio += (Decimal(qtd_papeis[fii]) * HistoricoFII.objects.filter(fii__ticker=fii).order_by('-data')[0].preco_unitario)
         # Verifica se altera ultima posicao do grafico ou adiciona novo registro
         if len(graf_patrimonio) > 0 and graf_patrimonio[-1][0] == data_formatada:
             graf_patrimonio[len(graf_gasto_total)-1][1] = float(patrimonio)
