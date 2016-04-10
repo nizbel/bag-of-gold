@@ -72,6 +72,9 @@ class HistoricoAcao (models.Model):
     data = models.DateField(u'Data')
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)
     
+    class Meta:
+        unique_together = ('acao', 'data')
+    
 class ValorDiarioAcao (models.Model):
     acao = models.ForeignKey('Acao')
     data_hora = models.DateTimeField(u'Horário')
