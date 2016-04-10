@@ -4,7 +4,7 @@ from bagogold.bagogold.models.fii import FII, HistoricoFII
 from decimal import Decimal
 from django.contrib.auth.models import User
 from django.utils import timezone
-from urllib2 import Request, urlopen, URLError, HTTPError
+from urllib2 import Request, urlopen
 from yahoo_finance import Share
 import datetime
 import pyexcel

@@ -136,8 +136,10 @@ def buscar_rendimentos_fii(ticker):
                 datas_lidas = list()
                 for data_lida in provento[0][0]:
                     datas_lidas.append(datetime.datetime.strptime(data_lida, "%d/%m/%Y").date())
-                datas_lidas.sort()
+                # Retirar datas duplicadas
                 datas_lidas = list(set(datas_lidas))
+                # Ordenar por data
+                datas_lidas.sort()
                 # Se lista tiver pelo menos 2 datas diferentes, preparar para adicionar
                 if len(datas_lidas) >= 2:
                     # Primeiro valor é o do provento
@@ -230,5 +232,5 @@ def ler_demonstrativo_rendimentos(pdf_url, ticker):
 def buscar_info_proventos_fii_no_texto(texto):
     datas = re.findall('(\d{1,2}[\.\/]\d{1,2}[\.\/]\d\d\d\d)', texto)
     valor = re.findall('(\d+\s*?,\s*?\d+)', texto)
-    print 'datas:', datas, 'valor', valor
+#     print 'datas:', datas, 'valor', valor
     return (datas, valor)

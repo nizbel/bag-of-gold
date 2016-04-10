@@ -42,8 +42,6 @@ class Command(BaseCommand):
     help = 'Preenche histórico para ações e FIIs'
 
     def handle(self, *args, **options):
-#         for ano in range(2010, 2017):
-#             ler_serie_historica_anual_bovespa('COTAHIST_A%s.TXT' % (ano))
         #Ação
         # O incremento mostra quantas threads correrão por vez
         incremento = 32
