@@ -20,6 +20,19 @@ try:
 except ImportError:
     from urllib import urlencode
 
+def ler_serie_historica_anual_bovespa(nome_arquivo):
+    # Carregar FIIs disponíveis
+    fiis = FII.objects.all()
+    fiis_lista = fiis.values_list('ticker', flat=True)
+    with open(nome_arquivo) as f:
+        content = f.readlines()
+        for line in content[1:len(content)-1]:
+            data = datetime.date(int(line[2:6]), int(line[6:8]), int(line[8:10]))
+            valor = Decimal(line[108:119] + '.' + line[119:121])
+            ticker = line[12:24].strip()
+            if ticker in fiis_lista:
+                HistoricoFII.objects.update_or_create(fii=fiis.get(ticker=ticker), data=data, preco_unitario=valor)
+            
 
 def buscar_historico(ticker):
     try:
@@ -62,6 +75,7 @@ def preencher_historico_fii(ticker, historico):
     fii = FII.objects.get(ticker=ticker)
 #         print fii
     for dia_papel in historico:
+        print dia_papel
         if not HistoricoFII.objects.filter(fii=fii, data=dia_papel['Date']):
             historico_fii = HistoricoFII(fii=fii, data=dia_papel['Date'], preco_unitario=Decimal(dia_papel['Close']).quantize(Decimal('0.01')))
             historico_fii.save()
