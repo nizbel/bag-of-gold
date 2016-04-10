@@ -23,7 +23,9 @@ except ImportError:
 def ler_serie_historica_anual_bovespa(nome_arquivo):
     # Carregar FIIs disponíveis
     fiis = FII.objects.all()
+    acoes = Acao.objects.all()
     fiis_lista = fiis.values_list('ticker', flat=True)
+    acoes_lista = acoes.values_list('ticker', flat=True)
     with open(nome_arquivo) as f:
         content = f.readlines()
         for line in content[1:len(content)-1]:
@@ -31,7 +33,12 @@ def ler_serie_historica_anual_bovespa(nome_arquivo):
             valor = Decimal(line[108:119] + '.' + line[119:121])
             ticker = line[12:24].strip()
             if ticker in fiis_lista:
-                HistoricoFII.objects.update_or_create(fii=fiis.get(ticker=ticker), data=data, preco_unitario=valor)
+                objeto, criado = HistoricoFII.objects.update_or_create(fii=fiis.get(ticker=ticker), data=data, preco_unitario=valor)
+                if criado:
+                    print ticker, 'em', data, 'criado'
+            elif line[39:41] == 'ON' or (line[39:41] == 'PN'):
+                if len(ticker) == 5 :
+                    print line[12:24], line[39:49]
             
 
 def buscar_historico(ticker):
