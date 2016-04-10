@@ -4,6 +4,9 @@ from django.db import models
 class FII (models.Model):
     ticker = models.CharField(u'Ticker da ação', max_length=10, unique=True) 
     
+    class Meta:
+        ordering = ['ticker']
+        
     def __unicode__(self):
         return self.ticker
     
@@ -15,7 +18,7 @@ class ProventoFII (models.Model):
     url_documento = models.CharField(u'URL do documento', blank=True, null=True, max_length=200)
     
     class Meta:
-        unique_together=(('data_ex', 'data_pagamento'), ('fii',))
+        unique_together=(('data_ex', 'data_pagamento', 'fii',))
     
 class OperacaoFII (models.Model):
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)  

@@ -5,6 +5,9 @@ class Acao (models.Model):
     ticker = models.CharField(u'Ticker da ação', max_length=10)
     empresa = models.ForeignKey('Empresa') 
     
+    class Meta:
+        ordering = ['ticker']
+    
     def __unicode__(self):
         return self.ticker
     
