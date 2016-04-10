@@ -145,7 +145,7 @@ def buscar_rendimentos_fii(ticker):
                     # Primeiro valor é o do provento
                     valor = Decimal(provento[0][1][0].replace(' ', '').replace(',', '.'))
                     print ticker, ':', datas_lidas[-2:], valor 
-                    novo_provento = ProventoFII(fii=fii, data_ex=datas_lidas[-2], data_pagamento=datas_lidas[-1], valor_unitario=valor, url_documento=provento[1])
+                    novo_provento, criado = ProventoFII(fii=fii, data_ex=datas_lidas[-2], data_pagamento=datas_lidas[-1], valor_unitario=valor, url_documento=provento[1])
                     novo_provento.save()
                 
         

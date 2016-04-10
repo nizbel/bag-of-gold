@@ -14,7 +14,7 @@ class BuscaHistoricoBovespaThread(Thread):
         except Exception as e:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
             message = template.format(type(e).__name__, e.args)
-            print self.ticker, "Thread:", message
+            print self.ano, "Thread:", message
             pass
 
 class Command(BaseCommand):
@@ -22,8 +22,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # O incremento mostra quantas threads correrão por vez
-        incremento = 2
-        anos = range(2016, 2017)
+        incremento = 1
+        anos = range(2007, 2017)
         contador = 0
         while contador <= len(anos):
             threads = []
