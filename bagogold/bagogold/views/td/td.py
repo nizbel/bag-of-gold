@@ -271,23 +271,32 @@ def painel(request):
             else:
                 operacao.lucro = float(operacao.valor_total_atual - operacao.total_gasto)
                 operacao.lucro_percentual = operacao.lucro / float(operacao.total_gasto) * 100
+            ############################################################
+            # TODO Apagar teste
+            valor_esperado = 1000 - operacao.valor_atual
+            qtd_dias_esperado = (Titulo.objects.get(id=titulo).data_vencimento - datetime.date.today()).days
+            rendimento_esperado = math.pow(1 + (valor_esperado / operacao.valor_atual * 100)/100, float(1)/qtd_dias_esperado) - 1
+            rendimento_esperado = (math.pow(1 + rendimento_esperado, 30) - 1) * 100
+            rendimento_esperado = (math.pow(1 + rendimento_esperado/100, 12) - 1) * 100
+            print '%s Valor a render: %s sobre %s em %s dias, total de %s ao ano' % (titulo, valor_esperado, operacao.valor_atual, qtd_dias_esperado, rendimento_esperado)
+            ############################################################
 #             print '%s: %s ao preço %s valendo %s (%s (%s%%) de lucro)' % (titulo, operacao.quantidade, operacao.preco_unitario, valor_atual, \
 #                                                                     valor_atual - operacao.preco_unitario, (valor_atual - operacao.preco_unitario) / operacao.preco_unitario * 100)
     
     # Dados de títulos vendidos
     for titulo in titulos_vendidos.keys():
         for operacao in titulos_vendidos[titulo]:
-            print titulo
+#             print titulo
             operacao.variacao = operacao.valor_atual - operacao.preco_unitario
             operacao.variacao_percentual = operacao.variacao / operacao.preco_unitario * 100
-            print operacao.variacao_percentual
-            print (datetime.date.today() - operacao.data).days
+#             print operacao.variacao_percentual
+#             print (datetime.date.today() - operacao.data).days
             # Pegar a taxa diária
             operacao.variacao_percentual_mensal = math.pow(1 + operacao.variacao_percentual/100, float(1)/(operacao.data_venda - operacao.data).days) - 1
-            print operacao.variacao_percentual_mensal
+#             print operacao.variacao_percentual_mensal
             # Pegar a taxa mensal percentual
             operacao.variacao_percentual_mensal = (math.pow(1 + operacao.variacao_percentual_mensal, 30) - 1) * 100
-            print operacao.variacao_percentual_mensal
+#             print operacao.variacao_percentual_mensal
             # Pegar a taxa anual percentual
             operacao.variacao_percentual_anual = (math.pow(1 + operacao.variacao_percentual_mensal/100, 12) - 1) * 100
             operacao.valor_total_atual = operacao.valor_atual * operacao.quantidade
