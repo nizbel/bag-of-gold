@@ -197,13 +197,9 @@ def painel(request):
     
     titulos = {}
     titulos_vendidos = {}
-#     for titulo_id in OperacaoTitulo.objects.filter().values('titulo_id').distinct():
-#         titulo_id = titulo_id['titulo_id']
-#         titulos[titulo_id] = Object()
-#         titulos[titulo_id].nome = Titulo.objects.get(id=titulo_id).nome()
-#         titulos[titulo_id].quantidade = quantidade_titulos_ate_dia(titulo_id, datetime.date.today())
     
     for operacao in OperacaoTitulo.objects.filter().order_by('data'):
+        # Verificar se se trata de compra
         if operacao.tipo_operacao == 'C':
             if operacao.titulo.id not in titulos.keys():
                 titulos[operacao.titulo.id] = list()
@@ -218,6 +214,8 @@ def painel(request):
 #             valor_atual = ValorDiarioTitulo.objects.filter(titulo__id=operacao.titulo.id).order_by('-data_hora')[0].preco_venda
 #             print '%s comprado a %s valendo %s (%s (%s%%) de lucro)' % (operacao.titulo.nome(), operacao.preco_unitario, valor_atual, \
 #                                                                       valor_atual - operacao.preco_unitario, (valor_atual - operacao.preco_unitario) / operacao.preco_unitario * 100)
+        
+        # Verificar se se trata de venda
         elif operacao.tipo_operacao == 'V':
 #             print '%s vendido a %s' % (operacao.titulo.nome(), operacao.preco_unitario)
             lista_compras = titulos[operacao.titulo.id]
@@ -250,7 +248,8 @@ def painel(request):
             # Remover aqueles que foram completamente vendidos
             lista_compras = [x for x in lista_compras if x.quantidade > 0]
             titulos[operacao.titulo.id] = lista_compras
-                    
+    
+    # Dados de títulos ainda em posse do usuario                
     for titulo in titulos.keys():
         for operacao in titulos[titulo]:
             try:
@@ -275,6 +274,7 @@ def painel(request):
 #             print '%s: %s ao preço %s valendo %s (%s (%s%%) de lucro)' % (titulo, operacao.quantidade, operacao.preco_unitario, valor_atual, \
 #                                                                     valor_atual - operacao.preco_unitario, (valor_atual - operacao.preco_unitario) / operacao.preco_unitario * 100)
     
+    # Dados de títulos vendidos
     for titulo in titulos_vendidos.keys():
         for operacao in titulos_vendidos[titulo]:
             print titulo
@@ -298,11 +298,5 @@ def painel(request):
             else:
                 operacao.lucro = float(operacao.valor_total_atual - operacao.total_gasto - operacao.valor_taxas)
                 operacao.lucro_percentual = operacao.lucro / float(operacao.total_gasto) * 100
-#     titulos = {}
-#     for titulo_id in OperacaoTitulo.objects.filter().values('titulo_id').distinct():
-#         titulo_id = titulo_id['titulo_id']
-#         titulos[titulo_id] = Object()
-#         titulos[titulo_id].nome = Titulo.objects.get(id=titulo_id).nome()
-#         titulos[titulo_id].quantidade = quantidade_titulos_ate_dia(titulo_id, datetime.date.today())
     
     return render_to_response('td/painel.html', {'titulos': titulos, 'titulos_vendidos': titulos_vendidos}, context_instance=RequestContext(request))
