@@ -14,7 +14,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from itertools import chain
-from operator import attrgetter
+from operator import attrgetter, itemgetter
 from yahoo_finance import Share
 import calendar
 import datetime
@@ -58,6 +58,8 @@ def aconselhamento_fii(request):
             proventos = proventos[0:6]
         if len(proventos) > 0:
             qtd_dias_periodo = (datetime.date.today() - proventos[len(proventos)-1].data_ex).days
+        else:
+            continue
         for provento in proventos:
             total_proventos += provento.valor_unitario
             
@@ -90,6 +92,8 @@ def aconselhamento_fii(request):
         percentual_retorno_semestral = 100*(math.pow(1 + percentual_retorno_semestral, 180) - 1)
         comparativos += [[fii, valor_atual, total_proventos, percentual_retorno_semestral]]
         
+    # Ordenar lista de comparativos
+    comparativos = reversed(sorted(comparativos, key=itemgetter(3)))
     
     return render_to_response('fii/aconselhamento.html', {'comparativos': comparativos}, context_instance=RequestContext(request))
     
