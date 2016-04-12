@@ -68,8 +68,8 @@ def ler_serie_historica_anual_bovespa(nome_arquivo):
 def buscar_historico(ticker):
     try:
         historico = list()
-        response_csv = urlopen('http://ichart.finance.yahoo.com/table.csv?s=%s.SA&a=0&b=01&c=2010&d=%s&e=%s&f=%s&g=d&ignore=.csv' % \
-                               (ticker, int(datetime.date.today().month), datetime.date.today().day, datetime.date.today().year))
+        response_csv = urlopen('http://ichart.finance.yahoo.com/table.csv?s=%s.SA&a=0&b=01&c=%s&d=%s&e=%s&f=%s&g=d&ignore=.csv' % \
+                               (ticker, datetime.date.today().year, int(datetime.date.today().month), datetime.date.today().day, datetime.date.today().year))
         csv = response_csv.read()
         book = pyexcel.get_book(file_type="csv", file_content=csv)
         sheets = book.to_dict()
@@ -87,8 +87,14 @@ def buscar_historico(ticker):
 #         template = "An exception of type {0} occured. Arguments:\n{1!r}"
 #         message = template.format(type(ex).__name__, ex.args)
 #         print ticker, ":", message
-        papel = Share('%s.SA' % (ticker))
-        historico = papel.get_historical('2010-01-01', datetime.datetime.now().strftime('%Y-%m-%d'))
+        try:
+            papel = Share('%s.SA' % (ticker))
+            historico = papel.get_historical('%s-01-01' % (datetime.date.today().year), datetime.datetime.now().strftime('%Y-%m-%d'))
+        except Exception as ex:
+#             template = "An exception of type {0} occured. Arguments:\n{1!r}"
+#             message = template.format(type(ex).__name__, ex.args)
+#             print ticker, ":", message
+            return list()
 #         print historico
     
     return historico
@@ -106,7 +112,6 @@ def preencher_historico_fii(ticker, historico):
     fii = FII.objects.get(ticker=ticker)
 #         print fii
     for dia_papel in historico:
-        print dia_papel
         if not HistoricoFII.objects.filter(fii=fii, data=dia_papel['Date']):
             historico_fii = HistoricoFII(fii=fii, data=dia_papel['Date'], preco_unitario=Decimal(dia_papel['Close']).quantize(Decimal('0.01')))
             historico_fii.save()
