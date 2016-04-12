@@ -10,31 +10,35 @@ import time
 
 
 class PreencheHistoricoAcaoThread(Thread):
-    def __init__(self, ticker):
-        self.ticker = ticker 
+    def __init__(self, tickers):
+        self.tickers = tickers 
         super(PreencheHistoricoAcaoThread, self).__init__()
 
     def run(self):
         try:
-            preencher_historico_acao(self.ticker, buscar_historico(self.ticker))
+            for index, ticker in enumerate(self.tickers):
+                print 'Starting', ticker, float(index)/len(self.tickers)*100
+                preencher_historico_acao(ticker, buscar_historico(ticker))
         except Exception as ex:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
-            print self.ticker, "Thread:", message
+            print ticker, "Thread:", message
             pass
         
 class PreencheHistoricoFIIThread(Thread):
-    def __init__(self, ticker):
-        self.ticker = ticker 
+    def __init__(self, tickers):
+        self.tickers = tickers 
         super(PreencheHistoricoFIIThread, self).__init__()
 
     def run(self):
         try:
-            preencher_historico_fii(self.ticker, buscar_historico(self.ticker))
+            for index, ticker in enumerate(self.tickers):
+                print 'Starting', ticker, float(index)/len(self.tickers)*100
+                preencher_historico_fii(ticker, buscar_historico(ticker))
         except Exception as ex:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
-            print self.ticker, "Thread:", message
+            print ticker, "Thread:", message
             pass
                     
 
@@ -43,32 +47,31 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         #Ação
-        # O incremento mostra quantas threads correrão por vez
-        incremento = 32
         acoes = Acao.objects.all()
+        threads = 4
+        qtd_por_thread = int(len(acoes)/threads)+1
         contador = 0
+        threads = []
         while contador <= len(acoes):
-            threads = []
-            for acao in acoes[contador : min(contador+incremento,len(acoes))]:
-                t = PreencheHistoricoAcaoThread(acao.ticker)
-                threads.append(t)
-                t.start()
-            for t in threads:
-                t.join()
-            contador += incremento
+            t = PreencheHistoricoAcaoThread(acoes[contador : min(contador+qtd_por_thread,len(acoes))])
+            threads.append(t)
+            t.start()
+            contador += qtd_por_thread
+        for t in threads:
+            t.join()
              
         # FII
-        fiis = FII.objects.filter(ticker='RNGO11')
+        fiis = FII.objects.all()
+        qtd_por_thread = int(len(fiis)/threads)+1
         contador = 0
+        threads = []
         while contador <= len(fiis):
-            threads = []
-            for fii in fiis[contador : min(contador+incremento,len(fiis))]:
-                t = PreencheHistoricoFIIThread(fii.ticker)
-                threads.append(t)
-                t.start()
-            for t in threads:
-                t.join()
-            contador += incremento
+            t = PreencheHistoricoFIIThread(fiis[contador : min(contador+qtd_por_thread,len(fiis))])
+            threads.append(t)
+            t.start()
+        contador += qtd_por_thread
+        for t in threads:
+            t.join()
 #             time.sleep(3)
 #         for t in threads:
 #             t.join()
