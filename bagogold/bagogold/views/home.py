@@ -24,13 +24,16 @@ def home(request):
         pass
     
     operacoes_fii = OperacaoFII.objects.exclude(data__isnull=True).order_by('data')
-    proventos_fii = ProventoFII.objects.exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).order_by('data_ex')  
-    for provento in proventos_fii:
-        provento.data = provento.data_ex
+    if operacoes_fii:
+        proventos_fii = ProventoFII.objects.exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).filter(fii__in=operacoes_fii.values_list('fii', flat=True), data_ex__gt=operacoes_fii[0].data).order_by('data_ex')  
+        for provento in proventos_fii:
+            provento.data = provento.data_ex
+    else:
+        proventos_fii = list()
     
     operacoes_td = OperacaoTitulo.objects.exclude(data__isnull=True).order_by('data')
     operacoes_bh = OperacaoAcao.objects.filter(destinacao='B').exclude(data__isnull=True).order_by('data')
-    proventos_bh = Provento.objects.exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).order_by('data_ex')
+    proventos_bh = Provento.objects.exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).filter(acao__in=operacoes_bh.values_list('acao', flat=True)).order_by('data_ex')
     for provento in proventos_bh:
         provento.data = provento.data_ex
         
@@ -182,7 +185,7 @@ def home(request):
         # Se não cair em nenhum dos anteriores: item vazio para pegar ultimo dia util do ano
         patrimonio = {}
         patrimonio['patrimonio_total'] = 0
-            
+
         # Rodar calculo de patrimonio
         # Acoes
         patrimonio['Ações'] = 0
@@ -245,7 +248,7 @@ def home(request):
                     ultimo_dia_util -= datetime.timedelta(days=1)
                 valor_fii = HistoricoFII.objects.get(fii__ticker=papel, data=ultimo_dia_util).preco_unitario
             patrimonio['FII'] += (fii[papel] * valor_fii)
-        patrimonio['patrimonio_total'] += patrimonio['FII']     
+        patrimonio['patrimonio_total'] += patrimonio['FII']  
                 
         # Proventos FII
         patrimonio['Proventos FII'] = Decimal(int(total_proventos_fii * 100) / Decimal(100))

@@ -31,7 +31,7 @@ class OperacaoFII (models.Model):
     consolidada = models.NullBooleanField(u'Consolidada?', blank=True)
      
     def __unicode__(self):
-        return '(' + self.tipo_operacao + ') ' +str(self.quantidade) + ' ' + self.acao.ticker + ' a R$' + str(self.preco_unitario)
+        return '(' + self.tipo_operacao + ') ' +str(self.quantidade) + ' ' + self.fii.ticker + ' a R$' + str(self.preco_unitario)
     
 class UsoProventosOperacaoFII (models.Model):
     operacao = models.ForeignKey('OperacaoFII')
