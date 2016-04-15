@@ -44,6 +44,7 @@ urlpatterns = [
     url(r'^fii/painel/$', views.fii.fii.painel, name='painel_fii'),
 
     # Tesouro direto
+    url(r'^td/aconselhamento/$', views.td.td.aconselhamento_td, name='aconselhamento_td'),
     url(r'^td/editar_operacao/(?P<id>\d+)/$', views.td.td.editar_operacao_td, name='editar_operacao_td'),
     url(r'^td/historico/$', views.td.td.historico_td, name='historico_td'),
     url(r'^td/inserir_operacao_td/$', views.td.td.inserir_operacao_td, name='inserir_operacao_td'),

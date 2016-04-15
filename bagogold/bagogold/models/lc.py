@@ -9,6 +9,18 @@ class LetraCredito (models.Model):
     def __unicode__(self):
         return self.nome
     
+    def carencia_atual(self):
+        try:
+            return HistoricoCarenciaLetraCredito.objects.filter(data__isnull=False, letra_credito=self).order_by('-data')[0].carencia
+        except:
+            return HistoricoCarenciaLetraCredito.objects.get(data__isnull=True, letra_credito=self).carencia
+    
+    def porcentagem_di_atual(self):
+        try:
+            return HistoricoPorcentagemLetraCredito.objects.filter(data__isnull=False, letra_credito=self).order_by('-data')[0].porcentagem_di
+        except:
+            return HistoricoPorcentagemLetraCredito.objects.get(data__isnull=True, letra_credito=self).porcentagem_di
+    
 class OperacaoLetraCredito (models.Model):
     quantidade = models.DecimalField(u'Quantidade investida/resgatada', max_digits=11, decimal_places=2)
     data = models.DateField(u'Data da operação')

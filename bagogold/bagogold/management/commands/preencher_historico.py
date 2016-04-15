@@ -17,7 +17,7 @@ class PreencheHistoricoAcaoThread(Thread):
     def run(self):
         try:
             for index, ticker in enumerate(self.tickers):
-                print 'Starting', ticker, float(index)/len(self.tickers)*100
+#                 print 'Starting', ticker, float(index)/len(self.tickers)*100
                 preencher_historico_acao(ticker, buscar_historico(ticker))
         except Exception as ex:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
@@ -33,7 +33,7 @@ class PreencheHistoricoFIIThread(Thread):
     def run(self):
         try:
             for index, ticker in enumerate(self.tickers):
-                print 'Starting', ticker, float(index)/len(self.tickers)*100
+#                 print 'Starting', ticker, float(index)/len(self.tickers)*100
                 preencher_historico_fii(ticker, buscar_historico(ticker))
         except Exception as ex:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
@@ -48,8 +48,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         #Ação
         acoes = Acao.objects.all()
-        threads = 4
-        qtd_por_thread = int(len(acoes)/threads)+1
+        qtd_threads = 8
+        qtd_por_thread = int(len(acoes)/qtd_threads)+1
         contador = 0
         threads = []
         while contador <= len(acoes):
@@ -62,14 +62,14 @@ class Command(BaseCommand):
              
         # FII
         fiis = FII.objects.all()
-        qtd_por_thread = int(len(fiis)/threads)+1
+        qtd_por_thread = int(len(fiis)/qtd_threads)+1
         contador = 0
         threads = []
         while contador <= len(fiis):
             t = PreencheHistoricoFIIThread(fiis[contador : min(contador+qtd_por_thread,len(fiis))])
             threads.append(t)
             t.start()
-        contador += qtd_por_thread
+            contador += qtd_por_thread
         for t in threads:
             t.join()
 #             time.sleep(3)

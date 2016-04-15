@@ -124,20 +124,22 @@ def buscar_ultimos_valores_geral_acao():
     connection = HTTPConnection('query.yahooapis.com')
     
     # Preparar acoes a serem buscadas
-    acoes_formatadas = ''
-    for acao in Acao.objects.all():
-        acoes_formatadas += '%s.SA ' % (acao.ticker)
-    acoes_formatadas.strip()
-    
-    yql = 'select * from yahoo.finance.quotes where symbol = "%s"' % (acoes_formatadas)
-    connection.request('GET', PUBLIC_API_URL + '?' + urlencode({ 'q': yql, 'format': 'json', 'env': DATATABLES_URL }))
-    resultado = simplejson.loads(connection.getresponse().read())
-    
-    # Preencher valores de ultimas negociacoes
+    qtd_por_query = 100
+    acoes = Acao.objects.all()
     valores_diarios = {}
-    
-    for dados in resultado['query']['results']['quote']:
-        valores_diarios[dados['Symbol']] = dados['LastTradePriceOnly']
+    for grupo_acoes in [acoes[i:i+qtd_por_query] for i in range(0, len(acoes), qtd_por_query)]:
+        acoes_formatadas = ''
+        for acao in grupo_acoes:
+            acoes_formatadas += '%s.SA ' % (acao.ticker)
+        acoes_formatadas.strip()
+        
+        yql = 'select * from yahoo.finance.quotes where symbol = "%s"' % (acoes_formatadas)
+        connection.request('GET', PUBLIC_API_URL + '?' + urlencode({ 'q': yql, 'format': 'json', 'env': DATATABLES_URL }))
+        resultado = simplejson.loads(connection.getresponse().read())
+        
+        # Preencher valores de ultimas negociacoes
+        for dados in resultado['query']['results']['quote']:
+            valores_diarios[dados['Symbol']] = dados['LastTradePriceOnly']
     return valores_diarios
 
 def buscar_ultimos_valores_geral_fii():
@@ -146,21 +148,23 @@ def buscar_ultimos_valores_geral_fii():
     DATATABLES_URL  = 'store://datatables.org/alltableswithkeys'
     connection = HTTPConnection('query.yahooapis.com')
     
-    # Preparar acoes a serem buscadas
-    fiis_formatados = ''
-    for fii in FII.objects.all():
-        fiis_formatados += '%s.SA ' % (fii.ticker)
-    fiis_formatados.strip()
-    
-    yql = 'select * from yahoo.finance.quotes where symbol = "%s"' % (fiis_formatados)
-    connection.request('GET', PUBLIC_API_URL + '?' + urlencode({ 'q': yql, 'format': 'json', 'env': DATATABLES_URL }))
-    resultado = simplejson.loads(connection.getresponse().read())
-    
-    # Preencher valores de ultimas negociacoes
+    # Preparar fiis a serem buscados
+    qtd_por_query = 100
+    fiis = FII.objects.all()
     valores_diarios = {}
-    
-    for dados in resultado['query']['results']['quote']:
-        valores_diarios[dados['Symbol']] = dados['LastTradePriceOnly']
+    for grupo_fiis in [fiis[i:i+qtd_por_query] for i in range(0, len(fiis), qtd_por_query)]:
+        fiis_formatados = ''
+        for fii in grupo_fiis:
+            fiis_formatados += '%s.SA ' % (fii.ticker)
+        fiis_formatados.strip()
+        
+        yql = 'select * from yahoo.finance.quotes where symbol = "%s"' % (fiis_formatados)
+        connection.request('GET', PUBLIC_API_URL + '?' + urlencode({ 'q': yql, 'format': 'json', 'env': DATATABLES_URL }))
+        resultado = simplejson.loads(connection.getresponse().read())
+        
+        # Preencher valores de ultimas negociacoes
+        for dados in resultado['query']['results']['quote']:
+            valores_diarios[dados['Symbol']] = dados['LastTradePriceOnly']
     return valores_diarios
 
 # TODO TEST THIS

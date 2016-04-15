@@ -93,7 +93,7 @@ def historico(request):
     # Gráfico de acompanhamento de gastos vs patrimonio
     graf_gasto_total = list()
     graf_patrimonio = list()
-    print dir(operacoes)
+
     while data_iteracao <= data_final:
         taxa_do_dia = HistoricoTaxaDI.objects.get(data=data_iteracao).taxa
         # Calcular o valor atualizado do patrimonio diariamente
