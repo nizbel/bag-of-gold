@@ -69,14 +69,12 @@ def aconselhamento_fii(request):
             valor_diario_mais_recente = ValorDiarioFII.objects.filter(fii=fii).order_by('-data_hora')
             if valor_diario_mais_recente and valor_diario_mais_recente[0].data_hora.date() == datetime.date.today():
                 valor_atual = valor_diario_mais_recente[0].preco_unitario
+                percentual_retorno_semestral = (total_proventos/valor_atual)
                 preenchido = True
         except:
             preenchido = False
         if (not preenchido):
             # Pegar último dia util com negociação da ação para calculo do patrimonio
-#             ultimo_dia_util = datetime.date.today()
-#             while not HistoricoFII.objects.filter(data=ultimo_dia_util, fii=fii):
-#                 ultimo_dia_util -= datetime.timedelta(days=1)
             try:
                 valor_atual = HistoricoFII.objects.filter(fii=fii).order_by('-data')[0].preco_unitario
                 # Percentual do retorno sobre o valor do fundo

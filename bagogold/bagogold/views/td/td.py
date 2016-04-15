@@ -2,12 +2,14 @@
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoTDFormSet
 from bagogold.bagogold.forms.td import OperacaoTituloForm
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD
+from bagogold.bagogold.models.lc import LetraCredito, HistoricoTaxaDI
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
     ValorDiarioTitulo, Titulo
 from bagogold.bagogold.testTD import buscar_valores_diarios
 from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia_por_titulo, \
     calcular_imposto_venda_td
 from copy import deepcopy
+from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
@@ -21,6 +23,107 @@ import datetime
 import math
 
 
+@login_required
+def aconselhamento_td(request):
+    # Objeto vazio para preenchimento
+    class Object():
+        pass
+    
+    titulos = {}
+    titulos_vendidos = {}
+    
+    for operacao in OperacaoTitulo.objects.filter().order_by('data'):
+        # Verificar se se trata de compra
+        if operacao.tipo_operacao == 'C':
+            if operacao.titulo.id not in titulos.keys():
+                titulos[operacao.titulo.id] = list()
+                titulos_vendidos[operacao.titulo.id] = list()
+            compra_titulo = Object()
+            compra_titulo.nome = operacao.titulo.nome()
+            compra_titulo.quantidade = operacao.quantidade
+            compra_titulo.data = operacao.data
+            compra_titulo.preco_unitario = operacao.preco_unitario 
+            compra_titulo.total_gasto = operacao.quantidade * operacao.preco_unitario
+            titulos[operacao.titulo.id].append(compra_titulo)
+#             valor_atual = ValorDiarioTitulo.objects.filter(titulo__id=operacao.titulo.id).order_by('-data_hora')[0].preco_venda
+#             print '%s comprado a %s valendo %s (%s (%s%%) de lucro)' % (operacao.titulo.nome(), operacao.preco_unitario, valor_atual, \
+#                                                                       valor_atual - operacao.preco_unitario, (valor_atual - operacao.preco_unitario) / operacao.preco_unitario * 100)
+        
+        # Verificar se se trata de venda
+        elif operacao.tipo_operacao == 'V':
+#             print '%s vendido a %s' % (operacao.titulo.nome(), operacao.preco_unitario)
+            lista_compras = titulos[operacao.titulo.id]
+            lista_compras.sort(key=lambda x: x.preco_unitario)
+            indice_operacao = 0
+            while operacao.quantidade > 0:
+                if lista_compras[indice_operacao].quantidade >= operacao.quantidade:
+                    lista_compras[indice_operacao].quantidade -= operacao.quantidade
+                    # Adicionar a titulos vendidos
+                    venda_objeto = deepcopy(lista_compras[indice_operacao])
+                    venda_objeto.quantidade = operacao.quantidade
+                    venda_objeto.data_venda = operacao.data
+                    venda_objeto.valor_atual = operacao.preco_unitario
+                    venda_objeto.valor_taxas = operacao.taxa_bvmf + operacao.taxa_custodia
+                    titulos_vendidos[operacao.titulo.id].append(venda_objeto)
+                    break
+                else:
+                    operacao.quantidade -= lista_compras[indice_operacao].quantidade
+                    # Adicionar a titulos vendidos
+                    venda_objeto = deepcopy(lista_compras[indice_operacao])
+                    venda_objeto.quantidade = lista_compras[indice_operacao].quantidade
+                    venda_objeto.data_venda = operacao.data
+                    venda_objeto.valor_atual = operacao.preco_unitario
+                    # Apenas soma o valor da taxa na última venda
+                    venda_objeto.valor_taxas = 0
+                    titulos_vendidos[operacao.titulo.id].append(venda_objeto)
+                    # Remover quantidade do título nas operações vigentes
+                    lista_compras[indice_operacao].quantidade = 0
+                    indice_operacao += 1
+            # Remover aqueles que foram completamente vendidos
+            lista_compras = [x for x in lista_compras if x.quantidade > 0]
+            titulos[operacao.titulo.id] = lista_compras
+    
+    # Dados de títulos ainda em posse do usuario                
+    for titulo in titulos.keys():
+        for operacao in titulos[titulo]:
+            try:
+                operacao.valor_atual = ValorDiarioTitulo.objects.filter(titulo__id=titulo).order_by('-data_hora')[0].preco_venda
+            except:
+                operacao.valor_atual = HistoricoTitulo.objects.filter(titulo__id=titulo).order_by('-data')[0].preco_venda
+            operacao.variacao = operacao.valor_atual - operacao.preco_unitario
+            operacao.variacao_percentual = operacao.variacao / operacao.preco_unitario * 100
+            # Pegar a taxa diária
+            operacao.variacao_percentual_mensal = math.pow(1 + operacao.variacao_percentual/100, float(1)/(datetime.date.today() - operacao.data).days) - 1
+            # Pegar a taxa mensal
+            operacao.variacao_percentual_mensal = (math.pow(1 + operacao.variacao_percentual_mensal, 30) - 1) * 100
+            # Pegar a taxa anual
+            operacao.variacao_percentual_anual = (math.pow(1 + operacao.variacao_percentual_mensal/100, 12) - 1) * 100
+            operacao.valor_total_atual = operacao.valor_atual * operacao.quantidade
+            if operacao.valor_total_atual > operacao.total_gasto:
+                operacao.lucro = operacao.valor_total_atual - operacao.total_gasto - calcular_imposto_venda_td((datetime.date.today() - operacao.data).days, operacao.valor_total_atual, operacao.valor_total_atual - operacao.total_gasto)
+                operacao.lucro_percentual = operacao.lucro / operacao.total_gasto * 100
+            else:
+                operacao.lucro = operacao.valor_total_atual - operacao.total_gasto
+                operacao.lucro_percentual = operacao.lucro / operacao.total_gasto * 100
+            ############################################################
+            # TODO Apagar teste
+            valor_esperado = (Decimal(1000) * operacao.quantidade) - calcular_imposto_venda_td((datetime.date.today() - operacao.data).days, Decimal(1000) * operacao.quantidade, \
+                                                                                               (Decimal(1000) * operacao.quantidade) - (operacao.total_gasto + operacao.lucro)) - (operacao.total_gasto + operacao.lucro)
+            print valor_esperado, (operacao.total_gasto + operacao.lucro)
+            qtd_dias_esperado = (Titulo.objects.get(id=titulo).data_vencimento - datetime.date.today()).days
+            rendimento_esperado = math.pow(1 + (valor_esperado / operacao.valor_total_atual * 100)/100, float(1)/qtd_dias_esperado) - 1
+            rendimento_esperado = (math.pow(1 + rendimento_esperado, 30) - 1) * 100
+            operacao.rendimento_esperado = (math.pow(1 + rendimento_esperado/100, 12) - 1) * 100
+#             print '%s Valor a render: %s sobre %s em %s dias, total de %s ao ano' % (titulo, valor_esperado, operacao.valor_atual, qtd_dias_esperado, rendimento_esperado)
+            ############################################################
+#             print '%s: %s ao preço %s valendo %s (%s (%s%%) de lucro)' % (titulo, operacao.quantidade, operacao.preco_unitario, valor_atual, \
+#                                                                     valor_atual - operacao.preco_unitario, (valor_atual - operacao.preco_unitario) / operacao.preco_unitario * 100)
+    
+    # Comparativo com letras de crédito
+    for lc in LetraCredito.objects.all():
+        print lc, lc.porcentagem_di_atual() * HistoricoTaxaDI.objects.filter(data__isnull=False).order_by('-data')[0].taxa / 100
+    
+    return render_to_response('td/aconselhamento.html', {'titulos': titulos}, context_instance=RequestContext(request))
 
 @login_required
 def editar_operacao_td(request, id):
@@ -266,20 +369,11 @@ def painel(request):
             operacao.variacao_percentual_anual = (math.pow(1 + operacao.variacao_percentual_mensal/100, 12) - 1) * 100
             operacao.valor_total_atual = operacao.valor_atual * operacao.quantidade
             if operacao.valor_total_atual > operacao.total_gasto:
-                operacao.lucro = float(operacao.valor_total_atual - operacao.total_gasto) - calcular_imposto_venda_td((datetime.date.today() - operacao.data).days, float(operacao.valor_total_atual), float(operacao.valor_total_atual - operacao.total_gasto))
-                operacao.lucro_percentual = operacao.lucro / float(operacao.total_gasto) * 100
+                operacao.lucro = (operacao.valor_total_atual - operacao.total_gasto) - calcular_imposto_venda_td((datetime.date.today() - operacao.data).days, operacao.valor_total_atual, operacao.valor_total_atual - operacao.total_gasto)
+                operacao.lucro_percentual = operacao.lucro / operacao.total_gasto * 100
             else:
                 operacao.lucro = float(operacao.valor_total_atual - operacao.total_gasto)
-                operacao.lucro_percentual = operacao.lucro / float(operacao.total_gasto) * 100
-            ############################################################
-            # TODO Apagar teste
-            valor_esperado = 1000 - operacao.valor_atual
-            qtd_dias_esperado = (Titulo.objects.get(id=titulo).data_vencimento - datetime.date.today()).days
-            rendimento_esperado = math.pow(1 + (valor_esperado / operacao.valor_atual * 100)/100, float(1)/qtd_dias_esperado) - 1
-            rendimento_esperado = (math.pow(1 + rendimento_esperado, 30) - 1) * 100
-            rendimento_esperado = (math.pow(1 + rendimento_esperado/100, 12) - 1) * 100
-            print '%s Valor a render: %s sobre %s em %s dias, total de %s ao ano' % (titulo, valor_esperado, operacao.valor_atual, qtd_dias_esperado, rendimento_esperado)
-            ############################################################
+                operacao.lucro_percentual = operacao.lucro / operacao.total_gasto * 100
 #             print '%s: %s ao preço %s valendo %s (%s (%s%%) de lucro)' % (titulo, operacao.quantidade, operacao.preco_unitario, valor_atual, \
 #                                                                     valor_atual - operacao.preco_unitario, (valor_atual - operacao.preco_unitario) / operacao.preco_unitario * 100)
     
@@ -301,11 +395,11 @@ def painel(request):
             operacao.variacao_percentual_anual = (math.pow(1 + operacao.variacao_percentual_mensal/100, 12) - 1) * 100
             operacao.valor_total_atual = operacao.valor_atual * operacao.quantidade
             if operacao.valor_total_atual > operacao.total_gasto:
-                operacao.lucro = float(operacao.valor_total_atual - operacao.total_gasto) - calcular_imposto_venda_td((operacao.data_venda - operacao.data).days, float(operacao.valor_total_atual), float(operacao.valor_total_atual - operacao.total_gasto))
-                operacao.lucro -= float(operacao.valor_taxas)
-                operacao.lucro_percentual = operacao.lucro / float(operacao.total_gasto) * 100
+                operacao.lucro = (operacao.valor_total_atual - operacao.total_gasto) - calcular_imposto_venda_td((operacao.data_venda - operacao.data).days, operacao.valor_total_atual, operacao.valor_total_atual - operacao.total_gasto)
+                operacao.lucro -= operacao.valor_taxas
+                operacao.lucro_percentual = operacao.lucro / operacao.total_gasto * 100
             else:
                 operacao.lucro = float(operacao.valor_total_atual - operacao.total_gasto - operacao.valor_taxas)
-                operacao.lucro_percentual = operacao.lucro / float(operacao.total_gasto) * 100
+                operacao.lucro_percentual = operacao.lucro / operacao.total_gasto * 100
     
     return render_to_response('td/painel.html', {'titulos': titulos, 'titulos_vendidos': titulos_vendidos}, context_instance=RequestContext(request))
