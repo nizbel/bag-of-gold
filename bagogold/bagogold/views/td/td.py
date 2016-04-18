@@ -2,10 +2,15 @@
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoTDFormSet
 from bagogold.bagogold.forms.td import OperacaoTituloForm
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD
-from bagogold.bagogold.models.lc import LetraCredito, HistoricoTaxaDI
+from bagogold.bagogold.models.fii import FII
+from bagogold.bagogold.models.lc import LetraCredito, HistoricoTaxaDI,\
+    HistoricoPorcentagemLetraCredito
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
     ValorDiarioTitulo, Titulo
 from bagogold.bagogold.testTD import buscar_valores_diarios
+from bagogold.bagogold.utils.fii import \
+    calcular_rendimento_proventos_fii_12_meses, \
+    calcular_variacao_percentual_fii_por_periodo
 from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia_por_titulo, \
     calcular_imposto_venda_td
 from copy import deepcopy
@@ -108,10 +113,10 @@ def aconselhamento_td(request):
             ############################################################
             # TODO Apagar teste
             valor_esperado = (Decimal(1000) * operacao.quantidade) - calcular_imposto_venda_td((datetime.date.today() - operacao.data).days, Decimal(1000) * operacao.quantidade, \
-                                                                                               (Decimal(1000) * operacao.quantidade) - (operacao.total_gasto + operacao.lucro)) - (operacao.total_gasto + operacao.lucro)
+                                                                                               (Decimal(1000) * operacao.quantidade) - operacao.total_gasto) - (operacao.total_gasto + operacao.lucro)
             print valor_esperado, (operacao.total_gasto + operacao.lucro)
             qtd_dias_esperado = (Titulo.objects.get(id=titulo).data_vencimento - datetime.date.today()).days
-            rendimento_esperado = math.pow(1 + (valor_esperado / operacao.valor_total_atual * 100)/100, float(1)/qtd_dias_esperado) - 1
+            rendimento_esperado = math.pow(1 + (valor_esperado / (operacao.total_gasto + operacao.lucro) * 100)/100, float(1)/qtd_dias_esperado) - 1
             rendimento_esperado = (math.pow(1 + rendimento_esperado, 30) - 1) * 100
             operacao.rendimento_esperado = (math.pow(1 + rendimento_esperado/100, 12) - 1) * 100
 #             print '%s Valor a render: %s sobre %s em %s dias, total de %s ao ano' % (titulo, valor_esperado, operacao.valor_atual, qtd_dias_esperado, rendimento_esperado)
@@ -119,11 +124,40 @@ def aconselhamento_td(request):
 #             print '%s: %s ao preço %s valendo %s (%s (%s%%) de lucro)' % (titulo, operacao.quantidade, operacao.preco_unitario, valor_atual, \
 #                                                                     valor_atual - operacao.preco_unitario, (valor_atual - operacao.preco_unitario) / operacao.preco_unitario * 100)
     
-    # Comparativo com letras de crédito
-    for lc in LetraCredito.objects.all():
-        print lc, lc.porcentagem_di_atual() * HistoricoTaxaDI.objects.filter(data__isnull=False).order_by('-data')[0].taxa / 100
+    # Data de 12 meses atrás
+    data_12_meses = datetime.date.today() - datetime.timedelta(days=365)
     
-    return render_to_response('td/aconselhamento.html', {'titulos': titulos}, context_instance=RequestContext(request))
+    letras_credito = list(LetraCredito.objects.all())
+    # Comparativo com letras de crédito
+    for lc in letras_credito:
+        lc.rendimento_atual =  lc.porcentagem_di_atual() * HistoricoTaxaDI.objects.filter(data__isnull=False).order_by('-data')[0].taxa / 100
+        # Calcular rendimento real dos últimos 12 meses
+        lc.rendimento_12_meses = 1000
+        data_iteracao = data_12_meses
+        try:
+            lc.taxa = HistoricoPorcentagemLetraCredito.objects.filter(data__lte=data_iteracao, letra_credito=lc).order_by('-data')[0].porcentagem_di
+        except:
+            lc.taxa = HistoricoPorcentagemLetraCredito.objects.get(letra_credito=lc, data__isnull=True).porcentagem_di
+        print lc.taxa
+        while data_iteracao < datetime.date.today():
+            try:
+                taxa_do_dia = HistoricoTaxaDI.objects.get(data=data_iteracao).taxa
+                lc.rendimento_12_meses = Decimal((pow((float(1) + float(taxa_do_dia)/float(100)), float(1)/float(252)) - float(1)) * float(lc.taxa/100) + float(1)) * lc.rendimento_12_meses
+            except HistoricoTaxaDI.DoesNotExist:
+                pass
+            data_iteracao += datetime.timedelta(days=1)
+        lc.rendimento_12_meses = (lc.rendimento_12_meses - 1000) / 10
+    letras_credito.sort(key=lambda x: x.rendimento_atual, reverse=True)
+        
+    fiis = list(FII.objects.all())
+    for fii in fiis:
+        fii.rendimento_prov = calcular_rendimento_proventos_fii_12_meses(fii)
+        if fii.rendimento_prov > 0:
+            fii.variacao_12_meses = calcular_variacao_percentual_fii_por_periodo(fii, data_12_meses, datetime.date.today())
+    fiis = [fii for fii in fiis if fii.rendimento_prov > 0]
+    fiis.sort(key=lambda x: x.rendimento_prov, reverse=True)
+    
+    return render_to_response('td/aconselhamento.html', {'titulos': titulos, 'letras_credito': letras_credito, 'fiis': fiis}, context_instance=RequestContext(request))
 
 @login_required
 def editar_operacao_td(request, id):

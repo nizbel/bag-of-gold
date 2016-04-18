@@ -20,6 +20,12 @@ class LetraCredito (models.Model):
             return HistoricoPorcentagemLetraCredito.objects.filter(data__isnull=False, letra_credito=self).order_by('-data')[0].porcentagem_di
         except:
             return HistoricoPorcentagemLetraCredito.objects.get(data__isnull=True, letra_credito=self).porcentagem_di
+        
+    def valor_minimo_atual(self):
+        try:
+            return HistoricoValorMinimoInvestimento.objects.filter(data__isnull=False, letra_credito=self).order_by('-data')[0].valor_minimo
+        except:
+            return HistoricoValorMinimoInvestimento.objects.get(data__isnull=True, letra_credito=self).valor_minimo
     
 class OperacaoLetraCredito (models.Model):
     quantidade = models.DecimalField(u'Quantidade investida/resgatada', max_digits=11, decimal_places=2)
@@ -102,6 +108,19 @@ class HistoricoCarenciaLetraCredito (models.Model):
             if self.carencia <= 0:
                 raise forms.ValidationError('Carência deve ser de pelo menos 1 dia')
             super(HistoricoCarenciaLetraCredito, self).save(*args, **kw)
+            
+class HistoricoValorMinimoInvestimento (models.Model):
+    valor_minimo = models.DecimalField(u'Valor mínimo para investimento', max_digits=9, decimal_places=2)
+    data = models.DateField(u'Data da variação', blank=True, null=True)
+    letra_credito = models.ForeignKey('LetraCredito')
+    
+    def save(self, *args, **kw):
+        try:
+            historico = HistoricoValorMinimoInvestimento.objects.get(letra_credito=self.letra_credito, data=self.data)
+        except HistoricoValorMinimoInvestimento.DoesNotExist:
+            if self.valor_minimo < 0:
+                raise forms.ValidationError('Valor mínimo não pode ser negativo')
+            super(HistoricoValorMinimoInvestimento, self).save(*args, **kw)
     
 class HistoricoTaxaDI (models.Model):
     data = models.DateField(u'Data')

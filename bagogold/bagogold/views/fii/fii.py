@@ -5,7 +5,7 @@ from bagogold.bagogold.forms.fii import OperacaoFIIForm, ProventoFIIForm, \
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII
 from bagogold.bagogold.models.fii import OperacaoFII, ProventoFII, HistoricoFII, \
     FII, UsoProventosOperacaoFII, ValorDiarioFII
-from decimal import Decimal
+from decimal import Decimal, ROUND_FLOOR
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
@@ -50,7 +50,6 @@ def aconselhamento_fii(request):
     
     comparativos = list()
     for fii in fiis:
-        print fii
         total_proventos = 0
         # Calcular media de proventos dos ultimos 6 recebimentos
         proventos = ProventoFII.objects.filter(fii=fii).order_by('-data_ex')
@@ -190,8 +189,8 @@ def historico_fii(request):
                             key=attrgetter('data'))
     
     qtd_papeis = {}
-    total_gasto = 0
-    total_proventos = 0
+    total_gasto = Decimal(0)
+    total_proventos = Decimal(0)
     
     # Gráfico de proventos recebidos
     graf_poupanca_proventos = list()
@@ -205,16 +204,16 @@ def historico_fii(request):
     
     for item in lista_conjunta:   
         if item.fii.ticker not in qtd_papeis.keys():
-            qtd_papeis[item.fii.ticker] = 0       
+            qtd_papeis[item.fii.ticker] = Decimal(0)       
         if isinstance(item, OperacaoFII):
             # Verificar se se trata de compra ou venda
             if item.tipo_operacao == 'C':
                 item.tipo = 'Compra'
-                uso_proventos = 0
+                uso_proventos = Decimal(0)
                 if len(item.usoproventosoperacaofii_set.all()) > 0:
                     uso_proventos += item.usoproventosoperacaofii_set.all()[0].qtd_utilizada
-                    total_proventos -= float(uso_proventos)
-                item.total = -1 * (item.quantidade * item.preco_unitario + \
+                    total_proventos -= uso_proventos
+                item.total = Decimal(-1) * (item.quantidade * item.preco_unitario + \
                 item.emolumentos + item.corretagem - uso_proventos)
                 total_gasto += item.total
                 qtd_papeis[item.fii.ticker] += item.quantidade
@@ -227,7 +226,7 @@ def historico_fii(request):
                 qtd_papeis[item.fii.ticker] -= item.quantidade
                 
         elif isinstance(item, ProventoFII):
-            item.total = math.floor(qtd_papeis[item.fii.ticker] * item.valor_unitario * 100) / 100
+            item.total = (qtd_papeis[item.fii.ticker] * item.valor_unitario * Decimal(100)).to_integral_exact(rounding=ROUND_FLOOR) / Decimal(100)
             item.quantidade = qtd_papeis[item.fii.ticker]
             total_proventos += item.total
         
@@ -236,9 +235,9 @@ def historico_fii(request):
         
         # Verifica se altera ultima posicao do grafico ou adiciona novo registro
         if len(graf_poupanca_proventos) > 0 and graf_poupanca_proventos[-1][0] == data_formatada:
-            graf_poupanca_proventos[len(graf_gasto_total)-1][1] = total_proventos
+            graf_poupanca_proventos[len(graf_gasto_total)-1][1] = float(total_proventos)
         else:
-            graf_poupanca_proventos += [[data_formatada, total_proventos]]
+            graf_poupanca_proventos += [[data_formatada, float(total_proventos)]]
         
         # Verifica se altera ultima posicao do grafico ou adiciona novo registro
         if len(graf_gasto_total) > 0 and graf_gasto_total[-1][0] == data_formatada:
@@ -268,7 +267,7 @@ def historico_fii(request):
     # Adicionar valor mais atual para todos os gráficos
     if not houve_operacao_hoje:
         data_mais_atual = datetime.date.today()
-        graf_poupanca_proventos += [[str(calendar.timegm(data_mais_atual.timetuple()) * 1000), total_proventos]]
+        graf_poupanca_proventos += [[str(calendar.timegm(data_mais_atual.timetuple()) * 1000), float(total_proventos)]]
         graf_gasto_total += [[str(calendar.timegm(data_mais_atual.timetuple()) * 1000), float(-total_gasto)]]
         
         patrimonio = 0
@@ -282,8 +281,8 @@ def historico_fii(request):
     dados['total_proventos'] = total_proventos
     dados['total_gasto'] = -total_gasto
     dados['patrimonio'] = patrimonio
-    dados['lucro'] = patrimonio + total_proventos + float(total_gasto)
-    dados['lucro_percentual'] = (patrimonio + total_proventos + float(total_gasto)) / -float(total_gasto) * 100
+    dados['lucro'] = patrimonio + total_proventos + total_gasto
+    dados['lucro_percentual'] = (patrimonio + total_proventos + total_gasto) / -total_gasto * 100
     return render_to_response('fii/historico.html', {'dados': dados, 'lista_conjunta': lista_conjunta, 'graf_poupanca_proventos': graf_poupanca_proventos, 
                                                      'graf_gasto_total': graf_gasto_total, 'graf_patrimonio': graf_patrimonio},
                                context_instance=RequestContext(request))
@@ -308,7 +307,7 @@ def inserir_operacao_fii(request):
                     operacao_fii.save()
                     uso_proventos = form_uso_proventos.save(commit=False)
                     if uso_proventos.qtd_utilizada > 0:
-                        uso_proventos.operacao = operacao_acao
+                        uso_proventos.operacao = operacao_fii
                         uso_proventos.save()
                     formset_divisao.save()
                     messages.success(request, 'Operação inserida com sucesso')
