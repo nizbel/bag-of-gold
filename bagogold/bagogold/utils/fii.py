@@ -2,6 +2,7 @@
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII
 from bagogold.bagogold.models.fii import OperacaoFII, ProventoFII, \
     ValorDiarioFII, HistoricoFII
+from decimal import Decimal
 import datetime
 
 
@@ -87,12 +88,12 @@ def calcular_rendimento_proventos_fii_12_meses(fii):
     Parâmetros: FII
     Retorno: Rendimento percentual
     """
-    total_proventos = 0
+    total_proventos = Decimal(0)
     data_1_ano_atras = datetime.date.today() - datetime.timedelta(days=365)
     # Calcular media de proventos dos ultimos 6 recebimentos
     proventos = ProventoFII.objects.filter(fii=fii, data_ex__gt=data_1_ano_atras).order_by('data_ex')
     if len(proventos) == 0:
-        return 0
+        return Decimal(0)
     for provento in proventos:
         total_proventos += provento.valor_unitario
         
@@ -102,7 +103,7 @@ def calcular_rendimento_proventos_fii_12_meses(fii):
         valor_diario_mais_recente = ValorDiarioFII.objects.filter(fii=fii).order_by('-data_hora')
         if valor_diario_mais_recente and valor_diario_mais_recente[0].data_hora.date() == datetime.date.today():
             valor_atual = valor_diario_mais_recente[0].preco_unitario
-            percentual_retorno = (total_proventos/valor_atual) * 100
+            percentual_retorno = (total_proventos/valor_atual) * Decimal(100)
             preenchido = True
     except:
         preenchido = False
@@ -111,11 +112,11 @@ def calcular_rendimento_proventos_fii_12_meses(fii):
         try:
             valor_atual = HistoricoFII.objects.filter(fii=fii).order_by('-data')[0].preco_unitario
             # Percentual do retorno sobre o valor do fundo
-            percentual_retorno = (total_proventos/valor_atual) * 100
+            percentual_retorno = (total_proventos/valor_atual) * Decimal(100)
         except:
-            valor_atual = 0
+            valor_atual = Decimal(0)
             # Percentual do retorno sobre o valor do fundo
-            percentual_retorno = 0
+            percentual_retorno = Decimal(0)
     
     return percentual_retorno
 

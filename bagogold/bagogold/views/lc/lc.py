@@ -8,7 +8,7 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoLC
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI, \
     HistoricoPorcentagemLetraCredito, LetraCredito, HistoricoCarenciaLetraCredito,\
     OperacaoVendaLetraCredito
-from decimal import Decimal, ROUND_DOWN
+from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
@@ -308,3 +308,85 @@ def modificar_porcentagem_di_lc(request):
         form = HistoricoPorcentagemLetraCreditoForm()
             
     return render_to_response('lc/modificar_porcentagem_di_lc.html', {'form': form}, context_instance=RequestContext(request))
+
+@login_required
+def painel(request):
+    # Processa primeiro operações de venda (V), depois compra (C)
+    operacoes = OperacaoLetraCredito.objects.exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
+    historico_porcentagem = HistoricoPorcentagemLetraCredito.objects.all() 
+    # Prepara o campo valor atual
+    for operacao in operacoes:
+        operacao.atual = operacao.quantidade
+        if operacao.tipo_operacao == 'C':
+            operacao.tipo = 'Compra'
+            operacao.taxa = operacao.porcentagem_di()
+        else:
+            operacao.tipo = 'Venda'
+    
+    # Pegar data inicial
+    data_inicial = operacoes.order_by('data')[0].data
+    
+    # Pegar data final
+    data_final = HistoricoTaxaDI.objects.filter().order_by('-data')[0].data
+    
+    data_iteracao = data_inicial
+    
+    total_gasto = 0
+    total_patrimonio = 0
+    
+    # Gráfico de acompanhamento de gastos vs patrimonio
+    graf_gasto_total = list()
+    graf_patrimonio = list()
+
+    while data_iteracao <= data_final:
+        taxa_do_dia = HistoricoTaxaDI.objects.get(data=data_iteracao).taxa
+        # Calcular o valor atualizado do patrimonio diariamente
+        total_patrimonio = 0
+        
+        # Processar operações
+        for operacao in operacoes:     
+            if (operacao.data <= data_iteracao):     
+                # Verificar se se trata de compra ou venda
+                if operacao.tipo_operacao == 'C':
+                        if (operacao.data == data_iteracao):
+                            operacao.total = operacao.quantidade
+                            total_gasto += operacao.total
+                        # Calcular o valor atualizado para cada operacao
+                        operacao.atual = Decimal((pow((float(1) + float(taxa_do_dia)/float(100)), float(1)/float(252)) - float(1)) * float(operacao.taxa/100) + float(1)) * operacao.atual
+                        # Arredondar na última iteração
+                        if (data_iteracao == data_final):
+                            str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
+                            operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+                        total_patrimonio += operacao.atual
+                        
+                elif operacao.tipo_operacao == 'V':
+                    if (operacao.data == data_iteracao):
+                        operacao.total = operacao.quantidade
+                        total_gasto -= operacao.total
+                        # Remover quantidade da operação de compra
+                        for operacao_c in operacoes:
+                            if (operacao_c.id == OperacaoVendaLetraCredito.objects.get(operacao_venda=operacao).id):
+                                # Configurar taxa para a mesma quantidade da compra
+                                operacao.taxa = operacao_c.taxa
+                                operacao.atual = (operacao.quantidade/operacao_c.quantidade) * operacao_c.atual
+                                operacao_c.atual -= operacao.atual
+                                str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
+                                operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+                                break
+                
+        if len(operacoes.filter(data=data_iteracao)) > 0 or data_iteracao == data_final:
+            graf_gasto_total += [[str(calendar.timegm(data_iteracao.timetuple()) * 1000), float(total_gasto)]]
+            graf_patrimonio += [[str(calendar.timegm(data_iteracao.timetuple()) * 1000), float(total_patrimonio)]]
+        
+        # Proximo dia útil
+        proximas_datas = HistoricoTaxaDI.objects.filter(data__gt=data_iteracao).order_by('data')
+        if len(proximas_datas) > 0:
+            data_iteracao = proximas_datas[0].data
+        else:
+            break
+    
+    # Remover operações que não estejam mais rendendo
+    operacoes = [operacao for operacao in operacoes if (operacao.atual > 0 and operacao.tipo_operacao == 'C')]
+    
+    return render_to_response('lc/painel.html', {'operacoes': operacoes},
+                               context_instance=RequestContext(request))

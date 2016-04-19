@@ -60,4 +60,5 @@ urlpatterns = [
     url(r'^lc/listar_letras_credito/$', views.lc.lc.listar_lc, name='listar_lc'),
     url(r'^lc/modificar_carencia_lc/$', views.lc.lc.modificar_carencia_lc, name='modificar_carencia_lc'),
     url(r'^lc/modificar_porcentagem_di_lc/$', views.lc.lc.modificar_porcentagem_di_lc, name='modificar_porcentagem_di_lc'),
+    url(r'^lc/painel/$', views.lc.lc.painel, name='painel_lc'),
 ]

@@ -65,7 +65,7 @@ class OperacaoLetraCredito (models.Model):
         if data_venda == None:
             data_venda = datetime.date.today()
         if self.tipo_operacao == 'C':
-            historico = HistoricoCarenciaLetraCredito.objects.exclude(data=None).filter(data__lte=self.data_venda).order_by('-data')
+            historico = HistoricoCarenciaLetraCredito.objects.exclude(data=None).filter(data__lte=data_venda).order_by('-data')
             if historico:
                 # Verifica o período de carência pegando a data mais recente antes da operação de compra
                 return (historico[0].carencia <= (data_venda - self.data).days)
