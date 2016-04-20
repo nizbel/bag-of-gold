@@ -21,7 +21,7 @@
             <td>{{ item.data|date:"Y-m-d" }}</td>
             <td>{{ item.taxa }}%</td>
             <td>R$ {{item.atual|floatformat:2}}</td>
-            <td>{{ item.venda_permitida }}</td>
+            <td>{{ item.venda_permitida|yesno:"Sim,Não,Indefinido" }}</td>
         </tr>
         
         {% endfor %}
