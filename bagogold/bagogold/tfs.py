@@ -5,6 +5,7 @@ from bagogold.bagogold.models.fii import FII, HistoricoFII
 from decimal import Decimal
 from django.contrib.auth.models import User
 from django.utils import timezone
+from threading import Thread
 from urllib2 import Request, urlopen
 from yahoo_finance import Share
 import datetime
@@ -20,6 +21,10 @@ try:
     from urllib.parse import urlencode
 except ImportError:
     from urllib import urlencode
+    
+# Variável global para guardar resultados de busca de últimos valores diários
+resultados_diarios_acao = {}
+resultados_diarios_fii = {}
 
 def ler_serie_historica_anual_bovespa(nome_arquivo):
     # Carregar FIIs disponíveis
@@ -35,14 +40,14 @@ def ler_serie_historica_anual_bovespa(nome_arquivo):
             valor = Decimal(line[108:119] + '.' + line[119:121])
             ticker = line[12:24].strip()
             if ticker in fiis_lista:
-                objeto, criado = HistoricoFII.objects.update_or_create(fii=fiis.get(ticker=ticker), data=data, defaults={'preco_unitario':valor,})
+                objeto, criado = HistoricoFII.objects.update_or_create(fii=fiis.get(ticker=ticker), data=data, defaults={'preco_unitario':valor, 'oficial_bovespa': True})
                 if criado:
                     print ticker, 'em', data, 'criado'
             elif line[39:41] == 'ON' or (line[39:41] == 'PN'):
                 if len(ticker) == 5 :
 #                     print line[12:24], line[39:49]
                     if ticker in acoes_lista:
-                        objeto, criado = HistoricoAcao.objects.update_or_create(acao=acoes.get(ticker=ticker), data=data, defaults={'preco_unitario':valor,})
+                        objeto, criado = HistoricoAcao.objects.update_or_create(acao=acoes.get(ticker=ticker), data=data, defaults={'preco_unitario':valor, 'oficial_bovespa': True})
                         if criado:
                             print ticker, 'em', data, 'criado (Histórico)'
                     else:
@@ -58,7 +63,7 @@ def ler_serie_historica_anual_bovespa(nome_arquivo):
                             empresa.save()
                         acao = Acao(ticker=ticker, empresa=empresa)
                         acao.save()
-                        objeto, criado = HistoricoAcao.objects.update_or_create(acao=acao, data=data, defaults={'preco_unitario':valor,})
+                        objeto, criado = HistoricoAcao.objects.update_or_create(acao=acao, data=data, defaults={'preco_unitario':valor, 'oficial_bovespa': True})
                         print ticker, 'em', data, 'criado (TICKER)'
                         acoes = Acao.objects.all()
                         acoes_lista = acoes.values_list('ticker', flat=True)
@@ -101,7 +106,7 @@ def buscar_historico(ticker):
         
 def preencher_historico_acao(ticker, historico):
     acao = Acao.objects.get(ticker=ticker)
-#         print acao
+#     print acao
     for dia_papel in historico:
         if not HistoricoAcao.objects.filter(acao=acao, data=dia_papel['Date']):
             historico_acao = HistoricoAcao(acao=acao, data=dia_papel['Date'], preco_unitario=Decimal(dia_papel['Close']).quantize(Decimal('0.01')))
@@ -110,59 +115,112 @@ def preencher_historico_acao(ticker, historico):
 
 def preencher_historico_fii(ticker, historico):
     fii = FII.objects.get(ticker=ticker)
-#         print fii
+#     print fii
     for dia_papel in historico:
         if not HistoricoFII.objects.filter(fii=fii, data=dia_papel['Date']):
             historico_fii = HistoricoFII(fii=fii, data=dia_papel['Date'], preco_unitario=Decimal(dia_papel['Close']).quantize(Decimal('0.01')))
             historico_fii.save()
     return
+
+# Threads usadas para buscar ultimos valores diários no yahoo finance
+class BuscarValoresDiariosAcaoThread(Thread):
+    def __init__(self, tickers, indice_thread):
+        self.tickers = tickers 
+        self.indice_thread = indice_thread
+        super(BuscarValoresDiariosAcaoThread, self).__init__()
+
+    def run(self):
+        try:
+            # Dados para a conexão
+            PUBLIC_API_URL  = 'http://query.yahooapis.com/v1/public/yql'
+            DATATABLES_URL  = 'store://datatables.org/alltableswithkeys'
+            connection = HTTPConnection('query.yahooapis.com')
+    
+            yql = 'select Symbol, LastTradePriceOnly from yahoo.finance.quotes where symbol = "%s"' % (self.tickers)
+            connection.request('GET', PUBLIC_API_URL + '?' + urlencode({ 'q': yql, 'format': 'json', 'env': DATATABLES_URL }))
+            resultado = simplejson.loads(connection.getresponse().read())
+            resultados_diarios_acao[self.indice_thread] = resultado
+            print self.indice_thread
+        except Exception as ex:
+            template = "An exception of type {0} occured. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print self.indice_thread, "Thread:", message
+            pass
+        
+class BuscarValoresDiariosFIIThread(Thread):
+    def __init__(self, tickers, indice_thread):
+        self.tickers = tickers 
+        self.indice_thread = indice_thread
+        super(BuscarValoresDiariosFIIThread, self).__init__()
+
+    def run(self):
+        try:
+            # Dados para a conexão
+            PUBLIC_API_URL  = 'http://query.yahooapis.com/v1/public/yql'
+            DATATABLES_URL  = 'store://datatables.org/alltableswithkeys'
+            connection = HTTPConnection('query.yahooapis.com')
+    
+            yql = 'select Symbol, LastTradePriceOnly from yahoo.finance.quotes where symbol = "%s"' % (self.tickers)
+            connection.request('GET', PUBLIC_API_URL + '?' + urlencode({ 'q': yql, 'format': 'json', 'env': DATATABLES_URL }))
+            resultado = simplejson.loads(connection.getresponse().read())
+            resultados_diarios_fii[self.indice_thread] = resultado
+        except Exception as ex:
+            template = "An exception of type {0} occured. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print self.indice_thread, "Thread:", message
+            pass
         
 def buscar_ultimos_valores_geral_acao():
-    # Dados para a conexão
-    PUBLIC_API_URL  = 'http://query.yahooapis.com/v1/public/yql'
-    DATATABLES_URL  = 'store://datatables.org/alltableswithkeys'
-    connection = HTTPConnection('query.yahooapis.com')
+    resultados_diarios_acao.clear()
     
     # Preparar acoes a serem buscadas
-    qtd_por_query = 100
+    qtd_por_query = 120
     acoes = Acao.objects.all()
+    
+    # Preparar threads
+    threads = []
     valores_diarios = {}
-    for grupo_acoes in [acoes[i:i+qtd_por_query] for i in range(0, len(acoes), qtd_por_query)]:
+    for indice, grupo_acoes in enumerate([acoes[i:i+qtd_por_query] for i in range(0, len(acoes), qtd_por_query)]):
         acoes_formatadas = ''
         for acao in grupo_acoes:
             acoes_formatadas += '%s.SA ' % (acao.ticker)
         acoes_formatadas.strip()
+        t = BuscarValoresDiariosAcaoThread(acoes_formatadas, indice)
+        threads.append(t)
+        t.start()
+    for t in threads:
+        t.join()
         
-        yql = 'select * from yahoo.finance.quotes where symbol = "%s"' % (acoes_formatadas)
-        connection.request('GET', PUBLIC_API_URL + '?' + urlencode({ 'q': yql, 'format': 'json', 'env': DATATABLES_URL }))
-        resultado = simplejson.loads(connection.getresponse().read())
-        
-        # Preencher valores de ultimas negociacoes
+    # Preencher valores de ultimas negociacoes
+    for resultado in resultados_diarios_acao.values():
         for dados in resultado['query']['results']['quote']:
             valores_diarios[dados['Symbol']] = dados['LastTradePriceOnly']
     return valores_diarios
 
 def buscar_ultimos_valores_geral_fii():
-    # Dados para a conexão
-    PUBLIC_API_URL  = 'http://query.yahooapis.com/v1/public/yql'
-    DATATABLES_URL  = 'store://datatables.org/alltableswithkeys'
-    connection = HTTPConnection('query.yahooapis.com')
-    
+    resultados_diarios_fii.clear()
+       
     # Preparar fiis a serem buscados
-    qtd_por_query = 100
+    qtd_por_query = 120
     fiis = FII.objects.all()
+    
+    # Preparar threads
+    threads = []
     valores_diarios = {}
-    for grupo_fiis in [fiis[i:i+qtd_por_query] for i in range(0, len(fiis), qtd_por_query)]:
+    for indice, grupo_fiis in enumerate([fiis[i:i+qtd_por_query] for i in range(0, len(fiis), qtd_por_query)]):
         fiis_formatados = ''
         for fii in grupo_fiis:
             fiis_formatados += '%s.SA ' % (fii.ticker)
         fiis_formatados.strip()
-        
-        yql = 'select * from yahoo.finance.quotes where symbol = "%s"' % (fiis_formatados)
-        connection.request('GET', PUBLIC_API_URL + '?' + urlencode({ 'q': yql, 'format': 'json', 'env': DATATABLES_URL }))
-        resultado = simplejson.loads(connection.getresponse().read())
-        
-        # Preencher valores de ultimas negociacoes
+        t = BuscarValoresDiariosAcaoThread(fiis_formatados, indice)
+        threads.append(t)
+        t.start()
+    for t in threads:
+        t.join()
+
+    # Preencher valores de ultimas negociacoes
+    for resultado in resultados_diarios_fii.values():
+        print resultado
         for dados in resultado['query']['results']['quote']:
             valores_diarios[dados['Symbol']] = dados['LastTradePriceOnly']
     return valores_diarios
