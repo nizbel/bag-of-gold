@@ -74,6 +74,7 @@ class HistoricoAcao (models.Model):
     acao = models.ForeignKey('Acao', unique_for_date='data')
     data = models.DateField(u'Data')
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)
+    oficial_bovespa = models.BooleanField(u'Oficial Bovespa?', default=False)
     
     class Meta:
         unique_together = ('acao', 'data')
