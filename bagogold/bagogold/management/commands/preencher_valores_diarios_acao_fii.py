@@ -20,14 +20,16 @@ class Command(BaseCommand):
         # Acoes
         valores_diarios = buscar_ultimos_valores_geral_acao()
         for k, v in valores_diarios.iteritems():
-            acao = Acao.objects.get(ticker=k[0:5])
-            valor_diario = ValorDiarioAcao(acao=acao, preco_unitario=v, data_hora=timezone.now())
-            valor_diario.save()
+            if v is not None:
+                acao = Acao.objects.get(ticker=k[:-3])
+                valor_diario = ValorDiarioAcao(acao=acao, preco_unitario=v, data_hora=timezone.now())
+                valor_diario.save()
             
         # FII
         valores_diarios = buscar_ultimos_valores_geral_fii()
         for k, v in valores_diarios.iteritems():
-            fii = FII.objects.get(ticker=k[0:6])
-            valor_diario = ValorDiarioFII(fii=fii, preco_unitario=v, data_hora=timezone.now())
-            valor_diario.save()
+            if v is not None:
+                fii = FII.objects.get(ticker=k[:-3])
+                valor_diario = ValorDiarioFII(fii=fii, preco_unitario=v, data_hora=timezone.now())
+                valor_diario.save()
 

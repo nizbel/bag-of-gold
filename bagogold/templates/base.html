@@ -144,6 +144,7 @@
                 <li>
                     <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> Tesouro Direto</span></a>
                     <ul>
+                        <li><a class="submenu" href="{% url "aconselhamento_td" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Aconselhamento</span></a></li>
                         <li><a class="submenu" href="{% url "historico_td" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico</span></a></li>
                         <li><a class="submenu" href="{% url "inserir_operacao_td" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir operação</span></a></li>
                         <li><a class="submenu" href="{% url "painel_td" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Painel</span></a></li>
@@ -159,6 +160,7 @@
                         <li><a class="submenu" href="{% url "listar_lc" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar Letras de Crédito</span></a></li>
                         <li><a class="submenu" href="{% url "modificar_carencia_lc" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Modificar carência LC</span></a></li>
                         <li><a class="submenu" href="{% url "modificar_porcentagem_di_lc" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Modificar porcentagem DI</span></a></li>
+                        <li><a class="submenu" href="{% url "painel_lc" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Painel</span></a></li>
                     </ul>  
                 </li>
                 <li>
@@ -186,7 +188,13 @@
             {% for message in messages %}
                 <div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %}">
                     <button type="button" class="close" data-dismiss="alert">×</button>
-                    <strong>{% if message.tags %}{{ message.tags }}{% endif %}</strong> {{ message }}
+                    {% if message.tags %}
+                        {% if message.tags == 'success' %}
+                            <i class="icon-ok"></i>
+                        {% elif message.tags == 'error' %}
+                            <i class=" icon-ban-circle"></i>
+                        {% endif %}
+                    {% endif %} {{ message }}
                 </div>
             {% endfor %}
             </div>

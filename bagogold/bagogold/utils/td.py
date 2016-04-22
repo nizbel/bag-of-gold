@@ -18,15 +18,15 @@ def calcular_imposto_venda_td(dias, valor_venda, rendimento):
     """
     if dias < 30:
         valor_iof = calcular_iof_regressivo(dias)
-        return min(valor_iof * valor_venda + 0.225 * rendimento, rendimento)
+        return min(valor_iof * valor_venda + Decimal(0.225) * rendimento, rendimento)
     if dias <= 180:
-        return 0.225 * rendimento
+        return Decimal(0.225) * rendimento
     elif dias <= 360:
-        return 0.2 * rendimento
+        return Decimal(0.2) * rendimento
     elif dias <= 720:
-        return 0.175 * rendimento
+        return Decimal(0.175) * rendimento
     else: 
-        return 0.15 * rendimento
+        return Decimal(0.15) * rendimento
 
 def criar_data_inicio_titulos():
     """

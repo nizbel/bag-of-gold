@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.forms.operacao_acao import OperacaoAcaoForm
-from bagogold.bagogold.forms.operacao_compra_venda import OperacaoCompraVendaForm
+from bagogold.bagogold.forms.operacao_compra_venda import \
+    OperacaoCompraVendaForm
 from bagogold.bagogold.models.acoes import OperacaoAcao, OperacaoCompraVenda
+from decimal import Decimal
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.db.models import Sum
@@ -204,9 +206,9 @@ def historico_operacoes(request):
     # Dados para acompanhamento de vendas mensal e tributavel
     ano = operacoes[0].data.year
     mes = operacoes[0].data.month
-    qtd_vendas_mensal = 0
-    lucro_mensal = 0
-    lucro_geral = 0
+    qtd_vendas_mensal = Decimal(0)
+    lucro_mensal = Decimal(0)
+    lucro_geral = Decimal(0)
     
     # Dados para o gráfico
     graf_lucro_acumulado = list()
@@ -240,13 +242,12 @@ def historico_operacoes(request):
             mes_operacao = {'mes': mes, 'ano': ano}
             
             # Reiniciar contadores mensais
-            qtd_vendas_mensal = 0
-            lucro_mensal = 0
-            
+            qtd_vendas_mensal = Decimal(0)
+            lucro_mensal = Decimal(0)
         
         # Verificar se se trata de compra ou venda
         if operacao.tipo_operacao == 'C':
-            operacao.total_gasto = -1 * (operacao.quantidade * operacao.preco_unitario + \
+            operacao.total_gasto = Decimal(-1) * (operacao.quantidade * operacao.preco_unitario + \
             operacao.emolumentos + operacao.corretagem)
         elif operacao.tipo_operacao == 'V':
             operacao.total_gasto = (operacao.quantidade * operacao.preco_unitario - \
@@ -257,21 +258,21 @@ def historico_operacoes(request):
             # Calcular lucro bruto da operação de venda
             # Pegar operações de compra
             # TODO PREPARAR CASO DE MUITAS COMPRAS PARA MUITAS VENDAS
-            qtd_compra = 0
-            gasto_total_compras = 0
+            qtd_compra = Decimal(0)
+            gasto_total_compras = Decimal(0)
             for operacao_compra in operacao.venda.get_queryset().order_by('compra__preco_unitario'):
                 qtd_compra += operacao_compra.compra.quantidade
                 # TODO NAO PREVÊ MUITAS COMPRAS PARA MUITAS VENDAS
                 gasto_total_compras += (operacao_compra.compra.quantidade * operacao_compra.compra.preco_unitario + operacao_compra.compra.emolumentos + \
-                                        operacao_compra.compra.corretagem)
-            
+                                        operacao_compra.compra.corretagem) * (Decimal(operacao.quantidade) / operacao_compra.compra.quantidade)
+                
             lucro_bruto_venda = (operacao.quantidade * operacao.preco_unitario - operacao.corretagem - operacao.emolumentos) - \
                 gasto_total_compras
             
             lucro_mensal += lucro_bruto_venda
         
         # Verificar se é a ultima iteração
-        if (operacao == operacoes.reverse()[0]):
+        if (operacao == operacoes[len(operacoes)-1]):
             # Colocar valores
             mes_operacao['lucro_mensal'] = lucro_mensal
             mes_operacao['lucro_geral'] = lucro_geral
