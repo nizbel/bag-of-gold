@@ -6,6 +6,9 @@ class Acao (models.Model):
     ticker = models.CharField(u'Ticker da ação', max_length=10)
     empresa = models.ForeignKey('Empresa') 
     
+    class Meta:
+        ordering = ['ticker']
+    
     def __unicode__(self):
         return self.ticker
     
@@ -80,6 +83,10 @@ class HistoricoAcao (models.Model):
     acao = models.ForeignKey('Acao', unique_for_date='data')
     data = models.DateField(u'Data')
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)
+    oficial_bovespa = models.BooleanField(u'Oficial Bovespa?', default=False)
+    
+    class Meta:
+        unique_together = ('acao', 'data')
     
 class ValorDiarioAcao (models.Model):
     acao = models.ForeignKey('Acao')

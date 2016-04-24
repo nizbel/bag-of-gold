@@ -3,8 +3,11 @@ from django.db import models
 import datetime
  
 class FII (models.Model):
-    ticker = models.CharField(u'Ticker da ação', max_length=10) 
+    ticker = models.CharField(u'Ticker do FII', max_length=10, unique=True) 
     
+    class Meta:
+        ordering = ['ticker']
+        
     def __unicode__(self):
         return self.ticker
     
@@ -21,6 +24,10 @@ class ProventoFII (models.Model):
     valor_unitario = models.DecimalField(u'Valor unitário', max_digits=13, decimal_places=9)
     data_ex = models.DateField(u'Data EX')
     data_pagamento = models.DateField(u'Data do pagamento')
+    url_documento = models.CharField(u'URL do documento', blank=True, null=True, max_length=200)
+    
+    class Meta:
+        unique_together=(('data_ex', 'data_pagamento', 'fii',))
     
 class OperacaoFII (models.Model):
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)  
@@ -44,6 +51,7 @@ class HistoricoFII (models.Model):
     fii = models.ForeignKey('FII', unique_for_date='data')
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)
     data = models.DateField(u'Data de referência')
+    oficial_bovespa = models.BooleanField(u'Oficial Bovespa?', default=False)
         
 class ValorDiarioFII (models.Model):
     fii = models.ForeignKey('FII')
