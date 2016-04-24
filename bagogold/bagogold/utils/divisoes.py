@@ -55,3 +55,21 @@ def preencher_operacoes_div_principal(operacao):
             operacao_div_principal.save()
     else:
         print 'Operação %s totalmente alocada' % (operacao)
+        
+def verificar_operacao_nao_alocada():
+    """
+    Procura operações que não tenham sido totalmente alocadas em divisões
+    """
+    operacoes_nao_alocadas = []
+    for operacao in OperacaoAcao.objects.filter():
+        divisoes_operacao = DivisaoOperacaoAcao.objects.filter(operacao=operacao)
+        quantidade_alocada = 0
+        for divisao in divisoes_operacao:
+            quantidade_alocada += divisao.quantidade
+        if quantidade_alocada < operacao.quantidade:
+            operacoes_nao_alocadas.append(operacao)
+    
+    # Adicionar alocação a pendencia do investidor
+    if len(operacoes_nao_alocadas) > 0:
+        return True
+    return False
