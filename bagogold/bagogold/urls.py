@@ -30,8 +30,11 @@ urlpatterns = [
     
     # Divisões
     url(r'^divisoes/detalhar_divisao/(?P<id>\d+)/$', views.divisoes.divisoes.detalhar_divisao, name='detalhar_divisao'),
+    url(r'^divisoes/editar_transferencia/(?P<id>\d+)/$', views.divisoes.divisoes.editar_transferencia, name='editar_transferencia'),
     url(r'^divisoes/inserir_divisao/$', views.divisoes.divisoes.inserir_divisao, name='inserir_divisao'),
+    url(r'^divisoes/inserir_transferencia/$', views.divisoes.divisoes.inserir_transferencia, name='inserir_transferencia'),
     url(r'^divisoes/listar_divisoes/$', views.divisoes.divisoes.listar_divisoes, name='listar_divisoes'),
+    url(r'^divisoes/listar_transferencias/$', views.divisoes.divisoes.listar_transferencias, name='listar_transferencias'),
     url(r'^divisoes/operacoes_nao_alocadas/$', views.divisoes.divisoes.operacoes_nao_alocadas, name='listar_op_nao_alocadas'),
     
     # FII
