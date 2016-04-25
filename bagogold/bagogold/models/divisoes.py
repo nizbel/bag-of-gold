@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from decimal import Decimal
 from django import forms
 from django.db import models
 
@@ -19,6 +20,15 @@ class Divisao (models.Model):
             return True
         except DivisaoPrincipal.DoesNotExist:
             return False
+        
+    def saldo(self):
+        saldo = Decimal(0)
+        for operacao_divisao in DivisaoOperacaoAcao.objects.filter(divisao=self):
+            operacao = operacao_divisao.operacao
+            if operacao.tipo_operacao == 'C':
+                saldo -= (operacao.quantidade * operacao.preco_unitario + operacao.corretagem + operacao.emolumentos)
+            elif operacao.tipo_operacao == 'V':
+                saldo += (operacao.quantidade * operacao.preco_unitario - operacao.corretagem - operacao.emolumentos)
     
 class DivisaoPrincipal (models.Model):
     divisao = models.ForeignKey('Divisao')

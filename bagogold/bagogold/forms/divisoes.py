@@ -122,3 +122,10 @@ class TransferenciaEntreDivisoesForm(forms.ModelForm):
         if quantidade <= 0:
             raise forms.ValidationError('Quantidade deve ser maior que 0')
         return quantidade
+    
+    def clean(self):
+        data = super(TransferenciaEntreDivisoesForm, self).clean()
+        if data.get('conta_cedente') == data.get('conta_recebedora'):
+            raise forms.ValidationError('Conta cedente não pode ser igual a recebedora')
+        
+        return data
