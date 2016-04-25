@@ -246,9 +246,9 @@ def listar_divisoes(request):
                 td_valor = ValorDiarioTitulo.objects.filter(titulo__id=titulo_id, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).order_by('-data_hora')[0].preco_venda
             except:
                 td_valor = HistoricoTitulo.objects.filter(titulo__id=titulo_id).order_by('-data')[0].preco_venda
-            print 'valor:', divisao.valor_atual
+#             print 'valor:', divisao.valor_atual
             divisao.valor_atual += (td_divisao[titulo_id] * td_valor)
-            print 'valor:', divisao.valor_atual
+#             print 'valor:', divisao.valor_atual
         
         if not divisao.objetivo_indefinido():
             divisao.quantidade_percentual = divisao.valor_atual / divisao.valor_objetivo * 100
