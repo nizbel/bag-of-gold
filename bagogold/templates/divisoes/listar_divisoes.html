@@ -18,7 +18,13 @@
         <td><a href="{% url 'detalhar_divisao' divisao.id %}">{{divisao.nome}}</a></td>
         <td>R${{divisao.valor_objetivo}}</td>
         <td>R${{divisao.valor_atual|floatformat:"2"}} ({{divisao.quantidade_percentual|floatformat:"2"}}%)</td>
-        <td>R${{divisao.saldo}}</td>
+        <td><span style="color:
+            {% if divisao.saldo < 0 %}
+            red
+            {% else %}
+            blue
+            {% endif %}
+            ">R${{divisao.saldo}}</span></td>
     </tr>
     {% endfor %}
     </tbody>
