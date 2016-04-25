@@ -2,6 +2,7 @@
 from decimal import Decimal
 from django import forms
 from django.db import models
+from bagogold.bagogold.models.lc import HistoricoTaxaDI
 
 class Divisao (models.Model):
     nome = models.CharField(u'Nome da divisão', max_length=50)
@@ -43,12 +44,25 @@ class Divisao (models.Model):
             elif operacao.tipo_operacao == 'V':
                 saldo += (operacao_divisao.quantidade * operacao.preco_unitario - (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
         # LC
+        historico_di = HistoricoTaxaDI.objects.all()
         for operacao_divisao in DivisaoOperacaoLC.objects.filter(divisao=self):
             operacao = operacao_divisao.operacao
             if operacao.tipo_operacao == 'C':
                 saldo -= operacao_divisao.quantidade 
             elif operacao.tipo_operacao == 'V':
-                saldo += operacao_divisao.quantidade
+                # Para venda, calcular valor da letra no dia da venda
+                valor_venda = operacao_divisao.quantidade
+                dias_de_rendimento = historico_di.filter(data__range=[operacao.operacao_compra_relacionada().data, operacao.data])
+                operacao.taxa = operacao.porcentagem_di()
+                for dia in dias_de_rendimento:
+                    # Arredondar na última iteração
+                    if (dia.data == dias_de_rendimento[len(dias_de_rendimento)-1].data):
+                        str_auxiliar = str(valor_venda.quantize(Decimal('.0001')))
+                        valor_venda = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+                    else:
+                        # Calcular o valor atualizado para cada operacao
+                        valor_venda = Decimal((pow((float(1) + float(dia.taxa)/float(100)), float(1)/float(252)) - float(1)) * float(operacao.taxa/100) + float(1)) * valor_venda
+                saldo += valor_venda
                 
         # TD
         for operacao_divisao in DivisaoOperacaoTD.objects.filter(divisao=self):
