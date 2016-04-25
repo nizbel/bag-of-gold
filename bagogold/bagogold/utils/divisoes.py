@@ -56,7 +56,7 @@ def preencher_operacoes_div_principal(operacao):
     else:
         print 'Operação %s totalmente alocada' % (operacao)
         
-def verificar_operacao_nao_alocada():
+def verificar_operacoes_nao_alocadas():
     """
     Procura operações que não tenham sido totalmente alocadas em divisões
     """
@@ -71,5 +71,5 @@ def verificar_operacao_nao_alocada():
     
     # Adicionar alocação a pendencia do investidor
     if len(operacoes_nao_alocadas) > 0:
-        return True
-    return False
+        pass
+    return operacoes_nao_alocadas
