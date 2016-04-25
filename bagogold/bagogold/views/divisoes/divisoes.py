@@ -254,6 +254,9 @@ def listar_divisoes(request):
             divisao.quantidade_percentual = divisao.valor_atual / divisao.valor_objetivo * 100
         else:
             divisao.quantidade_percentual = 100
+            
+        # Calcular saldo da divisão
+        divisao.saldo = divisao.saldo()
     
     return render_to_response('divisoes/listar_divisoes.html', {'divisoes': divisoes}, context_instance=RequestContext(request))
 
