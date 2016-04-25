@@ -10,6 +10,7 @@ from bagogold.bagogold.models.lc import HistoricoTaxaDI, \
 from bagogold.bagogold.models.td import ValorDiarioTitulo, HistoricoTitulo, \
     Titulo
 from bagogold.bagogold.utils.acoes import calcular_qtd_acoes_ate_dia_por_divisao
+from bagogold.bagogold.utils.divisoes import verificar_operacoes_nao_alocadas
 from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia_por_divisao
 from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia, \
     calcular_valor_lc_ate_dia_por_divisao
@@ -20,6 +21,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 import datetime
+
 
 def detalhar_divisao(request, id):
     # Usado para criar objetos vazios
@@ -208,3 +210,8 @@ def listar_divisoes(request):
             divisao.quantidade_percentual = 100
     
     return render_to_response('divisoes/listar_divisoes.html', {'divisoes': divisoes}, context_instance=RequestContext(request))
+
+# TODO preparar tela
+def operacoes_nao_alocadas(request):
+    operacoes_nao_alocadas = verificar_operacoes_nao_alocadas()
+    return render_to_response('divisoes/listar_op_nao_alocadas.html', {'operacoes_nao_alocadas': operacoes_nao_alocadas}, context_instance=RequestContext(request))

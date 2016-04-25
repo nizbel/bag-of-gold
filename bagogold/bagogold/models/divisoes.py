@@ -67,3 +67,16 @@ class DivisaoOperacaoFII (models.Model):
     
     class Meta:
         unique_together=('divisao', 'operacao')
+        
+class TransferenciaEntreDivisoes(models.Model):
+    """
+    Transferências em dinheiro entre as divisões, cedente ou recebedor nulos significa que
+    é uma transferência de dinheiro de/para meio externo
+    """
+    divisao_cedente = models.ForeignKey('Divisao', blank=True, null=True, related_name='divisao_cedente')
+    divisao_recebedora = models.ForeignKey('Divisao', blank=True, null=True, related_name='divisao_recebedora')
+    data = models.DateField(u'Data da transferência', blank=True, null=True)
+    """
+    Quantidade em R$
+    """
+    quantidade = models.DecimalField(u'Quantidade transferida', max_digits=11, decimal_places=2)
