@@ -18,6 +18,7 @@ from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia, \
     calcular_valor_lc_ate_dia_por_divisao
 from bagogold.bagogold.utils.td import calcular_qtd_titulos_ate_dia_por_divisao
 from decimal import Decimal
+from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
@@ -157,8 +158,33 @@ def detalhar_divisao(request, id):
 def editar_divisao(request):
     print 'oi'
     
-def editar_transferencia(request):
-    print 'oi'
+def editar_transferencia(request, id):
+    transferencia = TransferenciaEntreDivisoes.objects.get(pk=id)
+    
+    if request.method == 'POST':
+        if request.POST.get("save"):
+            form = TransferenciaEntreDivisoesForm(request.POST, instance=transferencia)
+            
+            if form.is_valid():
+                transferencia.save()
+                messages.success(request, 'Transferência editada com sucesso')
+                return HttpResponseRedirect(reverse('listar_transferencias'))
+            for erros in form.errors.values():
+                for erro in erros:
+                    messages.error(request, erro)
+            return render_to_response('td/editar_transferencia.html', {'form': form},
+                      context_instance=RequestContext(request))
+                
+        elif request.POST.get("delete"):
+            transferencia.delete()
+            messages.success(request, 'Operação excluída com sucesso')
+            return HttpResponseRedirect(reverse('listar_transferencias'))
+ 
+    else:
+        form = TransferenciaEntreDivisoesForm(instance=transferencia)
+            
+    return render_to_response('td/editar_transferencia.html', {'form': form},
+                              context_instance=RequestContext(request))
 
 def inserir_divisao(request):
     if request.method == 'POST':
