@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.forms.divisoes import DivisaoForm
+from bagogold.bagogold.forms.divisoes import DivisaoForm, \
+    TransferenciaEntreDivisoesForm
 from bagogold.bagogold.models.acoes import ValorDiarioAcao, HistoricoAcao, Acao
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
-    DivisaoOperacaoFII, DivisaoOperacaoTD, DivisaoOperacaoAcao
+    DivisaoOperacaoFII, DivisaoOperacaoTD, DivisaoOperacaoAcao, \
+    TransferenciaEntreDivisoes
 from bagogold.bagogold.models.fii import ValorDiarioFII, HistoricoFII, \
     OperacaoFII, FII
 from bagogold.bagogold.models.lc import HistoricoTaxaDI, \
@@ -151,7 +153,13 @@ def detalhar_divisao(request, id):
         
     return render_to_response('divisoes/detalhar_divisao.html', {'divisao': divisao, 'composicao': composicao},
                                context_instance=RequestContext(request))
+
+def editar_divisao(request):
+    print 'oi'
     
+def editar_transferencia(request):
+    print 'oi'
+
 def inserir_divisao(request):
     if request.method == 'POST':
         form = DivisaoForm(request.POST)
@@ -163,8 +171,20 @@ def inserir_divisao(request):
             
     return render_to_response('divisoes/inserir_divisao.html', {'form': form}, context_instance=RequestContext(request))
 
+def inserir_transferencia(request):
+    if request.method == 'POST':
+        form = TransferenciaEntreDivisoesForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect(reverse('listar_divisoes'))
+    else:
+        form = TransferenciaEntreDivisoesForm()
+            
+    return render_to_response('divisoes/inserir_transferencia.html', {'form': form}, context_instance=RequestContext(request))
+
+
 def listar_divisoes(request):
-    divisoes = Divisao.objects.all()
+    divisoes = Divisao.objects.filter()
     
     for divisao in divisoes:
         divisao.valor_atual = 0
@@ -210,6 +230,11 @@ def listar_divisoes(request):
             divisao.quantidade_percentual = 100
     
     return render_to_response('divisoes/listar_divisoes.html', {'divisoes': divisoes}, context_instance=RequestContext(request))
+
+def listar_transferencias(request):
+    transferencias = TransferenciaEntreDivisoes.objects.filter()
+    
+    return render_to_response('divisoes/listar_transferencias.html', {'transferencias': transferencias}, context_instance=RequestContext(request))
 
 # TODO preparar tela
 def operacoes_nao_alocadas(request):

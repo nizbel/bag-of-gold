@@ -1,0 +1,29 @@
+    {% extends "base.html" %}
+
+{% block content %}
+<div class="row-fluid">
+    <div class="box-content">
+    <table id="ordens" class="table table-striped table-bordered bootstrap-datatable datatable">
+    <thead>
+        <tr>
+            <th>Divisão cedente</th>
+            <th>Divisão recebedora</th>
+            <th>Data</th>
+            <th>Quantidade</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for transferencia in transferencias %}
+    <tr>
+        <td>{{transferencia.divisao_cedente}}</td>
+        <td>{{transferencia.divisao_recebedora}}</td>
+        <td>{{transferencia.data}}</td>
+        <td>R${{transferencia.quantidade}}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+    </table>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC
+from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
+    TransferenciaEntreDivisoes
 from bagogold.bagogold.models.lc import OperacaoVendaLetraCredito
 from django import forms
 
@@ -109,3 +110,15 @@ class DivisaoOperacaoTDFormSet(forms.models.BaseInlineFormSet):
                 
                     if self.instance.quantidade < qtd_total_div:
                         raise forms.ValidationError('Quantidade total alocada para as divisões é maior que quantidade da operação')
+
+class TransferenciaEntreDivisoesForm(forms.ModelForm):
+
+    class Meta:
+        model = TransferenciaEntreDivisoes
+        fields = ('divisao_cedente', 'divisao_recebedora', 'data', 'quantidade')
+
+    def clean_quantidade(self):
+        quantidade = self.cleaned_data['quantidade']
+        if quantidade <= 0:
+            raise forms.ValidationError('Quantidade deve ser maior que 0')
+        return quantidade
