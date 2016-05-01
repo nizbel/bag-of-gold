@@ -125,7 +125,11 @@ class TransferenciaEntreDivisoesForm(forms.ModelForm):
     
     def clean(self):
         data = super(TransferenciaEntreDivisoesForm, self).clean()
-        if data.get('conta_cedente') == data.get('conta_recebedora'):
-            raise forms.ValidationError('Conta cedente não pode ser igual a recebedora')
+        if data.get('conta_cedente') == data.get('conta_recebedora') == None:
+            raise forms.ValidationError('Conta cedente e recebedora não podem ser vazias')
+        if data.get('conta_cedente') == None and data.get('investimento_origem') != None:
+            raise forms.ValidationError('Conta vazia não pode ter investimento definido')
+        if data.get('conta_recebedora') == None and data.get('investimento_destino') != None:
+            raise forms.ValidationError('Conta vazia não pode ter investimento definido')
         
         return data
