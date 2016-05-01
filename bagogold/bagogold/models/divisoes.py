@@ -22,28 +22,51 @@ class Divisao (models.Model):
         except DivisaoPrincipal.DoesNotExist:
             return False
     
-    """
-    Calcula o saldo restante de uma divisão (dinheiro livre)
-    """
-    def saldo(self):
+    
+    def saldo_acoes_bh(self):
+        """
+        Calcula o saldo de operações de ações Buy and Hold de uma divisão (dinheiro livre)
+        """
         saldo = Decimal(0)
-        # Ações
-        # TODO adicionar trades
-        for operacao_divisao in DivisaoOperacaoAcao.objects.filter(divisao=self):
+        for operacao_divisao in DivisaoOperacaoAcao.objects.filter(divisao=self, operacao__destinacao='B'):
             operacao = operacao_divisao.operacao
             if operacao.tipo_operacao == 'C':
                 saldo -= (operacao_divisao.quantidade * operacao.preco_unitario + (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
             elif operacao.tipo_operacao == 'V':
                 saldo += (operacao_divisao.quantidade * operacao.preco_unitario - (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
-        
-        # FII
+        return saldo
+    
+    def saldo_acoes_trade(self):
+        """
+        Calcula o saldo de operações de ações para trade de uma divisão (dinheiro livre)
+        """
+        saldo = Decimal(0)
+        for operacao_divisao in DivisaoOperacaoAcao.objects.filter(divisao=self, operacao__destinacao='T'):
+            operacao = operacao_divisao.operacao
+            if operacao.tipo_operacao == 'C':
+                saldo -= (operacao_divisao.quantidade * operacao.preco_unitario + (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
+            elif operacao.tipo_operacao == 'V':
+                saldo += (operacao_divisao.quantidade * operacao.preco_unitario - (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
+        return saldo
+    
+    def saldo_fii(self):
+        """
+        Calcula o saldo de operações de FII de uma divisão (dinheiro livre)
+        """
+        saldo = Decimal(0)
         for operacao_divisao in DivisaoOperacaoFII.objects.filter(divisao=self):
             operacao = operacao_divisao.operacao
             if operacao.tipo_operacao == 'C':
                 saldo -= (operacao_divisao.quantidade * operacao.preco_unitario + (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
             elif operacao.tipo_operacao == 'V':
                 saldo += (operacao_divisao.quantidade * operacao.preco_unitario - (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
-        # LC
+        return saldo
+    
+    def saldo_lc(self):
+        """
+        Calcula o saldo de operações de Letra de Crédito de uma divisão (dinheiro livre)
+        """
+        saldo = Decimal(0)
         historico_di = HistoricoTaxaDI.objects.all()
         for operacao_divisao in DivisaoOperacaoLC.objects.filter(divisao=self):
             operacao = operacao_divisao.operacao
@@ -62,15 +85,39 @@ class Divisao (models.Model):
                     else:
                         # Calcular o valor atualizado para cada operacao
                         valor_venda = Decimal((pow((float(1) + float(dia.taxa)/float(100)), float(1)/float(252)) - float(1)) * float(operacao.taxa/100) + float(1)) * valor_venda
-                saldo += valor_venda
-                
-        # TD
+                saldo += valor_venda * operacao_divisao.percentual_divisao()
+        return saldo
+    
+    def saldo_td(self):
+        """
+        Calcula o saldo de operações de Tesouro Direto de uma divisão (dinheiro livre)
+        """
+        saldo = Decimal(0)
         for operacao_divisao in DivisaoOperacaoTD.objects.filter(divisao=self):
             operacao = operacao_divisao.operacao
             if operacao.tipo_operacao == 'C':
                 saldo -= (operacao_divisao.quantidade + (operacao.taxa_custodia + operacao.taxa_bvmf) * operacao_divisao.percentual_divisao())
             elif operacao.tipo_operacao == 'V':
                 saldo += (operacao_divisao.quantidade - (operacao.taxa_custodia + operacao.taxa_bvmf) * operacao_divisao.percentual_divisao())
+        return saldo
+    
+    
+    def saldo(self):
+        """
+        Calcula o saldo total restante de uma divisão (dinheiro livre)
+        """
+        saldo = Decimal(0)
+        # Ações
+        # Buy and hold
+        saldo += self.saldo_acoes_bh()
+        # Trades
+        saldo += self.saldo_acoes_trade()
+        # FII
+        saldo += self.saldo_fii()
+        # LC
+        saldo += self.saldo_lc()
+        # TD
+        saldo += self.saldo_td()
                 
         return saldo
     
@@ -154,6 +201,11 @@ class TransferenciaEntreDivisoes(models.Model):
     divisao_cedente = models.ForeignKey('Divisao', blank=True, null=True, related_name='divisao_cedente')
     divisao_recebedora = models.ForeignKey('Divisao', blank=True, null=True, related_name='divisao_recebedora')
     data = models.DateField(u'Data da transferência', blank=True, null=True)
+    """
+    B = Buy and Hold; D = Tesouro Direto; F = FII; L = Letra de Crédito; T = Trading
+    """
+    investimento_origem = models.CharField('Investimento de origem', blank=True, null=True, max_length=1)
+    investimento_destino = models.CharField('Investimento de destino', blank=True, null=True, max_length=1)
     """
     Quantidade em R$
     """
