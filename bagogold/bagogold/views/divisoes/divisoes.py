@@ -214,7 +214,6 @@ def listar_divisoes(request):
     
     for divisao in divisoes:
         divisao.valor_atual = 0
-        # TODO calcular valor atual
         
         # Ações (B&H)
         acao_divisao = calcular_qtd_acoes_ate_dia_por_divisao(datetime.date.today(), divisao.id)
@@ -256,8 +255,14 @@ def listar_divisoes(request):
             divisao.quantidade_percentual = 100
             
         # Calcular saldo da divisão
-        divisao.saldo = divisao.saldo()
-    
+        divisao.saldo_bh = divisao.saldo_acoes_bh()
+        divisao.saldo_lc = divisao.saldo_lc()
+        divisao.saldo_fii = divisao.saldo_fii()
+        divisao.saldo_trade = divisao.saldo_acoes_trade()
+        divisao.saldo_td = divisao.saldo_td()
+        divisao.saldo_nao_alocado = 0
+        divisao.saldo = divisao.saldo_bh + divisao.saldo_lc + divisao.saldo_fii + divisao.saldo_trade + divisao.saldo_td + divisao.saldo_nao_alocado
+        
     return render_to_response('divisoes/listar_divisoes.html', {'divisoes': divisoes}, context_instance=RequestContext(request))
 
 def listar_transferencias(request):

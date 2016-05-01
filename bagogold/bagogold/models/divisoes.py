@@ -34,6 +34,13 @@ class Divisao (models.Model):
                 saldo -= (operacao_divisao.quantidade * operacao.preco_unitario + (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
             elif operacao.tipo_operacao == 'V':
                 saldo += (operacao_divisao.quantidade * operacao.preco_unitario - (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
+                
+        # Transferências
+        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='B'):
+            saldo -= transferencia.quantidade
+        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='B'):
+            saldo += transferencia.quantidade
+            
         return saldo
     
     def saldo_acoes_trade(self):
@@ -47,6 +54,13 @@ class Divisao (models.Model):
                 saldo -= (operacao_divisao.quantidade * operacao.preco_unitario + (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
             elif operacao.tipo_operacao == 'V':
                 saldo += (operacao_divisao.quantidade * operacao.preco_unitario - (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
+                
+        # Transferências
+        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='T'):
+            saldo -= transferencia.quantidade
+        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='T'):
+            saldo += transferencia.quantidade
+            
         return saldo
     
     def saldo_fii(self):
@@ -60,6 +74,13 @@ class Divisao (models.Model):
                 saldo -= (operacao_divisao.quantidade * operacao.preco_unitario + (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
             elif operacao.tipo_operacao == 'V':
                 saldo += (operacao_divisao.quantidade * operacao.preco_unitario - (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
+                
+        # Transferências
+        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='F'):
+            saldo -= transferencia.quantidade
+        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='F'):
+            saldo += transferencia.quantidade
+            
         return saldo
     
     def saldo_lc(self):
@@ -86,6 +107,13 @@ class Divisao (models.Model):
                         # Calcular o valor atualizado para cada operacao
                         valor_venda = Decimal((pow((float(1) + float(dia.taxa)/float(100)), float(1)/float(252)) - float(1)) * float(operacao.taxa/100) + float(1)) * valor_venda
                 saldo += valor_venda * operacao_divisao.percentual_divisao()
+                
+        # Transferências
+        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='L'):
+            saldo -= transferencia.quantidade
+        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='L'):
+            saldo += transferencia.quantidade
+            
         return saldo
     
     def saldo_td(self):
@@ -96,9 +124,17 @@ class Divisao (models.Model):
         for operacao_divisao in DivisaoOperacaoTD.objects.filter(divisao=self):
             operacao = operacao_divisao.operacao
             if operacao.tipo_operacao == 'C':
-                saldo -= (operacao_divisao.quantidade + (operacao.taxa_custodia + operacao.taxa_bvmf) * operacao_divisao.percentual_divisao())
+                saldo -= (operacao_divisao.quantidade * operacao.preco_unitario + (operacao.taxa_custodia + operacao.taxa_bvmf) * operacao_divisao.percentual_divisao())
             elif operacao.tipo_operacao == 'V':
-                saldo += (operacao_divisao.quantidade - (operacao.taxa_custodia + operacao.taxa_bvmf) * operacao_divisao.percentual_divisao())
+                saldo += (operacao_divisao.quantidade * operacao.preco_unitario - (operacao.taxa_custodia + operacao.taxa_bvmf) * operacao_divisao.percentual_divisao())
+            print saldo
+                
+        # Transferências
+        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='D'):
+            saldo -= transferencia.quantidade
+        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='D'):
+            saldo += transferencia.quantidade
+            
         return saldo
     
     
@@ -170,10 +206,10 @@ class DivisaoOperacaoTD (models.Model):
     class Meta:
         unique_together=('divisao', 'operacao')
         
-    """
-    Calcula o percentual da operação que foi para a divisão
-    """
     def percentual_divisao(self):
+        """
+        Calcula o percentual da operação que foi para a divisão
+        """
         return self.quantidade / self.operacao.quantidade
     
 class DivisaoOperacaoFII (models.Model):
@@ -187,10 +223,10 @@ class DivisaoOperacaoFII (models.Model):
     class Meta:
         unique_together=('divisao', 'operacao')
         
-    """
-    Calcula o percentual da operação que foi para a divisão
-    """
     def percentual_divisao(self):
+        """
+        Calcula o percentual da operação que foi para a divisão
+        """
         return self.quantidade / self.operacao.quantidade
     
 class TransferenciaEntreDivisoes(models.Model):
@@ -210,3 +246,11 @@ class TransferenciaEntreDivisoes(models.Model):
     Quantidade em R$
     """
     quantidade = models.DecimalField(u'Quantidade transferida', max_digits=11, decimal_places=2)
+    
+    def intradivisao(self):
+        """
+        Verifica se a transferência foi feita entre investimentos de uma mesma divisão
+        """
+        return self.divisao_cedente == self.divisao_recebedora
+    
+    
