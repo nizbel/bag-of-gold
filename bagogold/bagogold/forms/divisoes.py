@@ -3,6 +3,7 @@ from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
     TransferenciaEntreDivisoes
 from bagogold.bagogold.models.lc import OperacaoVendaLetraCredito
 from django import forms
+from django.forms import widgets
 
 class DivisaoForm(forms.ModelForm):
 
@@ -112,11 +113,16 @@ class DivisaoOperacaoTDFormSet(forms.models.BaseInlineFormSet):
                         raise forms.ValidationError('Quantidade total alocada para as divisões é maior que quantidade da operação')
 
 class TransferenciaEntreDivisoesForm(forms.ModelForm):
-
+    OPCOES_INVESTIMENTO = (('B', 'Buy and Hold'), ('D', 'Tesouro Direto'), ('F', 'Fundo de Inv. Imobiliário'), ('L', 'Buy and Hold'), ('T', 'Trading'))
+    
     class Meta:
         model = TransferenciaEntreDivisoes
-        fields = ('divisao_cedente', 'divisao_recebedora', 'data', 'quantidade')
-
+        fields = ('divisao_cedente', 'investimento_origem', 'divisao_recebedora', 'investimento_destino', 'data', 'quantidade')
+        widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
+                                            'placeholder':'Selecione uma data'}),
+                 'investimento_origem': widgets.Select(choices=OPCOES_INVESTIMENTO),
+                 'investimento_destino': widgets.Select(choices=OPCOES_INVESTIMENTO),}
+        
     def clean_quantidade(self):
         quantidade = self.cleaned_data['quantidade']
         if quantidade <= 0:
