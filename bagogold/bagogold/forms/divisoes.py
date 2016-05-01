@@ -5,6 +5,8 @@ from bagogold.bagogold.models.lc import OperacaoVendaLetraCredito
 from django import forms
 from django.forms import widgets
 
+OPCOES_INVESTIMENTO = ((None, ''), ('B', 'Buy and Hold'), ('D', 'Tesouro Direto'), ('F', 'Fundo de Inv. Imobiliário'), ('L', 'Buy and Hold'), ('T', 'Trading'))
+    
 class DivisaoForm(forms.ModelForm):
 
     class Meta:
@@ -113,8 +115,6 @@ class DivisaoOperacaoTDFormSet(forms.models.BaseInlineFormSet):
                         raise forms.ValidationError('Quantidade total alocada para as divisões é maior que quantidade da operação')
 
 class TransferenciaEntreDivisoesForm(forms.ModelForm):
-    OPCOES_INVESTIMENTO = (('B', 'Buy and Hold'), ('D', 'Tesouro Direto'), ('F', 'Fundo de Inv. Imobiliário'), ('L', 'Buy and Hold'), ('T', 'Trading'))
-    
     class Meta:
         model = TransferenciaEntreDivisoes
         fields = ('divisao_cedente', 'investimento_origem', 'divisao_recebedora', 'investimento_destino', 'data', 'quantidade')
@@ -131,11 +131,11 @@ class TransferenciaEntreDivisoesForm(forms.ModelForm):
     
     def clean(self):
         data = super(TransferenciaEntreDivisoesForm, self).clean()
-        if data.get('conta_cedente') == data.get('conta_recebedora') == None:
+        if data.get('divisao_cedente') == None and data.get('divisao_recebedora') == None:
             raise forms.ValidationError('Conta cedente e recebedora não podem ser vazias')
-        if data.get('conta_cedente') == None and data.get('investimento_origem') != None:
+        if data.get('divisao_cedente') == None and data.get('investimento_origem') != None:
             raise forms.ValidationError('Conta vazia não pode ter investimento definido')
-        if data.get('conta_recebedora') == None and data.get('investimento_destino') != None:
+        if data.get('divisao_recebedora') == None and data.get('investimento_destino') != None:
             raise forms.ValidationError('Conta vazia não pode ter investimento definido')
         
         return data
