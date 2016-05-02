@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao, OperacaoAcao, \
-    AcaoProvento
+from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao, \
+    OperacaoAcao, AcaoProvento
 from decimal import Decimal
 from django.db.models import Sum, Case, When, IntegerField, F
 from itertools import chain
 from operator import attrgetter
+from urllib2 import Request, urlopen, HTTPError, URLError
 import calendar
 import datetime
+import re
 
 def calcular_operacoes_sem_proventos_por_mes(operacoes):
     """ 
@@ -230,3 +232,32 @@ def quantidade_acoes_ate_dia(ticker, dia):
                 qtd_acoes += int(item.provento.valor_unitario * quantidade_acoes_ate_dia(item.provento.acao.ticker, item.data) / 100)
     
     return qtd_acoes
+
+def buscar_proventos_acao(ticker):
+    """
+    Busca proventos de ações no site da Bovespa
+    """
+    acao_url = 'http://bvmf.bmfbovespa.com.br/cias-listadas/empresas-listadas/ResumoEventosCorporativos.aspx?codigoCvm=1023&tab=3&idioma=pt-br'
+    req = Request(acao_url)
+    try:
+        response = urlopen(req)
+    except HTTPError as e:
+        print 'The server couldn\'t fulfill the request.'
+        print 'Error code: ', e.code
+    except URLError as e:
+        print 'We failed to reach a server.'
+        print 'Reason: ', e.reason
+    else:
+        data = response.read()
+        if 'Sistema indisponivel' in data:
+            return buscar_proventos_acao(ticker)
+        inicio = data.find('<div id="divDividendo">')
+#         print 'inicio', inicio
+        fim = data.find('<div id="divSubscricao">', inicio)
+        string_importante = (data[inicio:fim]).decode(encoding='ISO-8859-1',errors='strict')
+        proventos = re.findall('<tr.*?>(.*?)<\/tr>', string_importante, flags=re.DOTALL)
+        for provento in proventos:
+            texto_provento = re.findall('<td.*?>(.*?)<\/td>', provento)
+            texto_provento += re.findall('<span.*?>(.*?)<\/span>', provento)
+            if texto_provento:
+                print texto_provento
