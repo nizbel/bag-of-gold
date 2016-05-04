@@ -20,6 +20,7 @@ class Provento (models.Model):
     tipo_provento = models.CharField(u'Tipo de provento', max_length=1)
     data_ex = models.DateField(u'Data EX')
     data_pagamento = models.DateField(u'Data do pagamento')
+    observacao = models.CharField(u'Observação', blank=True, null=True, max_length=300)
     
     def __unicode__(self):
         tipo = ''
