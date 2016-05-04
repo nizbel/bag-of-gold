@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao, \
     OperacaoAcao, AcaoProvento, Acao, Provento
+from bagogold.bagogold.models.empresa import Empresa
 from decimal import Decimal
 from django.db.models import Sum, Case, When, IntegerField, F
 from itertools import chain
@@ -276,3 +277,56 @@ def buscar_proventos_acao(ticker):
                     contador += 1
                 except Provento.DoesNotExist:
                     print 'Nao achou'
+                    
+def preencher_codigos_cvm():
+    """
+    Preenche códigos bvmf para as ações a partir das urls na listagem de empresas
+    """
+    acao_url = 'http://bvmf.bmfbovespa.com.br/cias-listadas/empresas-listadas/BuscaEmpresaListada.aspx?idioma=pt-br'
+    req = Request(acao_url)
+    try:
+        response = urlopen(req)
+    except HTTPError as e:
+        print 'The server couldn\'t fulfill the request.'
+        print 'Error code: ', e.code
+    except URLError as e:
+        print 'We failed to reach a server.'
+        print 'Reason: ', e.reason
+    else:
+        data = response.read()
+        if 'Sistema indisponivel' in data:
+            return preencher_codigos_cvm()
+        inicio = data.find('<div class="inline-list-letra">')
+        fim = data.find('</div>', inicio)
+        string_importante = (data[inicio:fim])
+        letras = re.findall('<a.*?>(.*?)<\/a>', string_importante, flags=re.DOTALL)
+        print letras
+        # Buscar empresas
+        empresas = Empresa.objects.all()
+        for letra in letras:
+            letra_url = 'http://bvmf.bmfbovespa.com.br/cias-listadas/empresas-listadas/BuscaEmpresaListada.aspx?Letra=%s&idioma=pt-br' % letra
+            req = Request(letra_url)
+            conectou = False
+            while not conectou:
+                try:
+                    response = urlopen(req)
+                except HTTPError as e:
+                    print 'The server couldn\'t fulfill the request.'
+                    print 'Error code: ', e.code
+                except URLError as e:
+                    print 'We failed to reach a server.'
+                    print 'Reason: ', e.reason
+                else:
+                    data = response.read()
+                    if 'Sistema indisponivel' not in data:
+                        conectou = True
+            inicio = data.find('<tbody>')
+            fim = data.find('</tbody>', inicio)
+            string_importante = (data[inicio:fim])
+            urls = re.findall('<a.*?codigoCvm=(.*?)\">(.*?)<\/a>', string_importante, flags=re.DOTALL)
+            for codigo, nome in urls:
+                if nome in empresas.values_list('nome_pregao', flat=True):
+                    empresa = empresas.filter(nome_pregao=nome).order_by('-id')[0]
+                    empresa.codigo_cvm = codigo
+                    empresa.save()
+                    print 'Salvou empresa', empresa
