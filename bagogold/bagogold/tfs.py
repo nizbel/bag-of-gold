@@ -59,7 +59,7 @@ def ler_serie_historica_anual_bovespa(nome_arquivo):
                                 empresa = Acao.objects.get(ticker=acao_listada).empresa
                                 break
                         if not empresa_existe:
-                            empresa = Empresa(nome=line[27:39].strip())
+                            empresa = Empresa(nome=line[27:39].strip(), nome_pregao=line[27:39].strip())
                             empresa.save()
                         acao = Acao(ticker=ticker, empresa=empresa)
                         acao.save()
