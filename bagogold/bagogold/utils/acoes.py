@@ -234,11 +234,11 @@ def quantidade_acoes_ate_dia(ticker, dia):
     
     return qtd_acoes
 
-def buscar_proventos_acao(ticker):
+def buscar_proventos_acao(codigo_cvm):
     """
     Busca proventos de ações no site da Bovespa
     """
-    acao_url = 'http://bvmf.bmfbovespa.com.br/cias-listadas/empresas-listadas/ResumoEventosCorporativos.aspx?codigoCvm=1023&tab=3&idioma=pt-br'
+    acao_url = 'http://bvmf.bmfbovespa.com.br/cias-listadas/empresas-listadas/ResumoEventosCorporativos.aspx?codigoCvm=%s&tab=3.1&idioma=pt-br' % (codigo_cvm)
     req = Request(acao_url)
     try:
         response = urlopen(req)
@@ -251,10 +251,10 @@ def buscar_proventos_acao(ticker):
     else:
         data = response.read()
         if 'Sistema indisponivel' in data:
-            return buscar_proventos_acao(ticker)
-        inicio = data.find('<div id="divDividendo">')
+            return buscar_proventos_acao(codigo_cvm)
+        inicio = data.find('<tbody>')
 #         print 'inicio', inicio
-        fim = data.find('<div id="divSubscricao">', inicio)
+        fim = data.find('</tbody>', inicio)
         string_importante = (data[inicio:fim])
         proventos = re.findall('<tr.*?>(.*?)<\/tr>', string_importante, flags=re.DOTALL)
         contador = 1
@@ -268,11 +268,17 @@ def buscar_proventos_acao(ticker):
                 # Incrementa data até que não seja fim de semana
                 while data_ex.weekday() > 4:
                     data_ex += datetime.timedelta(days=1)
+                    
+                # Preparar data pagamento (pode ser vazia)
+                try:
+                    data_pagamento = datetime.datetime.strptime(texto_provento[6],'%d/%m/%Y').date()
+                except:
+                    data_pagamento = None
                 provento = Provento(acao=Acao.objects.get(ticker='BBAS3'), valor_unitario=Decimal(texto_provento[3].replace(',', '.')), tipo_provento=texto_provento[0][0], \
-                                    data_pagamento=datetime.datetime.strptime(texto_provento[6],'%d/%m/%Y').date(), observacao=texto_provento[7], data_ex=data_ex)
+                                    data_pagamento=data_pagamento, observacao=texto_provento[7], data_ex=data_ex)
                 print provento
                 try:
-                    teste_prov = Provento.objects.get(acao__ticker='BBAS3', tipo_provento=texto_provento[0][0], data_pagamento=datetime.datetime.strptime(texto_provento[6],'%d/%m/%Y').date())
+                    teste_prov = Provento.objects.get(acao__ticker='BBAS3', tipo_provento=texto_provento[0][0], data_pagamento=data_pagamento)
                     print contador, teste_prov
                     contador += 1
                 except Provento.DoesNotExist:
