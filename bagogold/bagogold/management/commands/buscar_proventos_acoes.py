@@ -22,20 +22,19 @@ class Command(BaseCommand):
     help = 'Busca proventos de ações na Bovespa'
 
     def handle(self, *args, **options):
-        preencher_codigos_cvm()
         # O incremento mostra quantas threads correrão por vez
-#         incremento = 16
-#         acoes = Acao.objects.filter(ticker__in=['BBAS3'])
-#         contador = 0
-#         while contador <= len(acoes):
-#             threads = []
-#             for acao in acoes[contador : min(contador+incremento,len(acoes))]:
-#                 t = BuscaProventosAcaoThread(acao.ticker)
-#                 threads.append(t)
-#                 t.start()
-#             for t in threads:
-#                 t.join()
-#             contador += incremento
+        incremento = 16
+        acoes = Acao.objects.filter(ticker__in=['BBAS3'])
+        contador = 0
+        while contador <= len(acoes):
+            threads = []
+            for acao in acoes[contador : min(contador+incremento,len(acoes))]:
+                t = BuscaProventosAcaoThread(acao.ticker)
+                threads.append(t)
+                t.start()
+            for t in threads:
+                t.join()
+            contador += incremento
 
 
 

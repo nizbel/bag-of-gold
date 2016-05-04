@@ -300,7 +300,7 @@ def preencher_codigos_cvm():
         fim = data.find('</div>', inicio)
         string_importante = (data[inicio:fim])
         letras = re.findall('<a.*?>(.*?)<\/a>', string_importante, flags=re.DOTALL)
-        print letras
+#         print letras
         # Buscar empresas
         empresas = Empresa.objects.all()
         for letra in letras:
@@ -329,4 +329,4 @@ def preencher_codigos_cvm():
                     empresa = empresas.filter(nome_pregao=nome).order_by('-id')[0]
                     empresa.codigo_cvm = codigo
                     empresa.save()
-                    print 'Salvou empresa', empresa
+#                     print 'Salvou empresa', empresa
