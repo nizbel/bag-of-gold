@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao, \
-    OperacaoAcao, AcaoProvento
+    OperacaoAcao, AcaoProvento, Acao, Provento
 from decimal import Decimal
 from django.db.models import Sum, Case, When, IntegerField, F
 from itertools import chain
@@ -254,10 +254,25 @@ def buscar_proventos_acao(ticker):
         inicio = data.find('<div id="divDividendo">')
 #         print 'inicio', inicio
         fim = data.find('<div id="divSubscricao">', inicio)
-        string_importante = (data[inicio:fim]).decode(encoding='ISO-8859-1',errors='strict')
+        string_importante = (data[inicio:fim])
         proventos = re.findall('<tr.*?>(.*?)<\/tr>', string_importante, flags=re.DOTALL)
+        contador = 1
         for provento in proventos:
             texto_provento = re.findall('<td.*?>(.*?)<\/td>', provento)
             texto_provento += re.findall('<span.*?>(.*?)<\/span>', provento)
             if texto_provento:
-                print texto_provento
+#                 print texto_provento
+                # Criar provento
+                data_ex = datetime.datetime.strptime(texto_provento[2],'%d/%m/%Y').date() + datetime.timedelta(days=1)
+                # Incrementa data até que não seja fim de semana
+                while data_ex.weekday() > 4:
+                    data_ex += datetime.timedelta(days=1)
+                provento = Provento(acao=Acao.objects.get(ticker='BBAS3'), valor_unitario=Decimal(texto_provento[3].replace(',', '.')), tipo_provento=texto_provento[0][0], \
+                                    data_pagamento=datetime.datetime.strptime(texto_provento[6],'%d/%m/%Y').date(), observacao=texto_provento[7], data_ex=data_ex)
+                print provento
+                try:
+                    teste_prov = Provento.objects.get(acao__ticker='BBAS3', tipo_provento=texto_provento[0][0], data_pagamento=datetime.datetime.strptime(texto_provento[6],'%d/%m/%Y').date())
+                    print contador, teste_prov
+                    contador += 1
+                except Provento.DoesNotExist:
+                    print 'Nao achou'
