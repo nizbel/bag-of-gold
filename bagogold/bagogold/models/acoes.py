@@ -4,9 +4,11 @@ from django.db import models
 class Acao (models.Model):
     ticker = models.CharField(u'Ticker da ação', max_length=10)
     empresa = models.ForeignKey('Empresa') 
+    tipo = models.CharField(u'Tipo de ação', max_length=5)
     
     class Meta:
         ordering = ['ticker']
+        unique_together = ['ticker', 'empresa', 'tipo']
     
     def __unicode__(self):
         return self.ticker
@@ -19,7 +21,7 @@ class Provento (models.Model):
     """
     tipo_provento = models.CharField(u'Tipo de provento', max_length=1)
     data_ex = models.DateField(u'Data EX')
-    data_pagamento = models.DateField(u'Data do pagamento')
+    data_pagamento = models.DateField(u'Data do pagamento', blank=True, null=True)
     observacao = models.CharField(u'Observação', blank=True, null=True, max_length=300)
     
     def __unicode__(self):
