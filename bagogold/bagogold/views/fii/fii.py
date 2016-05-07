@@ -273,7 +273,7 @@ def historico_fii(request):
         patrimonio = 0
         for fii in qtd_papeis.keys():
             if qtd_papeis[fii] > 0:
-                patrimonio += (qtd_papeis[fii] * float(Share('%s.SA' % (fii)).get_price()))
+                patrimonio += (qtd_papeis[fii] * Decimal(Share('%s.SA' % (fii)).get_price()))
                 
         graf_patrimonio += [[str(calendar.timegm(data_mais_atual.timetuple()) * 1000), float(patrimonio)]]
         

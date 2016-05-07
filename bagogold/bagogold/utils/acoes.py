@@ -238,7 +238,7 @@ def buscar_proventos_acao(codigo_cvm):
     """
     Busca proventos de ações no site da Bovespa
     """
-    acao_url = 'http://bvmf.bmfbovespa.com.br/cias-listadas/empresas-listadas/ResumoEventosCorporativos.aspx?codigoCvm=%s&tab=3.1&idioma=pt-br' % (codigo_cvm)
+    acao_url = 'http://bvmf.bmfbovespa.com.br/cias-listadas/empresas-listadas/ResumoEventosCorporativos.aspx?codigoCvm=%s&tab=3.0&idioma=pt-br' % (codigo_cvm)
     req = Request(acao_url)
     try:
         response = urlopen(req)
@@ -252,9 +252,9 @@ def buscar_proventos_acao(codigo_cvm):
         data = response.read()
         if 'Sistema indisponivel' in data:
             return buscar_proventos_acao(codigo_cvm)
-        inicio = data.find('<tbody>')
+        inicio = data.find('<div id="divDividendo">')
 #         print 'inicio', inicio
-        fim = data.find('</tbody>', inicio)
+        fim = data.find('<div id="divSubscricao">', inicio)
         string_importante = (data[inicio:fim])
         proventos = re.findall('<tr.*?>(.*?)<\/tr>', string_importante, flags=re.DOTALL)
         contador = 1
@@ -278,7 +278,7 @@ def buscar_proventos_acao(codigo_cvm):
                                     data_pagamento=data_pagamento, observacao=texto_provento[7], data_ex=data_ex)
                 print provento
                 try:
-                    teste_prov = Provento.objects.get(acao__ticker='BBAS3', tipo_provento=texto_provento[0][0], data_pagamento=data_pagamento)
+                    teste_prov = Provento.objects.get(acao__ticker='BBAS3', tipo_provento=texto_provento[0][0], data_ex=data_ex)
                     print contador, teste_prov
                     contador += 1
                 except Provento.DoesNotExist:

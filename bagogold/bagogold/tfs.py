@@ -44,7 +44,7 @@ def ler_serie_historica_anual_bovespa(nome_arquivo):
                 if criado:
                     print ticker, 'em', data, 'criado'
             elif line[39:41] == 'ON' or (line[39:41] == 'PN'):
-                if len(ticker) == 5 :
+                if len(ticker) == 5 and int(ticker[4]) in [3,4,5,6,7,8]:
 #                     print line[12:24], line[39:49]
                     if ticker in acoes_lista:
                         objeto, criado = HistoricoAcao.objects.update_or_create(acao=acoes.get(ticker=ticker), data=data, defaults={'preco_unitario':valor, 'oficial_bovespa': True})
