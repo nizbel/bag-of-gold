@@ -4,6 +4,9 @@ from django.db import models
 class Acao (models.Model):
     ticker = models.CharField(u'Ticker da ação', max_length=10)
     empresa = models.ForeignKey('Empresa') 
+    """
+    Tipos 3 (ON), 4 (PN), 5 (PNA), 6 (PNB), 7 (PNC), e 8 (PND)
+    """
     tipo = models.CharField(u'Tipo de ação', max_length=5)
     
     class Meta:
