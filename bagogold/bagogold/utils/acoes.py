@@ -200,6 +200,35 @@ def calcular_media_proventos_6_meses(proventos, operacoes):
         
     return graf_proventos_mes
 
+def calcular_lucro_trade_ate_data(data):
+    """
+    Calcula o lucro acumulado em trades até a data especificada
+    Parâmetros: Data
+    Retorno: Lucro/Prejuízo
+    """
+    trades = OperacaoAcao.objects.exclude(data__isnull=True).filter(tipo_operacao='V', destinacao='T', data__lt=data).order_by('data')
+    lucro_acumulado = 0
+    
+    for operacao in trades:
+        venda_com_taxas = operacao.quantidade * operacao.preco_unitario - operacao.emolumentos - operacao.corretagem
+        
+        # Calcular lucro bruto da operação de venda
+        # Pegar operações de compra
+        # TODO PREPARAR CASO DE MUITAS COMPRAS PARA MUITAS VENDAS
+        qtd_compra = 0
+        gasto_total_compras = 0
+        for operacao_compra in operacao.venda.get_queryset().order_by('compra__preco_unitario'):
+            qtd_compra += min(operacao_compra.compra.quantidade, operacao.quantidade)
+            # TODO NAO PREVÊ MUITAS COMPRAS PARA MUITAS VENDAS
+            gasto_total_compras += (qtd_compra * operacao_compra.compra.preco_unitario + operacao_compra.compra.emolumentos + \
+                                    operacao_compra.compra.corretagem)
+        
+        lucro_bruto_venda = (operacao.quantidade * operacao.preco_unitario - operacao.corretagem - operacao.emolumentos) - \
+            gasto_total_compras
+        lucro_acumulado += lucro_bruto_venda
+        
+    return lucro_acumulado
+
 def quantidade_acoes_ate_dia(ticker, dia):
     """ 
     Calcula a quantidade de ações até dia determinado

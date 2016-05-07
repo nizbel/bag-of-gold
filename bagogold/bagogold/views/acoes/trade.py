@@ -3,6 +3,7 @@ from bagogold.bagogold.forms.operacao_acao import OperacaoAcaoForm
 from bagogold.bagogold.forms.operacao_compra_venda import \
     OperacaoCompraVendaForm
 from bagogold.bagogold.models.acoes import OperacaoAcao, OperacaoCompraVenda
+from bagogold.bagogold.utils.acoes import calcular_lucro_trade_ate_data
 from decimal import Decimal
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
@@ -63,7 +64,7 @@ def acompanhamento_mensal(request):
     operacoes_compra = {}
     operacoes_venda = {}
     
-    dados_mes = {'ano': ano, 'mes': mes, 'qtd_compra': 0, 'qtd_venda': 0, 'qtd_op_compra': 0, 
+    dados_mes = {'ano': ano, 'mes': mes, 'qtd_compra': 0, 'qtd_venda': 0, 'qtd_op_compra': 0, 'lucro_acumulado': 0,
                  'qtd_op_venda': 0, 'lucro_bruto': 0, 'total_corretagem' : 0, 'total_emolumentos': 0}
     acoes_lucro = {}
     
@@ -95,9 +96,9 @@ def acompanhamento_mensal(request):
             qtd_compra = 0
             gasto_total_compras = 0
             for operacao_compra in operacao.venda.get_queryset().order_by('compra__preco_unitario'):
-                qtd_compra += operacao_compra.compra.quantidade
+                qtd_compra += min(operacao_compra.compra.quantidade, operacao.quantidade)
                 # TODO NAO PREVÊ MUITAS COMPRAS PARA MUITAS VENDAS
-                gasto_total_compras += (operacao_compra.compra.quantidade * operacao_compra.compra.preco_unitario + operacao_compra.compra.emolumentos + \
+                gasto_total_compras += (qtd_compra * operacao_compra.compra.preco_unitario + operacao_compra.compra.emolumentos + \
                                         operacao_compra.compra.corretagem)
             
             lucro_bruto_venda = (operacao.quantidade * operacao.preco_unitario - operacao.corretagem - operacao.emolumentos) - \
@@ -132,6 +133,9 @@ def acompanhamento_mensal(request):
         acoes_lucro_ordenado = sorted(acoes_lucro.items(), key=operator.itemgetter(1), reverse=True)
         dados_mes['mais_lucrativa'] = acoes_lucro_ordenado[0]
         dados_mes['menos_lucrativa'] = acoes_lucro_ordenado[len(acoes_lucro)-1]
+    
+    # Calcular lucro acumulado até o mes escolhido
+    dados_mes['lucro_acumulado'] = calcular_lucro_trade_ate_data(datetime.date(ano, mes, 1))
     
     # Preencher gráficos de compras e vendas
     for key, value in sorted(operacoes_compra.iteritems(), key=operator.itemgetter(0)):
