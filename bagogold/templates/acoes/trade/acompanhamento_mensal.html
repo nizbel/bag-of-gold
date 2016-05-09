@@ -97,6 +97,10 @@
                         <span class="{% if acao.1 >= 0 %} green {% else %} red {% endif %}">{{ acao.0 }} (R${{ acao.1 }})</span>                                  
                     </a>
                 </li>
+                {% empty %}
+                <li>
+                    <a><span>Não houve vendas</span></a>
+                </li>
                 {% endfor %}
             </ul>
         </div>
