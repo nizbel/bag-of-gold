@@ -40,7 +40,7 @@ def home(request):
         
     operacoes_lc = OperacaoLetraCredito.objects.exclude(data__isnull=True).order_by('data')  
     
-    lista_operacoes = sorted(chain(operacoes_fii, proventos_fii, operacoes_td, proventos_bh,  operacoes_bh, operacoes_lc),
+    lista_operacoes = sorted(chain(proventos_fii, operacoes_fii, operacoes_td, proventos_bh,  operacoes_bh, operacoes_lc),
                             key=attrgetter('data'))
     # Pegar ano da primeira operacao feita
     ano_corrente = lista_operacoes[0].data.year
