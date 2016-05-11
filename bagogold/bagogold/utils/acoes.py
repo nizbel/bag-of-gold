@@ -2,13 +2,14 @@
 from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao, \
     OperacaoAcao, AcaoProvento, Acao, Provento
 from bagogold.bagogold.models.empresa import Empresa
-from decimal import Decimal
+from decimal import Decimal, ROUND_DOWN, ROUND_HALF_DOWN, ROUND_UP
 from django.db.models import Sum, Case, When, IntegerField, F
 from itertools import chain
-from operator import attrgetter
+from operator import attrgetter, itemgetter
 from urllib2 import Request, urlopen, HTTPError, URLError
 import calendar
 import datetime
+import mechanize
 import re
 
 def calcular_operacoes_sem_proventos_por_mes(operacoes):
@@ -229,14 +230,17 @@ def calcular_lucro_trade_ate_data(data):
         
     return lucro_acumulado
 
-def quantidade_acoes_ate_dia(ticker, dia):
+def quantidade_acoes_ate_dia(ticker, dia, considerar_trade=False):
     """ 
     Calcula a quantidade de ações até dia determinado
     Parâmetros: Ticker da ação
                 Dia final
     Retorno: Quantidade de ações
     """
-    operacoes = OperacaoAcao.objects.filter(destinacao='B', acao__ticker=ticker, data__lte=dia).exclude(data__isnull=True).order_by('data')
+    if considerar_trade:
+        operacoes = OperacaoAcao.objects.filter(acao__ticker=ticker, data__lte=dia).exclude(data__isnull=True).order_by('data')
+    else:
+        operacoes = OperacaoAcao.objects.filter(destinacao='B', acao__ticker=ticker, data__lte=dia).exclude(data__isnull=True).order_by('data')
     # Pega os proventos em ações recebidos por outras ações
     proventos_em_acoes = AcaoProvento.objects.filter(acao_recebida__ticker=ticker).order_by('provento__data_ex')
     for provento in proventos_em_acoes:
@@ -260,15 +264,56 @@ def quantidade_acoes_ate_dia(ticker, dia):
                 qtd_acoes += int(item.provento.valor_unitario * qtd_acoes / 100)
             else:
                 qtd_acoes += int(item.provento.valor_unitario * quantidade_acoes_ate_dia(item.provento.acao.ticker, item.data) / 100)
-    
     return qtd_acoes
 
 def buscar_proventos_acao(codigo_cvm):
     """
     Busca proventos de ações no site da Bovespa
     """
-    acao_url = 'http://bvmf.bmfbovespa.com.br/cias-listadas/empresas-listadas/ResumoEventosCorporativos.aspx?codigoCvm=%s&tab=3.0&idioma=pt-br' % (codigo_cvm)
-    req = Request(acao_url)
+    # Busca os dados dos proventos em 2 URLs da bovespa
+    # Proventos em dinheiro
+    prov_dinheiro_url = 'http://bvmf.bmfbovespa.com.br/cias-listadas/empresas-listadas/ResumoEventosCorporativos.aspx?codigoCvm=%s&tab=3.1&idioma=pt-br' % (codigo_cvm)
+    # Usar mechanize para simular clique do usuario no javascript
+    br = mechanize.Browser()
+    br.addheaders = [('User-agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1')]
+    response = br.open(prov_dinheiro_url)
+    
+    html = response.read()
+
+    br.select_form(nr=0)
+    br.set_all_readonly(False)
+    mnext = re.search("""<a.*?href=\"javascript:__doPostBack\('(.*?)','(.*?)'\)\".*?id=\"ctl00_contentPlaceHolderConteudo_MenuEmpresasListadas1_tabMenuEmpresa_tabEventosCorporativos_tabProventosDinheiro\".*?>\*?Proventos em dinheiro""", html, re.IGNORECASE)
+    if not mnext:
+        print 'not found'
+        return
+    br["__EVENTTARGET"] = mnext.group(1)
+    br["__EVENTARGUMENT"] = mnext.group(2)
+    br.find_control("ctl00$botaoNavegacaoVoltar").disabled = True
+    response = br.submit()
+    html = response.read()
+    if 'Sistema indisponivel' in html:
+        return buscar_proventos_acao(codigo_cvm)
+    
+    inicio = html.find('<tbody>')
+#         print 'inicio', inicio
+    fim = html.find('</tbody>', inicio)
+    string_importante = (html[inicio:fim])
+    proventos_dinheiro_texto = re.findall('<tr.*?>(.*?)<\/tr>', string_importante, flags=re.DOTALL)
+    proventos_dinheiro = list()
+    for texto_provento in proventos_dinheiro_texto:
+        provento = re.findall('<td.*?>(.*?)<\/td>', texto_provento)
+        if provento:
+            provento[5] = datetime.datetime.strptime(provento[5],'%d/%m/%Y').date() + datetime.timedelta(days=1)
+            while provento[5].weekday() > 4:
+                provento[5] += datetime.timedelta(days=1)
+            proventos_dinheiro.append(provento)
+    proventos_dinheiro = sorted(proventos_dinheiro, key=itemgetter(5))
+#     for provento_dinheiro in proventos_dinheiro:
+#         print provento_dinheiro
+        
+    # Busca todos os proventos
+    prov_url = 'http://bvmf.bmfbovespa.com.br/cias-listadas/empresas-listadas/ResumoEventosCorporativos.aspx?codigoCvm=%s&tab=3.0&idioma=pt-br' % (codigo_cvm)
+    req = Request(prov_url)
     try:
         response = urlopen(req)
     except HTTPError as e:
@@ -287,6 +332,7 @@ def buscar_proventos_acao(codigo_cvm):
         string_importante = (data[inicio:fim])
         proventos = re.findall('<tr.*?>(.*?)<\/tr>', string_importante, flags=re.DOTALL)
         contador = 1
+        total = 0
         for provento in proventos:
             texto_provento = re.findall('<td.*?>(.*?)<\/td>', provento)
             texto_provento += re.findall('<span.*?>(.*?)<\/span>', provento)
@@ -305,13 +351,38 @@ def buscar_proventos_acao(codigo_cvm):
                     data_pagamento = None
                 provento = Provento(acao=Acao.objects.get(ticker='BBAS3'), valor_unitario=Decimal(texto_provento[3].replace(',', '.')), tipo_provento=texto_provento[0][0], \
                                     data_pagamento=data_pagamento, observacao=texto_provento[7], data_ex=data_ex)
-                print provento
+                
                 try:
                     teste_prov = Provento.objects.get(acao__ticker='BBAS3', tipo_provento=texto_provento[0][0], data_ex=data_ex)
-                    print contador, teste_prov
+#                     print contador, teste_prov
+#                     print provento
+                    for provento_dinheiro in proventos_dinheiro:
+                        if provento_dinheiro[5] == data_ex:
+#                             print provento_dinheiro
+                            valor = Decimal(quantidade_acoes_ate_dia('BBAS3', datetime.datetime.strptime(texto_provento[2],'%d/%m/%Y').date(), True))
+                            if (provento_dinheiro[4][0] == 'R'):
+                                valor *= Decimal(provento_dinheiro[2].replace(',', '.')) * Decimal(0.775)
+                                print valor, valor.quantize(Decimal('0.01'), rounding=ROUND_HALF_DOWN)
+                                total += valor.quantize(Decimal('0.01'), rounding=ROUND_HALF_DOWN)
+                            elif (provento_dinheiro[4][0] == 'J'):
+                                valor *= Decimal(provento_dinheiro[2].replace(',', '.')) * Decimal(0.85)
+                                texto_valor = str(valor)
+#                                 print len(texto_valor[texto_valor.find('.')+1:]), texto_valor[texto_valor.find('.')+1:], texto_valor[texto_valor.find('.')+1:][1]
+                                if len(texto_valor[texto_valor.find('.')+1:]) > 2 and int(texto_valor[texto_valor.find('.')+1:][1]) % 2 != 0:
+                                    print valor, valor.quantize(Decimal('0.01'), rounding=ROUND_HALF_DOWN)
+                                    total += valor.quantize(Decimal('0.01'), rounding=ROUND_HALF_DOWN)
+                                else:
+                                    print valor, valor.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
+                                    total += valor.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
+                            else:
+                                valor *= Decimal(provento_dinheiro[2].replace(',', '.'))
+                                print valor, valor.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
+                                total += valor.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
                     contador += 1
                 except Provento.DoesNotExist:
-                    print 'Nao achou'
+#                     print 'Nao achou'
+                    pass
+    print total
                     
 def preencher_codigos_cvm():
     """
