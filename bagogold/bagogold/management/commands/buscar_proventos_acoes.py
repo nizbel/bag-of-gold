@@ -35,10 +35,6 @@ class Command(BaseCommand):
             for t in threads:
                 t.join()
             contador += incremento
-
-
-
-
-
-
-# http://bvmf.bmfbovespa.com.br/cias-listadas/empresas-listadas/ResumoEventosCorporativos.aspx?codigoCvm=1023&tab=3&idioma=pt-br
+        
+        
+        

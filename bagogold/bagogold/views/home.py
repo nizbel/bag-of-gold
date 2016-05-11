@@ -135,8 +135,6 @@ def home(request):
                     acoes[item.acao.ticker] = 0 
                 if item.tipo_provento in ['D', 'J']:
                     total_recebido = acoes[item.acao.ticker] * item.valor_unitario
-                    if item.acao.ticker == 'BBAS3':
-                        print acoes[item.acao.ticker], item
                     if item.tipo_provento == 'J':
                         total_recebido = total_recebido * Decimal(0.85)
                     total_proventos_bh += total_recebido
