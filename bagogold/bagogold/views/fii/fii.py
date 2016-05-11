@@ -185,7 +185,8 @@ def historico_fii(request):
         provento.data = provento.data_ex
         provento.tipo = 'Provento'
     
-    lista_conjunta = sorted(chain(operacoes, proventos),
+    # Proventos devem ser computados primeiro na data EX
+    lista_conjunta = sorted(chain(proventos, operacoes),
                             key=attrgetter('data'))
     
     qtd_papeis = {}
@@ -350,7 +351,8 @@ def painel(request):
     for provento in proventos:
         provento.data = provento.data_ex
     
-    lista_conjunta = sorted(chain(operacoes, proventos),
+    # Proventos devem ser computados primeiro na data EX
+    lista_conjunta = sorted(chain(proventos, operacoes),
                             key=attrgetter('data'))
     
     fiis = {}
