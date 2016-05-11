@@ -32,6 +32,7 @@ def home(request):
         proventos_fii = list()
     
     operacoes_td = OperacaoTitulo.objects.exclude(data__isnull=True).order_by('data')
+    
     operacoes_bh = OperacaoAcao.objects.filter(destinacao='B').exclude(data__isnull=True).order_by('data')
     proventos_bh = Provento.objects.exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).filter(acao__in=operacoes_bh.values_list('acao', flat=True)).order_by('data_ex')
     for provento in proventos_bh:
@@ -39,7 +40,7 @@ def home(request):
         
     operacoes_lc = OperacaoLetraCredito.objects.exclude(data__isnull=True).order_by('data')  
     
-    lista_operacoes = sorted(chain(operacoes_fii, proventos_fii, operacoes_td, operacoes_bh, proventos_bh, operacoes_lc),
+    lista_operacoes = sorted(chain(operacoes_fii, proventos_fii, operacoes_td, proventos_bh,  operacoes_bh, operacoes_lc),
                             key=attrgetter('data'))
     # Pegar ano da primeira operacao feita
     ano_corrente = lista_operacoes[0].data.year
@@ -134,6 +135,8 @@ def home(request):
                     acoes[item.acao.ticker] = 0 
                 if item.tipo_provento in ['D', 'J']:
                     total_recebido = acoes[item.acao.ticker] * item.valor_unitario
+                    if item.acao.ticker == 'BBAS3':
+                        print acoes[item.acao.ticker], item
                     if item.tipo_provento == 'J':
                         total_recebido = total_recebido * Decimal(0.85)
                     total_proventos_bh += total_recebido
