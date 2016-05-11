@@ -108,7 +108,8 @@ def estatisticas_acao(request, ticker=None):
         provento.data = provento.data_ex
         proventos.append(provento)
         
-    lista_conjunta = sorted(chain(operacoes, proventos), key=attrgetter('data'))
+    # Proventos devem vir antes
+    lista_conjunta = sorted(chain(proventos, operacoes), key=attrgetter('data'))
     
     graf_historico = list()
     graf_historico_proventos = list()
@@ -248,7 +249,8 @@ def historico(request):
 #     for taxa in taxas_custodia:
 #         taxa.data = datetime.date(taxa.ano_vigencia, taxa.mes_vigencia, 1)
     
-    lista_conjunta = sorted(chain(operacoes, proventos),
+    # Na lista conjunta proventos devem vir antes (data EX antes de operações do dia)
+    lista_conjunta = sorted(chain(proventos, operacoes),
                             key=attrgetter('data'))
     
     # Adicionar dias de pagamento de taxa de custodia
@@ -542,10 +544,6 @@ def painel(request):
         pass
     
     operacoes = OperacaoAcao.objects.filter(destinacao='B').exclude(data__isnull=True).order_by('data')
-
-    proventos_em_acoes = AcaoProvento.objects.filter().order_by('provento__data_ex')
-    
-    taxas_custodia = TaxaCustodiaAcao.objects.filter().order_by('ano_vigencia', 'mes_vigencia')
 
     # Guarda as ações correntes para o calculo do patrimonio
     acoes = {}
