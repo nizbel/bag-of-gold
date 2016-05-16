@@ -266,13 +266,13 @@ def quantidade_acoes_ate_dia(ticker, dia, considerar_trade=False):
                 qtd_acoes += int(item.provento.valor_unitario * quantidade_acoes_ate_dia(item.provento.acao.ticker, item.data) / 100)
     return qtd_acoes
 
-def buscar_proventos_acao(codigo_cvm):
+def buscar_proventos_acao(codigo_cvm, ticker):
     """
     Busca proventos de ações no site da Bovespa
     """
     # Busca os dados dos proventos em 2 URLs da bovespa
     # Proventos em dinheiro
-    prov_dinheiro_url = 'http://bvmf.bmfbovespa.com.br/cias-listadas/empresas-listadas/ResumoEventosCorporativos.aspx?codigoCvm=%s&tab=3.1&idioma=pt-br' % (codigo_cvm)
+    prov_dinheiro_url = 'http://bvmf.bmfbovespa.com.br/cias-listadas/empresas-listadas/ResumoEventosCorporativos.aspx?codigoCvm=%s&tab=3.0&idioma=pt-br' % (codigo_cvm)
     # Usar mechanize para simular clique do usuario no javascript
     br = mechanize.Browser()
     br.addheaders = [('User-agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1')]
@@ -292,7 +292,7 @@ def buscar_proventos_acao(codigo_cvm):
     response = br.submit()
     html = response.read()
     if 'Sistema indisponivel' in html:
-        return buscar_proventos_acao(codigo_cvm)
+        return buscar_proventos_acao(codigo_cvm, ticker)
     
     inicio = html.find('<tbody>')
 #         print 'inicio', inicio
@@ -349,17 +349,15 @@ def buscar_proventos_acao(codigo_cvm):
                     data_pagamento = datetime.datetime.strptime(texto_provento[6],'%d/%m/%Y').date()
                 except:
                     data_pagamento = None
-                provento = Provento(acao=Acao.objects.get(ticker='BBAS3'), valor_unitario=Decimal(texto_provento[3].replace(',', '.')), tipo_provento=texto_provento[0][0], \
+                provento = Provento(acao=Acao.objects.get(ticker=ticker), valor_unitario=Decimal(texto_provento[3].replace(',', '.')), tipo_provento=texto_provento[0][0], \
                                     data_pagamento=data_pagamento, observacao=texto_provento[7], data_ex=data_ex)
                 
-                try:
-                    teste_prov = Provento.objects.get(acao__ticker='BBAS3', tipo_provento=texto_provento[0][0], data_ex=data_ex)
-#                     print contador, teste_prov
-#                     print provento
-                    for provento_dinheiro in proventos_dinheiro:
-                        if provento_dinheiro[5] == data_ex:
+#                 print provento
+                for provento_dinheiro in proventos_dinheiro:
+                    if provento_dinheiro[5] == data_ex:
 #                             print provento_dinheiro
-                            valor = Decimal(quantidade_acoes_ate_dia('BBAS3', datetime.datetime.strptime(texto_provento[2],'%d/%m/%Y').date(), True))
+                        valor = Decimal(quantidade_acoes_ate_dia(ticker, datetime.datetime.strptime(texto_provento[2],'%d/%m/%Y').date(), True))
+                        if valor > 0:
                             if (provento_dinheiro[4][0] == 'R'):
                                 valor *= Decimal(provento_dinheiro[2].replace(',', '.')) * Decimal(0.775)
                                 print valor, valor.quantize(Decimal('0.01'), rounding=ROUND_HALF_DOWN)
@@ -378,11 +376,10 @@ def buscar_proventos_acao(codigo_cvm):
                                 valor *= Decimal(provento_dinheiro[2].replace(',', '.'))
                                 print valor, valor.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
                                 total += valor.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
-                    contador += 1
-                except Provento.DoesNotExist:
-#                     print 'Nao achou'
-                    pass
-    print total
+                            # Remover elemento da lista (evitar duplicidade)
+                            proventos_dinheiro = [x for x in proventos_dinheiro if x[5] != data_ex]
+                contador += 1
+    print ticker, total
                     
 def preencher_codigos_cvm():
     """

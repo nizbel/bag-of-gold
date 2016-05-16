@@ -5,13 +5,14 @@ from django.core.management.base import BaseCommand
 from threading import Thread
 
 class BuscaProventosAcaoThread(Thread):
-    def __init__(self, codigo_cvm):
+    def __init__(self, codigo_cvm, ticker):
         self.codigo_cvm = codigo_cvm 
+        self.ticker = ticker
         super(BuscaProventosAcaoThread, self).__init__()
  
     def run(self):
         try:
-            buscar_proventos_acao(self.codigo_cvm)
+            buscar_proventos_acao(self.codigo_cvm, self.ticker)
         except Exception as e:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
             message = template.format(type(e).__name__, e.args)
@@ -23,13 +24,13 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # O incremento mostra quantas threads correrão por vez
-        incremento = 16
-        acoes = Acao.objects.filter(ticker__in=['BBAS3'])
+        incremento = 1
+        acoes = Acao.objects.filter(ticker__in=['BBAS3', 'ABEV3', 'CIEL3', 'TBLE3'])
         contador = 0
         while contador <= len(acoes):
             threads = []
             for acao in acoes[contador : min(contador+incremento,len(acoes))]:
-                t = BuscaProventosAcaoThread(acao.empresa.codigo_cvm)
+                t = BuscaProventosAcaoThread(acao.empresa.codigo_cvm, acao.ticker)
                 threads.append(t)
                 t.start()
             for t in threads:
