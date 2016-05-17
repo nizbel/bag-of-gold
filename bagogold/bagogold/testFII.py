@@ -158,7 +158,9 @@ def buscar_rendimentos_fii(ticker):
     
 #     proventos_novo = list()
     for url in urls:
-        proventos.append((ler_demonstrativo_rendimentos(url, ticker),url))
+        rendimento = ler_demonstrativo_rendimentos(url, ticker)
+        print rendimento in [provento[0] for provento in proventos]
+        proventos.append((rendimento,url))
     
     # Adicionar proventos
     # Buscar FII
@@ -176,9 +178,14 @@ def buscar_rendimentos_fii(ticker):
             if len(datas_lidas) >= 2:
                 # Primeiro valor é o do provento
                 valor = Decimal(provento[0][1][0].replace(' ', '').replace(',', '.'))
-#                     print ticker, ':', datas_lidas[-2:], valor 
+                print ticker, ':', datas_lidas[-2:], valor 
                 novo_provento = ProventoFII(fii=fii, data_ex=datas_lidas[-2], data_pagamento=datas_lidas[-1], valor_unitario=valor, url_documento=provento[1])
 #                     novo_provento.save()
+                try:
+                    provento_atual = ProventoFII.objects.get(fii__ticker=ticker, data_ex=datas_lidas[-2])
+                    print provento_atual
+                except:
+                    print 'nao achou'
                 
         
         
