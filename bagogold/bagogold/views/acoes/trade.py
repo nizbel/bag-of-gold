@@ -27,7 +27,7 @@ LISTA_MESES = [['Janeiro', 1],   ['Fevereiro', 2],
 @login_required
 def acompanhamento_mensal(request):
     if request.method == 'POST':
-        ano = int(request.POST.get('select_ano', datetime.date.today().year))
+        ano = int(request.POST.get('select_ano', datetime.date.today().year).replace('.', ''))
         # Valor padrão para mês
         mes = datetime.date.today().month
         for possivel_mes in range(1,13):
