@@ -1,4 +1,5 @@
-    {% extends "base.html" %}
+{% extends "base.html" %}
+{% load l10n %}
 
 {% block content %}
 <div class="row-fluid">
@@ -23,7 +24,7 @@
             {% for operacao in operacoes %}
         <tr>
             <td>{{operacao.nome}}</td>
-            <td>{{operacao.data}}</td>
+            <td>{{operacao.data|unlocalize}}</td>
             <td>{{operacao.quantidade}}</td>
             <td>R${{operacao.preco_unitario}}</td>
             <td>R${{operacao.total_gasto|floatformat:"2"}}</td>
@@ -77,13 +78,13 @@
             {% for operacao in operacoes %}
         <tr>
             <td>{{operacao.nome}}</td>
-            <td>{{operacao.data}}</td>
+            <td>{{operacao.data|unlocalize}}</td>
             <td>{{operacao.quantidade}}</td>
             <td>R${{operacao.preco_unitario}}</td>
             <td>R${{operacao.total_gasto|floatformat:"2"}}</td>
             <td>R${{operacao.valor_atual}}</td>
             <td>R${{operacao.valor_total_atual|floatformat:"2"}}</td>
-            <td>{{operacao.data_venda}}</td>
+            <td>{{operacao.data_venda|unlocalize}}</td>
             <td>R${{operacao.variacao}}</td>
             <td>{{operacao.variacao_percentual|floatformat:"2"}}% ({{operacao.variacao_percentual_mensal|floatformat:"2"}}%/{{operacao.variacao_percentual_anual|floatformat:"2"}}%)</td>
             <td>R${{operacao.lucro|floatformat:"2"}} ({{operacao.lucro_percentual|floatformat:"2"}}%)</td>
