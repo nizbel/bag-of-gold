@@ -24,7 +24,7 @@ class Titulo (models.Model):
             return u'Título não encontrado'
     
     def __unicode__(self):
-        return '%s %s (%s)' % (self.nome(), self.data_vencimento.year,self.tipo)
+        return '%s (%s)' % (self.nome(), self.tipo)
     
     def titulo_vencido(self):
         if datetime.date.today() >= self.data_vencimento:
@@ -52,6 +52,10 @@ class HistoricoTitulo (models.Model):
     taxa_venda = models.DecimalField(u'Taxa de venda', max_digits=5, decimal_places=2)
     preco_compra = models.DecimalField(u'Preço de compra', max_digits=11, decimal_places=2)
     preco_venda = models.DecimalField(u'Preço de venda', max_digits=11, decimal_places=2)
+    
+    def __unicode__(self):
+        return str(self.titulo) + ' em ' + self.data + ': R$' + str(self.preco_compra) + '(' + str(self.taxa_compra) + ')' + \
+            '/R$' + str(self.preco_venda) + '(' + str(self.taxa_venda) + ')'
     
     def save(self, *args, **kw):
         try:
