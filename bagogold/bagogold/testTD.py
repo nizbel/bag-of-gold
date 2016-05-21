@@ -4,7 +4,9 @@ from bagogold.bagogold.models.td import HistoricoTitulo, Titulo, \
 from bagogold.bagogold.utils.td import criar_data_inicio_titulos
 from decimal import Decimal
 from urllib2 import Request, urlopen, URLError, HTTPError
+import cgi
 import datetime
+import mechanize
 import pyexcel
 import pyexcel.ext.xls
 import pytz
@@ -90,71 +92,78 @@ def baixar_historico_td_ano(ano):
     Baixa o histórico de todos os títulos para um ano
     Parâmetro: ano (inteiro ou string)
     """
-    td_url = 'http://www.tesouro.fazenda.gov.br/tesouro-direto-balanco-e-estatisticas'
-    req = Request(td_url)
-    try:
-        response = urlopen(req)
-    except HTTPError as e:
-        print 'The server couldn\'t fulfill the request.'
-        print 'Error code: ', e.code
-    except URLError as e:
-        print 'We failed to reach a server.'
-        print 'Reason: ', e.reason
-    else:
-        print 'Host: %s' % (req.get_host())
-        data = response.read()
-        string_importante = (data[data.find('Histórico de Preços e Taxas'):
-                                 data.find('Formação de Preços')])
-        urls = re.findall('[h]?[t]?[t]?[p]?[s]?[:]?[\/]?[\/]?(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+\.xls', string_importante)
-        for url in urls:
-            if not ('http://' in url or 'https://' in url):
-                url = 'http://' + req.get_host() + url
-            print 'Downloading from %s' % (url)
-            if str(ano) in url:
-                response_xls = urlopen(url)
-                xls = response_xls.read()
-                book = pyexcel.get_book(file_type="xls", file_content=xls, name_columns_by_row=0)
-                sheets = book.to_dict()
-                for key in sheets.keys():
-                    titulo_vencimento = sheets[key]
-                    espaco = ' '
-                    tipo = espaco.join(key.split(' ')[0 : len(key.split(' '))-1])
-                    data = time.strptime(key.split(' ')[len(key.split(' '))-1][0:4] + '20' + key.split(' ')[len(key.split(' '))-1][4:], "%d%m%Y")
-                    data = time.strftime('%Y-%m-%d', data)
+#     td_url = 'http://www.tesouro.fazenda.gov.br/tesouro-direto-balanco-e-estatisticas'
+    td_url = 'http://sisweb.tesouro.gov.br/apex/f?p=2031:2'
+    url_base = 'http://sisweb.tesouro.gov.br/apex/'
+    
+    # Usar mechanize para simular clique do usuario no javascript
+    br = mechanize.Browser()
+    br.addheaders = [('User-agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1')]
+    response = br.open(td_url)
+    
+    data = response.read()
+    
+    inicio = data.find('Histórico de preços e taxas')
+    fim = data.find('</div>', inicio)
+    string_importante = data[inicio:fim]
+    print string_importante
+    
+    urls = re.findall('href="(.*?)"', string_importante)
+    for url in urls:
+        url = url_base + url
+        print 'Downloading from %s' % (url)
+#         if str(ano) in url:
+        response_xls = urlopen(url)
+        _, params = cgi.parse_header(response_xls.headers.get('Content-Disposition', ''))
+        filename = params['filename']
+        print filename
+        
+        if str(ano) in filename:
+            xls = response_xls.read()
+            
+            book = pyexcel.get_book(file_type="xls", file_content=xls, name_columns_by_row=0)
+            sheets = book.to_dict()
+            for key in sheets.keys():
+                titulo_vencimento = sheets[key]
+                espaco = ' '
+                tipo = espaco.join(key.split(' ')[0 : len(key.split(' '))-1])
+                data = time.strptime(key.split(' ')[len(key.split(' '))-1][0:4] + '20' + key.split(' ')[len(key.split(' '))-1][4:], "%d%m%Y")
+                data = time.strftime('%Y-%m-%d', data)
     #                 print(data)
-                    try:
-                        titulo = Titulo.objects.get(tipo=tipo, data_vencimento=data)
-                    except Titulo.DoesNotExist:
-                        titulo = Titulo(tipo=tipo, data_vencimento=data)
-                        titulo.save()
-                    for linha in range(2,len(titulo_vencimento)):
-                        # Testar se a linha de data está vazia, passar ao proximo
-                        if titulo_vencimento[linha][0] == '':
-                            break
+                try:
+                    titulo = Titulo.objects.get(tipo=tipo, data_vencimento=data)
+                except Titulo.DoesNotExist:
+                    titulo = Titulo(tipo=tipo, data_vencimento=data)
+                    titulo.save()
+                for linha in range(2,len(titulo_vencimento)):
+                    # Testar se a linha de data está vazia, passar ao proximo
+                    if titulo_vencimento[linha][0] == '':
+                        break
     #                     print('Data: %s... type: %s' % (titulo_vencimento[linha][0], type(titulo_vencimento[linha][0])))
-                        
-                        # Formatar data
-                        if isinstance(titulo_vencimento[linha][0], (str, unicode)):
-                            data_formatada = time.strptime(titulo_vencimento[linha][0], "%d/%m/%Y")
-                            data_formatada = time.strftime('%Y-%m-%d', data_formatada)
-                        else:
-                            data_formatada = time.strftime('%Y-%m-%d', titulo_vencimento[linha][0].timetuple())
-                        if data_formatada >= data:
-                            break
-                        inserir_na_base = True
-                        # Testar se os valores estao ok
-                        try:
-                            float(titulo_vencimento[linha][1])
-                            float(titulo_vencimento[linha][2])
-                            float(titulo_vencimento[linha][3])
-                            float(titulo_vencimento[linha][4])
-                        except ValueError:
-                            inserir_na_base = False
-                        # Inserir na base
-                        if inserir_na_base:
-                            historico = HistoricoTitulo(titulo=titulo, data=data_formatada, taxa_compra=titulo_vencimento[linha][1]*100, taxa_venda=titulo_vencimento[linha][2]*100,
-                                                        preco_compra=titulo_vencimento[linha][3], preco_venda=titulo_vencimento[linha][4])
-                            historico.save()
+                    
+                    # Formatar data
+                    if isinstance(titulo_vencimento[linha][0], (str, unicode)):
+                        data_formatada = time.strptime(titulo_vencimento[linha][0], "%d/%m/%Y")
+                        data_formatada = time.strftime('%Y-%m-%d', data_formatada)
+                    else:
+                        data_formatada = time.strftime('%Y-%m-%d', titulo_vencimento[linha][0].timetuple())
+                    if data_formatada >= data:
+                        break
+                    inserir_na_base = True
+                    # Testar se os valores estao ok
+                    try:
+                        float(titulo_vencimento[linha][1])
+                        float(titulo_vencimento[linha][2])
+                        float(titulo_vencimento[linha][3])
+                        float(titulo_vencimento[linha][4])
+                    except ValueError:
+                        inserir_na_base = False
+                    # Inserir na base
+                    if inserir_na_base:
+                        historico = HistoricoTitulo(titulo=titulo, data=data_formatada, taxa_compra=titulo_vencimento[linha][1]*100, taxa_venda=titulo_vencimento[linha][2]*100,
+                                                    preco_compra=titulo_vencimento[linha][3], preco_venda=titulo_vencimento[linha][4])
+                        print historico
+#                         historico.save()
 
 def remover_titulos_duplicados():
     titulos = Titulo.objects.all()
