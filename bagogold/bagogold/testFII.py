@@ -269,7 +269,8 @@ def ler_demonstrativo_rendimentos(pdf_url, ticker):
             return ()
 
 def buscar_info_proventos_fii_no_texto(texto):
+    # TODO Preparar leitura de datas e valores a partir de texto mais proximo
     datas = re.findall('(\d{1,2}[\.\/]\d{1,2}[\.\/]\d\d\d\d)', texto)
     valor = re.findall('(\d+\s*?,\s*?\d+)', texto)
-#     print 'datas:', datas, 'valor', valor
+    print 'datas:', datas, 'valor', valor
     return (datas, valor)
