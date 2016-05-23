@@ -83,7 +83,7 @@ def historico(request):
     data_inicial = operacoes.order_by('data')[0].data
     
     # Pegar data final
-    data_final = HistoricoTaxaDI.objects.filter().order_by('-data')[0].data
+    data_final = max(HistoricoTaxaDI.objects.filter().order_by('-data')[0].data, datetime.date.today())
     
     data_iteracao = data_inicial
     
@@ -95,7 +95,12 @@ def historico(request):
     graf_patrimonio = list()
 
     while data_iteracao <= data_final:
-        taxa_do_dia = HistoricoTaxaDI.objects.get(data=data_iteracao).taxa
+        try:
+            taxa_do_dia = HistoricoTaxaDI.objects.get(data=data_iteracao).taxa
+        except:
+            taxa_do_dia = 0
+        print taxa_do_dia
+            
         # Calcular o valor atualizado do patrimonio diariamente
         total_patrimonio = 0
         
@@ -107,13 +112,14 @@ def historico(request):
                         if (operacao.data == data_iteracao):
                             operacao.total = operacao.quantidade
                             total_gasto += operacao.total
-                        # Calcular o valor atualizado para cada operacao
-                        operacao.atual = Decimal((pow((float(1) + float(taxa_do_dia)/float(100)), float(1)/float(252)) - float(1)) * float(operacao.taxa/100) + float(1)) * operacao.atual
-                        # Arredondar na última iteração
-                        if (data_iteracao == data_final):
-                            str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
-                            operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-                        total_patrimonio += operacao.atual
+                        if taxa_do_dia > 0:
+                            # Calcular o valor atualizado para cada operacao
+                            operacao.atual = Decimal((pow((float(1) + float(taxa_do_dia)/float(100)), float(1)/float(252)) - float(1)) * float(operacao.taxa/100) + float(1)) * operacao.atual
+                            # Arredondar na última iteração
+                            if (data_iteracao == data_final):
+                                str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
+                                operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+                            total_patrimonio += operacao.atual
                         
                 elif operacao.tipo_operacao == 'V':
                     if (operacao.data == data_iteracao):
@@ -121,7 +127,7 @@ def historico(request):
                         total_gasto -= operacao.total
                         # Remover quantidade da operação de compra
                         for operacao_c in operacoes:
-                            if (operacao_c.id == OperacaoVendaLetraCredito.objects.get(operacao_venda=operacao).id):
+                            if (operacao_c.id == OperacaoVendaLetraCredito.objects.get(operacao_venda=operacao).operacao_compra.id):
                                 # Configurar taxa para a mesma quantidade da compra
                                 operacao.taxa = operacao_c.taxa
                                 operacao.atual = (operacao.quantidade/operacao_c.quantidade) * operacao_c.atual
@@ -138,6 +144,8 @@ def historico(request):
         proximas_datas = HistoricoTaxaDI.objects.filter(data__gt=data_iteracao).order_by('data')
         if len(proximas_datas) > 0:
             data_iteracao = proximas_datas[0].data
+        elif data_iteracao < data_final:
+            data_iteracao = data_final
         else:
             break
 
