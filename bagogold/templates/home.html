@@ -72,7 +72,7 @@
                 {% for estatistica in estatisticas %}
                 <li>
                     <a href="#">
-                        <span style="text-align:left;" class="white span3">{{ estatistica.0 }}:</span>
+                        <span style="text-align:left;" class="white span4">{{ estatistica.0 }}:</span>
                         {% if estatistica.1 > 0 %}
                             <i class="icon-arrow-up green"></i> <span class="green">R${{ estatistica.1|floatformat:"2" }}</span>
                         {% elif estatistica.1 < 0 %}
