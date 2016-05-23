@@ -99,7 +99,6 @@ def historico(request):
             taxa_do_dia = HistoricoTaxaDI.objects.get(data=data_iteracao).taxa
         except:
             taxa_do_dia = 0
-        print taxa_do_dia
             
         # Calcular o valor atualizado do patrimonio diariamente
         total_patrimonio = 0
@@ -119,7 +118,7 @@ def historico(request):
                             if (data_iteracao == data_final):
                                 str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
                                 operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-                            total_patrimonio += operacao.atual
+                        total_patrimonio += operacao.atual
                         
                 elif operacao.tipo_operacao == 'V':
                     if (operacao.data == data_iteracao):

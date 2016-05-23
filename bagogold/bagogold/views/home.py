@@ -112,7 +112,7 @@ def home(request):
                 diferenca = patrimonio['patrimonio_total'] - patrimonio_anual[len(patrimonio_anual) - 1][1]['patrimonio_total']
             else:
                 diferenca = patrimonio['patrimonio_total']
-            patrimonio_anual += [[ano_corrente, patrimonio, diferenca]]
+            patrimonio_anual += [[str(ano_corrente).replace('.', ''), patrimonio, diferenca]]
             ano_corrente = item.data.year
         
         if isinstance(item, OperacaoAcao):  
@@ -287,7 +287,7 @@ def home(request):
         diferenca = patrimonio['patrimonio_total'] - patrimonio_anual[len(patrimonio_anual) - 1][1]['patrimonio_total']
     else:
         diferenca = patrimonio['patrimonio_total']
-    patrimonio_anual += [[ano_corrente, patrimonio, diferenca]]
+    patrimonio_anual += [[str(ano_corrente).replace('.', ''), patrimonio, diferenca]]
     
     # Terminar estatísticas
     for index, estatistica in enumerate(estatisticas):
