@@ -61,12 +61,51 @@ def verificar_operacoes_nao_alocadas():
     Procura operações que não tenham sido totalmente alocadas em divisões
     """
     operacoes_nao_alocadas = []
+    # Ações
     for operacao in OperacaoAcao.objects.filter():
         divisoes_operacao = DivisaoOperacaoAcao.objects.filter(operacao=operacao)
         quantidade_alocada = 0
         for divisao in divisoes_operacao:
             quantidade_alocada += divisao.quantidade
         if quantidade_alocada < operacao.quantidade:
+            if operacao.destinacao == 'B':
+                operacao.tipo = 'Ações (B & H)'
+            elif operacao.destinacao == 'T':
+                operacao.tipo = 'Ações (Trading)'
+            operacao.quantidade_nao_alocada = operacao.quantidade - quantidade_alocada
+            operacoes_nao_alocadas.append(operacao)
+    
+    # FII
+    for operacao in OperacaoFII.objects.filter():
+        divisoes_operacao = DivisaoOperacaoFII.objects.filter(operacao=operacao)
+        quantidade_alocada = 0
+        for divisao in divisoes_operacao:
+            quantidade_alocada += divisao.quantidade
+        if quantidade_alocada < operacao.quantidade:
+            operacao.tipo = 'FII'
+            operacao.quantidade_nao_alocada = operacao.quantidade - quantidade_alocada
+            operacoes_nao_alocadas.append(operacao)
+    
+    # LC
+    for operacao in OperacaoLetraCredito.objects.filter():
+        divisoes_operacao = DivisaoOperacaoLC.objects.filter(operacao=operacao)
+        quantidade_alocada = 0
+        for divisao in divisoes_operacao:
+            quantidade_alocada += divisao.quantidade
+        if quantidade_alocada < operacao.quantidade:
+            operacao.tipo = 'Letra de Crédito'
+            operacao.quantidade_nao_alocada = operacao.quantidade - quantidade_alocada
+            operacoes_nao_alocadas.append(operacao)
+    
+    # TD
+    for operacao in OperacaoTitulo.objects.filter():
+        divisoes_operacao = DivisaoOperacaoTD.objects.filter(operacao=operacao)
+        quantidade_alocada = 0
+        for divisao in divisoes_operacao:
+            quantidade_alocada += divisao.quantidade
+        if quantidade_alocada < operacao.quantidade:
+            operacao.tipo = 'Tesouro Direto'
+            operacao.quantidade_nao_alocada = operacao.quantidade - quantidade_alocada
             operacoes_nao_alocadas.append(operacao)
     
     # Adicionar alocação a pendencia do investidor

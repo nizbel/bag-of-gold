@@ -35,7 +35,6 @@ urlpatterns = [
     url(r'^divisoes/inserir_transferencia/$', views.divisoes.divisoes.inserir_transferencia, name='inserir_transferencia'),
     url(r'^divisoes/listar_divisoes/$', views.divisoes.divisoes.listar_divisoes, name='listar_divisoes'),
     url(r'^divisoes/listar_transferencias/$', views.divisoes.divisoes.listar_transferencias, name='listar_transferencias'),
-    url(r'^divisoes/operacoes_nao_alocadas/$', views.divisoes.divisoes.operacoes_nao_alocadas, name='listar_op_nao_alocadas'),
     
     # FII
     url(r'^fii/acompanhamento_mensal/$', views.fii.fii.acompanhamento_mensal_fii, name='acompanhamento_mensal_fii'),
