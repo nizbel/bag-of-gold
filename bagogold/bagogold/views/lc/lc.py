@@ -121,7 +121,7 @@ def historico(request):
                         total_gasto -= operacao.total
                         # Remover quantidade da operação de compra
                         for operacao_c in operacoes:
-                            if (operacao_c.id == OperacaoVendaLetraCredito.objects.get(operacao_venda=operacao).id):
+                            if (operacao_c.id == OperacaoVendaLetraCredito.objects.get(operacao_venda=operacao).operacao_compra.id):
                                 # Configurar taxa para a mesma quantidade da compra
                                 operacao.taxa = operacao_c.taxa
                                 operacao.atual = (operacao.quantidade/operacao_c.quantidade) * operacao_c.atual
@@ -140,6 +140,15 @@ def historico(request):
             data_iteracao = proximas_datas[0].data
         else:
             break
+    ### TODO apagar teste
+    saldo = 0
+    for operacao in operacoes:
+        if operacao.tipo_operacao == 'C':
+            saldo -= operacao.quantidade
+        else:
+            saldo += operacao.atual
+    print saldo
+    ### fim teste
 
     dados = {}
     dados['total_gasto'] = total_gasto

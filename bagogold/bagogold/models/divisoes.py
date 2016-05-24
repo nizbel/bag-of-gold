@@ -93,21 +93,22 @@ class Divisao (models.Model):
             operacao = operacao_divisao.operacao
             if operacao.tipo_operacao == 'C':
                 saldo -= operacao_divisao.quantidade 
+                print -operacao_divisao.quantidade
             elif operacao.tipo_operacao == 'V':
                 # Para venda, calcular valor da letra no dia da venda
                 valor_venda = operacao_divisao.quantidade
-                dias_de_rendimento = historico_di.filter(data__range=[operacao.operacao_compra_relacionada().data, operacao.data])
+                dias_de_rendimento = historico_di.filter(data__gte=operacao.operacao_compra_relacionada().data, data__lt=operacao.data)
                 operacao.taxa = operacao.porcentagem_di()
                 for dia in dias_de_rendimento:
-                    # Arredondar na última iteração
-                    if (dia.data == dias_de_rendimento[len(dias_de_rendimento)-1].data):
-                        str_auxiliar = str(valor_venda.quantize(Decimal('.0001')))
-                        valor_venda = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-                    else:
-                        # Calcular o valor atualizado para cada operacao
-                        valor_venda = Decimal((pow((float(1) + float(dia.taxa)/float(100)), float(1)/float(252)) - float(1)) * float(operacao.taxa/100) + float(1)) * valor_venda
-                saldo += valor_venda * operacao_divisao.percentual_divisao()
+                    # Calcular o valor atualizado para cada operacao
+                    valor_venda = Decimal((pow((float(1) + float(dia.taxa)/float(100)), float(1)/float(252)) - float(1)) * float(operacao.taxa/100) + float(1)) * valor_venda
+                # Arredondar
+                str_auxiliar = str(valor_venda.quantize(Decimal('.0001')))
+                valor_venda = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+                saldo += valor_venda
+                print valor_venda
                 
+        print 'Fim', saldo    
         # Transferências
         for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='L'):
             saldo -= transferencia.quantidade
@@ -127,14 +128,16 @@ class Divisao (models.Model):
                 saldo -= (operacao_divisao.quantidade * operacao.preco_unitario + (operacao.taxa_custodia + operacao.taxa_bvmf) * operacao_divisao.percentual_divisao())
             elif operacao.tipo_operacao == 'V':
                 saldo += (operacao_divisao.quantidade * operacao.preco_unitario - (operacao.taxa_custodia + operacao.taxa_bvmf) * operacao_divisao.percentual_divisao())
-            print saldo
                 
         # Transferências
         for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='D'):
             saldo -= transferencia.quantidade
         for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='D'):
             saldo += transferencia.quantidade
-            
+        
+        # Arredondar
+        saldo = saldo.quantize(Decimal('.01'))
+        
         return saldo
     
     
