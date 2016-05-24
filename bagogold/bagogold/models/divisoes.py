@@ -93,7 +93,6 @@ class Divisao (models.Model):
             operacao = operacao_divisao.operacao
             if operacao.tipo_operacao == 'C':
                 saldo -= operacao_divisao.quantidade 
-                print -operacao_divisao.quantidade
             elif operacao.tipo_operacao == 'V':
                 # Para venda, calcular valor da letra no dia da venda
                 valor_venda = operacao_divisao.quantidade
@@ -106,7 +105,6 @@ class Divisao (models.Model):
                 str_auxiliar = str(valor_venda.quantize(Decimal('.0001')))
                 valor_venda = Decimal(str_auxiliar[:len(str_auxiliar)-2])
                 saldo += valor_venda
-                print valor_venda
                 
         print 'Fim', saldo    
         # Transferências
@@ -241,7 +239,7 @@ class TransferenciaEntreDivisoes(models.Model):
     divisao_recebedora = models.ForeignKey('Divisao', blank=True, null=True, related_name='divisao_recebedora')
     data = models.DateField(u'Data da transferência', blank=True, null=True)
     """
-    B = Buy and Hold; D = Tesouro Direto; F = FII; L = Letra de Crédito; T = Trading
+    B = Buy and Hold; D = Tesouro Direto; F = FII; L = Letra de Crédito; T = Trading; N = Não alocado
     """
     investimento_origem = models.CharField('Investimento de origem', blank=True, null=True, max_length=1)
     investimento_destino = models.CharField('Investimento de destino', blank=True, null=True, max_length=1)
@@ -256,4 +254,10 @@ class TransferenciaEntreDivisoes(models.Model):
         """
         return self.divisao_cedente == self.divisao_recebedora
     
-    
+# class EntradaProgramada(models.Model):
+#     divisao
+#     investimento
+#     quantidade
+#     frequencia
+#     data_inicio
+#     data_fim

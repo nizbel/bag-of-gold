@@ -202,7 +202,8 @@ def inserir_transferencia(request):
         form = TransferenciaEntreDivisoesForm(request.POST)
         if form.is_valid():
             form.save()
-            return HttpResponseRedirect(reverse('listar_divisoes'))
+            messages.success(request, 'Transferência inserida com sucesso')
+            return HttpResponseRedirect(reverse('listar_transferencias'))
     else:
         form = TransferenciaEntreDivisoesForm()
             
@@ -263,14 +264,12 @@ def listar_divisoes(request):
         divisao.saldo_nao_alocado = 0
         divisao.saldo = divisao.saldo_bh + divisao.saldo_lc + divisao.saldo_fii + divisao.saldo_trade + divisao.saldo_td + divisao.saldo_nao_alocado
         
-    return render_to_response('divisoes/listar_divisoes.html', {'divisoes': divisoes}, context_instance=RequestContext(request))
+    # Preparar parte de operações não alocadas
+    operacoes_nao_alocadas = verificar_operacoes_nao_alocadas()
+    
+    return render_to_response('divisoes/listar_divisoes.html', {'divisoes': divisoes, 'operacoes_nao_alocadas': operacoes_nao_alocadas}, context_instance=RequestContext(request))
 
 def listar_transferencias(request):
     transferencias = TransferenciaEntreDivisoes.objects.filter()
     
     return render_to_response('divisoes/listar_transferencias.html', {'transferencias': transferencias}, context_instance=RequestContext(request))
-
-# TODO preparar tela
-def operacoes_nao_alocadas(request):
-    operacoes_nao_alocadas = verificar_operacoes_nao_alocadas()
-    return render_to_response('divisoes/listar_op_nao_alocadas.html', {'operacoes_nao_alocadas': operacoes_nao_alocadas}, context_instance=RequestContext(request))

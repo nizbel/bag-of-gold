@@ -140,15 +140,6 @@ def historico(request):
             data_iteracao = proximas_datas[0].data
         else:
             break
-    ### TODO apagar teste
-    saldo = 0
-    for operacao in operacoes:
-        if operacao.tipo_operacao == 'C':
-            saldo -= operacao.quantidade
-        else:
-            saldo += operacao.atual
-    print saldo
-    ### fim teste
 
     dados = {}
     dados['total_gasto'] = total_gasto
