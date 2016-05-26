@@ -284,6 +284,62 @@ def calcular_qtd_acoes_ate_dia_por_divisao(dia, divisao_id):
     
     return qtd_acoes
 
+def calcular_poupanca_proventos_ate_dia(dia):
+    """
+    Calcula a quantidade de proventos provisionada até dia determinado
+    Parâmetros: Dia da posição de proventos
+    Retorno: Quantidade provisionada no dia
+    """
+    operacoes = OperacaoAcao.objects.filter(destinacao='B', data__lte=dia).order_by('data')
+
+    proventos = Provento.objects.filter(data__lte=dia).order_by('data_ex')
+    for provento in proventos:
+        provento.data = provento.data_ex
+     
+    lista_conjunta = sorted(chain(operacoes, proventos),
+                            key=attrgetter('data'))
+    
+    total_proventos = 0
+    
+    # Guarda as ações correntes para o calculo do patrimonio
+    acoes = {}
+    # Calculos de patrimonio e gasto total
+    for item_lista in lista_conjunta:      
+        if item_lista.acao.ticker not in acoes.keys():
+            acoes[item_lista.acao.ticker] = 0
+            
+        # Verifica se é uma compra/venda
+        if isinstance(item_lista, OperacaoAcao):   
+            # Verificar se se trata de compra ou venda
+            if item_lista.tipo_operacao == 'C':
+                if item_lista.utilizou_proventos():
+                    total_proventos -= item_lista.qtd_proventos_utilizada()
+                acoes[item_lista.acao.ticker] += item_lista.quantidade
+                
+            elif item_lista.tipo_operacao == 'V':
+                acoes[item_lista.acao.ticker] -= item_lista.quantidade
+        
+        # Verifica se é recebimento de proventos
+        elif isinstance(item_lista, Provento):
+            if item_lista.data_pagamento <= datetime.date.today():
+                if item_lista.tipo_provento in ['D', 'J']:
+                    total_recebido = acoes[item_lista.acao.ticker] * item_lista.valor_unitario
+                    if item_lista.tipo_provento == 'J':
+                        total_recebido = total_recebido * Decimal(0.85)
+                    total_proventos += total_recebido
+                    
+                elif item_lista.tipo_provento == 'A':
+                    provento_acao = item_lista.acaoprovento_set.all()[0]
+                    if provento_acao.acao_recebida.ticker not in acoes.keys():
+                        acoes[provento_acao.acao_recebida.ticker] = 0
+                    acoes_recebidas = int((acoes[item_lista.acao.ticker] * item_lista.valor_unitario ) / 100 )
+                    item_lista.total_gasto = acoes_recebidas
+                    acoes[provento_acao.acao_recebida.ticker] += acoes_recebidas
+                    if provento_acao.valor_calculo_frac > 0:
+                        if provento_acao.data_pagamento_frac <= datetime.date.today():
+                            total_proventos += (((acoes[item_lista.acao.ticker] * item_lista.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
+                                
+
 # TODO melhorar isso
 def calcular_preco_medio_ir(ano):
     class Object(object):

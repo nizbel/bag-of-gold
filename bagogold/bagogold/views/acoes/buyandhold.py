@@ -352,10 +352,11 @@ def historico(request):
                     item_lista.tipo = 'Compra'
                     item_lista.total_gasto = -1 * (item_lista.quantidade * item_lista.preco_unitario + \
                     item_lista.emolumentos + item_lista.corretagem)
-                    if len(item_lista.usoproventosoperacaoacao_set.all()) > 0:
-                        proventos_gastos += item_lista.usoproventosoperacaoacao_set.all()[0].qtd_utilizada
+                    if item_lista.utilizou_proventos():
+                        qtd_utilizada = item_lista.qtd_proventos_utilizada()
+                        proventos_gastos += qtd_utilizada
                         # Remover proventos gastos do total gasto
-                        item_lista.total_gasto += item_lista.usoproventosoperacaoacao_set.all()[0].qtd_utilizada
+                        item_lista.total_gasto += qtd_utilizada
                     total_gasto += item_lista.total_gasto
                     acoes[item_lista.acao.ticker] += item_lista.quantidade
                     
