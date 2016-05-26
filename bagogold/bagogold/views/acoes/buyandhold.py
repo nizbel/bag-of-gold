@@ -57,7 +57,6 @@ def editar_operacao_acao(request, id):
                             uso_proventos.save()
                         # Se uso proventos for 0 e existir uso proventos atualmente, apagá-lo
                         elif uso_proventos.qtd_utilizada == 0 and UsoProventosOperacaoAcao.objects.filter(operacao=operacao_acao):
-                            print 'deletou'
                             uso_proventos.delete()
                         formset_divisao.save()
                         messages.success(request, 'Operação alterada com sucesso')

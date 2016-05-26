@@ -70,6 +70,15 @@ class OperacaoAcao (models.Model):
     def __unicode__(self):
         return '(' + self.tipo_operacao + ') ' +str(self.quantidade) + ' ' + self.acao.ticker + ' a R$' + str(self.preco_unitario) + ' em ' + str(self.data)
 
+    def qtd_proventos_utilizada(self):
+        try:
+            return UsoProventosOperacaoAcao.objects.get(operacao=self).qtd_utilizada
+        except UsoProventosOperacaoAcao.DoesNotExist:
+            return 0
+        
+    def utilizou_proventos(self):
+        return self.qtd_proventos_utilizada() > 0
+
 class UsoProventosOperacaoAcao (models.Model):
     operacao = models.ForeignKey('OperacaoAcao')
     qtd_utilizada = models.DecimalField(u'Quantidade de proventos utilizada', max_digits=11, decimal_places=2)
