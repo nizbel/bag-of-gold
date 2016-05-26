@@ -31,7 +31,7 @@ class Divisao (models.Model):
         for operacao_divisao in DivisaoOperacaoAcao.objects.filter(divisao=self, operacao__destinacao='B'):
             operacao = operacao_divisao.operacao
             if operacao.tipo_operacao == 'C':
-                saldo -= (operacao_divisao.quantidade * operacao.preco_unitario + (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
+                saldo -= (operacao_divisao.quantidade * operacao.preco_unitario + (operacao.corretagem + operacao.emolumentos - operacao.qtd_proventos_utilizada()) * operacao_divisao.percentual_divisao())
             elif operacao.tipo_operacao == 'V':
                 saldo += (operacao_divisao.quantidade * operacao.preco_unitario - (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
                 
