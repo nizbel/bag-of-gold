@@ -29,7 +29,7 @@ class DivisaoOperacaoAcaoFormSet(forms.models.BaseInlineFormSet):
         for form_divisao in self.forms:
             contador_forms += 1
             if form_divisao.is_valid():
-                print form_divisao.cleaned_data.get('quantidade')
+#                 print form_divisao.cleaned_data.get('quantidade')
                 if not (form_divisao.instance.id == None and not form_divisao.has_changed()):
                     # Verificar quantidade
                     div_qtd = form_divisao.cleaned_data['quantidade']
@@ -50,7 +50,7 @@ class DivisaoOperacaoFIIFormSet(forms.models.BaseInlineFormSet):
         for form_divisao in self.forms:
             contador_forms += 1
             if form_divisao.is_valid():
-                print form_divisao.cleaned_data.get('quantidade')
+#                 print form_divisao.cleaned_data.get('quantidade')
                 if not (form_divisao.instance.id == None and not form_divisao.has_changed()):
                     # Verificar quantidade
                     div_qtd = form_divisao.cleaned_data['quantidade']
@@ -102,7 +102,7 @@ class DivisaoOperacaoTDFormSet(forms.models.BaseInlineFormSet):
         for form_divisao in self.forms:
             contador_forms += 1
             if form_divisao.is_valid():
-                print form_divisao.cleaned_data.get('quantidade')
+#                 print form_divisao.cleaned_data.get('quantidade')
                 if not (form_divisao.instance.id == None and not form_divisao.has_changed()):
                     # Verificar quantidade
                     div_qtd = form_divisao.cleaned_data['quantidade']
