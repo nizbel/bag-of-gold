@@ -292,7 +292,7 @@ def calcular_poupanca_proventos_ate_dia(dia):
     """
     operacoes = OperacaoAcao.objects.filter(destinacao='B', data__lte=dia).order_by('data')
 
-    proventos = Provento.objects.filter(data__lte=dia).order_by('data_ex')
+    proventos = Provento.objects.filter(data_ex__lte=dia).order_by('data_ex')
     for provento in proventos:
         provento.data = provento.data_ex
      
@@ -338,7 +338,8 @@ def calcular_poupanca_proventos_ate_dia(dia):
                     if provento_acao.valor_calculo_frac > 0:
                         if provento_acao.data_pagamento_frac <= datetime.date.today():
                             total_proventos += (((acoes[item_lista.acao.ticker] * item_lista.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
-                                
+    
+    return total_proventos
 
 # TODO melhorar isso
 def calcular_preco_medio_ir(ano):
