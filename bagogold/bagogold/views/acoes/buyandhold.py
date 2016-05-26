@@ -10,7 +10,8 @@ from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, \
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao
 from bagogold.bagogold.utils.acoes import calcular_provento_por_mes, \
     calcular_media_proventos_6_meses, calcular_operacoes_sem_proventos_por_mes, \
-    calcular_uso_proventos_por_mes, quantidade_acoes_ate_dia
+    calcular_uso_proventos_por_mes, quantidade_acoes_ate_dia, \
+    calcular_poupanca_proventos_ate_dia
 from bagogold.bagogold.utils.divisoes import calcular_saldo_geral_acoes_bh
 from decimal import Decimal
 from django.contrib import messages
@@ -85,9 +86,12 @@ def editar_operacao_acao(request, id):
         else:
             form_uso_proventos = UsoProventosOperacaoAcaoForm()
         formset_divisao = DivisaoFormSet(instance=operacao_acao)
+        
+        # Valor da poupança de proventos na data apontada
+        poupanca_proventos = calcular_poupanca_proventos_ate_dia(operacao_acao.data)
             
     return render_to_response('acoes/buyandhold/editar_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,
-                                                                       'formset_divisao': formset_divisao }, context_instance=RequestContext(request))
+                                                                       'formset_divisao': formset_divisao, 'poupanca_proventos': poupanca_proventos }, context_instance=RequestContext(request))
 
 @login_required
 def editar_provento_acao(request, id):
