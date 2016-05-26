@@ -58,5 +58,7 @@ class UsoProventosOperacaoAcaoForm(forms.ModelForm):
             qtd_utilizada = qtd_utilizada.replace(",", ".")
             qtd_utilizada = Decimal(qtd_utilizada)
             data['qtd_utilizada'] = qtd_utilizada
+        else:
+            data['qtd_utilizada'] = 0
 
         return data

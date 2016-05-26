@@ -11,6 +11,7 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao
 from bagogold.bagogold.utils.acoes import calcular_provento_por_mes, \
     calcular_media_proventos_6_meses, calcular_operacoes_sem_proventos_por_mes, \
     calcular_uso_proventos_por_mes, quantidade_acoes_ate_dia
+from bagogold.bagogold.utils.divisoes import calcular_saldo_geral_acoes_bh
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -50,9 +51,14 @@ def editar_operacao_acao(request, id):
                     if formset_divisao.is_valid():
                         operacao_acao.save()
                         uso_proventos = form_uso_proventos.save(commit=False)
+                        print uso_proventos.qtd_utilizada 
                         if uso_proventos.qtd_utilizada > 0:
                             uso_proventos.operacao_acao = operacao_acao
                             uso_proventos.save()
+                        # Se uso proventos for 0 e existir uso proventos atualmente, apagá-lo
+                        elif uso_proventos.qtd_utilizada == 0 and UsoProventosOperacaoAcao.objects.filter(operacao=operacao_acao):
+                            print 'deletou'
+                            uso_proventos.delete()
                         formset_divisao.save()
                         messages.success(request, 'Operação alterada com sucesso')
                         return HttpResponseRedirect(reverse('historico_bh'))
@@ -349,8 +355,8 @@ def historico(request):
                     item_lista.emolumentos + item_lista.corretagem)
                     if len(item_lista.usoproventosoperacaoacao_set.all()) > 0:
                         proventos_gastos += item_lista.usoproventosoperacaoacao_set.all()[0].qtd_utilizada
-                        # Adicionar dados ao gráfico de poupança de proventos
-                        data_formatada = str(calendar.timegm(item_lista.data.timetuple()) * 1000)
+                        # Remover proventos gastos do total gasto
+                        item_lista.total_gasto += item_lista.usoproventosoperacaoacao_set.all()[0].qtd_utilizada
                     total_gasto += item_lista.total_gasto
                     acoes[item_lista.acao.ticker] += item_lista.quantidade
                     
@@ -358,7 +364,7 @@ def historico(request):
                     item_lista.tipo = 'Venda'
                     item_lista.total_gasto = (item_lista.quantidade * item_lista.preco_unitario - \
                     item_lista.emolumentos - item_lista.corretagem)
-                    total_proventos += item_lista.total_gasto
+#                     total_proventos += item_lista.total_gasto
                     total_gasto += item_lista.total_gasto
                     acoes[item_lista.acao.ticker] -= item_lista.quantidade
             
@@ -372,7 +378,7 @@ def historico(request):
                             total_recebido = total_recebido * Decimal(0.85)
                         else:
                             item_lista.tipo = 'Dividendos'
-                        total_gasto += total_recebido
+#                         total_gasto += total_recebido
                         total_proventos += total_recebido
                         item_lista.total_gasto = total_recebido
                         item_lista.quantidade = acoes[item_lista.acao.ticker]
@@ -391,7 +397,7 @@ def historico(request):
                         if provento_acao.valor_calculo_frac > 0:
                             if provento_acao.data_pagamento_frac <= datetime.date.today():
 #                                 print u'recebido fracionado %s, %s ações de %s a %s' % (total_recebido, acoes[item_lista.acao.ticker], item_lista.acao.ticker, item_lista.valor_unitario)
-                                total_gasto += (((acoes[item_lista.acao.ticker] * item_lista.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
+#                                 total_gasto += (((acoes[item_lista.acao.ticker] * item_lista.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
                                 total_proventos += (((acoes[item_lista.acao.ticker] * item_lista.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
                                 
             # Verifica se é pagamento de custódia
@@ -497,6 +503,7 @@ def historico(request):
     dados['lucro_percentual'] = (patrimonio + total_gasto) / -total_gasto * 100
     dados['dividendos_mensal'] = graf_dividendos_mensal[-1][1]
     dados['jscp_mensal'] = graf_jscp_mensal[-1][1]
+    dados['saldo_geral'] = calcular_saldo_geral_acoes_bh()
     
     # Remover taxas de custódia da lista conjunta de operações e proventos
     lista_conjunta = [value for value in lista_conjunta if not isinstance(value, Object)]

@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import OperacaoAcao
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD, \
-    DivisaoPrincipal, DivisaoOperacaoLC, DivisaoOperacaoFII, DivisaoOperacaoAcao
+    DivisaoPrincipal, DivisaoOperacaoLC, DivisaoOperacaoFII, DivisaoOperacaoAcao, \
+    Divisao
 from bagogold.bagogold.models.fii import OperacaoFII
 from bagogold.bagogold.models.lc import OperacaoLetraCredito
 from bagogold.bagogold.models.td import OperacaoTitulo
@@ -112,3 +113,9 @@ def verificar_operacoes_nao_alocadas():
     if len(operacoes_nao_alocadas) > 0:
         pass
     return operacoes_nao_alocadas
+
+def calcular_saldo_geral_acoes_bh():
+    saldo_geral = 0
+    for divisao in Divisao.objects.all():
+        saldo_geral += divisao.saldo_acoes_bh()
+    return saldo_geral
