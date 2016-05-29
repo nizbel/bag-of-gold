@@ -1,23 +1,30 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.forms.divisoes import DivisaoForm
+from bagogold.bagogold.forms.divisoes import DivisaoForm, \
+    TransferenciaEntreDivisoesForm
+from bagogold.bagogold.models.acoes import ValorDiarioAcao, HistoricoAcao, Acao
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
-    DivisaoOperacaoFII, DivisaoOperacaoTD
+    DivisaoOperacaoFII, DivisaoOperacaoTD, DivisaoOperacaoAcao, \
+    TransferenciaEntreDivisoes
 from bagogold.bagogold.models.fii import ValorDiarioFII, HistoricoFII, \
-    OperacaoFII
+    OperacaoFII, FII
 from bagogold.bagogold.models.lc import HistoricoTaxaDI, \
     HistoricoPorcentagemLetraCredito, LetraCredito
 from bagogold.bagogold.models.td import ValorDiarioTitulo, HistoricoTitulo, \
     Titulo
+from bagogold.bagogold.utils.acoes import calcular_qtd_acoes_ate_dia_por_divisao
+from bagogold.bagogold.utils.divisoes import verificar_operacoes_nao_alocadas
 from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia_por_divisao
 from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia, \
     calcular_valor_lc_ate_dia_por_divisao
 from bagogold.bagogold.utils.td import calcular_qtd_titulos_ate_dia_por_divisao
 from decimal import Decimal
+from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 import datetime
+
 
 def detalhar_divisao(request, id):
     # Usado para criar objetos vazios
@@ -28,6 +35,56 @@ def detalhar_divisao(request, id):
     divisao.valor_total = 0
     
     composicao = {}
+    
+    # Adicionar Acoes
+    composicao['acoes'] = Object()
+    composicao['acoes'].nome = 'Ações (Buy and Hold)'
+    composicao['acoes'].patrimonio = 0
+    composicao['acoes'].composicao = {}
+    # Pegar FIIs contidos na divisão
+    qtd_acoes_dia = calcular_qtd_acoes_ate_dia_por_divisao(datetime.date.today(), divisao.id)
+    for ticker in qtd_acoes_dia.keys():
+        acao_valor = Acao.objects.get(ticker=ticker).valor_no_dia(datetime.date.today())
+        print ticker, qtd_acoes_dia[ticker] * acao_valor
+        composicao['acoes'].patrimonio += qtd_acoes_dia[ticker] * acao_valor
+        composicao['acoes'].composicao[ticker] = Object()
+        composicao['acoes'].composicao[ticker].nome = ticker
+        composicao['acoes'].composicao[ticker].patrimonio = qtd_acoes_dia[ticker] * acao_valor
+        composicao['acoes'].composicao[ticker].composicao = {}
+        # Pegar operações dos FIIs
+        for operacao_divisao in DivisaoOperacaoAcao.objects.filter(divisao=divisao, operacao__acao__ticker=ticker):
+            composicao['acoes'].composicao[ticker].composicao[operacao_divisao.operacao.id] = Object()
+            composicao['acoes'].composicao[ticker].composicao[operacao_divisao.operacao.id].nome = operacao_divisao.operacao.tipo_operacao
+            composicao['acoes'].composicao[ticker].composicao[operacao_divisao.operacao.id].data = operacao_divisao.operacao.data
+            composicao['acoes'].composicao[ticker].composicao[operacao_divisao.operacao.id].quantidade = operacao_divisao.quantidade
+            composicao['acoes'].composicao[ticker].composicao[operacao_divisao.operacao.id].valor_unitario = Acao.objects.get(ticker=ticker).valor_no_dia(operacao_divisao.operacao.data)
+            print composicao['acoes'].composicao[ticker].composicao[operacao_divisao.operacao.id].valor_unitario
+            composicao['acoes'].composicao[ticker].composicao[operacao_divisao.operacao.id].patrimonio = operacao_divisao.quantidade * \
+                composicao['acoes'].composicao[ticker].composicao[operacao_divisao.operacao.id].valor_unitario
+    
+    # Adicionar FIIs
+    composicao['fii'] = Object()
+    composicao['fii'].nome = 'Fundos de Invest. Imob.'
+    composicao['fii'].patrimonio = 0
+    composicao['fii'].composicao = {}
+    # Pegar FIIs contidos na divisão
+    qtd_fiis_dia = calcular_qtd_fiis_ate_dia_por_divisao(datetime.date.today(), divisao.id)
+    for ticker in qtd_fiis_dia.keys():
+        fii_valor = FII.objects.get(ticker=ticker).valor_no_dia(datetime.date.today())
+        composicao['fii'].patrimonio += qtd_fiis_dia[ticker] * fii_valor
+        composicao['fii'].composicao[ticker] = Object()
+        composicao['fii'].composicao[ticker].nome = ticker
+        composicao['fii'].composicao[ticker].patrimonio = qtd_fiis_dia[ticker] * fii_valor
+        composicao['fii'].composicao[ticker].composicao = {}
+        # Pegar operações dos FIIs
+        for operacao_divisao in DivisaoOperacaoFII.objects.filter(divisao=divisao, operacao__fii__ticker=ticker):
+            composicao['fii'].composicao[ticker].composicao[operacao_divisao.operacao.id] = Object()
+            composicao['fii'].composicao[ticker].composicao[operacao_divisao.operacao.id].nome = operacao_divisao.operacao.tipo_operacao
+            composicao['fii'].composicao[ticker].composicao[operacao_divisao.operacao.id].data = operacao_divisao.operacao.data
+            composicao['fii'].composicao[ticker].composicao[operacao_divisao.operacao.id].quantidade = operacao_divisao.quantidade
+            composicao['fii'].composicao[ticker].composicao[operacao_divisao.operacao.id].valor_unitario = FII.objects.get(ticker=ticker).valor_no_dia(operacao_divisao.operacao.data)
+            composicao['fii'].composicao[ticker].composicao[operacao_divisao.operacao.id].patrimonio = operacao_divisao.quantidade * \
+                composicao['fii'].composicao[ticker].composicao[operacao_divisao.operacao.id].valor_unitario
     
     # Adicionar letras de crédito
     composicao['lc'] = Object()
@@ -54,33 +111,6 @@ def detalhar_divisao(request, id):
                 composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].valor_unitario = HistoricoPorcentagemLetraCredito.objects.get(data__isnull=True, letra_credito=operacao_divisao.operacao.letra_credito).porcentagem_di
             
             composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].patrimonio = operacao_divisao.quantidade
-    
-    # Adicionar FIIs
-    composicao['fii'] = Object()
-    composicao['fii'].nome = 'Fundos de Invest. Imob.'
-    composicao['fii'].patrimonio = 0
-    composicao['fii'].composicao = {}
-    # Pegar FIIs contidos na divisão
-    qtd_fiis_dia = calcular_qtd_fiis_ate_dia_por_divisao(datetime.date.today(), divisao.id)
-    for ticker in qtd_fiis_dia.keys():
-        try:
-            fii_valor = ValorDiarioFII.objects.filter(fii__ticker=ticker, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).order_by('-data_hora')[0].preco_unitario
-        except:
-            fii_valor = HistoricoFII.objects.filter(fii__ticker=ticker).order_by('-data')[0].preco_unitario
-        composicao['fii'].patrimonio += qtd_fiis_dia[ticker] * fii_valor
-        composicao['fii'].composicao[ticker] = Object()
-        composicao['fii'].composicao[ticker].nome = ticker
-        composicao['fii'].composicao[ticker].patrimonio = qtd_fiis_dia[ticker] * fii_valor
-        composicao['fii'].composicao[ticker].composicao = {}
-        # Pegar operações dos FIIs
-        for operacao_divisao in DivisaoOperacaoFII.objects.filter(divisao=divisao, operacao__fii__ticker=ticker):
-            composicao['fii'].composicao[ticker].composicao[operacao_divisao.operacao.id] = Object()
-            composicao['fii'].composicao[ticker].composicao[operacao_divisao.operacao.id].nome = operacao_divisao.operacao.tipo_operacao
-            composicao['fii'].composicao[ticker].composicao[operacao_divisao.operacao.id].data = operacao_divisao.operacao.data
-            composicao['fii'].composicao[ticker].composicao[operacao_divisao.operacao.id].quantidade = operacao_divisao.quantidade
-            composicao['fii'].composicao[ticker].composicao[operacao_divisao.operacao.id].valor_unitario = HistoricoFII.objects.get(data=operacao_divisao.operacao.data, fii=operacao_divisao.operacao.fii).preco_unitario
-            composicao['fii'].composicao[ticker].composicao[operacao_divisao.operacao.id].patrimonio = operacao_divisao.quantidade * \
-                composicao['fii'].composicao[ticker].composicao[operacao_divisao.operacao.id].valor_unitario
     
     # Adicionar TDs
     composicao['td'] = Object()
@@ -109,8 +139,11 @@ def detalhar_divisao(request, id):
             composicao['td'].composicao[titulo_id].composicao[operacao_divisao.operacao.id].patrimonio = operacao_divisao.quantidade * td_valor
     
     # Calcular valor total da divisão
-    for item in composicao.values():
-        divisao.valor_total += item.patrimonio
+    for key, item in composicao.items():
+        if item.patrimonio == 0:
+            del composicao[key]
+        else:
+            divisao.valor_total += item.patrimonio
         
     # Calcular valor percentual para cada item da composição da divisão
     for item in composicao.values():
@@ -121,7 +154,38 @@ def detalhar_divisao(request, id):
         
     return render_to_response('divisoes/detalhar_divisao.html', {'divisao': divisao, 'composicao': composicao},
                                context_instance=RequestContext(request))
+
+def editar_divisao(request):
+    print 'oi'
     
+def editar_transferencia(request, id):
+    transferencia = TransferenciaEntreDivisoes.objects.get(pk=id)
+    
+    if request.method == 'POST':
+        if request.POST.get("save"):
+            form = TransferenciaEntreDivisoesForm(request.POST, instance=transferencia)
+            
+            if form.is_valid():
+                transferencia.save()
+                messages.success(request, 'Transferência editada com sucesso')
+                return HttpResponseRedirect(reverse('listar_transferencias'))
+            for erros in form.errors.values():
+                for erro in erros:
+                    messages.error(request, erro)
+            return render_to_response('td/editar_transferencia.html', {'form': form},
+                      context_instance=RequestContext(request))
+                
+        elif request.POST.get("delete"):
+            transferencia.delete()
+            messages.success(request, 'Operação excluída com sucesso')
+            return HttpResponseRedirect(reverse('listar_transferencias'))
+ 
+    else:
+        form = TransferenciaEntreDivisoesForm(instance=transferencia)
+            
+    return render_to_response('td/editar_transferencia.html', {'form': form},
+                              context_instance=RequestContext(request))
+
 def inserir_divisao(request):
     if request.method == 'POST':
         form = DivisaoForm(request.POST)
@@ -133,12 +197,33 @@ def inserir_divisao(request):
             
     return render_to_response('divisoes/inserir_divisao.html', {'form': form}, context_instance=RequestContext(request))
 
+def inserir_transferencia(request):
+    if request.method == 'POST':
+        form = TransferenciaEntreDivisoesForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Transferência inserida com sucesso')
+            return HttpResponseRedirect(reverse('listar_transferencias'))
+    else:
+        form = TransferenciaEntreDivisoesForm()
+            
+    return render_to_response('divisoes/inserir_transferencia.html', {'form': form}, context_instance=RequestContext(request))
+
+
 def listar_divisoes(request):
-    divisoes = Divisao.objects.all()
+    divisoes = Divisao.objects.filter()
     
     for divisao in divisoes:
         divisao.valor_atual = 0
-        # TODO calcular valor atual
+        
+        # Ações (B&H)
+        acao_divisao = calcular_qtd_acoes_ate_dia_por_divisao(datetime.date.today(), divisao.id)
+        for ticker in acao_divisao.keys():
+            try:
+                acao_valor = ValorDiarioAcao.objects.filter(acao__ticker=ticker, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).order_by('-data_hora')[0].preco_unitario
+            except:
+                acao_valor = HistoricoAcao.objects.filter(acao__ticker=ticker).order_by('-data')[0].preco_unitario
+            divisao.valor_atual += (acao_divisao[ticker] * acao_valor)
         
         # Fundos de investimento imobiliário
         fii_divisao = calcular_qtd_fiis_ate_dia_por_divisao(datetime.date.today(), divisao.id)
@@ -161,13 +246,30 @@ def listar_divisoes(request):
                 td_valor = ValorDiarioTitulo.objects.filter(titulo__id=titulo_id, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).order_by('-data_hora')[0].preco_venda
             except:
                 td_valor = HistoricoTitulo.objects.filter(titulo__id=titulo_id).order_by('-data')[0].preco_venda
-            print 'valor:', divisao.valor_atual
+#             print 'valor:', divisao.valor_atual
             divisao.valor_atual += (td_divisao[titulo_id] * td_valor)
-            print 'valor:', divisao.valor_atual
+#             print 'valor:', divisao.valor_atual
         
         if not divisao.objetivo_indefinido():
             divisao.quantidade_percentual = divisao.valor_atual / divisao.valor_objetivo * 100
         else:
             divisao.quantidade_percentual = 100
+            
+        # Calcular saldo da divisão
+        divisao.saldo_bh = divisao.saldo_acoes_bh()
+        divisao.saldo_lc = divisao.saldo_lc()
+        divisao.saldo_fii = divisao.saldo_fii()
+        divisao.saldo_trade = divisao.saldo_acoes_trade()
+        divisao.saldo_td = divisao.saldo_td()
+        divisao.saldo_nao_alocado = 0
+        divisao.saldo = divisao.saldo_bh + divisao.saldo_lc + divisao.saldo_fii + divisao.saldo_trade + divisao.saldo_td + divisao.saldo_nao_alocado
+        
+    # Preparar parte de operações não alocadas
+    operacoes_nao_alocadas = verificar_operacoes_nao_alocadas()
     
-    return render_to_response('divisoes/listar_divisoes.html', {'divisoes': divisoes}, context_instance=RequestContext(request))
+    return render_to_response('divisoes/listar_divisoes.html', {'divisoes': divisoes, 'operacoes_nao_alocadas': operacoes_nao_alocadas}, context_instance=RequestContext(request))
+
+def listar_transferencias(request):
+    transferencias = TransferenciaEntreDivisoes.objects.filter()
+    
+    return render_to_response('divisoes/listar_transferencias.html', {'transferencias': transferencias}, context_instance=RequestContext(request))

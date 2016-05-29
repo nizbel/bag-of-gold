@@ -17,7 +17,7 @@ class PreencheHistoricoAcaoThread(Thread):
     def run(self):
         try:
             for index, ticker in enumerate(self.tickers):
-#                 print 'Starting', ticker, float(index)/len(self.tickers)*100
+                print 'Starting', ticker, '%s%%' % (format(float(index)/len(self.tickers)*100, '.2f'))
                 preencher_historico_acao(ticker, buscar_historico(ticker))
         except Exception as ex:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
@@ -33,7 +33,7 @@ class PreencheHistoricoFIIThread(Thread):
     def run(self):
         try:
             for index, ticker in enumerate(self.tickers):
-#                 print 'Starting', ticker, float(index)/len(self.tickers)*100
+                print 'Starting', ticker, '%s%%' % (format(float(index)/len(self.tickers)*100, '.2f'))
                 preencher_historico_fii(ticker, buscar_historico(ticker))
         except Exception as ex:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
@@ -48,7 +48,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         #Ação
         acoes = Acao.objects.all()
-        qtd_threads = 8
+        qtd_threads = 32
         qtd_por_thread = int(len(acoes)/qtd_threads)+1
         contador = 0
         threads = []

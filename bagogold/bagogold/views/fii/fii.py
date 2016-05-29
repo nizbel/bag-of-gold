@@ -250,7 +250,11 @@ def historico_fii(request):
         # Verifica se houve operacao hoje
         if item.data != datetime.date.today():
             for fii in qtd_papeis.keys():
-                patrimonio += (qtd_papeis[fii] * HistoricoFII.objects.get(fii__ticker=fii, data=item.data).preco_unitario)
+                # Pegar último dia util com negociação do fii para calculo do patrimonio
+                ultimo_dia_util = item.data
+                while not HistoricoFII.objects.filter(data=ultimo_dia_util, fii__ticker=fii):
+                    ultimo_dia_util -= datetime.timedelta(days=1)
+                patrimonio += (qtd_papeis[fii] * HistoricoFII.objects.get(fii__ticker=fii, data=ultimo_dia_util).preco_unitario)
         else:
             houve_operacao_hoje = True
             for fii in qtd_papeis.keys():

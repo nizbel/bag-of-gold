@@ -86,5 +86,9 @@ def calcular_qtd_titulos_ate_dia_por_divisao(dia, divisao_id):
             
         elif operacao.tipo_operacao == 'V':
             qtd_titulos[operacao.titulo.id] -= operacao.quantidade
+            
+    for key, item in qtd_titulos.items():
+        if qtd_titulos[key] == 0:
+            del qtd_titulos[key]
         
     return qtd_titulos

@@ -44,13 +44,21 @@ class UsoProventosOperacaoAcaoForm(forms.ModelForm):
     class Meta:
         model = UsoProventosOperacaoAcao
         fields = ('qtd_utilizada', )
+        
+    def __init__(self, *args, **kwargs):
+        super(UsoProventosOperacaoAcaoForm, self).__init__(*args, **kwargs)
+        self.fields['qtd_utilizada'].required = False
             
     def clean(self):
         data = super(UsoProventosOperacaoAcaoForm, self).clean()
         if data.get('qtd_utilizada') is not None:
+            if data.get('qtd_utilizada') < 0:
+                raise forms.ValidationError('Quantidade de proventos utilizada não pode ser negativa')
             qtd_utilizada = str(data.get('qtd_utilizada'))
             qtd_utilizada = qtd_utilizada.replace(",", ".")
             qtd_utilizada = Decimal(qtd_utilizada)
             data['qtd_utilizada'] = qtd_utilizada
+        else:
+            data['qtd_utilizada'] = 0
 
         return data

@@ -4,6 +4,7 @@ from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI, \
     HistoricoPorcentagemLetraCredito, OperacaoVendaLetraCredito
 from decimal import Decimal
 from django.db.models import Q
+import datetime
 
 def calcular_valor_lc_ate_dia(dia):
     """ 
@@ -102,7 +103,7 @@ def calcular_valor_lc_ate_dia_por_divisao(dia, divisao_id):
     # Pegar data inicial
     data_inicial = operacoes_queryset.order_by('data')[0].data
     
-    data_final = HistoricoTaxaDI.objects.filter(data__lte=dia).order_by('-data')[0].data
+    data_final = max(HistoricoTaxaDI.objects.filter(data__lte=dia).order_by('-data')[0].data, datetime.date.today())
     
     data_iteracao = data_inicial
     
@@ -119,7 +120,7 @@ def calcular_valor_lc_ate_dia_por_divisao(dia, divisao_id):
             if operacao.tipo_operacao == 'V':
                 # Remover quantidade da operação de compra
                 for operacao_c in operacoes:
-                    if (operacao_c.id == OperacaoVendaLetraCredito.objects.get(operacao_venda=operacao).id):
+                    if (operacao_c.id == OperacaoVendaLetraCredito.objects.get(operacao_venda=operacao).operacao_compra.id):
                         operacao.atual = (DivisaoOperacaoLC.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade/DivisaoOperacaoLC.objects.get(divisao__id=divisao_id, operacao=operacao_c).quantidade) * operacao_c.atual
                         operacao_c.atual -= operacao.atual
                         str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
@@ -130,10 +131,15 @@ def calcular_valor_lc_ate_dia_por_divisao(dia, divisao_id):
                         break
                     
         # Calcular o valor atualizado do patrimonio diariamente
-        taxa_do_dia = HistoricoTaxaDI.objects.get(data=data_iteracao).taxa
+        try:
+            taxa_do_dia = HistoricoTaxaDI.objects.get(data=data_iteracao).taxa
+        except:
+            taxa_do_dia = 0
+            
         for operacao in operacoes:
             if (operacao.data <= data_iteracao):
-                operacao.atual = Decimal((pow((float(1) + float(taxa_do_dia)/float(100)), float(1)/float(252)) - float(1)) * float(operacao.taxa/100) + float(1)) * operacao.atual
+                if taxa_do_dia > 0:
+                    operacao.atual = Decimal((pow((float(1) + float(taxa_do_dia)/float(100)), float(1)/float(252)) - float(1)) * float(operacao.taxa/100) + float(1)) * operacao.atual
                 # Arredondar na última iteração
                 if (data_iteracao == data_final):
                     str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
@@ -143,6 +149,8 @@ def calcular_valor_lc_ate_dia_por_divisao(dia, divisao_id):
         proximas_datas = HistoricoTaxaDI.objects.filter(data__gt=data_iteracao).order_by('data')
         if len(proximas_datas) > 0:
             data_iteracao = proximas_datas[0].data
+        elif data_iteracao < datetime.date.today():
+            data_iteracao = datetime.date.today()
         else:
             break
         

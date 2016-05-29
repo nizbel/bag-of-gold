@@ -49,6 +49,7 @@ def aconselhamento_td(request):
             compra_titulo.data = operacao.data
             compra_titulo.preco_unitario = operacao.preco_unitario 
             compra_titulo.total_gasto = operacao.quantidade * operacao.preco_unitario
+            compra_titulo.data_vencimento = operacao.titulo.data_vencimento
             titulos[operacao.titulo.id].append(compra_titulo)
 #             valor_atual = ValorDiarioTitulo.objects.filter(titulo__id=operacao.titulo.id).order_by('-data_hora')[0].preco_venda
 #             print '%s comprado a %s valendo %s (%s (%s%%) de lucro)' % (operacao.titulo.nome(), operacao.preco_unitario, valor_atual, \
@@ -110,7 +111,9 @@ def aconselhamento_td(request):
             else:
                 operacao.lucro = operacao.valor_total_atual - operacao.total_gasto
                 operacao.lucro_percentual = operacao.lucro / operacao.total_gasto * 100
-            valor_esperado = (Decimal(1000) * operacao.quantidade) - calcular_imposto_venda_td((datetime.date.today() - operacao.data).days, Decimal(1000) * operacao.quantidade, \
+                
+            # Valor esperado é a quantidade que ainda vai render caso investidor espere até o dia do vencimento
+            valor_esperado = (Decimal(1000) * operacao.quantidade) - calcular_imposto_venda_td((operacao.data_vencimento - operacao.data).days, Decimal(1000) * operacao.quantidade, \
                                                                                                (Decimal(1000) * operacao.quantidade) - operacao.total_gasto) - (operacao.total_gasto + operacao.lucro)
             qtd_dias_esperado = (Titulo.objects.get(id=titulo).data_vencimento - datetime.date.today()).days
             rendimento_esperado = math.pow(1 + (valor_esperado / (operacao.total_gasto + operacao.lucro) * 100)/100, float(1)/qtd_dias_esperado) - 1

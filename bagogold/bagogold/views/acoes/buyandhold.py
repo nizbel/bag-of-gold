@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.forms.divisoes import DivisaoOperacaoAcaoFormSet
 from bagogold.bagogold.forms.operacao_acao import OperacaoAcaoForm, \
     UsoProventosOperacaoAcaoForm
 from bagogold.bagogold.forms.provento_acao import ProventoAcaoForm
@@ -9,6 +10,7 @@ from bagogold.bagogold.utils.acoes import calcular_provento_por_mes, \
     calcular_media_proventos_6_meses, calcular_operacoes_sem_proventos_por_mes, \
     calcular_uso_proventos_por_mes, quantidade_acoes_ate_dia
 from decimal import Decimal
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.db.models import Q
@@ -24,7 +26,16 @@ import datetime
 import json
 
 @login_required
+def calcular_poupanca_proventos_na_data(request):
+    data = datetime.datetime.strptime(request.GET['dataEscolhida'], '%d/%m/%Y').date()
+    poupanca_proventos = str(calcular_poupanca_proventos_ate_dia(data))
+    return HttpResponse(json.dumps(poupanca_proventos), content_type = "application/json") 
+
+@login_required
 def editar_operacao_acao(request, id):
+    # Preparar formset para divisoes
+    DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'),
+                                            extra=1, formset=DivisaoOperacaoAcaoFormSet)
     operacao_acao = OperacaoAcao.objects.get(pk=id)
     try:
         uso_proventos = UsoProventosOperacaoAcao.objects.get(operacao=operacao_acao)
@@ -33,6 +44,7 @@ def editar_operacao_acao(request, id):
     if request.method == 'POST':
         if request.POST.get("save"):
             form_operacao_acao = OperacaoAcaoForm(request.POST, instance=operacao_acao)
+            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_acao)
             if uso_proventos is not None:
                 form_uso_proventos = UsoProventosOperacaoAcaoForm(request.POST, instance=uso_proventos)
             else:
@@ -40,16 +52,35 @@ def editar_operacao_acao(request, id):
             if form_operacao_acao.is_valid():
                 operacao_acao.save()
                 if form_uso_proventos.is_valid():
-                    uso_proventos = form_uso_proventos.save(commit=False)
-                    if uso_proventos.qtd_utilizada > 0:
-                        uso_proventos.operacao = operacao_acao
-                        uso_proventos.save()
-                return HttpResponseRedirect(reverse('historico_bh'))
+                    if formset_divisao.is_valid():
+                        operacao_acao.save()
+                        uso_proventos = form_uso_proventos.save(commit=False)
+                        print uso_proventos.qtd_utilizada 
+                        if uso_proventos.qtd_utilizada > 0:
+                            uso_proventos.operacao_acao = operacao_acao
+                            uso_proventos.save()
+                        # Se uso proventos for 0 e existir uso proventos atualmente, apagá-lo
+                        elif uso_proventos.qtd_utilizada == 0 and UsoProventosOperacaoAcao.objects.filter(operacao=operacao_acao):
+                            uso_proventos.delete()
+                        formset_divisao.save()
+                        messages.success(request, 'Operação alterada com sucesso')
+                        return HttpResponseRedirect(reverse('historico_bh'))
+            for erros in form_operacao_acao.errors.values():
+                for erro in erros:
+                    messages.error(request, erro)
+            for erro in formset_divisao.non_form_errors():
+                messages.error(request, erro)
+            return render_to_response('acoes/buyandhold/editar_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,
+                                                                       'formset_divisao': formset_divisao }, context_instance=RequestContext(request))
         elif request.POST.get("delete"):
             if uso_proventos is not None:
                 uso_proventos.delete()
+            divisao_fii = DivisaoOperacaoAcao.objects.filter(operacao=operacao_fii)
+            for divisao in divisao_fii:
+                divisao.delete()
             operacao_acao.delete()
-            return HttpResponseRedirect(reverse('historico_bh'))
+            messages.success(request, 'Operação apagada com sucesso')
+            return HttpResponseRedirect(reverse('historico_fii'))
 
     else:
         form_operacao_acao = OperacaoAcaoForm(instance=operacao_acao)
@@ -57,9 +88,13 @@ def editar_operacao_acao(request, id):
             form_uso_proventos = UsoProventosOperacaoAcaoForm(instance=uso_proventos)
         else:
             form_uso_proventos = UsoProventosOperacaoAcaoForm()
+        formset_divisao = DivisaoFormSet(instance=operacao_acao)
+        
+        # Valor da poupança de proventos na data apontada
+        poupanca_proventos = calcular_poupanca_proventos_ate_dia(operacao_acao.data)
             
-    return render_to_response('acoes/buyandhold/editar_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos},
-                              context_instance=RequestContext(request))  
+    return render_to_response('acoes/buyandhold/editar_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,
+                                                                       'formset_divisao': formset_divisao, 'poupanca_proventos': poupanca_proventos }, context_instance=RequestContext(request))
 
 @login_required
 def editar_provento_acao(request, id):
@@ -326,10 +361,11 @@ def historico(request):
                     item_lista.tipo = 'Compra'
                     item_lista.total_gasto = -1 * (item_lista.quantidade * item_lista.preco_unitario + \
                     item_lista.emolumentos + item_lista.corretagem)
-                    if len(item_lista.usoproventosoperacaoacao_set.all()) > 0:
-                        proventos_gastos += item_lista.usoproventosoperacaoacao_set.all()[0].qtd_utilizada
-                        # Adicionar dados ao gráfico de poupança de proventos
-                        data_formatada = str(calendar.timegm(item_lista.data.timetuple()) * 1000)
+                    if item_lista.utilizou_proventos():
+                        qtd_utilizada = item_lista.qtd_proventos_utilizada()
+                        proventos_gastos += qtd_utilizada
+                        # Remover proventos gastos do total gasto
+                        item_lista.total_gasto += qtd_utilizada
                     total_gasto += item_lista.total_gasto
                     acoes[item_lista.acao.ticker] += item_lista.quantidade
                     
@@ -337,7 +373,7 @@ def historico(request):
                     item_lista.tipo = 'Venda'
                     item_lista.total_gasto = (item_lista.quantidade * item_lista.preco_unitario - \
                     item_lista.emolumentos - item_lista.corretagem)
-                    total_proventos += item_lista.total_gasto
+#                     total_proventos += item_lista.total_gasto
                     total_gasto += item_lista.total_gasto
                     acoes[item_lista.acao.ticker] -= item_lista.quantidade
             
@@ -351,7 +387,7 @@ def historico(request):
                             total_recebido = total_recebido * Decimal(0.85)
                         else:
                             item_lista.tipo = 'Dividendos'
-                        total_gasto += total_recebido
+#                         total_gasto += total_recebido
                         total_proventos += total_recebido
                         item_lista.total_gasto = total_recebido
                         item_lista.quantidade = acoes[item_lista.acao.ticker]
@@ -370,7 +406,7 @@ def historico(request):
                         if provento_acao.valor_calculo_frac > 0:
                             if provento_acao.data_pagamento_frac <= datetime.date.today():
 #                                 print u'recebido fracionado %s, %s ações de %s a %s' % (total_recebido, acoes[item_lista.acao.ticker], item_lista.acao.ticker, item_lista.valor_unitario)
-                                total_gasto += (((acoes[item_lista.acao.ticker] * item_lista.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
+#                                 total_gasto += (((acoes[item_lista.acao.ticker] * item_lista.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
                                 total_proventos += (((acoes[item_lista.acao.ticker] * item_lista.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
                                 
             # Verifica se é pagamento de custódia
@@ -476,6 +512,7 @@ def historico(request):
     dados['lucro_percentual'] = (patrimonio + total_gasto) / -total_gasto * 100
     dados['dividendos_mensal'] = graf_dividendos_mensal[-1][1]
     dados['jscp_mensal'] = graf_jscp_mensal[-1][1]
+    dados['saldo_geral'] = calcular_saldo_geral_acoes_bh()
     
     # Remover taxas de custódia da lista conjunta de operações e proventos
     lista_conjunta = [value for value in lista_conjunta if not isinstance(value, Object)]
@@ -489,27 +526,38 @@ def historico(request):
     
 @login_required
 def inserir_operacao_acao(request):
+    # Preparar formset para divisoes
+    DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'),
+                                            extra=1, formset=DivisaoOperacaoAcaoFormSet)
+    
     if request.method == 'POST':
         form_operacao_acao = OperacaoAcaoForm(request.POST)
         form_uso_proventos = UsoProventosOperacaoAcaoForm(request.POST)
         if form_operacao_acao.is_valid():
             operacao_acao = form_operacao_acao.save(commit=False)
+            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_acao)
             operacao_acao.destinacao = 'B'
-            operacao_acao.save()
             if form_uso_proventos.is_valid():
-                uso_proventos = form_uso_proventos.save(commit=False)
-                if uso_proventos.qtd_utilizada > 0:
-                    uso_proventos.operacao = operacao_acao
-#                     print uso_proventos.qtd_utilizada
-                    uso_proventos.save()
-            return HttpResponseRedirect(reverse('historico_bh'))
+                if formset_divisao.is_valid():
+                    operacao_acao.save()
+                    uso_proventos = form_uso_proventos.save(commit=False)
+                    if uso_proventos.qtd_utilizada > 0:
+                        uso_proventos.operacao = operacao_acao
+                        uso_proventos.save()
+                    formset_divisao.save()
+                    messages.success(request, 'Operação inserida com sucesso')
+                    return HttpResponseRedirect(reverse('historico_bh'))
+            for erro in formset_divisao.non_form_errors():
+                messages.error(request, erro)
+            return render_to_response('acoes/buyandhold/inserir_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,
+                                                                       'formset_divisao': formset_divisao }, context_instance=RequestContext(request))
     else:
         form_operacao_acao = OperacaoAcaoForm()
         form_uso_proventos = UsoProventosOperacaoAcaoForm()
+        formset_divisao = DivisaoFormSet()
             
-    return render_to_response('acoes/buyandhold/inserir_operacao_acao.html', {'form_operacao_acao': form_operacao_acao,
-                                                                              'form_uso_proventos': form_uso_proventos},
-                               context_instance=RequestContext(request))
+    return render_to_response('acoes/buyandhold/inserir_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,
+                                                                       'formset_divisao': formset_divisao }, context_instance=RequestContext(request))
     
 @login_required
 def inserir_provento_acao(request):
@@ -544,6 +592,10 @@ def painel(request):
         pass
     
     operacoes = OperacaoAcao.objects.filter(destinacao='B').exclude(data__isnull=True).order_by('data')
+
+    proventos_em_acoes = AcaoProvento.objects.filter().order_by('provento__data_ex')
+    
+    taxas_custodia = TaxaCustodiaAcao.objects.filter().order_by('ano_vigencia', 'mes_vigencia')
 
     # Guarda as ações correntes para o calculo do patrimonio
     acoes = {}
