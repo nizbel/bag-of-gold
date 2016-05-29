@@ -30,6 +30,12 @@ import datetime
 import json
 
 @login_required
+def calcular_poupanca_proventos_na_data(request):
+    data = datetime.datetime.strptime(request.GET['dataEscolhida'], '%d/%m/%Y').date()
+    poupanca_proventos = str(calcular_poupanca_proventos_ate_dia(data))
+    return HttpResponse(json.dumps(poupanca_proventos), content_type = "application/json") 
+
+@login_required
 def editar_operacao_acao(request, id):
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'),

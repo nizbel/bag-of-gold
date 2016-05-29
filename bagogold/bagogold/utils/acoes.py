@@ -339,7 +339,7 @@ def calcular_poupanca_proventos_ate_dia(dia):
                         if provento_acao.data_pagamento_frac <= datetime.date.today():
                             total_proventos += (((acoes[item_lista.acao.ticker] * item_lista.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
     
-    return total_proventos
+    return total_proventos.quantize(Decimal('0.01'))
 
 # TODO melhorar isso
 def calcular_preco_medio_ir(ano):

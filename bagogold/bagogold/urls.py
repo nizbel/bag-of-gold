@@ -10,6 +10,7 @@ urlpatterns = [
     # Ações
     url(r'^acoes/$', views.acoes.home.home, name='home_acoes'),
 #     url(r'^$', views.acoes.buyandhold.listar_acoes, name='listar_acoes'),
+    url(r'^acoes/buyandhold/calcular_poupanca_proventos_na_data/$', views.acoes.buyandhold.calcular_poupanca_proventos_na_data, name='calcular_poupanca_proventos_na_data'),
     url(r'^acoes/buyandhold/editar_operacao_acao/(?P<id>\d+)/$', views.acoes.buyandhold.editar_operacao_acao, name='editar_operacao_bh'),
     url(r'^acoes/buyandhold/editar_provento_acao/(?P<id>\d+)/$', views.acoes.buyandhold.editar_provento_acao, name='editar_provento_bh'),
     url(r'^acoes/buyandhold/estatisticas_acao/(?P<ticker>\w+)/$', views.acoes.buyandhold.estatisticas_acao, name='estatisticas_acao_bh'),
