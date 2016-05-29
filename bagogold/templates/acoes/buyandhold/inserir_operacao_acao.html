@@ -6,18 +6,20 @@
 
 {% block content %}
     <h1>Inserir operação</h1>
-   <div class="row-fluid">
-        <div class="box span12">
-            <div class="box-content">
-                <form method="POST" class="post-form form-horizontal">{% csrf_token %}
-                    {{ form_operacao_acao.as_p }}
-                    {{ form_uso_proventos.as_p }}
-                    <div class="form-actions">
-                        <button type="submit" class="btn">Salvar</button>
-                    </div>
-                </form>
-            </div>
+   <form method="POST" class="post-form form-horizontal">{% csrf_token %}
+        <div id="forms">
+            {{ form_operacao_acao.as_p }}
+            {{ form_uso_proventos.as_p }}
+            <h2>Divisões <button id="add-another" class="btn btn-primary" type="button">+</button></h2>
+            {{ formset_divisao.management_form }}
+            {% for form_divisao in formset_divisao %}
+                <h3>Divisão {{ forloop.counter }}</h3>
+                {{ form_divisao.as_p }}
+            {% endfor %}
         </div>
-    </div>
+        <div class="form-actions">
+            <button type="submit" class="btn">Salvar</button>
+        </div>
+    </form>
 {% endblock %}
 

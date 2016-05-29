@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.fii import FII, OperacaoFII, ProventoFII, \
     UsoProventosOperacaoFII
+from decimal import Decimal
 from django import forms
 from django.forms import widgets
 
@@ -72,7 +73,7 @@ class UsoProventosOperacaoFIIForm(forms.ModelForm):
                 raise forms.ValidationError('Quantidade de proventos utilizada não pode ser negativa')
             qtd_utilizada = str(data.get('qtd_utilizada'))
             qtd_utilizada = qtd_utilizada.replace(",", ".")
-            qtd_utilizada = float(qtd_utilizada)
+            qtd_utilizada = Decimal(qtd_utilizada)
             data['qtd_utilizada'] = qtd_utilizada
 
         return data

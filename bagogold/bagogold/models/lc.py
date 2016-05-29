@@ -49,10 +49,13 @@ class OperacaoLetraCredito (models.Model):
             return None
     
     def porcentagem_di(self):
-        try:
-            return HistoricoPorcentagemLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito)[0].porcentagem_di
-        except:
-            return HistoricoPorcentagemLetraCredito.objects.get(data__isnull=True, letra_credito=self.letra_credito).porcentagem_di
+        if self.tipo_operacao == 'C':
+            try:
+                return HistoricoPorcentagemLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito)[0].porcentagem_di
+            except:
+                return HistoricoPorcentagemLetraCredito.objects.get(data__isnull=True, letra_credito=self.letra_credito).porcentagem_di
+        elif self.tipo_operacao == 'V':
+            return self.operacao_compra_relacionada().porcentagem_di()
     
     def qtd_disponivel_venda(self):
         vendas = OperacaoVendaLetraCredito.objects.filter(operacao_compra=self).values_list('operacao_venda__id', flat=True)

@@ -121,13 +121,13 @@ def home(request):
             if item.tipo_operacao == 'C':
                 acoes[item.acao.ticker] += item.quantidade
                 if len(item.usoproventosoperacaoacao_set.all()) > 0:
-                    total_proventos_bh -= item.usoproventosoperacaoacao_set.all()[0].qtd_utilizada
+                    total_proventos_bh -= item.qtd_proventos_utilizada()
                 
             elif item.tipo_operacao == 'V':
                 acoes[item.acao.ticker] -= item.quantidade
                 total_venda = (item.quantidade * item.preco_unitario - \
                     item.emolumentos - item.corretagem)
-                total_proventos_bh += total_venda
+#                 total_proventos_bh += total_venda
                 
         elif isinstance(item, Provento):
             if item.data_pagamento <= datetime.date.today():
