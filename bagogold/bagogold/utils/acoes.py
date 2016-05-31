@@ -473,7 +473,7 @@ def calcular_preco_medio_ir(ano):
         if fiis[fii].quantidade > 0:
             print fii, '->', fiis[fii].quantidade, 'a', (fiis[fii].preco_medio/Decimal(fiis[fii].quantidade))
 
-def buscar_proventos_acao(codigo_cvm, ticker):
+def buscar_proventos_acao(codigo_cvm, ticker, num_tentativas):
     """
     Busca proventos de ações no site da Bovespa
     """
@@ -499,7 +499,10 @@ def buscar_proventos_acao(codigo_cvm, ticker):
     response = br.submit()
     html = response.read()
     if 'Sistema indisponivel' in html:
-        return buscar_proventos_acao(codigo_cvm, ticker)
+        if num_tentativas == 3:
+            raise URLError('Sistema indisponível')
+            return
+        return buscar_proventos_acao(codigo_cvm, ticker, num_tentativas+1)
     
     inicio = html.find('<tbody>')
 #         print 'inicio', inicio
@@ -532,7 +535,10 @@ def buscar_proventos_acao(codigo_cvm, ticker):
     else:
         data = response.read()
         if 'Sistema indisponivel' in data:
-            return buscar_proventos_acao(codigo_cvm)
+            if num_tentativas == 3:
+                raise URLError('Sistema indisponível')
+                return
+            return buscar_proventos_acao(codigo_cvm, ticker, num_tentativas+1)
         inicio = data.find('<div id="divDividendo">')
 #         print 'inicio', inicio
         fim = data.find('<div id="divSubscricao">', inicio)
