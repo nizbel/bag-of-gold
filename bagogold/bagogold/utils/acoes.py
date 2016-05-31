@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao, \
     OperacaoAcao, AcaoProvento, Acao, Provento
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao
 from bagogold.bagogold.models.empresa import Empresa
+from bagogold.bagogold.models.fii import OperacaoFII
 from decimal import Decimal, ROUND_DOWN, ROUND_HALF_DOWN, ROUND_UP
 from django.db.models import Sum, Case, When, IntegerField, F
 from itertools import chain

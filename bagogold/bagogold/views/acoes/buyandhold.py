@@ -4,11 +4,15 @@ from bagogold.bagogold.forms.operacao_acao import OperacaoAcaoForm, \
     UsoProventosOperacaoAcaoForm
 from bagogold.bagogold.forms.provento_acao import ProventoAcaoForm
 from bagogold.bagogold.forms.taxa_custodia_acao import TaxaCustodiaAcaoForm
-from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, ValorDiarioAcao, \
-    Provento, UsoProventosOperacaoAcao, TaxaCustodiaAcao, Acao, AcaoProvento
+from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, \
+    ValorDiarioAcao, Provento, UsoProventosOperacaoAcao, TaxaCustodiaAcao, Acao, \
+    AcaoProvento
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao
 from bagogold.bagogold.utils.acoes import calcular_provento_por_mes, \
     calcular_media_proventos_6_meses, calcular_operacoes_sem_proventos_por_mes, \
-    calcular_uso_proventos_por_mes, quantidade_acoes_ate_dia
+    calcular_uso_proventos_por_mes, quantidade_acoes_ate_dia, \
+    calcular_poupanca_proventos_ate_dia
+from bagogold.bagogold.utils.divisoes import calcular_saldo_geral_acoes_bh
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
