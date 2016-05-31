@@ -17,4 +17,14 @@ class Migration(migrations.Migration):
             name='codigo_cvm',
             field=models.CharField(blank=True, max_length=10, null=True, verbose_name=b'C\xc3\xb3digo CVM'),
         ),
+        migrations.AddField(
+            model_name='transferenciaentredivisoes',
+            name='investimento_destino',
+            field=models.CharField(blank=True, max_length=1, null=True, verbose_name=b'Investimento de destino'),
+        ),
+        migrations.AddField(
+            model_name='transferenciaentredivisoes',
+            name='investimento_origem',
+            field=models.CharField(blank=True, max_length=1, null=True, verbose_name=b'Investimento de origem'),
+        ),
     ]
