@@ -12,7 +12,7 @@ class BuscaProventosAcaoThread(Thread):
  
     def run(self):
         try:
-            buscar_proventos_acao(self.codigo_cvm, self.ticker)
+            buscar_proventos_acao(self.codigo_cvm, self.ticker, 0)
         except Exception as e:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
             message = template.format(type(e).__name__, e.args)
