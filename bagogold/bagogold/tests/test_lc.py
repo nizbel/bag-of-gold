@@ -1,20 +1,23 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.models.lc import OperacaoLetraCredito, LetraCredito
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa
+from decimal import Decimal
 from django.test import TestCase
 import datetime
 
 class AtualizarLCPorDITestCase(TestCase):
     
-#     def setUp(self):
-#         Titulo.objects.create(tipo="NTN-B Principal", data_vencimento=datetime.date(2035, 1, 1))
-#         OperacaoTitulo.objects.create(preco_unitario=742.28, quantidade=1, data= models.DateField(u'Data', blank=True, null=True)
-#     taxa_bvmf = models.DecimalField(u'Taxa BVMF', max_digits=11, decimal_places=2)
-#     taxa_custodia = models.DecimalField(u'Taxa do agente de custódia', max_digits=11, decimal_places=2)
-#     tipo_operacao = models.CharField(u'Tipo de operação', max_length=1)
-#     titulo = models.ForeignKey('Titulo')
-#     consolidada=True)
+    def setUp(self):
+        LetraCredito.objects.create(nome="LCA Teste")
+        OperacaoLetraCredito.objects.create(quantidade=Decimal(2500), data=datetime.date(2016, 5, 23), tipo_operacao='C', \
+                                            letra_credito=LetraCredito.objects.get(nome="LCA Teste"))
 
-    def test_iof_regressivo(self):
+    def test_calculo_valor_atualizado_taxa_di(self):
         """Testar de acordo com o pego no extrato da conta"""
-        #10.224,87    10.229,17 
-        self.assertEqual(calcular_valor_atualizado_com_taxa(14.13, 10224.87, 80), 10229.17)
+        # 2506,30 em 1 de Junho (6 dias após, todos com taxa DI 14,13%)
+        operacao = OperacaoLetraCredito.objects.get(quantidade=(Decimal(2500)))
+        for i in range(0,6):
+            operacao.quantidade = calcular_valor_atualizado_com_taxa(Decimal(14.13), operacao.quantidade, Decimal(80))
+        str_auxiliar = str(operacao.quantidade.quantize(Decimal('.0001')))
+        operacao.quantidade = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+        self.assertEqual(operacao.quantidade, Decimal('2506.30'))
