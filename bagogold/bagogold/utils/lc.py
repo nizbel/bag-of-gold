@@ -6,6 +6,15 @@ from decimal import Decimal
 from django.db.models import Q
 import datetime
 
+def calcular_valor_atualizado_com_taxa(taxa_do_dia, valor_atual, operacao_taxa):
+    """
+    Calcula o valor atualizado de uma operação em LC, a partir da taxa DI do dia
+    Parâmetros: Taxa DI do dia, valor atual da operação, taxa da operação
+    Retorno: Valor atualizado com a taxa DI
+    """
+    return ((pow((Decimal(1) + taxa_do_dia/100), Decimal(1)/Decimal(252)) - Decimal(1)) * operacao_taxa/100 + Decimal(1)) * valor_atual
+
+
 def calcular_valor_lc_ate_dia(dia):
     """ 
     Calcula o valor das letras de crédito no dia determinado

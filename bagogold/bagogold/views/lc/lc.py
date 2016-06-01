@@ -6,8 +6,9 @@ from bagogold.bagogold.forms.lc import OperacaoLetraCreditoForm, \
     HistoricoCarenciaLetraCreditoForm
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoLC
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI, \
-    HistoricoPorcentagemLetraCredito, LetraCredito, HistoricoCarenciaLetraCredito,\
+    HistoricoPorcentagemLetraCredito, LetraCredito, HistoricoCarenciaLetraCredito, \
     OperacaoVendaLetraCredito
+from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -341,10 +342,6 @@ def painel(request):
     total_gasto = 0
     total_patrimonio = 0
     
-    # Gráfico de acompanhamento de gastos vs patrimonio
-    graf_gasto_total = list()
-    graf_patrimonio = list()
-
     while data_iteracao <= data_final:
         taxa_do_dia = HistoricoTaxaDI.objects.get(data=data_iteracao).taxa
         # Calcular o valor atualizado do patrimonio diariamente
@@ -381,10 +378,6 @@ def painel(request):
                                 operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
                                 break
                 
-        if len(operacoes.filter(data=data_iteracao)) > 0 or data_iteracao == data_final:
-            graf_gasto_total += [[str(calendar.timegm(data_iteracao.timetuple()) * 1000), float(total_gasto)]]
-            graf_patrimonio += [[str(calendar.timegm(data_iteracao.timetuple()) * 1000), float(total_patrimonio)]]
-        
         # Proximo dia útil
         proximas_datas = HistoricoTaxaDI.objects.filter(data__gt=data_iteracao).order_by('data')
         if len(proximas_datas) > 0:
@@ -394,6 +387,11 @@ def painel(request):
     
     # Remover operações que não estejam mais rendendo
     operacoes = [operacao for operacao in operacoes if (operacao.atual > 0 and operacao.tipo_operacao == 'C')]
+    
+    # Calcular o ganho no dia seguinte, considerando taxa do dia anterior
+    for operacao in operacoes:
+        operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa) - operacao.atual
+        operacao.ganho_prox_dia = operacao.ganho_prox_dia.quantize(Decimal('0.01'))
     
     return render_to_response('lc/painel.html', {'operacoes': operacoes},
                                context_instance=RequestContext(request))
