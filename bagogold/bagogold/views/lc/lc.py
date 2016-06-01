@@ -114,7 +114,7 @@ def historico(request):
                             total_gasto += operacao.total
                         if taxa_do_dia > 0:
                             # Calcular o valor atualizado para cada operacao
-                            operacao.atual = Decimal((pow((float(1) + float(taxa_do_dia)/float(100)), float(1)/float(252)) - float(1)) * float(operacao.taxa/100) + float(1)) * operacao.atual
+                            operacao.atual = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa)
                             # Arredondar na última iteração
                             if (data_iteracao == data_final):
                                 str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
@@ -356,7 +356,7 @@ def painel(request):
                             operacao.total = operacao.quantidade
                             total_gasto += operacao.total
                         # Calcular o valor atualizado para cada operacao
-                        operacao.atual = Decimal((pow((float(1) + float(taxa_do_dia)/float(100)), float(1)/float(252)) - float(1)) * float(operacao.taxa/100) + float(1)) * operacao.atual
+                        operacao.atual = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa)
                         # Arredondar na última iteração
                         if (data_iteracao == data_final):
                             str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
