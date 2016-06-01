@@ -53,8 +53,9 @@ def calcular_valor_lc_ate_dia(dia):
             # Vendas
             if operacao.tipo_operacao == 'V':
                 # Remover quantidade da operação de compra
+                operacao_compra_id = operacao.operacao_compra_relacionada().id
                 for operacao_c in operacoes:
-                    if (operacao_c.id == OperacaoVendaLetraCredito.objects.get(operacao_venda=operacao).id):
+                    if (operacao_c.id == operacao_compra_id):
                         operacao.atual = (operacao.quantidade/operacao_c.quantidade) * operacao_c.atual
                         operacao_c.atual -= operacao.atual
                         str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
@@ -128,8 +129,9 @@ def calcular_valor_lc_ate_dia_por_divisao(dia, divisao_id):
             # Vendas
             if operacao.tipo_operacao == 'V':
                 # Remover quantidade da operação de compra
+                operacao_compra_id = operacao.operacao_compra_relacionada().id
                 for operacao_c in operacoes:
-                    if (operacao_c.id == OperacaoVendaLetraCredito.objects.get(operacao_venda=operacao).operacao_compra.id):
+                    if (operacao_c.id == operacao_compra_id):
                         operacao.atual = (DivisaoOperacaoLC.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade/DivisaoOperacaoLC.objects.get(divisao__id=divisao_id, operacao=operacao_c).quantidade) * operacao_c.atual
                         operacao_c.atual -= operacao.atual
                         str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
@@ -148,7 +150,7 @@ def calcular_valor_lc_ate_dia_por_divisao(dia, divisao_id):
         for operacao in operacoes:
             if (operacao.data <= data_iteracao):
                 if taxa_do_dia > 0:
-                    operacao.atual = Decimal((pow((float(1) + float(taxa_do_dia)/float(100)), float(1)/float(252)) - float(1)) * float(operacao.taxa/100) + float(1)) * operacao.atual
+                    operacao.atual = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa)
                 # Arredondar na última iteração
                 if (data_iteracao == data_final):
                     str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))

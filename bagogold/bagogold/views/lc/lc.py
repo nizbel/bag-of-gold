@@ -126,8 +126,9 @@ def historico(request):
                         operacao.total = operacao.quantidade
                         total_gasto -= operacao.total
                         # Remover quantidade da operação de compra
+                        operacao_compra_id = operacao.operacao_compra_relacionada().id
                         for operacao_c in operacoes:
-                            if (operacao_c.id == OperacaoVendaLetraCredito.objects.get(operacao_venda=operacao).operacao_compra.id):
+                            if (operacao_c.id == operacao_compra_id):
                                 # Configurar taxa para a mesma quantidade da compra
                                 operacao.taxa = operacao_c.taxa
                                 operacao.atual = (operacao.quantidade/operacao_c.quantidade) * operacao_c.atual
@@ -368,8 +369,9 @@ def painel(request):
                         operacao.total = operacao.quantidade
                         total_gasto -= operacao.total
                         # Remover quantidade da operação de compra
+                        operacao_compra_id = operacao.operacao_compra_relacionada().id
                         for operacao_c in operacoes:
-                            if (operacao_c.id == OperacaoVendaLetraCredito.objects.get(operacao_venda=operacao).id):
+                            if (operacao_c.id == operacao_compra_id):
                                 # Configurar taxa para a mesma quantidade da compra
                                 operacao.taxa = operacao_c.taxa
                                 operacao.atual = (operacao.quantidade/operacao_c.quantidade) * operacao_c.atual
