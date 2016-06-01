@@ -77,7 +77,7 @@
     <tr class="operacao-{{key}}_{{key_composicao}}">
         <td>{{item_operacao.nome}}</a></td>
         <td>{{item_operacao.quantidade}}</a></td>
-        <td>{{item_operacao.data}}</a></td>
+        <td>{{item_operacao.data|date:"Y-m-d"}}</a></td>
         <td>{{item_operacao.valor_unitario}}</a></td>
         <td>R${{item_operacao.patrimonio|floatformat:"2"}} ({{item_operacao.percentual|floatformat:"2"}}%)</td>
     </tr>
