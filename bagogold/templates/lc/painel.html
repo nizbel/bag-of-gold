@@ -12,6 +12,7 @@
                 <th>Taxa (% do DI)</th>
                 <th>Valor atual</th>
                 <th>Venda permitida?</th>
+                <th>Ganho no próx. dia*</th>
             </tr>
         </thead>
         <tbody>
@@ -22,11 +23,13 @@
             <td>{{ item.taxa }}%</td>
             <td>R$ {{item.atual|floatformat:2}}</td>
             <td>{{ item.venda_permitida|yesno:"Sim,Não,Indefinido" }}</td>
+            <td>R$ {{item.ganho_prox_dia }}</td>
         </tr>
         
         {% endfor %}
         </tbody>
         </table>
+        * Obs.: Ganho considerando que seja repetida a taxa do dia anterior
     </div>
 </div>
 
