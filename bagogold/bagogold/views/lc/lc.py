@@ -391,7 +391,8 @@ def painel(request):
     # Calcular o ganho no dia seguinte, considerando taxa do dia anterior
     for operacao in operacoes:
         operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa) - operacao.atual
-        operacao.ganho_prox_dia = operacao.ganho_prox_dia.quantize(Decimal('0.01'))
+        str_auxiliar = str(operacao.ganho_prox_dia.quantize(Decimal('.0001')))
+        operacao.ganho_prox_dia = Decimal(str_auxiliar[:len(str_auxiliar)-2])
     
     return render_to_response('lc/painel.html', {'operacoes': operacoes},
                                context_instance=RequestContext(request))
