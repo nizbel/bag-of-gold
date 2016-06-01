@@ -114,15 +114,14 @@ function mostrarComposicao(key) {
     // Preparar total
     var total_composicao = 0;
 	$(data).each( function ( index, row ) {
-    	total_composicao += parseFloat(row[1].match(/R\$[\d\.]*/)[0].replace("R$", ""));
+    	total_composicao += parseFloat(row[1].match(/R\$[\d\.,]*/)[0].replace("R$", "").replace(".", "").replace(",", "."));
     	total_composicao = Math.round(total_composicao * 100) / 100;
     });
-    $('#item_total').html('R$' + total_composicao);
+    $('#item_total').html('R$' + String(total_composicao).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, "."));
 }
 
 //Mostrar operações do investimento escolhido
 function mostrarOperacoes(key) {
-	console.log("MOSTRAR OPERACOES");
     // Alterar classe escolhida
     $('#tab_operacao').toggleClass('operacao-' + key);
 	// Mostrar ou esconder tabela atual
@@ -136,13 +135,13 @@ function mostrarOperacoes(key) {
     var total_operacao = 0;
     $(data).each( function ( index, row ) {
     	if (row[0] == 'C') {
-    	    total_operacao += parseFloat(row[4].match(/R\$[\d\.]*/)[0].replace("R$", ""));
+    	    total_operacao += parseFloat(row[4].match(/R\$[\d\.,]*/)[0].replace("R$", "").replace(".", "").replace(",", "."));
     	} else {
-            total_operacao -= parseFloat(row[4].match(/R\$[\d\.]*/)[0].replace("R$", ""));
+            total_operacao -= parseFloat(row[4].match(/R\$[\d\.,]*/)[0].replace("R$", "").replace(".", "").replace(",", "."));
     	}
     	total_operacao = Math.round(total_operacao * 100) / 100;
     });
-    $('#operacao_total').html('R$' + total_operacao);
+    $('#operacao_total').html('R$' + String(total_operacao).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, "."));
 }
 
 $.fn.dataTableExt.afnFiltering.push(function (oSettings, aData, iDataIndex) {
@@ -157,7 +156,6 @@ $.fn.dataTableExt.afnFiltering.push(function (oSettings, aData, iDataIndex) {
     if ($(oSettings.nTable).hasClass('mostrar-operacoes')) {
     	var classe_linha = oSettings.aoData[iDataIndex].nTr.className.split(" ");
     	var mostrar = ($(oSettings.nTable).hasClass(classe_linha[0]));
-        console.log(classe_linha + "..." + mostrar);
         return mostrar;
     } else return true;
 });
