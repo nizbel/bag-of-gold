@@ -101,7 +101,11 @@ $(document).ready(function(){
 
 		e.preventDefault();
 
-		$(this).parent().find('ul').slideToggle();
+		/* Hide those who are already opened */
+		var this_ul = $(this).parent().find('ul');
+		$(this).parent().parent().find('ul:visible').not(this_ul).slideToggle();
+		
+		$(this).parent().find('ul:hidden').slideToggle();
 	
 	});
 			
