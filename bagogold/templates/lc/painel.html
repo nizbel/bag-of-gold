@@ -53,8 +53,8 @@ $( document ).ready(function() {
         total_prox_dia += parseFloat(row[5].match(/R\$[\d\.,]*/)[0].replace("R$", "").replace(".", "").replace(",", "."));
         total_prox_dia = Math.round(total_prox_dia * 100) / 100;
     });
-    $('#total_atual').html('R$' + String(total_atual).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, "."));
-    $('#total_prox_dia').html('R$' + String(total_prox_dia).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, "."));
+    $('#total_atual').html('R$' + total_atual.toFixed(2).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, "."));
+    $('#total_prox_dia').html('R$' + total_prox_dia.toFixed(2).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, "."));
 });
 </script>
 

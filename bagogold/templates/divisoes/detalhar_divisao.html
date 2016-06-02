@@ -117,7 +117,7 @@ function mostrarComposicao(key) {
     	total_composicao += parseFloat(row[1].match(/R\$[\d\.,]*/)[0].replace("R$", "").replace(".", "").replace(",", "."));
     	total_composicao = Math.round(total_composicao * 100) / 100;
     });
-    $('#item_total').html('R$' + String(total_composicao).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, "."));
+    $('#item_total').html('R$' + total_composicao.toFixed(2).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, "."));
 }
 
 //Mostrar operações do investimento escolhido
@@ -141,7 +141,7 @@ function mostrarOperacoes(key) {
     	}
     	total_operacao = Math.round(total_operacao * 100) / 100;
     });
-    $('#operacao_total').html('R$' + String(total_operacao).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, "."));
+    $('#operacao_total').html('R$' + total_operacao.toFixed(2).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, "."));
 }
 
 $.fn.dataTableExt.afnFiltering.push(function (oSettings, aData, iDataIndex) {
