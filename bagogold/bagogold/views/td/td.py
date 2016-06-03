@@ -331,6 +331,9 @@ def painel(request):
     titulos = {}
     titulos_vendidos = {}
     
+    total_atual = 0
+    total_lucro = 0
+    
     for operacao in OperacaoTitulo.objects.filter().order_by('data'):
         # Verificar se se trata de compra
         if operacao.tipo_operacao == 'C':
@@ -398,15 +401,18 @@ def painel(request):
             # Pegar a taxa anual
             operacao.variacao_percentual_anual = (math.pow(1 + operacao.variacao_percentual_mensal/100, 12) - 1) * 100
             operacao.valor_total_atual = operacao.valor_atual * operacao.quantidade
+            total_atual += operacao.valor_total_atual
             if operacao.valor_total_atual > operacao.total_gasto:
                 operacao.lucro = (operacao.valor_total_atual - operacao.total_gasto) - calcular_imposto_venda_td((datetime.date.today() - operacao.data).days, operacao.valor_total_atual, operacao.valor_total_atual - operacao.total_gasto)
                 operacao.lucro_percentual = operacao.lucro / operacao.total_gasto * 100
             else:
-                operacao.lucro = float(operacao.valor_total_atual - operacao.total_gasto)
+                operacao.lucro = operacao.valor_total_atual - operacao.total_gasto
                 operacao.lucro_percentual = operacao.lucro / operacao.total_gasto * 100
 #             print '%s: %s ao preço %s valendo %s (%s (%s%%) de lucro)' % (titulo, operacao.quantidade, operacao.preco_unitario, valor_atual, \
 #                                                                     valor_atual - operacao.preco_unitario, (valor_atual - operacao.preco_unitario) / operacao.preco_unitario * 100)
-    
+            total_lucro += operacao.lucro
+            
+            
     # Dados de títulos vendidos
     for titulo in titulos_vendidos.keys():
         for operacao in titulos_vendidos[titulo]:
@@ -429,7 +435,12 @@ def painel(request):
                 operacao.lucro -= operacao.valor_taxas
                 operacao.lucro_percentual = operacao.lucro / operacao.total_gasto * 100
             else:
-                operacao.lucro = float(operacao.valor_total_atual - operacao.total_gasto - operacao.valor_taxas)
+                operacao.lucro = operacao.valor_total_atual - operacao.total_gasto - operacao.valor_taxas
                 operacao.lucro_percentual = operacao.lucro / operacao.total_gasto * 100
     
-    return render_to_response('td/painel.html', {'titulos': titulos, 'titulos_vendidos': titulos_vendidos}, context_instance=RequestContext(request))
+    # Popular dados
+    dados = {}
+    dados['total_atual'] = total_atual
+    dados['total_lucro'] = total_lucro
+    
+    return render_to_response('td/painel.html', {'titulos': titulos, 'titulos_vendidos': titulos_vendidos, 'dados': dados}, context_instance=RequestContext(request))
