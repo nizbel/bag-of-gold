@@ -30,32 +30,14 @@
         <tfoot>
             <tr>
                 <th colspan="3">Total</th>
-                <th id="total_atual">R$0</th>
+                <th>R${{ dados.total_atual }}</th>
                 <th></th>
-                <th id="total_prox_dia">R$0</th>
+                <th>R${{ dados.total_ganho_prox_dia }}</th>
             </tr>
         </tfoot>
         </table>
         * Obs.: Ganho considerando que seja repetida a taxa do dia anterior
     </div>
 </div>
-
-<script>
-$( document ).ready(function() {
-    var table = $('#operacoes').dataTable({"bRetrieve": true});
-    var data = table._('tr');
-    // Preparar total
-    var total_atual = 0;
-    var total_prox_dia = 0;
-    $(data).each( function ( index, row ) {
-        total_atual += parseFloat(row[3].match(/R\$[\d\.,]*/)[0].replace("R$", "").replace(".", "").replace(",", "."));
-        total_atual = Math.round(total_atual * 100) / 100;
-        total_prox_dia += parseFloat(row[5].match(/R\$[\d\.,]*/)[0].replace("R$", "").replace(".", "").replace(",", "."));
-        total_prox_dia = Math.round(total_prox_dia * 100) / 100;
-    });
-    $('#total_atual').html('R$' + total_atual.toFixed(2).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, "."));
-    $('#total_prox_dia').html('R$' + total_prox_dia.toFixed(2).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, "."));
-});
-</script>
 
 {% endblock %}
