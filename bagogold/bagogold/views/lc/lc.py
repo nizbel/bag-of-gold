@@ -340,13 +340,10 @@ def painel(request):
     
     data_iteracao = data_inicial
     
-    total_gasto = 0
-    total_patrimonio = 0
+    total_atual = 0
     
     while data_iteracao <= data_final:
         taxa_do_dia = HistoricoTaxaDI.objects.get(data=data_iteracao).taxa
-        # Calcular o valor atualizado do patrimonio diariamente
-        total_patrimonio = 0
         
         # Processar operações
         for operacao in operacoes:     
@@ -355,19 +352,17 @@ def painel(request):
                 if operacao.tipo_operacao == 'C':
                         if (operacao.data == data_iteracao):
                             operacao.total = operacao.quantidade
-                            total_gasto += operacao.total
                         # Calcular o valor atualizado para cada operacao
                         operacao.atual = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa)
                         # Arredondar na última iteração
                         if (data_iteracao == data_final):
                             str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
                             operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-                        total_patrimonio += operacao.atual
+                            total_atual += operacao.atual
                         
                 elif operacao.tipo_operacao == 'V':
                     if (operacao.data == data_iteracao):
                         operacao.total = operacao.quantidade
-                        total_gasto -= operacao.total
                         # Remover quantidade da operação de compra
                         operacao_compra_id = operacao.operacao_compra_relacionada().id
                         for operacao_c in operacoes:
@@ -390,11 +385,18 @@ def painel(request):
     # Remover operações que não estejam mais rendendo
     operacoes = [operacao for operacao in operacoes if (operacao.atual > 0 and operacao.tipo_operacao == 'C')]
     
+    total_ganho_prox_dia = 0
     # Calcular o ganho no dia seguinte, considerando taxa do dia anterior
     for operacao in operacoes:
         operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa) - operacao.atual
         str_auxiliar = str(operacao.ganho_prox_dia.quantize(Decimal('.0001')))
         operacao.ganho_prox_dia = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+        total_ganho_prox_dia += operacao.ganho_prox_dia
     
-    return render_to_response('lc/painel.html', {'operacoes': operacoes},
+    # Popular dados
+    dados = {}
+    dados['total_atual'] = total_atual
+    dados['total_ganho_prox_dia'] = total_ganho_prox_dia
+    
+    return render_to_response('lc/painel.html', {'operacoes': operacoes, 'dados': dados},
                                context_instance=RequestContext(request))
