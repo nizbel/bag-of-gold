@@ -660,5 +660,7 @@ def painel(request):
 @login_required
 def ver_taxas_custodia_acao(request):
     taxas_custodia = TaxaCustodiaAcao.objects.filter().order_by('ano_vigencia', 'mes_vigencia')
+    for taxa in taxas_custodia:
+        taxa.ano_vigencia = str(taxa.ano_vigencia).replace('.', '')
     return render_to_response('acoes/buyandhold/ver_taxas_custodia_acao.html', {'taxas_custodia': taxas_custodia},
                                context_instance=RequestContext(request))
