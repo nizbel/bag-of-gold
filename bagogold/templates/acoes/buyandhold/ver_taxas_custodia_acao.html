@@ -14,12 +14,19 @@
     {% for taxa in taxas_custodia %}
     <tr>
         <td>R${{ taxa.valor_mensal }}</td>
-        <td>{{ taxa.mes_vigencia }}/{{ taxa.ano_vigencia }}</td>
+        <td>{{ taxa.ano_vigencia }}/{{ taxa.mes_vigencia }}</td>
     </tr>
     {% endfor %}
     </tbody>
     </table>
     </div>
 </div>
+
+<script type="text/javascript">
+$( document ).ready(function() {
+    var table = $('#taxas').dataTable({"bRetrieve": true});
+    table.fnSort( [ [1,'asc'] ] );
+});
+</script>
 
 {% endblock %}
