@@ -102,6 +102,98 @@
 </head>
 
 <body>
+<div class="navbar">
+    <div class="navbar-inner">
+        <div class="container-fluid">
+            <a class="brand" href="#"><span>Bag of Gold</span></a>
+                            
+            <!-- start: Header Menu -->
+            <div class="nav-no-collapse header-nav">
+                <ul class="nav pull-right">
+                    <li class="dropdown hidden-phone">
+                        <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+                            <i class="halflings-icon white warning-sign"></i>
+                        </a>
+                        <ul class="dropdown-menu notifications">
+                            <li class="dropdown-menu-title">
+                                <span>11 pendências</span>
+                                <a href="#refresh"><i class="icon-repeat"></i></a>
+                            </li>   
+<!--                             <li> -->
+<!--                                 <a href="#"> -->
+<!--                                     <span class="icon blue"><i class="icon-user"></i></span> -->
+<!--                                     <span class="message">New user registration</span> -->
+<!--                                     <span class="time">1 min</span>  -->
+<!--                                 </a> -->
+<!--                             </li> -->
+<!--                             <li> -->
+<!--                                 <a href="#"> -->
+<!--                                     <span class="icon green"><i class="icon-comment-alt"></i></span> -->
+<!--                                     <span class="message">New comment</span> -->
+<!--                                     <span class="time">7 min</span>  -->
+<!--                                 </a> -->
+<!--                             </li> -->
+<!--                             <li> -->
+<!--                                 <a href="#"> -->
+<!--                                     <span class="icon green"><i class="icon-comment-alt"></i></span> -->
+<!--                                     <span class="message">New comment</span> -->
+<!--                                     <span class="time">8 min</span>  -->
+<!--                                 </a> -->
+<!--                             </li> -->
+<!--                             <li> -->
+<!--                                 <a href="#"> -->
+<!--                                     <span class="icon green"><i class="icon-comment-alt"></i></span> -->
+<!--                                     <span class="message">New comment</span> -->
+<!--                                     <span class="time">16 min</span>  -->
+<!--                                 </a> -->
+<!--                             </li> -->
+<!--                             <li> -->
+<!--                                 <a href="#"> -->
+<!--                                     <span class="icon green"><i class="icon-comment-alt"></i></span> -->
+<!--                                     <span class="message">New comment</span> -->
+<!--                                     <span class="time">yesterday</span>  -->
+<!--                                 </a> -->
+<!--                             </li> -->
+<!--                             <li> -->
+<!--                                 <a href="#"> -->
+<!--                                     <span class="icon blue"><i class="icon-user"></i></span> -->
+<!--                                     <span class="message">New user registration</span> -->
+<!--                                     <span class="time">yesterday</span>  -->
+<!--                                 </a> -->
+<!--                             </li> -->
+                            <li class="dropdown-menu-sub-footer">
+                                <a>View all notifications</a>
+                            </li>   
+                        </ul>
+                    </li>
+                    <li>
+                        <a class="btn" href="#">
+                            <i class="halflings-icon white wrench"></i>
+                        </a>
+                    </li>
+                    <!-- start: User Dropdown -->
+                    <li class="dropdown">
+                        <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+                            <i class="halflings-icon white user"></i> {{ request.user.username }}
+                            <span class="caret"></span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li class="dropdown-menu-title">
+                                <span>Minha conta</span>
+                            </li>
+                            <li><a href="#"><i class="halflings-icon user"></i> Alterar dados</a></li>
+                            <li><a href="{% url "django.contrib.auth.views.logout" %}"><i class="halflings-icon off"></i> Sair</a></li>
+                        </ul>
+                    </li>
+                    <!-- end: User Dropdown -->
+                </ul>
+            </div>
+            <!-- end: Header Menu -->
+            
+        </div>
+    </div>
+</div>
+
 <div class="container-fluid-full">
 <div class="row-fluid">
     <!-- start: Main Menu -->
