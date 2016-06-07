@@ -41,6 +41,7 @@ class OperacaoTitulo (models.Model):
     tipo_operacao = models.CharField(u'Tipo de operação', max_length=1)
     titulo = models.ForeignKey('Titulo')
     consolidada = models.NullBooleanField(u'Consolidada?', blank=True, null=True)
+    investidor = models.ForeignKey('Investidor')
     
     def __unicode__(self):
         return '(' + self.tipo_operacao + ') ' +str(self.quantidade) + ' ' + self.titulo.tipo + ' a R$' + str(self.preco_unitario)
