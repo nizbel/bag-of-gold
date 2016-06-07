@@ -5,17 +5,20 @@
     <link href="{% static "css/bootstrap.min.css" %}" type="text/css" rel="stylesheet">
     <link href="{% static "font-awesome/css/font-awesome.css" %}" type="text/css" rel="stylesheet">
 
-    <!-- Page-Level Plugin CSS - Dashboard -->
-    <link href="{% static "css/plugins/morris/morris-0.4.3.min.css" %}" type="text/css" rel="stylesheet">
-    <link href="{% static "css/plugins/timeline/timeline.css" %}" type="text/css" rel="stylesheet">
-
-    <!-- SB Admin CSS - Include with every page -->
-    <link href="{% static "css/sb-admin.css" %}" type="text/css" rel="stylesheet">
+    <link href="{% static "css/bootstrap-responsive.min.css" %}" rel="stylesheet">
+    <link id="base-style" href="{% static "css/style.css" %}" rel="stylesheet">
+    <link id="base-style-responsive" href="{% static "css/style-responsive.css" %}" rel="stylesheet">
+    <link href="http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800&amp;subset=latin,cyrillic-ext,latin-ext" rel="stylesheet" type="text/css">
+    
+    <style type="text/css">
+        body { background: url({% static "img/bg-login.jpg" %}) !important; }
+    </style>
+    
 </head>
 
 <body>
 
-    <div class="container">
+    <div class="container-fluid-full">
         {% if messages %}
         <div class="row">
             <div class="col-md-4 col-md-offset-4">
@@ -31,33 +34,52 @@
             </div>
         </div>
         {% endif %}
-        <div class="row">
-            <div class="col-md-4 col-md-offset-4">
-                <div class="login-panel panel panel-default">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">Login</h3>
+        <div class="row-fluid">
+            
+            <div class="row-fluid">
+                <div class="login-box">
+                    <div class="icons">
+                        <a href="index.html"><i class="halflings-icon home"></i></a>
+                        <a href="#"><i class="halflings-icon cog"></i></a>
                     </div>
-                    <div class="panel-body">
-                        {% if form.errors %}
-                            <p>Usuário e/ou senha não conferem</p>
-                        {% endif %}
-                        <form method="post" action="{% url "django.contrib.auth.views.login" %}">
+                    <h2>Login</h2>
+                    {% if form.errors %}
+                        <p>Usuário e/ou senha não conferem</p>
+                    {% endif %}
+                    <form class="form-horizontal" action="{% url "django.contrib.auth.views.login" %}" method="post">
                         {% csrf_token %}
-                        
-                        <label class="required" for="id_username">Login:</label>
-                        <input class="form-control" id="id_username" type="text" name="username" maxlength="254" autofocus/>
-                        <label class="required" for="id_password">Senha:</label>
-                        <input class="form-control" id="id_password" type="password" name="password" />
-                        <h3></h3>
-                        
-                        <input type="submit" class="btn btn-lg btn-success btn-block" value="Enviar" />
-                        <input type="hidden" name="next" value="{{ next }}" />
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
+                        <fieldset>
+                            
+                            <div class="input-prepend" title="Username">
+                                <span class="add-on"><i class="halflings-icon user"></i></span>
+                                <input class="input-large span10" name="username" id="username" placeholder="type username" type="text">
+                            </div>
+                            <div class="clearfix"></div>
+
+                            <div class="input-prepend" title="Password">
+                                <span class="add-on"><i class="halflings-icon lock"></i></span>
+                                <input class="input-large span10" name="password" id="password" placeholder="type password" type="password">
+                            </div>
+                            <div class="clearfix"></div>
+                            
+                            <div class="button-login">  
+                                <button type="submit" class="btn btn-primary">Login</button>
+                            </div>
+                            <input type="hidden" name="next" value="{{ next }}" />
+                            <div class="clearfix"></div>
+                    
+                    <hr>
+<!--                     <h3>Forgot Password?</h3> -->
+<!--                     <p> -->
+<!--                         No problem, <a href="#">click here</a> to get a new password. -->
+<!--                     </p>     -->
+                </fieldset></form></div><!--/span-->
+            </div><!--/row-->
+            
+        </div><!--/.fluid-container-->
+    
     </div>
+
 
     <!-- Core Scripts - Include with every page -->
     <script src="{% static "js/jquery-1.10.2.js" %}"></script>
