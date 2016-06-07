@@ -14,7 +14,7 @@ class Investidor (models.Model):
         return self.user.first_name + ' ' + self.user.last_name
     
 class HistoricoCorretagemPadrao (models.Model):
-    user = models.ForeignKey('Investidor')
+    investidor = models.ForeignKey('Investidor')
     data_vigencia = models.DateField(u'Início da vigência', blank=True, null=True)
     corretagem_padrao = models.DecimalField(u'Corretagem padrão', max_digits=5, decimal_places=2, blank=True, null=True)
     """
