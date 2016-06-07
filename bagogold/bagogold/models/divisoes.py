@@ -7,6 +7,7 @@ from bagogold.bagogold.models.lc import HistoricoTaxaDI
 class Divisao (models.Model):
     nome = models.CharField(u'Nome da divisão', max_length=50)
     valor_objetivo = models.DecimalField(u'Objetivo', max_digits=11, decimal_places=2, blank=True, default=0)
+    investidor = models.ForeignKey('Investidor')
     
     def __unicode__(self):
         return self.nome
