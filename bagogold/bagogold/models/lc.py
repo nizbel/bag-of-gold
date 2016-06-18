@@ -65,6 +65,13 @@ class OperacaoLetraCredito (models.Model):
             qtd_vendida += venda.quantidade
         return self.quantidade - qtd_vendida
     
+    def qtd_disponivel_venda_na_data(self, data):
+        vendas = OperacaoVendaLetraCredito.objects.filter(operacao_compra=self).values_list('operacao_venda__id', flat=True)
+        qtd_vendida = 0
+        for venda in OperacaoLetraCredito.objects.filter(id__in=vendas, data__lt=data):
+            qtd_vendida += venda.quantidade
+        return self.quantidade - qtd_vendida
+    
     def venda_permitida(self, data_venda=None):
         if data_venda == None:
             data_venda = datetime.date.today()
