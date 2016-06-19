@@ -213,24 +213,23 @@ def home(request):
             # Acoes
             inicio_acoes = datetime.datetime.now()
             patrimonio['Ações'] = 0
-            for acao in acoes.keys():
-                # Verifica se valor foi preenchido com valor mais atual (válido apenas para data atual)
-                preenchido = False
-                if item.data == datetime.date.today():
-                    try:
-                        valor_diario_mais_recente = ValorDiarioAcao.objects.filter(acao__ticker=acao).order_by('-data_hora')
-                        if valor_diario_mais_recente and valor_diario_mais_recente[0].data_hora.date() == datetime.date.today():
-                            valor_acao = valor_diario_mais_recente[0].preco_unitario
-                            preenchido = True
-                    except:
-                        preenchido = False
-                if (not preenchido):
-                    # Pegar último dia util com negociação da ação para calculo do patrimonio
-                    ultimo_dia_util = item.data
-                    while not HistoricoAcao.objects.filter(data=ultimo_dia_util, acao__ticker=acao):
-                        ultimo_dia_util -= datetime.timedelta(days=1)
-                    valor_acao = HistoricoAcao.objects.get(acao__ticker=acao, data=ultimo_dia_util).preco_unitario
-                patrimonio['Ações'] += (valor_acao * acoes[acao])
+            periodo_1_ano = item.data - datetime.timedelta(days=365)
+            for acao, quantidade in acoes.items():
+                if quantidade > 0:
+                    # Verifica se valor foi preenchido com valor mais atual (válido apenas para data atual)
+                    preenchido = False
+                    if item.data == datetime.date.today():
+                        try:
+                            valor_diario_mais_recente = ValorDiarioAcao.objects.filter(acao__ticker=acao).order_by('-data_hora')
+                            if valor_diario_mais_recente and valor_diario_mais_recente[0].data_hora.date() == datetime.date.today():
+                                valor_acao = valor_diario_mais_recente[0].preco_unitario
+                                preenchido = True
+                        except:
+                            preenchido = False
+                    if (not preenchido):
+                        # Pegar último dia util com negociação da ação para calculo do patrimonio
+                        valor_acao = HistoricoAcao.objects.filter(acao__ticker=acao, data__range=[periodo_1_ano, item.data]).order_by('-data')[0].preco_unitario
+                    patrimonio['Ações'] += (valor_acao * quantidade)
             patrimonio['patrimonio_total'] += patrimonio['Ações'] 
             fim_acoes = datetime.datetime.now()
             total_acoes += fim_acoes - inicio_acoes
@@ -263,7 +262,8 @@ def home(request):
             # FII
             inicio_fii = datetime.datetime.now()
             patrimonio['FII'] = 0
-            for papel in fii.keys():
+            periodo_1_ano = item.data - datetime.timedelta(days=365)
+            for papel, quantidade in fii.items():
                 # Verifica se valor foi preenchido com valor mais atual (válido apenas para data atual)
                 preenchido = False
                 if item.data == datetime.date.today():
@@ -276,11 +276,8 @@ def home(request):
                         preenchido = False
                 if (not preenchido):
                     # Pegar último dia util com negociação da ação para calculo do patrimonio
-                    ultimo_dia_util = item.data
-                    while not HistoricoFII.objects.filter(data=ultimo_dia_util, fii__ticker=papel):
-                        ultimo_dia_util -= datetime.timedelta(days=1)
-                    valor_fii = HistoricoFII.objects.get(fii__ticker=papel, data=ultimo_dia_util).preco_unitario
-                patrimonio['FII'] += (fii[papel] * valor_fii)
+                    valor_fii = HistoricoFII.objects.filter(fii__ticker=papel, data__range=[periodo_1_ano, item.data]).order_by('-data')[0].preco_unitario
+                patrimonio['FII'] += (quantidade * valor_fii)
             patrimonio['patrimonio_total'] += patrimonio['FII']  
             fim_fii = datetime.datetime.now()
             total_fii += fim_fii - inicio_fii
@@ -311,9 +308,7 @@ def home(request):
                             operacao.quantidade = Decimal(str_auxiliar[:len(str_auxiliar)-2])
                 # Guardar ultima data de calculo
                 ultima_data_calculada_lc = item.data
-            print 'o'
             for letra_credito in letras_credito.values():
-                print letra_credito
                 patrimonio_lc += letra_credito.quantidade
             patrimonio['Letras de Crédito'] = patrimonio_lc
             patrimonio['patrimonio_total'] += patrimonio['Letras de Crédito'] 
