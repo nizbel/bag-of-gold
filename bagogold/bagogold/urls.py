@@ -73,6 +73,6 @@ urlpatterns = [
     url(r'^cdb_rdb/inserir_operacao_cdb_rdb/$', views.cdb_rdb.cdb_rdb.inserir_operacao_cdb_rdb, name='inserir_operacao_cdb_rdb'),
     url(r'^cdb_rdb/listar_cdb_rdb/$', views.cdb_rdb.cdb_rdb.listar_cdb_rdb, name='listar_cdb_rdb'),
     url(r'^cdb_rdb/modificar_carencia_cdb_rdb/$', views.cdb_rdb.cdb_rdb.modificar_carencia_cdb_rdb, name='modificar_carencia_cdb_rdb'),
-    url(r'^cdb_rdb/modificar_porcentagem_cdb_rdb/$', views.cdb_rdb.cdb_rdb.modificar_porcentagem_di_cdb_rdb, name='modificar_porcentagem_di_cdb_rdb'),
+    url(r'^cdb_rdb/modificar_porcentagem_cdb_rdb/$', views.cdb_rdb.cdb_rdb.modificar_porcentagem_di_cdb_rdb, name='modificar_porcentagem_cdb_rdb'),
     url(r'^cdb_rdb/painel/$', views.cdb_rdb.cdb_rdb.painel, name='painel_cdb_rdb'),
 ]
