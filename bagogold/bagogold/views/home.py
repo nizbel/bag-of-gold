@@ -211,7 +211,7 @@ def home(request):
     
             # Rodar calculo de patrimonio
             # Acoes
-            inicio_acoes = datetime.datetime.now()
+#             inicio_acoes = datetime.datetime.now()
             patrimonio['Ações'] = 0
             periodo_1_ano = item.data - datetime.timedelta(days=365)
             for acao, quantidade in acoes.items():
@@ -231,18 +231,18 @@ def home(request):
                         valor_acao = HistoricoAcao.objects.filter(acao__ticker=acao, data__range=[periodo_1_ano, item.data]).order_by('-data')[0].preco_unitario
                     patrimonio['Ações'] += (valor_acao * quantidade)
             patrimonio['patrimonio_total'] += patrimonio['Ações'] 
-            fim_acoes = datetime.datetime.now()
-            total_acoes += fim_acoes - inicio_acoes
+#             fim_acoes = datetime.datetime.now()
+#             total_acoes += fim_acoes - inicio_acoes
             
             # Proventos Acoes
-            inicio_prov_acoes = datetime.datetime.now()
+#             inicio_prov_acoes = datetime.datetime.now()
             patrimonio['Proventos Ações'] = Decimal(int(total_proventos_bh * 100) / Decimal(100))
             patrimonio['patrimonio_total'] += patrimonio['Proventos Ações']
-            fim_prov_acoes = datetime.datetime.now()
-            total_prov_acoes += fim_prov_acoes - inicio_prov_acoes
+#             fim_prov_acoes = datetime.datetime.now()
+#             total_prov_acoes += fim_prov_acoes - inicio_prov_acoes
             
             # TD
-            inicio_td = datetime.datetime.now()
+#             inicio_td = datetime.datetime.now()
             patrimonio['Tesouro Direto'] = 0
             for titulo in titulos_td.keys():
                 if item.data is not datetime.date.today():
@@ -256,11 +256,11 @@ def home(request):
                             patrimonio['Tesouro Direto'] += (titulos_td[titulo] * valor_diario.preco_venda)
                             break
             patrimonio['patrimonio_total'] += patrimonio['Tesouro Direto'] 
-            fim_td = datetime.datetime.now()
-            total_td += fim_td - inicio_td
+#             fim_td = datetime.datetime.now()
+#             total_td += fim_td - inicio_td
                 
             # FII
-            inicio_fii = datetime.datetime.now()
+#             inicio_fii = datetime.datetime.now()
             patrimonio['FII'] = 0
             periodo_1_ano = item.data - datetime.timedelta(days=365)
             for papel, quantidade in fii.items():
@@ -279,18 +279,18 @@ def home(request):
                     valor_fii = HistoricoFII.objects.filter(fii__ticker=papel, data__range=[periodo_1_ano, item.data]).order_by('-data')[0].preco_unitario
                 patrimonio['FII'] += (quantidade * valor_fii)
             patrimonio['patrimonio_total'] += patrimonio['FII']  
-            fim_fii = datetime.datetime.now()
-            total_fii += fim_fii - inicio_fii
+#             fim_fii = datetime.datetime.now()
+#             total_fii += fim_fii - inicio_fii
                     
             # Proventos FII
-            inicio_prov_fii = datetime.datetime.now()
+#             inicio_prov_fii = datetime.datetime.now()
             patrimonio['Proventos FII'] = Decimal(int(total_proventos_fii * 100) / Decimal(100))
             patrimonio['patrimonio_total'] += patrimonio['Proventos FII'] 
-            fim_prov_fii = datetime.datetime.now()
-            total_prov_fii += fim_prov_fii - inicio_prov_fii
+#             fim_prov_fii = datetime.datetime.now()
+#             total_prov_fii += fim_prov_fii - inicio_prov_fii
             
             # LC
-            inicio_lc = datetime.datetime.now()
+#             inicio_lc = datetime.datetime.now()
             patrimonio_lc = 0
             # Rodar calculo com as datas desde o último calculo, com 1 dia de atraso pois a atualização é a do dia anterior
             dia_anterior = item.data - datetime.timedelta(days=1)
@@ -312,8 +312,8 @@ def home(request):
                 patrimonio_lc += letra_credito.quantidade
             patrimonio['Letras de Crédito'] = patrimonio_lc
             patrimonio['patrimonio_total'] += patrimonio['Letras de Crédito'] 
-            fim_lc = datetime.datetime.now()
-            total_lc += fim_lc - inicio_lc
+#             fim_lc = datetime.datetime.now()
+#             total_lc += fim_lc - inicio_lc
             
             
             
@@ -351,11 +351,11 @@ def home(request):
     for index, estatistica in enumerate(estatisticas):
         estatisticas[index] = [estatistica[0], float(patrimonio['patrimonio_total']) - estatistica[1]]
     
-    print 'Ações:        ', total_acoes 
-    print 'Prov. ações:  ', total_prov_acoes 
-    print 'FII:          ', total_fii 
-    print 'Prov. FII:    ', total_prov_fii 
-    print 'TD:           ', total_td 
-    print 'LC:           ', total_lc 
+#     print 'Ações:        ', total_acoes 
+#     print 'Prov. ações:  ', total_prov_acoes 
+#     print 'FII:          ', total_fii 
+#     print 'Prov. FII:    ', total_prov_fii 
+#     print 'TD:           ', total_td 
+#     print 'LC:           ', total_lc 
     
     return render_to_response('home.html', {'graf_patrimonio': graf_patrimonio, 'patrimonio_anual': patrimonio_anual, 'estatisticas': estatisticas}, context_instance=RequestContext(request))
