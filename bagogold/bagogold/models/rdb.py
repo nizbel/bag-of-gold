@@ -16,21 +16,21 @@ class RDB (models.Model):
     
     def carencia_atual(self):
         try:
-            return HistoricoCarenciaRDB.objects.filter(data__isnull=False, letra_credito=self).order_by('-data')[0].carencia
+            return HistoricoCarenciaRDB.objects.filter(data__isnull=False, rdb=self).order_by('-data')[0].carencia
         except:
-            return HistoricoCarenciaRDB.objects.get(data__isnull=True, letra_credito=self).carencia
+            return HistoricoCarenciaRDB.objects.get(data__isnull=True, rdb=self).carencia
     
     def porcentagem_atual(self):
         try:
-            return HistoricoPorcentagemRDB.objects.filter(data__isnull=False, letra_credito=self).order_by('-data')[0].porcentagem_di
+            return HistoricoPorcentagemRDB.objects.filter(data__isnull=False, rdb=self).order_by('-data')[0].porcentagem_di
         except:
-            return HistoricoPorcentagemRDB.objects.get(data__isnull=True, letra_credito=self).porcentagem_di
+            return HistoricoPorcentagemRDB.objects.get(data__isnull=True, rdb=self).porcentagem_di
     
     def valor_minimo_atual(self):
         try:
-            return HistoricoValorMinimoInvestimento.objects.filter(data__isnull=False, letra_credito=self).order_by('-data')[0].valor_minimo
+            return HistoricoValorMinimoInvestimentoRDB.objects.filter(data__isnull=False, rdb=self).order_by('-data')[0].valor_minimo
         except:
-            return HistoricoValorMinimoInvestimento.objects.get(data__isnull=True, letra_credito=self).valor_minimo
+            return HistoricoValorMinimoInvestimentoRDB.objects.get(data__isnull=True, rdb=self).valor_minimo
     
 class OperacaoRDB (models.Model):
     quantidade = models.DecimalField(u'Quantidade investida/resgatada', max_digits=11, decimal_places=2)
@@ -43,9 +43,9 @@ class OperacaoRDB (models.Model):
     
     def carencia(self):
         try:
-            return HistoricoCarenciaRDB.objects.filter(data__lte=self.data, letra_credito=self.letra_credito)[0].carencia
+            return HistoricoCarenciaRDB.objects.filter(data__lte=self.data, rdb=self.letra_credito)[0].carencia
         except:
-            return HistoricoCarenciaRDB.objects.get(data__isnull=True, letra_credito=self.letra_credito).carencia
+            return HistoricoCarenciaRDB.objects.get(data__isnull=True, rdb=self.letra_credito).carencia
     
     def operacao_compra_relacionada(self):
         if self.tipo_operacao == 'V':
@@ -56,9 +56,9 @@ class OperacaoRDB (models.Model):
     def porcentagem_di(self):
         if self.tipo_operacao == 'C':
             try:
-                return HistoricoPorcentagemRDB.objects.filter(data__lte=self.data, letra_credito=self.letra_credito)[0].porcentagem_di
+                return HistoricoPorcentagemRDB.objects.filter(data__lte=self.data, rdb=self.letra_credito)[0].porcentagem_di
             except:
-                return HistoricoPorcentagemRDB.objects.get(data__isnull=True, letra_credito=self.letra_credito).porcentagem_di
+                return HistoricoPorcentagemRDB.objects.get(data__isnull=True, rdb=self.letra_credito).porcentagem_di
         elif self.tipo_operacao == 'V':
             return self.operacao_compra_relacionada().porcentagem_di()
     
@@ -78,7 +78,7 @@ class OperacaoRDB (models.Model):
                 # Verifica o período de carência pegando a data mais recente antes da operação de compra
                 return (historico[0].carencia <= (data_venda - self.data).days)
             else:
-                carencia = HistoricoCarenciaRDB.objects.get(letra_credito=self.letra_credito).carencia
+                carencia = HistoricoCarenciaRDB.objects.get(rdb=self.letra_credito).carencia
                 return (carencia <= (data_venda - self.data).days)
         else:
             return False
@@ -97,7 +97,7 @@ class HistoricoPorcentagemRDB (models.Model):
     
     def save(self, *args, **kw):
         try:
-            historico = HistoricoPorcentagemRDB.objects.get(letra_credito=self.letra_credito, data=self.data)
+            historico = HistoricoPorcentagemRDB.objects.get(rdb=self.letra_credito, data=self.data)
         except HistoricoPorcentagemRDB.DoesNotExist:
             super(HistoricoPorcentagemRDB, self).save(*args, **kw)
     
@@ -111,7 +111,7 @@ class HistoricoCarenciaRDB (models.Model):
     
     def save(self, *args, **kw):
         try:
-            historico = HistoricoCarenciaRDB.objects.get(letra_credito=self.letra_credito, data=self.data)
+            historico = HistoricoCarenciaRDB.objects.get(rdb=self.letra_credito, data=self.data)
         except HistoricoCarenciaRDB.DoesNotExist:
             if self.carencia <= 0:
                 raise forms.ValidationError('Carência deve ser de pelo menos 1 dia')
@@ -124,7 +124,7 @@ class HistoricoValorMinimoInvestimentoRDB (models.Model):
     
     def save(self, *args, **kw):
         try:
-            historico = HistoricoValorMinimoInvestimento.objects.get(letra_credito=self.letra_credito, data=self.data)
+            historico = HistoricoValorMinimoInvestimento.objects.get(rdb=self.letra_credito, data=self.data)
         except HistoricoValorMinimoInvestimento.DoesNotExist:
             if self.valor_minimo < 0:
                 raise forms.ValidationError('Valor mínimo não pode ser negativo')
