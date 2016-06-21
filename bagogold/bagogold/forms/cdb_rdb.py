@@ -27,18 +27,23 @@ class OperacaoCDBForm(forms.ModelForm):
         model = OperacaoCDB
         fields = ('tipo_operacao', 'quantidade', 'data', 'operacao_compra',
                   'cdb')
+        labels = {'cdb': 'CDB'}
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),
                  'tipo_operacao': widgets.Select(choices=ESCOLHAS_TIPO_OPERACAO),}
         
-#     class Media:
-#         js = ('js/bagogold/lc.js',)
+    class Media:
+        js = ('js/bagogold/cdb.js',)
         
     def __init__(self, *args, **kwargs):
         # first call parent's constructor
         super(OperacaoCDBForm, self).__init__(*args, **kwargs)
         # there's a `fields` property now
         self.fields['cdb'].required = False
+        self.fields['tipo_operacao'].widget.attrs.update({'id' : 'id_tipo_operacao_cdb'})
+        self.fields['operacao_compra'].widget.attrs.update({'id' : 'id_operacao_compra_cdb'})
+        self.fields['data'].widget.attrs.update({'id' : 'id_data_cdb'})
+        self.fields['quantidade'].widget.attrs.update({'id' : 'id_quantidade_cdb'})
 #         if self.instance.pk is not None:
 #             # Verificar se é uma compra
 #             if self.instance.tipo_operacao == 'V':
@@ -58,14 +63,14 @@ class OperacaoCDBForm(forms.ModelForm):
             return operacao_compra
         return None
 
-    def clean_letra_credito(self):
+    def clean_cdb(self):
         tipo_operacao = self.cleaned_data['tipo_operacao']
         if tipo_operacao == 'V':
             cdb = self.cleaned_data.get('operacao_compra').cdb
         else:
             cdb = self.cleaned_data.get('cdb')
         if cdb is None:
-            raise forms.ValidationError('Insira letra de crédito válida')
+            raise forms.ValidationError('Insira CDB válido')
               
         return cdb
     
@@ -77,18 +82,23 @@ class OperacaoRDBForm(forms.ModelForm):
         model = OperacaoRDB
         fields = ('tipo_operacao', 'quantidade', 'data', 'operacao_compra',
                   'rdb')
+        labels = {'rdb': 'RDB'}
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),
                  'tipo_operacao': widgets.Select(choices=ESCOLHAS_TIPO_OPERACAO),}
         
     class Media:
-        js = ('js/bagogold/lc.js',)
+        js = ('js/bagogold/rdb.js',)
         
     def __init__(self, *args, **kwargs):
         # first call parent's constructor
         super(OperacaoRDBForm, self).__init__(*args, **kwargs)
         # there's a `fields` property now
         self.fields['rdb'].required = False
+        self.fields['tipo_operacao'].widget.attrs.update({'id' : 'id_tipo_operacao_rdb'})
+        self.fields['operacao_compra'].widget.attrs.update({'id' : 'id_operacao_compra_rdb'})
+        self.fields['data'].widget.attrs.update({'id' : 'id_data_rdb'})
+        self.fields['quantidade'].widget.attrs.update({'id' : 'id_quantidade_rdb'})
 #         if self.instance.pk is not None:
 #             # Verificar se é uma compra
 #             if self.instance.tipo_operacao == 'V':
@@ -108,14 +118,14 @@ class OperacaoRDBForm(forms.ModelForm):
             return operacao_compra
         return None
 
-    def clean_letra_credito(self):
+    def clean_rdb(self):
         tipo_operacao = self.cleaned_data['tipo_operacao']
         if tipo_operacao == 'V':
             rdb = self.cleaned_data.get('operacao_compra').rdb
         else:
             rdb = self.cleaned_data.get('rdb')
         if rdb is None:
-            raise forms.ValidationError('Insira letra de crédito válida')
+            raise forms.ValidationError('Insira RDB válido')
               
         return rdb
 
