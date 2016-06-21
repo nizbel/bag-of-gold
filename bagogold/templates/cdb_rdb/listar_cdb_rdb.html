@@ -7,16 +7,20 @@
     <thead>
         <tr>
             <th>Nome</th>
+            <th>Tipo</th>
+            <th>Tipo de rendimento</th>
             <th>Carência atual</th>
             <th>Rendimento atual (DI)</th>
         </tr>
     </thead>
     <tbody>
-    {% for lc in lcs %}
+    {% for item in cdb_rdb %}
     <tr>
-        <td>{{lc.nome}}</td>
-        <td>{{lc.carencia_atual}} dia(s)</td>
-        <td>{{lc.rendimento_atual}}%</td>
+        <td>{{item.nome}}</td>
+        <td>{{item.tipo}}</td>
+        <td>{{item.str_tipo_rendimento}}</td>
+        <td>{{item.carencia_atual}} dia(s)</td>
+        <td>{{item.rendimento_atual}}%</td>
     </tr>
     {% endfor %}
     </tbody>

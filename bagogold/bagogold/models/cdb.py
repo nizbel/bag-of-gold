@@ -8,7 +8,7 @@ class CDB (models.Model):
     """
     Tipo de CDB, 1 = Pré-fixado, 2 = Pós-fixado
     """    
-    tipo = models.PositiveSmallIntegerField(u'Tipo')
+    tipo_rendimento = models.PositiveSmallIntegerField(u'Tipo de rendimento')
     
     
     def __unicode__(self):
@@ -22,9 +22,9 @@ class CDB (models.Model):
     
     def porcentagem_atual(self):
         try:
-            return HistoricoPorcentagemCDB.objects.filter(data__isnull=False, cdb=self).order_by('-data')[0].porcentagem_di
+            return HistoricoPorcentagemCDB.objects.filter(data__isnull=False, cdb=self).order_by('-data')[0].porcentagem
         except:
-            return HistoricoPorcentagemCDB.objects.get(data__isnull=True, cdb=self).porcentagem_di
+            return HistoricoPorcentagemCDB.objects.get(data__isnull=True, cdb=self).porcentagem
     
     def valor_minimo_atual(self):
         try:
@@ -39,13 +39,13 @@ class OperacaoCDB (models.Model):
     cdb = models.ForeignKey('CDB')
     
     def __unicode__(self):
-        return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.letra_credito, self.data)
+        return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.cdb, self.data)
     
     def carencia(self):
         try:
-            return HistoricoCarenciaCDB.objects.filter(data__lte=self.data, cdb=self.letra_credito)[0].carencia
+            return HistoricoCarenciaCDB.objects.filter(data__lte=self.data, cdb=self.cdb).order_by('-data')[0].carencia
         except:
-            return HistoricoCarenciaCDB.objects.get(data__isnull=True, cdb=self.letra_credito).carencia
+            return HistoricoCarenciaCDB.objects.get(data__isnull=True, cdb=self.cdb).carencia
     
     def operacao_compra_relacionada(self):
         if self.tipo_operacao == 'V':
@@ -53,14 +53,14 @@ class OperacaoCDB (models.Model):
         else:
             return None
     
-    def porcentagem_di(self):
+    def porcentagem(self):
         if self.tipo_operacao == 'C':
             try:
-                return HistoricoPorcentagemCDB.objects.filter(data__lte=self.data, cdb=self.letra_credito)[0].porcentagem_di
+                return HistoricoPorcentagemCDB.objects.filter(data__lte=self.data, cdb=self.cdb).order_by('-data')[0].porcentagem
             except:
-                return HistoricoPorcentagemCDB.objects.get(data__isnull=True, cdb=self.letra_credito).porcentagem_di
+                return HistoricoPorcentagemCDB.objects.get(data__isnull=True, cdb=self.letra_credito).porcentagem
         elif self.tipo_operacao == 'V':
-            return self.operacao_compra_relacionada().porcentagem_di()
+            return self.operacao_compra_relacionada().porcentagem()
     
     def qtd_disponivel_venda(self):
         vendas = OperacaoVendaCDB.objects.filter(operacao_compra=self).values_list('operacao_venda__id', flat=True)
@@ -97,7 +97,7 @@ class HistoricoPorcentagemCDB (models.Model):
     
     def save(self, *args, **kw):
         try:
-            historico = HistoricoPorcentagemCDB.objects.get(cdb=self.letra_credito, data=self.data)
+            historico = HistoricoPorcentagemCDB.objects.get(cdb=self.cdb, data=self.data)
         except HistoricoPorcentagemCDB.DoesNotExist:
             super(HistoricoPorcentagemCDB, self).save(*args, **kw)
     
@@ -111,7 +111,7 @@ class HistoricoCarenciaCDB (models.Model):
     
     def save(self, *args, **kw):
         try:
-            historico = HistoricoCarenciaCDB.objects.get(cdb=self.letra_credito, data=self.data)
+            historico = HistoricoCarenciaCDB.objects.get(cdb=self.cdb, data=self.data)
         except HistoricoCarenciaCDB.DoesNotExist:
             if self.carencia <= 0:
                 raise forms.ValidationError('Carência deve ser de pelo menos 1 dia')
@@ -124,7 +124,7 @@ class HistoricoValorMinimoInvestimentoCDB (models.Model):
     
     def save(self, *args, **kw):
         try:
-            historico = HistoricoValorMinimoInvestimento.objects.get(cdb=self.letra_credito, data=self.data)
+            historico = HistoricoValorMinimoInvestimento.objects.get(cdb=self.cdb, data=self.data)
         except HistoricoValorMinimoInvestimento.DoesNotExist:
             if self.valor_minimo < 0:
                 raise forms.ValidationError('Valor mínimo não pode ser negativo')

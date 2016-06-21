@@ -1,37 +1,44 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.models.cdb import HistoricoPorcentagemCDB, OperacaoCDB
+from bagogold.bagogold.models.rdb import HistoricoCarenciaRDB, OperacaoRDB
 from django import forms
 from django.forms import widgets
 
 
-ESCOLHAS_CDB_RDB=((1, 'CDB'), (2, 'RDB'))
+ESCOLHAS_CDB_RDB=((1, 'CDB'), 
+                  (2, 'RDB'))
+
+ESCOLHAS_TIPO_RENDIMENTO=((1, 'Pré-fixado'), 
+                            (2, 'Pós-fixado'))
 
 ESCOLHAS_TIPO_OPERACAO=(('C', "Compra"),
                         ('V', "Venda"))
 
 class CDBRDBForm(forms.Form):
-    tipo = forms.ChoiceField(label='Tipo', widget=widgets.Select(choices=ESCOLHAS_CDB_RDB))
+    tipo = forms.ChoiceField(label='Tipo', choices=ESCOLHAS_CDB_RDB)
     nome = forms.CharField(label='Nome', max_length=50)
-"""
-class OperacaoCDBRDBForm(forms.ModelForm):
-    # Campo verificado apenas no caso de venda de operação de lc
-    operacao_compra = forms.ModelChoiceField(label='Operação de compra',queryset=OperacaoCDBRDB.objects.filter(tipo_operacao='C'), required=False)
+    tipo_rendimento = forms.ChoiceField(label='Tipo de rendimento', choices=ESCOLHAS_TIPO_RENDIMENTO)
+
+class OperacaoCDBForm(forms.ModelForm):
+    # Campo verificado apenas no caso de venda de operação de cdb/rdb
+    operacao_compra = forms.ModelChoiceField(label='Operação de compra',queryset=OperacaoCDB.objects.filter(tipo_operacao='C'), required=False)
     
     class Meta:
-        model = OperacaoCDBRDB
+        model = OperacaoCDB
         fields = ('tipo_operacao', 'quantidade', 'data', 'operacao_compra',
-                  'letra_credito')
+                  'cdb')
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),
                  'tipo_operacao': widgets.Select(choices=ESCOLHAS_TIPO_OPERACAO),}
         
-    class Media:
-        js = ('js/bagogold/lc.js',)
+#     class Media:
+#         js = ('js/bagogold/lc.js',)
         
     def __init__(self, *args, **kwargs):
         # first call parent's constructor
-        super(OperacaoCDBRDBForm, self).__init__(*args, **kwargs)
+        super(OperacaoCDBForm, self).__init__(*args, **kwargs)
         # there's a `fields` property now
-        self.fields['letra_credito'].required = False
+        self.fields['cdb'].required = False
 #         if self.instance.pk is not None:
 #             # Verificar se é uma compra
 #             if self.instance.tipo_operacao == 'V':
@@ -54,30 +61,66 @@ class OperacaoCDBRDBForm(forms.ModelForm):
     def clean_letra_credito(self):
         tipo_operacao = self.cleaned_data['tipo_operacao']
         if tipo_operacao == 'V':
-            letra_credito = self.cleaned_data.get('operacao_compra').letra_credito
+            cdb = self.cleaned_data.get('operacao_compra').cdb
         else:
-            letra_credito = self.cleaned_data.get('letra_credito')
-        if letra_credito is None:
+            cdb = self.cleaned_data.get('cdb')
+        if cdb is None:
             raise forms.ValidationError('Insira letra de crédito válida')
               
-        return letra_credito
+        return cdb
     
-    
-class HistoricoPorcentagemCDBRDBForm(forms.ModelForm):
+class OperacaoRDBForm(forms.ModelForm):
+    # Campo verificado apenas no caso de venda de operação de cdb/rdb
+    operacao_compra = forms.ModelChoiceField(label='Operação de compra',queryset=OperacaoRDB.objects.filter(tipo_operacao='C'), required=False)
     
     class Meta:
-        model = HistoricoPorcentagemCDBRDB
-        fields = ('porcentagem_di', 'data',
-                  'letra_credito')
+        model = OperacaoRDB
+        fields = ('tipo_operacao', 'quantidade', 'data', 'operacao_compra',
+                  'rdb')
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
-                                            'placeholder':'Selecione uma data'}),}
+                                            'placeholder':'Selecione uma data'}),
+                 'tipo_operacao': widgets.Select(choices=ESCOLHAS_TIPO_OPERACAO),}
         
-class HistoricoCarenciaCDBRDBForm(forms.ModelForm):
+    class Media:
+        js = ('js/bagogold/lc.js',)
+        
+    def __init__(self, *args, **kwargs):
+        # first call parent's constructor
+        super(OperacaoRDBForm, self).__init__(*args, **kwargs)
+        # there's a `fields` property now
+        self.fields['rdb'].required = False
+#         if self.instance.pk is not None:
+#             # Verificar se é uma compra
+#             if self.instance.tipo_operacao == 'V':
+#                 self.operacao_compra.v
     
-    class Meta:
-        model = HistoricoCarenciaCDBRDB
-        fields = ('carencia', 'data',
-                  'letra_credito')
-        widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
-                                            'placeholder':'Selecione uma data'}),}
-"""        
+    def clean_operacao_compra(self):
+        print 'test'
+        tipo_operacao = self.cleaned_data['tipo_operacao']
+        if tipo_operacao == 'V':
+            operacao_compra = self.cleaned_data.get('operacao_compra')
+            # Testar se operacao_compra é válido
+            if operacao_compra is None:
+                raise forms.ValidationError('Selecione operação de compra válida')
+            quantidade = self.cleaned_data['quantidade']
+            if quantidade > operacao_compra.qtd_disponivel_venda():
+                raise forms.ValidationError('Não é possível vender mais do que o disponível na operação de compra')
+            return operacao_compra
+        return None
+
+    def clean_letra_credito(self):
+        tipo_operacao = self.cleaned_data['tipo_operacao']
+        if tipo_operacao == 'V':
+            rdb = self.cleaned_data.get('operacao_compra').rdb
+        else:
+            rdb = self.cleaned_data.get('rdb')
+        if rdb is None:
+            raise forms.ValidationError('Insira letra de crédito válida')
+              
+        return rdb
+
+class HistoricoPorcentagemForm(forms.Form):
+    porcentagem = forms.DecimalField(label='Porcentagem de rendimento', max_digits=5, decimal_places=2)
+    
+class HistoricoCarenciaForm(forms.Form):
+    carencia = forms.IntegerField(label='Período de carência (em dias)')

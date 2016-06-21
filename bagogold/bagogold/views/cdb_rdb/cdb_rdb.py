@@ -1,13 +1,19 @@
 # -*- coding: utf-8 -*-
 
+from bagogold.bagogold.forms.cdb_rdb import CDBRDBForm, HistoricoPorcentagemForm, \
+    HistoricoCarenciaForm, OperacaoCDBForm, OperacaoRDBForm
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoLCFormSet
 from bagogold.bagogold.forms.lc import OperacaoLetraCreditoForm, \
     HistoricoPorcentagemLetraCreditoForm, LetraCreditoForm, \
     HistoricoCarenciaLetraCreditoForm
+from bagogold.bagogold.models.cdb import CDB, HistoricoPorcentagemCDB, \
+    HistoricoCarenciaCDB
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoLC
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI, \
     HistoricoPorcentagemLetraCredito, LetraCredito, HistoricoCarenciaLetraCredito, \
     OperacaoVendaLetraCredito
+from bagogold.bagogold.models.rdb import RDB, HistoricoPorcentagemRDB, \
+    HistoricoCarenciaRDB
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa
 from decimal import Decimal
 from django.contrib import messages
@@ -17,8 +23,12 @@ from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
+from itertools import chain
 import calendar
 import datetime
+
+TIPO_CDB = '1'
+TIPO_RDB = '2'
 
 @login_required
 def editar_operacao_cdb_rdb(request, id):
@@ -163,55 +173,52 @@ def historico(request):
 
 @login_required
 def inserir_cdb_rdb(request):
-    # Preparar formsets 
-    PorcentagemFormSet = inlineformset_factory(LetraCredito, HistoricoPorcentagemLetraCredito, fields=('porcentagem_di',),
-                                            extra=1, can_delete=False, max_num=1, validate_max=True)
-    CarenciaFormSet = inlineformset_factory(LetraCredito, HistoricoCarenciaLetraCredito, fields=('carencia',),
-                                            extra=1, can_delete=False, max_num=1, validate_max=True)
-    
     if request.method == 'POST':
-        if request.POST.get("save"):
-            form_cdb_rdb = LetraCreditoForm(request.POST)
-            if form_cdb_rdb.is_valid():
-                lc = form_cdb_rdb.save(commit=False)
-                formset_porcentagem = PorcentagemFormSet(request.POST, instance=lc)
-                formset_porcentagem.forms[0].empty_permitted=False
-                formset_carencia = CarenciaFormSet(request.POST, instance=lc)
-                formset_carencia.forms[0].empty_permitted=False
-                
-                if formset_porcentagem.is_valid():
-                    if formset_carencia.is_valid():
-                        try:
-                            lc.save()
-                            formset_porcentagem.save()
-                            formset_carencia.save()
-                        # Capturar erros oriundos da hora de salvar os objetos
-                        except Exception as erro:
-                            messages.error(request, erro.message)
-                            return render_to_response('cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'formset_porcentagem': formset_porcentagem,
-                                                                         'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
-                        return HttpResponseRedirect(reverse('listar_cdb_rdb'))
-            for erros in form_cdb_rdb.errors.values():
-                for erro in erros:
-                    messages.error(request, erro)
-            for erro in formset_porcentagem.non_form_errors():
+        form_cdb_rdb = CDBRDBForm(request.POST)
+        form_historico_porcentagem = HistoricoPorcentagemForm(request.POST)
+        form_historico_carencia = HistoricoCarenciaForm(request.POST)
+        if form_cdb_rdb.is_valid():
+            if form_historico_porcentagem.is_valid():
+                if form_historico_carencia.is_valid():
+                    try:
+                        if form_cdb_rdb.cleaned_data['tipo'] == TIPO_CDB:
+                            investimento = CDB(nome=form_cdb_rdb.cleaned_data['nome'], tipo_rendimento=form_cdb_rdb.cleaned_data['tipo_rendimento'])
+                            investimento.save()
+                            historico_porcentagem = HistoricoPorcentagemCDB(cdb=investimento, porcentagem=form_historico_porcentagem.cleaned_data['porcentagem'])
+                            historico_carencia = HistoricoCarenciaCDB(cdb=investimento, carencia=form_historico_carencia.cleaned_data['carencia'])
+                            
+                        elif form_cdb_rdb.cleaned_data['tipo'] == TIPO_RDB:
+                            investimento = RDB(nome=form_cdb_rdb.cleaned_data['nome'], tipo_rendimento=form_cdb_rdb.cleaned_data['tipo_rendimento'])
+                            investimento.save()
+                            historico_porcentagem = HistoricoPorcentagemRDB(rdb=investimento, porcentagem=form_historico_porcentagem.cleaned_data['porcentagem'])
+                            historico_carencia = HistoricoCarenciaRDB(rdb=investimento, carencia=form_historico_carencia.cleaned_data['carencia'])
+                        
+                        historico_porcentagem.save()
+                        historico_carencia.save()
+                        
+                    # Capturar erros oriundos da hora de salvar os objetos
+                    except Exception as erro:
+                        messages.error(request, erro.message)
+                        return render_to_response('cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'form_historico_porcentagem': form_historico_porcentagem,
+                                                           'form_historico_carencia': form_historico_carencia}, context_instance=RequestContext(request))
+                    return HttpResponseRedirect(reverse('listar_cdb_rdb'))
+        for erros in form_cdb_rdb.errors.values():
+            for erro in erros:
                 messages.error(request, erro)
-            for erro in formset_carencia.non_form_errors():
-                messages.error(request, erro)
-            return render_to_response('cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'formset_porcentagem': formset_porcentagem,
-                                                                      'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
+        return render_to_response('cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'form_historico_porcentagem': form_historico_porcentagem,
+                                                               'form_historico_carencia': form_historico_carencia}, context_instance=RequestContext(request))
     else:
-        form_cdb_rdb = LetraCreditoForm()
-        formset_porcentagem = PorcentagemFormSet()
-        formset_carencia = CarenciaFormSet()
-    return render_to_response('cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'formset_porcentagem': formset_porcentagem,
-                                                              'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
+        form_cdb_rdb = CDBRDBForm()
+        form_historico_porcentagem = HistoricoPorcentagemForm()
+        form_historico_carencia = HistoricoCarenciaForm()
+    return render_to_response('cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'form_historico_porcentagem': form_historico_porcentagem,
+                                                               'form_historico_carencia': form_historico_carencia}, context_instance=RequestContext(request))
 
 @login_required
 def inserir_operacao_cdb_rdb(request):
     # Preparar formset para divisoes
-    DivisaoFormSet = inlineformset_factory(OperacaoLetraCredito, DivisaoOperacaoLC, fields=('divisao', 'quantidade'),
-                                            extra=1, formset=DivisaoOperacaoLCFormSet)
+#     DivisaoFormSet = inlineformset_factory(OperacaoLetraCredito, DivisaoOperacaoLC, fields=('divisao', 'quantidade'),
+#                                             extra=1, formset=DivisaoOperacaoLCFormSet)
     
     if request.method == 'POST':
         if request.POST.get("save"):
@@ -265,31 +272,34 @@ def inserir_operacao_cdb_rdb(request):
 #                         print '%s %s'  % (divisao_cdb_rdb.quantidade, divisao_cdb_rdb.divisao)
                 
     else:
-        form_operacao_cdb_rdb = OperacaoLetraCreditoForm()
-        formset_divisao = DivisaoFormSet()
-    return render_to_response('cdb_rdb/inserir_operacao_cdb_rdb.html', {'form_operacao_cdb_rdb': form_operacao_cdb_rdb, 'formset_divisao': formset_divisao},
-                              context_instance=RequestContext(request))
+        form_operacao_cdb = OperacaoCDBForm()
+        form_operacao_rdb = OperacaoRDBForm()
+#         formset_divisao = DivisaoFormSet()
+    return render_to_response('cdb_rdb/inserir_operacao_cdb_rdb.html', {'form_operacao_cdb': form_operacao_cdb, 'form_operacao_rdb': form_operacao_rdb, 
+                                                                        'formset_divisao': formset_divisao}, context_instance=RequestContext(request))
 
 @login_required
 def listar_cdb_rdb(request):
-    lcs = LetraCredito.objects.all()
+    cdb = CDB.objects.all()
+    for item in cdb:
+        item.tipo = 'CDB'
+    rdb = RDB.objects.all()
+    for item in rdb:
+        item.tipo = 'RDB'
+    cdb_rdb = list(chain(cdb, rdb))
     
-    for lc in lcs:
+    for investimento in cdb_rdb:
         # Preparar o valor mais atual para carência
-        historico_carencia = HistoricoCarenciaLetraCredito.objects.filter(letra_credito=lc).exclude(data=None).order_by('-data')
-        if historico_carencia:
-            lc.carencia_atual = historico_carencia[0].carencia
-        else:
-            lc.carencia_atual = HistoricoCarenciaLetraCredito.objects.get(letra_credito=lc).carencia
+        investimento.carencia_atual = investimento.carencia_atual()
         # Preparar o valor mais atual de rendimento
-        historico_rendimento = HistoricoPorcentagemLetraCredito.objects.filter(letra_credito=lc).exclude(data=None).order_by('-data')
-#         print historico_rendimento
-        if historico_rendimento:
-            lc.rendimento_atual = historico_rendimento[0].porcentagem_di
-        else:
-            lc.rendimento_atual = HistoricoPorcentagemLetraCredito.objects.get(letra_credito=lc).porcentagem_di
-
-    return render_to_response('cdb_rdb/listar_cdb_rdb.html', {'lcs': lcs},
+        investimento.rendimento_atual = investimento.porcentagem_atual()
+        
+        if investimento.tipo_rendimento == 1:
+            investimento.str_tipo_rendimento = 'Pré-fixado'
+        elif investimento.tipo_rendimento == 2:
+            investimento.str_tipo_rendimento = 'Pós-fixado'
+        
+    return render_to_response('cdb_rdb/listar_cdb_rdb.html', {'cdb_rdb': cdb_rdb},
                               context_instance=RequestContext(request))
 
 @login_required

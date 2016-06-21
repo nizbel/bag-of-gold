@@ -8,7 +8,7 @@ class RDB (models.Model):
     """
     Tipo de RDB, 1 = Pré-fixado, 2 = Pós-fixado
     """    
-    tipo = models.PositiveSmallIntegerField(u'Tipo')
+    tipo_rendimento = models.PositiveSmallIntegerField(u'Tipo de rendimento')
     
     
     def __unicode__(self):
@@ -22,9 +22,9 @@ class RDB (models.Model):
     
     def porcentagem_atual(self):
         try:
-            return HistoricoPorcentagemRDB.objects.filter(data__isnull=False, rdb=self).order_by('-data')[0].porcentagem_di
+            return HistoricoPorcentagemRDB.objects.filter(data__isnull=False, rdb=self).order_by('-data')[0].porcentagem
         except:
-            return HistoricoPorcentagemRDB.objects.get(data__isnull=True, rdb=self).porcentagem_di
+            return HistoricoPorcentagemRDB.objects.get(data__isnull=True, rdb=self).porcentagem
     
     def valor_minimo_atual(self):
         try:
@@ -39,13 +39,13 @@ class OperacaoRDB (models.Model):
     rdb = models.ForeignKey('RDB')
     
     def __unicode__(self):
-        return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.letra_credito, self.data)
+        return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.rdb, self.data)
     
     def carencia(self):
         try:
-            return HistoricoCarenciaRDB.objects.filter(data__lte=self.data, rdb=self.letra_credito)[0].carencia
+            return HistoricoCarenciaRDB.objects.filter(data__lte=self.data, rdb=self.rdb).order_by('-data')[0].carencia
         except:
-            return HistoricoCarenciaRDB.objects.get(data__isnull=True, rdb=self.letra_credito).carencia
+            return HistoricoCarenciaRDB.objects.get(data__isnull=True, rdb=self.rdb).carencia
     
     def operacao_compra_relacionada(self):
         if self.tipo_operacao == 'V':
@@ -53,14 +53,14 @@ class OperacaoRDB (models.Model):
         else:
             return None
     
-    def porcentagem_di(self):
+    def porcentagem(self):
         if self.tipo_operacao == 'C':
             try:
-                return HistoricoPorcentagemRDB.objects.filter(data__lte=self.data, rdb=self.letra_credito)[0].porcentagem_di
+                return HistoricoPorcentagemRDB.objects.filter(data__lte=self.data, rdb=self.rdb).order_by('-data')[0].porcentagem
             except:
-                return HistoricoPorcentagemRDB.objects.get(data__isnull=True, rdb=self.letra_credito).porcentagem_di
+                return HistoricoPorcentagemRDB.objects.get(data__isnull=True, rdb=self.rdb).porcentagem
         elif self.tipo_operacao == 'V':
-            return self.operacao_compra_relacionada().porcentagem_di()
+            return self.operacao_compra_relacionada().porcentagem()
     
     def qtd_disponivel_venda(self):
         vendas = OperacaoVendaRDB.objects.filter(operacao_compra=self).values_list('operacao_venda__id', flat=True)
@@ -97,7 +97,7 @@ class HistoricoPorcentagemRDB (models.Model):
     
     def save(self, *args, **kw):
         try:
-            historico = HistoricoPorcentagemRDB.objects.get(rdb=self.letra_credito, data=self.data)
+            historico = HistoricoPorcentagemRDB.objects.get(rdb=self.rdb, data=self.data)
         except HistoricoPorcentagemRDB.DoesNotExist:
             super(HistoricoPorcentagemRDB, self).save(*args, **kw)
     
@@ -111,7 +111,7 @@ class HistoricoCarenciaRDB (models.Model):
     
     def save(self, *args, **kw):
         try:
-            historico = HistoricoCarenciaRDB.objects.get(rdb=self.letra_credito, data=self.data)
+            historico = HistoricoCarenciaRDB.objects.get(rdb=self.rdb, data=self.data)
         except HistoricoCarenciaRDB.DoesNotExist:
             if self.carencia <= 0:
                 raise forms.ValidationError('Carência deve ser de pelo menos 1 dia')
@@ -124,7 +124,7 @@ class HistoricoValorMinimoInvestimentoRDB (models.Model):
     
     def save(self, *args, **kw):
         try:
-            historico = HistoricoValorMinimoInvestimento.objects.get(rdb=self.letra_credito, data=self.data)
+            historico = HistoricoValorMinimoInvestimento.objects.get(rdb=self.rdb, data=self.data)
         except HistoricoValorMinimoInvestimento.DoesNotExist:
             if self.valor_minimo < 0:
                 raise forms.ValidationError('Valor mínimo não pode ser negativo')
