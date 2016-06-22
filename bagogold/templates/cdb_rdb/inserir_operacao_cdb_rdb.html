@@ -39,7 +39,7 @@
             
         </div>
         <div class="form-actions">
-            <button type="submit" name="save" value="1" class="btn">Salvar</button>
+            <button type="submit" name="save" value="cdb" class="btn">Salvar</button>
         </div>
     </form>
 
@@ -47,6 +47,7 @@
 $( "input[name='tipoRadio']" ).click(function(){
 	$( "div[class='radioDiv'][id='" + $(this).val() + "']" ).show();
     $( "div[class='radioDiv'][id!='" + $(this).val() + "']" ).hide();
+    $( "button[name='save']").val($(this).val());
   });
 </script>
 {% endblock %}
