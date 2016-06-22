@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 
-from bagogold.bagogold.forms.cdb_rdb import CDBRDBForm, HistoricoPorcentagemForm, \
-    HistoricoCarenciaForm, OperacaoCDBForm, OperacaoRDBForm
-from bagogold.bagogold.forms.divisoes import DivisaoOperacaoLCFormSet
+from bagogold.bagogold.forms.cdb_rdb import HistoricoPorcentagemForm, \
+    HistoricoCarenciaForm, CDB_RDBForm
+from bagogold.bagogold.forms.divisoes import DivisaoOperacaoLCFormSet, \
+    DivisaoOperacaoCDBFormSet, DivisaoOperacaoRDBFormSet
 from bagogold.bagogold.forms.lc import OperacaoLetraCreditoForm, \
     HistoricoPorcentagemLetraCreditoForm, LetraCreditoForm, \
     HistoricoCarenciaLetraCreditoForm
-from bagogold.bagogold.models.cdb import CDB, HistoricoPorcentagemCDB, \
-    HistoricoCarenciaCDB
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoLC
+from bagogold.bagogold.models.cdb_rdb import HistoricoPorcentagemCDB_RDB, \
+    HistoricoCarenciaCDB_RDB
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoLC, \
+    DivisaoOperacaoCDB, DivisaoOperacaoRDB
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI, \
     HistoricoPorcentagemLetraCredito, LetraCredito, HistoricoCarenciaLetraCredito, \
     OperacaoVendaLetraCredito
-from bagogold.bagogold.models.rdb import RDB, HistoricoPorcentagemRDB, \
-    HistoricoCarenciaRDB
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa
 from decimal import Decimal
 from django.contrib import messages
@@ -174,25 +174,17 @@ def historico(request):
 @login_required
 def inserir_cdb_rdb(request):
     if request.method == 'POST':
-        form_cdb_rdb = CDBRDBForm(request.POST)
+        form_cdb_rdb = CDB_RDBForm(request.POST)
         form_historico_porcentagem = HistoricoPorcentagemForm(request.POST)
         form_historico_carencia = HistoricoCarenciaForm(request.POST)
         if form_cdb_rdb.is_valid():
+            investimento = form_cdb_rdb.save(commit=False)
             if form_historico_porcentagem.is_valid():
                 if form_historico_carencia.is_valid():
                     try:
-                        if form_cdb_rdb.cleaned_data['tipo'] == TIPO_CDB:
-                            investimento = CDB(nome=form_cdb_rdb.cleaned_data['nome'], tipo_rendimento=form_cdb_rdb.cleaned_data['tipo_rendimento'])
-                            investimento.save()
-                            historico_porcentagem = HistoricoPorcentagemCDB(cdb=investimento, porcentagem=form_historico_porcentagem.cleaned_data['porcentagem'])
-                            historico_carencia = HistoricoCarenciaCDB(cdb=investimento, carencia=form_historico_carencia.cleaned_data['carencia'])
-                            
-                        elif form_cdb_rdb.cleaned_data['tipo'] == TIPO_RDB:
-                            investimento = RDB(nome=form_cdb_rdb.cleaned_data['nome'], tipo_rendimento=form_cdb_rdb.cleaned_data['tipo_rendimento'])
-                            investimento.save()
-                            historico_porcentagem = HistoricoPorcentagemRDB(rdb=investimento, porcentagem=form_historico_porcentagem.cleaned_data['porcentagem'])
-                            historico_carencia = HistoricoCarenciaRDB(rdb=investimento, carencia=form_historico_carencia.cleaned_data['carencia'])
-                        
+                        historico_porcentagem = HistoricoPorcentagemCDB_RDB(cdb=investimento, porcentagem=form_historico_porcentagem.cleaned_data['porcentagem'])
+                        historico_carencia = HistoricoCarenciaCDB_RDB(cdb=investimento, carencia=form_historico_carencia.cleaned_data['carencia'])
+                        investimento.save()
                         historico_porcentagem.save()
                         historico_carencia.save()
                         
@@ -208,7 +200,7 @@ def inserir_cdb_rdb(request):
         return render_to_response('cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'form_historico_porcentagem': form_historico_porcentagem,
                                                                'form_historico_carencia': form_historico_carencia}, context_instance=RequestContext(request))
     else:
-        form_cdb_rdb = CDBRDBForm()
+        form_cdb_rdb = CDB_RDBForm()
         form_historico_porcentagem = HistoricoPorcentagemForm()
         form_historico_carencia = HistoricoCarenciaForm()
     return render_to_response('cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'form_historico_porcentagem': form_historico_porcentagem,
@@ -217,19 +209,21 @@ def inserir_cdb_rdb(request):
 @login_required
 def inserir_operacao_cdb_rdb(request):
     # Preparar formset para divisoes
-    DivisaoFormSet = inlineformset_factory(OperacaoLetraCredito, DivisaoOperacaoLC, fields=('divisao', 'quantidade'),
-                                            extra=1, formset=DivisaoOperacaoLCFormSet)
+    DivisaoCDB_RDBFormSet = inlineformset_factory(OperacaoCDB_RDB, DivisaoOperacaoCDB_RDB, fields=('divisao', 'quantidade'),
+                                            extra=1, formset=DivisaoOperacaoCDB_RDBFormSet)
     
     if request.method == 'POST':
-        if request.POST.get("save"):
-            form_operacao_cdb = OperacaoCDBForm(request.POST)
-            form_operacao_rdb = OperacaoRDBForm(request.POST)
-            formset_divisao = DivisaoFormSet(request.POST)
-            
+        form_operacao_cdb = OperacaoCDBForm(request.POST)
+        formset_divisao_cdb = DivisaoCDBFormSet(request.POST)
+        form_operacao_rdb = OperacaoCDBForm(request.POST)
+        formset_divisao_rdb = DivisaoCDBFormSet(request.POST)
+        
+        # Validar CDB
+        if request.POST.get("save") == 'cdb':
             if form_operacao_cdb.is_valid():
                 operacao_cdb = form_operacao_cdb.save(commit=False)
                 operacao_compra = form_operacao_cdb.cleaned_data['operacao_compra']
-                formset_divisao = DivisaoFormSet(request.POST, instance=operacao_cdb, operacao_compra=operacao_compra)
+                formset_divisao_cdb = DivisaoCDBFormSet(request.POST, instance=operacao_cdb, operacao_compra=operacao_compra)
                     
                 # TODO Validar em caso de venda
                 if form_operacao_cdb.cleaned_data['tipo_operacao'] == 'V':
@@ -238,46 +232,91 @@ def inserir_operacao_cdb_rdb(request):
                     if form_operacao_cdb.cleaned_data['quantidade'] == operacao_compra.quantidade:
                         # Desconsiderar divisões inseridas, copiar da operação de compra
                         operacao_cdb.save()
-                        for divisao_cdb_rdb in DivisaoOperacaoLC.objects.filter(operacao=operacao_compra):
+                        for divisao_cdb_rdb in DivisaoOperacaoCDB.objects.filter(operacao=operacao_compra):
                             divisao_cdb_rdb_venda = DivisaoOperacaoLC(quantidade=divisao_cdb_rdb.quantidade, divisao=divisao_cdb_rdb.divisao, \
                                                                  operacao=operacao_cdb)
                             divisao_cdb_rdb_venda.save()
-                        operacao_venda_cdb_rdb = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_cdb)
+                        operacao_venda_cdb_rdb = OperacaoVendaCDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb)
                         operacao_venda_cdb_rdb.save()
                         messages.success(request, 'Operação inserida com sucesso')
                         return HttpResponseRedirect(reverse('historico_cdb_rdb'))
                     # Vendas parciais
                     else:
-                        if formset_divisao.is_valid():
+                        if formset_divisao_cdb.is_valid():
                             operacao_cdb.save()
-                            formset_divisao.save()
-                            operacao_venda_cdb_rdb = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_cdb)
+                            formset_divisao_cdb.save()
+                            operacao_venda_cdb_rdb = OperacaoVendaCDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb)
                             operacao_venda_cdb_rdb.save()
                             messages.success(request, 'Operação inserida com sucesso')
                             return HttpResponseRedirect(reverse('historico_cdb_rdb'))
                 else:
-                    if formset_divisao.is_valid():
+                    if formset_divisao_cdb.is_valid():
                         operacao_cdb.save()
-                        formset_divisao.save()
+                        formset_divisao_cdb.save()
                         messages.success(request, 'Operação inserida com sucesso')
                         return HttpResponseRedirect(reverse('historico_cdb_rdb'))
                         
             for erros in form_operacao_cdb.errors.values():
                 for erro in erros:
                     messages.error(request, erro)
-            for erro in formset_divisao.non_form_errors():
+            for erro in formset_divisao_cdb.non_form_errors():
+                messages.error(request, erro)
+        # Validar RDB
+        if request.POST.get("save") == 'rdb':
+            if form_operacao_rdb.is_valid():
+                operacao_rdb = form_operacao_rdb.save(commit=False)
+                operacao_compra = form_operacao_rdb.cleaned_data['operacao_compra']
+                formset_divisao_rdb = DivisaoRDBFormSet(request.POST, instance=operacao_rdb, operacao_compra=operacao_compra)
+                    
+                # TODO Validar em caso de venda
+                if form_operacao_rdb.cleaned_data['tipo_operacao'] == 'V':
+                    operacao_compra = form_operacao_rdb.cleaned_data['operacao_compra']
+                    # Caso de venda total da letra de crédito
+                    if form_operacao_rdb.cleaned_data['quantidade'] == operacao_compra.quantidade:
+                        # Desconsiderar divisões inseridas, copiar da operação de compra
+                        operacao_rdb.save()
+                        for divisao_rdb_rdb in DivisaoOperacaoRDB.objects.filter(operacao=operacao_compra):
+                            divisao_rdb_rdb_venda = DivisaoOperacaoRDB(quantidade=divisao_rdb_rdb.quantidade, divisao=divisao_rdb_rdb.divisao, \
+                                                                 operacao=operacao_rdb)
+                            divisao_rdb_rdb_venda.save()
+                        operacao_venda_rdb_rdb = OperacaoVendaRDB(operacao_compra=operacao_compra, operacao_venda=operacao_rdb)
+                        operacao_venda_rdb_rdb.save()
+                        messages.success(request, 'Operação inserida com sucesso')
+                        return HttpResponseRedirect(reverse('historico_rdb_rdb'))
+                    # Vendas parciais
+                    else:
+                        if formset_divisao_rdb.is_valid():
+                            operacao_rdb.save()
+                            formset_divisao_rdb.save()
+                            operacao_venda_rdb_rdb = OperacaoVendaRDB(operacao_compra=operacao_compra, operacao_venda=operacao_rdb)
+                            operacao_venda_rdb_rdb.save()
+                            messages.success(request, 'Operação inserida com sucesso')
+                            return HttpResponseRedirect(reverse('historico_rdb_rdb'))
+                else:
+                    if formset_divisao_rdb.is_valid():
+                        operacao_rdb.save()
+                        formset_divisao_rdb.save()
+                        messages.success(request, 'Operação inserida com sucesso')
+                        return HttpResponseRedirect(reverse('historico_rdb_rdb'))
+                        
+            for erros in form_operacao_rdb.errors.values():
+                for erro in erros:
+                    messages.error(request, erro)
+            for erro in formset_divisao_rdb.non_form_errors():
                 messages.error(request, erro)
                 
-            return render_to_response('cdb_rdb/inserir_operacao_cdb_rdb.html', {'form_operacao_cdb_rdb': form_operacao_cdb, 'formset_divisao': formset_divisao},
-                                      context_instance=RequestContext(request))
+        return render_to_response('cdb_rdb/inserir_operacao_cdb_rdb.html', {'form_operacao_cdb': form_operacao_cdb, 'form_operacao_rdb': form_operacao_rdb, 
+                                                                            'formset_divisao_cdb': formset_divisao_cdb, 'formset_divisao_rdb': formset_divisao_rdb},
+                                  context_instance=RequestContext(request))
 #                         print '%s %s'  % (divisao_cdb_rdb.quantidade, divisao_cdb_rdb.divisao)
                 
     else:
         form_operacao_cdb = OperacaoCDBForm()
         form_operacao_rdb = OperacaoRDBForm()
-        formset_divisao = DivisaoFormSet()
+        formset_divisao_cdb = DivisaoCDBFormSet()
+        formset_divisao_rdb = DivisaoRDBFormSet()
     return render_to_response('cdb_rdb/inserir_operacao_cdb_rdb.html', {'form_operacao_cdb': form_operacao_cdb, 'form_operacao_rdb': form_operacao_rdb, 
-                                                                        'formset_divisao': formset_divisao}, context_instance=RequestContext(request))
+                                                                        'formset_divisao_cdb': formset_divisao_cdb, 'formset_divisao_rdb': formset_divisao_rdb}, context_instance=RequestContext(request))
 
 @login_required
 def listar_cdb_rdb(request):

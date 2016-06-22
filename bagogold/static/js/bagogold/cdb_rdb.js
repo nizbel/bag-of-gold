@@ -24,9 +24,9 @@ $(document).ready(function() {
          par_quantidade.append(label_quantidade);
          par_quantidade.append(quantidade);
          
-         id = $("#id_divisaooperacaolc_set-0-id").clone();
-         id.attr("name", "divisaooperacaolc_set-" + form_count + "-id");
-         id.attr('id', "id_divisaooperacaolc_set-" + form_count + "-id");
+         id = $("#id_divisaooperacaolc_set-0-id_investimento").clone();
+         id.attr("name", "divisaooperacaolc_set-" + form_count + "-id_investimento");
+         id.attr('id', "id_divisaooperacaolc_set-" + form_count + "-id_investimento");
          id.removeAttr('value');
          par_id = $('<p></p>');
          par_id.append(id);
@@ -51,22 +51,22 @@ $(document).ready(function() {
      })
 	
 	
-	if ($('#id_tipo_operacao_cdb').val() == 'C') {
-        $("#id_operacao_compra_cdb").parent().hide();
-        $("#id_cdb").parent().show();
+	if ($('#id_tipo_operacao').val() == 'C') {
+        $("#id_operacao_compra").parent().hide();
+        $("#id_investimento").parent().show();
     } else {
-        $("#id_operacao_compra_cdb").parent().show();
-        $("#id_cdb").parent().hide();
+        $("#id_operacao_compra").parent().show();
+        $("#id_investimento").parent().hide();
     }
 	
 	// Adiciona alterações para o form dependendo do tipo de operação
-	$("#id_tipo_operacao_cdb").change(function() {
+	$("#id_tipo_operacao").change(function() {
 	   if ($(this).val() == 'C') {
-		   $("#id_operacao_compra_cdb").parent().hide();
-		   $("#id_cdb").parent().show();
+		   $("#id_operacao_compra").parent().hide();
+		   $("#id_investimento").parent().show();
 	   } else {
-        $("#id_operacao_compra_cdb").parent().show();
-        $("#id_cdb").parent().hide();
+        $("#id_operacao_compra").parent().show();
+        $("#id_investimento").parent().hide();
 	   }
 	})
 });
