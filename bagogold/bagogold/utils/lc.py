@@ -14,6 +14,16 @@ def calcular_valor_atualizado_com_taxa(taxa_do_dia, valor_atual, operacao_taxa):
     """
     return ((pow((Decimal(1) + taxa_do_dia/100), Decimal(1)/Decimal(252)) - Decimal(1)) * operacao_taxa/100 + Decimal(1)) * valor_atual
 
+def calcular_valor_atualizado_com_taxas(taxas_dos_dias, valor_atual, operacao_taxa):
+    """
+    Calcula o valor atualizado de uma operação em LC, a partir das taxa DI dos dias
+    Parâmetros: Taxas DI dos dias {taxa: quantidade_de_dias}, valor atual da operação, taxa da operação
+    Retorno: Valor atualizado com a taxa DI
+    """
+    taxa_acumulada = 1
+    for taxa_do_dia in taxas_dos_dias.keys():
+        taxa_acumulada *= pow(((pow((Decimal(1) + taxa_do_dia/100), Decimal(1)/Decimal(252)) - Decimal(1)) * operacao_taxa/100 + Decimal(1)), taxas_dos_dias[taxa_do_dia])
+    return taxa_acumulada * valor_atual
 
 def calcular_valor_lc_ate_dia(dia):
     """ 

@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, Provento, \
     ValorDiarioAcao
-from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB
 from bagogold.bagogold.models.fii import OperacaoFII, HistoricoFII, ProventoFII, \
     ValorDiarioFII
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo
 from bagogold.bagogold.testTD import buscar_valores_diarios
-from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia
+from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia, \
+    calcular_valor_atualizado_com_taxas
 from decimal import Decimal
 from django.contrib.auth.decorators import login_required
+from django.db.models import Count
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from itertools import chain
@@ -17,6 +18,7 @@ from operator import attrgetter
 import calendar
 import datetime
 import math
+from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB
 
 @login_required
 def home(request):
@@ -100,7 +102,17 @@ def home(request):
     acoes = {}
     titulos_td = {}
     letras_credito = {}
+    # Caso haja LC, preparar para o cálculo
+    try:
+        ultima_data_calculada_lc = operacoes_lc[0].data
+    except:
+        ultima_data_calculada_lc = datetime.date.today()
     cdb_rdb = {}
+    # Caso haja CDB/RDB, preparar para o cálculo
+    try:
+        ultima_data_calculada_cdb_rdb = operacoes_lc[0].data
+    except:
+        ultima_data_calculada_cdb_rdb = datetime.date.today()
     total_proventos_fii = 0
     total_proventos_bh = 0
     
@@ -109,7 +121,17 @@ def home(request):
     graf_patrimonio = list()
     estatisticas = list()
     
-    for item in lista_conjunta:      
+    ############# TESTE
+#     total_acoes = datetime.timedelta(hours=0)
+#     total_prov_acoes = datetime.timedelta(hours=0)
+#     total_fii = datetime.timedelta(hours=0)
+#     total_prov_fii = datetime.timedelta(hours=0)
+#     total_td = datetime.timedelta(hours=0)
+#     total_lc = datetime.timedelta(hours=0)
+#     total_cdb_rdb = datetime.timedelta(hours=0)
+    ############# TESTE
+    
+    for index, item in enumerate(lista_conjunta):    
         # Atualizar lista de patrimonio atual ao trocar de ano
         if item.data.year != ano_corrente:
             if len(patrimonio_anual) > 0:
@@ -179,132 +201,190 @@ def home(request):
             total_proventos_fii += item.total
                 
         elif isinstance(item, OperacaoLetraCredito):
-            if item.letra_credito not in letras_credito.keys():
-                letras_credito[item.letra_credito] = 0    
+#             if item.letra_credito not in letras_credito.keys():
+#                 letras_credito[item.letra_credito] = 0    
             if item.tipo_operacao == 'C':
-                letras_credito[item.letra_credito] += item.quantidade
+                letras_credito[item.id] = item
                 
             elif item.tipo_operacao == 'V':
-                letras_credito[item.letra_credito] -= item.quantidade
-                
-        elif isinstance(item, OperacaoCDB_RDB):
-            if item.investimento not in cdb_rdb.keys():
-                cdb_rdb[item.investimento] = 0    
-            if item.tipo_operacao == 'C':
-                cdb_rdb[item.investimento] += item.quantidade
-                
-            elif item.tipo_operacao == 'V':
-                cdb_rdb[item.investimento] -= item.quantidade
-                
-        # Se não cair em nenhum dos anteriores: item vazio para pegar ultimo dia util do ano
-        patrimonio = {}
-        patrimonio['patrimonio_total'] = 0
-
-        # Rodar calculo de patrimonio
-        # Acoes
-        patrimonio['Ações'] = 0
-        for acao in acoes.keys():
-            # Verifica se valor foi preenchido com valor mais atual (válido apenas para data atual)
-            preenchido = False
-            if item.data == datetime.date.today():
-                try:
-                    valor_diario_mais_recente = ValorDiarioAcao.objects.filter(acao__ticker=acao).order_by('-data_hora')
-                    if valor_diario_mais_recente and valor_diario_mais_recente[0].data_hora.date() == datetime.date.today():
-                        valor_acao = valor_diario_mais_recente[0].preco_unitario
-                        preenchido = True
-                except:
-                    preenchido = False
-            if (not preenchido):
-                # Pegar último dia util com negociação da ação para calculo do patrimonio
-                ultimo_dia_util = item.data
-                while not HistoricoAcao.objects.filter(data=ultimo_dia_util, acao__ticker=acao):
-                    ultimo_dia_util -= datetime.timedelta(days=1)
-                valor_acao = HistoricoAcao.objects.get(acao__ticker=acao, data=ultimo_dia_util).preco_unitario
-            patrimonio['Ações'] += (valor_acao * acoes[acao])
-        patrimonio['patrimonio_total'] += patrimonio['Ações'] 
-        
-        # Proventos Acoes
-        patrimonio['Proventos Ações'] = Decimal(int(total_proventos_bh * 100) / Decimal(100))
-        patrimonio['patrimonio_total'] += patrimonio['Proventos Ações']
-        
-        # TD
-        patrimonio['Tesouro Direto'] = 0
-        for titulo in titulos_td.keys():
-            if item.data is not datetime.date.today():
-                ultimo_dia_util = item.data
-                while not HistoricoTitulo.objects.filter(data=ultimo_dia_util, titulo=titulo):
-                    ultimo_dia_util -= datetime.timedelta(days=1)
-                patrimonio['Tesouro Direto'] += (titulos_td[titulo] * HistoricoTitulo.objects.get(data=ultimo_dia_util, titulo=titulo).preco_venda)
-            else:
-                for valor_diario in buscar_valores_diarios():
-                    if valor_diario.titulo == titulo:
-                        patrimonio['Tesouro Direto'] += (titulos_td[titulo] * valor_diario.preco_venda)
-                        break
-        patrimonio['patrimonio_total'] += patrimonio['Tesouro Direto'] 
-            
-        # FII
-        patrimonio['FII'] = 0
-        for papel in fii.keys():
-            # Verifica se valor foi preenchido com valor mais atual (válido apenas para data atual)
-            preenchido = False
-            if item.data == datetime.date.today():
-                try:
-                    valor_diario_mais_recente = ValorDiarioFII.objects.filter(fii__ticker=papel).order_by('-data_hora')
-                    if valor_diario_mais_recente and valor_diario_mais_recente[0].data_hora.date() == datetime.date.today():
-                        valor_fii = valor_diario_mais_recente[0].preco_unitario
-                        preenchido = True
-                except:
-                    preenchido= False
-            if (not preenchido):
-                # Pegar último dia util com negociação da ação para calculo do patrimonio
-                ultimo_dia_util = item.data
-                while not HistoricoFII.objects.filter(data=ultimo_dia_util, fii__ticker=papel):
-                    ultimo_dia_util -= datetime.timedelta(days=1)
-                valor_fii = HistoricoFII.objects.get(fii__ticker=papel, data=ultimo_dia_util).preco_unitario
-            patrimonio['FII'] += (fii[papel] * valor_fii)
-        patrimonio['patrimonio_total'] += patrimonio['FII']  
-                
-        # Proventos FII
-        patrimonio['Proventos FII'] = Decimal(int(total_proventos_fii * 100) / Decimal(100))
-        patrimonio['patrimonio_total'] += patrimonio['Proventos FII']
-        
-        # LC
-        ultimo_dia_util = item.data
-        while not HistoricoTaxaDI.objects.filter(data=ultimo_dia_util):
-            ultimo_dia_util -= datetime.timedelta(days=1)
-        patrimonio_lc = 0
-        valores_letras_credito_dia = calcular_valor_lc_ate_dia(ultimo_dia_util)
-        for valor in valores_letras_credito_dia.values():
-            patrimonio_lc += valor
-        patrimonio['Letras de Crédito'] = patrimonio_lc
-        patrimonio['patrimonio_total'] += patrimonio['Letras de Crédito']
-        
-        # CDB/RDB
-        ultimo_dia_util = item.data
-        while not HistoricoTaxaDI.objects.filter(data=ultimo_dia_util):
-            ultimo_dia_util -= datetime.timedelta(days=1)
-        patrimonio_cdb_rdb = 0
-        valores_cdb_rdb_dia = calcular_valor_lc_ate_dia(ultimo_dia_util)
-        for valor in valores_cdb_rdb_dia.values():
-            patrimonio_cdb_rdb += valor
-        patrimonio['CDB/RDB'] = patrimonio_cdb_rdb
-        patrimonio['patrimonio_total'] += patrimonio['CDB/RDB']
-        
-        # Preparar estatísticas
-        for data_estatistica in datas_estatisticas:
-            if item.data == data_estatistica.data: 
-                if len(estatisticas) > 0 and estatisticas[len(estatisticas)-1][0] == data_estatistica.descricao:
-                    estatisticas[len(estatisticas)-1] = [data_estatistica.descricao, float(patrimonio['patrimonio_total'])]
+                if item.quantidade == item.operacao_compra_relacionada().qtd_disponivel_venda_na_data(item.data):
+                    del letras_credito[item.operacao_compra_relacionada().id]
                 else:
-                    estatisticas += [[data_estatistica.descricao, float(patrimonio['patrimonio_total'])]]
-             
-        # Preparar data
-        data_formatada = str(calendar.timegm(item.data.timetuple()) * 1000)
-        # Verifica se altera ultima posicao do grafico ou adiciona novo registro
-        if len(graf_patrimonio) > 0 and graf_patrimonio[len(graf_patrimonio)-1][0] == data_formatada:
-            graf_patrimonio[len(graf_patrimonio)-1][1] = float(patrimonio['patrimonio_total'])
-        else:
-            graf_patrimonio += [[data_formatada, float(patrimonio['patrimonio_total'])]]
+                    letras_credito[item.operacao_compra_relacionada().id].quantidade -= letras_credito[item.operacao_compra_relacionada().id].quantidade * item.quantidade / item.operacao_compra_relacionada().quantidade
+                    
+        elif isinstance(item, OperacaoCDB_RDB):
+            if item.tipo_operacao == 'C':
+                cdb_rdb[item.id] = item
+                
+            elif item.tipo_operacao == 'V':
+                if item.quantidade == item.operacao_compra_relacionada().qtd_disponivel_venda_na_data(item.data):
+                    del cdb_rdb[item.operacao_compra_relacionada().id]
+                else:
+                    cdb_rdb[item.operacao_compra_relacionada().id].quantidade -= cdb_rdb[item.operacao_compra_relacionada().id].quantidade * item.quantidade / item.operacao_compra_relacionada().quantidade
+                
+        # Se não cair em nenhum dos anteriores: item vazio
+        
+        # Se última operação feita no dia, calcular patrimonio
+        if index == len(lista_conjunta)-1 or item.data < lista_conjunta[index+1].data:
+            patrimonio = {}
+            patrimonio['patrimonio_total'] = 0
+    
+            # Rodar calculo de patrimonio
+            # Acoes
+#             inicio_acoes = datetime.datetime.now()
+            patrimonio['Ações'] = 0
+            periodo_1_ano = item.data - datetime.timedelta(days=365)
+            for acao, quantidade in acoes.items():
+                if quantidade > 0:
+                    # Verifica se valor foi preenchido com valor mais atual (válido apenas para data atual)
+                    preenchido = False
+                    if item.data == datetime.date.today():
+                        try:
+                            valor_diario_mais_recente = ValorDiarioAcao.objects.filter(acao__ticker=acao).order_by('-data_hora')
+                            if valor_diario_mais_recente and valor_diario_mais_recente[0].data_hora.date() == datetime.date.today():
+                                valor_acao = valor_diario_mais_recente[0].preco_unitario
+                                preenchido = True
+                        except:
+                            preenchido = False
+                    if (not preenchido):
+                        # Pegar último dia util com negociação da ação para calculo do patrimonio
+                        valor_acao = HistoricoAcao.objects.filter(acao__ticker=acao, data__range=[periodo_1_ano, item.data]).order_by('-data')[0].preco_unitario
+                    patrimonio['Ações'] += (valor_acao * quantidade)
+            patrimonio['patrimonio_total'] += patrimonio['Ações'] 
+#             fim_acoes = datetime.datetime.now()
+#             total_acoes += fim_acoes - inicio_acoes
+            
+            # Proventos Acoes
+#             inicio_prov_acoes = datetime.datetime.now()
+            patrimonio['Proventos Ações'] = Decimal(int(total_proventos_bh * 100) / Decimal(100))
+            patrimonio['patrimonio_total'] += patrimonio['Proventos Ações']
+#             fim_prov_acoes = datetime.datetime.now()
+#             total_prov_acoes += fim_prov_acoes - inicio_prov_acoes
+            
+            # TD
+#             inicio_td = datetime.datetime.now()
+            patrimonio['Tesouro Direto'] = 0
+            for titulo in titulos_td.keys():
+                if item.data is not datetime.date.today():
+                    ultimo_dia_util = item.data
+                    while not HistoricoTitulo.objects.filter(data=ultimo_dia_util, titulo=titulo):
+                        ultimo_dia_util -= datetime.timedelta(days=1)
+                    patrimonio['Tesouro Direto'] += (titulos_td[titulo] * HistoricoTitulo.objects.get(data=ultimo_dia_util, titulo=titulo).preco_venda)
+                else:
+                    for valor_diario in buscar_valores_diarios():
+                        if valor_diario.titulo == titulo:
+                            patrimonio['Tesouro Direto'] += (titulos_td[titulo] * valor_diario.preco_venda)
+                            break
+            patrimonio['patrimonio_total'] += patrimonio['Tesouro Direto'] 
+#             fim_td = datetime.datetime.now()
+#             total_td += fim_td - inicio_td
+                
+            # FII
+#             inicio_fii = datetime.datetime.now()
+            patrimonio['FII'] = 0
+            periodo_1_ano = item.data - datetime.timedelta(days=365)
+            for papel, quantidade in fii.items():
+                # Verifica se valor foi preenchido com valor mais atual (válido apenas para data atual)
+                preenchido = False
+                if item.data == datetime.date.today():
+                    try:
+                        valor_diario_mais_recente = ValorDiarioFII.objects.filter(fii__ticker=papel).order_by('-data_hora')
+                        if valor_diario_mais_recente and valor_diario_mais_recente[0].data_hora.date() == datetime.date.today():
+                            valor_fii = valor_diario_mais_recente[0].preco_unitario
+                            preenchido = True
+                    except:
+                        preenchido = False
+                if (not preenchido):
+                    # Pegar último dia util com negociação da ação para calculo do patrimonio
+                    valor_fii = HistoricoFII.objects.filter(fii__ticker=papel, data__range=[periodo_1_ano, item.data]).order_by('-data')[0].preco_unitario
+                patrimonio['FII'] += (quantidade * valor_fii)
+            patrimonio['patrimonio_total'] += patrimonio['FII']  
+#             fim_fii = datetime.datetime.now()
+#             total_fii += fim_fii - inicio_fii
+                    
+            # Proventos FII
+#             inicio_prov_fii = datetime.datetime.now()
+            patrimonio['Proventos FII'] = Decimal(int(total_proventos_fii * 100) / Decimal(100))
+            patrimonio['patrimonio_total'] += patrimonio['Proventos FII'] 
+#             fim_prov_fii = datetime.datetime.now()
+#             total_prov_fii += fim_prov_fii - inicio_prov_fii
+            
+            # LC
+#             inicio_lc = datetime.datetime.now()
+            patrimonio_lc = 0
+            # Rodar calculo com as datas desde o último calculo, com 1 dia de atraso pois a atualização é a do dia anterior
+            dia_anterior = item.data - datetime.timedelta(days=1)
+            if item.data > ultima_data_calculada_lc:
+                # Retira a data limite (item.data) do cálculo
+                taxas = HistoricoTaxaDI.objects.filter(data__range=[ultima_data_calculada_lc, dia_anterior]).values('taxa').annotate(qtd_dias=Count('taxa'))
+                taxas_dos_dias = {}
+                for taxa in taxas:
+                    taxas_dos_dias[taxa['taxa']] = taxa['qtd_dias']
+                for operacao_id, operacao in letras_credito.items():
+                    if operacao.data < item.data:
+                        operacao.quantidade = calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao.quantidade, OperacaoLetraCredito.objects.get(id=operacao_id).porcentagem_di())
+                        if item.data == datetime.date.today():
+                            str_auxiliar = str(operacao.quantidade.quantize(Decimal('.0001')))
+                            operacao.quantidade = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+                # Guardar ultima data de calculo
+                ultima_data_calculada_lc = item.data
+            for letra_credito in letras_credito.values():
+                patrimonio_lc += letra_credito.quantidade
+            patrimonio['Letras de Crédito'] = patrimonio_lc
+            patrimonio['patrimonio_total'] += patrimonio['Letras de Crédito'] 
+#             fim_lc = datetime.datetime.now()
+#             total_lc += fim_lc - inicio_lc
+            
+            # CDB/RDB
+#             inicio_cdb_rdb = datetime.datetime.now()
+            patrimonio_cdb_rdb = 0
+            # Rodar calculo com as datas desde o último calculo, com 1 dia de atraso pois a atualização é a do dia anterior
+            dia_anterior = item.data - datetime.timedelta(days=1)
+            if item.data > ultima_data_calculada_cdb_rdb:
+                # Retira a data limite (item.data) do cálculo
+                taxas = HistoricoTaxaDI.objects.filter(data__range=[ultima_data_calculada_cdb_rdb, dia_anterior]).values('taxa').annotate(qtd_dias=Count('taxa'))
+                taxas_dos_dias = {}
+                for taxa in taxas:
+                    taxas_dos_dias[taxa['taxa']] = taxa['qtd_dias']
+                for operacao_id, operacao in cdb_rdb.items():
+                    if operacao.data < item.data:
+                        operacao.quantidade = calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao.quantidade, OperacaoCDB_RDB.objects.get(id=operacao_id).porcentagem())
+                        if item.data == datetime.date.today():
+                            str_auxiliar = str(operacao.quantidade.quantize(Decimal('.0001')))
+                            operacao.quantidade = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+                # Guardar ultima data de calculo
+                ultima_data_calculada_cdb_rdb = item.data
+            for investimento in cdb_rdb.values():
+                patrimonio_cdb_rdb += investimento.quantidade
+            patrimonio['CDB/RDB'] = patrimonio_cdb_rdb
+            patrimonio['patrimonio_total'] += patrimonio['CDB/RDB'] 
+#             fim_cdb_rdb = datetime.datetime.now()
+#             total_cdb_rdb += fim_cdb_rdb - inicio_cdb_rdb
+            
+            
+#             print 'Ações      ', total_acoes
+#             print 'Prov. Ações', total_prov_acoes
+#             print 'TD         ', total_td
+#             print 'FII        ', total_fii
+#             print 'Prov. FII  ', total_prov_fii
+#             print 'LC         ', total_lc
+#             print 'CDB/RDB:   ', total_cdb_rdb
+            
+            # Preparar estatísticas
+            for data_estatistica in datas_estatisticas:
+                if item.data == data_estatistica.data: 
+                    if len(estatisticas) > 0 and estatisticas[len(estatisticas)-1][0] == data_estatistica.descricao:
+                        estatisticas[len(estatisticas)-1] = [data_estatistica.descricao, float(patrimonio['patrimonio_total'])]
+                    else:
+                        estatisticas += [[data_estatistica.descricao, float(patrimonio['patrimonio_total'])]]
+                 
+            # Preparar data
+            data_formatada = str(calendar.timegm(item.data.timetuple()) * 1000)
+            # Verifica se altera ultima posicao do grafico ou adiciona novo registro
+            if len(graf_patrimonio) > 0 and graf_patrimonio[len(graf_patrimonio)-1][0] == data_formatada:
+                graf_patrimonio[len(graf_patrimonio)-1][1] = float(patrimonio['patrimonio_total'])
+            else:
+                graf_patrimonio += [[data_formatada, float(patrimonio['patrimonio_total'])]]
             
     # Adicionar ultimo valor ao dicionario de patrimonio anual
     if len(patrimonio_anual) > 0:
@@ -316,5 +396,13 @@ def home(request):
     # Terminar estatísticas
     for index, estatistica in enumerate(estatisticas):
         estatisticas[index] = [estatistica[0], float(patrimonio['patrimonio_total']) - estatistica[1]]
-            
+    
+#     print 'Ações:        ', total_acoes 
+#     print 'Prov. ações:  ', total_prov_acoes 
+#     print 'FII:          ', total_fii 
+#     print 'Prov. FII:    ', total_prov_fii 
+#     print 'TD:           ', total_td 
+#     print 'LC:           ', total_lc 
+#     print 'CDB/RDB:      ', total_cdb_rdb
+    
     return render_to_response('home.html', {'graf_patrimonio': graf_patrimonio, 'patrimonio_anual': patrimonio_anual, 'estatisticas': estatisticas}, context_instance=RequestContext(request))
