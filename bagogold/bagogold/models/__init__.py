@@ -1,8 +1,7 @@
 from acoes import *
-from cdb import *
+from cdb_rdb import *
 from fii import *
 from lc import *
-from rdb import *
 from td import *
 from divisoes import *
   
