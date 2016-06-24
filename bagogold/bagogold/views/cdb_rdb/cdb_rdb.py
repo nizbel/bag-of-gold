@@ -331,7 +331,7 @@ def painel(request):
         operacao.atual = operacao.quantidade
         if operacao.tipo_operacao == 'C':
             operacao.tipo = 'Compra'
-            operacao.taxa = operacao.porcentagem_di()
+            operacao.taxa = operacao.porcentagem()
         else:
             operacao.tipo = 'Venda'
     
@@ -356,7 +356,7 @@ def painel(request):
                         if (operacao.data == data_iteracao):
                             operacao.total = operacao.quantidade
                         # Cacdb_rdbular o valor atualizado para cada operacao
-                        operacao.atual = cacdb_rdbular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa)
+                        operacao.atual = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa)
                         # Arredondar na última iteração
                         if (data_iteracao == data_final):
                             str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
