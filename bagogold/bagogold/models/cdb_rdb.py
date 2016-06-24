@@ -82,7 +82,7 @@ class OperacaoCDB_RDB (models.Model):
                 # Verifica o período de carência pegando a data mais recente antes da operação de compra
                 return (historico[0].carencia <= (data_venda - self.data).days)
             else:
-                carencia = HistoricoCarenciaCDB_RDB.objects.get(cdb_rdb=self.letra_credito).carencia
+                carencia = HistoricoCarenciaCDB_RDB.objects.get(cdb_rdb=self.investimento).carencia
                 return (carencia <= (data_venda - self.data).days)
         else:
             return False

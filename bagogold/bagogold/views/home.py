@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, Provento, \
     ValorDiarioAcao
+from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB
 from bagogold.bagogold.models.fii import OperacaoFII, HistoricoFII, ProventoFII, \
     ValorDiarioFII
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI
@@ -40,7 +41,9 @@ def home(request):
         
     operacoes_lc = OperacaoLetraCredito.objects.exclude(data__isnull=True).order_by('data')  
     
-    lista_operacoes = sorted(chain(proventos_fii, operacoes_fii, operacoes_td, proventos_bh,  operacoes_bh, operacoes_lc),
+    operacoes_cdb_rdb = OperacaoCDB_RDB.objects.exclude(data__isnull=True).order_by('data')  
+    
+    lista_operacoes = sorted(chain(proventos_fii, operacoes_fii, operacoes_td, proventos_bh,  operacoes_bh, operacoes_lc, operacoes_cdb_rdb),
                             key=attrgetter('data'))
     # Pegar ano da primeira operacao feita
     ano_corrente = lista_operacoes[0].data.year
@@ -97,6 +100,7 @@ def home(request):
     acoes = {}
     titulos_td = {}
     letras_credito = {}
+    cdb_rdb = {}
     total_proventos_fii = 0
     total_proventos_bh = 0
     
@@ -183,6 +187,15 @@ def home(request):
             elif item.tipo_operacao == 'V':
                 letras_credito[item.letra_credito] -= item.quantidade
                 
+        elif isinstance(item, OperacaoCDB_RDB):
+            if item.investimento not in cdb_rdb.keys():
+                cdb_rdb[item.investimento] = 0    
+            if item.tipo_operacao == 'C':
+                cdb_rdb[item.investimento] += item.quantidade
+                
+            elif item.tipo_operacao == 'V':
+                cdb_rdb[item.investimento] -= item.quantidade
+                
         # Se não cair em nenhum dos anteriores: item vazio para pegar ultimo dia util do ano
         patrimonio = {}
         patrimonio['patrimonio_total'] = 0
@@ -265,6 +278,17 @@ def home(request):
             patrimonio_lc += valor
         patrimonio['Letras de Crédito'] = patrimonio_lc
         patrimonio['patrimonio_total'] += patrimonio['Letras de Crédito']
+        
+        # CDB/RDB
+        ultimo_dia_util = item.data
+        while not HistoricoTaxaDI.objects.filter(data=ultimo_dia_util):
+            ultimo_dia_util -= datetime.timedelta(days=1)
+        patrimonio_cdb_rdb = 0
+        valores_cdb_rdb_dia = calcular_valor_lc_ate_dia(ultimo_dia_util)
+        for valor in valores_cdb_rdb_dia.values():
+            patrimonio_cdb_rdb += valor
+        patrimonio['CDB/RDB'] = patrimonio_cdb_rdb
+        patrimonio['patrimonio_total'] += patrimonio['CDB/RDB']
         
         # Preparar estatísticas
         for data_estatistica in datas_estatisticas:
