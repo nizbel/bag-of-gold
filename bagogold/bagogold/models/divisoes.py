@@ -179,26 +179,9 @@ class DivisaoOperacaoLC (models.Model):
     def percentual_divisao(self):
         return self.quantidade / self.operacao.quantidade
     
-class DivisaoOperacaoCDB (models.Model):
+class DivisaoOperacaoCDB_RDB (models.Model):
     divisao = models.ForeignKey('Divisao')
-    operacao = models.ForeignKey('OperacaoCDB')
-    """
-    Guarda a quantidade da operação que pertence a divisão
-    """
-    quantidade = models.DecimalField('Quantidade',  max_digits=11, decimal_places=2)
-    
-    class Meta:
-        unique_together=('divisao', 'operacao')
-    
-    """
-    Calcula o percentual da operação que foi para a divisão
-    """
-    def percentual_divisao(self):
-        return self.quantidade / self.operacao.quantidade
-    
-class DivisaoOperacaoRDB (models.Model):
-    divisao = models.ForeignKey('Divisao')
-    operacao = models.ForeignKey('OperacaoRDB')
+    operacao = models.ForeignKey('OperacaoCDB_RDB')
     """
     Guarda a quantidade da operação que pertence a divisão
     """
@@ -273,7 +256,7 @@ class TransferenciaEntreDivisoes(models.Model):
     divisao_recebedora = models.ForeignKey('Divisao', blank=True, null=True, related_name='divisao_recebedora')
     data = models.DateField(u'Data da transferência', blank=True, null=True)
     """
-    B = Buy and Hold; D = Tesouro Direto; F = FII; L = Letra de Crédito; T = Trading; N = Não alocado
+    B = Buy and Hold; C = CDB/RDB; D = Tesouro Direto; F = FII; L = Letra de Crédito; T = Trading; N = Não alocado
     """
     investimento_origem = models.CharField('Investimento de origem', blank=True, null=True, max_length=1)
     investimento_destino = models.CharField('Investimento de destino', blank=True, null=True, max_length=1)

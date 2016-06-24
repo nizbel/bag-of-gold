@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.cdb_rdb import CDB_RDB, OperacaoCDB_RDB
+from bagogold.bagogold.models.cdb_rdb import CDB_RDB, OperacaoCDB_RDB, \
+    HistoricoPorcentagemCDB_RDB, HistoricoCarenciaCDB_RDB
 from django import forms
 from django.forms import widgets
 
@@ -22,7 +23,7 @@ class CDB_RDBForm(forms.ModelForm):
 
 class OperacaoCDB_RDBForm(forms.ModelForm):
     # Campo verificado apenas no caso de venda de operação de cdb/rdb
-    operacao_compra = forms.ModelChoiceField(label='Operação de compra',queryset=OperacaoCDB.objects.filter(tipo_operacao='C'), required=False)
+    operacao_compra = forms.ModelChoiceField(label='Operação de compra',queryset=OperacaoCDB_RDB.objects.filter(tipo_operacao='C'), required=False)
     
     class Meta:
         model = OperacaoCDB_RDB
@@ -71,8 +72,20 @@ class OperacaoCDB_RDBForm(forms.ModelForm):
         return cdb
     
 
-class HistoricoPorcentagemForm(forms.Form):
-    porcentagem = forms.DecimalField(label='Porcentagem de rendimento', max_digits=5, decimal_places=2)
+class HistoricoPorcentagemCDB_RDBForm(forms.ModelForm):
     
-class HistoricoCarenciaForm(forms.Form):
-    carencia = forms.IntegerField(label='Período de carência (em dias)')
+    class Meta:
+        model = HistoricoPorcentagemCDB_RDB
+        fields = ('porcentagem', 'data',
+                  'cdb_rdb')
+        widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
+                                            'placeholder':'Selecione uma data'}),}
+        
+class HistoricoCarenciaCDB_RDBForm(forms.ModelForm):
+    
+    class Meta:
+        model = HistoricoCarenciaCDB_RDB
+        fields = ('carencia', 'data',
+                  'cdb_rdb')
+        widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
+                                            'placeholder':'Selecione uma data'}),}

@@ -30,10 +30,10 @@ def editar_operacao_lc(request, id):
     if request.method == 'POST':
         if request.POST.get("save"):
             form_operacao_lc = OperacaoLetraCreditoForm(request.POST, instance=operacao_lc)
-            operacao_compra = form_operacao_lc.cleaned_data['operacao_compra']
-            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lc, operacao_compra=operacao_compra)
             
             if form_operacao_lc.is_valid():
+                operacao_compra = form_operacao_lc.cleaned_data['operacao_compra']
+                formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lc, operacao_compra=operacao_compra)
                 if formset_divisao.is_valid():
                     operacao_lc.save()
                     formset_divisao.save()
@@ -70,7 +70,6 @@ def editar_operacao_lc(request, id):
 def historico(request):
     # Processa primeiro operações de venda (V), depois compra (C)
     operacoes = OperacaoLetraCredito.objects.exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
-    historico_porcentagem = HistoricoPorcentagemLetraCredito.objects.all() 
     # Prepara o campo valor atual
     for operacao in operacoes:
         operacao.atual = operacao.quantidade

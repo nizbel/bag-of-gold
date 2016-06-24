@@ -20,21 +20,21 @@ class CDB_RDB (models.Model):
     
     def carencia_atual(self):
         try:
-            return HistoricoCarenciaCDB_RDB.objects.filter(data__isnull=False, cdb=self).order_by('-data')[0].carencia
+            return HistoricoCarenciaCDB_RDB.objects.filter(data__isnull=False, cdb_rdb=self).order_by('-data')[0].carencia
         except:
-            return HistoricoCarenciaCDB_RDB.objects.get(data__isnull=True, cdb=self).carencia
+            return HistoricoCarenciaCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self).carencia
     
     def porcentagem_atual(self):
         try:
-            return HistoricoPorcentagemCDB_RDB.objects.filter(data__isnull=False, cdb=self).order_by('-data')[0].porcentagem
+            return HistoricoPorcentagemCDB_RDB.objects.filter(data__isnull=False, cdb_rdb=self).order_by('-data')[0].porcentagem
         except:
-            return HistoricoPorcentagemCDB_RDB.objects.get(data__isnull=True, cdb=self).porcentagem
+            return HistoricoPorcentagemCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self).porcentagem
     
     def valor_minimo_atual(self):
         try:
-            return HistoricoValorMinimoInvestimentoCDB_RDB.objects.filter(data__isnull=False, cdb=self).order_by('-data')[0].valor_minimo
+            return HistoricoValorMinimoInvestimentoCDB_RDB.objects.filter(data__isnull=False, cdb_rdb=self).order_by('-data')[0].valor_minimo
         except:
-            return HistoricoValorMinimoInvestimentoCDB_RDB.objects.get(data__isnull=True, cdb=self).valor_minimo
+            return HistoricoValorMinimoInvestimentoCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self).valor_minimo
     
 class OperacaoCDB_RDB (models.Model):
     quantidade = models.DecimalField(u'Quantidade investida/resgatada', max_digits=11, decimal_places=2)
@@ -43,13 +43,13 @@ class OperacaoCDB_RDB (models.Model):
     investimento = models.ForeignKey('CDB_RDB')
     
     def __unicode__(self):
-        return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.cdb, self.data)
+        return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.investimento, self.data)
     
     def carencia(self):
         try:
-            return HistoricoCarenciaCDB_RDB.objects.filter(data__lte=self.data, cdb=self.cdb).order_by('-data')[0].carencia
+            return HistoricoCarenciaCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.investimento).order_by('-data')[0].carencia
         except:
-            return HistoricoCarenciaCDB_RDB.objects.get(data__isnull=True, cdb=self.cdb).carencia
+            return HistoricoCarenciaCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.investimento).carencia
     
     def operacao_compra_relacionada(self):
         if self.tipo_operacao == 'V':
@@ -60,9 +60,9 @@ class OperacaoCDB_RDB (models.Model):
     def porcentagem(self):
         if self.tipo_operacao == 'C':
             try:
-                return HistoricoPorcentagemCDB_RDB.objects.filter(data__lte=self.data, cdb=self.cdb).order_by('-data')[0].porcentagem
+                return HistoricoPorcentagemCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.investimento).order_by('-data')[0].porcentagem
             except:
-                return HistoricoPorcentagemCDB_RDB.objects.get(data__isnull=True, cdb=self.letra_credito).porcentagem
+                return HistoricoPorcentagemCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.investimento).porcentagem
         elif self.tipo_operacao == 'V':
             return self.operacao_compra_relacionada().porcentagem()
     
@@ -82,7 +82,7 @@ class OperacaoCDB_RDB (models.Model):
                 # Verifica o período de carência pegando a data mais recente antes da operação de compra
                 return (historico[0].carencia <= (data_venda - self.data).days)
             else:
-                carencia = HistoricoCarenciaCDB_RDB.objects.get(cdb=self.letra_credito).carencia
+                carencia = HistoricoCarenciaCDB_RDB.objects.get(cdb_rdb=self.letra_credito).carencia
                 return (carencia <= (data_venda - self.data).days)
         else:
             return False
@@ -97,11 +97,11 @@ class OperacaoVendaCDB_RDB (models.Model):
 class HistoricoPorcentagemCDB_RDB (models.Model):
     porcentagem = models.DecimalField(u'Porcentagem de rendimento', max_digits=5, decimal_places=2)
     data = models.DateField(u'Data da variação', blank=True, null=True)
-    cdb = models.ForeignKey('CDB_RDB')
+    cdb_rdb = models.ForeignKey('CDB_RDB')
     
     def save(self, *args, **kw):
         try:
-            historico = HistoricoPorcentagemCDB_RDB.objects.get(cdb=self.cdb, data=self.data)
+            historico = HistoricoPorcentagemCDB_RDB.objects.get(cdb_rdb=self.cdb_rdb, data=self.data)
         except HistoricoPorcentagemCDB_RDB.DoesNotExist:
             super(HistoricoPorcentagemCDB_RDB, self).save(*args, **kw)
     
@@ -111,11 +111,11 @@ class HistoricoCarenciaCDB_RDB (models.Model):
     """
     carencia = models.IntegerField(u'Período de carência')
     data = models.DateField(u'Data da variação', blank=True, null=True)
-    cdb = models.ForeignKey('CDB_RDB')
+    cdb_rdb = models.ForeignKey('CDB_RDB')
     
     def save(self, *args, **kw):
         try:
-            historico = HistoricoCarenciaCDB_RDB.objects.get(cdb=self.cdb, data=self.data)
+            historico = HistoricoCarenciaCDB_RDB.objects.get(cdb_rdb=self.cdb_rdb, data=self.data)
         except HistoricoCarenciaCDB_RDB.DoesNotExist:
             if self.carencia <= 0:
                 raise forms.ValidationError('Carência deve ser de pelo menos 1 dia')
@@ -124,11 +124,11 @@ class HistoricoCarenciaCDB_RDB (models.Model):
 class HistoricoValorMinimoInvestimentoCDB_RDB (models.Model):
     valor_minimo = models.DecimalField(u'Valor mínimo para investimento', max_digits=9, decimal_places=2)
     data = models.DateField(u'Data da variação', blank=True, null=True)
-    cdb = models.ForeignKey('CDB_RDB')
+    cdb_rdb = models.ForeignKey('CDB_RDB')
     
     def save(self, *args, **kw):
         try:
-            historico = HistoricoValorMinimoInvestimentoCDB_RDB.objects.get(cdb=self.cdb, data=self.data)
+            historico = HistoricoValorMinimoInvestimentoCDB_RDB.objects.get(cdb_rdb=self.cdb_rdb, data=self.data)
         except HistoricoValorMinimoInvestimentoCDB_RDB.DoesNotExist:
             if self.valor_minimo < 0:
                 raise forms.ValidationError('Valor mínimo não pode ser negativo')
