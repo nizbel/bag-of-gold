@@ -229,6 +229,7 @@ def inserir_operacao_lc(request):
                     # Caso de venda total da letra de crédito
                     if form_operacao_lc.cleaned_data['quantidade'] == operacao_compra.quantidade:
                         # Desconsiderar divisões inseridas, copiar da operação de compra
+                        operacao_lc.investidor = request.user.investidor
                         operacao_lc.save()
                         for divisao_lc in DivisaoOperacaoLC.objects.filter(operacao=operacao_compra):
                             divisao_lc_venda = DivisaoOperacaoLC(quantidade=divisao_lc.quantidade, divisao=divisao_lc.divisao, \
@@ -241,6 +242,7 @@ def inserir_operacao_lc(request):
                     # Vendas parciais
                     else:
                         if formset_divisao.is_valid():
+                            operacao_lc.investidor = request.user.investidor
                             operacao_lc.save()
                             formset_divisao.save()
                             operacao_venda_lc = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_lc)
@@ -249,6 +251,7 @@ def inserir_operacao_lc(request):
                             return HttpResponseRedirect(reverse('historico_lc'))
                 else:
                     if formset_divisao.is_valid():
+                        operacao_lc.investidor = request.user.investidor
                         operacao_lc.save()
                         formset_divisao.save()
                         messages.success(request, 'Operação inserida com sucesso')
