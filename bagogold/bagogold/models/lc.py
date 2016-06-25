@@ -52,7 +52,7 @@ class OperacaoLetraCredito (models.Model):
     def porcentagem_di(self):
         if self.tipo_operacao == 'C':
             try:
-                return HistoricoPorcentagemLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito)[0].porcentagem_di
+                return HistoricoPorcentagemLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito).order_by('-data')[0].porcentagem_di
             except:
                 return HistoricoPorcentagemLetraCredito.objects.get(data__isnull=True, letra_credito=self.letra_credito).porcentagem_di
         elif self.tipo_operacao == 'V':
