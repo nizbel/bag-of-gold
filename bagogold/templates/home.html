@@ -30,6 +30,12 @@
                         {% endif %}
                     </a>
                 </li>
+                {% empty %}
+                <li>
+                    <a href="#">
+                        <span style="text-align:left;" class="white">Não há investimentos</span>
+                    </a>
+                </li>
                 {% endfor %}
             </ul>
         </div>
@@ -54,12 +60,6 @@
                     </li>
                     {% endif %}
                 {% endfor %}
-                {% empty %}
-                <li>
-                    <a href="#">
-                        <span style="text-align:left;" class="white">Não há investimentos</span>
-                    </a>
-                </li>
                 {% endfor %}
             </ul>
         </div>
