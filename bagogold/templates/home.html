@@ -54,6 +54,12 @@
                     </li>
                     {% endif %}
                 {% endfor %}
+                {% empty %}
+                <li>
+                    <a href="#">
+                        <span style="text-align:left;" class="white">Não há investimentos</span>
+                    </a>
+                </li>
                 {% endfor %}
             </ul>
         </div>
@@ -80,6 +86,12 @@
                         {% else %}
                             <i class="icon-minus blue"></i> <span class="blue">R${{ estatistica.1|floatformat:"2" }}</span>
                         {% endif %}
+                    </a>
+                </li>
+                {% empty %}
+                <li>
+                    <a href="#">
+                        <span style="text-align:left;" class="white">Não há investimentos</span>
                     </a>
                 </li>
                 {% endfor %}

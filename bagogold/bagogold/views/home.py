@@ -24,8 +24,8 @@ def home(request):
     # Usado para criar objetos vazios
     class Object(object):
         pass
-    
-    operacoes_fii = OperacaoFII.objects.exclude(data__isnull=True).order_by('data')
+    investidor = request.user.investidor
+    operacoes_fii = OperacaoFII.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
     if operacoes_fii:
         proventos_fii = ProventoFII.objects.exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).filter(fii__in=operacoes_fii.values_list('fii', flat=True), data_ex__gt=operacoes_fii[0].data).order_by('data_ex')  
         for provento in proventos_fii:
@@ -33,17 +33,24 @@ def home(request):
     else:
         proventos_fii = list()
     
-    operacoes_td = OperacaoTitulo.objects.exclude(data__isnull=True).order_by('data')
+    operacoes_td = OperacaoTitulo.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
     
-    operacoes_bh = OperacaoAcao.objects.filter(destinacao='B').exclude(data__isnull=True).order_by('data')
+    operacoes_bh = OperacaoAcao.objects.filter(investidor=investidor, destinacao='B').exclude(data__isnull=True).order_by('data')
     proventos_bh = Provento.objects.exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).filter(acao__in=operacoes_bh.values_list('acao', flat=True)).order_by('data_ex')
     for provento in proventos_bh:
         provento.data = provento.data_ex
         
-    operacoes_lc = OperacaoLetraCredito.objects.exclude(data__isnull=True).order_by('data')  
+    operacoes_lc = OperacaoLetraCredito.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
     
     lista_operacoes = sorted(chain(proventos_fii, operacoes_fii, operacoes_td, proventos_bh,  operacoes_bh, operacoes_lc),
                             key=attrgetter('data'))
+    
+    # Se não houver operações, retornar vazio
+    if not lista_operacoes:
+        data_anterior = str(calendar.timegm((datetime.date.today() - datetime.timedelta(days=365)).timetuple()) * 1000)
+        data_atual = str(calendar.timegm(datetime.date.today().timetuple()) * 1000)
+        return render_to_response('home.html', {'graf_patrimonio': [[data_anterior, float(0)], [data_atual, float(0)]], 'patrimonio_anual': list(), 'estatisticas': list()}, context_instance=RequestContext(request))
+    
     # Pegar ano da primeira operacao feita
     ano_corrente = lista_operacoes[0].data.year
     
