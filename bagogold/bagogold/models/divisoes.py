@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.models.lc import HistoricoTaxaDI
 from decimal import Decimal
 from django import forms
 from django.db import models
-from bagogold.bagogold.models.lc import HistoricoTaxaDI
+import datetime
 
 class Divisao (models.Model):
     nome = models.CharField(u'Nome da divisão', max_length=50)
@@ -23,18 +24,23 @@ class Divisao (models.Model):
             return False
     
     
-    def saldo_acoes_bh(self):
+    def saldo_acoes_bh(self, data=datetime.date.today()):
+        from bagogold.bagogold.utils.acoes import \
+            calcular_poupanca_proventos_ate_dia_por_divisao
         """
         Calcula o saldo de operações de ações Buy and Hold de uma divisão (dinheiro livre)
         """
         saldo = Decimal(0)
-        for operacao_divisao in DivisaoOperacaoAcao.objects.filter(divisao=self, operacao__destinacao='B'):
+        for operacao_divisao in DivisaoOperacaoAcao.objects.filter(divisao=self, operacao__destinacao='B', operacao__data__lte=data):
             operacao = operacao_divisao.operacao
             if operacao.tipo_operacao == 'C':
                 saldo -= (operacao_divisao.quantidade * operacao.preco_unitario + (operacao.corretagem + operacao.emolumentos - operacao.qtd_proventos_utilizada()) * operacao_divisao.percentual_divisao())
             elif operacao.tipo_operacao == 'V':
                 saldo += (operacao_divisao.quantidade * operacao.preco_unitario - (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
-                
+        
+        # Proventos
+        saldo += calcular_poupanca_proventos_ate_dia_por_divisao(data, self)        
+        
         # Transferências
         for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='B'):
             saldo -= transferencia.quantidade
@@ -43,12 +49,12 @@ class Divisao (models.Model):
             
         return saldo
     
-    def saldo_acoes_trade(self):
+    def saldo_acoes_trade(self, data=datetime.date.today()):
         """
         Calcula o saldo de operações de ações para trade de uma divisão (dinheiro livre)
         """
         saldo = Decimal(0)
-        for operacao_divisao in DivisaoOperacaoAcao.objects.filter(divisao=self, operacao__destinacao='T'):
+        for operacao_divisao in DivisaoOperacaoAcao.objects.filter(divisao=self, operacao__destinacao='T', operacao__data__lte=data):
             operacao = operacao_divisao.operacao
             if operacao.tipo_operacao == 'C':
                 saldo -= (operacao_divisao.quantidade * operacao.preco_unitario + (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
@@ -63,12 +69,12 @@ class Divisao (models.Model):
             
         return saldo
     
-    def saldo_fii(self):
+    def saldo_fii(self, data=datetime.date.today()):
         """
         Calcula o saldo de operações de FII de uma divisão (dinheiro livre)
         """
         saldo = Decimal(0)
-        for operacao_divisao in DivisaoOperacaoFII.objects.filter(divisao=self):
+        for operacao_divisao in DivisaoOperacaoFII.objects.filter(divisao=self, operacao__data__lte=data):
             operacao = operacao_divisao.operacao
             if operacao.tipo_operacao == 'C':
                 saldo -= (operacao_divisao.quantidade * operacao.preco_unitario + (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
@@ -83,13 +89,13 @@ class Divisao (models.Model):
             
         return saldo
     
-    def saldo_lc(self):
+    def saldo_lc(self, data=datetime.date.today()):
         """
         Calcula o saldo de operações de Letra de Crédito de uma divisão (dinheiro livre)
         """
         saldo = Decimal(0)
         historico_di = HistoricoTaxaDI.objects.all()
-        for operacao_divisao in DivisaoOperacaoLC.objects.filter(divisao=self):
+        for operacao_divisao in DivisaoOperacaoLC.objects.filter(divisao=self, operacao__data__lte=data):
             operacao = operacao_divisao.operacao
             if operacao.tipo_operacao == 'C':
                 saldo -= operacao_divisao.quantidade 
@@ -106,7 +112,6 @@ class Divisao (models.Model):
                 valor_venda = Decimal(str_auxiliar[:len(str_auxiliar)-2])
                 saldo += valor_venda
                 
-        print 'Fim', saldo    
         # Transferências
         for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='L'):
             saldo -= transferencia.quantidade
@@ -115,7 +120,7 @@ class Divisao (models.Model):
             
         return saldo
     
-    def saldo_td(self):
+    def saldo_td(self, data=datetime.date.today()):
         """
         Calcula o saldo de operações de Tesouro Direto de uma divisão (dinheiro livre)
         """
@@ -139,22 +144,22 @@ class Divisao (models.Model):
         return saldo
     
     
-    def saldo(self):
+    def saldo(self, data=datetime.date.today()):
         """
         Calcula o saldo total restante de uma divisão (dinheiro livre)
         """
         saldo = Decimal(0)
         # Ações
         # Buy and hold
-        saldo += self.saldo_acoes_bh()
+        saldo += self.saldo_acoes_bh(data=data)
         # Trades
-        saldo += self.saldo_acoes_trade()
+        saldo += self.saldo_acoes_trade(data=data)
         # FII
-        saldo += self.saldo_fii()
+        saldo += self.saldo_fii(data=data)
         # LC
-        saldo += self.saldo_lc()
+        saldo += self.saldo_lc(data=data)
         # TD
-        saldo += self.saldo_td()
+        saldo += self.saldo_td(data=data)
                 
         return saldo
     
