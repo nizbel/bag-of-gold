@@ -5,7 +5,8 @@ from bagogold.bagogold.models.lc import OperacaoVendaLetraCredito
 from django import forms
 from django.forms import widgets
 
-OPCOES_INVESTIMENTO = (('', '---------'), ('B', 'Buy and Hold'), ('D', 'Tesouro Direto'), ('F', 'Fundo de Inv. Imobiliário'), ('L', 'Letras de Crédito'), ('T', 'Trading'))
+OPCOES_INVESTIMENTO = (('', 'Fonte externa'), ('B', 'Buy and Hold'), ('D', 'Tesouro Direto'), ('F', 'Fundo de Inv. Imobiliário'), 
+                       ('L', 'Letras de Crédito'), ('T', 'Trading'))
     
 class DivisaoForm(forms.ModelForm):
 
