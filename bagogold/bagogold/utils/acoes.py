@@ -284,13 +284,13 @@ def calcular_qtd_acoes_ate_dia_por_divisao(dia, divisao_id):
     
     return qtd_acoes
 
-def calcular_poupanca_proventos_ate_dia(dia):
+def calcular_poupanca_proventos_ate_dia(dia, destinacao='B'):
     """
     Calcula a quantidade de proventos provisionada até dia determinado
-    Parâmetros: Dia da posição de proventos
+    Parâmetros: Dia da posição de proventos, destinação ('B' ou 'T')
     Retorno: Quantidade provisionada no dia
     """
-    operacoes = OperacaoAcao.objects.filter(destinacao='B', data__lte=dia).order_by('data')
+    operacoes = OperacaoAcao.objects.filter(destinacao=destinacao, data__lte=dia).order_by('data')
 
     proventos = Provento.objects.filter(data_ex__lte=dia).order_by('data_ex')
     for provento in proventos:
@@ -341,13 +341,13 @@ def calcular_poupanca_proventos_ate_dia(dia):
     
     return total_proventos.quantize(Decimal('0.01'))
 
-def calcular_poupanca_proventos_ate_dia_por_divisao(dia, divisao):
+def calcular_poupanca_proventos_ate_dia_por_divisao(dia, divisao, destinacao='B'):
     """
     Calcula a quantidade de proventos provisionada até dia determinado para uma divisão
-    Parâmetros: Dia da posição de proventos, divisão escolhida
+    Parâmetros: Dia da posição de proventos, divisão escolhida, destinação ('B' ou 'T')
     Retorno: Quantidade provisionada no dia
     """
-    operacoes_divisao = DivisaoOperacaoAcao.objects.filter(divisao=divisao, operacao__destinacao='B', operacao__data__lte=dia).values_list('operacao__id', flat=True)
+    operacoes_divisao = DivisaoOperacaoAcao.objects.filter(divisao=divisao, operacao__destinacao=destinacao, operacao__data__lte=dia).values_list('operacao__id', flat=True)
     print operacoes_divisao
     
     operacoes = OperacaoAcao.objects.filter(id__in=operacoes_divisao).order_by('data')
