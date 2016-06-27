@@ -298,8 +298,8 @@ def historico_operacoes_cv(request):
     
     # TODO adicionar calculos de lucro com DayTrade
     for operacao in operacoes:
-        operacao.lucro = operacao.venda.preco_unitario * operacao.venda.quantidade - operacao.venda.corretagem - operacao.venda.emolumentos 
-        operacao.lucro -= (operacao.compra.preco_unitario * operacao.compra.quantidade + operacao.compra.corretagem + operacao.compra.emolumentos)
+        operacao.lucro = operacao.venda.preco_unitario * min(operacao.venda.quantidade, operacao.compra.quantidade) - operacao.venda.corretagem - operacao.venda.emolumentos 
+        operacao.lucro -= (operacao.compra.preco_unitario * min(operacao.venda.quantidade, operacao.compra.quantidade) + operacao.compra.corretagem + operacao.compra.emolumentos)
             
     return render_to_response('acoes/trade/historico_operacoes_cv.html', {'operacoes': operacoes}, context_instance=RequestContext(request))
     
