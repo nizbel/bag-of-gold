@@ -232,7 +232,7 @@ def calcular_lucro_trade_ate_data(data):
         
     return lucro_acumulado
 
-def quantidade_acoes_ate_dia(ticker, dia, considerar_trade=False):
+def quantidade_acoes_ate_dia(investidor, ticker, dia, considerar_trade=False):
     """ 
     Calcula a quantidade de ações até dia determinado
     Parâmetros: Ticker da ação
