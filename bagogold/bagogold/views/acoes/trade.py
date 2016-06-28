@@ -112,7 +112,7 @@ def acompanhamento_mensal(request):
             
             lucro_bruto_venda = (operacao.quantidade * operacao.preco_unitario - operacao.corretagem - operacao.emolumentos) - \
                 gasto_total_compras
-            dados_mes['lucro_bruto'] += lucro_bruto_venda
+            dados_mes['lucro_bruto'] += lucro_bruto_venda.quantize(Decimal('0.01'))
             
             # Adicionar ao dicionario de lucro por ação
             if operacao.acao.ticker in acoes_lucro:
