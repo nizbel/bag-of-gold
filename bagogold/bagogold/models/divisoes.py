@@ -259,6 +259,38 @@ class TransferenciaEntreDivisoes(models.Model):
         """
         return self.divisao_cedente == self.divisao_recebedora
     
+    def investimento_origem_completo(self):
+        if self.investimento_origem == 'B':
+            return 'Buy and Hold'
+        elif self.investimento_origem == 'C':
+            return 'CDB/RDB'
+        elif self.investimento_origem == 'D':
+            return 'Tesouro Direto'
+        elif self.investimento_origem == 'F':
+            return 'FII'
+        elif self.investimento_origem == 'L':
+            return 'Letra de Crédito'
+        elif self.investimento_origem == 'T':
+            return 'Trading'
+        elif self.investimento_origem == 'N':
+            return 'Não alocado'
+    
+    def investimento_destino_completo(self):
+        if self.investimento_destino == 'B':
+            return 'Buy and Hold'
+        elif self.investimento_destino == 'C':
+            return 'CDB/RDB'
+        elif self.investimento_destino == 'D':
+            return 'Tesouro Direto'
+        elif self.investimento_destino == 'F':
+            return 'FII'
+        elif self.investimento_destino == 'L':
+            return 'Letra de Crédito'
+        elif self.investimento_destino == 'T':
+            return 'Trading'
+        elif self.investimento_destino == 'N':
+            return 'Não alocado'
+    
 # class EntradaProgramada(models.Model):
 #     divisao
 #     investimento
