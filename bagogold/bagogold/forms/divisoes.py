@@ -22,6 +22,13 @@ class DivisaoForm(forms.ModelForm):
     
 # Inline FormSet para operações em ações (B&H)
 class DivisaoOperacaoAcaoFormSet(forms.models.BaseInlineFormSet):
+    def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
+        super(DivisaoOperacaoAcaoFormSet, self).__init__(*args, **kwargs)
+
+        for form in self.forms:
+            form.fields['divisao'].queryset = Divisao.objects.filter(investidor=self.investidor)
+            
     def clean(self):
         qtd_total_div = 0
         contador_forms = 0
@@ -43,6 +50,13 @@ class DivisaoOperacaoAcaoFormSet(forms.models.BaseInlineFormSet):
 
 # Inline FormSet para operações em fundos de investimento imobiliário
 class DivisaoOperacaoFIIFormSet(forms.models.BaseInlineFormSet):
+    def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
+        super(DivisaoOperacaoFIIFormSet, self).__init__(*args, **kwargs)
+
+        for form in self.forms:
+            form.fields['divisao'].queryset = Divisao.objects.filter(investidor=self.investidor)
+            
     def clean(self):
         qtd_total_div = 0
         contador_forms = 0
@@ -66,8 +80,12 @@ class DivisaoOperacaoFIIFormSet(forms.models.BaseInlineFormSet):
 class DivisaoOperacaoLCFormSet(forms.models.BaseInlineFormSet):
     def __init__(self, *args, **kwargs):
         self.operacao_compra = kwargs.pop('operacao_compra', None)
+        self.investidor = kwargs.pop('investidor')
         super(DivisaoOperacaoLCFormSet, self).__init__(*args, **kwargs)
     
+        for form in self.forms:
+            form.fields['divisao'].queryset = Divisao.objects.filter(investidor=self.investidor)
+            
     def clean(self):
         qtd_total_div = 0
         contador_forms = 0
@@ -95,6 +113,13 @@ class DivisaoOperacaoLCFormSet(forms.models.BaseInlineFormSet):
 
 # Inline FormSet para operações em tesouro direto
 class DivisaoOperacaoTDFormSet(forms.models.BaseInlineFormSet):
+    def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
+        super(DivisaoOperacaoTDFormSet, self).__init__(*args, **kwargs)
+
+        for form in self.forms:
+            form.fields['divisao'].queryset = Divisao.objects.filter(investidor=self.investidor)
+            
     def clean(self):
         qtd_total_div = 0
         contador_forms = 0

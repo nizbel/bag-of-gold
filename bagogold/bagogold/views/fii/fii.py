@@ -179,7 +179,15 @@ def editar_provento_fii(request, id):
 @login_required
 def historico_fii(request):
     investidor = request.user.investidor
-    operacoes = OperacaoFII.filter(investidor=investidor).objects.exclude(data__isnull=True).order_by('data')  
+    operacoes = OperacaoFII.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data') 
+    
+    # Se investidor não tiver feito operações
+    if not operacoes:
+        return render_to_response('fii/historico.html', {'dados': {}, 'lista_conjunta': list(), 'graf_poupanca_proventos': list(), 
+                                                     'graf_gasto_total': list(), 'graf_patrimonio': list()},
+                               context_instance=RequestContext(request))
+    
+     
     for operacao in operacoes:
         operacao.valor_unitario = operacao.preco_unitario
     
@@ -281,7 +289,7 @@ def historico_fii(request):
         patrimonio = 0
         for fii in qtd_papeis.keys():
             if qtd_papeis[fii] > 0:
-                patrimonio += (qtd_papeis[fii] * Decimal(Share('%s.SA' % (fii)).get_price()))
+                patrimonio += (qtd_papeis[fii] * HistoricoFII.objects.filter(fii__ticker=fii)[0].preco_unitario)
                 
         graf_patrimonio += [[str(calendar.timegm(data_mais_atual.timetuple()) * 1000), float(patrimonio)]]
         
@@ -295,11 +303,10 @@ def historico_fii(request):
                                                      'graf_gasto_total': graf_gasto_total, 'graf_patrimonio': graf_patrimonio},
                                context_instance=RequestContext(request))
     
-
-    
     
 @login_required
 def inserir_operacao_fii(request):
+    investidor = request.user.investidor
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoFII, DivisaoOperacaoFII, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoFIIFormSet)
@@ -327,7 +334,7 @@ def inserir_operacao_fii(request):
     else:
         form_operacao_fii = OperacaoFIIForm()
         form_uso_proventos = UsoProventosOperacaoFIIForm()
-        formset_divisao = DivisaoFormSet()
+        formset_divisao = DivisaoFormSet(investidor=investidor)
             
     return render_to_response('fii/inserir_operacao_fii.html', {'form_operacao_fii': form_operacao_fii, 'form_uso_proventos': form_uso_proventos,
                                                                'formset_divisao': formset_divisao}, context_instance=RequestContext(request))

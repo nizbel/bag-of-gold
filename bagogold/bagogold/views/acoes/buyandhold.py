@@ -38,6 +38,7 @@ def calcular_poupanca_proventos_na_data(request):
 
 @login_required
 def editar_operacao_acao(request, id):
+    investidor = request.user.investidor
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoAcaoFormSet)
@@ -93,7 +94,7 @@ def editar_operacao_acao(request, id):
             form_uso_proventos = UsoProventosOperacaoAcaoForm(instance=uso_proventos)
         else:
             form_uso_proventos = UsoProventosOperacaoAcaoForm()
-        formset_divisao = DivisaoFormSet(instance=operacao_acao)
+        formset_divisao = DivisaoFormSet(instance=operacao_acao, investidor=investidor)
         
         # Valor da poupança de proventos na data apontada
         poupanca_proventos = calcular_poupanca_proventos_ate_dia(operacao_acao.data)
@@ -543,6 +544,7 @@ def historico(request):
     
 @login_required
 def inserir_operacao_acao(request):
+    investidor = request.user.investidor
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoAcaoFormSet)
@@ -571,7 +573,7 @@ def inserir_operacao_acao(request):
     else:
         form_operacao_acao = OperacaoAcaoForm()
         form_uso_proventos = UsoProventosOperacaoAcaoForm()
-        formset_divisao = DivisaoFormSet()
+        formset_divisao = DivisaoFormSet(investidor=investidor)
             
     return render_to_response('acoes/buyandhold/inserir_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,
                                                                        'formset_divisao': formset_divisao }, context_instance=RequestContext(request))
