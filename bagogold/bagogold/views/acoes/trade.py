@@ -3,6 +3,9 @@ from bagogold.bagogold.forms.operacao_acao import OperacaoAcaoForm
 from bagogold.bagogold.forms.operacao_compra_venda import \
     OperacaoCompraVendaForm
 from bagogold.bagogold.models.acoes import OperacaoAcao, OperacaoCompraVenda
+from bagogold.bagogold.models.divisoes import Divisao, \
+    TransferenciaEntreDivisoes
+from bagogold.bagogold.utils.acoes import calcular_poupanca_proventos_ate_dia
 from decimal import Decimal
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
@@ -63,7 +66,12 @@ def acompanhamento_mensal(request):
     operacoes_compra = {}
     operacoes_venda = {}
     
-    dados_mes = {'ano': ano, 'mes': mes, 'qtd_compra': 0, 'qtd_venda': 0, 'qtd_op_compra': 0, 
+    # Calcula o saldo para Trades inicial do mês
+    saldo_inicial_mes = 0
+    for divisao in Divisao.objects.filter():
+        saldo_inicial_mes += divisao.saldo_acoes_trade(data=datetime.date(ano, mes, 1) - datetime.timedelta(days=1))
+    
+    dados_mes = {'ano': ano, 'mes': mes, 'qtd_compra': 0, 'qtd_venda': 0, 'qtd_op_compra': 0, 'saldo_trades': saldo_inicial_mes,
                  'qtd_op_venda': 0, 'lucro_bruto': 0, 'total_corretagem' : 0, 'total_emolumentos': 0}
     acoes_lucro = {}
     
@@ -73,6 +81,7 @@ def acompanhamento_mensal(request):
             dados_mes['qtd_compra'] += operacao.quantidade * operacao.preco_unitario 
             dados_mes['qtd_op_compra'] += 1
             compra_com_taxas = operacao.quantidade * operacao.preco_unitario + operacao.emolumentos + operacao.corretagem
+            dados_mes['saldo_trades'] -= compra_com_taxas
             
             if str(calendar.timegm(operacao.data.timetuple()) * 1000) in operacoes_compra:
                 operacoes_compra[str(calendar.timegm(operacao.data.timetuple()) * 1000)] += float(-compra_com_taxas)
@@ -83,6 +92,7 @@ def acompanhamento_mensal(request):
             dados_mes['qtd_venda'] += operacao.quantidade * operacao.preco_unitario
             dados_mes['qtd_op_venda'] += 1
             venda_com_taxas = operacao.quantidade * operacao.preco_unitario - operacao.emolumentos - operacao.corretagem
+            dados_mes['saldo_trades'] += venda_com_taxas
             
             if str(calendar.timegm(operacao.data.timetuple()) * 1000) in operacoes_venda:
                 operacoes_venda[str(calendar.timegm(operacao.data.timetuple()) * 1000)] += float(venda_com_taxas)
@@ -98,7 +108,7 @@ def acompanhamento_mensal(request):
                 qtd_compra += operacao_compra.compra.quantidade
                 # TODO NAO PREVÊ MUITAS COMPRAS PARA MUITAS VENDAS
                 gasto_total_compras += (operacao_compra.compra.quantidade * operacao_compra.compra.preco_unitario + operacao_compra.compra.emolumentos + \
-                                        operacao_compra.compra.corretagem)
+                                        operacao_compra.compra.corretagem) * (Decimal(operacao.quantidade) / operacao_compra.compra.quantidade)
             
             lucro_bruto_venda = (operacao.quantidade * operacao.preco_unitario - operacao.corretagem - operacao.emolumentos) - \
                 gasto_total_compras
@@ -120,6 +130,18 @@ def acompanhamento_mensal(request):
         dados_mes['total_corretagem'] += operacao.corretagem
         dados_mes['total_emolumentos'] += operacao.emolumentos
         
+    # Adicionar transferencias ao saldo de trades
+    for transferencia in TransferenciaEntreDivisoes.objects.filter(investimento_origem='T', 
+                                                                   data__range=[datetime.date(ano, mes, 1), datetime.date(ano, mes, calendar.monthrange(ano,mes)[1])]):
+        dados_mes['saldo_trades'] -= transferencia.quantidade
+    for transferencia in TransferenciaEntreDivisoes.objects.filter(investimento_destino='T',
+                                                                   data__range=[datetime.date(ano, mes, 1), datetime.date(ano, mes, calendar.monthrange(ano,mes)[1])]):
+        dados_mes['saldo_trades'] += transferencia.quantidade
+    
+    # Adicionar pagamentos de proventos
+    # TODO Rever a essa forma de calculo
+    dados_mes['saldo_trades'] += calcular_poupanca_proventos_ate_dia(datetime.date(ano, mes, calendar.monthrange(ano,mes)[1]), destinacao='T')
+    
     # Preparar IR
     if (dados_mes['qtd_venda'] > 20000 and dados_mes['lucro_bruto'] > 0):
         dados_mes['ir_devido'] = float(dados_mes['lucro_bruto']) * 0.15
@@ -223,8 +245,8 @@ def historico_operacoes(request):
         if (ano != operacao.data.year or mes != operacao.data.month): 
             
             # Colocar valores
-            mes_operacao['lucro_mensal'] = lucro_mensal
-            mes_operacao['lucro_geral'] = lucro_geral
+            mes_operacao['lucro_mensal'] = lucro_mensal.quantize(Decimal('0.01'))
+            mes_operacao['lucro_geral'] = lucro_geral.quantize(Decimal('0.01'))
             mes_operacao['qtd_vendas_mensal'] = qtd_vendas_mensal
             
             # Adicionar mes a lista de meses
@@ -274,8 +296,8 @@ def historico_operacoes(request):
         # Verificar se é a ultima iteração
         if (operacao == operacoes[len(operacoes)-1]):
             # Colocar valores
-            mes_operacao['lucro_mensal'] = lucro_mensal
-            mes_operacao['lucro_geral'] = lucro_geral
+            mes_operacao['lucro_mensal'] = lucro_mensal.quantize(Decimal('0.01'))
+            mes_operacao['lucro_geral'] = lucro_geral.quantize(Decimal('0.01'))
             mes_operacao['qtd_vendas_mensal'] = qtd_vendas_mensal
             
             # Adicionar mes a lista de meses
