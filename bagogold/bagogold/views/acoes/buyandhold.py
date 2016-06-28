@@ -19,6 +19,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.db.models.functions import Concat
+from django.forms import inlineformset_factory
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
@@ -276,15 +277,27 @@ def historico(request):
     class Object(object):
         pass
     
-    operacoes = OperacaoAcao.objects.filter(destinacao='B').exclude(data__isnull=True).order_by('data')
+    investidor = request.user.investidor
+    
+    operacoes = OperacaoAcao.objects.filter(destinacao='B', investidor=investidor).exclude(data__isnull=True).order_by('data')
+    
+    if not operacoes:
+        return render_to_response('acoes/buyandhold/historico.html', 
+                              {'operacoes': list(), 'graf_total_gasto': list(), 'graf_patrimonio': list(), 'graf_diario': list(),
+                               'graf_proventos_mes': list(), 'graf_media_proventos_6_meses': list(), 'graf_poupanca_proventos': list(),
+                               'graf_gasto_op_sem_prov_mes': list(), 'graf_uso_proventos_mes': list(),
+                                'graf_dividendos_mensal': list(), 'graf_jscp_mensal': list(), 'dados': {}},
+                              context_instance=RequestContext(request))
+    
+    acoes = list(set(operacoes.values_list('acao', flat=True)))
 
-    proventos = Provento.objects.exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).order_by('data_ex')
+    proventos = Provento.objects.filter(acao__in=acoes).exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).order_by('data_ex')
     for provento in proventos:
         provento.data = provento.data_ex
         provento.emolumentos = 0
         provento.corretagem = 0
      
-    taxas_custodia = TaxaCustodiaAcao.objects.filter().order_by('ano_vigencia', 'mes_vigencia')
+    taxas_custodia = TaxaCustodiaAcao.objects.filter(investidor=investidor).order_by('ano_vigencia', 'mes_vigencia')
 #     for taxa in taxas_custodia:
 #         taxa.data = datetime.date(taxa.ano_vigencia, taxa.mes_vigencia, 1)
     
@@ -595,19 +608,20 @@ def painel(request):
     class Object(object):
         pass
     
-    operacoes = OperacaoAcao.objects.filter(destinacao='B').exclude(data__isnull=True).order_by('data')
-
-    proventos_em_acoes = AcaoProvento.objects.filter().order_by('provento__data_ex')
+    investidor = request.user.investidor
     
-    taxas_custodia = TaxaCustodiaAcao.objects.filter().order_by('ano_vigencia', 'mes_vigencia')
+    operacoes = OperacaoAcao.objects.filter(destinacao='B', investidor=investidor).exclude(data__isnull=True).order_by('data')
 
+    acoes = list(set(operacoes.values_list('acao', flat=True)))
+    
+    proventos_em_acoes = AcaoProvento.objects.filter(provento__acao__in=acoes).order_by('provento__data_ex')
+    
     # Guarda as ações correntes para o calculo do patrimonio
     acoes = {}
     # Cálculo de quantidade
-    for acao in Acao.objects.filter():
-        # TODO filtrar pelas ações que a pessoa já teve, remover 0s
+    for acao in Acao.objects.filter(id__in=acoes):
         acoes[acao.ticker] = Object()
-        acoes[acao.ticker].quantidade = quantidade_acoes_ate_dia(acao.ticker, datetime.date.today())
+        acoes[acao.ticker].quantidade = quantidade_acoes_ate_dia(investidor, acao.ticker, datetime.date.today())
         if acoes[acao.ticker].quantidade == 0:
             del acoes[acao.ticker]
         else:
@@ -659,7 +673,7 @@ def painel(request):
     
 @login_required
 def ver_taxas_custodia_acao(request):
-    taxas_custodia = TaxaCustodiaAcao.objects.filter().order_by('ano_vigencia', 'mes_vigencia')
+    taxas_custodia = TaxaCustodiaAcao.objects.filter(investidor=investidor).order_by('ano_vigencia', 'mes_vigencia')
     for taxa in taxas_custodia:
         taxa.ano_vigencia = str(taxa.ano_vigencia).replace('.', '')
     return render_to_response('acoes/buyandhold/ver_taxas_custodia_acao.html', {'taxas_custodia': taxas_custodia},
