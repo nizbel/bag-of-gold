@@ -610,16 +610,21 @@ def painel(request):
     
     investidor = request.user.investidor
     
+    # Buscar ações que o usuário já teve
     operacoes = OperacaoAcao.objects.filter(destinacao='B', investidor=investidor).exclude(data__isnull=True).order_by('data')
 
-    acoes = list(set(operacoes.values_list('acao', flat=True)))
+    acoes_investidor = list(set(operacoes.values_list('acao', flat=True)))
     
-    proventos_em_acoes = AcaoProvento.objects.filter(provento__acao__in=acoes).order_by('provento__data_ex')
+    proventos_em_acoes = list(set(AcaoProvento.objects.filter(provento__acao__in=acoes_investidor).order_by('provento__data_ex') \
+                                  .values_list('acao_recebida', flat=True)))
+    
+    # Adicionar ações recebidas pelo investidor
+    acoes_investidor = list(set(acoes_investidor + proventos_em_acoes))
     
     # Guarda as ações correntes para o calculo do patrimonio
     acoes = {}
     # Cálculo de quantidade
-    for acao in Acao.objects.filter(id__in=acoes):
+    for acao in Acao.objects.filter(id__in=acoes_investidor):
         acoes[acao.ticker] = Object()
         acoes[acao.ticker].quantidade = quantidade_acoes_ate_dia(investidor, acao.ticker, datetime.date.today())
         if acoes[acao.ticker].quantidade == 0:
@@ -658,7 +663,8 @@ def painel(request):
         total_variacao_percentual += acoes[acao].valor_dia_anterior * acoes[acao].quantidade
     
     # Calcular percentual do total de variação
-    total_variacao_percentual = float(total_variacao) / float(total_variacao_percentual) * 100
+    if total_variacao_percentual > 0:
+        total_variacao_percentual = total_variacao / total_variacao_percentual * Decimal(100)
     
     # Popular dados
     dados = {}
