@@ -291,8 +291,11 @@ def calcular_poupanca_proventos_ate_dia(dia, destinacao='B'):
     Retorno: Quantidade provisionada no dia
     """
     operacoes = OperacaoAcao.objects.filter(destinacao=destinacao, data__lte=dia).order_by('data')
+    
+    # Remover valores repetidos
+    acoes = list(set(operacoes.values_list('acao', flat=True)))
 
-    proventos = Provento.objects.filter(data_ex__lte=dia).order_by('data_ex')
+    proventos = Provento.objects.filter(data_ex__lte=dia, acao__in=acoes).order_by('data_ex')
     for provento in proventos:
         provento.data = provento.data_ex
      
@@ -321,12 +324,11 @@ def calcular_poupanca_proventos_ate_dia(dia, destinacao='B'):
         
         # Verifica se é recebimento de proventos
         elif isinstance(item_lista, Provento):
-            if item_lista.data_pagamento <= datetime.date.today():
+            if item_lista.data_pagamento <= datetime.date.today() and acoes[item_lista.acao.ticker] > 0:
                 if item_lista.tipo_provento in ['D', 'J']:
                     total_recebido = acoes[item_lista.acao.ticker] * item_lista.valor_unitario
                     if item_lista.tipo_provento == 'J':
                         total_recebido = total_recebido * Decimal(0.85)
-                    print item_lista.acao.ticker, item_lista.valor_unitario, total_recebido
                     total_proventos += total_recebido
                     
                 elif item_lista.tipo_provento == 'A':
@@ -381,7 +383,7 @@ def calcular_poupanca_proventos_ate_dia_por_divisao(dia, divisao, destinacao='B'
         
         # Verifica se é recebimento de proventos
         elif isinstance(item_lista, Provento):
-            if item_lista.data_pagamento <= datetime.date.today():
+            if item_lista.data_pagamento <= datetime.date.today() and acoes[item_lista.acao.ticker] > 0:
                 if item_lista.tipo_provento in ['D', 'J']:
                     total_recebido = acoes[item_lista.acao.ticker] * item_lista.valor_unitario
                     if item_lista.tipo_provento == 'J':
