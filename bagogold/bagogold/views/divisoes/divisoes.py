@@ -272,4 +272,8 @@ def listar_divisoes(request):
 def listar_transferencias(request):
     transferencias = TransferenciaEntreDivisoes.objects.filter()
     
+    for transferencia in transferencias:
+        transferencia.investimento_origem = transferencia.investimento_origem_completo()
+        transferencia.investimento_destino = transferencia.investimento_destino_completo()
+    
     return render_to_response('divisoes/listar_transferencias.html', {'transferencias': transferencias}, context_instance=RequestContext(request))
