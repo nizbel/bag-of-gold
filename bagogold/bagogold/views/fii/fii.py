@@ -24,7 +24,8 @@ import math
 
 @login_required
 def acompanhamento_mensal_fii(request):
-    operacoes = OperacaoFII.objects.exclude(data__isnull=True).order_by('data')
+    investidor = request.user.investidor
+    operacoes = OperacaoFII.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
     
     graf_vendas_mes = list()
     graf_lucro_mes = list()
@@ -46,6 +47,7 @@ def acompanhamento_mensal_fii(request):
     
 @login_required
 def aconselhamento_fii(request):
+    investidor = request.user.investidor
     fiis = FII.objects.all()
     
     comparativos = list()
@@ -176,7 +178,8 @@ def editar_provento_fii(request, id):
     
 @login_required
 def historico_fii(request):
-    operacoes = OperacaoFII.objects.exclude(data__isnull=True).order_by('data')  
+    investidor = request.user.investidor
+    operacoes = OperacaoFII.filter(investidor=investidor).objects.exclude(data__isnull=True).order_by('data')  
     for operacao in operacoes:
         operacao.valor_unitario = operacao.preco_unitario
     

@@ -14,10 +14,10 @@ import datetime
 import mechanize
 import re
 
-def calcular_operacoes_sem_proventos_por_mes(operacoes):
+def calcular_operacoes_sem_proventos_por_mes(investidor, operacoes):
     """ 
     Calcula a quantidade de ações compradas sem usar proventos por mes
-    Parâmetros: Queryset de operações ordenadas por data
+    Parâmetros: Investidor, Queryset de operações ordenadas por data
     Retorno: Lista de tuplas (data, quantidade)
     """
     lista_ids_operacoes = list()
@@ -50,9 +50,10 @@ def calcular_operacoes_sem_proventos_por_mes(operacoes):
         
     return graf_gasto_op_sem_prov_mes
 
-def calcular_uso_proventos_por_mes():
+def calcular_uso_proventos_por_mes(investidor):
     """ 
     Calcula a quantidade de uso de proventos em operações por mes
+    Parâmetros: Investidor
     Retorno: Lista de tuplas (data, quantidade)
     """
     lista_ids_operacoes = list()
@@ -80,9 +81,10 @@ def calcular_uso_proventos_por_mes():
         
     return graf_uso_proventos_mes
 
-def calcular_media_uso_proventos_6_meses():
+def calcular_media_uso_proventos_6_meses(investidor):
     """ 
     Calcula a média de uso de proventos em operações nos últimos 6 meses
+    Parâmetros: Investidor
     Retorno: Lista de tuplas (data, quantidade)
     """
     ultimos_6_meses = list()
@@ -118,10 +120,11 @@ def calcular_media_uso_proventos_6_meses():
         
     return graf_uso_proventos_mes
     
-def calcular_provento_por_mes(proventos, operacoes):
+def calcular_provento_por_mes(investidor, proventos, operacoes):
     """ 
     Calcula a quantidade de proventos em dinheiro recebido por mes
-    Parâmetros: Queryset de proventos ordenados por data
+    Parâmetros: Investidor
+                Queryset de proventos ordenados por data
                 Queryset de operações ordenadas por data
     Retorno: Lista de tuplas (data, quantidade)
     """
@@ -157,10 +160,11 @@ def calcular_provento_por_mes(proventos, operacoes):
         
     return graf_proventos_mes
 
-def calcular_media_proventos_6_meses(proventos, operacoes):
+def calcular_media_proventos_6_meses(investidor, proventos, operacoes):
     """ 
     Calcula a média de proventos recebida nos últimos 6 meses
-    Parâmetros: Queryset de proventos ordenados por data
+    Parâmetros: Investidor
+                Queryset de proventos ordenados por data
                 Queryset de operações ordenadas por data
     Retorno: Lista de tuplas (data, quantidade)
     """
@@ -203,13 +207,13 @@ def calcular_media_proventos_6_meses(proventos, operacoes):
         
     return graf_proventos_mes
 
-def calcular_lucro_trade_ate_data(data):
+def calcular_lucro_trade_ate_data(investidor, data):
     """
     Calcula o lucro acumulado em trades até a data especificada
-    Parâmetros: Data
+    Parâmetros: Investidor, Data
     Retorno: Lucro/Prejuízo
     """
-    trades = OperacaoAcao.objects.exclude(data__isnull=True).filter(tipo_operacao='V', destinacao='T', data__lt=data).order_by('data')
+    trades = OperacaoAcao.objects.exclude(data__isnull=True).filter(investidor=investidor, tipo_operacao='V', destinacao='T', data__lt=data).order_by('data')
     lucro_acumulado = 0
     
     for operacao in trades:
@@ -235,7 +239,8 @@ def calcular_lucro_trade_ate_data(data):
 def quantidade_acoes_ate_dia(investidor, ticker, dia, considerar_trade=False):
     """ 
     Calcula a quantidade de ações até dia determinado
-    Parâmetros: Ticker da ação
+    Parâmetros: Investidor
+                Ticker da ação
                 Dia final
     Retorno: Quantidade de ações
     """
@@ -268,10 +273,11 @@ def quantidade_acoes_ate_dia(investidor, ticker, dia, considerar_trade=False):
                 qtd_acoes += int(item.provento.valor_unitario * quantidade_acoes_ate_dia(item.provento.acao.ticker, item.data) / 100)
     return qtd_acoes
 
-def calcular_qtd_acoes_ate_dia_por_divisao(dia, divisao_id):
+def calcular_qtd_acoes_ate_dia_por_divisao(investidor, dia, divisao_id):
     """ 
     Calcula a quantidade de ações até dia determinado por divisão
-    Parâmetros: Dia final
+    Parâmetros: Investidor
+                Dia final
                 ID da divisão
     Retorno: Quantidade de ações {ticker: qtd}
     """
@@ -319,7 +325,7 @@ def calcular_qtd_acoes_ate_dia_por_divisao(dia, divisao_id):
     
     return qtd_acoes
 
-def calcular_poupanca_proventos_ate_dia(dia):
+def calcular_poupanca_proventos_ate_dia(investidor, dia):
     """
     Calcula a quantidade de proventos provisionada até dia determinado
     Parâmetros: Dia da posição de proventos

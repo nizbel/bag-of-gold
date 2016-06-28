@@ -26,6 +26,8 @@ LISTA_MESES = [['Janeiro', 1],   ['Fevereiro', 2],
 
 @login_required
 def acompanhamento_mensal(request):
+    investidor = request.user.investidor
+    
     if request.method == 'POST':
         ano = int(request.POST.get('select_ano', datetime.date.today().year).replace('.', ''))
         # Valor padrão para mês
@@ -38,12 +40,17 @@ def acompanhamento_mensal(request):
         mes = datetime.date.today().month
     
     # Pegar primeiro ano que uma operação foi feita
-    primeira_operacao = OperacaoAcao.objects.filter(destinacao='T').exclude(data__isnull=True).order_by('data')[0]
+    try:
+        primeira_operacao = OperacaoAcao.objects.filter(destinacao='T', investidor=investidor).exclude(data__isnull=True).order_by('data')[0]
+        primeira_operacao_ano = primeira_operacao.data.year
+    except:
+        primeira_operacao_ano = datetime.date.today().year
     
     # Preparar lista de anos
     lista_anos = list()
-    for ano_operacoes in reversed(range(primeira_operacao.data.year, datetime.date.today().year+1)):
-        lista_anos += [ano_operacoes]
+    for ano_operacoes in reversed(range(primeira_operacao_ano, datetime.date.today().year+1)):
+        print type(ano_operacoes)
+        lista_anos += [str(ano_operacoes)]
     
     # Preparar lista de meses
     lista_meses = list()
@@ -56,7 +63,7 @@ def acompanhamento_mensal(request):
     if request.method == 'POST' and request.is_ajax():
         return HttpResponse(json.dumps(lista_meses), content_type = "application/json")
         
-    operacoes = OperacaoAcao.objects.exclude(data__isnull=True).filter(destinacao='T', data__year=ano, data__month=mes).order_by('data')
+    operacoes = OperacaoAcao.objects.exclude(data__isnull=True).filter(destinacao='T', investidor=investidor, data__year=ano, data__month=mes).order_by('data')
     
     graf_compras_mes = list()
     graf_vendas_mes = list()
@@ -135,7 +142,7 @@ def acompanhamento_mensal(request):
         dados_mes['menos_lucrativa'] = acoes_lucro_ordenado[len(acoes_lucro)-1]
     
     # Calcular lucro acumulado até o mes escolhido
-    dados_mes['lucro_acumulado'] = calcular_lucro_trade_ate_data(datetime.date(ano, mes, 1))
+    dados_mes['lucro_acumulado'] = calcular_lucro_trade_ate_data(investidor, datetime.date(ano, mes, 1))
     
     # Preencher gráficos de compras e vendas
     for key, value in sorted(operacoes_compra.iteritems(), key=operator.itemgetter(0)):
@@ -205,7 +212,14 @@ def editar_operacao_acao(request, id):
     
 @login_required
 def historico_operacoes(request):
-    operacoes = OperacaoAcao.objects.filter(destinacao='T').exclude(data__isnull=True).order_by('data')
+    investidor = request.user.investidor
+    
+    operacoes = OperacaoAcao.objects.filter(destinacao='T', investidor=investidor).exclude(data__isnull=True).order_by('data')
+    
+    if not operacoes:
+        return render_to_response('acoes/trade/historico_operacoes.html', 
+                              {'operacoes': operacoes, 'meses_operacao': list(), 'graf_lucro_acumulado': list(),
+                               'graf_lucro_mensal': list()}, context_instance=RequestContext(request))
     
     # Dados para acompanhamento de vendas mensal e tributavel
     ano = operacoes[0].data.year
@@ -298,7 +312,8 @@ def historico_operacoes(request):
     
 @login_required
 def historico_operacoes_cv(request):
-    operacoes = OperacaoCompraVenda.objects.order_by('id')
+    investidor = request.user.investidor
+    operacoes = OperacaoCompraVenda.objects.filter(compra__investidor=investidor).order_by('id')
     
     # TODO adicionar calculos de lucro com DayTrade
     for operacao in operacoes:
@@ -309,13 +324,14 @@ def historico_operacoes_cv(request):
     
 @login_required
 def inserir_operacao(request):
+    investidor = request.user.investidor
     if request.method == 'POST':
         form = OperacaoCompraVendaForm(request.POST)
         if form.is_valid():
             form.save()
             return HttpResponseRedirect(reverse('historico_operacoes_cv'))
     else:
-        form = OperacaoCompraVendaForm()
+        form = OperacaoCompraVendaForm(investidor=investidor)
             
     return render_to_response('acoes/trade/inserir_operacao.html', {'form': form}, context_instance=RequestContext(request))
     
