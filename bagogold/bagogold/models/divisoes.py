@@ -42,9 +42,9 @@ class Divisao (models.Model):
         saldo += calcular_poupanca_proventos_ate_dia_por_divisao(data, self)        
         
         # Transferências
-        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='B'):
+        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='B', data__lte=data):
             saldo -= transferencia.quantidade
-        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='B'):
+        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='B', data__lte=data):
             saldo += transferencia.quantidade
             
         return saldo
@@ -62,9 +62,9 @@ class Divisao (models.Model):
                 saldo += (operacao_divisao.quantidade * operacao.preco_unitario - (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
                 
         # Transferências
-        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='T'):
+        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='T', data__lte=data):
             saldo -= transferencia.quantidade
-        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='T'):
+        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='T', data__lte=data):
             saldo += transferencia.quantidade
             
         return saldo
@@ -82,9 +82,9 @@ class Divisao (models.Model):
                 saldo += (operacao_divisao.quantidade * operacao.preco_unitario - (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
                 
         # Transferências
-        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='F'):
+        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='F', data__lte=data):
             saldo -= transferencia.quantidade
-        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='F'):
+        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='F', data__lte=data):
             saldo += transferencia.quantidade
             
         return saldo
@@ -113,9 +113,9 @@ class Divisao (models.Model):
                 saldo += valor_venda
                 
         # Transferências
-        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='L'):
+        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='L', data__lte=data):
             saldo -= transferencia.quantidade
-        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='L'):
+        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='L', data__lte=data):
             saldo += transferencia.quantidade
             
         return saldo
@@ -125,7 +125,7 @@ class Divisao (models.Model):
         Calcula o saldo de operações de Tesouro Direto de uma divisão (dinheiro livre)
         """
         saldo = Decimal(0)
-        for operacao_divisao in DivisaoOperacaoTD.objects.filter(divisao=self):
+        for operacao_divisao in DivisaoOperacaoTD.objects.filter(divisao=self, operacao__data__lte=data):
             operacao = operacao_divisao.operacao
             if operacao.tipo_operacao == 'C':
                 saldo -= (operacao_divisao.quantidade * operacao.preco_unitario + (operacao.taxa_custodia + operacao.taxa_bvmf) * operacao_divisao.percentual_divisao())
@@ -133,9 +133,9 @@ class Divisao (models.Model):
                 saldo += (operacao_divisao.quantidade * operacao.preco_unitario - (operacao.taxa_custodia + operacao.taxa_bvmf) * operacao_divisao.percentual_divisao())
                 
         # Transferências
-        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='D'):
+        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='D', data__lte=data):
             saldo -= transferencia.quantidade
-        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='D'):
+        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='D', data__lte=data):
             saldo += transferencia.quantidade
         
         # Arredondar

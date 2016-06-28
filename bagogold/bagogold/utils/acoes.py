@@ -326,6 +326,7 @@ def calcular_poupanca_proventos_ate_dia(dia, destinacao='B'):
                     total_recebido = acoes[item_lista.acao.ticker] * item_lista.valor_unitario
                     if item_lista.tipo_provento == 'J':
                         total_recebido = total_recebido * Decimal(0.85)
+                    print item_lista.acao.ticker, item_lista.valor_unitario, total_recebido
                     total_proventos += total_recebido
                     
                 elif item_lista.tipo_provento == 'A':
@@ -348,7 +349,6 @@ def calcular_poupanca_proventos_ate_dia_por_divisao(dia, divisao, destinacao='B'
     Retorno: Quantidade provisionada no dia
     """
     operacoes_divisao = DivisaoOperacaoAcao.objects.filter(divisao=divisao, operacao__destinacao=destinacao, operacao__data__lte=dia).values_list('operacao__id', flat=True)
-    print operacoes_divisao
     
     operacoes = OperacaoAcao.objects.filter(id__in=operacoes_divisao).order_by('data')
 
