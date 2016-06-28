@@ -679,6 +679,7 @@ def painel(request):
     
 @login_required
 def ver_taxas_custodia_acao(request):
+    investidor = request.user.investidor
     taxas_custodia = TaxaCustodiaAcao.objects.filter(investidor=investidor).order_by('ano_vigencia', 'mes_vigencia')
     for taxa in taxas_custodia:
         taxa.ano_vigencia = str(taxa.ano_vigencia).replace('.', '')
