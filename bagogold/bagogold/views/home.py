@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.decorators.investidores import is_superuser
 from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, Provento, \
     ValorDiarioAcao
 from bagogold.bagogold.models.fii import OperacaoFII, HistoricoFII, ProventoFII, \
