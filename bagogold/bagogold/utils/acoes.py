@@ -168,6 +168,9 @@ def calcular_media_proventos_6_meses(investidor, proventos, operacoes):
                 Queryset de operações ordenadas por data
     Retorno: Lista de tuplas (data, quantidade)
     """
+    # Verifica se há proventos a serem calculados
+    if not proventos:
+        return list()
     
     ultimos_6_meses = list()
     meses_anos = list()

@@ -328,7 +328,9 @@ def inserir_operacao(request):
     if request.method == 'POST':
         form = OperacaoCompraVendaForm(request.POST)
         if form.is_valid():
-            form.save()
+            operacao_trade = form.save(commit=False)
+            operacao_trade.investidor = investidor
+            operacao_trade.save()
             return HttpResponseRedirect(reverse('historico_operacoes_cv'))
     else:
         form = OperacaoCompraVendaForm(investidor=investidor)
