@@ -266,6 +266,7 @@ def quantidade_acoes_ate_dia(ticker, dia, considerar_trade=False):
                 qtd_acoes += int(item.provento.valor_unitario * qtd_acoes / 100)
             else:
                 qtd_acoes += int(item.provento.valor_unitario * quantidade_acoes_ate_dia(item.provento.acao.ticker, item.data) / 100)
+    
     return qtd_acoes
 
 def calcular_qtd_acoes_ate_dia_por_divisao(dia, divisao_id):
@@ -319,15 +320,18 @@ def calcular_qtd_acoes_ate_dia_por_divisao(dia, divisao_id):
     
     return qtd_acoes
 
-def calcular_poupanca_proventos_ate_dia(dia):
+def calcular_poupanca_proventos_ate_dia(dia, destinacao='B'):
     """
     Calcula a quantidade de proventos provisionada até dia determinado
-    Parâmetros: Dia da posição de proventos
+    Parâmetros: Dia da posição de proventos, destinação ('B' ou 'T')
     Retorno: Quantidade provisionada no dia
     """
-    operacoes = OperacaoAcao.objects.filter(destinacao='B', data__lte=dia).order_by('data')
+    operacoes = OperacaoAcao.objects.filter(destinacao=destinacao, data__lte=dia).order_by('data')
+    
+    # Remover valores repetidos
+    acoes = list(set(operacoes.values_list('acao', flat=True)))
 
-    proventos = Provento.objects.filter(data_ex__lte=dia).order_by('data_ex')
+    proventos = Provento.objects.filter(data_ex__lte=dia, acao__in=acoes).order_by('data_ex')
     for provento in proventos:
         provento.data = provento.data_ex
      
@@ -356,7 +360,7 @@ def calcular_poupanca_proventos_ate_dia(dia):
         
         # Verifica se é recebimento de proventos
         elif isinstance(item_lista, Provento):
-            if item_lista.data_pagamento <= datetime.date.today():
+            if item_lista.data_pagamento <= datetime.date.today() and acoes[item_lista.acao.ticker] > 0:
                 if item_lista.tipo_provento in ['D', 'J']:
                     total_recebido = acoes[item_lista.acao.ticker] * item_lista.valor_unitario
                     if item_lista.tipo_provento == 'J':
