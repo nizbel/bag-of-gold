@@ -37,6 +37,7 @@ def calcular_valor_lc_ate_dia(investidor, dia):
     if len(operacoes_queryset) == 0:
         return {}
     operacoes = list(operacoes_queryset)
+    historico_porcentagem = HistoricoPorcentagemLetraCredito.objects.filter(Q(data__lte=dia) | Q(data__isnull=True)).order_by('-data')
     for operacao in operacoes:
         if operacao.tipo_operacao == 'C':
             operacao.atual = operacao.quantidade
