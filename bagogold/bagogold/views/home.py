@@ -44,7 +44,7 @@ def home(request):
         
     operacoes_lc = OperacaoLetraCredito.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
     
-    operacoes_cdb_rdb = OperacaoCDB_RDB.objects.exclude(data__isnull=True).order_by('data')  
+    operacoes_cdb_rdb = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
     
     lista_operacoes = sorted(chain(proventos_fii, operacoes_fii, operacoes_td, proventos_bh,  operacoes_bh, operacoes_lc, operacoes_cdb_rdb),
                             key=attrgetter('data'))
