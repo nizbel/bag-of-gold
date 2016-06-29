@@ -18,12 +18,14 @@ from operator import attrgetter
 import calendar
 import datetime
 import math
+from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB
 
 @login_required
 def home(request):
     # Usado para criar objetos vazios
     class Object(object):
         pass
+
     investidor = request.user.investidor
     operacoes_fii = OperacaoFII.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
     if operacoes_fii:
@@ -42,10 +44,12 @@ def home(request):
         
     operacoes_lc = OperacaoLetraCredito.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
     
-    lista_operacoes = sorted(chain(proventos_fii, operacoes_fii, operacoes_td, proventos_bh,  operacoes_bh, operacoes_lc),
-                            key=attrgetter('data'))
+    operacoes_cdb_rdb = OperacaoCDB_RDB.objects.exclude(data__isnull=True).order_by('data')  
     
-    # Se não houver operações, retornar vazio
+    lista_operacoes = sorted(chain(proventos_fii, operacoes_fii, operacoes_td, proventos_bh,  operacoes_bh, operacoes_lc, operacoes_cdb_rdb),
+                            key=attrgetter('data'))
+
+	# Se não houver operações, retornar vazio
     if not lista_operacoes:
         data_anterior = str(calendar.timegm((datetime.date.today() - datetime.timedelta(days=365)).timetuple()) * 1000)
         data_atual = str(calendar.timegm(datetime.date.today().timetuple()) * 1000)
@@ -111,6 +115,12 @@ def home(request):
         ultima_data_calculada_lc = operacoes_lc[0].data
     except:
         ultima_data_calculada_lc = datetime.date.today()
+    cdb_rdb = {}
+    # Caso haja CDB/RDB, preparar para o cálculo
+    try:
+        ultima_data_calculada_cdb_rdb = operacoes_lc[0].data
+    except:
+        ultima_data_calculada_cdb_rdb = datetime.date.today()
     total_proventos_fii = 0
     total_proventos_bh = 0
     
@@ -120,12 +130,13 @@ def home(request):
     estatisticas = list()
     
     ############# TESTE
-    total_acoes = datetime.timedelta(hours=0)
-    total_prov_acoes = datetime.timedelta(hours=0)
-    total_fii = datetime.timedelta(hours=0)
-    total_prov_fii = datetime.timedelta(hours=0)
-    total_td = datetime.timedelta(hours=0)
-    total_lc = datetime.timedelta(hours=0)
+#     total_acoes = datetime.timedelta(hours=0)
+#     total_prov_acoes = datetime.timedelta(hours=0)
+#     total_fii = datetime.timedelta(hours=0)
+#     total_prov_fii = datetime.timedelta(hours=0)
+#     total_td = datetime.timedelta(hours=0)
+#     total_lc = datetime.timedelta(hours=0)
+#     total_cdb_rdb = datetime.timedelta(hours=0)
     ############# TESTE
     
     for index, item in enumerate(lista_conjunta):    
@@ -208,6 +219,16 @@ def home(request):
                     del letras_credito[item.operacao_compra_relacionada().id]
                 else:
                     letras_credito[item.operacao_compra_relacionada().id].quantidade -= letras_credito[item.operacao_compra_relacionada().id].quantidade * item.quantidade / item.operacao_compra_relacionada().quantidade
+                    
+        elif isinstance(item, OperacaoCDB_RDB):
+            if item.tipo_operacao == 'C':
+                cdb_rdb[item.id] = item
+                
+            elif item.tipo_operacao == 'V':
+                if item.quantidade == item.operacao_compra_relacionada().qtd_disponivel_venda_na_data(item.data):
+                    del cdb_rdb[item.operacao_compra_relacionada().id]
+                else:
+                    cdb_rdb[item.operacao_compra_relacionada().id].quantidade -= cdb_rdb[item.operacao_compra_relacionada().id].quantidade * item.quantidade / item.operacao_compra_relacionada().quantidade
                 
         # Se não cair em nenhum dos anteriores: item vazio
         
@@ -322,6 +343,31 @@ def home(request):
 #             fim_lc = datetime.datetime.now()
 #             total_lc += fim_lc - inicio_lc
             
+            # CDB/RDB
+#             inicio_cdb_rdb = datetime.datetime.now()
+            patrimonio_cdb_rdb = 0
+            # Rodar calculo com as datas desde o último calculo, com 1 dia de atraso pois a atualização é a do dia anterior
+            dia_anterior = item.data - datetime.timedelta(days=1)
+            if item.data > ultima_data_calculada_cdb_rdb:
+                # Retira a data limite (item.data) do cálculo
+                taxas = HistoricoTaxaDI.objects.filter(data__range=[ultima_data_calculada_cdb_rdb, dia_anterior]).values('taxa').annotate(qtd_dias=Count('taxa'))
+                taxas_dos_dias = {}
+                for taxa in taxas:
+                    taxas_dos_dias[taxa['taxa']] = taxa['qtd_dias']
+                for operacao_id, operacao in cdb_rdb.items():
+                    if operacao.data < item.data:
+                        operacao.quantidade = calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao.quantidade, OperacaoCDB_RDB.objects.get(id=operacao_id).porcentagem())
+                        if item.data == datetime.date.today():
+                            str_auxiliar = str(operacao.quantidade.quantize(Decimal('.0001')))
+                            operacao.quantidade = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+                # Guardar ultima data de calculo
+                ultima_data_calculada_cdb_rdb = item.data
+            for investimento in cdb_rdb.values():
+                patrimonio_cdb_rdb += investimento.quantidade
+            patrimonio['CDB/RDB'] = patrimonio_cdb_rdb
+            patrimonio['patrimonio_total'] += patrimonio['CDB/RDB'] 
+#             fim_cdb_rdb = datetime.datetime.now()
+#             total_cdb_rdb += fim_cdb_rdb - inicio_cdb_rdb
             
             
 #             print 'Ações      ', total_acoes
@@ -330,6 +376,7 @@ def home(request):
 #             print 'FII        ', total_fii
 #             print 'Prov. FII  ', total_prov_fii
 #             print 'LC         ', total_lc
+#             print 'CDB/RDB:   ', total_cdb_rdb
             
             # Preparar estatísticas
             for data_estatistica in datas_estatisticas:
@@ -364,5 +411,6 @@ def home(request):
 #     print 'Prov. FII:    ', total_prov_fii 
 #     print 'TD:           ', total_td 
 #     print 'LC:           ', total_lc 
+#     print 'CDB/RDB:      ', total_cdb_rdb
     
     return render_to_response('home.html', {'graf_patrimonio': graf_patrimonio, 'patrimonio_anual': patrimonio_anual, 'estatisticas': estatisticas}, context_instance=RequestContext(request))
