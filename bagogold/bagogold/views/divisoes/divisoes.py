@@ -277,10 +277,10 @@ def listar_divisoes(request):
     return render_to_response('divisoes/listar_divisoes.html', {'divisoes': divisoes, 'operacoes_nao_alocadas': operacoes_nao_alocadas}, context_instance=RequestContext(request))
 
 def listar_transferencias(request):
-	investidor = request.user.investidor
-
+    investidor = request.user.investidor
+    
     transferencias = TransferenciaEntreDivisoes.objects.filter(Q(divisao_cedente__investidor=investidor) | Q(divisao_recebedora__investidor=investidor))
-     
+    
     for transferencia in transferencias:
         transferencia.investimento_origem = transferencia.investimento_origem_completo()
         transferencia.investimento_destino = transferencia.investimento_destino_completo()

@@ -41,6 +41,7 @@ class OperacaoCDB_RDB (models.Model):
     data = models.DateField(u'Data da operação')
     tipo_operacao = models.CharField(u'Tipo de operação', max_length=1)
     investimento = models.ForeignKey('CDB_RDB')
+    investidor = models.ForeignKey('Investidor')
     
     def __unicode__(self):
         return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.investimento, self.data)
