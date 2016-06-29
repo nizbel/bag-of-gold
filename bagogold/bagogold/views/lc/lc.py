@@ -5,13 +5,14 @@ from bagogold.bagogold.forms.lc import OperacaoLetraCreditoForm, \
     HistoricoPorcentagemLetraCreditoForm, LetraCreditoForm, \
     HistoricoCarenciaLetraCreditoForm
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoLC
-from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI, \
-    HistoricoPorcentagemLetraCredito, LetraCredito, HistoricoCarenciaLetraCredito, \
-    OperacaoVendaLetraCredito
+from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI, OperacaoVendaLetraCredito, \
+    HistoricoPorcentagemLetraCredito, LetraCredito, HistoricoCarenciaLetraCredito 
+    
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
@@ -22,10 +23,15 @@ import datetime
 
 @login_required
 def editar_operacao_lc(request, id):
+    investidor = request.user.investidor
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoLetraCredito, DivisaoOperacaoLC, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoLCFormSet)
     operacao_lc = OperacaoLetraCredito.objects.get(pk=id)
+    
+    # Verifica se a operação é do investidor, senão, jogar erro de permissão
+    if operacao_lc.investidor != investidor:
+        raise PermissionDenied
     
     if request.method == 'POST':
         if request.POST.get("save"):
