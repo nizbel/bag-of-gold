@@ -98,6 +98,7 @@
             </ul>
         </div>
     </div>
+    <div class="span4" id="graf_composicao" style="width:550px;height:550px"></div>
 </div>
 
 <script>
@@ -152,6 +153,25 @@ function mostrarComposicao(ano) {
     $('#tabelaComposicao').removeClass('hidden');
     $('#tabelaComposicao > div > ul > li[name!=composicao_' + ano + ']').addClass('hidden');
     $('#tabelaComposicao > div > ul > li[name=composicao_' + ano + ']').removeClass('hidden');
+    var composicao_data = [];
+    $('#tabelaComposicao > div > ul > li[name=composicao_' + ano + ']').each(function() {
+    	  label = $( this ).text().trim().split(':')[0];
+    	  value = parseFloat($( this ).text().trim().split(':')[1].replace('.', '').replace(',', '.').replace(/[^\d\.]/g, ''));
+    	  composicao_data.push({label: label, data: value});
+    });
+    $.plot('#graf_composicao',  composicao_data, {
+    	series: {
+            pie: {
+                show: true
+            }
+        },
+        grid: {
+            hoverable: true
+        },
+        legend: {
+            show: false
+        }
+    });
 }
 </script>
 {% endblock %}
