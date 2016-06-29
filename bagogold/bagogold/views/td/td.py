@@ -3,7 +3,7 @@ from bagogold.bagogold.forms.divisoes import DivisaoOperacaoTDFormSet
 from bagogold.bagogold.forms.td import OperacaoTituloForm
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD
 from bagogold.bagogold.models.fii import FII
-from bagogold.bagogold.models.lc import LetraCredito, HistoricoTaxaDI,\
+from bagogold.bagogold.models.lc import LetraCredito, HistoricoTaxaDI, \
     HistoricoPorcentagemLetraCredito
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
     ValorDiarioTitulo, Titulo
@@ -16,7 +16,8 @@ from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia_por_titulo, \
 from copy import deepcopy
 from decimal import Decimal
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
@@ -165,6 +166,9 @@ def editar_operacao_td(request, id):
     DivisaoFormSet = inlineformset_factory(OperacaoTitulo, DivisaoOperacaoTD, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoTDFormSet)
     operacao_td = OperacaoTitulo.objects.get(pk=id)
+    # Verifica se a operação é do investidor, senão, jogar erro de permissão
+    if operacao_td.investidor != investidor:
+        raise PermissionDenied
     
     if request.method == 'POST':
         if request.POST.get("save"):
