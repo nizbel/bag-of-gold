@@ -34,10 +34,12 @@ def aconselhamento_td(request):
     class Object():
         pass
     
+    investidor = request.user.investidor
+    
     titulos = {}
     titulos_vendidos = {}
     
-    for operacao in OperacaoTitulo.objects.filter().order_by('data'):
+    for operacao in OperacaoTitulo.objects.filter(investidor=investidor).order_by('data'):
         # Verificar se se trata de compra
         if operacao.tipo_operacao == 'C':
             if operacao.titulo.id not in titulos.keys():
@@ -157,6 +159,8 @@ def aconselhamento_td(request):
 
 @login_required
 def editar_operacao_td(request, id):
+    investidor = request.user.investidor
+    
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoTitulo, DivisaoOperacaoTD, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoTDFormSet)
@@ -165,7 +169,7 @@ def editar_operacao_td(request, id):
     if request.method == 'POST':
         if request.POST.get("save"):
             form_operacao_td = OperacaoTituloForm(request.POST, instance=operacao_td)
-            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_td)
+            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_td, investidor=investidor)
             
             if form_operacao_td.is_valid():
                 if formset_divisao.is_valid():
@@ -190,7 +194,7 @@ def editar_operacao_td(request, id):
 
     else:
         form_operacao_td = OperacaoTituloForm(instance=operacao_td)
-        formset_divisao = DivisaoFormSet(instance=operacao_td)
+        formset_divisao = DivisaoFormSet(instance=operacao_td, investidor=investidor)
             
     return render_to_response('td/editar_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao }, 
                               context_instance=RequestContext(request))   
@@ -198,7 +202,9 @@ def editar_operacao_td(request, id):
     
 @login_required
 def historico_td(request):
-    operacoes = OperacaoTitulo.objects.exclude(data__isnull=True).order_by('data')  
+    investidor = request.user.investidor
+    
+    operacoes = OperacaoTitulo.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
     for operacao in operacoes:
         operacao.valor_unitario = operacao.preco_unitario
     
@@ -283,7 +289,10 @@ def historico_td(request):
     dados['total_gasto'] = -total_gasto
     dados['patrimonio'] = patrimonio_atual
     dados['lucro'] = patrimonio_atual + total_gasto
-    dados['lucro_percentual'] = (patrimonio_atual + total_gasto) / -total_gasto * 100
+    if total_gasto == 0:
+        dados['lucro_percentual'] = 0
+    else:
+        dados['lucro_percentual'] = (patrimonio_atual + total_gasto) / -total_gasto * 100
     
     # Pegar valores correntes dos títulos no site do Tesouro
     
@@ -296,6 +305,8 @@ def historico_td(request):
     
 @login_required
 def inserir_operacao_td(request):
+    investidor = request.user.investidor
+    
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoTitulo, DivisaoOperacaoTD, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoTDFormSet)
@@ -304,6 +315,7 @@ def inserir_operacao_td(request):
         form_operacao_td = OperacaoTituloForm(request.POST)
         if form_operacao_td.is_valid():
             operacao_td = form_operacao_td.save(commit=False)
+            operacao_td.investidor = investidor
             formset_divisao = DivisaoFormSet(request.POST, instance=operacao_td)
             if formset_divisao.is_valid():
                 operacao_td.save()
@@ -317,7 +329,7 @@ def inserir_operacao_td(request):
         
     else:
         form_operacao_td = OperacaoTituloForm()
-        formset_divisao = DivisaoFormSet()
+        formset_divisao = DivisaoFormSet(investidor=investidor)
             
     return render_to_response('td/inserir_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao }, 
                                       context_instance=RequestContext(request))
@@ -328,13 +340,15 @@ def painel(request):
     class Object():
         pass
     
+    investidor = request.user.investidor
+    
     titulos = {}
     titulos_vendidos = {}
     
     total_atual = 0
     total_lucro = 0
     
-    for operacao in OperacaoTitulo.objects.filter().order_by('data'):
+    for operacao in OperacaoTitulo.objects.filter(investidor=investidor).order_by('data'):
         # Verificar se se trata de compra
         if operacao.tipo_operacao == 'C':
             if operacao.titulo.id not in titulos.keys():

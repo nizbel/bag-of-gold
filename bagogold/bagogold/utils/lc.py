@@ -26,13 +26,14 @@ def calcular_valor_atualizado_com_taxas(taxas_dos_dias, valor_atual, operacao_ta
     return taxa_acumulada * valor_atual
 
 
-def calcular_valor_lc_ate_dia(dia):
+def calcular_valor_lc_ate_dia(investidor, dia):
     """ 
     Calcula o valor das letras de crédito no dia determinado
-    Parâmetros: Data final
+    Parâmetros: Investidor
+                Data final
     Retorno: Valor de cada letra de crédito na data escolhida {id_letra: valor_na_data, }
     """
-    operacoes_queryset = OperacaoLetraCredito.objects.exclude(data__isnull=True).exclude(data__gte=dia).order_by('-tipo_operacao', 'data') 
+    operacoes_queryset = OperacaoLetraCredito.objects.filter(investidor=investidor).exclude(data__isnull=True).exclude(data__gte=dia).order_by('-tipo_operacao', 'data') 
     if len(operacoes_queryset) == 0:
         return {}
     operacoes = list(operacoes_queryset)

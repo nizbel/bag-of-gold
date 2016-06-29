@@ -99,6 +99,8 @@ def aconselhamento_fii(request):
     
 @login_required
 def editar_operacao_fii(request, id):
+    investidor = request.user.investidor
+    
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoFII, DivisaoOperacaoFII, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoFIIFormSet)
@@ -110,7 +112,7 @@ def editar_operacao_fii(request, id):
     if request.method == 'POST':
         if request.POST.get("save"):
             form_operacao_fii = OperacaoFIIForm(request.POST, instance=operacao_fii)
-            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_fii)
+            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_fii, investidor=investidor)
             if uso_proventos is not None:
                 form_uso_proventos = UsoProventosOperacaoFIIForm(request.POST, instance=uso_proventos)
             else:
@@ -149,7 +151,7 @@ def editar_operacao_fii(request, id):
             form_uso_proventos = UsoProventosOperacaoFIIForm(instance=uso_proventos)
         else:
             form_uso_proventos = UsoProventosOperacaoFIIForm()
-        formset_divisao = DivisaoFormSet(instance=operacao_fii)
+        formset_divisao = DivisaoFormSet(instance=operacao_fii, investidor=investidor)
             
     return render_to_response('fii/editar_operacao_fii.html', {'form_operacao_fii': form_operacao_fii, 'form_uso_proventos': form_uso_proventos,
                                                                'formset_divisao': formset_divisao}, context_instance=RequestContext(request))   
@@ -316,6 +318,7 @@ def inserir_operacao_fii(request):
         form_uso_proventos = UsoProventosOperacaoFIIForm(request.POST)
         if form_operacao_fii.is_valid():
             operacao_fii = form_operacao_fii.save(commit=False)
+            operacao_fii.investidor = investidor
             formset_divisao = DivisaoFormSet(request.POST, instance=operacao_fii)
             if form_uso_proventos.is_valid():
                 if formset_divisao.is_valid():
@@ -357,11 +360,16 @@ def painel(request):
     # Usado para criar objetos vazios
     class Object(object):
         pass
-    operacoes = OperacaoFII.objects.exclude(data__isnull=True).order_by('data')  
+    
+    investidor = request.user.investidor
+    
+    operacoes = OperacaoFII.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
     for operacao in operacoes:
         operacao.valor_unitario = operacao.preco_unitario
+        
+    operacoes_fiis = list(set(operacoes.values_list('fii', flat=True)))
     
-    proventos = ProventoFII.objects.exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).order_by('data_ex')  
+    proventos = ProventoFII.objects.filter(fii__in=operacoes_fiis).exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).order_by('data_ex')  
     for provento in proventos:
         provento.data = provento.data_ex
     
