@@ -32,8 +32,9 @@ import json
 
 @login_required
 def calcular_poupanca_proventos_na_data(request):
+    investidor = request.user.investidor
     data = datetime.datetime.strptime(request.GET['dataEscolhida'], '%d/%m/%Y').date()
-    poupanca_proventos = str(calcular_poupanca_proventos_ate_dia(data))
+    poupanca_proventos = str(calcular_poupanca_proventos_ate_dia(investidor, data))
     return HttpResponse(json.dumps(poupanca_proventos), content_type = "application/json") 
 
 @login_required
@@ -49,8 +50,8 @@ def editar_operacao_acao(request, id):
         uso_proventos = None
     if request.method == 'POST':
         if request.POST.get("save"):
-            form_operacao_acao = OperacaoAcaoForm(request.POST, instance=operacao_acao)
-            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_acao)
+            form_operacao_acao = OperacaoAcaoForm(request.POST, instance=operacao_acao, investidor=investidor)
+            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_acao, investidor=investidor)
             if uso_proventos is not None:
                 form_uso_proventos = UsoProventosOperacaoAcaoForm(request.POST, instance=uso_proventos)
             else:
@@ -81,12 +82,12 @@ def editar_operacao_acao(request, id):
         elif request.POST.get("delete"):
             if uso_proventos is not None:
                 uso_proventos.delete()
-            divisao_fii = DivisaoOperacaoAcao.objects.filter(operacao=operacao_fii)
-            for divisao in divisao_fii:
+            divisao_acao = DivisaoOperacaoAcao.objects.filter(operacao=operacao_acao)
+            for divisao in divisao_acao:
                 divisao.delete()
             operacao_acao.delete()
             messages.success(request, 'Operação apagada com sucesso')
-            return HttpResponseRedirect(reverse('historico_fii'))
+            return HttpResponseRedirect(reverse('historico_bh'))
 
     else:
         form_operacao_acao = OperacaoAcaoForm(instance=operacao_acao)
@@ -97,7 +98,7 @@ def editar_operacao_acao(request, id):
         formset_divisao = DivisaoFormSet(instance=operacao_acao, investidor=investidor)
         
         # Valor da poupança de proventos na data apontada
-        poupanca_proventos = calcular_poupanca_proventos_ate_dia(operacao_acao.data)
+        poupanca_proventos = calcular_poupanca_proventos_ate_dia(investidor, operacao_acao.data)
             
     return render_to_response('acoes/buyandhold/editar_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,
                                                                        'formset_divisao': formset_divisao, 'poupanca_proventos': poupanca_proventos }, context_instance=RequestContext(request))
@@ -312,23 +313,25 @@ def historico(request):
     ano_inicial = lista_conjunta[0].data.year
     mes_inicial = lista_conjunta[0].data.month
     
-    # Adicionar datas finais de cada ano
-    for ano in range(ano_inicial, datetime.date.today().year+1):
-        for mes_inicial in range(mes_inicial, 13):
-            # Verificar se há nova taxa de custodia vigente
-            taxa_custodia_atual = taxas_custodia.filter(Q(ano_vigencia__lt=ano) | Q(ano_vigencia=ano, mes_vigencia__lte=mes_inicial) ).order_by('-ano_vigencia', '-mes_vigencia')[0]
-            
-            data_custodia = Object()
-            data_custodia.data = datetime.date(ano, mes_inicial, 1)
-            data_custodia.valor = taxa_custodia_atual.valor_mensal
-            data_custodia.acao = operacoes[0].acao
-            datas_custodia.add(data_custodia)
-            
-            # Parar caso esteja no ano atual
-            if ano == datetime.date.today().year:
-                if mes_inicial == datetime.date.today().month:
-                    break
-        mes_inicial = 1
+    # Se houver registro de taxas de custódia, adicionar ao histórico
+    if taxas_custodia:
+        # Adicionar datas finais de cada ano
+        for ano in range(ano_inicial, datetime.date.today().year+1):
+            for mes_inicial in range(mes_inicial, 13):
+                # Verificar se há nova taxa de custodia vigente
+                taxa_custodia_atual = taxas_custodia.filter(Q(ano_vigencia__lt=ano) | Q(ano_vigencia=ano, mes_vigencia__lte=mes_inicial) ).order_by('-ano_vigencia', '-mes_vigencia')[0]
+                
+                data_custodia = Object()
+                data_custodia.data = datetime.date(ano, mes_inicial, 1)
+                data_custodia.valor = taxa_custodia_atual.valor_mensal
+                data_custodia.acao = operacoes[0].acao
+                datas_custodia.add(data_custodia)
+                
+                # Parar caso esteja no ano atual
+                if ano == datetime.date.today().year:
+                    if mes_inicial == datetime.date.today().month:
+                        break
+            mes_inicial = 1
         
     lista_conjunta = sorted(chain(lista_conjunta, datas_custodia),
                             key=attrgetter('data'))
@@ -356,17 +359,17 @@ def historico(request):
     if not request.is_ajax():
         # Preparar gráfico de proventos em dinheiro por mês
 #         graf_proventos_mes = calcular_provento_por_mes(proventos.exclude(data_ex__gt=datetime.date.today()).exclude(tipo_provento='A'), operacoes)
-        proventos_mes = calcular_provento_por_mes(proventos.exclude(data_ex__gt=datetime.date.today()).exclude(tipo_provento='A'), operacoes)
+        proventos_mes = calcular_provento_por_mes(investidor, proventos.exclude(data_ex__gt=datetime.date.today()).exclude(tipo_provento='A'), operacoes)
         for x in proventos_mes:
             graf_proventos_mes += [[x[0], x[1] + x[2]]]
             graf_dividendos_mensal += [[x[0], x[1]]]
             graf_jscp_mensal += [[x[0], x[2]]]
         
-        graf_media_proventos_6_meses = calcular_media_proventos_6_meses(proventos.exclude(data_ex__gt=datetime.date.today()).exclude(tipo_provento='A'), operacoes)
+        graf_media_proventos_6_meses = calcular_media_proventos_6_meses(investidor, proventos.exclude(data_ex__gt=datetime.date.today()).exclude(tipo_provento='A'), operacoes)
         
         # Preparar gráfico de utilização de proventos por mês
-        graf_gasto_op_sem_prov_mes = calcular_operacoes_sem_proventos_por_mes(operacoes.filter(tipo_operacao='C'))
-        graf_uso_proventos_mes = calcular_uso_proventos_por_mes()
+        graf_gasto_op_sem_prov_mes = calcular_operacoes_sem_proventos_por_mes(investidor, operacoes.filter(tipo_operacao='C'))
+        graf_uso_proventos_mes = calcular_uso_proventos_por_mes(investidor)
         
         # Calculos de patrimonio e gasto total
         for item_lista in lista_conjunta:      
@@ -554,7 +557,8 @@ def inserir_operacao_acao(request):
         form_uso_proventos = UsoProventosOperacaoAcaoForm(request.POST)
         if form_operacao_acao.is_valid():
             operacao_acao = form_operacao_acao.save(commit=False)
-            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_acao)
+            operacao_acao.investidor = investidor
+            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_acao, investidor=investidor)
             operacao_acao.destinacao = 'B'
             if form_uso_proventos.is_valid():
                 if formset_divisao.is_valid():
