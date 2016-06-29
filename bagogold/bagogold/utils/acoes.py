@@ -276,11 +276,10 @@ def quantidade_acoes_ate_dia(investidor, ticker, dia, considerar_trade=False):
                 qtd_acoes += int(item.provento.valor_unitario * quantidade_acoes_ate_dia(item.provento.acao.ticker, item.data) / 100)
     return qtd_acoes
 
-def calcular_qtd_acoes_ate_dia_por_divisao(investidor, dia, divisao_id):
+def calcular_qtd_acoes_ate_dia_por_divisao(dia, divisao_id):
     """ 
     Calcula a quantidade de ações até dia determinado por divisão
-    Parâmetros: Investidor
-                Dia final
+    Parâmetros: Dia final
                 ID da divisão
     Retorno: Quantidade de ações {ticker: qtd}
     """

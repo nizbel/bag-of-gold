@@ -187,10 +187,14 @@ def editar_transferencia(request, id):
                               context_instance=RequestContext(request))
 
 def inserir_divisao(request):
+    investidor = request.user.investidor
+    
     if request.method == 'POST':
         form = DivisaoForm(request.POST)
         if form.is_valid():
-            form.save()
+            divisao = form.save(commit=False)
+            divisao.investidor = investidor
+            divisao.save()
             return HttpResponseRedirect(reverse('listar_divisoes'))
     else:
         form = DivisaoForm()
@@ -211,7 +215,9 @@ def inserir_transferencia(request):
 
 
 def listar_divisoes(request):
-    divisoes = Divisao.objects.filter()
+    investidor = request.user.investidor
+    
+    divisoes = Divisao.objects.filter(investidor=investidor)
     
     for divisao in divisoes:
         divisao.valor_atual = 0
