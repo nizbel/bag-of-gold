@@ -57,13 +57,13 @@ def preencher_operacoes_div_principal(operacao):
     else:
         print 'Operação %s totalmente alocada' % (operacao)
         
-def verificar_operacoes_nao_alocadas():
+def verificar_operacoes_nao_alocadas(investidor):
     """
     Procura operações que não tenham sido totalmente alocadas em divisões
     """
     operacoes_nao_alocadas = []
     # Ações
-    for operacao in OperacaoAcao.objects.filter():
+    for operacao in OperacaoAcao.objects.filter(investidor=investidor):
         divisoes_operacao = DivisaoOperacaoAcao.objects.filter(operacao=operacao)
         quantidade_alocada = 0
         for divisao in divisoes_operacao:
@@ -78,7 +78,7 @@ def verificar_operacoes_nao_alocadas():
             operacoes_nao_alocadas.append(operacao)
     
     # FII
-    for operacao in OperacaoFII.objects.filter():
+    for operacao in OperacaoFII.objects.filter(investidor=investidor):
         divisoes_operacao = DivisaoOperacaoFII.objects.filter(operacao=operacao)
         quantidade_alocada = 0
         for divisao in divisoes_operacao:
@@ -89,7 +89,7 @@ def verificar_operacoes_nao_alocadas():
             operacoes_nao_alocadas.append(operacao)
     
     # LC
-    for operacao in OperacaoLetraCredito.objects.filter():
+    for operacao in OperacaoLetraCredito.objects.filter(investidor=investidor):
         divisoes_operacao = DivisaoOperacaoLC.objects.filter(operacao=operacao)
         quantidade_alocada = 0
         for divisao in divisoes_operacao:
@@ -100,7 +100,7 @@ def verificar_operacoes_nao_alocadas():
             operacoes_nao_alocadas.append(operacao)
     
     # TD
-    for operacao in OperacaoTitulo.objects.filter():
+    for operacao in OperacaoTitulo.objects.filter(investidor=investidor):
         divisoes_operacao = DivisaoOperacaoTD.objects.filter(operacao=operacao)
         quantidade_alocada = 0
         for divisao in divisoes_operacao:
