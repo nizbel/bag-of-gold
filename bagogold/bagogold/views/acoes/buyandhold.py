@@ -13,9 +13,11 @@ from bagogold.bagogold.utils.acoes import calcular_provento_por_mes, \
     calcular_uso_proventos_por_mes, quantidade_acoes_ate_dia, \
     calcular_poupanca_proventos_ate_dia
 from bagogold.bagogold.utils.divisoes import calcular_saldo_geral_acoes_bh
+from bagogold.bagogold.utils.investidores import is_superuser
 from decimal import Decimal
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.db.models.functions import Concat
@@ -25,7 +27,6 @@ from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from itertools import chain
 from operator import attrgetter
-from yahoo_finance import Share
 import calendar
 import datetime
 import json
@@ -44,6 +45,10 @@ def editar_operacao_acao(request, id):
     DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoAcaoFormSet)
     operacao_acao = OperacaoAcao.objects.get(pk=id)
+    
+    # Verifica se a operação é do investidor, senão, jogar erro de permissão
+    if operacao_acao.investidor != investidor:
+        raise PermissionDenied
     try:
         uso_proventos = UsoProventosOperacaoAcao.objects.get(operacao=operacao_acao)
     except UsoProventosOperacaoAcao.DoesNotExist:
@@ -104,6 +109,7 @@ def editar_operacao_acao(request, id):
                                                                        'formset_divisao': formset_divisao, 'poupanca_proventos': poupanca_proventos }, context_instance=RequestContext(request))
 
 @login_required
+@user_passes_test(is_superuser)
 def editar_provento_acao(request, id):
     provento = Provento.objects.get(pk=id)
     if request.method == 'POST':
@@ -123,6 +129,7 @@ def editar_provento_acao(request, id):
 
 @login_required
 def estatisticas_acao(request, ticker=None):
+    investidor = request.user.investidor
     if (ticker):
         acao = Acao.objects.get(ticker=ticker)
     else:
@@ -130,7 +137,7 @@ def estatisticas_acao(request, ticker=None):
     
     # Buscar historicos
     historico = HistoricoAcao.objects.filter(acao__ticker=ticker).order_by('data')
-    operacoes = OperacaoAcao.objects.filter(destinacao='B', acao__ticker=ticker).exclude(data__isnull=True).order_by('data')
+    operacoes = OperacaoAcao.objects.filter(destinacao='B', acao__ticker=ticker, investidor=investidor).exclude(data__isnull=True).order_by('data')
     # Pega os proventos em ações recebidos por outras ações
     proventos_em_acoes = AcaoProvento.objects.filter(acao_recebida__ticker=ticker).exclude(provento__acao__ticker=ticker).order_by('provento__data_ex')
     
@@ -583,6 +590,7 @@ def inserir_operacao_acao(request):
                                                                        'formset_divisao': formset_divisao }, context_instance=RequestContext(request))
     
 @login_required
+@user_passes_test(is_superuser)
 def inserir_provento_acao(request):
     if request.method == 'POST':
         form = ProventoAcaoForm(request.POST)
@@ -597,10 +605,14 @@ def inserir_provento_acao(request):
     
 @login_required
 def inserir_taxa_custodia_acao(request):
+    investidor = request.user.investidor
+    
     if request.method == 'POST':
         form = TaxaCustodiaAcaoForm(request.POST)
         if form.is_valid():
-            taxa_custodia = form.save()
+            taxa_custodia = form.save(commit=False)
+            taxa_custodia.investidor = investidor
+            taxa_custodia.save()
             return HttpResponseRedirect(reverse('ver_taxas_custodia_acao'))
     else:
         form = TaxaCustodiaAcaoForm()

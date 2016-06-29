@@ -5,9 +5,11 @@ from bagogold.bagogold.forms.fii import OperacaoFIIForm, ProventoFIIForm, \
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII
 from bagogold.bagogold.models.fii import OperacaoFII, ProventoFII, HistoricoFII, \
     FII, UsoProventosOperacaoFII, ValorDiarioFII
+from bagogold.bagogold.utils.investidores import is_superuser
 from decimal import Decimal, ROUND_FLOOR
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
@@ -23,6 +25,7 @@ import math
 
 
 @login_required
+@user_passes_test(is_superuser)
 def acompanhamento_mensal_fii(request):
     investidor = request.user.investidor
     operacoes = OperacaoFII.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
@@ -105,6 +108,11 @@ def editar_operacao_fii(request, id):
     DivisaoFormSet = inlineformset_factory(OperacaoFII, DivisaoOperacaoFII, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoFIIFormSet)
     operacao_fii = OperacaoFII.objects.get(pk=id)
+    
+    # Verificar se a operação é do investidor logado
+    if operacao_fii.investidor != investidor:
+        raise PermissionDenied
+    
     try:
         uso_proventos = UsoProventosOperacaoFII.objects.get(operacao=operacao_fii)
     except UsoProventosOperacaoFII.DoesNotExist:
@@ -158,6 +166,7 @@ def editar_operacao_fii(request, id):
 
 
 @login_required
+@user_passes_test(is_superuser)
 def editar_provento_fii(request, id):
     operacao = ProventoFII.objects.get(pk=id)
     if request.method == 'POST':
@@ -344,6 +353,7 @@ def inserir_operacao_fii(request):
 
 
 @login_required
+@user_passes_test(is_superuser)
 def inserir_provento_fii(request):
     if request.method == 'POST':
         form = ProventoFIIForm(request.POST)
