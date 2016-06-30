@@ -39,7 +39,7 @@ class OperacaoLetraCredito (models.Model):
     
     def carencia(self):
         try:
-            return HistoricoCarenciaLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito)[0].carencia
+            return HistoricoCarenciaLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito).order_by('-data')[0].carencia
         except:
             return HistoricoCarenciaLetraCredito.objects.get(data__isnull=True, letra_credito=self.letra_credito).carencia
     

@@ -272,7 +272,7 @@ def listar_divisoes(request):
         divisao.saldo = divisao.saldo_bh + divisao.saldo_lc + divisao.saldo_fii + divisao.saldo_trade + divisao.saldo_td + divisao.saldo_nao_alocado
         
     # Preparar parte de operações não alocadas
-    operacoes_nao_alocadas = verificar_operacoes_nao_alocadas()
+    operacoes_nao_alocadas = verificar_operacoes_nao_alocadas(investidor=investidor)
     
     return render_to_response('divisoes/listar_divisoes.html', {'divisoes': divisoes, 'operacoes_nao_alocadas': operacoes_nao_alocadas}, context_instance=RequestContext(request))
 
@@ -280,5 +280,9 @@ def listar_transferencias(request):
     investidor = request.user.investidor
     
     transferencias = TransferenciaEntreDivisoes.objects.filter(Q(divisao_cedente__investidor=investidor) | Q(divisao_recebedora__investidor=investidor))
+    
+    for transferencia in transferencias:
+        transferencia.investimento_origem = transferencia.investimento_origem_completo()
+        transferencia.investimento_destino = transferencia.investimento_destino_completo()
     
     return render_to_response('divisoes/listar_transferencias.html', {'transferencias': transferencias}, context_instance=RequestContext(request))
