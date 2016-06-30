@@ -15,8 +15,14 @@
     <tbody>
     {% for transferencia in transferencias %}
     <tr>
-        <td>{{transferencia.divisao_cedente}} ({{transferencia.investimento_origem}})</td>
-        <td>{{transferencia.divisao_recebedora}} ({{transferencia.investimento_destino}})</td>
+        <td>{% if transferencia.divisao_cedente %}{{transferencia.divisao_cedente}} ({{transferencia.investimento_origem}})
+            {% else %}Fonte externa
+            {% endif %}
+        </td>
+        <td>{% if transferencia.divisao_recebedora %}{{transferencia.divisao_recebedora}} ({{transferencia.investimento_destino}})
+            {% else %}Fonte externa
+            {% endif %}
+        </td>
         <td>{{transferencia.data}}</td>
         <td>R${{transferencia.quantidade}}</td>
     </tr>

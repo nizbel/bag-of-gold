@@ -8,3 +8,4 @@ syntax: glob
 README.md
 *.pyc
 *.orig
+COTAHIST_A.tar.gz

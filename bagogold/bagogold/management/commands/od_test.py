@@ -11,7 +11,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         print 'Descomente por sua conta e risco'
-#         for operacao in OperacaoAcao.objects.filter(destinacao='B'):
+#         for operacao in OperacaoAcao.objects.filter(destinacao='T'):
 #             preencher_operacoes_div_principal(operacao)
 #         for operacao in OperacaoFII.objects.all():
 #             preencher_operacoes_div_principal(operacao)
