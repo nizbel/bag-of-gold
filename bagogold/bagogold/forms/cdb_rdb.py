@@ -41,6 +41,7 @@ class OperacaoCDB_RDBForm(forms.ModelForm):
         super(OperacaoCDB_RDBForm, self).__init__(*args, **kwargs)
         # there's a `fields` property now
         self.fields['investimento'].required = False
+        self.fields['investimento'].queryset = CDB_RDB.objects.filter(investidor=self.investidor)
 #         if self.instance.pk is not None:
 #             # Verificar se é uma compra
 #             if self.instance.tipo_operacao == 'V':
