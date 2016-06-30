@@ -179,6 +179,7 @@ def historico(request):
 
 @login_required
 def inserir_lc(request):
+    investidor = request.user.investidor
     # Preparar formsets 
     PorcentagemFormSet = inlineformset_factory(LetraCredito, HistoricoPorcentagemLetraCredito, fields=('porcentagem_di',),
                                             extra=1, can_delete=False, max_num=1, validate_max=True)
@@ -190,6 +191,7 @@ def inserir_lc(request):
             form_lc = LetraCreditoForm(request.POST)
             if form_lc.is_valid():
                 lc = form_lc.save(commit=False)
+                lc.investidor = investidor
                 formset_porcentagem = PorcentagemFormSet(request.POST, instance=lc)
                 formset_porcentagem.forms[0].empty_permitted=False
                 formset_carencia = CarenciaFormSet(request.POST, instance=lc)

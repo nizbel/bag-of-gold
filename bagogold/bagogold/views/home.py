@@ -75,33 +75,39 @@ def home(request):
     # Dia anterior
     data_dia_anterior = Object()
     data_dia_anterior.data = datetime.date.today() + datetime.timedelta(days=-1)
-    data_dia_anterior.descricao = "1 dia"
-    datas_estatisticas.add(data_dia_anterior)
+    if data_dia_anterior.data >= lista_operacoes[0].data:
+        data_dia_anterior.descricao = "1 dia"
+        datas_estatisticas.add(data_dia_anterior)
     # 1 semana
     data_1_semana = Object()
     data_1_semana.data = datetime.date.today() + datetime.timedelta(days=-7)
-    data_1_semana.descricao = "7 dias"
-    datas_estatisticas.add(data_1_semana)
+    if data_1_semana.data >= lista_operacoes[0].data:
+        data_1_semana.descricao = "7 dias"
+        datas_estatisticas.add(data_1_semana)
     # 30 dias
     data_30_dias = Object()
     data_30_dias.data = datetime.date.today() + datetime.timedelta(days=-30)
-    data_30_dias.descricao = "30 dias"
-    datas_estatisticas.add(data_30_dias)
+    if data_30_dias.data >= lista_operacoes[0].data:
+        data_30_dias.descricao = "30 dias"
+        datas_estatisticas.add(data_30_dias)
     # 3 meses
     data_3_meses = Object()
     data_3_meses.data = datetime.date.today() + datetime.timedelta(days=-90)
-    data_3_meses.descricao = "3 meses"
-    datas_estatisticas.add(data_3_meses)
+    if data_3_meses.data >= lista_operacoes[0].data:
+        data_3_meses.descricao = "3 meses"
+        datas_estatisticas.add(data_3_meses)
     # 1 semestre
     data_1_semestre = Object()
     data_1_semestre.data = datetime.date.today() + datetime.timedelta(days=-180)
-    data_1_semestre.descricao = "1 semestre"
-    datas_estatisticas.add(data_1_semestre)
+    if data_1_semestre.data >= lista_operacoes[0].data:
+        data_1_semestre.descricao = "1 semestre"
+        datas_estatisticas.add(data_1_semestre)
     # 1 ano
     data_1_ano = Object()
     data_1_ano.data = datetime.date.today() + datetime.timedelta(days=-365)
-    data_1_ano.descricao = "1 ano"
-    datas_estatisticas.add(data_1_ano)
+    if data_1_ano.data >= lista_operacoes[0].data:
+        data_1_ano.descricao = "1 ano"
+        datas_estatisticas.add(data_1_ano)
     
     lista_conjunta = sorted(chain(lista_operacoes, datas_finais_ano, datas_estatisticas),
                             key=attrgetter('data'))

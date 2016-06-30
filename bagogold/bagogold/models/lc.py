@@ -4,7 +4,8 @@ from django.db import models
 import datetime
 
 class LetraCredito (models.Model):
-    nome = models.CharField(u'Nome', max_length=50)    
+    nome = models.CharField(u'Nome', max_length=50)  
+    investidor = models.ForeignKey('Investidor')
     
     def __unicode__(self):
         return self.nome
