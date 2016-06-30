@@ -34,6 +34,7 @@ class OperacaoLetraCreditoForm(forms.ModelForm):
         super(OperacaoLetraCreditoForm, self).__init__(*args, **kwargs)
         # there's a `fields` property now
         self.fields['letra_credito'].required = False
+        self.fields['letra_credito'].queryset = LetraCredito.objects.filter(investidor=self.investidor)
 #         if self.instance.pk is not None:
 #             # Verificar se é uma compra
 #             if self.instance.tipo_operacao == 'V':

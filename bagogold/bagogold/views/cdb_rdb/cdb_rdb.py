@@ -170,34 +170,37 @@ def historico(request):
 
 @login_required
 def inserir_cdb_rdb(request):
+    investidor = request.user.investidor
     # Preparar formsets 
-    PorcentagemFormSet = inlineformset_factory(CDB_RDB, HistoricoPorcentagemCDB_RDB, fields=('porcentagem_di',),
+    PorcentagemFormSet = inlineformset_factory(CDB_RDB, HistoricoPorcentagemCDB_RDB, fields=('porcentagem',),
                                             extra=1, can_delete=False, max_num=1, validate_max=True)
     CarenciaFormSet = inlineformset_factory(CDB_RDB, HistoricoCarenciaCDB_RDB, fields=('carencia',),
                                             extra=1, can_delete=False, max_num=1, validate_max=True)
     
     if request.method == 'POST':
         if request.POST.get("save"):
-            form_lc = CDB_RDBForm(request.POST)
-            if form_lc.is_valid():
-                lc = form_lc.save(commit=False)
-                formset_porcentagem = PorcentagemFormSet(request.POST, instance=lc)
+            form_cdb_rdb = CDB_RDBForm(request.POST)
+            if form_cdb_rdb.is_valid():
+                cdb_rdb = form_cdb_rdb.save(commit=False)
+                cdb_rdb.investidor = request.user.investidor
+                formset_porcentagem = PorcentagemFormSet(request.POST, instance=cdb_rdb)
                 formset_porcentagem.forms[0].empty_permitted=False
-                formset_carencia = CarenciaFormSet(request.POST, instance=lc)
+                formset_carencia = CarenciaFormSet(request.POST, instance=cdb_rdb)
                 formset_carencia.forms[0].empty_permitted=False
                 
                 if formset_porcentagem.is_valid():
                     if formset_carencia.is_valid():
                         try:
-                            lc.save()
+                            cdb_rdb.save()
                             formset_porcentagem.save()
                             formset_carencia.save()
                         # Capturar erros oriundos da hora de salvar os objetos
                         except Exception as erro:
                             messages.error(request, erro.message)
-                            return render_to_response('lc/inserir_lc.html', {'form_lc': form_lc, 'formset_porcentagem': formset_porcentagem,
-                                                                         'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
-                        return HttpResponseRedirect(reverse('listar_lc'))
+                            return render_to_response('cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'formset_porcentagem': formset_porcentagem,
+                                                              'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
+                            
+                        return HttpResponseRedirect(reverse('listar_cdb_rdb'))
             for erros in form_lc.errors.values():
                 for erro in erros:
                     messages.error(request, erro)
@@ -205,13 +208,13 @@ def inserir_cdb_rdb(request):
                 messages.error(request, erro)
             for erro in formset_carencia.non_form_errors():
                 messages.error(request, erro)
-            return render_to_response('lc/inserir_lc.html', {'form_lc': form_lc, 'formset_porcentagem': formset_porcentagem,
-                                                                      'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
+            return render_to_response('cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'formset_porcentagem': formset_porcentagem,
+                                                              'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
     else:
-        form_lc = CDB_RDBForm()
+        form_cdb_rdb = CDB_RDBForm()
         formset_porcentagem = PorcentagemFormSet()
         formset_carencia = CarenciaFormSet()
-    return render_to_response('lc/inserir_lc.html', {'form_lc': form_lc, 'formset_porcentagem': formset_porcentagem,
+    return render_to_response('cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'formset_porcentagem': formset_porcentagem,
                                                               'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
 
 @login_required
