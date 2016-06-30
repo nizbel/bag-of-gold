@@ -37,6 +37,7 @@ class OperacaoCDB_RDBForm(forms.ModelForm):
         js = ('js/bagogold/cdb_rdb.js',)
         
     def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
         # first call parent's constructor
         super(OperacaoCDB_RDBForm, self).__init__(*args, **kwargs)
         # there's a `fields` property now

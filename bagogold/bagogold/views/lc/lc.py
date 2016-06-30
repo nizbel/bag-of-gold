@@ -235,8 +235,8 @@ def inserir_operacao_lc(request):
     
     if request.method == 'POST':
         if request.POST.get("save"):
-            form_operacao_lc = OperacaoLetraCreditoForm(request.POST)
-            formset_divisao = DivisaoFormSet(request.POST)
+            form_operacao_lc = OperacaoLetraCreditoForm(request.POST, investidor=investidor)
+            formset_divisao = DivisaoFormSet(request.POST, investidor=investidor)
             
             if form_operacao_lc.is_valid():
                 operacao_lc = form_operacao_lc.save(commit=False)
@@ -288,7 +288,7 @@ def inserir_operacao_lc(request):
 #                         print '%s %s'  % (divisao_lc.quantidade, divisao_lc.divisao)
                 
     else:
-        form_operacao_lc = OperacaoLetraCreditoForm()
+        form_operacao_lc = OperacaoLetraCreditoForm(investidor=investidor)
         formset_divisao = DivisaoFormSet(investidor=investidor)
     return render_to_response('lc/inserir_operacao_lc.html', {'form_operacao_lc': form_operacao_lc, 'formset_divisao': formset_divisao},
                               context_instance=RequestContext(request))

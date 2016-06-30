@@ -225,7 +225,7 @@ def inserir_operacao_cdb_rdb(request):
                                             extra=1, formset=DivisaoOperacaoCDB_RDBFormSet)
     
     if request.method == 'POST':
-        form_operacao_cdb_rdb = OperacaoCDB_RDBForm(request.POST)
+        form_operacao_cdb_rdb = OperacaoCDB_RDBForm(request.POST, investidor=investidor)
         formset_divisao_cdb_rdb = DivisaoCDB_RDBFormSet(request.POST, investidor=investidor)
         
         # Validar CDB
@@ -278,7 +278,7 @@ def inserir_operacao_cdb_rdb(request):
 #                         print '%s %s'  % (divisao_cdb_rdb.quantidade, divisao_cdb_rdb.divisao)
                 
     else:
-        form_operacao_cdb_rdb = OperacaoCDB_RDBForm()
+        form_operacao_cdb_rdb = OperacaoCDB_RDBForm(investidor=investidor)
         formset_divisao_cdb_rdb = DivisaoCDB_RDBFormSet(investidor=investidor)
     return render_to_response('cdb_rdb/inserir_operacao_cdb_rdb.html', {'form_operacao_cdb_rdb': form_operacao_cdb_rdb, 'formset_divisao_cdb_rdb': formset_divisao_cdb_rdb}, context_instance=RequestContext(request))
 

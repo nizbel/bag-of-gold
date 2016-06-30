@@ -30,6 +30,7 @@ class OperacaoLetraCreditoForm(forms.ModelForm):
         js = ('js/bagogold/lc.js',)
         
     def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
         # first call parent's constructor
         super(OperacaoLetraCreditoForm, self).__init__(*args, **kwargs)
         # there's a `fields` property now

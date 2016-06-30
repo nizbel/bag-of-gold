@@ -126,7 +126,7 @@ def aconselhamento_td(request):
     # Data de 12 meses atrás
     data_12_meses = datetime.date.today() - datetime.timedelta(days=365)
     
-    letras_credito = list(LetraCredito.objects.all())
+    letras_credito = list(LetraCredito.objects.filter(investidor=investidor))
     # Comparativo com letras de crédito
     for lc in letras_credito:
         lc.rendimento_atual =  lc.porcentagem_di_atual() * HistoricoTaxaDI.objects.filter(data__isnull=False).order_by('-data')[0].taxa / 100
