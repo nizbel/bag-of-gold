@@ -5,6 +5,7 @@ import datetime
 
 class CDB_RDB (models.Model):
     nome = models.CharField(u'Nome', max_length=50)
+    investidor = models.ForeignKey('Investidor')
     """
     Tipo de investimento, C = CDB, R = RDB
     """
