@@ -328,7 +328,7 @@ def inserir_operacao_fii(request):
         if form_operacao_fii.is_valid():
             operacao_fii = form_operacao_fii.save(commit=False)
             operacao_fii.investidor = investidor
-            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_fii)
+            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_fii, investidor=investidor)
             if form_uso_proventos.is_valid():
                 if formset_divisao.is_valid():
                     operacao_fii.save()

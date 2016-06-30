@@ -320,7 +320,7 @@ def inserir_operacao_td(request):
         if form_operacao_td.is_valid():
             operacao_td = form_operacao_td.save(commit=False)
             operacao_td.investidor = investidor
-            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_td)
+            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_td, investidor=investidor)
             if formset_divisao.is_valid():
                 operacao_td.save()
                 formset_divisao.save()
