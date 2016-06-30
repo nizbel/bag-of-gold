@@ -3,7 +3,7 @@
 {% block content %}
 <div class="row-fluid">
 
-        <div class="span4" id="graf_patrimonio" style="width:1200px;height:400px"></div>
+        <div class="span4" id="graf_patrimonio" style="width:100%;height:400px"></div>
 
 </div>
 
@@ -107,7 +107,9 @@
                 </ul>
             </div>
         </div>
-        <div class="span4" id="graf_composicao" style="width:550px;height:550px"></div>
+    </div>
+    <div class="span4">
+        <div class="span4" id="graf_composicao" style="width:100%;height:550px"></div>
     </div>
 </div>
 
@@ -157,6 +159,14 @@ function showTooltip(x, y, contents) {
     });
 
 });
+
+
+function labelFormatter(label, series) {
+	console.log(series);
+    return "<div style='font-size:10pt; text-align:center; padding:2px; color:" + series.color + ";'>" + label + "<br/>" + 
+    (Math.round(series.percent * 100) / 100) + "%</div>";
+}
+
 //Mostrar composição do ano
 function mostrarComposicao(ano) {
 	document.getElementById("titulo_composicao").innerHTML = "Composição (" + ano + ")";
@@ -166,13 +176,19 @@ function mostrarComposicao(ano) {
     var composicao_data = [];
     $('#tabelaComposicao > div > ul > li[name=composicao_' + ano + ']').each(function() {
     	  label = $( this ).text().trim().split(':')[0];
-    	  value = parseFloat($( this ).text().trim().split(':')[1].replace('.', '').replace(',', '.').replace(/[^\d\.]/g, ''));
-    	  composicao_data.push({label: label, data: value});
+    	  value = parseFloat($( this ).text().trim().split(':')[1].replace('.', '').replace(',', '.').replace(/[^\-\d\.]/g, ''));
+    	  if (value > 0) {
+    		    composicao_data.push({label: label, data: value});
+    	  }
     });
     $.plot('#graf_composicao',  composicao_data, {
     	series: {
             pie: {
-                show: true
+                show: true,
+                radius: 0.85,
+                label: {
+                    formatter: labelFormatter
+                }
             }
         },
         grid: {
@@ -183,5 +199,6 @@ function mostrarComposicao(ano) {
         }
     });
 }
+
 </script>
 {% endblock %}
