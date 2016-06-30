@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
+import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
@@ -12,6 +13,52 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.CreateModel(
+            name='HistoricoCorretagemPadrao',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('data_vigencia', models.DateField(blank=True, null=True, verbose_name='In\xedcio da vig\xeancia')),
+                ('corretagem_padrao', models.DecimalField(blank=True, decimal_places=2, max_digits=5, null=True, verbose_name='Corretagem padr\xe3o')),
+                ('tipo_corretagem', models.CharField(blank=True, max_length=1, null=True, verbose_name='Tipo de corretagem')),
+                ('investidor', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='bagogold.Investidor')),
+            ],
+        ),
+        migrations.AddField(
+            model_name='divisao',
+            name='investidor',
+            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, to='bagogold.Investidor'),
+            preserve_default=False,
+        ),
+        migrations.AddField(
+            model_name='operacaoacao',
+            name='investidor',
+            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, to='bagogold.Investidor'),
+            preserve_default=False,
+        ),
+        migrations.AddField(
+            model_name='operacaofii',
+            name='investidor',
+            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, to='bagogold.Investidor'),
+            preserve_default=False,
+        ),
+        migrations.AddField(
+            model_name='operacaoletracredito',
+            name='investidor',
+            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, to='bagogold.Investidor'),
+            preserve_default=False,
+        ),
+        migrations.AddField(
+            model_name='operacaotitulo',
+            name='investidor',
+            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, to='bagogold.Investidor'),
+            preserve_default=False,
+        ),
+        migrations.AddField(
+            model_name='taxacustodiaacao',
+            name='investidor',
+            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, to='bagogold.Investidor'),
+            preserve_default=False,
+        ),
         migrations.RemoveField(
             model_name='cdb',
             name='tipo',
