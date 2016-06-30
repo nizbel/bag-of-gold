@@ -116,7 +116,11 @@ class DivisaoOperacaoLCFormSet(forms.models.BaseInlineFormSet):
 class DivisaoOperacaoCDB_RDBFormSet(forms.models.BaseInlineFormSet):
     def __init__(self, *args, **kwargs):
         self.operacao_compra = kwargs.pop('operacao_compra', None)
+        self.investidor = kwargs.pop('investidor')
         super(DivisaoOperacaoCDB_RDBFormSet, self).__init__(*args, **kwargs)
+        
+        for form in self.forms:
+            form.fields['divisao'].queryset = Divisao.objects.filter(investidor=self.investidor)
     
     def clean(self):
         qtd_total_div = 0

@@ -216,20 +216,22 @@ def inserir_cdb_rdb(request):
 
 @login_required
 def inserir_operacao_cdb_rdb(request):
+    investidor = request.user.investidor
     # Preparar formset para divisoes
     DivisaoCDB_RDBFormSet = inlineformset_factory(OperacaoCDB_RDB, DivisaoOperacaoCDB_RDB, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoCDB_RDBFormSet)
     
     if request.method == 'POST':
         form_operacao_cdb_rdb = OperacaoCDB_RDBForm(request.POST)
-        formset_divisao_cdb_rdb = DivisaoCDB_RDBFormSet(request.POST)
+        formset_divisao_cdb_rdb = DivisaoCDB_RDBFormSet(request.POST, investidor=investidor)
         
         # Validar CDB
         if request.POST.get("save") == 'cdb':
             if form_operacao_cdb_rdb.is_valid():
                 operacao_cdb_rdb = form_operacao_cdb_rdb.save(commit=False)
+                operacao_cdb_rdb.investidor = investidor
                 operacao_compra = form_operacao_cdb_rdb.cleaned_data['operacao_compra']
-                formset_divisao_cdb = DivisaoCDB_RDBFormSet(request.POST, instance=operacao_cdb_rdb, operacao_compra=operacao_compra)
+                formset_divisao_cdb = DivisaoCDB_RDBFormSet(request.POST, instance=operacao_cdb_rdb, operacao_compra=operacao_compra, investidor=investidor)
                     
                 # TODO Validar em caso de venda
                 if form_operacao_cdb_rdb.cleaned_data['tipo_operacao'] == 'V':
@@ -274,7 +276,7 @@ def inserir_operacao_cdb_rdb(request):
                 
     else:
         form_operacao_cdb_rdb = OperacaoCDB_RDBForm()
-        formset_divisao_cdb_rdb = DivisaoCDB_RDBFormSet()
+        formset_divisao_cdb_rdb = DivisaoCDB_RDBFormSet(investidor=investidor)
     return render_to_response('cdb_rdb/inserir_operacao_cdb_rdb.html', {'form_operacao_cdb_rdb': form_operacao_cdb_rdb, 'formset_divisao_cdb_rdb': formset_divisao_cdb_rdb}, context_instance=RequestContext(request))
 
 @login_required
