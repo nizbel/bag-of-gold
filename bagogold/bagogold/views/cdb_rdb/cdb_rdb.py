@@ -314,7 +314,7 @@ def modificar_carencia_cdb_rdb(request):
     return render_to_response('cdb_rdb/modificar_carencia_cdb_rdb.html', {'form': form}, context_instance=RequestContext(request))
 
 @login_required
-def modificar_porcentagem_di_cdb_rdb(request):
+def modificar_porcentagem_cdb_rdb(request):
     if request.method == 'POST':
         form = HistoricoPorcentagemCDB_RDBForm(request.POST)
         if form.is_valid():
@@ -324,7 +324,7 @@ def modificar_porcentagem_di_cdb_rdb(request):
     else:
         form = HistoricoPorcentagemCDB_RDBForm()
             
-    return render_to_response('cdb_rdb/modificar_porcentagem_di_cdb_rdb.html', {'form': form}, context_instance=RequestContext(request))
+    return render_to_response('cdb_rdb/modificar_porcentagem_cdb_rdb.html', {'form': form}, context_instance=RequestContext(request))
 
 @login_required
 def painel(request):
