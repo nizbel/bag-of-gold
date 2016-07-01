@@ -562,6 +562,7 @@ def inserir_operacao_acao(request):
     if request.method == 'POST':
         form_operacao_acao = OperacaoAcaoForm(request.POST)
         form_uso_proventos = UsoProventosOperacaoAcaoForm(request.POST)
+        formset_divisao = DivisaoFormSet(request.POST, investidor=investidor)
         if form_operacao_acao.is_valid():
             operacao_acao = form_operacao_acao.save(commit=False)
             operacao_acao.investidor = investidor
