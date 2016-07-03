@@ -271,13 +271,13 @@ def listar_divisoes(request):
             
         # Calcular saldo da divisão
         divisao.saldo_bh = divisao.saldo_acoes_bh()
-        divisao.saldo_cdb_rdb = divisao.saldo_acoes_trade()
+        divisao.saldo_cdb_rdb = divisao.saldo_cdb_rdb()
         divisao.saldo_fii = divisao.saldo_fii()
         divisao.saldo_lc = divisao.saldo_lc()
         divisao.saldo_td = divisao.saldo_td()
         divisao.saldo_trade = divisao.saldo_acoes_trade()
         divisao.saldo_nao_alocado = 0
-        divisao.saldo = divisao.saldo_bh + divisao.saldo_lc + divisao.saldo_fii + divisao.saldo_trade + divisao.saldo_td + divisao.saldo_nao_alocado
+        divisao.saldo = divisao.saldo_bh + divisao.saldo_cdb_rdb + divisao.saldo_lc + divisao.saldo_fii + divisao.saldo_trade + divisao.saldo_td + divisao.saldo_nao_alocado
         
     # Preparar parte de operações não alocadas
     operacoes_nao_alocadas = verificar_operacoes_nao_alocadas(investidor=investidor)

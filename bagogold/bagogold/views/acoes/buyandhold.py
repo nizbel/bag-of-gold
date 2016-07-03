@@ -11,7 +11,7 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao
 from bagogold.bagogold.utils.acoes import calcular_provento_por_mes, \
     calcular_media_proventos_6_meses, calcular_operacoes_sem_proventos_por_mes, \
     calcular_uso_proventos_por_mes, quantidade_acoes_ate_dia, \
-    calcular_poupanca_proventos_ate_dia
+    calcular_poupanca_prov_acao_ate_dia
 from bagogold.bagogold.utils.divisoes import calcular_saldo_geral_acoes_bh
 from bagogold.bagogold.utils.investidores import is_superuser
 from decimal import Decimal
@@ -35,7 +35,7 @@ import json
 def calcular_poupanca_proventos_na_data(request):
     investidor = request.user.investidor
     data = datetime.datetime.strptime(request.GET['dataEscolhida'], '%d/%m/%Y').date()
-    poupanca_proventos = str(calcular_poupanca_proventos_ate_dia(investidor, data))
+    poupanca_proventos = str(calcular_poupanca_prov_acao_ate_dia(investidor, data))
     return HttpResponse(json.dumps(poupanca_proventos), content_type = "application/json") 
 
 @login_required
@@ -103,7 +103,7 @@ def editar_operacao_acao(request, id):
         formset_divisao = DivisaoFormSet(instance=operacao_acao, investidor=investidor)
         
         # Valor da poupança de proventos na data apontada
-        poupanca_proventos = calcular_poupanca_proventos_ate_dia(investidor, operacao_acao.data)
+        poupanca_proventos = calcular_poupanca_prov_acao_ate_dia(investidor, operacao_acao.data)
             
     return render_to_response('acoes/buyandhold/editar_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,
                                                                        'formset_divisao': formset_divisao, 'poupanca_proventos': poupanca_proventos }, context_instance=RequestContext(request))

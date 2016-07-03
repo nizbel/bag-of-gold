@@ -38,7 +38,7 @@ def calcular_valor_cdb_rdb_ate_dia(investidor, dia):
         # Processar operações
         operacoes_do_dia = operacoes_queryset.filter(data=data_iteracao)
         for operacao in operacoes_do_dia:          
-            if operacao.letra_credito.id not in cdb_rdb.keys():
+            if operacao.investimento.id not in cdb_rdb.keys():
                 cdb_rdb[operacao.investimento.id] = 0
                 
             # Vendas
@@ -92,14 +92,10 @@ def calcular_valor_cdb_rdb_ate_dia_por_divisao(dia, divisao_id):
         return {}
     operacoes_queryset = OperacaoCDB_RDB.objects.exclude(data__isnull=True).filter(id__in=operacoes_divisao_id).order_by('-tipo_operacao', 'data') 
     operacoes = list(operacoes_queryset)
-    historico_porcentagem = HistoricoPorcentagemCDB_RDB.objects.filter(Q(data__lte=dia) | Q(data__isnull=True)).order_by('-data')
     for operacao in operacoes:
         if operacao.tipo_operacao == 'C':
-            operacao.atual = DivisaoOperacaoCDB_RDB.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade
-            try:
-                operacao.taxa = historico_porcentagem.filter(data__lte=operacao.data, letra_credito=operacao.letra_credito)[0].porcentagem_di
-            except:
-                operacao.taxa = historico_porcentagem.get(data__isnull=True, letra_credito=operacao.letra_credito).porcentagem_di
+            operacao.atual = operacao.quantidade
+            operacao.taxa = operacao.porcentagem()
     
     # Pegar data inicial
     data_inicial = operacoes_queryset.order_by('data')[0].data
@@ -114,7 +110,7 @@ def calcular_valor_cdb_rdb_ate_dia_por_divisao(dia, divisao_id):
         # Processar operações
         operacoes_do_dia = operacoes_queryset.filter(data=data_iteracao)
         for operacao in operacoes_do_dia:          
-            if operacao.cdb_rdb.id not in cdb_rdb.keys():
+            if operacao.investimento.id not in cdb_rdb.keys():
                 cdb_rdb[operacao.investimento.id] = 0
                 
             # Vendas

@@ -329,9 +329,9 @@ def calcular_qtd_acoes_ate_dia_por_divisao(dia, divisao_id):
     
     return qtd_acoes
 
-def calcular_poupanca_proventos_ate_dia(investidor, dia, destinacao='B'):
+def calcular_poupanca_prov_acao_ate_dia(investidor, dia, destinacao='B'):
     """
-    Calcula a quantidade de proventos provisionada até dia determinado
+    Calcula a quantidade de proventos provisionada até dia determinado para ações
     Parâmetros: Investidor
 				Dia da posição de proventos
 				Destinação ('B' ou 'T')
@@ -391,9 +391,9 @@ def calcular_poupanca_proventos_ate_dia(investidor, dia, destinacao='B'):
     
     return total_proventos.quantize(Decimal('0.01'))
 
-def calcular_poupanca_proventos_ate_dia_por_divisao(dia, divisao, destinacao='B'):
+def calcular_poupanca_prov_acao_ate_dia_por_divisao(dia, divisao, destinacao='B'):
     """
-    Calcula a quantidade de proventos provisionada até dia determinado para uma divisão
+    Calcula a quantidade de proventos provisionada até dia determinado para uma divisão para ações
     Parâmetros: Dia da posição de proventos, divisão escolhida, destinação ('B' ou 'T')
     Retorno: Quantidade provisionada no dia
     """

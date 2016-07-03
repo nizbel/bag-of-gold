@@ -6,7 +6,7 @@ from bagogold.bagogold.models.acoes import OperacaoAcao, OperacaoCompraVenda
 from bagogold.bagogold.models.divisoes import Divisao, \
     TransferenciaEntreDivisoes
 from bagogold.bagogold.utils.acoes import calcular_lucro_trade_ate_data, \
-    calcular_poupanca_proventos_ate_dia
+    calcular_poupanca_prov_acao_ate_dia
 from decimal import Decimal
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
@@ -148,7 +148,7 @@ def acompanhamento_mensal(request):
     
     # Adicionar pagamentos de proventos
     # TODO Rever a essa forma de calculo
-    dados_mes['saldo_trades'] += calcular_poupanca_proventos_ate_dia(investidor, datetime.date(ano, mes, calendar.monthrange(ano,mes)[1]), destinacao='T')
+    dados_mes['saldo_trades'] += calcular_poupanca_prov_acao_ate_dia(investidor, datetime.date(ano, mes, calendar.monthrange(ano,mes)[1]), destinacao='T')
     
     # Preparar IR
     if (dados_mes['qtd_venda'] > 20000 and dados_mes['lucro_bruto'] > 0):
