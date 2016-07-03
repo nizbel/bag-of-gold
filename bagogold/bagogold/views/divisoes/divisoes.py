@@ -12,6 +12,8 @@ from bagogold.bagogold.models.lc import HistoricoTaxaDI, \
 from bagogold.bagogold.models.td import ValorDiarioTitulo, HistoricoTitulo, \
     Titulo
 from bagogold.bagogold.utils.acoes import calcular_qtd_acoes_ate_dia_por_divisao
+from bagogold.bagogold.utils.cdb_rdb import \
+    calcular_valor_cdb_rdb_ate_dia_por_divisao
 from bagogold.bagogold.utils.divisoes import verificar_operacoes_nao_alocadas
 from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia_por_divisao
 from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia, \
@@ -232,6 +234,11 @@ def listar_divisoes(request):
                 acao_valor = HistoricoAcao.objects.filter(acao__ticker=ticker).order_by('-data')[0].preco_unitario
             divisao.valor_atual += (acao_divisao[ticker] * acao_valor)
         
+        # CDB / RDB
+        cdb_rdb_divisao = calcular_valor_cdb_rdb_ate_dia_por_divisao(datetime.date.today(), divisao.id)
+        for total_cdb_rdb in cdb_rdb_divisao.values():
+            divisao.valor_atual += total_cdb_rdb
+        
         # Fundos de investimento imobiliário
         fii_divisao = calcular_qtd_fiis_ate_dia_por_divisao(datetime.date.today(), divisao.id)
         for ticker in fii_divisao.keys():
@@ -264,10 +271,11 @@ def listar_divisoes(request):
             
         # Calcular saldo da divisão
         divisao.saldo_bh = divisao.saldo_acoes_bh()
-        divisao.saldo_lc = divisao.saldo_lc()
+        divisao.saldo_cdb_rdb = divisao.saldo_acoes_trade()
         divisao.saldo_fii = divisao.saldo_fii()
-        divisao.saldo_trade = divisao.saldo_acoes_trade()
+        divisao.saldo_lc = divisao.saldo_lc()
         divisao.saldo_td = divisao.saldo_td()
+        divisao.saldo_trade = divisao.saldo_acoes_trade()
         divisao.saldo_nao_alocado = 0
         divisao.saldo = divisao.saldo_bh + divisao.saldo_lc + divisao.saldo_fii + divisao.saldo_trade + divisao.saldo_td + divisao.saldo_nao_alocado
         

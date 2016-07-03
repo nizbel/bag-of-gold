@@ -71,6 +71,37 @@ class Divisao (models.Model):
             
         return saldo
     
+    def saldo_cdb_rdb(self, data=datetime.date.today()):
+        """
+        Calcula o saldo de operações de CDB/RDB de uma divisão (dinheiro livre)
+        """
+        saldo = Decimal(0)
+        historico_di = HistoricoTaxaDI.objects.all()
+        for operacao_divisao in DivisaoOperacaoCDB_RDB.objects.filter(divisao=self, operacao__data__lte=data):
+            operacao = operacao_divisao.operacao
+            if operacao.tipo_operacao == 'C':
+                saldo -= operacao_divisao.quantidade 
+            elif operacao.tipo_operacao == 'V':
+                # Para venda, calcular valor da letra no dia da venda
+                valor_venda = operacao_divisao.quantidade
+                dias_de_rendimento = historico_di.filter(data__gte=operacao.operacao_compra_relacionada().data, data__lt=operacao.data)
+                operacao.taxa = operacao.porcentagem()
+                for dia in dias_de_rendimento:
+                    # Calcular o valor atualizado para cada operacao
+                    valor_venda = Decimal((pow((float(1) + float(dia.taxa)/float(100)), float(1)/float(252)) - float(1)) * float(operacao.taxa/100) + float(1)) * valor_venda
+                # Arredondar
+                str_auxiliar = str(valor_venda.quantize(Decimal('.0001')))
+                valor_venda = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+                saldo += valor_venda
+                
+        # Transferências
+        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='C', data__lte=data):
+            saldo -= transferencia.quantidade
+        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='C', data__lte=data):
+            saldo += transferencia.quantidade
+            
+        return saldo
+    
     def saldo_fii(self, data=datetime.date.today()):
         """
         Calcula o saldo de operações de FII de uma divisão (dinheiro livre)
@@ -114,7 +145,6 @@ class Divisao (models.Model):
                 valor_venda = Decimal(str_auxiliar[:len(str_auxiliar)-2])
                 saldo += valor_venda
                 
-        print 'Fim', saldo    
         # Transferências
         for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='L', data__lte=data):
             saldo -= transferencia.quantidade

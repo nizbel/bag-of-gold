@@ -1,46 +1,29 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC
-from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI, \
-    HistoricoPorcentagemLetraCredito, OperacaoVendaLetraCredito
+from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB, \
+    HistoricoPorcentagemCDB_RDB
+from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
+    DivisaoOperacaoCDB_RDB
+from bagogold.bagogold.models.lc import HistoricoTaxaDI
+from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa
 from decimal import Decimal
 from django.db.models import Q
 import datetime
 
-def calcular_valor_atualizado_com_taxa(taxa_do_dia, valor_atual, operacao_taxa):
-    """
-    Calcula o valor atualizado de uma operação em LC, a partir da taxa DI do dia
-    Parâmetros: Taxa DI do dia, valor atual da operação, taxa da operação
-    Retorno: Valor atualizado com a taxa DI
-    """
-    return ((pow((Decimal(1) + taxa_do_dia/100), Decimal(1)/Decimal(252)) - Decimal(1)) * operacao_taxa/100 + Decimal(1)) * valor_atual
-
-def calcular_valor_atualizado_com_taxas(taxas_dos_dias, valor_atual, operacao_taxa):
-    """
-    Calcula o valor atualizado de uma operação em LC, a partir das taxa DI dos dias
-    Parâmetros: Taxas DI dos dias {taxa: quantidade_de_dias}, valor atual da operação, taxa da operação
-    Retorno: Valor atualizado com a taxa DI
-    """
-    taxa_acumulada = 1
-    for taxa_do_dia in taxas_dos_dias.keys():
-        taxa_acumulada *= pow(((pow((Decimal(1) + taxa_do_dia/100), Decimal(1)/Decimal(252)) - Decimal(1)) * operacao_taxa/100 + Decimal(1)), taxas_dos_dias[taxa_do_dia])
-    return taxa_acumulada * valor_atual
-
-
-def calcular_valor_lc_ate_dia(investidor, dia):
+def calcular_valor_cdb_rdb_ate_dia(investidor, dia):
     """ 
-    Calcula o valor das letras de crédito no dia determinado
+    Calcula o valor dos CDB/RDB no dia determinado
     Parâmetros: Investidor
                 Data final
-    Retorno: Valor de cada letra de crédito na data escolhida {id_letra: valor_na_data, }
+    Retorno: Valor de cada CDB/RDB na data escolhida {id_letra: valor_na_data, }
     """
-    operacoes_queryset = OperacaoLetraCredito.objects.filter(investidor=investidor).exclude(data__isnull=True).exclude(data__gte=dia).order_by('-tipo_operacao', 'data') 
+    operacoes_queryset = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).exclude(data__gte=dia).order_by('-tipo_operacao', 'data') 
     if len(operacoes_queryset) == 0:
         return {}
     operacoes = list(operacoes_queryset)
     for operacao in operacoes:
         if operacao.tipo_operacao == 'C':
             operacao.atual = operacao.quantidade
-            operacao.taxa = operacao.porcentagem_di()
+            operacao.taxa = operacao.porcentagem()
     
     # Pegar data inicial
     data_inicial = operacoes_queryset.order_by('data')[0].data
@@ -49,14 +32,14 @@ def calcular_valor_lc_ate_dia(investidor, dia):
     
     data_iteracao = data_inicial
     
-    letras_credito = {}
+    cdb_rdb = {}
     
     while data_iteracao <= data_final:
         # Processar operações
         operacoes_do_dia = operacoes_queryset.filter(data=data_iteracao)
         for operacao in operacoes_do_dia:          
-            if operacao.letra_credito.id not in letras_credito.keys():
-                letras_credito[operacao.letra_credito.id] = 0
+            if operacao.letra_credito.id not in cdb_rdb.keys():
+                cdb_rdb[operacao.investimento.id] = 0
                 
             # Vendas
             if operacao.tipo_operacao == 'V':
@@ -91,28 +74,28 @@ def calcular_valor_lc_ate_dia(investidor, dia):
             break
     
     # Preencher os valores nas letras de crédito
-    for letra_credito_id in letras_credito.keys():
+    for investimento_id in cdb_rdb.keys():
         for operacao in operacoes:
-            if operacao.letra_credito.id == letra_credito_id:
-                letras_credito[letra_credito_id] += operacao.atual
+            if operacao.investimento.id == investimento_id:
+                cdb_rdb[investimento_id] += operacao.atual
     
-    return letras_credito
+    return cdb_rdb
 
-def calcular_valor_lc_ate_dia_por_divisao(dia, divisao_id):
+def calcular_valor_cdb_rdb_ate_dia_por_divisao(dia, divisao_id):
     """ 
     Calcula o valor das letras de crédito da divisão no dia determinado
     Parâmetros: Data final, id da divisão
     Retorno: Valor de cada letra de crédito da divisão na data escolhida {id_letra: valor_na_data, }
     """
-    operacoes_divisao_id = DivisaoOperacaoLC.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).values('operacao__id')
+    operacoes_divisao_id = DivisaoOperacaoCDB_RDB.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).values('operacao__id')
     if len(operacoes_divisao_id) == 0:
         return {}
-    operacoes_queryset = OperacaoLetraCredito.objects.exclude(data__isnull=True).filter(id__in=operacoes_divisao_id).order_by('-tipo_operacao', 'data') 
+    operacoes_queryset = OperacaoCDB_RDB.objects.exclude(data__isnull=True).filter(id__in=operacoes_divisao_id).order_by('-tipo_operacao', 'data') 
     operacoes = list(operacoes_queryset)
-    historico_porcentagem = HistoricoPorcentagemLetraCredito.objects.filter(Q(data__lte=dia) | Q(data__isnull=True)).order_by('-data')
+    historico_porcentagem = HistoricoPorcentagemCDB_RDB.objects.filter(Q(data__lte=dia) | Q(data__isnull=True)).order_by('-data')
     for operacao in operacoes:
         if operacao.tipo_operacao == 'C':
-            operacao.atual = DivisaoOperacaoLC.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade
+            operacao.atual = DivisaoOperacaoCDB_RDB.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade
             try:
                 operacao.taxa = historico_porcentagem.filter(data__lte=operacao.data, letra_credito=operacao.letra_credito)[0].porcentagem_di
             except:
@@ -125,14 +108,14 @@ def calcular_valor_lc_ate_dia_por_divisao(dia, divisao_id):
     
     data_iteracao = data_inicial
     
-    letras_credito = {}
+    cdb_rdb = {}
     
     while data_iteracao <= data_final:
         # Processar operações
         operacoes_do_dia = operacoes_queryset.filter(data=data_iteracao)
         for operacao in operacoes_do_dia:          
-            if operacao.letra_credito.id not in letras_credito.keys():
-                letras_credito[operacao.letra_credito.id] = 0
+            if operacao.cdb_rdb.id not in cdb_rdb.keys():
+                cdb_rdb[operacao.investimento.id] = 0
                 
             # Vendas
             if operacao.tipo_operacao == 'V':
@@ -174,9 +157,9 @@ def calcular_valor_lc_ate_dia_por_divisao(dia, divisao_id):
             break
         
     # Preencher os valores nas letras de crédito
-    for letra_credito_id in letras_credito.keys():
+    for investimento_id in cdb_rdb.keys():
         for operacao in operacoes:
-            if operacao.letra_credito.id == letra_credito_id:
-                letras_credito[letra_credito_id] += operacao.atual
+            if operacao.investimento.id == investimento_id:
+                cdb_rdb[investimento_id] += operacao.atual
     
-    return letras_credito
+    return cdb_rdb
