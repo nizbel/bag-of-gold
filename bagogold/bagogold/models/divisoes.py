@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.lc import HistoricoTaxaDI
+from bagogold.bagogold.models.lc import HistoricoTaxaDI, HistoricoTaxaDI
 from decimal import Decimal
 from django import forms
 from django.db import models
-from bagogold.bagogold.models.lc import HistoricoTaxaDI
 import datetime
 
 class Divisao (models.Model):
@@ -103,6 +102,8 @@ class Divisao (models.Model):
         return saldo
     
     def saldo_fii(self, data=datetime.date.today()):
+        from bagogold.bagogold.utils.fii import \
+            calcular_poupanca_prov_fii_ate_dia_por_divisao
         """
         Calcula o saldo de operações de FII de uma divisão (dinheiro livre)
         """
@@ -115,7 +116,7 @@ class Divisao (models.Model):
                 saldo += (operacao_divisao.quantidade * operacao.preco_unitario - (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
                 
         # Proventos
-        saldo += calcular_poupanca_prov_acao_ate_dia_por_divisao(data, self)    
+        saldo += calcular_poupanca_prov_fii_ate_dia_por_divisao(data, self)    
         
         # Transferências
         for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='F', data__lte=data):

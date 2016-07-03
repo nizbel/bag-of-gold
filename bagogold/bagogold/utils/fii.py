@@ -93,7 +93,7 @@ def calcular_poupanca_prov_fii_ate_dia_por_divisao(dia, divisao):
                 fiis[item_lista.fii.ticker] -= item_lista.quantidade
         
         # Verifica se é recebimento de proventos
-        elif isinstance(item_lista, Provento):
+        elif isinstance(item_lista, ProventoFII):
             if item_lista.data_pagamento <= datetime.date.today() and fiis[item_lista.fii.ticker] > 0:
                 total_recebido = fiis[item_lista.fii.ticker] * item_lista.valor_unitario
                 total_proventos += total_recebido
