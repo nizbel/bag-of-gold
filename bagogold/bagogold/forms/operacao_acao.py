@@ -29,14 +29,21 @@ class OperacaoAcaoForm(forms.ModelForm):
     class Media:
         js = ('js/bagogold/acoes.js',)
     
-    def clean(self):
-        data = super(OperacaoAcaoForm, self).clean()
-        preco_unitario = str(data.get('preco_unitario'))
-        preco_unitario = preco_unitario.replace(",", ".")
-        preco_unitario = Decimal(preco_unitario)
-        data['preco_unitario'] = preco_unitario
-
-        return data
+    def clean_preco_unitario(self):
+        preco_unitario = Decimal(self.cleaned_data['preco_unitario'])
+        print preco_unitario
+        if preco_unitario <= Decimal(0):
+            raise forms.ValidationError('Preço unitário deve ser maior que 0')
+        return preco_unitario
+    
+#     def clean(self):
+#         data = super(OperacaoAcaoForm, self).clean()
+#         preco_unitario = str(data.get('preco_unitario'))
+#         preco_unitario = preco_unitario.replace(",", ".")
+#         preco_unitario = Decimal(preco_unitario)
+#         data['preco_unitario'] = preco_unitario
+# 
+#         return data
 
 class UsoProventosOperacaoAcaoForm(forms.ModelForm):
 

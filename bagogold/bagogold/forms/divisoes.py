@@ -5,7 +5,7 @@ from bagogold.bagogold.models.lc import OperacaoVendaLetraCredito
 from django import forms
 from django.forms import widgets
 
-OPCOES_INVESTIMENTO = ((None, ''), ('B', 'Buy and Hold'), ('C', 'CDB/RDB'), ('D', 'Tesouro Direto'), ('F', 'Fundo de Inv. Imobiliário'), 
+OPCOES_INVESTIMENTO = (('', 'Fonte externa'), ('B', 'Buy and Hold'), ('D', 'Tesouro Direto'), ('F', 'Fundo de Inv. Imobiliário'), 
                        ('L', 'Letras de Crédito'), ('T', 'Trading'))
     
 class DivisaoForm(forms.ModelForm):
@@ -23,6 +23,13 @@ class DivisaoForm(forms.ModelForm):
     
 # Inline FormSet para operações em ações (B&H)
 class DivisaoOperacaoAcaoFormSet(forms.models.BaseInlineFormSet):
+    def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
+        super(DivisaoOperacaoAcaoFormSet, self).__init__(*args, **kwargs)
+
+        for form in self.forms:
+            form.fields['divisao'].queryset = Divisao.objects.filter(investidor=self.investidor)
+            
     def clean(self):
         qtd_total_div = 0
         contador_forms = 0
@@ -44,6 +51,13 @@ class DivisaoOperacaoAcaoFormSet(forms.models.BaseInlineFormSet):
 
 # Inline FormSet para operações em fundos de investimento imobiliário
 class DivisaoOperacaoFIIFormSet(forms.models.BaseInlineFormSet):
+    def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
+        super(DivisaoOperacaoFIIFormSet, self).__init__(*args, **kwargs)
+
+        for form in self.forms:
+            form.fields['divisao'].queryset = Divisao.objects.filter(investidor=self.investidor)
+            
     def clean(self):
         qtd_total_div = 0
         contador_forms = 0
@@ -67,8 +81,12 @@ class DivisaoOperacaoFIIFormSet(forms.models.BaseInlineFormSet):
 class DivisaoOperacaoLCFormSet(forms.models.BaseInlineFormSet):
     def __init__(self, *args, **kwargs):
         self.operacao_compra = kwargs.pop('operacao_compra', None)
+        self.investidor = kwargs.pop('investidor')
         super(DivisaoOperacaoLCFormSet, self).__init__(*args, **kwargs)
     
+        for form in self.forms:
+            form.fields['divisao'].queryset = Divisao.objects.filter(investidor=self.investidor)
+            
     def clean(self):
         qtd_total_div = 0
         contador_forms = 0
@@ -98,7 +116,11 @@ class DivisaoOperacaoLCFormSet(forms.models.BaseInlineFormSet):
 class DivisaoOperacaoCDB_RDBFormSet(forms.models.BaseInlineFormSet):
     def __init__(self, *args, **kwargs):
         self.operacao_compra = kwargs.pop('operacao_compra', None)
+        self.investidor = kwargs.pop('investidor')
         super(DivisaoOperacaoCDB_RDBFormSet, self).__init__(*args, **kwargs)
+        
+        for form in self.forms:
+            form.fields['divisao'].queryset = Divisao.objects.filter(investidor=self.investidor)
     
     def clean(self):
         qtd_total_div = 0
@@ -127,6 +149,13 @@ class DivisaoOperacaoCDB_RDBFormSet(forms.models.BaseInlineFormSet):
                             
 # Inline FormSet para operações em tesouro direto
 class DivisaoOperacaoTDFormSet(forms.models.BaseInlineFormSet):
+    def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
+        super(DivisaoOperacaoTDFormSet, self).__init__(*args, **kwargs)
+
+        for form in self.forms:
+            form.fields['divisao'].queryset = Divisao.objects.filter(investidor=self.investidor)
+            
     def clean(self):
         qtd_total_div = 0
         contador_forms = 0
@@ -165,9 +194,9 @@ class TransferenciaEntreDivisoesForm(forms.ModelForm):
         data = super(TransferenciaEntreDivisoesForm, self).clean()
         if data.get('divisao_cedente') == None and data.get('divisao_recebedora') == None:
             raise forms.ValidationError('Conta cedente e recebedora não podem ser vazias')
-        if data.get('divisao_cedente') == None and data.get('investimento_origem') != None:
-            raise forms.ValidationError('Conta vazia não pode ter investimento definido')
-        if data.get('divisao_recebedora') == None and data.get('investimento_destino') != None:
-            raise forms.ValidationError('Conta vazia não pode ter investimento definido')
+        if data.get('divisao_cedente') == None and data.get('investimento_origem') != '':
+            raise forms.ValidationError('Conta cedente vazia não pode ter investimento definido')
+        if data.get('divisao_recebedora') == None and data.get('investimento_destino') != '':
+            raise forms.ValidationError('Conta recebedora vazia não pode ter investimento definido')
         
         return data

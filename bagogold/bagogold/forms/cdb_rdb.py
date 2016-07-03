@@ -37,10 +37,12 @@ class OperacaoCDB_RDBForm(forms.ModelForm):
         js = ('js/bagogold/cdb_rdb.js',)
         
     def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
         # first call parent's constructor
         super(OperacaoCDB_RDBForm, self).__init__(*args, **kwargs)
         # there's a `fields` property now
         self.fields['investimento'].required = False
+        self.fields['investimento'].queryset = CDB_RDB.objects.filter(investidor=self.investidor)
 #         if self.instance.pk is not None:
 #             # Verificar se é uma compra
 #             if self.instance.tipo_operacao == 'V':

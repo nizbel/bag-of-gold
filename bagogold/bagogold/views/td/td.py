@@ -3,7 +3,7 @@ from bagogold.bagogold.forms.divisoes import DivisaoOperacaoTDFormSet
 from bagogold.bagogold.forms.td import OperacaoTituloForm
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD
 from bagogold.bagogold.models.fii import FII
-from bagogold.bagogold.models.lc import LetraCredito, HistoricoTaxaDI,\
+from bagogold.bagogold.models.lc import LetraCredito, HistoricoTaxaDI, \
     HistoricoPorcentagemLetraCredito
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
     ValorDiarioTitulo, Titulo
@@ -12,11 +12,12 @@ from bagogold.bagogold.utils.fii import \
     calcular_rendimento_proventos_fii_12_meses, \
     calcular_variacao_percentual_fii_por_periodo
 from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia_por_titulo, \
-    calcular_imposto_venda_td
+    calcular_imposto_venda_td, buscar_data_valor_mais_recente
 from copy import deepcopy
 from decimal import Decimal
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
@@ -34,10 +35,12 @@ def aconselhamento_td(request):
     class Object():
         pass
     
+    investidor = request.user.investidor
+    
     titulos = {}
     titulos_vendidos = {}
     
-    for operacao in OperacaoTitulo.objects.filter().order_by('data'):
+    for operacao in OperacaoTitulo.objects.filter(investidor=investidor).order_by('data'):
         # Verificar se se trata de compra
         if operacao.tipo_operacao == 'C':
             if operacao.titulo.id not in titulos.keys():
@@ -123,7 +126,7 @@ def aconselhamento_td(request):
     # Data de 12 meses atrás
     data_12_meses = datetime.date.today() - datetime.timedelta(days=365)
     
-    letras_credito = list(LetraCredito.objects.all())
+    letras_credito = list(LetraCredito.objects.filter(investidor=investidor))
     # Comparativo com letras de crédito
     for lc in letras_credito:
         lc.rendimento_atual =  lc.porcentagem_di_atual() * HistoricoTaxaDI.objects.filter(data__isnull=False).order_by('-data')[0].taxa / 100
@@ -157,15 +160,20 @@ def aconselhamento_td(request):
 
 @login_required
 def editar_operacao_td(request, id):
+    investidor = request.user.investidor
+    
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoTitulo, DivisaoOperacaoTD, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoTDFormSet)
     operacao_td = OperacaoTitulo.objects.get(pk=id)
+    # Verifica se a operação é do investidor, senão, jogar erro de permissão
+    if operacao_td.investidor != investidor:
+        raise PermissionDenied
     
     if request.method == 'POST':
         if request.POST.get("save"):
             form_operacao_td = OperacaoTituloForm(request.POST, instance=operacao_td)
-            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_td)
+            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_td, investidor=investidor)
             
             if form_operacao_td.is_valid():
                 if formset_divisao.is_valid():
@@ -190,7 +198,7 @@ def editar_operacao_td(request, id):
 
     else:
         form_operacao_td = OperacaoTituloForm(instance=operacao_td)
-        formset_divisao = DivisaoFormSet(instance=operacao_td)
+        formset_divisao = DivisaoFormSet(instance=operacao_td, investidor=investidor)
             
     return render_to_response('td/editar_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao }, 
                               context_instance=RequestContext(request))   
@@ -198,7 +206,9 @@ def editar_operacao_td(request, id):
     
 @login_required
 def historico_td(request):
-    operacoes = OperacaoTitulo.objects.exclude(data__isnull=True).order_by('data')  
+    investidor = request.user.investidor
+    
+    operacoes = OperacaoTitulo.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
     for operacao in operacoes:
         operacao.valor_unitario = operacao.preco_unitario
     
@@ -283,7 +293,10 @@ def historico_td(request):
     dados['total_gasto'] = -total_gasto
     dados['patrimonio'] = patrimonio_atual
     dados['lucro'] = patrimonio_atual + total_gasto
-    dados['lucro_percentual'] = (patrimonio_atual + total_gasto) / -total_gasto * 100
+    if total_gasto == 0:
+        dados['lucro_percentual'] = 0
+    else:
+        dados['lucro_percentual'] = (patrimonio_atual + total_gasto) / -total_gasto * 100
     
     # Pegar valores correntes dos títulos no site do Tesouro
     
@@ -296,6 +309,8 @@ def historico_td(request):
     
 @login_required
 def inserir_operacao_td(request):
+    investidor = request.user.investidor
+    
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoTitulo, DivisaoOperacaoTD, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoTDFormSet)
@@ -304,7 +319,8 @@ def inserir_operacao_td(request):
         form_operacao_td = OperacaoTituloForm(request.POST)
         if form_operacao_td.is_valid():
             operacao_td = form_operacao_td.save(commit=False)
-            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_td)
+            operacao_td.investidor = investidor
+            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_td, investidor=investidor)
             if formset_divisao.is_valid():
                 operacao_td.save()
                 formset_divisao.save()
@@ -317,7 +333,7 @@ def inserir_operacao_td(request):
         
     else:
         form_operacao_td = OperacaoTituloForm()
-        formset_divisao = DivisaoFormSet()
+        formset_divisao = DivisaoFormSet(investidor=investidor)
             
     return render_to_response('td/inserir_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao }, 
                                       context_instance=RequestContext(request))
@@ -328,13 +344,15 @@ def painel(request):
     class Object():
         pass
     
+    investidor = request.user.investidor
+    
     titulos = {}
     titulos_vendidos = {}
     
     total_atual = 0
     total_lucro = 0
     
-    for operacao in OperacaoTitulo.objects.filter().order_by('data'):
+    for operacao in OperacaoTitulo.objects.filter(investidor=investidor).order_by('data'):
         # Verificar se se trata de compra
         if operacao.tipo_operacao == 'C':
             if operacao.titulo.id not in titulos.keys():
@@ -442,5 +460,6 @@ def painel(request):
     dados = {}
     dados['total_atual'] = total_atual
     dados['total_lucro'] = total_lucro
+    dados['data_valor_mais_recente'] = buscar_data_valor_mais_recente()
     
     return render_to_response('td/painel.html', {'titulos': titulos, 'titulos_vendidos': titulos_vendidos, 'dados': dados}, context_instance=RequestContext(request))

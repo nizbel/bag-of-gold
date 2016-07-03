@@ -4,5 +4,6 @@ from fii import *
 from lc import *
 from td import *
 from divisoes import *
+from investidores import *
   
 from empresa import Empresa

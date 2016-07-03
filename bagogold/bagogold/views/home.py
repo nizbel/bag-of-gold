@@ -25,8 +25,9 @@ def home(request):
     # Usado para criar objetos vazios
     class Object(object):
         pass
-    
-    operacoes_fii = OperacaoFII.objects.exclude(data__isnull=True).order_by('data')
+
+    investidor = request.user.investidor
+    operacoes_fii = OperacaoFII.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
     if operacoes_fii:
         proventos_fii = ProventoFII.objects.exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).filter(fii__in=operacoes_fii.values_list('fii', flat=True), data_ex__gt=operacoes_fii[0].data).order_by('data_ex')  
         for provento in proventos_fii:
@@ -34,19 +35,26 @@ def home(request):
     else:
         proventos_fii = list()
     
-    operacoes_td = OperacaoTitulo.objects.exclude(data__isnull=True).order_by('data')
+    operacoes_td = OperacaoTitulo.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
     
-    operacoes_bh = OperacaoAcao.objects.filter(destinacao='B').exclude(data__isnull=True).order_by('data')
+    operacoes_bh = OperacaoAcao.objects.filter(investidor=investidor, destinacao='B').exclude(data__isnull=True).order_by('data')
     proventos_bh = Provento.objects.exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).filter(acao__in=operacoes_bh.values_list('acao', flat=True)).order_by('data_ex')
     for provento in proventos_bh:
         provento.data = provento.data_ex
         
-    operacoes_lc = OperacaoLetraCredito.objects.exclude(data__isnull=True).order_by('data')  
+    operacoes_lc = OperacaoLetraCredito.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
     
-    operacoes_cdb_rdb = OperacaoCDB_RDB.objects.exclude(data__isnull=True).order_by('data')  
+    operacoes_cdb_rdb = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
     
     lista_operacoes = sorted(chain(proventos_fii, operacoes_fii, operacoes_td, proventos_bh,  operacoes_bh, operacoes_lc, operacoes_cdb_rdb),
                             key=attrgetter('data'))
+
+	# Se não houver operações, retornar vazio
+    if not lista_operacoes:
+        data_anterior = str(calendar.timegm((datetime.date.today() - datetime.timedelta(days=365)).timetuple()) * 1000)
+        data_atual = str(calendar.timegm(datetime.date.today().timetuple()) * 1000)
+        return render_to_response('home.html', {'graf_patrimonio': [[data_anterior, float(0)], [data_atual, float(0)]], 'patrimonio_anual': list(), 'estatisticas': list()}, context_instance=RequestContext(request))
+    
     # Pegar ano da primeira operacao feita
     ano_corrente = lista_operacoes[0].data.year
     
@@ -67,33 +75,39 @@ def home(request):
     # Dia anterior
     data_dia_anterior = Object()
     data_dia_anterior.data = datetime.date.today() + datetime.timedelta(days=-1)
-    data_dia_anterior.descricao = "1 dia"
-    datas_estatisticas.add(data_dia_anterior)
+    if data_dia_anterior.data >= lista_operacoes[0].data:
+        data_dia_anterior.descricao = "1 dia"
+        datas_estatisticas.add(data_dia_anterior)
     # 1 semana
     data_1_semana = Object()
     data_1_semana.data = datetime.date.today() + datetime.timedelta(days=-7)
-    data_1_semana.descricao = "7 dias"
-    datas_estatisticas.add(data_1_semana)
+    if data_1_semana.data >= lista_operacoes[0].data:
+        data_1_semana.descricao = "7 dias"
+        datas_estatisticas.add(data_1_semana)
     # 30 dias
     data_30_dias = Object()
     data_30_dias.data = datetime.date.today() + datetime.timedelta(days=-30)
-    data_30_dias.descricao = "30 dias"
-    datas_estatisticas.add(data_30_dias)
+    if data_30_dias.data >= lista_operacoes[0].data:
+        data_30_dias.descricao = "30 dias"
+        datas_estatisticas.add(data_30_dias)
     # 3 meses
     data_3_meses = Object()
     data_3_meses.data = datetime.date.today() + datetime.timedelta(days=-90)
-    data_3_meses.descricao = "3 meses"
-    datas_estatisticas.add(data_3_meses)
+    if data_3_meses.data >= lista_operacoes[0].data:
+        data_3_meses.descricao = "3 meses"
+        datas_estatisticas.add(data_3_meses)
     # 1 semestre
     data_1_semestre = Object()
     data_1_semestre.data = datetime.date.today() + datetime.timedelta(days=-180)
-    data_1_semestre.descricao = "1 semestre"
-    datas_estatisticas.add(data_1_semestre)
+    if data_1_semestre.data >= lista_operacoes[0].data:
+        data_1_semestre.descricao = "1 semestre"
+        datas_estatisticas.add(data_1_semestre)
     # 1 ano
     data_1_ano = Object()
     data_1_ano.data = datetime.date.today() + datetime.timedelta(days=-365)
-    data_1_ano.descricao = "1 ano"
-    datas_estatisticas.add(data_1_ano)
+    if data_1_ano.data >= lista_operacoes[0].data:
+        data_1_ano.descricao = "1 ano"
+        datas_estatisticas.add(data_1_ano)
     
     lista_conjunta = sorted(chain(lista_operacoes, datas_finais_ano, datas_estatisticas),
                             key=attrgetter('data'))
