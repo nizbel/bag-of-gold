@@ -28,6 +28,15 @@ class ProventoFII (models.Model):
     
     class Meta:
         unique_together=(('data_ex', 'data_pagamento', 'fii',))
+        
+    def qtd_proventos_utilizada(self):
+        try:
+            return UsoProventosOperacaoFII.objects.get(operacao=self).qtd_utilizada
+        except UsoProventosOperacaoFII.DoesNotExist:
+            return 0
+        
+    def utilizou_proventos(self):
+        return self.qtd_proventos_utilizada() > 0
     
 class OperacaoFII (models.Model):
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)  

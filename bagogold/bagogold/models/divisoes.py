@@ -28,7 +28,7 @@ class Divisao (models.Model):
     
     def saldo_acoes_bh(self, data=datetime.date.today()):
         from bagogold.bagogold.utils.acoes import \
-            calcular_poupanca_proventos_ate_dia_por_divisao
+            calcular_poupanca_prov_acao_ate_dia_por_divisao
         """
         Calcula o saldo de operações de ações Buy and Hold de uma divisão (dinheiro livre)
         """
@@ -41,7 +41,7 @@ class Divisao (models.Model):
                 saldo += (operacao_divisao.quantidade * operacao.preco_unitario - (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
         
         # Proventos
-        saldo += calcular_poupanca_proventos_ate_dia_por_divisao(data, self)        
+        saldo += calcular_poupanca_prov_acao_ate_dia_por_divisao(data, self)        
         
         # Transferências
         for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='B', data__lte=data):
@@ -114,6 +114,9 @@ class Divisao (models.Model):
             elif operacao.tipo_operacao == 'V':
                 saldo += (operacao_divisao.quantidade * operacao.preco_unitario - (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
                 
+        # Proventos
+        saldo += calcular_poupanca_prov_acao_ate_dia_por_divisao(data, self)    
+        
         # Transferências
         for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='F', data__lte=data):
             saldo -= transferencia.quantidade
@@ -187,6 +190,8 @@ class Divisao (models.Model):
         saldo += self.saldo_acoes_bh(data=data)
         # Trades
         saldo += self.saldo_acoes_trade(data=data)
+        # CDB/RDB
+        saldo += self.saldo_cdb_rdb(data=data)
         # FII
         saldo += self.saldo_fii(data=data)
         # LC
@@ -302,6 +307,7 @@ class TransferenciaEntreDivisoes(models.Model):
     Quantidade em R$
     """
     quantidade = models.DecimalField(u'Quantidade transferida', max_digits=11, decimal_places=2)
+    descricao = models.CharField(u'Descrição', blank=True, null=True, max_length=150)
     
     def intradivisao(self):
         """

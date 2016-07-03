@@ -10,11 +10,12 @@
             <th rowspan="2">Objetivo</th>
             <th rowspan="2">Valor atual</th>
             <th rowspan="2">Saldo</th>
-            <th colspan="6">Composição</th>
+            <th colspan="7">Composição</th>
         </tr>
         <tr>
             <th>B & H</th>
             <th>Trading</th>
+            <th>CDB/RDB</th>
             <th>Letra de Créd.</th>
             <th>FII</th>
             <th>Tes. Direto</th>
@@ -48,6 +49,13 @@
             blue
             {% endif %}
             ">R${{divisao.saldo_trade}}</span></td>
+        <td><span style="color:
+            {% if divisao.saldo_cdb_rdb < 0 %}
+            red
+            {% else %}
+            blue
+            {% endif %}
+            ">R${{divisao.saldo_cdb_rdb}}</span></td>
         <td><span style="color:
             {% if divisao.saldo_lc < 0 %}
             red
