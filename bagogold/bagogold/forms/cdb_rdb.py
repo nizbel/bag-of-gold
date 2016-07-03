@@ -49,7 +49,6 @@ class OperacaoCDB_RDBForm(forms.ModelForm):
 #                 self.operacao_compra.v
     
     def clean_operacao_compra(self):
-        print 'test'
         tipo_operacao = self.cleaned_data['tipo_operacao']
         if tipo_operacao == 'V':
             operacao_compra = self.cleaned_data.get('operacao_compra')
