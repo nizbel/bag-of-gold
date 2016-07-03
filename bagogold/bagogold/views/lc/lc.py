@@ -12,6 +12,7 @@ from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
@@ -22,14 +23,21 @@ import datetime
 
 @login_required
 def editar_operacao_lc(request, id):
+    investidor = request.user.investidor
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoLetraCredito, DivisaoOperacaoLC, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoLCFormSet)
     operacao_lc = OperacaoLetraCredito.objects.get(pk=id)
     
+    # Verifica se a operação é do investidor, senão, jogar erro de permissão
+    if operacao_lc.investidor != investidor:
+        raise PermissionDenied
+    
     if request.method == 'POST':
         if request.POST.get("save"):
             form_operacao_lc = OperacaoLetraCreditoForm(request.POST, instance=operacao_lc)
+            operacao_compra = form_operacao_lc.cleaned_data['operacao_compra']
+            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lc, operacao_compra=operacao_compra, investidor=investidor)
             
             if form_operacao_lc.is_valid():
                 operacao_compra = form_operacao_lc.cleaned_data['operacao_compra']
@@ -60,7 +68,7 @@ def editar_operacao_lc(request, id):
  
     else:
         form_operacao_lc = OperacaoLetraCreditoForm(instance=operacao_lc, initial={'operacao_compra': operacao_lc.operacao_compra_relacionada(),})
-        formset_divisao = DivisaoFormSet(instance=operacao_lc)
+        formset_divisao = DivisaoFormSet(instance=operacao_lc, investidor=investidor)
             
     return render_to_response('lc/editar_operacao_lc.html', {'form_operacao_lc': form_operacao_lc, 'formset_divisao': formset_divisao},
                               context_instance=RequestContext(request))  
@@ -68,8 +76,17 @@ def editar_operacao_lc(request, id):
     
 @login_required
 def historico(request):
+    investidor = request.user.investidor
+    
     # Processa primeiro operações de venda (V), depois compra (C)
-    operacoes = OperacaoLetraCredito.objects.exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
+    operacoes = OperacaoLetraCredito.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
+    
+    # Se investidor não fez operações, retornar
+    if not operacoes:
+        return render_to_response('lc/historico.html', {'dados': {}, 'operacoes': operacoes, 'graf_gasto_total': list(), 'graf_patrimonio': list()},
+                               context_instance=RequestContext(request))
+    
+    historico_porcentagem = HistoricoPorcentagemLetraCredito.objects.all() 
     # Prepara o campo valor atual
     for operacao in operacoes:
         operacao.atual = operacao.quantidade
@@ -162,6 +179,7 @@ def historico(request):
 
 @login_required
 def inserir_lc(request):
+    investidor = request.user.investidor
     # Preparar formsets 
     PorcentagemFormSet = inlineformset_factory(LetraCredito, HistoricoPorcentagemLetraCredito, fields=('porcentagem_di',),
                                             extra=1, can_delete=False, max_num=1, validate_max=True)
@@ -173,6 +191,7 @@ def inserir_lc(request):
             form_lc = LetraCreditoForm(request.POST)
             if form_lc.is_valid():
                 lc = form_lc.save(commit=False)
+                lc.investidor = investidor
                 formset_porcentagem = PorcentagemFormSet(request.POST, instance=lc)
                 formset_porcentagem.forms[0].empty_permitted=False
                 formset_carencia = CarenciaFormSet(request.POST, instance=lc)
@@ -208,19 +227,21 @@ def inserir_lc(request):
 
 @login_required
 def inserir_operacao_lc(request):
+    investidor = request.user.investidor
+    
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoLetraCredito, DivisaoOperacaoLC, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoLCFormSet)
     
     if request.method == 'POST':
         if request.POST.get("save"):
-            form_operacao_lc = OperacaoLetraCreditoForm(request.POST)
-            formset_divisao = DivisaoFormSet(request.POST)
+            form_operacao_lc = OperacaoLetraCreditoForm(request.POST, investidor=investidor)
+            formset_divisao = DivisaoFormSet(request.POST, investidor=investidor)
             
             if form_operacao_lc.is_valid():
                 operacao_lc = form_operacao_lc.save(commit=False)
                 operacao_compra = form_operacao_lc.cleaned_data['operacao_compra']
-                formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lc, operacao_compra=operacao_compra)
+                formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lc, operacao_compra=operacao_compra, investidor=investidor)
                     
                 # TODO Validar em caso de venda
                 if form_operacao_lc.cleaned_data['tipo_operacao'] == 'V':
@@ -228,6 +249,7 @@ def inserir_operacao_lc(request):
                     # Caso de venda total da letra de crédito
                     if form_operacao_lc.cleaned_data['quantidade'] == operacao_compra.quantidade:
                         # Desconsiderar divisões inseridas, copiar da operação de compra
+                        operacao_lc.investidor = investidor
                         operacao_lc.save()
                         for divisao_lc in DivisaoOperacaoLC.objects.filter(operacao=operacao_compra):
                             divisao_lc_venda = DivisaoOperacaoLC(quantidade=divisao_lc.quantidade, divisao=divisao_lc.divisao, \
@@ -240,6 +262,7 @@ def inserir_operacao_lc(request):
                     # Vendas parciais
                     else:
                         if formset_divisao.is_valid():
+                            operacao_lc.investidor = investidor
                             operacao_lc.save()
                             formset_divisao.save()
                             operacao_venda_lc = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_lc)
@@ -248,6 +271,7 @@ def inserir_operacao_lc(request):
                             return HttpResponseRedirect(reverse('historico_lc'))
                 else:
                     if formset_divisao.is_valid():
+                        operacao_lc.investidor = investidor
                         operacao_lc.save()
                         formset_divisao.save()
                         messages.success(request, 'Operação inserida com sucesso')
@@ -264,8 +288,8 @@ def inserir_operacao_lc(request):
 #                         print '%s %s'  % (divisao_lc.quantidade, divisao_lc.divisao)
                 
     else:
-        form_operacao_lc = OperacaoLetraCreditoForm()
-        formset_divisao = DivisaoFormSet()
+        form_operacao_lc = OperacaoLetraCreditoForm(investidor=investidor)
+        formset_divisao = DivisaoFormSet(investidor=investidor)
     return render_to_response('lc/inserir_operacao_lc.html', {'form_operacao_lc': form_operacao_lc, 'formset_divisao': formset_divisao},
                               context_instance=RequestContext(request))
 
@@ -319,8 +343,16 @@ def modificar_porcentagem_di_lc(request):
 
 @login_required
 def painel(request):
+    investidor = request.user.investidor
+    
     # Processa primeiro operações de venda (V), depois compra (C)
-    operacoes = OperacaoLetraCredito.objects.exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
+    operacoes = OperacaoLetraCredito.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
+    
+    # Se não há operações, retornar
+    if not operacoes:
+        return render_to_response('lc/painel.html', {'operacoes': operacoes, 'dados': {}},
+                               context_instance=RequestContext(request))
+    
     historico_porcentagem = HistoricoPorcentagemLetraCredito.objects.all() 
     # Prepara o campo valor atual
     for operacao in operacoes:

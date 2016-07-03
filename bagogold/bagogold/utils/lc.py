@@ -25,13 +25,15 @@ def calcular_valor_atualizado_com_taxas(taxas_dos_dias, valor_atual, operacao_ta
         taxa_acumulada *= pow(((pow((Decimal(1) + taxa_do_dia/100), Decimal(1)/Decimal(252)) - Decimal(1)) * operacao_taxa/100 + Decimal(1)), taxas_dos_dias[taxa_do_dia])
     return taxa_acumulada * valor_atual
 
-def calcular_valor_lc_ate_dia(dia):
+
+def calcular_valor_lc_ate_dia(investidor, dia):
     """ 
     Calcula o valor das letras de crédito no dia determinado
-    Parâmetros: Data final
+    Parâmetros: Investidor
+                Data final
     Retorno: Valor de cada letra de crédito na data escolhida {id_letra: valor_na_data, }
     """
-    operacoes_queryset = OperacaoLetraCredito.objects.exclude(data__isnull=True).exclude(data__gte=dia).order_by('-tipo_operacao', 'data') 
+    operacoes_queryset = OperacaoLetraCredito.objects.filter(investidor=investidor).exclude(data__isnull=True).exclude(data__gte=dia).order_by('-tipo_operacao', 'data') 
     if len(operacoes_queryset) == 0:
         return {}
     operacoes = list(operacoes_queryset)
@@ -39,10 +41,7 @@ def calcular_valor_lc_ate_dia(dia):
     for operacao in operacoes:
         if operacao.tipo_operacao == 'C':
             operacao.atual = operacao.quantidade
-            try:
-                operacao.taxa = historico_porcentagem.filter(data__lte=operacao.data, letra_credito=operacao.letra_credito)[0].porcentagem_di
-            except:
-                operacao.taxa = historico_porcentagem.get(data__isnull=True, letra_credito=operacao.letra_credito).porcentagem_di
+            operacao.taxa = operacao.porcentagem_di()
     
     # Pegar data inicial
     data_inicial = operacoes_queryset.order_by('data')[0].data
@@ -91,7 +90,7 @@ def calcular_valor_lc_ate_dia(dia):
             data_iteracao = proximas_datas[0].data
         else:
             break
-        
+    
     # Preencher os valores nas letras de crédito
     for letra_credito_id in letras_credito.keys():
         for operacao in operacoes:

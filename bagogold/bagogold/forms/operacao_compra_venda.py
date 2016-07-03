@@ -13,10 +13,13 @@ ESCOLHAS_DAYTRADE=(
 class OperacaoCompraVendaForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
+        # Pegar investidor atual
+        self.investidor = kwargs.pop('investidor')
+        
         super(OperacaoCompraVendaForm, self).__init__(*args, **kwargs)
-
+        
         # lista de compras
-        operacoes_compra = OperacaoAcao.objects.filter(tipo_operacao='C', destinacao='T')
+        operacoes_compra = OperacaoAcao.objects.filter(investidor=self.investidor, tipo_operacao='C', destinacao='T')
         self.fields["compra"].choices = []
         for operacao in operacoes_compra:
             adicionar = True
@@ -27,7 +30,7 @@ class OperacaoCompraVendaForm(forms.ModelForm):
                 self.fields["compra"].choices += [[operacao.id, operacao]]
         
         # lista de vendas
-        operacoes_venda = OperacaoAcao.objects.filter(tipo_operacao='V', destinacao='T')
+        operacoes_venda = OperacaoAcao.objects.filter(investidor=self.investidor, tipo_operacao='V', destinacao='T')
         self.fields["venda"].choices = []
         for operacao in operacoes_venda:
             adicionar = True

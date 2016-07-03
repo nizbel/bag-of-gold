@@ -20,6 +20,7 @@ from bagogold.bagogold.utils.td import calcular_qtd_titulos_ate_dia_por_divisao
 from decimal import Decimal
 from django.contrib import messages
 from django.core.urlresolvers import reverse
+from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
@@ -187,10 +188,14 @@ def editar_transferencia(request, id):
                               context_instance=RequestContext(request))
 
 def inserir_divisao(request):
+    investidor = request.user.investidor
+    
     if request.method == 'POST':
         form = DivisaoForm(request.POST)
         if form.is_valid():
-            form.save()
+            divisao = form.save(commit=False)
+            divisao.investidor = investidor
+            divisao.save()
             return HttpResponseRedirect(reverse('listar_divisoes'))
     else:
         form = DivisaoForm()
@@ -211,7 +216,9 @@ def inserir_transferencia(request):
 
 
 def listar_divisoes(request):
-    divisoes = Divisao.objects.filter()
+    investidor = request.user.investidor
+    
+    divisoes = Divisao.objects.filter(investidor=investidor)
     
     for divisao in divisoes:
         divisao.valor_atual = 0
@@ -265,11 +272,17 @@ def listar_divisoes(request):
         divisao.saldo = divisao.saldo_bh + divisao.saldo_lc + divisao.saldo_fii + divisao.saldo_trade + divisao.saldo_td + divisao.saldo_nao_alocado
         
     # Preparar parte de operações não alocadas
-    operacoes_nao_alocadas = verificar_operacoes_nao_alocadas()
+    operacoes_nao_alocadas = verificar_operacoes_nao_alocadas(investidor=investidor)
     
     return render_to_response('divisoes/listar_divisoes.html', {'divisoes': divisoes, 'operacoes_nao_alocadas': operacoes_nao_alocadas}, context_instance=RequestContext(request))
 
 def listar_transferencias(request):
-    transferencias = TransferenciaEntreDivisoes.objects.filter()
+    investidor = request.user.investidor
+    
+    transferencias = TransferenciaEntreDivisoes.objects.filter(Q(divisao_cedente__investidor=investidor) | Q(divisao_recebedora__investidor=investidor))
+    
+    for transferencia in transferencias:
+        transferencia.investimento_origem = transferencia.investimento_origem_completo()
+        transferencia.investimento_destino = transferencia.investimento_destino_completo()
     
     return render_to_response('divisoes/listar_transferencias.html', {'transferencias': transferencias}, context_instance=RequestContext(request))

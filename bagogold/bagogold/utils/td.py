@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD
-from bagogold.bagogold.models.td import OperacaoTitulo, Titulo, HistoricoTitulo
+from bagogold.bagogold.models.td import OperacaoTitulo, Titulo, HistoricoTitulo, \
+    ValorDiarioTitulo
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo
 from decimal import Decimal
 from django.db.models import Sum, Case, When, IntegerField, F
@@ -92,3 +93,14 @@ def calcular_qtd_titulos_ate_dia_por_divisao(dia, divisao_id):
             del qtd_titulos[key]
         
     return qtd_titulos
+
+def buscar_data_valor_mais_recente():
+    """
+    Traz a data para o valor mais recente registrado na base
+    Retorno: Data ou Data e Hora mais recente
+    """
+    try:
+        atualizacao_mais_recente = ValorDiarioTitulo.objects.latest('data_hora').data_hora
+    except:
+        atualizacao_mais_recente = HistoricoTitulo.objects.latest('data').data
+    return atualizacao_mais_recente

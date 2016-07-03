@@ -30,10 +30,12 @@ class OperacaoLetraCreditoForm(forms.ModelForm):
         js = ('js/bagogold/lc.js',)
         
     def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
         # first call parent's constructor
         super(OperacaoLetraCreditoForm, self).__init__(*args, **kwargs)
         # there's a `fields` property now
         self.fields['letra_credito'].required = False
+        self.fields['letra_credito'].queryset = LetraCredito.objects.filter(investidor=self.investidor)
 #         if self.instance.pk is not None:
 #             # Verificar se é uma compra
 #             if self.instance.tipo_operacao == 'V':
@@ -48,7 +50,7 @@ class OperacaoLetraCreditoForm(forms.ModelForm):
             if operacao_compra is None:
                 raise forms.ValidationError('Selecione operação de compra válida')
             quantidade = self.cleaned_data['quantidade']
-            if quantidade > operacao_compra.qtd_disponivel_venda():
+            if quantidade > operacao_compra.qtd_disponivel_venda_na_data(self.cleaned_data['data']):
                 raise forms.ValidationError('Não é possível vender mais do que o disponível na operação de compra')
             return operacao_compra
         return None

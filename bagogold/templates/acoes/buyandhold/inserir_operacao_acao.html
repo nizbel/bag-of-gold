@@ -18,8 +18,32 @@
             {% endfor %}
         </div>
         <div class="form-actions">
-            <button type="submit" class="btn">Salvar</button>
+            <button class="btn btn-setting">Salvar</button>
+        </div>
+        
+        <div aria-hidden="true" style="display: none;" class="modal hide fade" id="myModal">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">×</button>
+                <h3>Confirmação</h3>
+            </div>
+            <div class="modal-body">
+                <p>Confirma a criação de operação em ações?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn">Sim</button>
+                <a href="#" class="btn btn-danger" data-dismiss="modal">Não</a>
+            </div>
         </div>
     </form>
+    
+    <script>
+    $( document ).ready(function() {
+        $('#id_preco_unitario').on('input',function(){
+        	var string_numeros = $(this).val().replace(/[^\d]/g, '');
+            $(this).val( ("000" + string_numeros).replace(/([0-9]{2})$/, ".$1")
+            		.replace(/^0+([1-9]|0\.)/, '$1'));
+        });
+    });
+    </script>
 {% endblock %}
 

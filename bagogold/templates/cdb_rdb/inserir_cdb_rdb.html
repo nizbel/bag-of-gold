@@ -8,18 +8,9 @@
     <h1>Inserir CDB/RDB</h1>
     <form method="POST" class="post-form form-horizontal">{% csrf_token %}
         <div id="forms">
-<!--             <p> -->
-<!--                 <label>Tipo:</label>           -->
-<!--                 <label class="radio"><input name="tipoRadio" value="option1" checked="" type="radio"> -->
-<!--                     CDB -->
-<!--                 </label> -->
-<!--                 <label class="radio"><input name="tipoRadio" value="option2" type="radio"> -->
-<!--                     RDB -->
-<!--                 </label> -->
-<!--             </p>  -->
             {{ form_cdb_rdb.as_p }}
-            {{ form_historico_porcentagem.as_p }}
-            {{ form_historico_carencia.as_p }}
+            {{ formset_porcentagem }}
+            {{ formset_carencia }}
         </div>
         <div class="form-actions">
             <button type="submit" class="btn">Salvar</button>

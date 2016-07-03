@@ -5,7 +5,7 @@
 {% block head %}
     <!-- start: Meta -->
     <meta charset="utf-8">
-    <title>Acompanhamento de Investimentos Cabuloso</title>
+    <title>Bag of Gold</title>
     <meta name="description" content="Bootstrap Metro Dashboard">
     <meta name="author" content="Dennis Ji">
     <meta name="keyword" content="Metro, Metro UI, Dashboard, Bootstrap, Admin, Template, Theme, Responsive, Fluid, Retina">
@@ -102,6 +102,98 @@
 </head>
 
 <body>
+<div class="navbar">
+    <div class="navbar-inner">
+        <div class="container-fluid">
+            <a class="brand" href="#"><span>Bag of Gold</span></a>
+                            
+            <!-- start: Header Menu -->
+            <div class="nav-no-collapse header-nav">
+                <ul class="nav pull-right">
+                    <li class="dropdown hidden-phone">
+                        <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+                            <i class="halflings-icon white warning-sign"></i>
+                        </a>
+                        <ul class="dropdown-menu notifications">
+                            <li class="dropdown-menu-title">
+                                <span>11 pendências</span>
+                                <a href="#refresh"><i class="icon-repeat"></i></a>
+                            </li>   
+<!--                             <li> -->
+<!--                                 <a href="#"> -->
+<!--                                     <span class="icon blue"><i class="icon-user"></i></span> -->
+<!--                                     <span class="message">New user registration</span> -->
+<!--                                     <span class="time">1 min</span>  -->
+<!--                                 </a> -->
+<!--                             </li> -->
+<!--                             <li> -->
+<!--                                 <a href="#"> -->
+<!--                                     <span class="icon green"><i class="icon-comment-alt"></i></span> -->
+<!--                                     <span class="message">New comment</span> -->
+<!--                                     <span class="time">7 min</span>  -->
+<!--                                 </a> -->
+<!--                             </li> -->
+<!--                             <li> -->
+<!--                                 <a href="#"> -->
+<!--                                     <span class="icon green"><i class="icon-comment-alt"></i></span> -->
+<!--                                     <span class="message">New comment</span> -->
+<!--                                     <span class="time">8 min</span>  -->
+<!--                                 </a> -->
+<!--                             </li> -->
+<!--                             <li> -->
+<!--                                 <a href="#"> -->
+<!--                                     <span class="icon green"><i class="icon-comment-alt"></i></span> -->
+<!--                                     <span class="message">New comment</span> -->
+<!--                                     <span class="time">16 min</span>  -->
+<!--                                 </a> -->
+<!--                             </li> -->
+<!--                             <li> -->
+<!--                                 <a href="#"> -->
+<!--                                     <span class="icon green"><i class="icon-comment-alt"></i></span> -->
+<!--                                     <span class="message">New comment</span> -->
+<!--                                     <span class="time">yesterday</span>  -->
+<!--                                 </a> -->
+<!--                             </li> -->
+<!--                             <li> -->
+<!--                                 <a href="#"> -->
+<!--                                     <span class="icon blue"><i class="icon-user"></i></span> -->
+<!--                                     <span class="message">New user registration</span> -->
+<!--                                     <span class="time">yesterday</span>  -->
+<!--                                 </a> -->
+<!--                             </li> -->
+                            <li class="dropdown-menu-sub-footer">
+                                <a>View all notifications</a>
+                            </li>   
+                        </ul>
+                    </li>
+                    <li>
+                        <a class="btn" href="#">
+                            <i class="halflings-icon white wrench"></i>
+                        </a>
+                    </li>
+                    <!-- start: User Dropdown -->
+                    <li class="dropdown">
+                        <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+                            <i class="halflings-icon white user"></i> {{ request.user.username }}
+                            <span class="caret"></span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li class="dropdown-menu-title">
+                                <span>Minha conta</span>
+                            </li>
+                            <li><a href="#"><i class="halflings-icon user"></i> Alterar dados</a></li>
+                            <li><a href="{% url "logout" %}"><i class="halflings-icon off"></i> Sair</a></li>
+                        </ul>
+                    </li>
+                    <!-- end: User Dropdown -->
+                </ul>
+            </div>
+            <!-- end: Header Menu -->
+            
+        </div>
+    </div>
+</div>
+
 <div class="container-fluid-full">
 <div class="row-fluid">
     <!-- start: Main Menu -->
@@ -114,7 +206,9 @@
                     <ul>
                         <li><a class="submenu" href="{% url "historico_bh" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico</span></a></li>
                         <li><a class="submenu" href="{% url "inserir_operacao_bh" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir operação</span></a></li>
+                        {% if request.user.is_superuser %}
                         <li><a class="submenu" href="{% url "inserir_provento_bh" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir provento</span></a></li>
+                        {% endif %}
                         <li><a class="submenu" href="{% url "inserir_taxa_custodia_acao" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Ins. taxa de custódia</span></a></li>
                         <li><a class="submenu" href="{% url "painel_bh" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Painel</span></a></li>
                         <li><a class="submenu" href="{% url "ver_taxas_custodia_acao" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Ver taxas de custódia</span></a></li>
@@ -145,11 +239,15 @@
                 <li>
                     <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> FII</span></a>
                     <ul>
+                        {% if request.user.is_superuser %}
                         <li><a class="submenu" href="{% url "acompanhamento_mensal_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Acomp. mensal</span></a></li>
+                        {% endif %}
                         <li><a class="submenu" href="{% url "aconselhamento_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Aconselhamento</span></a></li>
                         <li><a class="submenu" href="{% url "historico_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico</span></a></li>
                         <li><a class="submenu" href="{% url "inserir_operacao_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir operação</span></a></li>
+                        {% if request.user.is_superuser %}
                         <li><a class="submenu" href="{% url "inserir_provento_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir provento</span></a></li>
+                        {% endif %}
                         <li><a class="submenu" href="{% url "painel_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Painel</span></a></li>
                     </ul>   
                 </li>
@@ -176,7 +274,7 @@
                     </ul>  
                 </li>
                 <li>
-                    <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> Divisões</span><span class="label label-important"> 1 </span></a>
+                    <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> Divisões</span></a>
                     <ul>
                         <li><a class="submenu" href="{% url "inserir_divisao" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir divisão</span></a></li>
                         <li><a class="submenu" href="{% url "inserir_transferencia" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir transferência</span></a></li>
@@ -214,9 +312,13 @@
         {% endif %}
 
         <div class="row-fluid">
+            <div class="span10">
             {% block content %}
             
             {% endblock %}
+            </div>
+            <div class="span2">
+            </div>
         </div>
     </div>
 </div>
