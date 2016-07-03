@@ -685,12 +685,23 @@ def painel(request):
     if total_variacao_percentual > 0:
         total_variacao_percentual = total_variacao / total_variacao_percentual * Decimal(100)
     
+    # Adicionar dados sobre última atualização
+    # Histórico
+    historico_mais_recente = HistoricoAcao.objects.all().order_by('-data')[0].data
+    # Valor diário
+    try:
+        valor_diario_mais_recente = ValorDiarioAcao.objects.all().order_by('-data_hora')[0].data_hora
+    except:
+        valor_diario_mais_recente = 'N/A'
+    
     # Popular dados
     dados = {}
     dados['total_acoes'] = total_acoes
     dados['total_valor'] = total_valor
     dados['total_variacao'] = total_variacao
     dados['total_variacao_percentual'] = total_variacao_percentual
+    dados['historico_mais_recente'] = historico_mais_recente
+    dados['valor_diario_mais_recente'] = valor_diario_mais_recente
 
     return render_to_response('acoes/buyandhold/painel.html', 
                               {'acoes': acoes, 'dados': dados},
