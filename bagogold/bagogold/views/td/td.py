@@ -12,7 +12,7 @@ from bagogold.bagogold.utils.fii import \
     calcular_rendimento_proventos_fii_12_meses, \
     calcular_variacao_percentual_fii_por_periodo
 from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia_por_titulo, \
-    calcular_imposto_venda_td
+    calcular_imposto_venda_td, buscar_data_valor_mais_recente
 from copy import deepcopy
 from decimal import Decimal
 from django.contrib import messages
@@ -460,5 +460,6 @@ def painel(request):
     dados = {}
     dados['total_atual'] = total_atual
     dados['total_lucro'] = total_lucro
+    dados['data_valor_mais_recente'] = buscar_data_valor_mais_recente()
     
     return render_to_response('td/painel.html', {'titulos': titulos, 'titulos_vendidos': titulos_vendidos, 'dados': dados}, context_instance=RequestContext(request))

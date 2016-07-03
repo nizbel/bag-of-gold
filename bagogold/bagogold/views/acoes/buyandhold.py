@@ -687,10 +687,10 @@ def painel(request):
     
     # Adicionar dados sobre última atualização
     # Histórico
-    historico_mais_recente = HistoricoAcao.objects.all().order_by('-data')[0].data
+    historico_mais_recente = HistoricoAcao.objects.latest('data').data
     # Valor diário
     try:
-        valor_diario_mais_recente = ValorDiarioAcao.objects.all().order_by('-data_hora')[0].data_hora
+        valor_diario_mais_recente = ValorDiarioAcao.objects.latest('data_hora').data_hora
     except:
         valor_diario_mais_recente = 'N/A'
     
