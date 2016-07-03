@@ -94,7 +94,7 @@ def calcular_valor_cdb_rdb_ate_dia_por_divisao(dia, divisao_id):
     operacoes = list(operacoes_queryset)
     for operacao in operacoes:
         if operacao.tipo_operacao == 'C':
-            operacao.atual = operacao.quantidade
+            operacao.atual = DivisaoOperacaoCDB_RDB.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade
             operacao.taxa = operacao.porcentagem()
     
     # Pegar data inicial

@@ -113,10 +113,7 @@ def calcular_valor_lc_ate_dia_por_divisao(dia, divisao_id):
     for operacao in operacoes:
         if operacao.tipo_operacao == 'C':
             operacao.atual = DivisaoOperacaoLC.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade
-            try:
-                operacao.taxa = historico_porcentagem.filter(data__lte=operacao.data, letra_credito=operacao.letra_credito)[0].porcentagem_di
-            except:
-                operacao.taxa = historico_porcentagem.get(data__isnull=True, letra_credito=operacao.letra_credito).porcentagem_di
+            operacao.taxa = operacao.porcentagem_di()
     
     # Pegar data inicial
     data_inicial = operacoes_queryset.order_by('data')[0].data
