@@ -128,6 +128,7 @@ def historico(request):
                             if (data_iteracao == data_final):
                                 str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
                                 operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+                            print operacao.atual
                         total_patrimonio += operacao.atual
                         
                 elif operacao.tipo_operacao == 'V':
@@ -345,7 +346,7 @@ def painel(request):
     data_inicial = operacoes.order_by('data')[0].data
     
     # Pegar data final
-    data_final = HistoricoTaxaDI.objects.filter().order_by('-data')[0].data
+    data_final = max(HistoricoTaxaDI.objects.filter().order_by('-data')[0].data, datetime.date.today())
     
     data_iteracao = data_inicial
     
@@ -368,6 +369,7 @@ def painel(request):
                             str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
                             operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
                             total_atual += operacao.atual
+                        print operacao.atual
                         
                 elif operacao.tipo_operacao == 'V':
                     if (operacao.data == data_iteracao):
