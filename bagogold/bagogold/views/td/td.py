@@ -245,7 +245,6 @@ def historico_td(request):
                                 total_patrimonio += (qtd_titulos[titulo] * valor_diario.preco_venda)
                                 break
                 graf_patrimonio += [[str(calendar.timegm(item.data.timetuple()) * 1000), float(total_patrimonio)]]
-                graf_total_venc += [[str(calendar.timegm(item.data.timetuple()) * 1000), float(qtd_total_titulos * 1000)]]
                 
             elif item.tipo_operacao == 'V':
                 item.tipo = 'Venda'
@@ -266,7 +265,13 @@ def historico_td(request):
                                 total_patrimonio += (qtd_titulos[titulo] * valor_diario.preco_venda)
                                 break
                 graf_patrimonio += [[str(calendar.timegm(item.data.timetuple()) * 1000), float(total_patrimonio)]]
-                graf_total_venc += [[str(calendar.timegm(item.data.timetuple()) * 1000), float(qtd_total_titulos * 1000)]]
+        # Calcular o total a receber no vencimento com base nas quantidades
+        total_vencimento_atual = 0
+        for titulo in qtd_titulos.keys():
+            if qtd_titulos[titulo] > 0:
+                print titulo, titulo.valor_vencimento()
+                total_vencimento_atual += qtd_titulos[titulo] * titulo.valor_vencimento()
+        graf_total_venc += [[str(calendar.timegm(item.data.timetuple()) * 1000), float(total_vencimento_atual)]]
             
     # Adicionar valor mais atual para todos os gráficos
     data_mais_atual = datetime.datetime.now()
@@ -284,7 +289,7 @@ def historico_td(request):
                 patrimonio_atual += (qtd_titulos[titulo] * valores_diarios_titulo[0].preco_venda)
             
             # Calcular o total a receber no vencimento com base nas quantidades
-            total_vencimento_atual += qtd_titulos[titulo] * 1000
+            total_vencimento_atual += qtd_titulos[titulo] * titulo.valor_vencimento()
     graf_patrimonio += [[str(calendar.timegm(data_mais_atual.timetuple()) * 1000), float(patrimonio_atual)]]
     graf_total_venc += [[str(calendar.timegm(data_mais_atual.timetuple()) * 1000), float(total_vencimento_atual)]]
         

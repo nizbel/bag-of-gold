@@ -4,12 +4,14 @@ from django.conf.urls import url
 from django.contrib.auth.views import login, password_change, \
     password_change_done, password_reset, password_reset_done, \
     password_reset_confirm, password_reset_complete
+from django.views.generic.base import RedirectView
 import views
 
 
 
 urlpatterns = [
     # Geral
+    url(r'^$', RedirectView.as_view(url='/home/')),
     url(r'^home/$', views.home.home, name='home'),
     
     # Investidores
