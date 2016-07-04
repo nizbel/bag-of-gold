@@ -31,6 +31,24 @@ class Titulo (models.Model):
             return True
         else:
             return False
+        
+    def valor_vencimento(self):
+        from bagogold.bagogold.utils.td import calcular_valor_acumulado_ipca
+        
+        if self.tipo == 'LTN':
+            return 1000
+        elif self.tipo == 'LFT':
+            return 1000
+        elif self.tipo == 'NTN-B':
+            return (1 + calcular_valor_acumulado_ipca(datetime.date(2000, 7, 15))) * 1000
+        elif self.tipo == 'NTN-B Principal':
+            return (1 + calcular_valor_acumulado_ipca(datetime.date(2000, 7, 15))) * 1000
+        elif self.tipo == 'NTN-F':
+            return 1000
+        elif self.tipo == 'NTN-C':
+            return 1000
+        else:
+            return 0
     
 class OperacaoTitulo (models.Model):
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)  
