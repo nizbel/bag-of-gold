@@ -1,5 +1,42 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.models.td import HistoricoIPCA
+from decimal import Decimal
+from urllib2 import Request, urlopen, URLError, HTTPError
 import math
+import re
 
 def calcular_iof_regressivo(dias):
-   return max((100 - (dias * 3 + math.ceil((float(dias)/3)))), 0)/100
+    return max((100 - (dias * 3 + math.ceil((float(dias)/3)))), 0)/100
+
+def buscar_historico_ipca():
+    td_url = 'http://www.portalbrasil.net/ipca.htm'
+    req = Request(td_url)
+    try:
+        response = urlopen(req)
+    except HTTPError as e:
+        print 'The server couldn\'t fulfill the request.'
+        print 'Error code: ', e.code
+    except URLError as e:
+        print 'We failed to reach a server.'
+        print 'Reason: ', e.reason
+    else:
+#         print 'Host: %s' % (req.get_host())
+        data = response.read()
+#         print data
+        string_importante = (data[data.find('simplificada'):
+                                 data.find('FONTES')])
+#         print string_importante
+        linhas = re.findall('<tr.*?>.*?</tr>', string_importante, re.MULTILINE|re.DOTALL|re.IGNORECASE)
+        for linha in linhas[1:]:
+            linha = re.sub('<.*?>', '', linha, flags=re.MULTILINE|re.DOTALL|re.IGNORECASE)
+            linha = linha.replace(' ', '').replace('&nbsp;', '')
+            campos = re.findall('([\S]*)', linha, re.MULTILINE|re.DOTALL|re.IGNORECASE)
+            campos = filter(bool, campos)
+            print campos
+            for mes in range(1,13):
+                try:
+                    print 'Ano:', campos[0], 'Mes:', mes, 'Valor:', Decimal(campos[mes].replace(',', '.'))
+                    historico_ipca = HistoricoIPCA(ano=int(campos[0]), mes=mes, valor=Decimal(campos[mes].replace(',', '.')))
+                    historico_ipca.save()
+                except:
+                    print 'Não foi possível converter', campos[mes]
