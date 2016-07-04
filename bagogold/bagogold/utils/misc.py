@@ -6,7 +6,7 @@ import math
 import re
 
 def calcular_iof_regressivo(dias):
-    return max((100 - (dias * 3 + math.ceil((float(dias)/3)))), 0)/100
+    return Decimal(max((100 - (dias * 3 + math.ceil((float(dias)/3)))), 0)/100)
 
 def buscar_historico_ipca():
     td_url = 'http://www.portalbrasil.net/ipca.htm'

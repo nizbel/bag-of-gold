@@ -183,6 +183,8 @@ def inserir_cdb_rdb(request):
     if request.method == 'POST':
         if request.POST.get("save"):
             form_cdb_rdb = CDB_RDBForm(request.POST)
+            formset_porcentagem = PorcentagemFormSet(request.POST)
+            formset_carencia = CarenciaFormSet(request.POST)
             if form_cdb_rdb.is_valid():
                 cdb_rdb = form_cdb_rdb.save(commit=False)
                 cdb_rdb.investidor = request.user.investidor
