@@ -394,7 +394,7 @@ def painel(request):
     operacoes = [operacao for operacao in operacoes if (operacao.atual > 0 and operacao.tipo_operacao == 'C')]
     
     total_ganho_prox_dia = 0
-    # Cacdb_rdbular o ganho no dia seguinte, considerando taxa do dia anterior
+    # Calcular o ganho no dia seguinte, considerando taxa do dia anterior
     for operacao in operacoes:
         operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa) - operacao.atual
         str_auxiliar = str(operacao.ganho_prox_dia.quantize(Decimal('.0001')))
