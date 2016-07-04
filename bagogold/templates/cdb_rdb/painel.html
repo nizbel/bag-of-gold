@@ -12,6 +12,8 @@
                 <th>Taxa (% do DI)</th>
                 <th>Valor atual</th>
                 <th>Venda permitida?</th>
+                <th>IR</th>
+                <th>IOF</th>
                 <th>Ganho no próx. dia*</th>
             </tr>
         </thead>
@@ -23,6 +25,8 @@
                 <td>{{ item.taxa }}%</td>
                 <td>R${{item.atual|floatformat:2}}</td>
                 <td>{{ item.venda_permitida|yesno:"Sim,Não,Indefinido" }}</td>
+                <td>R${{ item.imposto_renda|floatformat:2 }}</td>
+                <td>R${{ item.iof|floatformat:2 }}</td>
                 <td>R${{item.ganho_prox_dia }}</td>
             </tr>
         {% endfor %}
@@ -31,6 +35,8 @@
             <tr>
                 <th colspan="3">Total</th>
                 <th>R${{ dados.total_atual }}</th>
+                <th></th>
+                <th></th>
                 <th></th>
                 <th>R${{ dados.total_ganho_prox_dia }}</th>
             </tr>
