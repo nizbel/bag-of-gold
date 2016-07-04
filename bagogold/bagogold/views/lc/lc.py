@@ -131,10 +131,11 @@ def historico(request):
                         if taxa_do_dia > 0:
                             # Calcular o valor atualizado para cada operacao
                             operacao.atual = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa)
-                            # Arredondar na última iteração
-                            if (data_iteracao == data_final):
-                                str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
-                                operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+                        # Arredondar na última iteração
+                        if (data_iteracao == data_final):
+                            print 'data final'
+                            str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
+                            operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
                         total_patrimonio += operacao.atual
                         
                 elif operacao.tipo_operacao == 'V':
