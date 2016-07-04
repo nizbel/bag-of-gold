@@ -396,6 +396,8 @@ def painel(request):
     # Remover operações que não estejam mais rendendo
     operacoes = [operacao for operacao in operacoes if (operacao.atual > 0 and operacao.tipo_operacao == 'C')]
     
+    total_ir = 0
+    total_iof = 0
     total_ganho_prox_dia = 0
     for operacao in operacoes:
         # Calcular o ganho no dia seguinte, considerando taxa do dia anterior
@@ -418,10 +420,14 @@ def painel(request):
             operacao.imposto_renda =  Decimal(0.175) * (operacao.atual - operacao.inicial - operacao.iof)
         else: 
             operacao.imposto_renda =  Decimal(0.15) * (operacao.atual - operacao.inicial - operacao.iof)
+        total_ir += operacao.imposto_renda
+        total_iof += operacao.iof
     
     # Popular dados
     dados = {}
     dados['total_atual'] = total_atual
+    dados['total_ir'] = total_ir
+    dados['total_iof'] = total_iof
     dados['total_ganho_prox_dia'] = total_ganho_prox_dia
     
     return render_to_response('cdb_rdb/painel.html', {'operacoes': operacoes, 'dados': dados},
