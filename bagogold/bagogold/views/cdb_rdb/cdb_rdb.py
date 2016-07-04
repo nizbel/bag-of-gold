@@ -124,11 +124,10 @@ def historico(request):
                         if taxa_do_dia > 0:
                             # Cacdb_rdbular o valor atualizado para cada operacao
                             operacao.atual = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa)
-                            # Arredondar na última iteração
-                            if (data_iteracao == data_final):
-                                str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
-                                operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-                            print operacao.atual
+                        # Arredondar na última iteração
+                        if (data_iteracao == data_final):
+                            str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
+                            operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
                         total_patrimonio += operacao.atual
                         
                 elif operacao.tipo_operacao == 'V':
@@ -346,7 +345,7 @@ def painel(request):
     data_inicial = operacoes.order_by('data')[0].data
     
     # Pegar data final
-    data_final = max(HistoricoTaxaDI.objects.filter().order_by('-data')[0].data, datetime.date.today())
+    data_final = HistoricoTaxaDI.objects.filter().order_by('-data')[0].data
     
     data_iteracao = data_inicial
     
@@ -397,7 +396,7 @@ def painel(request):
     operacoes = [operacao for operacao in operacoes if (operacao.atual > 0 and operacao.tipo_operacao == 'C')]
     
     total_ganho_prox_dia = 0
-    # CAlcular o ganho no dia seguinte, considerando taxa do dia anterior
+    # Calcular o ganho no dia seguinte, considerando taxa do dia anterior
     for operacao in operacoes:
         operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa) - operacao.atual
         str_auxiliar = str(operacao.ganho_prox_dia.quantize(Decimal('.0001')))
