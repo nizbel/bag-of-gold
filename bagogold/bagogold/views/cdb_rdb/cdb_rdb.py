@@ -13,6 +13,7 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoLC, \
     DivisaoOperacaoCDB_RDB
 from bagogold.bagogold.models.lc import HistoricoTaxaDI
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa
+from bagogold.bagogold.utils.misc import calcular_iof_regressivo
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -360,7 +361,7 @@ def painel(request):
                 # Verificar se se trata de compra ou venda
                 if operacao.tipo_operacao == 'C':
                         if (operacao.data == data_iteracao):
-                            operacao.total = operacao.quantidade
+                            operacao.inicial = operacao.quantidade
                         # Cacdb_rdbular o valor atualizado para cada operacao
                         operacao.atual = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa)
                         # Arredondar na última iteração
@@ -368,11 +369,10 @@ def painel(request):
                             str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
                             operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
                             total_atual += operacao.atual
-                        print operacao.atual
                         
                 elif operacao.tipo_operacao == 'V':
                     if (operacao.data == data_iteracao):
-                        operacao.total = operacao.quantidade
+                        operacao.inicial = operacao.quantidade
                         # Remover quantidade da operação de compra
                         operacao_compra_id = operacao.operacao_compra_relacionada().id
                         for operacao_c in operacoes:
@@ -381,6 +381,7 @@ def painel(request):
                                 operacao.taxa = operacao_c.taxa
                                 operacao.atual = (operacao.quantidade/operacao_c.quantidade) * operacao_c.atual
                                 operacao_c.atual -= operacao.atual
+                                operacao_c.inicial -= operacao.inicial
                                 str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
                                 operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
                                 break
@@ -396,12 +397,27 @@ def painel(request):
     operacoes = [operacao for operacao in operacoes if (operacao.atual > 0 and operacao.tipo_operacao == 'C')]
     
     total_ganho_prox_dia = 0
-    # Calcular o ganho no dia seguinte, considerando taxa do dia anterior
     for operacao in operacoes:
+        # Calcular o ganho no dia seguinte, considerando taxa do dia anterior
         operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa) - operacao.atual
         str_auxiliar = str(operacao.ganho_prox_dia.quantize(Decimal('.0001')))
         operacao.ganho_prox_dia = Decimal(str_auxiliar[:len(str_auxiliar)-2])
         total_ganho_prox_dia += operacao.ganho_prox_dia
+        
+        # Calcular impostos
+        qtd_dias = (datetime.date.today() - operacao.data).days
+        print qtd_dias, calcular_iof_regressivo(qtd_dias)
+        # IOF
+        operacao.iof = Decimal(calcular_iof_regressivo(qtd_dias)) * (operacao.atual - operacao.inicial)
+        # IR
+        if qtd_dias <= 180:
+            operacao.imposto_renda =  Decimal(0.225) * (operacao.atual - operacao.inicial - operacao.iof)
+        elif qtd_dias <= 360:
+            operacao.imposto_renda =  Decimal(0.2) * (operacao.atual - operacao.inicial - operacao.iof)
+        elif qtd_dias <= 720:
+            operacao.imposto_renda =  Decimal(0.175) * (operacao.atual - operacao.inicial - operacao.iof)
+        else: 
+            operacao.imposto_renda =  Decimal(0.15) * (operacao.atual - operacao.inicial - operacao.iof)
     
     # Popular dados
     dados = {}
