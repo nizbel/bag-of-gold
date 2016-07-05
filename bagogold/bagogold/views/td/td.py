@@ -232,7 +232,6 @@ def historico_td(request):
                 item.taxa_bvmf + item.taxa_custodia)
                 total_gasto += item.total
                 qtd_titulos[item.titulo] += item.quantidade
-                graf_gasto_total += [[str(calendar.timegm(item.data.timetuple()) * 1000), float(-total_gasto)]]
                 total_patrimonio = 0
                 qtd_total_titulos = 0
                 for titulo in qtd_titulos.keys():
@@ -252,7 +251,6 @@ def historico_td(request):
                 item.taxa_bvmf - item.taxa_custodia)
                 total_gasto += item.total
                 qtd_titulos[item.titulo] -= item.quantidade
-                graf_gasto_total += [[str(calendar.timegm(item.data.timetuple()) * 1000), float(-total_gasto)]]
                 total_patrimonio = 0
                 qtd_total_titulos = 0
                 for titulo in qtd_titulos.keys():
@@ -286,15 +284,19 @@ def historico_td(request):
             if qtd_titulos[titulo] > 0:
                 print titulo, titulo.valor_vencimento()
                 total_vencimento_atual += qtd_titulos[titulo] * titulo.valor_vencimento()
-         # Verifica se altera ultima posicao do grafico ou adiciona novo registro
+        # Verifica se altera ultima posicao do grafico ou adiciona novo registro
         if len(graf_total_venc) > 0 and graf_total_venc[-1][0] == data_formatada:
             graf_total_venc[len(graf_total_venc)-1][1] = float(total_vencimento_atual)
         else:
             graf_total_venc += [[data_formatada, float(total_vencimento_atual)]]
             
     # Adicionar valor mais atual para todos os gráficos
-    data_mais_atual = datetime.datetime.now()
-    graf_gasto_total += [[str(calendar.timegm(data_mais_atual.timetuple()) * 1000), float(-total_gasto)]]
+    data_mais_atual_formatada = str(calendar.timegm(datetime.datetime.now().timetuple()) * 1000)  
+    # Total gasto
+    if len(graf_gasto_total) > 0 and graf_gasto_total[-1][0] == data_mais_atual_formatada:
+        graf_gasto_total[len(graf_gasto_total)-1][1] = float(-total_gasto)
+    else:
+        graf_gasto_total += [[data_mais_atual_formatada, float(-total_gasto)]]
     patrimonio_atual = 0
     total_vencimento_atual = 0
     for titulo in qtd_titulos.keys():
@@ -309,8 +311,16 @@ def historico_td(request):
             
             # Calcular o total a receber no vencimento com base nas quantidades
             total_vencimento_atual += qtd_titulos[titulo] * titulo.valor_vencimento()
-    graf_patrimonio += [[str(calendar.timegm(data_mais_atual.timetuple()) * 1000), float(patrimonio_atual)]]
-    graf_total_venc += [[str(calendar.timegm(data_mais_atual.timetuple()) * 1000), float(total_vencimento_atual)]]
+    # Patrimônio
+    if len(graf_patrimonio) > 0 and graf_patrimonio[-1][0] == data_mais_atual_formatada:
+        graf_patrimonio[len(graf_patrimonio)-1][1] = float(patrimonio_atual)
+    else:
+        graf_patrimonio += [[data_mais_atual_formatada, float(patrimonio_atual)]]
+    # Total vencimento
+    if len(graf_total_venc) > 0 and graf_total_venc[-1][0] == data_mais_atual_formatada:
+        graf_total_venc[len(graf_total_venc)-1][1] = float(total_vencimento_atual)
+    else:
+        graf_total_venc += [[data_mais_atual_formatada, float(total_vencimento_atual)]]
         
     dados = {}
     dados['total_venc_atual'] = total_vencimento_atual
