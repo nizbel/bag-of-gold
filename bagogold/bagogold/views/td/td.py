@@ -283,7 +283,7 @@ def historico_td(request):
         for titulo in qtd_titulos.keys():
             if qtd_titulos[titulo] > 0:
                 print titulo, titulo.valor_vencimento()
-                total_vencimento_atual += qtd_titulos[titulo] * titulo.valor_vencimento()
+                total_vencimento_atual += qtd_titulos[titulo] * titulo.valor_vencimento(data=item.data)
         # Verifica se altera ultima posicao do grafico ou adiciona novo registro
         if len(graf_total_venc) > 0 and graf_total_venc[-1][0] == data_formatada:
             graf_total_venc[len(graf_total_venc)-1][1] = float(total_vencimento_atual)
