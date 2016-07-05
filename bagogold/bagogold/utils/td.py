@@ -29,7 +29,7 @@ def calcular_valor_acumulado_ipca(data_base, data_final=datetime.date.today()):
 #     print 'IPCA inicial:', ipca_periodo
     # TODO melhorar isso
     for mes_historico in HistoricoIPCA.objects.filter(id__gt=ipca_inicial.id, ano__lte=data_final.year).order_by('ano', 'mes'):
-        if datetime.date(mes_historico.ano, mes_historico.mes, 1) <= data_final:
+        if datetime.date(mes_historico.ano, mes_historico.mes, calendar.monthrange(mes_historico.ano, mes_historico.mes)[1]) <= data_final:
 #             print mes_historico.ano, '/', mes_historico.mes, '->', ipca_periodo, (1 + mes_historico.valor/Decimal(100))
             ipca_periodo = (1 + ipca_periodo) * (1 + mes_historico.valor/Decimal(100)) - 1
     return ipca_periodo

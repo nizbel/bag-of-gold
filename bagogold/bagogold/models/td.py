@@ -32,7 +32,7 @@ class Titulo (models.Model):
         else:
             return False
         
-    def valor_vencimento(self):
+    def valor_vencimento(self, data=datetime.date.today()):
         from bagogold.bagogold.utils.td import calcular_valor_acumulado_ipca
         
         if self.tipo == 'LTN':
@@ -40,9 +40,9 @@ class Titulo (models.Model):
         elif self.tipo == 'LFT':
             return 1000
         elif self.tipo == 'NTN-B':
-            return (1 + calcular_valor_acumulado_ipca(datetime.date(2000, 7, 15))) * 1000
+            return (1 + calcular_valor_acumulado_ipca(datetime.date(2000, 7, 15), data_final=data)) * 1000
         elif self.tipo == 'NTN-B Principal':
-            return (1 + calcular_valor_acumulado_ipca(datetime.date(2000, 7, 15))) * 1000
+            return (1 + calcular_valor_acumulado_ipca(datetime.date(2000, 7, 15), data_final=data)) * 1000
         elif self.tipo == 'NTN-F':
             return 1000
         elif self.tipo == 'NTN-C':
