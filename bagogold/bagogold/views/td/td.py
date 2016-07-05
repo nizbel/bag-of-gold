@@ -240,6 +240,7 @@ def historico_td(request):
                     if not item.data == datetime.date.today():
                         total_patrimonio += (qtd_titulos[titulo] * HistoricoTitulo.objects.get(data=item.data, titulo=titulo).preco_venda)
                     else:
+                        # TODO verificar necessidade de chamar buscar valores diarios tao frequentemente assim
                         for valor_diario in buscar_valores_diarios():
                             if valor_diario.titulo == titulo:
                                 total_patrimonio += (qtd_titulos[titulo] * valor_diario.preco_venda)
@@ -272,6 +273,12 @@ def historico_td(request):
             graf_patrimonio[len(graf_patrimonio)-1][1] = float(total_patrimonio)
         else:
             graf_patrimonio += [[data_formatada, float(total_patrimonio)]]
+            
+        # Total gasto
+        if len(graf_gasto_total) > 0 and graf_gasto_total[-1][0] == data_formatada:
+            graf_gasto_total[len(graf_gasto_total)-1][1] = float(-total_gasto)
+        else:
+            graf_gasto_total += [[data_formatada, float(-total_gasto)]]
             
         # Calcular o total a receber no vencimento com base nas quantidades
         total_vencimento_atual = 0
