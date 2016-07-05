@@ -79,8 +79,9 @@ def editar_operacao_cdb_rdb(request, id):
     
 @login_required
 def historico(request):
+    investidor = request.user.investidor
     # Processa primeiro operações de venda (V), depois compra (C)
-    operacoes = OperacaoCDB_RDB.objects.exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
+    operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
     # Prepara o campo valor atual
     for operacao in operacoes:
         operacao.atual = operacao.quantidade
@@ -288,7 +289,8 @@ def inserir_operacao_cdb_rdb(request):
 
 @login_required
 def listar_cdb_rdb(request):
-    cdb_rdb = CDB_RDB.objects.all()
+    investidor = request.user.investidor
+    cdb_rdb = CDB_RDB.objects.filter(investidor=investidor)
     
     for investimento in cdb_rdb:
         # Preparar o valor mais atual para carência
@@ -332,8 +334,9 @@ def modificar_porcentagem_cdb_rdb(request):
 
 @login_required
 def painel(request):
+    investidor = request.user.investidor
     # Processa primeiro operações de venda (V), depois compra (C)
-    operacoes = OperacaoCDB_RDB.objects.exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
+    operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
     historico_porcentagem = HistoricoPorcentagemCDB_RDB.objects.all() 
     # Prepara o campo valor atual
     for operacao in operacoes:
