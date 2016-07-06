@@ -84,4 +84,5 @@ class HistoricoCarenciaLetraCreditoForm(forms.ModelForm):
                   'letra_credito')
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),}
+        labels = {'carencia': 'Período de carência (em dias)',}
         

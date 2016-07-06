@@ -23,6 +23,9 @@ from django.template.context import RequestContext
 import calendar
 import datetime
 
+@login_required
+def adicionar_valor_cota_historico(request):
+    pass
 
 @login_required
 def editar_operacao_fundo_investimento(request, id):
@@ -172,7 +175,7 @@ def inserir_fundo_investimento(request):
     investidor = request.user.investidor
     # Preparar formsets 
     CarenciaFormSet = inlineformset_factory(FundoInvestimento, HistoricoCarenciaFundoInvestimento, fields=('carencia',),
-                                            extra=1, can_delete=False, max_num=1, validate_max=True)
+                                            extra=1, can_delete=False, max_num=1, validate_max=True, labels = {'carencia': 'Período de carência (em dias)',})
     
     if request.method == 'POST':
         if request.POST.get("save"):

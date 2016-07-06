@@ -173,7 +173,7 @@ def inserir_cdb_rdb(request):
     PorcentagemFormSet = inlineformset_factory(CDB_RDB, HistoricoPorcentagemCDB_RDB, fields=('porcentagem',),
                                             extra=1, can_delete=False, max_num=1, validate_max=True)
     CarenciaFormSet = inlineformset_factory(CDB_RDB, HistoricoCarenciaCDB_RDB, fields=('carencia',),
-                                            extra=1, can_delete=False, max_num=1, validate_max=True)
+                                            extra=1, can_delete=False, max_num=1, validate_max=True, labels = {'carencia': 'Período de carência (em dias)',})
     
     if request.method == 'POST':
         if request.POST.get("save"):
