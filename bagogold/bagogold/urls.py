@@ -92,4 +92,14 @@ urlpatterns = [
     url(r'^cdb_rdb/modificar_carencia_cdb_rdb/$', views.cdb_rdb.cdb_rdb.modificar_carencia_cdb_rdb, name='modificar_carencia_cdb_rdb'),
     url(r'^cdb_rdb/modificar_porcentagem_cdb_rdb/$', views.cdb_rdb.cdb_rdb.modificar_porcentagem_cdb_rdb, name='modificar_porcentagem_cdb_rdb'),
     url(r'^cdb_rdb/painel/$', views.cdb_rdb.cdb_rdb.painel, name='painel_cdb_rdb'),
+    
+    # Fundo de investimento
+    url(r'^fundo_investimento/adicionar_valor_cota_historico/$', views.fundo_investimento.fundo_investimento.adicionar_valor_cota_historico, name='adicionar_valor_cota_historico'),
+    url(r'^fundo_investimento/editar_operacao/(?P<id>\d+)/$', views.fundo_investimento.fundo_investimento.editar_operacao_fundo_investimento, name='editar_operacao_fundo_investimento'),
+    url(r'^fundo_investimento/historico/$', views.fundo_investimento.fundo_investimento.historico, name='historico_fundo_investimento'),
+    url(r'^fundo_investimento/inserir_fundo_investimento/$', views.fundo_investimento.fundo_investimento.inserir_fundo_investimento, name='inserir_fundo_investimento'),
+    url(r'^fundo_investimento/inserir_operacao_fundo_investimento/$', views.fundo_investimento.fundo_investimento.inserir_operacao_fundo_investimento, name='inserir_operacao_fundo_investimento'),
+    url(r'^fundo_investimento/listar_fundo_investimento/$', views.fundo_investimento.fundo_investimento.listar_fundo_investimento, name='listar_fundo_investimento'),
+    url(r'^fundo_investimento/modificar_carencia_fundo_investimento/$', views.fundo_investimento.fundo_investimento.modificar_carencia_fundo_investimento, name='modificar_carencia_fundo_investimento'),
+    url(r'^fundo_investimento/painel/$', views.fundo_investimento.fundo_investimento.painel, name='painel_fundo_investimento'),
 ]
