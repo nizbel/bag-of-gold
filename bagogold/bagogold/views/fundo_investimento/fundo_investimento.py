@@ -29,19 +29,18 @@ def adicionar_valor_cota_historico(request):
     investidor = request.user.investidor
     
     if request.method == 'POST':
-        if request.POST.get("save"):
-            form_historico_valor_cota = HistoricoValorCotasForm(request.POST)
-            if form_historico_valor_cota.is_valid():
-                form_historico_valor_cota.save()
-                return HttpResponseRedirect(reverse('listar_fundo_investimento'))
-            
-            for erros in form_historico_valor_cota.errors.values():
-                for erro in erros:
-                    messages.error(request, erro)
-            return render_to_response('fundo_investimento/inserir_fundo_investimento.html', {'form_historico_valor_cota': form_historico_valor_cota}, context_instance=RequestContext(request))
+        form_historico_valor_cota = HistoricoValorCotasForm(request.POST)
+        if form_historico_valor_cota.is_valid():
+            form_historico_valor_cota.save()
+            return HttpResponseRedirect(reverse('listar_fundo_investimento'))
+        
+        for erros in form_historico_valor_cota.errors.values():
+            for erro in erros:
+                messages.error(request, erro)
+        return render_to_response('fundo_investimento/adicionar_valor_cota_historico.html', {'form_historico_valor_cota': form_historico_valor_cota}, context_instance=RequestContext(request))
     else:
         form_historico_valor_cota = HistoricoValorCotasForm()
-    return render_to_response('fundo_investimento/editar_operacao_fundo_investimento.html', {'form_historico_valor_cota': form_historico_valor_cota},
+    return render_to_response('fundo_investimento/adicionar_valor_cota_historico.html', {'form_historico_valor_cota': form_historico_valor_cota},
                               context_instance=RequestContext(request)) 
 
 @login_required
@@ -238,8 +237,7 @@ def listar_fundo_investimento(request):
             fundo.data_valor_cota = historico_mais_recente.data
             fundo.valor_cota = historico_mais_recente.valor_cota
         except:
-            fundo.data_valor_cota = 'Não há'
-            fundo.valor_cota = 'Não há'
+            pass
         
         # Limitar descrição
         if len(fundo.descricao) > 30:

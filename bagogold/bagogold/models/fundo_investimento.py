@@ -61,8 +61,8 @@ class OperacaoFundoInvestimento (models.Model):
 
 class HistoricoValorCotas (models.Model):
     fundo_investimento = models.ForeignKey('FundoInvestimento')
-    data = models.DateField(u'Data da operação')
-    valor_cota = models.DecimalField(u'Quantidade de cotas', max_digits=11, decimal_places=2)
+    data = models.DateField(u'Data')
+    valor_cota = models.DecimalField(u'Valor da cota', max_digits=11, decimal_places=2)
 
     def save(self, *args, **kw):
         try:
