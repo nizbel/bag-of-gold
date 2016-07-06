@@ -23,7 +23,7 @@ class CDB_RDBForm(forms.ModelForm):
 
 class OperacaoCDB_RDBForm(forms.ModelForm):
     # Campo verificado apenas no caso de venda de operação de cdb/rdb
-    operacao_compra = forms.ModelChoiceField(label='Operação de compra',queryset=OperacaoCDB_RDB.objects.filter(tipo_operacao='C'), required=False)
+    operacao_compra = forms.ModelChoiceField(label='Operação de compra', queryset=OperacaoCDB_RDB.objects.filter(tipo_operacao='C'), required=False)
     
     class Meta:
         model = OperacaoCDB_RDB
@@ -43,6 +43,7 @@ class OperacaoCDB_RDBForm(forms.ModelForm):
         # there's a `fields` property now
         self.fields['investimento'].required = False
         self.fields['investimento'].queryset = CDB_RDB.objects.filter(investidor=self.investidor)
+        self.fields['operacao_compra'].queryset = OperacaoCDB_RDB.objects.filter(tipo_operacao='C', investidor=self.investidor)
 #         if self.instance.pk is not None:
 #             # Verificar se é uma compra
 #             if self.instance.tipo_operacao == 'V':
@@ -90,3 +91,4 @@ class HistoricoCarenciaCDB_RDBForm(forms.ModelForm):
                   'cdb_rdb')
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),}
+        labels = {'carencia': 'Período de carência (em dias)',}
