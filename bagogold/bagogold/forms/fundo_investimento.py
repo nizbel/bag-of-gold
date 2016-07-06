@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.fundo_investimento import FundoInvestimento, OperacaoFundoInvestimento, \
-    HistoricoPorcentagemFundoInvestimento, HistoricoCarenciaFundoInvestimento
+from bagogold.bagogold.models.fundo_investimento import FundoInvestimento, \
+    OperacaoFundoInvestimento, HistoricoCarenciaFundoInvestimento, HistoricoValorCotas
 from django import forms
 from django.forms import widgets
 
@@ -27,6 +27,15 @@ class OperacaoFundoInvestimentoForm(forms.ModelForm):
         
     class Media:
         js = ('js/bagogold/fundo_investimento.js',)
+        
+class HistoricoValorCotasForm(forms.ModelForm):
+    
+    class Meta:
+        model = HistoricoValorCotas
+        fields = ('valor_cota', 'data',
+                  'fundo_investimento')
+        widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
+                                            'placeholder':'Selecione uma data'}),}
         
 class HistoricoCarenciaFundoInvestimentoForm(forms.ModelForm):
     

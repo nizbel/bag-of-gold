@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+from bagogold.bagogold.forms.fundo_investimento import \
+    OperacaoFundoInvestimentoForm, FundoInvestimentoForm, \
+    HistoricoCarenciaFundoInvestimentoForm
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoLC
 from bagogold.bagogold.models.fundo_investimento import \
     OperacaoFundoInvestimento, FundoInvestimento, HistoricoCarenciaFundoInvestimento
@@ -188,7 +191,7 @@ def inserir_fundo_investimento(request):
                         return render_to_response('fundo_investimento/inserir_fundo_investimento.html', {'form_fundo_investimento': form_fundo_investimento,
                                                           'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
                             
-                        return HttpResponseRedirect(reverse('listar_fundo_investimento'))
+                    return HttpResponseRedirect(reverse('listar_fundo_investimento'))
             for erros in form_fundo_investimento.errors.values():
                 for erro in erros:
                     messages.error(request, erro)
