@@ -6,7 +6,7 @@ import time
 
 
 class Command(BaseCommand):
-    help = 'Preenche valores diários para o Tesouro Direto'
+    help = 'Preenche valores para o IPCA'
 
     def handle(self, *args, **options):
         buscar_historico_ipca()
