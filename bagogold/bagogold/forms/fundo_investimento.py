@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.fundo_investimento import FundoInvestimento, \
-    OperacaoFundoInvestimento, HistoricoCarenciaFundoInvestimento, HistoricoValorCotas
+    OperacaoFundoInvestimento, HistoricoCarenciaFundoInvestimento, \
+    HistoricoValorCotas
 from django import forms
 from django.forms import widgets
+import datetime
 
 ESCOLHAS_TIPO_PRAZO=(('L', 'Longo prazo'), 
                             ('C', 'Curto prazo'))
@@ -37,6 +39,14 @@ class HistoricoValorCotasForm(forms.ModelForm):
                   'fundo_investimento')
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),}
+        
+    def clean_data(self):
+        data = self.cleaned_data['data']
+        if data > datetime.date.today():
+            raise forms.ValidationError('Data não pode ser posterior a data atual')
+        
+        return data
+            
         
 class HistoricoCarenciaFundoInvestimentoForm(forms.ModelForm):
     

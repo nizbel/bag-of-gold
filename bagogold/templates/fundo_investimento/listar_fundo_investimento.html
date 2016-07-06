@@ -22,7 +22,7 @@
         <td>{{item.tipo_prazo}}</td>
         <td>{{item.carencia_atual}} dia(s)</td>
         <td>{{item.data_valor_cota|date:"Y-m-d"|default:"Não há"}}</td>
-        <td>R${{item.valor_cota|default:"0,00"}}</td>
+        <td>R$ {{item.valor_cota|default:"0,00"}}</td>
     </tr>
     {% endfor %}
     </tbody>
