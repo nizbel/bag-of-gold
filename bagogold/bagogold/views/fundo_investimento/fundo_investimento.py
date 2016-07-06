@@ -8,7 +8,8 @@ from bagogold.bagogold.forms.fundo_investimento import \
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoLC, \
     DivisaoOperacaoFundoInvestimento
 from bagogold.bagogold.models.fundo_investimento import \
-    OperacaoFundoInvestimento, FundoInvestimento, HistoricoCarenciaFundoInvestimento
+    OperacaoFundoInvestimento, FundoInvestimento, HistoricoCarenciaFundoInvestimento,\
+    HistoricoValorCotas
 from bagogold.bagogold.models.lc import HistoricoTaxaDI
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo
@@ -219,7 +220,7 @@ def inserir_operacao_fundo_investimento(request):
                                             extra=1, formset=DivisaoOperacaoFundoInvestimentoFormSet)
     
     if request.method == 'POST':
-        form_operacao_fundo_investimento = OperacaoFundoInvestimentoForm(request.POST, investidor=investidor)
+        form_operacao_fundo_investimento = OperacaoFundoInvestimentoForm(request.POST)
         formset_divisao_fundo_investimento = DivisaoFundoInvestimentoFormSet(request.POST, investidor=investidor)
         
         # Validar CDB
@@ -244,27 +245,38 @@ def inserir_operacao_fundo_investimento(request):
 #                         print '%s %s'  % (divisao_fundo_investimento.quantidade, divisao_fundo_investimento.divisao)
                 
     else:
-        form_operacao_fundo_investimento = OperacaoFundoInvestimentoForm(investidor=investidor)
+        form_operacao_fundo_investimento = OperacaoFundoInvestimentoForm()
         formset_divisao_fundo_investimento = DivisaoFundoInvestimentoFormSet(investidor=investidor)
     return render_to_response('fundo_investimento/inserir_operacao_fundo_investimento.html', {'form_operacao_fundo_investimento': form_operacao_fundo_investimento, 'formset_divisao_fundo_investimento': formset_divisao_fundo_investimento}, context_instance=RequestContext(request))
 
 @login_required
 def listar_fundo_investimento(request):
     investidor = request.user.investidor
-    fundo_investimento = FundoInvestimento.objects.filter(investidor=investidor)
+    fundos_investimento = FundoInvestimento.objects.filter(investidor=investidor)
     
-    for investimento in fundo_investimento:
+    for fundo in fundos_investimento:
         # Preparar o valor mais atual para carência
-        investimento.carencia_atual = investimento.carencia_atual()
+        fundo.carencia_atual = fundo.carencia_atual()
         # Preparar o valor mais atual de rendimento
-        investimento.rendimento_atual = investimento.porcentagem_atual()
+        try:
+            historico_mais_recente = HistoricoValorCotas.objects.filter(fundo_investimento=fundo).order_by('-data')[0]
+            fundo.data_valor_cota = historico_mais_recente.data
+            fundo.valor_cota = historico_mais_recente.valor_cota
+        except:
+            fundo.data_valor_cota = 'Não há'
+            fundo.valor_cota = 'Não há'
         
-        if investimento.tipo_rendimento == 1:
-            investimento.str_tipo_rendimento = 'Pré-fixado'
-        elif investimento.tipo_rendimento == 2:
-            investimento.str_tipo_rendimento = 'Pós-fixado'
+        # Limitar descrição
+        if len(fundo.descricao) > 30:
+            fundo.descricao = fundo.descricao[0:30] + '...'
         
-    return render_to_response('fundo_investimento/listar_fundo_investimento.html', {'fundo_investimento': fundo_investimento},
+        # Prazo
+        if fundo.tipo_prazo == 'C':
+            fundo.tipo_prazo = 'Curto'
+        elif fundo.tipo_prazo == 'L':
+            fundo.tipo_prazo = 'Longo'
+        
+    return render_to_response('fundo_investimento/listar_fundo_investimento.html', {'fundos_investimento': fundos_investimento},
                               context_instance=RequestContext(request))
 
 @login_required

@@ -1,26 +1,28 @@
     {% extends "base.html" %}
 
 {% block content %}
-<h1>CDB/RDB</h1>
+<h1>Fundos de investimento</h1>
     <div class="box-content">
     <table id="ordens" class="table table-striped table-bordered bootstrap-datatable datatable">
     <thead>
         <tr>
             <th>Nome</th>
-            <th>Tipo</th>
-            <th>Tipo de rendimento</th>
+            <th>Descrição</th>
+            <th>Prazo</th>
             <th>Carência atual</th>
-            <th>Rendimento atual (DI)</th>
+            <th>Data da cota</th>
+            <th>Valor da cota</th>
         </tr>
     </thead>
     <tbody>
-    {% for item in cdb_rdb %}
+    {% for item in fundos_investimento %}
     <tr>
         <td>{{item.nome}}</td>
-        <td>{{item.tipo}}</td>
-        <td>{{item.str_tipo_rendimento}}</td>
+        <td>{{item.descricao}}</td>
+        <td>{{item.tipo_prazo}}</td>
         <td>{{item.carencia_atual}} dia(s)</td>
-        <td>{{item.rendimento_atual}}%</td>
+        <td>{{item.data_valor_cota}}</td>
+        <td>{{item.valor_cota}}</td>
     </tr>
     {% endfor %}
     </tbody>

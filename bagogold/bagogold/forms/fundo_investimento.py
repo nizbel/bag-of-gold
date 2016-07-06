@@ -24,6 +24,7 @@ class OperacaoFundoInvestimentoForm(forms.ModelForm):
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),
                  'tipo_operacao': widgets.Select(choices=ESCOLHAS_TIPO_OPERACAO),}
+        labels = {'fundo_investimento': 'Fundo de investimento',}
         
     class Media:
         js = ('js/bagogold/fundo_investimento.js',)
