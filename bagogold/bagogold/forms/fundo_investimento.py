@@ -45,3 +45,4 @@ class HistoricoCarenciaFundoInvestimentoForm(forms.ModelForm):
                   'fundo_investimento')
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),}
+        labels = {'carencia': 'Período de carência (em dias)',}
