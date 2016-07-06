@@ -18,9 +18,9 @@ class FundoInvestimento (models.Model):
     
     def carencia_atual(self):
         try:
-            return HistoricoCarenciaFundoInvestimento.objects.filter(data__isnull=False, cdb_rdb=self).order_by('-data')[0].carencia
+            return HistoricoCarenciaFundoInvestimento.objects.filter(data__isnull=False, fundo_investimento=self).order_by('-data')[0].carencia
         except:
-            return HistoricoCarenciaFundoInvestimento.objects.get(data__isnull=True, cdb_rdb=self).carencia
+            return HistoricoCarenciaFundoInvestimento.objects.get(data__isnull=True, fundo_investimento=self).carencia
     
     def valor_minimo_atual(self):
         try:
