@@ -4,11 +4,11 @@ from bagogold.bagogold.forms.divisoes import \
     DivisaoOperacaoFundoInvestimentoFormSet
 from bagogold.bagogold.forms.fundo_investimento import \
     OperacaoFundoInvestimentoForm, FundoInvestimentoForm, \
-    HistoricoCarenciaFundoInvestimentoForm
+    HistoricoCarenciaFundoInvestimentoForm, HistoricoValorCotasForm
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoLC, \
     DivisaoOperacaoFundoInvestimento
 from bagogold.bagogold.models.fundo_investimento import \
-    OperacaoFundoInvestimento, FundoInvestimento, HistoricoCarenciaFundoInvestimento,\
+    OperacaoFundoInvestimento, FundoInvestimento, HistoricoCarenciaFundoInvestimento, \
     HistoricoValorCotas
 from bagogold.bagogold.models.lc import HistoricoTaxaDI
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa
@@ -26,7 +26,23 @@ import datetime
 
 @login_required
 def adicionar_valor_cota_historico(request):
-    pass
+    investidor = request.user.investidor
+    
+    if request.method == 'POST':
+        if request.POST.get("save"):
+            form_historico_valor_cota = HistoricoValorCotasForm(request.POST)
+            if form_historico_valor_cota.is_valid():
+                form_historico_valor_cota.save()
+                return HttpResponseRedirect(reverse('listar_fundo_investimento'))
+            
+            for erros in form_historico_valor_cota.errors.values():
+                for erro in erros:
+                    messages.error(request, erro)
+            return render_to_response('fundo_investimento/inserir_fundo_investimento.html', {'form_historico_valor_cota': form_historico_valor_cota}, context_instance=RequestContext(request))
+    else:
+        form_historico_valor_cota = HistoricoValorCotasForm()
+    return render_to_response('fundo_investimento/editar_operacao_fundo_investimento.html', {'form_historico_valor_cota': form_historico_valor_cota},
+                              context_instance=RequestContext(request)) 
 
 @login_required
 def editar_operacao_fundo_investimento(request, id):
@@ -80,77 +96,45 @@ def editar_operacao_fundo_investimento(request, id):
 def historico(request):
     investidor = request.user.investidor
     # Processa primeiro operações de venda (V), depois compra (C)
-    operacoes = OperacaoFundoInvestimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
+    operacoes = OperacaoFundoInvestimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data') 
+    # Se investidor não tiver operações, retornar vazio
+    if not operacoes:
+        return render_to_response('fundo_investimento/historico.html', {'dados': {}, 'operacoes': operacoes, 
+                                                    'graf_gasto_total': list(), 'graf_patrimonio': list()},
+                               context_instance=RequestContext(request))
     # Prepara o campo valor atual
     for operacao in operacoes:
-        operacao.atual = operacao.quantidade_cotas
         if operacao.tipo_operacao == 'C':
             operacao.tipo = 'Compra'
         else:
             operacao.tipo = 'Venda'
+            
     
     total_gasto = 0
     total_patrimonio = 0
     
     # Gráfico de acompanhamento de gastos vs patrimonio
+    # Adicionar primeira data com valor 0
     graf_gasto_total = list()
     graf_patrimonio = list()
 
-    while data_iteracao <= data_final:
-        try:
-            taxa_do_dia = HistoricoTaxaDI.objects.get(data=data_iteracao).taxa
-        except:
-            taxa_do_dia = 0
-            
-        # Calcular o valor atualizado do patrimonio diariamente
-        total_patrimonio = 0
-        
-        # Processar operações
-        for operacao in operacoes:     
-            if (operacao.data <= data_iteracao):     
-                # Verificar se se trata de compra ou venda
-                if operacao.tipo_operacao == 'C':
-                        if (operacao.data == data_iteracao):
-                            operacao.total = operacao.quantidade
-                            total_gasto += operacao.total
-                        if taxa_do_dia > 0:
-                            # Cafundo_investimentoular o valor atualizado para cada operacao
-                            operacao.atual = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa)
-                        # Arredondar na última iteração
-                        if (data_iteracao == data_final):
-                            str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
-                            operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-                        total_patrimonio += operacao.atual
-                        
-                elif operacao.tipo_operacao == 'V':
-                    if (operacao.data == data_iteracao):
-                        operacao.total = operacao.quantidade
-                        total_gasto -= operacao.total
-                        # Remover quantidade da operação de compra
-                        operacao_compra_id = operacao.operacao_compra_relacionada().id
-                        for operacao_c in operacoes:
-                            if (operacao_c.id == operacao_compra_id):
-                                # Configurar taxa para a mesma quantidade da compra
-                                operacao.taxa = operacao_c.taxa
-                                operacao.atual = (operacao.quantidade/operacao_c.quantidade) * operacao_c.atual
-                                operacao_c.atual -= operacao.atual
-                                str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
-                                operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-                                break
+    for operacao in operacoes:     
+        # Verificar se se trata de compra ou venda
+        if operacao.tipo_operacao == 'C':
+            total_gasto += operacao.valor
+            total_patrimonio += operacao.valor
                 
-        if len(operacoes.filter(data=data_iteracao)) > 0 or data_iteracao == data_final:
-            graf_gasto_total += [[str(calendar.timegm(data_iteracao.timetuple()) * 1000), float(total_gasto)]]
-            graf_patrimonio += [[str(calendar.timegm(data_iteracao.timetuple()) * 1000), float(total_patrimonio)]]
+        elif operacao.tipo_operacao == 'V':
+            total_gasto -= operacao.valor
+            total_patrimonio -= operacao.valor
+            
+        graf_gasto_total += [[str(calendar.timegm(operacao.data.timetuple()) * 1000), float(total_gasto)]]
+        graf_patrimonio += [[str(calendar.timegm(operacao.data.timetuple()) * 1000), float(total_patrimonio)]]
         
-        # Proximo dia útil
-        proximas_datas = HistoricoTaxaDI.objects.filter(data__gt=data_iteracao).order_by('data')
-        if len(proximas_datas) > 0:
-            data_iteracao = proximas_datas[0].data
-        elif data_iteracao < data_final:
-            data_iteracao = data_final
-        else:
-            break
-
+    # Adicionar data atual
+    graf_gasto_total += [[str(calendar.timegm(datetime.date.today().timetuple()) * 1000), float(total_gasto)]]
+    graf_patrimonio += [[str(calendar.timegm(datetime.date.today().timetuple()) * 1000), float(total_patrimonio)]]
+    
     dados = {}
     dados['total_gasto'] = total_gasto
     dados['patrimonio'] = total_patrimonio
