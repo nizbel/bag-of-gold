@@ -224,35 +224,11 @@ def inserir_operacao_fundo_investimento(request):
             operacao_fundo_investimento = form_operacao_fundo_investimento.save(commit=False)
             operacao_fundo_investimento.investidor = investidor
             formset_divisao_fundo_investimento = DivisaoFundoInvestimentoFormSet(request.POST, instance=operacao_fundo_investimento, investidor=investidor)
-                
-            # TODO Validar em caso de venda
-            if form_operacao_fundo_investimento.cleaned_data['tipo_operacao'] == 'V':
-                operacao_compra = form_operacao_fundo_investimento.cleaned_data['operacao_compra']
-                    # Desconsiderar divisões inseridas, copiar da operação de compra
-                    operacao_fundo_investimento.save()
-                    for divisao_fundo_investimento in DivisaoOperacaoFundoInvestimento.objects.filter(operacao=operacao_compra):
-                        divisao_fundo_investimento_venda = DivisaoOperacaoLC(quantidade=divisao_fundo_investimento.quantidade, divisao=divisao_fundo_investimento.divisao, \
-                                                             operacao=operacao_fundo_investimento)
-                        divisao_fundo_investimento_venda.save()
-                    operacao_venda_fundo_investimento = OperacaoVendaFundoInvestimento(operacao_compra=operacao_compra, operacao_venda=operacao_fundo_investimento)
-                    operacao_venda_fundo_investimento.save()
-                    messages.success(request, 'Operação inserida com sucesso')
-                    return HttpResponseRedirect(reverse('historico_fundo_investimento'))
-                # Vendas parciais
-                else:
-                    if formset_divisao_cdb.is_valid():
-                        operacao_fundo_investimento.save()
-                        formset_divisao_cdb.save()
-                        operacao_venda_fundo_investimento = OperacaoVendaFundoInvestimento(operacao_compra=operacao_compra, operacao_venda=operacao_fundo_investimento)
-                        operacao_venda_fundo_investimento.save()
-                        messages.success(request, 'Operação inserida com sucesso')
-                        return HttpResponseRedirect(reverse('historico_fundo_investimento'))
-            else:
-                if form_operacao_fundo_investimento.is_valid():
-                    operacao_fundo_investimento.save()
-                    form_operacao_fundo_investimento.save()
-                    messages.success(request, 'Operação inserida com sucesso')
-                    return HttpResponseRedirect(reverse('historico_fundo_investimento'))
+            if formset_divisao_fundo_investimento.is_valid():
+                operacao_fundo_investimento.save()
+                formset_divisao_fundo_investimento.save()
+                messages.success(request, 'Operação inserida com sucesso')
+                return HttpResponseRedirect(reverse('historico_fundo_investimento'))
                     
         for erros in form_operacao_fundo_investimento.errors.values():
             for erro in erros:
