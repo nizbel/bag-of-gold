@@ -233,7 +233,7 @@ def inserir_operacao_cdb_rdb(request):
             operacao_cdb_rdb = form_operacao_cdb_rdb.save(commit=False)
             operacao_cdb_rdb.investidor = investidor
             operacao_compra = form_operacao_cdb_rdb.cleaned_data['operacao_compra']
-            formset_divisao_cdb = DivisaoCDB_RDBFormSet(request.POST, instance=operacao_cdb_rdb, operacao_compra=operacao_compra, investidor=investidor)
+            formset_divisao_cdb_rdb = DivisaoCDB_RDBFormSet(request.POST, instance=operacao_cdb_rdb, operacao_compra=operacao_compra, investidor=investidor)
                 
             # TODO Validar em caso de venda
             if form_operacao_cdb_rdb.cleaned_data['tipo_operacao'] == 'V':
@@ -252,17 +252,17 @@ def inserir_operacao_cdb_rdb(request):
                     return HttpResponseRedirect(reverse('historico_cdb_rdb'))
                 # Vendas parciais
                 else:
-                    if formset_divisao_cdb.is_valid():
+                    if formset_divisao_cdb_rdb.is_valid():
                         operacao_cdb_rdb.save()
-                        formset_divisao_cdb.save()
+                        formset_divisao_cdb_rdb.save()
                         operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
                         operacao_venda_cdb_rdb.save()
                         messages.success(request, 'Operação inserida com sucesso')
                         return HttpResponseRedirect(reverse('historico_cdb_rdb'))
             else:
-                if formset_divisao_cdb.is_valid():
+                if formset_divisao_cdb_rdb.is_valid():
                     operacao_cdb_rdb.save()
-                    formset_divisao_cdb.save()
+                    formset_divisao_cdb_rdb.save()
                     messages.success(request, 'Operação inserida com sucesso')
                     return HttpResponseRedirect(reverse('historico_cdb_rdb'))
                     
