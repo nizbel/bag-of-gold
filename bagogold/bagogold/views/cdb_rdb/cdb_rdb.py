@@ -260,9 +260,9 @@ def inserir_operacao_cdb_rdb(request):
                         messages.success(request, 'Operação inserida com sucesso')
                         return HttpResponseRedirect(reverse('historico_cdb_rdb'))
             else:
-                if form_operacao_cdb_rdb.is_valid():
+                if formset_divisao_cdb.is_valid():
                     operacao_cdb_rdb.save()
-                    form_operacao_cdb_rdb.save()
+                    formset_divisao_cdb.save()
                     messages.success(request, 'Operação inserida com sucesso')
                     return HttpResponseRedirect(reverse('historico_cdb_rdb'))
                     
