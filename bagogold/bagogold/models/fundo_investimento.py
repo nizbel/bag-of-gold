@@ -64,6 +64,14 @@ class HistoricoValorCotas (models.Model):
     data = models.DateField(u'Data da operação')
     valor_cota = models.DecimalField(u'Quantidade de cotas', max_digits=11, decimal_places=2)
 
+    def save(self, *args, **kw):
+        try:
+            historico = HistoricoValorCotas.objects.get(fundo_investimento=self.fundo_investimento, data=self.data)
+        except HistoricoValorCotas.DoesNotExist:
+            if self.valor_cota <= 0:
+                raise forms.ValidationError('Valor da cota deve ser superior a zero')
+            super(HistoricoValorCotas, self).save(*args, **kw)
+
 class HistoricoCarenciaFundoInvestimento (models.Model):
     """
     O período de carência é medido em dias
@@ -74,7 +82,7 @@ class HistoricoCarenciaFundoInvestimento (models.Model):
     
     def save(self, *args, **kw):
         try:
-            historico = HistoricoCarenciaFundoInvestimento.objects.get(cdb_rdb=self.cdb_rdb, data=self.data)
+            historico = HistoricoCarenciaFundoInvestimento.objects.get(fundo_investimento=self.fundo_investimento, data=self.data)
         except HistoricoCarenciaFundoInvestimento.DoesNotExist:
             if self.carencia <= 0:
                 raise forms.ValidationError('Carência deve ser de pelo menos 1 dia')
@@ -87,7 +95,7 @@ class HistoricoValorMinimoInvestimentoFundoInvestimento (models.Model):
     
     def save(self, *args, **kw):
         try:
-            historico = HistoricoValorMinimoInvestimentoFundoInvestimento.objects.get(cdb_rdb=self.cdb_rdb, data=self.data)
+            historico = HistoricoValorMinimoInvestimentoFundoInvestimento.objects.get(fundo_investimento=self.fundo_investimento, data=self.data)
         except HistoricoValorMinimoInvestimentoFundoInvestimento.DoesNotExist:
             if self.valor_minimo < 0:
                 raise forms.ValidationError('Valor mínimo não pode ser negativo')

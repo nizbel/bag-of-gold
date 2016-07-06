@@ -201,7 +201,7 @@ def inserir_cdb_rdb(request):
                                                               'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
                             
                         return HttpResponseRedirect(reverse('listar_cdb_rdb'))
-            for erros in form_lc.errors.values():
+            for erros in form_cdb_rdb.errors.values():
                 for erro in erros:
                     messages.error(request, erro)
             for erro in formset_porcentagem.non_form_errors():
