@@ -83,20 +83,11 @@ def historico(request):
     operacoes = OperacaoFundoInvestimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
     # Prepara o campo valor atual
     for operacao in operacoes:
-        operacao.atual = operacao.quantidade
+        operacao.atual = operacao.quantidade_cotas
         if operacao.tipo_operacao == 'C':
             operacao.tipo = 'Compra'
-            operacao.taxa = operacao.porcentagem()
         else:
             operacao.tipo = 'Venda'
-    
-    # Pegar data inicial
-    data_inicial = operacoes.order_by('data')[0].data
-    
-    # Pegar data final
-    data_final = max(HistoricoTaxaDI.objects.filter().order_by('-data')[0].data, datetime.date.today())
-    
-    data_iteracao = data_inicial
     
     total_gasto = 0
     total_patrimonio = 0
@@ -111,7 +102,7 @@ def historico(request):
         except:
             taxa_do_dia = 0
             
-        # Cafundo_investimentoular o valor atualizado do patrimonio diariamente
+        # Calcular o valor atualizado do patrimonio diariamente
         total_patrimonio = 0
         
         # Processar operações

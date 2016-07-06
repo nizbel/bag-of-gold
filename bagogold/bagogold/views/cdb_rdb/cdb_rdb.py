@@ -106,7 +106,7 @@ def historico(request):
         except:
             taxa_do_dia = 0
             
-        # Cacdb_rdbular o valor atualizado do patrimonio diariamente
+        # Calcular o valor atualizado do patrimonio diariamente
         total_patrimonio = 0
         
         # Processar operações
@@ -118,7 +118,7 @@ def historico(request):
                             operacao.total = operacao.quantidade
                             total_gasto += operacao.total
                         if taxa_do_dia > 0:
-                            # Cacdb_rdbular o valor atualizado para cada operacao
+                            # Calcular o valor atualizado para cada operacao
                             operacao.atual = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa)
                         # Arredondar na última iteração
                         if (data_iteracao == data_final):
@@ -361,7 +361,7 @@ def painel(request):
                 if operacao.tipo_operacao == 'C':
                         if (operacao.data == data_iteracao):
                             operacao.inicial = operacao.quantidade
-                        # Cacdb_rdbular o valor atualizado para cada operacao
+                        # Calcular o valor atualizado para cada operacao
                         operacao.atual = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa)
                         # Arredondar na última iteração
                         if (data_iteracao == data_final):
