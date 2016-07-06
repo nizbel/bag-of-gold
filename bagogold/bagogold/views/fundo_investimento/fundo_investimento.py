@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 
+from bagogold.bagogold.forms.divisoes import \
+    DivisaoOperacaoFundoInvestimentoFormSet
 from bagogold.bagogold.forms.fundo_investimento import \
     OperacaoFundoInvestimentoForm, FundoInvestimentoForm, \
     HistoricoCarenciaFundoInvestimentoForm
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoLC
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoLC, \
+    DivisaoOperacaoFundoInvestimento
 from bagogold.bagogold.models.fundo_investimento import \
     OperacaoFundoInvestimento, FundoInvestimento, HistoricoCarenciaFundoInvestimento
 from bagogold.bagogold.models.lc import HistoricoTaxaDI
@@ -220,14 +223,11 @@ def inserir_operacao_fundo_investimento(request):
         if form_operacao_fundo_investimento.is_valid():
             operacao_fundo_investimento = form_operacao_fundo_investimento.save(commit=False)
             operacao_fundo_investimento.investidor = investidor
-            operacao_compra = form_operacao_fundo_investimento.cleaned_data['operacao_compra']
-            formset_divisao_cdb = DivisaoFundoInvestimentoFormSet(request.POST, instance=operacao_fundo_investimento, operacao_compra=operacao_compra, investidor=investidor)
+            formset_divisao_fundo_investimento = DivisaoFundoInvestimentoFormSet(request.POST, instance=operacao_fundo_investimento, investidor=investidor)
                 
             # TODO Validar em caso de venda
             if form_operacao_fundo_investimento.cleaned_data['tipo_operacao'] == 'V':
                 operacao_compra = form_operacao_fundo_investimento.cleaned_data['operacao_compra']
-                # Caso de venda total da letra de crédito
-                if form_operacao_fundo_investimento.cleaned_data['quantidade'] == operacao_compra.quantidade:
                     # Desconsiderar divisões inseridas, copiar da operação de compra
                     operacao_fundo_investimento.save()
                     for divisao_fundo_investimento in DivisaoOperacaoFundoInvestimento.objects.filter(operacao=operacao_compra):
