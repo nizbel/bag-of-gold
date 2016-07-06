@@ -1,11 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from bagogold.bagogold.forms.cdb_rdb import OperacaoCDB_RDBForm, HistoricoPorcentagemCDB_RDBForm, CDB_RDBForm, \
-    HistoricoCarenciaCDB_RDBForm
-from bagogold.bagogold.forms.divisoes import DivisaoOperacaoCDB_RDBFormSet
-from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB, \
-    HistoricoPorcentagemCDB_RDB, CDB_RDB, HistoricoCarenciaCDB_RDB, OperacaoVendaCDB_RDB
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoCDB_RDB
 from bagogold.bagogold.models.lc import HistoricoTaxaDI
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo
@@ -17,11 +11,10 @@ from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
+from itertools import chain
 import calendar
 import datetime
 
-TIPO_CDB = '1'
-TIPO_RDB = '2'
 
 @login_required
 def editar_operacao_cdb_rdb(request, id):
@@ -53,7 +46,7 @@ def editar_operacao_cdb_rdb(request, id):
 #                         print '%s %s'  % (divisao_cdb_rdb.quantidade, divisao_cdb_rdb.divisao)
                 
         elif request.POST.get("delete"):
-            divisao_cdb_rdb = DivisaoOperacaoCDB_RDB.objects.filter(operacao=operacao_cdb_rdb)
+            divisao_cdb_rdb = DivisaoOperacaoLC.objects.filter(operacao=operacao_cdb_rdb)
             for divisao in divisao_cdb_rdb:
                 divisao.delete()
             if operacao_cdb_rdb.tipo_operacao == 'V':
@@ -243,7 +236,7 @@ def inserir_operacao_cdb_rdb(request):
                     # Desconsiderar divisões inseridas, copiar da operação de compra
                     operacao_cdb_rdb.save()
                     for divisao_cdb_rdb in DivisaoOperacaoCDB_RDB.objects.filter(operacao=operacao_compra):
-                        divisao_cdb_rdb_venda = DivisaoOperacaoCDB_RDB(quantidade=divisao_cdb_rdb.quantidade, divisao=divisao_cdb_rdb.divisao, \
+                        divisao_cdb_rdb_venda = DivisaoOperacaoLC(quantidade=divisao_cdb_rdb.quantidade, divisao=divisao_cdb_rdb.divisao, \
                                                              operacao=operacao_cdb_rdb)
                         divisao_cdb_rdb_venda.save()
                     operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
