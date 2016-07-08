@@ -159,7 +159,8 @@ def historico(request):
         graf_gasto_total[len(graf_gasto_total)-1][1] = float(total_gasto)
     else:
         graf_gasto_total += [[data_formatada, float(total_gasto)]]
-    
+     
+    total_patrimonio = 0  
     # Calcular patrimônio atual
     for fundo in fundos_investimento:
         fundo.data_ultima_operacao = operacoes.filter(fundo_investimento=fundo).order_by('-data')[0].data

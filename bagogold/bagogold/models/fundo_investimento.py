@@ -11,6 +11,7 @@ class FundoInvestimento (models.Model):
     L = longo prazo, C = curto prazo; para fins de IR
     """
     tipo_prazo = models.CharField(u'Tipo de prazo', max_length=1)
+    taxa_adm = models.DecimalField(u'Taxa de administração', max_digits=4, decimal_places=2)
     
     
     def __unicode__(self):
@@ -58,6 +59,9 @@ class OperacaoFundoInvestimento (models.Model):
                 return (carencia <= (data_venda - self.data).days)
         else:
             return False
+        
+    def valor_cota(self):
+        return self.valor/self.quantidade_cotas
 
 class HistoricoValorCotas (models.Model):
     fundo_investimento = models.ForeignKey('FundoInvestimento')

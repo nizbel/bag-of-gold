@@ -9,6 +9,7 @@
             <th>Nome</th>
             <th>Descrição</th>
             <th>Prazo</th>
+            <th>Taxa de adm.</th>
             <th>Carência atual</th>
             <th>Data da cota</th>
             <th>Valor da cota</th>
@@ -20,6 +21,7 @@
         <td>{{item.nome}}</td>
         <td>{{item.descricao}}</td>
         <td>{{item.tipo_prazo}}</td>
+        <td>{{item.taxa_adm}}%</td>
         <td>{{item.carencia_atual}} dia(s)</td>
         <td>{{item.data_valor_cota|date:"Y-m-d"|default:"Não há"}}</td>
         <td>R$ {{item.valor_cota|default:"0,00"}}</td>
