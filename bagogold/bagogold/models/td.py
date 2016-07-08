@@ -31,6 +31,24 @@ class Titulo (models.Model):
             return True
         else:
             return False
+        
+    def valor_vencimento(self, data=datetime.date.today()):
+        from bagogold.bagogold.utils.td import calcular_valor_acumulado_ipca
+        
+        if self.tipo == 'LTN':
+            return 1000
+        elif self.tipo == 'LFT':
+            return 1000
+        elif self.tipo == 'NTN-B':
+            return (1 + calcular_valor_acumulado_ipca(datetime.date(2000, 7, 15), data_final=data)) * 1000
+        elif self.tipo == 'NTN-B Principal':
+            return (1 + calcular_valor_acumulado_ipca(datetime.date(2000, 7, 15), data_final=data)) * 1000
+        elif self.tipo == 'NTN-F':
+            return 1000
+        elif self.tipo == 'NTN-C':
+            return 1000
+        else:
+            return 0
     
 class OperacaoTitulo (models.Model):
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)  
@@ -77,3 +95,14 @@ class ValorDiarioTitulo (models.Model):
             ValorDiarioTitulo.objects.get(titulo=self.titulo, data_hora=self.data_hora)
         except ValorDiarioTitulo.DoesNotExist:
             super(ValorDiarioTitulo, self).save(*args, **kw)
+            
+class HistoricoIPCA (models.Model):
+    valor = models.DecimalField(u'Valor IPCA', max_digits=5, decimal_places=2)
+    mes = models.SmallIntegerField(u'Mês')
+    ano = models.SmallIntegerField(u'Ano')
+    
+    def save(self, *args, **kw):
+        try:
+            HistoricoIPCA.objects.get(mes=self.mes, ano=self.ano)
+        except HistoricoIPCA.DoesNotExist:
+            super(HistoricoIPCA, self).save(*args, **kw)

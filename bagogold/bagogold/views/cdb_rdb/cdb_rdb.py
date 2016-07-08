@@ -1,16 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from bagogold.bagogold.forms.cdb_rdb import CDB_RDBForm, OperacaoCDB_RDBForm, \
-    OperacaoCDB_RDBForm, HistoricoPorcentagemCDB_RDBForm, CDB_RDBForm, \
+from bagogold.bagogold.forms.cdb_rdb import OperacaoCDB_RDBForm, HistoricoPorcentagemCDB_RDBForm, CDB_RDBForm, \
     HistoricoCarenciaCDB_RDBForm
-from bagogold.bagogold.forms.divisoes import DivisaoOperacaoLCFormSet, \
-    DivisaoOperacaoCDB_RDBFormSet
-from bagogold.bagogold.models.cdb_rdb import HistoricoPorcentagemCDB_RDB, \
-    HistoricoCarenciaCDB_RDB, OperacaoCDB_RDB, OperacaoVendaCDB_RDB, CDB_RDB, \
-    OperacaoCDB_RDB, HistoricoPorcentagemCDB_RDB, CDB_RDB, HistoricoCarenciaCDB_RDB, \
-    OperacaoVendaCDB_RDB
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoLC, \
-    DivisaoOperacaoCDB_RDB
+from bagogold.bagogold.forms.divisoes import DivisaoOperacaoCDB_RDBFormSet
+from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB, \
+    HistoricoPorcentagemCDB_RDB, CDB_RDB, HistoricoCarenciaCDB_RDB, OperacaoVendaCDB_RDB
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoCDB_RDB
 from bagogold.bagogold.models.lc import HistoricoTaxaDI
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo
@@ -22,7 +17,6 @@ from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
-from itertools import chain
 import calendar
 import datetime
 
@@ -59,7 +53,7 @@ def editar_operacao_cdb_rdb(request, id):
 #                         print '%s %s'  % (divisao_cdb_rdb.quantidade, divisao_cdb_rdb.divisao)
                 
         elif request.POST.get("delete"):
-            divisao_cdb_rdb = DivisaoOperacaoLC.objects.filter(operacao=operacao_cdb_rdb)
+            divisao_cdb_rdb = DivisaoOperacaoCDB_RDB.objects.filter(operacao=operacao_cdb_rdb)
             for divisao in divisao_cdb_rdb:
                 divisao.delete()
             if operacao_cdb_rdb.tipo_operacao == 'V':
@@ -79,8 +73,9 @@ def editar_operacao_cdb_rdb(request, id):
     
 @login_required
 def historico(request):
+    investidor = request.user.investidor
     # Processa primeiro operações de venda (V), depois compra (C)
-    operacoes = OperacaoCDB_RDB.objects.exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
+    operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
     # Prepara o campo valor atual
     for operacao in operacoes:
         operacao.atual = operacao.quantidade
@@ -111,7 +106,7 @@ def historico(request):
         except:
             taxa_do_dia = 0
             
-        # Cacdb_rdbular o valor atualizado do patrimonio diariamente
+        # Calcular o valor atualizado do patrimonio diariamente
         total_patrimonio = 0
         
         # Processar operações
@@ -123,7 +118,7 @@ def historico(request):
                             operacao.total = operacao.quantidade
                             total_gasto += operacao.total
                         if taxa_do_dia > 0:
-                            # Cacdb_rdbular o valor atualizado para cada operacao
+                            # Calcular o valor atualizado para cada operacao
                             operacao.atual = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa)
                         # Arredondar na última iteração
                         if (data_iteracao == data_final):
@@ -178,41 +173,42 @@ def inserir_cdb_rdb(request):
     PorcentagemFormSet = inlineformset_factory(CDB_RDB, HistoricoPorcentagemCDB_RDB, fields=('porcentagem',),
                                             extra=1, can_delete=False, max_num=1, validate_max=True)
     CarenciaFormSet = inlineformset_factory(CDB_RDB, HistoricoCarenciaCDB_RDB, fields=('carencia',),
-                                            extra=1, can_delete=False, max_num=1, validate_max=True)
+                                            extra=1, can_delete=False, max_num=1, validate_max=True, labels = {'carencia': 'Período de carência (em dias)',})
     
     if request.method == 'POST':
-        if request.POST.get("save"):
-            form_cdb_rdb = CDB_RDBForm(request.POST)
-            if form_cdb_rdb.is_valid():
-                cdb_rdb = form_cdb_rdb.save(commit=False)
-                cdb_rdb.investidor = request.user.investidor
-                formset_porcentagem = PorcentagemFormSet(request.POST, instance=cdb_rdb)
-                formset_porcentagem.forms[0].empty_permitted=False
-                formset_carencia = CarenciaFormSet(request.POST, instance=cdb_rdb)
-                formset_carencia.forms[0].empty_permitted=False
-                
-                if formset_porcentagem.is_valid():
-                    if formset_carencia.is_valid():
-                        try:
-                            cdb_rdb.save()
-                            formset_porcentagem.save()
-                            formset_carencia.save()
-                        # Capturar erros oriundos da hora de salvar os objetos
-                        except Exception as erro:
-                            messages.error(request, erro.message)
-                            return render_to_response('cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'formset_porcentagem': formset_porcentagem,
-                                                              'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
-                            
-                        return HttpResponseRedirect(reverse('listar_cdb_rdb'))
-            for erros in form_lc.errors.values():
-                for erro in erros:
-                    messages.error(request, erro)
-            for erro in formset_porcentagem.non_form_errors():
+        form_cdb_rdb = CDB_RDBForm(request.POST)
+        formset_porcentagem = PorcentagemFormSet(request.POST)
+        formset_carencia = CarenciaFormSet(request.POST)
+        if form_cdb_rdb.is_valid():
+            cdb_rdb = form_cdb_rdb.save(commit=False)
+            cdb_rdb.investidor = request.user.investidor
+            formset_porcentagem = PorcentagemFormSet(request.POST, instance=cdb_rdb)
+            formset_porcentagem.forms[0].empty_permitted=False
+            formset_carencia = CarenciaFormSet(request.POST, instance=cdb_rdb)
+            formset_carencia.forms[0].empty_permitted=False
+            
+            if formset_porcentagem.is_valid():
+                if formset_carencia.is_valid():
+                    try:
+                        cdb_rdb.save()
+                        formset_porcentagem.save()
+                        formset_carencia.save()
+                    # Capturar erros oriundos da hora de salvar os objetos
+                    except Exception as erro:
+                        messages.error(request, erro.message)
+                        return render_to_response('cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'formset_porcentagem': formset_porcentagem,
+                                                          'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
+                        
+                    return HttpResponseRedirect(reverse('listar_cdb_rdb'))
+        for erros in form_cdb_rdb.errors.values():
+            for erro in erros:
                 messages.error(request, erro)
-            for erro in formset_carencia.non_form_errors():
-                messages.error(request, erro)
-            return render_to_response('cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'formset_porcentagem': formset_porcentagem,
-                                                              'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
+        for erro in formset_porcentagem.non_form_errors():
+            messages.error(request, erro)
+        for erro in formset_carencia.non_form_errors():
+            messages.error(request, erro)
+        return render_to_response('cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'formset_porcentagem': formset_porcentagem,
+                                                          'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
     else:
         form_cdb_rdb = CDB_RDBForm()
         formset_porcentagem = PorcentagemFormSet()
@@ -236,7 +232,7 @@ def inserir_operacao_cdb_rdb(request):
             operacao_cdb_rdb = form_operacao_cdb_rdb.save(commit=False)
             operacao_cdb_rdb.investidor = investidor
             operacao_compra = form_operacao_cdb_rdb.cleaned_data['operacao_compra']
-            formset_divisao_cdb = DivisaoCDB_RDBFormSet(request.POST, instance=operacao_cdb_rdb, operacao_compra=operacao_compra, investidor=investidor)
+            formset_divisao_cdb_rdb = DivisaoCDB_RDBFormSet(request.POST, instance=operacao_cdb_rdb, operacao_compra=operacao_compra, investidor=investidor)
                 
             # TODO Validar em caso de venda
             if form_operacao_cdb_rdb.cleaned_data['tipo_operacao'] == 'V':
@@ -246,7 +242,7 @@ def inserir_operacao_cdb_rdb(request):
                     # Desconsiderar divisões inseridas, copiar da operação de compra
                     operacao_cdb_rdb.save()
                     for divisao_cdb_rdb in DivisaoOperacaoCDB_RDB.objects.filter(operacao=operacao_compra):
-                        divisao_cdb_rdb_venda = DivisaoOperacaoLC(quantidade=divisao_cdb_rdb.quantidade, divisao=divisao_cdb_rdb.divisao, \
+                        divisao_cdb_rdb_venda = DivisaoOperacaoCDB_RDB(quantidade=divisao_cdb_rdb.quantidade, divisao=divisao_cdb_rdb.divisao, \
                                                              operacao=operacao_cdb_rdb)
                         divisao_cdb_rdb_venda.save()
                     operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
@@ -255,17 +251,17 @@ def inserir_operacao_cdb_rdb(request):
                     return HttpResponseRedirect(reverse('historico_cdb_rdb'))
                 # Vendas parciais
                 else:
-                    if formset_divisao_cdb.is_valid():
+                    if formset_divisao_cdb_rdb.is_valid():
                         operacao_cdb_rdb.save()
-                        formset_divisao_cdb.save()
+                        formset_divisao_cdb_rdb.save()
                         operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
                         operacao_venda_cdb_rdb.save()
                         messages.success(request, 'Operação inserida com sucesso')
                         return HttpResponseRedirect(reverse('historico_cdb_rdb'))
             else:
-                if form_operacao_cdb_rdb.is_valid():
+                if formset_divisao_cdb_rdb.is_valid():
                     operacao_cdb_rdb.save()
-                    form_operacao_cdb_rdb.save()
+                    formset_divisao_cdb_rdb.save()
                     messages.success(request, 'Operação inserida com sucesso')
                     return HttpResponseRedirect(reverse('historico_cdb_rdb'))
                     
@@ -286,7 +282,8 @@ def inserir_operacao_cdb_rdb(request):
 
 @login_required
 def listar_cdb_rdb(request):
-    cdb_rdb = CDB_RDB.objects.all()
+    investidor = request.user.investidor
+    cdb_rdb = CDB_RDB.objects.filter(investidor=investidor)
     
     for investimento in cdb_rdb:
         # Preparar o valor mais atual para carência
@@ -330,8 +327,9 @@ def modificar_porcentagem_cdb_rdb(request):
 
 @login_required
 def painel(request):
+    investidor = request.user.investidor
     # Processa primeiro operações de venda (V), depois compra (C)
-    operacoes = OperacaoCDB_RDB.objects.exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
+    operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
     historico_porcentagem = HistoricoPorcentagemCDB_RDB.objects.all() 
     # Prepara o campo valor atual
     for operacao in operacoes:
@@ -362,7 +360,7 @@ def painel(request):
                 if operacao.tipo_operacao == 'C':
                         if (operacao.data == data_iteracao):
                             operacao.inicial = operacao.quantidade
-                        # Cacdb_rdbular o valor atualizado para cada operacao
+                        # Calcular o valor atualizado para cada operacao
                         operacao.atual = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa)
                         # Arredondar na última iteração
                         if (data_iteracao == data_final):

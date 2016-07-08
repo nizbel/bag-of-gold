@@ -204,6 +204,23 @@ class DivisaoOperacaoCDB_RDB (models.Model):
     def percentual_divisao(self):
         return self.quantidade / self.operacao.quantidade
     
+class DivisaoOperacaoFundoInvestimento (models.Model):
+    divisao = models.ForeignKey('Divisao')
+    operacao = models.ForeignKey('OperacaoFundoInvestimento')
+    """
+    Guarda a quantidade da operação que pertence a divisão
+    """
+    quantidade = models.DecimalField('Quantidade',  max_digits=11, decimal_places=2)
+    
+    class Meta:
+        unique_together=('divisao', 'operacao')
+    
+    """
+    Calcula o percentual da operação que foi para a divisão
+    """
+    def percentual_divisao(self):
+        return self.quantidade / self.operacao.quantidade
+    
 class DivisaoOperacaoAcao (models.Model):
     divisao = models.ForeignKey('Divisao')
     operacao = models.ForeignKey('OperacaoAcao')
