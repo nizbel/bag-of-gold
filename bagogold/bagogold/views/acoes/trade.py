@@ -199,10 +199,11 @@ def acompanhamento_mensal(request):
     
 @login_required
 def editar_operacao(request, id):
+    investidor = request.user.investidor
     operacao = OperacaoCompraVenda.objects.get(pk=id)
     if request.method == 'POST':
         if request.POST.get("save"):
-            form = OperacaoCompraVendaForm(request.POST, instance=operacao)
+            form = OperacaoCompraVendaForm(request.POST, instance=operacao, investidor=investidor)
             if form.is_valid():
                 form.save()
         elif request.POST.get("delete"):
@@ -210,7 +211,7 @@ def editar_operacao(request, id):
             return HttpResponseRedirect(reverse('historico_operacoes_cv'))
 
     else:
-        form = OperacaoCompraVendaForm(instance=operacao)
+        form = OperacaoCompraVendaForm(instance=operacao, investidor=investidor)
         
     return render_to_response('acoes/trade/editar_operacao_acao.html', {'form': form}, context_instance=RequestContext(request)) 
     
@@ -340,7 +341,7 @@ def historico_operacoes_cv(request):
     # TODO adicionar calculos de lucro com DayTrade
     for operacao in operacoes:
         operacao.lucro = operacao.venda.preco_unitario * operacao.venda.quantidade - operacao.venda.corretagem - operacao.venda.emolumentos 
-        operacao.lucro -= (operacao.compra.preco_unitario * operacao.compra.quantidade + operacao.compra.corretagem + operacao.compra.emolumentos)
+        operacao.lucro -= (operacao.compra.preco_unitario * operacao.venda.quantidade + operacao.compra.corretagem + operacao.compra.emolumentos)
             
     return render_to_response('acoes/trade/historico_operacoes_cv.html', {'operacoes': operacoes}, context_instance=RequestContext(request))
     
@@ -361,6 +362,7 @@ def inserir_operacao(request):
     
 @login_required
 def inserir_operacao_acao(request):
+    investidor = request.user.investidor
     if request.method == 'POST':
         form = OperacaoAcaoForm(request.POST)
         if form.is_valid():
@@ -369,6 +371,9 @@ def inserir_operacao_acao(request):
             operacao_acao.save()
             return HttpResponseRedirect(reverse('historico_operacoes'))
     else:
-        form = OperacaoAcaoForm()
+        valores_iniciais = {}
+        if investidor.tipo_corretagem == 'F':
+            valores_iniciais['corretagem'] = investidor.corretagem_padrao
+        form = OperacaoAcaoForm(initial=valores_iniciais)
             
     return render_to_response('acoes/trade/inserir_operacao_acao.html', {'form': form}, context_instance=RequestContext(request))
