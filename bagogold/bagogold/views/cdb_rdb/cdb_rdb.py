@@ -176,40 +176,39 @@ def inserir_cdb_rdb(request):
                                             extra=1, can_delete=False, max_num=1, validate_max=True, labels = {'carencia': 'Período de carência (em dias)',})
     
     if request.method == 'POST':
-        if request.POST.get("save"):
-            form_cdb_rdb = CDB_RDBForm(request.POST)
-            formset_porcentagem = PorcentagemFormSet(request.POST)
-            formset_carencia = CarenciaFormSet(request.POST)
-            if form_cdb_rdb.is_valid():
-                cdb_rdb = form_cdb_rdb.save(commit=False)
-                cdb_rdb.investidor = request.user.investidor
-                formset_porcentagem = PorcentagemFormSet(request.POST, instance=cdb_rdb)
-                formset_porcentagem.forms[0].empty_permitted=False
-                formset_carencia = CarenciaFormSet(request.POST, instance=cdb_rdb)
-                formset_carencia.forms[0].empty_permitted=False
-                
-                if formset_porcentagem.is_valid():
-                    if formset_carencia.is_valid():
-                        try:
-                            cdb_rdb.save()
-                            formset_porcentagem.save()
-                            formset_carencia.save()
-                        # Capturar erros oriundos da hora de salvar os objetos
-                        except Exception as erro:
-                            messages.error(request, erro.message)
-                            return render_to_response('cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'formset_porcentagem': formset_porcentagem,
-                                                              'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
-                            
-                        return HttpResponseRedirect(reverse('listar_cdb_rdb'))
-            for erros in form_cdb_rdb.errors.values():
-                for erro in erros:
-                    messages.error(request, erro)
-            for erro in formset_porcentagem.non_form_errors():
+        form_cdb_rdb = CDB_RDBForm(request.POST)
+        formset_porcentagem = PorcentagemFormSet(request.POST)
+        formset_carencia = CarenciaFormSet(request.POST)
+        if form_cdb_rdb.is_valid():
+            cdb_rdb = form_cdb_rdb.save(commit=False)
+            cdb_rdb.investidor = request.user.investidor
+            formset_porcentagem = PorcentagemFormSet(request.POST, instance=cdb_rdb)
+            formset_porcentagem.forms[0].empty_permitted=False
+            formset_carencia = CarenciaFormSet(request.POST, instance=cdb_rdb)
+            formset_carencia.forms[0].empty_permitted=False
+            
+            if formset_porcentagem.is_valid():
+                if formset_carencia.is_valid():
+                    try:
+                        cdb_rdb.save()
+                        formset_porcentagem.save()
+                        formset_carencia.save()
+                    # Capturar erros oriundos da hora de salvar os objetos
+                    except Exception as erro:
+                        messages.error(request, erro.message)
+                        return render_to_response('cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'formset_porcentagem': formset_porcentagem,
+                                                          'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
+                        
+                    return HttpResponseRedirect(reverse('listar_cdb_rdb'))
+        for erros in form_cdb_rdb.errors.values():
+            for erro in erros:
                 messages.error(request, erro)
-            for erro in formset_carencia.non_form_errors():
-                messages.error(request, erro)
-            return render_to_response('cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'formset_porcentagem': formset_porcentagem,
-                                                              'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
+        for erro in formset_porcentagem.non_form_errors():
+            messages.error(request, erro)
+        for erro in formset_carencia.non_form_errors():
+            messages.error(request, erro)
+        return render_to_response('cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'formset_porcentagem': formset_porcentagem,
+                                                          'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
     else:
         form_cdb_rdb = CDB_RDBForm()
         formset_porcentagem = PorcentagemFormSet()
