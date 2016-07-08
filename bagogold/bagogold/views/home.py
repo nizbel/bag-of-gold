@@ -124,7 +124,7 @@ def home(request):
     cdb_rdb = {}
     # Caso haja CDB/RDB, preparar para o cálculo
     try:
-        ultima_data_calculada_cdb_rdb = operacoes_lc[0].data
+        ultima_data_calculada_cdb_rdb = operacoes_cdb_rdb[0].data
     except:
         ultima_data_calculada_cdb_rdb = datetime.date.today()
     total_proventos_fii = 0
