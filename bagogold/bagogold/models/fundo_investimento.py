@@ -38,7 +38,7 @@ class OperacaoFundoInvestimento (models.Model):
     investidor = models.ForeignKey('Investidor')
     
     def __unicode__(self):
-        return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.investimento, self.data)
+        return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade_cotas, self.fundo_investimento, self.data)
     
     def carencia(self):
         try:
