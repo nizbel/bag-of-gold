@@ -58,8 +58,8 @@
             <td>{{ item.data|date:"Y-m-d" }}</td>
             <td>{{item.quantidade}}</td>
             <td>R$ {{item.valor_unitario}}</td>
-            <td><span style="color:red">{% if item.emolumentos != None %}R$ {{item.emolumentos|floatformat:"2"}}{% endif %}</span></td>
-            <td><span style="color:red">{% if item.corretagem != None %}R$ {{item.corretagem|floatformat:"2"}}{% endif %}</span></td>
+            <td>{% if item.emolumentos != None %}<span style="color:red">R$ {{item.emolumentos|floatformat:"2"}}</span>{% else %}N/A{% endif %}</td>
+            <td>{% if item.corretagem != None %}<span style="color:red">R$ {{item.corretagem|floatformat:"2"}}</span>{% else %}N/A{% endif %}</td>
             <td><span style="color:
             {% if item.total < 0 %}
             red
