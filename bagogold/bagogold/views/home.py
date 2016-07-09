@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, Provento, \
     ValorDiarioAcao
+from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB
 from bagogold.bagogold.models.fii import OperacaoFII, HistoricoFII, ProventoFII, \
     ValorDiarioFII
+from bagogold.bagogold.models.fundo_investimento import \
+    OperacaoFundoInvestimento, HistoricoValorCotas
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo
 from bagogold.bagogold.testTD import buscar_valores_diarios
@@ -46,7 +49,10 @@ def home(request):
     
     operacoes_cdb_rdb = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
     
-    lista_operacoes = sorted(chain(proventos_fii, operacoes_fii, operacoes_td, proventos_bh,  operacoes_bh, operacoes_lc, operacoes_cdb_rdb),
+    operacoes_fundo_investimento = OperacaoFundoInvestimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
+    
+    # Juntar todas as operações
+    lista_operacoes = sorted(chain(proventos_fii, operacoes_fii, operacoes_td, proventos_bh,  operacoes_bh, operacoes_lc, operacoes_cdb_rdb, operacoes_fundo_investimento),
                             key=attrgetter('data'))
 
 	# Se não houver operações, retornar vazio
@@ -124,9 +130,10 @@ def home(request):
     cdb_rdb = {}
     # Caso haja CDB/RDB, preparar para o cálculo
     try:
-        ultima_data_calculada_cdb_rdb = operacoes_lc[0].data
+        ultima_data_calculada_cdb_rdb = operacoes_cdb_rdb[0].data
     except:
         ultima_data_calculada_cdb_rdb = datetime.date.today()
+    fundos_investimento = {}
     total_proventos_fii = 0
     total_proventos_bh = 0
     
@@ -143,6 +150,7 @@ def home(request):
 #     total_td = datetime.timedelta(hours=0)
 #     total_lc = datetime.timedelta(hours=0)
 #     total_cdb_rdb = datetime.timedelta(hours=0)
+#     total_fundo_investimento = datetime.timedelta(hours=0)
     ############# TESTE
     
     for index, item in enumerate(lista_conjunta):    
@@ -236,6 +244,15 @@ def home(request):
                 else:
                     cdb_rdb[item.operacao_compra_relacionada().id].quantidade -= cdb_rdb[item.operacao_compra_relacionada().id].quantidade * item.quantidade / item.operacao_compra_relacionada().quantidade
                 
+        elif isinstance(item, OperacaoFundoInvestimento):
+            if item.fundo_investimento not in fundos_investimento.keys():
+                fundos_investimento[item.fundo_investimento] = 0    
+            if item.tipo_operacao == 'C':
+                fundos_investimento[item.fundo_investimento] += item.quantidade_cotas
+                
+            elif item.tipo_operacao == 'V':
+                fundos_investimento[item.fundo_investimento] -= item.quantidade_cotas
+
         # Se não cair em nenhum dos anteriores: item vazio
         
         # Se última operação feita no dia, calcular patrimonio
@@ -374,6 +391,21 @@ def home(request):
             patrimonio['patrimonio_total'] += patrimonio['CDB/RDB'] 
 #             fim_cdb_rdb = datetime.datetime.now()
 #             total_cdb_rdb += fim_cdb_rdb - inicio_cdb_rdb
+
+            # Fundo de investimento
+#             inicio_fundo_investimento = datetime.datetime.now()
+            patrimonio_fundo_investimento = 0
+            for fundo in fundos_investimento.keys():
+                historico_fundo = HistoricoValorCotas.objects.filter(fundo_investimento=fundo, data__lte=item.data).order_by('-data')
+                ultima_operacao_fundo = OperacaoFundoInvestimento.objects.filter(data__lte=item.data, fundo_investimento=fundo).order_by('-data')[0]
+                if historico_fundo and historico_fundo[0].data > ultima_operacao_fundo.data:
+                    patrimonio_fundo_investimento += fundos_investimento[fundo] * historico_fundo[0].valor_cota
+                else:
+                    patrimonio_fundo_investimento += fundos_investimento[fundo] * ultima_operacao_fundo.valor_cota()
+            patrimonio['Fundo de Inv.'] = patrimonio_fundo_investimento
+            patrimonio['patrimonio_total'] += patrimonio['Fundo de Inv.'] 
+#             fim_fundo_investimento = datetime.datetime.now()
+#             total_fundo_investimento += fim_fundo_investimento - inicio_fundo_investimento
             
             
 #             print 'Ações      ', total_acoes
@@ -383,6 +415,7 @@ def home(request):
 #             print 'Prov. FII  ', total_prov_fii
 #             print 'LC         ', total_lc
 #             print 'CDB/RDB:   ', total_cdb_rdb
+#             print 'Fundo Inv. ', total_fundo_investimento
             
             # Preparar estatísticas
             for data_estatistica in datas_estatisticas:
@@ -418,5 +451,6 @@ def home(request):
 #     print 'TD:           ', total_td 
 #     print 'LC:           ', total_lc 
 #     print 'CDB/RDB:      ', total_cdb_rdb
+#     print 'Fundo Inv.:   ', total_fundo_investimento
     
     return render_to_response('home.html', {'graf_patrimonio': graf_patrimonio, 'patrimonio_anual': patrimonio_anual, 'estatisticas': estatisticas}, context_instance=RequestContext(request))

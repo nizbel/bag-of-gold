@@ -164,6 +164,7 @@ class BuscarValoresDiariosFIIThread(Thread):
             connection.request('GET', PUBLIC_API_URL + '?' + urlencode({ 'q': yql, 'format': 'json', 'env': DATATABLES_URL }))
             resultado = simplejson.loads(connection.getresponse().read())
             resultados_diarios_fii[self.indice_thread] = resultado
+            print self.indice_thread
         except Exception as ex:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -212,7 +213,7 @@ def buscar_ultimos_valores_geral_fii():
         for fii in grupo_fiis:
             fiis_formatados += '%s.SA ' % (fii.ticker)
         fiis_formatados.strip()
-        t = BuscarValoresDiariosAcaoThread(fiis_formatados, indice)
+        t = BuscarValoresDiariosFIIThread(fiis_formatados, indice)
         threads.append(t)
         t.start()
     for t in threads:
@@ -220,7 +221,6 @@ def buscar_ultimos_valores_geral_fii():
 
     # Preencher valores de ultimas negociacoes
     for resultado in resultados_diarios_fii.values():
-        print resultado
         for dados in resultado['query']['results']['quote']:
             valores_diarios[dados['Symbol']] = dados['LastTradePriceOnly']
     return valores_diarios

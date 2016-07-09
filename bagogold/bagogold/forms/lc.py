@@ -36,13 +36,13 @@ class OperacaoLetraCreditoForm(forms.ModelForm):
         # there's a `fields` property now
         self.fields['letra_credito'].required = False
         self.fields['letra_credito'].queryset = LetraCredito.objects.filter(investidor=self.investidor)
+        self.fields['operacao_compra'].queryset = OperacaoLetraCredito.objects.filter(investidor=self.investidor, tipo_operacao='C')
 #         if self.instance.pk is not None:
 #             # Verificar se é uma compra
 #             if self.instance.tipo_operacao == 'V':
 #                 self.operacao_compra.v
     
     def clean_operacao_compra(self):
-        print 'test'
         tipo_operacao = self.cleaned_data['tipo_operacao']
         if tipo_operacao == 'V':
             operacao_compra = self.cleaned_data.get('operacao_compra')
@@ -84,4 +84,5 @@ class HistoricoCarenciaLetraCreditoForm(forms.ModelForm):
                   'letra_credito')
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),}
+        labels = {'carencia': 'Período de carência (em dias)',}
         

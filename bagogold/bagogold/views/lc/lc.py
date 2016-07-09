@@ -131,10 +131,11 @@ def historico(request):
                         if taxa_do_dia > 0:
                             # Calcular o valor atualizado para cada operacao
                             operacao.atual = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa)
-                            # Arredondar na última iteração
-                            if (data_iteracao == data_final):
-                                str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
-                                operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+                        # Arredondar na última iteração
+                        if (data_iteracao == data_final):
+                            print 'data final'
+                            str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
+                            operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
                         total_patrimonio += operacao.atual
                         
                 elif operacao.tipo_operacao == 'V':
@@ -184,7 +185,7 @@ def inserir_lc(request):
     PorcentagemFormSet = inlineformset_factory(LetraCredito, HistoricoPorcentagemLetraCredito, fields=('porcentagem_di',),
                                             extra=1, can_delete=False, max_num=1, validate_max=True)
     CarenciaFormSet = inlineformset_factory(LetraCredito, HistoricoCarenciaLetraCredito, fields=('carencia',),
-                                            extra=1, can_delete=False, max_num=1, validate_max=True)
+                                            extra=1, can_delete=False, max_num=1, validate_max=True, labels = {'carencia': 'Período de carência (em dias)',})
     
     if request.method == 'POST':
         if request.POST.get("save"):
@@ -240,6 +241,7 @@ def inserir_operacao_lc(request):
             
             if form_operacao_lc.is_valid():
                 operacao_lc = form_operacao_lc.save(commit=False)
+                operacao_lc.investidor = investidor
                 operacao_compra = form_operacao_lc.cleaned_data['operacao_compra']
                 formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lc, operacao_compra=operacao_compra, investidor=investidor)
                     
@@ -249,7 +251,6 @@ def inserir_operacao_lc(request):
                     # Caso de venda total da letra de crédito
                     if form_operacao_lc.cleaned_data['quantidade'] == operacao_compra.quantidade:
                         # Desconsiderar divisões inseridas, copiar da operação de compra
-                        operacao_lc.investidor = investidor
                         operacao_lc.save()
                         for divisao_lc in DivisaoOperacaoLC.objects.filter(operacao=operacao_compra):
                             divisao_lc_venda = DivisaoOperacaoLC(quantidade=divisao_lc.quantidade, divisao=divisao_lc.divisao, \
@@ -262,7 +263,6 @@ def inserir_operacao_lc(request):
                     # Vendas parciais
                     else:
                         if formset_divisao.is_valid():
-                            operacao_lc.investidor = investidor
                             operacao_lc.save()
                             formset_divisao.save()
                             operacao_venda_lc = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_lc)
@@ -271,7 +271,6 @@ def inserir_operacao_lc(request):
                             return HttpResponseRedirect(reverse('historico_lc'))
                 else:
                     if formset_divisao.is_valid():
-                        operacao_lc.investidor = investidor
                         operacao_lc.save()
                         formset_divisao.save()
                         messages.success(request, 'Operação inserida com sucesso')
