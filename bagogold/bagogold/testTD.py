@@ -105,7 +105,7 @@ def baixar_historico_td_ano(ano):
     inicio = data.find('Histórico de preços e taxas')
     fim = data.find('</div>', inicio)
     string_importante = data[inicio:fim]
-    print string_importante
+#     print string_importante
     
     urls = re.findall('href="(.*?)"', string_importante)
     for url in urls:
