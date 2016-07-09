@@ -244,6 +244,15 @@ def home(request):
                 else:
                     cdb_rdb[item.operacao_compra_relacionada().id].quantidade -= cdb_rdb[item.operacao_compra_relacionada().id].quantidade * item.quantidade / item.operacao_compra_relacionada().quantidade
                 
+        elif isinstance(item, OperacaoFundoInvestimento):
+            if item.fundo_investimento not in fundos_investimento.keys():
+                fundos_investimento[item.fundo_investimento] = 0    
+            if item.tipo_operacao == 'C':
+                fundos_investimento[item.fundo_investimento] += item.quantidade_cotas
+                
+            elif item.tipo_operacao == 'V':
+                fundos_investimento[item.fundo_investimento] -= item.quantidade_cotas
+
         # Se não cair em nenhum dos anteriores: item vazio
         
         # Se última operação feita no dia, calcular patrimonio
