@@ -103,7 +103,7 @@ function mostrarComposicao(key) {
 	// Alterar classe escolhida
     $('#tab_composicao').toggleClass('mostrar-' + key);
 	// Mostrar ou esconder tabela atual
-	if ($('#tab_composicao').is('.mostrar-acoes, .mostrar-fii, .mostrar-lc, .mostrar-td, .mostrar-cdb-rdb')) {
+	if ($('#tab_composicao').is('.mostrar-acoes, .mostrar-fii, .mostrar-lc, .mostrar-td, .mostrar-cdb-rdb, .mostrar-fundo-investimento')) {
 	    $('#composicao_item').removeClass('hidden');
     } else {
     	$('#composicao_item').addClass('hidden');
@@ -145,10 +145,10 @@ function mostrarOperacoes(key) {
 }
 
 $.fn.dataTableExt.afnFiltering.push(function (oSettings, aData, iDataIndex) {
-    if ($(oSettings.nTable).is('.mostrar-acoes, .mostrar-fii, .mostrar-lc, .mostrar-td, .mostrar-cdb-rdb')) {
+    if ($(oSettings.nTable).is('.mostrar-acoes, .mostrar-fii, .mostrar-lc, .mostrar-td, .mostrar-cdb-rdb, .mostrar-fundo-investimento')) {
     	var mostrar = (aData[0].match(/acoes\_/) != null && $(oSettings.nTable).hasClass('mostrar-acoes')) || (aData[0].match(/fii\_/) != null && $(oSettings.nTable).hasClass('mostrar-fii')) ||
     	   (aData[0].match(/lc\_/) != null && $(oSettings.nTable).hasClass('mostrar-lc')) || (aData[0].match(/td\_/) != null && $(oSettings.nTable).hasClass('mostrar-td')) ||
-    	   (aData[0].match(/cdb-rdb\_/) != null && $(oSettings.nTable).hasClass('mostrar-cdb-rdb'));
+    	   (aData[0].match(/cdb-rdb\_/) != null && $(oSettings.nTable).hasClass('mostrar-cdb-rdb')) || (aData[0].match(/td\_/) != null && $(oSettings.nTable).hasClass('mostrar-fundo-investimento'));
         return mostrar;
     } else return true;
 });
