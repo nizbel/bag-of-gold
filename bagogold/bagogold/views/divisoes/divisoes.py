@@ -2,13 +2,16 @@
 from bagogold.bagogold.forms.divisoes import DivisaoForm, \
     TransferenciaEntreDivisoesForm
 from bagogold.bagogold.models.acoes import ValorDiarioAcao, HistoricoAcao, Acao
+from bagogold.bagogold.models.cdb_rdb import CDB_RDB, \
+    HistoricoPorcentagemCDB_RDB
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
     DivisaoOperacaoFII, DivisaoOperacaoTD, DivisaoOperacaoAcao, \
-    TransferenciaEntreDivisoes
+    TransferenciaEntreDivisoes, DivisaoOperacaoFundoInvestimento, \
+    DivisaoOperacaoCDB_RDB
 from bagogold.bagogold.models.fii import ValorDiarioFII, HistoricoFII, \
     OperacaoFII, FII
 from bagogold.bagogold.models.fundo_investimento import HistoricoValorCotas, \
-    OperacaoFundoInvestimento
+    OperacaoFundoInvestimento, FundoInvestimento
 from bagogold.bagogold.models.lc import HistoricoTaxaDI, \
     HistoricoPorcentagemLetraCredito, LetraCredito
 from bagogold.bagogold.models.td import ValorDiarioTitulo, HistoricoTitulo, \
@@ -92,6 +95,30 @@ def detalhar_divisao(request, id):
             composicao['fii'].composicao[ticker].composicao[operacao_divisao.operacao.id].valor_unitario = FII.objects.get(ticker=ticker).valor_no_dia(operacao_divisao.operacao.data)
             composicao['fii'].composicao[ticker].composicao[operacao_divisao.operacao.id].patrimonio = operacao_divisao.quantidade * \
                 composicao['fii'].composicao[ticker].composicao[operacao_divisao.operacao.id].valor_unitario
+                
+    # Adicionar Fundos de investimento
+    composicao['fundo_investimento'] = Object()
+    composicao['fundo_investimento'].nome = 'Fundos de Investimento'
+    composicao['fundo_investimento'].patrimonio = 0
+    composicao['fundo_investimento'].composicao = {}
+    # Pegar fundos de investimento contidos na divisão
+    qtd_fundos_dia = calcular_qtd_cotas_ate_dia_por_divisao(datetime.date.today(), divisao.id)
+    for fundo_id in qtd_fundos_dia.keys():
+        fundo_valor = FundoInvestimento.objects.get(id=fundo_id).valor_no_dia(datetime.date.today())
+        composicao['fundo_investimento'].patrimonio += qtd_fundos_dia[fundo_id] * fundo_valor
+        composicao['fundo_investimento'].composicao[fundo_id] = Object()
+        composicao['fundo_investimento'].composicao[fundo_id].nome = FundoInvestimento.objects.get(id=fundo_id).nome
+        composicao['fundo_investimento'].composicao[fundo_id].patrimonio = qtd_fundos_dia[fundo_id] * fundo_valor
+        composicao['fundo_investimento'].composicao[fundo_id].composicao = {}
+        # Pegar operações dos fundos de investimento
+        for operacao_divisao in DivisaoOperacaoFundoInvestimento.objects.filter(divisao=divisao, operacao__fundo_investimento__id=fundo_id):
+            composicao['fundo_investimento'].composicao[fundo_id].composicao[operacao_divisao.operacao.id] = Object()
+            composicao['fundo_investimento'].composicao[fundo_id].composicao[operacao_divisao.operacao.id].nome = operacao_divisao.operacao.tipo_operacao
+            composicao['fundo_investimento'].composicao[fundo_id].composicao[operacao_divisao.operacao.id].data = operacao_divisao.operacao.data
+            composicao['fundo_investimento'].composicao[fundo_id].composicao[operacao_divisao.operacao.id].quantidade = operacao_divisao.quantidade
+            composicao['fundo_investimento'].composicao[fundo_id].composicao[operacao_divisao.operacao.id].valor_unitario = operacao_divisao.operacao.valor_cota()
+            composicao['fundo_investimento'].composicao[fundo_id].composicao[operacao_divisao.operacao.id].patrimonio = operacao_divisao.quantidade * \
+                composicao['fundo_investimento'].composicao[fundo_id].composicao[operacao_divisao.operacao.id].valor_unitario
     
     # Adicionar letras de crédito
     composicao['lc'] = Object()
@@ -118,6 +145,32 @@ def detalhar_divisao(request, id):
                 composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].valor_unitario = HistoricoPorcentagemLetraCredito.objects.get(data__isnull=True, letra_credito=operacao_divisao.operacao.letra_credito).porcentagem_di
             
             composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].patrimonio = operacao_divisao.quantidade
+            
+    # Adicionar cdb-rdb
+    composicao['cdb-rdb'] = Object()
+    composicao['cdb-rdb'].nome = 'CDB/RDB'
+    composicao['cdb-rdb'].patrimonio = 0
+    composicao['cdb-rdb'].composicao = {}
+    valores_cdb_rdb_dia = calcular_valor_cdb_rdb_ate_dia_por_divisao(datetime.date.today(), divisao.id)
+    for cdb_rdb_id in valores_cdb_rdb_dia.keys():
+        composicao['cdb-rdb'].patrimonio += valores_cdb_rdb_dia[cdb_rdb_id]
+        composicao['cdb-rdb'].composicao[cdb_rdb_id] = Object()
+        composicao['cdb-rdb'].composicao[cdb_rdb_id].nome = CDB_RDB.objects.get(id=cdb_rdb_id).nome
+        composicao['cdb-rdb'].composicao[cdb_rdb_id].patrimonio = valores_cdb_rdb_dia[cdb_rdb_id]
+        composicao['cdb-rdb'].composicao[cdb_rdb_id].composicao = {}
+        # Pegar operações dos cdb-rdbs
+        for operacao_divisao in DivisaoOperacaoCDB_RDB.objects.filter(divisao=divisao, operacao__investimento__id=cdb_rdb_id):
+            composicao['cdb-rdb'].composicao[cdb_rdb_id].composicao[operacao_divisao.operacao.id] = Object()
+            composicao['cdb-rdb'].composicao[cdb_rdb_id].composicao[operacao_divisao.operacao.id].nome = operacao_divisao.operacao.tipo_operacao
+            composicao['cdb-rdb'].composicao[cdb_rdb_id].composicao[operacao_divisao.operacao.id].data = operacao_divisao.operacao.data
+            composicao['cdb-rdb'].composicao[cdb_rdb_id].composicao[operacao_divisao.operacao.id].quantidade = operacao_divisao.quantidade
+            try:
+                composicao['cdb-rdb'].composicao[cdb_rdb_id].composicao[operacao_divisao.operacao.id].valor_unitario = HistoricoPorcentagemCDB_RDB.objects.filter(cdb_rdb=operacao_divisao.operacao.investimento, \
+                                                                                                                                        data__lte=operacao_divisao.operacao.data).order_by('-data')[0].porcentagem
+            except:
+                composicao['cdb-rdb'].composicao[cdb_rdb_id].composicao[operacao_divisao.operacao.id].valor_unitario = HistoricoPorcentagemCDB_RDB.objects.get(data__isnull=True, cdb_rdb=operacao_divisao.operacao.investimento).porcentagem
+            
+            composicao['cdb-rdb'].composicao[cdb_rdb_id].composicao[operacao_divisao.operacao.id].patrimonio = operacao_divisao.quantidade
     
     # Adicionar TDs
     composicao['td'] = Object()
