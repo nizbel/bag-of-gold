@@ -97,28 +97,28 @@ def detalhar_divisao(request, id):
                 composicao['fii'].composicao[ticker].composicao[operacao_divisao.operacao.id].valor_unitario
                 
     # Adicionar Fundos de investimento
-    composicao['fundo_investimento'] = Object()
-    composicao['fundo_investimento'].nome = 'Fundos de Investimento'
-    composicao['fundo_investimento'].patrimonio = 0
-    composicao['fundo_investimento'].composicao = {}
+    composicao['fundo-investimento'] = Object()
+    composicao['fundo-investimento'].nome = 'Fundos de Investimento'
+    composicao['fundo-investimento'].patrimonio = 0
+    composicao['fundo-investimento'].composicao = {}
     # Pegar fundos de investimento contidos na divisão
     qtd_fundos_dia = calcular_qtd_cotas_ate_dia_por_divisao(datetime.date.today(), divisao.id)
     for fundo_id in qtd_fundos_dia.keys():
         fundo_valor = FundoInvestimento.objects.get(id=fundo_id).valor_no_dia(datetime.date.today())
-        composicao['fundo_investimento'].patrimonio += qtd_fundos_dia[fundo_id] * fundo_valor
-        composicao['fundo_investimento'].composicao[fundo_id] = Object()
-        composicao['fundo_investimento'].composicao[fundo_id].nome = FundoInvestimento.objects.get(id=fundo_id).nome
-        composicao['fundo_investimento'].composicao[fundo_id].patrimonio = qtd_fundos_dia[fundo_id] * fundo_valor
-        composicao['fundo_investimento'].composicao[fundo_id].composicao = {}
+        composicao['fundo-investimento'].patrimonio += qtd_fundos_dia[fundo_id] * fundo_valor
+        composicao['fundo-investimento'].composicao[fundo_id] = Object()
+        composicao['fundo-investimento'].composicao[fundo_id].nome = FundoInvestimento.objects.get(id=fundo_id).nome
+        composicao['fundo-investimento'].composicao[fundo_id].patrimonio = qtd_fundos_dia[fundo_id] * fundo_valor
+        composicao['fundo-investimento'].composicao[fundo_id].composicao = {}
         # Pegar operações dos fundos de investimento
         for operacao_divisao in DivisaoOperacaoFundoInvestimento.objects.filter(divisao=divisao, operacao__fundo_investimento__id=fundo_id):
-            composicao['fundo_investimento'].composicao[fundo_id].composicao[operacao_divisao.operacao.id] = Object()
-            composicao['fundo_investimento'].composicao[fundo_id].composicao[operacao_divisao.operacao.id].nome = operacao_divisao.operacao.tipo_operacao
-            composicao['fundo_investimento'].composicao[fundo_id].composicao[operacao_divisao.operacao.id].data = operacao_divisao.operacao.data
-            composicao['fundo_investimento'].composicao[fundo_id].composicao[operacao_divisao.operacao.id].quantidade = operacao_divisao.quantidade
-            composicao['fundo_investimento'].composicao[fundo_id].composicao[operacao_divisao.operacao.id].valor_unitario = operacao_divisao.operacao.valor_cota()
-            composicao['fundo_investimento'].composicao[fundo_id].composicao[operacao_divisao.operacao.id].patrimonio = operacao_divisao.quantidade * \
-                composicao['fundo_investimento'].composicao[fundo_id].composicao[operacao_divisao.operacao.id].valor_unitario
+            composicao['fundo-investimento'].composicao[fundo_id].composicao[operacao_divisao.operacao.id] = Object()
+            composicao['fundo-investimento'].composicao[fundo_id].composicao[operacao_divisao.operacao.id].nome = operacao_divisao.operacao.tipo_operacao
+            composicao['fundo-investimento'].composicao[fundo_id].composicao[operacao_divisao.operacao.id].data = operacao_divisao.operacao.data
+            composicao['fundo-investimento'].composicao[fundo_id].composicao[operacao_divisao.operacao.id].quantidade = operacao_divisao.quantidade
+            composicao['fundo-investimento'].composicao[fundo_id].composicao[operacao_divisao.operacao.id].valor_unitario = operacao_divisao.operacao.valor_cota()
+            composicao['fundo-investimento'].composicao[fundo_id].composicao[operacao_divisao.operacao.id].patrimonio = operacao_divisao.quantidade * \
+                composicao['fundo-investimento'].composicao[fundo_id].composicao[operacao_divisao.operacao.id].valor_unitario
     
     # Adicionar letras de crédito
     composicao['lc'] = Object()
