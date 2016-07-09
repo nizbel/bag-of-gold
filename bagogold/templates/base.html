@@ -252,6 +252,18 @@
                     </ul>   
                 </li>
                 <li>
+                    <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> Fundo de Investimento</span></a>
+                    <ul>
+                        <li><a class="submenu" href="{% url "adicionar_valor_cota_historico" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Adicionar valor de cota</span></a></li>
+                        <li><a class="submenu" href="{% url "historico_fundo_investimento" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico</span></a></li>
+                        <li><a class="submenu" href="{% url "inserir_operacao_fundo_investimento" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir operação</span></a></li>
+                        <li><a class="submenu" href="{% url "inserir_fundo_investimento" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir Fundo de Inv.</span></a></li>
+                        <li><a class="submenu" href="{% url "listar_fundo_investimento" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar Fundos</span></a></li>
+                        <li><a class="submenu" href="{% url "modificar_carencia_fundo_investimento" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Modificar carência</span></a></li>
+                        <li><a class="submenu" href="{% url "painel_fundo_investimento" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Painel</span></a></li>
+                    </ul>  
+                </li>
+                <li>
                     <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> LCI / LCA</span></a>
                     <ul>
                         <li><a class="submenu" href="{% url "historico_lc" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico</span></a></li>

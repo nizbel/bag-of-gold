@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.lc import HistoricoTaxaDI, HistoricoTaxaDI
+from bagogold.bagogold.models.lc import HistoricoTaxaDI
 from decimal import Decimal
 from django import forms
 from django.db import models
+from bagogold.bagogold.models.lc import HistoricoTaxaDI
 import datetime
 
 class Divisao (models.Model):
@@ -149,6 +150,7 @@ class Divisao (models.Model):
                 valor_venda = Decimal(str_auxiliar[:len(str_auxiliar)-2])
                 saldo += valor_venda
                 
+        print 'Fim', saldo    
         # Transferências
         for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='L', data__lte=data):
             saldo -= transferencia.quantidade
@@ -226,6 +228,23 @@ class DivisaoOperacaoLC (models.Model):
 class DivisaoOperacaoCDB_RDB (models.Model):
     divisao = models.ForeignKey('Divisao')
     operacao = models.ForeignKey('OperacaoCDB_RDB')
+    """
+    Guarda a quantidade da operação que pertence a divisão
+    """
+    quantidade = models.DecimalField('Quantidade',  max_digits=11, decimal_places=2)
+    
+    class Meta:
+        unique_together=('divisao', 'operacao')
+    
+    """
+    Calcula o percentual da operação que foi para a divisão
+    """
+    def percentual_divisao(self):
+        return self.quantidade / self.operacao.quantidade
+    
+class DivisaoOperacaoFundoInvestimento (models.Model):
+    divisao = models.ForeignKey('Divisao')
+    operacao = models.ForeignKey('OperacaoFundoInvestimento')
     """
     Guarda a quantidade da operação que pertence a divisão
     """

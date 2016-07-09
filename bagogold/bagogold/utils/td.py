@@ -1,15 +1,38 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD
 from bagogold.bagogold.models.td import OperacaoTitulo, Titulo, HistoricoTitulo, \
-    ValorDiarioTitulo
+    ValorDiarioTitulo, HistoricoIPCA
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo
 from decimal import Decimal
-from django.db.models import Sum, Case, When, IntegerField, F
-from itertools import chain
-from operator import attrgetter
+from django.db.models import Q
 import calendar
 import datetime
 
+
+def calcular_valor_acumulado_ipca(data_base, data_final=datetime.date.today()):
+    """
+    Calcula o valor acumulado do IPCA desde a data base, até uma data final
+    Parâmetros: Data base
+                Data final
+    Retorno: Taxa total acumulada
+    """
+    ipca_inicial = HistoricoIPCA.objects.get(mes=data_base.month, ano=data_base.year)
+    # Calcular quantidade de dias em que a taxa inicial foi aplicada
+    ultimo_dia_mes_inicial = datetime.date(data_base.year, data_base.month, calendar.monthrange(data_base.year, data_base.month)[1])
+    qtd_dias = (min(data_final, ultimo_dia_mes_inicial) - data_base).days
+    # Transformar taxa mensal em diaria
+    ipca_inicial_diario = pow(1 + ipca_inicial.valor/Decimal(100), Decimal(1)/30) - 1
+    # Iniciar IPCA do periodo com o acumulado nos dias
+    ipca_periodo = pow(1 + ipca_inicial_diario, qtd_dias) - 1
+#     print 'IPCA inicial:', ipca_periodo
+    # TODO melhorar isso
+    print 'comecando'
+    for mes_historico in HistoricoIPCA.objects.filter((Q(mes__gt=ipca_inicial.mes) & Q(ano=ipca_inicial.ano)) | \
+                                                      Q(ano__gt=ipca_inicial.ano)).filter(ano__lte=data_final.year).order_by('ano', 'mes'):
+        if datetime.date(mes_historico.ano, mes_historico.mes, calendar.monthrange(mes_historico.ano, mes_historico.mes)[1]) <= data_final:
+#             print mes_historico.ano, '/', mes_historico.mes, '->', ipca_periodo, (1 + mes_historico.valor/Decimal(100))
+            ipca_periodo = (1 + ipca_periodo) * (1 + mes_historico.valor/Decimal(100)) - 1
+    return ipca_periodo
 
 def calcular_imposto_venda_td(dias, valor_venda, rendimento):
     """
@@ -19,7 +42,7 @@ def calcular_imposto_venda_td(dias, valor_venda, rendimento):
     """
     if dias < 30:
         valor_iof = calcular_iof_regressivo(dias)
-        return min(valor_iof * valor_venda + Decimal(0.225) * rendimento, rendimento)
+        return min((valor_iof + Decimal(0.225)) * rendimento, rendimento)
     if dias <= 180:
         return Decimal(0.225) * rendimento
     elif dias <= 360:

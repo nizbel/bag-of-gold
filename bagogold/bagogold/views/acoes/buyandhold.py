@@ -206,7 +206,7 @@ def estatisticas_acao(request, ticker=None):
                 elif item.tipo_provento == 'A':
                     provento_acao = item.acaoprovento_set.all()[0]
                     if provento_acao.acao_recebida.ticker == ticker:
-                        acoes_recebidas = int((quantidade_acoes_ate_dia(item.acao.ticker, item.data) * item.valor_unitario ) / 100 )
+                        acoes_recebidas = int((quantidade_acoes_ate_dia(investidor, item.acao.ticker, item.data) * item.valor_unitario ) / 100 )
                         qtd_acoes += acoes_recebidas
                     if item.acao.ticker == ticker:
                         if provento_acao.valor_calculo_frac > 0:
@@ -583,7 +583,10 @@ def inserir_operacao_acao(request):
             return render_to_response('acoes/buyandhold/inserir_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,
                                                                        'formset_divisao': formset_divisao }, context_instance=RequestContext(request))
     else:
-        form_operacao_acao = OperacaoAcaoForm()
+        valores_iniciais = {}
+        if investidor.tipo_corretagem == 'F':
+            valores_iniciais['corretagem'] = investidor.corretagem_padrao
+        form_operacao_acao = OperacaoAcaoForm(initial=valores_iniciais)
         form_uso_proventos = UsoProventosOperacaoAcaoForm()
         formset_divisao = DivisaoFormSet(investidor=investidor)
             

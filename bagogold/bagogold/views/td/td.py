@@ -232,20 +232,18 @@ def historico_td(request):
                 item.taxa_bvmf + item.taxa_custodia)
                 total_gasto += item.total
                 qtd_titulos[item.titulo] += item.quantidade
-                graf_gasto_total += [[str(calendar.timegm(item.data.timetuple()) * 1000), float(-total_gasto)]]
                 total_patrimonio = 0
                 qtd_total_titulos = 0
                 for titulo in qtd_titulos.keys():
                     qtd_total_titulos += qtd_titulos[titulo]
                     if not item.data == datetime.date.today():
-                        total_patrimonio += (qtd_titulos[titulo] * HistoricoTitulo.objects.get(data=item.data, titulo=titulo).preco_venda)
+                        total_patrimonio += (qtd_titulos[titulo] * HistoricoTitulo.objects.filter(data__lte=item.data, titulo=titulo).order_by('-data')[0].preco_venda)
                     else:
+                        # TODO verificar necessidade de chamar buscar valores diarios tao frequentemente assim
                         for valor_diario in buscar_valores_diarios():
                             if valor_diario.titulo == titulo:
                                 total_patrimonio += (qtd_titulos[titulo] * valor_diario.preco_venda)
                                 break
-                graf_patrimonio += [[str(calendar.timegm(item.data.timetuple()) * 1000), float(total_patrimonio)]]
-                graf_total_venc += [[str(calendar.timegm(item.data.timetuple()) * 1000), float(qtd_total_titulos * 1000)]]
                 
             elif item.tipo_operacao == 'V':
                 item.tipo = 'Venda'
@@ -253,24 +251,53 @@ def historico_td(request):
                 item.taxa_bvmf - item.taxa_custodia)
                 total_gasto += item.total
                 qtd_titulos[item.titulo] -= item.quantidade
-                graf_gasto_total += [[str(calendar.timegm(item.data.timetuple()) * 1000), float(-total_gasto)]]
                 total_patrimonio = 0
                 qtd_total_titulos = 0
                 for titulo in qtd_titulos.keys():
                     qtd_total_titulos += qtd_titulos[titulo]
                     if item.data is not datetime.date.today():
-                        total_patrimonio += (qtd_titulos[titulo] * HistoricoTitulo.objects.get(data=item.data, titulo=titulo).preco_venda)
+                        total_patrimonio += (qtd_titulos[titulo] * HistoricoTitulo.objects.filter(data__lte=item.data, titulo=titulo).order_by('-data')[0].preco_venda)
                     else:
                         for valor_diario in buscar_valores_diarios():
                             if valor_diario.titulo == titulo:
                                 total_patrimonio += (qtd_titulos[titulo] * valor_diario.preco_venda)
                                 break
-                graf_patrimonio += [[str(calendar.timegm(item.data.timetuple()) * 1000), float(total_patrimonio)]]
-                graf_total_venc += [[str(calendar.timegm(item.data.timetuple()) * 1000), float(qtd_total_titulos * 1000)]]
+        
+        # Formatar data para inserir nos gráficos
+        data_formatada = str(calendar.timegm(item.data.timetuple()) * 1000)        
+        # Patrimônio
+        # Verifica se altera ultima posicao do grafico ou adiciona novo registro
+        if len(graf_patrimonio) > 0 and graf_patrimonio[-1][0] == data_formatada:
+            graf_patrimonio[len(graf_patrimonio)-1][1] = float(total_patrimonio)
+        else:
+            graf_patrimonio += [[data_formatada, float(total_patrimonio)]]
+            
+        # Total gasto
+        if len(graf_gasto_total) > 0 and graf_gasto_total[-1][0] == data_formatada:
+            graf_gasto_total[len(graf_gasto_total)-1][1] = float(-total_gasto)
+        else:
+            graf_gasto_total += [[data_formatada, float(-total_gasto)]]
+            
+        # Calcular o total a receber no vencimento com base nas quantidades
+        total_vencimento_atual = 0
+        for titulo in qtd_titulos.keys():
+            if qtd_titulos[titulo] > 0:
+                print titulo, titulo.valor_vencimento()
+                total_vencimento_atual += qtd_titulos[titulo] * titulo.valor_vencimento(data=item.data)
+        # Verifica se altera ultima posicao do grafico ou adiciona novo registro
+        if len(graf_total_venc) > 0 and graf_total_venc[-1][0] == data_formatada:
+            graf_total_venc[len(graf_total_venc)-1][1] = float(total_vencimento_atual)
+        else:
+            graf_total_venc += [[data_formatada, float(total_vencimento_atual)]]
             
     # Adicionar valor mais atual para todos os gráficos
-    data_mais_atual = datetime.datetime.now()
-    graf_gasto_total += [[str(calendar.timegm(data_mais_atual.timetuple()) * 1000), float(-total_gasto)]]
+    data_mais_atual_formatada = str(calendar.timegm(datetime.datetime.now().timetuple()) * 1000)  
+    # Total gasto
+    if len(graf_gasto_total) > 0 and graf_gasto_total[-1][0] == data_mais_atual_formatada:
+        graf_gasto_total[len(graf_gasto_total)-1][1] = float(-total_gasto)
+    else:
+        graf_gasto_total += [[data_mais_atual_formatada, float(-total_gasto)]]
+        
     patrimonio_atual = 0
     total_vencimento_atual = 0
     for titulo in qtd_titulos.keys():
@@ -284,9 +311,18 @@ def historico_td(request):
                 patrimonio_atual += (qtd_titulos[titulo] * valores_diarios_titulo[0].preco_venda)
             
             # Calcular o total a receber no vencimento com base nas quantidades
-            total_vencimento_atual += qtd_titulos[titulo] * 1000
-    graf_patrimonio += [[str(calendar.timegm(data_mais_atual.timetuple()) * 1000), float(patrimonio_atual)]]
-    graf_total_venc += [[str(calendar.timegm(data_mais_atual.timetuple()) * 1000), float(total_vencimento_atual)]]
+            total_vencimento_atual += qtd_titulos[titulo] * titulo.valor_vencimento()
+    # Patrimônio
+    if len(graf_patrimonio) > 0 and graf_patrimonio[-1][0] == data_mais_atual_formatada:
+        graf_patrimonio[len(graf_patrimonio)-1][1] = float(patrimonio_atual)
+    else:
+        graf_patrimonio += [[data_mais_atual_formatada, float(patrimonio_atual)]]
+        
+    # Total vencimento
+    if len(graf_total_venc) > 0 and graf_total_venc[-1][0] == data_mais_atual_formatada:
+        graf_total_venc[len(graf_total_venc)-1][1] = float(total_vencimento_atual)
+    else:
+        graf_total_venc += [[data_mais_atual_formatada, float(total_vencimento_atual)]]
         
     dados = {}
     dados['total_venc_atual'] = total_vencimento_atual
