@@ -237,7 +237,7 @@ def historico_td(request):
                 for titulo in qtd_titulos.keys():
                     qtd_total_titulos += qtd_titulos[titulo]
                     if not item.data == datetime.date.today():
-                        total_patrimonio += (qtd_titulos[titulo] * HistoricoTitulo.objects.get(data=item.data, titulo=titulo).preco_venda)
+                        total_patrimonio += (qtd_titulos[titulo] * HistoricoTitulo.objects.filter(data__lte=item.data, titulo=titulo).order_by('-data')[0].preco_venda)
                     else:
                         # TODO verificar necessidade de chamar buscar valores diarios tao frequentemente assim
                         for valor_diario in buscar_valores_diarios():
@@ -256,7 +256,7 @@ def historico_td(request):
                 for titulo in qtd_titulos.keys():
                     qtd_total_titulos += qtd_titulos[titulo]
                     if item.data is not datetime.date.today():
-                        total_patrimonio += (qtd_titulos[titulo] * HistoricoTitulo.objects.get(data=item.data, titulo=titulo).preco_venda)
+                        total_patrimonio += (qtd_titulos[titulo] * HistoricoTitulo.objects.filter(data__lte=item.data, titulo=titulo).order_by('-data')[0].preco_venda)
                     else:
                         for valor_diario in buscar_valores_diarios():
                             if valor_diario.titulo == titulo:
@@ -297,6 +297,7 @@ def historico_td(request):
         graf_gasto_total[len(graf_gasto_total)-1][1] = float(-total_gasto)
     else:
         graf_gasto_total += [[data_mais_atual_formatada, float(-total_gasto)]]
+        
     patrimonio_atual = 0
     total_vencimento_atual = 0
     for titulo in qtd_titulos.keys():
@@ -316,6 +317,7 @@ def historico_td(request):
         graf_patrimonio[len(graf_patrimonio)-1][1] = float(patrimonio_atual)
     else:
         graf_patrimonio += [[data_mais_atual_formatada, float(patrimonio_atual)]]
+        
     # Total vencimento
     if len(graf_total_venc) > 0 and graf_total_venc[-1][0] == data_mais_atual_formatada:
         graf_total_venc[len(graf_total_venc)-1][1] = float(total_vencimento_atual)
