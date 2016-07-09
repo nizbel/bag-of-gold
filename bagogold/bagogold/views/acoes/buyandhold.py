@@ -206,7 +206,7 @@ def estatisticas_acao(request, ticker=None):
                 elif item.tipo_provento == 'A':
                     provento_acao = item.acaoprovento_set.all()[0]
                     if provento_acao.acao_recebida.ticker == ticker:
-                        acoes_recebidas = int((quantidade_acoes_ate_dia(item.acao.ticker, item.data) * item.valor_unitario ) / 100 )
+                        acoes_recebidas = int((quantidade_acoes_ate_dia(investidor, item.acao.ticker, item.data) * item.valor_unitario ) / 100 )
                         qtd_acoes += acoes_recebidas
                     if item.acao.ticker == ticker:
                         if provento_acao.valor_calculo_frac > 0:
