@@ -7,6 +7,8 @@ from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
     TransferenciaEntreDivisoes
 from bagogold.bagogold.models.fii import ValorDiarioFII, HistoricoFII, \
     OperacaoFII, FII
+from bagogold.bagogold.models.fundo_investimento import HistoricoValorCotas, \
+    OperacaoFundoInvestimento
 from bagogold.bagogold.models.lc import HistoricoTaxaDI, \
     HistoricoPorcentagemLetraCredito, LetraCredito
 from bagogold.bagogold.models.td import ValorDiarioTitulo, HistoricoTitulo, \
@@ -16,6 +18,8 @@ from bagogold.bagogold.utils.cdb_rdb import \
     calcular_valor_cdb_rdb_ate_dia_por_divisao
 from bagogold.bagogold.utils.divisoes import verificar_operacoes_nao_alocadas
 from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia_por_divisao
+from bagogold.bagogold.utils.fundo_investimento import \
+    calcular_qtd_cotas_ate_dia_por_divisao
 from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia, \
     calcular_valor_lc_ate_dia_por_divisao
 from bagogold.bagogold.utils.td import calcular_qtd_titulos_ate_dia_por_divisao
@@ -248,6 +252,17 @@ def listar_divisoes(request):
                 fii_valor = HistoricoFII.objects.filter(fii__ticker=ticker).order_by('-data')[0].preco_unitario
             divisao.valor_atual += (fii_divisao[ticker] * fii_valor)
         
+        # Fundos de investimento
+        fundo_investimento_divisao = calcular_qtd_cotas_ate_dia_por_divisao(datetime.date.today(), divisao.id)
+        for fundo_id in fundo_investimento_divisao.keys():
+            historico_fundo = HistoricoValorCotas.objects.filter(fundo_investimento__id=fundo_id).order_by('-data')
+            ultima_operacao_fundo = OperacaoFundoInvestimento.objects.filter(fundo_investimento__id=fundo_id).order_by('-data')[0]
+            if historico_fundo and historico_fundo[0].data > ultima_operacao_fundo.data:
+                valor_cota = historico_fundo[0].valor_cota
+            else:
+                valor_cota = ultima_operacao_fundo.valor_cota()
+            divisao.valor_atual += (fundo_investimento_divisao[fundo_id] * valor_cota)
+            
         # Letras de crédito
         lc_divisao = calcular_valor_lc_ate_dia_por_divisao(datetime.date.today(), divisao.id)
         for total_lc in lc_divisao.values():
@@ -273,12 +288,13 @@ def listar_divisoes(request):
         divisao.saldo_bh = divisao.saldo_acoes_bh()
         divisao.saldo_cdb_rdb = divisao.saldo_cdb_rdb()
         divisao.saldo_fii = divisao.saldo_fii()
+        divisao.saldo_fundo_investimento = divisao.saldo_fundo_investimento()
         divisao.saldo_lc = divisao.saldo_lc()
         divisao.saldo_td = divisao.saldo_td()
         divisao.saldo_trade = divisao.saldo_acoes_trade()
         divisao.saldo_nao_alocado = 0
         divisao.saldo = divisao.saldo_bh + divisao.saldo_cdb_rdb + divisao.saldo_lc + divisao.saldo_fii + divisao.saldo_trade + divisao.saldo_td + divisao.saldo_nao_alocado
-        
+          
     # Preparar parte de operações não alocadas
     operacoes_nao_alocadas = verificar_operacoes_nao_alocadas(investidor=investidor)
     
