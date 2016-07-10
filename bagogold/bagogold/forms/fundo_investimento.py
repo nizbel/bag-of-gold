@@ -15,7 +15,7 @@ ESCOLHAS_TIPO_OPERACAO=(('C', "Compra"),
 class FundoInvestimentoForm(forms.ModelForm):
     class Meta:
         model = FundoInvestimento
-        fields = ('nome', 'tipo_prazo', 'descricao')
+        fields = ('nome', 'tipo_prazo', 'descricao', 'taxa_adm')
         widgets={'tipo_prazo': widgets.Select(choices=ESCOLHAS_TIPO_PRAZO),}
 
 class OperacaoFundoInvestimentoForm(forms.ModelForm):
@@ -27,9 +27,16 @@ class OperacaoFundoInvestimentoForm(forms.ModelForm):
                                             'placeholder':'Selecione uma data'}),
                  'tipo_operacao': widgets.Select(choices=ESCOLHAS_TIPO_OPERACAO),}
         labels = {'fundo_investimento': 'Fundo de investimento',}
-        
+    
     class Media:
         js = ('js/bagogold/fundo_investimento.js',)
+        
+    def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
+        # first call parent's constructor
+        super(OperacaoFundoInvestimentoForm, self).__init__(*args, **kwargs)
+        # there's a `fields` property now
+        self.fields['fundo_investimento'].queryset = FundoInvestimento.objects.filter(investidor=self.investidor)
         
 class HistoricoValorCotasForm(forms.ModelForm):
     

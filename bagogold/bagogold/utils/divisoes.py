@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import OperacaoAcao
+from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD, \
     DivisaoPrincipal, DivisaoOperacaoLC, DivisaoOperacaoFII, DivisaoOperacaoAcao, \
-    Divisao
+    Divisao, DivisaoOperacaoFundoInvestimento, DivisaoOperacaoCDB_RDB
 from bagogold.bagogold.models.fii import OperacaoFII
+from bagogold.bagogold.models.fundo_investimento import \
+    OperacaoFundoInvestimento
 from bagogold.bagogold.models.lc import OperacaoLetraCredito
 from bagogold.bagogold.models.td import OperacaoTitulo
 from django.apps import apps
@@ -77,6 +80,17 @@ def verificar_operacoes_nao_alocadas(investidor):
             operacao.quantidade_nao_alocada = operacao.quantidade - quantidade_alocada
             operacoes_nao_alocadas.append(operacao)
     
+    # CDB/RDB
+    for operacao in OperacaoCDB_RDB.objects.filter(investidor=investidor):
+        divisoes_operacao = DivisaoOperacaoCDB_RDB.objects.filter(operacao=operacao)
+        quantidade_alocada = 0
+        for divisao in divisoes_operacao:
+            quantidade_alocada += divisao.quantidade
+        if quantidade_alocada < operacao.quantidade:
+            operacao.tipo = 'CDB/RDB'
+            operacao.quantidade_nao_alocada = operacao.quantidade - quantidade_alocada
+            operacoes_nao_alocadas.append(operacao)
+    
     # FII
     for operacao in OperacaoFII.objects.filter(investidor=investidor):
         divisoes_operacao = DivisaoOperacaoFII.objects.filter(operacao=operacao)
@@ -86,6 +100,17 @@ def verificar_operacoes_nao_alocadas(investidor):
         if quantidade_alocada < operacao.quantidade:
             operacao.tipo = 'FII'
             operacao.quantidade_nao_alocada = operacao.quantidade - quantidade_alocada
+            operacoes_nao_alocadas.append(operacao)
+            
+    # Fundo de investimento
+    for operacao in OperacaoFundoInvestimento.objects.filter(investidor=investidor):
+        divisoes_operacao = DivisaoOperacaoFundoInvestimento.objects.filter(operacao=operacao)
+        quantidade_alocada = 0
+        for divisao in divisoes_operacao:
+            quantidade_alocada += divisao.quantidade
+        if quantidade_alocada < operacao.quantidade_cotas:
+            operacao.tipo = 'Fundo Inv.'
+            operacao.quantidade_nao_alocada = operacao.quantidade_cotas - quantidade_alocada
             operacoes_nao_alocadas.append(operacao)
     
     # LC
