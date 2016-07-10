@@ -127,6 +127,26 @@ class Divisao (models.Model):
             
         return saldo
     
+    def saldo_fundo_investimento(self, data=datetime.date.today()):
+        """
+        Calcula o saldo de operações de fundo de investimento de uma divisão (dinheiro livre)
+        """
+        saldo = Decimal(0)
+        for operacao_divisao in DivisaoOperacaoFundoInvestimento.objects.filter(divisao=self, operacao__data__lte=data):
+            operacao = operacao_divisao.operacao
+            if operacao.tipo_operacao == 'C':
+                saldo -= (operacao_divisao.quantidade * operacao.valor_cota())
+            elif operacao.tipo_operacao == 'V':
+                saldo += (operacao_divisao.quantidade * operacao.valor_cota())
+                
+        # Transferências
+        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='I', data__lte=data):
+            saldo -= transferencia.quantidade
+        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='I', data__lte=data):
+            saldo += transferencia.quantidade
+            
+        return saldo
+    
     def saldo_lc(self, data=datetime.date.today()):
         """
         Calcula o saldo de operações de Letra de Crédito de uma divisão (dinheiro livre)
@@ -150,7 +170,6 @@ class Divisao (models.Model):
                 valor_venda = Decimal(str_auxiliar[:len(str_auxiliar)-2])
                 saldo += valor_venda
                 
-        print 'Fim', saldo    
         # Transferências
         for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='L', data__lte=data):
             saldo -= transferencia.quantidade
@@ -197,11 +216,13 @@ class Divisao (models.Model):
         saldo += self.saldo_cdb_rdb(data=data)
         # FII
         saldo += self.saldo_fii(data=data)
+        # Fundo de investimento
+        saldo += self.saldo_fundo_investimento(data=data)
         # LC
         saldo += self.saldo_lc(data=data)
         # TD
         saldo += self.saldo_td(data=data)
-                
+        
         return saldo
     
 class DivisaoPrincipal (models.Model):
@@ -246,7 +267,7 @@ class DivisaoOperacaoFundoInvestimento (models.Model):
     divisao = models.ForeignKey('Divisao')
     operacao = models.ForeignKey('OperacaoFundoInvestimento')
     """
-    Guarda a quantidade da operação que pertence a divisão
+    Guarda a quantidade de cotas que pertence a divisão
     """
     quantidade = models.DecimalField('Quantidade',  max_digits=11, decimal_places=2)
     
@@ -319,7 +340,7 @@ class TransferenciaEntreDivisoes(models.Model):
     divisao_recebedora = models.ForeignKey('Divisao', blank=True, null=True, related_name='divisao_recebedora')
     data = models.DateField(u'Data da transferência', blank=True, null=True)
     """
-    B = Buy and Hold; C = CDB/RDB; D = Tesouro Direto; F = FII; L = Letra de Crédito; T = Trading; N = Não alocado
+    B = Buy and Hold; C = CDB/RDB; D = Tesouro Direto; F = FII; I = Fundo de investimento; L = Letra de Crédito; T = Trading; N = Não alocado
     """
     investimento_origem = models.CharField('Investimento de origem', blank=True, null=True, max_length=1)
     investimento_destino = models.CharField('Investimento de destino', blank=True, null=True, max_length=1)
@@ -344,6 +365,8 @@ class TransferenciaEntreDivisoes(models.Model):
             return 'Tesouro Direto'
         elif self.investimento_origem == 'F':
             return 'FII'
+        elif self.investimento_origem == 'I':
+            return 'Fundo de inv.'
         elif self.investimento_origem == 'L':
             return 'Letra de Crédito'
         elif self.investimento_origem == 'T':
@@ -360,6 +383,8 @@ class TransferenciaEntreDivisoes(models.Model):
             return 'Tesouro Direto'
         elif self.investimento_destino == 'F':
             return 'FII'
+        elif self.investimento_destino == 'I':
+            return 'Fundo de inv.'
         elif self.investimento_destino == 'L':
             return 'Letra de Crédito'
         elif self.investimento_destino == 'T':

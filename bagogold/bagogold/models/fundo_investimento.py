@@ -17,6 +17,14 @@ class FundoInvestimento (models.Model):
     def __unicode__(self):
         return self.nome
     
+    def valor_no_dia(self, dia=datetime.date.today()):
+        historico_fundo = HistoricoValorCotas.objects.filter(fundo_investimento=self).order_by('-data')
+        ultima_operacao_fundo = OperacaoFundoInvestimento.objects.filter(fundo_investimento=self).order_by('-data')[0]
+        if historico_fundo and historico_fundo[0].data > ultima_operacao_fundo.data:
+            return historico_fundo[0].valor_cota
+        else:
+            return ultima_operacao_fundo.valor_cota()
+    
     def carencia_atual(self):
         try:
             return HistoricoCarenciaFundoInvestimento.objects.filter(data__isnull=False, fundo_investimento=self).order_by('-data')[0].carencia

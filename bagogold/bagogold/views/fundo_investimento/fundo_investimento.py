@@ -236,7 +236,7 @@ def inserir_operacao_fundo_investimento(request):
                                             extra=1, formset=DivisaoOperacaoFundoInvestimentoFormSet)
     
     if request.method == 'POST':
-        form_operacao_fundo_investimento = OperacaoFundoInvestimentoForm(request.POST)
+        form_operacao_fundo_investimento = OperacaoFundoInvestimentoForm(request.POST, investidor=investidor)
         formset_divisao_fundo_investimento = DivisaoFundoInvestimentoFormSet(request.POST, investidor=investidor)
         
         # Validar CDB
@@ -261,7 +261,7 @@ def inserir_operacao_fundo_investimento(request):
 #                         print '%s %s'  % (divisao_fundo_investimento.quantidade, divisao_fundo_investimento.divisao)
                 
     else:
-        form_operacao_fundo_investimento = OperacaoFundoInvestimentoForm()
+        form_operacao_fundo_investimento = OperacaoFundoInvestimentoForm(investidor=investidor)
         formset_divisao_fundo_investimento = DivisaoFundoInvestimentoFormSet(investidor=investidor)
     return render_to_response('fundo_investimento/inserir_operacao_fundo_investimento.html', {'form_operacao_fundo_investimento': form_operacao_fundo_investimento, 'formset_divisao_fundo_investimento': formset_divisao_fundo_investimento}, context_instance=RequestContext(request))
 

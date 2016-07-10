@@ -83,9 +83,10 @@ def calcular_valor_cdb_rdb_ate_dia(investidor, dia):
 
 def calcular_valor_cdb_rdb_ate_dia_por_divisao(dia, divisao_id):
     """ 
-    Calcula o valor das letras de crédito da divisão no dia determinado
-    Parâmetros: Data final, id da divisão
-    Retorno: Valor de cada letra de crédito da divisão na data escolhida {id_letra: valor_na_data, }
+    Calcula o valor dos CDB/RDB da divisão no dia determinado
+    Parâmetros: Data final
+                ID da divisão
+    Retorno: Valor de cada CDB/RDB da divisão na data escolhida {id_investimento: valor_na_data, }
     """
     operacoes_divisao_id = DivisaoOperacaoCDB_RDB.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).values('operacao__id')
     if len(operacoes_divisao_id) == 0:
@@ -119,7 +120,7 @@ def calcular_valor_cdb_rdb_ate_dia_por_divisao(dia, divisao_id):
                 operacao_compra_id = operacao.operacao_compra_relacionada().id
                 for operacao_c in operacoes:
                     if (operacao_c.id == operacao_compra_id):
-                        operacao.atual = (DivisaoOperacaoLC.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade/DivisaoOperacaoLC.objects.get(divisao__id=divisao_id, operacao=operacao_c).quantidade) * operacao_c.atual
+                        operacao.atual = (DivisaoOperacaoCDB_RDB.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade/DivisaoOperacaoLC.objects.get(divisao__id=divisao_id, operacao=operacao_c).quantidade) * operacao_c.atual
                         operacao_c.atual -= operacao.atual
                         str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
                         operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])

@@ -10,7 +10,7 @@
             <th rowspan="2">Objetivo</th>
             <th rowspan="2">Valor atual</th>
             <th rowspan="2">Saldo</th>
-            <th colspan="7">Composição</th>
+            <th colspan="8">Composição</th>
         </tr>
         <tr>
             <th>B & H</th>
@@ -18,6 +18,7 @@
             <th>CDB/RDB</th>
             <th>Letra de Créd.</th>
             <th>FII</th>
+            <th>Fundo Inv.</th>
             <th>Tes. Direto</th>
             <th>Não alocado</th>
         </tr>
@@ -34,42 +35,49 @@
             {% else %}
             blue
             {% endif %}
-            ">R${{divisao.saldo}}</span></td>
+            ">R${{divisao.saldo|floatformat:"2"}}</span></td>
         <td><span style="color:
             {% if divisao.saldo_bh < 0 %}
             red
             {% else %}
             blue
             {% endif %}
-            ">R${{divisao.saldo_bh}}</span></td>
+            ">R${{divisao.saldo_bh|floatformat:"2"}}</span></td>
         <td><span style="color:
             {% if divisao.saldo_trade < 0 %}
             red
             {% else %}
             blue
             {% endif %}
-            ">R${{divisao.saldo_trade}}</span></td>
+            ">R${{divisao.saldo_trade|floatformat:"2"}}</span></td>
         <td><span style="color:
             {% if divisao.saldo_cdb_rdb < 0 %}
             red
             {% else %}
             blue
             {% endif %}
-            ">R${{divisao.saldo_cdb_rdb}}</span></td>
+            ">R${{divisao.saldo_cdb_rdb|floatformat:"2"}}</span></td>
         <td><span style="color:
             {% if divisao.saldo_lc < 0 %}
             red
             {% else %}
             blue
             {% endif %}
-            ">R${{divisao.saldo_lc}}</span></td>
+            ">R${{divisao.saldo_lc|floatformat:"2"}}</span></td>
         <td><span style="color:
             {% if divisao.saldo_fii < 0 %}
             red
             {% else %}
             blue
             {% endif %}
-            ">R${{divisao.saldo_fii}}</span></td>
+            ">R${{divisao.saldo_fii|floatformat:"2"}}</span></td>
+        <td><span style="color:
+            {% if divisao.saldo_fundo_investimento < 0 %}
+            red
+            {% else %}
+            blue
+            {% endif %}
+            ">R${{divisao.saldo_fundo_investimento|floatformat:"2"}}</span></td>
         <td><span style="color:
             {% if divisao.saldo_td < 0 %}
             red
@@ -83,7 +91,7 @@
             {% else %}
             blue
             {% endif %}
-            ">R${{divisao.saldo_nao_alocado}}</span></td>
+            ">R${{divisao.saldo_nao_alocado|floatformat:"2"}}</span></td>
     </tr>
     {% endfor %}
     </tbody>

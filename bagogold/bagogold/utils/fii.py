@@ -136,13 +136,12 @@ def calcular_qtd_fiis_ate_dia_por_ticker(dia, ticker):
     qtd_fii = 0
     
     for item in operacoes:
-        if isinstance(item, OperacaoFII): 
-            # Verificar se se trata de compra ou venda
-            if item.tipo_operacao == 'C':
-                qtd_fii += item.quantidade
-                
-            elif item.tipo_operacao == 'V':
-                qtd_fii -= item.quantidade
+        # Verificar se se trata de compra ou venda
+        if item.tipo_operacao == 'C':
+            qtd_fii += item.quantidade
+            
+        elif item.tipo_operacao == 'V':
+            qtd_fii -= item.quantidade
         
     return qtd_fii
 
