@@ -84,6 +84,7 @@ urlpatterns = [
     url(r'^lc/painel/$', views.lc.lc.painel, name='painel_lc'),
     
     # CDB e RDB
+    url(r'^cdb_rdb/detalhar_cdb_rdb/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.detalhar_cdb_rdb, name='detalhar_cdb_rdb'),
     url(r'^cdb_rdb/editar_operacao/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.editar_operacao_cdb_rdb, name='editar_operacao_cdb_rdb'),
     url(r'^cdb_rdb/historico/$', views.cdb_rdb.cdb_rdb.historico, name='historico_cdb_rdb'),
     url(r'^cdb_rdb/inserir_cdb_rdb/$', views.cdb_rdb.cdb_rdb.inserir_cdb_rdb, name='inserir_cdb_rdb'),
