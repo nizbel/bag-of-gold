@@ -1,18 +1,22 @@
 # -*- coding: utf-8 -*-
 
-from bagogold.bagogold.forms.cdb_rdb import OperacaoCDB_RDBForm, HistoricoPorcentagemCDB_RDBForm, CDB_RDBForm, \
-    HistoricoCarenciaCDB_RDBForm
+from bagogold.bagogold.forms.cdb_rdb import OperacaoCDB_RDBForm, \
+    HistoricoPorcentagemCDB_RDBForm, CDB_RDBForm, HistoricoCarenciaCDB_RDBForm
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoCDB_RDBFormSet
 from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB, \
-    HistoricoPorcentagemCDB_RDB, CDB_RDB, HistoricoCarenciaCDB_RDB, OperacaoVendaCDB_RDB
+    HistoricoPorcentagemCDB_RDB, CDB_RDB, HistoricoCarenciaCDB_RDB, \
+    OperacaoVendaCDB_RDB
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoCDB_RDB
 from bagogold.bagogold.models.lc import HistoricoTaxaDI
-from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa
+from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa, \
+    calcular_valor_atualizado_com_taxas
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
+from django.db.models import Count
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
@@ -24,12 +28,87 @@ TIPO_CDB = '1'
 TIPO_RDB = '2'
 
 @login_required
+def detalhar_cdb_rdb(request, id):
+    investidor = request.user.investidor
+    
+    cdb_rdb = CDB_RDB.objects.get(id=id)
+    if cdb_rdb.investidor != investidor:
+        raise PermissionDenied
+    
+    historico_porcentagem = HistoricoPorcentagemCDB_RDB.objects.filter(cdb_rdb=cdb_rdb)
+    historico_carencia = HistoricoCarenciaCDB_RDB.objects.filter(cdb_rdb=cdb_rdb)
+    
+    # Inserir dados do investimento
+    if cdb_rdb.tipo == 'R':
+        cdb_rdb.tipo = 'RDB'
+    elif cdb_rdb.tipo == 'C':
+        cdb_rdb.tipo = 'CDB'
+    cdb_rdb.carencia_atual = cdb_rdb.carencia_atual()
+    cdb_rdb.porcentagem_atual = cdb_rdb.porcentagem_atual()
+    
+    cdb_rdb.total_investido = 0
+    cdb_rdb.saldo_atual = 0
+    operacoes = OperacaoCDB_RDB.objects.filter(investimento=cdb_rdb).order_by('data')
+    historico_di = HistoricoTaxaDI.objects.filter(data__range=[operacoes[0].data, datetime.date.today()])
+    for operacao in operacoes:
+        # Total investido
+        cdb_rdb.total_investido = operacao.qtd_disponivel_venda()
+        
+        # Saldo atual
+        taxas = historico_di.filter(data__gte=operacao.data).values('taxa').annotate(qtd_dias=Count('taxa'))
+        taxas_dos_dias = {}
+        for taxa in taxas:
+            taxas_dos_dias[taxa['taxa']] = taxa['qtd_dias']
+        cdb_rdb.saldo_atual += calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao.qtd_disponivel_venda(), operacao.porcentagem())
+    str_auxiliar = str(cdb_rdb.saldo_atual.quantize(Decimal('.0001')))
+    cdb_rdb.saldo_atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+    
+    cdb_rdb.lucro = cdb_rdb.saldo_atual - cdb_rdb.total_investido
+    cdb_rdb.lucro_percentual = cdb_rdb.lucro / cdb_rdb.total_investido * 100
+    
+    return render_to_response('cdb_rdb/detalhar_cdb_rdb.html', {'cdb_rdb': cdb_rdb, 'historico_porcentagem': historico_porcentagem,
+                                                                       'historico_carencia': historico_carencia},
+                              context_instance=RequestContext(request))
+
+@login_required
+def editar_cdb_rdb(request, id):
+    investidor = request.user.investidor
+    cdb_rdb = CDB_RDB.objects.get(pk=id)
+    
+    if cdb_rdb.investidor != investidor:
+        raise PermissionDenied
+    
+    if request.method == 'POST':
+        if request.POST.get("save"):
+            form_cdb_rdb = CDB_RDBForm(request.POST, instance=cdb_rdb)
+            
+            if form_cdb_rdb.is_valid():
+                cdb_rdb.save()
+                messages.success(request, 'CDB/RDB editado com sucesso')
+                return HttpResponseRedirect(reverse('detalhar_cdb_rdb', kwargs={'id': cdb_rdb.id}))
+                
+        # TODO verificar o que pode acontecer na exclusão
+        elif request.POST.get("delete"):
+#             cdb_rdb.delete()
+            messages.success(request, 'CDB/RDB excluído com sucesso')
+            return HttpResponseRedirect(reverse('listar_cdb_rdb'))
+ 
+    else:
+        form_cdb_rdb = OperacaoCDB_RDBForm(instance=cdb_rdb)
+            
+    return render_to_response('cdb_rdb/editar_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb},
+                              context_instance=RequestContext(request))  
+
+@login_required
 def editar_operacao_cdb_rdb(request, id):
     investidor = request.user.investidor
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoCDB_RDB, DivisaoOperacaoCDB_RDB, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoCDB_RDBFormSet)
     operacao_cdb_rdb = OperacaoCDB_RDB.objects.get(pk=id)
+    
+    if operacao_cdb_rdb.investidor != investidor:
+        raise PermissionDenied
     
     if request.method == 'POST':
         if request.POST.get("save"):
