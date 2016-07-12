@@ -5,7 +5,7 @@
 {% endblock %}
 
 {% block content %}
-    <h1>Editar CDB/RDB</h1>
+    <h1>Editar histórico de carência de CDB/RDB</h1>
     <form method="POST" class="post-form form-horizontal">{% csrf_token %}
         <div id="forms">
             {{ form_historico_carencia.as_p }}
