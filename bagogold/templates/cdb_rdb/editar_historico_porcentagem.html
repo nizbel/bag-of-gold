@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 
 {% block extra_head %}
-    {{ form_cdb_rdb.media }}
+    {{ form_historico_porcentagem.media }}
 {% endblock %}
 
 {% block content %}
     <h1>Editar CDB/RDB</h1>
     <form method="POST" class="post-form form-horizontal">{% csrf_token %}
         <div id="forms">
-            {{ form_cdb_rdb.as_p }}
+            {{ form_historico_porcentagem.as_p }}
         </div>
         <div class="form-actions">
             <button type="submit" name="save" value="1" class="btn">Salvar</button>

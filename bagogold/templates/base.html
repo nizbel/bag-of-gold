@@ -299,14 +299,14 @@
     </div>
     <!-- end: Main Menu -->
     <!-- start: Content -->
-    <div id="content" class="span10">
+    <div id="content">
         <ul class="breadcrumb">
             Breadcrumb
         </ul>
         
         {% if messages %}
         <div class="row-fluid">
-            <div class="box-content alerts">
+            <div class="box-content alerts span10">
             {% for message in messages %}
                 <div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %}">
                     <button type="button" class="close" data-dismiss="alert">×</button>
