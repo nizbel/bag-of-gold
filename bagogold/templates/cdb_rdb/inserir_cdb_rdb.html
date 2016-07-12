@@ -17,4 +17,18 @@
         </div>
     </form>
     
+    <script>
+    $(document).ready(function() {
+        var label = $("label[for='id_historicoporcentagemcdb_rdb_set-0-porcentagem']");
+        label.text(label.text().replace(':', '') + ' (ao ano):');
+        
+        $('#id_tipo_rendimento').change( function() {
+        	if (String($(this).val()) == '1') {
+    		    label.text(label.text().replace(/\(.*?\)/, '(ao ano)'));
+        	} else if (String($(this).val()) == '2') {
+        		label.text(label.text().replace(/\(.*?\)/, '(% do CDI)'));
+        	}
+        })
+    });
+    </script>
 {% endblock %}

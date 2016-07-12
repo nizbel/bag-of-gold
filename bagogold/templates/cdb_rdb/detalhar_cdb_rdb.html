@@ -12,12 +12,12 @@
                 <div class="span2"><strong>Tipo:</strong></div>
                 <div class="span2">{{cdb_rdb.tipo}}</div>
                 <div class="span2"><strong>Rendimento atual:</strong></div>
-                <div class="span2">{{cdb_rdb.porcentagem_atual}}%</div>
+                <div class="span2">{{cdb_rdb.porcentagem_atual}}% {% if cdb_rdb.tipo_rendimento == 1 %}ao ano{% elif cdb_rdb.tipo_rendimento == 2 %}do DI{% endif %}</div>
                 <div class="span2"><strong>Carência atual:</strong></div>
                 <div class="span2">{{cdb_rdb.carencia_atual}} dia(s)</div>
             </div>
             <div class="row-fluid">
-                <div class="span2"><strong>Rendimento atual:</strong></div>
+                <div class="span2"><strong>Total de operações:</strong></div>
                 <div class="span2">{{cdb_rdb.porcentagem_atual}}%</div>
             </div>
         </div>
