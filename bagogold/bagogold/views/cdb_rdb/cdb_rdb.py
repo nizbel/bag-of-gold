@@ -167,6 +167,7 @@ def editar_historico_porcentagem(request, id):
     if historico_porcentagem.cdb_rdb.investidor != investidor:
         raise PermissionDenied
     
+    
     if request.method == 'POST':
         if request.POST.get("save"):
             if historico_porcentagem.data is None:
@@ -182,9 +183,11 @@ def editar_historico_porcentagem(request, id):
             if historico_porcentagem.data is None:
                 messages.error(request, 'Valor inicial de porcentagem não pode ser excluído')
                 return HttpResponseRedirect(reverse('detalhar_cdb_rdb', kwargs={'id': historico_porcentagem.cdb_rdb.id}))
+            # Pegar investimento para o redirecionamento no caso de exclusão
+            cdb_rdb = historico_porcentagem.cdb_rdb
             historico_porcentagem.delete()
             messages.success(request, 'Histórico de porcentagem excluído com sucesso')
-            return HttpResponseRedirect(reverse('listar_cdb_rdb'))
+            return HttpResponseRedirect(reverse('detalhar_cdb_rdb', kwargs={'id': cdb_rdb.id}))
  
     else:
         if historico_porcentagem.data is None:
