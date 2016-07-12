@@ -48,18 +48,44 @@ def detalhar_cdb_rdb(request, id):
     
     cdb_rdb.total_investido = 0
     cdb_rdb.saldo_atual = 0
+    cdb_rdb.total_ir = 0
+    cdb_rdb.total_iof = 0
     operacoes = OperacaoCDB_RDB.objects.filter(investimento=cdb_rdb).order_by('data')
+    # Remover operacoes totalmente vendidas
+    operacoes = [operacao for operacao in operacoes if operacao.qtd_disponivel_venda() > 0]
     historico_di = HistoricoTaxaDI.objects.filter(data__range=[operacoes[0].data, datetime.date.today()])
     for operacao in operacoes:
         # Total investido
-        cdb_rdb.total_investido = operacao.qtd_disponivel_venda()
+        cdb_rdb.total_investido += operacao.qtd_disponivel_venda()
         
         # Saldo atual
         taxas = historico_di.filter(data__gte=operacao.data).values('taxa').annotate(qtd_dias=Count('taxa'))
         taxas_dos_dias = {}
         for taxa in taxas:
             taxas_dos_dias[taxa['taxa']] = taxa['qtd_dias']
-        cdb_rdb.saldo_atual += calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao.qtd_disponivel_venda(), operacao.porcentagem())
+        operacao.atual = calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao.qtd_disponivel_venda(), operacao.porcentagem())
+        cdb_rdb.saldo_atual += operacao.atual
+        
+        # Calcular impostos
+        qtd_dias = (datetime.date.today() - operacao.data).days
+        # IOF
+        operacao.iof = Decimal(calcular_iof_regressivo(qtd_dias)) * (operacao.atual - operacao.quantidade)
+        # IR
+        if qtd_dias <= 180:
+            operacao.imposto_renda =  Decimal(0.225) * (operacao.atual - operacao.quantidade - operacao.iof)
+        elif qtd_dias <= 360:
+            operacao.imposto_renda =  Decimal(0.2) * (operacao.atual - operacao.quantidade - operacao.iof)
+        elif qtd_dias <= 720:
+            operacao.imposto_renda =  Decimal(0.175) * (operacao.atual - operacao.quantidade - operacao.iof)
+        else: 
+            operacao.imposto_renda =  Decimal(0.15) * (operacao.atual - operacao.quantidade - operacao.iof)
+        cdb_rdb.total_ir += operacao.imposto_renda
+        cdb_rdb.total_iof += operacao.iof
+    try: 
+        cdb_rdb.dias_proxima_retirada = (min(operacao.data + datetime.timedelta(days=operacao.carencia()) for operacao in operacoes if \
+                                             (operacao.data + datetime.timedelta(days=operacao.carencia())) > datetime.date.today()) - datetime.date.today()).days
+    except ValueError:
+        cdb_rdb.dias_proxima_retirada = 0
     str_auxiliar = str(cdb_rdb.saldo_atual.quantize(Decimal('.0001')))
     cdb_rdb.saldo_atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
     
