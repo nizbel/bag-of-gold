@@ -9,6 +9,7 @@ from bagogold.bagogold.utils.acoes import calcular_lucro_trade_ate_data, \
     calcular_poupanca_prov_acao_ate_dia
 from decimal import Decimal
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db.models import Sum
 from django.http import HttpResponse, HttpResponseRedirect
@@ -200,7 +201,12 @@ def acompanhamento_mensal(request):
 @login_required
 def editar_operacao(request, id):
     investidor = request.user.investidor
+    
     operacao = OperacaoCompraVenda.objects.get(pk=id)
+    # Checar se é o investidor da operação
+    if investidor != operacao.investidor:
+        raise PermissionDenied
+    
     if request.method == 'POST':
         if request.POST.get("save"):
             form = OperacaoCompraVendaForm(request.POST, instance=operacao, investidor=investidor)
@@ -217,7 +223,13 @@ def editar_operacao(request, id):
     
 @login_required
 def editar_operacao_acao(request, id):
+    investidor = request.user.investidor
+    
     operacao = OperacaoAcao.objects.get(pk=id)
+    # Checar se é o investidor da operação
+    if investidor != operacao.compra.investidor:
+        raise PermissionDenied
+    
     if request.method == 'POST':
         if request.POST.get("save"):
             form = OperacaoAcaoForm(request.POST, instance=operacao)
@@ -368,6 +380,7 @@ def inserir_operacao_acao(request):
         if form.is_valid():
             operacao_acao = form.save(commit=False)
             operacao_acao.destinacao = 'T'
+            operacao_acao.investidor = investidor
             operacao_acao.save()
             return HttpResponseRedirect(reverse('historico_operacoes'))
     else:
