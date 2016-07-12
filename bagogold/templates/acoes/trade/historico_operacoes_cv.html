@@ -34,7 +34,7 @@
         {% else %}
         blue
         {% endif %}
-        ">R${{operacao.lucro}}</span></td>
+        ">R${{operacao.lucro}} ({{operacao.lucro_percentual|floatformat:2}}%)</span></td>
     </tr>
     
     {% endfor %}

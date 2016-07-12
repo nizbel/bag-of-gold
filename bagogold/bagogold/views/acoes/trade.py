@@ -204,7 +204,7 @@ def editar_operacao(request, id):
     
     operacao = OperacaoCompraVenda.objects.get(pk=id)
     # Checar se é o investidor da operação
-    if investidor != operacao.investidor:
+    if investidor != operacao.compra.investidor:
         raise PermissionDenied
     
     if request.method == 'POST':
@@ -227,7 +227,7 @@ def editar_operacao_acao(request, id):
     
     operacao = OperacaoAcao.objects.get(pk=id)
     # Checar se é o investidor da operação
-    if investidor != operacao.compra.investidor:
+    if investidor != operacao.investidor:
         raise PermissionDenied
     
     if request.method == 'POST':
@@ -235,6 +235,7 @@ def editar_operacao_acao(request, id):
             form = OperacaoAcaoForm(request.POST, instance=operacao)
             if form.is_valid():
                 form.save()
+                return HttpResponseRedirect(reverse('historico_operacoes'))
         elif request.POST.get("delete"):
             operacao.delete()
             return HttpResponseRedirect(reverse('historico_operacoes'))
@@ -352,8 +353,10 @@ def historico_operacoes_cv(request):
     
     # TODO adicionar calculos de lucro com DayTrade
     for operacao in operacoes:
+        operacao.total_compra = (operacao.compra.preco_unitario * operacao.venda.quantidade + operacao.compra.corretagem + operacao.compra.emolumentos)
         operacao.lucro = operacao.venda.preco_unitario * operacao.venda.quantidade - operacao.venda.corretagem - operacao.venda.emolumentos 
-        operacao.lucro -= (operacao.compra.preco_unitario * operacao.venda.quantidade + operacao.compra.corretagem + operacao.compra.emolumentos)
+        operacao.lucro -= operacao.total_compra
+        operacao.lucro_percentual = operacao.lucro / operacao.total_compra * 100
             
     return render_to_response('acoes/trade/historico_operacoes_cv.html', {'operacoes': operacoes}, context_instance=RequestContext(request))
     
@@ -361,7 +364,7 @@ def historico_operacoes_cv(request):
 def inserir_operacao(request):
     investidor = request.user.investidor
     if request.method == 'POST':
-        form = OperacaoCompraVendaForm(request.POST)
+        form = OperacaoCompraVendaForm(request.POST, investidor=investidor)
         if form.is_valid():
             operacao_trade = form.save(commit=False)
             operacao_trade.investidor = investidor
