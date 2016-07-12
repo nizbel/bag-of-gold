@@ -122,11 +122,69 @@ def editar_cdb_rdb(request, id):
             return HttpResponseRedirect(reverse('listar_cdb_rdb'))
  
     else:
-        form_cdb_rdb = OperacaoCDB_RDBForm(instance=cdb_rdb)
+        form_cdb_rdb = CDB_RDBForm(instance=cdb_rdb)
             
     return render_to_response('cdb_rdb/editar_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb},
                               context_instance=RequestContext(request))  
-
+    
+@login_required
+def editar_historico_carencia(request, id):
+    investidor = request.user.investidor
+    historico_carencia = HistoricoCarenciaCDB_RDB.objects.get(pk=id)
+    
+    if historico_carencia.cdb_rdb.investidor != investidor:
+        raise PermissionDenied
+    
+    if request.method == 'POST':
+        if request.POST.get("save"):
+            form_historico_carencia = HistoricoCarenciaCDB_RDBForm(request.POST, instance=historico_carencia)
+            
+            if form_historico_carencia.is_valid():
+                historico_carencia.save()
+                messages.success(request, 'CDB/RDB editado com sucesso')
+                return HttpResponseRedirect(reverse('detalhar_cdb_rdb', kwargs={'id': historico_carencia.cdb_rdb.id}))
+                
+        # TODO verificar o que pode acontecer na exclusão
+        elif request.POST.get("delete"):
+#             cdb_rdb.delete()
+            messages.success(request, 'CDB/RDB excluído com sucesso')
+            return HttpResponseRedirect(reverse('listar_cdb_rdb'))
+ 
+    else:
+        form_historico_carencia = HistoricoCarenciaCDB_RDBForm(instance=historico_carencia)
+            
+    return render_to_response('cdb_rdb/editar_historico_carencia.html', {'form_historico_carencia': form_historico_carencia},
+                              context_instance=RequestContext(request)) 
+    
+@login_required
+def editar_historico_porcentagem(request, id):
+    investidor = request.user.investidor
+    historico_porcentagem = HistoricoPorcentagemCDB_RDB.objects.get(pk=id)
+    
+    if historico_porcentagem.cdb_rdb.investidor != investidor:
+        raise PermissionDenied
+    
+    if request.method == 'POST':
+        if request.POST.get("save"):
+            form_historico_porcentagem = HistoricoPorcentagemCDB_RDBForm(request.POST, instance=historico_porcentagem)
+            
+            if form_historico_porcentagem.is_valid():
+                historico_porcentagem.save()
+                messages.success(request, 'CDB/RDB editado com sucesso')
+                return HttpResponseRedirect(reverse('detalhar_cdb_rdb', kwargs={'id': historico_porcentagem.cdb_rdb.id}))
+                
+        # TODO verificar o que pode acontecer na exclusão
+        elif request.POST.get("delete"):
+#             cdb_rdb.delete()
+            messages.success(request, 'CDB/RDB excluído com sucesso')
+            return HttpResponseRedirect(reverse('listar_cdb_rdb'))
+ 
+    else:
+        form_historico_porcentagem = HistoricoPorcentagemCDB_RDBForm(instance=historico_porcentagem)
+            
+    return render_to_response('cdb_rdb/editar_historico_porcentagem.html', {'form_historico_porcentagem': form_historico_porcentagem},
+                              context_instance=RequestContext(request)) 
+    
 @login_required
 def editar_operacao_cdb_rdb(request, id):
     investidor = request.user.investidor
