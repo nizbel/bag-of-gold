@@ -108,12 +108,6 @@ class HistoricoPorcentagemCDB_RDB (models.Model):
     data = models.DateField(u'Data da variação', blank=True, null=True)
     cdb_rdb = models.ForeignKey('CDB_RDB')
     
-    def save(self, *args, **kw):
-        try:
-            historico = HistoricoPorcentagemCDB_RDB.objects.get(cdb_rdb=self.cdb_rdb, data=self.data)
-        except HistoricoPorcentagemCDB_RDB.DoesNotExist:
-            super(HistoricoPorcentagemCDB_RDB, self).save(*args, **kw)
-    
 class HistoricoCarenciaCDB_RDB (models.Model):
     """
     O período de carência é medido em dias
