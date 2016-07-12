@@ -51,6 +51,8 @@ def detalhar_cdb_rdb(request, id):
     cdb_rdb.total_ir = 0
     cdb_rdb.total_iof = 0
     operacoes = OperacaoCDB_RDB.objects.filter(investimento=cdb_rdb).order_by('data')
+    # Contar total de operações já realizadas 
+    cdb_rdb.total_operacoes = len(operacoes)
     # Remover operacoes totalmente vendidas
     operacoes = [operacao for operacao in operacoes if operacao.qtd_disponivel_venda() > 0]
     historico_di = HistoricoTaxaDI.objects.filter(data__range=[operacoes[0].data, datetime.date.today()])
