@@ -1,7 +1,14 @@
     {% extends "base.html" %}
 
 {% block content %}
-<h1>{{cdb_rdb.nome}}</h1>
+<div class="row-fluid">
+    <div class="span10">
+        <h1>{{cdb_rdb.nome}}</h1>
+    </div>
+    <div class="span2">
+        <a href="{% url 'editar_cdb_rdb' cdb_rdb.id %}" class="btn btn-small btn-warning">Editar {{cdb_rdb.tipo}}</a>
+    </div>
+</div>
 <div class="row-fluid">
     <div class="box span12">
         <div class="box-header">
@@ -55,6 +62,7 @@
             <tr>
                 <th>Data</th>
                 <th>Rendimento</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -62,6 +70,7 @@
         <tr>
             <td>{{item.data|default:"Inicial"}}</td>
             <td>{{item.porcentagem}}%</td>
+            <td><a href="{% url 'editar_historico_porcentagem' item.id %}" class="btn btn-small btn-warning">Editar</a></td>
         </tr>
         {% endfor %}
         </tbody>
@@ -74,6 +83,7 @@
             <tr>
                 <th>Data</th>
                 <th>Carência (dias)</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -81,6 +91,7 @@
         <tr>
             <td>{{item.data|default:"Inicial"}}</td>
             <td>{{item.carencia}} dia(s)</td>
+            <td><a href="{% url 'editar_historico_carencia' item.id %}" class="btn btn-small btn-warning">Editar</a></td>
         </tr>
         {% endfor %}
         </tbody>
