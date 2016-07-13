@@ -137,18 +137,24 @@ def editar_historico_carencia(request, id):
     
     if request.method == 'POST':
         if request.POST.get("save"):
-            form_historico_carencia = HistoricoCarenciaCDB_RDBForm(request.POST, instance=historico_carencia)
-            
+            if historico_carencia.data is None:
+                form_historico_carencia = HistoricoCarenciaCDB_RDBForm(request.POST, instance=historico_carencia, cdb_rdb=historico_carencia.cdb_rdb, inicial=True)
+            else:
+                form_historico_carencia = HistoricoCarenciaCDB_RDBForm(request.POST, instance=historico_carencia, cdb_rdb=historico_carencia.cdb_rdb)
             if form_historico_carencia.is_valid():
                 historico_carencia.save()
                 messages.success(request, 'Histórico de carência editado com sucesso')
                 return HttpResponseRedirect(reverse('detalhar_cdb_rdb', kwargs={'id': historico_carencia.cdb_rdb.id}))
                 
-        # TODO verificar o que pode acontecer na exclusão
         elif request.POST.get("delete"):
-#             cdb_rdb.delete()
+            if historico_carencia.data is None:
+                messages.error(request, 'Valor inicial de carência não pode ser excluído')
+                return HttpResponseRedirect(reverse('detalhar_cdb_rdb', kwargs={'id': historico_carencia.cdb_rdb.id}))
+            # Pegar investimento para o redirecionamento no caso de exclusão
+            cdb_rdb = historico_carencia.cdb_rdb
+            historico_carencia.delete()
             messages.success(request, 'Histórico de carência excluído com sucesso')
-            return HttpResponseRedirect(reverse('listar_cdb_rdb'))
+            return HttpResponseRedirect(reverse('detalhar_cdb_rdb', kwargs={'id': cdb_rdb.id}))
  
     else:
         if historico_carencia.data is None:
@@ -166,7 +172,6 @@ def editar_historico_porcentagem(request, id):
     
     if historico_porcentagem.cdb_rdb.investidor != investidor:
         raise PermissionDenied
-    
     
     if request.method == 'POST':
         if request.POST.get("save"):

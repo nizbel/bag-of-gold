@@ -116,13 +116,6 @@ class HistoricoCarenciaCDB_RDB (models.Model):
     data = models.DateField(u'Data da variação', blank=True, null=True)
     cdb_rdb = models.ForeignKey('CDB_RDB')
     
-    def save(self, *args, **kw):
-        try:
-            historico = HistoricoCarenciaCDB_RDB.objects.get(cdb_rdb=self.cdb_rdb, data=self.data)
-        except HistoricoCarenciaCDB_RDB.DoesNotExist:
-            if self.carencia <= 0:
-                raise forms.ValidationError('Carência deve ser de pelo menos 1 dia')
-            super(HistoricoCarenciaCDB_RDB, self).save(*args, **kw)
             
 class HistoricoValorMinimoInvestimentoCDB_RDB (models.Model):
     valor_minimo = models.DecimalField(u'Valor mínimo para investimento', max_digits=9, decimal_places=2)
@@ -130,10 +123,7 @@ class HistoricoValorMinimoInvestimentoCDB_RDB (models.Model):
     cdb_rdb = models.ForeignKey('CDB_RDB')
     
     def save(self, *args, **kw):
-        try:
-            historico = HistoricoValorMinimoInvestimentoCDB_RDB.objects.get(cdb_rdb=self.cdb_rdb, data=self.data)
-        except HistoricoValorMinimoInvestimentoCDB_RDB.DoesNotExist:
-            if self.valor_minimo < 0:
-                raise forms.ValidationError('Valor mínimo não pode ser negativo')
-            super(HistoricoValorMinimoInvestimentoCDB_RDB, self).save(*args, **kw)
+        if self.valor_minimo < 0:
+            raise forms.ValidationError('Valor mínimo não pode ser negativo')
+        super(HistoricoValorMinimoInvestimentoCDB_RDB, self).save(*args, **kw)
     
