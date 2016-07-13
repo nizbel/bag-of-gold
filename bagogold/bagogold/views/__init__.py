@@ -7,3 +7,5 @@ import fii
 import investidores
 import fundo_investimento
 import home
+
+import imposto_renda
