@@ -388,11 +388,7 @@ def painel(request):
                             key=attrgetter('data'))
     
     fiis = {}
-    total_gasto = 0
-    total_proventos = 0
     
-    # Verifica se foi adicionada alguma operação na data de hoje
-    houve_operacao_hoje = False
     
     for item in lista_conjunta:   
         if item.fii.ticker not in fiis.keys():
@@ -445,6 +441,7 @@ def painel(request):
     dados = {}
     dados['total_papeis'] = total_papeis
     dados['total_valor'] = total_valor
+    dados['valor_diario_mais_recente'] = ValorDiarioFII.objects.latest('data_hora').data_hora
 
     return render_to_response('fii/painel.html', 
                               {'fiis': fiis, 'dados': dados},
