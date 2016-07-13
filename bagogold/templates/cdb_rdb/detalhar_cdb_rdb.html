@@ -38,11 +38,11 @@
         <div class="box-content">
             <div class="row-fluid">
                 <div class="span2"><strong>Total investido:</strong></div>
-                <div class="span2">R$ {{cdb_rdb.total_investido}}</div>
+                <div class="span2">R$ {{cdb_rdb.total_investido|floatformat:2}}</div>
                 <div class="span2"><strong>Saldo atual:</strong></div>
-                <div class="span2">R$ {{cdb_rdb.saldo_atual}}</div>
+                <div class="span2">R$ {{cdb_rdb.saldo_atual|floatformat:2}}</div>
                 <div class="span2"><strong>Lucro:</strong></div>
-                <div class="span2">R$ {{ cdb_rdb.lucro }} ({{ cdb_rdb.lucro_percentual|floatformat:"2" }}%)</div>
+                <div class="span2">R$ {{ cdb_rdb.lucro|floatformat:2 }} ({{ cdb_rdb.lucro_percentual|floatformat:2 }}%)</div>
             </div>
             <div class="row-fluid">
                 <div class="span2"><strong>Dias para próx. retirada:</strong></div>
