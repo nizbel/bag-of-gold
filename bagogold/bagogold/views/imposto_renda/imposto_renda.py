@@ -1,22 +1,29 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import OperacaoAcao, Provento
 from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB
-from bagogold.bagogold.models.fii import OperacaoFII
+from bagogold.bagogold.models.fii import OperacaoFII, ProventoFII
 from bagogold.bagogold.models.fundo_investimento import \
     OperacaoFundoInvestimento
 from bagogold.bagogold.models.lc import OperacaoLetraCredito
 from bagogold.bagogold.models.td import OperacaoTitulo
+from bagogold.bagogold.utils.misc import trazer_primeiro_registro
+from collections import OrderedDict
 from decimal import Decimal
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
+from itertools import chain
+from operator import attrgetter
 import datetime
 
 # TODO melhorar isso
-def calcular_preco_medio_ir(request, ano):
+def detalhar_imposto_renda(request, ano):
+    ano = int(ano)
+    investidor = request.user.investidor
+    
     class Object(object):
         pass
-    operacoes_ano = OperacaoAcao.objects.filter(data__lte='%s-12-31' % (ano), destinacao='B').order_by('data')
-    proventos_ano = Provento.objects.exclude(data_ex__isnull=True).filter(data_ex__range=[operacoes_ano[0].data, '%s-12-31' % (ano)]).order_by('data_ex')
+    operacoes_ano = OperacaoAcao.objects.filter(data__lte='%s-12-31' % (ano), destinacao='B', investidor=investidor).order_by('data')
+    proventos_ano = Provento.objects.exclude(data_ex__isnull=True).filter(data_ex__range=['%s-1-1' % (ano), '%s-12-31' % (ano)]).order_by('data_ex')
     for provento in proventos_ano:
         provento.data = provento.data_ex
     
@@ -57,7 +64,10 @@ def calcular_preco_medio_ir(request, ano):
                             acoes[evento.acao.ticker].jscp += total_recebido
                         else:
                             acoes[evento.acao.ticker].dividendos += total_recebido
+                            print acoes[evento.acao.ticker].dividendos
                     else:
+                        if evento.tipo_provento == 'J':
+                            total_recebido = total_recebido * Decimal(0.85)
                         acoes[evento.acao.ticker].credito_prox_ano += total_recebido
                     
                 
@@ -80,49 +90,96 @@ def calcular_preco_medio_ir(request, ano):
 #                         total_gasto += (((acoes[evento.acao.ticker] * evento.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
 #                         total_proventos += (((acoes[evento.acao.ticker] * evento.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
 
+    total_dividendos = Decimal(0)
+    total_jscp = Decimal(0)
     for acao in sorted(acoes.keys()):
+        total_dividendos += acoes[acao].dividendos
+        total_jscp += acoes[acao].jscp
         if acoes[acao].quantidade > 0:
-            print acao, '->', acoes[acao].quantidade, 'a', (acoes[acao].preco_medio/Decimal(acoes[acao].quantidade)), 'Div.:', acoes[acao].dividendos, 'JSCP:', acoes[acao].jscp, 'Ano seguinte:', \
+            acoes[acao].preco_medio = (acoes[acao].preco_medio/Decimal(acoes[acao].quantidade))
+            print acao, '->', acoes[acao].quantidade, 'a', acoes[acao].preco_medio, 'Div.:', acoes[acao].dividendos, 'JSCP:', acoes[acao].jscp, 'Ano seguinte:', \
                 acoes[acao].credito_prox_ano
-            print acao, '->', acoes[acao].quantidade, 'a', Decimal(format(acoes[acao].preco_medio/Decimal(acoes[acao].quantidade), '.2f')), 'Div.:', Decimal(format(acoes[acao].dividendos, '.2f')), \
-                                                                   'JSCP:', Decimal(format(acoes[acao].jscp, '.2f')), 'Ano seguinte:', acoes[acao].credito_prox_ano
             
     fiis = {}
-    for operacao in OperacaoFII.objects.filter(data__lte='%s-12-31' % (ano)).order_by('data'):
-        if operacao.fii.ticker not in fiis:
-            fiis[operacao.fii.ticker] = Object()
-            fiis[operacao.fii.ticker].quantidade = 0
-            fiis[operacao.fii.ticker].preco_medio = Decimal(0)
-            
-        if operacao.tipo_operacao == 'C':
-            fiis[operacao.fii.ticker].quantidade += operacao.quantidade
-            fiis[operacao.fii.ticker].preco_medio += (operacao.quantidade * operacao.preco_unitario + \
-                operacao.emolumentos + operacao.corretagem)
-            
-        elif operacao.tipo_operacao == 'V':
-            fiis[operacao.fii.ticker].quantidade -= operacao.quantidade
-            fiis[operacao.fii.ticker].preco_medio -= (operacao.quantidade * operacao.preco_unitario - \
-                operacao.emolumentos - operacao.corretagem)
+    operacoes_fii_ano = OperacaoFII.objects.filter(data__lte='%s-12-31' % (ano), investidor=investidor).order_by('data')
+    proventos_fii_ano = ProventoFII.objects.exclude(data_ex__isnull=True).filter(data_ex__range=['%s-1-1' % (ano), '%s-12-31' % (ano)]).order_by('data_ex')
+    for provento in proventos_fii_ano:
+        provento.data = provento.data_ex
     
-    for fii in fiis.keys():
-        if fiis[fii].quantidade > 0:
-            print fii, '->', fiis[fii].quantidade, 'a', (fiis[fii].preco_medio/Decimal(fiis[fii].quantidade))
+    lista_eventos_fii = sorted(chain(operacoes_fii_ano, proventos_fii_ano), key=attrgetter('data'))
+    
+    # Verificar se é operação
+    for evento in lista_eventos_fii:
+        if evento.fii.ticker not in fiis:
+            fiis[evento.fii.ticker] = Object()
+            fiis[evento.fii.ticker].quantidade = 0
+            fiis[evento.fii.ticker].preco_medio = Decimal(0)
+            fiis[evento.fii.ticker].rendimentos = Decimal(0)
             
-    return render_to_response('imposto_renda/imposto_renda.html', {}, context_instance=RequestContext(request))
+        if isinstance(evento, OperacaoFII):
+            if evento.tipo_operacao == 'C':
+                fiis[evento.fii.ticker].quantidade += evento.quantidade
+                fiis[evento.fii.ticker].preco_medio += (evento.quantidade * evento.preco_unitario + \
+                    evento.emolumentos + evento.corretagem)
+                
+            elif evento.tipo_operacao == 'V':
+                fiis[evento.fii.ticker].quantidade -= evento.quantidade
+                fiis[evento.fii.ticker].preco_medio -= (evento.quantidade * evento.preco_unitario - \
+                    evento.emolumentos - evento.corretagem)
+                
+        # Verificar se é provento
+        elif isinstance(evento, ProventoFII):  
+            if evento.data_pagamento >= datetime.date(ano,1,1):
+                total_recebido = fiis[evento.fii.ticker].quantidade * evento.valor_unitario
+                print evento.fii.ticker, fiis[evento.fii.ticker].quantidade, evento.valor_unitario, total_recebido, 'pagos em', evento.data_pagamento
+                if evento.data_pagamento <= datetime.date(ano,12,31):
+                    fiis[evento.fii.ticker].rendimentos += total_recebido
+                    print fiis[evento.fii.ticker].rendimentos
+                else:
+                    fiis[evento.fii.ticker].credito_prox_ano += total_recebido
+                        
+    total_rendimentos_fii = Decimal(0)
+    for fii in fiis.keys():
+        total_rendimentos_fii += fiis[fii].rendimentos
+        if fiis[fii].quantidade > 0:
+            fiis[fii].preco_medio = (fiis[fii].preco_medio/Decimal(fiis[fii].quantidade))
+            print fii, '->', fiis[fii].quantidade, 'a', fiis[fii].preco_medio
+            
+    # Preparar dados
+    dados = {}
+    dados['total_dividendos'] = total_dividendos
+    dados['total_jscp'] = total_jscp
+    dados['total_rendimentos_fii'] = total_rendimentos_fii
+    
+    # Editar ano para string
+    ano = str(ano).replace('.', '')
+    
+    return render_to_response('imposto_renda/detalhar_imposto_ano.html', {'ano': ano, 'acoes': acoes, 'fiis': fiis, 'dados': dados}, context_instance=RequestContext(request))
 
 def listar_anos(request):
+    class Object(object):
+        pass
     investidor = request.user.investidor
     
-    primeira_operacao_acoes = OperacaoAcao.objects.filter(investidor=investidor).order_by('data')[0]
-    primeira_operacao_cdb_rdb = OperacaoCDB_RDB.objects.filter(investidor=investidor).order_by('data')[0]
-    primeira_operacao_fii = OperacaoFII.objects.filter(investidor=investidor).order_by('data')[0]
-    primeira_operacao_fundo_investimento = OperacaoFundoInvestimento.objects.filter(investidor=investidor).order_by('data')[0]
-    primeira_operacao_lc = OperacaoLetraCredito.objects.filter(investidor=investidor).order_by('data')[0]
-    primeira_operacao_td = OperacaoTitulo.objects.filter(investidor=investidor).order_by('data')[0]
+    lista_primeiras_operacoes = list()
+    lista_primeiras_operacoes.append(trazer_primeiro_registro(OperacaoAcao.objects.filter(investidor=investidor).order_by('data')))
+    lista_primeiras_operacoes.append(trazer_primeiro_registro(OperacaoCDB_RDB.objects.filter(investidor=investidor).order_by('data')))
+    lista_primeiras_operacoes.append(trazer_primeiro_registro(OperacaoFII.objects.filter(investidor=investidor).order_by('data')))
+    lista_primeiras_operacoes.append(trazer_primeiro_registro(OperacaoFundoInvestimento.objects.filter(investidor=investidor).order_by('data')))
+    lista_primeiras_operacoes.append(trazer_primeiro_registro(OperacaoLetraCredito.objects.filter(investidor=investidor).order_by('data')))
+    lista_primeiras_operacoes.append(trazer_primeiro_registro(OperacaoTitulo.objects.filter(investidor=investidor).order_by('data')))
     
-    primeiro_ano = min(primeira_operacao_acoes.data, primeira_operacao_cdb_rdb.data, primeira_operacao_fii.data, primeira_operacao_fundo_investimento.data, \
-                       primeira_operacao_lc.data, primeira_operacao_td.data).year
+    # Remover nulos
+    lista_primeiras_operacoes = [operacao for operacao in lista_primeiras_operacoes if operacao != None]
     
-    anos = range(primeiro_ano, datetime.date.today().year + 1)
+    primeiro_ano = min([operacao.data for operacao in lista_primeiras_operacoes]).year
     
-    return render_to_response('imposto_renda/listar_anos.html', {'anos': anos}, context_instance=RequestContext(request))
+    impostos_renda = list()
+    
+    for ano in range(primeiro_ano, datetime.date.today().year + 1):
+        imposto_renda = Object()
+        imposto_renda.ano = str(ano).replace('.', '')
+        imposto_renda.valor_a_pagar = Decimal(0)
+        impostos_renda.append(imposto_renda)
+    
+    return render_to_response('imposto_renda/listar_anos.html', {'impostos_renda': impostos_renda}, context_instance=RequestContext(request))

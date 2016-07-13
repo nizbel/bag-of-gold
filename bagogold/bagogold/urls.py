@@ -108,7 +108,7 @@ urlpatterns = [
     url(r'^fundo_investimento/painel/$', views.fundo_investimento.fundo_investimento.painel, name='painel_fundo_investimento'),
 
     # Imposto de renda
-    url(r'^imposto_renda/detalhar_imposto_renda/(?P<id>\d+)/$', views.imposto_renda.imposto_renda.detalhar_imposto_renda, name='detalhar_imposto_renda'),
+    url(r'^imposto_renda/detalhar_imposto_renda/(?P<ano>\d+)/$', views.imposto_renda.imposto_renda.detalhar_imposto_renda, name='detalhar_imposto_renda'),
     url(r'^imposto_renda/listar_anos/$', views.imposto_renda.imposto_renda.listar_anos, name='listar_anos_imposto_renda'),
 
 ]

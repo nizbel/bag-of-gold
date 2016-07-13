@@ -9,17 +9,18 @@
         <thead>
             <tr>
                 <th>Ano</th>
-                <th>Rendimento</th>
+                <th>Valor a pagar</th>
             </tr>
         </thead>
         <tbody>
-        {% for ano in anos %}
+        {% for imposto_renda in impostos_renda %}
         <tr>
-            <td><a href="#">{{ ano }}</a></td>
-            <td>{{item.porcentagem}}%</td>
-            <td><a href="{% url 'editar_historico_porcentagem' item.id %}" class="btn btn-small btn-warning">Editar</a></td>
+            <td><a href="{% url "detalhar_imposto_renda" imposto_renda.ano %}">{{ imposto_renda.ano }}</a></td>
+            <td>R$ {{ imposto_renda.valor_a_pagar|default:"0,00" }}</td>
         </tr>
         {% endfor %}
         </tbody>
     </table>
 </div>
+
+{% endblock %}
