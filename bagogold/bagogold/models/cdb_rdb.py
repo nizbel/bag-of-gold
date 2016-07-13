@@ -21,19 +21,19 @@ class CDB_RDB (models.Model):
     
     def carencia_atual(self):
         try:
-            return HistoricoCarenciaCDB_RDB.objects.filter(data__isnull=False, cdb_rdb=self).order_by('-data')[0].carencia
+            return HistoricoCarenciaCDB_RDB.objects.filter(data__isnull=False, data__lte=datetime.date.today(), cdb_rdb=self).order_by('-data')[0].carencia
         except:
             return HistoricoCarenciaCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self).carencia
     
     def porcentagem_atual(self):
         try:
-            return HistoricoPorcentagemCDB_RDB.objects.filter(data__isnull=False, cdb_rdb=self).order_by('-data')[0].porcentagem
+            return HistoricoPorcentagemCDB_RDB.objects.filter(data__isnull=False, data__lte=datetime.date.today(), cdb_rdb=self).order_by('-data')[0].porcentagem
         except:
             return HistoricoPorcentagemCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self).porcentagem
     
     def valor_minimo_atual(self):
         try:
-            return HistoricoValorMinimoInvestimentoCDB_RDB.objects.filter(data__isnull=False, cdb_rdb=self).order_by('-data')[0].valor_minimo
+            return HistoricoValorMinimoInvestimentoCDB_RDB.objects.filter(data__isnull=False, data__lte=datetime.date.today(), cdb_rdb=self).order_by('-data')[0].valor_minimo
         except:
             return HistoricoValorMinimoInvestimentoCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self).valor_minimo
     
@@ -108,12 +108,6 @@ class HistoricoPorcentagemCDB_RDB (models.Model):
     data = models.DateField(u'Data da variação', blank=True, null=True)
     cdb_rdb = models.ForeignKey('CDB_RDB')
     
-    def save(self, *args, **kw):
-        try:
-            historico = HistoricoPorcentagemCDB_RDB.objects.get(cdb_rdb=self.cdb_rdb, data=self.data)
-        except HistoricoPorcentagemCDB_RDB.DoesNotExist:
-            super(HistoricoPorcentagemCDB_RDB, self).save(*args, **kw)
-    
 class HistoricoCarenciaCDB_RDB (models.Model):
     """
     O período de carência é medido em dias
@@ -122,13 +116,6 @@ class HistoricoCarenciaCDB_RDB (models.Model):
     data = models.DateField(u'Data da variação', blank=True, null=True)
     cdb_rdb = models.ForeignKey('CDB_RDB')
     
-    def save(self, *args, **kw):
-        try:
-            historico = HistoricoCarenciaCDB_RDB.objects.get(cdb_rdb=self.cdb_rdb, data=self.data)
-        except HistoricoCarenciaCDB_RDB.DoesNotExist:
-            if self.carencia <= 0:
-                raise forms.ValidationError('Carência deve ser de pelo menos 1 dia')
-            super(HistoricoCarenciaCDB_RDB, self).save(*args, **kw)
             
 class HistoricoValorMinimoInvestimentoCDB_RDB (models.Model):
     valor_minimo = models.DecimalField(u'Valor mínimo para investimento', max_digits=9, decimal_places=2)
@@ -136,10 +123,7 @@ class HistoricoValorMinimoInvestimentoCDB_RDB (models.Model):
     cdb_rdb = models.ForeignKey('CDB_RDB')
     
     def save(self, *args, **kw):
-        try:
-            historico = HistoricoValorMinimoInvestimentoCDB_RDB.objects.get(cdb_rdb=self.cdb_rdb, data=self.data)
-        except HistoricoValorMinimoInvestimentoCDB_RDB.DoesNotExist:
-            if self.valor_minimo < 0:
-                raise forms.ValidationError('Valor mínimo não pode ser negativo')
-            super(HistoricoValorMinimoInvestimentoCDB_RDB, self).save(*args, **kw)
+        if self.valor_minimo < 0:
+            raise forms.ValidationError('Valor mínimo não pode ser negativo')
+        super(HistoricoValorMinimoInvestimentoCDB_RDB, self).save(*args, **kw)
     

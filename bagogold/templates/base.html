@@ -231,8 +231,6 @@
                         <li><a class="submenu" href="{% url "inserir_operacao_cdb_rdb" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir operação</span></a></li>
                         <li><a class="submenu" href="{% url "inserir_cdb_rdb" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir CDB/RDB</span></a></li>
                         <li><a class="submenu" href="{% url "listar_cdb_rdb" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar CDB/RDB</span></a></li>
-                        <li><a class="submenu" href="{% url "modificar_carencia_cdb_rdb" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Modificar carência</span></a></li>
-                        <li><a class="submenu" href="{% url "modificar_porcentagem_cdb_rdb" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Modificar porcentagem</span></a></li>
                         <li><a class="submenu" href="{% url "painel_cdb_rdb" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Painel</span></a></li>
                     </ul>  
                 </li>
@@ -299,14 +297,14 @@
     </div>
     <!-- end: Main Menu -->
     <!-- start: Content -->
-    <div id="content" class="span10">
+    <div id="content">
         <ul class="breadcrumb">
             Breadcrumb
         </ul>
         
         {% if messages %}
         <div class="row-fluid">
-            <div class="box-content alerts">
+            <div class="box-content alerts span10">
             {% for message in messages %}
                 <div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %}">
                     <button type="button" class="close" data-dismiss="alert">×</button>
