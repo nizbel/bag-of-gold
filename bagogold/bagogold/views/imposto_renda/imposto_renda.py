@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import OperacaoAcao, Provento
+from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB
 from bagogold.bagogold.models.fii import OperacaoFII
+from bagogold.bagogold.models.fundo_investimento import \
+    OperacaoFundoInvestimento
+from bagogold.bagogold.models.lc import OperacaoLetraCredito
+from bagogold.bagogold.models.td import OperacaoTitulo
 from decimal import Decimal
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
@@ -103,4 +108,21 @@ def calcular_preco_medio_ir(request, ano):
         if fiis[fii].quantidade > 0:
             print fii, '->', fiis[fii].quantidade, 'a', (fiis[fii].preco_medio/Decimal(fiis[fii].quantidade))
             
-    return render_to_response('imposto_renda.html', {}, context_instance=RequestContext(request))
+    return render_to_response('imposto_renda/imposto_renda.html', {}, context_instance=RequestContext(request))
+
+def listar_anos(request):
+    investidor = request.user.investidor
+    
+    primeira_operacao_acoes = OperacaoAcao.objects.filter(investidor=investidor).order_by('data')[0]
+    primeira_operacao_cdb_rdb = OperacaoCDB_RDB.objects.filter(investidor=investidor).order_by('data')[0]
+    primeira_operacao_fii = OperacaoFII.objects.filter(investidor=investidor).order_by('data')[0]
+    primeira_operacao_fundo_investimento = OperacaoFundoInvestimento.objects.filter(investidor=investidor).order_by('data')[0]
+    primeira_operacao_lc = OperacaoLetraCredito.objects.filter(investidor=investidor).order_by('data')[0]
+    primeira_operacao_td = OperacaoTitulo.objects.filter(investidor=investidor).order_by('data')[0]
+    
+    primeiro_ano = min(primeira_operacao_acoes.data, primeira_operacao_cdb_rdb.data, primeira_operacao_fii.data, primeira_operacao_fundo_investimento.data, \
+                       primeira_operacao_lc.data, primeira_operacao_td.data).year
+    
+    anos = range(primeiro_ano, datetime.date.today().year + 1)
+    
+    return render_to_response('imposto_renda/listar_anos.html', {'anos': anos}, context_instance=RequestContext(request))
