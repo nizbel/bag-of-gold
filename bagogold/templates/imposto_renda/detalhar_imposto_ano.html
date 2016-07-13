@@ -2,3 +2,96 @@
 
 {% block content %}
 <div class="row-fluid">
+    <h1>Detalhamento do imposto de renda para {{ ano }}</h1>
+</div>
+<div class="row-fluid">
+    <div class="box span12">
+        <div class="box-header">
+            <h2>Rendimentos isentos e não-tributáveis</h2>
+        </div>
+        <div class="box-content">
+            <h4>Lucros e dividendos recebidos pelo titular e dependentes</h4>
+            <ul>
+            {% for ticker, acao in acoes.items %}
+                {% if acao.dividendos > 0 %}
+                <li>{{ticker}}: {{acao.dividendos}}</li>
+                {% endif %}
+            {% endfor %}
+            <li><strong>Total: {{dados.total_dividendos}}</strong></li>
+            </ul>
+            
+            <h4>Ganhos líquidos em operações no mercado à vista de ações negociadas em bolsa de valores nas alienações 
+            realizadas até R$ 20.000,00, em cada mês, para o conjunto de ações</h4>
+            
+            <h4>Outros</h4>
+            <ul>
+            {% for ticker, fii in fiis.items %}
+                {% if fii.rendimentos > 0 %}
+                <li>{{ticker}}: {{fii.rendimentos}}</li>
+                {% endif %}
+            {% endfor %}
+            <li><strong>Total: {{dados.total_rendimentos_fii}}</strong></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="row-fluid">
+    <div class="box span12">
+        <div class="box-header">
+            <h2>Rendimentos sujeitos à tributação exclusiva/definitiva</h2>
+        </div>
+        <div class="box-content">
+            <h4>Ganhos líquidos em renda variável (bolsa de valores, de mercadorias, de futuros e assemelhados e fundos de investimento imobiliário)</h4>
+            
+            <h4>Juros sobre capital próprio</h4>
+            <ul>
+            {% for ticker, acao in acoes.items %}
+                {% if acao.jscp > 0 %}
+                <li>{{ticker}}: {{acao.jscp}}</li>
+                {% endif %}
+            {% endfor %}
+            <li><strong>Total: {{dados.total_jscp}}</strong></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="row-fluid">
+    <div class="box span12">
+        <div class="box-header">
+            <h2>Bens e Direitos</h2>
+        </div>
+        <div class="box-content">
+            <ul>
+            {% for ticker, acao in acoes.items %}
+                {% if acao.quantidade > 0 %}
+                    <li>{{ticker}}: {{acao.quantidade}} ações a {{acao.preco_medio}}</li>
+                {% endif %}
+            {% endfor %}
+            <li>Proventos declarados no ano-calendário e que serão pagos no(s) ano(s) seguinte(s):
+                <ul>
+                {% for ticker, acao in acoes.items %}
+                    {% if acao.credito_prox_ano > 0 %}
+                        <li>{{ ticker }}: R${{acao.credito_prox_ano}}</li>
+                    {% endif %}
+                {% endfor %}
+                </ul>
+            </li>
+        <!-- print acao, '->', acoes[acao].quantidade, 'a', (acoes[acao].preco_medio/Decimal(acoes[acao].quantidade)), 'Div.:', acoes[acao].dividendos, 'JSCP:', acoes[acao].jscp, 'Ano seguinte:', \ -->
+        <!--                 acoes[acao].credito_prox_ano -->
+                    
+                    
+            {% for ticker, fii in fiis.items %}
+                {% if fii.quantidade > 0 %}
+                    <li>{{ticker}}: {{fii.quantidade}} cotas a {{fii.preco_medio}}</li>
+                {% endif %}
+            {% endfor %}
+            </ul>
+        </div>
+    </div>
+    
+<!--             print fii, '->', fiis[fii].quantidade, 'a', (fiis[fii].preco_medio/Decimal(fiis[fii].quantidade)) -->
+</div>
+
+{% endblock %}

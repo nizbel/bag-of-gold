@@ -40,3 +40,15 @@ def buscar_historico_ipca():
                     historico_ipca.save()
                 except:
                     print 'Não foi possível converter', campos[mes]
+                    
+def trazer_primeiro_registro(queryset):
+    """
+    Traz o primeiro registro de um queryset
+    Parâmetros: Queryset
+    Retorno: Primeiro registro ou nulo
+    """
+    resultado = list(queryset[:1])
+    if resultado:
+        return resultado[0]
+    return None
+
