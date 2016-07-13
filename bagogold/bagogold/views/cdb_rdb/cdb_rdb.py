@@ -483,28 +483,40 @@ def listar_cdb_rdb(request):
                               context_instance=RequestContext(request))
 
 @login_required
-def modificar_carencia_cdb_rdb(request):
+def modificar_carencia_cdb_rdb(request, id):
+    investidor = request.user.investidor
+    cdb_rdb = CDB_RDB.objects.get(id=id)
+    
+    if cdb_rdb.investidor != investidor:
+        raise PermissionDenied
+    
     if request.method == 'POST':
-        form = HistoricoCarenciaCDB_RDBForm(request.POST)
+        form = HistoricoCarenciaCDB_RDBForm(request.POST, initial={'cdb_rdb': cdb_rdb.id}, cdb_rdb=cdb_rdb)
         if form.is_valid():
             historico = form.save()
             messages.success(request, 'Histórico de carência para %s alterado com sucesso' % historico.cdb_rdb)
-            return HttpResponseRedirect(reverse('historico_cdb_rdb'))
+            return HttpResponseRedirect(reverse('detalhar_cdb_rdb', kwargs={'id': cdb_rdb.id}))
     else:
-        form = HistoricoCarenciaCDB_RDBForm()
+        form = HistoricoCarenciaCDB_RDBForm(initial={'cdb_rdb': cdb_rdb.id}, cdb_rdb=cdb_rdb)
             
     return render_to_response('cdb_rdb/modificar_carencia_cdb_rdb.html', {'form': form}, context_instance=RequestContext(request))
 
 @login_required
-def modificar_porcentagem_cdb_rdb(request):
+def modificar_porcentagem_cdb_rdb(request, id):
+    investidor = request.user.investidor
+    cdb_rdb = CDB_RDB.objects.get(id=id)
+    
+    if cdb_rdb.investidor != investidor:
+        raise PermissionDenied
+    
     if request.method == 'POST':
-        form = HistoricoPorcentagemCDB_RDBForm(request.POST)
+        form = HistoricoPorcentagemCDB_RDBForm(request.POST, initial={'cdb_rdb': cdb_rdb.id}, cdb_rdb=cdb_rdb)
         if form.is_valid():
             historico = form.save()
             messages.success(request, 'Histórico de porcentagem de rendimento para %s alterado com sucesso' % historico.cdb_rdb)
-            return HttpResponseRedirect(reverse('historico_cdb_rdb'))
+            return HttpResponseRedirect(reverse('detalhar_cdb_rdb', kwargs={'id': cdb_rdb.id}))
     else:
-        form = HistoricoPorcentagemCDB_RDBForm()
+        form = HistoricoPorcentagemCDB_RDBForm(initial={'cdb_rdb': cdb_rdb.id}, cdb_rdb=cdb_rdb)
             
     return render_to_response('cdb_rdb/modificar_porcentagem_cdb_rdb.html', {'form': form}, context_instance=RequestContext(request))
 

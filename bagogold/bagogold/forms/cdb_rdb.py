@@ -150,5 +150,5 @@ class HistoricoCarenciaCDB_RDBForm(forms.ModelForm):
             try:
                 historico = HistoricoCarenciaCDB_RDB.objects.get(cdb_rdb=cleaned_data.get('cdb_rdb'), data=cleaned_data.get('data'))
                 raise forms.ValidationError('Já existe uma alteração de carência para essa data')
-            except HistoricoPorcentagemCDB_RDB.DoesNotExist:
+            except HistoricoCarenciaCDB_RDB.DoesNotExist:
                 pass
