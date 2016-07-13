@@ -62,7 +62,6 @@ def editar_operacao_acao(request, id):
             else:
                 form_uso_proventos = UsoProventosOperacaoAcaoForm(request.POST)
             if form_operacao_acao.is_valid():
-                operacao_acao.save()
                 if form_uso_proventos.is_valid():
                     if formset_divisao.is_valid():
                         operacao_acao.save()
