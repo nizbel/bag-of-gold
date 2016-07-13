@@ -21,19 +21,19 @@ class CDB_RDB (models.Model):
     
     def carencia_atual(self):
         try:
-            return HistoricoCarenciaCDB_RDB.objects.filter(data__isnull=False, cdb_rdb=self).order_by('-data')[0].carencia
+            return HistoricoCarenciaCDB_RDB.objects.filter(data__isnull=False, data__lte=datetime.date.today(), cdb_rdb=self).order_by('-data')[0].carencia
         except:
             return HistoricoCarenciaCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self).carencia
     
     def porcentagem_atual(self):
         try:
-            return HistoricoPorcentagemCDB_RDB.objects.filter(data__isnull=False, cdb_rdb=self).order_by('-data')[0].porcentagem
+            return HistoricoPorcentagemCDB_RDB.objects.filter(data__isnull=False, data__lte=datetime.date.today(), cdb_rdb=self).order_by('-data')[0].porcentagem
         except:
             return HistoricoPorcentagemCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self).porcentagem
     
     def valor_minimo_atual(self):
         try:
-            return HistoricoValorMinimoInvestimentoCDB_RDB.objects.filter(data__isnull=False, cdb_rdb=self).order_by('-data')[0].valor_minimo
+            return HistoricoValorMinimoInvestimentoCDB_RDB.objects.filter(data__isnull=False, data__lte=datetime.date.today(), cdb_rdb=self).order_by('-data')[0].valor_minimo
         except:
             return HistoricoValorMinimoInvestimentoCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self).valor_minimo
     
