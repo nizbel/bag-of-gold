@@ -78,17 +78,77 @@ class HistoricoPorcentagemCDB_RDBForm(forms.ModelForm):
     
     class Meta:
         model = HistoricoPorcentagemCDB_RDB
-        fields = ('porcentagem', 'data',
-                  'cdb_rdb')
+        fields = ('porcentagem', 'data', 'cdb_rdb')
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),}
+        
+    def __init__(self, *args, **kwargs):
+        try:
+            self.inicial = kwargs.pop('inicial')
+        except:
+            self.inicial = False
+        try:
+            self.cdb_rdb = kwargs.pop('cdb_rdb')
+        except:
+            self.cdb_rdb = None
+        super(HistoricoPorcentagemCDB_RDBForm, self).__init__(*args, **kwargs)
+        if self.cdb_rdb:
+            self.fields['cdb_rdb'].disabled = True
+        if self.inicial:
+            self.fields['data'].disabled = True
+    
+    def clean_porcentagem(self):
+        porcentagem = self.cleaned_data['porcentagem']
+        if porcentagem <= 0:
+            raise forms.ValidationError('Porcentagem deve ser maior que zero')
+        return porcentagem
+    
+    def clean(self):
+        cleaned_data = super(HistoricoPorcentagemCDB_RDBForm, self).clean()
+        # Se não possui cdb_rdb (inserção), testar se já existe algum histórico para o investimento na data
+        if not self.cdb_rdb:
+            try:
+                historico = HistoricoPorcentagemCDB_RDB.objects.get(cdb_rdb=cleaned_data.get('cdb_rdb'), data=cleaned_data.get('data'))
+                raise forms.ValidationError('Já existe uma alteração de porcentagem para essa data')
+            except HistoricoPorcentagemCDB_RDB.DoesNotExist:
+                pass
         
 class HistoricoCarenciaCDB_RDBForm(forms.ModelForm):
     
     class Meta:
         model = HistoricoCarenciaCDB_RDB
-        fields = ('carencia', 'data',
-                  'cdb_rdb')
+        fields = ('carencia', 'data', 'cdb_rdb')
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),}
         labels = {'carencia': 'Período de carência (em dias)',}
+        
+    def __init__(self, *args, **kwargs):
+        try:
+            self.inicial = kwargs.pop('inicial')
+        except:
+            self.inicial = False
+        try:
+            self.cdb_rdb = kwargs.pop('cdb_rdb')
+        except:
+            self.cdb_rdb = None
+        super(HistoricoCarenciaCDB_RDBForm, self).__init__(*args, **kwargs)
+        if self.cdb_rdb:
+            self.fields['cdb_rdb'].disabled = True
+        if self.inicial:
+            self.fields['data'].disabled = True
+            
+    def clean_carencia(self):
+        porcentagem = self.cleaned_data['carencia']
+        if porcentagem <= 0:
+            raise forms.ValidationError('Carência deve ser de pelo menos 1 dia')
+        return porcentagem
+    
+    def clean(self):
+        cleaned_data = super(HistoricoCarenciaCDB_RDBForm, self).clean()
+        # Se não possui cdb_rdb (inserção), testar se já existe algum histórico para o investimento na data
+        if not self.cdb_rdb:
+            try:
+                historico = HistoricoCarenciaCDB_RDB.objects.get(cdb_rdb=cleaned_data.get('cdb_rdb'), data=cleaned_data.get('data'))
+                raise forms.ValidationError('Já existe uma alteração de carência para essa data')
+            except HistoricoCarenciaCDB_RDB.DoesNotExist:
+                pass

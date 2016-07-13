@@ -84,13 +84,17 @@ urlpatterns = [
     url(r'^lc/painel/$', views.lc.lc.painel, name='painel_lc'),
     
     # CDB e RDB
+    url(r'^cdb_rdb/detalhar_cdb_rdb/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.detalhar_cdb_rdb, name='detalhar_cdb_rdb'),
+    url(r'^cdb_rdb/editar_cdb_rdb/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.editar_cdb_rdb, name='editar_cdb_rdb'),
+    url(r'^cdb_rdb/editar_historico_carencia/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.editar_historico_carencia, name='editar_historico_carencia'),
+    url(r'^cdb_rdb/editar_historico_porcentagem/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.editar_historico_porcentagem, name='editar_historico_porcentagem'),
     url(r'^cdb_rdb/editar_operacao/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.editar_operacao_cdb_rdb, name='editar_operacao_cdb_rdb'),
     url(r'^cdb_rdb/historico/$', views.cdb_rdb.cdb_rdb.historico, name='historico_cdb_rdb'),
     url(r'^cdb_rdb/inserir_cdb_rdb/$', views.cdb_rdb.cdb_rdb.inserir_cdb_rdb, name='inserir_cdb_rdb'),
     url(r'^cdb_rdb/inserir_operacao_cdb_rdb/$', views.cdb_rdb.cdb_rdb.inserir_operacao_cdb_rdb, name='inserir_operacao_cdb_rdb'),
     url(r'^cdb_rdb/listar_cdb_rdb/$', views.cdb_rdb.cdb_rdb.listar_cdb_rdb, name='listar_cdb_rdb'),
-    url(r'^cdb_rdb/modificar_carencia_cdb_rdb/$', views.cdb_rdb.cdb_rdb.modificar_carencia_cdb_rdb, name='modificar_carencia_cdb_rdb'),
-    url(r'^cdb_rdb/modificar_porcentagem_cdb_rdb/$', views.cdb_rdb.cdb_rdb.modificar_porcentagem_cdb_rdb, name='modificar_porcentagem_cdb_rdb'),
+    url(r'^cdb_rdb/modificar_carencia_cdb_rdb/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.modificar_carencia_cdb_rdb, name='modificar_carencia_cdb_rdb'),
+    url(r'^cdb_rdb/modificar_porcentagem_cdb_rdb/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.modificar_porcentagem_cdb_rdb, name='modificar_porcentagem_cdb_rdb'),
     url(r'^cdb_rdb/painel/$', views.cdb_rdb.cdb_rdb.painel, name='painel_cdb_rdb'),
     
     # Fundo de investimento

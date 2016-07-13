@@ -9,7 +9,9 @@ import datetime
 def calcular_valor_atualizado_com_taxa(taxa_do_dia, valor_atual, operacao_taxa):
     """
     Calcula o valor atualizado de uma operação em LC, a partir da taxa DI do dia
-    Parâmetros: Taxa DI do dia, valor atual da operação, taxa da operação
+    Parâmetros: Taxa DI do dia
+                Valor atual da operação
+                Taxa da operação
     Retorno: Valor atualizado com a taxa DI
     """
     return ((pow((Decimal(1) + taxa_do_dia/100), Decimal(1)/Decimal(252)) - Decimal(1)) * operacao_taxa/100 + Decimal(1)) * valor_atual
@@ -17,7 +19,9 @@ def calcular_valor_atualizado_com_taxa(taxa_do_dia, valor_atual, operacao_taxa):
 def calcular_valor_atualizado_com_taxas(taxas_dos_dias, valor_atual, operacao_taxa):
     """
     Calcula o valor atualizado de uma operação em LC, a partir das taxa DI dos dias
-    Parâmetros: Taxas DI dos dias {taxa: quantidade_de_dias}, valor atual da operação, taxa da operação
+    Parâmetros: Taxas DI dos dias {taxa: quantidade_de_dias}
+                Valor atual da operação
+                Taxa da operação
     Retorno: Valor atualizado com a taxa DI
     """
     taxa_acumulada = 1
@@ -101,7 +105,8 @@ def calcular_valor_lc_ate_dia(investidor, dia):
 def calcular_valor_lc_ate_dia_por_divisao(dia, divisao_id):
     """ 
     Calcula o valor das letras de crédito da divisão no dia determinado
-    Parâmetros: Data final, id da divisão
+    Parâmetros: Data final
+                ID da divisão
     Retorno: Valor de cada letra de crédito da divisão na data escolhida {id_letra: valor_na_data, }
     """
     operacoes_divisao_id = DivisaoOperacaoLC.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).values('operacao__id')
