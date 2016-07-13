@@ -1,17 +1,20 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.forms.divisoes import DivisaoOperacaoAcaoFormSet
 from bagogold.bagogold.forms.operacao_acao import OperacaoAcaoForm
 from bagogold.bagogold.forms.operacao_compra_venda import \
     OperacaoCompraVendaForm
 from bagogold.bagogold.models.acoes import OperacaoAcao, OperacaoCompraVenda
 from bagogold.bagogold.models.divisoes import Divisao, \
-    TransferenciaEntreDivisoes
+    TransferenciaEntreDivisoes, DivisaoOperacaoAcao
 from bagogold.bagogold.utils.acoes import calcular_lucro_trade_ate_data, \
     calcular_poupanca_prov_acao_ate_dia
 from decimal import Decimal
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db.models import Sum
+from django.forms.models import inlineformset_factory
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
@@ -224,6 +227,9 @@ def editar_operacao(request, id):
 @login_required
 def editar_operacao_acao(request, id):
     investidor = request.user.investidor
+    # Preparar formset para divisoes
+    DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'),
+                                            extra=1, formset=DivisaoOperacaoAcaoFormSet)
     
     operacao = OperacaoAcao.objects.get(pk=id)
     # Checar se é o investidor da operação
@@ -232,18 +238,28 @@ def editar_operacao_acao(request, id):
     
     if request.method == 'POST':
         if request.POST.get("save"):
-            form = OperacaoAcaoForm(request.POST, instance=operacao)
-            if form.is_valid():
-                form.save()
-                return HttpResponseRedirect(reverse('historico_operacoes'))
+            form_operacao_acao = OperacaoAcaoForm(request.POST, instance=operacao)
+            formset_divisao = DivisaoFormSet(request.POST, instance=operacao, investidor=investidor)
+            if form_operacao_acao.is_valid():
+                if formset_divisao.is_valid():
+                    operacao.save()
+                    formset_divisao.save()
+                    messages.success(request, 'Operação alterada com sucesso')
+                    return HttpResponseRedirect(reverse('historico_operacoes'))
         elif request.POST.get("delete"):
+            divisao_acao = DivisaoOperacaoAcao.objects.filter(operacao=operacao)
+            for divisao in divisao_acao:
+                divisao.delete()
             operacao.delete()
+            messages.success(request, 'Operação apagada com sucesso')
             return HttpResponseRedirect(reverse('historico_operacoes'))
 
     else:
-        form = OperacaoAcaoForm(instance=operacao)
+        form_operacao_acao = OperacaoAcaoForm(instance=operacao)
+        formset_divisao = DivisaoFormSet(instance=operacao, investidor=investidor)
             
-    return render_to_response('acoes/trade/editar_operacao_acao.html', {'form': form}, context_instance=RequestContext(request))   
+    return render_to_response('acoes/trade/editar_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'formset_divisao': formset_divisao},
+                               context_instance=RequestContext(request))   
     
     
 @login_required
@@ -377,19 +393,28 @@ def inserir_operacao(request):
     
 @login_required
 def inserir_operacao_acao(request):
-    investidor = request.user.investidor
+    investidor = request.user.investidor# Preparar formset para divisoes
+    DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'),
+                                            extra=1, formset=DivisaoOperacaoAcaoFormSet)
+    
     if request.method == 'POST':
-        form = OperacaoAcaoForm(request.POST)
-        if form.is_valid():
-            operacao_acao = form.save(commit=False)
+        form_operacao_acao = OperacaoAcaoForm(request.POST)
+        formset_divisao = DivisaoFormSet(request.POST, investidor=investidor)
+        if form_operacao_acao.is_valid():
+            operacao_acao = form_operacao_acao.save(commit=False)
             operacao_acao.destinacao = 'T'
             operacao_acao.investidor = investidor
-            operacao_acao.save()
-            return HttpResponseRedirect(reverse('historico_operacoes'))
+            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_acao, investidor=investidor)
+            if formset_divisao.is_valid():
+                operacao_acao.save()
+                formset_divisao.save()
+                messages.success(request, 'Operação inserida com sucesso')
+                return HttpResponseRedirect(reverse('historico_operacoes'))
     else:
         valores_iniciais = {}
         if investidor.tipo_corretagem == 'F':
             valores_iniciais['corretagem'] = investidor.corretagem_padrao
-        form = OperacaoAcaoForm(initial=valores_iniciais)
+        form_operacao_acao = OperacaoAcaoForm(initial=valores_iniciais)
+        formset_divisao = DivisaoFormSet(investidor=investidor)
             
-    return render_to_response('acoes/trade/inserir_operacao_acao.html', {'form': form}, context_instance=RequestContext(request))
+    return render_to_response('acoes/trade/inserir_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'formset_divisao': formset_divisao}, context_instance=RequestContext(request))
