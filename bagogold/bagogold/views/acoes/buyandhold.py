@@ -66,7 +66,7 @@ def editar_operacao_acao(request, id):
                     if formset_divisao.is_valid():
                         operacao_acao.save()
                         uso_proventos = form_uso_proventos.save(commit=False)
-                        print uso_proventos.qtd_utilizada 
+#                         print uso_proventos.qtd_utilizada 
                         if uso_proventos.qtd_utilizada > 0:
                             uso_proventos.operacao_acao = operacao_acao
                             uso_proventos.save()
