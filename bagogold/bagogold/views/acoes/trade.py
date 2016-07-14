@@ -364,6 +364,11 @@ def historico_operacoes(request):
     
 @login_required
 def historico_operacoes_cv(request):
+    for operacao in OperacaoCompraVenda.objects.all():
+        if operacao.quantidade == 0:
+            operacao.quantidade = min(operacao.compra.quantidade, operacao.venda.quantidade)
+            operacao.save()
+            
     investidor = request.user.investidor
     operacoes = OperacaoCompraVenda.objects.filter(compra__investidor=investidor).order_by('id')
     
