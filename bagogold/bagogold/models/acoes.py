@@ -99,6 +99,9 @@ class OperacaoCompraVenda (models.Model):
     
     class Meta:
         unique_together = ('compra', 'venda')
+        
+    def __unicode__(self):
+        return 'Compra: ' + self.compra.__unicode__() + ', Venda: ' + self.venda.__unicode__()
     
 class HistoricoAcao (models.Model):
     acao = models.ForeignKey('Acao', unique_for_date='data')
