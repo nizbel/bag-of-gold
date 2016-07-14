@@ -24,8 +24,8 @@
         <td><a href="{% url 'editar_operacao_acao_t' operacao.compra.id %}">{{ operacao.compra.data|date:"Y-m-d" }}</a></td>
         <td><a href="{% url 'editar_operacao_acao_t' operacao.venda.id %}">{{ operacao.venda.data|date:"Y-m-d" }}</a></td>
         <td>R${{operacao.compra.preco_unitario}}</td>
-        <td>{{operacao.compra.quantidade}}</td>
-        <td>{{operacao.venda.quantidade}}</td>
+        <td>{{operacao.quantidade}}/{{operacao.compra.quantidade}}</td>
+        <td>{{operacao.quantidade}}/{{operacao.venda.quantidade}}</td>
         <td>R${{operacao.venda.preco_unitario}}</td>
         
         <td><span style="color:
