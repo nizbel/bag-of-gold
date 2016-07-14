@@ -31,6 +31,7 @@ def detalhar_imposto_renda(request, ano):
     
     ganho_abaixo_vinte_mil = OrderedDict()
     total_abaixo_vinte_mil = Decimal(0)
+    ganho_acima_vinte_mil = OrderedDict()
     # Pegar ganhos líquidos por ações até 20.000 reais no mês
     for mes in range(1, 13):
         print mes
@@ -44,24 +45,23 @@ def detalhar_imposto_renda(request, ano):
                 print 'buy and hold', total_mes
             elif operacao.destinacao == 'T':
                 # Pegar compras para ver lucro
-                qtd_compra = 0
-                gasto_total_compras = 0
-                print operacao
                 for operacao_compra in operacao.venda.get_queryset().order_by('compra__preco_unitario'):
-                    qtd_compra += min(operacao_compra.compra.quantidade, operacao.quantidade)
-                    # TODO NAO PREVÊ MUITAS COMPRAS PARA MUITAS VENDAS
-                    gasto_total_compras += (qtd_compra * operacao_compra.compra.preco_unitario + operacao_compra.compra.emolumentos + \
-                                            operacao_compra.compra.corretagem)
-                print 'lucro da venda:', (operacao.quantidade * operacao.preco_unitario - operacao.corretagem - operacao.emolumentos), \
-                    gasto_total_compras, (operacao.quantidade * operacao.preco_unitario - operacao.corretagem - operacao.emolumentos - gasto_total_compras)
-                lucro_venda += (operacao.quantidade * operacao.preco_unitario - operacao.corretagem - operacao.emolumentos) - \
-                    gasto_total_compras
+                    gasto_total_compra = (Decimal(operacao_compra.quantidade) / operacao_compra.compra.quantidade) * \
+                        (operacao_compra.compra.quantidade * operacao_compra.compra.preco_unitario + operacao_compra.compra.emolumentos + operacao_compra.compra.corretagem)
+                    total_venda = (Decimal(operacao_compra.quantidade) / operacao.quantidade) * \
+                        (operacao.quantidade * operacao.preco_unitario - operacao.corretagem - operacao.emolumentos)
+                    print 'lucro da venda:', total_venda, '-', gasto_total_compra, (total_venda - gasto_total_compra)
+                    if operacao_compra.day_trade:
+                        lucro_venda_dt += total_venda - gasto_total_compra
+                    else:
+                        lucro_venda += total_venda - gasto_total_compra
         if total_mes < 20000 and lucro_venda > 0:
 #             print 'mes', mes, lucro_venda
             ganho_abaixo_vinte_mil[mes] = lucro_venda
             total_abaixo_vinte_mil += lucro_venda
-        elif total_mes > 20000:
-            print 'mes', mes, lucro_venda, lucro_venda_dt
+        elif total_mes > 20000 or lucro_venda < 0 or lucro_venda_dt != 0:
+#             print 'mes', mes, lucro_venda, lucro_venda_dt
+            ganho_acima_vinte_mil[mes] = (lucro_venda, lucro_venda_dt)
     
     acoes = {}
     for evento in lista_eventos:
@@ -190,7 +190,7 @@ def detalhar_imposto_renda(request, ano):
     ano = str(ano).replace('.', '')
     
     return render_to_response('imposto_renda/detalhar_imposto_ano.html', {'ano': ano, 'acoes': acoes, 'fiis': fiis, 'ganho_abaixo_vinte_mil': ganho_abaixo_vinte_mil,
-                                                                          'dados': dados}, context_instance=RequestContext(request))
+                                                                          'ganho_acima_vinte_mil': ganho_acima_vinte_mil, 'dados': dados}, context_instance=RequestContext(request))
 
 def listar_anos(request):
     class Object(object):

@@ -102,4 +102,21 @@
 <!--             print fii, '->', fiis[fii].quantidade, 'a', (fiis[fii].preco_medio/Decimal(fiis[fii].quantidade)) -->
 </div>
 
+<div class="row-fluid">
+    <div class="box span12">
+        <div class="box-header">
+            <h2>Renda variável</h2>
+        </div>
+        <div class="box-content">
+            <ul>
+            {% for mes, ganho in ganho_acima_vinte_mil.items %}
+                <li>Mês {{mes}}: Comum: <strong>R${{ganho.0|floatformat:"2"}}</strong> Daytrade: <strong>R${{ganho.1|floatformat:"2"}}</strong></li>
+            {% endfor %}
+            </ul>
+        </div>
+    </div>
+    
+<!--             print fii, '->', fiis[fii].quantidade, 'a', (fiis[fii].preco_medio/Decimal(fiis[fii].quantidade)) -->
+</div>
+
 {% endblock %}
