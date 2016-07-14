@@ -22,12 +22,46 @@ def detalhar_imposto_renda(request, ano):
     
     class Object(object):
         pass
-    operacoes_ano = OperacaoAcao.objects.filter(data__lte='%s-12-31' % (ano), destinacao='B', investidor=investidor).order_by('data')
+    operacoes_ano = OperacaoAcao.objects.filter(data__lte='%s-12-31' % (ano), investidor=investidor).order_by('data')
     proventos_ano = Provento.objects.exclude(data_ex__isnull=True).filter(data_ex__range=['%s-1-1' % (ano), '%s-12-31' % (ano)]).order_by('data_ex')
     for provento in proventos_ano:
         provento.data = provento.data_ex
     
     lista_eventos = sorted(chain(operacoes_ano, proventos_ano), key=attrgetter('data'))
+    
+    ganho_abaixo_vinte_mil = OrderedDict()
+    total_abaixo_vinte_mil = Decimal(0)
+    # Pegar ganhos líquidos por ações até 20.000 reais no mês
+    for mes in range(1, 13):
+        print mes
+        total_mes = Decimal(0)
+        lucro_venda = Decimal(0)
+        lucro_venda_dt = Decimal(0)
+        operacoes_mes = operacoes_ano.filter(data__year=ano, data__month=mes, tipo_operacao='V')
+        for operacao in operacoes_mes:
+            total_mes += operacao.preco_unitario * operacao.quantidade
+            if operacao.destinacao == 'B':
+                print 'buy and hold', total_mes
+            elif operacao.destinacao == 'T':
+                # Pegar compras para ver lucro
+                qtd_compra = 0
+                gasto_total_compras = 0
+                print operacao
+                for operacao_compra in operacao.venda.get_queryset().order_by('compra__preco_unitario'):
+                    qtd_compra += min(operacao_compra.compra.quantidade, operacao.quantidade)
+                    # TODO NAO PREVÊ MUITAS COMPRAS PARA MUITAS VENDAS
+                    gasto_total_compras += (qtd_compra * operacao_compra.compra.preco_unitario + operacao_compra.compra.emolumentos + \
+                                            operacao_compra.compra.corretagem)
+                print 'lucro da venda:', (operacao.quantidade * operacao.preco_unitario - operacao.corretagem - operacao.emolumentos), \
+                    gasto_total_compras, (operacao.quantidade * operacao.preco_unitario - operacao.corretagem - operacao.emolumentos - gasto_total_compras)
+                lucro_venda += (operacao.quantidade * operacao.preco_unitario - operacao.corretagem - operacao.emolumentos) - \
+                    gasto_total_compras
+        if total_mes < 20000 and lucro_venda > 0:
+#             print 'mes', mes, lucro_venda
+            ganho_abaixo_vinte_mil[mes] = lucro_venda
+            total_abaixo_vinte_mil += lucro_venda
+        elif total_mes > 20000:
+            print 'mes', mes, lucro_venda, lucro_venda_dt
     
     acoes = {}
     for evento in lista_eventos:
@@ -57,7 +91,7 @@ def detalhar_imposto_renda(request, ano):
             if evento.tipo_provento in ['D', 'J']:
                 if evento.data_pagamento >= datetime.date(ano,1,1):
                     total_recebido = acoes[evento.acao.ticker].quantidade * evento.valor_unitario
-                    print evento.acao.ticker, acoes[evento.acao.ticker].quantidade, evento.valor_unitario, total_recebido, 'pagos em', evento.data_pagamento
+#                     print evento.acao.ticker, acoes[evento.acao.ticker].quantidade, evento.valor_unitario, total_recebido, 'pagos em', evento.data_pagamento
                     if evento.data_pagamento <= datetime.date(ano,12,31):
                         if evento.tipo_provento == 'J':
                             total_recebido = total_recebido * Decimal(0.85)
@@ -97,8 +131,8 @@ def detalhar_imposto_renda(request, ano):
         total_jscp += acoes[acao].jscp
         if acoes[acao].quantidade > 0:
             acoes[acao].preco_medio = (acoes[acao].preco_medio/Decimal(acoes[acao].quantidade))
-            print acao, '->', acoes[acao].quantidade, 'a', acoes[acao].preco_medio, 'Div.:', acoes[acao].dividendos, 'JSCP:', acoes[acao].jscp, 'Ano seguinte:', \
-                acoes[acao].credito_prox_ano
+#             print acao, '->', acoes[acao].quantidade, 'a', acoes[acao].preco_medio, 'Div.:', acoes[acao].dividendos, 'JSCP:', acoes[acao].jscp, 'Ano seguinte:', \
+#                 acoes[acao].credito_prox_ano
             
     fiis = {}
     operacoes_fii_ano = OperacaoFII.objects.filter(data__lte='%s-12-31' % (ano), investidor=investidor).order_by('data')
@@ -131,7 +165,7 @@ def detalhar_imposto_renda(request, ano):
         elif isinstance(evento, ProventoFII):  
             if evento.data_pagamento >= datetime.date(ano,1,1):
                 total_recebido = fiis[evento.fii.ticker].quantidade * evento.valor_unitario
-                print evento.fii.ticker, fiis[evento.fii.ticker].quantidade, evento.valor_unitario, total_recebido, 'pagos em', evento.data_pagamento
+#                 print evento.fii.ticker, fiis[evento.fii.ticker].quantidade, evento.valor_unitario, total_recebido, 'pagos em', evento.data_pagamento
                 if evento.data_pagamento <= datetime.date(ano,12,31):
                     fiis[evento.fii.ticker].rendimentos += total_recebido
                     print fiis[evento.fii.ticker].rendimentos
@@ -143,18 +177,20 @@ def detalhar_imposto_renda(request, ano):
         total_rendimentos_fii += fiis[fii].rendimentos
         if fiis[fii].quantidade > 0:
             fiis[fii].preco_medio = (fiis[fii].preco_medio/Decimal(fiis[fii].quantidade))
-            print fii, '->', fiis[fii].quantidade, 'a', fiis[fii].preco_medio
+#             print fii, '->', fiis[fii].quantidade, 'a', fiis[fii].preco_medio
             
     # Preparar dados
     dados = {}
     dados['total_dividendos'] = total_dividendos
     dados['total_jscp'] = total_jscp
     dados['total_rendimentos_fii'] = total_rendimentos_fii
+    dados['total_abaixo_vinte_mil'] = total_abaixo_vinte_mil
     
     # Editar ano para string
     ano = str(ano).replace('.', '')
     
-    return render_to_response('imposto_renda/detalhar_imposto_ano.html', {'ano': ano, 'acoes': acoes, 'fiis': fiis, 'dados': dados}, context_instance=RequestContext(request))
+    return render_to_response('imposto_renda/detalhar_imposto_ano.html', {'ano': ano, 'acoes': acoes, 'fiis': fiis, 'ganho_abaixo_vinte_mil': ganho_abaixo_vinte_mil,
+                                                                          'dados': dados}, context_instance=RequestContext(request))
 
 def listar_anos(request):
     class Object(object):
