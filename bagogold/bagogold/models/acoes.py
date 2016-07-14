@@ -95,6 +95,10 @@ class OperacaoCompraVenda (models.Model):
     compra = models.ForeignKey('OperacaoAcao', limit_choices_to={'tipo_operacao': 'C'}, related_name='compra')
     venda = models.ForeignKey('OperacaoAcao', limit_choices_to={'tipo_operacao': 'V'}, related_name='venda')
     day_trade = models.NullBooleanField(u'É day trade?', blank=True)
+    quantidade = models.IntegerField(u'Quantidade de ações')
+    
+    class Meta:
+        unique_together = ('compra', 'venda')
     
 class HistoricoAcao (models.Model):
     acao = models.ForeignKey('Acao', unique_for_date='data')
