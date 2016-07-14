@@ -56,7 +56,7 @@ def acompanhamento_mensal(request):
     # Preparar lista de anos
     lista_anos = list()
     for ano_operacoes in reversed(range(primeira_operacao_ano, datetime.date.today().year+1)):
-        print type(ano_operacoes)
+#         print type(ano_operacoes)
         lista_anos += [str(ano_operacoes)]
     
     # Preparar lista de meses
@@ -83,7 +83,7 @@ def acompanhamento_mensal(request):
     for divisao in Divisao.objects.filter():
         saldo_inicial_mes += divisao.saldo_acoes_trade(data=datetime.date(ano, mes, 1) - datetime.timedelta(days=1))
     
-    dados_mes = {'ano': ano, 'mes': mes, 'qtd_compra': 0, 'qtd_venda': 0, 'qtd_op_compra': 0, 'saldo_trades': saldo_inicial_mes,
+    dados_mes = {'ano': str(ano).replace('.', ''), 'mes': mes, 'qtd_compra': 0, 'qtd_venda': 0, 'qtd_op_compra': 0, 'saldo_trades': saldo_inicial_mes,
                  'qtd_op_venda': 0, 'lucro_bruto': 0, 'total_corretagem' : 0, 'total_emolumentos': 0}
     acoes_lucro = {}
     
