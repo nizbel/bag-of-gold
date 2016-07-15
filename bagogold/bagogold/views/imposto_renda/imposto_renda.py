@@ -29,39 +29,13 @@ def detalhar_imposto_renda(request, ano):
     
     lista_eventos = sorted(chain(operacoes_ano, proventos_ano), key=attrgetter('data'))
     
+    # Variáveis para cálculo de ganhos em renda variável por mes
+    total_mes = OrderedDict()
     ganho_abaixo_vinte_mil = OrderedDict()
-    total_abaixo_vinte_mil = Decimal(0)
+    total_abaixo_vinte_mil = OrderedDict()
     ganho_acima_vinte_mil = OrderedDict()
-    # Pegar ganhos líquidos por ações até 20.000 reais no mês
-    for mes in range(1, 13):
-        print mes
-        total_mes = Decimal(0)
-        lucro_venda = Decimal(0)
-        lucro_venda_dt = Decimal(0)
-        operacoes_mes = operacoes_ano.filter(data__year=ano, data__month=mes, tipo_operacao='V')
-        for operacao in operacoes_mes:
-            total_mes += operacao.preco_unitario * operacao.quantidade
-            if operacao.destinacao == 'B':
-                print 'buy and hold', total_mes
-            elif operacao.destinacao == 'T':
-                # Pegar compras para ver lucro
-                for operacao_compra in operacao.venda.get_queryset().order_by('compra__preco_unitario'):
-                    gasto_total_compra = (Decimal(operacao_compra.quantidade) / operacao_compra.compra.quantidade) * \
-                        (operacao_compra.compra.quantidade * operacao_compra.compra.preco_unitario + operacao_compra.compra.emolumentos + operacao_compra.compra.corretagem)
-                    total_venda = (Decimal(operacao_compra.quantidade) / operacao.quantidade) * \
-                        (operacao.quantidade * operacao.preco_unitario - operacao.corretagem - operacao.emolumentos)
-                    print 'lucro da venda:', total_venda, '-', gasto_total_compra, (total_venda - gasto_total_compra)
-                    if operacao_compra.day_trade:
-                        lucro_venda_dt += total_venda - gasto_total_compra
-                    else:
-                        lucro_venda += total_venda - gasto_total_compra
-        if total_mes < 20000 and lucro_venda > 0:
-#             print 'mes', mes, lucro_venda
-            ganho_abaixo_vinte_mil[mes] = lucro_venda
-            total_abaixo_vinte_mil += lucro_venda
-        elif total_mes > 20000 or lucro_venda < 0 or lucro_venda_dt != 0:
-#             print 'mes', mes, lucro_venda, lucro_venda_dt
-            ganho_acima_vinte_mil[mes] = (lucro_venda, lucro_venda_dt)
+    lucro_venda = OrderedDict()
+    lucro_venda_dt = OrderedDict()
     
     acoes = {}
     for evento in lista_eventos:
@@ -85,6 +59,34 @@ def detalhar_imposto_renda(request, ano):
                 acoes[evento.acao.ticker].quantidade -= evento.quantidade
                 acoes[evento.acao.ticker].preco_medio -= (evento.quantidade * evento.preco_unitario - \
                     evento.emolumentos - evento.corretagem)
+                
+                if evento.data.year == ano:
+                    mes_atual = evento.data.month
+                    # Adicionar mes às variáveis, caso não tenham sido inicializadas
+                    if mes_atual not in total_mes.keys():
+                        total_mes[mes_atual] = Decimal(0)
+                        ganho_abaixo_vinte_mil[mes_atual] = Decimal(0)
+                        total_abaixo_vinte_mil[mes_atual] = Decimal(0)
+                        ganho_acima_vinte_mil[mes_atual] = Decimal(0)
+                        lucro_venda[mes_atual] = Decimal(0)
+                        lucro_venda_dt[mes_atual] = Decimal(0)
+                        
+                    # Apurar ganhos de vendas para renda variável
+                    total_mes[mes_atual] += evento.preco_unitario * evento.quantidade
+                    if evento.destinacao == 'B':
+                        print 'buy and hold', total_mes[mes_atual]
+                    elif evento.destinacao == 'T':
+                        # Pegar compras para ver lucro
+                        for evento_compra in evento.venda.get_queryset().order_by('compra__preco_unitario'):
+                            gasto_total_compra = (Decimal(evento_compra.quantidade) / evento_compra.compra.quantidade) * \
+                                (evento_compra.compra.quantidade * evento_compra.compra.preco_unitario + evento_compra.compra.emolumentos + evento_compra.compra.corretagem)
+                            total_venda = (Decimal(evento_compra.quantidade) / evento.quantidade) * \
+                                (evento.quantidade * evento.preco_unitario - evento.corretagem - evento.emolumentos)
+                            print 'lucro da venda:', total_venda, '-', gasto_total_compra, (total_venda - gasto_total_compra)
+                            if evento_compra.day_trade:
+                                lucro_venda_dt[mes_atual] += total_venda - gasto_total_compra
+                            else:
+                                lucro_venda[mes_atual] += total_venda - gasto_total_compra
         
         # Verificar se é provento
         elif isinstance(evento, Provento):  
@@ -124,6 +126,18 @@ def detalhar_imposto_renda(request, ano):
 #                         total_gasto += (((acoes[evento.acao.ticker] * evento.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
 #                         total_proventos += (((acoes[evento.acao.ticker] * evento.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
 
+    # Pegar ganhos líquidos por ações até 20.000 reais no mês
+    for mes in range(1, 13):
+        print mes
+            
+        if total_mes < 20000 and lucro_venda > 0:
+#             print 'mes', mes, lucro_venda
+            ganho_abaixo_vinte_mil[mes] = lucro_venda
+            total_abaixo_vinte_mil += lucro_venda
+        elif total_mes > 20000 or lucro_venda < 0 or lucro_venda_dt != 0:
+#             print 'mes', mes, lucro_venda, lucro_venda_dt
+            ganho_acima_vinte_mil[mes] = (lucro_venda, lucro_venda_dt)
+    
     total_dividendos = Decimal(0)
     total_jscp = Decimal(0)
     for acao in sorted(acoes.keys()):
