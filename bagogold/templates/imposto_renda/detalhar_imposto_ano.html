@@ -97,7 +97,9 @@
             
             <!-- Letras de Crédito -->
             {% for letra, valor in letras_credito.items %}
-                <li>Aplicação em {{letra}}: R${{ valor }}</li>
+                {% if valor > 0 %}
+                    <li>Aplicação em {{letra}}: R${{ valor }}</li>
+                {% endif %}
             {% endfor %}
             
             <!-- Tesouro Direto -->

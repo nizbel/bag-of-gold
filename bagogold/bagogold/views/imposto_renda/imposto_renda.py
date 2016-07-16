@@ -10,7 +10,7 @@ from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia
 from bagogold.bagogold.utils.misc import trazer_primeiro_registro
 from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia_por_titulo
 from collections import OrderedDict
-from decimal import Decimal
+from decimal import Decimal, ROUND_FLOOR
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from itertools import chain
@@ -161,7 +161,7 @@ def detalhar_imposto_renda(request, ano):
     
     fiis = {}
     operacoes_fii_ano = OperacaoFII.objects.filter(data__lte='%s-12-31' % (ano), investidor=investidor).order_by('data')
-    proventos_fii_ano = ProventoFII.objects.exclude(data_ex__isnull=True).filter(data_ex__range=['%s-1-1' % (ano), '%s-12-31' % (ano)]).order_by('data_ex')
+    proventos_fii_ano = ProventoFII.objects.exclude(data_ex__isnull=True).filter(data_pagamento__range=['%s-1-1' % (ano), '%s-12-31' % (ano)], data_ex__range=['%s-1-1' % (ano), '%s-12-31' % (ano)]).order_by('data_ex')
     for provento in proventos_fii_ano:
         provento.data = provento.data_ex
     
@@ -210,22 +210,45 @@ def detalhar_imposto_renda(request, ano):
     ############################################################
     
     letras_credito = {}
+     
+#     for letra_credito_id, valor in calcular_valor_lc_ate_dia(investidor, datetime.date(ano, 12, 31)).items():
+#         lc = LetraCredito.objects.get(id=letra_credito_id, investidor=investidor)
+#         letras_credito[lc.nome] = valor
+    for operacao in OperacaoLetraCredito.objects.filter(data__lte='%s-12-31' % (ano), investidor=investidor).order_by('data'):
+        if operacao.letra_credito.nome not in letras_credito:
+            letras_credito[operacao.letra_credito.nome] = Decimal(0)
+        if operacao.tipo_operacao == 'C':
+            letras_credito[operacao.letra_credito.nome] += operacao.quantidade
+        elif operacao.tipo_operacao == 'V':
+            letras_credito[operacao.letra_credito.nome] -= operacao.quantidade
     
-    for letra_credito_id, valor in calcular_valor_lc_ate_dia(investidor, datetime.date(ano, 12, 31)).items():
-        lc = LetraCredito.objects.get(id=letra_credito_id, investidor=investidor)
-        letras_credito[lc.nome] = valor
             
     ############################################################
     ### Tesouro Direto #########################################
     ############################################################
     
-    titulos_investidor = list(set(OperacaoTitulo.objects.filter(data__lte='%s-12-31' % (ano), investidor=investidor).values_list('titulo', flat=True)))
+    # Para IR devem ser acumulados os valores de compra das operações
+    operacoes_td = OperacaoTitulo.objects.filter(data__lte='%s-12-31' % (ano), investidor=investidor).order_by('data')
+    
+    # Lista para guardar as operações de compra remanescentes
+    operacoes_td_lista = list(operacoes_td.filter(tipo_operacao='C'))
+    
+    for operacao_venda in operacoes_td.filter(tipo_operacao='V'):
+        for operacao_compra in [operacao_lista for operacao_lista in operacoes_td_lista if operacao_lista.titulo==operacao_venda.titulo]:
+            if operacao_venda.quantidade == operacao_compra.quantidade:
+                operacoes_td_lista.remove(operacao_compra)
+                break
+            elif operacao_venda.quantidade > operacao_compra.quantidade:
+                operacao_venda.quantidade -= operacao_compra.quantidade
+                operacoes_td_lista.remove(operacao_compra)
+            elif operacao_venda.quantidade < operacao_compra.quantidade:
+                operacao_compra.quantidade -= operacao_venda.quantidade
+                break
     
     total_acumulado_td = Decimal(0)
     
-    for titulo in titulos_investidor:
-        total_acumulado_td += (quantidade_titulos_ate_dia_por_titulo(investidor, titulo, datetime.date(ano, 12, 31)) * \
-            HistoricoTitulo.objects.filter(data__lte='%s-12-31' % (ano), titulo__id=titulo).order_by('-data')[0].preco_venda)
+    for operacao in operacoes_td_lista:
+        total_acumulado_td += (operacao.preco_unitario * operacao.quantidade).quantize(Decimal('0.01'), ROUND_FLOOR)
     
     # Preparar dados
     dados = {}
