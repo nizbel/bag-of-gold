@@ -4,9 +4,11 @@ from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB
 from bagogold.bagogold.models.fii import OperacaoFII, ProventoFII
 from bagogold.bagogold.models.fundo_investimento import \
     OperacaoFundoInvestimento
-from bagogold.bagogold.models.lc import OperacaoLetraCredito
-from bagogold.bagogold.models.td import OperacaoTitulo
+from bagogold.bagogold.models.lc import OperacaoLetraCredito, LetraCredito
+from bagogold.bagogold.models.td import OperacaoTitulo, Titulo, HistoricoTitulo
+from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia
 from bagogold.bagogold.utils.misc import trazer_primeiro_registro
+from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia_por_titulo
 from collections import OrderedDict
 from decimal import Decimal
 from django.shortcuts import render_to_response
@@ -22,6 +24,11 @@ def detalhar_imposto_renda(request, ano):
     
     class Object(object):
         pass
+    
+    ############################################################
+    ### Ações ##################################################
+    ############################################################
+    
     operacoes_ano = OperacaoAcao.objects.filter(data__lte='%s-12-31' % (ano), investidor=investidor).order_by('data')
     proventos_ano = Provento.objects.exclude(data_ex__isnull=True).filter(data_ex__range=['%s-1-1' % (ano), '%s-12-31' % (ano)]).order_by('data_ex')
     for provento in proventos_ano:
@@ -32,10 +39,18 @@ def detalhar_imposto_renda(request, ano):
     # Variáveis para cálculo de ganhos em renda variável por mes
     total_mes = OrderedDict()
     ganho_abaixo_vinte_mil = OrderedDict()
-    total_abaixo_vinte_mil = OrderedDict()
+    total_abaixo_vinte_mil = Decimal(0)
     ganho_acima_vinte_mil = OrderedDict()
     lucro_venda = OrderedDict()
     lucro_venda_dt = OrderedDict()
+    
+    # Inicializar variáveis
+    for mes_atual in range(1, 13):
+        total_mes[mes_atual] = Decimal(0)
+        ganho_abaixo_vinte_mil[mes_atual] = Decimal(0)
+        ganho_acima_vinte_mil[mes_atual] = (Decimal(0), Decimal(0))
+        lucro_venda[mes_atual] = Decimal(0)
+        lucro_venda_dt[mes_atual] = Decimal(0)
     
     acoes = {}
     for evento in lista_eventos:
@@ -56,25 +71,13 @@ def detalhar_imposto_renda(request, ano):
                     evento.emolumentos + evento.corretagem)
                 
             elif evento.tipo_operacao == 'V':
-                acoes[evento.acao.ticker].quantidade -= evento.quantidade
-                acoes[evento.acao.ticker].preco_medio -= (evento.quantidade * evento.preco_unitario - \
-                    evento.emolumentos - evento.corretagem)
-                
+                # Apurar ganhos de renda variável
                 if evento.data.year == ano:
                     mes_atual = evento.data.month
-                    # Adicionar mes às variáveis, caso não tenham sido inicializadas
-                    if mes_atual not in total_mes.keys():
-                        total_mes[mes_atual] = Decimal(0)
-                        ganho_abaixo_vinte_mil[mes_atual] = Decimal(0)
-                        total_abaixo_vinte_mil[mes_atual] = Decimal(0)
-                        ganho_acima_vinte_mil[mes_atual] = Decimal(0)
-                        lucro_venda[mes_atual] = Decimal(0)
-                        lucro_venda_dt[mes_atual] = Decimal(0)
-                        
-                    # Apurar ganhos de vendas para renda variável
                     total_mes[mes_atual] += evento.preco_unitario * evento.quantidade
                     if evento.destinacao == 'B':
-                        print 'buy and hold', total_mes[mes_atual]
+                        total_venda = (evento.quantidade * evento.preco_unitario - evento.corretagem - evento.emolumentos)
+                        lucro_venda[mes_atual] += total_venda - (acoes[evento.acao.ticker].preco_medio / acoes[evento.acao.ticker].quantidade) * evento.quantidade
                     elif evento.destinacao == 'T':
                         # Pegar compras para ver lucro
                         for evento_compra in evento.venda.get_queryset().order_by('compra__preco_unitario'):
@@ -87,6 +90,11 @@ def detalhar_imposto_renda(request, ano):
                                 lucro_venda_dt[mes_atual] += total_venda - gasto_total_compra
                             else:
                                 lucro_venda[mes_atual] += total_venda - gasto_total_compra
+                                
+                # Alterar dados da ação atual
+                acoes[evento.acao.ticker].quantidade -= evento.quantidade
+                acoes[evento.acao.ticker].preco_medio -= (evento.quantidade * evento.preco_unitario - \
+                    evento.emolumentos - evento.corretagem)
         
         # Verificar se é provento
         elif isinstance(evento, Provento):  
@@ -100,7 +108,7 @@ def detalhar_imposto_renda(request, ano):
                             acoes[evento.acao.ticker].jscp += total_recebido
                         else:
                             acoes[evento.acao.ticker].dividendos += total_recebido
-                            print acoes[evento.acao.ticker].dividendos
+#                             print acoes[evento.acao.ticker].dividendos
                     else:
                         if evento.tipo_provento == 'J':
                             total_recebido = total_recebido * Decimal(0.85)
@@ -129,14 +137,13 @@ def detalhar_imposto_renda(request, ano):
     # Pegar ganhos líquidos por ações até 20.000 reais no mês
     for mes in range(1, 13):
         print mes
-            
-        if total_mes < 20000 and lucro_venda > 0:
+        if total_mes[mes] < 20000 and lucro_venda[mes] > 0:
 #             print 'mes', mes, lucro_venda
-            ganho_abaixo_vinte_mil[mes] = lucro_venda
-            total_abaixo_vinte_mil += lucro_venda
+            ganho_abaixo_vinte_mil[mes] = lucro_venda[mes]
+            total_abaixo_vinte_mil += lucro_venda[mes]
         elif total_mes > 20000 or lucro_venda < 0 or lucro_venda_dt != 0:
 #             print 'mes', mes, lucro_venda, lucro_venda_dt
-            ganho_acima_vinte_mil[mes] = (lucro_venda, lucro_venda_dt)
+            ganho_acima_vinte_mil[mes] = (lucro_venda[mes], lucro_venda_dt[mes])
     
     total_dividendos = Decimal(0)
     total_jscp = Decimal(0)
@@ -144,10 +151,14 @@ def detalhar_imposto_renda(request, ano):
         total_dividendos += acoes[acao].dividendos
         total_jscp += acoes[acao].jscp
         if acoes[acao].quantidade > 0:
-            acoes[acao].preco_medio = (acoes[acao].preco_medio/Decimal(acoes[acao].quantidade))
+            acoes[acao].preco_medio = (acoes[acao].preco_medio/Decimal(acoes[acao].quantidade)).quantize(Decimal('0.0001'))
 #             print acao, '->', acoes[acao].quantidade, 'a', acoes[acao].preco_medio, 'Div.:', acoes[acao].dividendos, 'JSCP:', acoes[acao].jscp, 'Ano seguinte:', \
 #                 acoes[acao].credito_prox_ano
             
+    ############################################################
+    ### Fundo de investimento imobiliário ######################
+    ############################################################
+    
     fiis = {}
     operacoes_fii_ano = OperacaoFII.objects.filter(data__lte='%s-12-31' % (ano), investidor=investidor).order_by('data')
     proventos_fii_ano = ProventoFII.objects.exclude(data_ex__isnull=True).filter(data_ex__range=['%s-1-1' % (ano), '%s-12-31' % (ano)]).order_by('data_ex')
@@ -190,21 +201,45 @@ def detalhar_imposto_renda(request, ano):
     for fii in fiis.keys():
         total_rendimentos_fii += fiis[fii].rendimentos
         if fiis[fii].quantidade > 0:
-            fiis[fii].preco_medio = (fiis[fii].preco_medio/Decimal(fiis[fii].quantidade))
+            fiis[fii].preco_medio = (fiis[fii].preco_medio/Decimal(fiis[fii].quantidade)).quantize(Decimal('0.0001'))
 #             print fii, '->', fiis[fii].quantidade, 'a', fiis[fii].preco_medio
             
+            
+    ############################################################
+    ### Letras de Crédito ######################################
+    ############################################################
+    
+    letras_credito = {}
+    
+    for letra_credito_id, valor in calcular_valor_lc_ate_dia(investidor, datetime.date(ano, 12, 31)).items():
+        lc = LetraCredito.objects.get(id=letra_credito_id, investidor=investidor)
+        letras_credito[lc.nome] = valor
+            
+    ############################################################
+    ### Tesouro Direto #########################################
+    ############################################################
+    
+    titulos_investidor = list(set(OperacaoTitulo.objects.filter(data__lte='%s-12-31' % (ano), investidor=investidor).values_list('titulo', flat=True)))
+    
+    total_acumulado_td = Decimal(0)
+    
+    for titulo in titulos_investidor:
+        total_acumulado_td += (quantidade_titulos_ate_dia_por_titulo(investidor, titulo, datetime.date(ano, 12, 31)) * \
+            HistoricoTitulo.objects.filter(data__lte='%s-12-31' % (ano), titulo__id=titulo).order_by('-data')[0].preco_venda)
+    
     # Preparar dados
     dados = {}
     dados['total_dividendos'] = total_dividendos
     dados['total_jscp'] = total_jscp
     dados['total_rendimentos_fii'] = total_rendimentos_fii
     dados['total_abaixo_vinte_mil'] = total_abaixo_vinte_mil
+    dados['total_acumulado_td'] = total_acumulado_td
     
     # Editar ano para string
     ano = str(ano).replace('.', '')
     
     return render_to_response('imposto_renda/detalhar_imposto_ano.html', {'ano': ano, 'acoes': acoes, 'fiis': fiis, 'ganho_abaixo_vinte_mil': ganho_abaixo_vinte_mil,
-                                                                          'ganho_acima_vinte_mil': ganho_acima_vinte_mil, 'dados': dados}, context_instance=RequestContext(request))
+                                                                          'ganho_acima_vinte_mil': ganho_acima_vinte_mil, 'letras_credito': letras_credito,'dados': dados}, context_instance=RequestContext(request))
 
 def listar_anos(request):
     class Object(object):

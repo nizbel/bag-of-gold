@@ -61,9 +61,9 @@ def criar_data_inicio_titulos():
         titulo.data_inicio = HistoricoTitulo.objects.filter(titulo=titulo).order_by('data')[0].data
         titulo.save()
 
-def quantidade_titulos_ate_dia_por_titulo(titulo_id, dia):
+def quantidade_titulos_ate_dia_por_titulo(investidor, titulo_id, dia):
     """ 
-    Calcula a quantidade de títulos até dia determinado
+    Calcula a quantidade de títulos do investidor até dia determinado
     Parâmetros: ID do título
                 Dia final
     Retorno: Quantidade de títulos

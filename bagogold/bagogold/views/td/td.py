@@ -11,8 +11,7 @@ from bagogold.bagogold.testTD import buscar_valores_diarios
 from bagogold.bagogold.utils.fii import \
     calcular_rendimento_proventos_fii_12_meses, \
     calcular_variacao_percentual_fii_por_periodo
-from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia_por_titulo, \
-    calcular_imposto_venda_td, buscar_data_valor_mais_recente
+from bagogold.bagogold.utils.td import calcular_imposto_venda_td, buscar_data_valor_mais_recente
 from copy import deepcopy
 from decimal import Decimal
 from django.contrib import messages
