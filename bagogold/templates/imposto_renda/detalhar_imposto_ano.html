@@ -87,6 +87,13 @@
                 {% endfor %}
                 </ul>
             </li>
+            
+            <!-- CDB/RDB -->
+            {% for investimento, valor in cdb_rdb.items %}
+                {% if valor > 0 %}
+                    <li>Aplicação em {{investimento}}: R${{ valor }}</li>
+                {% endif %}
+            {% endfor %}
                     
             <!-- FII -->
             {% for ticker, fii in fiis.items %}
