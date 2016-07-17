@@ -156,6 +156,24 @@ def detalhar_imposto_renda(request, ano):
 #                 acoes[acao].credito_prox_ano
             
     ############################################################
+    ### Letras de Crédito ######################################
+    ############################################################
+    
+    cdb_rdb = {}
+     
+#     for letra_credito_id, valor in calcular_valor_lc_ate_dia(investidor, datetime.date(ano, 12, 31)).items():
+#         lc = LetraCredito.objects.get(id=letra_credito_id, investidor=investidor)
+#         letras_credito[lc.nome] = valor
+    for operacao in OperacaoCDB_RDB.objects.filter(data__lte='%s-12-31' % (ano), investidor=investidor).order_by('data'):
+        if operacao.investimento.nome not in cdb_rdb:
+            cdb_rdb[operacao.investimento.nome] = Decimal(0)
+        if operacao.tipo_operacao == 'C':
+            cdb_rdb[operacao.investimento.nome] += operacao.quantidade
+        elif operacao.tipo_operacao == 'V':
+            cdb_rdb[operacao.investimento.nome] -= operacao.quantidade
+            
+            
+    ############################################################
     ### Fundo de investimento imobiliário ######################
     ############################################################
     
@@ -261,7 +279,7 @@ def detalhar_imposto_renda(request, ano):
     # Editar ano para string
     ano = str(ano).replace('.', '')
     
-    return render_to_response('imposto_renda/detalhar_imposto_ano.html', {'ano': ano, 'acoes': acoes, 'fiis': fiis, 'ganho_abaixo_vinte_mil': ganho_abaixo_vinte_mil,
+    return render_to_response('imposto_renda/detalhar_imposto_ano.html', {'ano': ano, 'acoes': acoes, 'cdb_rdb': cdb_rdb, 'fiis': fiis, 'ganho_abaixo_vinte_mil': ganho_abaixo_vinte_mil,
                                                                           'ganho_acima_vinte_mil': ganho_acima_vinte_mil, 'letras_credito': letras_credito,'dados': dados}, context_instance=RequestContext(request))
 
 def listar_anos(request):
