@@ -137,12 +137,11 @@
         <div class="box-content">
             <ul>
             {% for mes, ganho in ganho_acima_vinte_mil.items %}
-                <div class="row-fluid">
                 <li>
                     <span class="span1">Mês {{mes}}:</span><span class="span2">Comum: <strong>R${{ganho.0|floatformat:"2"}}</strong></span>
                     <span class="span2">Daytrade: <strong>R${{ganho.1|floatformat:"2"}}</strong></span><span>Prejuízo a compensar: R${{prejuizo_a_compensar|dict_index:mes}}/R${{prejuizo_a_compensar_dt|dict_index:mes}}</span>
+                    <div style="clear:both"></div>
                 </li>
-                </div>
             {% endfor %}
             </ul>
         </div>
