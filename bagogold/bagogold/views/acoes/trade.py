@@ -16,7 +16,8 @@ from django.core.urlresolvers import reverse
 from django.db.models import Sum
 from django.forms.models import inlineformset_factory
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render_to_response
+from django.http.response import Http404
+from django.shortcuts import render_to_response, get_object_or_404
 from django.template.context import RequestContext
 import calendar
 import datetime
@@ -231,7 +232,8 @@ def editar_operacao_acao(request, id):
     DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoAcaoFormSet)
     
-    operacao = OperacaoAcao.objects.get(pk=id)
+    operacao = get_object_or_404(OperacaoAcao, pk=id, destinacao='T')
+    print 'DESTINACAO', operacao.destinacao
     # Checar se é o investidor da operação
     if investidor != operacao.investidor:
         raise PermissionDenied
