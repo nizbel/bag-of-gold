@@ -222,7 +222,7 @@ def editar_operacao(request, id):
     else:
         form = OperacaoCompraVendaForm(instance=operacao, investidor=investidor)
         
-    return render_to_response('acoes/trade/editar_operacao_acao.html', {'form': form}, context_instance=RequestContext(request)) 
+    return render_to_response('acoes/trade/editar_operacao.html', {'form': form}, context_instance=RequestContext(request)) 
     
 @login_required
 def editar_operacao_acao(request, id):
