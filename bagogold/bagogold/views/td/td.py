@@ -100,22 +100,24 @@ def aconselhamento_td(request):
                 operacao.valor_atual = HistoricoTitulo.objects.filter(titulo__id=titulo).order_by('-data')[0].preco_venda
             operacao.variacao = operacao.valor_atual - operacao.preco_unitario
             operacao.variacao_percentual = operacao.variacao / operacao.preco_unitario * 100
+            # Definir quantidade de dias já passados, mínimo de 1 considerando uma operação de hoje
+            qtd_dias = max((datetime.date.today() - operacao.data).days, 1)
             # Pegar a taxa diária
-            operacao.variacao_percentual_mensal = math.pow(1 + operacao.variacao_percentual/100, float(1)/(datetime.date.today() - operacao.data).days) - 1
+            operacao.variacao_percentual_mensal = math.pow(1 + operacao.variacao_percentual/100, float(1)/qtd_dias) - 1
             # Pegar a taxa mensal
             operacao.variacao_percentual_mensal = (math.pow(1 + operacao.variacao_percentual_mensal, 30) - 1) * 100
             # Pegar a taxa anual
             operacao.variacao_percentual_anual = (math.pow(1 + operacao.variacao_percentual_mensal/100, 12) - 1) * 100
             operacao.valor_total_atual = operacao.valor_atual * operacao.quantidade
             if operacao.valor_total_atual > operacao.total_gasto:
-                operacao.lucro = operacao.valor_total_atual - operacao.total_gasto - calcular_imposto_venda_td((datetime.date.today() - operacao.data).days, operacao.valor_total_atual, operacao.valor_total_atual - operacao.total_gasto)
+                operacao.lucro = operacao.valor_total_atual - operacao.total_gasto - calcular_imposto_venda_td(qtd_dias, operacao.valor_total_atual, operacao.valor_total_atual - operacao.total_gasto)
                 operacao.lucro_percentual = operacao.lucro / operacao.total_gasto * 100
             else:
                 operacao.lucro = operacao.valor_total_atual - operacao.total_gasto
                 operacao.lucro_percentual = operacao.lucro / operacao.total_gasto * 100
                 
             # Valor esperado é a quantidade que ainda vai render caso investidor espere até o dia do vencimento
-            valor_esperado = (Decimal(1000) * operacao.quantidade) - calcular_imposto_venda_td((operacao.data_vencimento - operacao.data).days, Decimal(1000) * operacao.quantidade, \
+            valor_esperado = (Decimal(1000) * operacao.quantidade) - calcular_imposto_venda_td(qtd_dias, Decimal(1000) * operacao.quantidade, \
                                                                                                (Decimal(1000) * operacao.quantidade) - operacao.total_gasto) - (operacao.total_gasto + operacao.lucro)
             qtd_dias_esperado = (Titulo.objects.get(id=titulo).data_vencimento - datetime.date.today()).days
             rendimento_esperado = math.pow(1 + (valor_esperado / (operacao.total_gasto + operacao.lucro) * 100)/100, float(1)/qtd_dias_esperado) - 1
@@ -447,8 +449,10 @@ def painel(request):
                 operacao.valor_atual = HistoricoTitulo.objects.filter(titulo__id=titulo).order_by('-data')[0].preco_venda
             operacao.variacao = operacao.valor_atual - operacao.preco_unitario
             operacao.variacao_percentual = operacao.variacao / operacao.preco_unitario * 100
+            # Definir quantidade de dias já passados, mínimo de 1 considerando uma operação de hoje
+            qtd_dias = max((datetime.date.today() - operacao.data).days, 1)
             # Pegar a taxa diária
-            operacao.variacao_percentual_mensal = math.pow(1 + operacao.variacao_percentual/100, float(1)/(datetime.date.today() - operacao.data).days) - 1
+            operacao.variacao_percentual_mensal = math.pow(1 + operacao.variacao_percentual/100, float(1)/qtd_dias) - 1
             # Pegar a taxa mensal
             operacao.variacao_percentual_mensal = (math.pow(1 + operacao.variacao_percentual_mensal, 30) - 1) * 100
             # Pegar a taxa anual
@@ -456,7 +460,7 @@ def painel(request):
             operacao.valor_total_atual = operacao.valor_atual * operacao.quantidade
             total_atual += operacao.valor_total_atual
             if operacao.valor_total_atual > operacao.total_gasto:
-                operacao.lucro = (operacao.valor_total_atual - operacao.total_gasto) - calcular_imposto_venda_td((datetime.date.today() - operacao.data).days, operacao.valor_total_atual, operacao.valor_total_atual - operacao.total_gasto)
+                operacao.lucro = (operacao.valor_total_atual - operacao.total_gasto) - calcular_imposto_venda_td(qtd_dias, operacao.valor_total_atual, operacao.valor_total_atual - operacao.total_gasto)
                 operacao.lucro_percentual = operacao.lucro / operacao.total_gasto * 100
             else:
                 operacao.lucro = operacao.valor_total_atual - operacao.total_gasto
@@ -472,10 +476,12 @@ def painel(request):
 #             print titulo
             operacao.variacao = operacao.valor_atual - operacao.preco_unitario
             operacao.variacao_percentual = operacao.variacao / operacao.preco_unitario * 100
+            # Definir quantidade de dias já passados, mínimo de 1 considerando uma operação de hoje
+            qtd_dias = max((datetime.date.today() - operacao.data).days, 1)
 #             print operacao.variacao_percentual
-#             print (datetime.date.today() - operacao.data).days
+#             print qtd_dias
             # Pegar a taxa diária
-            operacao.variacao_percentual_mensal = math.pow(1 + operacao.variacao_percentual/100, float(1)/(operacao.data_venda - operacao.data).days) - 1
+            operacao.variacao_percentual_mensal = math.pow(1 + operacao.variacao_percentual/100, float(1)/qtd_dias) - 1
 #             print operacao.variacao_percentual_mensal
             # Pegar a taxa mensal percentual
             operacao.variacao_percentual_mensal = (math.pow(1 + operacao.variacao_percentual_mensal, 30) - 1) * 100
@@ -484,7 +490,7 @@ def painel(request):
             operacao.variacao_percentual_anual = (math.pow(1 + operacao.variacao_percentual_mensal/100, 12) - 1) * 100
             operacao.valor_total_atual = operacao.valor_atual * operacao.quantidade
             if operacao.valor_total_atual > operacao.total_gasto:
-                operacao.lucro = (operacao.valor_total_atual - operacao.total_gasto) - calcular_imposto_venda_td((operacao.data_venda - operacao.data).days, operacao.valor_total_atual, operacao.valor_total_atual - operacao.total_gasto)
+                operacao.lucro = (operacao.valor_total_atual - operacao.total_gasto) - calcular_imposto_venda_td(qtd_dias, operacao.valor_total_atual, operacao.valor_total_atual - operacao.total_gasto)
                 operacao.lucro -= operacao.valor_taxas
                 operacao.lucro_percentual = operacao.lucro / operacao.total_gasto * 100
             else:
