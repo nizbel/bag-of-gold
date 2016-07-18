@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% load misc %}
+
 {% block content %}
 <div class="row-fluid">
     <h1>Detalhamento do imposto de renda para {{ ano }}</h1>
@@ -135,7 +137,12 @@
         <div class="box-content">
             <ul>
             {% for mes, ganho in ganho_acima_vinte_mil.items %}
-                <li>Mês {{mes}}: Comum: <strong>R${{ganho.0|floatformat:"2"}}</strong> Daytrade: <strong>R${{ganho.1|floatformat:"2"}}</strong></li>
+                <div class="row-fluid">
+                <li>
+                    <span class="span1">Mês {{mes}}:</span><span class="span2">Comum: <strong>R${{ganho.0|floatformat:"2"}}</strong></span>
+                    <span class="span2">Daytrade: <strong>R${{ganho.1|floatformat:"2"}}</strong></span><span>Prejuízo a compensar: R${{prejuizo_a_compensar|dict_index:mes}}/R${{prejuizo_a_compensar_dt|dict_index:mes}}</span>
+                </li>
+                </div>
             {% endfor %}
             </ul>
         </div>
