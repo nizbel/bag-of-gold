@@ -52,3 +52,21 @@ def trazer_primeiro_registro(queryset):
         return resultado[0]
     return None
 
+def verificar_feriado_bovespa(data):
+    """
+    Verifica se o dia informado é feriado na Bovespa
+    Parâmetros: Data
+    Retorno: É feriado?
+    """
+    dia_mes = (data.day, data.month)
+    lista_feriados = ((1, 1), # Confraternização Universal
+                      (21, 4), # Tiradentes
+                      (7, 7), # Independência do Brasil
+                      (12, 10), # Nossa Senhora Aparecida
+                      (2, 11), # Finados
+                      (15, 11), # Proclamação da República
+                      (31, 12), # Ano novo
+                      )
+    print dia_mes, lista_feriados, (dia_mes in lista_feriados)
+    return (dia_mes in lista_feriados)
+
