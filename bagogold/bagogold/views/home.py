@@ -11,7 +11,7 @@ from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo
 from bagogold.bagogold.testTD import buscar_valores_diarios
 from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia, \
     calcular_valor_atualizado_com_taxas
-from decimal import Decimal
+from decimal import Decimal, ROUND_DOWN
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
 from django.shortcuts import render_to_response
@@ -354,13 +354,10 @@ def home(request):
                 for operacao_id, operacao in letras_credito.items():
                     if operacao.data < item.data:
                         operacao.quantidade = calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao.quantidade, OperacaoLetraCredito.objects.get(id=operacao_id).porcentagem_di())
-                        if item.data == datetime.date.today():
-                            str_auxiliar = str(operacao.quantidade.quantize(Decimal('.0001')))
-                            operacao.quantidade = Decimal(str_auxiliar[:len(str_auxiliar)-2])
                 # Guardar ultima data de calculo
                 ultima_data_calculada_lc = item.data
             for letra_credito in letras_credito.values():
-                patrimonio_lc += letra_credito.quantidade
+                patrimonio_lc += letra_credito.quantidade.quantize(Decimal('.01'), ROUND_DOWN)
             patrimonio['Letras de Crédito'] = patrimonio_lc
             patrimonio['patrimonio_total'] += patrimonio['Letras de Crédito'] 
 #             fim_lc = datetime.datetime.now()
