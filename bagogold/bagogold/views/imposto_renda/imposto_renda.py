@@ -32,11 +32,17 @@ def detalhar_imposto_renda(request, ano):
     ############################################################
     
     operacoes_ano = OperacaoAcao.objects.filter(data__lte='%s-12-31' % (ano), investidor=investidor).order_by('data')
-    proventos_ano = Provento.objects.exclude(data_ex__isnull=True).filter(data_ex__range=['%s-1-1' % (ano), '%s-12-31' % (ano)]).order_by('data_ex')
+    proventos_ano = Provento.objects.exclude(data_ex__isnull=True).filter(tipo_provento__in=['D','J'], data_ex__range=['%s-1-1' % (ano), '%s-1-10' % (ano+1)]).order_by('data_ex').annotate(data=F('data_ex'))
     for provento in proventos_ano:
-        provento.data = provento.data_ex
+        # Remover proventos cuja data base não esteja no ano
+        provento.data_base = provento.data_ex - datetime.timedelta(days=1)
+        while provento.data_base.weekday() > 4 or verificar_feriado_bovespa(provento.data_base):
+            provento.data_base = provento.data_base - datetime.timedelta(days=1)
+        if provento.data_base.year != ano:
+            proventos_ano = proventos_ano.exclude(id=provento.id)
+    proventos_em_acoes = Provento.objects.exclude(data_ex__isnull=True).filter(tipo_provento='A', data_ex__lte='%s-12-31' % (ano+1)).order_by('data_ex').annotate(data=F('data_ex'))
     
-    lista_eventos = sorted(chain(operacoes_ano, proventos_ano), key=attrgetter('data'))
+    lista_eventos = sorted(chain(proventos_em_acoes, proventos_ano, operacoes_ano), key=attrgetter('data'))
     
     # Variáveis para cálculo de ganhos em renda variável por mes
     total_mes = OrderedDict()
@@ -104,7 +110,7 @@ def detalhar_imposto_renda(request, ano):
             if evento.tipo_provento in ['D', 'J']:
                 if evento.data_pagamento >= datetime.date(ano,1,1):
                     total_recebido = acoes[evento.acao.ticker].quantidade * evento.valor_unitario
-#                     print evento.acao.ticker, acoes[evento.acao.ticker].quantidade, evento.valor_unitario, total_recebido, 'pagos em', evento.data_pagamento
+                    print evento.acao.ticker, acoes[evento.acao.ticker].quantidade, evento.valor_unitario, total_recebido, 'pagos em', evento.data_pagamento
                     if evento.data_pagamento <= datetime.date(ano,12,31):
                         if evento.tipo_provento == 'J':
                             total_recebido = total_recebido * Decimal(0.85)
