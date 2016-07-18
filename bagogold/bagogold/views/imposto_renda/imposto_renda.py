@@ -43,6 +43,7 @@ def detalhar_imposto_renda(request, ano):
     ganho_abaixo_vinte_mil = OrderedDict()
     total_abaixo_vinte_mil = Decimal(0)
     ganho_acima_vinte_mil = OrderedDict()
+    total_acima_vinte_mil = Decimal(0)
     lucro_venda = OrderedDict()
     lucro_venda_dt = OrderedDict()
     
@@ -143,9 +144,10 @@ def detalhar_imposto_renda(request, ano):
 #             print 'mes', mes, lucro_venda
             ganho_abaixo_vinte_mil[mes] = lucro_venda[mes]
             total_abaixo_vinte_mil += lucro_venda[mes]
-        elif total_mes > 20000 or lucro_venda < 0 or lucro_venda_dt != 0:
+        elif total_mes[mes] > 20000 or lucro_venda[mes] < 0 or lucro_venda_dt[mes] != 0:
 #             print 'mes', mes, lucro_venda, lucro_venda_dt
             ganho_acima_vinte_mil[mes] = (lucro_venda[mes], lucro_venda_dt[mes])
+            # TODO computar ganhos liquidos em RV
     
     total_dividendos = Decimal(0)
     total_jscp = Decimal(0)
