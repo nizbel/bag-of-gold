@@ -44,7 +44,7 @@ def editar_operacao_acao(request, id):
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoAcaoFormSet)
-    operacao_acao = OperacaoAcao.objects.get(pk=id)
+    operacao = get_object_or_404(OperacaoAcao, pk=id, destinacao='B')
     
     # Verifica se a operação é do investidor, senão, jogar erro de permissão
     if operacao_acao.investidor != investidor:
