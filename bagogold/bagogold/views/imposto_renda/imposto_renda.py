@@ -223,7 +223,7 @@ def detalhar_imposto_renda(request, ano):
         # Verificar se é provento
         elif isinstance(evento, ProventoFII):  
             if evento.data_pagamento >= datetime.date(ano,1,1):
-                total_recebido = fiis[evento.fii.ticker].quantidade * evento.valor_unitario
+                total_recebido = (fiis[evento.fii.ticker].quantidade * evento.valor_unitario).quantize(Decimal('0.01'), ROUND_FLOOR)
 #                 print evento.fii.ticker, fiis[evento.fii.ticker].quantidade, evento.valor_unitario, total_recebido, 'pagos em', evento.data_pagamento
                 if evento.data_pagamento <= datetime.date(ano,12,31):
                     fiis[evento.fii.ticker].rendimentos += total_recebido
