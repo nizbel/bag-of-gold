@@ -377,13 +377,10 @@ def home(request):
                 for operacao_id, operacao in cdb_rdb.items():
                     if operacao.data < item.data:
                         operacao.quantidade = calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao.quantidade, OperacaoCDB_RDB.objects.get(id=operacao_id).porcentagem())
-                        if item.data == datetime.date.today():
-                            str_auxiliar = str(operacao.quantidade.quantize(Decimal('.0001')))
-                            operacao.quantidade = Decimal(str_auxiliar[:len(str_auxiliar)-2])
                 # Guardar ultima data de calculo
                 ultima_data_calculada_cdb_rdb = item.data
             for investimento in cdb_rdb.values():
-                patrimonio_cdb_rdb += investimento.quantidade
+                patrimonio_cdb_rdb += investimento.quantidade.quantize(Decimal('.01'), ROUND_DOWN)
             patrimonio['CDB/RDB'] = patrimonio_cdb_rdb
             patrimonio['patrimonio_total'] += patrimonio['CDB/RDB'] 
 #             fim_cdb_rdb = datetime.datetime.now()
