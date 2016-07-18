@@ -7,10 +7,12 @@ from bagogold.bagogold.models.fundo_investimento import \
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, LetraCredito
 from bagogold.bagogold.models.td import OperacaoTitulo, Titulo, HistoricoTitulo
 from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia
-from bagogold.bagogold.utils.misc import trazer_primeiro_registro
+from bagogold.bagogold.utils.misc import trazer_primeiro_registro, \
+    verificar_feriado_bovespa
 from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia_por_titulo
 from collections import OrderedDict
 from decimal import Decimal, ROUND_FLOOR
+from django.db.models.expressions import F
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from itertools import chain
@@ -85,7 +87,7 @@ def detalhar_imposto_renda(request, ano):
                                 (evento_compra.compra.quantidade * evento_compra.compra.preco_unitario + evento_compra.compra.emolumentos + evento_compra.compra.corretagem)
                             total_venda = (Decimal(evento_compra.quantidade) / evento.quantidade) * \
                                 (evento.quantidade * evento.preco_unitario - evento.corretagem - evento.emolumentos)
-                            print 'lucro da venda:', total_venda, '-', gasto_total_compra, (total_venda - gasto_total_compra)
+#                             print 'lucro da venda:', total_venda, '-', gasto_total_compra, (total_venda - gasto_total_compra)
                             if evento_compra.day_trade:
                                 lucro_venda_dt[mes_atual] += total_venda - gasto_total_compra
                             else:
@@ -136,7 +138,7 @@ def detalhar_imposto_renda(request, ano):
 
     # Pegar ganhos líquidos por ações até 20.000 reais no mês
     for mes in range(1, 13):
-        print mes
+#         print mes
         if total_mes[mes] < 20000 and lucro_venda[mes] > 0:
 #             print 'mes', mes, lucro_venda
             ganho_abaixo_vinte_mil[mes] = lucro_venda[mes]
@@ -156,14 +158,11 @@ def detalhar_imposto_renda(request, ano):
 #                 acoes[acao].credito_prox_ano
             
     ############################################################
-    ### Letras de Crédito ######################################
+    ### CDB/RDB  ###############################################
     ############################################################
     
     cdb_rdb = {}
      
-#     for letra_credito_id, valor in calcular_valor_lc_ate_dia(investidor, datetime.date(ano, 12, 31)).items():
-#         lc = LetraCredito.objects.get(id=letra_credito_id, investidor=investidor)
-#         letras_credito[lc.nome] = valor
     for operacao in OperacaoCDB_RDB.objects.filter(data__lte='%s-12-31' % (ano), investidor=investidor).order_by('data'):
         if operacao.investimento.nome not in cdb_rdb:
             cdb_rdb[operacao.investimento.nome] = Decimal(0)
@@ -172,6 +171,19 @@ def detalhar_imposto_renda(request, ano):
         elif operacao.tipo_operacao == 'V':
             cdb_rdb[operacao.investimento.nome] -= operacao.quantidade
             
+    ############################################################
+    ### Fundo de investimento  ###############################################
+    ############################################################
+    
+    fundos_investimento = {}
+     
+    for operacao in OperacaoFundoInvestimento.objects.filter(data__lte='%s-12-31' % (ano), investidor=investidor).order_by('data'):
+        if operacao.fundo_investimento.nome not in fundos_investimento:
+            fundos_investimento[operacao.fundo_investimento.nome] = Decimal(0)
+        if operacao.tipo_operacao == 'C':
+            fundos_investimento[operacao.fundo_investimento.nome] += operacao.quantidade
+        elif operacao.tipo_operacao == 'V':
+            fundos_investimento[operacao.fundo_investimento.nome] -= operacao.quantidade
             
     ############################################################
     ### Fundo de investimento imobiliário ######################
@@ -179,9 +191,13 @@ def detalhar_imposto_renda(request, ano):
     
     fiis = {}
     operacoes_fii_ano = OperacaoFII.objects.filter(data__lte='%s-12-31' % (ano), investidor=investidor).order_by('data')
-    proventos_fii_ano = ProventoFII.objects.exclude(data_ex__isnull=True).filter(data_pagamento__range=['%s-1-1' % (ano), '%s-12-31' % (ano)], data_ex__range=['%s-1-1' % (ano), '%s-12-31' % (ano)]).order_by('data_ex')
+    proventos_fii_ano = ProventoFII.objects.exclude(data_ex__isnull=True).filter(data_ex__range=['%s-1-1' % (ano), '%s-12-31' % (ano)]).order_by('data_ex').annotate(data=F('data_ex'))
     for provento in proventos_fii_ano:
-        provento.data = provento.data_ex
+        provento.data_base = provento.data_ex - datetime.timedelta(days=1)
+        while provento.data_base.weekday() > 4 or verificar_feriado_bovespa(provento.data_base):
+            provento.data_base = provento.data_base - datetime.timedelta(days=1)
+        if provento.data_base.year != ano:
+            proventos_fii_ano = proventos_fii_ano.exclude(id=provento.id)
     
     lista_eventos_fii = sorted(chain(operacoes_fii_ano, proventos_fii_ano), key=attrgetter('data'))
     
@@ -211,7 +227,7 @@ def detalhar_imposto_renda(request, ano):
 #                 print evento.fii.ticker, fiis[evento.fii.ticker].quantidade, evento.valor_unitario, total_recebido, 'pagos em', evento.data_pagamento
                 if evento.data_pagamento <= datetime.date(ano,12,31):
                     fiis[evento.fii.ticker].rendimentos += total_recebido
-                    print fiis[evento.fii.ticker].rendimentos
+#                     print fiis[evento.fii.ticker].rendimentos
                 else:
                     fiis[evento.fii.ticker].credito_prox_ano += total_recebido
                         
@@ -229,9 +245,6 @@ def detalhar_imposto_renda(request, ano):
     
     letras_credito = {}
      
-#     for letra_credito_id, valor in calcular_valor_lc_ate_dia(investidor, datetime.date(ano, 12, 31)).items():
-#         lc = LetraCredito.objects.get(id=letra_credito_id, investidor=investidor)
-#         letras_credito[lc.nome] = valor
     for operacao in OperacaoLetraCredito.objects.filter(data__lte='%s-12-31' % (ano), investidor=investidor).order_by('data'):
         if operacao.letra_credito.nome not in letras_credito:
             letras_credito[operacao.letra_credito.nome] = Decimal(0)
@@ -279,7 +292,7 @@ def detalhar_imposto_renda(request, ano):
     # Editar ano para string
     ano = str(ano).replace('.', '')
     
-    return render_to_response('imposto_renda/detalhar_imposto_ano.html', {'ano': ano, 'acoes': acoes, 'cdb_rdb': cdb_rdb, 'fiis': fiis, 'ganho_abaixo_vinte_mil': ganho_abaixo_vinte_mil,
+    return render_to_response('imposto_renda/detalhar_imposto_ano.html', {'ano': ano, 'acoes': acoes, 'cdb_rdb': cdb_rdb, 'fundos_investimento': fundos_investimento, 'fiis': fiis, 'ganho_abaixo_vinte_mil': ganho_abaixo_vinte_mil,
                                                                           'ganho_acima_vinte_mil': ganho_acima_vinte_mil, 'letras_credito': letras_credito,'dados': dados}, context_instance=RequestContext(request))
 
 def listar_anos(request):

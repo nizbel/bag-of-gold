@@ -94,6 +94,13 @@
                     <li>Aplicação em {{investimento}}: R${{ valor }}</li>
                 {% endif %}
             {% endfor %}
+            
+            <!-- Fundo de Investimento -->
+            {% for fundo, valor in fundos_investimento.items %}
+                {% if valor > 0 %}
+                    <li>Aplicação em {{fundo}}: R${{ valor }}</li>
+                {% endif %}
+            {% endfor %}
                     
             <!-- FII -->
             {% for ticker, fii in fiis.items %}
