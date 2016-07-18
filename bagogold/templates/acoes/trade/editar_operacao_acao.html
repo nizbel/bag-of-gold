@@ -13,7 +13,6 @@
                     <div id="forms">
                         {{ form_operacao_acao.as_p }}
                         {{ form_uso_proventos.as_p }}
-                        <span id="poupanca_proventos">R$ {{ poupanca_proventos|floatformat:"2" }}</span>
                         <h2>Divisões <button id="add-another" class="btn btn-primary" type="button">+</button></h2>
                         {{ formset_divisao.management_form }}
                         {% for form_divisao in formset_divisao %}
