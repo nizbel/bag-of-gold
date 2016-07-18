@@ -21,7 +21,6 @@ from operator import attrgetter
 import calendar
 import datetime
 import math
-from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB
 
 @login_required
 def home(request):
