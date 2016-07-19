@@ -1,0 +1,1 @@
+import gerador_proventos
