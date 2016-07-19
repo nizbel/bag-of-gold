@@ -16,10 +16,12 @@ from django.core.urlresolvers import reverse
 from django.db.models import Sum
 from django.forms.models import inlineformset_factory
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render_to_response
+from django.http.response import Http404
+from django.shortcuts import render_to_response, get_object_or_404
 from django.template.context import RequestContext
 import calendar
 import datetime
+from itertools import chain
 import json
 import operator
 
@@ -231,10 +233,18 @@ def editar_operacao_acao(request, id):
     DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoAcaoFormSet)
     
-    operacao = OperacaoAcao.objects.get(pk=id)
+    operacao = get_object_or_404(OperacaoAcao, pk=id, destinacao='T')
     # Checar se é o investidor da operação
     if investidor != operacao.investidor:
         raise PermissionDenied
+    
+    # Busca as operações de compra/venda relativas a essa operação, se alguma envolver daytrade, marcar como daytrade
+    # TODO preparar para muitas execuções em uma mesma operação
+    operacao_day_trade = False
+    if operacao.compra or operacao.venda:
+        for operacao_compra_venda in list(chain(operacao.compra.get_queryset(), operacao.venda.get_queryset())):
+            if operacao_compra_venda.day_trade:
+                operacao_day_trade = True
     
     if request.method == 'POST':
         if request.POST.get("save"):
@@ -258,7 +268,7 @@ def editar_operacao_acao(request, id):
         form_operacao_acao = OperacaoAcaoForm(instance=operacao)
         formset_divisao = DivisaoFormSet(instance=operacao, investidor=investidor)
             
-    return render_to_response('acoes/trade/editar_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'formset_divisao': formset_divisao},
+    return render_to_response('acoes/trade/editar_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'formset_divisao': formset_divisao, 'operacao_day_trade': operacao_day_trade},
                                context_instance=RequestContext(request))   
     
     

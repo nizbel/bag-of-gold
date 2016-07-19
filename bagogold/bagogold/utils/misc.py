@@ -67,6 +67,5 @@ def verificar_feriado_bovespa(data):
                       (15, 11), # Proclamação da República
                       (31, 12), # Ano novo
                       )
-    print dia_mes, lista_feriados, (dia_mes in lista_feriados)
     return (dia_mes in lista_feriados)
 
