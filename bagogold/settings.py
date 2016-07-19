@@ -43,7 +43,6 @@ INSTALLED_APPS = (
     
     #Bag-O-Gold
     'bagogold',
-    'gerador_proventos',
 )
 
 MIDDLEWARE_CLASSES = (
