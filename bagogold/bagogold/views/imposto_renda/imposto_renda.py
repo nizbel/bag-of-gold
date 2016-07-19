@@ -32,11 +32,17 @@ def detalhar_imposto_renda(request, ano):
     ############################################################
     
     operacoes_ano = OperacaoAcao.objects.filter(data__lte='%s-12-31' % (ano), investidor=investidor).order_by('data')
-    proventos_ano = Provento.objects.exclude(data_ex__isnull=True).filter(data_ex__range=['%s-1-1' % (ano), '%s-12-31' % (ano)]).order_by('data_ex')
+    proventos_ano = Provento.objects.exclude(data_ex__isnull=True).filter(tipo_provento__in=['D','J'], data_ex__range=['%s-1-1' % (ano), '%s-1-10' % (ano+1)]).order_by('data_ex').annotate(data=F('data_ex'))
     for provento in proventos_ano:
-        provento.data = provento.data_ex
+        # Remover proventos cuja data base não esteja no ano
+        provento.data_base = provento.data_ex - datetime.timedelta(days=1)
+        while provento.data_base.weekday() > 4 or verificar_feriado_bovespa(provento.data_base):
+            provento.data_base = provento.data_base - datetime.timedelta(days=1)
+        if provento.data_base.year != ano:
+            proventos_ano = proventos_ano.exclude(id=provento.id)
+    proventos_em_acoes = Provento.objects.exclude(data_ex__isnull=True).filter(tipo_provento='A', data_ex__lte='%s-12-31' % (ano+1)).order_by('data_ex').annotate(data=F('data_ex'))
     
-    lista_eventos = sorted(chain(operacoes_ano, proventos_ano), key=attrgetter('data'))
+    lista_eventos = sorted(chain(proventos_em_acoes, proventos_ano, operacoes_ano), key=attrgetter('data'))
     
     # Variáveis para cálculo de ganhos em renda variável por mes
     total_mes = OrderedDict()
@@ -46,6 +52,10 @@ def detalhar_imposto_renda(request, ano):
     total_acima_vinte_mil = Decimal(0)
     lucro_venda = OrderedDict()
     lucro_venda_dt = OrderedDict()
+    prejuizo_a_compensar = OrderedDict()
+    prejuizo_a_compensar_dt = OrderedDict()
+    prejuizo_acumulado = Decimal(0)
+    prejuizo_acumulado_dt = Decimal(0)
     
     # Inicializar variáveis
     for mes_atual in range(1, 13):
@@ -54,6 +64,8 @@ def detalhar_imposto_renda(request, ano):
         ganho_acima_vinte_mil[mes_atual] = (Decimal(0), Decimal(0))
         lucro_venda[mes_atual] = Decimal(0)
         lucro_venda_dt[mes_atual] = Decimal(0)
+        prejuizo_a_compensar[mes_atual] = Decimal(0)
+        prejuizo_a_compensar_dt[mes_atual] = Decimal(0)
     
     acoes = {}
     for evento in lista_eventos:
@@ -137,6 +149,10 @@ def detalhar_imposto_renda(request, ano):
 #                         total_gasto += (((acoes[evento.acao.ticker] * evento.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
 #                         total_proventos += (((acoes[evento.acao.ticker] * evento.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
 
+
+    # Busca prejuízos acumulados
+    prejuizo_acumulado = Decimal(0)
+    prejuizo_acumulado_dt = Decimal(0)
     # Pegar ganhos líquidos por ações até 20.000 reais no mês
     for mes in range(1, 13):
 #         print mes
@@ -144,10 +160,25 @@ def detalhar_imposto_renda(request, ano):
 #             print 'mes', mes, lucro_venda
             ganho_abaixo_vinte_mil[mes] = lucro_venda[mes]
             total_abaixo_vinte_mil += lucro_venda[mes]
-        elif total_mes[mes] > 20000 or lucro_venda[mes] < 0 or lucro_venda_dt[mes] != 0:
+        if total_mes[mes] > 20000 or lucro_venda[mes] < 0 or lucro_venda_dt[mes] != 0:
 #             print 'mes', mes, lucro_venda, lucro_venda_dt
+            if total_mes[mes] <= 20000 and lucro_venda[mes] > 0:
+                lucro_venda[mes] = 0
             ganho_acima_vinte_mil[mes] = (lucro_venda[mes], lucro_venda_dt[mes])
-            # TODO computar ganhos liquidos em RV
+            # Aumentar total de ganhos em RV
+            total_acima_vinte_mil += max(lucro_venda[mes] - prejuizo_acumulado, Decimal(0)) + max(Decimal(0), lucro_venda_dt[mes] - prejuizo_acumulado_dt)
+            # TODO computar ganhos liquidos em RV (pegar impostos pagos)
+            if lucro_venda[mes] < 0:
+                prejuizo_acumulado -= lucro_venda[mes]
+            elif lucro_venda[mes] > 0 and prejuizo_acumulado > 0:
+                prejuizo_acumulado -= min(lucro_venda[mes], prejuizo_acumulado)
+            if lucro_venda_dt[mes] < 0:
+                prejuizo_acumulado_dt -= lucro_venda_dt[mes]
+            elif lucro_venda_dt[mes] > 0 and prejuizo_acumulado_dt > 0:
+                prejuizo_acumulado_dt -= min(lucro_venda_dt[mes], prejuizo_acumulado_dt)
+        prejuizo_a_compensar[mes] = prejuizo_acumulado
+        prejuizo_a_compensar_dt[mes] = prejuizo_acumulado_dt
+                
     
     total_dividendos = Decimal(0)
     total_jscp = Decimal(0)
@@ -289,13 +320,16 @@ def detalhar_imposto_renda(request, ano):
     dados['total_jscp'] = total_jscp
     dados['total_rendimentos_fii'] = total_rendimentos_fii
     dados['total_abaixo_vinte_mil'] = total_abaixo_vinte_mil
+    dados['total_acima_vinte_mil'] = total_acima_vinte_mil
     dados['total_acumulado_td'] = total_acumulado_td
     
     # Editar ano para string
     ano = str(ano).replace('.', '')
     
-    return render_to_response('imposto_renda/detalhar_imposto_ano.html', {'ano': ano, 'acoes': acoes, 'cdb_rdb': cdb_rdb, 'fundos_investimento': fundos_investimento, 'fiis': fiis, 'ganho_abaixo_vinte_mil': ganho_abaixo_vinte_mil,
-                                                                          'ganho_acima_vinte_mil': ganho_acima_vinte_mil, 'letras_credito': letras_credito,'dados': dados}, context_instance=RequestContext(request))
+    return render_to_response('imposto_renda/detalhar_imposto_ano.html', {'ano': ano, 'acoes': acoes, 'ganho_abaixo_vinte_mil': ganho_abaixo_vinte_mil, 'ganho_acima_vinte_mil': ganho_acima_vinte_mil, 
+                                                                          'prejuizo_a_compensar': prejuizo_a_compensar, 'prejuizo_a_compensar_dt': prejuizo_a_compensar_dt, 'cdb_rdb': cdb_rdb, 
+                                                                          'fundos_investimento': fundos_investimento, 'fiis': fiis, 'letras_credito': letras_credito,'dados': dados}, 
+                              context_instance=RequestContext(request))
 
 def listar_anos(request):
     class Object(object):
