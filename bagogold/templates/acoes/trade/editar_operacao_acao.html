@@ -12,11 +12,11 @@
                 <form method="POST" class="post-form form-horizontal">{% csrf_token %}
                     <div id="forms">
                         <label class="radio">
-                            <input name="radioDT" value="0" checked="" type="radio">
+                            <input name="radioDT" value="0" {% if not operacao_day_trade %}checked=""{% endif %} type="radio">
                         Operação comum
                         </label>
                         <label class="radio">
-                            <input name="radioDT" value="1" type="radio">
+                            <input name="radioDT" value="1" {% if operacao_day_trade %}checked=""{% endif %} type="radio">
                         Operação Daytrade
                         </label>
                         {{ form_operacao_acao.as_p }}
