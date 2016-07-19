@@ -42,7 +42,8 @@ INSTALLED_APPS = (
     'yahoo_finance',
     
     #Bag-O-Gold
-    'bagogold.bagogold',
+    'bagogold',
+    'gerador_proventos',
 )
 
 MIDDLEWARE_CLASSES = (
