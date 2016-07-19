@@ -116,7 +116,7 @@ def detalhar_imposto_renda(request, ano):
             if evento.tipo_provento in ['D', 'J']:
                 if evento.data_pagamento >= datetime.date(ano,1,1):
                     total_recebido = acoes[evento.acao.ticker].quantidade * evento.valor_unitario
-                    print evento.acao.ticker, acoes[evento.acao.ticker].quantidade, evento.valor_unitario, total_recebido, 'pagos em', evento.data_pagamento
+#                     print evento.acao.ticker, acoes[evento.acao.ticker].quantidade, evento.valor_unitario, total_recebido, 'pagos em', evento.data_pagamento
                     if evento.data_pagamento <= datetime.date(ano,12,31):
                         if evento.tipo_provento == 'J':
                             total_recebido = total_recebido * Decimal(0.85)
@@ -165,7 +165,9 @@ def detalhar_imposto_renda(request, ano):
             if total_mes[mes] <= 20000 and lucro_venda[mes] > 0:
                 lucro_venda[mes] = 0
             ganho_acima_vinte_mil[mes] = (lucro_venda[mes], lucro_venda_dt[mes])
-            # TODO computar ganhos liquidos em RV
+            # Aumentar total de ganhos em RV
+            total_acima_vinte_mil += max(lucro_venda[mes] - prejuizo_acumulado, Decimal(0)) + max(Decimal(0), lucro_venda_dt[mes] - prejuizo_acumulado_dt)
+            # TODO computar ganhos liquidos em RV (pegar impostos pagos)
             if lucro_venda[mes] < 0:
                 prejuizo_acumulado -= lucro_venda[mes]
             elif lucro_venda[mes] > 0 and prejuizo_acumulado > 0:
@@ -318,6 +320,7 @@ def detalhar_imposto_renda(request, ano):
     dados['total_jscp'] = total_jscp
     dados['total_rendimentos_fii'] = total_rendimentos_fii
     dados['total_abaixo_vinte_mil'] = total_abaixo_vinte_mil
+    dados['total_acima_vinte_mil'] = total_acima_vinte_mil
     dados['total_acumulado_td'] = total_acumulado_td
     
     # Editar ano para string
