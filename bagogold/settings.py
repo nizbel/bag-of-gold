@@ -42,7 +42,7 @@ INSTALLED_APPS = (
     'yahoo_finance',
     
     #Bag-O-Gold
-    'bagogold',
+    'bagogold.bagogold',
 )
 
 MIDDLEWARE_CLASSES = (
