@@ -67,7 +67,7 @@ def editar_operacao_lc(request, id):
             return HttpResponseRedirect(reverse('historico_lc'))
  
     else:
-        form_operacao_lc = OperacaoLetraCreditoForm(instance=operacao_lc, initial={'operacao_compra': operacao_lc.operacao_compra_relacionada(),})
+        form_operacao_lc = OperacaoLetraCreditoForm(instance=operacao_lc, investidor=investidor, initial={'operacao_compra': operacao_lc.operacao_compra_relacionada(),})
         formset_divisao = DivisaoFormSet(instance=operacao_lc, investidor=investidor)
             
     return render_to_response('lc/editar_operacao_lc.html', {'form_operacao_lc': form_operacao_lc, 'formset_divisao': formset_divisao},
