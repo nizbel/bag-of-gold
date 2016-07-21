@@ -451,6 +451,38 @@ def calcular_poupanca_prov_acao_ate_dia_por_divisao(dia, divisao, destinacao='B'
     return total_proventos.quantize(Decimal('0.01'))
 
 
+def buscar_proventos_acao(codigo_cvm, ticker, ano, num_tentativas):
+    # Busca todos os proventos
+    prov_url = 'http://bvmf.bmfbovespa.com.br/pt-br/mercados/acoes/empresas/ExecutaAcaoConsultaInfoRelevantes.asp?codCVM=%s&ano=%s&categoria=3' % (codigo_cvm, ano)
+    req = Request(prov_url)
+    try:
+        response = urlopen(req)
+    except HTTPError as e:
+        print 'The server couldn\'t fulfill the request.'
+        print 'Error code: ', e.code
+    except URLError as e:
+        print 'We failed to reach a server.'
+        print 'Reason: ', e.reason
+    else:
+        data = response.read()
+        # Verificar se sistema está indisponível
+        if 'Sistema indisponivel' in data:
+            if num_tentativas == 3:
+                raise URLError('Sistema indisponível')
+                return
+            return buscar_proventos_acao(codigo_cvm, ticker, ano, num_tentativas+1)
+        protocolos = re.findall('<a href=".*?protocolo=(\d+).*?" target="_blank">Aviso aos Acionistas</a>', data,flags=re.IGNORECASE)
+        if len(protocolos) == 0:
+            return
+#         qtd_avisos = re.findall('<strong>\s*?Aviso aos Acionistas\s*?\((\d+?)\)\s*?</strong>', data,flags=re.IGNORECASE|re.DOTALL)[0]
+#         print len(urls), qtd_avisos, ticker, ano
+        for protocolo in protocolos:
+#             print url
+            print protocolo
+            ler_demonstrativo_rendimentos('http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=%s' % (protocolo), ticker)
+
+
+
 def buscar_proventos_acao(codigo_cvm, ticker, num_tentativas):
     """
     Busca proventos de ações no site da Bovespa

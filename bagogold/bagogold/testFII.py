@@ -256,7 +256,7 @@ def ler_demonstrativo_rendimentos(pdf_url, ticker):
                 retstr.close()
                 os.remove('%s.pdf' % (ticker))
                 os.remove('%s-decrypted.pdf' % (ticker))
-                return buscar_info_proventos_fii_no_texto(text)
+                return buscar_info_proventos_no_texto(text)
             except Exception as e:
                 template = "An exception of type {0} occured. Arguments:\n{1!r}"
                 message = template.format(type(e).__name__, e.args)
@@ -267,6 +267,17 @@ def ler_demonstrativo_rendimentos(pdf_url, ticker):
             message = template.format(type(e).__name__, e.args)
             print pdf_url, "->", message
             return ()
+
+def buscar_info_proventos_no_texto(texto):
+    possui_dividendo = len(re.findall('dividendo', texto, re.IGNORECASE)) > 0
+    possui_jscp = len(re.findall('j[s]{0,1}cp|[^a-z]juro[s]{0,1}[^a-z]', texto, re.IGNORECASE)) > 0
+    mencoes_com = re.findall('[^a-z]com[^a-z]', texto, re.IGNORECASE)
+    mencoes_ex = re.findall('[^a-z]ex[^a-z]|[^a-z]exjur[^a-z]', texto, re.IGNORECASE)
+    mencoes_pagamento = re.findall('pagamento|pago', texto, re.IGNORECASE)
+    datas = re.findall('(\d{1,2}[\.\/]\d{1,2}[\.\/]\d\d\d\d)', texto)
+    valor = re.findall('(\d+\s*?,\s*?\d+)', texto)
+    print 'datas:', datas, 'valor', valor
+    return (datas, valor)
 
 def buscar_info_proventos_fii_no_texto(texto):
     # TODO Preparar leitura de datas e valores a partir de texto mais proximo
