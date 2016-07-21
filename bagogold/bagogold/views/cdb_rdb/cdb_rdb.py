@@ -545,6 +545,7 @@ def painel(request):
     # Prepara o campo valor atual
     for operacao in operacoes:
         operacao.atual = operacao.quantidade
+        operacao.inicial = operacao.quantidade
         if operacao.tipo_operacao == 'C':
             operacao.tipo = 'Compra'
             operacao.taxa = operacao.porcentagem()
@@ -569,8 +570,6 @@ def painel(request):
             if (operacao.data <= data_iteracao):     
                 # Verificar se se trata de compra ou venda
                 if operacao.tipo_operacao == 'C':
-                        if (operacao.data == data_iteracao):
-                            operacao.inicial = operacao.quantidade
                         # Calcular o valor atualizado para cada operacao
                         operacao.atual = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa)
                         # Arredondar na última iteração
