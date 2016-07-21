@@ -533,7 +533,15 @@ def painel(request):
     investidor = request.user.investidor
     # Processa primeiro operações de venda (V), depois compra (C)
     operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
-    historico_porcentagem = HistoricoPorcentagemCDB_RDB.objects.all() 
+    if not operacoes:
+        dados = {}
+        dados['total_atual'] = Decimal(0)
+        dados['total_ir'] = Decimal(0)
+        dados['total_iof'] = Decimal(0)
+        dados['total_ganho_prox_dia'] = Decimal(0)
+        return render_to_response('cdb_rdb/painel.html', {'operacoes': {}, 'dados': dados},
+                               context_instance=RequestContext(request))
+    
     # Prepara o campo valor atual
     for operacao in operacoes:
         operacao.atual = operacao.quantidade
