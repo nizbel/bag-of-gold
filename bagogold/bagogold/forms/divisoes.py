@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
-    TransferenciaEntreDivisoes
+    TransferenciaEntreDivisoes, DivisaoOperacaoAcao
 from bagogold.bagogold.models.lc import OperacaoVendaLetraCredito
 from django import forms
 from django.forms import widgets
@@ -48,7 +48,7 @@ class DivisaoOperacaoAcaoFormSet(forms.models.BaseInlineFormSet):
                 
                     if self.instance.quantidade < qtd_total_div:
                         raise forms.ValidationError('Quantidade total alocada para as divisões é maior que quantidade da operação')
-
+                    
 # Inline FormSet para operações em fundos de investimento imobiliário
 class DivisaoOperacaoFIIFormSet(forms.models.BaseInlineFormSet):
     def __init__(self, *args, **kwargs):
@@ -107,10 +107,8 @@ class DivisaoOperacaoLCFormSet(forms.models.BaseInlineFormSet):
                     
                     # Verificar em caso de venda
                     if self.instance.tipo_operacao == 'V':
-                        # Caso de venda total da letra de crédito
-                        if self.instance.quantidade < self.operacao_compra.quantidade:
-                            if DivisaoOperacaoLC.objects.get(divisao=form_divisao.cleaned_data['divisao'], operacao=self.operacao_compra).quantidade < div_qtd:
-                                raise forms.ValidationError('Venda de quantidade acima da disponível para divisão %s' % (form_divisao.cleaned_data['divisao']))
+                        if DivisaoOperacaoLC.objects.get(divisao=form_divisao.cleaned_data['divisao'], operacao=self.operacao_compra).quantidade < div_qtd:
+                            raise forms.ValidationError('Venda de quantidade acima da disponível para divisão %s' % (form_divisao.cleaned_data['divisao']))
 
 # Inline FormSet para operações em CDB
 class DivisaoOperacaoCDB_RDBFormSet(forms.models.BaseInlineFormSet):
@@ -142,10 +140,8 @@ class DivisaoOperacaoCDB_RDBFormSet(forms.models.BaseInlineFormSet):
                     
                     # Verificar em caso de venda
                     if self.instance.tipo_operacao == 'V':
-                        # Caso de venda total do CDB
-                        if self.instance.quantidade < self.operacao_compra.quantidade:
-                            if DivisaoOperacaoCDB.objects.get(divisao=form_divisao.cleaned_data['divisao'], operacao=self.operacao_compra).quantidade < div_qtd:
-                                raise forms.ValidationError('Venda de quantidade acima da disponível para divisão %s' % (form_divisao.cleaned_data['divisao']))
+                        if DivisaoOperacaoCDB.objects.get(divisao=form_divisao.cleaned_data['divisao'], operacao=self.operacao_compra).quantidade < div_qtd:
+                            raise forms.ValidationError('Venda de quantidade acima da disponível para divisão %s' % (form_divisao.cleaned_data['divisao']))
                             
 # Inline FormSet para operações em CDB
 class DivisaoOperacaoFundoInvestimentoFormSet(forms.models.BaseInlineFormSet):
