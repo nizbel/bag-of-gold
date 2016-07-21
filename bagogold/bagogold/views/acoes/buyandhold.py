@@ -579,8 +579,6 @@ def inserir_operacao_acao(request):
                     return HttpResponseRedirect(reverse('historico_bh'))
             for erro in formset_divisao.non_form_errors():
                 messages.error(request, erro)
-            return render_to_response('acoes/buyandhold/inserir_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,
-                                                                       'formset_divisao': formset_divisao }, context_instance=RequestContext(request))
     else:
         valores_iniciais = {}
         if investidor.tipo_corretagem == 'F':
