@@ -425,6 +425,8 @@ def inserir_operacao_acao(request):
                 formset_divisao.save()
                 messages.success(request, 'Operação inserida com sucesso')
                 return HttpResponseRedirect(reverse('historico_operacoes'))
+            for erro in formset_divisao.non_form_errors():
+                messages.error(request, erro)
     else:
         valores_iniciais = {}
         if investidor.tipo_corretagem == 'F':
