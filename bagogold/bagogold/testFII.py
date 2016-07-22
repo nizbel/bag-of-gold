@@ -194,6 +194,7 @@ def ler_demonstrativo_rendimentos(pdf_url, ticker):
 #     http://bvmf.bmfbovespa.com.br/sig/FormConsultaPdfDocumentoFundos.asp?strSigla=BBPO&strData=2016-04-01T11:55:11.357
 #     pdf_url = 'http://bvmf.bmfbovespa.com.br/sig/FormConsultaPdfDocumentoFundos.asp?strSigla=BBPO11&strData=2015-12-01T10:27:19.467'
     req = Request(pdf_url)
+#     print pdf_url
     try:
         response = urlopen(req)
     except HTTPError as e:
@@ -206,6 +207,8 @@ def ler_demonstrativo_rendimentos(pdf_url, ticker):
         return ()
     else:
         try:
+            meta = response.info()
+            print "Content-Length:", meta.getheaders("Content-Length")[0]
             arquivo_rendimentos = StringIO(response.read())
             rsrcmgr = PDFResourceManager()
             retstr = StringIO()
@@ -269,6 +272,7 @@ def ler_demonstrativo_rendimentos(pdf_url, ticker):
             return ()
 
 def buscar_info_proventos_no_texto(texto):
+#     print 'Ações'
     possui_dividendo = len(re.findall('dividendo', texto, re.IGNORECASE)) > 0
     possui_jscp = len(re.findall('j[s]{0,1}cp|[^a-z]juro[s]{0,1}[^a-z]', texto, re.IGNORECASE)) > 0
     mencoes_com = re.findall('[^a-z]com[^a-z]', texto, re.IGNORECASE)
@@ -276,12 +280,13 @@ def buscar_info_proventos_no_texto(texto):
     mencoes_pagamento = re.findall('pagamento|pago', texto, re.IGNORECASE)
     datas = re.findall('(\d{1,2}[\.\/]\d{1,2}[\.\/]\d\d\d\d)', texto)
     valor = re.findall('(\d+\s*?,\s*?\d+)', texto)
-    print 'datas:', datas, 'valor', valor
+#     print 'datas:', datas, 'valor', valor
     return (datas, valor)
 
 def buscar_info_proventos_fii_no_texto(texto):
+#     print 'FII'
     # TODO Preparar leitura de datas e valores a partir de texto mais proximo
     datas = re.findall('(\d{1,2}[\.\/]\d{1,2}[\.\/]\d\d\d\d)', texto)
     valor = re.findall('(\d+\s*?,\s*?\d+)', texto)
-    print 'datas:', datas, 'valor', valor
+#     print 'datas:', datas, 'valor', valor
     return (datas, valor)
