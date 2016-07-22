@@ -454,7 +454,7 @@ def calcular_poupanca_prov_acao_ate_dia_por_divisao(dia, divisao, destinacao='B'
 
 def buscar_proventos_acao(codigo_cvm, ticker, ano, num_tentativas):
     # Busca todos os proventos
-    prov_url = 'http://bvmf.bmfbovespa.com.br/pt-br/mercados/acoes/empresas/ExecutaAcaoConsultaInfoRelevantes.asp?codCVM=%s&ano=%s&categoria=3' % (codigo_cvm, ano)
+    prov_url = 'http://bvmf.bmfbovespa.com.br/pt-br/mercados/acoes/empresas/ExecutaAcaoConsultaInfoRelevantes.asp?codCVM=%s&ano=%s' % (codigo_cvm, ano)
     req = Request(prov_url)
     try:
         response = urlopen(req)
@@ -472,14 +472,14 @@ def buscar_proventos_acao(codigo_cvm, ticker, ano, num_tentativas):
                 raise URLError('Sistema indisponível')
                 return
             return buscar_proventos_acao(codigo_cvm, ticker, ano, num_tentativas+1)
-        protocolos = re.findall('<a href=".*?protocolo=(\d+).*?" target="_blank">Aviso aos Acionistas</a>', data,flags=re.IGNORECASE)
+        protocolos = re.findall('Assunto(?:(?!Assunto).)*?(?:juro|dividendo|provento).*?<a href=".*?protocolo=(\d+).*?" target="_blank">.*?</a>', data,flags=re.IGNORECASE|re.DOTALL)
+#         protocolos = re.findall('<a href=".*?protocolo=(\d+).*?" target="_blank">.*?(juro|dividendo).?*</a>', data,flags=re.IGNORECASE)
         if len(protocolos) == 0:
             return
 #         qtd_avisos = re.findall('<strong>\s*?Aviso aos Acionistas\s*?\((\d+?)\)\s*?</strong>', data,flags=re.IGNORECASE|re.DOTALL)[0]
 #         print len(urls), qtd_avisos, ticker, ano
         for protocolo in protocolos:
-#             print url
-            print protocolo
+#             print protocolo
             ler_demonstrativo_rendimentos('http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=%s' % (protocolo), ticker)
 
 
