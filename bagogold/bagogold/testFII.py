@@ -210,6 +210,14 @@ def ler_demonstrativo_rendimentos(pdf_url, ticker):
             meta = response.info()
             print "Content-Length:", meta.getheaders("Content-Length")[0]
             arquivo_rendimentos = StringIO(response.read())
+            pasta = 'doc proventos/%s' % (ticker)
+            if not os.path.exists(pasta):
+                os.makedirs(pasta)
+                
+            with open('%s/%s-%s.pdf' % (pasta, ticker, re.findall('protocolo=(\d+)', pdf_url,flags=re.IGNORECASE)[0]), "wb") as local_file:
+                local_file.write(arquivo_rendimentos.getvalue())
+            if True:
+                return
             rsrcmgr = PDFResourceManager()
             retstr = StringIO()
             codec = 'utf-8'

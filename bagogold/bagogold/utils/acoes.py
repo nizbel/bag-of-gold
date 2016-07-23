@@ -472,7 +472,7 @@ def buscar_proventos_acao(codigo_cvm, ticker, ano, num_tentativas):
                 raise URLError('Sistema indisponível')
                 return
             return buscar_proventos_acao(codigo_cvm, ticker, ano, num_tentativas+1)
-        protocolos = re.findall('Assunto(?:(?!Assunto).)*?(?:juro|dividendo|provento).*?<a href=".*?protocolo=(\d+).*?" target="_blank">.*?</a>', data,flags=re.IGNORECASE|re.DOTALL)
+        protocolos = re.findall('Assunto(?:(?!Assunto).)*?(?:juro|dividendo|provento|capital social).*?<a href=".*?protocolo=(\d+).*?" target="_blank">.*?</a>', data,flags=re.IGNORECASE|re.DOTALL)
 #         protocolos = re.findall('<a href=".*?protocolo=(\d+).*?" target="_blank">.*?(juro|dividendo).?*</a>', data,flags=re.IGNORECASE)
         if len(protocolos) == 0:
             return
@@ -481,7 +481,7 @@ def buscar_proventos_acao(codigo_cvm, ticker, ano, num_tentativas):
         for protocolo in protocolos:
 #             print protocolo
             ler_demonstrativo_rendimentos('http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=%s' % (protocolo), ticker)
-
+#             return
 
 
 # def buscar_proventos_acao(codigo_cvm, ticker, num_tentativas):
