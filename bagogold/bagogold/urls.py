@@ -15,7 +15,8 @@ urlpatterns = [
     url(r'^home/$', views.home.home, name='home'),
     
     # Investidores
-    url(r'^login/$', login, {'template_name': 'login.html'}),
+    url(r'^cadastrar/$',  views.investidores.investidores.cadastrar, name='cadastrar'),
+    url(r'^login/$', login, {'template_name': 'login.html'}, name='login'),
     url(r'^logout/$', logout, {'next_page': '/login'}, name='logout'),
     url(r'^password_change/$', password_change, name='password_change'),
     url(r'^password_change/done/$', password_change_done, name='password_change_done'),
