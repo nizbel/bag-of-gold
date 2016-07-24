@@ -30,7 +30,14 @@ class DocumentoBovespa (models.Model):
                 
     def baixar_documento(self):
         documento = baixar_demonstrativo_rendimentos(self.url)
-        self.documento.save('%s-%s.pdf' % (self.ticker_empresa(), self.protocolo), File(documento))
+        try:
+            self.documento.save('%s-%s.pdf' % (self.ticker_empresa(), self.protocolo), File(documento))
+        except Exception as e:
+            # Apaga o documento antes de lançar o erro
+            if self.documento:
+                if os.path.isfile(self.documento.path):
+                    os.remove(self.documento.path)
+            raise e
         
     def ticker_empresa(self):
         return Acao.objects.filter(empresa=self.empresa)[0].ticker
@@ -49,7 +56,7 @@ def apagar_documento_on_delete(sender, instance, **kwargs):
     if instance.documento:
         if os.path.isfile(instance.documento.path):
             os.remove(instance.documento.path)
-    
+            
 class ProventoAcaoDocumento (models.Model):
     provento = models.ForeignKey('Provento')
     documento = models.ForeignKey('DocumentoBovespa')
