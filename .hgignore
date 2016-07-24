@@ -1,6 +1,7 @@
 syntax: regexp
 .git/*
 backup-*
+doc proventos/*
 syntax: glob
 .project
 .pydevproject
