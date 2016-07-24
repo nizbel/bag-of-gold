@@ -122,4 +122,4 @@ STATICFILES_DIRS = [
     '/var/www/static/',
 ]
 
-MEDIA_ROOT = '/media/'
+MEDIA_ROOT = PROJECT_ROOT + '/media/'

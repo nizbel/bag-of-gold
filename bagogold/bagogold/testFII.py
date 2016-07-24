@@ -206,15 +206,7 @@ def baixar_demonstrativo_rendimentos(pdf_url):
             meta = response.info()
             print "Content-Length:", meta.getheaders("Content-Length")[0]
             arquivo_rendimentos = StringIO(response.read())
-#             pasta = 'doc proventos/%s' % (ticker)
-#             if not os.path.exists(pasta):
-#                 os.makedirs(pasta)
-#                 
-#             with open('%s/%s-%s.pdf' % (pasta, ticker, re.findall('protocolo=(\d+)', pdf_url,flags=re.IGNORECASE)[0]), "wb") as local_file:
-#                 local_file.write(arquivo_rendimentos.getvalue())
-#             if True:
-#                 return
-            return arquivo_rendimentos.get_value()
+            return arquivo_rendimentos
         except Exception as e:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
             message = template.format(type(e).__name__, e.args)

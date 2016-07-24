@@ -8,6 +8,7 @@ from bagogold.bagogold.models.gerador_proventos import DocumentoBovespa
 from bagogold.bagogold.testFII import ler_demonstrativo_rendimentos, \
     baixar_demonstrativo_rendimentos
 from decimal import Decimal, ROUND_DOWN, ROUND_HALF_DOWN, ROUND_UP
+from django.core.files import File
 from django.db.models import Sum, Case, When, IntegerField, F
 from itertools import chain
 from operator import attrgetter, itemgetter
@@ -474,6 +475,7 @@ def buscar_proventos_acao(codigo_cvm, ticker, ano, num_tentativas):
                 raise URLError('Sistema indisponível')
                 return
             return buscar_proventos_acao(codigo_cvm, ticker, ano, num_tentativas+1)
+        # TODO adicionar data Data Referência.*?(\d+/\d+/\d+).*?(?:Data Entrega).*?Assunto(?:(?!Assunto).)*?(?:juro|dividendo|provento|capital social).*?<a href=".*?protocolo=(\d+).*?" target="_blank">.*?</a>
         protocolos = re.findall('Assunto(?:(?!Assunto).)*?(?:juro|dividendo|provento|capital social).*?<a href=".*?protocolo=(\d+).*?" target="_blank">.*?</a>', data,flags=re.IGNORECASE|re.DOTALL)
 #         protocolos = re.findall('<a href=".*?protocolo=(\d+).*?" target="_blank">.*?(juro|dividendo).?*</a>', data,flags=re.IGNORECASE)
         if len(protocolos) == 0:
@@ -485,10 +487,9 @@ def buscar_proventos_acao(codigo_cvm, ticker, ano, num_tentativas):
             documento = DocumentoBovespa()
             documento.empresa = Empresa.objects.get(codigo_cvm=codigo_cvm)
             documento.url = 'http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=%s' % (protocolo)
-            documento.documento = baixar_demonstrativo_rendimentos('http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=%s' % (protocolo))
             documento.tipo = 'A'
             documento.protocolo = protocolo
-            documento.save()
+            documento.documento.save('%s-%s.pdf' % (ticker, protocolo), File(baixar_demonstrativo_rendimentos('http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=%s' % (protocolo))))
             return
 
 
