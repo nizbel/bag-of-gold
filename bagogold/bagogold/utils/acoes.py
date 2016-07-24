@@ -484,6 +484,7 @@ def buscar_proventos_acao(codigo_cvm, ticker, ano, num_tentativas):
 #         print len(urls), qtd_avisos, ticker, ano
         for protocolo in protocolos:
 #             print protocolo
+            print (not DocumentoBovespa.objects.filter(empresa__codigo_cvm=codigo_cvm, protocolo=protocolo))
             documento = DocumentoBovespa()
             documento.empresa = Empresa.objects.get(codigo_cvm=codigo_cvm)
             documento.url = 'http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=%s' % (protocolo)

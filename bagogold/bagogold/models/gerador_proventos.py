@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import Acao
+from bagogold.bagogold.testFII import baixar_demonstrativo_rendimentos
+from django.core.files import File
 from django.db import models
 import os
 import re
@@ -29,6 +31,17 @@ class DocumentoBovespa (models.Model):
                 os.remove(self.documento.path)
         except DocumentoBovespa.DoesNotExist:
             super(DocumentoBovespa, self).save(*args, **kw)
+            
+    def apagar_documento(self):
+        if os.path.isfile(self.documento.path):
+            os.remove(self.documento.path)
+                
+    def baixar_documento(self):
+        documento = baixar_demonstrativo_rendimentos(self.url)
+        self.documento.save('%s-%s.pdf' % (self.ticker_empresa(), self.protocolo), File(documento))
+        
+    def ticker_empresa(self):
+        return Acao.objects.filter(empresa=self.empresa)[0].ticker
     
 #     def pendente(self):
 #        if self.tipo == 'A':
