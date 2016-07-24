@@ -476,21 +476,35 @@ def buscar_proventos_acao(codigo_cvm, ticker, ano, num_tentativas):
                 return
             return buscar_proventos_acao(codigo_cvm, ticker, ano, num_tentativas+1)
         # TODO adicionar data Data Referência.*?(\d+/\d+/\d+).*?(?:Data Entrega).*?Assunto(?:(?!Assunto).)*?(?:juro|dividendo|provento|capital social).*?<a href=".*?protocolo=(\d+).*?" target="_blank">.*?</a>
-        protocolos = re.findall('Assunto(?:(?!Assunto).)*?(?:juro|dividendo|provento|capital social).*?<a href=".*?protocolo=(\d+).*?" target="_blank">.*?</a>', data,flags=re.IGNORECASE|re.DOTALL)
+        inicio = data.find('id="frmConsultaEmpresas"')
+        fim = data.find('</form>', inicio)
+        data = data[inicio : fim]
+        
+        divisoes = re.findall('<div class="large-12 columns">(.*?)<div class="large-12 columns">', data, flags=re.IGNORECASE|re.DOTALL)
+        informacoes_rendimentos = list()
+        for divisao in divisoes:
+            # Pega as informações necessárias dentro da divisão, não há como existir mais de uma tupla (data, protocolo)
+            informacao_divisao = re.findall('Data Referência.*?(\d+/\d+/\d+).*?Assunto(?:(?!Assunto).)*?(?:juro|dividendo|provento|capital social).*?<a href=".*?protocolo=(\d+).*?" target="_blank">.*?</a>', divisao, flags=re.IGNORECASE|re.DOTALL)
+            if informacao_divisao:
+                informacoes_rendimentos.append(informacao_divisao[0])
+        
+#         print re.findall('Data Referência.*?(\d+/\d+/\d+).*?Assunto(?:(?!Assunto).)*?(?:juro|dividendo|provento|capital social).*?<a href=".*?protocolo=(\d+).*?" target="_blank">.*?</a>', data,flags=re.IGNORECASE|re.DOTALL)
+        protocolos = re.findall('Assunto(?:(?!Assunto).)*?(?:juro|dividendo|provento|capital social).*?<a href=".*?protocolo=(\d+).*?" target="_blank">.*?</a>', data, flags=re.IGNORECASE|re.DOTALL)
 #         protocolos = re.findall('<a href=".*?protocolo=(\d+).*?" target="_blank">.*?(juro|dividendo).?*</a>', data,flags=re.IGNORECASE)
         if len(protocolos) == 0:
             return
 #         qtd_avisos = re.findall('<strong>\s*?Aviso aos Acionistas\s*?\((\d+?)\)\s*?</strong>', data,flags=re.IGNORECASE|re.DOTALL)[0]
 #         print len(urls), qtd_avisos, ticker, ano
-        for protocolo in protocolos:
+        for data, protocolo in informacoes_rendimentos:
 #             print protocolo
-            print (not DocumentoBovespa.objects.filter(empresa__codigo_cvm=codigo_cvm, protocolo=protocolo))
-            documento = DocumentoBovespa()
-            documento.empresa = Empresa.objects.get(codigo_cvm=codigo_cvm)
-            documento.url = 'http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=%s' % (protocolo)
-            documento.tipo = 'A'
-            documento.protocolo = protocolo
-            documento.documento.save('%s-%s.pdf' % (ticker, protocolo), File(baixar_demonstrativo_rendimentos('http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=%s' % (protocolo))))
+            if not DocumentoBovespa.objects.filter(empresa__codigo_cvm=codigo_cvm, protocolo=protocolo):
+                documento = DocumentoBovespa()
+                documento.empresa = Empresa.objects.get(codigo_cvm=codigo_cvm)
+                documento.url = 'http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=%s' % (protocolo)
+                documento.tipo = 'A'
+                documento.protocolo = protocolo
+                documento.data_referencia = data
+                documento.baixar_documento()
             return
 
 
