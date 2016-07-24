@@ -4,7 +4,9 @@ from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao, \
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.fii import OperacaoFII
-from bagogold.bagogold.testFII import ler_demonstrativo_rendimentos
+from bagogold.bagogold.models.gerador_proventos import DocumentoBovespa
+from bagogold.bagogold.testFII import ler_demonstrativo_rendimentos, \
+    baixar_demonstrativo_rendimentos
 from decimal import Decimal, ROUND_DOWN, ROUND_HALF_DOWN, ROUND_UP
 from django.db.models import Sum, Case, When, IntegerField, F
 from itertools import chain
@@ -480,8 +482,14 @@ def buscar_proventos_acao(codigo_cvm, ticker, ano, num_tentativas):
 #         print len(urls), qtd_avisos, ticker, ano
         for protocolo in protocolos:
 #             print protocolo
-            ler_demonstrativo_rendimentos('http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=%s' % (protocolo), ticker)
-#             return
+            documento = DocumentoBovespa()
+            documento.empresa = Empresa.objects.get(codigo_cvm=codigo_cvm)
+            documento.url = 'http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=%s' % (protocolo)
+            documento.documento = baixar_demonstrativo_rendimentos('http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=%s' % (protocolo))
+            documento.tipo = 'A'
+            documento.protocolo = protocolo
+            documento.save()
+            return
 
 
 # def buscar_proventos_acao(codigo_cvm, ticker, num_tentativas):
