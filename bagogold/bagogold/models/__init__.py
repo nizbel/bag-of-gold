@@ -8,3 +8,5 @@ from divisoes import *
 from investidores import *
   
 from empresa import Empresa
+
+from gerador_proventos import *
