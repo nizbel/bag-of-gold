@@ -3,12 +3,12 @@ from bagogold.bagogold.models.acoes import Acao
 from bagogold.bagogold.testFII import baixar_demonstrativo_rendimentos
 from django.core.files import File
 from django.db import models
+from django.dispatch import receiver
 import os
 import re
 
 def ticker_path(instance, filename):
-    ticker = Acao.objects.filter(empresa=instance.empresa)[0].ticker
-    return 'doc proventos/{0}/{1}'.format(re.sub('\d', '', ticker), filename)
+    return 'doc proventos/{0}/{1}'.format(re.sub('\d', '', instance.ticker_empresa()), filename)
 
 class DocumentoBovespa (models.Model):
     url = models.CharField(u'URL do documento', blank=True, null=True, max_length=200)
@@ -24,14 +24,6 @@ class DocumentoBovespa (models.Model):
     class Meta:
         unique_together = ('empresa', 'protocolo')
         
-    def save(self, *args, **kw):
-        try:
-            documento_existente = DocumentoBovespa.objects.get(empresa=self.empresa, protocolo=self.protocolo)
-            if os.path.isfile(self.documento.path):
-                os.remove(self.documento.path)
-        except DocumentoBovespa.DoesNotExist:
-            super(DocumentoBovespa, self).save(*args, **kw)
-            
     def apagar_documento(self):
         if os.path.isfile(self.documento.path):
             os.remove(self.documento.path)
@@ -48,6 +40,15 @@ class DocumentoBovespa (models.Model):
 #            return len(ProventoAcaoDocumento.objects.filter(documento=self)) > 0
 #        elif self.tipo == 'F':
 #            return len(ProventoFIIDocumento.objects.filter(documento=self)) > 0 
+
+@receiver(models.signals.post_delete, sender=DocumentoBovespa)
+def apagar_documento_on_delete(sender, instance, **kwargs):
+    """
+    Apaga o documento no disco quando o arquivo é deletado da base
+    """
+    if instance.documento:
+        if os.path.isfile(instance.documento.path):
+            os.remove(instance.documento.path)
     
 class ProventoAcaoDocumento (models.Model):
     provento = models.ForeignKey('Provento')
