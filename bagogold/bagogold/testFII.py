@@ -188,7 +188,40 @@ def buscar_rendimentos_fii(ticker):
                     print 'nao achou'
                 
         
-        
+def baixar_demonstrativo_rendimentos(pdf_url):
+    req = Request(pdf_url)
+#     print pdf_url
+    try:
+        response = urlopen(req)
+    except HTTPError as e:
+        print 'The server couldn\'t fulfill the request.'
+        print 'Error code: ', e.code
+        return ()
+    except URLError as e:
+        print 'We failed to reach a server.'
+        print 'Reason: ', e.reason
+        return ()
+    else:
+        try:
+            meta = response.info()
+            print "Content-Length:", meta.getheaders("Content-Length")[0]
+            arquivo_rendimentos = StringIO(response.read())
+#             pasta = 'doc proventos/%s' % (ticker)
+#             if not os.path.exists(pasta):
+#                 os.makedirs(pasta)
+#                 
+#             with open('%s/%s-%s.pdf' % (pasta, ticker, re.findall('protocolo=(\d+)', pdf_url,flags=re.IGNORECASE)[0]), "wb") as local_file:
+#                 local_file.write(arquivo_rendimentos.getvalue())
+#             if True:
+#                 return
+            return arquivo_rendimentos.get_value()
+        except Exception as e:
+            template = "An exception of type {0} occured. Arguments:\n{1!r}"
+            message = template.format(type(e).__name__, e.args)
+            print pdf_url, "->", message
+            return ()
+
+
 
 def ler_demonstrativo_rendimentos(pdf_url, ticker):
 #     http://bvmf.bmfbovespa.com.br/sig/FormConsultaPdfDocumentoFundos.asp?strSigla=BBPO&strData=2016-04-01T11:55:11.357
@@ -208,7 +241,6 @@ def ler_demonstrativo_rendimentos(pdf_url, ticker):
     else:
         try:
             meta = response.info()
-            print "Content-Length:", meta.getheaders("Content-Length")[0]
             arquivo_rendimentos = StringIO(response.read())
             pasta = 'doc proventos/%s' % (ticker)
             if not os.path.exists(pasta):
