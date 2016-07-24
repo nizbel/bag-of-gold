@@ -29,8 +29,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # O incremento mostra quantas threads correrão por vez
         incremento = 12
-        acoes = Acao.objects.filter(empresa__codigo_cvm__isnull=False).order_by('empresa__codigo_cvm').distinct('empresa__codigo_cvm')
-#         acoes = Acao.objects.filter(ticker__in=['BBAS3'])
+#         acoes = Acao.objects.filter(empresa__codigo_cvm__isnull=False).order_by('empresa__codigo_cvm').distinct('empresa__codigo_cvm')
+        acoes = Acao.objects.filter(ticker__in=['BVMF3'])
         contador = 0
         while contador <= len(acoes):
             threads = []
