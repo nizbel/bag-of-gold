@@ -298,6 +298,15 @@
                         <li><a class="submenu" href="{% url "listar_anos_imposto_renda" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar anos</span></a></li>
                     </ul>   
                 </li>
+                {% if request.user.is_superuser %}
+                <li>
+                    <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> Gerador de proventos</span></a>
+                    <ul>
+                        <li><a class="submenu" href="{% url "listar_documentos" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar documentos</span></a></li>
+                        <li><a class="submenu" href="{% url "listar_pendencias" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar pendências</span></a></li>
+                    </ul>   
+                </li>
+                {% endif %}
             </ul>
         </div>
     </div>

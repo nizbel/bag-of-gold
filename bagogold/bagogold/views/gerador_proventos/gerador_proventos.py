@@ -21,7 +21,7 @@ def resolver_pendencia(request):
 @login_required
 @user_passes_test(is_superuser)
 def listar_documentos(request):
-    documentos = DocumentoProventoBovespa.objects.all()
+    documentos = DocumentoProventoBovespa.objects.filter().order_by('data_referencia')
     
     for documento in documentos:
         documento.nome = documento.documento.name.split('/')[-1]
