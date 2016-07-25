@@ -8,7 +8,7 @@ import os
 import re
 
 def ticker_path(instance, filename):
-    return 'doc proventos/{0}/{1}'.format(re.sub('\d', '', instance.ticker_empresa()), filename)
+    return 'doc proventos/{0}/{1}'.format(instance.ticker_empresa(), filename)
 
 class DocumentoBovespa (models.Model):
     url = models.CharField(u'URL do documento', blank=True, null=True, max_length=200)
@@ -40,7 +40,7 @@ class DocumentoBovespa (models.Model):
             raise e
         
     def ticker_empresa(self):
-        return Acao.objects.filter(empresa=self.empresa)[0].ticker
+        return re.sub('\d', '', Acao.objects.filter(empresa=self.empresa)[0].ticker)
     
 #     def pendente(self):
 #        if self.tipo == 'A':
