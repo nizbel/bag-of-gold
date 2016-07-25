@@ -204,7 +204,7 @@ def baixar_demonstrativo_rendimentos(pdf_url):
     else:
         try:
             meta = response.info()
-            print "Content-Length:", meta.getheaders("Content-Length")[0]
+#             print "Content-Length:", meta.getheaders("Content-Length")[0]
             arquivo_rendimentos = StringIO(response.read())
             return arquivo_rendimentos
         except Exception as e:
