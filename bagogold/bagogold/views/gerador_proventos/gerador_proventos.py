@@ -27,6 +27,10 @@ def listar_documentos(request):
         documento.nome = documento.documento.name.split('/')[-1]
         
         documento.pendente = documento.pendente()
+        
+        if documento.tipo == 'A':
+            documento.ha_proventos_vinculados = False
+            
     return render_to_response('gerador_proventos/listar_documentos.html', {'documentos': documentos},
                               context_instance=RequestContext(request))
 
