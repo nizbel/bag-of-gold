@@ -15,7 +15,7 @@ class BuscaProventosAcaoThread(Thread):
  
     def run(self):
         try:
-            for ano in range(2000, datetime.date.today().year+1):
+            for ano in range(datetime.date.today().year-1, datetime.date.today().year+1):
                 buscar_proventos_acao(self.codigo_cvm, self.ticker, ano, 0)
         except Exception as e:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
@@ -29,8 +29,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # O incremento mostra quantas threads correrão por vez
         incremento = 12
-#         acoes = Acao.objects.filter(empresa__codigo_cvm__isnull=False).order_by('empresa__codigo_cvm').distinct('empresa__codigo_cvm')
-        acoes = Acao.objects.filter(ticker__in=['BVMF3'])
+        acoes = Acao.objects.filter(empresa__codigo_cvm__isnull=False).order_by('empresa__codigo_cvm').distinct('empresa__codigo_cvm')
+#         acoes = Acao.objects.filter(ticker__in=['LREN3'])
         contador = 0
         while contador <= len(acoes):
             threads = []
