@@ -24,6 +24,10 @@ urlpatterns = [
     url(r'^reset/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$', password_reset_confirm, name='password_reset_confirm'),
     url(r'^reset/done/$', password_reset_complete, name='password_reset_complete'),
     
+    # Gerador de proventos
+    url(r'^gerador_proventos/listar_documentos/$', views.gerador_proventos.gerador_proventos.listar_documentos, name='listar_documentos'),
+    url(r'^gerador_proventos/listar_pendencias/$', views.gerador_proventos.gerador_proventos.listar_pendencias, name='listar_pendencias'),
+    
     # Ações
     url(r'^acoes/$', views.acoes.home.home, name='home_acoes'),
 #     url(r'^$', views.acoes.buyandhold.listar_acoes, name='listar_acoes'),
