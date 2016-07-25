@@ -500,8 +500,11 @@ def buscar_proventos_acao(codigo_cvm, ticker, ano, num_tentativas):
                 documento.protocolo = protocolo
                 documento.data_referencia = datetime.datetime.strptime(data_referencia, '%d/%m/%Y')
                 documento.baixar_documento()
+                
                 # Gerar pendencia para o documento
-                pendencia = PendenciaDocumentoBovesp
+                pendencia = PendenciaDocumentoProvento()
+                pendencia.documento = documento
+                pendencia.save()
                 
 
 # def buscar_proventos_acao(codigo_cvm, ticker, num_tentativas):
