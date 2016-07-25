@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, PendenciaDocumentoProvento
 from bagogold.bagogold.utils.investidores import is_superuser
 from django.contrib.auth.decorators import login_required, user_passes_test
-from bagogold.bagogold.models.gerador_proventos import DocumentoBovespa
+from django.shortcuts import render_to_response
+from django.template.context import RequestContext
 
 
 @login_required
@@ -12,34 +14,29 @@ def listar_proventos(request):
 
 @login_required
 @user_passes_test(is_superuser)
-def inserir_provento(request):
+def resolver_pendencia(request):
     pass
 
 
 @login_required
 @user_passes_test(is_superuser)
 def listar_documentos(request):
-    documentos = DocumentoBovespa.objects.all()
+    documentos = DocumentoProventoBovespa.objects.all()
     
     for documento in documentos:
-        # Preparar o valor mais atual para carência
-        historico_carencia = HistoricoCarenciaLetraCredito.objects.filter(letra_credito=lc).exclude(data=None).order_by('-data')
-        if historico_carencia:
-            lc.carencia_atual = historico_carencia[0].carencia
-        else:
-            lc.carencia_atual = HistoricoCarenciaLetraCredito.objects.get(letra_credito=lc).carencia
-        # Preparar o valor mais atual de rendimento
-        historico_rendimento = HistoricoPorcentagemLetraCredito.objects.filter(letra_credito=lc).exclude(data=None).order_by('-data')
-#         print historico_rendimento
-        if historico_rendimento:
-            lc.rendimento_atual = historico_rendimento[0].porcentagem_di
-        else:
-            lc.rendimento_atual = HistoricoPorcentagemLetraCredito.objects.get(letra_credito=lc).porcentagem_di
-
-    return render_to_response('lc/listar_lc.html', {'lcs': lcs},
+        documento.nome = documento.documento.name.split('/')[-1]
+        
+        documento.pendente = documento.pendente()
+    return render_to_response('gerador_proventos/listar_documentos.html', {'documentos': documentos},
                               context_instance=RequestContext(request))
 
 @login_required
 @user_passes_test(is_superuser)
 def listar_pendencias(request):
-    pass
+    pendencias = PendenciaDocumentoProvento.objects.all()
+    
+    for pendencia in pendencias:
+        pendencia.nome = pendencia.documento.documento.name.split('/')[-1]
+        
+    return render_to_response('gerador_proventos/listar_pendencias.html', {'pendencias': pendencias},
+                              context_instance=RequestContext(request))
