@@ -1,0 +1,33 @@
+    {% extends "base.html" %}
+
+{% block content %}
+<h1>Documentos de proventos Bovespa</h1>
+    <div class="box-content">
+    <table id="ordens" class="table table-striped table-bordered bootstrap-datatable datatable">
+    <thead>
+        <tr>
+            <th>Nome</th>
+            <th>Tipo</th>
+            <th>Protocolo</th>
+            <th>Data de referência</th>
+            <th>Empresa</th>
+            <th>Pendente?</th>
+            <th>Possui proventos vinculados?</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for documento in documentos %}
+    <tr>
+        <td>{{documento.nome}}</td>
+        <td>{{documento.tipo}}</td>
+        <td>{{documento.protocolo}} dia(s)</td>
+        <td>{{documento.empresa}}%</td>
+        <td>{{documento.pendente|yesno:"Sim,Não,Indefinido"}}%</td>
+        <td>{{documento.ha_proventos_vinculados|yesno:"Sim,Não,Indefinido"}}%</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+    </table>
+</div>
+
+{% endblock %}
