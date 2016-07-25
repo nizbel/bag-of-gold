@@ -21,7 +21,8 @@ def resolver_pendencia(request):
 @login_required
 @user_passes_test(is_superuser)
 def listar_documentos(request):
-    documentos = DocumentoProventoBovespa.objects.filter().order_by('data_referencia')
+    empresas = Empresa.objects.all()
+    documentos = DocumentoProventoBovespa.objects.filter(empresa__id=1).order_by('data_referencia')
     
     for documento in documentos:
         documento.nome = documento.documento.name.split('/')[-1]
@@ -31,7 +32,7 @@ def listar_documentos(request):
         if documento.tipo == 'A':
             documento.ha_proventos_vinculados = False
             
-    return render_to_response('gerador_proventos/listar_documentos.html', {'documentos': documentos},
+    return render_to_response('gerador_proventos/listar_documentos.html', {'documentos': documentos, 'empresas': empresas},
                               context_instance=RequestContext(request))
 
 @login_required
