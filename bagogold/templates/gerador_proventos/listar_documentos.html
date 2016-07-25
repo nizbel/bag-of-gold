@@ -20,10 +20,11 @@
     <tr>
         <td>{{documento.nome}}</td>
         <td>{{documento.tipo}}</td>
-        <td>{{documento.protocolo}} dia(s)</td>
-        <td>{{documento.empresa}}%</td>
-        <td>{{documento.pendente|yesno:"Sim,Não,Indefinido"}}%</td>
-        <td>{{documento.ha_proventos_vinculados|yesno:"Sim,Não,Indefinido"}}%</td>
+        <td>{{documento.protocolo}}</td>
+        <td>{{documento.data_referencia}}</td>
+        <td>{{documento.empresa}}</td>
+        <td>{{documento.pendente|yesno:"Sim,Não,Indefinido"}}</td>
+        <td>{{documento.ha_proventos_vinculados|yesno:"Sim,Não,Indefinido"}}</td>
     </tr>
     {% endfor %}
     </tbody>
