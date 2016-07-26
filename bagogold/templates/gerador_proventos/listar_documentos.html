@@ -2,35 +2,40 @@
 
 {% block content %}
 <h1>Documentos de proventos Bovespa</h1>
+<div class="row-fluid">
     <div class="box-content">
-<!--     Adicionar campo de auto completar -->
-<!--     <input> -->
-    <table id="ordens" class="table table-striped table-bordered bootstrap-datatable datatable">
-    <thead>
-        <tr>
-            <th>Nome</th>
-            <th>Tipo</th>
-            <th>Protocolo</th>
-            <th>Data de referência</th>
-            <th>Empresa</th>
-            <th>Pendente?</th>
-            <th>Possui proventos vinculados?</th>
-        </tr>
-    </thead>
-    <tbody>
-    {% for documento in documentos %}
-    <tr>
-        <td>{{documento.nome}}</td>
-        <td>{{documento.tipo}}</td>
-        <td>{{documento.protocolo}}</td>
-        <td>{{documento.data_referencia}}</td>
-        <td>{{documento.empresa}}</td>
-        <td>{{documento.pendente|yesno:"Sim,Não,Indefinido"}}</td>
-        <td>{{documento.ha_proventos_vinculados|yesno:"Sim,Não,Indefinido"}}</td>
-    </tr>
-    {% endfor %}
-    </tbody>
-    </table>
+        <span class="span4">Empresa atual: <strong>{{ empresa_atual }} ({{ empresa_atual.ticker }})</strong></span>
+        <form method="POST" class="post-form form-horizontal">{% csrf_token %}
+            <label class="span2 control-label" for="empresa">Procurar por ticker:</label>
+            <input class="span1 typeahead" name="busca_empresa" id="empresa" data-provide="typeahead" data-items="7" data-source="{{ empresas }}" type="text">
+            <button type="submit" class="btn"><i class="icon-search"></i></button>
+        </form>
+        <table id="ordens" class="table table-striped table-bordered bootstrap-datatable datatable">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Tipo</th>
+                    <th>Protocolo</th>
+                    <th>Data de referência</th>
+                    <th>Empresa</th>
+                    <th>Pendente?</th>
+                    <th>Possui proventos vinculados?</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for documento in documentos %}
+            <tr>
+                <td>{{documento.nome}}</td>
+                <td>{{documento.tipo}}</td>
+                <td>{{documento.protocolo}}</td>
+                <td>{{documento.data_referencia}}</td>
+                <td>{{documento.empresa}}</td>
+                <td>{{documento.pendente|yesno:"Sim,Não,Indefinido"}}</td>
+                <td>{{documento.ha_proventos_vinculados|yesno:"Sim,Não,Indefinido"}}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
-
 {% endblock %}
