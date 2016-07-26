@@ -36,7 +36,6 @@ def listar_documentos(request):
     empresas = [empresa.ticker_empresa() for empresa in Empresa.objects.all().order_by('id')]
 #     empresas = map(str, empresas)
     empresas = '["' + '","'.join(empresas) + '"]'
-    print empresas
     documentos = DocumentoProventoBovespa.objects.filter(empresa__id=empresa_id).order_by('data_referencia')
     
     for documento in documentos:

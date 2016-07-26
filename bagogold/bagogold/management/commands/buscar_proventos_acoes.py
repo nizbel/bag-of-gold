@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import Acao
+from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa
 from bagogold.bagogold.utils.acoes import buscar_proventos_acao, \
     preencher_codigos_cvm
 from django.core.management.base import BaseCommand
@@ -15,7 +16,12 @@ class BuscaProventosAcaoThread(Thread):
  
     def run(self):
         try:
-            for ano in range(datetime.date.today().year-1, datetime.date.today().year+1):
+            ano_atual = datetime.date.today().year
+            if DocumentoProventoBovespa.objects.filter(data_referencia__year=ano_atual):
+                ano_inicial = ano_atual
+            else:
+                ano_inicial = ano_atual - 1 
+            for ano in range(ano_inicial, datetime.date.today().year+1):
                 buscar_proventos_acao(self.codigo_cvm, self.ticker, ano, 0)
         except Exception as e:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
