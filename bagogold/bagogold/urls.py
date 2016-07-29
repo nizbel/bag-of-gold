@@ -27,6 +27,7 @@ urlpatterns = [
     # Gerador de proventos
     url(r'^gerador_proventos/listar_documentos/$', views.gerador_proventos.gerador_proventos.listar_documentos, name='listar_documentos'),
     url(r'^gerador_proventos/listar_pendencias/$', views.gerador_proventos.gerador_proventos.listar_pendencias, name='listar_pendencias'),
+    url(r'^gerador_proventos/resolver_pendencia/(?P<id>\d+)/$', views.gerador_proventos.gerador_proventos.resolver_pendencia, name='resolver_pendencia'),
     
     # Ações
     url(r'^acoes/$', views.acoes.home.home, name='home_acoes'),

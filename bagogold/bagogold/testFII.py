@@ -302,6 +302,36 @@ def ler_demonstrativo_rendimentos(pdf_url, ticker):
             message = template.format(type(e).__name__, e.args)
             print pdf_url, "->", message
             return ()
+        
+def ler_documento_proventos(documento):
+    try:
+        documento.open()
+        arquivo_rendimentos = StringIO(documento.read())
+        
+        rsrcmgr = PDFResourceManager()
+        retstr = StringIO()
+        codec = 'utf-8'
+        laparams = LAParams()
+        device = TextConverter(rsrcmgr, retstr, codec=codec, laparams=laparams)
+        interpreter = PDFPageInterpreter(rsrcmgr, device)
+        password = ""
+        maxpages = 0
+        caching = True
+        pagenos=set()
+        
+        for page in PDFPage.get_pages(arquivo_rendimentos, pagenos, maxpages=maxpages, password=password,caching=caching, check_extractable=True):
+            interpreter.process_page(page)
+         
+        arquivo_rendimentos.close()
+        device.close()
+        text = retstr.getvalue()
+        retstr.close()
+        return text
+    except Exception as e:
+        template = "An exception of type {0} occured. Arguments:\n{1!r}"
+        message = template.format(type(e).__name__, e.args)
+        print "->", message
+        return ()
 
 def buscar_info_proventos_no_texto(texto):
 #     print 'Ações'
