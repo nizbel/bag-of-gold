@@ -1,16 +1,21 @@
 {% extends "base.html" %}
 
 {% block extra_head %}
-    {{ form_cdb_rdb.media }}
+    {{ form_pendencia.media }}
 {% endblock %}
 
 {% block content %}
-    <h1>Inserir Letra de Crédito</h1>
+    <h1>Resolver pendência</h1>
+    <div class="span12">
+    {{ texto_documento }}
+    </div>
     <form method="POST" class="post-form form-horizontal">{% csrf_token %}
         <div id="forms">
-            {{ form_cdb_rdb.as_p }}
-            {{ formset_porcentagem }}
-            {{ formset_carencia }}
+            {{ formset.management_form }}
+            {% for form in formset.forms %}
+                {{ form.as_p }}
+            {% endfor %}
+            <input type="button" value="Add More" id="add_more">
         </div>
         <div class="form-actions">
             <button type="submit" name="save" value="1" class="btn">Salvar</button>
