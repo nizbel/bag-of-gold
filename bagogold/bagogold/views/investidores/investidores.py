@@ -3,8 +3,6 @@ from django.contrib import messages
 from django.contrib.auth import views, authenticate
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
-from django.core.urlresolvers import reverse
-from django.http.response import HttpResponseRedirect
 from django.shortcuts import render_to_response, redirect
 from django.template.context import RequestContext
 
