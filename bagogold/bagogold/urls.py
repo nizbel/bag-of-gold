@@ -4,9 +4,9 @@ from django.conf.urls import include, url
 from django.contrib.auth.views import login, password_change, \
     password_change_done, password_reset, password_reset_done, \
     password_reset_confirm, password_reset_complete
-from django.views.generic.base import RedirectView
+from django.views.generic.base import RedirectView, TemplateView
 import views
-from registration import views as registration_views
+from registration.backends.hmac import views as registration_views
 
 
 
@@ -19,14 +19,20 @@ urlpatterns = [
 #     url(r'^cadastrar/$',  views.investidores.investidores.cadastrar, name='cadastrar'),
     url(r'^login/$', login, {'template_name': 'login.html'}, name='login'),
     url(r'^logout/$', logout, {'next_page': '/login'}, name='logout'),
-    url(r'^password_change/$', password_change, {'template_name': 'investidores/alterar_senha.html'}, name='password_change'),
-    url(r'^password_change/done/$', password_change_done, name='password_change_done'),
+    url(r'^password_change/$', password_change, {'template_name': 'registration/alterar_senha.html'}, name='password_change'),
+    url(r'^password_change/done/$', password_change_done, {'template_name': 'registration/senha_alterada.html'}, name='password_change_done'),
     url(r'^password_reset/$', password_reset, name='password_reset'),
     url(r'^password_reset/done/$', password_reset_done, name='password_reset_done'),
     url(r'^reset/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$', password_reset_confirm, name='password_reset_confirm'),
     url(r'^reset/done/$', password_reset_complete, name='password_reset_complete'),
-    url(r'^cadastrar/$', registration_views.RegistrationView.as_view(), name='cadastrar'),
-#     url(r'', include('registration.backends.hmac.urls')),
+    # Django-registration
+    url(r'^cadastro/$', registration_views.RegistrationView.as_view(), name='cadastro'),
+    url(r'^ativacao/completa/$', TemplateView.as_view(template_name='registration/activation_complete.html'), name='registration_activation_complete'),
+    # The activation key can make use of any character from the
+    # URL-safe base64 alphabet, plus the colon as a separator.
+    url(r'^ativacao/(?P<activation_key>[-:\w]+)/$', registration_views.ActivationView.as_view(), name='ativar_cadastro'),
+    url(r'^cadastro/completo/$', TemplateView.as_view(template_name='registration/registration_complete.html'), name='registration_complete'),
+    url(r'^cadastro/fechado/$', TemplateView.as_view(template_name='registration/registration_closed.html'), name='registration_closed'),
     
     # Ações
     url(r'^acoes/$', views.acoes.home.home, name='home_acoes'),
