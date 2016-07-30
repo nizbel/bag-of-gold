@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.views.investidores.investidores import logout
-from django.conf.urls import url
+from django.conf.urls import include, url
 from django.contrib.auth.views import login, password_change, \
     password_change_done, password_reset, password_reset_done, \
     password_reset_confirm, password_reset_complete
 from django.views.generic.base import RedirectView
 import views
+from registration import views as registration_views
 
 
 
@@ -15,7 +16,7 @@ urlpatterns = [
     url(r'^home/$', views.home.home, name='home'),
     
     # Investidores
-    url(r'^cadastrar/$',  views.investidores.investidores.cadastrar, name='cadastrar'),
+#     url(r'^cadastrar/$',  views.investidores.investidores.cadastrar, name='cadastrar'),
     url(r'^login/$', login, {'template_name': 'login.html'}, name='login'),
     url(r'^logout/$', logout, {'next_page': '/login'}, name='logout'),
     url(r'^password_change/$', password_change, {'template_name': 'investidores/alterar_senha.html'}, name='password_change'),
@@ -24,6 +25,8 @@ urlpatterns = [
     url(r'^password_reset/done/$', password_reset_done, name='password_reset_done'),
     url(r'^reset/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$', password_reset_confirm, name='password_reset_confirm'),
     url(r'^reset/done/$', password_reset_complete, name='password_reset_complete'),
+    url(r'^cadastrar/$', registration_views.RegistrationView.as_view(), name='cadastrar'),
+#     url(r'', include('registration.backends.hmac.urls')),
     
     # Ações
     url(r'^acoes/$', views.acoes.home.home, name='home_acoes'),

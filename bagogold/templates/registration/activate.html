@@ -27,7 +27,7 @@
                 <h2>Cadastrar usuário</h2>
                 <form method="POST" class="form-horizontal">{% csrf_token %}
                     <fieldset>
-                        {% for field in form_usuario %}
+                        {% for field in form %}
                             {{ field.errors }}
                             <span>{{ field.label }}</span>
                             <div class="input-prepend">

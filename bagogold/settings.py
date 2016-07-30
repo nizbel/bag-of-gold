@@ -112,6 +112,9 @@ USE_THOUSAND_SEPARATOR = True
 
 LOGIN_URL= '/login/'
 
+# Django-registration
+ACCOUNT_ACTIVATION_DAYS = 3
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
