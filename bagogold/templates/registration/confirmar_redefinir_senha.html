@@ -23,27 +23,22 @@
         <div class="row-fluid">
             <div class="login-box">
                 <h2>Redefinir senha</h2>
-                {% if validlink %}
-                <form method="POST" class="form-horizontal">{% csrf_token %}
+                <form method="POST">{% csrf_token %}
                     <fieldset>
-                        {% for field in form %}
-                            {{ field.errors }}
-                            <span>{{ field.label }}</span>
-                            <div class="input-prepend">
-                                <span class="add-on"><i class="halflings-icon lock"></i></span>
-                                <input class="input-large span10" name="{{ field.name }}" id="{{ field.id_for_label }}" placeholder="{{ field.label }}" title="{{ field.help_text }}"
-                                    type="{% if 'password' in field.name %}password{% else %}text{% endif %}">
-                            </div>
-                            <div class="clearfix"></div>
-                        {% endfor %}
+                        {{ form.email.errors }}
+                        <span>{{ field.label }}</span>
+                        <div class="input-prepend">
+                            <span class="add-on"><i class="halflings-icon envelope"></i></span>
+                            <input class="input-large span10" name="{{ form.email.name }}" id="{{ form.email.id_for_label }}" placeholder="{{ form.email.label }}" title="{{ form.email.help_text }}"
+                                type="text">
+                        </div>
+                        <div class="clearfix"></div>
                         <div class="button-login">
-                            <input type="submit" class="btn btn-primary" value="Alterar senha" />
+                            <button type="submit" class="btn btn-primary" >Redefinir senha</button>
+                            <a href="{% url 'login' %}" class="btn btn-danger">Cancelar</a>
                         </div>
                     </fieldset>
                 </form>
-                {% else %}
-                    <h3>O link de redefinição de senha é inválido, é possível que já tenha sido usado. Por favor faça um novo pedido de redefinição de senha.</h3>
-                {% endif %}
             </div><!--/span-->
         </div><!--/row-->
     </div>
@@ -67,3 +62,34 @@
 </body>
 
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- {% block content %} -->
+<!-- <div class="row-fluid"> -->
+
+<!-- <form method="post">{% csrf_token %} -->
+<!-- <div> -->
+
+<!-- <p>Insira seu email e enviaremos instruções para gerar uma nova senha.</p> -->
+
+<!-- <form method="post">{% csrf_token %} -->
+<!-- {{ form.email.errors }} -->
+<!-- <p><label for="id_email">Email:</label> {{ form.email }} <input type="submit" class="btn btn-primary" value="Redefinir senha" /></p> -->
+<!-- </form> -->
+
+<!-- {% endblock %} -->
