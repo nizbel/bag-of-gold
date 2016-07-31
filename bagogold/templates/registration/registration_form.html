@@ -29,7 +29,15 @@
                             {{ field.errors }}
                             <span>{{ field.label }}</span>
                             <div class="input-prepend">
-                                <span class="add-on"></span>
+                                <span class="add-on">
+                                    {% if 'username' in field.name %}
+                                        <i class="halflings-icon user"></i>
+                                    {% elif 'password' in field.name %}
+                                        <i class="halflings-icon lock"></i>
+                                    {% elif 'email' in field.name %}
+                                        <i class="halflings-icon envelope"></i>
+                                    {% endif %}
+                                </span>
                                 <input class="input-large span10" name="{{ field.name }}" id="{{ field.id_for_label }}" placeholder="{{ field.label }}" title="{{ field.help_text }}"
                                     type="{% if 'password' in field.name %}password{% else %}text{% endif %}">
                             </div>
