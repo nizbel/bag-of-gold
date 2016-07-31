@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row-fluid">
+
+<form method="post">{% csrf_token %}
+<div>
+
+<p>Insira seu email e enviaremos instruções para gerar uma nova senha.</p>
+
+<form method="post">{% csrf_token %}
+{{ form.email.errors }}
+<p><label for="id_email">Email:</label> {{ form.email }} <input type="submit" class="btn btn-primary" value="Redefinir senha" /></p>
+</form>
+
+{% endblock %}
