@@ -19,45 +19,15 @@
 <body>
 
     <div class="container-fluid-full">
-        
-        
                     
         <div class="row-fluid">
             <div class="login-box">
-                <h2>Cadastrar usuário</h2>
-                <form method="POST" class="form-horizontal">{% csrf_token %}
-                    <fieldset>
-                        {% for field in form %}
-                            {{ field.errors }}
-                            <span>{{ field.label }}</span>
-                            <div class="input-prepend">
-                                <span class="add-on"></span>
-                                <input class="input-large span10" name="{{ field.name }}" id="{{ field.id_for_label }}" placeholder="{{ field.label }}" title="{{ field.help_text }}"
-                                    type="{% if 'password' in field.name %}password{% else %}text{% endif %}">
-                            </div>
-                            <div class="clearfix"></div>
-                        {% endfor %}
-                        <div class="button-login">
-                            <button type="submit" class="btn btn-primary">Salvar</button>
-                            <a href="{% url 'login' %}" class="btn btn-danger">Cancelar</a>
-                        </div>
-                    </fieldset>
-                </form>
+                <h2>Cadastro feito com sucesso!</h2>
+                <button type="submit" name="acesso" value="1" class="btn btn-primary">Acessar</button>
             </div><!--/span-->
         </div><!--/row-->
         
-<!--         {% if messages %} -->
-<!--         <div class="row-fluid"> -->
-<!--             <div class="login-box"> -->
-<!--                 {% for message in messages %} -->
-<!--                 <h3>{{ message }}</h3> -->
-<!--                 {% endfor %} -->
-<!--             </div> -->
-<!--         </div> -->
-<!--         {% endif %} -->
-            
     </div>
-
 
     <!-- Core Scripts - Include with every page -->
     <script src="{% static "js/jquery-1.10.2.js" %}"></script>
