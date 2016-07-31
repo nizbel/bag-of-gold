@@ -181,7 +181,7 @@
                             <li class="dropdown-menu-title">
                                 <span>Minha conta</span>
                             </li>
-                            <li><a href="{% url "password_change" %}"><i class="halflings-icon user"></i> Alterar dados</a></li>
+                            <li><a href="{% url "configuracoes_conta_investidor" request.user.id %}"><i class="halflings-icon user"></i> Configurações</a></li>
                             <li><a href="{% url "logout" %}"><i class="halflings-icon off"></i> Sair</a></li>
                         </ul>
                     </li>
