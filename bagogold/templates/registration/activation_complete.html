@@ -23,7 +23,13 @@
         <div class="row-fluid">
             <div class="login-box">
                 <h2>Cadastro feito com sucesso!</h2>
-                <button type="submit" name="acesso" value="1" class="btn btn-primary">Acessar</button>
+                <form>
+                    <fieldset>
+                        <div class="button-login">
+                            <a href="{% url 'home' %}" class="btn btn-primary">Acessar</a>
+                        </div>
+                    </fieldset>
+                </form>
             </div><!--/span-->
         </div><!--/row-->
         
