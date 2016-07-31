@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 from django.contrib import messages
-from django.contrib.auth import views, authenticate
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth import login
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
+from django.dispatch import receiver
 from django.shortcuts import render_to_response, redirect
 from django.template.context import RequestContext
-from registration.backends.hmac import urls
-from django.dispatch import receiver
 from registration.signals import user_activated
 
 
@@ -21,3 +19,21 @@ def login_on_activation(sender, user, request, **kwargs):
     """Loga o usuário após ativação"""
     user.backend = 'django.contrib.auth.backends.ModelBackend'
     login(request, user)
+
+
+@login_required    
+def configuracoes_conta_investidor(request, id):
+    investidor = request.user.investidor
+    if int(id) != int(request.user.id):
+        raise PermissionDenied
+    
+    return render_to_response('investidores/configuracoes_conta.html', {}, context_instance=RequestContext(request))
+
+
+@login_required
+def alterar_dados_cadastrais(request, id):
+    investidor = request.user.investidor
+    if int(id) != int(request.user.id):
+        raise PermissionDenied
+    
+    

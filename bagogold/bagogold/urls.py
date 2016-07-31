@@ -16,11 +16,10 @@ urlpatterns = [
     url(r'^home/$', views.home.home, name='home'),
     
     # Investidores
-#     url(r'^cadastrar/$',  views.investidores.investidores.cadastrar, name='cadastrar'),
     url(r'^login/$', login, {'template_name': 'login.html'}, name='login'),
     url(r'^logout/$', logout, {'next_page': '/login'}, name='logout'),
-    url(r'^alterar_senha/$', password_change, {'template_name': 'registration/alterar_senha.html'}, name='password_change'),
-    url(r'^alterar_senha/sucesso/$', password_change_done, {'template_name': 'registration/senha_alterada.html'}, name='password_change_done'),
+    url(r'^minha_conta/alterar_senha/$', password_change, {'template_name': 'registration/alterar_senha.html'}, name='password_change'),
+    url(r'^minha_conta/alterar_senha/sucesso/$', password_change_done, {'template_name': 'registration/senha_alterada.html'}, name='password_change_done'),
     url(r'^senha_esquecida/$', password_reset, {'template_name': 'registration/confirmar_redefinir_senha.html'}, name='password_reset'),
     url(r'^senha_esquecida/email_enviado/$', password_reset_done, {'template_name': 'registration/redefinir_senha_email_enviado.html'}, name='password_reset_done'),
     url(r'^redefinicao_senha/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$', password_reset_confirm, {'template_name': 'registration/redefinir_senha.html'}, name='password_reset_confirm'),
@@ -33,6 +32,9 @@ urlpatterns = [
     url(r'^ativacao/(?P<activation_key>[-:\w]+)/$', registration_views.ActivationView.as_view(), name='ativar_cadastro'),
     url(r'^cadastro/completo/$', TemplateView.as_view(template_name='registration/registration_complete.html'), name='registration_complete'),
     url(r'^cadastro/fechado/$', TemplateView.as_view(template_name='registration/registration_closed.html'), name='registration_closed'),
+    url(r'^minha_conta/(?P<id>\d+)/$', views.investidores.investidores.configuracoes_conta_investidor, name='configuracoes_conta_investidor'),
+    url(r'^minha_conta/alterar_dados_cadastrais/(?P<id>\d+)/$', views.investidores.investidores.alterar_dados_cadastrais, name='alterar_dados_cadastrais'),
+    
     
     # Ações
     url(r'^acoes/$', views.acoes.home.home, name='home_acoes'),
