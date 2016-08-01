@@ -1,13 +1,17 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.views.investidores.investidores import logout
-from django.conf.urls import url
+from django.conf.urls import include, url
 from django.contrib.auth.views import login, password_change, \
     password_change_done, password_reset, password_reset_done, \
     password_reset_confirm, password_reset_complete
-from django.views.generic.base import RedirectView
+from django.views.generic.base import RedirectView, TemplateView
+from registration import validators
+from registration.backends.hmac import views as registration_views
+from registration.forms import RegistrationFormUniqueEmail
 import views
 
-
+# Altera valor para constante de email duplicado no Django-registration
+validators.DUPLICATE_EMAIL = 'Já existe um usuário cadastrado com esse email'
 
 urlpatterns = [
     # Geral
@@ -15,14 +19,25 @@ urlpatterns = [
     url(r'^home/$', views.home.home, name='home'),
     
     # Investidores
-    url(r'^login/$', login, {'template_name': 'login.html'}),
+    url(r'^login/$', login, {'template_name': 'login.html'}, name='login'),
     url(r'^logout/$', logout, {'next_page': '/login'}, name='logout'),
-    url(r'^password_change/$', password_change, name='password_change'),
-    url(r'^password_change/done/$', password_change_done, name='password_change_done'),
-    url(r'^password_reset/$', password_reset, name='password_reset'),
-    url(r'^password_reset/done/$', password_reset_done, name='password_reset_done'),
-    url(r'^reset/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$', password_reset_confirm, name='password_reset_confirm'),
-    url(r'^reset/done/$', password_reset_complete, name='password_reset_complete'),
+    url(r'^minha_conta/alterar_senha/$', password_change, {'template_name': 'registration/alterar_senha.html'}, name='password_change'),
+    url(r'^minha_conta/alterar_senha/sucesso/$', password_change_done, {'template_name': 'registration/senha_alterada.html'}, name='password_change_done'),
+    url(r'^senha_esquecida/$', password_reset, {'template_name': 'registration/confirmar_redefinir_senha.html'}, name='password_reset'),
+    url(r'^senha_esquecida/email_enviado/$', password_reset_done, {'template_name': 'registration/redefinir_senha_email_enviado.html'}, name='password_reset_done'),
+    url(r'^redefinicao_senha/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$', password_reset_confirm, {'template_name': 'registration/redefinir_senha.html'}, name='password_reset_confirm'),
+    url(r'^redefinicao_senha/completa/$', password_reset_complete, {'template_name': 'registration/senha_redefinida.html'}, name='password_reset_complete'),
+    # Django-registration
+    url(r'^cadastro/$', registration_views.RegistrationView.as_view(form_class=RegistrationFormUniqueEmail), name='cadastro'),
+    url(r'^ativacao/completa/$', TemplateView.as_view(template_name='registration/activation_complete.html'), name='registration_activation_complete'),
+    # The activation key can make use of any character from the
+    # URL-safe base64 alphabet, plus the colon as a separator.
+    url(r'^ativacao/(?P<activation_key>[-:\w]+)/$', registration_views.ActivationView.as_view(), name='ativar_cadastro'),
+    url(r'^cadastro/completo/$', TemplateView.as_view(template_name='registration/registration_complete.html'), name='registration_complete'),
+    url(r'^cadastro/fechado/$', TemplateView.as_view(template_name='registration/registration_closed.html'), name='registration_closed'),
+    url(r'^minha_conta/(?P<id>\d+)/$', views.investidores.investidores.configuracoes_conta_investidor, name='configuracoes_conta_investidor'),
+    url(r'^minha_conta/editar_dados_cadastrais/(?P<id>\d+)/$', views.investidores.investidores.editar_dados_cadastrais, name='editar_dados_cadastrais'),
+    
     
     # Ações
     url(r'^acoes/$', views.acoes.home.home, name='home_acoes'),
