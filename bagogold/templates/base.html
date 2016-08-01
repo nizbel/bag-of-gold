@@ -166,11 +166,11 @@
                             </li>   
                         </ul>
                     </li>
-                    <li>
-                        <a class="btn" href="#">
-                            <i class="halflings-icon white wrench"></i>
-                        </a>
-                    </li>
+<!--                     <li> -->
+<!--                         <a class="btn" href="#"> -->
+<!--                             <i class="halflings-icon white wrench"></i> -->
+<!--                         </a> -->
+<!--                     </li> -->
                     <!-- start: User Dropdown -->
                     <li class="dropdown">
                         <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
@@ -181,7 +181,7 @@
                             <li class="dropdown-menu-title">
                                 <span>Minha conta</span>
                             </li>
-                            <li><a href="#"><i class="halflings-icon user"></i> Alterar dados</a></li>
+                            <li><a href="{% url "configuracoes_conta_investidor" request.user.id %}"><i class="halflings-icon user"></i> Configurações</a></li>
                             <li><a href="{% url "logout" %}"><i class="halflings-icon off"></i> Sair</a></li>
                         </ul>
                     </li>
@@ -304,9 +304,6 @@
     <!-- end: Main Menu -->
     <!-- start: Content -->
     <div id="content">
-        <ul class="breadcrumb">
-            Breadcrumb
-        </ul>
         
         {% if messages %}
         <div class="row-fluid">

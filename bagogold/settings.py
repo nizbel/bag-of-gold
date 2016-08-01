@@ -112,6 +112,14 @@ USE_THOUSAND_SEPARATOR = True
 
 LOGIN_URL= '/login/'
 
+# Django-registration
+ACCOUNT_ACTIVATION_DAYS = 3
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = 'site.bagofgold@gmail.com'
+EMAIL_HOST_PASSWORD = 'Nizbel65'
+EMAIL_PORT = 587
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
