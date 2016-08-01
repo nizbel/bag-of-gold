@@ -33,7 +33,7 @@ urlpatterns = [
     url(r'^cadastro/completo/$', TemplateView.as_view(template_name='registration/registration_complete.html'), name='registration_complete'),
     url(r'^cadastro/fechado/$', TemplateView.as_view(template_name='registration/registration_closed.html'), name='registration_closed'),
     url(r'^minha_conta/(?P<id>\d+)/$', views.investidores.investidores.configuracoes_conta_investidor, name='configuracoes_conta_investidor'),
-    url(r'^minha_conta/alterar_dados_cadastrais/(?P<id>\d+)/$', views.investidores.investidores.alterar_dados_cadastrais, name='alterar_dados_cadastrais'),
+    url(r'^minha_conta/editar_dados_cadastrais/(?P<id>\d+)/$', views.investidores.investidores.editar_dados_cadastrais, name='editar_dados_cadastrais'),
     
     
     # Ações
