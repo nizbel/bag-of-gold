@@ -43,7 +43,7 @@
         </div>
         <div class="box-content">
             <div class="row-fluid">
-                <div class="span1"><strong>Corretagem:</strong></div>
+                <div class="span1"><strong>Corretagem padrão:</strong></div>
                 <div class="span3">{% if request.user.investidor.tipo_corretagem == 'F' %}R${% endif %}{{request.user.investidor.corretagem_padrao}}{% if request.user.investidor.tipo_corretagem == 'P' %}%{% endif %}</div>
             </div>
         </div>
