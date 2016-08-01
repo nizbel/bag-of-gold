@@ -9,7 +9,8 @@
         <div class="box-header">
             <h2>Dados da conta</h2>
             <div class="box-icon">
-                <a href="{% url "editar_dados_cadastrais" request.user.id %}" title="Editar"><i class="halflings-icon pencil"></i></a>
+                <a href="{% url "editar_dados_cadastrais" request.user.id %}" data-original-title="Editar"
+            data-rel="tooltip"><i class="halflings-icon pencil"></i></a>
                 <a href="#" class="btn-minimize"><i class="halflings-icon chevron-up"></i></a>
             </div>
         </div>
