@@ -23,5 +23,5 @@ class DadosCadastraisForm(forms.ModelForm):
         email = self.cleaned_data.get('email')
 
         if email and User.objects.filter(email=email).exclude(username=self.username):
-            raise forms.ValidationError('This email address is already in use. Please supply a different email address.')
+            raise forms.ValidationError('Este email já está em uso, por favor insira outro email')
         return email
