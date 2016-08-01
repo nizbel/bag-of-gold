@@ -7,24 +7,21 @@ from django.contrib.auth.models import User
 class DadosCadastraisForm(forms.ModelForm):
     first_name = forms.CharField(required=False)
     last_name = forms.CharField(required=False)
+    email = forms.EmailField(required=True)
 
     class Meta:
         model = User
-        fields = ('first_name', 'last_name')
+        fields = ('first_name', 'last_name', 'email')
+
+    def __init__(self, *args, **kwargs):
+        self.username = kwargs.pop('username')
+        super(DadosCadastraisForm, self).__init__(*args, **kwargs)
+        if self.initial['email'] and self.initial['email'] != '':
+            self.fields['email'].disabled = True
 
     def clean_email(self):
-        username = self.cleaned_data.get('username')
         email = self.cleaned_data.get('email')
 
-        if email and User.objects.filter(email=email).exclude(username=username):
+        if email and User.objects.filter(email=email).exclude(username=self.username):
             raise forms.ValidationError('This email address is already in use. Please supply a different email address.')
         return email
-
-    def save(self, commit=True):
-        user = super(RegistrationForm, self).save(commit=False)
-        user.email = self.cleaned_data['email']
-
-        if commit:
-            user.save()
-
-        return user
