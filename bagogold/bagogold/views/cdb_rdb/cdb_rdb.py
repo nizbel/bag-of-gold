@@ -628,6 +628,10 @@ def painel(request):
             operacao.imposto_renda =  Decimal(0.175) * (operacao.atual - operacao.inicial - operacao.iof)
         else: 
             operacao.imposto_renda =  Decimal(0.15) * (operacao.atual - operacao.inicial - operacao.iof)
+        
+        # Valor líquido
+        operacao.valor_liquido = operacao.atual - operacao.imposto_renda - operacao.iof
+            
         total_ir += operacao.imposto_renda
         total_iof += operacao.iof
     
@@ -636,7 +640,9 @@ def painel(request):
     dados['total_atual'] = total_atual
     dados['total_ir'] = total_ir
     dados['total_iof'] = total_iof
+    dados['total_liquido'] = total_atual - total_ir - total_iof
     dados['total_ganho_prox_dia'] = total_ganho_prox_dia
+    dados['data_di_mais_recente'] = data_final
     
     return render_to_response('cdb_rdb/painel.html', {'operacoes': operacoes, 'dados': dados},
                                context_instance=RequestContext(request))

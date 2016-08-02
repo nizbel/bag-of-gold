@@ -426,6 +426,7 @@ def painel(request):
     dados = {}
     dados['total_atual'] = total_atual
     dados['total_ganho_prox_dia'] = total_ganho_prox_dia
+    dados['data_di_mais_recente'] = data_final
     
     return render_to_response('lc/painel.html', {'operacoes': operacoes, 'dados': dados},
                                context_instance=RequestContext(request))
