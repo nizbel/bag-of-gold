@@ -62,6 +62,7 @@ urlpatterns = [
     url(r'^acoes/trading/inserir_operacao_acao/$', views.acoes.trade.inserir_operacao_acao, name='inserir_operacao_acao_t'),
     
     # Divisões
+    url(r'^divisoes/criar_transferencias/$', views.divisoes.divisoes.criar_transferencias, name='criar_transferencias'),
     url(r'^divisoes/detalhar_divisao/(?P<id>\d+)/$', views.divisoes.divisoes.detalhar_divisao, name='detalhar_divisao'),
     url(r'^divisoes/editar_transferencia/(?P<id>\d+)/$', views.divisoes.divisoes.editar_transferencia, name='editar_transferencia'),
     url(r'^divisoes/inserir_divisao/$', views.divisoes.divisoes.inserir_divisao, name='inserir_divisao'),

@@ -31,10 +31,41 @@ from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.http import HttpResponseRedirect
+from django.http.response import HttpResponse
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 import datetime
 
+def criar_transferencias(request):
+    investidor = request.user.investidor
+    
+    divisoes = Divisao.objects.filter(investidor=investidor)
+    
+    for divisao in divisoes:
+        print divisao
+        # Letra de crédito
+        for divisao_operacao in DivisaoOperacaoLC.objects.filter(divisao=divisao, operacao__tipo_operacao='C').order_by('operacao__data'):
+            saldo_no_dia = divisao.saldo_lc(divisao_operacao.operacao.data)
+#             print 'Compra na Data:', divisao_operacao.operacao.data, divisao_operacao.quantidade
+#             print 'Saldo:', divisao.saldo_lc(divisao_operacao.operacao.data)
+            
+            if saldo_no_dia < 0:
+                transferencia = TransferenciaEntreDivisoes(divisao_recebedora=divisao, investimento_destino='L', quantidade=-saldo_no_dia, data=divisao_operacao.operacao.data, descricao='Gerada automaticamente')
+#                 transferencia.save()
+#                 print transferencia
+                
+        # CDB / RDB
+        for divisao_operacao in DivisaoOperacaoCDB_RDB.objects.filter(divisao=divisao, operacao__tipo_operacao='C').order_by('operacao__data'):
+            saldo_no_dia = divisao.saldo_cdb_rdb(divisao_operacao.operacao.data)
+            print 'Compra na Data:', divisao_operacao.operacao.data, divisao_operacao.quantidade
+            print 'Saldo:', divisao.saldo_cdb_rdb(divisao_operacao.operacao.data)
+            
+            if saldo_no_dia < 0:
+                transferencia = TransferenciaEntreDivisoes(divisao_recebedora=divisao, investimento_destino='C', quantidade=-saldo_no_dia, data=divisao_operacao.operacao.data, descricao='Gerada automaticamente')
+                transferencia.save()
+                print transferencia
+        
+    return HttpResponse()
 
 def detalhar_divisao(request, id):
     # Usado para criar objetos vazios
