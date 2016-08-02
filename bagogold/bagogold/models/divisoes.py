@@ -350,6 +350,12 @@ class TransferenciaEntreDivisoes(models.Model):
     quantidade = models.DecimalField(u'Quantidade transferida', max_digits=11, decimal_places=2)
     descricao = models.CharField(u'Descrição', blank=True, null=True, max_length=150)
     
+    def __unicode__(self):
+        descricao = ('(' + self.descricao + ')') if self.descricao else ''
+        nome_divisao_cedente = self.divisao_cedente.nome if self.divisao_cedente else 'Meio externo'
+        nome_divisao_recebedora = self.divisao_recebedora.nome if self.divisao_recebedora else 'Meio externo'
+        return 'R$' + str(self.quantidade) + ' de ' + nome_divisao_cedente + ' para ' + nome_divisao_recebedora + ' em ' + str(self.data) + ' ' + descricao
+    
     def intradivisao(self):
         """
         Verifica se a transferência foi feita entre investimentos de uma mesma divisão

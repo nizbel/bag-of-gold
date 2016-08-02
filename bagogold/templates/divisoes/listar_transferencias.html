@@ -10,6 +10,7 @@
             <th>Divisão recebedora</th>
             <th>Data</th>
             <th>Quantidade</th>
+            <th>Descrição</th>
         </tr>
     </thead>
     <tbody>
@@ -25,6 +26,7 @@
         </td>
         <td>{{transferencia.data}}</td>
         <td>R${{transferencia.quantidade}}</td>
+        <td>{{transferencia.descricao|default:"Sem descrição"}}</td>
     </tr>
     {% endfor %}
     </tbody>

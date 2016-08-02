@@ -38,6 +38,7 @@
         {% endfor %}
         </tbody>
         </table>
+        <a href="{% url "criar_transferencias" %}" class="btn btn-warning">Criar transferências</a>
         </div>
     </div>
 </div>
@@ -140,8 +141,8 @@
     <div class="box-content">
     <h3>Operações não alocadas</h3>
     <!-- Botão para alocar automaticamente -->
-    <input type="button" class="btn btn-success" value="Inclusão automática" />
-    <table id="ordens" class="table table-striped table-bordered bootstrap-datatable datatable">
+    <input type="button" class="btn btn-warning" value="Inclusão automática" />
+    <table id="nao_alocadas" class="table table-striped table-bordered bootstrap-datatable datatable">
     <thead>
         <tr>
             <th>Tipo</th>
