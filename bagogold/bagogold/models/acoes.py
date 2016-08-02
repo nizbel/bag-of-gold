@@ -117,6 +117,9 @@ class ValorDiarioAcao (models.Model):
     data_hora = models.DateTimeField(u'Horário')
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)
     
+    def __unicode__(self):
+        return self.acao.ticker + ' em ' + str(self.data_hora) + ': R$' + str(self.preco_unitario)
+    
 class TaxaCustodiaAcao (models.Model):
     valor_mensal = models.DecimalField(u'Valor mensal', max_digits=11, decimal_places=2)
     ano_vigencia = models.IntegerField(u'Ano de início de vigência')
