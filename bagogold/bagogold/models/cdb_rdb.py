@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
 from django import forms
 from django.db import models
 import datetime
@@ -52,6 +53,13 @@ class OperacaoCDB_RDB (models.Model):
             return HistoricoCarenciaCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.investimento).order_by('-data')[0].carencia
         except:
             return HistoricoCarenciaCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.investimento).carencia
+        
+    def data_vencimento(self):
+        data_carencia = self.data + datetime.timedelta(days=self.carencia())
+        # Verifica se é fim de semana ou feriado
+        while data_carencia.weekday() > 4 or verificar_feriado_bovespa(data_carencia):
+            data_carencia += datetime.timedelta(days=1)
+        return data_carencia
     
     def operacao_compra_relacionada(self):
         if self.tipo_operacao == 'V':
