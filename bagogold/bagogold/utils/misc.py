@@ -2,6 +2,7 @@
 from bagogold.bagogold.models.td import HistoricoIPCA
 from decimal import Decimal
 from urllib2 import Request, urlopen, URLError, HTTPError
+import datetime
 import math
 import re
 
@@ -61,11 +62,25 @@ def verificar_feriado_bovespa(data):
     dia_mes = (data.day, data.month)
     lista_feriados = ((1, 1), # Confraternização Universal
                       (21, 4), # Tiradentes
-                      (7, 7), # Independência do Brasil
+                      (1, 5), # Dia do trabalho
+                      (7, 9), # Independência do Brasil
                       (12, 10), # Nossa Senhora Aparecida
                       (2, 11), # Finados
                       (15, 11), # Proclamação da República
+                      (25, 12), # Natal
                       (31, 12), # Ano novo
                       )
     return (dia_mes in lista_feriados)
 
+def qtd_dias_uteis_no_periodo(data_inicial, data_final):
+    """
+    Calcula a quantidade de dias úteis entre as datas enviadas, incluindo a primeira e excluindo a segunda
+    Parâmetros: Data inicial (inclusiva)
+                Data final (exclusiva)
+    Retorno: Número de dias entre as datas
+    """
+    # Se data final menor que inicial, retornar erro
+    if data_final < data_inicial:
+        raise ValueError('Data final deve ser igual ou maior que data inicial')
+    daygenerator = (data_inicial + datetime.timedelta(days=x) for x in xrange((data_final - data_inicial).days))
+    return sum(1 for day in daygenerator if day.weekday() < 5 and not verificar_feriado_bovespa(day))

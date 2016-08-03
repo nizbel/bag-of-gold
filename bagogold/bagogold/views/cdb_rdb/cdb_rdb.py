@@ -10,7 +10,8 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoCDB_RDB
 from bagogold.bagogold.models.lc import HistoricoTaxaDI
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa, \
     calcular_valor_atualizado_com_taxas
-from bagogold.bagogold.utils.misc import calcular_iof_regressivo
+from bagogold.bagogold.utils.misc import calcular_iof_regressivo, \
+    qtd_dias_uteis_no_periodo
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -607,6 +608,7 @@ def painel(request):
     total_ir = 0
     total_iof = 0
     total_ganho_prox_dia = 0
+    total_vencimento = 0
     for operacao in operacoes:
         # Calcular o ganho no dia seguinte, considerando taxa do dia anterior
         operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa) - operacao.atual
@@ -616,7 +618,7 @@ def painel(request):
         
         # Calcular impostos
         qtd_dias = (datetime.date.today() - operacao.data).days
-        print qtd_dias, calcular_iof_regressivo(qtd_dias)
+#         print qtd_dias, calcular_iof_regressivo(qtd_dias)
         # IOF
         operacao.iof = Decimal(calcular_iof_regressivo(qtd_dias)) * (operacao.atual - operacao.inicial)
         # IR
@@ -631,18 +633,27 @@ def painel(request):
         
         # Valor líquido
         operacao.valor_liquido = operacao.atual - operacao.imposto_renda - operacao.iof
-            
+        
+        # Estimativa para o valor do investimento na data de vencimento
+        qtd_dias_uteis_ate_vencimento = qtd_dias_uteis_no_periodo(data_final + datetime.timedelta(days=1), operacao.data_vencimento())
+        operacao.valor_vencimento = calcular_valor_atualizado_com_taxas({HistoricoTaxaDI.objects.get(data=data_final).taxa: qtd_dias_uteis_ate_vencimento},
+                                             operacao.atual, operacao.taxa)
+        str_auxiliar = str(operacao.valor_vencimento.quantize(Decimal('.0001')))
+        operacao.valor_vencimento = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+        
         total_ir += operacao.imposto_renda
         total_iof += operacao.iof
+        total_vencimento += operacao.valor_vencimento
     
     # Popular dados
     dados = {}
+    dados['data_di_mais_recente'] = data_final
     dados['total_atual'] = total_atual
     dados['total_ir'] = total_ir
     dados['total_iof'] = total_iof
     dados['total_liquido'] = total_atual - total_ir - total_iof
     dados['total_ganho_prox_dia'] = total_ganho_prox_dia
-    dados['data_di_mais_recente'] = data_final
+    dados['total_vencimento'] = total_vencimento
     
     return render_to_response('cdb_rdb/painel.html', {'operacoes': operacoes, 'dados': dados},
                                context_instance=RequestContext(request))
