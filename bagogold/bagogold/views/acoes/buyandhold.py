@@ -300,6 +300,8 @@ def historico(request):
     acoes = list(set(operacoes.values_list('acao', flat=True)))
 
     proventos = Provento.objects.filter(acao__in=acoes).exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).order_by('data_ex')
+    for acao_id in operacoes.values_list('acao', flat=True):
+        proventos = proventos.filter((Q(acao__id=acao_id) & Q(data_ex__gt=operacoes.filter(acao__id=acao_id)[0].data)) | ~Q(acao__id=acao_id))
     for provento in proventos:
         provento.data = provento.data_ex
         provento.emolumentos = 0
