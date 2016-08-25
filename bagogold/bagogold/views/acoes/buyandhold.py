@@ -23,7 +23,7 @@ from django.db.models import Q
 from django.db.models.functions import Concat
 from django.forms import inlineformset_factory
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response, get_object_or_404
 from django.template.context import RequestContext
 from itertools import chain
 from operator import attrgetter
@@ -44,7 +44,7 @@ def editar_operacao_acao(request, id):
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoAcaoFormSet)
-    operacao = get_object_or_404(OperacaoAcao, pk=id, destinacao='B')
+    operacao_acao = get_object_or_404(OperacaoAcao, pk=id, destinacao='B')
     
     # Verifica se a operação é do investidor, senão, jogar erro de permissão
     if operacao_acao.investidor != investidor:
@@ -174,6 +174,8 @@ def estatisticas_acao(request, ticker=None):
     for item in historico:
         data_formatada = str(calendar.timegm(item.data.timetuple()) * 1000)
         graf_historico += [[data_formatada, float(item.preco_unitario)]]
+        if item.data > datetime.date(2016, 7, 1):
+            print item.data
     
     for item in lista_conjunta:
 #         print item
