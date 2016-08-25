@@ -130,22 +130,30 @@ def editar_provento_acao(request, id):
 def estatisticas_acao(request, ticker=None):
     investidor = request.user.investidor
     if (ticker):
-        acao = Acao.objects.get(ticker=ticker)
+        acao = get_object_or_404(Acao, ticker=ticker)
     else:
         acao = Acao.objects.all()[0]
     
     # Buscar historicos
     historico = HistoricoAcao.objects.filter(acao__ticker=ticker).order_by('data')
+    if not historico:
+        return render_to_response('acoes/buyandhold/estatisticas_acao.html', 
+                              {'graf_preco_medio': list(), 'graf_preco_medio_valor_acao': list(),
+                               'graf_historico_proventos': list(), 'graf_historico': list()},
+                              context_instance=RequestContext(request))
+        
     operacoes = OperacaoAcao.objects.filter(destinacao='B', acao__ticker=ticker, investidor=investidor).exclude(data__isnull=True).order_by('data')
     # Pega os proventos em ações recebidos por outras ações
     proventos_em_acoes = AcaoProvento.objects.filter(acao_recebida__ticker=ticker).exclude(provento__acao__ticker=ticker).order_by('provento__data_ex')
     
     # Verifica se houve operação
     # TODO testar data mais antiga para ver se é operação ou provento em ação de outra ação
+    data_mais_antiga = datetime.date.today()
     if operacoes:
-        proventos = Provento.objects.filter(acao__ticker=ticker).exclude(data_ex__isnull=True).filter(data_ex__range=[operacoes[0].data, datetime.date.today()]).order_by('data_ex')
-    else:
-        proventos = Provento.objects.filter(acao__ticker=ticker).exclude(data_ex__isnull=True).filter(data_ex__range=[proventos_em_acoes[0].provento.data_ex, datetime.date.today()]).order_by('data_ex')
+        data_mais_antiga = min(data_mais_antiga, operacoes[0].data)
+    if proventos_em_acoes:
+        data_mais_antiga = min(data_mais_antiga, proventos_em_acoes[0].data)
+    proventos = Provento.objects.filter(acao__ticker=ticker).exclude(data_ex__isnull=True).filter(data_ex__range=[data_mais_antiga, datetime.date.today()]).order_by('data_ex')
     for provento in proventos:
         provento.data = provento.data_ex
     
