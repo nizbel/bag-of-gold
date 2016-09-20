@@ -35,13 +35,11 @@ def editar_operacao_lc(request, id):
     
     if request.method == 'POST':
         if request.POST.get("save"):
-            form_operacao_lc = OperacaoLetraCreditoForm(request.POST, instance=operacao_lc)
-            operacao_compra = form_operacao_lc.cleaned_data['operacao_compra']
-            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lc, operacao_compra=operacao_compra, investidor=investidor)
+            form_operacao_lc = OperacaoLetraCreditoForm(request.POST, instance=operacao_lc, investidor=investidor)
             
             if form_operacao_lc.is_valid():
                 operacao_compra = form_operacao_lc.cleaned_data['operacao_compra']
-                formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lc, operacao_compra=operacao_compra)
+                formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lc, operacao_compra=operacao_compra, investidor=investidor)
                 if formset_divisao.is_valid():
                     operacao_lc.save()
                     formset_divisao.save()
