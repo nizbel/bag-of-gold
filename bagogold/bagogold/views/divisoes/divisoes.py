@@ -28,6 +28,7 @@ from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia, \
 from bagogold.bagogold.utils.td import calcular_qtd_titulos_ate_dia_por_divisao
 from decimal import Decimal
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.http import HttpResponseRedirect
@@ -68,11 +69,16 @@ def criar_transferencias(request):
     return HttpResponse()
 
 def detalhar_divisao(request, id):
+    investidor = request.user.investidor
+    
     # Usado para criar objetos vazios
     class Object(object):
         pass
     
     divisao = Divisao.objects.get(id=id)
+    if divisao.investidor != investidor:
+        raise PermissionDenied
+    
     divisao.valor_total = 0
     
     composicao = {}
@@ -246,11 +252,47 @@ def detalhar_divisao(request, id):
     return render_to_response('divisoes/detalhar_divisao.html', {'divisao': divisao, 'composicao': composicao},
                                context_instance=RequestContext(request))
 
-def editar_divisao(request):
-    print 'oi'
+def editar_divisao(request, id):
+    investidor = request.user.investidor
+    
+    divisao = Divisao.objects.get(pk=id)
+    if divisao.investidor != investidor:
+        raise PermissionDenied
+    
+    if request.method == 'POST':
+        if request.POST.get("save"):
+            form = DivisaoForm(request.POST, instance=divisao)
+            
+            if form.is_valid():
+                divisao.save()
+                messages.success(request, 'Divisão editada com sucesso')
+                return HttpResponseRedirect(reverse('listar_divisoes'))
+            for erros in form.errors.values():
+                for erro in erros:
+                    messages.error(request, erro)
+            return render_to_response('divisoes/editar_divisao.html', {'form': form, 'divisao': divisao},
+                      context_instance=RequestContext(request))
+                
+        elif request.POST.get("delete"):
+            divisao.delete()
+            messages.success(request, 'Divisão excluída com sucesso')
+            return HttpResponseRedirect(reverse('listar_divisoes'))
+ 
+    else:
+        form = DivisaoForm(instance=divisao)
+            
+    return render_to_response('divisoes/editar_divisao.html', {'form': form, 'divisao': divisao},
+                              context_instance=RequestContext(request))
     
 def editar_transferencia(request, id):
+    investidor = request.user.investidor
+    
+    # Checar ambas as divisões
     transferencia = TransferenciaEntreDivisoes.objects.get(pk=id)
+    if transferencia.divisao_cedente and transferencia.divisao_cedente.investidor != investidor:
+        raise PermissionDenied
+    if transferencia.divisao_recebedora and transferencia.divisao_recebedora.investidor != investidor:
+        raise PermissionDenied
     
     if request.method == 'POST':
         if request.POST.get("save"):
@@ -263,7 +305,7 @@ def editar_transferencia(request, id):
             for erros in form.errors.values():
                 for erro in erros:
                     messages.error(request, erro)
-            return render_to_response('td/editar_transferencia.html', {'form': form},
+            return render_to_response('divisoes/editar_transferencia.html', {'form': form},
                       context_instance=RequestContext(request))
                 
         elif request.POST.get("delete"):
@@ -274,7 +316,7 @@ def editar_transferencia(request, id):
     else:
         form = TransferenciaEntreDivisoesForm(instance=transferencia)
             
-    return render_to_response('td/editar_transferencia.html', {'form': form},
+    return render_to_response('divisoes/editar_transferencia.html', {'form': form},
                               context_instance=RequestContext(request))
 
 def inserir_divisao(request):
