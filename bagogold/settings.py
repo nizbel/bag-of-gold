@@ -26,7 +26,11 @@ SECRET_KEY = '3$z^a73@q+n$h@v)j-$vo0j5k((s6u#jebu5t9qhcl+k!@zg=s'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# ALLOWED_HOSTS = ['bagofgold.com.br']
+
+ADMINS = [('Guilherme', 'kingbowserii@gmail.com'), ]
+MANAGERS = [('Guilherme', 'kingbowserii@gmail.com'), ]
+SERVER_EMAIL = 'site.bagofgold@gmail.com'
 
 
 # Application definition
@@ -113,6 +117,7 @@ USE_THOUSAND_SEPARATOR = True
 LOGIN_URL= '/login/'
 
 # Django-registration
+DEFAULT_FROM_EMAIL = 'Bag of Gold <site.bagofgold@gmail.com>'
 ACCOUNT_ACTIVATION_DAYS = 3
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
