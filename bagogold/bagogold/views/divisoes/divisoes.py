@@ -47,13 +47,13 @@ def criar_transferencias(request):
         # Letra de crédito
         for divisao_operacao in DivisaoOperacaoLC.objects.filter(divisao=divisao, operacao__tipo_operacao='C').order_by('operacao__data'):
             saldo_no_dia = divisao.saldo_lc(divisao_operacao.operacao.data)
-#             print 'Compra na Data:', divisao_operacao.operacao.data, divisao_operacao.quantidade
-#             print 'Saldo:', divisao.saldo_lc(divisao_operacao.operacao.data)
+            print 'Compra na Data:', divisao_operacao.operacao.data, divisao_operacao.quantidade
+            print 'Saldo:', divisao.saldo_lc(divisao_operacao.operacao.data)
             
             if saldo_no_dia < 0:
                 transferencia = TransferenciaEntreDivisoes(divisao_recebedora=divisao, investimento_destino='L', quantidade=-saldo_no_dia, data=divisao_operacao.operacao.data, descricao='Gerada automaticamente')
 #                 transferencia.save()
-#                 print transferencia
+                print transferencia
                 
         # CDB / RDB
         for divisao_operacao in DivisaoOperacaoCDB_RDB.objects.filter(divisao=divisao, operacao__tipo_operacao='C').order_by('operacao__data'):
@@ -63,7 +63,7 @@ def criar_transferencias(request):
             
             if saldo_no_dia < 0:
                 transferencia = TransferenciaEntreDivisoes(divisao_recebedora=divisao, investimento_destino='C', quantidade=-saldo_no_dia, data=divisao_operacao.operacao.data, descricao='Gerada automaticamente')
-                transferencia.save()
+#                 transferencia.save()
                 print transferencia
         
     return HttpResponse()
