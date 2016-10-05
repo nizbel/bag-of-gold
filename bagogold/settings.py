@@ -30,7 +30,7 @@ DEBUG = True
 
 ADMINS = [('Guilherme', 'kingbowserii@gmail.com'), ]
 MANAGERS = [('Guilherme', 'kingbowserii@gmail.com'), ]
-SERVER_EMAIL = 'site.bagofgold@gmail.com'
+SERVER_EMAIL = 'django@bagofgold.com.br'
 
 
 # Application definition
@@ -122,7 +122,7 @@ ACCOUNT_ACTIVATION_DAYS = 3
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_HOST_USER = 'site.bagofgold@gmail.com'
-EMAIL_HOST_PASSWORD = 'Nizbel65'
+EMAIL_HOST_PASSWORD = 'EvangelioN64'
 EMAIL_PORT = 587
 
 # Static files (CSS, JavaScript, Images)
