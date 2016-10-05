@@ -135,5 +135,5 @@ STATICFILES_DIRS = [
     '/var/www/static/',
 ]
 
-# Buscar configurações adicionais
+# Buscar configuracoes adicionais
 from conf.settings_local import *
