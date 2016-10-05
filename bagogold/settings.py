@@ -134,3 +134,5 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR + '/bagogold', "static"),
     '/var/www/static/',
 ]
+
+import conf.settings_local
