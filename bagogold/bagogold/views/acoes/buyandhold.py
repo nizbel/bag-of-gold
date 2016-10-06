@@ -182,8 +182,6 @@ def estatisticas_acao(request, ticker=None):
     for item in historico:
         data_formatada = str(calendar.timegm(item.data.timetuple()) * 1000)
         graf_historico += [[data_formatada, float(item.preco_unitario)]]
-        if item.data > datetime.date(2016, 7, 1):
-            print item.data
     
     for item in lista_conjunta:
 #         print item
