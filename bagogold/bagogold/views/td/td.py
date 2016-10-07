@@ -153,7 +153,7 @@ def aconselhamento_td(request):
         fii.rendimento_prov = calcular_rendimento_proventos_fii_12_meses(fii)
         if fii.rendimento_prov > 0:
             fii.variacao_12_meses = calcular_variacao_percentual_fii_por_periodo(fii, data_12_meses, datetime.date.today())
-            print type(fii.rendimento_prov)
+#             print type(fii.rendimento_prov)
     fiis = [fii for fii in fiis if fii.rendimento_prov > 0]
     fiis.sort(key=lambda x: x.rendimento_prov, reverse=True)
     
@@ -283,7 +283,7 @@ def historico_td(request):
         total_vencimento_atual = 0
         for titulo in qtd_titulos.keys():
             if qtd_titulos[titulo] > 0:
-                print titulo, titulo.valor_vencimento()
+#                 print titulo, titulo.valor_vencimento()
                 total_vencimento_atual += qtd_titulos[titulo] * titulo.valor_vencimento(data=item.data)
         # Verifica se altera ultima posicao do grafico ou adiciona novo registro
         if len(graf_total_venc) > 0 and graf_total_venc[-1][0] == data_formatada:
