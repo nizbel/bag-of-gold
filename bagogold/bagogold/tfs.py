@@ -54,7 +54,7 @@ def ler_serie_historica_anual_bovespa(nome_arquivo):
                         empresa_existe = False
                         for acao_listada in acoes_lista:
                             if ticker[0:4] in acao_listada:
-                                print 'Inserido'
+#                                 print 'Inserido'
                                 empresa_existe = True
                                 empresa = Acao.objects.get(ticker=acao_listada).empresa
                                 break
@@ -140,7 +140,7 @@ class BuscarValoresDiariosAcaoThread(Thread):
             connection.request('GET', PUBLIC_API_URL + '?' + urlencode({ 'q': yql, 'format': 'json', 'env': DATATABLES_URL }))
             resultado = simplejson.loads(connection.getresponse().read())
             resultados_diarios_acao[self.indice_thread] = resultado
-            print self.indice_thread
+#             print self.indice_thread
         except Exception as ex:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -164,7 +164,7 @@ class BuscarValoresDiariosFIIThread(Thread):
             connection.request('GET', PUBLIC_API_URL + '?' + urlencode({ 'q': yql, 'format': 'json', 'env': DATATABLES_URL }))
             resultado = simplejson.loads(connection.getresponse().read())
             resultados_diarios_fii[self.indice_thread] = resultado
-            print self.indice_thread
+#             print self.indice_thread
         except Exception as ex:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
