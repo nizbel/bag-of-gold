@@ -21,6 +21,6 @@ def buscar_valores_diarios():
             if data > data_ultimo_registro:
                 taxa = []
                 ftp.retrlines('RETR ' + nome, taxa.append)
-                print '%s: %s' % (data, Decimal(taxa[0]) / 100)
+#                 print '%s: %s' % (data, Decimal(taxa[0]) / 100)
                 historico = HistoricoTaxaDI(data = data, taxa = Decimal(taxa[0]) / 100)
                 historico.save()
