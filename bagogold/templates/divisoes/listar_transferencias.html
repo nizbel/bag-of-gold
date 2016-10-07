@@ -24,7 +24,7 @@
             {% else %}Fonte externa
             {% endif %}
         </td>
-        <td>{{transferencia.data}}</td>
+        <td>{{transferencia.data|date:"Y-m-d"}}</td>
         <td>R${{transferencia.quantidade}}</td>
         <td>{{transferencia.descricao|default:"Sem descrição"}}</td>
     </tr>
