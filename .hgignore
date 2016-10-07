@@ -10,6 +10,5 @@ README.md
 *.pyc
 *.orig
 COTAHIST_A.tar.gz
-db_dump.sh~
-crontab_copy~
 conf/settings_local.py
+*~
