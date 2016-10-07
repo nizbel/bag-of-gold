@@ -33,10 +33,10 @@ def buscar_historico_ipca():
             linha = linha.replace(' ', '').replace('&nbsp;', '')
             campos = re.findall('([\S]*)', linha, re.MULTILINE|re.DOTALL|re.IGNORECASE)
             campos = filter(bool, campos)
-            print campos
+#             print campos
             for mes in range(1,13):
                 try:
-                    print 'Ano:', campos[0], 'Mes:', mes, 'Valor:', Decimal(campos[mes].replace(',', '.'))
+#                     print 'Ano:', campos[0], 'Mes:', mes, 'Valor:', Decimal(campos[mes].replace(',', '.'))
                     historico_ipca = HistoricoIPCA(ano=int(campos[0]), mes=mes, valor=Decimal(campos[mes].replace(',', '.')))
                     historico_ipca.save()
                 except:

@@ -17,7 +17,7 @@ class PreencheHistoricoAcaoThread(Thread):
     def run(self):
         try:
             for index, ticker in enumerate(self.tickers):
-                print 'Starting', ticker, '%s%%' % (format(float(index)/len(self.tickers)*100, '.2f'))
+#                 print 'Starting', ticker, '%s%%' % (format(float(index)/len(self.tickers)*100, '.2f'))
                 preencher_historico_acao(ticker, buscar_historico(ticker))
         except Exception as ex:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
@@ -33,7 +33,7 @@ class PreencheHistoricoFIIThread(Thread):
     def run(self):
         try:
             for index, ticker in enumerate(self.tickers):
-                print 'Starting', ticker, '%s%%' % (format(float(index)/len(self.tickers)*100, '.2f'))
+#                 print 'Starting', ticker, '%s%%' % (format(float(index)/len(self.tickers)*100, '.2f'))
                 preencher_historico_fii(ticker, buscar_historico(ticker))
         except Exception as ex:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
