@@ -1,6 +1,7 @@
 syntax: regexp
 .git/*
-backup-*
+/backup-*
+/ultimo_backup-*
 doc proventos/*
 syntax: glob
 .project
@@ -12,3 +13,4 @@ README.md
 COTAHIST_A.tar.gz
 conf/settings_local.py
 *~
+backups.tar.gz
