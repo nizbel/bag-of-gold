@@ -117,7 +117,7 @@ USE_THOUSAND_SEPARATOR = True
 LOGIN_URL= '/login/'
 
 # Django-registration
-DEFAULT_FROM_EMAIL = 'Bag of Gold <do-not-reply@gmail.com>'
+DEFAULT_FROM_EMAIL = 'Bag of Gold <do-not-reply@bagofgold.com.br>'
 ACCOUNT_ACTIVATION_DAYS = 3
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
