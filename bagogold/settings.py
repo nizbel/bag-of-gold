@@ -117,12 +117,12 @@ USE_THOUSAND_SEPARATOR = True
 LOGIN_URL= '/login/'
 
 # Django-registration
-DEFAULT_FROM_EMAIL = 'Bag of Gold <site.bagofgold@gmail.com>'
+DEFAULT_FROM_EMAIL = 'Bag of Gold <do-not-reply@gmail.com>'
 ACCOUNT_ACTIVATION_DAYS = 3
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = 'site.bagofgold@gmail.com'
-EMAIL_HOST_PASSWORD = 'EvangelioN64'
+EMAIL_HOST_USER = 'bagofgold@bagofgold.com.br'
+EMAIL_HOST_PASSWORD = '9jU3IU8hse'
 EMAIL_PORT = 587
 
 # Static files (CSS, JavaScript, Images)
