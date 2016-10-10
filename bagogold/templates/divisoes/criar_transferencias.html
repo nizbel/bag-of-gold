@@ -16,8 +16,12 @@
                 </li>
                 {% endfor %}
             </ol>
-            <button type="submit" name="save" value="1" class="btn">Salvar</button>
-            <button type="submit" name="cancel" value="1" class="btn btn-danger">Cancelar</button>
+            <form method="POST" class="post-form form-horizontal">{% csrf_token %}
+                <div class="form-actions">
+                    <button type="submit" name="save" value="1" class="btn">Salvar</button>
+                    <button type="submit" name="cancel" value="1" class="btn btn-danger">Cancelar</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
