@@ -1,0 +1,25 @@
+    {% extends "base.html" %}
+
+{% block content %}
+<h1>Transferências a criar</h1>
+
+<div class="row-fluid">
+    <div class="box span12">
+        <div class="box-content">
+            <ol>
+                {% for transferencia in transferencias %}
+                <li>
+                    <div class="box">
+                        <span>{{transferencia.divisao_recebedora.nome}} ({{transferencia.investimento_destino}}) 
+                        Quantidade: R${{transferencia.quantidade}} em {{transferencia.data}} --- {{transferencia.operacao}}</span>
+                    </div>
+                </li>
+                {% endfor %}
+            </ol>
+            <button type="submit" name="save" value="1" class="btn">Salvar</button>
+            <button type="submit" name="cancel" value="1" class="btn btn-danger">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
