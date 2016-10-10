@@ -56,7 +56,7 @@ def criar_transferencias(request):
         print divisao
         # Letra de crédito
         for divisao_operacao in DivisaoOperacaoLC.objects.filter(divisao=divisao, operacao__tipo_operacao='C').order_by('operacao__data'):
-            saldo_no_dia = divisao.saldo_lc(divisao_operacao.operacao.data)
+            saldo_no_dia = divisao.saldo_lc(divisao_operacao.operacao.data) + sum([transferencia.quantidade for transferencia in transferencias if transferencia.investimento_destino == 'L'])
 #             print 'Compra na Data:', divisao_operacao.operacao.data, divisao_operacao.quantidade
 #             print 'Saldo:', divisao.saldo_lc(divisao_operacao.operacao.data)
             
@@ -68,7 +68,7 @@ def criar_transferencias(request):
                 
         # CDB / RDB
         for divisao_operacao in DivisaoOperacaoCDB_RDB.objects.filter(divisao=divisao, operacao__tipo_operacao='C').order_by('operacao__data'):
-            saldo_no_dia = divisao.saldo_cdb_rdb(divisao_operacao.operacao.data)
+            saldo_no_dia = divisao.saldo_cdb_rdb(divisao_operacao.operacao.data) + sum([transferencia.quantidade for transferencia in transferencias if transferencia.investimento_destino == 'C'])
 #             print 'Compra na Data:', divisao_operacao.operacao.data, divisao_operacao.quantidade
 #             print 'Saldo:', divisao.saldo_cdb_rdb(divisao_operacao.operacao.data)
             
@@ -80,7 +80,7 @@ def criar_transferencias(request):
                 
         # Tesouro Direto
         for divisao_operacao in DivisaoOperacaoTD.objects.filter(divisao=divisao, operacao__tipo_operacao='C').order_by('operacao__data'):
-            saldo_no_dia = divisao.saldo_td(divisao_operacao.operacao.data)
+            saldo_no_dia = divisao.saldo_td(divisao_operacao.operacao.data) + sum([transferencia.quantidade for transferencia in transferencias if transferencia.investimento_destino == 'T'])
             print 'Compra na Data:', divisao_operacao.operacao.data, divisao_operacao.quantidade
             print 'Saldo:', divisao.saldo_td(divisao_operacao.operacao.data)
             
