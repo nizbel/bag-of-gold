@@ -126,6 +126,7 @@
             <!-- start: Header Menu -->
             <div class="nav-no-collapse header-nav">
                 <ul class="nav pull-right">
+                {% comment %}
 <!--                     <li class="dropdown hidden-phone"> -->
 <!--                         <a class="btn dropdown-toggle" data-toggle="dropdown" href="#"> -->
 <!--                             <i class="halflings-icon white warning-sign"></i> -->
@@ -188,6 +189,7 @@
 <!--                         </a> -->
 <!--                     </li> -->
                     <!-- start: User Dropdown -->
+                    {% endcomment %}
                     <li class="dropdown">
                         <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
                             <i class="halflings-icon white user"></i> {{ request.user.username }}
