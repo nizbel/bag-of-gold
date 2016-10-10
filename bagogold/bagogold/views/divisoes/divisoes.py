@@ -26,7 +26,8 @@ from bagogold.bagogold.utils.fundo_investimento import \
 from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia, \
     calcular_valor_lc_ate_dia_por_divisao
 from bagogold.bagogold.utils.td import calcular_qtd_titulos_ate_dia_por_divisao
-from decimal import Decimal
+
+from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
@@ -35,8 +36,11 @@ from django.http import HttpResponseRedirect
 from django.http.response import HttpResponse
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
+
+from decimal import Decimal
 import datetime
 
+@login_required
 def criar_transferencias(request):
     investidor = request.user.investidor
     
@@ -68,6 +72,7 @@ def criar_transferencias(request):
         
     return HttpResponse()
 
+@login_required
 def detalhar_divisao(request, id):
     investidor = request.user.investidor
     
@@ -252,6 +257,7 @@ def detalhar_divisao(request, id):
     return render_to_response('divisoes/detalhar_divisao.html', {'divisao': divisao, 'composicao': composicao},
                                context_instance=RequestContext(request))
 
+@login_required
 def editar_divisao(request, id):
     investidor = request.user.investidor
     
@@ -284,6 +290,7 @@ def editar_divisao(request, id):
     return render_to_response('divisoes/editar_divisao.html', {'form': form, 'divisao': divisao},
                               context_instance=RequestContext(request))
     
+@login_required
 def editar_transferencia(request, id):
     investidor = request.user.investidor
     
@@ -318,7 +325,8 @@ def editar_transferencia(request, id):
             
     return render_to_response('divisoes/editar_transferencia.html', {'form': form},
                               context_instance=RequestContext(request))
-
+    
+@login_required
 def inserir_divisao(request):
     investidor = request.user.investidor
     
@@ -334,6 +342,7 @@ def inserir_divisao(request):
             
     return render_to_response('divisoes/inserir_divisao.html', {'form': form}, context_instance=RequestContext(request))
 
+@login_required
 def inserir_transferencia(request):
     if request.method == 'POST':
         form = TransferenciaEntreDivisoesForm(request.POST)
@@ -346,7 +355,7 @@ def inserir_transferencia(request):
             
     return render_to_response('divisoes/inserir_transferencia.html', {'form': form}, context_instance=RequestContext(request))
 
-
+@login_required
 def listar_divisoes(request):
     investidor = request.user.investidor
     
@@ -426,6 +435,7 @@ def listar_divisoes(request):
     
     return render_to_response('divisoes/listar_divisoes.html', {'divisoes': divisoes, 'operacoes_nao_alocadas': operacoes_nao_alocadas}, context_instance=RequestContext(request))
 
+@login_required
 def listar_transferencias(request):
     investidor = request.user.investidor
     
