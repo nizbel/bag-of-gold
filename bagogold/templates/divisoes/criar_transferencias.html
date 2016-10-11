@@ -6,6 +6,7 @@
 <div class="row-fluid">
     <div class="box span12">
         <div class="box-content">
+            <form method="POST" class="post-form form-horizontal">{% csrf_token %}
             <ol>
                 {% for transferencia in transferencias %}
                 <li>
@@ -16,11 +17,10 @@
                 </li>
                 {% endfor %}
             </ol>
-            <form method="POST" class="post-form form-horizontal">{% csrf_token %}
-                <div class="form-actions">
-                    <button type="submit" name="save" value="1" class="btn">Salvar</button>
-                    <button type="submit" name="cancel" value="1" class="btn btn-danger">Cancelar</button>
-                </div>
+            <div class="form-actions">
+                <button type="submit" name="save" value="1" class="btn">Salvar</button>
+                <button type="submit" name="cancel" value="1" class="btn btn-danger">Cancelar</button>
+            </div>
             </form>
         </div>
     </div>
