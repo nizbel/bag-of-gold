@@ -347,6 +347,9 @@ def listar_anos(request):
     # Remover nulos
     lista_primeiras_operacoes = [operacao for operacao in lista_primeiras_operacoes if operacao != None]
     
+    if not lista_primeiras_operacoes:
+        return render_to_response('imposto_renda/listar_anos.html', {'impostos_renda': list()}, context_instance=RequestContext(request))
+    
     primeiro_ano = min([operacao.data for operacao in lista_primeiras_operacoes]).year
     
     impostos_renda = list()
