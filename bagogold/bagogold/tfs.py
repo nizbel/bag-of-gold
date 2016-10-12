@@ -74,7 +74,6 @@ def buscar_historico(ticker):
     # Busca historico dos ultimos 180 dias
     data_180_dias_atras = datetime.date.today() - datetime.timedelta(days=180)
     try:
-        raise Exception
         historico = list()
         url_yahoo_csv = 'http://ichart.finance.yahoo.com/table.csv?s=%s.SA&a=%s&b=%s&c=%s&d=%s&e=%s&f=%s&g=d&ignore=.csv' % \
                                (ticker, int(data_180_dias_atras.month)-1, data_180_dias_atras.day, data_180_dias_atras.year, int(datetime.date.today().month)-1, datetime.date.today().day, datetime.date.today().year)
