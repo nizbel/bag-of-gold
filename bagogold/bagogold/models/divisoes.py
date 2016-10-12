@@ -18,7 +18,7 @@ class Divisao (models.Model):
         return (self.valor_objetivo == 0)
     
     def divisao_principal(self):
-        return self.investidor.divisao_principal.divisao.id == self.id
+        return self.investidor.divisaoprincipal.divisao.id == self.id
         # TODO alterar quando adicionar investidor
 #         try:
 #             DivisaoPrincipal.objects.get(id=self.id)
@@ -228,7 +228,7 @@ class Divisao (models.Model):
     
 class DivisaoPrincipal (models.Model):
     divisao = models.ForeignKey('Divisao')
-    investidor = models.OneToOneField('Investidor')
+    investidor = models.OneToOneField('Investidor', on_delete=models.CASCADE, primary_key=True,)
     
 class DivisaoOperacaoLC (models.Model):
     divisao = models.ForeignKey('Divisao')
