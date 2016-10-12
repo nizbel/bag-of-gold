@@ -18,12 +18,13 @@ class Divisao (models.Model):
         return (self.valor_objetivo == 0)
     
     def divisao_principal(self):
+        return self.investidor.divisao_principal.divisao.id == self.id
         # TODO alterar quando adicionar investidor
-        try:
-            DivisaoPrincipal.objects.get(id=self.id)
-            return True
-        except DivisaoPrincipal.DoesNotExist:
-            return False
+#         try:
+#             DivisaoPrincipal.objects.get(id=self.id)
+#             return True
+#         except DivisaoPrincipal.DoesNotExist:
+#             return False
     
     
     def saldo_acoes_bh(self, data=datetime.date.today()):
@@ -227,7 +228,7 @@ class Divisao (models.Model):
     
 class DivisaoPrincipal (models.Model):
     divisao = models.ForeignKey('Divisao')
-    # TODO adicionar ligação com usuario
+    investidor = models.OneToOneField('Investidor')
     
 class DivisaoOperacaoLC (models.Model):
     divisao = models.ForeignKey('Divisao')
