@@ -74,6 +74,12 @@ def acompanhamento_mensal(request):
         
     operacoes = OperacaoAcao.objects.exclude(data__isnull=True).filter(destinacao='T', investidor=investidor, data__year=ano, data__month=mes).order_by('data')
     
+    if not operacoes:
+        return render_to_response('acoes/trade/acompanhamento_mensal.html', 
+                              {'lista_anos': lista_anos, 'lista_meses': lista_meses, 'dados_mes': {}, 'graf_compras_mes': list(),
+                               'graf_vendas_mes': list(), 'graf_lucro_mes': list(), 'acoes_ranking': {}},
+                               context_instance=RequestContext(request))
+        
     graf_compras_mes = list()
     graf_vendas_mes = list()
     graf_lucro_mes = list()
