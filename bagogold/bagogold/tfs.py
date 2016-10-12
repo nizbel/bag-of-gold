@@ -71,10 +71,14 @@ def ler_serie_historica_anual_bovespa(nome_arquivo):
             
 
 def buscar_historico(ticker):
+    # Busca historico dos ultimos 180 dias
+    data_180_dias_atras = datetime.date.today() - datetime.timedelta(days=180)
     try:
+        raise Exception
         historico = list()
-        response_csv = urlopen('http://ichart.finance.yahoo.com/table.csv?s=%s.SA&a=0&b=01&c=%s&d=%s&e=%s&f=%s&g=d&ignore=.csv' % \
-                               (ticker, datetime.date.today().year, int(datetime.date.today().month), datetime.date.today().day, datetime.date.today().year))
+        url_yahoo_csv = 'http://ichart.finance.yahoo.com/table.csv?s=%s.SA&a=%s&b=%s&c=%s&d=%s&e=%s&f=%s&g=d&ignore=.csv' % \
+                               (ticker, int(data_180_dias_atras.month)-1, data_180_dias_atras.day, data_180_dias_atras.year, int(datetime.date.today().month)-1, datetime.date.today().day, datetime.date.today().year)
+        response_csv = urlopen(url_yahoo_csv)
         csv = response_csv.read()
         book = pyexcel.get_book(file_type="csv", file_content=csv)
         sheets = book.to_dict()
@@ -92,14 +96,51 @@ def buscar_historico(ticker):
 #         template = "An exception of type {0} occured. Arguments:\n{1!r}"
 #         message = template.format(type(ex).__name__, ex.args)
 #         print ticker, ":", message
-        try:
-            papel = Share('%s.SA' % (ticker))
-            historico = papel.get_historical('%s-01-01' % (datetime.date.today().year), datetime.datetime.now().strftime('%Y-%m-%d'))
-        except Exception as ex:
-#             template = "An exception of type {0} occured. Arguments:\n{1!r}"
-#             message = template.format(type(ex).__name__, ex.args)
-#             print ticker, ":", message
-            return list()
+        tentativas = 0
+        sucesso = False
+        while tentativas < 3 and not sucesso:
+            try:
+                papel = Share('%s.SA' % (ticker))
+                historico = papel.get_historical(data_180_dias_atras.strftime('%Y-%m-%d'), datetime.date.today().strftime('%Y-%m-%d'))
+                
+                # Verificar erro pois no código do yahoo-finance ele só verifica se não for lista
+                if 'ERROR' in str(historico).upper() or 'NOT FOUND' in str(historico).upper():
+                    # Resetar histórico
+                    historico = list()
+                    raise Exception
+                if len(historico) == 0:
+                    raise Exception
+                
+                sucesso = True
+            except Exception as ex:
+                tentativas += 1
+#                 template = "An exception of type {0} occured. Arguments:\n{1!r}"
+#                 message = template.format(type(ex).__name__, ex.args)
+#                 print ticker, ":", message
+        if not sucesso:
+            try:
+                # terceira opção, buscar no site da exame
+                url_exame_csv = 'http://financas.exame.abril.com.br/coletor/export/stocks/%s/interday.csv?start_date=%s-%s-%s&end_date=%s-%s-%s' % \
+                                   (ticker, data_180_dias_atras.year, int(data_180_dias_atras.month), data_180_dias_atras.day, datetime.date.today().year, int(datetime.date.today().month), datetime.date.today().day)
+                response_csv = urlopen(url_exame_csv)
+                csv = response_csv.read()
+                book = pyexcel.get_book(file_type="csv", file_content=csv)
+                sheets = book.to_dict()
+                for key in sheets.keys():
+                    dados_papel = sheets[key]
+                    for linha in range(1,len(dados_papel)):
+                        # Testar se a linha de data está vazia, passar ao proximo
+                        if dados_papel[linha][0] == '':
+                            break
+                        dados_data = {}
+                        dados_data['Date'] = datetime.datetime.strptime(dados_papel[linha][0], '%d/%m/%Y').strftime('%Y-%m-%d')
+                        dados_data['Close'] = dados_papel[linha][1].replace(',', '.')
+                        historico.append(dados_data)
+            except Exception as ex:
+#                 template = "An exception of type {0} occured. Arguments:\n{1!r}"
+#                 message = template.format(type(ex).__name__, ex.args)
+#                 print ticker, ":", message
+                return list()
 #         print historico
     
     return historico
@@ -135,11 +176,19 @@ class BuscarValoresDiariosAcaoThread(Thread):
             PUBLIC_API_URL  = 'http://query.yahooapis.com/v1/public/yql'
             DATATABLES_URL  = 'store://datatables.org/alltableswithkeys'
             connection = HTTPConnection('query.yahooapis.com')
-    
-            yql = 'select Symbol, LastTradePriceOnly from yahoo.finance.quotes where symbol = "%s"' % (self.tickers)
-            connection.request('GET', PUBLIC_API_URL + '?' + urlencode({ 'q': yql, 'format': 'json', 'env': DATATABLES_URL }))
-            resultado = simplejson.loads(connection.getresponse().read())
-            resultados_diarios_acao[self.indice_thread] = resultado
+            
+            tentativas = 0
+            sucesso = False
+            while tentativas < 3 and not sucesso:
+                yql = 'select Symbol, LastTradePriceOnly from yahoo.finance.quotes where symbol = "%s"' % (self.tickers)
+                connection.request('GET', PUBLIC_API_URL + '?' + urlencode({ 'q': yql, 'format': 'json', 'env': DATATABLES_URL }))
+                resultado = simplejson.loads(connection.getresponse().read())
+                tentativas += 1
+                if 'error' not in resultado and resultado['query']['count'] > 0:
+                    sucesso = True
+            
+            if sucesso:
+                resultados_diarios_acao[self.indice_thread] = resultado
 #             print self.indice_thread
         except Exception as ex:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
@@ -160,10 +209,18 @@ class BuscarValoresDiariosFIIThread(Thread):
             DATATABLES_URL  = 'store://datatables.org/alltableswithkeys'
             connection = HTTPConnection('query.yahooapis.com')
     
-            yql = 'select Symbol, LastTradePriceOnly from yahoo.finance.quotes where symbol = "%s"' % (self.tickers)
-            connection.request('GET', PUBLIC_API_URL + '?' + urlencode({ 'q': yql, 'format': 'json', 'env': DATATABLES_URL }))
-            resultado = simplejson.loads(connection.getresponse().read())
-            resultados_diarios_fii[self.indice_thread] = resultado
+            tentativas = 0
+            sucesso = False
+            while tentativas < 3 and not sucesso:
+                yql = 'select Symbol, LastTradePriceOnly from yahoo.finance.quotes where symbol = "%s"' % (self.tickers)
+                connection.request('GET', PUBLIC_API_URL + '?' + urlencode({ 'q': yql, 'format': 'json', 'env': DATATABLES_URL }))
+                resultado = simplejson.loads(connection.getresponse().read())
+                tentativas += 1
+                if 'error' not in resultado and resultado['query']['count'] > 0:
+                    sucesso = True
+                    
+            if sucesso:
+                resultados_diarios_fii[self.indice_thread] = resultado
 #             print self.indice_thread
         except Exception as ex:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
@@ -194,8 +251,11 @@ def buscar_ultimos_valores_geral_acao():
         
     # Preencher valores de ultimas negociacoes
     for resultado in resultados_diarios_acao.values():
-        for dados in resultado['query']['results']['quote']:
-            valores_diarios[dados['Symbol']] = dados['LastTradePriceOnly']
+        try:
+            for dados in resultado['query']['results']['quote']:
+                valores_diarios[dados['Symbol']] = dados['LastTradePriceOnly']
+        except:
+            pass
     return valores_diarios
 
 def buscar_ultimos_valores_geral_fii():
@@ -221,8 +281,11 @@ def buscar_ultimos_valores_geral_fii():
 
     # Preencher valores de ultimas negociacoes
     for resultado in resultados_diarios_fii.values():
-        for dados in resultado['query']['results']['quote']:
-            valores_diarios[dados['Symbol']] = dados['LastTradePriceOnly']
+        try:
+            for dados in resultado['query']['results']['quote']:
+                valores_diarios[dados['Symbol']] = dados['LastTradePriceOnly']
+        except:
+            pass
     return valores_diarios
 
 # TODO TEST THIS
