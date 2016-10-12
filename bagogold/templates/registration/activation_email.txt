@@ -2,4 +2,4 @@ Criação da conta para o usuário {{user}}.
 
 Você tem {{expiration_days}} dias para ativar a conta.
 
-Chave de ativação: https://{{ site.domain }}{% url 'registration_activate' activation_key %}
+Chave de ativação: https://{{ site.domain }}{% url 'ativar_cadastro' activation_key %}
