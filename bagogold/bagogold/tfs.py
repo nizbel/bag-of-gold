@@ -71,12 +71,12 @@ def ler_serie_historica_anual_bovespa(nome_arquivo):
             
 
 def buscar_historico(ticker):
+    # Busca historico dos ultimos 180 dias
+    data_180_dias_atras = datetime.date.today() - datetime.timedelta(days=180)
     try:
         historico = list()
-        response_csv = urlopen('http://ichart.finance.yahoo.com/table.csv?s=%s.SA&a=0&b=01&c=%s&d=%s&e=%s&f=%s&g=d&ignore=.csv' % \
-                               (ticker, datetime.date.today().year, int(datetime.date.today().month), datetime.date.today().day, datetime.date.today().year))
-        if 'ERROR' in response_csv.upper():
-            raise Exception
+        response_csv = urlopen('http://ichart.finance.yahoo.com/table.csv?s=%s.SA&a=%s&b=%s&c=%s&d=%s&e=%s&f=%s&g=d&ignore=.csv' % \
+                               (ticker, int(data_180_dias_atras.month), data_180_dias_atras.day, data_180_dias_atras.year, int(datetime.date.today().month), datetime.date.today().day, datetime.date.today().year))
         csv = response_csv.read()
         book = pyexcel.get_book(file_type="csv", file_content=csv)
         sheets = book.to_dict()
@@ -94,13 +94,27 @@ def buscar_historico(ticker):
 #         template = "An exception of type {0} occured. Arguments:\n{1!r}"
 #         message = template.format(type(ex).__name__, ex.args)
 #         print ticker, ":", message
-        try:
-            papel = Share('%s.SA' % (ticker))
-            historico = papel.get_historical('%s-01-01' % (datetime.date.today().year), datetime.datetime.now().strftime('%Y-%m-%d'))
-        except Exception as ex:
-#             template = "An exception of type {0} occured. Arguments:\n{1!r}"
-#             message = template.format(type(ex).__name__, ex.args)
-#             print ticker, ":", message
+        tentativas = 0
+        sucesso = False
+        while tentativas < 3 and not sucesso:
+            try:
+                papel = Share('%s.SA' % (ticker))
+                historico = papel.get_historical(data_180_dias_atras.strftime('%Y-%m-%d'), datetime.date.today().strftime('%Y-%m-%d'))
+                print historico
+                
+                # Verificar erro pois no código do yahoo-finance ele só verifica se não for lista
+                if 'ERROR' in str(historico).upper():
+                    raise Exception
+                
+                sucesso = True
+                print 'modo 2', ticker
+            except Exception as ex:
+                tentativas += 1
+                template = "An exception of type {0} occured. Arguments:\n{1!r}"
+                message = template.format(type(ex).__name__, ex.args)
+                print ticker, ":", message
+                print ex
+        if not sucesso:
             return list()
 #         print historico
     

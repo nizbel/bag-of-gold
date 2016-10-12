@@ -48,7 +48,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         #Ação
         acoes = Acao.objects.all()
-#         acoes = Acao.objects.filter(ticker='AMBV4')
+        acoes = acoes.filter(ticker='BBAS3')
         qtd_threads = 32
         qtd_por_thread = int(len(acoes)/qtd_threads)+1
         contador = 0
