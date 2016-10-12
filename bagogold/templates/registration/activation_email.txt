@@ -2,4 +2,4 @@ Criação da conta para o usuário {{user}}.
 
 Você tem {{expiration_days}} dias para ativar a conta.
 
-Chave de ativação: http://bagofgold.com.br/ativacao/{{activation_key}}.
+Chave de ativação: https://bagofgold.com.br/ativacao/{{activation_key}}.
