@@ -280,6 +280,10 @@ def editar_divisao(request, id):
                       context_instance=RequestContext(request))
                 
         elif request.POST.get("delete"):
+            if divisao.divisao_principal():
+                messages.error(request, 'Divisão principal não pode ser excluída')
+                return render_to_response('divisoes/editar_divisao.html', {'form': form, 'divisao': divisao},
+                          context_instance=RequestContext(request))
             divisao.delete()
             messages.success(request, 'Divisão excluída com sucesso')
             return HttpResponseRedirect(reverse('listar_divisoes'))

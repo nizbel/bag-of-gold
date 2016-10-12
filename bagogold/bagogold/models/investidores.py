@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.models.divisoes import Divisao, DivisaoPrincipal
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models.signals import pre_save, post_save
+from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django import forms
  
 class Investidor (models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -23,4 +23,9 @@ def create_investidor(sender, instance, **kwargs):
     """
     Cria investidor para cada usuário criado
     """
-    Investidor.objects.get_or_create(user=instance)
+    investidor = Investidor.objects.get_or_create(user=instance)
+    """ 
+    Cria uma divisão e configura como principal
+    """
+    divisao = Divisao.objects.get_or_create(investidor=investidor, nome='Geral')
+    DivisaoPrincipal.objects.get_or_create(investidor=investidor, divisao=divisao)
