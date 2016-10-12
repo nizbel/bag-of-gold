@@ -2,7 +2,7 @@
 from bagogold.bagogold.models.acoes import Acao
 from bagogold.bagogold.models.fii import FII
 from bagogold.bagogold.tfs import preencher_historico_acao, buscar_historico, \
-    preencher_historico_fii, ler_serie_historica_anual_bovespa
+    preencher_historico_fii
 from django.core.management.base import BaseCommand
 from threading import Thread
 import sys
@@ -48,6 +48,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         #Ação
         acoes = Acao.objects.all()
+        acoes = Acao.objects.filter(ticker='AMBV4')
         qtd_threads = 32
         qtd_por_thread = int(len(acoes)/qtd_threads)+1
         contador = 0
@@ -65,14 +66,11 @@ class Command(BaseCommand):
         qtd_por_thread = int(len(fiis)/qtd_threads)+1
         contador = 0
         threads = []
-        while contador <= len(fiis):
-            t = PreencheHistoricoFIIThread(fiis[contador : min(contador+qtd_por_thread,len(fiis))])
-            threads.append(t)
-            t.start()
-            contador += qtd_por_thread
-        for t in threads:
-            t.join()
-#             time.sleep(3)
+#         while contador <= len(fiis):
+#             t = PreencheHistoricoFIIThread(fiis[contador : min(contador+qtd_por_thread,len(fiis))])
+#             threads.append(t)
+#             t.start()
+#             contador += qtd_por_thread
 #         for t in threads:
 #             t.join()
 

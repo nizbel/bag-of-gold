@@ -106,7 +106,8 @@ def buscar_historico(ticker):
         
 def preencher_historico_acao(ticker, historico):
     acao = Acao.objects.get(ticker=ticker)
-#     print acao
+    if len(historico) > 0 and 'Date' not in historico[0]:
+        print acao, historico
     for dia_papel in historico:
         if not HistoricoAcao.objects.filter(acao=acao, data=dia_papel['Date']):
             historico_acao = HistoricoAcao(acao=acao, data=dia_papel['Date'], preco_unitario=Decimal(dia_papel['Close']).quantize(Decimal('0.01')))
