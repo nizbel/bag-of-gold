@@ -44,33 +44,55 @@ import datetime
 def criar_transferencias(request):
     investidor = request.user.investidor
     
+    if request.method == 'POST':
+        print 'POST'
+    
     divisoes = Divisao.objects.filter(investidor=investidor)
+    
+    # Transferências criadas
+    transferencias = list()
     
     for divisao in divisoes:
         print divisao
         # Letra de crédito
         for divisao_operacao in DivisaoOperacaoLC.objects.filter(divisao=divisao, operacao__tipo_operacao='C').order_by('operacao__data'):
-            saldo_no_dia = divisao.saldo_lc(divisao_operacao.operacao.data)
-            print 'Compra na Data:', divisao_operacao.operacao.data, divisao_operacao.quantidade
-            print 'Saldo:', divisao.saldo_lc(divisao_operacao.operacao.data)
+            saldo_no_dia = divisao.saldo_lc(divisao_operacao.operacao.data) + sum([transferencia.quantidade for transferencia in transferencias if transferencia.investimento_destino == 'L'])
+#             print 'Compra na Data:', divisao_operacao.operacao.data, divisao_operacao.quantidade
+#             print 'Saldo:', divisao.saldo_lc(divisao_operacao.operacao.data)
             
             if saldo_no_dia < 0:
                 transferencia = TransferenciaEntreDivisoes(divisao_recebedora=divisao, investimento_destino='L', quantidade=-saldo_no_dia, data=divisao_operacao.operacao.data, descricao='Gerada automaticamente')
 #                 transferencia.save()
                 print transferencia
+                transferencias.append(transferencia)
                 
         # CDB / RDB
         for divisao_operacao in DivisaoOperacaoCDB_RDB.objects.filter(divisao=divisao, operacao__tipo_operacao='C').order_by('operacao__data'):
-            saldo_no_dia = divisao.saldo_cdb_rdb(divisao_operacao.operacao.data)
-            print 'Compra na Data:', divisao_operacao.operacao.data, divisao_operacao.quantidade
-            print 'Saldo:', divisao.saldo_cdb_rdb(divisao_operacao.operacao.data)
+            saldo_no_dia = divisao.saldo_cdb_rdb(divisao_operacao.operacao.data) + sum([transferencia.quantidade for transferencia in transferencias if transferencia.investimento_destino == 'C'])
+#             print 'Compra na Data:', divisao_operacao.operacao.data, divisao_operacao.quantidade
+#             print 'Saldo:', divisao.saldo_cdb_rdb(divisao_operacao.operacao.data)
             
             if saldo_no_dia < 0:
                 transferencia = TransferenciaEntreDivisoes(divisao_recebedora=divisao, investimento_destino='C', quantidade=-saldo_no_dia, data=divisao_operacao.operacao.data, descricao='Gerada automaticamente')
 #                 transferencia.save()
                 print transferencia
+                transferencias.append(transferencia)
+                
+        # Tesouro Direto
+        for divisao_operacao in DivisaoOperacaoTD.objects.filter(divisao=divisao, operacao__tipo_operacao='C').order_by('operacao__data'):
+            saldo_no_dia = divisao.saldo_td(divisao_operacao.operacao.data) + sum([transferencia.quantidade for transferencia in transferencias if transferencia.investimento_destino == 'T'])
+            print 'Compra na Data:', divisao_operacao.operacao.data, divisao_operacao.quantidade
+            print 'Saldo:', divisao.saldo_td(divisao_operacao.operacao.data)
+            
+            if saldo_no_dia < 0:
+                transferencia = TransferenciaEntreDivisoes(divisao_recebedora=divisao, investimento_destino='T', quantidade=-saldo_no_dia, data=divisao_operacao.operacao.data, descricao='Gerada automaticamente')
+#                 transferencia.save()
+                print transferencia
+                transferencia.operacao = divisao_operacao.operacao
+                transferencias.append(transferencia)
         
-    return HttpResponse()
+    return render_to_response('divisoes/criar_transferencias.html', {'transferencias': transferencias},
+                               context_instance=RequestContext(request))
 
 @login_required
 def detalhar_divisao(request, id):
