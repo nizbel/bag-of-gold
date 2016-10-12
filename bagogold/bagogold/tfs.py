@@ -75,6 +75,8 @@ def buscar_historico(ticker):
         historico = list()
         response_csv = urlopen('http://ichart.finance.yahoo.com/table.csv?s=%s.SA&a=0&b=01&c=%s&d=%s&e=%s&f=%s&g=d&ignore=.csv' % \
                                (ticker, datetime.date.today().year, int(datetime.date.today().month), datetime.date.today().day, datetime.date.today().year))
+        if 'ERROR' in response_csv.upper():
+            raise Exception
         csv = response_csv.read()
         book = pyexcel.get_book(file_type="csv", file_content=csv)
         sheets = book.to_dict()
