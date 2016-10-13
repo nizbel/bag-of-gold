@@ -6,7 +6,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
  
 class Investidor (models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     corretagem_padrao = models.DecimalField(u'Corretagem padrão', max_digits=5, decimal_places=2, default=0)
     """
     F = valor fixo, P = valor percentual da operação
@@ -32,5 +32,5 @@ def create_investidor(sender, instance, created, **kwargs):
         """ 
         Cria uma divisão e configura como principal
         """
-        divisao, criado = Divisao.objects.get_or_create(investidor=investidor, nome='Geralf')
+        divisao, criado = Divisao.objects.get_or_create(investidor=investidor, nome='Geral')
         DivisaoPrincipal.objects.get_or_create(investidor=investidor, divisao=divisao)
