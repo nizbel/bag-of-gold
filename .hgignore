@@ -3,6 +3,7 @@ syntax: regexp
 /backup-*
 /ultimo_backup-*
 doc proventos/*
+backups/teste-*
 syntax: glob
 .project
 .pydevproject
