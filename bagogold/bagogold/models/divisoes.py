@@ -284,6 +284,7 @@ class DivisaoOperacaoFundoInvestimento (models.Model):
 class DivisaoOperacaoAcao (models.Model):
     divisao = models.ForeignKey('Divisao')
     operacao = models.ForeignKey('OperacaoAcao')
+    uso_proventos = models.DecimalField('Utilização de proventos', max_digits=11, decimal_places=2, blank=True, default=0)
     """
     Guarda a quantidade de ações que pertence a divisão
     """
