@@ -4,8 +4,11 @@ from bagogold.bagogold.models.fii import FII, ProventoFII, OperacaoFII, \
 from django.contrib import admin
  
 admin.site.register(FII)
+
+class ProventoFIIAdmin(admin.ModelAdmin):
+    list_display = ('fii', 'valor_unitario', 'data_ex', 'data_pagamento')
     
-admin.site.register(ProventoFII)
+admin.site.register(ProventoFII, ProventoFIIAdmin)
     
 admin.site.register(OperacaoFII)
     
