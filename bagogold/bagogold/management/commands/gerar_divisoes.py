@@ -12,9 +12,9 @@ class Command(BaseCommand):
                 print investidor, 'nao tem divisoes'
                 divisao, criado = Divisao.objects.get_or_create(investidor=investidor, nome='Geral')
                 DivisaoPrincipal.objects.get_or_create(investidor=investidor, divisao=divisao)
-            elif not investidor.divisaoprincipal:
+            elif not hasattr(investidor, 'divisaoprincipal'):
                 print investidor, 'tem %s divisoes' % (len(Divisao.objects.filter(investidor=investidor))), 'sem principal'
-#                 DivisaoPrincipal.objcts.get_or_create()
+                DivisaoPrincipal.objects.get_or_create(investidor=investidor, divisao=Divisao.objects.filter(investidor=investidor)[0])
             else:
                 print investidor, 'tem %s divisoes' % (len(Divisao.objects.filter(investidor=investidor)))
                 for divisao in Divisao.objects.filter(investidor=investidor):
