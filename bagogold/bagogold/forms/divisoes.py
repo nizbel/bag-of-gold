@@ -48,6 +48,8 @@ class DivisaoOperacaoAcaoFormSet(forms.models.BaseInlineFormSet):
                 
                     if self.instance.quantidade < qtd_total_div:
                         raise forms.ValidationError('Quantidade total alocada para as divisões é maior que quantidade da operação')
+                    elif self.instance.quantidade > qtd_total_div:
+                        raise forms.ValidationError('Quantidade total alocada para as divisões é menor que quantidade da operação')
                     
 # Inline FormSet para operações em fundos de investimento imobiliário
 class DivisaoOperacaoFIIFormSet(forms.models.BaseInlineFormSet):
@@ -76,6 +78,8 @@ class DivisaoOperacaoFIIFormSet(forms.models.BaseInlineFormSet):
                 
                     if self.instance.quantidade < qtd_total_div:
                         raise forms.ValidationError('Quantidade total alocada para as divisões é maior que quantidade da operação')
+                    elif self.instance.quantidade > qtd_total_div:
+                        raise forms.ValidationError('Quantidade total alocada para as divisões é menor que quantidade da operação')
 
 # Inline FormSet para operações em letras de crédito
 class DivisaoOperacaoLCFormSet(forms.models.BaseInlineFormSet):
@@ -104,6 +108,8 @@ class DivisaoOperacaoLCFormSet(forms.models.BaseInlineFormSet):
                 
                     if self.instance.quantidade < qtd_total_div:
                         raise forms.ValidationError('Quantidade total alocada para as divisões é maior que quantidade da operação')
+                    elif self.instance.quantidade > qtd_total_div:
+                        raise forms.ValidationError('Quantidade total alocada para as divisões é menor que quantidade da operação')
                     
                     # Verificar em caso de venda
                     if self.instance.tipo_operacao == 'V':
@@ -137,6 +143,8 @@ class DivisaoOperacaoCDB_RDBFormSet(forms.models.BaseInlineFormSet):
                 
                     if self.instance.quantidade < qtd_total_div:
                         raise forms.ValidationError('Quantidade total alocada para as divisões é maior que quantidade da operação')
+                    elif self.instance.quantidade > qtd_total_div:
+                        raise forms.ValidationError('Quantidade total alocada para as divisões é menor que quantidade da operação')
                     
                     # Verificar em caso de venda
                     if self.instance.tipo_operacao == 'V':
@@ -170,6 +178,8 @@ class DivisaoOperacaoFundoInvestimentoFormSet(forms.models.BaseInlineFormSet):
                 
                     if self.instance.quantidade_cotas < qtd_total_div:
                         raise forms.ValidationError('Quantidade total alocada para as divisões é maior que quantidade da operação')
+                    elif self.instance.quantidade > qtd_total_div:
+                        raise forms.ValidationError('Quantidade total alocada para as divisões é menor que quantidade da operação')
                             
 # Inline FormSet para operações em tesouro direto
 class DivisaoOperacaoTDFormSet(forms.models.BaseInlineFormSet):
@@ -198,6 +208,8 @@ class DivisaoOperacaoTDFormSet(forms.models.BaseInlineFormSet):
                 
                     if self.instance.quantidade < qtd_total_div:
                         raise forms.ValidationError('Quantidade total alocada para as divisões é maior que quantidade da operação')
+                    elif self.instance.quantidade > qtd_total_div:
+                        raise forms.ValidationError('Quantidade total alocada para as divisões é menor que quantidade da operação')
 
 class TransferenciaEntreDivisoesForm(forms.ModelForm):
     class Meta:
