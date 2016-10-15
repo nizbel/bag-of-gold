@@ -15,6 +15,22 @@
     
     <script>
     $(document).ready(function() {
+    	// Ao iniciar, deixar apenas fonte externa para divisões
+    	$("#id_investimento_origem option").each(function() {
+            if ($(this).val() != '') {
+                $(this).hide();
+            } else {
+                $(this).show();
+            }
+         });
+    	$("#id_investimento_destino option").each(function() {
+            if ($(this).val() != '') {
+                $(this).hide();
+            } else {
+                $(this).show();
+            }
+         });
+    	
         // Altera opções de investimento de acordo com escolha da divisão cedente
         $("#id_divisao_cedente").change(function() {
            if ($(this).val() == '') {
