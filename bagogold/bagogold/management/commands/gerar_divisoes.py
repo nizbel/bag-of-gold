@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.divisoes import DivisaoPrincipal, Divisao
+from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao
+from bagogold.bagogold.models.divisoes import DivisaoPrincipal, Divisao, \
+    DivisaoOperacaoAcao
 from bagogold.bagogold.models.investidores import Investidor
 from django.core.management.base import BaseCommand
 
@@ -7,6 +9,12 @@ class Command(BaseCommand):
     help = 'Gera divisões e configura como principal para cada usuario'
 
     def handle(self, *args, **options):
+        # Modificar todos os uso proventos para o formato novo
+        for uso_proventos in UsoProventosOperacaoAcao.objects.all():
+            uso_proventos.divisao_operacao = DivisaoOperacaoAcao.objects.get(operacao=uso_proventos.operacao)
+            uso_proventos.save()
+        
+        # Fazer alterações nos investidores
         for investidor in Investidor.objects.all():
             if not Divisao.objects.filter(investidor=investidor):
                 print investidor, 'nao tem divisoes'
@@ -20,5 +28,5 @@ class Command(BaseCommand):
                 for divisao in Divisao.objects.filter(investidor=investidor):
                     print divisao, divisao.divisao_principal()
 
-
+            # Após gerar divisão principal, mudar todas as operações para ela
 
