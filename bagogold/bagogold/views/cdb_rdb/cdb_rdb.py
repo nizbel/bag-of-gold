@@ -15,7 +15,7 @@ from bagogold.bagogold.utils.misc import calcular_iof_regressivo, \
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
 from django.db.models import Count
 from django.forms import inlineformset_factory
@@ -236,8 +236,8 @@ def editar_operacao_cdb_rdb(request, id):
                     messages.success(request, 'Operação editada com sucesso')
                     return HttpResponseRedirect(reverse('historico_cdb_rdb'))
             for erros in form_operacao_cdb_rdb.errors.values():
-                for erro in erros:
-                    messages.error(request, erro)
+                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
+                    messages.error(request, erro.code)
             for erro in formset_divisao.non_form_errors():
                 messages.error(request, erro)
             return render_to_response('cdb_rdb/editar_operacao_cdb_rdb.html', {'form_operacao_cdb_rdb': form_operacao_cdb_rdb, 'formset_divisao': formset_divisao },
@@ -399,8 +399,8 @@ def inserir_cdb_rdb(request):
                         
                     return HttpResponseRedirect(reverse('listar_cdb_rdb'))
         for erros in form_cdb_rdb.errors.values():
-            for erro in erros:
-                messages.error(request, erro)
+            for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
+                messages.error(request, erro.code)
         for erro in formset_porcentagem.non_form_errors():
             messages.error(request, erro)
         for erro in formset_carencia.non_form_errors():
@@ -464,8 +464,8 @@ def inserir_operacao_cdb_rdb(request):
                     return HttpResponseRedirect(reverse('historico_cdb_rdb'))
                     
         for erros in form_operacao_cdb_rdb.errors.values():
-            for erro in erros:
-                messages.error(request, erro)
+            for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
+                messages.error(request, erro.code)
         for erro in formset_divisao_cdb_rdb.non_form_errors():
             messages.error(request, erro)
                         
