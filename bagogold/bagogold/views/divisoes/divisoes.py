@@ -348,14 +348,16 @@ def inserir_divisao(request):
 
 @login_required
 def inserir_transferencia(request):
+    investidor = request.user.investidor
+    
     if request.method == 'POST':
-        form = TransferenciaEntreDivisoesForm(request.POST)
+        form = TransferenciaEntreDivisoesForm(request.POST, investidor=investidor)
         if form.is_valid():
             form.save()
             messages.success(request, 'Transferência inserida com sucesso')
             return HttpResponseRedirect(reverse('listar_transferencias'))
     else:
-        form = TransferenciaEntreDivisoesForm()
+        form = TransferenciaEntreDivisoesForm(investidor=investidor)
             
     return render_to_response('divisoes/inserir_transferencia.html', {'form': form}, context_instance=RequestContext(request))
 

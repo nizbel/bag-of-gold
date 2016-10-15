@@ -202,12 +202,20 @@ class DivisaoOperacaoTDFormSet(forms.models.BaseInlineFormSet):
 class TransferenciaEntreDivisoesForm(forms.ModelForm):
     class Meta:
         model = TransferenciaEntreDivisoes
-        fields = ('divisao_cedente', 'investimento_origem', 'divisao_recebedora', 'investimento_destino', 'data', 'quantidade')
+        fields = ('divisao_cedente', 'investimento_origem', 'divisao_recebedora', 'investimento_destino', 'data', 'quantidade', 'descricao')
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),
                  'investimento_origem': widgets.Select(choices=OPCOES_INVESTIMENTO),
                  'investimento_destino': widgets.Select(choices=OPCOES_INVESTIMENTO),}
-        
+    
+    def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
+        # first call parent's constructor
+        super(TransferenciaEntreDivisoesForm, self).__init__(*args, **kwargs)
+        # there's a `fields` property now
+        self.fields['divisao_cedente'].queryset = Divisao.objects.filter(investidor=self.investidor)
+        self.fields['divisao_recebedora'].queryset = Divisao.objects.filter(investidor=self.investidor)
+    
     def clean_quantidade(self):
         quantidade = self.cleaned_data['quantidade']
         if quantidade <= 0:
