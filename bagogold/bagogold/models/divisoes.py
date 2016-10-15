@@ -236,7 +236,7 @@ class DivisaoOperacaoLC (models.Model):
     """
     Guarda a quantidade da operação que pertence a divisão
     """
-    quantidade = models.DecimalField('Quantidade',  max_digits=11, decimal_places=2)
+    quantidade = models.DecimalField('Quantidade (em reais)',  max_digits=11, decimal_places=2)
     
     class Meta:
         unique_together=('divisao', 'operacao')
@@ -253,7 +253,7 @@ class DivisaoOperacaoCDB_RDB (models.Model):
     """
     Guarda a quantidade da operação que pertence a divisão
     """
-    quantidade = models.DecimalField('Quantidade',  max_digits=11, decimal_places=2)
+    quantidade = models.DecimalField('Quantidade (em reais)',  max_digits=11, decimal_places=2)
     
     class Meta:
         unique_together=('divisao', 'operacao')
@@ -270,7 +270,7 @@ class DivisaoOperacaoFundoInvestimento (models.Model):
     """
     Guarda a quantidade de cotas que pertence a divisão
     """
-    quantidade = models.DecimalField('Quantidade',  max_digits=11, decimal_places=2)
+    quantidade = models.DecimalField('Quantidade (em cotas)',  max_digits=11, decimal_places=2)
     
     class Meta:
         unique_together=('divisao', 'operacao')
@@ -284,11 +284,10 @@ class DivisaoOperacaoFundoInvestimento (models.Model):
 class DivisaoOperacaoAcao (models.Model):
     divisao = models.ForeignKey('Divisao')
     operacao = models.ForeignKey('OperacaoAcao')
-    uso_proventos = models.DecimalField('Utilização de proventos', max_digits=11, decimal_places=2, blank=True, default=0)
     """
     Guarda a quantidade de ações que pertence a divisão
     """
-    quantidade = models.IntegerField('Quantidade')
+    quantidade = models.IntegerField('Quantidade (em ações)')
     
     class Meta:
         unique_together=('divisao', 'operacao')
@@ -305,7 +304,7 @@ class DivisaoOperacaoTD (models.Model):
     """
     Guarda a quantidade de títulos que pertence a divisão
     """
-    quantidade = models.DecimalField(u'Quantidade', max_digits=7, decimal_places=2) 
+    quantidade = models.DecimalField(u'Quantidade (em títulos)', max_digits=7, decimal_places=2) 
     
     class Meta:
         unique_together=('divisao', 'operacao')
@@ -322,7 +321,7 @@ class DivisaoOperacaoFII (models.Model):
     """
     Guarda a quantidade de FIIs que pertence a divisão
     """
-    quantidade = models.IntegerField('Quantidade')
+    quantidade = models.IntegerField('Quantidade (em papéis)')
     
     class Meta:
         unique_together=('divisao', 'operacao')
