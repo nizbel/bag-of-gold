@@ -225,10 +225,14 @@ class TransferenciaEntreDivisoesForm(forms.ModelForm):
     def clean(self):
         data = super(TransferenciaEntreDivisoesForm, self).clean()
         if data.get('divisao_cedente') == None and data.get('divisao_recebedora') == None:
-            raise forms.ValidationError('Conta cedente e recebedora não podem ser vazias')
+            raise forms.ValidationError('Divisão cedente e recebedora não podem ser vazias')
         if data.get('divisao_cedente') == None and data.get('investimento_origem') != '':
-            raise forms.ValidationError('Conta cedente vazia não pode ter investimento definido')
+            raise forms.ValidationError('Divisão cedente vazia não pode ter investimento definido')
         if data.get('divisao_recebedora') == None and data.get('investimento_destino') != '':
-            raise forms.ValidationError('Conta recebedora vazia não pode ter investimento definido')
+            raise forms.ValidationError('Divisão recebedora vazia não pode ter investimento definido')
+        if data.get('divisao_cedente') != None and data.get('divisao_cedente').investidor != self.investidor:
+            raise forms.ValidationError('Divisão cedente não permitida para o investidor')
+        if data.get('divisao_recebedora') != None and data.get('divisao_recebedora').investidor != self.investidor:
+            raise forms.ValidationError('Divisão recebedora não permitida para o investidor')
         
         return data
