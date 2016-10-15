@@ -41,39 +41,63 @@ def calcular_poupanca_proventos_na_data(request):
 @login_required
 def editar_operacao_acao(request, id):
     investidor = request.user.investidor
-    # Preparar formset para divisoes
-    DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'),
-                                            extra=1, formset=DivisaoOperacaoAcaoFormSet)
+    
     operacao_acao = get_object_or_404(OperacaoAcao, pk=id, destinacao='B')
     
     # Verifica se a operação é do investidor, senão, jogar erro de permissão
     if operacao_acao.investidor != investidor:
         raise PermissionDenied
-    try:
-        uso_proventos = UsoProventosOperacaoAcao.objects.get(operacao=operacao_acao)
-    except UsoProventosOperacaoAcao.DoesNotExist:
-        uso_proventos = None
+    
+    # Preparar formset para divisoes
+    DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'),
+                                            extra=1, formset=DivisaoOperacaoAcaoFormSet)
+    
+    # Testa se investidor possui mais de uma divisão
+    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+#     try:
+#         uso_proventos = UsoProventosOperacaoAcao.objects.get(operacao=operacao_acao)
+#     except UsoProventosOperacaoAcao.DoesNotExist:
+#         uso_proventos = None
     if request.method == 'POST':
         if request.POST.get("save"):
-            form_operacao_acao = OperacaoAcaoForm(request.POST, instance=operacao_acao, investidor=investidor)
-            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_acao, investidor=investidor)
-            if uso_proventos is not None:
-                form_uso_proventos = UsoProventosOperacaoAcaoForm(request.POST, instance=uso_proventos)
+            form_operacao_acao = OperacaoAcaoForm(request.POST, instance=operacao_acao)
+            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_acao, investidor=investidor) if varias_divisoes else None
+            
+#             if uso_proventos is not None:
+#                 form_uso_proventos = UsoProventosOperacaoAcaoForm(request.POST, instance=uso_proventos)
+#             else:
+#                 form_uso_proventos = UsoProventosOperacaoAcaoForm(request.POST)
+            
+            if not varias_divisoes:
+                try:
+                    form_uso_proventos = UsoProventosOperacaoAcaoForm(request.POST, instance=UsoProventosOperacaoAcao.objects.get(divisao_operacao__operacao=operacao_acao))
+                except UsoProventosOperacaoAcao.DoesNotExist:
+                    form_uso_proventos = UsoProventosOperacaoAcaoForm(request.POST)
             else:
-                form_uso_proventos = UsoProventosOperacaoAcaoForm(request.POST)
+                form_uso_proventos = UsoProventosOperacaoAcaoForm()    
+                
             if form_operacao_acao.is_valid():
-                if form_uso_proventos.is_valid():
+                # Validar de acordo com a quantidade de divisões
+                if varias_divisoes:
                     if formset_divisao.is_valid():
+                        formset_divisao = DivisaoFormSet(request.POST, instance=operacao_acao, investidor=investidor)
+                        formset_divisao.save()
+                        
+                else:
+                    if form_uso_proventos.is_valid():
                         operacao_acao.save()
+                        divisao_operacao = DivisaoOperacaoAcao.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_acao)
+                        divisao_operacao.quantidade = operacao_acao.quantidade
+                        divisao_operacao.save()
                         uso_proventos = form_uso_proventos.save(commit=False)
 #                         print uso_proventos.qtd_utilizada 
                         if uso_proventos.qtd_utilizada > 0:
                             uso_proventos.operacao_acao = operacao_acao
+                            uso_proventos.divisao_operacao = DivisaoOperacaoAcao.objects.get(operacao=operacao_acao)
                             uso_proventos.save()
                         # Se uso proventos for 0 e existir uso proventos atualmente, apagá-lo
-                        elif uso_proventos.qtd_utilizada == 0 and UsoProventosOperacaoAcao.objects.filter(operacao=operacao_acao):
+                        elif uso_proventos.qtd_utilizada == 0 and UsoProventosOperacaoAcao.objects.filter(divisao_operacao__operacao=operacao_acao):
                             uso_proventos.delete()
-                        formset_divisao.save()
                         messages.success(request, 'Operação alterada com sucesso')
                         return HttpResponseRedirect(reverse('historico_bh'))
             for erros in form_operacao_acao.errors.values():
@@ -84,10 +108,10 @@ def editar_operacao_acao(request, id):
             return render_to_response('acoes/buyandhold/editar_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,
                                                                        'formset_divisao': formset_divisao }, context_instance=RequestContext(request))
         elif request.POST.get("delete"):
-            if uso_proventos is not None:
-                uso_proventos.delete()
             divisao_acao = DivisaoOperacaoAcao.objects.filter(operacao=operacao_acao)
             for divisao in divisao_acao:
+                if hasattr(divisao, 'usoproventosoperacaoacao'):
+                    divisao.usoproventosoperacaoacao.delete()
                 divisao.delete()
             operacao_acao.delete()
             messages.success(request, 'Operação apagada com sucesso')
@@ -95,8 +119,11 @@ def editar_operacao_acao(request, id):
 
     else:
         form_operacao_acao = OperacaoAcaoForm(instance=operacao_acao)
-        if uso_proventos is not None:
-            form_uso_proventos = UsoProventosOperacaoAcaoForm(instance=uso_proventos)
+        if not varias_divisoes:
+            try:
+                form_uso_proventos = UsoProventosOperacaoAcaoForm(instance=UsoProventosOperacaoAcao.objects.get(divisao_operacao__operacao=operacao_acao))
+            except UsoProventosOperacaoAcao.DoesNotExist:
+                form_uso_proventos = UsoProventosOperacaoAcaoForm()
         else:
             form_uso_proventos = UsoProventosOperacaoAcaoForm()
         formset_divisao = DivisaoFormSet(instance=operacao_acao, investidor=investidor)
@@ -105,7 +132,7 @@ def editar_operacao_acao(request, id):
         poupanca_proventos = calcular_poupanca_prov_acao_ate_dia(investidor, operacao_acao.data)
             
     return render_to_response('acoes/buyandhold/editar_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,
-                                                                       'formset_divisao': formset_divisao, 'poupanca_proventos': poupanca_proventos }, context_instance=RequestContext(request))
+                                                                       'formset_divisao': formset_divisao, 'poupanca_proventos': poupanca_proventos, 'varias_divisoes': varias_divisoes}, context_instance=RequestContext(request))
 
 @login_required
 @user_passes_test(is_superuser)
