@@ -7,7 +7,7 @@ from bagogold.bagogold.forms.taxa_custodia_acao import TaxaCustodiaAcaoForm
 from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, \
     ValorDiarioAcao, Provento, UsoProventosOperacaoAcao, TaxaCustodiaAcao, Acao, \
     AcaoProvento
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao, Divisao
 from bagogold.bagogold.utils.acoes import calcular_provento_por_mes, \
     calcular_media_proventos_6_meses, calcular_operacoes_sem_proventos_por_mes, \
     calcular_uso_proventos_por_mes, quantidade_acoes_ate_dia, \
@@ -564,27 +564,38 @@ def historico(request):
 @login_required
 def inserir_operacao_acao(request):
     investidor = request.user.investidor
+    
+    # Testa se investidor possui mais de uma divisão
+    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoAcaoFormSet)
     
     if request.method == 'POST':
         form_operacao_acao = OperacaoAcaoForm(request.POST)
-        form_uso_proventos = UsoProventosOperacaoAcaoForm(request.POST)
-        formset_divisao = DivisaoFormSet(request.POST, investidor=investidor)
+        form_uso_proventos = UsoProventosOperacaoAcaoForm(request.POST) if not varias_divisoes else None
+        formset_divisao = DivisaoFormSet(request.POST, investidor=investidor) if varias_divisoes else None
         if form_operacao_acao.is_valid():
             operacao_acao = form_operacao_acao.save(commit=False)
             operacao_acao.investidor = investidor
-            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_acao, investidor=investidor)
             operacao_acao.destinacao = 'B'
-            if form_uso_proventos.is_valid():
+            # Validar de acordo com a quantidade de divisões
+            if varias_divisoes:
                 if formset_divisao.is_valid():
+                    formset_divisao = DivisaoFormSet(request.POST, instance=operacao_acao, investidor=investidor)
+                    formset_divisao.save()
+                
+            else:
+                if form_uso_proventos.is_valid():
                     operacao_acao.save()
+                    divisao_operacao = DivisaoOperacaoAcao(operacao=operacao_acao, quantidade=operacao_acao.quantidade, divisao=investidor.divisaoprincipal.divisao)
+                    divisao_operacao.save()
                     uso_proventos = form_uso_proventos.save(commit=False)
                     if uso_proventos.qtd_utilizada > 0:
                         uso_proventos.operacao = operacao_acao
+                        uso_proventos.divisao_operacao = divisao_operacao
                         uso_proventos.save()
-                    formset_divisao.save()
                     messages.success(request, 'Operação inserida com sucesso')
                     return HttpResponseRedirect(reverse('historico_bh'))
             for erro in formset_divisao.non_form_errors():
@@ -594,11 +605,11 @@ def inserir_operacao_acao(request):
         if investidor.tipo_corretagem == 'F':
             valores_iniciais['corretagem'] = investidor.corretagem_padrao
         form_operacao_acao = OperacaoAcaoForm(initial=valores_iniciais)
-        form_uso_proventos = UsoProventosOperacaoAcaoForm()
+        form_uso_proventos = UsoProventosOperacaoAcaoForm(initial={'qtd_utilizada': Decimal('0.00')})
         formset_divisao = DivisaoFormSet(investidor=investidor)
             
     return render_to_response('acoes/buyandhold/inserir_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,
-                                                                       'formset_divisao': formset_divisao }, context_instance=RequestContext(request))
+                                                                       'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes }, context_instance=RequestContext(request))
     
 @login_required
 @user_passes_test(is_superuser)
