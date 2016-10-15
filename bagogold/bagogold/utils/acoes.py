@@ -349,7 +349,7 @@ def calcular_poupanca_prov_acao_ate_dia(investidor, dia, destinacao='B'):
     lista_conjunta = sorted(chain(operacoes, proventos),
                             key=attrgetter('data'))
     
-    total_proventos = 0
+    total_proventos = Decimal(0)
     
     # Guarda as ações correntes para o calculo do patrimonio
     acoes = {}
