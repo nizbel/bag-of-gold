@@ -17,7 +17,7 @@ from bagogold.bagogold.utils.investidores import is_superuser
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.db.models.functions import Concat
@@ -77,8 +77,8 @@ def editar_operacao_acao(request, id):
                         messages.success(request, 'Operação alterada com sucesso')
                         return HttpResponseRedirect(reverse('historico_bh'))
             for erros in form_operacao_acao.errors.values():
-                for erro in erros:
-                    messages.error(request, erro)
+                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
+                    messages.error(request, erro.code)
             for erro in formset_divisao.non_form_errors():
                 messages.error(request, erro)
             return render_to_response('acoes/buyandhold/editar_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,

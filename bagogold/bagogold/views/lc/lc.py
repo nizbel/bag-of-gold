@@ -12,7 +12,7 @@ from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
@@ -46,8 +46,8 @@ def editar_operacao_lc(request, id):
                     messages.success(request, 'Operação editada com sucesso')
                     return HttpResponseRedirect(reverse('historico_lc'))
             for erros in form_operacao_lc.errors.values():
-                for erro in erros:
-                    messages.error(request, erro)
+                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
+                    messages.error(request, erro.code)
             for erro in formset_divisao.non_form_errors():
                 messages.error(request, erro)
             return render_to_response('lc/editar_operacao_lc.html', {'form_operacao_lc': form_operacao_lc, 'formset_divisao': formset_divisao },
@@ -208,8 +208,8 @@ def inserir_lc(request):
                                                                          'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
                         return HttpResponseRedirect(reverse('listar_lc'))
             for erros in form_lc.errors.values():
-                for erro in erros:
-                    messages.error(request, erro)
+                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
+                    messages.error(request, erro.code)
             for erro in formset_porcentagem.non_form_errors():
                 messages.error(request, erro)
             for erro in formset_carencia.non_form_errors():
@@ -274,10 +274,11 @@ def inserir_operacao_lc(request):
                         return HttpResponseRedirect(reverse('historico_lc'))
                         
             for erros in form_operacao_lc.errors.values():
-                for erro in erros:
-                    messages.error(request, erro)
-            for erro in formset_divisao.non_form_errors():
-                messages.error(request, erro)
+                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
+                    messages.error(request, erro.code)
+                if not erros:
+                    for erro in formset_divisao.non_form_errors():
+                        messages.error(request, erro)
                 
             return render_to_response('lc/inserir_operacao_lc.html', {'form_operacao_lc': form_operacao_lc, 'formset_divisao': formset_divisao},
                                       context_instance=RequestContext(request))

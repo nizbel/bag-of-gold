@@ -16,7 +16,7 @@ from copy import deepcopy
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
@@ -183,8 +183,8 @@ def editar_operacao_td(request, id):
                     messages.success(request, 'Operação alterada com sucesso')
                     return HttpResponseRedirect(reverse('historico_td'))
             for erros in form_operacao_td.errors.values():
-                for erro in erros:
-                    messages.error(request, erro)
+                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
+                    messages.error(request, erro.code)
             for erro in formset_divisao.non_form_errors():
                 messages.error(request, erro)
             return render_to_response('td/editar_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao }, 
@@ -354,6 +354,7 @@ def inserir_operacao_td(request):
     
     if request.method == 'POST':
         form_operacao_td = OperacaoTituloForm(request.POST)
+        formset_divisao = DivisaoFormSet(request.POST, investidor=investidor)
         if form_operacao_td.is_valid():
             operacao_td = form_operacao_td.save(commit=False)
             operacao_td.investidor = investidor
@@ -363,10 +364,16 @@ def inserir_operacao_td(request):
                 formset_divisao.save()
                 messages.success(request, 'Operação inserida com sucesso')
             return HttpResponseRedirect(reverse('historico_td'))
+            
+        for erros in form_operacao_td.errors.values():
+            for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
+                    messages.error(request, erro.message)
+        if not erros:
             for erro in formset_divisao.non_form_errors():
-                messages.error(request, erro)
-            return render_to_response('td/inserir_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao }, 
-                                      context_instance=RequestContext(request))
+                    messages.error(request, erro)
+                        
+        return render_to_response('td/inserir_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao }, 
+                                  context_instance=RequestContext(request))
         
     else:
         form_operacao_td = OperacaoTituloForm()

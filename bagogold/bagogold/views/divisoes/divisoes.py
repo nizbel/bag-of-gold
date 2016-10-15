@@ -26,19 +26,19 @@ from bagogold.bagogold.utils.fundo_investimento import \
 from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia, \
     calcular_valor_lc_ate_dia_por_divisao
 from bagogold.bagogold.utils.td import calcular_qtd_titulos_ate_dia_por_divisao
-
-from django.contrib.auth.decorators import login_required
+from decimal import Decimal
 from django.contrib import messages
-from django.core.exceptions import PermissionDenied
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.http.response import HttpResponse
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
-
-from decimal import Decimal
 import datetime
+
+
 
 @login_required
 def criar_transferencias(request):
@@ -274,8 +274,8 @@ def editar_divisao(request, id):
                 messages.success(request, 'Divisão editada com sucesso')
                 return HttpResponseRedirect(reverse('listar_divisoes'))
             for erros in form.errors.values():
-                for erro in erros:
-                    messages.error(request, erro)
+                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
+                    messages.error(request, erro.code)
             return render_to_response('divisoes/editar_divisao.html', {'form': form, 'divisao': divisao},
                       context_instance=RequestContext(request))
                 
@@ -314,8 +314,8 @@ def editar_transferencia(request, id):
                 messages.success(request, 'Transferência editada com sucesso')
                 return HttpResponseRedirect(reverse('listar_transferencias'))
             for erros in form.errors.values():
-                for erro in erros:
-                    messages.error(request, erro)
+                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
+                    messages.error(request, erro.code)
             return render_to_response('divisoes/editar_transferencia.html', {'form': form},
                       context_instance=RequestContext(request))
                 
