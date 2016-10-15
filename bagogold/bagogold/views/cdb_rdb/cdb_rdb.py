@@ -567,8 +567,6 @@ def painel(request):
     
     data_iteracao = data_inicial
     
-    total_atual = 0
-    
     while data_iteracao <= data_final:
         taxa_do_dia = HistoricoTaxaDI.objects.get(data=data_iteracao).taxa
         
@@ -583,7 +581,6 @@ def painel(request):
                         if (data_iteracao == data_final):
                             str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
                             operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-                            total_atual += operacao.atual
                         
                 elif operacao.tipo_operacao == 'V':
                     if (operacao.data == data_iteracao):
@@ -611,6 +608,7 @@ def painel(request):
     # Remover operações que não estejam mais rendendo
     operacoes = [operacao for operacao in operacoes if (operacao.atual > 0 and operacao.tipo_operacao == 'C')]
     
+    total_atual = 0
     total_ir = 0
     total_iof = 0
     total_ganho_prox_dia = 0
@@ -647,6 +645,7 @@ def painel(request):
         str_auxiliar = str(operacao.valor_vencimento.quantize(Decimal('.0001')))
         operacao.valor_vencimento = Decimal(str_auxiliar[:len(str_auxiliar)-2])
         
+        total_atual += operacao.atual
         total_ir += operacao.imposto_renda
         total_iof += operacao.iof
         total_vencimento += operacao.valor_vencimento
