@@ -307,7 +307,7 @@ def editar_transferencia(request, id):
     
     if request.method == 'POST':
         if request.POST.get("save"):
-            form = TransferenciaEntreDivisoesForm(request.POST, instance=transferencia)
+            form = TransferenciaEntreDivisoesForm(request.POST, instance=transferencia, investidor=investidor)
             
             if form.is_valid():
                 transferencia.save()
@@ -325,7 +325,7 @@ def editar_transferencia(request, id):
             return HttpResponseRedirect(reverse('listar_transferencias'))
  
     else:
-        form = TransferenciaEntreDivisoesForm(instance=transferencia)
+        form = TransferenciaEntreDivisoesForm(instance=transferencia, investidor=investidor)
             
     return render_to_response('divisoes/editar_transferencia.html', {'form': form},
                               context_instance=RequestContext(request))
