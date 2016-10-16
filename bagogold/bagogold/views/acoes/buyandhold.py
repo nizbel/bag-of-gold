@@ -79,7 +79,7 @@ def editar_operacao_acao(request, id):
                         formset_divisao.save()
                         for form_divisao_operacao in [form for form in formset_divisao if form.cleaned_data]:
                             # Ignorar caso seja apagado
-                            if 'DELETE' in form.cleaned_data and form.cleaned_data['DELETE']:
+                            if 'DELETE' in form_divisao_operacao.cleaned_data and form_divisao_operacao.cleaned_data['DELETE']:
                                 pass
                             else:
                                 divisao_operacao = form_divisao_operacao.save(commit=False)

@@ -104,6 +104,8 @@ def aconselhamento_fii(request):
 def editar_operacao_fii(request, id):
     investidor = request.user.investidor
     
+    operacao_fii = OperacaoFII.objects.get(pk=id)
+    
     # Verificar se a operação é do investidor logado
     if operacao_fii.investidor != investidor:
         raise PermissionDenied
@@ -111,7 +113,6 @@ def editar_operacao_fii(request, id):
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoFII, DivisaoOperacaoFII, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoFIIFormSet)
-    operacao_fii = OperacaoFII.objects.get(pk=id)
     
     # Testa se investidor possui mais de uma divisão
     varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
@@ -145,8 +146,9 @@ def editar_operacao_fii(request, id):
                         operacao_fii.save()
                         formset_divisao.save()
                         for form_divisao_operacao in [form for form in formset_divisao if form.cleaned_data]:
+                            print form_divisao_operacao.cleaned_data
                             # Ignorar caso seja apagado
-                            if 'DELETE' in form.cleaned_data and form.cleaned_data['DELETE']:
+                            if 'DELETE' in form_divisao_operacao.cleaned_data and form_divisao_operacao.cleaned_data['DELETE']:
                                 pass
                             else:
                                 divisao_operacao = form_divisao_operacao.save(commit=False)
@@ -163,7 +165,7 @@ def editar_operacao_fii(request, id):
                                         divisao_operacao.usoproventosoperacaofii.save()
                         
                         messages.success(request, 'Operação alterada com sucesso')
-                        return HttpResponseRedirect(reverse('historico_bh'))
+                        return HttpResponseRedirect(reverse('historico_fii'))
                     
                 else:    
                     if form_uso_proventos.is_valid():
