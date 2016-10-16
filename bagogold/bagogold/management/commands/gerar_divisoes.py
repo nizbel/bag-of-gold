@@ -11,12 +11,18 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # Modificar todos os uso proventos para o formato novo
-        for uso_proventos in UsoProventosOperacaoAcao.objects.all():
-            uso_proventos.divisao_operacao = DivisaoOperacaoAcao.objects.get(operacao=uso_proventos.operacao)
-            uso_proventos.save()
-        for uso_proventos in UsoProventosOperacaoFII.objects.all():
-            uso_proventos.divisao_operacao = DivisaoOperacaoFII.objects.get(operacao=uso_proventos.operacao)
-            uso_proventos.save()
+        try:
+            for uso_proventos in UsoProventosOperacaoAcao.objects.all():
+                uso_proventos.divisao_operacao = DivisaoOperacaoAcao.objects.get(operacao=uso_proventos.operacao)
+                uso_proventos.save()
+        except:
+            pass
+        try:
+            for uso_proventos in UsoProventosOperacaoFII.objects.all():
+                uso_proventos.divisao_operacao = DivisaoOperacaoFII.objects.get(operacao=uso_proventos.operacao)
+                uso_proventos.save()
+        except:
+            pass
         
         # Fazer alterações nos investidores
         for investidor in Investidor.objects.all():
