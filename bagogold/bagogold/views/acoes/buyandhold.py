@@ -75,7 +75,7 @@ def editar_operacao_acao(request, id):
                 # Validar de acordo com a quantidade de divisões
                 if varias_divisoes:
                     if formset_divisao.is_valid():
-#                         operacao_acao.save()
+                        operacao_acao.save()
                         formset_divisao.save()
                         for form_divisao_operacao in [form for form in formset_divisao if form.cleaned_data]:
                             # Ignorar caso seja apagado

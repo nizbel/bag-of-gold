@@ -60,12 +60,14 @@ class OperacaoFIIForm(forms.ModelForm):
     
     
 class UsoProventosOperacaoFIIForm(forms.ModelForm):
-
-
     class Meta:
         model = UsoProventosOperacaoFII
         fields = ('qtd_utilizada', )
-            
+    
+    def __init__(self, *args, **kwargs):
+        super(UsoProventosOperacaoFIIForm, self).__init__(*args, **kwargs)
+        self.fields['qtd_utilizada'].required = False
+        
     def clean(self):
         data = super(UsoProventosOperacaoFIIForm, self).clean()
         if data.get('qtd_utilizada') is not None:
@@ -75,5 +77,7 @@ class UsoProventosOperacaoFIIForm(forms.ModelForm):
             qtd_utilizada = qtd_utilizada.replace(",", ".")
             qtd_utilizada = Decimal(qtd_utilizada)
             data['qtd_utilizada'] = qtd_utilizada
+        else:
+            data['qtd_utilizada'] = 0
 
         return data
