@@ -48,6 +48,7 @@ $(document).ready(function() {
          $("#forms").append(titulo);
          $("#forms").append(par_divisao);
          $("#forms").append(par_quantidade);
+         $("#forms").append(par_qtd_proventos_utilizada);
          $("#forms").append(par_id);
          $("#forms").append(par_operacao);
          // build divisao and append it to our forms container
