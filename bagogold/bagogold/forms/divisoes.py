@@ -21,7 +21,7 @@ class DivisaoForm(forms.ModelForm):
 
         return data
     
-# Inline FormSet para operações em ações (B&H)
+# Inline FormSet para operações em ações 
 class DivisaoOperacaoAcaoFormSet(forms.models.BaseInlineFormSet):
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
@@ -33,7 +33,6 @@ class DivisaoOperacaoAcaoFormSet(forms.models.BaseInlineFormSet):
     def clean(self):
         qtd_total_div = 0
         contador_forms = 0
-        divisoes = list()
         for form_divisao in self.forms:
             contador_forms += 1
             if form_divisao.is_valid():
@@ -63,7 +62,6 @@ class DivisaoOperacaoFIIFormSet(forms.models.BaseInlineFormSet):
     def clean(self):
         qtd_total_div = 0
         contador_forms = 0
-        divisoes = list()
         for form_divisao in self.forms:
             contador_forms += 1
             if form_divisao.is_valid():
@@ -94,7 +92,6 @@ class DivisaoOperacaoLCFormSet(forms.models.BaseInlineFormSet):
     def clean(self):
         qtd_total_div = 0
         contador_forms = 0
-        divisoes = list()
         for form_divisao in self.forms:
             contador_forms += 1
             if form_divisao.is_valid():
@@ -129,7 +126,6 @@ class DivisaoOperacaoCDB_RDBFormSet(forms.models.BaseInlineFormSet):
     def clean(self):
         qtd_total_div = 0
         contador_forms = 0
-        divisoes = list()
         for form_divisao in self.forms:
             contador_forms += 1
             if form_divisao.is_valid():
@@ -163,7 +159,6 @@ class DivisaoOperacaoFundoInvestimentoFormSet(forms.models.BaseInlineFormSet):
     def clean(self):
         qtd_total_div = 0
         contador_forms = 0
-        divisoes = list()
         for form_divisao in self.forms:
             contador_forms += 1
             if form_divisao.is_valid():
@@ -193,7 +188,6 @@ class DivisaoOperacaoTDFormSet(forms.models.BaseInlineFormSet):
     def clean(self):
         qtd_total_div = 0
         contador_forms = 0
-        divisoes = list()
         for form_divisao in self.forms:
             contador_forms += 1
             if form_divisao.is_valid():
