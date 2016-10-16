@@ -241,6 +241,9 @@ class DivisaoOperacaoLC (models.Model):
     class Meta:
         unique_together=('divisao', 'operacao')
     
+    def __unicode__(self):
+        return self.divisao + ': ' + self.operacao
+    
     """
     Calcula o percentual da operação que foi para a divisão
     """
@@ -257,6 +260,9 @@ class DivisaoOperacaoCDB_RDB (models.Model):
     
     class Meta:
         unique_together=('divisao', 'operacao')
+    
+    def __unicode__(self):
+        return self.divisao + ': ' + self.operacao
     
     """
     Calcula o percentual da operação que foi para a divisão
@@ -275,6 +281,9 @@ class DivisaoOperacaoFundoInvestimento (models.Model):
     class Meta:
         unique_together=('divisao', 'operacao')
     
+    def __unicode__(self):
+        return self.divisao + ': ' + self.operacao
+    
     """
     Calcula o percentual da operação que foi para a divisão
     """
@@ -292,6 +301,9 @@ class DivisaoOperacaoAcao (models.Model):
     class Meta:
         unique_together=('divisao', 'operacao')
     
+    def __unicode__(self):
+        return self.divisao + ': ' + self.operacao
+    
     """
     Calcula o percentual da operação que foi para a divisão
     """
@@ -308,6 +320,9 @@ class DivisaoOperacaoTD (models.Model):
     
     class Meta:
         unique_together=('divisao', 'operacao')
+    
+    def __unicode__(self):
+        return self.divisao + ': ' + self.operacao
         
     def percentual_divisao(self):
         """
@@ -325,6 +340,9 @@ class DivisaoOperacaoFII (models.Model):
     
     class Meta:
         unique_together=('divisao', 'operacao')
+    
+    def __unicode__(self):
+        return self.divisao + ': ' + self.operacao
         
     def percentual_divisao(self):
         """
