@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII
 from django.db import models
 import datetime
  
@@ -44,10 +45,11 @@ class OperacaoFII (models.Model):
         return '(' + self.tipo_operacao + ') ' + str(self.quantidade) + ' ' + self.fii.ticker + ' a R$' + str(self.preco_unitario)
     
     def qtd_proventos_utilizada(self):
-        try:
-            return UsoProventosOperacaoFII.objects.get(operacao=self).qtd_utilizada
-        except UsoProventosOperacaoFII.DoesNotExist:
-            return 0
+        qtd_total = 0
+        for divisao in DivisaoOperacaoFII.objects.filter(operacao=self):
+            if hasattr(divisao, 'usoproventosoperacaofii'):
+                qtd_total += divisao.usoproventosoperacaofii.qtd_utilizada
+        return qtd_total
         
     def utilizou_proventos(self):
         return self.qtd_proventos_utilizada() > 0
@@ -55,7 +57,10 @@ class OperacaoFII (models.Model):
 class UsoProventosOperacaoFII (models.Model):
     operacao = models.ForeignKey('OperacaoFII')
     qtd_utilizada = models.DecimalField(u'Quantidade de proventos utilizada', max_digits=11, decimal_places=2, blank=True)
+    divisao_operacao = models.OneToOneField('DivisaoOperacaoFII')
 
+    def __unicode__(self):
+        return 'R$ ' + str(self.qtd_utilizada) + ' em ' + self.divisao_operacao.divisao.nome + ' para ' + unicode(self.divisao_operacao.operacao)
     
 class HistoricoFII (models.Model):
     fii = models.ForeignKey('FII', unique_for_date='data')

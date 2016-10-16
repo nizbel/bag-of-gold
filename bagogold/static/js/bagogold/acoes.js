@@ -40,7 +40,6 @@ $(document).ready(function() {
          par_divisao.append(label_divisao);
          par_divisao.append(divisao);
          
-    
          label_quantidade = $("<label for=id_divisaooperacaoacao_set-" + form_count + "-quantidade>Quantidade:</label>");
          quantidade = $("#id_divisaooperacaoacao_set-0-quantidade").clone();
          quantidade.attr("name", "divisaooperacaoacao_set-" + form_count + "-quantidade");

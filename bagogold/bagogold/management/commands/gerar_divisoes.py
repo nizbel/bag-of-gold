@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao
 from bagogold.bagogold.models.divisoes import DivisaoPrincipal, Divisao, \
-    DivisaoOperacaoAcao
+    DivisaoOperacaoAcao, DivisaoOperacaoFII
+from bagogold.bagogold.models.fii import UsoProventosOperacaoFII
 from bagogold.bagogold.models.investidores import Investidor
 from django.core.management.base import BaseCommand
 
@@ -12,6 +13,9 @@ class Command(BaseCommand):
         # Modificar todos os uso proventos para o formato novo
         for uso_proventos in UsoProventosOperacaoAcao.objects.all():
             uso_proventos.divisao_operacao = DivisaoOperacaoAcao.objects.get(operacao=uso_proventos.operacao)
+            uso_proventos.save()
+        for uso_proventos in UsoProventosOperacaoFII.objects.all():
+            uso_proventos.divisao_operacao = DivisaoOperacaoFII.objects.get(operacao=uso_proventos.operacao)
             uso_proventos.save()
         
         # Fazer alterações nos investidores
