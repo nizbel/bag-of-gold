@@ -36,15 +36,6 @@ class OperacaoAcaoForm(forms.ModelForm):
             raise forms.ValidationError('Preço unitário deve ser maior que 0')
         return preco_unitario
     
-#     def clean(self):
-#         data = super(OperacaoAcaoForm, self).clean()
-#         preco_unitario = str(data.get('preco_unitario'))
-#         preco_unitario = preco_unitario.replace(",", ".")
-#         preco_unitario = Decimal(preco_unitario)
-#         data['preco_unitario'] = preco_unitario
-# 
-#         return data
-
 class UsoProventosOperacaoAcaoForm(forms.ModelForm):
 
 
