@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
-    TransferenciaEntreDivisoes, DivisaoOperacaoAcao
+    TransferenciaEntreDivisoes, DivisaoOperacaoAcao, DivisaoOperacaoFII
 from bagogold.bagogold.models.lc import OperacaoVendaLetraCredito
 from django import forms
 from django.forms import widgets
@@ -23,9 +23,6 @@ class DivisaoForm(forms.ModelForm):
     
 # Inline FormSet para operações em ações 
 class DivisaoOperacaoAcaoFormSet(forms.models.BaseInlineFormSet):
-    class Meta:
-        fields = ('nome', 'valor_objetivo')
-        
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
         super(DivisaoOperacaoAcaoFormSet, self).__init__(*args, **kwargs)
@@ -112,6 +109,23 @@ class DivisaoOperacaoFIIFormSet(forms.models.BaseInlineFormSet):
 
         for form in self.forms:
             form.fields['divisao'].queryset = Divisao.objects.filter(investidor=self.investidor)
+    
+    def add_fields(self, form, index):
+        super(DivisaoOperacaoFIIFormSet, self).add_fields(form, index)
+        form.fields['qtd_proventos_utilizada'] = forms.DecimalField(max_digits=11, decimal_places=2)
+        form.fields['qtd_proventos_utilizada'].label = 'Quantidade de proventos utilizada'
+        form.fields['qtd_proventos_utilizada'].required = False
+        
+        if 'divisao' in form.initial:
+            divisao_operacao = DivisaoOperacaoFII.objects.get(divisao=form.initial['divisao'], operacao=self.instance)
+            if hasattr(divisao_operacao, 'usoproventosoperacaofii'):
+                form.fields['qtd_proventos_utilizada'].initial = divisao_operacao.usoproventosoperacaofii.qtd_utilizada
+        
+        # Alterar ordem do checkbox de exclusão, mandando-o pro final
+        if 'DELETE' in form.fields.keys():
+            botao_delete = form.fields['DELETE']
+            del form.fields['DELETE']
+            form.fields['DELETE'] = botao_delete
             
     def clean(self):
         qtd_total_div = 0
