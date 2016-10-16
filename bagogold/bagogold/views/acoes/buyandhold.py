@@ -596,7 +596,7 @@ def inserir_operacao_acao(request):
     varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
     
     # Preparar formset para divisoes
-    DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'),
+    DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'), can_delete=False,
                                             extra=1, formset=DivisaoOperacaoAcaoFormSet)
     
     if request.method == 'POST':
@@ -611,19 +611,17 @@ def inserir_operacao_acao(request):
             if varias_divisoes:
                 formset_divisao = DivisaoFormSet(request.POST, instance=operacao_acao, investidor=investidor)
                 if formset_divisao.is_valid():
-#                     operacao_acao.save()
-                    for form_divisao_operacao in formset_divisao:
-                        print form_divisao_operacao.cleaned_data['qtd_proventos_utilizada']
+                    operacao_acao.save()
+                    formset_divisao.save()
+                    for form_divisao_operacao in [form for form in formset_divisao if form.cleaned_data]:
                         divisao_operacao = form_divisao_operacao.save(commit=False)
-                        print divisao_operacao
-#                         divisao_operacao.save()
                         if form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] != None and form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] > 0:
                             # TODO remover operação de uso proventos
                             divisao_operacao.usoproventosoperacaoacao = UsoProventosOperacaoAcao(qtd_utilizada=form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'], operacao=operacao_acao)
-                            print divisao_operacao.usoproventosoperacaoacao.divisao_operacao
-                            print divisao_operacao.usoproventosoperacaoacao.qtd_utilizada
-                            print divisao_operacao.usoproventosoperacaoacao.operacao
-#                             divisao_operacao.usoproventosoperacaoacao.save()
+                            divisao_operacao.usoproventosoperacaoacao.save()
+                        
+                        messages.success(request, 'Operação inserida com sucesso')
+                        return HttpResponseRedirect(reverse('historico_bh'))
                 for erro in formset_divisao.non_form_errors():
                     messages.error(request, erro)
                 
