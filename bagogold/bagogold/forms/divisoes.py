@@ -53,6 +53,7 @@ class DivisaoOperacaoAcaoFormSet(forms.models.BaseInlineFormSet):
 #             return self.cleaned_data['qtd_proventos_utilizada']
     
     def clean(self):
+        print 'clean final'
         qtd_total_div = 0
         qtd_total_prov = 0
         contador_forms = 0
@@ -62,10 +63,14 @@ class DivisaoOperacaoAcaoFormSet(forms.models.BaseInlineFormSet):
             if form_divisao.is_valid():
 #                 print form_divisao.cleaned_data.get('quantidade')
                 if not (form_divisao.instance.id == None and not form_divisao.has_changed()):
+                    print 'Testando form', form_divisao.cleaned_data
+                    
                     # Verificar se foram escolhidas 2 divisões iguais
                     if form_divisao.cleaned_data['divisao'].id in divisoes_utilizadas:
                         raise forms.ValidationError('Divisão %s escolhida mais de uma vez' % (form_divisao.cleaned_data['divisao']))
                     else:
+                        if self.investidor != form_divisao.cleaned_data['divisao'].investidor:
+                            raise forms.ValidationError('Divisão não pertence ao investidor')
                         divisoes_utilizadas[form_divisao.cleaned_data['divisao'].id] = form_divisao.cleaned_data['divisao']
                     
                     # Verificar quantidade das divisões
@@ -117,6 +122,8 @@ class DivisaoOperacaoFIIFormSet(forms.models.BaseInlineFormSet):
                     if form_divisao.cleaned_data['divisao'].id in divisoes_utilizadas:
                         raise forms.ValidationError('Divisão %s escolhida mais de uma vez' % (form_divisao.cleaned_data['divisao']))
                     else:
+                        if self.investidor != form_divisao.cleaned_data['divisao'].investidor:
+                            raise forms.ValidationError('Divisão não pertence ao investidor')
                         divisoes_utilizadas[form_divisao.cleaned_data['divisao'].id] = form_divisao.cleaned_data['divisao']
                         
                     # Verificar quantidade
@@ -153,6 +160,8 @@ class DivisaoOperacaoLCFormSet(forms.models.BaseInlineFormSet):
                     if form_divisao.cleaned_data['divisao'].id in divisoes_utilizadas:
                         raise forms.ValidationError('Divisão %s escolhida mais de uma vez' % (form_divisao.cleaned_data['divisao']))
                     else:
+                        if self.investidor != form_divisao.cleaned_data['divisao'].investidor:
+                            raise forms.ValidationError('Divisão não pertence ao investidor')
                         divisoes_utilizadas[form_divisao.cleaned_data['divisao'].id] = form_divisao.cleaned_data['divisao']
                         
                     # Verificar quantidade
@@ -194,6 +203,8 @@ class DivisaoOperacaoCDB_RDBFormSet(forms.models.BaseInlineFormSet):
                     if form_divisao.cleaned_data['divisao'].id in divisoes_utilizadas:
                         raise forms.ValidationError('Divisão %s escolhida mais de uma vez' % (form_divisao.cleaned_data['divisao']))
                     else:
+                        if self.investidor != form_divisao.cleaned_data['divisao'].investidor:
+                            raise forms.ValidationError('Divisão não pertence ao investidor')
                         divisoes_utilizadas[form_divisao.cleaned_data['divisao'].id] = form_divisao.cleaned_data['divisao']
                         
                     # Verificar quantidade
@@ -235,6 +246,8 @@ class DivisaoOperacaoFundoInvestimentoFormSet(forms.models.BaseInlineFormSet):
                     if form_divisao.cleaned_data['divisao'].id in divisoes_utilizadas:
                         raise forms.ValidationError('Divisão %s escolhida mais de uma vez' % (form_divisao.cleaned_data['divisao']))
                     else:
+                        if self.investidor != form_divisao.cleaned_data['divisao'].investidor:
+                            raise forms.ValidationError('Divisão não pertence ao investidor')
                         divisoes_utilizadas[form_divisao.cleaned_data['divisao'].id] = form_divisao.cleaned_data['divisao']
                         
                     # Verificar quantidade
@@ -271,6 +284,8 @@ class DivisaoOperacaoTDFormSet(forms.models.BaseInlineFormSet):
                     if form_divisao.cleaned_data['divisao'].id in divisoes_utilizadas:
                         raise forms.ValidationError('Divisão %s escolhida mais de uma vez' % (form_divisao.cleaned_data['divisao']))
                     else:
+                        if self.investidor != form_divisao.cleaned_data['divisao'].investidor:
+                            raise forms.ValidationError('Divisão não pertence ao investidor')
                         divisoes_utilizadas[form_divisao.cleaned_data['divisao'].id] = form_divisao.cleaned_data['divisao']
                         
                     # Verificar quantidade
