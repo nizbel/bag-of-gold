@@ -37,8 +37,6 @@ class OperacaoAcaoForm(forms.ModelForm):
         return preco_unitario
     
 class UsoProventosOperacaoAcaoForm(forms.ModelForm):
-
-
     class Meta:
         model = UsoProventosOperacaoAcao
         fields = ('qtd_utilizada', )

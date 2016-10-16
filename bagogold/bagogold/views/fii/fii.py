@@ -104,50 +104,97 @@ def aconselhamento_fii(request):
 def editar_operacao_fii(request, id):
     investidor = request.user.investidor
     
+    # Verificar se a operação é do investidor logado
+    if operacao_fii.investidor != investidor:
+        raise PermissionDenied
+    
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoFII, DivisaoOperacaoFII, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoFIIFormSet)
     operacao_fii = OperacaoFII.objects.get(pk=id)
     
-    # Verificar se a operação é do investidor logado
-    if operacao_fii.investidor != investidor:
-        raise PermissionDenied
+    # Testa se investidor possui mais de uma divisão
+    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
     
-    try:
-        uso_proventos = UsoProventosOperacaoFII.objects.get(operacao=operacao_fii)
-    except UsoProventosOperacaoFII.DoesNotExist:
-        uso_proventos = None
+#     try:
+#         uso_proventos = UsoProventosOperacaoFII.objects.get(operacao=operacao_fii)
+#     except UsoProventosOperacaoFII.DoesNotExist:
+#         uso_proventos = None
     if request.method == 'POST':
         if request.POST.get("save"):
             form_operacao_fii = OperacaoFIIForm(request.POST, instance=operacao_fii)
-            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_fii, investidor=investidor)
-            if uso_proventos is not None:
-                form_uso_proventos = UsoProventosOperacaoFIIForm(request.POST, instance=uso_proventos)
+            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_fii, investidor=investidor) if varias_divisoes else None
+            
+            if not varias_divisoes:
+                try:
+                    form_uso_proventos = UsoProventosOperacaoFIIForm(request.POST, instance=UsoProventosOperacaoFII.objects.get(divisao_operacao__operacao=operacao_fii))
+                except UsoProventosOperacaoFII.DoesNotExist:
+                    form_uso_proventos = UsoProventosOperacaoFIIForm(request.POST)
             else:
-                form_uso_proventos = UsoProventosOperacaoFIIForm(request.POST)
+                form_uso_proventos = UsoProventosOperacaoFIIForm()    
+                
+#             if uso_proventos is not None:
+#                 form_uso_proventos = UsoProventosOperacaoFIIForm(request.POST, instance=uso_proventos)
+#             else:
+#                 form_uso_proventos = UsoProventosOperacaoFIIForm(request.POST)
+            
             if form_operacao_fii.is_valid():
-                if form_uso_proventos.is_valid():
+                # Validar de acordo com a quantidade de divisões
+                if varias_divisoes:
                     if formset_divisao.is_valid():
                         operacao_fii.save()
-                        uso_proventos = form_uso_proventos.save(commit=False)
-                        if uso_proventos.qtd_utilizada > 0:
-                            uso_proventos.operacao_fii = operacao_fii
-                            uso_proventos.save()
                         formset_divisao.save()
+                        for form_divisao_operacao in [form for form in formset_divisao if form.cleaned_data]:
+                            # Ignorar caso seja apagado
+                            if 'DELETE' in form.cleaned_data and form.cleaned_data['DELETE']:
+                                pass
+                            else:
+                                divisao_operacao = form_divisao_operacao.save(commit=False)
+                                if hasattr(divisao_operacao, 'usoproventosoperacaofii'):
+                                    if form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] == None or form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] == 0:
+                                        divisao_operacao.usoproventosoperacaofii.delete()
+                                    else:
+                                        divisao_operacao.usoproventosoperacaofii.qtd_utilizada = form_divisao_operacao.cleaned_data['qtd_proventos_utilizada']
+                                        divisao_operacao.usoproventosoperacaofii.save()
+                                else:
+                                    if form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] != None and form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] > 0:
+                                        # TODO remover operação de uso proventos
+                                        divisao_operacao.usoproventosoperacaofii = UsoProventosOperacaoFII(qtd_utilizada=form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'], operacao=operacao_fii)
+                                        divisao_operacao.usoproventosoperacaofii.save()
+                        
                         messages.success(request, 'Operação alterada com sucesso')
-                        return HttpResponseRedirect(reverse('historico_fii'))
+                        return HttpResponseRedirect(reverse('historico_bh'))
+                    
+                else:    
+                    if form_uso_proventos.is_valid():
+                        if formset_divisao.is_valid():
+                            operacao_fii.save()
+                            divisao_operacao = DivisaoOperacaoFII.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_fii)
+                            divisao_operacao.quantidade = operacao_fii.quantidade
+                            divisao_operacao.save()
+                            uso_proventos = form_uso_proventos.save(commit=False)
+                            if uso_proventos.qtd_utilizada > 0:
+                                uso_proventos.operacao = operacao_fii
+                                uso_proventos.divisao_operacao = DivisaoOperacaoFII.objects.get(operacao=operacao_fii)
+                                uso_proventos.save()
+                            # Se uso proventos for 0 e existir uso proventos atualmente, apagá-lo
+                            elif uso_proventos.qtd_utilizada == 0 and UsoProventosOperacaoFII.objects.filter(divisao_operacao__operacao=operacao_fii):
+                                uso_proventos.delete()
+                            formset_divisao.save()
+                            messages.success(request, 'Operação alterada com sucesso')
+                            return HttpResponseRedirect(reverse('historico_fii'))
+                        
             for erros in form_operacao_fii.errors.values():
                 for erro in erros:
                     messages.error(request, erro)
             for erro in formset_divisao.non_form_errors():
                 messages.error(request, erro)
-            return render_to_response('fii/editar_operacao_fii.html', {'form_operacao_fii': form_operacao_fii, 'form_uso_proventos': form_uso_proventos,
-                                                                       'formset_divisao': formset_divisao }, context_instance=RequestContext(request))
+                
         elif request.POST.get("delete"):
-            if uso_proventos is not None:
-                uso_proventos.delete()
             divisao_fii = DivisaoOperacaoFII.objects.filter(operacao=operacao_fii)
             for divisao in divisao_fii:
+                if hasattr(divisao, 'usoproventosoperacaofii'):
+                    divisao.usoproventosoperacaofii.delete()
                 divisao.delete()
             operacao_fii.delete()
             messages.success(request, 'Operação apagada com sucesso')
@@ -155,14 +202,17 @@ def editar_operacao_fii(request, id):
 
     else:
         form_operacao_fii = OperacaoFIIForm(instance=operacao_fii)
-        if uso_proventos is not None:
-            form_uso_proventos = UsoProventosOperacaoFIIForm(instance=uso_proventos)
+        if not varias_divisoes:
+            try:
+                form_uso_proventos = UsoProventosOperacaoFIIForm(instance=UsoProventosOperacaoFII.objects.get(divisao_operacao__operacao=operacao_fii))
+            except UsoProventosOperacaoFII.DoesNotExist:
+                form_uso_proventos = UsoProventosOperacaoFIIForm()
         else:
             form_uso_proventos = UsoProventosOperacaoFIIForm()
         formset_divisao = DivisaoFormSet(instance=operacao_fii, investidor=investidor)
             
     return render_to_response('fii/editar_operacao_fii.html', {'form_operacao_fii': form_operacao_fii, 'form_uso_proventos': form_uso_proventos,
-                                                               'formset_divisao': formset_divisao}, context_instance=RequestContext(request))   
+                                                               'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes}, context_instance=RequestContext(request))   
 
 
 @login_required
@@ -342,11 +392,11 @@ def inserir_operacao_fii(request):
                         divisao_operacao = form_divisao_operacao.save(commit=False)
                         if form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] != None and form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] > 0:
                             # TODO remover operação de uso proventos
-                            divisao_operacao.usoproventosoperacaoacao = UsoProventosOperacaoFII(qtd_utilizada=form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'], operacao=operacao_fii)
-                            divisao_operacao.usoproventosoperacaoacao.save()
+                            divisao_operacao.usoproventosoperacaofii = UsoProventosOperacaoFII(qtd_utilizada=form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'], operacao=operacao_fii)
+                            divisao_operacao.usoproventosoperacaofii.save()
                         
                     messages.success(request, 'Operação inserida com sucesso')
-                    return HttpResponseRedirect(reverse('historico_bh'))
+                    return HttpResponseRedirect(reverse('historico_fii'))
                 
                 for erro in formset_divisao.non_form_errors():
                     messages.error(request, erro)
@@ -361,7 +411,6 @@ def inserir_operacao_fii(request):
                         uso_proventos.operacao = operacao_fii
                         uso_proventos.divisao_operacao = divisao_operacao
                         uso_proventos.save()
-                    formset_divisao.save()
                     messages.success(request, 'Operação inserida com sucesso')
                     return HttpResponseRedirect(reverse('historico_fii'))
     else:
