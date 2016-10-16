@@ -40,9 +40,12 @@ def home(request):
     operacoes_td = OperacaoTitulo.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
     
     operacoes_bh = OperacaoAcao.objects.filter(investidor=investidor, destinacao='B').exclude(data__isnull=True).order_by('data')
-    proventos_bh = Provento.objects.exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).filter(acao__in=operacoes_bh.values_list('acao', flat=True)).order_by('data_ex')
-    for provento in proventos_bh:
-        provento.data = provento.data_ex
+    if operacoes_bh:
+        proventos_bh = Provento.objects.exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).filter(acao__in=operacoes_bh.values_list('acao', flat=True), data_ex__gt=operacoes_bh[0].data).order_by('data_ex')
+        for provento in proventos_bh:
+            provento.data = provento.data_ex
+    else:
+        proventos_bh = list()
         
     operacoes_lc = OperacaoLetraCredito.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
     
