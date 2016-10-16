@@ -39,18 +39,16 @@ class DivisaoOperacaoAcaoFormSet(forms.models.BaseInlineFormSet):
         form.fields['qtd_proventos_utilizada'].label = 'Quantidade de proventos utilizada'
         form.fields['qtd_proventos_utilizada'].required = False
         
+        if 'divisao' in form.initial:
+            divisao_operacao = DivisaoOperacaoAcao.objects.get(divisao=form.initial['divisao'], operacao=self.instance)
+            if hasattr(divisao_operacao, 'usoproventosoperacaoacao'):
+                form.fields['qtd_proventos_utilizada'].initial = divisao_operacao.usoproventosoperacaoacao.qtd_utilizada
+        
         # Alterar ordem do checkbox de exclusão, mandando-o pro final
         if 'DELETE' in form.fields.keys():
             botao_delete = form.fields['DELETE']
             del form.fields['DELETE']
             form.fields['DELETE'] = botao_delete
-    
-#     def clean_qtd_proventos_utilizada(self):
-#         print 'clean qtd proventos'
-#         if not 'qtd_proventos_utilizada' in self.cleaned_data or self.cleaned_data['qtd_proventos_utilizada'] == None:
-#             return 0
-#         else:
-#             return self.cleaned_data['qtd_proventos_utilizada']
     
     def clean(self):
         print 'clean final'

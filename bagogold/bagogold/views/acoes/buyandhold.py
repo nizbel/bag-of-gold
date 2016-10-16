@@ -80,8 +80,24 @@ def editar_operacao_acao(request, id):
                 # Validar de acordo com a quantidade de divisões
                 if varias_divisoes:
                     if formset_divisao.is_valid():
-                        formset_divisao = DivisaoFormSet(request.POST, instance=operacao_acao, investidor=investidor)
+                        operacao_acao.save()
                         formset_divisao.save()
+                        for form_divisao_operacao in [form for form in formset_divisao if form.cleaned_data]:
+                            divisao_operacao = form_divisao_operacao.save(commit=False)
+                            if hasattr(divisao_operacao, 'usoproventosoperacaoacao'):
+                                if form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] == None or form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] == 0:
+                                    divisao_operacao.usoproventosoperacaoacao.delete()
+                                else:
+                                    divisao_operacao.usoproventosoperacaoacao.qtd_utilizada = form_divisao_operacao.cleaned_data['qtd_proventos_utilizada']
+                                    divisao_operacao.usoproventosoperacaoacao.save()
+                            else:
+                                if form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] != None and form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] > 0:
+                                    # TODO remover operação de uso proventos
+                                    divisao_operacao.usoproventosoperacaoacao = UsoProventosOperacaoAcao(qtd_utilizada=form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'], operacao=operacao_acao)
+                                    divisao_operacao.usoproventosoperacaoacao.save()
+                        
+                        messages.success(request, 'Operação alterada com sucesso')
+                        return HttpResponseRedirect(reverse('historico_bh'))
                         
                 else:
                     if form_uso_proventos.is_valid():
@@ -620,8 +636,8 @@ def inserir_operacao_acao(request):
                             divisao_operacao.usoproventosoperacaoacao = UsoProventosOperacaoAcao(qtd_utilizada=form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'], operacao=operacao_acao)
                             divisao_operacao.usoproventosoperacaoacao.save()
                         
-                        messages.success(request, 'Operação inserida com sucesso')
-                        return HttpResponseRedirect(reverse('historico_bh'))
+                    messages.success(request, 'Operação inserida com sucesso')
+                    return HttpResponseRedirect(reverse('historico_bh'))
                 for erro in formset_divisao.non_form_errors():
                     messages.error(request, erro)
                 

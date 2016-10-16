@@ -16,14 +16,16 @@ import re
 
 def calcular_operacoes_sem_proventos_por_mes(investidor, operacoes):
     """ 
-    Calcula a quantidade de ações compradas sem usar proventos por mes
+    Calcula a quantidade investida em compras de ações sem usar proventos por mes
     Parâmetros: Investidor, Queryset de operações ordenadas por data
     Retorno: Lista de tuplas (data, quantidade)
     """
     lista_ids_operacoes = list()
     usos_proventos = UsoProventosOperacaoAcao.objects.filter()
     for uso_proventos in usos_proventos:
-        lista_ids_operacoes.append(uso_proventos.operacao.id)
+        lista_ids_operacoes.append(uso_proventos.divisao_operacao.operacao.id)
+    # Remover elementos repetidos
+    lista_ids_operacoes = list(set(lista_ids_operacoes))
     
     anos_meses = list()
     for operacao in operacoes:
@@ -41,7 +43,7 @@ def calcular_operacoes_sem_proventos_por_mes(investidor, operacoes):
                 total_mes += (operacao.quantidade * operacao.preco_unitario + \
                 operacao.emolumentos + operacao.corretagem)
             else:
-                qtd_usada = usos_proventos.get(operacao__id=operacao.id).qtd_utilizada
+                qtd_usada = operacao.qtd_proventos_utilizada()
 #                 print 'Com uso de proventos: %s' % (qtd_usada)
                 total_mes += (operacao.quantidade * operacao.preco_unitario + \
                 operacao.emolumentos + operacao.corretagem) - qtd_usada
@@ -60,6 +62,8 @@ def calcular_uso_proventos_por_mes(investidor):
     usos_proventos = UsoProventosOperacaoAcao.objects.filter()
     for uso_proventos in usos_proventos:
         lista_ids_operacoes.append(uso_proventos.operacao.id)
+    # Remover elementos repetidos
+    lista_ids_operacoes = list(set(lista_ids_operacoes))
     
     # Guarda as operações que tiveram uso de proventos
     operacoes = OperacaoAcao.objects.filter(id__in=lista_ids_operacoes)
@@ -75,7 +79,7 @@ def calcular_uso_proventos_por_mes(investidor):
         operacoes_mes = operacoes.filter(data__month=mes, data__year=ano)
         total_mes = 0
         for operacao in operacoes_mes:                      
-            total_mes += usos_proventos.get(operacao__id=operacao.id).qtd_utilizada
+            total_mes += operacao.qtd_proventos_utilizada()
         data_formatada = str(calendar.timegm(datetime.date(ano, mes, 15).timetuple()) * 1000)
         graf_uso_proventos_mes += [[data_formatada, float(total_mes)]]
         
