@@ -2,7 +2,7 @@
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoFIIFormSet
 from bagogold.bagogold.forms.fii import OperacaoFIIForm, ProventoFIIForm, \
     UsoProventosOperacaoFIIForm
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII, Divisao
 from bagogold.bagogold.models.fii import OperacaoFII, ProventoFII, HistoricoFII, \
     FII, UsoProventosOperacaoFII, ValorDiarioFII
 from bagogold.bagogold.utils.investidores import is_superuser
@@ -318,38 +318,59 @@ def historico_fii(request):
 @login_required
 def inserir_operacao_fii(request):
     investidor = request.user.investidor
+    
+    # Testa se investidor possui mais de uma divisão
+    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    
     # Preparar formset para divisoes
-    DivisaoFormSet = inlineformset_factory(OperacaoFII, DivisaoOperacaoFII, fields=('divisao', 'quantidade'),
+    DivisaoFormSet = inlineformset_factory(OperacaoFII, DivisaoOperacaoFII, fields=('divisao', 'quantidade'), can_delete=False,
                                             extra=1, formset=DivisaoOperacaoFIIFormSet)
     
     if request.method == 'POST':
         form_operacao_fii = OperacaoFIIForm(request.POST)
-        form_uso_proventos = UsoProventosOperacaoFIIForm(request.POST)
+        form_uso_proventos = UsoProventosOperacaoFIIForm(request.POST) if not varias_divisoes else None
+        formset_divisao = DivisaoFormSet(request.POST, investidor=investidor) if varias_divisoes else None
         if form_operacao_fii.is_valid():
             operacao_fii = form_operacao_fii.save(commit=False)
             operacao_fii.investidor = investidor
-            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_fii, investidor=investidor)
-            if form_uso_proventos.is_valid():
+            if varias_divisoes:
+                formset_divisao = DivisaoFormSet(request.POST, instance=operacao_fii, investidor=investidor)
                 if formset_divisao.is_valid():
                     operacao_fii.save()
+                    formset_divisao.save()
+                    for form_divisao_operacao in [form for form in formset_divisao if form.cleaned_data]:
+                        divisao_operacao = form_divisao_operacao.save(commit=False)
+                        if form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] != None and form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] > 0:
+                            # TODO remover operação de uso proventos
+                            divisao_operacao.usoproventosoperacaoacao = UsoProventosOperacaoFII(qtd_utilizada=form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'], operacao=operacao_fii)
+                            divisao_operacao.usoproventosoperacaoacao.save()
+                        
+                    messages.success(request, 'Operação inserida com sucesso')
+                    return HttpResponseRedirect(reverse('historico_bh'))
+                
+                for erro in formset_divisao.non_form_errors():
+                    messages.error(request, erro)
+                    
+            else:
+                if form_uso_proventos.is_valid():
+                    operacao_fii.save()
+                    divisao_operacao = DivisaoOperacaoFII(operacao=operacao_fii, quantidade=operacao_fii.quantidade, divisao=investidor.divisaoprincipal.divisao)
+                    divisao_operacao.save()
                     uso_proventos = form_uso_proventos.save(commit=False)
                     if uso_proventos.qtd_utilizada > 0:
                         uso_proventos.operacao = operacao_fii
+                        uso_proventos.divisao_operacao = divisao_operacao
                         uso_proventos.save()
                     formset_divisao.save()
                     messages.success(request, 'Operação inserida com sucesso')
                     return HttpResponseRedirect(reverse('historico_fii'))
-            for erro in formset_divisao.non_form_errors():
-                messages.error(request, erro)
-            return render_to_response('fii/inserir_operacao_fii.html', {'form_operacao_fii': form_operacao_fii, 'form_uso_proventos': form_uso_proventos,
-                                                                       'formset_divisao': formset_divisao }, context_instance=RequestContext(request))
     else:
         form_operacao_fii = OperacaoFIIForm()
-        form_uso_proventos = UsoProventosOperacaoFIIForm()
+        form_uso_proventos = UsoProventosOperacaoFIIForm(initial={'qtd_utilizada': Decimal('0.00')})
         formset_divisao = DivisaoFormSet(investidor=investidor)
             
     return render_to_response('fii/inserir_operacao_fii.html', {'form_operacao_fii': form_operacao_fii, 'form_uso_proventos': form_uso_proventos,
-                                                               'formset_divisao': formset_divisao}, context_instance=RequestContext(request))
+                                                               'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes}, context_instance=RequestContext(request))
 
 
 @login_required

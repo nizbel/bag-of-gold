@@ -57,19 +57,11 @@ def editar_operacao_acao(request, id):
     
     # Testa se investidor possui mais de uma divisão
     varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
-#     try:
-#         uso_proventos = UsoProventosOperacaoAcao.objects.get(operacao=operacao_acao)
-#     except UsoProventosOperacaoAcao.DoesNotExist:
-#         uso_proventos = None
+
     if request.method == 'POST':
         if request.POST.get("save"):
             form_operacao_acao = OperacaoAcaoForm(request.POST, instance=operacao_acao)
             formset_divisao = DivisaoFormSet(request.POST, instance=operacao_acao, investidor=investidor) if varias_divisoes else None
-            
-#             if uso_proventos is not None:
-#                 form_uso_proventos = UsoProventosOperacaoAcaoForm(request.POST, instance=uso_proventos)
-#             else:
-#                 form_uso_proventos = UsoProventosOperacaoAcaoForm(request.POST)
             
             if not varias_divisoes:
                 try:

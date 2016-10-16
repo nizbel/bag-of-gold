@@ -47,7 +47,7 @@ class OperacaoFIIForm(forms.ModelForm):
                  'consolidada': widgets.Select(choices=ESCOLHAS_CONSOLIDADO),}
         
     class Media:
-        js = ('js/bagogold/acoes.js', 
+        js = ('js/bagogold/calculo_emolumentos.js', 
               'js/bagogold/fii.js',)
         
     def clean(self):
