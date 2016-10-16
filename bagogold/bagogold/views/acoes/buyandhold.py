@@ -48,6 +48,9 @@ def editar_operacao_acao(request, id):
     if operacao_acao.investidor != investidor:
         raise PermissionDenied
     
+    # Valor da poupança de proventos na data apontada
+    poupanca_proventos = calcular_poupanca_prov_acao_ate_dia(investidor, operacao_acao.data)
+    
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoAcaoFormSet)
@@ -80,21 +83,25 @@ def editar_operacao_acao(request, id):
                 # Validar de acordo com a quantidade de divisões
                 if varias_divisoes:
                     if formset_divisao.is_valid():
-                        operacao_acao.save()
+#                         operacao_acao.save()
                         formset_divisao.save()
                         for form_divisao_operacao in [form for form in formset_divisao if form.cleaned_data]:
-                            divisao_operacao = form_divisao_operacao.save(commit=False)
-                            if hasattr(divisao_operacao, 'usoproventosoperacaoacao'):
-                                if form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] == None or form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] == 0:
-                                    divisao_operacao.usoproventosoperacaoacao.delete()
-                                else:
-                                    divisao_operacao.usoproventosoperacaoacao.qtd_utilizada = form_divisao_operacao.cleaned_data['qtd_proventos_utilizada']
-                                    divisao_operacao.usoproventosoperacaoacao.save()
+                            # Ignorar caso seja apagado
+                            if 'DELETE' in form.cleaned_data and form.cleaned_data['DELETE']:
+                                pass
                             else:
-                                if form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] != None and form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] > 0:
-                                    # TODO remover operação de uso proventos
-                                    divisao_operacao.usoproventosoperacaoacao = UsoProventosOperacaoAcao(qtd_utilizada=form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'], operacao=operacao_acao)
-                                    divisao_operacao.usoproventosoperacaoacao.save()
+                                divisao_operacao = form_divisao_operacao.save(commit=False)
+                                if hasattr(divisao_operacao, 'usoproventosoperacaoacao'):
+                                    if form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] == None or form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] == 0:
+                                        divisao_operacao.usoproventosoperacaoacao.delete()
+                                    else:
+                                        divisao_operacao.usoproventosoperacaoacao.qtd_utilizada = form_divisao_operacao.cleaned_data['qtd_proventos_utilizada']
+                                        divisao_operacao.usoproventosoperacaoacao.save()
+                                else:
+                                    if form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] != None and form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] > 0:
+                                        # TODO remover operação de uso proventos
+                                        divisao_operacao.usoproventosoperacaoacao = UsoProventosOperacaoAcao(qtd_utilizada=form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'], operacao=operacao_acao)
+                                        divisao_operacao.usoproventosoperacaoacao.save()
                         
                         messages.success(request, 'Operação alterada com sucesso')
                         return HttpResponseRedirect(reverse('historico_bh'))
@@ -121,8 +128,7 @@ def editar_operacao_acao(request, id):
                     messages.error(request, erro)
             for erro in formset_divisao.non_form_errors():
                 messages.error(request, erro)
-            return render_to_response('acoes/buyandhold/editar_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,
-                                                                       'formset_divisao': formset_divisao }, context_instance=RequestContext(request))
+
         elif request.POST.get("delete"):
             divisao_acao = DivisaoOperacaoAcao.objects.filter(operacao=operacao_acao)
             for divisao in divisao_acao:
@@ -143,9 +149,6 @@ def editar_operacao_acao(request, id):
         else:
             form_uso_proventos = UsoProventosOperacaoAcaoForm()
         formset_divisao = DivisaoFormSet(instance=operacao_acao, investidor=investidor)
-        
-        # Valor da poupança de proventos na data apontada
-        poupanca_proventos = calcular_poupanca_prov_acao_ate_dia(investidor, operacao_acao.data)
             
     return render_to_response('acoes/buyandhold/editar_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,
                                                                        'formset_divisao': formset_divisao, 'poupanca_proventos': poupanca_proventos, 'varias_divisoes': varias_divisoes}, context_instance=RequestContext(request))

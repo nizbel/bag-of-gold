@@ -94,6 +94,9 @@ class UsoProventosOperacaoAcao (models.Model):
     qtd_utilizada = models.DecimalField(u'Quantidade de proventos utilizada', max_digits=11, decimal_places=2)
     divisao_operacao = models.OneToOneField('DivisaoOperacaoAcao')
 
+    def __unicode__(self):
+        return 'R$ ' + str(self.qtd_utilizada) + ' em ' + self.divisao_operacao.divisao.nome + ' para ' + unicode(self.divisao_operacao.operacao)
+    
 class OperacaoCompraVenda (models.Model):
     compra = models.ForeignKey('OperacaoAcao', limit_choices_to={'tipo_operacao': 'C'}, related_name='compra')
     venda = models.ForeignKey('OperacaoAcao', limit_choices_to={'tipo_operacao': 'V'}, related_name='venda')
