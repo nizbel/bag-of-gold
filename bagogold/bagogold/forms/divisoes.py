@@ -53,15 +53,21 @@ class DivisaoOperacaoAcaoFormSet(forms.models.BaseInlineFormSet):
 #             return self.cleaned_data['qtd_proventos_utilizada']
     
     def clean(self):
-        print 'clean final'
         qtd_total_div = 0
         qtd_total_prov = 0
         contador_forms = 0
+        divisoes_utilizadas = {}
         for form_divisao in self.forms:
             contador_forms += 1
             if form_divisao.is_valid():
 #                 print form_divisao.cleaned_data.get('quantidade')
                 if not (form_divisao.instance.id == None and not form_divisao.has_changed()):
+                    # Verificar se foram escolhidas 2 divisões iguais
+                    if form_divisao.cleaned_data['divisao'].id in divisoes_utilizadas:
+                        raise forms.ValidationError('Divisão %s escolhida mais de uma vez' % (form_divisao.cleaned_data['divisao']))
+                    else:
+                        divisoes_utilizadas[form_divisao.cleaned_data['divisao'].id] = form_divisao.cleaned_data['divisao']
+                    
                     # Verificar quantidade das divisões
                     div_qtd = form_divisao.cleaned_data['quantidade']
                     if div_qtd != None and div_qtd > 0:
@@ -77,7 +83,9 @@ class DivisaoOperacaoAcaoFormSet(forms.models.BaseInlineFormSet):
                         qtd_total_prov += div_qtd_prov
                     else:
                         raise forms.ValidationError('Quantidade de proventos utilizada da divisão %s é inválida, não pode ser negativa' % (contador_forms))
-        
+                    
+            else:
+                print 'Invalid'
         if self.instance.quantidade < qtd_total_div:
             raise forms.ValidationError('Quantidade total alocada para as divisões é maior que quantidade da operação')
         elif self.instance.quantidade > qtd_total_div:
@@ -99,11 +107,18 @@ class DivisaoOperacaoFIIFormSet(forms.models.BaseInlineFormSet):
     def clean(self):
         qtd_total_div = 0
         contador_forms = 0
+        divisoes_utilizadas = {}
         for form_divisao in self.forms:
             contador_forms += 1
             if form_divisao.is_valid():
 #                 print form_divisao.cleaned_data.get('quantidade')
                 if not (form_divisao.instance.id == None and not form_divisao.has_changed()):
+                    # Verificar se foram escolhidas 2 divisões iguais
+                    if form_divisao.cleaned_data['divisao'].id in divisoes_utilizadas:
+                        raise forms.ValidationError('Divisão %s escolhida mais de uma vez' % (form_divisao.cleaned_data['divisao']))
+                    else:
+                        divisoes_utilizadas[form_divisao.cleaned_data['divisao'].id] = form_divisao.cleaned_data['divisao']
+                        
                     # Verificar quantidade
                     div_qtd = form_divisao.cleaned_data['quantidade']
                     if div_qtd != None and div_qtd > 0:
@@ -129,10 +144,17 @@ class DivisaoOperacaoLCFormSet(forms.models.BaseInlineFormSet):
     def clean(self):
         qtd_total_div = 0
         contador_forms = 0
+        divisoes_utilizadas = {}
         for form_divisao in self.forms:
             contador_forms += 1
             if form_divisao.is_valid():
                 if not (form_divisao.instance.id == None and not form_divisao.has_changed()):
+                    # Verificar se foram escolhidas 2 divisões iguais
+                    if form_divisao.cleaned_data['divisao'].id in divisoes_utilizadas:
+                        raise forms.ValidationError('Divisão %s escolhida mais de uma vez' % (form_divisao.cleaned_data['divisao']))
+                    else:
+                        divisoes_utilizadas[form_divisao.cleaned_data['divisao'].id] = form_divisao.cleaned_data['divisao']
+                        
                     # Verificar quantidade
                     div_qtd = form_divisao.cleaned_data['quantidade']
                     if div_qtd != None and div_qtd > 0:
@@ -163,10 +185,17 @@ class DivisaoOperacaoCDB_RDBFormSet(forms.models.BaseInlineFormSet):
     def clean(self):
         qtd_total_div = 0
         contador_forms = 0
+        divisoes_utilizadas = {}
         for form_divisao in self.forms:
             contador_forms += 1
             if form_divisao.is_valid():
                 if not (form_divisao.instance.id == None and not form_divisao.has_changed()):
+                    # Verificar se foram escolhidas 2 divisões iguais
+                    if form_divisao.cleaned_data['divisao'].id in divisoes_utilizadas:
+                        raise forms.ValidationError('Divisão %s escolhida mais de uma vez' % (form_divisao.cleaned_data['divisao']))
+                    else:
+                        divisoes_utilizadas[form_divisao.cleaned_data['divisao'].id] = form_divisao.cleaned_data['divisao']
+                        
                     # Verificar quantidade
                     div_qtd = form_divisao.cleaned_data['quantidade']
                     if div_qtd != None and div_qtd > 0:
@@ -196,11 +225,18 @@ class DivisaoOperacaoFundoInvestimentoFormSet(forms.models.BaseInlineFormSet):
     def clean(self):
         qtd_total_div = 0
         contador_forms = 0
+        divisoes_utilizadas = {}
         for form_divisao in self.forms:
             contador_forms += 1
             if form_divisao.is_valid():
 #                 print form_divisao.cleaned_data.get('quantidade')
                 if not (form_divisao.instance.id == None and not form_divisao.has_changed()):
+                    # Verificar se foram escolhidas 2 divisões iguais
+                    if form_divisao.cleaned_data['divisao'].id in divisoes_utilizadas:
+                        raise forms.ValidationError('Divisão %s escolhida mais de uma vez' % (form_divisao.cleaned_data['divisao']))
+                    else:
+                        divisoes_utilizadas[form_divisao.cleaned_data['divisao'].id] = form_divisao.cleaned_data['divisao']
+                        
                     # Verificar quantidade
                     div_qtd = form_divisao.cleaned_data['quantidade']
                     if div_qtd != None and div_qtd > 0:
@@ -225,11 +261,18 @@ class DivisaoOperacaoTDFormSet(forms.models.BaseInlineFormSet):
     def clean(self):
         qtd_total_div = 0
         contador_forms = 0
+        divisoes_utilizadas = {}
         for form_divisao in self.forms:
             contador_forms += 1
             if form_divisao.is_valid():
 #                 print form_divisao.cleaned_data.get('quantidade')
                 if not (form_divisao.instance.id == None and not form_divisao.has_changed()):
+                    # Verificar se foram escolhidas 2 divisões iguais
+                    if form_divisao.cleaned_data['divisao'].id in divisoes_utilizadas:
+                        raise forms.ValidationError('Divisão %s escolhida mais de uma vez' % (form_divisao.cleaned_data['divisao']))
+                    else:
+                        divisoes_utilizadas[form_divisao.cleaned_data['divisao'].id] = form_divisao.cleaned_data['divisao']
+                        
                     # Verificar quantidade
                     div_qtd = form_divisao.cleaned_data['quantidade']
                     if div_qtd != None and div_qtd > 0:
