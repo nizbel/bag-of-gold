@@ -64,7 +64,6 @@ class DivisaoOperacaoAcaoFormSet(forms.models.BaseInlineFormSet):
                 # Verifica se pode passar pelo form, e se não está configurado para ser apagada
                 if not (form_divisao.instance.id == None and not form_divisao.has_changed()):
                     if ('DELETE' not in form_divisao.cleaned_data or not form_divisao.cleaned_data['DELETE']):
-                        print 'Testando form', form_divisao.cleaned_data
                         
                         # Verificar se foram escolhidas 2 divisões iguais
                         if form_divisao.cleaned_data['divisao'].id in divisoes_utilizadas:
@@ -93,8 +92,7 @@ class DivisaoOperacaoAcaoFormSet(forms.models.BaseInlineFormSet):
                     # Divisão será apagada
                     elif form_divisao.cleaned_data['DELETE']:
                         divisao_a_excluir = True
-            else:
-                print 'Invalid'
+
         if self.instance.quantidade < qtd_total_div:
             raise forms.ValidationError('Quantidade total alocada para as divisões é maior que quantidade da operação')
         elif self.instance.quantidade > qtd_total_div:
@@ -117,31 +115,50 @@ class DivisaoOperacaoFIIFormSet(forms.models.BaseInlineFormSet):
             
     def clean(self):
         qtd_total_div = 0
+        qtd_total_prov = 0
         contador_forms = 0
         divisoes_utilizadas = {}
+        divisao_a_excluir = False
         for form_divisao in self.forms:
             contador_forms += 1
             if form_divisao.is_valid():
 #                 print form_divisao.cleaned_data.get('quantidade')
                 if not (form_divisao.instance.id == None and not form_divisao.has_changed()):
-                    # Verificar se foram escolhidas 2 divisões iguais
-                    if form_divisao.cleaned_data['divisao'].id in divisoes_utilizadas:
-                        raise forms.ValidationError('Divisão %s escolhida mais de uma vez' % (form_divisao.cleaned_data['divisao']))
-                    else:
-                        if self.investidor != form_divisao.cleaned_data['divisao'].investidor:
-                            raise forms.ValidationError('Divisão não pertence ao investidor')
-                        divisoes_utilizadas[form_divisao.cleaned_data['divisao'].id] = form_divisao.cleaned_data['divisao']
+                    if ('DELETE' not in form_divisao.cleaned_data or not form_divisao.cleaned_data['DELETE']):
                         
-                    # Verificar quantidade
-                    div_qtd = form_divisao.cleaned_data['quantidade']
-                    if div_qtd != None and div_qtd > 0:
-                        qtd_total_div += div_qtd
-                    else:
-                        raise forms.ValidationError('Quantidade da divisão %s é inválida, quantidade deve ser maior que 0' % (contador_forms))
+                        # Verificar se foram escolhidas 2 divisões iguais
+                        if form_divisao.cleaned_data['divisao'].id in divisoes_utilizadas:
+                            raise forms.ValidationError('Divisão %s escolhida mais de uma vez' % (form_divisao.cleaned_data['divisao']))
+                        else:
+                            if self.investidor != form_divisao.cleaned_data['divisao'].investidor:
+                                raise forms.ValidationError('Divisão não pertence ao investidor')
+                            divisoes_utilizadas[form_divisao.cleaned_data['divisao'].id] = form_divisao.cleaned_data['divisao']
+                            
+                        # Verificar quantidade
+                        div_qtd = form_divisao.cleaned_data['quantidade']
+                        if div_qtd != None and div_qtd > 0:
+                            qtd_total_div += div_qtd
+                        else:
+                            raise forms.ValidationError('Quantidade da divisão %s é inválida, quantidade deve ser maior que 0' % (contador_forms))
+                        
+                        # Verificar quantidade de proventos utilizada das divisões
+                        div_qtd_prov = form_divisao.cleaned_data['qtd_proventos_utilizada']
+                        if div_qtd_prov == None:
+                            pass
+                        elif div_qtd_prov >= 0:
+                            qtd_total_prov += div_qtd_prov
+                        else:
+                            raise forms.ValidationError('Quantidade de proventos utilizada da divisão %s é inválida, não pode ser negativa' % (contador_forms))
                 
+                    # Divisão será apagada
+                    elif form_divisao.cleaned_data['DELETE']:
+                        divisao_a_excluir = True
+                        
         if self.instance.quantidade < qtd_total_div:
             raise forms.ValidationError('Quantidade total alocada para as divisões é maior que quantidade da operação')
         elif self.instance.quantidade > qtd_total_div:
+            if divisao_a_excluir:
+                raise forms.ValidationError('Quantidade total alocada para as divisões é menor que quantidade da operação. Repasse a quantidade da divisão excluída para a(s) remanescente(s)')
             raise forms.ValidationError('Quantidade total alocada para as divisões é menor que quantidade da operação')
 
 # Inline FormSet para operações em letras de crédito
