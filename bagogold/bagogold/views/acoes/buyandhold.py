@@ -17,7 +17,7 @@ from bagogold.bagogold.utils.investidores import is_superuser
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.db.models.functions import Concat
@@ -609,9 +609,23 @@ def inserir_operacao_acao(request):
             operacao_acao.destinacao = 'B'
             # Validar de acordo com a quantidade de divisões
             if varias_divisoes:
+                formset_divisao = DivisaoFormSet(request.POST, instance=operacao_acao, investidor=investidor)
                 if formset_divisao.is_valid():
-                    formset_divisao = DivisaoFormSet(request.POST, instance=operacao_acao, investidor=investidor)
-                    formset_divisao.save()
+#                     operacao_acao.save()
+                    for form_divisao_operacao in formset_divisao:
+                        print form_divisao_operacao.cleaned_data['qtd_proventos_utilizada']
+                        divisao_operacao = form_divisao_operacao.save(commit=False)
+                        print divisao_operacao
+#                         divisao_operacao.save()
+                        if form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] != None and form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] > 0:
+                            # TODO remover operação de uso proventos
+                            divisao_operacao.usoproventosoperacaoacao = UsoProventosOperacaoAcao(qtd_utilizada=form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'], operacao=operacao_acao)
+                            print divisao_operacao.usoproventosoperacaoacao.divisao_operacao
+                            print divisao_operacao.usoproventosoperacaoacao.qtd_utilizada
+                            print divisao_operacao.usoproventosoperacaoacao.operacao
+#                             divisao_operacao.usoproventosoperacaoacao.save()
+                for erro in formset_divisao.non_form_errors():
+                    messages.error(request, erro)
                 
             else:
                 if form_uso_proventos.is_valid():
@@ -625,8 +639,6 @@ def inserir_operacao_acao(request):
                         uso_proventos.save()
                     messages.success(request, 'Operação inserida com sucesso')
                     return HttpResponseRedirect(reverse('historico_bh'))
-            for erro in formset_divisao.non_form_errors():
-                messages.error(request, erro)
     else:
         valores_iniciais = {}
         if investidor.tipo_corretagem == 'F':
