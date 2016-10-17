@@ -31,6 +31,9 @@ def editar_operacao_lc(request, id):
     if operacao_lc.investidor != investidor:
         raise PermissionDenied
     
+    # Testa se investidor possui mais de uma divisão
+    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoLetraCredito, DivisaoOperacaoLC, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoLCFormSet)
@@ -70,7 +73,7 @@ def editar_operacao_lc(request, id):
         form_operacao_lc = OperacaoLetraCreditoForm(instance=operacao_lc, investidor=investidor, initial={'operacao_compra': operacao_lc.operacao_compra_relacionada(),})
         formset_divisao = DivisaoFormSet(instance=operacao_lc, investidor=investidor)
             
-    return render_to_response('lc/editar_operacao_lc.html', {'form_operacao_lc': form_operacao_lc, 'formset_divisao': formset_divisao},
+    return render_to_response('lc/editar_operacao_lc.html', {'form_operacao_lc': form_operacao_lc, 'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes},
                               context_instance=RequestContext(request))  
 
     
