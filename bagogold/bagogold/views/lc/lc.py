@@ -231,6 +231,9 @@ def inserir_operacao_lc(request):
     DivisaoFormSet = inlineformset_factory(OperacaoLetraCredito, DivisaoOperacaoLC, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoLCFormSet)
     
+    # Testa se investidor possui mais de uma divisão
+    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    
     if request.method == 'POST':
         if request.POST.get("save"):
             form_operacao_lc = OperacaoLetraCreditoForm(request.POST, investidor=investidor)
@@ -240,9 +243,9 @@ def inserir_operacao_lc(request):
                 operacao_lc = form_operacao_lc.save(commit=False)
                 operacao_lc.investidor = investidor
                 operacao_compra = form_operacao_lc.cleaned_data['operacao_compra']
-                formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lc, operacao_compra=operacao_compra, investidor=investidor)
+                formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lc, operacao_compra=operacao_compra, investidor=investidor) if varias_divisoes else None
                     
-                # TODO Validar em caso de venda
+                # Validar em caso de venda
                 if form_operacao_lc.cleaned_data['tipo_operacao'] == 'V':
                     operacao_compra = form_operacao_lc.cleaned_data['operacao_compra']
                     # Caso de venda total da letra de crédito
@@ -259,17 +262,37 @@ def inserir_operacao_lc(request):
                         return HttpResponseRedirect(reverse('historico_lc'))
                     # Vendas parciais
                     else:
-                        if formset_divisao.is_valid():
+                        # Verificar se varias divisões
+                        if varias_divisoes:
+                            if formset_divisao.is_valid():
+                                operacao_lc.save()
+                                formset_divisao.save()
+                                operacao_venda_lc = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_lc)
+                                operacao_venda_lc.save()
+                                messages.success(request, 'Operação inserida com sucesso')
+                                return HttpResponseRedirect(reverse('historico_lc'))
+                        else:
                             operacao_lc.save()
-                            formset_divisao.save()
+                            divisao_operacao = DivisaoOperacaoLC(operacao=operacao_lc, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_lc.quantidade)
+                            divisao_operacao.save()
                             operacao_venda_lc = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_lc)
                             operacao_venda_lc.save()
                             messages.success(request, 'Operação inserida com sucesso')
                             return HttpResponseRedirect(reverse('historico_lc'))
+                        
+                # Compra
                 else:
-                    if formset_divisao.is_valid():
+                    # Verificar se várias divisões
+                    if varias_divisoes:
+                        if formset_divisao.is_valid():
+                            operacao_lc.save()
+                            formset_divisao.save()
+                            messages.success(request, 'Operação inserida com sucesso')
+                            return HttpResponseRedirect(reverse('historico_lc'))
+                    else:
                         operacao_lc.save()
-                        formset_divisao.save()
+                        divisao_operacao = DivisaoOperacaoLC(operacao=operacao_lc, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_lc.quantidade)
+                        divisao_operacao.save()
                         messages.success(request, 'Operação inserida com sucesso')
                         return HttpResponseRedirect(reverse('historico_lc'))
                         
@@ -278,15 +301,12 @@ def inserir_operacao_lc(request):
                     messages.error(request, erro)
             for erro in formset_divisao.non_form_errors():
                 messages.error(request, erro)
-                
-            return render_to_response('lc/inserir_operacao_lc.html', {'form_operacao_lc': form_operacao_lc, 'formset_divisao': formset_divisao},
-                                      context_instance=RequestContext(request))
 #                         print '%s %s'  % (divisao_lc.quantidade, divisao_lc.divisao)
                 
     else:
         form_operacao_lc = OperacaoLetraCreditoForm(investidor=investidor)
         formset_divisao = DivisaoFormSet(investidor=investidor)
-    return render_to_response('lc/inserir_operacao_lc.html', {'form_operacao_lc': form_operacao_lc, 'formset_divisao': formset_divisao},
+    return render_to_response('lc/inserir_operacao_lc.html', {'form_operacao_lc': form_operacao_lc, 'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes},
                               context_instance=RequestContext(request))
 
 @login_required
