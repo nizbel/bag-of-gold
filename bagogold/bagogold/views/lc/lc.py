@@ -242,7 +242,7 @@ def inserir_operacao_lc(request):
     if request.method == 'POST':
         if request.POST.get("save"):
             form_operacao_lc = OperacaoLetraCreditoForm(request.POST, investidor=investidor)
-            formset_divisao = DivisaoFormSet(request.POST, investidor=investidor)
+            formset_divisao = DivisaoFormSet(request.POST, investidor=investidor) if varias_divisoes else None
             
             if form_operacao_lc.is_valid():
                 operacao_lc = form_operacao_lc.save(commit=False)
@@ -276,6 +276,8 @@ def inserir_operacao_lc(request):
                                 operacao_venda_lc.save()
                                 messages.success(request, 'Operação inserida com sucesso')
                                 return HttpResponseRedirect(reverse('historico_lc'))
+                            for erro in formset_divisao.non_form_errors():
+                                messages.error(request, erro)
                         else:
                             operacao_lc.save()
                             divisao_operacao = DivisaoOperacaoLC(operacao=operacao_lc, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_lc.quantidade)
@@ -294,6 +296,9 @@ def inserir_operacao_lc(request):
                             formset_divisao.save()
                             messages.success(request, 'Operação inserida com sucesso')
                             return HttpResponseRedirect(reverse('historico_lc'))
+                        for erro in formset_divisao.non_form_errors():
+                            messages.error(request, erro)
+                            
                     else:
                         operacao_lc.save()
                         divisao_operacao = DivisaoOperacaoLC(operacao=operacao_lc, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_lc.quantidade)
@@ -304,8 +309,6 @@ def inserir_operacao_lc(request):
             for erros in form_operacao_lc.errors.values():
                 for erro in erros:
                     messages.error(request, erro)
-            for erro in formset_divisao.non_form_errors():
-                messages.error(request, erro)
 #                         print '%s %s'  % (divisao_lc.quantidade, divisao_lc.divisao)
                 
     else:
