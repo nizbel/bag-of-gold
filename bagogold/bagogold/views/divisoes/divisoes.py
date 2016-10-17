@@ -288,9 +288,8 @@ def editar_divisao(request, id):
         raise PermissionDenied
     
     if request.method == 'POST':
+        form = DivisaoForm(request.POST, instance=divisao)
         if request.POST.get("save"):
-            form = DivisaoForm(request.POST, instance=divisao)
-            
             if form.is_valid():
                 divisao.save()
                 messages.success(request, 'Divisão editada com sucesso')
