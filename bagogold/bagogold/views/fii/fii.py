@@ -146,7 +146,6 @@ def editar_operacao_fii(request, id):
                         operacao_fii.save()
                         formset_divisao.save()
                         for form_divisao_operacao in [form for form in formset_divisao if form.cleaned_data]:
-                            print form_divisao_operacao.cleaned_data
                             # Ignorar caso seja apagado
                             if 'DELETE' in form_divisao_operacao.cleaned_data and form_divisao_operacao.cleaned_data['DELETE']:
                                 pass
@@ -169,22 +168,20 @@ def editar_operacao_fii(request, id):
                     
                 else:    
                     if form_uso_proventos.is_valid():
-                        if formset_divisao.is_valid():
-                            operacao_fii.save()
-                            divisao_operacao = DivisaoOperacaoFII.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_fii)
-                            divisao_operacao.quantidade = operacao_fii.quantidade
-                            divisao_operacao.save()
-                            uso_proventos = form_uso_proventos.save(commit=False)
-                            if uso_proventos.qtd_utilizada > 0:
-                                uso_proventos.operacao = operacao_fii
-                                uso_proventos.divisao_operacao = DivisaoOperacaoFII.objects.get(operacao=operacao_fii)
-                                uso_proventos.save()
-                            # Se uso proventos for 0 e existir uso proventos atualmente, apagá-lo
-                            elif uso_proventos.qtd_utilizada == 0 and UsoProventosOperacaoFII.objects.filter(divisao_operacao__operacao=operacao_fii):
-                                uso_proventos.delete()
-                            formset_divisao.save()
-                            messages.success(request, 'Operação alterada com sucesso')
-                            return HttpResponseRedirect(reverse('historico_fii'))
+                        operacao_fii.save()
+                        divisao_operacao = DivisaoOperacaoFII.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_fii)
+                        divisao_operacao.quantidade = operacao_fii.quantidade
+                        divisao_operacao.save()
+                        uso_proventos = form_uso_proventos.save(commit=False)
+                        if uso_proventos.qtd_utilizada > 0:
+                            uso_proventos.operacao = operacao_fii
+                            uso_proventos.divisao_operacao = DivisaoOperacaoFII.objects.get(operacao=operacao_fii)
+                            uso_proventos.save()
+                        # Se uso proventos for 0 e existir uso proventos atualmente, apagá-lo
+                        elif uso_proventos.qtd_utilizada == 0 and UsoProventosOperacaoFII.objects.filter(divisao_operacao__operacao=operacao_fii):
+                            uso_proventos.delete()
+                        messages.success(request, 'Operação alterada com sucesso')
+                        return HttpResponseRedirect(reverse('historico_fii'))
                         
             for erros in form_operacao_fii.errors.values():
                 for erro in erros:
