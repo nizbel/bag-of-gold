@@ -292,7 +292,9 @@ def inserir_operacao_lc(request):
 
 @login_required
 def listar_lc(request):
-    lcs = LetraCredito.objects.all()
+    investidor = request.user.investidor
+    
+    lcs = LetraCredito.objects.filter(investidor=investidor)
     
     for lc in lcs:
         # Preparar o valor mais atual para carência
