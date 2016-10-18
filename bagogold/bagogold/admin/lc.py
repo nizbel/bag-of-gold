@@ -8,7 +8,10 @@ admin.site.register(LetraCredito)
     
 admin.site.register(OperacaoLetraCredito)
     
-admin.site.register(OperacaoVendaLetraCredito)
+class OperacaoVendaLetraCreditoAdmin(admin.ModelAdmin):
+    list_display = ('operacao_venda', 'operacao_compra')
+    
+admin.site.register(OperacaoVendaLetraCredito, OperacaoVendaLetraCreditoAdmin)
     
 admin.site.register(HistoricoPorcentagemLetraCredito)
     
