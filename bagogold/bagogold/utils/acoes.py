@@ -274,7 +274,7 @@ def quantidade_acoes_ate_dia(investidor, ticker, dia, considerar_trade=False):
             if item.provento.acao.ticker == ticker:
                 qtd_acoes += int(item.provento.valor_unitario * qtd_acoes / 100)
             else:
-                qtd_acoes += int(item.provento.valor_unitario * quantidade_acoes_ate_dia(investidor, item.provento.acao.ticker, item.data) / 100)
+                qtd_acoes += int(item.provento.valor_unitario * quantidade_acoes_ate_dia(investidor, item.provento.acao.ticker, item.data, considerar_trade) / 100)
     
     return qtd_acoes
 
