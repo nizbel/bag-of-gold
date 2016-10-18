@@ -659,7 +659,7 @@ def painel(request):
         if acoes[acao.ticker].quantidade == 0:
             del acoes[acao.ticker]
         else:
-            ultimo_dia_util = datetime.date.today()
+            ultimo_dia_util = (datetime.date.today() + datetime.timedelta(days=-1))
             while not HistoricoAcao.objects.filter(data=ultimo_dia_util, acao=acao):
                 ultimo_dia_util -= datetime.timedelta(days=1)
             acoes[acao.ticker].valor_dia_anterior = HistoricoAcao.objects.get(acao=acao, data=ultimo_dia_util).preco_unitario
