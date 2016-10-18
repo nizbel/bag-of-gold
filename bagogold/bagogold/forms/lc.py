@@ -53,6 +53,8 @@ class OperacaoLetraCreditoForm(forms.ModelForm):
             if operacao_compra is None:
                 raise forms.ValidationError('Selecione operação de compra válida')
             quantidade = self.cleaned_data['quantidade']
+            if 'data' not in self.cleaned_data or self.cleaned_data['data'] == None:
+                return None
             if quantidade > operacao_compra.qtd_disponivel_venda_na_data(self.cleaned_data['data']):
                 raise forms.ValidationError('Não é possível vender mais do que o disponível na operação de compra')
             return operacao_compra
