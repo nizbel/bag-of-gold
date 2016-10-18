@@ -73,6 +73,10 @@ class OperacaoLetraCreditoForm(forms.ModelForm):
             return letra_credito
         return None
     
+    def clean(self):
+        data = super(OperacaoLetraCreditoForm, self).clean()
+        print self.instance
+    
     
 class HistoricoPorcentagemLetraCreditoForm(forms.ModelForm):
     
