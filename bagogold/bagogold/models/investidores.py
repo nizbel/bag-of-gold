@@ -19,13 +19,14 @@ class Investidor (models.Model):
     
     
 @receiver(post_save, sender=User, dispatch_uid="usuario_criado")
-def create_investidor(sender, instance, **kwargs):
-    """
-    Cria investidor para cada usuário criado
-    """
-    investidor = Investidor.objects.get_or_create(user=instance)
-    """ 
-    Cria uma divisão e configura como principal
-    """
-    divisao = Divisao.objects.get_or_create(investidor=investidor, nome='Geral')
-    DivisaoPrincipal.objects.get_or_create(investidor=investidor, divisao=divisao)
+def create_investidor(sender, instance, created, **kwargs):
+    if created:
+        """
+        Cria investidor para cada usuário criado
+        """
+        investidor = Investidor.objects.get_or_create(user=instance)
+        """ 
+        Cria uma divisão e configura como principal
+        """
+        divisao = Divisao.objects.get_or_create(investidor=investidor, nome='Geral')
+        DivisaoPrincipal.objects.get_or_create(investidor=investidor, divisao=divisao)
