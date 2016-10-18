@@ -57,7 +57,11 @@ class OperacaoLetraCreditoForm(forms.ModelForm):
 
     def clean_letra_credito(self):
         tipo_operacao = self.cleaned_data['tipo_operacao']
-        if tipo_operacao == 'C':
+        if tipo_operacao == 'V':
+            if self.cleaned_data.get('operacao_compra'):
+                letra_credito = self.cleaned_data.get('operacao_compra').letra_credito
+                return letra_credito
+        else:
             letra_credito = self.cleaned_data.get('letra_credito')
             if letra_credito is None:
                 raise forms.ValidationError('Insira letra de crédito válida')
