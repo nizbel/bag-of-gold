@@ -44,19 +44,31 @@ def editar_operacao_lc(request, id):
             
             if form_operacao_lc.is_valid():
                 operacao_compra = form_operacao_lc.cleaned_data['operacao_compra']
-                formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lc, operacao_compra=operacao_compra, investidor=investidor)
-                if formset_divisao.is_valid():
-                    operacao_lc.save()
-                    formset_divisao.save()
+                formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lc, operacao_compra=operacao_compra, investidor=investidor) if varias_divisoes else None
+                if varias_divisoes:
+                    if formset_divisao.is_valid():
+#                         operacao_lc.save()
+                        # Testar se operação era venda e virou compra
+                        if operacao_lc.tipo_operacao == 'C' and OperacaoVendaLetraCredito.objects.filter(operacao_venda=operacao_lc):
+                            OperacaoVendaLetraCredito.objects.get(operacao_venda=operacao_lc).delete()
+#                         formset_divisao.save()
+                        messages.success(request, 'Operação editada com sucesso')
+                        return HttpResponseRedirect(reverse('historico_lc'))
+                    for erro in formset_divisao.non_form_errors():
+                        messages.error(request, erro)
+                else:
+#                     operacao_lc.save()
+                    # Testar se operação era venda e virou compra
+                    if operacao_lc.tipo_operacao == 'C' and OperacaoVendaLetraCredito.objects.filter(operacao_venda=operacao_lc):
+                        OperacaoVendaLetraCredito.objects.get(operacao_venda=operacao_lc).delete()
+                    divisao_operacao = DivisaoOperacaoLC.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_lc)
+                    divisao_operacao.quantidade = operacao_lc.quantidade
+#                     divisao_operacao.save()
                     messages.success(request, 'Operação editada com sucesso')
                     return HttpResponseRedirect(reverse('historico_lc'))
             for erros in form_operacao_lc.errors.values():
                 for erro in erros:
                     messages.error(request, erro)
-            for erro in formset_divisao.non_form_errors():
-                messages.error(request, erro)
-            return render_to_response('lc/editar_operacao_lc.html', {'form_operacao_lc': form_operacao_lc, 'formset_divisao': formset_divisao },
-                      context_instance=RequestContext(request))
 #                         print '%s %s'  % (divisao_lc.quantidade, divisao_lc.divisao)
                 
         elif request.POST.get("delete"):
