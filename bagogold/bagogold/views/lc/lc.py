@@ -233,7 +233,7 @@ def inserir_operacao_lc(request):
     investidor = request.user.investidor
     
     # Preparar formset para divisoes
-    DivisaoFormSet = inlineformset_factory(OperacaoLetraCredito, DivisaoOperacaoLC, fields=('divisao', 'quantidade'),
+    DivisaoFormSet = inlineformset_factory(OperacaoLetraCredito, DivisaoOperacaoLC, fields=('divisao', 'quantidade'), can_delete=False,
                                             extra=1, formset=DivisaoOperacaoLCFormSet)
     
     # Testa se investidor possui mais de uma divisão

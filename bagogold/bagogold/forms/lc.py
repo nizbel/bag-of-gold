@@ -37,6 +37,9 @@ class OperacaoLetraCreditoForm(forms.ModelForm):
         self.fields['letra_credito'].required = False
         self.fields['letra_credito'].queryset = LetraCredito.objects.filter(investidor=self.investidor)
         self.fields['operacao_compra'].queryset = OperacaoLetraCredito.objects.filter(investidor=self.investidor, tipo_operacao='C')
+        # Remover operações que já tenham sido totalmente vendidas
+        self.fields['operacao_compra'].queryset = self.fields['operacao_compra'].queryset.exclude(id__in=[operacao_compra.id for operacao_compra in self.fields['operacao_compra'].queryset 
+                                                                                                          if operacao_compra.qtd_disponivel_venda() == 0])
 #         if self.instance.pk is not None:
 #             # Verificar se é uma compra
 #             if self.instance.tipo_operacao == 'V':
