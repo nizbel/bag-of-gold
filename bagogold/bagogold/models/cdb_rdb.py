@@ -25,16 +25,34 @@ class CDB_RDB (models.Model):
             return HistoricoCarenciaCDB_RDB.objects.filter(data__isnull=False, data__lte=datetime.date.today(), cdb_rdb=self).order_by('-data')[0].carencia
         except:
             return HistoricoCarenciaCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self).carencia
+        
+    def carencia_na_data(self, data):
+        try:
+            return HistoricoCarenciaCDB_RDB.objects.filter(data__isnull=False, cdb_rdb=self, data__lte=data).order_by('-data')[0].carencia
+        except:
+            return HistoricoCarenciaCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self).carencia
     
     def porcentagem_atual(self):
         try:
             return HistoricoPorcentagemCDB_RDB.objects.filter(data__isnull=False, data__lte=datetime.date.today(), cdb_rdb=self).order_by('-data')[0].porcentagem
         except:
             return HistoricoPorcentagemCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self).porcentagem
+        
+    def porcentagem_na_data(self, data):
+        try:
+            return HistoricoPorcentagemCDB_RDB.objects.filter(data__isnull=False, cdb_rdb=self, data__lte=data).order_by('-data')[0].porcentagem
+        except:
+            return HistoricoPorcentagemCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self).porcentagem
     
     def valor_minimo_atual(self):
         try:
             return HistoricoValorMinimoInvestimentoCDB_RDB.objects.filter(data__isnull=False, data__lte=datetime.date.today(), cdb_rdb=self).order_by('-data')[0].valor_minimo
+        except:
+            return HistoricoValorMinimoInvestimentoCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self).valor_minimo
+        
+    def valor_minimo_na_data(self, data):
+        try:
+            return HistoricoValorMinimoInvestimentoCDB_RDB.objects.filter(data__isnull=False, cdb_rdb=self, data__lte=data).order_by('-data')[0].valor_minimo
         except:
             return HistoricoValorMinimoInvestimentoCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self).valor_minimo
     
