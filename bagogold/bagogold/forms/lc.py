@@ -17,7 +17,7 @@ class LetraCreditoForm(forms.ModelForm):
 
 class OperacaoLetraCreditoForm(forms.ModelForm):
     # Campo verificado apenas no caso de venda de operação de lc
-    operacao_compra = forms.ModelChoiceField(label='Operação de compra',queryset=OperacaoLetraCredito.objects.filter(investidor=self.investidor, tipo_operacao='C'), required=False)
+    operacao_compra = forms.ModelChoiceField(label='Operação de compra',queryset=OperacaoLetraCredito.objects.filter(tipo_operacao='C'), required=False)
     
     class Meta:
         model = OperacaoLetraCredito
@@ -37,6 +37,7 @@ class OperacaoLetraCreditoForm(forms.ModelForm):
         # there's a `fields` property now
         self.fields['letra_credito'].required = False
         self.fields['letra_credito'].queryset = LetraCredito.objects.filter(investidor=self.investidor)
+        self.fields['operacao_compra'].queryset = OperacaoLetraCredito.objects.filter(investidor=self.investidor, tipo_operacao='C')
         # Remover operações que já tenham sido totalmente vendidas e a própria operação
         operacoes_compra_invalidas = [operacao_compra_invalida.id for operacao_compra_invalida in self.fields['operacao_compra'].queryset if operacao_compra_invalida.qtd_disponivel_venda() == 0] + \
             [self.instance.id] if self.instance.id != None else []
@@ -93,11 +94,12 @@ class HistoricoPorcentagemLetraCreditoForm(forms.ModelForm):
         # first call parent's constructor
         super(HistoricoPorcentagemLetraCreditoForm, self).__init__(*args, **kwargs)
         # there's a `fields` property now
-        self.fields['letra_credito'].required = False
         self.fields['letra_credito'].queryset = LetraCredito.objects.filter(investidor=self.investidor)
         
         def clean_letra_credito(self):
-            
+            if self.cleaned_data['letra_credito'].investidor != self.investidor:
+                raise forms.ValidationError('Letra de Crédito inválida')
+            return self.cleaned_data['letra_credito']
         
 class HistoricoCarenciaLetraCreditoForm(forms.ModelForm):
     
@@ -114,6 +116,9 @@ class HistoricoCarenciaLetraCreditoForm(forms.ModelForm):
         # first call parent's constructor
         super(HistoricoCarenciaLetraCreditoForm, self).__init__(*args, **kwargs)
         # there's a `fields` property now
-        self.fields['letra_credito'].required = False
         self.fields['letra_credito'].queryset = LetraCredito.objects.filter(investidor=self.investidor)
         
+        def clean_letra_credito(self):
+            if self.cleaned_data['letra_credito'].investidor != self.investidor:
+                raise forms.ValidationError('Letra de Crédito inválida')
+            return self.cleaned_data['letra_credito']
