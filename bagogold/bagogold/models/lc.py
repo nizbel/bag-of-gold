@@ -15,6 +15,12 @@ class LetraCredito (models.Model):
             return HistoricoCarenciaLetraCredito.objects.filter(data__isnull=False, letra_credito=self).order_by('-data')[0].carencia
         except:
             return HistoricoCarenciaLetraCredito.objects.get(data__isnull=True, letra_credito=self).carencia
+        
+    def carencia_na_data(self, data):
+        try:
+            return HistoricoCarenciaLetraCredito.objects.filter(data__isnull=False, letra_credito=self, data__lte=data).order_by('-data')[0].carencia
+        except:
+            return HistoricoCarenciaLetraCredito.objects.get(data__isnull=True, letra_credito=self).carencia
     
     def porcentagem_di_atual(self):
         try:
@@ -22,9 +28,21 @@ class LetraCredito (models.Model):
         except:
             return HistoricoPorcentagemLetraCredito.objects.get(data__isnull=True, letra_credito=self).porcentagem_di
         
+    def porcentagem_na_data(self, data):
+        try:
+            return HistoricoPorcentagemLetraCredito.objects.filter(data__isnull=False, letra_credito=self, data__lte=data).order_by('-data')[0].porcentagem_di
+        except:
+            return HistoricoPorcentagemLetraCredito.objects.get(data__isnull=True, letra_credito=self).porcentagem_di
+        
     def valor_minimo_atual(self):
         try:
             return HistoricoValorMinimoInvestimento.objects.filter(data__isnull=False, letra_credito=self).order_by('-data')[0].valor_minimo
+        except:
+            return HistoricoValorMinimoInvestimento.objects.get(data__isnull=True, letra_credito=self).valor_minimo
+        
+    def valor_minimo_na_data(self, data):
+        try:
+            return HistoricoValorMinimoInvestimento.objects.filter(data__isnull=False, letra_credito=self, data__lte=data).order_by('-data')[0].valor_minimo
         except:
             return HistoricoValorMinimoInvestimento.objects.get(data__isnull=True, letra_credito=self).valor_minimo
     
@@ -37,6 +55,12 @@ class OperacaoLetraCredito (models.Model):
     
     def __unicode__(self):
         return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.letra_credito, self.data)
+    
+    def save(self, *args, **kw):
+        # Apagar operação venda caso operação seja editada para compra
+        if OperacaoVendaLetraCredito.objects.filter(operacao_venda=self) and self.tipo_operacao == 'C':
+            OperacaoVendaLetraCredito.objects.get(operacao_venda=self).delete()
+        super(OperacaoLetraCredito, self).save(*args, **kw)
     
     def carencia(self):
         try:
