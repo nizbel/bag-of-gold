@@ -117,9 +117,9 @@ def historico(request):
     # Prepara o campo valor atual
     for operacao in operacoes:
         operacao.atual = operacao.quantidade
+        operacao.taxa = operacao.porcentagem_di()
         if operacao.tipo_operacao == 'C':
             operacao.tipo = 'Compra'
-            operacao.taxa = operacao.porcentagem_di()
         else:
             operacao.tipo = 'Venda'
     
@@ -172,8 +172,6 @@ def historico(request):
                         operacao_compra_id = operacao.operacao_compra_relacionada().id
                         for operacao_c in operacoes:
                             if (operacao_c.id == operacao_compra_id):
-                                # Configurar taxa para a mesma quantidade da compra
-                                operacao.taxa = operacao_c.taxa
                                 operacao.atual = (operacao.quantidade/operacao_c.quantidade) * operacao_c.atual
                                 operacao_c.atual -= operacao.atual
                                 str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
