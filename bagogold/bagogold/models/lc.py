@@ -83,8 +83,8 @@ class OperacaoLetraCredito (models.Model):
         elif self.tipo_operacao == 'V':
             return self.operacao_compra_relacionada().porcentagem_di()
     
-    def qtd_disponivel_venda(self):
-        vendas = OperacaoVendaLetraCredito.objects.filter(operacao_compra=self).values_list('operacao_venda__id', flat=True)
+    def qtd_disponivel_venda(self, desconsiderar_vendas=list()):
+        vendas = OperacaoVendaLetraCredito.objects.filter(operacao_compra=self).exclude(operacao_venda__in=desconsiderar_vendas).values_list('operacao_venda__id', flat=True)
         qtd_vendida = 0
         for venda in OperacaoLetraCredito.objects.filter(id__in=vendas):
             qtd_vendida += venda.quantidade
