@@ -41,29 +41,41 @@ def editar_operacao_lc(request, id):
     if request.method == 'POST':
         if request.POST.get("save"):
             form_operacao_lc = OperacaoLetraCreditoForm(request.POST, instance=operacao_lc, investidor=investidor)
+            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lc, operacao_compra=operacao_compra, investidor=investidor) if varias_divisoes else None
             
             if form_operacao_lc.is_valid():
                 operacao_compra = form_operacao_lc.cleaned_data['operacao_compra']
-                formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lc, operacao_compra=operacao_compra, investidor=investidor) if varias_divisoes else None
                 if varias_divisoes:
                     if formset_divisao.is_valid():
-#                         operacao_lc.save()
-                        # Testar se operação era venda e virou compra
-                        if operacao_lc.tipo_operacao == 'C' and OperacaoVendaLetraCredito.objects.filter(operacao_venda=operacao_lc):
-                            OperacaoVendaLetraCredito.objects.get(operacao_venda=operacao_lc).delete()
-#                         formset_divisao.save()
+                        operacao_lc.save()
+                        if operacao_lc.tipo_operacao == 'V':
+                            if not OperacaoVendaLetraCredito.objects.filter(operacao_venda=operacao_lc):
+                                operacao_venda_lc = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_lc)
+                                operacao_venda_lc.save()
+                            else: 
+                                operacao_venda_lc = OperacaoVendaLetraCredito.objects.get(operacao_venda=operacao_lc)
+                                if operacao_venda_lc.operacao_compra != operacao_compra:
+                                    operacao_venda_lc.operacao_compra = operacao_compra
+                                    operacao_venda_lc.save()
+                        formset_divisao.save()
                         messages.success(request, 'Operação editada com sucesso')
                         return HttpResponseRedirect(reverse('historico_lc'))
                     for erro in formset_divisao.non_form_errors():
                         messages.error(request, erro)
                 else:
-#                     operacao_lc.save()
-                    # Testar se operação era venda e virou compra
-                    if operacao_lc.tipo_operacao == 'C' and OperacaoVendaLetraCredito.objects.filter(operacao_venda=operacao_lc):
-                        OperacaoVendaLetraCredito.objects.get(operacao_venda=operacao_lc).delete()
+                    operacao_lc.save()
+                    if operacao_lc.tipo_operacao == 'V':
+                        if not OperacaoVendaLetraCredito.objects.filter(operacao_venda=operacao_lc):
+                            operacao_venda_lc = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_lc)
+                            operacao_venda_lc.save()
+                        else: 
+                            operacao_venda_lc = OperacaoVendaLetraCredito.objects.get(operacao_venda=operacao_lc)
+                            if operacao_venda_lc.operacao_compra != operacao_compra:
+                                operacao_venda_lc.operacao_compra = operacao_compra
+                                operacao_venda_lc.save()
                     divisao_operacao = DivisaoOperacaoLC.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_lc)
                     divisao_operacao.quantidade = operacao_lc.quantidade
-#                     divisao_operacao.save()
+                    divisao_operacao.save()
                     messages.success(request, 'Operação editada com sucesso')
                     return HttpResponseRedirect(reverse('historico_lc'))
             for erros in form_operacao_lc.errors.values():
@@ -185,7 +197,7 @@ def historico(request):
     dados['total_gasto'] = total_gasto
     dados['patrimonio'] = total_patrimonio
     dados['lucro'] = total_patrimonio - total_gasto
-    dados['lucro_percentual'] = (total_patrimonio - total_gasto) / total_gasto * 100
+    dados['lucro_percentual'] = ((total_patrimonio - total_gasto) / total_gasto * 100) if total_gasto > 0 else 0
     
     return render_to_response('lc/historico.html', {'dados': dados, 'operacoes': operacoes, 
                                                     'graf_gasto_total': graf_gasto_total, 'graf_patrimonio': graf_patrimonio},

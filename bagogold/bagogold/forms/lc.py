@@ -3,6 +3,7 @@ from bagogold.bagogold.models.lc import OperacaoLetraCredito, \
     HistoricoPorcentagemLetraCredito, LetraCredito, HistoricoCarenciaLetraCredito
 from django import forms
 from django.forms import widgets
+import datetime
 
 
 ESCOLHAS_TIPO_OPERACAO=(('C', "Compra"),
@@ -37,9 +38,9 @@ class OperacaoLetraCreditoForm(forms.ModelForm):
         self.fields['letra_credito'].required = False
         self.fields['letra_credito'].queryset = LetraCredito.objects.filter(investidor=self.investidor)
         self.fields['operacao_compra'].queryset = OperacaoLetraCredito.objects.filter(investidor=self.investidor, tipo_operacao='C')
-        # Remover operações que já tenham sido totalmente vendidas
+        # Remover operações que já tenham sido totalmente vendidas e a própria operação
         self.fields['operacao_compra'].queryset = self.fields['operacao_compra'].queryset.exclude(id__in=[operacao_compra.id for operacao_compra in self.fields['operacao_compra'].queryset 
-                                                                                                          if operacao_compra.qtd_disponivel_venda() == 0])
+                                                                                                          if operacao_compra.qtd_disponivel_venda() == 0] + [self.instance.id] if self.instance.id != None else [])
 #         if self.instance.pk is not None:
 #             # Verificar se é uma compra
 #             if self.instance.tipo_operacao == 'V':
@@ -47,15 +48,21 @@ class OperacaoLetraCreditoForm(forms.ModelForm):
     
     def clean_operacao_compra(self):
         tipo_operacao = self.cleaned_data['tipo_operacao']
+        print self.instance.id
         if tipo_operacao == 'V':
             operacao_compra = self.cleaned_data.get('operacao_compra')
             # Testar se operacao_compra é válido
             if operacao_compra is None:
                 raise forms.ValidationError('Selecione operação de compra válida')
             quantidade = self.cleaned_data['quantidade']
+            # Testar data, deve ser posterior a operação de compra relacionada
             if 'data' not in self.cleaned_data or self.cleaned_data['data'] == None:
                 return None
-            if quantidade > operacao_compra.qtd_disponivel_venda_na_data(self.cleaned_data['data']):
+            else:
+                if self.cleaned_data["data"] < operacao_compra.data + datetime.timedelta(days=operacao_compra.carencia()):
+                    raise forms.ValidationError('Data da venda deve ser posterior ao período de carência (%s)' % 
+                                                ((operacao_compra.data + datetime.timedelta(days=operacao_compra.carencia())).data.strftime("%d/%m/%Y")))
+            if quantidade > operacao_compra.qtd_disponivel_venda():
                 raise forms.ValidationError('Não é possível vender mais do que o disponível na operação de compra')
             return operacao_compra
         return None
@@ -72,11 +79,6 @@ class OperacaoLetraCreditoForm(forms.ModelForm):
                 raise forms.ValidationError('Insira letra de crédito válida')
             return letra_credito
         return None
-    
-    def clean(self):
-        data = super(OperacaoLetraCreditoForm, self).clean()
-        print self.instance
-    
     
 class HistoricoPorcentagemLetraCreditoForm(forms.ModelForm):
     
