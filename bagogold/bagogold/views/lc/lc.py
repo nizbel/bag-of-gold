@@ -217,9 +217,9 @@ def inserir_lc(request):
             if form_lc.is_valid():
                 lc = form_lc.save(commit=False)
                 lc.investidor = investidor
-                formset_porcentagem = PorcentagemFormSet(request.POST, instance=lc)
+                formset_porcentagem = PorcentagemFormSet(request.POST, instance=lc, investidor=investidor)
                 formset_porcentagem.forms[0].empty_permitted=False
-                formset_carencia = CarenciaFormSet(request.POST, instance=lc)
+                formset_carencia = CarenciaFormSet(request.POST, instance=lc, investidor=investidor)
                 formset_carencia.forms[0].empty_permitted=False
                 
                 if formset_porcentagem.is_valid():
@@ -245,8 +245,8 @@ def inserir_lc(request):
                                                                       'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
     else:
         form_lc = LetraCreditoForm()
-        formset_porcentagem = PorcentagemFormSet()
-        formset_carencia = CarenciaFormSet()
+        formset_porcentagem = PorcentagemFormSet(investidor=investidor)
+        formset_carencia = CarenciaFormSet(investidor=investidor)
     return render_to_response('lc/inserir_lc.html', {'form_lc': form_lc, 'formset_porcentagem': formset_porcentagem,
                                                               'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
 
@@ -363,27 +363,31 @@ def listar_lc(request):
 
 @login_required
 def modificar_carencia_lc(request):
+    investidor = request.user.investidor
+    
     if request.method == 'POST':
-        form = HistoricoCarenciaLetraCreditoForm(request.POST)
+        form = HistoricoCarenciaLetraCreditoForm(request.POST, investidor=investidor)
         if form.is_valid():
             historico = form.save()
             messages.success(request, 'Histórico de carência para %s alterado com sucesso' % historico.letra_credito)
             return HttpResponseRedirect(reverse('historico_lc'))
     else:
-        form = HistoricoCarenciaLetraCreditoForm()
+        form = HistoricoCarenciaLetraCreditoForm(investidor=investidor)
             
     return render_to_response('lc/modificar_carencia_lc.html', {'form': form}, context_instance=RequestContext(request))
 
 @login_required
 def modificar_porcentagem_di_lc(request):
+    investidor = request.user.investidor
+    
     if request.method == 'POST':
-        form = HistoricoPorcentagemLetraCreditoForm(request.POST)
+        form = HistoricoPorcentagemLetraCreditoForm(request.POST, investidor=investidor)
         if form.is_valid():
             historico = form.save()
             messages.success(request, 'Histórico de porcentagem de rendimento para %s alterado com sucesso' % historico.letra_credito)
             return HttpResponseRedirect(reverse('historico_lc'))
     else:
-        form = HistoricoPorcentagemLetraCreditoForm()
+        form = HistoricoPorcentagemLetraCreditoForm(investidor=investidor)
             
     return render_to_response('lc/modificar_porcentagem_di_lc.html', {'form': form}, context_instance=RequestContext(request))
 
