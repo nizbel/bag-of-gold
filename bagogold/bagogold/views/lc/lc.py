@@ -151,9 +151,12 @@ def historico(request):
         for operacao in operacoes:     
             if (operacao.data <= data_iteracao):     
                 # Verificar se se trata de compra ou venda
+                print data_iteracao, operacao, operacao.atual
                 if operacao.tipo_operacao == 'C':
                         if (operacao.data == data_iteracao):
                             operacao.total = operacao.quantidade
+                            # Quantidade restante guarda o quanto da operação de compra ainda não foi vendido
+                            operacao.qtd_restante = operacao.quantidade
                             total_gasto += operacao.total
                         if taxa_do_dia > 0:
                             # Calcular o valor atualizado para cada operacao
@@ -172,7 +175,8 @@ def historico(request):
                         operacao_compra_id = operacao.operacao_compra_relacionada().id
                         for operacao_c in operacoes:
                             if (operacao_c.id == operacao_compra_id):
-                                operacao.atual = (operacao.quantidade/operacao_c.quantidade) * operacao_c.atual
+                                operacao.atual = (operacao.quantidade/operacao_c.qtd_restante) * operacao_c.atual
+                                operacao_c.qtd_restante -= operacao.quantidade
                                 operacao_c.atual -= operacao.atual
                                 str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
                                 operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
