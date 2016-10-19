@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, \
-    HistoricoPorcentagemLetraCredito, LetraCredito, HistoricoCarenciaLetraCredito
+    HistoricoPorcentagemLetraCredito, LetraCredito, HistoricoCarenciaLetraCredito,\
+    OperacaoVendaLetraCredito
 from django import forms
 from django.forms import widgets
 import datetime
@@ -48,7 +49,6 @@ class OperacaoLetraCreditoForm(forms.ModelForm):
     
     def clean_operacao_compra(self):
         tipo_operacao = self.cleaned_data['tipo_operacao']
-        print self.instance.id
         if tipo_operacao == 'V':
             operacao_compra = self.cleaned_data.get('operacao_compra')
             # Testar se operacao_compra é válido
@@ -79,6 +79,14 @@ class OperacaoLetraCreditoForm(forms.ModelForm):
                 raise forms.ValidationError('Insira letra de crédito válida')
             return letra_credito
         return None
+    
+    def clean(self):
+        data = super(OperacaoLetraCreditoForm, self).clean()
+        # Testa se não se trata de uma edição de compra para venda
+        if data.get('tipo_operacao') == 'V' and self.instance.tipo_operacao == 'C':
+            # Verificar se já há vendas registradas para essa compra, se sim, lançar erro
+            if OperacaoVendaLetraCredito.objects.filter(operacao_compra=self.instance):
+                raise forms.ValidationError('Não é possível alterar tipo de operação pois já há vendas registradas para essa compra')
     
 class HistoricoPorcentagemLetraCreditoForm(forms.ModelForm):
     
