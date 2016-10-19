@@ -17,7 +17,7 @@ class LetraCreditoForm(forms.ModelForm):
 
 class OperacaoLetraCreditoForm(forms.ModelForm):
     # Campo verificado apenas no caso de venda de operação de lc
-    operacao_compra = forms.ModelChoiceField(label='Operação de compra',queryset=OperacaoLetraCredito.objects.filter(tipo_operacao='C'), required=False)
+    operacao_compra = forms.ModelChoiceField(label='Operação de compra',queryset=OperacaoLetraCredito.objects.filter(investidor=self.investidor, tipo_operacao='C'), required=False)
     
     class Meta:
         model = OperacaoLetraCredito
@@ -37,7 +37,6 @@ class OperacaoLetraCreditoForm(forms.ModelForm):
         # there's a `fields` property now
         self.fields['letra_credito'].required = False
         self.fields['letra_credito'].queryset = LetraCredito.objects.filter(investidor=self.investidor)
-        self.fields['operacao_compra'].queryset = OperacaoLetraCredito.objects.filter(investidor=self.investidor, tipo_operacao='C')
         # Remover operações que já tenham sido totalmente vendidas e a própria operação
         operacoes_compra_invalidas = [operacao_compra_invalida.id for operacao_compra_invalida in self.fields['operacao_compra'].queryset if operacao_compra_invalida.qtd_disponivel_venda() == 0] + \
             [self.instance.id] if self.instance.id != None else []
@@ -45,10 +44,6 @@ class OperacaoLetraCreditoForm(forms.ModelForm):
         if self.instance.operacao_compra_relacionada():
             operacoes_compra_invalidas.remove(self.instance.operacao_compra_relacionada().id)
         self.fields['operacao_compra'].queryset = self.fields['operacao_compra'].queryset.exclude(id__in=operacoes_compra_invalidas)
-#         if self.instance.pk is not None:
-#             # Verificar se é uma compra
-#             if self.instance.tipo_operacao == 'V':
-#                 self.operacao_compra.v
     
     def clean_operacao_compra(self):
         tipo_operacao = self.cleaned_data['tipo_operacao']
@@ -93,6 +88,17 @@ class HistoricoPorcentagemLetraCreditoForm(forms.ModelForm):
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),}
         
+    def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
+        # first call parent's constructor
+        super(HistoricoPorcentagemLetraCreditoForm, self).__init__(*args, **kwargs)
+        # there's a `fields` property now
+        self.fields['letra_credito'].required = False
+        self.fields['letra_credito'].queryset = LetraCredito.objects.filter(investidor=self.investidor)
+        
+        def clean_letra_credito(self):
+            
+        
 class HistoricoCarenciaLetraCreditoForm(forms.ModelForm):
     
     class Meta:
@@ -102,4 +108,12 @@ class HistoricoCarenciaLetraCreditoForm(forms.ModelForm):
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),}
         labels = {'carencia': 'Período de carência (em dias)',}
+    
+    def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
+        # first call parent's constructor
+        super(HistoricoCarenciaLetraCreditoForm, self).__init__(*args, **kwargs)
+        # there's a `fields` property now
+        self.fields['letra_credito'].required = False
+        self.fields['letra_credito'].queryset = LetraCredito.objects.filter(investidor=self.investidor)
         
