@@ -39,10 +39,10 @@ def editar_operacao_lc(request, id):
                                             extra=1, formset=DivisaoOperacaoLCFormSet)
     
     if request.method == 'POST':
+        form_operacao_lc = OperacaoLetraCreditoForm(request.POST, instance=operacao_lc, investidor=investidor)
+        formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lc, operacao_compra=operacao_compra, investidor=investidor) if varias_divisoes else None
+        
         if request.POST.get("save"):
-            form_operacao_lc = OperacaoLetraCreditoForm(request.POST, instance=operacao_lc, investidor=investidor)
-            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lc, operacao_compra=operacao_compra, investidor=investidor) if varias_divisoes else None
-            
             if form_operacao_lc.is_valid():
                 operacao_compra = form_operacao_lc.cleaned_data['operacao_compra']
                 if varias_divisoes:
@@ -84,14 +84,18 @@ def editar_operacao_lc(request, id):
 #                         print '%s %s'  % (divisao_lc.quantidade, divisao_lc.divisao)
                 
         elif request.POST.get("delete"):
-            divisao_lc = DivisaoOperacaoLC.objects.filter(operacao=operacao_lc)
-            for divisao in divisao_lc:
-                divisao.delete()
-            if operacao_lc.tipo_operacao == 'V':
-                OperacaoVendaLetraCredito.objects.get(operacao_venda=operacao_lc).delete()
-            operacao_lc.delete()
-            messages.success(request, 'Operação excluída com sucesso')
-            return HttpResponseRedirect(reverse('historico_lc'))
+            # Testa se operação a excluir não é uma operação de compra com vendas já registradas
+            if not OperacaoVendaLetraCredito.objects.filter(operacao_compra=operacao_lc):
+                divisao_lc = DivisaoOperacaoLC.objects.filter(operacao=operacao_lc)
+                for divisao in divisao_lc:
+                    divisao.delete()
+                if operacao_lc.tipo_operacao == 'V':
+                    OperacaoVendaLetraCredito.objects.get(operacao_venda=operacao_lc).delete()
+                operacao_lc.delete()
+                messages.success(request, 'Operação excluída com sucesso')
+                return HttpResponseRedirect(reverse('historico_lc'))
+            else:
+                messages.error(request, 'Não é possível excluir operação de compra que já tenha vendas registradas')
  
     else:
         form_operacao_lc = OperacaoLetraCreditoForm(instance=operacao_lc, investidor=investidor, initial={'operacao_compra': operacao_lc.operacao_compra_relacionada(),})
