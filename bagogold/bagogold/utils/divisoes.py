@@ -20,22 +20,22 @@ def preencher_operacoes_div_principal(operacao):
     if isinstance(operacao, OperacaoAcao):
         modelo_operacao_div = apps.get_model('bagogold', 'DivisaoOperacaoAcao')
         divisoes_operacao = DivisaoOperacaoAcao.objects.filter(operacao=operacao)
-        div_principal = DivisaoPrincipal.objects.get().divisao 
+        div_principal = DivisaoPrincipal.objects.get(investidor=operacao.investidor).divisao 
     # FII
     elif isinstance(operacao, OperacaoFII):
         modelo_operacao_div = apps.get_model('bagogold', 'DivisaoOperacaoFII')
         divisoes_operacao = DivisaoOperacaoFII.objects.filter(operacao=operacao)
-        div_principal = DivisaoPrincipal.objects.get().divisao
+        div_principal = DivisaoPrincipal.objects.get(investidor=operacao.investidor).divisao
     # LC
     elif isinstance(operacao, OperacaoLetraCredito):
         modelo_operacao_div = apps.get_model('bagogold', 'DivisaoOperacaoLC')
         divisoes_operacao = DivisaoOperacaoLC.objects.filter(operacao=operacao)
-        div_principal = DivisaoPrincipal.objects.get().divisao
+        div_principal = DivisaoPrincipal.objects.get(investidor=operacao.investidor).divisao
     # TD
     else:
         modelo_operacao_div = apps.get_model('bagogold', 'DivisaoOperacaoTD')
         divisoes_operacao = DivisaoOperacaoTD.objects.filter(operacao=operacao)
-        div_principal = DivisaoPrincipal.objects.get().divisao
+        div_principal = DivisaoPrincipal.objects.get(investidor=operacao.investidor).divisao
         
     # Guarda a quantidade alocada para todas as divisões
     qtd_divisoes = 0

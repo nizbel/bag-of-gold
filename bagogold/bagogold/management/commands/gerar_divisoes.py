@@ -4,6 +4,8 @@ from bagogold.bagogold.models.divisoes import DivisaoPrincipal, Divisao, \
     DivisaoOperacaoAcao, DivisaoOperacaoFII
 from bagogold.bagogold.models.fii import UsoProventosOperacaoFII
 from bagogold.bagogold.models.investidores import Investidor
+from bagogold.bagogold.utils.divisoes import verificar_operacoes_nao_alocadas, \
+    preencher_operacoes_div_principal
 from django.core.management.base import BaseCommand
 
 class Command(BaseCommand):
@@ -39,4 +41,5 @@ class Command(BaseCommand):
                     print divisao, divisao.divisao_principal()
 
             # Após gerar divisão principal, mudar todas as operações para ela
-
+            for operacao in verificar_operacoes_nao_alocadas(investidor):
+                preencher_operacoes_div_principal(operacao)
