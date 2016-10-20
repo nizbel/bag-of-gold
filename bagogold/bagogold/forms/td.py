@@ -31,6 +31,7 @@ class OperacaoTituloForm(forms.ModelForm):
         self.investidor = kwargs.pop('investidor')
         # first call parent's constructor
         super(OperacaoTituloForm, self).__init__(*args, **kwargs)
+        self.fields['titulo'].queryset = self.fields['titulo'].queryset.order_by('data_vencimento')
 
     def clean(self):
         dados = super(OperacaoTituloForm, self).clean()
