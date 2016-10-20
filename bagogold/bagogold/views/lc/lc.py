@@ -40,11 +40,12 @@ def editar_operacao_lc(request, id):
     
     if request.method == 'POST':
         form_operacao_lc = OperacaoLetraCreditoForm(request.POST, instance=operacao_lc, investidor=investidor)
-        formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lc, operacao_compra=operacao_compra, investidor=investidor) if varias_divisoes else None
+        formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lc, investidor=investidor) if varias_divisoes else None
         
         if request.POST.get("save"):
             if form_operacao_lc.is_valid():
                 operacao_compra = form_operacao_lc.cleaned_data['operacao_compra']
+                formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lc, operacao_compra=operacao_compra, investidor=investidor) if varias_divisoes else None
                 if varias_divisoes:
                     if formset_divisao.is_valid():
                         operacao_lc.save()

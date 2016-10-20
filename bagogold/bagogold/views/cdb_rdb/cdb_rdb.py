@@ -6,7 +6,7 @@ from bagogold.bagogold.forms.divisoes import DivisaoOperacaoCDB_RDBFormSet
 from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB, \
     HistoricoPorcentagemCDB_RDB, CDB_RDB, HistoricoCarenciaCDB_RDB, \
     OperacaoVendaCDB_RDB
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoCDB_RDB
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoCDB_RDB, Divisao
 from bagogold.bagogold.models.lc import HistoricoTaxaDI
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa, \
     calcular_valor_atualizado_com_taxas
@@ -215,51 +215,85 @@ def editar_historico_porcentagem(request, id):
 @login_required
 def editar_operacao_cdb_rdb(request, id):
     investidor = request.user.investidor
+    
+    if operacao_cdb_rdb.investidor != investidor:
+        raise PermissionDenied
+    
+    # Testa se investidor possui mais de uma divisão
+    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoCDB_RDB, DivisaoOperacaoCDB_RDB, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoCDB_RDBFormSet)
     operacao_cdb_rdb = OperacaoCDB_RDB.objects.get(pk=id)
     
-    if operacao_cdb_rdb.investidor != investidor:
-        raise PermissionDenied
-    
     if request.method == 'POST':
+        form_operacao_cdb_rdb = OperacaoCDB_RDBForm(request.POST, instance=operacao_cdb_rdb, investidor=investidor)
+        formset_divisao = DivisaoFormSet(request.POST, instance=operacao_cdb_rdb, investidor=investidor) if varias_divisoes else None
+        
         if request.POST.get("save"):
-            form_operacao_cdb_rdb = OperacaoCDB_RDBForm(request.POST, instance=operacao_cdb_rdb, investidor=investidor)
-            
             if form_operacao_cdb_rdb.is_valid():
                 operacao_compra = form_operacao_cdb_rdb.cleaned_data['operacao_compra']
-                formset_divisao = DivisaoFormSet(request.POST, instance=operacao_cdb_rdb, operacao_compra=operacao_compra, investidor=investidor)
-                if formset_divisao.is_valid():
+                formset_divisao = DivisaoFormSet(request.POST, instance=operacao_cdb_rdb, operacao_compra=operacao_compra, investidor=investidor) if varias_divisoes else None
+                if varias_divisoes:
+                    if formset_divisao.is_valid():
+                        operacao_cdb_rdb.save()
+                        if operacao_cdb_rdb.tipo_operacao == 'V':
+                            if not OperacaoVendaCDB_RDB.objects.filter(operacao_venda=operacao_cdb_rdb):
+                                operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
+                                operacao_venda_cdb_rdb.save()
+                            else: 
+                                operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB.objects.get(operacao_venda=operacao_cdb_rdb)
+                                if operacao_venda_cdb_rdb.operacao_compra != operacao_compra:
+                                    operacao_venda_cdb_rdb.operacao_compra = operacao_compra
+                                    operacao_venda_cdb_rdb.save()
+                        formset_divisao.save()
+                        messages.success(request, 'Operação editada com sucesso')
+                        return HttpResponseRedirect(reverse('historico_cdb_rdb'))
+                    for erro in formset_divisao.non_form_errors():
+                        messages.error(request, erro)
+                        
+                else:
                     operacao_cdb_rdb.save()
-                    formset_divisao.save()
+                    if operacao_cdb_rdb.tipo_operacao == 'V':
+                        if not OperacaoVendaCDB_RDB.objects.filter(operacao_venda=operacao_cdb_rdb):
+                            operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
+                            operacao_venda_cdb_rdb.save()
+                        else: 
+                            operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB.objects.get(operacao_venda=operacao_cdb_rdb)
+                            if operacao_venda_cdb_rdb.operacao_compra != operacao_compra:
+                                operacao_venda_cdb_rdb.operacao_compra = operacao_compra
+                                operacao_venda_cdb_rdb.save()
+                    divisao_operacao = DivisaoOperacaoCDB_RDB.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_cdb_rdb)
+                    divisao_operacao.quantidade = operacao_cdb_rdb.quantidade
+                    divisao_operacao.save()
                     messages.success(request, 'Operação editada com sucesso')
                     return HttpResponseRedirect(reverse('historico_cdb_rdb'))
             for erros in form_operacao_cdb_rdb.errors.values():
                 for erro in erros:
                     messages.error(request, erro)
-            for erro in formset_divisao.non_form_errors():
-                messages.error(request, erro)
-            return render_to_response('cdb_rdb/editar_operacao_cdb_rdb.html', {'form_operacao_cdb_rdb': form_operacao_cdb_rdb, 'formset_divisao': formset_divisao },
-                      context_instance=RequestContext(request))
 #                         print '%s %s'  % (divisao_cdb_rdb.quantidade, divisao_cdb_rdb.divisao)
                 
         elif request.POST.get("delete"):
-            divisao_cdb_rdb = DivisaoOperacaoCDB_RDB.objects.filter(operacao=operacao_cdb_rdb)
-            for divisao in divisao_cdb_rdb:
-                divisao.delete()
-            if operacao_cdb_rdb.tipo_operacao == 'V':
-                OperacaoVendaCDB_RDB.objects.get(operacao_venda=operacao_cdb_rdb).delete()
-            operacao_cdb_rdb.delete()
-            messages.success(request, 'Operação excluída com sucesso')
-            return HttpResponseRedirect(reverse('historico_cdb_rdb'))
+            # Testa se operação a excluir não é uma operação de compra com vendas já registradas
+            if not OperacaoVendaCDB_RDB.objects.filter(operacao_compra=operacao_cdb_rdb):
+                divisao_cdb_rdb = DivisaoOperacaoCDB_RDB.objects.filter(operacao=operacao_cdb_rdb)
+                for divisao in divisao_cdb_rdb:
+                    divisao.delete()
+                if operacao_cdb_rdb.tipo_operacao == 'V':
+                    OperacaoVendaCDB_RDB.objects.get(operacao_venda=operacao_cdb_rdb).delete()
+                operacao_cdb_rdb.delete()
+                messages.success(request, 'Operação excluída com sucesso')
+                return HttpResponseRedirect(reverse('historico_cdb_rdb'))
+            else:
+                messages.error(request, 'Não é possível excluir operação de compra que já tenha vendas registradas')
  
     else:
         form_operacao_cdb_rdb = OperacaoCDB_RDBForm(instance=operacao_cdb_rdb, initial={'operacao_compra': operacao_cdb_rdb.operacao_compra_relacionada(),}, \
                                                     investidor=investidor)
         formset_divisao = DivisaoFormSet(instance=operacao_cdb_rdb, investidor=investidor)
             
-    return render_to_response('cdb_rdb/editar_operacao_cdb_rdb.html', {'form_operacao_cdb_rdb': form_operacao_cdb_rdb, 'formset_divisao': formset_divisao},
+    return render_to_response('cdb_rdb/editar_operacao_cdb_rdb.html', {'form_operacao_cdb_rdb': form_operacao_cdb_rdb, 'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes},
                               context_instance=RequestContext(request))  
 
     
