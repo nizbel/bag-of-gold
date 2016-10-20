@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoTDFormSet
 from bagogold.bagogold.forms.td import OperacaoTituloForm
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD, Divisao
 from bagogold.bagogold.models.fii import FII
 from bagogold.bagogold.models.lc import LetraCredito, HistoricoTaxaDI, \
     HistoricoPorcentagemLetraCredito
@@ -11,7 +11,8 @@ from bagogold.bagogold.testTD import buscar_valores_diarios
 from bagogold.bagogold.utils.fii import \
     calcular_rendimento_proventos_fii_12_meses, \
     calcular_variacao_percentual_fii_por_periodo
-from bagogold.bagogold.utils.td import calcular_imposto_venda_td, buscar_data_valor_mais_recente
+from bagogold.bagogold.utils.td import calcular_imposto_venda_td, \
+    buscar_data_valor_mais_recente
 from copy import deepcopy
 from decimal import Decimal
 from django.contrib import messages
@@ -352,24 +353,37 @@ def inserir_operacao_td(request):
     DivisaoFormSet = inlineformset_factory(OperacaoTitulo, DivisaoOperacaoTD, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoTDFormSet)
     
+    # Testa se investidor possui mais de uma divisão
+    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    
     if request.method == 'POST':
-        form_operacao_td = OperacaoTituloForm(request.POST)
+        form_operacao_td = OperacaoTituloForm(request.POST, investidor=investidor)
         if form_operacao_td.is_valid():
-            operacao_td = form_operacao_td.save(commit=False)
-            operacao_td.investidor = investidor
-            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_td, investidor=investidor)
-            if formset_divisao.is_valid():
-                operacao_td.save()
-                formset_divisao.save()
+            if varias_divisoes:
+                operacao_td = form_operacao_td.save(commit=False)
+                operacao_td.investidor = investidor
+                formset_divisao = DivisaoFormSet(request.POST, instance=operacao_td, investidor=investidor)
+                if formset_divisao.is_valid():
+                    operacao_td.save()
+                    formset_divisao.save()
+                    messages.success(request, 'Operação inserida com sucesso')
+                    return HttpResponseRedirect(reverse('historico_td'))
+                for erro in formset_divisao.non_form_errors():
+                    messages.error(request, erro)
+            else:
+                operacao_td = form_operacao_td.save(commit=False)
+                operacao_td.investidor = investidor
+                divisao_operacao = DivisaoOperacaoTD(operacao=operacao_td, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_td.quantidade)
+                divisao_operacao.save()
                 messages.success(request, 'Operação inserida com sucesso')
-            return HttpResponseRedirect(reverse('historico_td'))
-            for erro in formset_divisao.non_form_errors():
+                return HttpResponseRedirect(reverse('historico_td'))
+            
+        for erros in operacao_td.errors.values():
+            for erro in erros:
                 messages.error(request, erro)
-            return render_to_response('td/inserir_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao }, 
-                                      context_instance=RequestContext(request))
-        
+                    
     else:
-        form_operacao_td = OperacaoTituloForm()
+        form_operacao_td = OperacaoTituloForm(investidor=investidor)
         formset_divisao = DivisaoFormSet(investidor=investidor)
             
     return render_to_response('td/inserir_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao }, 
