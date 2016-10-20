@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
-    TransferenciaEntreDivisoes, DivisaoOperacaoAcao, DivisaoOperacaoFII
+    TransferenciaEntreDivisoes, DivisaoOperacaoAcao, DivisaoOperacaoFII,\
+    DivisaoOperacaoCDB_RDB
 from django import forms
 from django.forms import widgets
 
@@ -254,6 +255,8 @@ class DivisaoOperacaoCDB_RDBFormSet(forms.models.BaseInlineFormSet):
                     
                     # Verificar em caso de venda
                     if self.instance.tipo_operacao == 'V':
+                        if not DivisaoOperacaoCDB_RDB.objects.filter(divisao=form_divisao.cleaned_data['divisao'], operacao=self.operacao_compra):
+                            raise forms.ValidationError('Venda para divisão %s não é permitida, não há alocação para a operação de compra selecionada' % (form_divisao.cleaned_data['divisao']))
                         if DivisaoOperacaoCDB.objects.get(divisao=form_divisao.cleaned_data['divisao'], operacao=self.operacao_compra).quantidade < div_qtd:
                             raise forms.ValidationError('Venda de quantidade acima da disponível para divisão %s' % (form_divisao.cleaned_data['divisao']))
                         
