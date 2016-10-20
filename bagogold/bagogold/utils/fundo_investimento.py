@@ -26,10 +26,10 @@ def calcular_qtd_cotas_ate_dia(investidor, dia):
             
         # Verificar se se trata de compra ou venda
         if operacao.tipo_operacao == 'C':
-            qtd_cotas[operacao.fundo_investimento.id] += operacao.quantidade_cotas
+            qtd_cotas[operacao.fundo_investimento.id] += operacao.quantidade
             
         elif operacao.tipo_operacao == 'V':
-            qtd_cotas[operacao.fundo_investimento.id] -= operacao.quantidade_cotas
+            qtd_cotas[operacao.fundo_investimento.id] -= operacao.quantidade
         
     return qtd_cotas
 
@@ -48,10 +48,10 @@ def calcular_qtd_cotas_ate_dia_por_fundo(investidor, dia, fundo_id):
     for item in operacoes:
         # Verificar se se trata de compra ou venda
         if item.tipo_operacao == 'C':
-            qtd_cotas += item.quantidade_cotas
+            qtd_cotas += item.quantidade
             
         elif item.tipo_operacao == 'V':
-            qtd_cotas -= item.quantidade_cotas
+            qtd_cotas -= item.quantidade
         
     return qtd_cotas
 
@@ -78,10 +78,10 @@ def calcular_qtd_cotas_ate_dia_por_divisao(dia, divisao_id):
             
         # Verificar se se trata de compra ou venda
         if operacao.tipo_operacao == 'C':
-            qtd_cotas[operacao.fundo_investimento.id] += operacao.quantidade_cotas
+            qtd_cotas[operacao.fundo_investimento.id] += operacao.quantidade
             
         elif operacao.tipo_operacao == 'V':
-            qtd_cotas[operacao.fundo_investimento.id] -= operacao.quantidade_cotas
+            qtd_cotas[operacao.fundo_investimento.id] -= operacao.quantidade
         
     for key, item in qtd_cotas.items():
         if qtd_cotas[key] == 0:
