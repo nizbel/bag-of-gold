@@ -66,6 +66,12 @@ class OperacaoCDB_RDB (models.Model):
     def __unicode__(self):
         return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.investimento, self.data)
     
+    def save(self, *args, **kw):
+        # Apagar operação venda caso operação seja editada para compra
+        if OperacaoVendaCDB_RDB.objects.filter(operacao_venda=self) and self.tipo_operacao == 'C':
+            OperacaoVendaCDB_RDB.objects.get(operacao_venda=self).delete()
+        super(OperacaoCDB_RDB, self).save(*args, **kw)
+    
     def carencia(self):
         try:
             return HistoricoCarenciaCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.investimento).order_by('-data')[0].carencia
@@ -94,8 +100,8 @@ class OperacaoCDB_RDB (models.Model):
         elif self.tipo_operacao == 'V':
             return self.operacao_compra_relacionada().porcentagem()
     
-    def qtd_disponivel_venda(self):
-        vendas = OperacaoVendaCDB_RDB.objects.filter(operacao_compra=self).values_list('operacao_venda__id', flat=True)
+    def qtd_disponivel_venda(self, desconsiderar_vendas=list()):
+        vendas = OperacaoVendaCDB_RDB.objects.filter(operacao_compra=self).exclude(operacao_venda__in=desconsiderar_vendas).values_list('operacao_venda__id', flat=True)
         qtd_vendida = 0
         for venda in OperacaoCDB_RDB.objects.filter(id__in=vendas):
             qtd_vendida += venda.quantidade
@@ -148,8 +154,8 @@ class HistoricoValorMinimoInvestimentoCDB_RDB (models.Model):
     data = models.DateField(u'Data da variação', blank=True, null=True)
     cdb_rdb = models.ForeignKey('CDB_RDB')
     
-    def save(self, *args, **kw):
-        if self.valor_minimo < 0:
-            raise forms.ValidationError('Valor mínimo não pode ser negativo')
-        super(HistoricoValorMinimoInvestimentoCDB_RDB, self).save(*args, **kw)
+#     def save(self, *args, **kw):
+#         if self.valor_minimo < 0:
+#             raise forms.ValidationError('Valor mínimo não pode ser negativo')
+#         super(HistoricoValorMinimoInvestimentoCDB_RDB, self).save(*args, **kw)
     

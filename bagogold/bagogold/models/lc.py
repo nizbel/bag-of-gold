@@ -123,11 +123,11 @@ class HistoricoPorcentagemLetraCredito (models.Model):
     data = models.DateField(u'Data da variação', blank=True, null=True)
     letra_credito = models.ForeignKey('LetraCredito')
     
-    def save(self, *args, **kw):
-        try:
-            historico = HistoricoPorcentagemLetraCredito.objects.get(letra_credito=self.letra_credito, data=self.data)
-        except HistoricoPorcentagemLetraCredito.DoesNotExist:
-            super(HistoricoPorcentagemLetraCredito, self).save(*args, **kw)
+#     def save(self, *args, **kw):
+#         try:
+#             historico = HistoricoPorcentagemLetraCredito.objects.get(letra_credito=self.letra_credito, data=self.data)
+#         except HistoricoPorcentagemLetraCredito.DoesNotExist:
+#             super(HistoricoPorcentagemLetraCredito, self).save(*args, **kw)
     
 class HistoricoCarenciaLetraCredito (models.Model):
     """
@@ -137,26 +137,24 @@ class HistoricoCarenciaLetraCredito (models.Model):
     data = models.DateField(u'Data da variação', blank=True, null=True)
     letra_credito = models.ForeignKey('LetraCredito')
     
-    def save(self, *args, **kw):
-        try:
-            historico = HistoricoCarenciaLetraCredito.objects.get(letra_credito=self.letra_credito, data=self.data)
-        except HistoricoCarenciaLetraCredito.DoesNotExist:
-            if self.carencia <= 0:
-                raise forms.ValidationError('Carência deve ser de pelo menos 1 dia')
-            super(HistoricoCarenciaLetraCredito, self).save(*args, **kw)
+#     def save(self, *args, **kw):
+#         try:
+#             historico = HistoricoCarenciaLetraCredito.objects.get(letra_credito=self.letra_credito, data=self.data)
+#         except HistoricoCarenciaLetraCredito.DoesNotExist:
+#             super(HistoricoCarenciaLetraCredito, self).save(*args, **kw)
             
 class HistoricoValorMinimoInvestimento (models.Model):
     valor_minimo = models.DecimalField(u'Valor mínimo para investimento', max_digits=9, decimal_places=2)
     data = models.DateField(u'Data da variação', blank=True, null=True)
     letra_credito = models.ForeignKey('LetraCredito')
     
-    def save(self, *args, **kw):
-        try:
-            historico = HistoricoValorMinimoInvestimento.objects.get(letra_credito=self.letra_credito, data=self.data)
-        except HistoricoValorMinimoInvestimento.DoesNotExist:
-            if self.valor_minimo < 0:
-                raise forms.ValidationError('Valor mínimo não pode ser negativo')
-            super(HistoricoValorMinimoInvestimento, self).save(*args, **kw)
+#     def save(self, *args, **kw):
+#         try:
+#             historico = HistoricoValorMinimoInvestimento.objects.get(letra_credito=self.letra_credito, data=self.data)
+#         except HistoricoValorMinimoInvestimento.DoesNotExist:
+#             if self.valor_minimo < 0:
+#                 raise forms.ValidationError('Valor mínimo não pode ser negativo')
+#             super(HistoricoValorMinimoInvestimento, self).save(*args, **kw)
     
 class HistoricoTaxaDI (models.Model):
     data = models.DateField(u'Data')

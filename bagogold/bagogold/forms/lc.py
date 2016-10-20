@@ -99,15 +99,43 @@ class HistoricoPorcentagemLetraCreditoForm(forms.ModelForm):
         
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
+        try:
+            self.inicial = kwargs.pop('inicial')
+        except:
+            self.inicial = False
+        try:
+            self.letra_credito = kwargs.pop('letra_credito')
+        except:
+            self.letra_credito = None
         # first call parent's constructor
         super(HistoricoPorcentagemLetraCreditoForm, self).__init__(*args, **kwargs)
         # there's a `fields` property now
         self.fields['letra_credito'].queryset = LetraCredito.objects.filter(investidor=self.investidor)
+        if self.letra_credito:
+            self.fields['letra_credito'].disabled = True
+        if self.inicial:
+            self.fields['data'].disabled = True
         
         def clean_letra_credito(self):
             if self.cleaned_data['letra_credito'].investidor != self.investidor:
                 raise forms.ValidationError('Letra de Crédito inválida')
             return self.cleaned_data['letra_credito']
+        
+        def clean_porcentagem_di(self):
+            porcentagem_di = self.cleaned_data['porcentagem_di']
+            if porcentagem_di <= 0:
+                raise forms.ValidationError('Porcentagem deve ser maior que zero')
+            return porcentagem_di
+        
+        def clean(self):
+            cleaned_data = super(HistoricoPorcentagemLetraCreditoForm, self).clean()
+            # Testar se já existe algum histórico para o investimento na data
+            try:
+                historico = HistoricoPorcentagemLetraCredito.objects.get(letra_credito=cleaned_data.get('letra_credito'), data=cleaned_data.get('data'))
+                raise forms.ValidationError('Já existe uma alteração de porcentagem para essa data')
+            except HistoricoCarenciaLetraCredito.DoesNotExist:
+                pass
+            return cleaned_data
         
 class HistoricoCarenciaLetraCreditoForm(forms.ModelForm):
     
@@ -121,12 +149,39 @@ class HistoricoCarenciaLetraCreditoForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
+        try:
+            self.inicial = kwargs.pop('inicial')
+        except:
+            self.inicial = False
+        try:
+            self.letra_credito = kwargs.pop('letra_credito')
+        except:
+            self.letra_credito = None
         # first call parent's constructor
         super(HistoricoCarenciaLetraCreditoForm, self).__init__(*args, **kwargs)
-        # there's a `fields` property now
         self.fields['letra_credito'].queryset = LetraCredito.objects.filter(investidor=self.investidor)
+        if self.letra_credito:
+            self.fields['letra_credito'].disabled = True
+        if self.inicial:
+            self.fields['data'].disabled = True
         
         def clean_letra_credito(self):
             if self.cleaned_data['letra_credito'].investidor != self.investidor:
                 raise forms.ValidationError('Letra de Crédito inválida')
             return self.cleaned_data['letra_credito']
+        
+        def clean_carencia(self):
+            carencia = self.cleaned_data['carencia']
+            if carencia <= 0:
+                raise forms.ValidationError('Carência deve ser de pelo menos 1 dia')
+            return carencia
+        
+        def clean(self):
+            cleaned_data = super(HistoricoCarenciaLetraCreditoForm, self).clean()
+            # Testar se já existe algum histórico para o investimento na data
+            try:
+                historico = HistoricoCarenciaLetraCredito.objects.get(letra_credito=cleaned_data.get('letra_credito'), data=cleaned_data.get('data'))
+                raise forms.ValidationError('Já existe uma alteração de carência para essa data')
+            except HistoricoCarenciaLetraCredito.DoesNotExist:
+                pass
+            return cleaned_data
