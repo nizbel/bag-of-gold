@@ -298,7 +298,7 @@ class DivisaoOperacaoFundoInvestimentoFormSet(forms.models.BaseInlineFormSet):
                     else:
                         raise forms.ValidationError('Quantidade da divisão %s é inválida, quantidade deve ser maior que 0' % (contador_forms))
                 
-        if self.instance.quantidade_cotas < qtd_total_div:
+        if self.instance.quantidade < qtd_total_div:
             raise forms.ValidationError('Quantidade total alocada para as divisões é maior que quantidade da operação')
         elif self.instance.quantidade > qtd_total_div:
             raise forms.ValidationError('Quantidade total alocada para as divisões é menor que quantidade da operação')

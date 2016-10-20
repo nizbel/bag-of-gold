@@ -22,7 +22,7 @@ class OperacaoFundoInvestimentoForm(forms.ModelForm):
     
     class Meta:
         model = OperacaoFundoInvestimento
-        fields = ('tipo_operacao', 'quantidade_cotas', 'valor', 'data', 'fundo_investimento')
+        fields = ('tipo_operacao', 'quantidade', 'valor', 'data', 'fundo_investimento')
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),
                  'tipo_operacao': widgets.Select(choices=ESCOLHAS_TIPO_OPERACAO),}

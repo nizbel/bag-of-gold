@@ -124,15 +124,15 @@ def historico(request):
             fundos_investimento[operacao.fundo_investimento].valor_cotas = 0
         # Verificar se se trata de compra ou venda
         if operacao.tipo_operacao == 'C':
-            operacao.valor_cota = operacao.valor / operacao.quantidade_cotas
+            operacao.valor_cota = operacao.valor / operacao.quantidade
             total_gasto += operacao.valor
-            fundos_investimento[operacao.fundo_investimento].qtd_cotas += operacao.quantidade_cotas
-            fundos_investimento[operacao.fundo_investimento].valor_cotas = (operacao.valor / operacao.quantidade_cotas)
+            fundos_investimento[operacao.fundo_investimento].qtd_cotas += operacao.quantidade
+            fundos_investimento[operacao.fundo_investimento].valor_cotas = (operacao.valor / operacao.quantidade)
                 
         elif operacao.tipo_operacao == 'V':
             total_gasto -= operacao.valor
-            fundos_investimento[operacao.fundo_investimento].qtd_cotas -= operacao.quantidade_cotas
-            fundos_investimento[operacao.fundo_investimento].valor_cotas = (operacao.valor / operacao.quantidade_cotas)
+            fundos_investimento[operacao.fundo_investimento].qtd_cotas -= operacao.quantidade
+            fundos_investimento[operacao.fundo_investimento].valor_cotas = (operacao.valor / operacao.quantidade)
         
         for fundo in fundos_investimento:
             total_patrimonio += (fundo.valor_cotas * fundo.qtd_cotas)

@@ -250,10 +250,10 @@ def home(request):
             if item.fundo_investimento not in fundos_investimento.keys():
                 fundos_investimento[item.fundo_investimento] = 0    
             if item.tipo_operacao == 'C':
-                fundos_investimento[item.fundo_investimento] += item.quantidade_cotas
+                fundos_investimento[item.fundo_investimento] += item.quantidade
                 
             elif item.tipo_operacao == 'V':
-                fundos_investimento[item.fundo_investimento] -= item.quantidade_cotas
+                fundos_investimento[item.fundo_investimento] -= item.quantidade
 
         # Se não cair em nenhum dos anteriores: item vazio
         
