@@ -226,9 +226,9 @@ def inserir_lc(request):
             if form_lc.is_valid():
                 lc = form_lc.save(commit=False)
                 lc.investidor = investidor
-                formset_porcentagem = PorcentagemFormSet(request.POST, instance=lc, investidor=investidor)
+                formset_porcentagem = PorcentagemFormSet(request.POST, instance=lc)
                 formset_porcentagem.forms[0].empty_permitted=False
-                formset_carencia = CarenciaFormSet(request.POST, instance=lc, investidor=investidor)
+                formset_carencia = CarenciaFormSet(request.POST, instance=lc)
                 formset_carencia.forms[0].empty_permitted=False
                 
                 if formset_porcentagem.is_valid():
@@ -254,8 +254,8 @@ def inserir_lc(request):
 
     else:
         form_lc = LetraCreditoForm()
-        formset_porcentagem = PorcentagemFormSet(investidor=investidor)
-        formset_carencia = CarenciaFormSet(investidor=investidor)
+        formset_porcentagem = PorcentagemFormSet()
+        formset_carencia = CarenciaFormSet()
     return render_to_response('lc/inserir_lc.html', {'form_lc': form_lc, 'formset_porcentagem': formset_porcentagem,
                                                               'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
 

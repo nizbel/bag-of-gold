@@ -381,9 +381,9 @@ def inserir_cdb_rdb(request):
         if form_cdb_rdb.is_valid():
             cdb_rdb = form_cdb_rdb.save(commit=False)
             cdb_rdb.investidor = investidor
-            formset_porcentagem = PorcentagemFormSet(request.POST, instance=cdb_rdb, investidor=investidor)
+            formset_porcentagem = PorcentagemFormSet(request.POST, instance=cdb_rdb)
             formset_porcentagem.forms[0].empty_permitted=False
-            formset_carencia = CarenciaFormSet(request.POST, instance=cdb_rdb, investidor=investidor)
+            formset_carencia = CarenciaFormSet(request.POST, instance=cdb_rdb)
             formset_carencia.forms[0].empty_permitted=False
             
             if formset_porcentagem.is_valid():
