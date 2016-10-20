@@ -27,11 +27,16 @@ class OperacaoTituloForm(forms.ModelForm):
     class Media:
         js = ('js/bagogold/td.js',)
 
+    def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
+        # first call parent's constructor
+        super(OperacaoTituloForm, self).__init__(*args, **kwargs)
+
     def clean(self):
         dados = super(OperacaoTituloForm, self).clean()
         data = dados.get('data')
         data_vencimento = dados.get('titulo').data_vencimento
 #         print '%s %s %s' % (data_ex, data_pagamento, data_ex < data_pagamento)
         if (data > data_vencimento):
-            raise forms.ValidationError("Título não pode ter sido comprado após sua data de vencimento")
+            raise forms.ValidationError("Título não pode ter sido comprado após sua data de vencimento (%s)" % (dados.get('titulo').data_vencimento))
         return dados
