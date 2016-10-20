@@ -367,6 +367,7 @@ def historico(request):
 @login_required
 def inserir_cdb_rdb(request):
     investidor = request.user.investidor
+    
     # Preparar formsets 
     PorcentagemFormSet = inlineformset_factory(CDB_RDB, HistoricoPorcentagemCDB_RDB, fields=('porcentagem',),
                                             extra=1, can_delete=False, max_num=1, validate_max=True)
@@ -379,10 +380,10 @@ def inserir_cdb_rdb(request):
         formset_carencia = CarenciaFormSet(request.POST)
         if form_cdb_rdb.is_valid():
             cdb_rdb = form_cdb_rdb.save(commit=False)
-            cdb_rdb.investidor = request.user.investidor
-            formset_porcentagem = PorcentagemFormSet(request.POST, instance=cdb_rdb)
+            cdb_rdb.investidor = investidor
+            formset_porcentagem = PorcentagemFormSet(request.POST, instance=cdb_rdb, investidor=investidor)
             formset_porcentagem.forms[0].empty_permitted=False
-            formset_carencia = CarenciaFormSet(request.POST, instance=cdb_rdb)
+            formset_carencia = CarenciaFormSet(request.POST, instance=cdb_rdb, investidor=investidor)
             formset_carencia.forms[0].empty_permitted=False
             
             if formset_porcentagem.is_valid():
@@ -398,6 +399,7 @@ def inserir_cdb_rdb(request):
                                                           'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
                         
                     return HttpResponseRedirect(reverse('listar_cdb_rdb'))
+                
         for erros in form_cdb_rdb.errors.values():
             for erro in erros:
                 messages.error(request, erro)
@@ -405,8 +407,7 @@ def inserir_cdb_rdb(request):
             messages.error(request, erro)
         for erro in formset_carencia.non_form_errors():
             messages.error(request, erro)
-        return render_to_response('cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'formset_porcentagem': formset_porcentagem,
-                                                          'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
+            
     else:
         form_cdb_rdb = CDB_RDBForm()
         formset_porcentagem = PorcentagemFormSet()
@@ -417,13 +418,17 @@ def inserir_cdb_rdb(request):
 @login_required
 def inserir_operacao_cdb_rdb(request):
     investidor = request.user.investidor
+    
     # Preparar formset para divisoes
-    DivisaoCDB_RDBFormSet = inlineformset_factory(OperacaoCDB_RDB, DivisaoOperacaoCDB_RDB, fields=('divisao', 'quantidade'),
+    DivisaoCDB_RDBFormSet = inlineformset_factory(OperacaoCDB_RDB, DivisaoOperacaoCDB_RDB, fields=('divisao', 'quantidade'), can_delete=False,
                                             extra=1, formset=DivisaoOperacaoCDB_RDBFormSet)
+    
+    # Testa se investidor possui mais de uma divisão
+    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
     
     if request.method == 'POST':
         form_operacao_cdb_rdb = OperacaoCDB_RDBForm(request.POST, investidor=investidor)
-        formset_divisao_cdb_rdb = DivisaoCDB_RDBFormSet(request.POST, investidor=investidor)
+        formset_divisao_cdb_rdb = DivisaoCDB_RDBFormSet(request.POST, investidor=investidor) if varias_divisoes else None
         
         # Validar CDB
         if form_operacao_cdb_rdb.is_valid():
