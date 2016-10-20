@@ -213,6 +213,7 @@ def historico(request):
 @login_required
 def inserir_lc(request):
     investidor = request.user.investidor
+    
     # Preparar formsets 
     PorcentagemFormSet = inlineformset_factory(LetraCredito, HistoricoPorcentagemLetraCredito, fields=('porcentagem_di',),
                                             extra=1, can_delete=False, max_num=1, validate_max=True)
@@ -242,6 +243,7 @@ def inserir_lc(request):
                             return render_to_response('lc/inserir_lc.html', {'form_lc': form_lc, 'formset_porcentagem': formset_porcentagem,
                                                                          'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
                         return HttpResponseRedirect(reverse('listar_lc'))
+                    
             for erros in form_lc.errors.values():
                 for erro in erros:
                     messages.error(request, erro)
@@ -249,8 +251,7 @@ def inserir_lc(request):
                 messages.error(request, erro)
             for erro in formset_carencia.non_form_errors():
                 messages.error(request, erro)
-            return render_to_response('lc/inserir_lc.html', {'form_lc': form_lc, 'formset_porcentagem': formset_porcentagem,
-                                                                      'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
+
     else:
         form_lc = LetraCreditoForm()
         formset_porcentagem = PorcentagemFormSet(investidor=investidor)

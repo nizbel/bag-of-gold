@@ -93,7 +93,6 @@ class HistoricoPorcentagemCDB_RDBForm(forms.ModelForm):
         except:
             self.cdb_rdb = None
         super(HistoricoPorcentagemCDB_RDBForm, self).__init__(*args, **kwargs)
-        self.fields['letra_credito'].queryset = CDB_RDB.objects.filter(investidor=self.investidor)
         if self.cdb_rdb:
             self.fields['cdb_rdb'].disabled = True
         if self.inicial:
@@ -140,7 +139,6 @@ class HistoricoCarenciaCDB_RDBForm(forms.ModelForm):
         except:
             self.cdb_rdb = None
         super(HistoricoCarenciaCDB_RDBForm, self).__init__(*args, **kwargs)
-        self.fields['cdb_rdb'].queryset = CDB_RDB.objects.filter(investidor=self.investidor)
         if self.cdb_rdb:
             self.fields['cdb_rdb'].disabled = True
         if self.inicial:
