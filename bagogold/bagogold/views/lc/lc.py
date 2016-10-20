@@ -275,6 +275,7 @@ def inserir_operacao_lc(request):
             form_operacao_lc = OperacaoLetraCreditoForm(request.POST, investidor=investidor)
             formset_divisao = DivisaoFormSet(request.POST, investidor=investidor) if varias_divisoes else None
             
+            # Validar Letra de Crédito
             if form_operacao_lc.is_valid():
                 operacao_lc = form_operacao_lc.save(commit=False)
                 operacao_lc.investidor = investidor
@@ -309,6 +310,7 @@ def inserir_operacao_lc(request):
                                 return HttpResponseRedirect(reverse('historico_lc'))
                             for erro in formset_divisao.non_form_errors():
                                 messages.error(request, erro)
+                                
                         else:
                             operacao_lc.save()
                             divisao_operacao = DivisaoOperacaoLC(operacao=operacao_lc, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_lc.quantidade)
