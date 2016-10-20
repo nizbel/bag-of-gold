@@ -21,6 +21,16 @@ def preencher_operacoes_div_principal(operacao):
         modelo_operacao_div = apps.get_model('bagogold', 'DivisaoOperacaoAcao')
         divisoes_operacao = DivisaoOperacaoAcao.objects.filter(operacao=operacao)
         div_principal = DivisaoPrincipal.objects.get(investidor=operacao.investidor).divisao 
+    # CDB/RDB
+    elif isinstance(operacao, OperacaoCDB_RDB):
+        modelo_operacao_div = apps.get_model('bagogold', 'DivisaoOperacaoCDB_RDB')
+        divisoes_operacao = DivisaoOperacaoCDB_RDB.objects.filter(operacao=operacao)
+        div_principal = DivisaoPrincipal.objects.get(investidor=operacao.investidor).divisao
+    # Fundo de Investimento
+    elif isinstance(operacao, OperacaoFundoInvestimento):
+        modelo_operacao_div = apps.get_model('bagogold', 'DivisaoOperacaoFundoInvestimento')
+        divisoes_operacao = DivisaoOperacaoFundoInvestimento.objects.filter(operacao=operacao)
+        div_principal = DivisaoPrincipal.objects.get(investidor=operacao.investidor).divisao
     # FII
     elif isinstance(operacao, OperacaoFII):
         modelo_operacao_div = apps.get_model('bagogold', 'DivisaoOperacaoFII')
@@ -108,9 +118,9 @@ def verificar_operacoes_nao_alocadas(investidor):
         quantidade_alocada = 0
         for divisao in divisoes_operacao:
             quantidade_alocada += divisao.quantidade
-        if quantidade_alocada < operacao.quantidade_cotas:
+        if quantidade_alocada < operacao.quantidade:
             operacao.tipo = 'Fundo Inv.'
-            operacao.quantidade_nao_alocada = operacao.quantidade_cotas - quantidade_alocada
+            operacao.quantidade_nao_alocada = operacao.quantidade - quantidade_alocada
             operacoes_nao_alocadas.append(operacao)
     
     # LC
