@@ -12,7 +12,7 @@ from bagogold.bagogold.utils.fii import \
     calcular_rendimento_proventos_fii_12_meses, \
     calcular_variacao_percentual_fii_por_periodo
 from bagogold.bagogold.utils.td import calcular_imposto_venda_td, \
-    buscar_data_valor_mais_recente
+    buscar_data_valor_mais_recente, quantidade_titulos_ate_dia
 from copy import deepcopy
 from decimal import Decimal
 from django.contrib import messages
@@ -33,7 +33,11 @@ import math
 
 def buscar_titulos_validos_na_data(request):
     data = datetime.datetime.strptime(request.GET['dataEscolhida'], '%d/%m/%Y').date()
-    lista_titulos_validos = list(Titulo.objects.filter(data_vencimento__gt=data).values_list('id', flat=True))
+    tipo_operacao = request.GET['tipoOperacao']
+    if tipo_operacao == 'C':
+        lista_titulos_validos = list(Titulo.objects.filter(data_vencimento__gt=data).values_list('id', flat=True))
+    else:
+        lista_titulos_validos = list(quantidade_titulos_ate_dia(request.user.investidor, data).keys())
     return HttpResponse(json.dumps(lista_titulos_validos), content_type = "application/json") 
 
 @login_required
