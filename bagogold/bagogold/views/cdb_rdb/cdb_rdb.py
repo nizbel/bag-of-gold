@@ -430,17 +430,17 @@ def inserir_operacao_cdb_rdb(request):
         form_operacao_cdb_rdb = OperacaoCDB_RDBForm(request.POST, investidor=investidor)
         formset_divisao_cdb_rdb = DivisaoCDB_RDBFormSet(request.POST, investidor=investidor) if varias_divisoes else None
         
-        # Validar CDB
+        # Validar CDB/RDB
         if form_operacao_cdb_rdb.is_valid():
             operacao_cdb_rdb = form_operacao_cdb_rdb.save(commit=False)
             operacao_cdb_rdb.investidor = investidor
             operacao_compra = form_operacao_cdb_rdb.cleaned_data['operacao_compra']
-            formset_divisao_cdb_rdb = DivisaoCDB_RDBFormSet(request.POST, instance=operacao_cdb_rdb, operacao_compra=operacao_compra, investidor=investidor)
+            formset_divisao_cdb_rdb = DivisaoCDB_RDBFormSet(request.POST, instance=operacao_cdb_rdb, operacao_compra=operacao_compra, investidor=investidor) if varias_divisoes else None
                 
-            # TODO Validar em caso de venda
+            # Validar em caso de venda
             if form_operacao_cdb_rdb.cleaned_data['tipo_operacao'] == 'V':
                 operacao_compra = form_operacao_cdb_rdb.cleaned_data['operacao_compra']
-                # Caso de venda total da letra de crédito
+                # Caso de venda total do cdb/rdb
                 if form_operacao_cdb_rdb.cleaned_data['quantidade'] == operacao_compra.quantidade:
                     # Desconsiderar divisões inseridas, copiar da operação de compra
                     operacao_cdb_rdb.save()
@@ -454,34 +454,58 @@ def inserir_operacao_cdb_rdb(request):
                     return HttpResponseRedirect(reverse('historico_cdb_rdb'))
                 # Vendas parciais
                 else:
-                    if formset_divisao_cdb_rdb.is_valid():
+                    # Verificar se varias divisões
+                    if varias_divisoes:
+                        if formset_divisao_cdb_rdb.is_valid():
+                            operacao_cdb_rdb.save()
+                            formset_divisao_cdb_rdb.save()
+                            operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
+                            operacao_venda_cdb_rdb.save()
+                            messages.success(request, 'Operação inserida com sucesso')
+                            return HttpResponseRedirect(reverse('historico_cdb_rdb'))
+                        for erro in formset_divisao_cdb_rdb.non_form_errors():
+                                messages.error(request, erro)
+                                
+                    else:
                         operacao_cdb_rdb.save()
-                        formset_divisao_cdb_rdb.save()
+                        divisao_operacao = DivisaoOperacaoCDB_RDB(operacao=operacao_cdb_rdb, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_cdb_rdb.quantidade)
+                        divisao_operacao.save()
                         operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
                         operacao_venda_cdb_rdb.save()
                         messages.success(request, 'Operação inserida com sucesso')
                         return HttpResponseRedirect(reverse('historico_cdb_rdb'))
+            
+            # Compra
             else:
-                if formset_divisao_cdb_rdb.is_valid():
-                    operacao_cdb_rdb.save()
-                    formset_divisao_cdb_rdb.save()
-                    messages.success(request, 'Operação inserida com sucesso')
-                    return HttpResponseRedirect(reverse('historico_cdb_rdb'))
+                # Verificar se várias divisões
+                if varias_divisoes:
+                    if formset_divisao_cdb_rdb.is_valid():
+                        operacao_cdb_rdb.save()
+                        formset_divisao_cdb_rdb.save()
+                        messages.success(request, 'Operação inserida com sucesso')
+                        return HttpResponseRedirect(reverse('historico_cdb_rdb'))
+                    for erro in formset_divisao_cdb_rdb.non_form_errors():
+                                messages.error(request, erro)
+                                
+                else:
+                        operacao_cdb_rdb.save()
+                        divisao_operacao = DivisaoOperacaoCDB_RDB(operacao=operacao_cdb_rdb, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_cdb_rdb.quantidade)
+                        divisao_operacao.save()
+                        messages.success(request, 'Operação inserida com sucesso')
+                        return HttpResponseRedirect(reverse('historico_cdb_rdb'))
                     
         for erros in form_operacao_cdb_rdb.errors.values():
             for erro in erros:
                 messages.error(request, erro)
         for erro in formset_divisao_cdb_rdb.non_form_errors():
             messages.error(request, erro)
-                        
-        return render_to_response('cdb_rdb/inserir_operacao_cdb_rdb.html', {'form_operacao_cdb_rdb': form_operacao_cdb_rdb, 'formset_divisao_cdb_rdb': formset_divisao_cdb_rdb},
-                                  context_instance=RequestContext(request))
 #                         print '%s %s'  % (divisao_cdb_rdb.quantidade, divisao_cdb_rdb.divisao)
                 
     else:
         form_operacao_cdb_rdb = OperacaoCDB_RDBForm(investidor=investidor)
         formset_divisao_cdb_rdb = DivisaoCDB_RDBFormSet(investidor=investidor)
-    return render_to_response('cdb_rdb/inserir_operacao_cdb_rdb.html', {'form_operacao_cdb_rdb': form_operacao_cdb_rdb, 'formset_divisao_cdb_rdb': formset_divisao_cdb_rdb}, context_instance=RequestContext(request))
+    return render_to_response('cdb_rdb/inserir_operacao_cdb_rdb.html', {'form_operacao_cdb_rdb': form_operacao_cdb_rdb, 'formset_divisao_cdb_rdb': formset_divisao_cdb_rdb,
+                                                                        'varias_divisoes': varias_divisoes}, context_instance=RequestContext(request))
 
 @login_required
 def listar_cdb_rdb(request):
