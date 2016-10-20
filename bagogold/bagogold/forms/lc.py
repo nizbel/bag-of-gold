@@ -54,7 +54,6 @@ class OperacaoLetraCreditoForm(forms.ModelForm):
             # Testar se operacao_compra é válido
             if operacao_compra is None:
                 raise forms.ValidationError('Selecione operação de compra válida')
-            quantidade = self.cleaned_data['quantidade']
             # Testar data, deve ser posterior a operação de compra relacionada
             if 'data' not in self.cleaned_data or self.cleaned_data['data'] == None:
                 return None
@@ -62,6 +61,8 @@ class OperacaoLetraCreditoForm(forms.ModelForm):
                 if self.cleaned_data["data"] < operacao_compra.data + datetime.timedelta(days=operacao_compra.carencia()):
                     raise forms.ValidationError('Data da venda deve ser posterior ao período de carência (%s)' % 
                                                 ((operacao_compra.data + datetime.timedelta(days=operacao_compra.carencia())).strftime("%d/%m/%Y")))
+            # Testar quantidade
+            quantidade = self.cleaned_data['quantidade']
             if quantidade > operacao_compra.qtd_disponivel_venda(desconsiderar_vendas=[self.instance]):
                 raise forms.ValidationError('Não é possível vender mais do que o disponível na operação de compra')
             return operacao_compra

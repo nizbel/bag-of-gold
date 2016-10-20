@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.cdb_rdb import CDB_RDB, OperacaoCDB_RDB, \
-    HistoricoPorcentagemCDB_RDB, HistoricoCarenciaCDB_RDB
+    HistoricoPorcentagemCDB_RDB, HistoricoCarenciaCDB_RDB, OperacaoVendaCDB_RDB
 from django import forms
 from django.forms import widgets
+import datetime
 
 
 ESCOLHAS_CDB_RDB=(('C', 'CDB'), 
@@ -56,23 +57,40 @@ class OperacaoCDB_RDBForm(forms.ModelForm):
             # Testar se operacao_compra é válido
             if operacao_compra is None:
                 raise forms.ValidationError('Selecione operação de compra válida')
+            # Testar data, deve ser posterior a operação de compra relacionada
+            if 'data' not in self.cleaned_data or self.cleaned_data['data'] == None:
+                return None
+            else:
+                if self.cleaned_data["data"] < operacao_compra.data + datetime.timedelta(days=operacao_compra.carencia()):
+                    raise forms.ValidationError('Data da venda deve ser posterior ao período de carência (%s)' % 
+                                                ((operacao_compra.data + datetime.timedelta(days=operacao_compra.carencia())).strftime("%d/%m/%Y")))
+            # Testar quantidade
             quantidade = self.cleaned_data['quantidade']
-            if quantidade > operacao_compra.qtd_disponivel_venda():
+            if quantidade > operacao_compra.qtd_disponivel_venda(desconsiderar_vendas=[self.instance]):
                 raise forms.ValidationError('Não é possível vender mais do que o disponível na operação de compra')
             return operacao_compra
         return None
 
-    def clean_cdb(self):
+    def clean_investimento(self):
         tipo_operacao = self.cleaned_data['tipo_operacao']
         if tipo_operacao == 'V':
-            cdb = self.cleaned_data.get('operacao_compra').cdb
+            if self.cleaned_data.get('operacao_compra'):
+                cdb_rdb = self.cleaned_data.get('operacao_compra').investimento
+                return cdb_rdb
         else:
             cdb = self.cleaned_data.get('cdb')
-        if cdb is None:
-            raise forms.ValidationError('Insira CDB válido')
-              
-        return cdb
+            if cdb is None:
+                raise forms.ValidationError('Insira CDB válido')
+            return cdb
+        return None
     
+    def clean(self):
+        data = super(OperacaoCDB_RDBForm, self).clean()
+        # Testa se não se trata de uma edição de compra para venda
+        if data.get('tipo_operacao') == 'V' and self.instance.tipo_operacao == 'C':
+            # Verificar se já há vendas registradas para essa compra, se sim, lançar erro
+            if OperacaoVendaCDB_RDB.objects.filter(operacao_compra=self.instance):
+                raise forms.ValidationError('Não é possível alterar tipo de operação pois já há vendas registradas para essa compra')
 
 class HistoricoPorcentagemCDB_RDBForm(forms.ModelForm):
     
