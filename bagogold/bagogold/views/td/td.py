@@ -21,16 +21,20 @@ from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
+from django.http.response import HttpResponse
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 import calendar
 import copy
 import datetime
+import json
 import math
 
 
 def buscar_titulos_validos_na_data(request):
-    print 'titulos validos'
+    data = datetime.datetime.strptime(request.GET['dataEscolhida'], '%d/%m/%Y').date()
+    lista_titulos_validos = list(Titulo.objects.filter(data_vencimento__gt=data).values_list('id', flat=True))
+    return HttpResponse(json.dumps(lista_titulos_validos), content_type = "application/json") 
 
 @login_required
 def aconselhamento_td(request):
