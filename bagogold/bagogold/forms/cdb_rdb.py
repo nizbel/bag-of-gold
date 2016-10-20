@@ -83,6 +83,7 @@ class HistoricoPorcentagemCDB_RDBForm(forms.ModelForm):
                                             'placeholder':'Selecione uma data'}),}
         
     def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
         try:
             self.inicial = kwargs.pop('inicial')
         except:
@@ -92,10 +93,16 @@ class HistoricoPorcentagemCDB_RDBForm(forms.ModelForm):
         except:
             self.cdb_rdb = None
         super(HistoricoPorcentagemCDB_RDBForm, self).__init__(*args, **kwargs)
+        self.fields['letra_credito'].queryset = CDB_RDB.objects.filter(investidor=self.investidor)
         if self.cdb_rdb:
             self.fields['cdb_rdb'].disabled = True
         if self.inicial:
             self.fields['data'].disabled = True
+    
+    def clean_cdb_rdb(self):
+        if self.cleaned_data['cdb_rdb'].investidor != self.investidor:
+            raise forms.ValidationError('CDB/RDB inválido')
+        return self.cleaned_data['cdb_rdb']
     
     def clean_porcentagem(self):
         porcentagem = self.cleaned_data['porcentagem']
@@ -105,13 +112,13 @@ class HistoricoPorcentagemCDB_RDBForm(forms.ModelForm):
     
     def clean(self):
         cleaned_data = super(HistoricoPorcentagemCDB_RDBForm, self).clean()
-        # Se não possui cdb_rdb (inserção), testar se já existe algum histórico para o investimento na data
-        if not self.cdb_rdb:
-            try:
-                historico = HistoricoPorcentagemCDB_RDB.objects.get(cdb_rdb=cleaned_data.get('cdb_rdb'), data=cleaned_data.get('data'))
-                raise forms.ValidationError('Já existe uma alteração de porcentagem para essa data')
-            except HistoricoPorcentagemCDB_RDB.DoesNotExist:
-                pass
+        # Testar se já existe algum histórico para o investimento na data
+        try:
+            historico = HistoricoPorcentagemCDB_RDB.objects.get(cdb_rdb=cleaned_data.get('cdb_rdb'), data=cleaned_data.get('data'))
+            raise forms.ValidationError('Já existe uma alteração de porcentagem para essa data')
+        except HistoricoPorcentagemCDB_RDB.DoesNotExist:
+            pass
+        return cleaned_data
         
 class HistoricoCarenciaCDB_RDBForm(forms.ModelForm):
     
@@ -123,6 +130,7 @@ class HistoricoCarenciaCDB_RDBForm(forms.ModelForm):
         labels = {'carencia': 'Período de carência (em dias)',}
         
     def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
         try:
             self.inicial = kwargs.pop('inicial')
         except:
@@ -132,23 +140,29 @@ class HistoricoCarenciaCDB_RDBForm(forms.ModelForm):
         except:
             self.cdb_rdb = None
         super(HistoricoCarenciaCDB_RDBForm, self).__init__(*args, **kwargs)
+        self.fields['cdb_rdb'].queryset = CDB_RDB.objects.filter(investidor=self.investidor)
         if self.cdb_rdb:
             self.fields['cdb_rdb'].disabled = True
         if self.inicial:
             self.fields['data'].disabled = True
-            
+    
+    def clean_cdb_rdb(self):
+        if self.cleaned_data['cdb_rdb'].investidor != self.investidor:
+            raise forms.ValidationError('CDB/RDB inválido')
+        return self.cleaned_data['cdb_rdb']
+    
     def clean_carencia(self):
-        porcentagem = self.cleaned_data['carencia']
-        if porcentagem <= 0:
+        carencia = self.cleaned_data['carencia']
+        if carencia <= 0:
             raise forms.ValidationError('Carência deve ser de pelo menos 1 dia')
-        return porcentagem
+        return carencia
     
     def clean(self):
         cleaned_data = super(HistoricoCarenciaCDB_RDBForm, self).clean()
-        # Se não possui cdb_rdb (inserção), testar se já existe algum histórico para o investimento na data
-        if not self.cdb_rdb:
-            try:
-                historico = HistoricoCarenciaCDB_RDB.objects.get(cdb_rdb=cleaned_data.get('cdb_rdb'), data=cleaned_data.get('data'))
-                raise forms.ValidationError('Já existe uma alteração de carência para essa data')
-            except HistoricoCarenciaCDB_RDB.DoesNotExist:
-                pass
+        # Testar se já existe algum histórico para o investimento na data
+        try:
+            historico = HistoricoCarenciaCDB_RDB.objects.get(cdb_rdb=cleaned_data.get('cdb_rdb'), data=cleaned_data.get('data'))
+            raise forms.ValidationError('Já existe uma alteração de carência para essa data')
+        except HistoricoCarenciaCDB_RDB.DoesNotExist:
+            pass
+        return cleaned_data
