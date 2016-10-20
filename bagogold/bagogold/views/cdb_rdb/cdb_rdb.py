@@ -216,6 +216,7 @@ def editar_historico_porcentagem(request, id):
 def editar_operacao_cdb_rdb(request, id):
     investidor = request.user.investidor
     
+    operacao_cdb_rdb = OperacaoCDB_RDB.objects.get(pk=id)
     if operacao_cdb_rdb.investidor != investidor:
         raise PermissionDenied
     
@@ -225,7 +226,6 @@ def editar_operacao_cdb_rdb(request, id):
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoCDB_RDB, DivisaoOperacaoCDB_RDB, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoCDB_RDBFormSet)
-    operacao_cdb_rdb = OperacaoCDB_RDB.objects.get(pk=id)
     
     if request.method == 'POST':
         form_operacao_cdb_rdb = OperacaoCDB_RDBForm(request.POST, instance=operacao_cdb_rdb, investidor=investidor)
