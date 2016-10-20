@@ -29,6 +29,9 @@ import datetime
 import math
 
 
+def buscar_titulos_validos_na_data(request):
+    print 'titulos validos'
+
 @login_required
 def aconselhamento_td(request):
     # Objeto vazio para preenchimento
@@ -343,7 +346,6 @@ def historico_td(request):
                                                      'graf_gasto_total': graf_gasto_total, 'graf_patrimonio': graf_patrimonio},
                                context_instance=RequestContext(request))
     
-
     
 @login_required
 def inserir_operacao_td(request):
@@ -358,10 +360,15 @@ def inserir_operacao_td(request):
     
     if request.method == 'POST':
         form_operacao_td = OperacaoTituloForm(request.POST, investidor=investidor)
+        formset_divisao = DivisaoFormSet(request.POST, investidor=investidor) if varias_divisoes else None
+        
+        # Validar título
         if form_operacao_td.is_valid():
+            operacao_td = form_operacao_td.save(commit=False)
+            operacao_td.investidor = investidor
+            
+            # Testar se várias divisões
             if varias_divisoes:
-                operacao_td = form_operacao_td.save(commit=False)
-                operacao_td.investidor = investidor
                 formset_divisao = DivisaoFormSet(request.POST, instance=operacao_td, investidor=investidor)
                 if formset_divisao.is_valid():
                     operacao_td.save()
@@ -371,14 +378,13 @@ def inserir_operacao_td(request):
                 for erro in formset_divisao.non_form_errors():
                     messages.error(request, erro)
             else:
-                operacao_td = form_operacao_td.save(commit=False)
-                operacao_td.investidor = investidor
+                operacao_td.save()
                 divisao_operacao = DivisaoOperacaoTD(operacao=operacao_td, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_td.quantidade)
                 divisao_operacao.save()
                 messages.success(request, 'Operação inserida com sucesso')
                 return HttpResponseRedirect(reverse('historico_td'))
             
-        for erros in operacao_td.errors.values():
+        for erros in form_operacao_td.errors.values():
             for erro in erros:
                 messages.error(request, erro)
                     
@@ -386,8 +392,8 @@ def inserir_operacao_td(request):
         form_operacao_td = OperacaoTituloForm(investidor=investidor)
         formset_divisao = DivisaoFormSet(investidor=investidor)
             
-    return render_to_response('td/inserir_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao }, 
-                                      context_instance=RequestContext(request))
+    return render_to_response('td/inserir_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao,
+                                                              'varias_divisoes': varias_divisoes}, context_instance=RequestContext(request))
 
 @login_required
 def painel(request):
