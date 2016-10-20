@@ -45,10 +45,13 @@ class OperacaoCDB_RDBForm(forms.ModelForm):
         self.fields['investimento'].required = False
         self.fields['investimento'].queryset = CDB_RDB.objects.filter(investidor=self.investidor)
         self.fields['operacao_compra'].queryset = OperacaoCDB_RDB.objects.filter(tipo_operacao='C', investidor=self.investidor)
-#         if self.instance.pk is not None:
-#             # Verificar se é uma compra
-#             if self.instance.tipo_operacao == 'V':
-#                 self.operacao_compra.v
+        # Remover operações que já tenham sido totalmente vendidas e a própria operação
+        operacoes_compra_invalidas = [operacao_compra_invalida.id for operacao_compra_invalida in self.fields['operacao_compra'].queryset if operacao_compra_invalida.qtd_disponivel_venda() <= 0] + \
+            ([self.instance.id] if self.instance.id != None else [])
+        # Manter operação de compra atual, caso seja edição de venda
+        if self.instance.operacao_compra_relacionada():
+            operacoes_compra_invalidas.remove(self.instance.operacao_compra_relacionada().id)
+        self.fields['operacao_compra'].queryset = self.fields['operacao_compra'].queryset.exclude(id__in=operacoes_compra_invalidas)
     
     def clean_operacao_compra(self):
         tipo_operacao = self.cleaned_data['tipo_operacao']
@@ -78,7 +81,7 @@ class OperacaoCDB_RDBForm(forms.ModelForm):
                 cdb_rdb = self.cleaned_data.get('operacao_compra').investimento
                 return cdb_rdb
         else:
-            cdb = self.cleaned_data.get('cdb')
+            cdb = self.cleaned_data.get('investimento')
             if cdb is None:
                 raise forms.ValidationError('Insira CDB válido')
             return cdb
