@@ -61,6 +61,36 @@ def criar_data_inicio_titulos():
         titulo.data_inicio = HistoricoTitulo.objects.filter(titulo=titulo).order_by('data')[0].data
         titulo.save()
 
+def quantidade_titulos_ate_dia(investidor, dia):
+    """ 
+    Calcula a quantidade de títulos do investidor até dia determinado
+    Parâmetros: Dia final
+    Retorno: Quantidade de títulos {titulo_id: qtd}
+    """
+    
+    operacoes = OperacaoTitulo.objects.filter(data__lte=dia).exclude(data__isnull=True).order_by('data')
+    
+    qtd_titulos = {}
+    
+    for item in operacoes:
+        print qtd_titulos
+        # Verificar se se trata de compra ou venda
+        if item.tipo_operacao == 'C':
+            if item.titulo.id not in qtd_titulos:
+                qtd_titulos[item.titulo.id] = item.quantidade
+            else:
+                qtd_titulos[item.titulo.id] += item.quantidade
+            
+        elif item.tipo_operacao == 'V':
+            qtd_titulos[item.titulo.id] -= item.quantidade
+    
+    # Remover títulos com quantidade 0
+    for titulo_id in qtd_titulos.keys():
+        if qtd_titulos[titulo_id] == 0:
+            del qtd_titulos[titulo_id]
+    
+    return qtd_titulos
+
 def quantidade_titulos_ate_dia_por_titulo(investidor, titulo_id, dia):
     """ 
     Calcula a quantidade de títulos do investidor até dia determinado
