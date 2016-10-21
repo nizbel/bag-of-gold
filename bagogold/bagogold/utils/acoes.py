@@ -249,9 +249,9 @@ def quantidade_acoes_ate_dia(investidor, ticker, dia, considerar_trade=False):
     Retorno: Quantidade de ações
     """
     if considerar_trade:
-        operacoes = OperacaoAcao.objects.filter(acao__ticker=ticker, data__lte=dia).exclude(data__isnull=True).order_by('data')
+        operacoes = OperacaoAcao.objects.filter(investidor=investidor, acao__ticker=ticker, data__lte=dia).exclude(data__isnull=True).order_by('data')
     else:
-        operacoes = OperacaoAcao.objects.filter(destinacao='B', acao__ticker=ticker, data__lte=dia).exclude(data__isnull=True).order_by('data')
+        operacoes = OperacaoAcao.objects.filter(investidor=investidor, destinacao='B', acao__ticker=ticker, data__lte=dia).exclude(data__isnull=True).order_by('data')
     # Pega os proventos em ações recebidos por outras ações
     proventos_em_acoes = AcaoProvento.objects.filter(acao_recebida__ticker=ticker, provento__data_ex__lte=dia).exclude(provento__data_ex__isnull=True).order_by('provento__data_ex')
     for provento in proventos_em_acoes:
@@ -274,7 +274,7 @@ def quantidade_acoes_ate_dia(investidor, ticker, dia, considerar_trade=False):
             if item.provento.acao.ticker == ticker:
                 qtd_acoes += int(item.provento.valor_unitario * qtd_acoes / 100)
             else:
-                qtd_acoes += int(item.provento.valor_unitario * quantidade_acoes_ate_dia(investidor, item.provento.acao.ticker, item.data) / 100)
+                qtd_acoes += int(item.provento.valor_unitario * quantidade_acoes_ate_dia(investidor, item.provento.acao.ticker, item.data, considerar_trade) / 100)
     
     return qtd_acoes
 
