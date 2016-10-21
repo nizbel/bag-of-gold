@@ -27,6 +27,12 @@
                         <span>Juntando {{posicao.1}} cotas: R$ {{posicao.2}}</span>                                 
                     </a>
                 </li>
+                {% empty %}
+                <li>
+                    <a href="#">
+                        <span>Ainda não há resultados</span>                                 
+                    </a>
+                </li>
                 {% endfor %}
             </ul>
         </div>

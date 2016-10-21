@@ -104,12 +104,12 @@ def calcular_resultado_corretagem(request):
     if request.method == 'POST':
         form_calcular = CalculoResultadoCorretagemForm(request.POST)
         
-        if form_calcular.isvalid():
-            NUM_MESES = form_calcular.fields['num_meses']
-            PRECO_COTA = form_calcular.fields['preco_cota']
-            CORRETAGEM = form_calcular.fields['corretagem']
-            RENDIMENTO = form_calcular.fields['rendimento']
-            QTD_COTAS = form_calcular.fields['quantidade_cotas']
+        if form_calcular.is_valid():
+            NUM_MESES = form_calcular.cleaned_data['num_meses']
+            PRECO_COTA = form_calcular.cleaned_data['preco_cota']
+            CORRETAGEM = form_calcular.cleaned_data['corretagem']
+            RENDIMENTO = form_calcular.cleaned_data['rendimento']
+            QTD_COTAS = form_calcular.cleaned_data['quantidade_cotas']
             
             ranking = list()
             for qtd_cotas_juntar in range(1, 11):
