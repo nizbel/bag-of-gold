@@ -4,6 +4,8 @@
 
 <div class="row-fluid">
     <div class="box-content">
+        <h3>Este cálculo serve para se ter uma aproximação do resultado caso o investidor espere juntar dinheiro para comprar mais de uma cota antes de investir em mais FIIs.</h3>
+        <h3>Os valores de preço e rendimento da cota são considerados constantes por todo o cálculo.</h3>
         <form method="POST" class="post-form form-horizontal">{% csrf_token %}
         <div id="forms">
             {{ form_calcular.as_p }}
@@ -24,7 +26,7 @@
                 {% for posicao in ranking %}
                 <li>
                     <a href="#">
-                        <span>Juntando {{posicao.1}} cotas: R$ {{posicao.2}}</span>                                 
+                        <span>Juntando {{posicao.0}} cota(s): R$ {{posicao.1}}</span>                                 
                     </a>
                 </li>
                 {% empty %}
