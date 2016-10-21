@@ -261,6 +261,8 @@
                         <li><a class="submenu" href="{% url "acompanhamento_mensal_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Acomp. mensal</span></a></li>
                         {% endif %}
                         <li><a class="submenu" href="{% url "aconselhamento_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Aconselhamento</span></a></li>
+                        <li><a class="submenu" href="{% url "calcular_resultado_corretagem" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Cálculo de res. da corretagem</span></a></li>
+                       
                         <li><a class="submenu" href="{% url "historico_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico</span></a></li>
                         <li><a class="submenu" href="{% url "inserir_operacao_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir operação</span></a></li>
                         {% if request.user.is_superuser %}

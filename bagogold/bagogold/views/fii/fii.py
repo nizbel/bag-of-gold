@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoFIIFormSet
 from bagogold.bagogold.forms.fii import OperacaoFIIForm, ProventoFIIForm, \
-    UsoProventosOperacaoFIIForm
+    UsoProventosOperacaoFIIForm, CalculoResultadoCorretagemForm
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII
 from bagogold.bagogold.models.fii import OperacaoFII, ProventoFII, HistoricoFII, \
     FII, UsoProventosOperacaoFII, ValorDiarioFII
@@ -98,6 +98,42 @@ def aconselhamento_fii(request):
     comparativos = reversed(sorted(comparativos, key=itemgetter(3)))
     
     return render_to_response('fii/aconselhamento.html', {'comparativos': comparativos}, context_instance=RequestContext(request))
+    
+
+def calcular_resultado_corretagem(request):
+    if request.method == 'POST':
+        form_calcular = CalculoResultadoCorretagemForm(request.POST)
+        
+        if form_calcular.isvalid():
+            NUM_MESES = form_calcular.fields['num_meses']
+            PRECO_COTA = form_calcular.fields['preco_cota']
+            CORRETAGEM = form_calcular.fields['corretagem']
+            RENDIMENTO = form_calcular.fields['rendimento']
+            QTD_COTAS = form_calcular.fields['quantidade_cotas']
+            
+            ranking = list()
+            for qtd_cotas_juntar in range(1, 11):
+                qtd_cotas = QTD_COTAS
+                qtd_acumulada = 0
+                for _ in range(NUM_MESES):
+                    qtd_acumulada += qtd_cotas * RENDIMENTO
+                    if qtd_acumulada >= (PRECO_COTA * qtd_cotas_juntar) + CORRETAGEM:
+                        qtd_cotas_comprada = int(math.floor((qtd_acumulada - CORRETAGEM) / PRECO_COTA))
+                        qtd_cotas += qtd_cotas_comprada
+                        qtd_acumulada -= (qtd_cotas_comprada * PRECO_COTA) + CORRETAGEM
+                # print 'Ao final, tem %s cotas e %s reais' % (qtd_cotas, qtd_acumulada)
+                total_acumulado = qtd_cotas * PRECO_COTA + qtd_acumulada
+        #         print 'Esperando %s: %s' % (qtd_cotas_juntar, total_acumulado)
+                ranking.append((qtd_cotas_juntar, total_acumulado))
+                
+            ranking.sort(key=lambda x: x[1], reverse=True)
+                
+            return render_to_response('fii/calcular_resultado_corretagem.html', {'ranking': ranking, 'form_calcular': form_calcular}, context_instance=RequestContext(request))
+    
+    ranking = list()
+    form_calcular = CalculoResultadoCorretagemForm()
+    
+    return render_to_response('fii/calcular_resultado_corretagem.html', {'ranking': ranking, 'form_calcular': form_calcular}, context_instance=RequestContext(request))
     
     
 @login_required
