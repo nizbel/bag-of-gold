@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="row-fluid">
+    <div class="box-content">
+        <form method="POST" class="post-form form-horizontal">{% csrf_token %}
+        <div id="forms">
+            {{ form_calcular.as_p }}
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn">Calcular</button>
+        </div>
+    </form>
+    </div>
+
+    <div class="box-content">
+        <div class="box black span5" ontablet="span5" ondesktop="span5">
+        <div class="box-header">
+            <span>Resultados</span>
+        </div>
+        <div class="box-content">
+            <ul class="dashboard-list metro">
+                {% for posicao in ranking %}
+                <li>
+                    <a href="#">
+                        <span>Juntando {{posicao.1}} cotas: R$ {{posicao.2}}</span>                                 
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    </div>
+</div>
+
+{% endblock %}
