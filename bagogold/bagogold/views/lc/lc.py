@@ -168,7 +168,7 @@ def historico(request):
     dados['total_gasto'] = total_gasto
     dados['patrimonio'] = total_patrimonio
     dados['lucro'] = total_patrimonio - total_gasto
-    dados['lucro_percentual'] = (total_patrimonio - total_gasto) / total_gasto * 100
+    dados['lucro_percentual'] = (total_patrimonio - total_gasto) / total_gasto * 100 if total_gasto > 0 else 0
     
     return render_to_response('lc/historico.html', {'dados': dados, 'operacoes': operacoes, 
                                                     'graf_gasto_total': graf_gasto_total, 'graf_patrimonio': graf_patrimonio},
