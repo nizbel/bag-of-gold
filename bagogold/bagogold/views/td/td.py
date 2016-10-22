@@ -12,7 +12,8 @@ from bagogold.bagogold.utils.fii import \
     calcular_rendimento_proventos_fii_12_meses, \
     calcular_variacao_percentual_fii_por_periodo
 from bagogold.bagogold.utils.td import calcular_imposto_venda_td, \
-    buscar_data_valor_mais_recente, quantidade_titulos_ate_dia
+    buscar_data_valor_mais_recente, quantidade_titulos_ate_dia, \
+    quantidade_titulos_ate_dia_por_titulo
 from copy import deepcopy
 from decimal import Decimal
 from django.contrib import messages
@@ -175,13 +176,17 @@ def aconselhamento_td(request):
 def editar_operacao_td(request, id):
     investidor = request.user.investidor
     
-    # Preparar formset para divisoes
-    DivisaoFormSet = inlineformset_factory(OperacaoTitulo, DivisaoOperacaoTD, fields=('divisao', 'quantidade'),
-                                            extra=1, formset=DivisaoOperacaoTDFormSet)
     operacao_td = OperacaoTitulo.objects.get(pk=id)
     # Verifica se a operação é do investidor, senão, jogar erro de permissão
     if operacao_td.investidor != investidor:
         raise PermissionDenied
+    
+    # Preparar formset para divisoes
+    DivisaoFormSet = inlineformset_factory(OperacaoTitulo, DivisaoOperacaoTD, fields=('divisao', 'quantidade'),
+                                            extra=1, formset=DivisaoOperacaoTDFormSet)
+    
+    # Testa se investidor possui mais de uma divisão
+    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
     
     if request.method == 'POST':
         if request.POST.get("save"):
@@ -189,31 +194,35 @@ def editar_operacao_td(request, id):
             formset_divisao = DivisaoFormSet(request.POST, instance=operacao_td, investidor=investidor)
             
             if form_operacao_td.is_valid():
-                if formset_divisao.is_valid():
-                    operacao_td.save()
-                    formset_divisao.save()
-                    messages.success(request, 'Operação alterada com sucesso')
-                    return HttpResponseRedirect(reverse('historico_td'))
+                if varias_divisoes:
+                    if formset_divisao.is_valid():
+                        operacao_td.save()
+                        formset_divisao.save()
+                        messages.success(request, 'Operação alterada com sucesso')
+                        return HttpResponseRedirect(reverse('historico_td'))
+                    for erro in formset_divisao.non_form_errors():
+                        messages.error(request, erro)
             for erros in form_operacao_td.errors.values():
                 for erro in erros:
                     messages.error(request, erro)
-            for erro in formset_divisao.non_form_errors():
-                messages.error(request, erro)
-            return render_to_response('td/editar_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao }, 
-                                      context_instance=RequestContext(request))
+                    
         elif request.POST.get("delete"):
-            divisao_td = DivisaoOperacaoTD.objects.filter(operacao=operacao_td)
-            for divisao in divisao_td:
-                divisao.delete()
-            operacao_td.delete()
-            messages.success(request, 'Operação apagada com sucesso')
-            return HttpResponseRedirect(reverse('historico_td'))
+            # Verifica se, em caso de compra, a quantidade de títulos do usuário não fica negativa
+            if operacao_td.tipo_operacao == 'C' and quantidade_titulos_ate_dia_por_titulo(investidor, operacao_td.titulo.id, datetime.date.today()) - operacao_td.quantidade < 0:
+                messages.error(request, 'Operação de compra não pode ser apagada pois quantidade de titulos atual seria negativa')
+            else:
+                divisao_td = DivisaoOperacaoTD.objects.filter(operacao=operacao_td)
+                for divisao in divisao_td:
+                    divisao.delete()
+                operacao_td.delete()
+                messages.success(request, 'Operação apagada com sucesso')
+                return HttpResponseRedirect(reverse('historico_td'))
 
     else:
         form_operacao_td = OperacaoTituloForm(instance=operacao_td)
         formset_divisao = DivisaoFormSet(instance=operacao_td, investidor=investidor)
             
-    return render_to_response('td/editar_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao }, 
+    return render_to_response('td/editar_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes}, 
                               context_instance=RequestContext(request))   
 
     
