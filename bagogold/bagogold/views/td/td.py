@@ -274,10 +274,14 @@ def historico_td(request):
                     if item.data is not datetime.date.today():
                         total_patrimonio += (qtd_titulos[titulo] * HistoricoTitulo.objects.filter(data__lte=item.data, titulo=titulo).order_by('-data')[0].preco_venda)
                     else:
-                        for valor_diario in buscar_valores_diarios():
-                            if valor_diario.titulo == titulo:
-                                total_patrimonio += (qtd_titulos[titulo] * valor_diario.preco_venda)
-                                break
+                        # Buscar valor mais atual de valor diário, se existir
+                        if ValorDiarioTitulo.objects.filter(titulo=item.titulo, data_hora__date=item.data).order_by('-data_hora'):
+                            valor_diario = ValorDiarioTitulo.objects.filter(titulo=item.titulo, data_hora__date=item.data).order_by('-data_hora')[0]
+                            total_patrimonio += (qtd_titulos[titulo] * valor_diario.preco_venda)
+                            break
+                        else:
+                            # Se não há valor diário, buscar histórico mais atual mesmo
+                            total_patrimonio += (qtd_titulos[titulo] * HistoricoTitulo.objects.filter(titulo=titulo).order_by('-data')[0].preco_venda)
         
         # Formatar data para inserir nos gráficos
         data_formatada = str(calendar.timegm(item.data.timetuple()) * 1000)        
