@@ -67,7 +67,7 @@ def quantidade_titulos_ate_dia(investidor, dia):
     Retorno: Quantidade de títulos {titulo_id: qtd}
     """
     
-    operacoes = OperacaoTitulo.objects.filter(data__lte=dia).exclude(data__isnull=True).order_by('data')
+    operacoes = OperacaoTitulo.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True).order_by('data')
     
     qtd_titulos = {}
     
@@ -98,7 +98,7 @@ def quantidade_titulos_ate_dia_por_titulo(investidor, titulo_id, dia):
     Retorno: Quantidade de títulos
     """
     
-    operacoes = OperacaoTitulo.objects.filter(titulo__id=titulo_id, data__lte=dia).exclude(data__isnull=True).order_by('data')
+    operacoes = OperacaoTitulo.objects.filter(investidor=investidor, titulo__id=titulo_id, data__lte=dia).exclude(data__isnull=True).order_by('data')
     
     qtd_titulos = 0
     
