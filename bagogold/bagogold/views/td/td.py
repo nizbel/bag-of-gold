@@ -252,11 +252,14 @@ def historico_td(request):
                     if not item.data == datetime.date.today():
                         total_patrimonio += (qtd_titulos[titulo] * HistoricoTitulo.objects.filter(data__lte=item.data, titulo=titulo).order_by('-data')[0].preco_venda)
                     else:
-                        # TODO verificar necessidade de chamar buscar valores diarios tao frequentemente assim
-                        for valor_diario in buscar_valores_diarios():
-                            if valor_diario.titulo == titulo:
-                                total_patrimonio += (qtd_titulos[titulo] * valor_diario.preco_venda)
-                                break
+                        # Buscar valor mais atual de valor diário, se existir
+                        if ValorDiarioTitulo.objects.filter(titulo=item.titulo, data_hora__date=item.data).order_by('-data_hora'):
+                            valor_diario = ValorDiarioTitulo.objects.filter(titulo=item.titulo, data_hora__date=item.data).order_by('-data_hora')[0]
+                            total_patrimonio += (qtd_titulos[titulo] * valor_diario.preco_venda)
+                            break
+                        else:
+                            # Se não há valor diário, buscar histórico mais atual mesmo
+                            total_patrimonio += (qtd_titulos[titulo] * HistoricoTitulo.objects.filter(titulo=titulo).order_by('-data')[0].preco_venda)
                 
             elif item.tipo_operacao == 'V':
                 item.tipo = 'Venda'
