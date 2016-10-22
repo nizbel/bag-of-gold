@@ -26,7 +26,6 @@ def calcular_valor_acumulado_ipca(data_base, data_final=datetime.date.today()):
     ipca_periodo = pow(1 + ipca_inicial_diario, qtd_dias) - 1
 #     print 'IPCA inicial:', ipca_periodo
     # TODO melhorar isso
-    print 'comecando'
     for mes_historico in HistoricoIPCA.objects.filter((Q(mes__gt=ipca_inicial.mes) & Q(ano=ipca_inicial.ano)) | \
                                                       Q(ano__gt=ipca_inicial.ano)).filter(ano__lte=data_final.year).order_by('ano', 'mes'):
         if datetime.date(mes_historico.ano, mes_historico.mes, calendar.monthrange(mes_historico.ano, mes_historico.mes)[1]) <= data_final:
