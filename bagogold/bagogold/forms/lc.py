@@ -88,7 +88,7 @@ class OperacaoLetraCreditoForm(forms.ModelForm):
             # Verificar se já há vendas registradas para essa compra, se sim, lançar erro
             if OperacaoVendaLetraCredito.objects.filter(operacao_compra=self.instance):
                 raise forms.ValidationError('Não é possível alterar tipo de operação pois já há vendas registradas para essa compra')
-    
+            
 class HistoricoPorcentagemLetraCreditoForm(forms.ModelForm):
     
     class Meta:

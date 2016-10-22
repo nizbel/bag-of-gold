@@ -190,8 +190,8 @@ def editar_operacao_td(request, id):
     
     if request.method == 'POST':
         if request.POST.get("save"):
-            form_operacao_td = OperacaoTituloForm(request.POST, instance=operacao_td)
-            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_td, investidor=investidor)
+            form_operacao_td = OperacaoTituloForm(request.POST, instance=operacao_td, investidor=investidor)
+            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_td, investidor=investidor) if varias_divisoes else None
             
             if form_operacao_td.is_valid():
                 if varias_divisoes:
@@ -202,6 +202,14 @@ def editar_operacao_td(request, id):
                         return HttpResponseRedirect(reverse('historico_td'))
                     for erro in formset_divisao.non_form_errors():
                         messages.error(request, erro)
+                
+                else:
+                    operacao_td.save()
+                    divisao_operacao = DivisaoOperacaoTD.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_td)
+                    divisao_operacao.quantidade = operacao_td.quantidade
+                    divisao_operacao.save()
+                    messages.success(request, 'Operação editada com sucesso')
+                    return HttpResponseRedirect(reverse('historico_td'))
             for erros in form_operacao_td.errors.values():
                 for erro in erros:
                     messages.error(request, erro)
@@ -209,7 +217,7 @@ def editar_operacao_td(request, id):
         elif request.POST.get("delete"):
             # Verifica se, em caso de compra, a quantidade de títulos do usuário não fica negativa
             if operacao_td.tipo_operacao == 'C' and quantidade_titulos_ate_dia_por_titulo(investidor, operacao_td.titulo.id, datetime.date.today()) - operacao_td.quantidade < 0:
-                messages.error(request, 'Operação de compra não pode ser apagada pois quantidade de titulos atual seria negativa')
+                messages.error(request, 'Operação de compra não pode ser apagada pois quantidade atual para o título %s seria negativa' % (operacao_tdtitulo))
             else:
                 divisao_td = DivisaoOperacaoTD.objects.filter(operacao=operacao_td)
                 for divisao in divisao_td:
@@ -219,7 +227,7 @@ def editar_operacao_td(request, id):
                 return HttpResponseRedirect(reverse('historico_td'))
 
     else:
-        form_operacao_td = OperacaoTituloForm(instance=operacao_td)
+        form_operacao_td = OperacaoTituloForm(instance=operacao_td, investidor=investidor)
         formset_divisao = DivisaoFormSet(instance=operacao_td, investidor=investidor)
             
     return render_to_response('td/editar_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes}, 

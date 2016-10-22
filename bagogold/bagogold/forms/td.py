@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.td import OperacaoTitulo
+from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia_por_titulo
 from django import forms
 from django.forms import widgets
+import datetime
 
 
 ESCOLHAS_CONSOLIDADO=(
@@ -40,4 +42,10 @@ class OperacaoTituloForm(forms.ModelForm):
 #         print '%s %s %s' % (data_ex, data_pagamento, data_ex < data_pagamento)
         if (data > data_vencimento):
             raise forms.ValidationError("Título não pode ter sido comprado após sua data de vencimento (%s)" % (dados.get('titulo').data_vencimento))
-        return dados
+        # Testa se não se trata de uma edição de compra para venda
+        if dados.get('tipo_operacao') == 'V' and self.instance.tipo_operacao == 'C':
+            # Verificar se já há vendas registradas para essa compra, se sim, lançar erro
+            print quantidade_titulos_ate_dia_por_titulo(self.investidor, self.instance.titulo.id, datetime.date.today()), self.instance.quantidade
+            if quantidade_titulos_ate_dia_por_titulo(self.investidor, self.instance.titulo.id, datetime.date.today()) - self.instance.quantidade < 0:
+                raise forms.ValidationError('Não é possível alterar tipo de operação pois a quantidade atual para o título %s seria negativa' % (self.instance.titulo))
+    
