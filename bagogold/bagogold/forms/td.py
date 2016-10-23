@@ -45,7 +45,6 @@ class OperacaoTituloForm(forms.ModelForm):
         # Testa se não se trata de uma edição de compra para venda
         if dados.get('tipo_operacao') == 'V' and self.instance.tipo_operacao == 'C':
             # Verificar se já há vendas registradas para essa compra, se sim, lançar erro
-            print quantidade_titulos_ate_dia_por_titulo(self.investidor, self.instance.titulo.id, datetime.date.today()), self.instance.quantidade
             if quantidade_titulos_ate_dia_por_titulo(self.investidor, self.instance.titulo.id, datetime.date.today()) - self.instance.quantidade < 0:
                 raise forms.ValidationError('Não é possível alterar tipo de operação pois a quantidade atual para o título %s seria negativa' % (self.instance.titulo))
     
