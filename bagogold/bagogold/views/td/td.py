@@ -384,7 +384,7 @@ def inserir_operacao_td(request):
     investidor = request.user.investidor
     
     # Preparar formset para divisoes
-    DivisaoFormSet = inlineformset_factory(OperacaoTitulo, DivisaoOperacaoTD, fields=('divisao', 'quantidade'),
+    DivisaoFormSet = inlineformset_factory(OperacaoTitulo, DivisaoOperacaoTD, fields=('divisao', 'quantidade'), can_delete=False,
                                             extra=1, formset=DivisaoOperacaoTDFormSet)
     
     # Testa se investidor possui mais de uma divisão
