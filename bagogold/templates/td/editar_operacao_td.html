@@ -23,5 +23,67 @@
             <button type="submit" name="delete" value="1" class="btn btn-danger">Excluir</button>
         </div>
     </form>
+    
+    <script type="text/javascript">
+    $( document ).ready(function() {
+        $( "#id_data" ).change(function() {
+            var dataEscolhida = $(this).val();
+            if (dataEscolhida == null || dataEscolhida == '') {
+                return;
+            }
+            var tipoOperacao = $('#id_tipo_operacao').val();
+            $.ajax({
+                url : "{% url 'buscar_titulos_validos_na_data' %}", // the endpoint
+                type : "GET", // http method
+                data: {dataEscolhida: dataEscolhida, tipoOperacao: tipoOperacao},
+                
+                // handle a successful response
+                success : function(lista_titulos_validos) {
+                    $("#id_titulo option").each(function() {
+                        if ($.inArray(parseInt(this.value), lista_titulos_validos) > -1) {
+                            $("#id_titulo option[value=" + this.value + "]").show();
+                        } else {
+                            $("#id_titulo option[value=" + this.value + "]").hide();
+                        }
+                    });
+                }, 
+                    
+                // handle a non-successful response
+                error : function(xhr,errmsg,err) {
+                    console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+                }
+            });
+        });
+        
+        $( "#id_tipo_operacao" ).change(function() {
+            var dataEscolhida = $('#id_data').val();
+            if (dataEscolhida == null || dataEscolhida == '') {
+                return;
+            }
+            var tipoOperacao = $(this).val();
+            $.ajax({
+                url : "{% url 'buscar_titulos_validos_na_data' %}", // the endpoint
+                type : "GET", // http method
+                data: {dataEscolhida: dataEscolhida, tipoOperacao: tipoOperacao},
+                
+                // handle a successful response
+                success : function(lista_titulos_validos) {
+                    $("#id_titulo option").each(function() {
+                        if ($.inArray(parseInt(this.value), lista_titulos_validos) > -1) {
+                            $("#id_titulo option[value=" + this.value + "]").show();
+                        } else {
+                            $("#id_titulo option[value=" + this.value + "]").hide();
+                        }
+                    });
+                }, 
+                    
+                // handle a non-successful response
+                error : function(xhr,errmsg,err) {
+                    console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+                }
+            });
+        });
+    });
+    </script>
 {% endblock %}
 
