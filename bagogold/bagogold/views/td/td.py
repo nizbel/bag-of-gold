@@ -215,9 +215,9 @@ def editar_operacao_td(request, id):
                     messages.error(request, erro)
                     
         elif request.POST.get("delete"):
-            # Verifica se, em caso de compra, a quantidade de títulos do usuário não fica negativa
+            # Verifica se, em caso de compra, a quantidade de títulos do investidor não fica negativa
             if operacao_td.tipo_operacao == 'C' and quantidade_titulos_ate_dia_por_titulo(investidor, operacao_td.titulo.id, datetime.date.today()) - operacao_td.quantidade < 0:
-                messages.error(request, 'Operação de compra não pode ser apagada pois quantidade atual para o título %s seria negativa' % (operacao_tdtitulo))
+                messages.error(request, 'Operação de compra não pode ser apagada pois quantidade atual para o título %s seria negativa' % (operacao_td.titulo))
             else:
                 divisao_td = DivisaoOperacaoTD.objects.filter(operacao=operacao_td)
                 for divisao in divisao_td:

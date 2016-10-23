@@ -6,16 +6,19 @@ from bagogold.bagogold.forms.fundo_investimento import \
     OperacaoFundoInvestimentoForm, FundoInvestimentoForm, \
     HistoricoCarenciaFundoInvestimentoForm, HistoricoValorCotasForm
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoLC, \
-    DivisaoOperacaoFundoInvestimento
+    DivisaoOperacaoFundoInvestimento, Divisao
 from bagogold.bagogold.models.fundo_investimento import \
     OperacaoFundoInvestimento, FundoInvestimento, HistoricoCarenciaFundoInvestimento, \
     HistoricoValorCotas
 from bagogold.bagogold.models.lc import HistoricoTaxaDI
+from bagogold.bagogold.utils.fundo_investimento import \
+    calcular_qtd_cotas_ate_dia_por_fundo
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
@@ -42,48 +45,64 @@ def adicionar_valor_cota_historico(request):
 @login_required
 def editar_operacao_fundo_investimento(request, id):
     investidor = request.user.investidor
+    
+    operacao_fundo_investimento = OperacaoFundoInvestimento.objects.get(pk=id)
+    # Verifica se a operação é do investidor, senão, jogar erro de permissão
+    if operacao_fundo_investimento.investidor != investidor:
+        raise PermissionDenied
+    
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoFundoInvestimento, DivisaoOperacaoFundoInvestimento, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoFundoInvestimentoFormSet)
-    operacao_fundo_investimento = OperacaoFundoInvestimento.objects.get(pk=id)
+    
+    # Testa se investidor possui mais de uma divisão
+    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
     
     if request.method == 'POST':
         if request.POST.get("save"):
             form_operacao_fundo_investimento = OperacaoFundoInvestimentoForm(request.POST, instance=operacao_fundo_investimento, investidor=investidor)
+            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_fundo_investimento, investidor=investidor) if varias_divisoes else None
             
             if form_operacao_fundo_investimento.is_valid():
-                operacao_compra = form_operacao_fundo_investimento.cleaned_data['operacao_compra']
-                formset_divisao = DivisaoFormSet(request.POST, instance=operacao_fundo_investimento, operacao_compra=operacao_compra, investidor=investidor)
-                if formset_divisao.is_valid():
+                if varias_divisoes:
+                    if formset_divisao.is_valid():
+                        operacao_fundo_investimento.save()
+                        formset_divisao.save()
+                        messages.success(request, 'Operação editada com sucesso')
+                        return HttpResponseRedirect(reverse('historico_fundo_investimento'))
+                    for erro in formset_divisao.non_form_errors():
+                        messages.error(request, erro)
+                        
+                else:
                     operacao_fundo_investimento.save()
-                    formset_divisao.save()
+                    divisao_operacao = DivisaoOperacaoFundoInvestimento.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_fundo_investimento)
+                    divisao_operacao.quantidade = operacao_fundo_investimento.quantidade
+                    divisao_operacao.save()
                     messages.success(request, 'Operação editada com sucesso')
                     return HttpResponseRedirect(reverse('historico_fundo_investimento'))
             for erros in form_operacao_fundo_investimento.errors.values():
                 for erro in erros:
                     messages.error(request, erro)
-            for erro in formset_divisao.non_form_errors():
-                messages.error(request, erro)
-            return render_to_response('fundo_investimento/editar_operacao_fundo_investimento.html', {'form_operacao_fundo_investimento': form_operacao_fundo_investimento, 'formset_divisao': formset_divisao },
-                      context_instance=RequestContext(request))
 #                         print '%s %s'  % (divisao_fundo_investimento.quantidade, divisao_fundo_investimento.divisao)
                 
         elif request.POST.get("delete"):
-            divisao_fundo_investimento = DivisaoOperacaoLC.objects.filter(operacao=operacao_fundo_investimento)
-            for divisao in divisao_fundo_investimento:
-                divisao.delete()
-            if operacao_fundo_investimento.tipo_operacao == 'V':
-                OperacaoVendaFundoInvestimento.objects.get(operacao_venda=operacao_fundo_investimento).delete()
-            operacao_fundo_investimento.delete()
-            messages.success(request, 'Operação excluída com sucesso')
-            return HttpResponseRedirect(reverse('historico_fundo_investimento'))
+            # Verifica se, em caso de compra, a quantidade de cotas do investidor não fica negativa
+            if operacao_fundo_investimento.tipo_operacao == 'C' and calcular_qtd_cotas_ate_dia_por_fundo(investidor, operacao_fundo_investimento.fundo_investimento.id, datetime.date.today()) - operacao_fundo_investimento.quantidade < 0:
+                messages.error(request, 'Operação de compra não pode ser apagada pois quantidade atual para o fundo %s seria negativa' % (operacao_fundo_investimento.fundo_investimento))
+            else:
+                divisao_fundo_investimento = DivisaoOperacaoFundoInvestimento.objects.filter(operacao=operacao_fundo_investimento)
+                for divisao in divisao_fundo_investimento:
+                    divisao.delete()
+                operacao_fundo_investimento.delete()
+                messages.success(request, 'Operação apagada com sucesso')
+                return HttpResponseRedirect(reverse('historico_td'))
  
     else:
-        form_operacao_fundo_investimento = OperacaoFundoInvestimentoForm(instance=operacao_fundo_investimento, initial={'operacao_compra': operacao_fundo_investimento.operacao_compra_relacionada(),}, \
-                                                    investidor=investidor)
+        form_operacao_fundo_investimento = OperacaoFundoInvestimentoForm(instance=operacao_fundo_investimento, investidor=investidor)
         formset_divisao = DivisaoFormSet(instance=operacao_fundo_investimento, investidor=investidor)
             
-    return render_to_response('fundo_investimento/editar_operacao_fundo_investimento.html', {'form_operacao_fundo_investimento': form_operacao_fundo_investimento, 'formset_divisao': formset_divisao},
+    return render_to_response('fundo_investimento/editar_operacao_fundo_investimento.html', {'form_operacao_fundo_investimento': form_operacao_fundo_investimento, 'formset_divisao': formset_divisao, \
+                                                                                             'varias_divisoes': varias_divisoes},
                               context_instance=RequestContext(request))  
 
     
@@ -231,39 +250,50 @@ def inserir_fundo_investimento(request):
 @login_required
 def inserir_operacao_fundo_investimento(request):
     investidor = request.user.investidor
+    
     # Preparar formset para divisoes
-    DivisaoFundoInvestimentoFormSet = inlineformset_factory(OperacaoFundoInvestimento, DivisaoOperacaoFundoInvestimento, fields=('divisao', 'quantidade'),
+    DivisaoFundoInvestimentoFormSet = inlineformset_factory(OperacaoFundoInvestimento, DivisaoOperacaoFundoInvestimento, fields=('divisao', 'quantidade'), can_delete=False,
                                             extra=1, formset=DivisaoOperacaoFundoInvestimentoFormSet)
+    
+    # Testa se investidor possui mais de uma divisão
+    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
     
     if request.method == 'POST':
         form_operacao_fundo_investimento = OperacaoFundoInvestimentoForm(request.POST, investidor=investidor)
-        formset_divisao_fundo_investimento = DivisaoFundoInvestimentoFormSet(request.POST, investidor=investidor)
+        formset_divisao_fundo_investimento = DivisaoFundoInvestimentoFormSet(request.POST, investidor=investidor) if varias_divisoes else None
         
-        # Validar CDB
+        # Validar Fundo de Investimento
         if form_operacao_fundo_investimento.is_valid():
             operacao_fundo_investimento = form_operacao_fundo_investimento.save(commit=False)
             operacao_fundo_investimento.investidor = investidor
-            formset_divisao_fundo_investimento = DivisaoFundoInvestimentoFormSet(request.POST, instance=operacao_fundo_investimento, investidor=investidor)
-            if formset_divisao_fundo_investimento.is_valid():
+            
+            # Testar se várias divisões
+            if varias_divisoes:
+                formset_divisao_fundo_investimento = DivisaoFundoInvestimentoFormSet(request.POST, instance=operacao_fundo_investimento, investidor=investidor)
+                if formset_divisao_fundo_investimento.is_valid():
+                    operacao_fundo_investimento.save()
+                    formset_divisao_fundo_investimento.save()
+                    messages.success(request, 'Operação inserida com sucesso')
+                    return HttpResponseRedirect(reverse('historico_fundo_investimento'))
+                for erro in formset_divisao_fundo_investimento.non_form_errors():
+                    messages.error(request, erro)
+            else:
                 operacao_fundo_investimento.save()
-                formset_divisao_fundo_investimento.save()
+                divisao_operacao = DivisaoOperacaoFundoInvestimento(operacao=operacao_fundo_investimento, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_fundo_investimento.quantidade)
+                divisao_operacao.save()
                 messages.success(request, 'Operação inserida com sucesso')
                 return HttpResponseRedirect(reverse('historico_fundo_investimento'))
-                    
+            
         for erros in form_operacao_fundo_investimento.errors.values():
             for erro in erros:
                 messages.error(request, erro)
-        for erro in formset_divisao_fundo_investimento.non_form_errors():
-            messages.error(request, erro)
-                        
-        return render_to_response('fundo_investimento/inserir_operacao_fundo_investimento.html', {'form_operacao_fundo_investimento': form_operacao_fundo_investimento, 'formset_divisao_fundo_investimento': formset_divisao_fundo_investimento},
-                                  context_instance=RequestContext(request))
 #                         print '%s %s'  % (divisao_fundo_investimento.quantidade, divisao_fundo_investimento.divisao)
                 
     else:
         form_operacao_fundo_investimento = OperacaoFundoInvestimentoForm(investidor=investidor)
         formset_divisao_fundo_investimento = DivisaoFundoInvestimentoFormSet(investidor=investidor)
-    return render_to_response('fundo_investimento/inserir_operacao_fundo_investimento.html', {'form_operacao_fundo_investimento': form_operacao_fundo_investimento, 'formset_divisao_fundo_investimento': formset_divisao_fundo_investimento}, context_instance=RequestContext(request))
+    return render_to_response('fundo_investimento/inserir_operacao_fundo_investimento.html', {'form_operacao_fundo_investimento': form_operacao_fundo_investimento, \
+                                                                                              'formset_divisao_fundo_investimento': formset_divisao_fundo_investimento, 'varias_divisoes': varias_divisoes}, context_instance=RequestContext(request))
 
 @login_required
 def listar_fundo_investimento(request):
