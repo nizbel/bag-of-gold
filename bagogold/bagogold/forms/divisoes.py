@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
-    TransferenciaEntreDivisoes, DivisaoOperacaoAcao, DivisaoOperacaoFII,\
-    DivisaoOperacaoCDB_RDB
+    TransferenciaEntreDivisoes, DivisaoOperacaoAcao, DivisaoOperacaoFII, \
+    DivisaoOperacaoCDB_RDB, DivisaoOperacaoTD
+from bagogold.bagogold.utils.fundo_investimento import \
+    calcular_qtd_cotas_ate_dia_por_divisao
+from bagogold.bagogold.utils.td import calcular_qtd_titulos_ate_dia_por_divisao
 from django import forms
 from django.forms import widgets
 
@@ -265,7 +268,7 @@ class DivisaoOperacaoCDB_RDBFormSet(forms.models.BaseInlineFormSet):
         elif self.instance.quantidade > qtd_total_div:
             raise forms.ValidationError('Quantidade total alocada para as divisões é menor que quantidade da operação')
                             
-# Inline FormSet para operações em CDB
+# Inline FormSet para operações em Fundo de Investimeno
 class DivisaoOperacaoFundoInvestimentoFormSet(forms.models.BaseInlineFormSet):
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
@@ -297,6 +300,13 @@ class DivisaoOperacaoFundoInvestimentoFormSet(forms.models.BaseInlineFormSet):
                         qtd_total_div += div_qtd
                     else:
                         raise forms.ValidationError('Quantidade da divisão %s é inválida, quantidade deve ser maior que 0' % (contador_forms))
+                    
+                    # Verificar em caso de venda
+                    if self.instance.tipo_operacao == 'V':
+                        fundos_disponiveis = calcular_qtd_cotas_ate_dia_por_divisao(self.instance.data, form_divisao.cleaned_data['divisao'].id)
+                        qtd_disponivel_divisao = fundos_disponiveis[form_divisao.cleaned_data['divisao'].id] if form_divisao.cleaned_data['divisao'] in fundos_disponiveis else 0 
+                        if qtd_disponivel_divisao < div_qtd:
+                            raise forms.ValidationError('Venda de quantidade acima da disponível para divisão %s, disponível: R$ %s' % (form_divisao.cleaned_data['divisao'], qtd_disponivel_divisao))
                 
         if self.instance.quantidade < qtd_total_div:
             raise forms.ValidationError('Quantidade total alocada para as divisões é maior que quantidade da operação')
@@ -335,6 +345,13 @@ class DivisaoOperacaoTDFormSet(forms.models.BaseInlineFormSet):
                         qtd_total_div += div_qtd
                     else:
                         raise forms.ValidationError('Quantidade da divisão %s é inválida, quantidade deve ser maior que 0' % (contador_forms))
+                    
+                    # Verificar em caso de venda
+                    if self.instance.tipo_operacao == 'V':
+                        titulos_disponiveis = calcular_qtd_titulos_ate_dia_por_divisao(self.instance.data, form_divisao.cleaned_data['divisao'].id)
+                        qtd_disponivel_divisao = titulos_disponiveis[form_divisao.cleaned_data['divisao'].id] if form_divisao.cleaned_data['divisao'] in titulos_disponiveis else 0 
+                        if qtd_disponivel_divisao < div_qtd:
+                            raise forms.ValidationError('Venda de quantidade acima da disponível para divisão %s, disponível: R$ %s' % (form_divisao.cleaned_data['divisao'], qtd_disponivel_divisao))
                 
         if self.instance.quantidade < qtd_total_div:
             raise forms.ValidationError('Quantidade total alocada para as divisões é maior que quantidade da operação')
