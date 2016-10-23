@@ -29,13 +29,13 @@ def adicionar_valor_cota_historico(request):
     investidor = request.user.investidor
     
     if request.method == 'POST':
-        form_historico_valor_cota = HistoricoValorCotasForm(request.POST)
+        form_historico_valor_cota = HistoricoValorCotasForm(request.POST, investidor=investidor)
         if form_historico_valor_cota.is_valid():
             form_historico_valor_cota.save()
             return HttpResponseRedirect(reverse('listar_fundo_investimento'))
         
     else:
-        form_historico_valor_cota = HistoricoValorCotasForm()
+        form_historico_valor_cota = HistoricoValorCotasForm(investidor=investidor)
     return render_to_response('fundo_investimento/adicionar_valor_cota_historico.html', {'form_historico_valor_cota': form_historico_valor_cota},
                               context_instance=RequestContext(request)) 
 

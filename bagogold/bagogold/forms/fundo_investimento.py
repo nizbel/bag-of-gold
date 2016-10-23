@@ -62,6 +62,13 @@ class HistoricoValorCotasForm(forms.ModelForm):
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),}
         
+    def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
+        # first call parent's constructor
+        super(OperacaoFundoInvestimentoForm, self).__init__(*args, **kwargs)
+        # there's a `fields` property now
+        self.fields['fundo_investimento'].queryset = FundoInvestimento.objects.filter(investidor=self.investidor)
+        
     def clean_data(self):
         data = self.cleaned_data['data']
         if data > datetime.date.today():
