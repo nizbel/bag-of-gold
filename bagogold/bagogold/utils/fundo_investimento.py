@@ -33,7 +33,7 @@ def calcular_qtd_cotas_ate_dia(investidor, dia):
         
     return qtd_cotas
 
-def calcular_qtd_cotas_ate_dia_por_fundo(investidor, dia, fundo_id):
+def calcular_qtd_cotas_ate_dia_por_fundo(investidor, fundo_id, dia,):
     """ 
     Calcula a quantidade de cotas até dia determinado para um fundo determinado
     Parâmetros: Investidor
@@ -42,7 +42,7 @@ def calcular_qtd_cotas_ate_dia_por_fundo(investidor, dia, fundo_id):
     Retorno: Quantidade de cotas para o fundo determinado
     """
     
-    operacoes = OperacaoFundoInvestimento.objects.filter(investidor=investidor, fii__ticker=ticker, data__lte=dia).exclude(data__isnull=True).order_by('data')
+    operacoes = OperacaoFundoInvestimento.objects.filter(investidor=investidor, fundo_investimento__id=fundo_id, data__lte=dia).exclude(data__isnull=True).order_by('data')
     qtd_cotas = 0
     
     for item in operacoes:
@@ -58,8 +58,8 @@ def calcular_qtd_cotas_ate_dia_por_fundo(investidor, dia, fundo_id):
 def calcular_qtd_cotas_ate_dia_por_divisao(dia, divisao_id):
     """ 
     Calcula a quantidade de cotas até dia determinado
-    Parâmetros: Id da divisão
-                Dia final
+    Parâmetros: Dia final
+                Id da divisão
     Retorno: Quantidade de cotas {fundo: qtd}
     """
     operacoes_divisao_id = DivisaoOperacaoFundoInvestimento.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).values('operacao__id')
