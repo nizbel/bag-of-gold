@@ -26,18 +26,16 @@ from bagogold.bagogold.utils.fundo_investimento import \
 from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia, \
     calcular_valor_lc_ate_dia_por_divisao
 from bagogold.bagogold.utils.td import calcular_qtd_titulos_ate_dia_por_divisao
-
-from django.contrib.auth.decorators import login_required
+from decimal import Decimal
 from django.contrib import messages
-from django.core.exceptions import PermissionDenied
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.http.response import HttpResponse
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
-
-from decimal import Decimal
 import datetime
 
 @login_required
@@ -289,7 +287,7 @@ def editar_divisao(request, id):
     
     if request.method == 'POST':
         form = DivisaoForm(request.POST, instance=divisao)
-        if request.POST.get("save"):
+        if request.POST.get("save"):            
             if form.is_valid():
                 divisao.save()
                 messages.success(request, 'Divisão editada com sucesso')
@@ -328,7 +326,7 @@ def editar_transferencia(request, id):
     
     if request.method == 'POST':
         if request.POST.get("save"):
-            form = TransferenciaEntreDivisoesForm(request.POST, instance=transferencia)
+            form = TransferenciaEntreDivisoesForm(request.POST, instance=transferencia, investidor=investidor)
             
             if form.is_valid():
                 transferencia.save()
@@ -346,7 +344,7 @@ def editar_transferencia(request, id):
             return HttpResponseRedirect(reverse('listar_transferencias'))
  
     else:
-        form = TransferenciaEntreDivisoesForm(instance=transferencia)
+        form = TransferenciaEntreDivisoesForm(instance=transferencia, investidor=investidor)
             
     return render_to_response('divisoes/editar_transferencia.html', {'form': form},
                               context_instance=RequestContext(request))
@@ -369,14 +367,16 @@ def inserir_divisao(request):
 
 @login_required
 def inserir_transferencia(request):
+    investidor = request.user.investidor
+    
     if request.method == 'POST':
-        form = TransferenciaEntreDivisoesForm(request.POST)
+        form = TransferenciaEntreDivisoesForm(request.POST, investidor=investidor)
         if form.is_valid():
             form.save()
             messages.success(request, 'Transferência inserida com sucesso')
             return HttpResponseRedirect(reverse('listar_transferencias'))
     else:
-        form = TransferenciaEntreDivisoesForm()
+        form = TransferenciaEntreDivisoesForm(investidor=investidor)
             
     return render_to_response('divisoes/inserir_transferencia.html', {'form': form}, context_instance=RequestContext(request))
 

@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoFIIFormSet
 from bagogold.bagogold.forms.fii import OperacaoFIIForm, ProventoFIIForm, \
-    UsoProventosOperacaoFIIForm
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII, Divisao
+    UsoProventosOperacaoFIIForm, CalculoResultadoCorretagemForm
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII
 from bagogold.bagogold.models.fii import OperacaoFII, ProventoFII, HistoricoFII, \
     FII, UsoProventosOperacaoFII, ValorDiarioFII
 from bagogold.bagogold.utils.investidores import is_superuser
 from decimal import Decimal, ROUND_FLOOR
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
@@ -98,6 +98,42 @@ def aconselhamento_fii(request):
     comparativos = reversed(sorted(comparativos, key=itemgetter(3)))
     
     return render_to_response('fii/aconselhamento.html', {'comparativos': comparativos}, context_instance=RequestContext(request))
+    
+
+def calcular_resultado_corretagem(request):
+    if request.method == 'POST':
+        form_calcular = CalculoResultadoCorretagemForm(request.POST)
+        
+        if form_calcular.is_valid():
+            NUM_MESES = form_calcular.cleaned_data['num_meses']
+            PRECO_COTA = form_calcular.cleaned_data['preco_cota']
+            CORRETAGEM = form_calcular.cleaned_data['corretagem']
+            RENDIMENTO = form_calcular.cleaned_data['rendimento']
+            QTD_COTAS = form_calcular.cleaned_data['quantidade_cotas']
+            
+            ranking = list()
+            for qtd_cotas_juntar in range(1, 11):
+                qtd_cotas = QTD_COTAS
+                qtd_acumulada = 0
+                for _ in range(NUM_MESES):
+                    qtd_acumulada += qtd_cotas * RENDIMENTO
+                    if qtd_acumulada >= (PRECO_COTA * qtd_cotas_juntar) + CORRETAGEM:
+                        qtd_cotas_comprada = int(math.floor((qtd_acumulada - CORRETAGEM) / PRECO_COTA))
+                        qtd_cotas += qtd_cotas_comprada
+                        qtd_acumulada -= (qtd_cotas_comprada * PRECO_COTA) + CORRETAGEM
+                # print 'Ao final, tem %s cotas e %s reais' % (qtd_cotas, qtd_acumulada)
+                total_acumulado = qtd_cotas * PRECO_COTA + qtd_acumulada
+        #         print 'Esperando %s: %s' % (qtd_cotas_juntar, total_acumulado)
+                ranking.append((qtd_cotas_juntar, total_acumulado))
+                
+            ranking.sort(key=lambda x: x[1], reverse=True)
+                
+            return render_to_response('fii/calcular_resultado_corretagem.html', {'ranking': ranking, 'form_calcular': form_calcular}, context_instance=RequestContext(request))
+    
+    ranking = list()
+    form_calcular = CalculoResultadoCorretagemForm()
+    
+    return render_to_response('fii/calcular_resultado_corretagem.html', {'ranking': ranking, 'form_calcular': form_calcular}, context_instance=RequestContext(request))
     
     
 @login_required
@@ -412,6 +448,9 @@ def inserir_operacao_fii(request):
                         uso_proventos.save()
                     messages.success(request, 'Operação inserida com sucesso')
                     return HttpResponseRedirect(reverse('historico_fii'))
+        for erro in formset_divisao.non_form_errors():
+            messages.error(request, erro)
+            
     else:
         form_operacao_fii = OperacaoFIIForm()
         form_uso_proventos = UsoProventosOperacaoFIIForm(initial={'qtd_utilizada': Decimal('0.00')})

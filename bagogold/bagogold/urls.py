@@ -74,6 +74,7 @@ urlpatterns = [
     # FII
     url(r'^fii/acompanhamento_mensal/$', views.fii.fii.acompanhamento_mensal_fii, name='acompanhamento_mensal_fii'),
     url(r'^fii/aconselhamento/$', views.fii.fii.aconselhamento_fii, name='aconselhamento_fii'),
+    url(r'^fii/calcular_resultado_corretagem/$', views.fii.fii.calcular_resultado_corretagem, name='calcular_resultado_corretagem'),
     url(r'^fii/editar_operacao/(?P<id>\d+)/$', views.fii.fii.editar_operacao_fii, name='editar_operacao_fii'),
     url(r'^fii/historico/$', views.fii.fii.historico_fii, name='historico_fii'),
     url(r'^fii/inserir_operacao_fii/$', views.fii.fii.inserir_operacao_fii, name='inserir_operacao_fii'),

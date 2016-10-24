@@ -12,7 +12,7 @@ from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
@@ -156,7 +156,6 @@ def historico(request):
         for operacao in operacoes:     
             if (operacao.data <= data_iteracao):     
                 # Verificar se se trata de compra ou venda
-                print data_iteracao, operacao, operacao.atual
                 if operacao.tipo_operacao == 'C':
                         if (operacao.data == data_iteracao):
                             operacao.total = operacao.quantidade
@@ -433,8 +432,6 @@ def painel(request):
     
     data_iteracao = data_inicial
     
-    total_atual = 0
-    
     while data_iteracao <= data_final:
         taxa_do_dia = HistoricoTaxaDI.objects.get(data=data_iteracao).taxa
         
@@ -451,7 +448,6 @@ def painel(request):
                         if (data_iteracao == data_final):
                             str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
                             operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-                            total_atual += operacao.atual
                         
                 elif operacao.tipo_operacao == 'V':
                     if (operacao.data == data_iteracao):
@@ -478,13 +474,16 @@ def painel(request):
     # Remover operações que não estejam mais rendendo
     operacoes = [operacao for operacao in operacoes if (operacao.atual > 0 and operacao.tipo_operacao == 'C')]
     
+    total_atual = 0
     total_ganho_prox_dia = 0
-    # Calcular o ganho no dia seguinte, considerando taxa do dia anterior
     for operacao in operacoes:
+        # Calcular o ganho no dia seguinte, considerando taxa do dia anterior
         operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa) - operacao.atual
         str_auxiliar = str(operacao.ganho_prox_dia.quantize(Decimal('.0001')))
         operacao.ganho_prox_dia = Decimal(str_auxiliar[:len(str_auxiliar)-2])
         total_ganho_prox_dia += operacao.ganho_prox_dia
+        # Cálculo do valor total atual
+        total_atual += operacao.atual
     
     # Popular dados
     dados = {}
