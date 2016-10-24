@@ -30,6 +30,9 @@ class ProventoFII (models.Model):
     class Meta:
         unique_together=(('data_ex', 'data_pagamento', 'fii',))
         
+    def __unicode__(self):
+        return 'R$ %s de %s em %s com data EX %s' % (str(self.valor_unitario), self.fii.ticker, str(self.data_pagamento), str(self.data_ex))
+        
 class OperacaoFII (models.Model):
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)  
     quantidade = models.IntegerField(u'Quantidade') 

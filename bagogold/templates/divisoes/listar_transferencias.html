@@ -11,6 +11,7 @@
             <th>Data</th>
             <th>Quantidade</th>
             <th>Descrição</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -27,6 +28,7 @@
         <td>{{transferencia.data|date:"Y-m-d"}}</td>
         <td>R${{transferencia.quantidade}}</td>
         <td>{{transferencia.descricao|default:"Sem descrição"}}</td>
+        <td><a href="{% url "editar_transferencia" transferencia.id %}" class="btn btn-small btn-warning">Editar</a></td>
     </tr>
     {% endfor %}
     </tbody>
