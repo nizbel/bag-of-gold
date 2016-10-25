@@ -220,8 +220,8 @@ def editar_operacao_fii(request, id):
                         return HttpResponseRedirect(reverse('historico_fii'))
                         
             for erros in form_operacao_fii.errors.values():
-                for erro in erros:
-                    messages.error(request, erro)
+                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
+                    messages.error(request, erro.message)
             for erro in formset_divisao.non_form_errors():
                 messages.error(request, erro)
                 

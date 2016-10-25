@@ -81,8 +81,8 @@ def editar_operacao_fundo_investimento(request, id):
                     messages.success(request, 'Operação editada com sucesso')
                     return HttpResponseRedirect(reverse('historico_fundo_investimento'))
             for erros in form_operacao_fundo_investimento.errors.values():
-                for erro in erros:
-                    messages.error(request, erro)
+                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
+                    messages.error(request, erro.message)
 #                         print '%s %s'  % (divisao_fundo_investimento.quantidade, divisao_fundo_investimento.divisao)
                 
         elif request.POST.get("delete"):
@@ -235,8 +235,8 @@ def inserir_fundo_investimento(request):
                             
                     return HttpResponseRedirect(reverse('listar_fundo_investimento'))
             for erros in form_fundo_investimento.errors.values():
-                for erro in erros:
-                    messages.error(request, erro)
+                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
+                    messages.error(request, erro.message)
             for erro in formset_carencia.non_form_errors():
                 messages.error(request, erro)
             return render_to_response('fundo_investimento/inserir_fundo_investimento.html', {'form_fundo_investimento': form_fundo_investimento,
@@ -285,8 +285,8 @@ def inserir_operacao_fundo_investimento(request):
                 return HttpResponseRedirect(reverse('historico_fundo_investimento'))
             
         for erros in form_operacao_fundo_investimento.errors.values():
-            for erro in erros:
-                messages.error(request, erro)
+            for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
+                messages.error(request, erro.message)
 #                         print '%s %s'  % (divisao_fundo_investimento.quantidade, divisao_fundo_investimento.divisao)
                 
     else:

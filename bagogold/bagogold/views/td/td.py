@@ -211,8 +211,8 @@ def editar_operacao_td(request, id):
                     messages.success(request, 'Operação editada com sucesso')
                     return HttpResponseRedirect(reverse('historico_td'))
             for erros in form_operacao_td.errors.values():
-                for erro in erros:
-                    messages.error(request, erro)
+                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
+                    messages.error(request, erro.message)
                     
         elif request.POST.get("delete"):
             # Verifica se, em caso de compra, a quantidade de títulos do investidor não fica negativa
