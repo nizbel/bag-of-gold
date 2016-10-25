@@ -37,6 +37,9 @@ class OperacaoTituloForm(forms.ModelForm):
 
     def clean(self):
         dados = super(OperacaoTituloForm, self).clean()
+        # Se não selecionar título, não testar o resto
+        if dados.get('titulo') is None:
+            return
         data = dados.get('data')
         data_vencimento = dados.get('titulo').data_vencimento
 #         print '%s %s %s' % (data_ex, data_pagamento, data_ex < data_pagamento)
