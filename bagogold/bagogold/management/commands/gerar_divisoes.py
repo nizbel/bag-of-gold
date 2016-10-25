@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao
+from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao, \
+    OperacaoAcao
 from bagogold.bagogold.models.divisoes import DivisaoPrincipal, Divisao, \
     DivisaoOperacaoAcao, DivisaoOperacaoFII
 from bagogold.bagogold.models.fii import UsoProventosOperacaoFII
 from bagogold.bagogold.models.investidores import Investidor
+from bagogold.bagogold.utils.acoes import calcular_qtd_acoes_ate_dia_por_divisao
 from bagogold.bagogold.utils.divisoes import verificar_operacoes_nao_alocadas, \
     preencher_operacoes_div_principal
 from django.core.management.base import BaseCommand
@@ -43,3 +45,10 @@ class Command(BaseCommand):
             # Após gerar divisão principal, mudar todas as operações para ela
             for operacao in verificar_operacoes_nao_alocadas(investidor):
                 preencher_operacoes_div_principal(operacao)
+                
+                # Se ainda houver operações de venda não alocadas, alocar verificando a quantidade em cada divisão
+                if operacao.tipo_operacao == 'V' and isinstance(operacao, OperacaoAcao):
+                    if calcular_qtd_acoes_ate_dia_por_divisao(operacao.data, investidor.divisaoprincipal.divisao.id) >= operacao.quantidade and not DivisaoOperacaoAcao.objects.filter(operacao=operacao):
+                        operacao_div_principal = DivisaoOperacaoAcao(operacao=operacao, divisao=investidor.divisaoprincipal.divisao, quantidade=(operacao.quantidade))
+                    else:
+                        print 'Houve um erro nos cálculos'
