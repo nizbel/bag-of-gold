@@ -417,8 +417,8 @@ def inserir_operacao_td(request):
                 return HttpResponseRedirect(reverse('historico_td'))
             
         for erros in form_operacao_td.errors.values():
-            for erro in erros:
-                messages.error(request, erro)
+            for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
+                messages.error(request, erro.message)
                     
     else:
         form_operacao_td = OperacaoTituloForm(investidor=investidor)
