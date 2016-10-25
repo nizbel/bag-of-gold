@@ -293,8 +293,8 @@ def editar_divisao(request, id):
                 messages.success(request, 'Divisão editada com sucesso')
                 return HttpResponseRedirect(reverse('listar_divisoes'))
             for erros in form.errors.values():
-                for erro in erros:
-                    messages.error(request, erro)
+                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
+                    messages.error(request, erro.message)
             return render_to_response('divisoes/editar_divisao.html', {'form': form, 'divisao': divisao},
                       context_instance=RequestContext(request))
                 
@@ -333,8 +333,8 @@ def editar_transferencia(request, id):
                 messages.success(request, 'Transferência editada com sucesso')
                 return HttpResponseRedirect(reverse('listar_transferencias'))
             for erros in form.errors.values():
-                for erro in erros:
-                    messages.error(request, erro)
+                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
+                    messages.error(request, erro.message)
             return render_to_response('divisoes/editar_transferencia.html', {'form': form},
                       context_instance=RequestContext(request))
                 

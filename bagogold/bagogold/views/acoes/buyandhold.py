@@ -115,8 +115,8 @@ def editar_operacao_acao(request, id):
                         messages.success(request, 'Operação alterada com sucesso')
                         return HttpResponseRedirect(reverse('historico_bh'))
             for erros in form_operacao_acao.errors.values():
-                for erro in erros:
-                    messages.error(request, erro)
+                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
+                    messages.error(request, erro.message)
             for erro in formset_divisao.non_form_errors():
                 messages.error(request, erro)
 

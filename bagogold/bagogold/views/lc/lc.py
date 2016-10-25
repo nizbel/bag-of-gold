@@ -80,8 +80,8 @@ def editar_operacao_lc(request, id):
                     messages.success(request, 'Operação editada com sucesso')
                     return HttpResponseRedirect(reverse('historico_lc'))
             for erros in form_operacao_lc.errors.values():
-                for erro in erros:
-                    messages.error(request, erro)
+                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
+                    messages.error(request, erro.message)
 #                         print '%s %s'  % (divisao_lc.quantidade, divisao_lc.divisao)
                 
         elif request.POST.get("delete"):
@@ -245,8 +245,8 @@ def inserir_lc(request):
                         return HttpResponseRedirect(reverse('listar_lc'))
                     
             for erros in form_lc.errors.values():
-                for erro in erros:
-                    messages.error(request, erro)
+                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
+                    messages.error(request, erro.message)
             for erro in formset_porcentagem.non_form_errors():
                 messages.error(request, erro)
             for erro in formset_carencia.non_form_errors():
@@ -340,8 +340,8 @@ def inserir_operacao_lc(request):
                         return HttpResponseRedirect(reverse('historico_lc'))
                         
             for erros in form_operacao_lc.errors.values():
-                for erro in erros:
-                    messages.error(request, erro)
+                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
+                    messages.error(request, erro.message)
 #                         print '%s %s'  % (divisao_lc.quantidade, divisao_lc.divisao)
                 
     else:
