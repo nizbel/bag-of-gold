@@ -50,5 +50,6 @@ class Command(BaseCommand):
                 if operacao.tipo_operacao == 'V' and isinstance(operacao, OperacaoAcao):
                     if calcular_qtd_acoes_ate_dia_por_divisao(operacao.data, investidor.divisaoprincipal.divisao.id) >= operacao.quantidade and not DivisaoOperacaoAcao.objects.filter(operacao=operacao):
                         operacao_div_principal = DivisaoOperacaoAcao(operacao=operacao, divisao=investidor.divisaoprincipal.divisao, quantidade=(operacao.quantidade))
+                        operacao_div_principal.save()
                     else:
                         print 'Houve um erro nos cálculos'
