@@ -192,35 +192,44 @@ class DivisaoOperacaoLCFormSet(forms.models.BaseInlineFormSet):
         qtd_total_div = 0
         contador_forms = 0
         divisoes_utilizadas = {}
+        divisao_a_excluir = False
         for form_divisao in self.forms:
             contador_forms += 1
             if form_divisao.is_valid():
                 if not (form_divisao.instance.id == None and not form_divisao.has_changed()):
-                    # Verificar se foram escolhidas 2 divisões iguais
-                    if form_divisao.cleaned_data['divisao'].id in divisoes_utilizadas:
-                        raise forms.ValidationError('Divisão %s escolhida mais de uma vez' % (form_divisao.cleaned_data['divisao']))
-                    else:
-                        if self.investidor != form_divisao.cleaned_data['divisao'].investidor:
-                            raise forms.ValidationError('Divisão não pertence ao investidor')
-                        divisoes_utilizadas[form_divisao.cleaned_data['divisao'].id] = form_divisao.cleaned_data['divisao']
+                    if ('DELETE' not in form_divisao.cleaned_data or not form_divisao.cleaned_data['DELETE']):
                         
-                    # Verificar quantidade
-                    div_qtd = form_divisao.cleaned_data['quantidade']
-                    if div_qtd != None and div_qtd > 0:
-                        qtd_total_div += div_qtd
-                    else:
-                        raise forms.ValidationError('Quantidade da divisão %s é inválida, quantidade deve ser maior que 0' % (contador_forms))
-                
-                    # Verificar em caso de venda
-                    if self.instance.tipo_operacao == 'V':
-                        if not DivisaoOperacaoLC.objects.filter(divisao=form_divisao.cleaned_data['divisao'], operacao=self.operacao_compra):
-                            raise forms.ValidationError('Venda para divisão %s não é permitida, não há alocação para a operação de compra selecionada' % (form_divisao.cleaned_data['divisao']))
-                        if DivisaoOperacaoLC.objects.get(divisao=form_divisao.cleaned_data['divisao'], operacao=self.operacao_compra).quantidade < div_qtd:
-                            raise forms.ValidationError('Venda de quantidade acima da disponível para divisão %s' % (form_divisao.cleaned_data['divisao']))
+                        # Verificar se foram escolhidas 2 divisões iguais
+                        if form_divisao.cleaned_data['divisao'].id in divisoes_utilizadas:
+                            raise forms.ValidationError('Divisão %s escolhida mais de uma vez' % (form_divisao.cleaned_data['divisao']))
+                        else:
+                            if self.investidor != form_divisao.cleaned_data['divisao'].investidor:
+                                raise forms.ValidationError('Divisão não pertence ao investidor')
+                            divisoes_utilizadas[form_divisao.cleaned_data['divisao'].id] = form_divisao.cleaned_data['divisao']
+                            
+                        # Verificar quantidade
+                        div_qtd = form_divisao.cleaned_data['quantidade']
+                        if div_qtd != None and div_qtd > 0:
+                            qtd_total_div += div_qtd
+                        else:
+                            raise forms.ValidationError('Quantidade da divisão %s é inválida, quantidade deve ser maior que 0' % (contador_forms))
+                    
+                        # Verificar em caso de venda
+                        if self.instance.tipo_operacao == 'V':
+                            if not DivisaoOperacaoLC.objects.filter(divisao=form_divisao.cleaned_data['divisao'], operacao=self.operacao_compra):
+                                raise forms.ValidationError('Venda para divisão %s não é permitida, não há alocação para a operação de compra selecionada' % (form_divisao.cleaned_data['divisao']))
+                            if DivisaoOperacaoLC.objects.get(divisao=form_divisao.cleaned_data['divisao'], operacao=self.operacao_compra).quantidade < div_qtd:
+                                raise forms.ValidationError('Venda de quantidade acima da disponível para divisão %s' % (form_divisao.cleaned_data['divisao']))
+                        
+                    # Divisão será apagada
+                    elif form_divisao.cleaned_data['DELETE']:
+                        divisao_a_excluir = True
                         
         if self.instance.quantidade < qtd_total_div:
             raise forms.ValidationError('Quantidade total alocada para as divisões é maior que quantidade da operação')
         elif self.instance.quantidade > qtd_total_div:
+            if divisao_a_excluir:
+                raise forms.ValidationError('Quantidade total alocada para as divisões é menor que quantidade da operação. Repasse a quantidade da divisão excluída para a(s) remanescente(s)')
             raise forms.ValidationError('Quantidade total alocada para as divisões é menor que quantidade da operação')
 
 # Inline FormSet para operações em CDB
@@ -237,35 +246,44 @@ class DivisaoOperacaoCDB_RDBFormSet(forms.models.BaseInlineFormSet):
         qtd_total_div = 0
         contador_forms = 0
         divisoes_utilizadas = {}
+        divisao_a_excluir = False
         for form_divisao in self.forms:
             contador_forms += 1
             if form_divisao.is_valid():
                 if not (form_divisao.instance.id == None and not form_divisao.has_changed()):
-                    # Verificar se foram escolhidas 2 divisões iguais
-                    if form_divisao.cleaned_data['divisao'].id in divisoes_utilizadas:
-                        raise forms.ValidationError('Divisão %s escolhida mais de uma vez' % (form_divisao.cleaned_data['divisao']))
-                    else:
-                        if self.investidor != form_divisao.cleaned_data['divisao'].investidor:
-                            raise forms.ValidationError('Divisão não pertence ao investidor')
-                        divisoes_utilizadas[form_divisao.cleaned_data['divisao'].id] = form_divisao.cleaned_data['divisao']
+                    if ('DELETE' not in form_divisao.cleaned_data or not form_divisao.cleaned_data['DELETE']):
                         
-                    # Verificar quantidade
-                    div_qtd = form_divisao.cleaned_data['quantidade']
-                    if div_qtd != None and div_qtd > 0:
-                        qtd_total_div += div_qtd
-                    else:
-                        raise forms.ValidationError('Quantidade da divisão %s é inválida, quantidade deve ser maior que 0' % (contador_forms))
-                    
-					# Verificar em caso de venda
-                    if self.instance.tipo_operacao == 'V':
-                        if not DivisaoOperacaoCDB_RDB.objects.filter(divisao=form_divisao.cleaned_data['divisao'], operacao=self.operacao_compra):
-                            raise forms.ValidationError('Venda para divisão %s não é permitida, não há alocação para a operação de compra selecionada' % (form_divisao.cleaned_data['divisao']))
-                        if DivisaoOperacaoCDB.objects.get(divisao=form_divisao.cleaned_data['divisao'], operacao=self.operacao_compra).quantidade < div_qtd:
-                            raise forms.ValidationError('Venda de quantidade acima da disponível para divisão %s' % (form_divisao.cleaned_data['divisao']))
+                        # Verificar se foram escolhidas 2 divisões iguais
+                        if form_divisao.cleaned_data['divisao'].id in divisoes_utilizadas:
+                            raise forms.ValidationError('Divisão %s escolhida mais de uma vez' % (form_divisao.cleaned_data['divisao']))
+                        else:
+                            if self.investidor != form_divisao.cleaned_data['divisao'].investidor:
+                                raise forms.ValidationError('Divisão não pertence ao investidor')
+                            divisoes_utilizadas[form_divisao.cleaned_data['divisao'].id] = form_divisao.cleaned_data['divisao']
+                            
+                        # Verificar quantidade
+                        div_qtd = form_divisao.cleaned_data['quantidade']
+                        if div_qtd != None and div_qtd > 0:
+                            qtd_total_div += div_qtd
+                        else:
+                            raise forms.ValidationError('Quantidade da divisão %s é inválida, quantidade deve ser maior que 0' % (contador_forms))
+                        
+                        # Verificar em caso de venda
+                        if self.instance.tipo_operacao == 'V':
+                            if not DivisaoOperacaoCDB_RDB.objects.filter(divisao=form_divisao.cleaned_data['divisao'], operacao=self.operacao_compra):
+                                raise forms.ValidationError('Venda para divisão %s não é permitida, não há alocação para a operação de compra selecionada' % (form_divisao.cleaned_data['divisao']))
+                            if DivisaoOperacaoCDB.objects.get(divisao=form_divisao.cleaned_data['divisao'], operacao=self.operacao_compra).quantidade < div_qtd:
+                                raise forms.ValidationError('Venda de quantidade acima da disponível para divisão %s' % (form_divisao.cleaned_data['divisao']))
+                        
+                    # Divisão será apagada
+                    elif form_divisao.cleaned_data['DELETE']:
+                        divisao_a_excluir = True
                         
         if self.instance.quantidade < qtd_total_div:
             raise forms.ValidationError('Quantidade total alocada para as divisões é maior que quantidade da operação')
         elif self.instance.quantidade > qtd_total_div:
+            if divisao_a_excluir:
+                raise forms.ValidationError('Quantidade total alocada para as divisões é menor que quantidade da operação. Repasse a quantidade da divisão excluída para a(s) remanescente(s)')
             raise forms.ValidationError('Quantidade total alocada para as divisões é menor que quantidade da operação')
                             
 # Inline FormSet para operações em Fundo de Investimento
@@ -281,36 +299,45 @@ class DivisaoOperacaoFundoInvestimentoFormSet(forms.models.BaseInlineFormSet):
         qtd_total_div = 0
         contador_forms = 0
         divisoes_utilizadas = {}
+        divisao_a_excluir = False
         for form_divisao in self.forms:
             contador_forms += 1
             if form_divisao.is_valid():
 #                 print form_divisao.cleaned_data.get('quantidade')
                 if not (form_divisao.instance.id == None and not form_divisao.has_changed()):
-                    # Verificar se foram escolhidas 2 divisões iguais
-                    if form_divisao.cleaned_data['divisao'].id in divisoes_utilizadas:
-                        raise forms.ValidationError('Divisão %s escolhida mais de uma vez' % (form_divisao.cleaned_data['divisao']))
-                    else:
-                        if self.investidor != form_divisao.cleaned_data['divisao'].investidor:
-                            raise forms.ValidationError('Divisão não pertence ao investidor')
-                        divisoes_utilizadas[form_divisao.cleaned_data['divisao'].id] = form_divisao.cleaned_data['divisao']
+                    if ('DELETE' not in form_divisao.cleaned_data or not form_divisao.cleaned_data['DELETE']):
                         
-                    # Verificar quantidade
-                    div_qtd = form_divisao.cleaned_data['quantidade']
-                    if div_qtd != None and div_qtd > 0:
-                        qtd_total_div += div_qtd
-                    else:
-                        raise forms.ValidationError('Quantidade da divisão %s é inválida, quantidade deve ser maior que 0' % (contador_forms))
-                    
-                    # Verificar em caso de venda
-                    if self.instance.tipo_operacao == 'V':
-                        fundos_disponiveis = calcular_qtd_cotas_ate_dia_por_divisao(self.instance.data, form_divisao.cleaned_data['divisao'].id)
-                        qtd_disponivel_divisao = fundos_disponiveis[form_divisao.cleaned_data['divisao'].id] if form_divisao.cleaned_data['divisao'] in fundos_disponiveis else 0 
-                        if qtd_disponivel_divisao < div_qtd:
-                            raise forms.ValidationError('Venda de quantidade acima da disponível para divisão %s, disponível: R$ %s' % (form_divisao.cleaned_data['divisao'], qtd_disponivel_divisao))
+                        # Verificar se foram escolhidas 2 divisões iguais
+                        if form_divisao.cleaned_data['divisao'].id in divisoes_utilizadas:
+                            raise forms.ValidationError('Divisão %s escolhida mais de uma vez' % (form_divisao.cleaned_data['divisao']))
+                        else:
+                            if self.investidor != form_divisao.cleaned_data['divisao'].investidor:
+                                raise forms.ValidationError('Divisão não pertence ao investidor')
+                            divisoes_utilizadas[form_divisao.cleaned_data['divisao'].id] = form_divisao.cleaned_data['divisao']
+                            
+                        # Verificar quantidade
+                        div_qtd = form_divisao.cleaned_data['quantidade']
+                        if div_qtd != None and div_qtd > 0:
+                            qtd_total_div += div_qtd
+                        else:
+                            raise forms.ValidationError('Quantidade da divisão %s é inválida, quantidade deve ser maior que 0' % (contador_forms))
+                        
+                        # Verificar em caso de venda
+                        if self.instance.tipo_operacao == 'V':
+                            fundos_disponiveis = calcular_qtd_cotas_ate_dia_por_divisao(self.instance.data, form_divisao.cleaned_data['divisao'].id)
+                            qtd_disponivel_divisao = fundos_disponiveis[form_divisao.cleaned_data['divisao'].id] if form_divisao.cleaned_data['divisao'] in fundos_disponiveis else 0 
+                            if qtd_disponivel_divisao < div_qtd:
+                                raise forms.ValidationError('Venda de quantidade acima da disponível para divisão %s, disponível: R$ %s' % (form_divisao.cleaned_data['divisao'], qtd_disponivel_divisao))
+                        
+                    # Divisão será apagada
+                    elif form_divisao.cleaned_data['DELETE']:
+                        divisao_a_excluir = True
                 
         if self.instance.quantidade < qtd_total_div:
             raise forms.ValidationError('Quantidade total alocada para as divisões é maior que quantidade da operação')
         elif self.instance.quantidade > qtd_total_div:
+            if divisao_a_excluir:
+                raise forms.ValidationError('Quantidade total alocada para as divisões é menor que quantidade da operação. Repasse a quantidade da divisão excluída para a(s) remanescente(s)')
             raise forms.ValidationError('Quantidade total alocada para as divisões é menor que quantidade da operação')
                             
 # Inline FormSet para operações em tesouro direto
@@ -326,36 +353,45 @@ class DivisaoOperacaoTDFormSet(forms.models.BaseInlineFormSet):
         qtd_total_div = 0
         contador_forms = 0
         divisoes_utilizadas = {}
+        divisao_a_excluir = False
         for form_divisao in self.forms:
             contador_forms += 1
             if form_divisao.is_valid():
 #                 print form_divisao.cleaned_data.get('quantidade')
                 if not (form_divisao.instance.id == None and not form_divisao.has_changed()):
-                    # Verificar se foram escolhidas 2 divisões iguais
-                    if form_divisao.cleaned_data['divisao'].id in divisoes_utilizadas:
-                        raise forms.ValidationError('Divisão %s escolhida mais de uma vez' % (form_divisao.cleaned_data['divisao']))
-                    else:
-                        if self.investidor != form_divisao.cleaned_data['divisao'].investidor:
-                            raise forms.ValidationError('Divisão não pertence ao investidor')
-                        divisoes_utilizadas[form_divisao.cleaned_data['divisao'].id] = form_divisao.cleaned_data['divisao']
+                    if ('DELETE' not in form_divisao.cleaned_data or not form_divisao.cleaned_data['DELETE']):
                         
-                    # Verificar quantidade
-                    div_qtd = form_divisao.cleaned_data['quantidade']
-                    if div_qtd != None and div_qtd > 0:
-                        qtd_total_div += div_qtd
-                    else:
-                        raise forms.ValidationError('Quantidade da divisão %s é inválida, quantidade deve ser maior que 0' % (contador_forms))
-                    
-                    # Verificar em caso de venda
-                    if self.instance.tipo_operacao == 'V':
-                        titulos_disponiveis = calcular_qtd_titulos_ate_dia_por_divisao(self.instance.data, form_divisao.cleaned_data['divisao'].id)
-                        qtd_disponivel_divisao = titulos_disponiveis[form_divisao.cleaned_data['divisao'].id] if form_divisao.cleaned_data['divisao'] in titulos_disponiveis else 0 
-                        if qtd_disponivel_divisao < div_qtd:
-                            raise forms.ValidationError('Venda de quantidade acima da disponível para divisão %s, disponível: R$ %s' % (form_divisao.cleaned_data['divisao'], qtd_disponivel_divisao))
+                        # Verificar se foram escolhidas 2 divisões iguais
+                        if form_divisao.cleaned_data['divisao'].id in divisoes_utilizadas:
+                            raise forms.ValidationError('Divisão %s escolhida mais de uma vez' % (form_divisao.cleaned_data['divisao']))
+                        else:
+                            if self.investidor != form_divisao.cleaned_data['divisao'].investidor:
+                                raise forms.ValidationError('Divisão não pertence ao investidor')
+                            divisoes_utilizadas[form_divisao.cleaned_data['divisao'].id] = form_divisao.cleaned_data['divisao']
+                            
+                        # Verificar quantidade
+                        div_qtd = form_divisao.cleaned_data['quantidade']
+                        if div_qtd != None and div_qtd > 0:
+                            qtd_total_div += div_qtd
+                        else:
+                            raise forms.ValidationError('Quantidade da divisão %s é inválida, quantidade deve ser maior que 0' % (contador_forms))
+                        
+                        # Verificar em caso de venda
+                        if self.instance.tipo_operacao == 'V':
+                            titulos_disponiveis = calcular_qtd_titulos_ate_dia_por_divisao(self.instance.data, form_divisao.cleaned_data['divisao'].id)
+                            qtd_disponivel_divisao = titulos_disponiveis[form_divisao.cleaned_data['divisao'].id] if form_divisao.cleaned_data['divisao'] in titulos_disponiveis else 0 
+                            if qtd_disponivel_divisao < div_qtd:
+                                raise forms.ValidationError('Venda de quantidade acima da disponível para divisão %s, disponível: R$ %s' % (form_divisao.cleaned_data['divisao'], qtd_disponivel_divisao))
+                        
+                    # Divisão será apagada
+                    elif form_divisao.cleaned_data['DELETE']:
+                        divisao_a_excluir = True
                 
         if self.instance.quantidade < qtd_total_div:
             raise forms.ValidationError('Quantidade total alocada para as divisões é maior que quantidade da operação')
         elif self.instance.quantidade > qtd_total_div:
+            if divisao_a_excluir:
+                raise forms.ValidationError('Quantidade total alocada para as divisões é menor que quantidade da operação. Repasse a quantidade da divisão excluída para a(s) remanescente(s)')
             raise forms.ValidationError('Quantidade total alocada para as divisões é menor que quantidade da operação')
 
 class TransferenciaEntreDivisoesForm(forms.ModelForm):
