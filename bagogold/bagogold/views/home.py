@@ -7,7 +7,8 @@ from bagogold.bagogold.models.fii import OperacaoFII, HistoricoFII, ProventoFII,
 from bagogold.bagogold.models.fundo_investimento import \
     OperacaoFundoInvestimento, HistoricoValorCotas
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI
-from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo
+from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
+    ValorDiarioTitulo
 from bagogold.bagogold.testTD import buscar_valores_diarios
 from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia, \
     calcular_valor_atualizado_com_taxas
@@ -304,10 +305,14 @@ def home(request):
                         ultimo_dia_util -= datetime.timedelta(days=1)
                     patrimonio['Tesouro Direto'] += (titulos_td[titulo] * HistoricoTitulo.objects.get(data=ultimo_dia_util, titulo=titulo).preco_venda)
                 else:
-                    for valor_diario in buscar_valores_diarios():
-                        if valor_diario.titulo == titulo:
-                            patrimonio['Tesouro Direto'] += (titulos_td[titulo] * valor_diario.preco_venda)
-                            break
+                    # Buscar valor mais atual de valor diário, se existir
+                    if ValorDiarioTitulo.objects.filter(titulo=item.titulo, data_hora__date=datetime.date.today()).order_by('-data_hora'):
+                        valor_diario = ValorDiarioTitulo.objects.filter(titulo=titulo, data_hora__date=datetime.date.today()).order_by('-data_hora')[0]
+                        patrimonio['Tesouro Direto'] += (titulos_td[titulo] * valor_diario.preco_venda)
+                        break
+                    else:
+                        # Se não há valor diário, buscar histórico mais atual mesmo
+                        patrimonio['Tesouro Direto'] += (titulos_td[titulo] * HistoricoTitulo.objects.filter(titulo=titulo).order_by('-data')[0].preco_venda)
             patrimonio['patrimonio_total'] += patrimonio['Tesouro Direto'] 
 #             fim_td = datetime.datetime.now()
 #             total_td += fim_td - inicio_td
