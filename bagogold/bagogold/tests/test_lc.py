@@ -1,16 +1,20 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.models.investidores import Investidor
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, LetraCredito
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa
 from decimal import Decimal
+from django.contrib.auth.models import User
 from django.test import TestCase
 import datetime
 
 class AtualizarLCPorDITestCase(TestCase):
     
     def setUp(self):
-        LetraCredito.objects.create(nome="LCA Teste")
+        user = User.objects.create(username='tester')
+        
+        LetraCredito.objects.create(nome="LCA Teste", investidor=user.investidor)
         OperacaoLetraCredito.objects.create(quantidade=Decimal(2500), data=datetime.date(2016, 5, 23), tipo_operacao='C', \
-                                            letra_credito=LetraCredito.objects.get(nome="LCA Teste"))
+                                            letra_credito=LetraCredito.objects.get(nome="LCA Teste"), investidor=user.investidor)
 
     def test_calculo_valor_atualizado_taxa_di(self):
         """Testar de acordo com o pego no extrato da conta"""
