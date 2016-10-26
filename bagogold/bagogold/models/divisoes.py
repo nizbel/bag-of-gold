@@ -19,13 +19,12 @@ class Divisao (models.Model):
     
     def divisao_principal(self):
         return self.investidor.divisaoprincipal.divisao.id == self.id
-        # TODO alterar quando adicionar investidor
-#         try:
-#             DivisaoPrincipal.objects.get(id=self.id)
-#             return True
-#         except DivisaoPrincipal.DoesNotExist:
-#             return False
-    
+
+    def possui_operacoes_registradas(self):
+        possui_operacoes = (DivisaoOperacaoAcao.objects.filter(divisao=self).count() + DivisaoOperacaoCDB_RDB.objects.filter(divisao=self).count() + DivisaoOperacaoFII.objects.filter(divisao=self).count() + \
+            DivisaoOperacaoFundoInvestimento.objects.filter(divisao=self).count() + DivisaoOperacaoLC.objects.filter(divisao=self).count() + DivisaoOperacaoTD.objects.filter(divisao=self).count()) > 0
+        
+        return possui_operacoes
     
     def saldo_acoes_bh(self, data=datetime.date.today()):
         from bagogold.bagogold.utils.acoes import \
