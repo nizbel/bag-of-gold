@@ -282,7 +282,7 @@ def quantidade_acoes_ate_dia(investidor, ticker, dia, considerar_trade=False):
     
     return qtd_acoes
 
-def calcular_qtd_acoes_ate_dia_por_divisao(dia, divisao_id):
+def calcular_qtd_acoes_ate_dia_por_divisao(dia, divisao_id, destinacao='B'):
     """ 
     Calcula a quantidade de ações até dia determinado por divisão
     Parâmetros: Dia final
@@ -292,7 +292,7 @@ def calcular_qtd_acoes_ate_dia_por_divisao(dia, divisao_id):
     operacoes_divisao_id = DivisaoOperacaoAcao.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).values('operacao__id')
     if len(operacoes_divisao_id) == 0:
         return {}
-    operacoes = OperacaoAcao.objects.filter(destinacao='B', id__in=operacoes_divisao_id).exclude(data__isnull=True).order_by('data')
+    operacoes = OperacaoAcao.objects.filter(destinacao=destinacao, id__in=operacoes_divisao_id).exclude(data__isnull=True).order_by('data')
     # Pega os proventos em ações recebidos por outras ações
     proventos_em_acoes = AcaoProvento.objects.filter(provento__acao__in=operacoes.values_list('acao', flat=True), provento__data_ex__lte=dia).exclude(provento__data_ex__isnull=True).order_by('provento__data_ex')
     for provento in proventos_em_acoes:
