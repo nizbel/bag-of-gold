@@ -26,8 +26,9 @@ import math
 
 def inicio(request):
     ultimas_operacoes = buscar_ultimas_operacoes(request.user.investidor, 5) if request.user.is_authenticated() else list()
+    investimentos_atuais = buscar_totais_atuais_investimentos(request.user.investidor) if request.user.is_authenticated else list()
     
-    return render_to_response('home.html', {'ultimas_operacoes': ultimas_operacoes}, context_instance=RequestContext(request))
+    return render_to_response('inicio.html', {'ultimas_operacoes': ultimas_operacoes, 'investimentos_atuais': investimentos_atuais}, context_instance=RequestContext(request))
 
 @login_required
 def detalhamento_investimentos(request):
