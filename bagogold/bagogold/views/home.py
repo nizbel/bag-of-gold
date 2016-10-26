@@ -9,10 +9,9 @@ from bagogold.bagogold.models.fundo_investimento import \
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
     ValorDiarioTitulo
-from bagogold.bagogold.testTD import buscar_valores_diarios
-from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia, \
-    calcular_valor_atualizado_com_taxas
-from bagogold.bagogold.utils.misc import buscar_ultimas_operacoes
+from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
+    buscar_totais_atuais_investimentos
+from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas
 from decimal import Decimal, ROUND_DOWN
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
@@ -462,5 +461,5 @@ def detalhamento_investimentos(request):
 #     print 'CDB/RDB:      ', total_cdb_rdb
 #     print 'Fundo Inv.:   ', total_fundo_investimento
     
-    return render_to_response('home.html', {'graf_patrimonio': graf_patrimonio, 'patrimonio_anual': patrimonio_anual,
+    return render_to_response('detalhamento_investimentos.html', {'graf_patrimonio': graf_patrimonio, 'patrimonio_anual': patrimonio_anual,
                                             'estatisticas': estatisticas}, context_instance=RequestContext(request))
