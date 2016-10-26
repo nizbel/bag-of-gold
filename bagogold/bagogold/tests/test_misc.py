@@ -7,7 +7,8 @@ from bagogold.bagogold.models.investidores import Investidor
 from bagogold.bagogold.models.lc import LetraCredito, OperacaoLetraCredito
 from bagogold.bagogold.models.td import Titulo, OperacaoTitulo
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo, \
-    buscar_ultimas_operacoes
+    buscar_ultimas_operacoes, verificar_feriado_bovespa,\
+    qtd_dias_uteis_no_periodo
 from decimal import Decimal
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -30,6 +31,27 @@ class IOFTestCase(TestCase):
         self.assertEqual(calcular_iof_regressivo(1), 0.96)
         self.assertEqual(calcular_iof_regressivo(15), 0.50)
         self.assertEqual(calcular_iof_regressivo(29), 0.03)
+        
+class VerificarFeriadoBovespaTestCase(TestCase):
+    
+    def test_deve_ser_feriado(self):
+        """Testa o Natal"""
+        self.assertTrue(verificar_feriado_bovespa(datetime.date(2016, 12, 25)))
+        
+    def test_nao_deve_ser_feriado(self):
+        """Testa dia 12 de Agosto"""
+        self.assertFalse(verificar_feriado_bovespa(datetime.date(2016, 8, 12)))
+        
+class QtdDiasUteisNoPeriodoTestCase(TestCase):
+    
+    def test_mostrar_erro_data_final_menor_que_inicial(self):
+        """Testa se é lançado um ValueError"""
+        with self.assertRaises(ValueError):
+            qtd_dias_uteis_no_periodo(datetime.date(2016, 5, 5), datetime.date(2016, 5, 1))
+            
+    def test_quantidade_com_feriados(self):
+        """Testa se retorna os 81 dias úteis"""
+        self.assertEqual(qtd_dias_uteis_no_periodo(datetime.date(2016, 7, 1), datetime.date(2016, 10, 26)), 81)
 
 class TelaInicioTestCase(TestCase):
     
