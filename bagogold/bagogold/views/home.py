@@ -306,7 +306,7 @@ def home(request):
                     patrimonio['Tesouro Direto'] += (titulos_td[titulo] * HistoricoTitulo.objects.get(data=ultimo_dia_util, titulo=titulo).preco_venda)
                 else:
                     # Buscar valor mais atual de valor diário, se existir
-                    if ValorDiarioTitulo.objects.filter(titulo=item.titulo, data_hora__date=datetime.date.today()).order_by('-data_hora'):
+                    if ValorDiarioTitulo.objects.filter(titulo=titulo, data_hora__date=datetime.date.today()).order_by('-data_hora'):
                         valor_diario = ValorDiarioTitulo.objects.filter(titulo=titulo, data_hora__date=datetime.date.today()).order_by('-data_hora')[0]
                         patrimonio['Tesouro Direto'] += (titulos_td[titulo] * valor_diario.preco_venda)
                         break
