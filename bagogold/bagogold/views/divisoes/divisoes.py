@@ -303,6 +303,10 @@ def editar_divisao(request, id):
                 messages.error(request, 'Divisão principal não pode ser excluída')
                 return render_to_response('divisoes/editar_divisao.html', {'form': form, 'divisao': divisao},
                           context_instance=RequestContext(request))
+            elif divisao.possui_operacoes_registradas():
+                messages.error(request, 'Divisão possui operações registradas')
+                return render_to_response('divisoes/editar_divisao.html', {'form': form, 'divisao': divisao},
+                          context_instance=RequestContext(request))
             divisao.delete()
             messages.success(request, 'Divisão excluída com sucesso')
             return HttpResponseRedirect(reverse('listar_divisoes'))
