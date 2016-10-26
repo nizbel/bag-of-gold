@@ -15,12 +15,12 @@
         </div>
         <div class="box-content">
             <div class="row-fluid">
-                {% for investimento in investimentos_atuais %}
-                <div class="span1 statbox green" ontablet="span1" ondesktop="span1">
-                    <div class="number">854</div>
-                    <div class="title">investimento.tipo</div>
+                {% for investimento, valor in investimentos_atuais.items %}
+                <div class="span2 statbox green" ontablet="span2" ondesktop="span2">
+                    <div class="number" style="font-size: 30px;">R$ {{valor}}</div>
+                    <div class="title">{{investimento}}</div>
                     <div class="footer">
-                        <a href="#"> read full report</a>
+                        <a href="#"> Detalhar</a>
                     </div>  
                 </div>
                 {% endfor %}
