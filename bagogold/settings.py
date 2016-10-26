@@ -93,7 +93,7 @@ DATABASES = {
     }
 }
 
-LOGIN_REDIRECT_URL = 'home'
+LOGIN_REDIRECT_URL = 'inicio'
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
