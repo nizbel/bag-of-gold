@@ -93,25 +93,3 @@ def qtd_dias_uteis_no_periodo(data_inicial, data_final):
     daygenerator = (data_inicial + datetime.timedelta(days=x) for x in xrange((data_final - data_inicial).days))
     return sum(1 for day in daygenerator if day.weekday() < 5 and not verificar_feriado_bovespa(day))
 
-def buscar_ultimas_operacoes(investidor, quantidade_operacoes):
-    from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB
-    """
-    Busca as últimas operações feitas pelo investidor, ordenadas por data decrescente
-    Parâmetros: Investidor
-                Quantidade de operações a ser retornada
-    Retorno: Lista com as operações ordenadas por data
-    """
-    # Juntar todas as operações em uma lista
-    operacoes_fii = OperacaoFII.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
-    operacoes_td = OperacaoTitulo.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
-    operacoes_acoes = OperacaoAcao.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
-    operacoes_lc = OperacaoLetraCredito.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
-    operacoes_cdb_rdb = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
-    operacoes_fundo_investimento = OperacaoFundoInvestimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
-    
-    lista_operacoes = sorted(chain(operacoes_fii, operacoes_td, operacoes_acoes, operacoes_lc, operacoes_cdb_rdb, operacoes_fundo_investimento),
-                            key=attrgetter('data'), reverse=True)
-    
-    ultimas_operacoes = lista_operacoes[:min(quantidade_operacoes, len(lista_operacoes))]
-    
-    return ultimas_operacoes
