@@ -23,8 +23,11 @@ import calendar
 import datetime
 import math
 
+def inicio(request):
+    return render_to_response('home.html', {}, context_instance=RequestContext(request))
+
 @login_required
-def home(request):
+def detalhamento_investimentos(request):
     # Usado para criar objetos vazios
     class Object(object):
         pass
@@ -303,7 +306,7 @@ def home(request):
                     ultimo_dia_util = item.data
                     while not HistoricoTitulo.objects.filter(data=ultimo_dia_util, titulo=titulo):
                         ultimo_dia_util -= datetime.timedelta(days=1)
-                    patrimonio['Tesouro Direto'] += (titulos_td[titulo] * HistoricoTitulo.objects.get(data=ultimo_dia_util, titulo=titulo).preco_venda)
+                    patrimonio['Tesouro Direto'] += (titulos_td[titulo] * HistoricoTitulo.objects.get(data=ultimo_dia_util, titulo=titulo).preco_venda)return render_to_response('home.html', {'graf_patrimonio': graf_patrimonio, 'patrimonio_anual': patrimonio_anual, 'estatisticas': estatisticas}, context_instance=RequestContext(request))
                 else:
                     # Buscar valor mais atual de valor diário, se existir
                     if ValorDiarioTitulo.objects.filter(titulo=titulo, data_hora__date=datetime.date.today()).order_by('-data_hora'):
@@ -454,4 +457,5 @@ def home(request):
 #     print 'CDB/RDB:      ', total_cdb_rdb
 #     print 'Fundo Inv.:   ', total_fundo_investimento
     
-    return render_to_response('home.html', {'graf_patrimonio': graf_patrimonio, 'patrimonio_anual': patrimonio_anual, 'estatisticas': estatisticas}, context_instance=RequestContext(request))
+    return render_to_response('home.html', {'graf_patrimonio': graf_patrimonio, 'patrimonio_anual': patrimonio_anual,
+                                            'estatisticas': estatisticas}, context_instance=RequestContext(request))
