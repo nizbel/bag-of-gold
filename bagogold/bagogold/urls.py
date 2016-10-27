@@ -15,8 +15,9 @@ validators.DUPLICATE_EMAIL = 'Já existe um usuário cadastrado com esse email'
 
 urlpatterns = [
     # Geral
-    url(r'^$', RedirectView.as_view(url='/home/')),
-    url(r'^home/$', views.home.home, name='home'),
+    url(r'^$', RedirectView.as_view(url='/inicio/')),
+    url(r'^inicio/$', views.home.inicio, name='inicio'),
+    url(r'^detalhamento_investimentos/$', views.home.detalhamento_investimentos, name='detalhamento_investimentos'),
     
     # Investidores
     url(r'^login/$', login, {'template_name': 'login.html'}, name='login'),

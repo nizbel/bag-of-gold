@@ -150,6 +150,7 @@ def verificar_operacoes_nao_alocadas(investidor):
         pass
     return operacoes_nao_alocadas
 
+# TODO repensar isso
 def calcular_saldo_geral_acoes_bh():
     saldo_geral = 0
     for divisao in Divisao.objects.all():
