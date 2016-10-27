@@ -124,15 +124,15 @@ def calcular_qtd_fiis_ate_dia(dia):
         
     return qtd_fii
 
-def calcular_qtd_fiis_ate_dia_por_ticker(dia, ticker):
+def calcular_qtd_fiis_ate_dia_por_ticker(investidor, dia, ticker):
     """ 
     Calcula a quantidade de FIIs até dia determinado para um ticker determinado
-    Parâmetros: Ticker do FII
+    Parâmetros: Investidor
+                Ticker do FII
                 Dia final
     Retorno: Quantidade de FIIs para o ticker determinado
     """
-    
-    operacoes = OperacaoFII.objects.filter(fii__ticker=ticker, data__lte=dia).exclude(data__isnull=True).order_by('data')
+    operacoes = OperacaoFII.objects.filter(fii__ticker=ticker, data__lte=dia, investidor=investidor).exclude(data__isnull=True).order_by('data')
     qtd_fii = 0
     
     for item in operacoes:

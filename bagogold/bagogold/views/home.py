@@ -10,7 +10,7 @@ from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
     ValorDiarioTitulo
 from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
-    buscar_totais_atuais_investimentos
+    buscar_totais_atuais_investimentos, buscar_proventos_a_receber
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas
 from decimal import Decimal, ROUND_DOWN
 from django.contrib.auth.decorators import login_required
@@ -25,9 +25,13 @@ import math
 
 def inicio(request):
     ultimas_operacoes = buscar_ultimas_operacoes(request.user.investidor, 5) if request.user.is_authenticated() else list()
+
     investimentos_atuais = buscar_totais_atuais_investimentos(request.user.investidor) if request.user.is_authenticated else list()
     
-    return render_to_response('inicio.html', {'ultimas_operacoes': ultimas_operacoes, 'investimentos_atuais': investimentos_atuais}, context_instance=RequestContext(request))
+    proventos_a_receber = buscar_proventos_a_receber(request.user.investidor) if request.user_is_authenticated else list()
+    
+    return render_to_response('inicio.html', {'ultimas_operacoes': ultimas_operacoes, 'investimentos_atuais': investimentos_atuais, 
+                                              'proventos_a_receber': proventos_a_receber}, context_instance=RequestContext(request))
 
 @login_required
 def detalhamento_investimentos(request):

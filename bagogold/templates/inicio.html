@@ -17,7 +17,7 @@
             <div class="row-fluid">
                 {% for investimento, valor in investimentos_atuais.items %}
                 <div class="span2 statbox green" ontablet="span2" ondesktop="span2">
-                    <div class="number" style="font-size: 30px;">R$ {{valor}}</div>
+                    <div class="number" style="font-size: 26px;">R$ {{valor}}</div>
                     <div class="title">{{investimento}}</div>
                     <div class="footer">
                         <a href="#"> Detalhar</a>
@@ -34,7 +34,7 @@
 
 
 <div class="row-fluid">
-    <div class="box span6" ontablet="span6" ondesktop="span6">
+    <div class="box span4" ontablet="span4" ondesktop="span4">
         <div class="box-header">
             <span><strong>Últimas operações</strong></span>
             <div class="box-icon">
@@ -61,9 +61,33 @@
     </div>
 </div>
 
-Últimos proventos
-
-Proventos a recebe
+<div class="row-fluid">
+    <div class="box span4" ontablet="span4" ondesktop="span4">
+        <div class="box-header">
+            <span><strong>Proventos a receber</strong></span>
+            <div class="box-icon">
+                <a href="#" class="btn-minimize"><i class="halflings-icon chevron-up"></i></a>
+            </div>
+        </div>
+        <div class="box-content">
+            <ul class="dashboard-list">
+                {% for provento in proventos_a_receber %}
+                <li>
+                    <a href="#">
+                        <span style="text-align:left;" class="white">{{provento}}</span>
+                    </a>
+                </li>
+                {% empty %}
+                <li>
+                    <a href="#">
+                        <span style="text-align:left;" class="white">Não há proventos</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
 
 <h3>Gráfico de rendimentos mensal</h3>
 <div class="row-fluid">

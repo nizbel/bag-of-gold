@@ -698,11 +698,11 @@ def painel(request):
     investidor = request.user.investidor
     
     # Buscar ações que o usuário já teve
-    operacoes = OperacaoAcao.objects.filter(destinacao='B', investidor=investidor).exclude(data__isnull=True).order_by('data')
+    operacoes = OperacaoAcao.objects.filter(destinacao='B', investidor=investidor).exclude(data__isnull=True)
 
     acoes_investidor = list(set(operacoes.values_list('acao', flat=True)))
     
-    proventos_em_acoes = list(set(AcaoProvento.objects.filter(provento__acao__in=acoes_investidor).order_by('provento__data_ex') \
+    proventos_em_acoes = list(set(AcaoProvento.objects.filter(provento__acao__in=acoes_investidor) \
                                   .values_list('acao_recebida', flat=True)))
     
     # Adicionar ações recebidas pelo investidor
