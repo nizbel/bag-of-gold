@@ -150,7 +150,7 @@ def buscar_proventos_a_receber(investidor):
         for provento in proventos_a_pagar:
             qtd_acoes = quantidade_acoes_ate_dia(investidor, acao.ticker, provento.data_ex - datetime.timedelta(days=1), considerar_trade=True) 
             if qtd_acoes > 0:
-                quantia_a_receber = (qtd_acoes * provento.valor_unitario) if provento.tipo_provento == 'D' else (qtd_acoes * provento.valor_unitario * 0.85)
+                quantia_a_receber = (qtd_acoes * provento.valor_unitario) if provento.tipo_provento == 'D' else (qtd_acoes * provento.valor_unitario * Decimal(0.85))
                 if acao.ticker in proventos_a_receber:
                     proventos_a_receber[acao.ticker] += quantia_a_receber
                 else:
@@ -172,5 +172,9 @@ def buscar_proventos_a_receber(investidor):
                     proventos_a_receber[fii.ticker] += quantia_a_receber
                 else:
                     proventos_a_receber[fii.ticker] = quantia_a_receber
-                    
+    
+    # Arredondar valores
+    for chave, valor in proventos_a_receber.items():
+        proventos_a_receber[chave] = valor.quantize(Decimal('0.01'))
+     
     return proventos_a_receber

@@ -11,7 +11,8 @@ from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
     ValorDiarioTitulo
 from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
     buscar_totais_atuais_investimentos, buscar_proventos_a_receber
-from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas
+from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas, \
+    calcular_valor_lc_ate_dia
 from decimal import Decimal, ROUND_DOWN
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
@@ -28,10 +29,17 @@ def inicio(request):
 
     investimentos_atuais = buscar_totais_atuais_investimentos(request.user.investidor) if request.user.is_authenticated else list()
     
-    proventos_a_receber = buscar_proventos_a_receber(request.user.investidor) if request.user_is_authenticated else list()
+    proventos_a_receber = buscar_proventos_a_receber(request.user.investidor) if request.user.is_authenticated else list()
+    
+#     graf_patrimonio += [[data_formatada, float(patrimonio['patrimonio_total'])]]
+#     str(calendar.timegm(item.data.timetuple()) * 1000)
+    graf_rendimentos_mensal = [[str(calendar.timegm(data.timetuple()) * 1000), float(sum(calcular_valor_lc_ate_dia(request.user.investidor, data).values())) ] \
+                               for data in [(datetime.date.today() - datetime.timedelta(dias_subtrair)) for dias_subtrair in [30, 20, 10, 0] ]] if request.user.is_authenticated else list()
+    
+    print graf_rendimentos_mensal
     
     return render_to_response('inicio.html', {'ultimas_operacoes': ultimas_operacoes, 'investimentos_atuais': investimentos_atuais, 
-                                              'proventos_a_receber': proventos_a_receber}, context_instance=RequestContext(request))
+                                              'proventos_a_receber': proventos_a_receber, 'graf_rendimentos_mensal': graf_rendimentos_mensal}, context_instance=RequestContext(request))
 
 @login_required
 def detalhamento_investimentos(request):
