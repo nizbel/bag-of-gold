@@ -59,9 +59,7 @@
             </ul>
         </div>
     </div>
-</div>
 
-<div class="row-fluid">
     <div class="box span4" ontablet="span4" ondesktop="span4">
         <div class="box-header">
             <span><strong>Proventos a receber</strong></span>
@@ -71,10 +69,11 @@
         </div>
         <div class="box-content">
             <ul class="dashboard-list">
-                {% for provento in proventos_a_receber %}
+                {% for provento, valor in proventos_a_receber.items %}
                 <li>
                     <a href="#">
-                        <span style="text-align:left;" class="white">{{provento}}</span>
+                        <span style="text-align:left;" class="white span6">{{provento}}</span>
+                        <span class="white">R$ {{valor}}</span>
                     </a>
                 </li>
                 {% empty %}
@@ -88,17 +87,17 @@
         </div>
     </div>
 </div>
-
+{% comment %}
 <h3>Gráfico de rendimentos mensal</h3>
 <div class="row-fluid">
 
-        <div class="span4" id="graf_rendimentos_mensal" style="width:100%;height:400px"></div>
+        <div class="span4" id="graf_rendimentos_mensal" style="width:40%;height:300px"></div>
 
 </div>
 
 <script>
 $( document ).ready(function() {
-    $.plot($("#graf_rendimentos_mensal"), [ {lines: {show:true}, label: "Rendimentos", data: {{ graf_patrimonio|safe }} } 
+    $.plot($("#graf_rendimentos_mensal"), [ {lines: {show:true}, label: "Rendimentos", data: {{ graf_rendimentos_mensal|safe }} } 
                               ],
                                 {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%d-%m-%y"} }  
     );
@@ -118,7 +117,7 @@ function showTooltip(x, y, contents) {
     }
 
     var previousPoint = null;
-    $("#graf_patrimonio").bind("plothover", function (event, pos, item) {
+    $("#graf_rendimentos_mensal").bind("plothover", function (event, pos, item) {
         $("#x").text(pos.x.toFixed(2));
         $("#y").text(pos.y.toFixed(2));
 
@@ -142,15 +141,8 @@ function showTooltip(x, y, contents) {
     });
 
 });
-
-
-function labelFormatter(label, series) {
-	console.log(series);
-    return "<div style='font-size:10pt; text-align:center; padding:2px; color:" + series.color + ";'>" + label + "<br/>" + 
-    (Math.round(series.percent * 100) / 100) + "%</div>";
-}
-
 </script>
+{% endcomment %}
 {% else %}
 <h1>Bem-vindo!</h1>
 
