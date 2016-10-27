@@ -1,18 +1,20 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import OperacaoAcao, ValorDiarioAcao, \
-    HistoricoAcao
+    HistoricoAcao, AcaoProvento, Acao, Provento
 from bagogold.bagogold.models.divisoes import Divisao
 from bagogold.bagogold.models.fii import OperacaoFII, ValorDiarioFII, \
-    HistoricoFII
+    HistoricoFII, FII, ProventoFII
 from bagogold.bagogold.models.fundo_investimento import \
     OperacaoFundoInvestimento, HistoricoValorCotas
 from bagogold.bagogold.models.lc import OperacaoLetraCredito
 from bagogold.bagogold.models.td import OperacaoTitulo, ValorDiarioTitulo, \
     HistoricoTitulo
-from bagogold.bagogold.utils.acoes import calcular_qtd_acoes_ate_dia_por_divisao
+from bagogold.bagogold.utils.acoes import calcular_qtd_acoes_ate_dia_por_divisao, \
+    quantidade_acoes_ate_dia
 from bagogold.bagogold.utils.cdb_rdb import \
     calcular_valor_cdb_rdb_ate_dia_por_divisao
-from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia_por_divisao
+from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia_por_divisao, \
+    calcular_qtd_fiis_ate_dia_por_ticker
 from bagogold.bagogold.utils.fundo_investimento import \
     calcular_qtd_cotas_ate_dia_por_divisao
 from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia_por_divisao
@@ -21,8 +23,8 @@ from decimal import Decimal
 from django.core.exceptions import PermissionDenied
 from itertools import chain
 from operator import attrgetter
-
 import datetime
+
 
 def is_superuser(user):
     if user.is_superuser:
@@ -120,3 +122,55 @@ def buscar_totais_atuais_investimentos(investidor):
         totais_atuais[chave] = valor.quantize(Decimal('0.00'))
     
     return totais_atuais
+
+def buscar_proventos_a_receber(investidor):
+    """
+    Retorna proventos que o investidor irá receber futuramente, já passada a data EX
+    Parâmetros: Investidor
+    Retorno:    Quantidade de proventos (em R$) {ticker: qtd}
+    """
+    proventos_a_receber = {}
+    
+    # Buscar proventos em ações
+    acoes_operadas = OperacaoAcao.objects.filter(investidor=investidor, data__lte=datetime.date.today()).values_list('acao', flat=True)
+    
+    # Remover ações repetidas
+    acoes_operadas = list(set(acoes_operadas))
+    
+    proventos_em_acoes = list(set(AcaoProvento.objects.filter(provento__acao__in=acoes_operadas) \
+                                  .values_list('acao_recebida', flat=True)))
+    
+    # Adicionar ações recebidas pelo investidor
+    acoes_investidor = list(set(acoes_operadas + proventos_em_acoes))
+    
+    data_atual = datetime.date.today()
+    
+    for acao in Acao.objects.filter(id__in=acoes_investidor):
+        proventos_a_pagar = Provento.objects.filter(acao=acao, data_ex__lte=data_atual, data_pagamento__gt=data_atual, tipo_provento__in=['D', 'J'])
+        for provento in proventos_a_pagar:
+            qtd_acoes = quantidade_acoes_ate_dia(investidor, acao.ticker, provento.data_ex - datetime.timedelta(days=1), considerar_trade=True) 
+            if qtd_acoes > 0:
+                quantia_a_receber = (qtd_acoes * provento.valor_unitario) if provento.tipo_provento == 'D' else (qtd_acoes * provento.valor_unitario * 0.85)
+                if acao.ticker in proventos_a_receber:
+                    proventos_a_receber[acao.ticker] += quantia_a_receber
+                else:
+                    proventos_a_receber[acao.ticker] = quantia_a_receber
+          
+    # Buscar proventos em FIIs          
+    fiis_investidor = OperacaoFII.objects.filter(investidor=investidor, data__lte=datetime.date.today()).values_list('fii', flat=True)
+    
+    # Remover FIIs repetidos
+    fiis_investidor = list(set(fiis_investidor))
+    
+    for fii in FII.objects.filter(id__in=fiis_investidor):
+        proventos_a_pagar = ProventoFII.objects.filter(fii=fii, data_ex__lte=data_atual, data_pagamento__gt=data_atual)
+        for provento in proventos_a_pagar:
+            qtd_fiis = calcular_qtd_fiis_ate_dia_por_ticker(investidor, provento.data_ex - datetime.timedelta(days=1), fii.ticker)
+            if qtd_fiis > 0:
+                quantia_a_receber = (qtd_fiis * provento.valor_unitario)
+                if fii.ticker in proventos_a_receber:
+                    proventos_a_receber[fii.ticker] += quantia_a_receber
+                else:
+                    proventos_a_receber[fii.ticker] = quantia_a_receber
+                    
+    return proventos_a_receber
