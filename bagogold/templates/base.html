@@ -192,6 +192,7 @@
 <!--                     </li> -->
                     <!-- start: User Dropdown -->
                     {% endcomment %}
+                    {% if user.is_authenticated %}
                     <li class="dropdown">
                         <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
                             <i class="halflings-icon white user"></i> {{ request.user.username }}
@@ -205,6 +206,11 @@
                             <li><a href="{% url "logout" %}"><i class="halflings-icon off"></i> Sair</a></li>
                         </ul>
                     </li>
+                    {% else %}
+                    <li>
+                        <a href="{% url "login" %}"><i class="halflings-icon off"></i> Acessar conta</a>
+                    </li>
+                    {% endif %}
                     <!-- end: User Dropdown -->
                 </ul>
             </div>

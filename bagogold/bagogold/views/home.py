@@ -25,18 +25,30 @@ import datetime
 import math
 
 def inicio(request):
+    inicio = datetime.datetime.now()
     ultimas_operacoes = buscar_ultimas_operacoes(request.user.investidor, 5) if request.user.is_authenticated() else list()
+    fim = datetime.datetime.now()
+    
+    print (fim - inicio)
 
-    investimentos_atuais = buscar_totais_atuais_investimentos(request.user.investidor) if request.user.is_authenticated else list()
+    inicio = datetime.datetime.now()
+    investimentos_atuais = buscar_totais_atuais_investimentos(request.user.investidor) if request.user.is_authenticated() else list()
+    fim = datetime.datetime.now()
     
-    proventos_a_receber = buscar_proventos_a_receber(request.user.investidor) if request.user.is_authenticated else list()
+    print (fim - inicio)
     
-#     graf_patrimonio += [[data_formatada, float(patrimonio['patrimonio_total'])]]
-#     str(calendar.timegm(item.data.timetuple()) * 1000)
+    inicio = datetime.datetime.now()
+    proventos_a_receber = buscar_proventos_a_receber(request.user.investidor) if request.user.is_authenticated() else list()
+    fim = datetime.datetime.now()
+    
+    print (fim - inicio)
+    
+    inicio = datetime.datetime.now()
     graf_rendimentos_mensal = [[str(calendar.timegm(data.timetuple()) * 1000), float(sum(calcular_valor_lc_ate_dia(request.user.investidor, data).values())) ] \
-                               for data in [(datetime.date.today() - datetime.timedelta(dias_subtrair)) for dias_subtrair in [30, 20, 10, 0] ]] if request.user.is_authenticated else list()
+                               for data in [(datetime.date.today() - datetime.timedelta(dias_subtrair)) for dias_subtrair in [30, 20, 10, 0] ]] if request.user.is_authenticated() else list()
+    fim = datetime.datetime.now()
     
-    print graf_rendimentos_mensal
+    print (fim - inicio)
     
     return render_to_response('inicio.html', {'ultimas_operacoes': ultimas_operacoes, 'investimentos_atuais': investimentos_atuais, 
                                               'proventos_a_receber': proventos_a_receber, 'graf_rendimentos_mensal': graf_rendimentos_mensal}, context_instance=RequestContext(request))
