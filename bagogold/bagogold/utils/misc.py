@@ -1,10 +1,18 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.td import HistoricoIPCA
+from bagogold.bagogold.models.acoes import OperacaoAcao
+from bagogold.bagogold.models.fii import OperacaoFII
+from bagogold.bagogold.models.fundo_investimento import \
+    OperacaoFundoInvestimento
+from bagogold.bagogold.models.lc import OperacaoLetraCredito
+from bagogold.bagogold.models.td import HistoricoIPCA, OperacaoTitulo
 from decimal import Decimal
+from itertools import chain
+from operator import attrgetter
 from urllib2 import Request, urlopen, URLError, HTTPError
 import datetime
 import math
 import re
+
 
 def calcular_iof_regressivo(dias):
     return Decimal(max((100 - (dias * 3 + math.ceil((float(dias)/3)))), 0)/100)
@@ -84,3 +92,4 @@ def qtd_dias_uteis_no_periodo(data_inicial, data_final):
         raise ValueError('Data final deve ser igual ou maior que data inicial')
     daygenerator = (data_inicial + datetime.timedelta(days=x) for x in xrange((data_final - data_inicial).days))
     return sum(1 for day in daygenerator if day.weekday() < 5 and not verificar_feriado_bovespa(day))
+

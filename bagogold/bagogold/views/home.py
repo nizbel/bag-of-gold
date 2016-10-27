@@ -9,9 +9,10 @@ from bagogold.bagogold.models.fundo_investimento import \
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
     ValorDiarioTitulo
-from bagogold.bagogold.testTD import buscar_valores_diarios
-from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia, \
-    calcular_valor_atualizado_com_taxas
+from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
+    buscar_totais_atuais_investimentos, buscar_proventos_a_receber
+from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas, \
+    calcular_valor_lc_ate_dia
 from decimal import Decimal, ROUND_DOWN
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
@@ -23,13 +24,31 @@ import calendar
 import datetime
 import math
 
+def inicio(request):
+    ultimas_operacoes = buscar_ultimas_operacoes(request.user.investidor, 5) if request.user.is_authenticated() else list()
+
+    investimentos_atuais = buscar_totais_atuais_investimentos(request.user.investidor) if request.user.is_authenticated else list()
+    
+    proventos_a_receber = buscar_proventos_a_receber(request.user.investidor) if request.user.is_authenticated else list()
+    
+#     graf_patrimonio += [[data_formatada, float(patrimonio['patrimonio_total'])]]
+#     str(calendar.timegm(item.data.timetuple()) * 1000)
+    graf_rendimentos_mensal = [[str(calendar.timegm(data.timetuple()) * 1000), float(sum(calcular_valor_lc_ate_dia(request.user.investidor, data).values())) ] \
+                               for data in [(datetime.date.today() - datetime.timedelta(dias_subtrair)) for dias_subtrair in [30, 20, 10, 0] ]] if request.user.is_authenticated else list()
+    
+    print graf_rendimentos_mensal
+    
+    return render_to_response('inicio.html', {'ultimas_operacoes': ultimas_operacoes, 'investimentos_atuais': investimentos_atuais, 
+                                              'proventos_a_receber': proventos_a_receber, 'graf_rendimentos_mensal': graf_rendimentos_mensal}, context_instance=RequestContext(request))
+
 @login_required
-def home(request):
+def detalhamento_investimentos(request):
     # Usado para criar objetos vazios
     class Object(object):
         pass
 
     investidor = request.user.investidor
+    
     operacoes_fii = OperacaoFII.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
     if operacoes_fii:
         proventos_fii = ProventoFII.objects.exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).filter(fii__in=operacoes_fii.values_list('fii', flat=True), data_ex__gt=operacoes_fii[0].data).order_by('data_ex')  
@@ -454,4 +473,5 @@ def home(request):
 #     print 'CDB/RDB:      ', total_cdb_rdb
 #     print 'Fundo Inv.:   ', total_fundo_investimento
     
-    return render_to_response('home.html', {'graf_patrimonio': graf_patrimonio, 'patrimonio_anual': patrimonio_anual, 'estatisticas': estatisticas}, context_instance=RequestContext(request))
+    return render_to_response('detalhamento_investimentos.html', {'graf_patrimonio': graf_patrimonio, 'patrimonio_anual': patrimonio_anual,
+                                            'estatisticas': estatisticas}, context_instance=RequestContext(request))

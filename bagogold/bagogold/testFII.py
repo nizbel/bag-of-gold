@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.fii import FII, ProventoFII
-from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia_por_ticker
 from cStringIO import StringIO
 from decimal import Decimal
 from pdfminer.converter import TextConverter
