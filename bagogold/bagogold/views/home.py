@@ -24,6 +24,8 @@ import calendar
 import datetime
 import math
 
+# TODO remover login_required
+@login_required
 def inicio(request):
     inicio = datetime.datetime.now()
     ultimas_operacoes = buscar_ultimas_operacoes(request.user.investidor, 5) if request.user.is_authenticated() else list()

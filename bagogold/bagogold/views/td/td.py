@@ -31,7 +31,7 @@ import datetime
 import json
 import math
 
-
+@login_required
 def buscar_titulos_validos_na_data(request):
     data = datetime.datetime.strptime(request.GET['dataEscolhida'], '%d/%m/%Y').date()
     tipo_operacao = request.GET['tipoOperacao']
