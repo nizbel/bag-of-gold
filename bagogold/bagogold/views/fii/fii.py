@@ -99,7 +99,8 @@ def aconselhamento_fii(request):
     
     return render_to_response('fii/aconselhamento.html', {'comparativos': comparativos}, context_instance=RequestContext(request))
     
-
+# TODO remover login_required
+@login_required
 def calcular_resultado_corretagem(request):
     if request.method == 'POST':
         form_calcular = CalculoResultadoCorretagemForm(request.POST)

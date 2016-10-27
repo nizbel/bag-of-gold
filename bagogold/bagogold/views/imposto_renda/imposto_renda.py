@@ -12,6 +12,7 @@ from bagogold.bagogold.utils.misc import trazer_primeiro_registro, \
 from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia_por_titulo
 from collections import OrderedDict
 from decimal import Decimal, ROUND_FLOOR
+from django.contrib.auth.decorators import login_required
 from django.db.models.expressions import F
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
@@ -20,6 +21,7 @@ from operator import attrgetter
 import datetime
 
 # TODO melhorar isso
+@login_required
 def detalhar_imposto_renda(request, ano):
     ano = int(ano)
     investidor = request.user.investidor
@@ -330,7 +332,8 @@ def detalhar_imposto_renda(request, ano):
                                                                           'prejuizo_a_compensar': prejuizo_a_compensar, 'prejuizo_a_compensar_dt': prejuizo_a_compensar_dt, 'cdb_rdb': cdb_rdb, 
                                                                           'fundos_investimento': fundos_investimento, 'fiis': fiis, 'letras_credito': letras_credito,'dados': dados}, 
                               context_instance=RequestContext(request))
-
+    
+@login_required
 def listar_anos(request):
     class Object(object):
         pass
