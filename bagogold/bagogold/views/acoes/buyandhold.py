@@ -13,7 +13,8 @@ from bagogold.bagogold.utils.acoes import calcular_provento_por_mes, \
     calcular_uso_proventos_por_mes, quantidade_acoes_ate_dia, \
     calcular_poupanca_prov_acao_ate_dia
 from bagogold.bagogold.utils.divisoes import calcular_saldo_geral_acoes_bh
-from bagogold.bagogold.utils.investidores import is_superuser
+from bagogold.bagogold.utils.investidores import is_superuser, \
+    buscar_acoes_investidor_na_data
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -697,16 +698,17 @@ def painel(request):
     
     investidor = request.user.investidor
     
-    # Buscar ações que o usuário já teve
-    operacoes = OperacaoAcao.objects.filter(destinacao='B', investidor=investidor).exclude(data__isnull=True)
-
-    acoes_investidor = list(set(operacoes.values_list('acao', flat=True)))
-    
-    proventos_em_acoes = list(set(AcaoProvento.objects.filter(provento__acao__in=acoes_investidor) \
-                                  .values_list('acao_recebida', flat=True)))
-    
-    # Adicionar ações recebidas pelo investidor
-    acoes_investidor = list(set(acoes_investidor + proventos_em_acoes))
+#     # Buscar ações que o usuário já teve
+#     operacoes = OperacaoAcao.objects.filter(destinacao='B', investidor=investidor).exclude(data__isnull=True)
+# 
+#     acoes_investidor = list(set(operacoes.values_list('acao', flat=True)))
+#     
+#     proventos_em_acoes = list(set(AcaoProvento.objects.filter(provento__acao__in=acoes_investidor) \
+#                                   .values_list('acao_recebida', flat=True)))
+#     
+#     # Adicionar ações recebidas pelo investidor
+#     acoes_investidor = list(set(acoes_investidor + proventos_em_acoes))
+    acoes_investidor = buscar_acoes_investidor_na_data(investidor, destinacao='B')
     
     # Guarda as ações correntes para o calculo do patrimonio
     acoes = {}
