@@ -6,10 +6,8 @@ from bagogold.bagogold.models.fundo_investimento import \
     OperacaoFundoInvestimento
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, LetraCredito
 from bagogold.bagogold.models.td import OperacaoTitulo, Titulo, HistoricoTitulo
-from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia
 from bagogold.bagogold.utils.misc import trazer_primeiro_registro, \
     verificar_feriado_bovespa
-from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia_por_titulo
 from collections import OrderedDict
 from decimal import Decimal, ROUND_FLOOR
 from django.contrib.auth.decorators import login_required

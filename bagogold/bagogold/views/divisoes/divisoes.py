@@ -23,8 +23,7 @@ from bagogold.bagogold.utils.divisoes import verificar_operacoes_nao_alocadas
 from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia_por_divisao
 from bagogold.bagogold.utils.fundo_investimento import \
     calcular_qtd_cotas_ate_dia_por_divisao
-from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia, \
-    calcular_valor_lc_ate_dia_por_divisao
+from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia_por_divisao
 from bagogold.bagogold.utils.td import calcular_qtd_titulos_ate_dia_por_divisao
 from decimal import Decimal
 from django.contrib import messages
