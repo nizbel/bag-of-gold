@@ -39,76 +39,6 @@ def calcular_valor_lc_ate_dia(investidor, dia):
                 Data final
     Retorno: Valor de cada letra de crédito na data escolhida {id_letra: valor_na_data, }
     """
-    inicio = datetime.datetime.now()
-    operacoes_queryset = OperacaoLetraCredito.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
-    if len(operacoes_queryset) == 0:
-        return {}
-    operacoes = list(operacoes_queryset)
-    for operacao in operacoes:
-        if operacao.tipo_operacao == 'C':
-            operacao.atual = operacao.quantidade
-            operacao.taxa = operacao.porcentagem_di()
-    
-    # Pegar data inicial
-    data_inicial = operacoes_queryset.order_by('data')[0].data
-    
-    data_final = HistoricoTaxaDI.objects.filter(data__lte=dia).order_by('-data')[0].data
-    
-    data_iteracao = data_inicial
-    
-    letras_credito = {}
-    
-    while data_iteracao <= data_final:
-        # Processar operações
-        operacoes_do_dia = operacoes_queryset.filter(data=data_iteracao)
-        for operacao in operacoes_do_dia:          
-            if operacao.letra_credito.id not in letras_credito.keys():
-                letras_credito[operacao.letra_credito.id] = 0
-                
-            # Vendas
-            if operacao.tipo_operacao == 'V':
-                # Remover quantidade da operação de compra
-                operacao_compra_id = operacao.operacao_compra_relacionada().id
-                for operacao_c in operacoes:
-                    if (operacao_c.id == operacao_compra_id):
-                        operacao.atual = (operacao.quantidade/operacao_c.quantidade) * operacao_c.atual
-                        operacao_c.atual -= operacao.atual
-                        str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
-                        operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-                        operacoes.remove(operacao)
-                        if operacao_c.atual == 0:
-                            operacoes.remove(operacao_c)
-                        break
-                
-        # Calcular o valor atualizado do patrimonio diariamente
-        taxa_do_dia = HistoricoTaxaDI.objects.get(data=data_iteracao).taxa
-        for operacao in operacoes:
-            if (operacao.data <= data_iteracao):
-                operacao.atual = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa)
-                # Arredondar na última iteração
-                if (data_iteracao == data_final):
-                    str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
-                    operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-            
-        # Proximo dia útil
-        proximas_datas = HistoricoTaxaDI.objects.filter(data__gt=data_iteracao).order_by('data')
-        if len(proximas_datas) > 0:
-            data_iteracao = proximas_datas[0].data
-        else:
-            break
-    
-    # Preencher os valores nas letras de crédito
-    for letra_credito_id in letras_credito.keys():
-        for operacao in operacoes:
-            if operacao.letra_credito.id == letra_credito_id:
-                letras_credito[letra_credito_id] += operacao.atual
-    fim = datetime.datetime.now()
-    
-    
-    print (fim - inicio), 'rodada 1'
-    
-    ################################# TESTE
-    inicio = datetime.datetime.now()
     # Definir vendas do investidor
     vendas = OperacaoVendaLetraCredito.objects.filter(operacao_compra__investidor=investidor, operacao_venda__investidor=investidor, operacao_compra__data__lte=dia,
                                                                              operacao_venda__data__lte=dia).values('operacao_compra').annotate(soma_venda=Sum('operacao_venda__quantidade'))
@@ -121,15 +51,16 @@ def calcular_valor_lc_ate_dia(investidor, dia):
     if len(operacoes_queryset) == 0:
         return {}
     operacoes = list(operacoes_queryset)
-    letras_credito_2 = {}
+    
+    letras_credito = {}
     # Buscar taxas dos dias
     historico = HistoricoTaxaDI.objects.all()
     for operacao in operacoes:
         operacao.quantidade -= 0 if operacao.id not in qtd_vendida_operacoes.keys() else qtd_vendida_operacoes[operacao.id]
         if operacao.quantidade == 0:
             continue
-        if operacao.letra_credito.id not in letras_credito_2.keys():
-            letras_credito_2[operacao.letra_credito.id] = 0
+        if operacao.letra_credito.id not in letras_credito.keys():
+            letras_credito[operacao.letra_credito.id] = 0
         
         # Definir período do histórico relevante para a operação
         historico_utilizado = historico.filter(data__range=[operacao.data, dia]).values('taxa').annotate(qtd_dias=Count('taxa'))
@@ -138,11 +69,7 @@ def calcular_valor_lc_ate_dia(investidor, dia):
             taxas_dos_dias[taxa_quantidade['taxa']] = taxa_quantidade['qtd_dias']
         
         # Calcular
-        letras_credito_2[operacao.letra_credito.id] += calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao.quantidade, operacao.porcentagem_di()).quantize(Decimal('.01'), ROUND_DOWN)
-    
-    fim = datetime.datetime.now()
-    print (fim - inicio), 'rodada 2'
-    print letras_credito == letras_credito_2, letras_credito, letras_credito_2
+        letras_credito[operacao.letra_credito.id] += calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao.quantidade, operacao.porcentagem_di()).quantize(Decimal('.01'), ROUND_DOWN)
     
     return letras_credito
 
