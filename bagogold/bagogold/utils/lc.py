@@ -2,8 +2,10 @@
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI, \
     HistoricoPorcentagemLetraCredito, OperacaoVendaLetraCredito
-from decimal import Decimal
+from decimal import Decimal, ROUND_DOWN
 from django.db.models import Q
+from django.db.models.aggregates import Sum, Count
+from django.db.models.expressions import F
 import datetime
 
 def calcular_valor_atualizado_com_taxa(taxa_do_dia, valor_atual, operacao_taxa):
@@ -37,7 +39,8 @@ def calcular_valor_lc_ate_dia(investidor, dia):
                 Data final
     Retorno: Valor de cada letra de crédito na data escolhida {id_letra: valor_na_data, }
     """
-    operacoes_queryset = OperacaoLetraCredito.objects.filter(investidor=investidor).exclude(data__isnull=True).exclude(data__gte=dia).order_by('-tipo_operacao', 'data') 
+    inicio = datetime.datetime.now()
+    operacoes_queryset = OperacaoLetraCredito.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
     if len(operacoes_queryset) == 0:
         return {}
     operacoes = list(operacoes_queryset)
@@ -99,6 +102,47 @@ def calcular_valor_lc_ate_dia(investidor, dia):
         for operacao in operacoes:
             if operacao.letra_credito.id == letra_credito_id:
                 letras_credito[letra_credito_id] += operacao.atual
+    fim = datetime.datetime.now()
+    
+    
+    print (fim - inicio), 'rodada 1'
+    
+    ################################# TESTE
+    inicio = datetime.datetime.now()
+    # Definir vendas do investidor
+    vendas = OperacaoVendaLetraCredito.objects.filter(operacao_compra__investidor=investidor, operacao_venda__investidor=investidor, operacao_compra__data__lte=dia,
+                                                                             operacao_venda__data__lte=dia).values('operacao_compra').annotate(soma_venda=Sum('operacao_venda__quantidade'))
+    qtd_vendida_operacoes = {}
+    for venda in vendas:
+        qtd_vendida_operacoes[venda['operacao_compra']] = venda['soma_venda']
+    
+    # Definir compras do investidor
+    operacoes_queryset = OperacaoLetraCredito.objects.filter(investidor=investidor, data__lte=dia, tipo_operacao='C').exclude(data__isnull=True)
+    if len(operacoes_queryset) == 0:
+        return {}
+    operacoes = list(operacoes_queryset)
+    letras_credito_2 = {}
+    # Buscar taxas dos dias
+    historico = HistoricoTaxaDI.objects.all()
+    for operacao in operacoes:
+        operacao.quantidade -= 0 if operacao.id not in qtd_vendida_operacoes.keys() else qtd_vendida_operacoes[operacao.id]
+        if operacao.quantidade == 0:
+            continue
+        if operacao.letra_credito.id not in letras_credito_2.keys():
+            letras_credito_2[operacao.letra_credito.id] = 0
+        
+        # Definir período do histórico relevante para a operação
+        historico_utilizado = historico.filter(data__range=[operacao.data, dia]).values('taxa').annotate(qtd_dias=Count('taxa'))
+        taxas_dos_dias = {}
+        for taxa_quantidade in historico_utilizado:
+            taxas_dos_dias[taxa_quantidade['taxa']] = taxa_quantidade['qtd_dias']
+        
+        # Calcular
+        letras_credito_2[operacao.letra_credito.id] += calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao.quantidade, operacao.porcentagem_di()).quantize(Decimal('.01'), ROUND_DOWN)
+    
+    fim = datetime.datetime.now()
+    print (fim - inicio), 'rodada 2'
+    print letras_credito == letras_credito_2, letras_credito, letras_credito_2
     
     return letras_credito
 
