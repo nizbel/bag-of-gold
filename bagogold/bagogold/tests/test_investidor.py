@@ -26,41 +26,44 @@ class TelaInicioTestCase(TestCase):
         divisao1 = Divisao.objects.create(investidor=user.investidor, nome='Teste 1')
         divisao2 = Divisao.objects.create(investidor=user.investidor, nome='Teste 2')
         
+        # Data do dia
+        data_atual = datetime.date(2016, 10, 26)
+        
         # Operações
         # Ação
         empresa = Empresa.objects.create(nome='Teste', nome_pregao='TEST')
         acao = Acao.objects.create(ticker='TEST3', empresa=empresa)
         operacao_acoes1 = OperacaoAcao.objects.create(investidor=user.investidor, destinacao='B', preco_unitario=Decimal(20), corretagem=Decimal(10), quantidade=200,
-                                       data=datetime.date.today() - datetime.timedelta(days=0), acao=acao, tipo_operacao='C', emolumentos=Decimal(0))
+                                       data=data_atual - datetime.timedelta(days=0), acao=acao, tipo_operacao='C', emolumentos=Decimal(0))
         divisao_operacao_acoes1 = DivisaoOperacaoAcao.objects.create(divisao=divisao1, operacao=operacao_acoes1, quantidade=operacao_acoes1.quantidade)
         operacao_acoes2 = OperacaoAcao.objects.create(investidor=user.investidor, destinacao='B', preco_unitario=Decimal(20), corretagem=Decimal(5), quantidade=100, 
-                                       data=datetime.date.today() - datetime.timedelta(days=1), acao=acao, tipo_operacao='C', emolumentos=Decimal(0))
+                                       data=data_atual - datetime.timedelta(days=1), acao=acao, tipo_operacao='C', emolumentos=Decimal(0))
         divisao_operacao_acoes2 = DivisaoOperacaoAcao.objects.create(divisao=divisao2, operacao=operacao_acoes2, quantidade=operacao_acoes2.quantidade)
         operacao_acoes3 = OperacaoAcao.objects.create(investidor=user.investidor, destinacao='B', preco_unitario=Decimal(10), corretagem=Decimal(10), quantidade=300, 
-                                       data=datetime.date.today() - datetime.timedelta(days=2), acao=acao, tipo_operacao='C', emolumentos=Decimal(0))
+                                       data=data_atual - datetime.timedelta(days=2), acao=acao, tipo_operacao='C', emolumentos=Decimal(0))
         divisao_operacao_acoes3 = DivisaoOperacaoAcao.objects.create(divisao=divisao2, operacao=operacao_acoes3, quantidade=operacao_acoes3.quantidade)
         
         # FII
         fii = FII.objects.create(ticker='TEST11')
         operacao_fii1 = OperacaoFII.objects.create(investidor=user.investidor, preco_unitario=Decimal(15), corretagem=Decimal(10), quantidade=400, 
-                                    data=datetime.date.today() - datetime.timedelta(days=1), tipo_operacao='C', fii=fii, emolumentos=Decimal(0))
+                                    data=data_atual - datetime.timedelta(days=1), tipo_operacao='C', fii=fii, emolumentos=Decimal(0))
         divisao_operacao_fii1 = DivisaoOperacaoFII.objects.create(divisao=divisao1, operacao=operacao_fii1, quantidade=operacao_fii1.quantidade)
         operacao_fii2 = OperacaoFII.objects.create(investidor=user.investidor, preco_unitario=Decimal(100), corretagem=Decimal(10), quantidade=10, 
-                                    data=datetime.date.today() - datetime.timedelta(days=2), tipo_operacao='C', fii=fii, emolumentos=Decimal(0))
+                                    data=data_atual - datetime.timedelta(days=2), tipo_operacao='C', fii=fii, emolumentos=Decimal(0))
         divisao_operacao_fii2 = DivisaoOperacaoFII.objects.create(divisao=divisao1, operacao=operacao_fii2, quantidade=operacao_fii2.quantidade)
         
         # LC
         lc = LetraCredito.objects.create(nome='Letra de teste', investidor=user.investidor)
         lc_porcentagem_di = HistoricoPorcentagemLetraCredito.objects.create(letra_credito=lc, porcentagem_di=Decimal(90))
-        operacao_lc1 = OperacaoLetraCredito.objects.create(investidor=user.investidor, letra_credito=lc, data=datetime.date.today() - datetime.timedelta(days=0), tipo_operacao='C',
+        operacao_lc1 = OperacaoLetraCredito.objects.create(investidor=user.investidor, letra_credito=lc, data=data_atual - datetime.timedelta(days=0), tipo_operacao='C',
                                             quantidade=Decimal(1000))
         divisao_operacao_lc1 = DivisaoOperacaoLC.objects.create(divisao=divisao1, operacao=operacao_lc1, quantidade=operacao_lc1.quantidade)
-        operacao_lc2 = OperacaoLetraCredito.objects.create(investidor=user.investidor, letra_credito=lc, data=datetime.date.today() - datetime.timedelta(days=1), tipo_operacao='C',
+        operacao_lc2 = OperacaoLetraCredito.objects.create(investidor=user.investidor, letra_credito=lc, data=data_atual - datetime.timedelta(days=1), tipo_operacao='C',
                                             quantidade=Decimal(2000))
         divisao_operacao_lc2 = DivisaoOperacaoLC.objects.create(divisao=divisao2, operacao=operacao_lc2, quantidade=operacao_lc2.quantidade)
         
         # Gerar valores históricos
-        date_list = [datetime.date(2016, 10, 26) - datetime.timedelta(days=x) for x in range(0, (datetime.date(2016, 10, 26) - datetime.date(2016, 1, 1)).days)]
+        date_list = [data_atual - datetime.timedelta(days=x) for x in range(0, (data_atual - datetime.date(2016, 1, 1)).days)]
         date_list = [data for data in date_list if data.weekday() < 5 and not verificar_feriado_bovespa(data)]
         
         for data in date_list:
@@ -88,8 +91,8 @@ class TelaInicioTestCase(TestCase):
         investidor = Investidor.objects.get(user__username='tester')
         ultimas_operacoes = buscar_ultimas_operacoes(investidor, 5)
         
-        self.assertNotIn(OperacaoAcao.objects.get(data=datetime.date.today() - datetime.timedelta(days=2)), ultimas_operacoes)
-        self.assertNotIn(OperacaoFII.objects.get(data=datetime.date.today() - datetime.timedelta(days=2)), ultimas_operacoes)
+        self.assertNotIn(OperacaoAcao.objects.get(data=datetime.date(2016, 10, 26) - datetime.timedelta(days=2)), ultimas_operacoes)
+        self.assertNotIn(OperacaoFII.objects.get(data=datetime.date(2016, 10, 26) - datetime.timedelta(days=2)), ultimas_operacoes)
         
     def test_buscar_ultimas_operacoes_deve_ser_ordenado_decrescente_por_data(self):
         """Verificar se últimas operações está ordenado de maneira decrescente por data"""
