@@ -5,7 +5,6 @@ from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI, \
 from decimal import Decimal, ROUND_DOWN
 from django.db.models import Q
 from django.db.models.aggregates import Sum, Count
-from django.db.models.expressions import F
 import datetime
 
 def calcular_valor_atualizado_com_taxa(taxa_do_dia, valor_atual, operacao_taxa):
@@ -70,6 +69,7 @@ def calcular_valor_lc_ate_dia(investidor, dia):
         
         # Calcular
         letras_credito[operacao.letra_credito.id] += calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao.quantidade, operacao.porcentagem_di()).quantize(Decimal('.01'), ROUND_DOWN)
+        print calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao.quantidade, operacao.porcentagem_di())
     
     return letras_credito
 

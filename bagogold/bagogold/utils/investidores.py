@@ -92,7 +92,7 @@ def buscar_totais_atuais_investimentos(investidor):
             acao_valor = HistoricoAcao.objects.filter(acao__ticker=acao.ticker).order_by('-data')[0].preco_unitario
         totais_atuais['Ações'] += (acao_qtd * acao_valor)
     fim = datetime.datetime.now()
-    print (fim - inicio), 'Acao'
+#     print (fim - inicio), 'Acao'
 
     for divisao in divisoes:
         inicio = datetime.datetime.now()
@@ -101,7 +101,7 @@ def buscar_totais_atuais_investimentos(investidor):
         for total_cdb_rdb in cdb_rdb_divisao.values():
             totais_atuais['CDB/RDB'] += total_cdb_rdb
         fim = datetime.datetime.now()
-        print (fim - inicio), 'CDB_RDB'
+#         print (fim - inicio), 'CDB_RDB'
         
         # Fundos de investimento imobiliário
         inicio = datetime.datetime.now()
@@ -113,7 +113,7 @@ def buscar_totais_atuais_investimentos(investidor):
                 fii_valor = HistoricoFII.objects.filter(fii__ticker=ticker).order_by('-data')[0].preco_unitario
             totais_atuais['FII'] += (fii_divisao[ticker] * fii_valor)
         fim = datetime.datetime.now()
-        print (fim - inicio), 'FII'
+#         print (fim - inicio), 'FII'
         
         # Fundos de investimento
         inicio = datetime.datetime.now()
@@ -127,7 +127,7 @@ def buscar_totais_atuais_investimentos(investidor):
                 valor_cota = ultima_operacao_fundo.valor_cota()
             totais_atuais['Fundos de Investimentos'] += (fundo_investimento_divisao[fundo_id] * valor_cota)
         fim = datetime.datetime.now()
-        print (fim - inicio), 'Fundos'
+#         print (fim - inicio), 'Fundos'
             
     # Letras de crédito
     inicio = datetime.datetime.now()
@@ -135,7 +135,7 @@ def buscar_totais_atuais_investimentos(investidor):
     for total_lc in letras_credito.values():
         totais_atuais['Letras de Crédito'] += total_lc
     fim = datetime.datetime.now()
-    print (fim - inicio), 'LC'
+#     print (fim - inicio), 'LC'
     
     for divisao in divisoes: 
         # Tesouro Direto
@@ -148,11 +148,11 @@ def buscar_totais_atuais_investimentos(investidor):
                 td_valor = HistoricoTitulo.objects.filter(titulo__id=titulo_id).order_by('-data')[0].preco_venda
             totais_atuais['Tesouro Direto'] += (td_divisao[titulo_id] * td_valor)
         fim = datetime.datetime.now()
-        print (fim - inicio), 'TD'
+#         print (fim - inicio), 'TD'
     
     # Arredondar todos os valores para 2 casas decimais
     for chave, valor in totais_atuais.items():
-        totais_atuais[chave] = valor.quantize(Decimal('0.00'))
+        totais_atuais[chave] = valor.quantize(Decimal('0.01'))
     
     return totais_atuais
 
