@@ -431,7 +431,7 @@ def painel(request):
         
         # Calcular impostos
         qtd_dias = (datetime.date.today() - operacao.data).days
-        print qtd_dias, calcular_iof_regressivo(qtd_dias)
+#         print qtd_dias, calcular_iof_regressivo(qtd_dias)
         # IOF
         operacao.iof = Decimal(calcular_iof_regressivo(qtd_dias)) * (operacao.atual - operacao.inicial)
         # IR

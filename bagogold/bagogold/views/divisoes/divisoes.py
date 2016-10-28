@@ -116,7 +116,7 @@ def detalhar_divisao(request, id):
     qtd_acoes_dia = calcular_qtd_acoes_ate_dia_por_divisao(datetime.date.today(), divisao.id)
     for ticker in qtd_acoes_dia.keys():
         acao_valor = Acao.objects.get(ticker=ticker).valor_no_dia(datetime.date.today())
-        print ticker, qtd_acoes_dia[ticker] * acao_valor
+#         print ticker, qtd_acoes_dia[ticker] * acao_valor
         composicao['acoes'].patrimonio += qtd_acoes_dia[ticker] * acao_valor
         composicao['acoes'].composicao[ticker] = Object()
         composicao['acoes'].composicao[ticker].nome = ticker
@@ -129,7 +129,7 @@ def detalhar_divisao(request, id):
             composicao['acoes'].composicao[ticker].composicao[operacao_divisao.operacao.id].data = operacao_divisao.operacao.data
             composicao['acoes'].composicao[ticker].composicao[operacao_divisao.operacao.id].quantidade = operacao_divisao.quantidade
             composicao['acoes'].composicao[ticker].composicao[operacao_divisao.operacao.id].valor_unitario = Acao.objects.get(ticker=ticker).valor_no_dia(operacao_divisao.operacao.data)
-            print composicao['acoes'].composicao[ticker].composicao[operacao_divisao.operacao.id].valor_unitario
+#             print composicao['acoes'].composicao[ticker].composicao[operacao_divisao.operacao.id].valor_unitario
             composicao['acoes'].composicao[ticker].composicao[operacao_divisao.operacao.id].patrimonio = operacao_divisao.quantidade * \
                 composicao['acoes'].composicao[ticker].composicao[operacao_divisao.operacao.id].valor_unitario
     
