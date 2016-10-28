@@ -31,6 +31,24 @@ def is_superuser(user):
         return True
     raise PermissionDenied
 
+def buscar_acoes_investidor_na_data(investidor, data=datetime.date.today(), destinacao=''):
+    if destinacao not in ['', 'B', 'T']:
+        raise ValueError
+    # Buscar proventos em ações
+    acoes_operadas = OperacaoAcao.objects.filter(investidor=investidor, data__lte=data).values_list('acao', flat=True) if destinacao == '' \
+            else OperacaoAcao.objects.filter(investidor=investidor, data__lte=data).values_list('acao', flat=True, destinacao=destinacao)
+    
+    # Remover ações repetidas
+    acoes_operadas = list(set(acoes_operadas))
+    
+    proventos_em_acoes = list(set(AcaoProvento.objects.filter(provento__acao__in=acoes_operadas, provento__data_pagamento__lte=data) \
+                                  .values_list('acao_recebida', flat=True)))
+    
+    # Adicionar ações recebidas pelo investidor
+    acoes_investidor = list(set(acoes_operadas + proventos_em_acoes))
+    
+    return acoes_investidor
+
 def buscar_ultimas_operacoes(investidor, quantidade_operacoes):
     from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB
     """
@@ -131,17 +149,15 @@ def buscar_proventos_a_receber(investidor):
     """
     proventos_a_receber = {}
     
-    # Buscar proventos em ações
-    acoes_operadas = OperacaoAcao.objects.filter(investidor=investidor, data__lte=datetime.date.today()).values_list('acao', flat=True)
-    
-    # Remover ações repetidas
-    acoes_operadas = list(set(acoes_operadas))
-    
-    proventos_em_acoes = list(set(AcaoProvento.objects.filter(provento__acao__in=acoes_operadas) \
-                                  .values_list('acao_recebida', flat=True)))
-    
-    # Adicionar ações recebidas pelo investidor
-    acoes_investidor = list(set(acoes_operadas + proventos_em_acoes))
+#     # Buscar proventos em ações
+#     acoes_operadas = OperacaoAcao.objects.filter(investidor=investidor, data__lte=datetime.date.today()).values_list('acao', flat=True)
+#     
+#     # Remover ações repetidas
+#     acoes_operadas = list(set(acoes_operadas))
+#     
+#     proventos_em_acoes = list(set(AcaoProvento.objects.filter(provento__acao__in=acoes_operadas) \
+#                                   .values_list('acao_recebida', flat=True)))
+    acoes_investidor = buscar_acoes_investidor_na_data(investidor)
     
     data_atual = datetime.date.today()
     
