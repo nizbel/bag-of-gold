@@ -36,7 +36,7 @@ def buscar_acoes_investidor_na_data(investidor, data=datetime.date.today(), dest
         raise ValueError
     # Buscar proventos em ações
     acoes_operadas = OperacaoAcao.objects.filter(investidor=investidor, data__lte=data).values_list('acao', flat=True) if destinacao == '' \
-            else OperacaoAcao.objects.filter(investidor=investidor, data__lte=data).values_list('acao', flat=True, destinacao=destinacao)
+            else OperacaoAcao.objects.filter(investidor=investidor, data__lte=data, destinacao=destinacao).values_list('acao', flat=True)
     
     # Remover ações repetidas
     acoes_operadas = list(set(acoes_operadas))
@@ -77,25 +77,20 @@ def buscar_totais_atuais_investimentos(investidor):
     
     totais_atuais = {'Ações': Decimal(0), 'CDB/RDB': Decimal(0), 'FII': Decimal(0), 'Fundos de Investimentos': Decimal(0), 'Letras de Crédito': Decimal(0), 'Tesouro Direto': Decimal(0), }
     
+    data_atual = datetime.date.today()
+    
+    # Ações (B&H)
+    acoes_investidor = buscar_acoes_investidor_na_data(investidor)
+    # Cálculo de quantidade
+    for acao in Acao.objects.filter(id__in=acoes_investidor):
+        acao_qtd = quantidade_acoes_ate_dia(investidor, acao.ticker, data_atual, considerar_trade=True)
+        try:
+            acao_valor = ValorDiarioAcao.objects.filter(acao__ticker=acao.ticker, data_hora__day=data_atual.day, data_hora__month=data_atual.month).order_by('-data_hora')[0].preco_unitario
+        except:
+            acao_valor = HistoricoAcao.objects.filter(acao__ticker=acao.ticker).order_by('-data')[0].preco_unitario
+        totais_atuais['Ações'] += (acao_qtd * acao_valor)
+
     for divisao in divisoes:
-        # Ações (B&H)
-        acao_divisao = calcular_qtd_acoes_ate_dia_por_divisao(datetime.date.today(), divisao.id, destinacao='B')
-        for ticker in acao_divisao.keys():
-            try:
-                acao_valor = ValorDiarioAcao.objects.filter(acao__ticker=ticker, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).order_by('-data_hora')[0].preco_unitario
-            except:
-                acao_valor = HistoricoAcao.objects.filter(acao__ticker=ticker).order_by('-data')[0].preco_unitario
-            totais_atuais['Ações'] += (acao_divisao[ticker] * acao_valor)
-            
-        # Ações (Trade)
-        acao_divisao = calcular_qtd_acoes_ate_dia_por_divisao(datetime.date.today(), divisao.id, destinacao='T')
-        for ticker in acao_divisao.keys():
-            try:
-                acao_valor = ValorDiarioAcao.objects.filter(acao__ticker=ticker, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).order_by('-data_hora')[0].preco_unitario
-            except:
-                acao_valor = HistoricoAcao.objects.filter(acao__ticker=ticker).order_by('-data')[0].preco_unitario
-            totais_atuais['Ações'] += (acao_divisao[ticker] * acao_valor)
-        
         # CDB / RDB
         cdb_rdb_divisao = calcular_valor_cdb_rdb_ate_dia_por_divisao(datetime.date.today(), divisao.id)
         for total_cdb_rdb in cdb_rdb_divisao.values():
