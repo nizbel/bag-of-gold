@@ -211,6 +211,7 @@
                         <a href="{% url "login" %}"><i class="halflings-icon off"></i> Acessar conta</a>
                     </li>
                     {% endif %}
+                    <a href="{% url "teste_nova_aparencia" request.path|slice:"1:-1" %}" class="btn btn-warning">Nova aparência</a>
                     <!-- end: User Dropdown -->
                 </ul>
             </div>

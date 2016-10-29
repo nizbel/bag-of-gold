@@ -19,6 +19,10 @@ urlpatterns = [
     url(r'^inicio/$', views.home.inicio, name='inicio'),
     url(r'^detalhamento_investimentos/$', views.home.detalhamento_investimentos, name='detalhamento_investimentos'),
     
+    # Teste de aparência
+    
+    url(r'^teste/(?P<url>[\w/]+)/$', views.misc.teste_nova_aparencia, name='teste_nova_aparencia'),
+    
     # Investidores
     url(r'^login/$', login, {'template_name': 'login.html'}, name='login'),
     url(r'^logout/$', logout, {'next_page': '/login'}, name='logout'),
