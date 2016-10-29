@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="row-fluid">
+    <div class="box-content">
+        <table id="operacoes" class="table table-striped table-bordered bootstrap-datatable datatable">
+        <thead>
+            <tr>
+                <th>CDB/RDB</th>
+                <th>Data</th>
+                <th>Taxa (% do DI)</th>
+                <th>Valor atual</th>
+                <th>Venda permitida?</th>
+                <th>IR</th>
+                <th>IOF</th>
+                <th>Ganho no próx. dia*</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for item in operacoes %}
+            <tr>
+                <td>{{item.investimento.nome}}</td>
+                <td>{{ item.data|date:"Y-m-d" }}</td>
+                <td>{{ item.taxa }}%</td>
+                <td>R${{item.atual|floatformat:2}}</td>
+                <td>{{ item.venda_permitida|yesno:"Sim,Não,Indefinido" }}</td>
+                <td>R${{ item.imposto_renda|floatformat:2 }}</td>
+                <td>R${{ item.iof|floatformat:2 }}</td>
+                <td>R${{item.ganho_prox_dia }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="3">Total</th>
+                <th>R${{ dados.total_atual }}</th>
+                <th></th>
+                <th>R${{ dados.total_ir|floatformat:2 }}</th>
+                <th>R${{ dados.total_iof|floatformat:2 }}</th>
+                <th>R${{ dados.total_ganho_prox_dia }}</th>
+            </tr>
+        </tfoot>
+        </table>
+        * Obs.: Ganho considerando que seja repetida a taxa do dia anterior
+    </div>
+</div>
+
+{% endblock %}

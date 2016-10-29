@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+    {{ form.media }}
+{% endblock %}
+
+{% block content %}
+    <h1>Inserir transferência</h1>
+    <form method="POST" class="post-form form-horizontal">{% csrf_token %}
+        {{ form.as_p }}
+        <div class="form-actions">
+            <button type="submit" class="btn">Salvar</button>
+        </div>
+    </form>
+{% endblock %}
+

@@ -1,0 +1,98 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Bag of Gold - Login</title>
+    <link href="{% static "css/bootstrap.min.css" %}" type="text/css" rel="stylesheet">
+    <link href="{% static "css/font-awesome.min.css" %}" type="text/css" rel="stylesheet">
+
+    <link href="{% static "css/bootstrap-responsive.min.css" %}" rel="stylesheet">
+    <link id="base-style" href="{% static "css/style.css" %}" rel="stylesheet">
+    <link id="base-style-responsive" href="{% static "css/style-responsive.css" %}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800&amp;subset=latin,cyrillic-ext,latin-ext" rel="stylesheet" type="text/css">
+    
+    {% if ENV == 'PROD' %}
+    <!-- Google analytics -->
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    
+      ga('create', 'UA-7792152-3', 'auto');
+      ga('send', 'pageview');
+    
+    </script>
+    {% endif %}
+    
+    <style type="text/css">
+        body { background: url({% static "img/bg-login.jpg" %}) !important; }
+    </style>
+    
+</head>
+
+<body>
+
+    <div class="container-fluid-full">
+        
+        
+                    
+        <div class="row-fluid">
+            <div class="login-box">
+                <h2>Login</h2>
+                {% if form.errors %}
+                    <p>Usuário e/ou senha não conferem</p>
+                {% endif %}
+                <form class="form-horizontal" action="{% url "django.contrib.auth.views.login" %}" method="post">
+                    {% csrf_token %}
+                    <fieldset>
+                        
+                        <div class="input-prepend">
+                            <span class="add-on"><i class="halflings-icon user"></i></span>
+                            <input class="input-large span10" name="username" id="username" placeholder="Usuário" type="text">
+                        </div>
+                        <div class="clearfix"></div>
+
+                        <div class="input-prepend">
+                            <span class="add-on"><i class="halflings-icon lock"></i></span>
+                            <input class="input-large span10" name="password" id="password" placeholder="Senha" type="password">
+                        </div>
+                        <div class="clearfix"></div>
+                        
+                        <div class="button-login">  
+                        {% comment %}
+<!--                         <a href="{% url 'cadastro' %}" class="btn btn-warning">Cadastrar novo usuário</a> -->
+                        {% endcomment %}
+                        <button type="submit" class="btn btn-primary">Login</button>
+                        </div>
+                        <input type="hidden" name="next" value="{{ next }}" />
+                        <div class="clearfix"></div>
+                
+                    <hr>
+                        
+                    <p>
+                        <a href="{% url 'password_reset' %}">Esqueci a senha</a>
+                    </p>    
+            </fieldset></form></div><!--/span-->
+        </div><!--/row-->
+        
+        {% if messages %}
+        <div class="row-fluid">
+            <div class="login-box">
+                {% for message in messages %}
+                <h3>{{ message }}</h3>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+            
+    </div>
+
+
+    <!-- Core Scripts - Include with every page -->
+    <script src="{% static "js/jquery-1.9.1.min.js" %}"></script>
+    <script src="{% static "js/bootstrap.min.js" %}"></script>
+    
+</body>
+
+</html>
