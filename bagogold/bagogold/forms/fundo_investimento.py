@@ -86,3 +86,32 @@ class HistoricoCarenciaFundoInvestimentoForm(forms.ModelForm):
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),}
         labels = {'carencia': 'Período de carência (em dias)',}
+        
+    def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
+        try:
+            self.inicial = kwargs.pop('inicial')
+        except:
+            self.inicial = False
+        try:
+            self.fundo_investimento = kwargs.pop('fundo_investimento')
+        except:
+            self.fundo_investimento = None
+        # first call parent's constructor
+        super(HistoricoCarenciaFundoInvestimentoForm, self).__init__(*args, **kwargs)
+        self.fields['fundo_investimento'].queryset = FundoInvestimento.objects.filter(investidor=self.investidor)
+        if self.fundo_investimento:
+            self.fields['fundo_investimento'].disabled = True
+        if self.inicial:
+            self.fields['data'].disabled = True
+        
+        def clean_fundo_investimento(self):
+            if self.cleaned_data['fundo_investimento'].investidor != self.investidor:
+                raise forms.ValidationError('Fundo de investimento inválido')
+            return self.cleaned_data['fundo_investimento']
+        
+        def clean_carencia(self):
+            carencia = self.cleaned_data['carencia']
+            if carencia <= 0:
+                raise forms.ValidationError('Carência deve ser de pelo menos 1 dia')
+            return carencia
