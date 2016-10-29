@@ -1,0 +1,368 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>
+    {% block title %}
+    Bag of Gold
+    {% endblock %}
+    </title>
+{% block head %}
+    <!-- start: Meta -->
+    <meta charset="utf-8">
+    <meta name="description" content="Bootstrap Metro Dashboard">
+    <meta name="author" content="Dennis Ji">
+    <meta name="keyword" content="Metro, Metro UI, Dashboard, Bootstrap, Admin, Template, Theme, Responsive, Fluid, Retina">
+    <!-- end: Meta -->
+    
+    <!-- start: Mobile Specific -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- end: Mobile Specific -->
+    
+    <!-- start: CSS -->
+    <link id="bootstrap-style" href={% static "css/bootstrap.min.css" %} rel="stylesheet">
+    <link href={% static "css/bootstrap-responsive.min.css" %} rel="stylesheet">
+    <link id="base-style" href={% static "css/style.css" %} rel="stylesheet">
+    <link id="base-style-responsive" href={% static "css/style-responsive.css" %} rel="stylesheet">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800&subset=latin,cyrillic-ext,latin-ext' rel='stylesheet' type='text/css'>
+    <!-- end: CSS -->
+    
+
+    <!-- The HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+        <script src="https://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+        <link id="ie-style" href="css/ie.css" rel="stylesheet">
+    <![endif]-->
+    
+    <!--[if IE 9]>
+        <link id="ie9style" href="css/ie9.css" rel="stylesheet">
+    <![endif]-->
+        
+    <!-- start: Favicon -->
+    <link rel="shortcut icon" href={% static "img/favicon.ico" %}>
+    <!-- end: Favicon -->
+    
+    <!-- start: JavaScript-->
+
+    <script src={% static "js/jquery-1.9.1.min.js" %}></script>
+    <script src={% static "js/jquery-migrate-1.0.0.min.js" %}></script>
+    
+    <script src={% static "js/jquery-ui-1.10.0.custom.min.js" %}></script>
+
+    <script src={% static "js/jquery.ui.touch-punch.js" %}></script>
+
+    <script src={% static "js/modernizr.js" %}></script>
+
+    <script src={% static "js/bootstrap.min.js" %}></script>
+
+    <script src={% static "js/jquery.cookie.js" %}></script>
+
+    <script src={% static "js/fullcalendar.min.js" %}></script>
+
+    <script src={% static "js/jquery.dataTables.min.js" %}></script>
+
+    <script src={% static "js/excanvas.js" %}></script>
+    <script src={% static "js/jquery.flot.js" %}></script>
+    <script src={% static "js/jquery.flot.pie.js" %}></script>
+    <script src={% static "js/jquery.flot.stack.js" %}></script>
+    <script src={% static "js/jquery.flot.resize.min.js" %}></script>
+    <script src={% static "js/jquery.flot.orderBars.js" %}></script>
+    
+    <script src={% static "js/jquery.chosen.min.js" %}></script>
+
+    <script src={% static "js/jquery.uniform.min.js" %}></script>
+    
+    <script src={% static "js/jquery.cleditor.min.js" %}></script>
+
+    <script src={% static "js/jquery.elfinder.min.js" %}></script>
+
+    <script src={% static "js/jquery.raty.min.js" %}></script>
+
+    <script src={% static "js/jquery.iphone.toggle.js" %}></script>
+
+    <script src={% static "js/jquery.uploadify-3.1.min.js" %}></script>
+
+    <script src={% static "js/jquery.gritter.min.js" %}></script>
+
+    <script src={% static "js/jquery.imagesloaded.js" %}></script>
+
+    <script src={% static "js/jquery.masonry.min.js" %}></script>
+
+    <script src={% static "js/jquery.knob.modified.js" %}></script>
+
+    <script src={% static "js/jquery.sparkline.min.js" %}></script>
+
+    <script src={% static "js/counter.js" %}></script>
+
+    <script src={% static "js/retina.js" %}></script>
+
+    <script src={% static "js/custom.js" %}></script>
+    
+    {% if ENV == 'PROD' %}
+    <!-- Google analytics -->
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    
+      ga('create', 'UA-7792152-3', 'auto');
+      ga('send', 'pageview');
+    
+    </script>
+    {% endif%}
+    <!-- end: JavaScript-->
+{% endblock %}    
+
+{% block extra_head %}
+
+{% endblock %}
+</head>
+
+<body>
+<div class="navbar">
+    <div class="navbar-inner">
+        <div class="container-fluid">
+            <a class="brand" href="#"><span>Bag of Gold</span></a>
+                            
+            <!-- start: Header Menu -->
+            <div class="nav-no-collapse header-nav">
+                <ul class="nav pull-right">
+                {% comment %}
+<!--                     <li class="dropdown hidden-phone"> -->
+<!--                         <a class="btn dropdown-toggle" data-toggle="dropdown" href="#"> -->
+<!--                             <i class="halflings-icon white warning-sign"></i> -->
+<!--                         </a> -->
+<!--                         <ul class="dropdown-menu notifications"> -->
+<!--                             <li class="dropdown-menu-title"> -->
+<!--                                 <span>11 pendências</span> -->
+<!--                                 <a href="#refresh"><i class="icon-repeat"></i></a> -->
+<!--                             </li>    -->
+<!--                             <li> -->
+<!--                                 <a href="#"> -->
+<!--                                     <span class="icon blue"><i class="icon-user"></i></span> -->
+<!--                                     <span class="message">New user registration</span> -->
+<!--                                     <span class="time">1 min</span>  -->
+<!--                                 </a> -->
+<!--                             </li> -->
+<!--                             <li> -->
+<!--                                 <a href="#"> -->
+<!--                                     <span class="icon green"><i class="icon-comment-alt"></i></span> -->
+<!--                                     <span class="message">New comment</span> -->
+<!--                                     <span class="time">7 min</span>  -->
+<!--                                 </a> -->
+<!--                             </li> -->
+<!--                             <li> -->
+<!--                                 <a href="#"> -->
+<!--                                     <span class="icon green"><i class="icon-comment-alt"></i></span> -->
+<!--                                     <span class="message">New comment</span> -->
+<!--                                     <span class="time">8 min</span>  -->
+<!--                                 </a> -->
+<!--                             </li> -->
+<!--                             <li> -->
+<!--                                 <a href="#"> -->
+<!--                                     <span class="icon green"><i class="icon-comment-alt"></i></span> -->
+<!--                                     <span class="message">New comment</span> -->
+<!--                                     <span class="time">16 min</span>  -->
+<!--                                 </a> -->
+<!--                             </li> -->
+<!--                             <li> -->
+<!--                                 <a href="#"> -->
+<!--                                     <span class="icon green"><i class="icon-comment-alt"></i></span> -->
+<!--                                     <span class="message">New comment</span> -->
+<!--                                     <span class="time">yesterday</span>  -->
+<!--                                 </a> -->
+<!--                             </li> -->
+<!--                             <li> -->
+<!--                                 <a href="#"> -->
+<!--                                     <span class="icon blue"><i class="icon-user"></i></span> -->
+<!--                                     <span class="message">New user registration</span> -->
+<!--                                     <span class="time">yesterday</span>  -->
+<!--                                 </a> -->
+<!--                             </li> -->
+<!--                             <li class="dropdown-menu-sub-footer"> -->
+<!--                                 <a>View all notifications</a> -->
+<!--                             </li>    -->
+<!--                         </ul> -->
+<!--                     </li> -->
+<!--                     <li> -->
+<!--                         <a class="btn" href="#"> -->
+<!--                             <i class="halflings-icon white wrench"></i> -->
+<!--                         </a> -->
+<!--                     </li> -->
+                    <!-- start: User Dropdown -->
+                    {% endcomment %}
+                    {% if user.is_authenticated %}
+                    <li class="dropdown">
+                        <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+                            <i class="halflings-icon white user"></i> {{ request.user.username }}
+                            <span class="caret"></span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li class="dropdown-menu-title">
+                                <span>Minha conta</span>
+                            </li>
+                            <li><a href="{% url "configuracoes_conta_investidor" request.user.id %}"><i class="halflings-icon user"></i> Configurações</a></li>
+                            <li><a href="{% url "logout" %}"><i class="halflings-icon off"></i> Sair</a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li>
+                        <a href="{% url "login" %}"><i class="halflings-icon off"></i> Acessar conta</a>
+                    </li>
+                    {% endif %}
+                    <!-- end: User Dropdown -->
+                </ul>
+            </div>
+            <!-- end: Header Menu -->
+            
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid-full">
+<div class="row-fluid">
+    <!-- start: Main Menu -->
+    <div id="sidebar-left" class="span2">
+        <div class="nav-collapse sidebar-nav">
+            <ul class="nav nav-tabs nav-stacked main-menu">
+                <li><a href="{% url "inicio" %}"><i class="icon-bar-chart"></i><span class="hidden-tablet"> Início</span></a></li>   
+                <li>
+                    <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> Ações (B & H)</span></a>
+                    <ul>
+                        <li><a class="submenu" href="{% url "historico_bh" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico</span></a></li>
+                        <li><a class="submenu" href="{% url "inserir_operacao_bh" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir operação</span></a></li>
+                        {% if request.user.is_superuser %}
+                        <li><a class="submenu" href="{% url "inserir_provento_bh" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir provento</span></a></li>
+                        {% endif %}
+                        <li><a class="submenu" href="{% url "inserir_taxa_custodia_acao" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Ins. taxa de custódia</span></a></li>
+                        <li><a class="submenu" href="{% url "painel_bh" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Painel</span></a></li>
+                        <li><a class="submenu" href="{% url "ver_taxas_custodia_acao" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Ver taxas de custódia</span></a></li>
+                    </ul>   
+                </li>
+                <li>
+                    <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> Ações (Trading)</span></a>
+                    <ul>
+                        <li><a class="submenu" href="{% url "acompanhamento_mensal" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Acomp. mensal</span></a></li>
+                        <li><a class="submenu" href="{% url "historico_operacoes" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico operações</span></a></li>
+                        <li><a class="submenu" href="{% url "historico_operacoes_cv" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico compras/vendas</span></a></li>
+                        <li><a class="submenu" href="{% url "inserir_operacao_acao_t" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir operação</span></a></li>
+                        <li><a class="submenu" href="{% url "inserir_operacao_t" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir compra/venda</span></a></li>
+                    </ul>   
+                </li>
+                <li>
+                    <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> CDB / RDB</span></a>
+                    <ul>
+                        <li><a class="submenu" href="{% url "historico_cdb_rdb" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico</span></a></li>
+                        <li><a class="submenu" href="{% url "inserir_operacao_cdb_rdb" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir operação</span></a></li>
+                        <li><a class="submenu" href="{% url "inserir_cdb_rdb" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir CDB/RDB</span></a></li>
+                        <li><a class="submenu" href="{% url "listar_cdb_rdb" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar CDB/RDB</span></a></li>
+                        <li><a class="submenu" href="{% url "painel_cdb_rdb" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Painel</span></a></li>
+                    </ul>  
+                </li>
+                <li>
+                    <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> FII</span></a>
+                    <ul>
+                        {% if request.user.is_superuser %}
+                        <li><a class="submenu" href="{% url "acompanhamento_mensal_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Acomp. mensal</span></a></li>
+                        {% endif %}
+                        <li><a class="submenu" href="{% url "aconselhamento_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Aconselhamento</span></a></li>
+                        <li><a class="submenu" href="{% url "calcular_resultado_corretagem" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Cálculo de res. da corretagem</span></a></li>
+                       
+                        <li><a class="submenu" href="{% url "historico_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico</span></a></li>
+                        <li><a class="submenu" href="{% url "inserir_operacao_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir operação</span></a></li>
+                        {% if request.user.is_superuser %}
+                        <li><a class="submenu" href="{% url "inserir_provento_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir provento</span></a></li>
+                        {% endif %}
+                        <li><a class="submenu" href="{% url "painel_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Painel</span></a></li>
+                    </ul>   
+                </li>
+                <li>
+                    <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> Fundo de Investimento</span></a>
+                    <ul>
+                        <li><a class="submenu" href="{% url "adicionar_valor_cota_historico" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Adicionar valor de cota</span></a></li>
+                        <li><a class="submenu" href="{% url "historico_fundo_investimento" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico</span></a></li>
+                        <li><a class="submenu" href="{% url "inserir_operacao_fundo_investimento" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir operação</span></a></li>
+                        <li><a class="submenu" href="{% url "inserir_fundo_investimento" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir Fundo de Inv.</span></a></li>
+                        <li><a class="submenu" href="{% url "listar_fundo_investimento" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar Fundos</span></a></li>
+                        <li><a class="submenu" href="{% url "modificar_carencia_fundo_investimento" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Modificar carência</span></a></li>
+                        <li><a class="submenu" href="{% url "painel_fundo_investimento" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Painel</span></a></li>
+                    </ul>  
+                </li>
+                <li>
+                    <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> LCI / LCA</span></a>
+                    <ul>
+                        <li><a class="submenu" href="{% url "historico_lc" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico</span></a></li>
+                        <li><a class="submenu" href="{% url "inserir_lc" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir Letra de Crédito</span></a></li>
+                        <li><a class="submenu" href="{% url "inserir_operacao_lc" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir operação</span></a></li>
+                        <li><a class="submenu" href="{% url "listar_lc" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar Letras de Crédito</span></a></li>
+                        <li><a class="submenu" href="{% url "modificar_carencia_lc" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Modificar carência LC</span></a></li>
+                        <li><a class="submenu" href="{% url "modificar_porcentagem_di_lc" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Modificar porcentagem DI</span></a></li>
+                        <li><a class="submenu" href="{% url "painel_lc" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Painel</span></a></li>
+                    </ul>  
+                </li>
+                <li>
+                    <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> Tesouro Direto</span></a>
+                    <ul>
+                        <li><a class="submenu" href="{% url "aconselhamento_td" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Aconselhamento</span></a></li>
+                        <li><a class="submenu" href="{% url "historico_td" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico</span></a></li>
+                        <li><a class="submenu" href="{% url "inserir_operacao_td" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir operação</span></a></li>
+                        <li><a class="submenu" href="{% url "painel_td" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Painel</span></a></li>
+                        
+                    </ul>  
+                </li>
+                <li>
+                    <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> Divisões</span></a>
+                    <ul>
+                        <li><a class="submenu" href="{% url "inserir_divisao" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir divisão</span></a></li>
+                        <li><a class="submenu" href="{% url "inserir_transferencia" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir transferência</span></a></li>
+                        <li><a class="submenu" href="{% url "listar_divisoes" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar divisões</span></a></li>
+                        <li><a class="submenu" href="{% url "listar_transferencias" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar transferências</span></a></li>
+                    </ul>   
+                </li>
+                <li>
+                    <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> Imposto de Renda</span></a>
+                    <ul>
+                        <li><a class="submenu" href="{% url "listar_anos_imposto_renda" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar anos</span></a></li>
+                    </ul>   
+                </li>
+            </ul>
+        </div>
+    </div>
+    <!-- end: Main Menu -->
+    <!-- start: Content -->
+    <div id="content">
+        
+        {% if messages %}
+        <div class="row-fluid">
+            <div class="box-content alerts span10">
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %}">
+                    <button type="button" class="close" data-dismiss="alert">×</button>
+                    {% if message.tags %}
+                        {% if message.tags == 'success' %}
+                            <i class="icon-ok"></i>
+                        {% elif message.tags == 'error' %}
+                            <i class=" icon-ban-circle"></i>
+                        {% endif %}
+                    {% endif %} {{ message }}
+                </div>
+            {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="row-fluid">
+            <div class="span10">
+            {% block content %}
+            
+            {% endblock %}
+            </div>
+            <div class="span2">
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+</body>
+</html>

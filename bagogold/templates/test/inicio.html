@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% if user.is_authenticated %}
+<h1>Bem-vindo, {{request.user.investidor}}!</h1>
+
+<div class="row-fluid">
+    <div class="box span12">
+        <div class="box-header">
+            <h2>Investimentos</h2>
+            <div class="box-icon">
+                <a href="#" class="btn-minimize"><i class="halflings-icon chevron-up"></i></a>
+            </div>
+        </div>
+        <div class="box-content">
+            <div class="row-fluid">
+                {% for investimento in investimentos_atuais %}
+                <div class="span2 statbox green" ontablet="span2" ondesktop="span2">
+                    <div class="number" style="font-size: 22px;">R$ {{investimento.valor}}</div>
+                    <div class="title">{{investimento.descricao}}</div>
+                    <div class="footer">
+                        <a href="{% url investimento.link %}"> Detalhar</a>
+                    </div>  
+                </div>
+                {% endfor %}
+            </div>
+            <div class="row-fluid">
+                <a href="{% url "detalhamento_investimentos" %}" class="btn btn-warning">Detalhar investimentos</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="row-fluid">
+    <div class="box span4" ontablet="span4" ondesktop="span4">
+        <div class="box-header">
+            <span><strong>Últimas operações</strong></span>
+            <div class="box-icon">
+                <a href="#" class="btn-minimize"><i class="halflings-icon chevron-up"></i></a>
+            </div>
+        </div>
+        <div class="box-content">
+            <ul class="dashboard-list">
+                {% for operacao in ultimas_operacoes %}
+                <li>
+                    <a href="#">
+                        <span style="text-align:left;" class="white">{{operacao}}</span>
+                    </a>
+                </li>
+                {% empty %}
+                <li>
+                    <a href="#">
+                        <span style="text-align:left;" class="white">Não há operações</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="box span4" ontablet="span4" ondesktop="span4">
+        <div class="box-header">
+            <span><strong>Proventos a receber</strong></span>
+            <div class="box-icon">
+                <a href="#" class="btn-minimize"><i class="halflings-icon chevron-up"></i></a>
+            </div>
+        </div>
+        <div class="box-content">
+            <ul class="dashboard-list">
+                {% for provento, valor in proventos_a_receber.items %}
+                <li>
+                    <a href="#">
+                        <span style="text-align:left;" class="white span6">{{provento}}</span>
+                        <span class="white">R$ {{valor}}</span>
+                    </a>
+                </li>
+                {% empty %}
+                <li>
+                    <a href="#">
+                        <span style="text-align:left;" class="white">Não há proventos</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% comment %}
+<h3>Gráfico de rendimentos mensal</h3>
+<div class="row-fluid">
+
+        <div class="span4" id="graf_rendimentos_mensal" style="width:40%;height:300px"></div>
+
+</div>
+
+<script>
+$( document ).ready(function() {
+    $.plot($("#graf_rendimentos_mensal"), [ {lines: {show:true}, label: "Rendimentos", data: {{ graf_rendimentos_mensal|safe }} } 
+                              ],
+                                {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%d-%m-%y"} }  
+    );
+    
+function showTooltip(x, y, contents) {
+        
+        $('<div id="tooltip">' + contents + '</div>').css( {
+            position: 'absolute',
+            display: 'none',
+            top: y + 5,
+            left: x + 5,
+            border: '1px solid #fdd',
+            padding: '2px',
+            'background-color': '#fee',
+            opacity: 0.80
+        }).appendTo("body").fadeIn(200);
+    }
+
+    var previousPoint = null;
+    $("#graf_rendimentos_mensal").bind("plothover", function (event, pos, item) {
+        $("#x").text(pos.x.toFixed(2));
+        $("#y").text(pos.y.toFixed(2));
+
+        if (item) {
+            if (previousPoint != item.datapoint) {
+                previousPoint = item.datapoint;
+                
+                $("#tooltip").remove();
+                var x = item.datapoint[0].toFixed(2),
+                    y = item.datapoint[1].toFixed(2);
+                
+                var date = new Date(parseInt(x));
+                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d-%m-%y") +"</br>" + item.series.label + ": R$" + y);
+            }
+        }
+        else {
+            $("#tooltip").remove();
+            clicksYet = false;
+            previousPoint = null;            
+        }
+    });
+
+});
+</script>
+{% endcomment %}
+{% else %}
+<h1>Bem-vindo ao Bag of Gold!</h1>
+
+<h2>Este é um site dedicado a acompanhar investimentos. O investidor pode cadastrar suas operações, em ações, letras de crédito, CDB e outros, e então acompanhar a evolução diária de suas aplicações.</h2>
+<h2>Aqui o usuário pode acompanhar, de maneira unificada, investimentos em várias instituições. Você não precisa acessar sua conta em cada banco diferente para saber a situação atual de seu dinheiro.
+Basta registrar suas operações que o sistema se encarrega de atualizá-la diariamente.</h2>
+<h2>Importante: Todos os valores são aproximados e podem não bater com o valor de seus investimentos centavo a centavo.</h2>
+{% endif %}
+
+{% endblock %}

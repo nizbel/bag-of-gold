@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row-fluid">
+<form action="{% url 'acompanhamento_mensal' %}" method="POST">
+    {% csrf_token %}
+    <div class="control-group span3">
+        <label class="control-label" for="selectAno">Selecione o ano</label>
+        <div class="controls">
+            <select id="selectAno" name="select_ano">
+                {% for ano in lista_anos %}
+                <option value="{{ ano }}"{% if ano == dados_mes.ano %}selected="selected"{% endif %}>
+                    {{ ano }}
+                </option>    
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="control-group span3">
+        <label class="control-label" for="selectMes">Selecione o mês</label>
+        <div class="controls">
+            <div class="input-append" id="selectMes" name="select_mes">
+                {% for mes, valor in lista_meses %}
+                <input class="btn {% if valor == dados_mes.mes %}btn-primary{% endif %}" type="submit" name="{{ valor }}" value="{{ mes }}"/>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</form>
+</div>
+
+<div class="span8">
+    <div class="sparkLineStats widget black">
+        <ul class="unstyled">
+            <li class="row-fluid">
+                <div class="span6">Operações de compra: 
+                    <span class="number">{{ dados_mes.qtd_op_compra }}</span>
+                </div>
+                <div class="span6">Operações venda: 
+                    <span class="number">{{ dados_mes.qtd_op_venda }}</span>
+                </div>
+            </li>
+            <li class="row-fluid">
+                <div class="span6">Total movimentado (compra): 
+                    <span class="number">R${{ dados_mes.qtd_compra }}</span>
+                </div>
+                <div class="span6">Total movimentado (venda): 
+                    <span class="number">R${{ dados_mes.qtd_venda }}</span>
+                </div>
+            </li>
+            <li class="row-fluid">
+                <div class="span6">Lucro bruto: 
+                    <span class="number">R${{ dados_mes.lucro_bruto }}</span>
+                </div>
+                <div class="span6">IR devido: 
+                    <span class="number">R${{ dados_mes.ir_devido|floatformat:2 }}</span>
+                </div>
+            </li>
+            <li class="row-fluid">
+                <div class="span6">Corretagem/Emolumentos: 
+                    <span class="number">R${{ dados_mes.total_corretagem }}/R${{ dados_mes.total_emolumentos }}</span>
+                </div>
+                <div class="span6">Saldo para trades: 
+                    <span class="number">R${{ dados_mes.saldo_trades }}</span>
+                </div>
+            </li>
+            <li class="row-fluid">
+                <div class="span6">Ação mais lucrativa: 
+                    <span class="number">{{ dados_mes.mais_lucrativa.0 }} (R${{ dados_mes.mais_lucrativa.1 }})</span>
+                </div>
+                <div class="span6">Ação menos lucrativa: 
+                    <span class="number">{{ dados_mes.menos_lucrativa.0 }} (R${{ dados_mes.menos_lucrativa.1 }})</span>
+                </div>
+            </li>
+        </ul>
+    </div>
+    <div class="clearfix" style="height: 50px;"></div>
+    <div id="placeholder" style="width:800px;height:400px"></div>
+</div>
+    
+    <div class="box black span3" ontablet="span3" ondesktop="span3">
+        <div class="box-header">
+            <span>Ranking mensal</span>
+            <div class="box-icon">
+                <a href="#" class="btn-minimize"><i class="halflings-icon chevron-up"></i></a>
+            </div>
+        </div>
+        <div class="box-content">
+            <ul class="dashboard-list metro">
+                {% for acao in acoes_ranking %}
+                <li>
+                    <a href="#">
+                        {% comment %}
+                        <i class="icon-arrow-up green"></i>                               
+                        <span class="green">92</span>
+                        {% endcomment %}
+                        <span class="{% if acao.1 >= 0 %} green {% else %} red {% endif %}">{{ acao.0 }} (R${{ acao.1 }})</span>                                  
+                    </a>
+                </li>
+                {% empty %}
+                <li>
+                    <a><span>Não houve vendas</span></a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+
+
+<script>
+$(document).ready(function() {
+	function getCookie(c_name)
+	{
+	    if (document.cookie.length > 0)
+	    {
+	        c_start = document.cookie.indexOf(c_name + "=");
+	        if (c_start != -1)
+	        {
+	            c_start = c_start + c_name.length + 1;
+	            c_end = document.cookie.indexOf(";", c_start);
+	            if (c_end == -1) c_end = document.cookie.length;
+	            return unescape(document.cookie.substring(c_start,c_end));
+	        }
+	    }
+	    return "";
+	}
+	$(function () {
+	    $.ajaxSetup({
+	        headers: { "X-CSRFToken": getCookie("csrftoken") }
+	    });
+	});
+    //for every field change
+    $('#selectAno').change(function() {
+        $.ajax({
+            url : "{% url 'acompanhamento_mensal' %}", // the endpoint
+            type : "POST", // http method
+            data : { select_ano : $('#selectAno').val() }, // data sent with the post request
+
+            // handle a successful response
+            success : function(lista_meses) {
+            	var i;
+            	// Clean select options
+                $('#selectMes').empty();
+            	for (i = 0; i < lista_meses.length; ++i) {
+            		// Append new
+            		if (i == lista_meses.length-1) {
+            			$('#selectMes').append('<input class="btn" type="submit" name="' + lista_meses[i][1] + '" value="' + lista_meses[i][0] + '"/>');
+            			//$('#selectMes').append('<option value="' + lista_meses[i][1] + '" selected="selected">' + lista_meses[i][0] + '</option>');
+            		}
+            		else {
+                        $('#selectMes').append('<input class="btn" type="submit" name="' + lista_meses[i][1] + '" value="' + lista_meses[i][0] + '"/>');
+            			  //$('#selectMes').append('<option value="' + lista_meses[i][1] + '">' + lista_meses[i][0] + '</option>');
+            		}
+            	}
+            },
+
+            // handle a non-successful response
+            error : function(xhr,errmsg,err) {
+                console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+            }
+        });
+    });
+    $.plot($("#placeholder"), [ {color: "#2222AA", label: "Vendas", bars: {show:true, align:"center", barWidth: 12 * 60 * 60 * 600, lineWidth: 1}, data: {{ graf_vendas_mes|safe }} }, 
+                                {color: "#AA2222", label: "Compras", bars: {show:true, align:"center", barWidth: 12 * 60 * 60 * 600, lineWidth: 1}, data: {{ graf_compras_mes|safe }} }, 
+                                {label: "Lucro mensal", lines: {show:true}, yaxis: 2, data: {{ graf_lucro_mes|safe }} } 
+                              ],
+                                {legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%d-%m-%y"}, 
+                                 yaxes: [{tickFormatter: function (val, axis) {
+                                   return "R$" + val;
+                               },
+                               axisLabel: "Valor operações",
+                               axisLabelUseCanvas: true,
+                               axisLabelFontSizePixels: 12,
+                               axisLabelFontFamily: "Verdana, Arial, Helvetica, Tahoma, sans-serif",
+                               axisLabelPadding: 5
+                               },
+                               {
+                               position: 0,
+                               tickFormatter: function (val, axis) {
+                                   return "R$" + val;
+                               },
+                               axisLabel: "Lucro",
+                               axisLabelUseCanvas: true,
+                               axisLabelFontSizePixels: 12,
+                               axisLabelFontFamily: "Verdana, Arial, Helvetica, Tahoma, sans-serif",
+                               axisLabelPadding: 5
+                               }
+                           ]}  
+    );
+});
+</script>
+
+{% endblock %}
