@@ -355,7 +355,6 @@ def painel(request):
     investidor = request.user.investidor
     # Processa primeiro operações de venda (V), depois compra (C)
     operacoes = OperacaoFundoInvestimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
-    historico_porcentagem = HistoricoPorcentagemFundoInvestimento.objects.all() 
     # Prepara o campo valor atual
     for operacao in operacoes:
         operacao.atual = operacao.quantidade
