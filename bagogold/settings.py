@@ -140,7 +140,7 @@ STATICFILES_DIRS = [
 
 # Configurar precisao de decimais
 from decimal import getcontext
-getcontext().prec = 9
+getcontext().prec = 15
 
 # Buscar configuracoes adicionais
 from conf.settings_local import *
