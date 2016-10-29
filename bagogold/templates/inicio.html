@@ -15,12 +15,12 @@
         </div>
         <div class="box-content">
             <div class="row-fluid">
-                {% for investimento, valor in investimentos_atuais.items %}
+                {% for investimento in investimentos_atuais %}
                 <div class="span2 statbox green" ontablet="span2" ondesktop="span2">
-                    <div class="number" style="font-size: 26px;">R$ {{valor}}</div>
-                    <div class="title">{{investimento}}</div>
+                    <div class="number" style="font-size: 22px;">R$ {{investimento.valor}}</div>
+                    <div class="title">{{investimento.descricao}}</div>
                     <div class="footer">
-                        <a href="#"> Detalhar</a>
+                        <a href="{% url investimento.link %}"> Detalhar</a>
                     </div>  
                 </div>
                 {% endfor %}
