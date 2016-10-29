@@ -25,6 +25,7 @@ from django.http import HttpResponseRedirect
 from django.http.response import HttpResponse
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
+from django.template.response import TemplateResponse
 import calendar
 import copy
 import datetime
@@ -555,4 +556,6 @@ def painel(request):
     dados['total_lucro'] = total_lucro
     dados['data_valor_mais_recente'] = buscar_data_valor_mais_recente()
     
-    return render_to_response('td/painel.html', {'titulos': titulos, 'titulos_vendidos': titulos_vendidos, 'dados': dados}, context_instance=RequestContext(request))
+#     return render_to_response('td/painel.html', {'titulos': titulos, 'titulos_vendidos': titulos_vendidos, 'dados': dados}, context_instance=RequestContext(request))
+    response = TemplateResponse(request, 'td/painel.html', {'titulos': titulos, 'titulos_vendidos': titulos_vendidos, 'dados': dados})
+    return response
