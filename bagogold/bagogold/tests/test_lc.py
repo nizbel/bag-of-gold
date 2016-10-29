@@ -63,6 +63,6 @@ class ValorLCAteDiaTestCase(TestCase):
                 HistoricoTaxaDI.objects.create(data=data, taxa=Decimal(14.13))
             
     def test_valor_lc_ate_dia(self):
-        """Testar se LC de 10000 está com valor 10.689,47 no dia 27/10/2016"""
+        """Testar se LC de 10000 está com valor 10.689,47 no dia 27/10/2016, permitindo erro de até 1 centavo"""
         valor_lc = calcular_valor_lc_ate_dia(User.objects.get(username='tester').investidor, datetime.date(2016, 10, 27)).values()
-        self.assertEqual(valor_lc[0], Decimal('10689.47'))
+        self.assertAlmostEqual(valor_lc[0], Decimal('10689.47'), delta=0.01)
