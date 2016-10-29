@@ -8,4 +8,6 @@ import investidores
 import fundo_investimento
 import home
 
+import misc
+
 import imposto_renda
