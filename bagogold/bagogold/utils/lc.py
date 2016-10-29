@@ -5,7 +5,6 @@ from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI, \
 from decimal import Decimal, ROUND_DOWN
 from django.db.models import Q
 from django.db.models.aggregates import Sum, Count
-from django.db.models.expressions import F
 import datetime
 
 def calcular_valor_atualizado_com_taxa(taxa_do_dia, valor_atual, operacao_taxa):

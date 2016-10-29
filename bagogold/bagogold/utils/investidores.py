@@ -134,7 +134,7 @@ def buscar_totais_atuais_investimentos(investidor):
     
     # Arredondar todos os valores para 2 casas decimais
     for chave, valor in totais_atuais.items():
-        totais_atuais[chave] = valor.quantize(Decimal('0.00'))
+        totais_atuais[chave] = valor.quantize(Decimal('0.01'))
     
     return totais_atuais
 

@@ -63,7 +63,7 @@ class TelaInicioTestCase(TestCase):
         divisao_operacao_lc2 = DivisaoOperacaoLC.objects.create(divisao=divisao2, operacao=operacao_lc2, quantidade=operacao_lc2.quantidade)
         
         # Gerar valores históricos
-        date_list = [data_atual - datetime.timedelta(days=x) for x in range(0, (data_atual - datetime.date(2016, 1, 1)).days)]
+        date_list = [data_atual - datetime.timedelta(days=x) for x in range(0, (data_atual - datetime.date(2016, 1, 1)).days+1)]
         date_list = [data for data in date_list if data.weekday() < 5 and not verificar_feriado_bovespa(data)]
         
         for data in date_list:

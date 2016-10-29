@@ -27,9 +27,38 @@ import math
 # TODO remover login_required
 @login_required
 def inicio(request):
+    # Usado para criar objetos vazios
+    class Object(object):
+        pass
+    
     ultimas_operacoes = buscar_ultimas_operacoes(request.user.investidor, 5) if request.user.is_authenticated() else list()
     
-    investimentos_atuais = buscar_totais_atuais_investimentos(request.user.investidor) if request.user.is_authenticated() else list()
+    print (fim - inicio)
+
+    inicio = datetime.datetime.now()
+    investimentos_atuais = list()
+    investimentos = buscar_totais_atuais_investimentos(request.user.investidor) if request.user.is_authenticated() else list()
+    for chave, valor in investimentos.items():
+        investimento = Object()
+        investimento.valor = valor
+        investimento.descricao = chave
+        if chave == 'Ações':
+            investimento.link = 'painel_bh'
+        elif chave == 'CDB/RDB':
+            investimento.link = 'painel_cdb_rdb'
+        elif chave == 'FII':
+            investimento.link = 'painel_fii'
+        elif chave == 'Fundos de Investimentos':
+            investimento.link = 'painel_fundo_investimento'
+        elif chave == 'Letras de Crédito':
+            investimento.link = 'painel_lc'
+        elif chave == 'Tesouro Direto':
+            investimento.link = 'painel_td'
+            
+        investimentos_atuais.append(investimento)
+        print chave, investimento.link
+            
+    fim = datetime.datetime.now()
     
     proventos_a_receber = buscar_proventos_a_receber(request.user.investidor) if request.user.is_authenticated() else list()
     
