@@ -81,7 +81,6 @@ def buscar_totais_atuais_investimentos(investidor):
     data_atual = datetime.date.today()
     
     # Ações (B&H)
-    inicio = datetime.datetime.now()
     acoes_investidor = buscar_acoes_investidor_na_data(investidor)
     # Cálculo de quantidade
     for acao in Acao.objects.filter(id__in=acoes_investidor):
@@ -91,20 +90,14 @@ def buscar_totais_atuais_investimentos(investidor):
         except:
             acao_valor = HistoricoAcao.objects.filter(acao__ticker=acao.ticker).order_by('-data')[0].preco_unitario
         totais_atuais['Ações'] += (acao_qtd * acao_valor)
-    fim = datetime.datetime.now()
-#     print (fim - inicio), 'Acao'
 
     for divisao in divisoes:
-        inicio = datetime.datetime.now()
         # CDB / RDB
         cdb_rdb_divisao = calcular_valor_cdb_rdb_ate_dia_por_divisao(datetime.date.today(), divisao.id)
         for total_cdb_rdb in cdb_rdb_divisao.values():
             totais_atuais['CDB/RDB'] += total_cdb_rdb
-        fim = datetime.datetime.now()
-#         print (fim - inicio), 'CDB_RDB'
         
         # Fundos de investimento imobiliário
-        inicio = datetime.datetime.now()
         fii_divisao = calcular_qtd_fiis_ate_dia_por_divisao(datetime.date.today(), divisao.id)
         for ticker in fii_divisao.keys():
             try:
@@ -112,11 +105,8 @@ def buscar_totais_atuais_investimentos(investidor):
             except:
                 fii_valor = HistoricoFII.objects.filter(fii__ticker=ticker).order_by('-data')[0].preco_unitario
             totais_atuais['FII'] += (fii_divisao[ticker] * fii_valor)
-        fim = datetime.datetime.now()
-#         print (fim - inicio), 'FII'
         
         # Fundos de investimento
-        inicio = datetime.datetime.now()
         fundo_investimento_divisao = calcular_qtd_cotas_ate_dia_por_divisao(datetime.date.today(), divisao.id)
         for fundo_id in fundo_investimento_divisao.keys():
             historico_fundo = HistoricoValorCotas.objects.filter(fundo_investimento__id=fundo_id).order_by('-data')
@@ -126,20 +116,14 @@ def buscar_totais_atuais_investimentos(investidor):
             else:
                 valor_cota = ultima_operacao_fundo.valor_cota()
             totais_atuais['Fundos de Investimentos'] += (fundo_investimento_divisao[fundo_id] * valor_cota)
-        fim = datetime.datetime.now()
-#         print (fim - inicio), 'Fundos'
             
     # Letras de crédito
-    inicio = datetime.datetime.now()
     letras_credito = calcular_valor_lc_ate_dia(investidor, data_atual)
     for total_lc in letras_credito.values():
         totais_atuais['Letras de Crédito'] += total_lc
-    fim = datetime.datetime.now()
-#     print (fim - inicio), 'LC'
     
     for divisao in divisoes: 
         # Tesouro Direto
-        inicio = datetime.datetime.now()
         td_divisao = calcular_qtd_titulos_ate_dia_por_divisao(datetime.date.today(), divisao.id)
         for titulo_id in td_divisao.keys():
             try:
@@ -147,8 +131,6 @@ def buscar_totais_atuais_investimentos(investidor):
             except:
                 td_valor = HistoricoTitulo.objects.filter(titulo__id=titulo_id).order_by('-data')[0].preco_venda
             totais_atuais['Tesouro Direto'] += (td_divisao[titulo_id] * td_valor)
-        fim = datetime.datetime.now()
-#         print (fim - inicio), 'TD'
     
     # Arredondar todos os valores para 2 casas decimais
     for chave, valor in totais_atuais.items():
