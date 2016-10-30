@@ -4,6 +4,8 @@ syntax: regexp
 /ultimo_backup-*
 doc proventos/*
 backups/teste-*
+assets/*
+templates/teste/*
 syntax: glob
 .project
 .pydevproject
