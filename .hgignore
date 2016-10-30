@@ -5,7 +5,7 @@ syntax: regexp
 doc proventos/*
 backups/teste-*
 assets/*
-templates/teste/*
+/templates/teste/*
 syntax: glob
 .project
 .pydevproject
