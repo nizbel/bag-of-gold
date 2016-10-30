@@ -21,6 +21,7 @@ from yahoo_finance import Share
 import calendar
 import datetime
 import math
+from django.template.response import TemplateResponse
 
 
 
@@ -552,6 +553,8 @@ def painel(request):
     dados['total_valor'] = total_valor
     dados['valor_diario_mais_recente'] = ValorDiarioFII.objects.latest('data_hora').data_hora
 
-    return render_to_response('fii/painel.html', 
-                              {'fiis': fiis, 'dados': dados},
-                              context_instance=RequestContext(request))
+#     return render_to_response('fii/painel.html', 
+#                               {'fiis': fiis, 'dados': dados},
+#                               context_instance=RequestContext(request))
+    response = TemplateResponse(request, 'fii/painel.html', {'fiis': fiis, 'dados': dados})
+    return response
