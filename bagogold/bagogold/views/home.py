@@ -23,6 +23,7 @@ from operator import attrgetter
 import calendar
 import datetime
 import math
+from django.template.response import TemplateResponse
 
 # TODO remover login_required
 @login_required
@@ -61,8 +62,11 @@ def inicio(request):
     graf_rendimentos_mensal = [[str(calendar.timegm(data.timetuple()) * 1000), float(sum(calcular_valor_lc_ate_dia(request.user.investidor, data).values())) ] \
                                for data in [(datetime.date.today() - datetime.timedelta(dias_subtrair)) for dias_subtrair in [30, 20, 10, 0] ]] if request.user.is_authenticated() else list()
     
-    return render_to_response('inicio.html', {'ultimas_operacoes': ultimas_operacoes, 'investimentos_atuais': investimentos_atuais, 
-                                              'proventos_a_receber': proventos_a_receber, 'graf_rendimentos_mensal': graf_rendimentos_mensal}, context_instance=RequestContext(request))
+#     return render_to_response('inicio.html', {'ultimas_operacoes': ultimas_operacoes, 'investimentos_atuais': investimentos_atuais, 
+#                                               'proventos_a_receber': proventos_a_receber, 'graf_rendimentos_mensal': graf_rendimentos_mensal}, context_instance=RequestContext(request))
+    response = TemplateResponse(request, 'inicio.html', {'ultimas_operacoes': ultimas_operacoes, 'investimentos_atuais': investimentos_atuais, 
+                                            'proventos_a_receber': proventos_a_receber, 'graf_rendimentos_mensal': graf_rendimentos_mensal})
+    return response
 
 @login_required
 def detalhamento_investimentos(request):
@@ -496,5 +500,8 @@ def detalhamento_investimentos(request):
 #     print 'CDB/RDB:      ', total_cdb_rdb
 #     print 'Fundo Inv.:   ', total_fundo_investimento
     
-    return render_to_response('detalhamento_investimentos.html', {'graf_patrimonio': graf_patrimonio, 'patrimonio_anual': patrimonio_anual,
-                                            'estatisticas': estatisticas}, context_instance=RequestContext(request))
+#     return render_to_response('detalhamento_investimentos.html', {'graf_patrimonio': graf_patrimonio, 'patrimonio_anual': patrimonio_anual,
+#                                             'estatisticas': estatisticas}, context_instance=RequestContext(request))
+    response = TemplateResponse(request, 'detalhamento_investimentos.html', {'graf_patrimonio': graf_patrimonio, 'patrimonio_anual': patrimonio_anual,
+                                            'estatisticas': estatisticas})
+    return response
