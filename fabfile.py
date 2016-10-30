@@ -15,7 +15,7 @@ import time
 def prod():
     env.config = 'PROD'
     env.hosts = ['bagofgold.com.br']
-    env.path = '/bagogold'
+    env.path = 'bagogold'
     env.repository = 'https://bitbucket.org/nizbel/bag-of-gold'
     env.user = 'bagofgold'
     env.virtualenv = 'bagogold'
@@ -88,17 +88,13 @@ def prod():
 #     sudo('/etc/init.d/supervisor start')
     
 def metronic_test_update():
-    require('path')
-    
     run('~/bin/dropbox.py start')
     time.sleep(15)
     run('~/bin/dropbox.py stop')
     with cd(env.path):
+        run('ls')
         run('cp -ar ~/Dropbox/HTML\ Bag\ of\ Gold/Teste\ in\ Progress/pages/* bagogold/templates/teste')
         run('cp -ar ~/Dropbox/HTML\ Bag\ of\ Gold/Teste\ in\ Progress/assets bagogold/static/')
-        
+            
         # Collect static files
-        run('source ~/.virtualenvs/bagogold/bin/activate; python manage.py collectstatic --noinput')
-        
-    sudo('service apache2 reload')
-    
+        run('source %s/bin/activate; python manage.py collectstatic --noinput' % (env.virtualenv_path))
