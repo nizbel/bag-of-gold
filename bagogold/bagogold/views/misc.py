@@ -8,7 +8,7 @@ from fabfile import metronic_test_update
 @login_required
 def ver_nova_aparencia(request, url):
     # Apenas eu e Camila podemos acessar
-    if request.id not in [1,31]:
+    if request.user.id not in [1,31]:
         raise PermissionDenied
     
     if 'testando_aparencia' in request.session:
@@ -20,7 +20,7 @@ def ver_nova_aparencia(request, url):
 @login_required
 def carregar_nova_aparencia(request, url):
     # Apenas eu e Camila podemos acessar
-    if request.id not in [1,31]:
+    if request.user.id not in [1,31]:
         raise PermissionDenied
 
     with settings(host_string='bagofgold@bagofgold.com.br'):
