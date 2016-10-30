@@ -92,7 +92,6 @@ def metronic_test_update():
     time.sleep(15)
     run('~/bin/dropbox.py stop')
     with cd(env.path):
-        run('ls')
         run('cp -ar ~/Dropbox/HTML\ Bag\ of\ Gold/Teste\ in\ Progress/pages/* bagogold/templates/teste')
         run('cp -ar ~/Dropbox/HTML\ Bag\ of\ Gold/Teste\ in\ Progress/assets bagogold/static/')
             
