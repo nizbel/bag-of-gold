@@ -30,7 +30,6 @@ def carregar_nova_aparencia(request, url):
     subprocess.call(['/home/bagofgold/bin/dropbox.py', 'stop'])
     subprocess.call(['cp', '-ar', '/home/bagofgold/Dropbox/HTML\ Bag\ of\ Gold/Teste\ in\ Progress/pages/*', '/bagogold/templates/teste'])
     subprocess.call(['cp', '-ar', '/home/bagofgold/Dropbox/HTML\ Bag\ of\ Gold/Teste\ in\ Progress/assets', '/bagogold/static/'])
-    subprocess.call(['source',  '/home/bagofgold/.virtualenvs/bagogold/bin/activate']) 
     subprocess.call(['/home/bagofgold/.virtualenvs/bagogold/bin/python', '/home/bagofgold/bagogold/manage.py', 'collectstatic', '--noinput'])
 
     messages.success(request, 'Arquivos carregados com sucesso')
