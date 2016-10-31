@@ -3,8 +3,9 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.http.response import HttpResponseRedirect
-from fabfile import metronic_test_update, prod
-from fabric.context_managers import settings
+import subprocess32 as subprocess
+import time
+
 
 @login_required
 def ver_nova_aparencia(request, url):
@@ -24,9 +25,13 @@ def carregar_nova_aparencia(request, url):
     if request.user.id not in [1,31]:
         raise PermissionDenied
 
-    with settings(host_string='bagofgold@bagofgold.com.br'):
-        prod()
-        metronic_test_update()
-        
+    subprocess.call(['/home/bagofgold/bin/dropbox.py', 'start'])
+    time.sleep(15)
+    subprocess.call(['/home/bagofgold/bin/dropbox.py', 'stop'])
+    subprocess.call(['cp', '-ar', '/home/bagofgold/Dropbox/HTML\ Bag\ of\ Gold/Teste\ in\ Progress/pages/*', '/bagogold/templates/teste'])
+    subprocess.call(['cp', '-ar', '/home/bagofgold/Dropbox/HTML\ Bag\ of\ Gold/Teste\ in\ Progress/assets', '/bagogold/static/'])
+    subprocess.call(['source',  '/home/bagofgold/.virtualenvs/bagogold/bin/activate']) 
+    subprocess.call(['/home/bagofgold/.virtualenvs/bagogold/bin/python', '/home/bagofgold/bagogold/manage.py', 'collectstatic', '--noinput'])
+
     messages.success(request, 'Arquivos carregados com sucesso')
     return HttpResponseRedirect('/' + url + '/')
