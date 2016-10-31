@@ -25,9 +25,9 @@ def carregar_nova_aparencia(request, url):
     if request.user.id not in [1,31]:
         raise PermissionDenied
 
-    subprocess.check_output(['/home/bagofgold/bin/dropbox.py', 'start'])
+    subprocess.call(['/home/bagofgold/bin/dropbox.py', 'start'])
     time.sleep(15)
-    subprocess.check_output(['/home/bagofgold/bin/dropbox.py', 'stop'])
+    subprocess.call(['/home/bagofgold/bin/dropbox.py', 'stop'])
     subprocess.call('cp -ar /home/bagofgold/Dropbox/HTML\ Bag\ of\ Gold/Teste\ in\ Progress/pages/* /home/bagofgold/bagogold/bagogold/templates/teste', shell=True)
     subprocess.call('cp -ar /home/bagofgold/Dropbox/HTML\ Bag\ of\ Gold/Teste\ in\ Progress/assets /home/bagofgold/bagogold/bagogold/static/', shell=True)
     subprocess.call(['/home/bagofgold/.virtualenvs/bagogold/bin/python', '/home/bagofgold/bagogold/manage.py', 'collectstatic', '--noinput'])
