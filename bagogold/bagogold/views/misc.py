@@ -25,12 +25,14 @@ def carregar_nova_aparencia(request, url):
     if request.user.id not in [1,31]:
         raise PermissionDenied
 
-    print subprocess.call(['/home/bagofgold/bin/dropbox.py', 'start'])
+    f = open('/home/bagofgold/bagogold/out.txt', 'w')
+    f.write(subprocess.call(['/home/bagofgold/bin/dropbox.py', 'start']))
     time.sleep(15)
-    print subprocess.call(['/home/bagofgold/bin/dropbox.py', 'stop'])
-    print subprocess.call('cp -ar /home/bagofgold/Dropbox/HTML\ Bag\ of\ Gold/Teste\ in\ Progress/pages/* /home/bagofgold/bagogold/bagogold/templates/teste', shell=True)
-    print subprocess.call('cp -ar /home/bagofgold/Dropbox/HTML\ Bag\ of\ Gold/Teste\ in\ Progress/assets /home/bagofgold/bagogold/bagogold/static/', shell=True)
-    print subprocess.call(['/home/bagofgold/.virtualenvs/bagogold/bin/python', '/home/bagofgold/bagogold/manage.py', 'collectstatic', '--noinput'])
+    f.write(subprocess.call(['/home/bagofgold/bin/dropbox.py', 'stop']))
+    f.write(subprocess.call('cp -ar /home/bagofgold/Dropbox/HTML\ Bag\ of\ Gold/Teste\ in\ Progress/pages/* /home/bagofgold/bagogold/bagogold/templates/teste', shell=True))
+    f.write(subprocess.call('cp -ar /home/bagofgold/Dropbox/HTML\ Bag\ of\ Gold/Teste\ in\ Progress/assets /home/bagofgold/bagogold/bagogold/static/', shell=True))
+    f.write(subprocess.call(['/home/bagofgold/.virtualenvs/bagogold/bin/python', '/home/bagofgold/bagogold/manage.py', 'collectstatic', '--noinput']))
+    f.close()
 
     messages.success(request, 'Arquivos carregados com sucesso')
     return HttpResponseRedirect('/' + url + '/')
