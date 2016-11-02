@@ -61,6 +61,43 @@ def trazer_primeiro_registro(queryset):
         return resultado[0]
     return None
 
+def calcular_domingo_pascoa_no_ano(ano):
+    """
+    Calcula o domingo de páscoa para o ano especificado. Usado para achar as datas dos feriados eclesiásticos
+    Parâmetros: Ano
+    Retorno: Dia do domingo de páscoa no ano
+    """
+    numero_dourado = (ano % 19)
+    # Verificar na tabela
+    """
+    1  14 de abril
+    2   3 de abril
+    3  23 de março
+    4  11 de abril
+    5  31 de março
+    6  18 de abril
+    7   8 de abril
+    8  28 de março
+    9  16 de abril
+    10  5 de abril
+    11 25 de março
+    12 13 de abril
+    13  2 de abril
+    14 22 de março
+    15 10 de abril
+    16 30 de março
+    17 17 de abril
+    18  7 de abril
+    19 27 de março
+    """
+    data_encontrada = ['14/4', '3/4', '23/3', '11/4', '31/3', '18/4', '8/4', '28/3', '16/4', '5/4', '25/3', '13/4', '2/4', '22/3', '10/4', '30/3', '17/4', '7/4', '27/3'][numero_dourado]
+    data_encontrada = datetime.date(ano, int(data_encontrada.split('/')[1]), int(data_encontrada.split('/')[0]))
+    # Verifica os próximos 7 dias a fim de encontrar o próximo domingo
+    semana_generator = [data_encontrada + datetime.timedelta(days=x) for x in xrange(7)]
+    for dia in semana_generator:
+        if dia.weekday() == 6:
+            return dia
+    
 def verificar_feriado_bovespa(data):
     """
     Verifica se o dia informado é feriado na Bovespa
@@ -68,7 +105,15 @@ def verificar_feriado_bovespa(data):
     Retorno: É feriado?
     """
     dia_mes = (data.day, data.month)
+    # Calcular feriados dependentes da páscoa
+    domingo_pascoa = calcular_domingo_pascoa_no_ano(data.year)
+    carnaval = domingo_pascoa - datetime.timedelta(days=47)
+    sexta_santa = domingo_pascoa - datetime.timedelta(days=2)
+    corpus_christi = domingo_pascoa + datetime.timedelta(days=60)
     lista_feriados = ((1, 1), # Confraternização Universal
+                      (carnaval.day, carnaval.month), # Carnaval
+                      (sexta_santa.day, sexta_santa.month), # Sexta-feira santa
+                      (corpus_christi.day, corpus_christi.month), # Corpus Christi
                       (21, 4), # Tiradentes
                       (1, 5), # Dia do trabalho
                       (7, 9), # Independência do Brasil
