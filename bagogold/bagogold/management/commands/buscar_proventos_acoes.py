@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import Acao
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa
-from bagogold.bagogold.utils.acoes import buscar_proventos_acao, \
-    preencher_codigos_cvm
 from django.core.management.base import BaseCommand
 from threading import Thread
 import datetime
@@ -48,5 +46,53 @@ class Command(BaseCommand):
                 t.join()
             contador += incremento
         
+def buscar_proventos_acao(codigo_cvm, ticker, ano, num_tentativas):
+    # Busca todos os proventos
+    prov_url = 'http://bvmf.bmfbovespa.com.br/pt-br/mercados/acoes/empresas/ExecutaAcaoConsultaInfoRelevantes.asp?codCVM=%s&ano=%s' % (codigo_cvm, ano)
+    req = Request(prov_url)
+    try:
+        response = urlopen(req)
+    except HTTPError as e:
+        print 'The server couldn\'t fulfill the request.'
+        print 'Error code: ', e.code
+    except URLError as e:
+        print 'We failed to reach a server.'
+        print 'Reason: ', e.reason
+    else:
+        data = response.read()
+        # Verificar se sistema está indisponível
+        if 'Sistema indisponivel' in data:
+            if num_tentativas == 3:
+                raise URLError('Sistema indisponível')
+                return
+            return buscar_proventos_acao(codigo_cvm, ticker, ano, num_tentativas+1)
+        inicio = data.find('id="frmConsultaEmpresas"')
+        fim = data.find('</form>', inicio)
+        data = data[inicio : fim]
         
+        print 'Buscar', Empresa.objects.get(codigo_cvm=codigo_cvm), ano
+        divisoes = re.findall('<div class="large-12 columns">(.*?)(?=<div class="large-12 columns">|$)', data, flags=re.IGNORECASE|re.DOTALL)
+        informacoes_rendimentos = list()
+        for divisao in divisoes:
+            # Pega as informações necessárias dentro da divisão, não há como existir mais de uma tupla (data, protocolo)
+            informacao_divisao = re.findall('Data Referência.*?(\d+/\d+/\d+).*?Assunto.*?(?:juro|dividendo|provento|capital social).*?<a href=".*?protocolo=(\d+).*?" target="_blank">.*?</a>', divisao, flags=re.IGNORECASE|re.DOTALL)
+            if informacao_divisao:
+                informacoes_rendimentos.append(informacao_divisao[0])
+        print 'Buscou', Empresa.objects.get(codigo_cvm=codigo_cvm), ano
+        
+        for data_referencia, protocolo in informacoes_rendimentos:
+#             print protocolo, Empresa.objects.get(codigo_cvm=codigo_cvm), ano
+            if not DocumentoProventoBovespa.objects.filter(empresa__codigo_cvm=codigo_cvm, protocolo=protocolo):
+                documento = DocumentoProventoBovespa()
+                documento.empresa = Empresa.objects.get(codigo_cvm=codigo_cvm)
+                documento.url = 'http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=%s' % (protocolo)
+                documento.tipo = 'A'
+                documento.protocolo = protocolo
+                documento.data_referencia = datetime.datetime.strptime(data_referencia, '%d/%m/%Y')
+                documento.baixar_documento()
+                
+                # Gerar pendencia para o documento
+                pendencia = PendenciaDocumentoProvento()
+                pendencia.documento = documento
+#                 pendencia.save()
         
