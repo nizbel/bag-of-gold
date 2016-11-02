@@ -21,10 +21,11 @@ class Command(BaseCommand):
             
             if test_metronic.carregar_dados:
                 subprocess.call(['/home/bagofgold/bin/dropbox.py', 'start'])
-                time.sleep(20)
+                while 'Up to date' not in subprocess.check_output(['/home/bagofgold/bin/dropbox.py', 'status']):
+                    time.sleep(5)
                 subprocess.call(['/home/bagofgold/bin/dropbox.py', 'stop'])
                 test_metronic.carregar_dados = False
                 test_metronic.save()
-                
+
             time.sleep(5)
             fim = datetime.datetime.now()   
