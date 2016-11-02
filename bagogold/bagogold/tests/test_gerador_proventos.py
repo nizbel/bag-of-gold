@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.testFII import baixar_demonstrativo_rendimentos
 from django.contrib.auth.models import User
+from django.core.files import File
 from django.test import TestCase
+from urllib2 import URLError
 
 class GeradorProventosTestCase(TestCase):
 
@@ -9,7 +12,15 @@ class GeradorProventosTestCase(TestCase):
         user = User.objects.create(username='tester')
 
     def test_baixar_arquivo(self):
-        arquivo = baixar_demonstrativo_rendimentos()
+        arquivo = File(baixar_demonstrativo_rendimentos('http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=507317'))
+        self.assertTrue(hasattr(arquivo, 'size'))
+        self.assertTrue(hasattr(arquivo, 'file'))
+        self.assertTrue(hasattr(arquivo, 'read'))
+        self.assertTrue(hasattr(arquivo, 'open'))
+        
+    def test_nao_baixar_se_url_invalida(self):
+        with self.assertRaises(URLError):
+            baixar_demonstrativo_rendimentos('http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protcolo=507317')
     
     def test_excluir_arquivo_sem_info(self):
         pass
