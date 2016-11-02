@@ -2,6 +2,7 @@
 from bagogold.bagogold.models.acoes import Acao
 from bagogold.bagogold.testFII import baixar_demonstrativo_rendimentos
 from django.core.files import File
+from django.core.files.storage import default_storage
 from django.db import models
 from django.dispatch import receiver
 import datetime
@@ -33,26 +34,28 @@ class DocumentoProventoBovespa (models.Model):
             self.documento.delete()
                 
     def baixar_documento(self):
-        documento = baixar_demonstrativo_rendimentos(self.url)
-        try:
-            self.documento.save('%s-%s.pdf' % (self.ticker_empresa(), self.protocolo), File(documento))
-            # Se possui '_' é porque já existia um arquivo antes, apagar este arquivo e salvar o documento novamente
-            if '_' in self.documento.name:
-                # Apagar documento original
-                path_documento_original = self.documento.path[:self.documento.path.find('_')] + self.extensao_documento()
-                print path_documento_original
-                if os.path.isfile(path_documento_original):
-                    os.remove(path_documento_original)
-                # Apagar documento criado
-                self.apagar_documento()
-                # Salvar novamente
-                self.documento.save('%s-%s.pdf' % (self.ticker_empresa(), self.protocolo), File(documento))
-        except Exception as e:
-            # Apaga o documento antes de lançar o erro
-            if self.documento:
-                if os.path.isfile(self.documento.path):
-                    os.remove(self.documento.path)
-            raise e
+        # Verificar se documento já não foi baixado
+        print default_storage.exists('doc proventos/{0}/{1}.pdf'.format(self.ticker_empresa(), '%s-%s.pdf' % (self.ticker_empresa(), self.protocolo)))
+#         documento = baixar_demonstrativo_rendimentos(self.url)
+#         try:
+#             self.documento.save('%s-%s.pdf' % (self.ticker_empresa(), self.protocolo), File(documento))
+#             # Se possui '_' é porque já existia um arquivo antes, apagar este arquivo e salvar o documento novamente
+#             if '_' in self.documento.name:
+#                 # Apagar documento original
+#                 path_documento_original = self.documento.path[:self.documento.path.find('_')] + self.extensao_documento()
+#                 print path_documento_original
+#                 if os.path.isfile(path_documento_original):
+#                     os.remove(path_documento_original)
+#                 # Apagar documento criado
+#                 self.apagar_documento()
+#                 # Salvar novamente
+#                 self.documento.save('%s-%s.pdf' % (self.ticker_empresa(), self.protocolo), File(documento))
+#         except Exception as e:
+#             # Apaga o documento antes de lançar o erro
+#             if self.documento:
+#                 if os.path.isfile(self.documento.path):
+#                     os.remove(self.documento.path)
+#             raise e
     
     def extensao_documento(self):
         nome, extensao = os.path.splitext(self.documento.name)
