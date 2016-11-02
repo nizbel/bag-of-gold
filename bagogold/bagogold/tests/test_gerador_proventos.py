@@ -3,6 +3,9 @@ from django.test import TestCase
 
 class GeradorProventosTestCase(TestCase):
 
+    def setUp(self):
+        pass
+
     def test_baixar_arquivos(self):
         pass
     
