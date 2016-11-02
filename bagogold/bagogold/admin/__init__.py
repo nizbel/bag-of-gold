@@ -3,6 +3,7 @@ import cdb_rdb
 import divisoes
 import fii
 import fundo_investimento
+import gerador_proventos
 import investidores
 import lc
 import td

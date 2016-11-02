@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.fii import FII, ProventoFII
+from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia_por_ticker
 from cStringIO import StringIO
 from decimal import Decimal
 from pdfminer.converter import TextConverter
@@ -187,12 +188,9 @@ def buscar_rendimentos_fii(ticker):
                     print 'nao achou'
                 
         
-        
-
-def ler_demonstrativo_rendimentos(pdf_url, ticker):
-#     http://bvmf.bmfbovespa.com.br/sig/FormConsultaPdfDocumentoFundos.asp?strSigla=BBPO&strData=2016-04-01T11:55:11.357
-#     pdf_url = 'http://bvmf.bmfbovespa.com.br/sig/FormConsultaPdfDocumentoFundos.asp?strSigla=BBPO11&strData=2015-12-01T10:27:19.467'
+def baixar_demonstrativo_rendimentos(pdf_url):
     req = Request(pdf_url)
+#     print pdf_url
     try:
         response = urlopen(req)
     except HTTPError as e:
@@ -205,7 +203,45 @@ def ler_demonstrativo_rendimentos(pdf_url, ticker):
         return ()
     else:
         try:
+            meta = response.info()
+#             print "Content-Length:", meta.getheaders("Content-Length")[0]
             arquivo_rendimentos = StringIO(response.read())
+            return arquivo_rendimentos
+        except Exception as e:
+            template = "An exception of type {0} occured. Arguments:\n{1!r}"
+            message = template.format(type(e).__name__, e.args)
+            print pdf_url, "->", message
+            return ()
+
+
+
+def ler_demonstrativo_rendimentos(pdf_url, ticker):
+#     http://bvmf.bmfbovespa.com.br/sig/FormConsultaPdfDocumentoFundos.asp?strSigla=BBPO&strData=2016-04-01T11:55:11.357
+#     pdf_url = 'http://bvmf.bmfbovespa.com.br/sig/FormConsultaPdfDocumentoFundos.asp?strSigla=BBPO11&strData=2015-12-01T10:27:19.467'
+    req = Request(pdf_url)
+#     print pdf_url
+    try:
+        response = urlopen(req)
+    except HTTPError as e:
+        print 'The server couldn\'t fulfill the request.'
+        print 'Error code: ', e.code
+        return ()
+    except URLError as e:
+        print 'We failed to reach a server.'
+        print 'Reason: ', e.reason
+        return ()
+    else:
+        try:
+            meta = response.info()
+            arquivo_rendimentos = StringIO(response.read())
+            pasta = 'doc proventos/%s' % (ticker)
+            if not os.path.exists(pasta):
+                os.makedirs(pasta)
+                
+            with open('%s/%s-%s.pdf' % (pasta, ticker, re.findall('protocolo=(\d+)', pdf_url,flags=re.IGNORECASE)[0]), "wb") as local_file:
+                local_file.write(arquivo_rendimentos.getvalue())
+            if True:
+                return
             rsrcmgr = PDFResourceManager()
             retstr = StringIO()
             codec = 'utf-8'
@@ -266,10 +302,53 @@ def ler_demonstrativo_rendimentos(pdf_url, ticker):
             message = template.format(type(e).__name__, e.args)
             print pdf_url, "->", message
             return ()
+        
+def ler_documento_proventos(documento):
+    try:
+        documento.open()
+        arquivo_rendimentos = StringIO(documento.read())
+        
+        rsrcmgr = PDFResourceManager()
+        retstr = StringIO()
+        codec = 'utf-8'
+        laparams = LAParams()
+        device = TextConverter(rsrcmgr, retstr, codec=codec, laparams=laparams)
+        interpreter = PDFPageInterpreter(rsrcmgr, device)
+        password = ""
+        maxpages = 0
+        caching = True
+        pagenos=set()
+        
+        for page in PDFPage.get_pages(arquivo_rendimentos, pagenos, maxpages=maxpages, password=password,caching=caching, check_extractable=True):
+            interpreter.process_page(page)
+         
+        arquivo_rendimentos.close()
+        device.close()
+        text = retstr.getvalue()
+        retstr.close()
+        return text
+    except Exception as e:
+        template = "An exception of type {0} occured. Arguments:\n{1!r}"
+        message = template.format(type(e).__name__, e.args)
+        print "->", message
+        return ()
+
+def buscar_info_proventos_no_texto(texto):
+#     print 'Ações'
+    possui_dividendo = len(re.findall('dividendo', texto, re.IGNORECASE)) > 0
+    possui_jscp = len(re.findall('j[s]{0,1}cp|[^a-z]juro[s]{0,1}[^a-z]', texto, re.IGNORECASE)) > 0
+    mencoes_com = re.findall('[^a-z]com[^a-z]', texto, re.IGNORECASE)
+    mencoes_ex = re.findall('[^a-z]ex[^a-z]|[^a-z]exjur[^a-z]', texto, re.IGNORECASE)
+    mencoes_pagamento = re.findall('pagamento|pago', texto, re.IGNORECASE)
+    datas = re.findall('(\d{1,2}[\.\/]\d{1,2}[\.\/]\d\d\d\d)', texto)
+    valor = re.findall('(\d+\s*?,\s*?\d+)', texto)
+#     print 'datas:', datas, 'valor', valor
+    return (datas, valor)
 
 def buscar_info_proventos_fii_no_texto(texto):
+#     print 'FII'
     # TODO Preparar leitura de datas e valores a partir de texto mais proximo
     datas = re.findall('(\d{1,2}[\.\/]\d{1,2}[\.\/]\d\d\d\d)', texto)
     valor = re.findall('(\d+\s*?,\s*?\d+)', texto)
-    print 'datas:', datas, 'valor', valor
+#     print 'datas:', datas, 'valor', valor
     return (datas, valor)

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+    {{ form_pendencia.media }}
+{% endblock %}
+
+{% block content %}
+    <h1>Resolver pendência</h1>
+    <div class="span12">
+    {{ texto_documento }}
+    </div>
+    <form method="POST" class="post-form form-horizontal">{% csrf_token %}
+        <div id="forms">
+            {{ formset.management_form }}
+            {% for form in formset.forms %}
+                {{ form.as_p }}
+            {% endfor %}
+            <input type="button" value="Add More" id="add_more">
+        </div>
+        <div class="form-actions">
+            <button type="submit" name="save" value="1" class="btn">Salvar</button>
+        </div>
+    </form>
+    
+{% endblock %}

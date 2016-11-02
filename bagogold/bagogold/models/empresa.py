@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.models.acoes import Acao
 from django.db import models
+import re
  
 class Empresa (models.Model):
     nome = models.CharField('Nome da empresa', max_length=100)
@@ -8,3 +10,6 @@ class Empresa (models.Model):
     
     def __unicode__(self):
         return self.nome
+    
+    def ticker_empresa(self):
+        return re.sub('\d', '', Acao.objects.filter(empresa=self)[0].ticker)
