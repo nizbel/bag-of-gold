@@ -36,6 +36,7 @@ def carregar_nova_aparencia(request, url):
     test_metronic.save()
     
     while test_metronic.carregar_dados:
+        test_metronic = CarregamentoMetronic.objects.get(id=1)
         pass
     
     subprocess.call('cp -ar /home/bagofgold/Dropbox/HTML\ Bag\ of\ Gold/Teste\ in\ Progress/pages/* /home/bagofgold/bagogold/bagogold/templates/teste', shell=True)
