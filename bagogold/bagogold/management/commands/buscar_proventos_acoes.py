@@ -1,10 +1,39 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import Acao
-from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa
+from bagogold.bagogold.models.empresa import Empresa
+from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
+    PendenciaDocumentoProvento
 from django.core.management.base import BaseCommand
 from threading import Thread
+from urllib2 import Request, urlopen, HTTPError, URLError
 import datetime
 import re
+import time
+
+
+threads_rodando = {}
+documentos_para_download = list()
+
+class CriarDocumentoThread(Thread):
+    def run(self):
+        try:
+            while len(threads_rodando) > 0 or len(documentos_para_download) > 0:
+                while len(documentos_para_download) > 0:
+                    documento = documentos_para_download.pop(0)
+                    
+                    # Baixar e salvar documento
+                    documento.baixar_documento()
+                
+                    # Gerar pendencia para o documento
+                    pendencia = PendenciaDocumentoProvento()
+                    pendencia.documento = documento
+                    pendencia.save()
+                    
+                time.sleep(10)
+        except Exception as e:
+                template = "An exception of type {0} occured. Arguments:\n{1!r}"
+                message = template.format(type(e).__name__, e.args)
+                print message
 
 class BuscaProventosAcaoThread(Thread):
     def __init__(self, codigo_cvm, ticker):
@@ -32,19 +61,15 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # O incremento mostra quantas threads correrão por vez
-        incremento = 12
-        acoes = Acao.objects.filter(empresa__codigo_cvm__isnull=False).order_by('empresa__codigo_cvm').distinct('empresa__codigo_cvm')
-#         acoes = Acao.objects.filter(ticker__in=['LREN3'])
+        qtd_threads = 10
+#         acoes = Acao.objects.filter(empresa__codigo_cvm__isnull=False).order_by('empresa__codigo_cvm').distinct('empresa__codigo_cvm')
+        acoes = Acao.objects.filter(ticker__in=['BBAS3'])
         contador = 0
         while contador <= len(acoes):
-            threads = []
             for acao in acoes[contador : min(contador+incremento,len(acoes))]:
                 t = BuscaProventosAcaoThread(acao.empresa.codigo_cvm, re.sub(r'\d', '', acao.ticker))
-                threads.append(t)
                 t.start()
-            for t in threads:
-                t.join()
-            contador += incremento
+                contador += 1
         
 def buscar_proventos_acao(codigo_cvm, ticker, ano, num_tentativas):
     # Busca todos os proventos
@@ -81,7 +106,7 @@ def buscar_proventos_acao(codigo_cvm, ticker, ano, num_tentativas):
         print 'Buscou', Empresa.objects.get(codigo_cvm=codigo_cvm), ano
         
         for data_referencia, protocolo in informacoes_rendimentos:
-#             print protocolo, Empresa.objects.get(codigo_cvm=codigo_cvm), ano
+            print protocolo, Empresa.objects.get(codigo_cvm=codigo_cvm), ano
             if not DocumentoProventoBovespa.objects.filter(empresa__codigo_cvm=codigo_cvm, protocolo=protocolo):
                 documento = DocumentoProventoBovespa()
                 documento.empresa = Empresa.objects.get(codigo_cvm=codigo_cvm)
@@ -89,10 +114,5 @@ def buscar_proventos_acao(codigo_cvm, ticker, ano, num_tentativas):
                 documento.tipo = 'A'
                 documento.protocolo = protocolo
                 documento.data_referencia = datetime.datetime.strptime(data_referencia, '%d/%m/%Y')
-                documento.baixar_documento()
-                
-                # Gerar pendencia para o documento
-                pendencia = PendenciaDocumentoProvento()
-                pendencia.documento = documento
-#                 pendencia.save()
+                documentos_para_download.append(documento)
         
