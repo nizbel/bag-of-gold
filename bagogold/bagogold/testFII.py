@@ -201,17 +201,21 @@ def baixar_demonstrativo_rendimentos(pdf_url):
         print 'We failed to reach a server.'
         print 'Reason: ', e.reason
         return ()
-    else:
-        try:
-            meta = response.info()
+#     else:
+#         try:
+#             meta = response.info()
 #             print "Content-Length:", meta.getheaders("Content-Length")[0]
-            arquivo_rendimentos = StringIO(response.read())
-            return arquivo_rendimentos
-        except Exception as e:
-            template = "An exception of type {0} occured. Arguments:\n{1!r}"
-            message = template.format(type(e).__name__, e.args)
-            print pdf_url, "->", message
-            return ()
+    resposta = response.read()
+    teste_resposta = resposta.decode('latin-1').strip()
+    if (u'Não Existem Arquivos com essas Características' in teste_resposta):
+        raise URLError('URL da bovespa inválida')
+    arquivo_rendimentos = StringIO(resposta)
+    return arquivo_rendimentos
+#         except Exception as e:
+#             template = "An exception of type {0} occured. Arguments:\n{1!r}"
+#             message = template.format(type(e).__name__, e.args)
+#             print pdf_url, "->", message
+#             return ()
 
 
 
