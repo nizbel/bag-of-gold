@@ -41,6 +41,12 @@ class VerificarFeriadoBovespaTestCase(TestCase):
         """Testa dia 12 de Agosto"""
         self.assertFalse(verificar_feriado_bovespa(datetime.date(2016, 8, 12)))
         
+    def test_feriados_moveis(self):
+        """Testa feriados móveis, carnaval, sexta-feira santa e corpus christi"""
+        self.assertTrue(verificar_feriado_bovespa(datetime.date(2016, 2, 9)))
+        self.assertTrue(verificar_feriado_bovespa(datetime.date(2016, 3, 25)))
+        self.assertTrue(verificar_feriado_bovespa(datetime.date(2016, 5, 26)))
+        
 class QtdDiasUteisNoPeriodoTestCase(TestCase):
     
     def test_mostrar_erro_data_final_menor_que_inicial(self):

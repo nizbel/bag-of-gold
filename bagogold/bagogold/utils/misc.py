@@ -105,7 +105,15 @@ def verificar_feriado_bovespa(data):
     Retorno: É feriado?
     """
     dia_mes = (data.day, data.month)
+    # Calcular feriados dependentes da páscoa
+    domingo_pascoa = calcular_domingo_pascoa_no_ano(data.year)
+    carnaval = domingo_pascoa - datetime.timedelta(days=47)
+    sexta_santa = domingo_pascoa - datetime.timedelta(days=2)
+    corpus_christi = domingo_pascoa + datetime.timedelta(days=60)
     lista_feriados = ((1, 1), # Confraternização Universal
+                      (carnaval.day, carnaval.month), # Carnaval
+                      (sexta_santa.day, sexta_santa.month), # Sexta-feira santa
+                      (corpus_christi.day, corpus_christi.month), # Corpus Christi
                       (21, 4), # Tiradentes
                       (1, 5), # Dia do trabalho
                       (7, 9), # Independência do Brasil
