@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
+from django.contrib.auth.models import User
 from django.test import TestCase
 
 class GeradorProventosTestCase(TestCase):
 
     def setUp(self):
-        pass
+        # Investidor
+        user = User.objects.create(username='tester')
 
-    def test_baixar_arquivos(self):
-        pass
+    def test_baixar_arquivo(self):
+        arquivo = baixar_demonstrativo_rendimentos()
     
     def test_excluir_arquivo_sem_info(self):
         pass
