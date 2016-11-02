@@ -28,4 +28,3 @@ class Command(BaseCommand):
                 
             time.sleep(5)
             fim = datetime.datetime.now()   
-            print (fim - inicio).total_seconds()
