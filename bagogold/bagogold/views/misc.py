@@ -6,6 +6,7 @@ from django.http.response import HttpResponseRedirect
 import subprocess32 as subprocess
 import sys
 import time
+from bagogold.bagogold.models.metronic_test import CarregamentoMetronic
 
 
 @login_required
@@ -26,6 +27,17 @@ def carregar_nova_aparencia(request, url):
     if request.user.id not in [1,31]:
         raise PermissionDenied
 
+    # Busca carregamento metronic
+    try:
+        test_metronic = CarregamentoMetronic.objects.get(id=1)
+    except CarregamentoMetronic.DoesNotExist:
+        test_metronic = CarregamentoMetronic()
+    test_metronic.carregar_dados = True
+    test_metronic.save()
+    
+    while test_metronic.carregar_dados:
+        pass
+    
     subprocess.call('cp -ar /home/bagofgold/Dropbox/HTML\ Bag\ of\ Gold/Teste\ in\ Progress/pages/* /home/bagofgold/bagogold/bagogold/templates/teste', shell=True)
     subprocess.call('cp -ar /home/bagofgold/Dropbox/HTML\ Bag\ of\ Gold/Teste\ in\ Progress/assets /home/bagofgold/bagogold/bagogold/static/', shell=True)
     subprocess.call(['/home/bagofgold/.virtualenvs/bagogold/bin/python', '/home/bagofgold/bagogold/manage.py', 'collectstatic', '--noinput'])
