@@ -291,7 +291,7 @@ def ler_demonstrativo_rendimentos(pdf_url, ticker):
                 retstr.close()
                 os.remove('%s.pdf' % (ticker))
                 os.remove('%s-decrypted.pdf' % (ticker))
-                return buscar_info_proventos_fii_no_texto(text)
+                return buscar_info_proventos_no_texto(text)
             except Exception as e:
                 template = "An exception of type {0} occured. Arguments:\n{1!r}"
                 message = template.format(type(e).__name__, e.args)
