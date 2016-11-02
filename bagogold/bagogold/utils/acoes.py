@@ -508,7 +508,7 @@ def buscar_proventos_acao(codigo_cvm, ticker, ano, num_tentativas):
                 # Gerar pendencia para o documento
                 pendencia = PendenciaDocumentoProvento()
                 pendencia.documento = documento
-                pendencia.save()
+#                 pendencia.save()
                 
 
 # def buscar_proventos_acao(codigo_cvm, ticker, num_tentativas):
