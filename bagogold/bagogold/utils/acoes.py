@@ -479,7 +479,6 @@ def buscar_proventos_acao(codigo_cvm, ticker, ano, num_tentativas):
                 raise URLError('Sistema indisponível')
                 return
             return buscar_proventos_acao(codigo_cvm, ticker, ano, num_tentativas+1)
-        # TODO adicionar data Data Referência.*?(\d+/\d+/\d+).*?(?:Data Entrega).*?Assunto(?:(?!Assunto).)*?(?:juro|dividendo|provento|capital social).*?<a href=".*?protocolo=(\d+).*?" target="_blank">.*?</a>
         inicio = data.find('id="frmConsultaEmpresas"')
         fim = data.find('</form>', inicio)
         data = data[inicio : fim]
