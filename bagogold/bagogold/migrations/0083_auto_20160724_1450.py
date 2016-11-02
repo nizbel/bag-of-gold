@@ -9,7 +9,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('bagogold', '0072_documentobovespa_pendencia_proventoacaodocumento_proventofiidocumento'),
+        ('bagogold', '0082_documentobovespa_pendencia_proventoacaodocumento_proventofiidocumento'),
     ]
 
     operations = [
