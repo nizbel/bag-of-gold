@@ -13,7 +13,9 @@ class GeradorProventosTestCase(TestCase):
 
     def test_baixar_arquivo(self):
         """Testa se o arquivo baixado realmente é um arquivo"""
-        arquivo = File(baixar_demonstrativo_rendimentos('http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=507317'))
+        conteudo = baixar_demonstrativo_rendimentos('http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=507317')
+        self.assertFalse(conteudo == ())
+        arquivo = File(conteudo)
         self.assertTrue(hasattr(arquivo, 'size'))
         self.assertTrue(hasattr(arquivo, 'file'))
         self.assertTrue(hasattr(arquivo, 'read'))
@@ -25,11 +27,11 @@ class GeradorProventosTestCase(TestCase):
             baixar_demonstrativo_rendimentos('http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protcolo=507317')
     
     def test_excluir_arquivo_sem_info(self):
-        """Testa exclusão de arquivo por um validador do site"""
+        """Testa exclusão de arquivo por um investidor do site"""
         pass
     
     def test_gerar_provento(self):
-        """Testa criação do provento por um validador"""
+        """Testa criação do provento por um investidor"""
         pass
     
     def test_gerar_versao_doc_provento(self):
