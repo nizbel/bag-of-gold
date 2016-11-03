@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold import settings
 from bagogold.bagogold.models.acoes import Acao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa
@@ -8,6 +9,7 @@ from django.core.files import File
 from django.test import TestCase
 from urllib2 import URLError
 import datetime
+import os
 
 class GeradorProventosTestCase(TestCase):
 
@@ -15,9 +17,13 @@ class GeradorProventosTestCase(TestCase):
         # Investidor
         user = User.objects.create(username='tester')
         
+        # Empresa existente
         empresa = Empresa.objects.create(nome='Banco do Brasil', nome_pregao='BBAS', codigo_cvm='1023')
-        
         acao = Acao.objects.create(empresa=empresa, ticker="BBAS3")
+        
+        # Empresa inexistente
+        empresa = Empresa.objects.create(nome='Teste', nome_pregao='TTTT', codigo_cvm='1024')
+        acao = Acao.objects.create(empresa=empresa, ticker="TTTT3")
 
     def test_baixar_arquivo(self):
         """Testa se o arquivo baixado realmente é um arquivo"""
@@ -43,6 +49,23 @@ class GeradorProventosTestCase(TestCase):
         documento.protocolo = '507317'
         documento.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
         self.assertFalse(documento.baixar_e_salvar_documento())
+        
+    def test_baixar_se_nao_existir_arquivo_em_media(self):
+        """Testa se criação do documento na base faz download devido a documento não existir em Media"""
+        empresa = Empresa.objects.get(codigo_cvm='1024')
+        documento = DocumentoProventoBovespa()
+        documento.empresa = empresa
+        documento.url = 'http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=%507317'
+        documento.tipo = 'A'
+        documento.protocolo = '507317'
+        documento.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
+        self.assertTrue(documento.baixar_e_salvar_documento())
+        # Apagar documento criado após teste
+        documento.apagar_documento()
+        # Apagar pasta após teste
+        if os.listdir('%sdoc proventos/%s' % (settings.MEDIA_ROOT, empresa.nome_pregao)) == []:
+            os.rmdir('%sdoc proventos/%s' % (settings.MEDIA_ROOT, empresa.nome_pregao))
+        
     
     def test_excluir_arquivo_sem_info(self):
         """Testa exclusão de arquivo por um investidor do site"""

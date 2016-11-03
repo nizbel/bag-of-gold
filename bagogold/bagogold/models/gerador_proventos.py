@@ -37,16 +37,14 @@ class DocumentoProventoBovespa (models.Model):
     def baixar_e_salvar_documento(self):
         # Verificar se documento já não foi baixado
         documento_path = '{0}doc proventos/{1}/{2}'.format(settings.MEDIA_ROOT, self.ticker_empresa(), '%s-%s.pdf' % (self.ticker_empresa(), self.protocolo))
-        print os.path.isfile(documento_path)
         if os.path.isfile(documento_path):
             baixou_arquivo = False
             self.documento.name = 'doc proventos/{0}/{1}'.format(self.ticker_empresa(), '%s-%s.pdf' % (self.ticker_empresa(), self.protocolo))
-            print 'Usou', documento_path
-#             self.save()
+            self.save()
         else:
             baixou_arquivo = True
             documento = baixar_demonstrativo_rendimentos(self.url)
-            print 'Baixou', documento_path
+            self.documento.save('%s-%s.pdf' % (self.ticker_empresa(), self.protocolo), File(documento))
         return baixou_arquivo
     
     def extensao_documento(self):
