@@ -1,15 +1,23 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.models.acoes import Acao
+from bagogold.bagogold.models.empresa import Empresa
+from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa
 from bagogold.bagogold.testFII import baixar_demonstrativo_rendimentos
 from django.contrib.auth.models import User
 from django.core.files import File
 from django.test import TestCase
 from urllib2 import URLError
+import datetime
 
 class GeradorProventosTestCase(TestCase):
 
     def setUp(self):
         # Investidor
         user = User.objects.create(username='tester')
+        
+        empresa = Empresa.objects.create(nome='Banco do Brasil', nome_pregao='BBAS', codigo_cvm='1023')
+        
+        acao = Acao.objects.create(empresa=empresa, ticker="BBAS3")
 
     def test_baixar_arquivo(self):
         """Testa se o arquivo baixado realmente é um arquivo"""
@@ -25,6 +33,16 @@ class GeradorProventosTestCase(TestCase):
         """Testa se é jogado URLError quando enviada uma URL da bovespa inválida"""
         with self.assertRaises(URLError):
             baixar_demonstrativo_rendimentos('http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protcolo=507317')
+    
+    def test_nao_baixar_se_ja_existir_arquivo_em_media(self):
+        """Testa se criação do documento na base recusa download devido a documento já existir em Media"""
+        documento = DocumentoProventoBovespa()
+        documento.empresa = Empresa.objects.get(codigo_cvm='1023')
+        documento.url = 'http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=%507317'
+        documento.tipo = 'A'
+        documento.protocolo = '507317'
+        documento.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
+        self.assertFalse(documento.baixar_e_salvar_documento())
     
     def test_excluir_arquivo_sem_info(self):
         """Testa exclusão de arquivo por um investidor do site"""

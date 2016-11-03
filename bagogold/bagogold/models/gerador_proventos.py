@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold import settings
 from bagogold.bagogold.models.acoes import Acao
 from bagogold.bagogold.testFII import baixar_demonstrativo_rendimentos
 from django.core.files import File
@@ -33,29 +34,20 @@ class DocumentoProventoBovespa (models.Model):
         if os.path.isfile(self.documento.path):
             self.documento.delete()
                 
-    def baixar_documento(self):
+    def baixar_e_salvar_documento(self):
         # Verificar se documento já não foi baixado
-        print default_storage.exists('doc proventos/{0}/{1}.pdf'.format(self.ticker_empresa(), '%s-%s.pdf' % (self.ticker_empresa(), self.protocolo)))
-#         documento = baixar_demonstrativo_rendimentos(self.url)
-#         try:
-#             self.documento.save('%s-%s.pdf' % (self.ticker_empresa(), self.protocolo), File(documento))
-#             # Se possui '_' é porque já existia um arquivo antes, apagar este arquivo e salvar o documento novamente
-#             if '_' in self.documento.name:
-#                 # Apagar documento original
-#                 path_documento_original = self.documento.path[:self.documento.path.find('_')] + self.extensao_documento()
-#                 print path_documento_original
-#                 if os.path.isfile(path_documento_original):
-#                     os.remove(path_documento_original)
-#                 # Apagar documento criado
-#                 self.apagar_documento()
-#                 # Salvar novamente
-#                 self.documento.save('%s-%s.pdf' % (self.ticker_empresa(), self.protocolo), File(documento))
-#         except Exception as e:
-#             # Apaga o documento antes de lançar o erro
-#             if self.documento:
-#                 if os.path.isfile(self.documento.path):
-#                     os.remove(self.documento.path)
-#             raise e
+        documento_path = '{0}doc proventos/{1}/{2}'.format(settings.MEDIA_ROOT, self.ticker_empresa(), '%s-%s.pdf' % (self.ticker_empresa(), self.protocolo))
+        print os.path.isfile(documento_path)
+        if os.path.isfile(documento_path):
+            baixou_arquivo = False
+            self.documento.name = 'doc proventos/{0}/{1}'.format(self.ticker_empresa(), '%s-%s.pdf' % (self.ticker_empresa(), self.protocolo))
+            print 'Usou', documento_path
+#             self.save()
+        else:
+            baixou_arquivo = True
+            documento = baixar_demonstrativo_rendimentos(self.url)
+            print 'Baixou', documento_path
+        return baixou_arquivo
     
     def extensao_documento(self):
         nome, extensao = os.path.splitext(self.documento.name)
