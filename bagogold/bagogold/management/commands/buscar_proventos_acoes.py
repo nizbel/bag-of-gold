@@ -10,8 +10,8 @@ import datetime
 import re
 import time
 
-
-threads_rodando = {}
+# A thread 'Principal' indica se ainda está rodando a thread principal
+threads_rodando = {'Principal': 1}
 documentos_para_download = list()
 
 class CriarDocumentoThread(Thread):
@@ -22,14 +22,14 @@ class CriarDocumentoThread(Thread):
                     documento = documentos_para_download.pop(0)
                     
                     # Baixar e salvar documento
-                    documento.baixar_documento()
+                    documento.baixar_e_salvar_documento()
                 
                     # Gerar pendencia para o documento
                     pendencia = PendenciaDocumentoProvento()
                     pendencia.documento = documento
-                    pendencia.save()
-                    
-                time.sleep(10)
+#                     pendencia.save()
+                
+                time.sleep(5)
         except Exception as e:
                 template = "An exception of type {0} occured. Arguments:\n{1!r}"
                 message = template.format(type(e).__name__, e.args)
@@ -54,22 +54,34 @@ class BuscaProventosAcaoThread(Thread):
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
             message = template.format(type(e).__name__, e.args)
             print self.codigo_cvm, "Thread:", message
-            pass
+#             pass
+        del threads_rodando[self.codigo_cvm]
 
 class Command(BaseCommand):
     help = 'Busca proventos de ações na Bovespa'
 
     def handle(self, *args, **options):
-        # O incremento mostra quantas threads correrão por vez
-        qtd_threads = 10
+        # O incremento mostra quantas threads de busca de documentos correrão por vez
+        qtd_threads = 20
+        
+        # Prepara thread de criação de documentos no sistema
+        thread_criar_documento = CriarDocumentoThread()
+        thread_criar_documento.start()
+        
+        # Prepara threads de busca
 #         acoes = Acao.objects.filter(empresa__codigo_cvm__isnull=False).order_by('empresa__codigo_cvm').distinct('empresa__codigo_cvm')
         acoes = Acao.objects.filter(ticker__in=['BBAS3'])
         contador = 0
-        while contador <= len(acoes):
-            for acao in acoes[contador : min(contador+incremento,len(acoes))]:
-                t = BuscaProventosAcaoThread(acao.empresa.codigo_cvm, re.sub(r'\d', '', acao.ticker))
-                t.start()
-                contador += 1
+        while contador < len(acoes):
+            acao = acoes[contador]
+            t = BuscaProventosAcaoThread(acao.empresa.codigo_cvm, re.sub(r'\d', '', acao.ticker))
+            threads_rodando[acao.empresa.codigo_cvm] = 1
+            t.start()
+            contador += 1
+            while (len(threads_rodando) > qtd_threads):
+                print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando)
+                time.sleep(3)
+        del threads_rodando['Principal']
         
 def buscar_proventos_acao(codigo_cvm, ticker, ano, num_tentativas):
     # Busca todos os proventos
