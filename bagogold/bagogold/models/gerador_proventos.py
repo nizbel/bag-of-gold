@@ -59,6 +59,16 @@ class DocumentoProventoBovespa (models.Model):
     
     def pendente(self):
         return len(PendenciaDocumentoProvento.objects.filter(documento=self)) > 0 
+    
+    def responsavel_leitura(self):
+        if hasattr(self, 'investidorleituradocumento'):
+            return self.investidorleituradocumento.investidor
+        return None
+    
+    def responsavel_validacao(self):
+        if hasattr(self, 'investidorvalidacaodocumento'):
+            return self.investidorvalidacaodocumento.investidor
+        return None
 
 @receiver(post_save, sender=DocumentoProventoBovespa, dispatch_uid="documento_provento_bovespa_criado")
 def criar_pendencia_on_save(sender, instance, created, **kwargs):
