@@ -68,6 +68,15 @@ class GeradorProventosTestCase(TestCase):
         
     def test_pendencia_gerada_ao_criar_documento_provento_bovespa(self):
         """Testa se foi gerada pendência ao criar um documento de proventos da Bovespa"""
+        empresa = Empresa.objects.get(codigo_cvm='1023')
+        documento = DocumentoProventoBovespa()
+        documento.empresa = empresa
+        documento.url = 'http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=%507317'
+        documento.tipo = 'A'
+        documento.protocolo = '507317'
+        documento.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
+        documento.baixar_e_salvar_documento()
+        self.assertTrue()
     
     def test_excluir_arquivo_sem_info(self):
         """Testa exclusão de arquivo por um investidor do site"""
