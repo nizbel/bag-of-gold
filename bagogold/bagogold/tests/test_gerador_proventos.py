@@ -2,7 +2,8 @@
 from bagogold import settings
 from bagogold.bagogold.models.acoes import Acao
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa
+from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa,\
+    PendenciaDocumentoProvento
 from bagogold.bagogold.testFII import baixar_demonstrativo_rendimentos
 from django.contrib.auth.models import User
 from django.core.files import File
@@ -76,7 +77,11 @@ class GeradorProventosTestCase(TestCase):
         documento.protocolo = '507317'
         documento.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
         documento.baixar_e_salvar_documento()
-        self.assertTrue()
+        self.assertTrue(documento.pendente())
+        # Quantidade de pendências deve ser 1
+        self.assertTrue(len(PendenciaDocumentoProvento.objects.filter(documento=documento)) == 1)
+        # Tipo de pendência deve ser 'L'
+        self.assertTrue(PendenciaDocumentoProvento.objects.filter(documento=documento)[0].tipo == 'L')
     
     def test_excluir_arquivo_sem_info(self):
         """Testa exclusão de arquivo por um investidor do site"""
