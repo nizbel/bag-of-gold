@@ -14,6 +14,20 @@ from django.template.context import RequestContext
 
 @login_required
 @user_passes_test(is_superuser)
+def ler_documento_provento(request, id):
+    pendencia = PendenciaDocumentoProvento.objects.get(id=id)
+    
+    texto_documento = ler_documento_proventos(pendencia.documento.documento)
+    
+    # Preparar formset de proventos
+    if pendencia.documento.tipo == 'A':
+        formset = formset_factory(ProventoAcaoForm, extra=1)
+    
+    return render_to_response('gerador_proventos/ler_documento_provento.html', {'pendencia': pendencia, 'texto_documento': texto_documento, 'formset': formset},
+                              context_instance=RequestContext(request))
+    
+@login_required
+@user_passes_test(is_superuser)
 def listar_documentos(request):
     empresa_id = 1
     if request.method == 'POST':
@@ -57,17 +71,7 @@ def listar_pendencias(request):
 def listar_proventos(request):
     pass
 
-
 @login_required
 @user_passes_test(is_superuser)
-def resolver_pendencia(request, id):
-    pendencia = PendenciaDocumentoProvento.objects.get(id=id)
-    
-    texto_documento = ler_documento_proventos(pendencia.documento.documento)
-    
-    # Preparar formset de proventos
-    if pendencia.documento.tipo == 'A':
-        formset = formset_factory(ProventoAcaoForm, extra=1)
-    
-    return render_to_response('gerador_proventos/resolver_pendencia.html', {'pendencia': pendencia, 'texto_documento': texto_documento, 'formset': formset},
-                              context_instance=RequestContext(request))
+def validar_documento_provento(request):
+    pass
