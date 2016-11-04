@@ -99,7 +99,15 @@ class GeradorProventosTestCase(TestCase):
         """Testa erro caso um provento seja gerado novamente"""
         pass
     
-    def test_puxar_validacao_para_investidor(self):
-        """Testa investidor puxando para si uma pendencia"""
+    def test_evitar_puxar_pendencia_com_responsavel_para_investidor(self):
+        """Testa situação de falha com investidor puxando para si uma pendência que já tenha responsável"""
+        pass
+    
+    def test_evitar_mesmo_investidor_ler_e_validar(self):
+        """Testa situação de falha com investidor puxando para si uma pendência de validação que tenha lido"""
+        pass
+    
+    def test_puxar_pendencia_para_investidor(self):
+        """Testa situação de sucesso com investidor puxando para si uma pendência"""
         pass
     

@@ -14,7 +14,7 @@
     <tbody>
     {% for pendencia in pendencias %}
     <tr>
-        <td><a href="{% url 'resolver_pendencia' pendencia.id %}">{{pendencia.documento}}</a></td>
+        <td><a href="{% url 'ler_documento_provento' pendencia.id %}">{{pendencia.documento}}</a></td>
         <td>{{pendencia.documento.tipo}}</td>
         <td>{{pendencia.data_criacao}}</td>
     </tr>
