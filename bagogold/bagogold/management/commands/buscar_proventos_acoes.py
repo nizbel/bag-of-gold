@@ -72,7 +72,9 @@ class BuscaProventosAcaoThread(Thread):
             message = template.format(type(e).__name__, e.args)
             print self.codigo_cvm, "Thread:", message
 #             pass
-        del threads_rodando[self.codigo_cvm]
+        # Tenta remover seu código da listagem de threads até conseguir
+        while self.codigo_cvm in threads_rodando:
+            del threads_rodando[self.codigo_cvm]
 
 class Command(BaseCommand):
     help = 'Busca proventos de ações na Bovespa'
@@ -112,7 +114,6 @@ class Command(BaseCommand):
             while (len(threads_rodando) > qtd_threads):
                 print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
                 time.sleep(3)
-        del threads_rodando['Principal']
         while (len(threads_rodando) > 0 or len(documentos_para_download) > 0 or len(informacoes_rendimentos) > 0):
             print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
             if 'Principal' in threads_rodando.keys():
