@@ -42,12 +42,12 @@ class DocumentoProventoBovespa (models.Model):
         if os.path.isfile(documento_path):
             baixou_arquivo = False
             self.documento.name = 'doc proventos/{0}/{1}'.format(self.ticker_empresa(), '%s-%s.pdf' % (self.ticker_empresa(), self.protocolo))
-#             self.save()
+            self.save()
         else:
             baixou_arquivo = True
 #             time.sleep(1)
             documento = baixar_demonstrativo_rendimentos(self.url)
-#             self.documento.save('%s-%s.pdf' % (self.ticker_empresa(), self.protocolo), File(documento))
+            self.documento.save('%s-%s.pdf' % (self.ticker_empresa(), self.protocolo), File(documento))
         return baixou_arquivo
     
     def extensao_documento(self):
@@ -78,6 +78,24 @@ def apagar_documento_on_delete(sender, instance, **kwargs):
     if instance.documento:
         if os.path.isfile(instance.documento.path):
             os.remove(instance.documento.path)
+
+class InvestidorLeituraDocumento (models.Model):
+    documento = models.OneToOneField('DocumentoProventoBovespa')
+    investidor = models.OneToOneField('Investidor')
+    """
+    A decisão que o leitor teve sobre o documento, C = Criar provento, E = Excluir
+    """
+    decisao = models.CharField(u'Decisão', max_length=1)
+    
+    class Meta:
+        unique_together=('documento', 'investidor')
+        
+class InvestidorValidacaoDocumento (models.Model):
+    documento = models.OneToOneField('DocumentoProventoBovespa')
+    investidor = models.OneToOneField('Investidor')
+    
+    class Meta:
+        unique_together=('documento', 'investidor')
             
 class ProventoAcaoDocumento (models.Model):
     provento = models.ForeignKey('Provento')
