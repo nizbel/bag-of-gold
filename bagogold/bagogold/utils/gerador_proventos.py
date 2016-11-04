@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.gerador_proventos import InvestidorResponsavelPendencia
 
-def puxar_pendencia_para_investidor(pendencia, investidor):
+def alocar_pendencia_para_investidor(pendencia, investidor):
     """
     Torna um investidor responsável pela pendência especificada
     Parâmetros: Pendência
@@ -12,4 +12,7 @@ def puxar_pendencia_para_investidor(pendencia, investidor):
     if pendencia.responsavel() != None:
         return (False, u'Pendência já possui responsável')
     # Verifica se pendência é de validação e investidor já foi responsável pela leitura
-    elif pendencia.documento.investidorleituradocumento
+    elif pendencia.tipo == 'V' and pendencia.documento.responsavel_leitura() == investidor:
+        return (False, u'Investidor já fez a leitura do documento, não pode validar')
+    
+    return (True, u'Alocação de pendência feita com sucesso!')
