@@ -66,6 +66,8 @@ class GeradorProventosTestCase(TestCase):
         if os.listdir('%sdoc proventos/%s' % (settings.MEDIA_ROOT, empresa.nome_pregao)) == []:
             os.rmdir('%sdoc proventos/%s' % (settings.MEDIA_ROOT, empresa.nome_pregao))
         
+    def test_pendencia_gerada_ao_criar_documento_provento_bovespa(self):
+        """Testa se foi gerada pendência ao criar um documento de proventos da Bovespa"""
     
     def test_excluir_arquivo_sem_info(self):
         """Testa exclusão de arquivo por um investidor do site"""
