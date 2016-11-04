@@ -9,6 +9,7 @@ from django.dispatch import receiver
 import datetime
 import os
 import re
+import time
 
 def ticker_path(instance, filename):
     return 'doc proventos/{0}/{1}'.format(instance.ticker_empresa(), filename)
@@ -40,11 +41,12 @@ class DocumentoProventoBovespa (models.Model):
         if os.path.isfile(documento_path):
             baixou_arquivo = False
             self.documento.name = 'doc proventos/{0}/{1}'.format(self.ticker_empresa(), '%s-%s.pdf' % (self.ticker_empresa(), self.protocolo))
-            self.save()
+#             self.save()
         else:
             baixou_arquivo = True
+#             time.sleep(1)
             documento = baixar_demonstrativo_rendimentos(self.url)
-            self.documento.save('%s-%s.pdf' % (self.ticker_empresa(), self.protocolo), File(documento))
+#             self.documento.save('%s-%s.pdf' % (self.ticker_empresa(), self.protocolo), File(documento))
         return baixou_arquivo
     
     def extensao_documento(self):
@@ -56,6 +58,16 @@ class DocumentoProventoBovespa (models.Model):
     
     def pendente(self):
         return len(PendenciaDocumentoProvento.objects.filter(documento=self)) > 0 
+
+@receiver(post_save, sender=DocumentoProventoBovespa, dispatch_uid="documento_provento_bovespa_criado")
+def criar_pendencia_on_save(sender, instance, created, **kwargs):
+    if created:
+        """
+        Cria pendência
+        """
+        pendencia, criada = PendenciaDocumentoProvento.objects.get_or_create(documento=instance)
+        if not criada:
+            instance.delete()
 
 @receiver(models.signals.post_delete, sender=DocumentoProventoBovespa)
 def apagar_documento_on_delete(sender, instance, **kwargs):
