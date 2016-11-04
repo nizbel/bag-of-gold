@@ -81,7 +81,7 @@ def apagar_documento_on_delete(sender, instance, **kwargs):
 
 class InvestidorLeituraDocumento (models.Model):
     documento = models.OneToOneField('DocumentoProventoBovespa')
-    investidor = models.OneToOneField('Investidor')
+    investidor = models.ForeignKey('Investidor')
     """
     A decisão que o leitor teve sobre o documento, C = Criar provento, E = Excluir
     """
@@ -90,9 +90,16 @@ class InvestidorLeituraDocumento (models.Model):
     class Meta:
         unique_together=('documento', 'investidor')
         
+class InvestidorResponsavelPendencia (models.Model):
+    pendencia = models.OneToOneField('PendenciaDocumentoProvento')
+    investidor = models.ForeignKey('Investidor')
+    
+    class Meta:
+        unique_together=('pendencia', 'investidor')
+        
 class InvestidorValidacaoDocumento (models.Model):
     documento = models.OneToOneField('DocumentoProventoBovespa')
-    investidor = models.OneToOneField('Investidor')
+    investidor = models.ForeignKey('Investidor')
     
     class Meta:
         unique_together=('documento', 'investidor')
@@ -117,3 +124,8 @@ class PendenciaDocumentoProvento (models.Model):
         if not self.id:
             self.data_criacao = datetime.date.today()
         return super(PendenciaDocumentoProvento, self).save(*args, **kwargs)
+    
+    def responsavel(self):
+        if hasattr(self, 'investidorresponsavelpendencia'):
+            return self.investidorresponsavelpendencia.investidor
+        return None
