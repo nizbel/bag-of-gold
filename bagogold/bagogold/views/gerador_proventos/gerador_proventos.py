@@ -61,6 +61,7 @@ def listar_pendencias(request):
     
     for pendencia in pendencias:
         pendencia.nome = pendencia.documento.documento.name.split('/')[-1]
+        pendencia.tipo = 'Ação' if pendencia.documento.tipo == 'A' else 'FII'
         
     return render_to_response('gerador_proventos/listar_pendencias.html', {'pendencias': pendencias},
                               context_instance=RequestContext(request))
