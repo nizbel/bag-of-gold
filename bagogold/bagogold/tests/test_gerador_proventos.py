@@ -2,9 +2,11 @@
 from bagogold import settings
 from bagogold.bagogold.models.acoes import Acao
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa,\
+from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
     PendenciaDocumentoProvento
 from bagogold.bagogold.testFII import baixar_demonstrativo_rendimentos
+from bagogold.bagogold.utils.gerador_proventos import \
+    alocar_pendencia_para_investidor
 from django.contrib.auth.models import User
 from django.core.files import File
 from django.test import TestCase
@@ -18,13 +20,24 @@ class GeradorProventosTestCase(TestCase):
         # Investidor
         user = User.objects.create(username='tester')
         
+        user = User.objects.create(username='validator')
+        
         # Empresa existente
-        empresa = Empresa.objects.create(nome='Banco do Brasil', nome_pregao='BBAS', codigo_cvm='1023')
-        acao = Acao.objects.create(empresa=empresa, ticker="BBAS3")
+        empresa1 = Empresa.objects.create(nome='Banco do Brasil', nome_pregao='BBAS', codigo_cvm='1023')
+        acao1 = Acao.objects.create(empresa=empresa1, ticker="BBAS3")
+        
+        # Documento da empresa, já existe em media
+        documento = DocumentoProventoBovespa()
+        documento.empresa = Empresa.objects.get(codigo_cvm=empresa1.codigo_cvm)
+        documento.url = 'http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=%508232'
+        documento.tipo = 'A'
+        documento.protocolo = '508232'
+        documento.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
+        documento.baixar_e_salvar_documento()
         
         # Empresa inexistente
-        empresa = Empresa.objects.create(nome='Teste', nome_pregao='TTTT', codigo_cvm='1024')
-        acao = Acao.objects.create(empresa=empresa, ticker="TTTT3")
+        empresa2 = Empresa.objects.create(nome='Teste', nome_pregao='TTTT', codigo_cvm='1024')
+        acao2 = Acao.objects.create(empresa=empresa2, ticker="TTTT3")
 
     def test_baixar_arquivo(self):
         """Testa se o arquivo baixado realmente é um arquivo"""
@@ -89,6 +102,7 @@ class GeradorProventosTestCase(TestCase):
     
     def test_gerar_provento(self):
         """Testa criação do provento por um investidor"""
+        
         pass
     
     def test_gerar_versao_doc_provento(self):
@@ -101,7 +115,11 @@ class GeradorProventosTestCase(TestCase):
     
     def test_evitar_puxar_pendencia_com_responsavel_para_investidor(self):
         """Testa situação de falha com investidor puxando para si uma pendência que já tenha responsável"""
-        pass
+        documento = DocumentoProventoBovespa.objects.get(protocolo='508232')
+        alocar_pendencia_para_investidor(PendenciaDocumentoProvento.objects.get(documento=documento), User.objects.get(username='tester').investidor)
+        resultado, mensagem = alocar_pendencia_para_investidor(PendenciaDocumentoProvento.objects.get(documento=documento), User.objects.get(username='validator').investidor)
+        self.assertFalse(resultado)
+        self.assertEqual(mensagem, u'Pendência já possui responsável')
     
     def test_evitar_mesmo_investidor_ler_e_validar(self):
         """Testa situação de falha com investidor puxando para si uma pendência de validação que tenha lido"""
@@ -109,5 +127,6 @@ class GeradorProventosTestCase(TestCase):
     
     def test_puxar_pendencia_para_investidor(self):
         """Testa situação de sucesso com investidor puxando para si uma pendência"""
-        pass
-    
+        documento = DocumentoProventoBovespa.objects.get(protocolo='508232')
+        resultado, mensagem = alocar_pendencia_para_investidor(PendenciaDocumentoProvento.objects.get(documento=documento), User.objects.get(username='tester').investidor)
+        self.assertTrue(resultado)
