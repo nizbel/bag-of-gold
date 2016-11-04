@@ -9,14 +9,16 @@
             <th>Documento</th>
             <th>Tipo de documento</th>
             <th>Data da criação</th>
+            <th>Responsável</th>
         </tr>
     </thead>
     <tbody>
     {% for pendencia in pendencias %}
     <tr>
         <td><a href="{% url 'ler_documento_provento' pendencia.id %}">{{pendencia.documento}}</a></td>
-        <td>{{pendencia.documento.tipo}}</td>
+        <td>{{pendencia.tipo}}</td>
         <td>{{pendencia.data_criacao}}</td>
+        <td><a href="{% url 'puxar_responsabilidade_documento_provento' pendencia.id %}" class="btn btn-warning">Virar responsável</a> 
     </tr>
     {% endfor %}
     </tbody>
