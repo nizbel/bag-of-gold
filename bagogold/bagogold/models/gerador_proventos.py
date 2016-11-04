@@ -5,6 +5,7 @@ from bagogold.bagogold.testFII import baixar_demonstrativo_rendimentos
 from django.core.files import File
 from django.core.files.storage import default_storage
 from django.db import models
+from django.db.models.signals import post_save
 from django.dispatch import receiver
 import datetime
 import os
@@ -89,6 +90,10 @@ class ProventoFIIDocumento (models.Model):
 class PendenciaDocumentoProvento (models.Model):
     documento = models.ForeignKey('DocumentoProventoBovespa')
     data_criacao = models.DateField(editable=False)
+    """
+    Tipo de pendência, L = Leitura, V = Validação
+    """
+    tipo = models.CharField(u'Tipo de pendência', max_length=1, default='L')
     
     def save(self, *args, **kwargs):
         if not self.id:
