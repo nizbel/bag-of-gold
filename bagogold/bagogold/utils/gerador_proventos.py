@@ -20,3 +20,18 @@ def alocar_pendencia_para_investidor(pendencia, investidor):
     except:
         return (False, u'Não foi possível alocar a pendência')
     return (True, u'Alocação de pendência feita com sucesso!')
+
+def desalocar_pendencia_de_investidor(pendencia, investidor):
+    """
+    Remove a responsabilidade de um investidor sobre a pendência apontada
+    Parâmetros: Pendência
+                Investidor
+    Retorno: (Se operação obteve sucesso, mensagem de explicação)
+    """
+    try:
+        InvestidorResponsavelPendencia.objects.get(pendencia=pendencia, investidor=investidor)
+        return (True, u'Desalocação de pendência feita com sucesso!')
+    except InvestidorResponsavelPendencia.DoesNotExist:
+        return (False, u'A pendência não estava alocada para o investidor')
+    except:
+        return (False, u'Não foi possível desalocar a pendência')

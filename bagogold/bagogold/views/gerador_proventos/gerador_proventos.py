@@ -6,7 +6,7 @@ from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa,
     PendenciaDocumentoProvento
 from bagogold.bagogold.testFII import ler_documento_proventos
 from bagogold.bagogold.utils.gerador_proventos import \
-    alocar_pendencia_para_investidor
+    alocar_pendencia_para_investidor, desalocar_pendencia_de_investidor
 from bagogold.bagogold.utils.investidores import is_superuser
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -76,11 +76,12 @@ def listar_pendencias(request):
     else:
         pagina_inicial = '0'
         
-    pendencias = PendenciaDocumentoProvento.objects.all()[:500]
+    pendencias = PendenciaDocumentoProvento.objects.all()
     
     for pendencia in pendencias:
         pendencia.nome = pendencia.documento.documento.name.split('/')[-1]
-        pendencia.tipo = 'Ação' if pendencia.documento.tipo == 'A' else 'FII'
+        pendencia.tipo_documento = 'Ação' if pendencia.documento.tipo == 'A' else 'FII'
+        pendencia.tipo = 'Leitura' if pendencia.tipo == 'L' else 'Validação'
         pendencia.responsavel = pendencia.responsavel()
         
     return TemplateResponse(request, 'gerador_proventos/listar_pendencias.html', {'pendencias': pendencias, 'pagina_inicial': pagina_inicial})
@@ -107,7 +108,6 @@ def puxar_responsabilidade_documento_provento(request):
     try:
         pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
     except PendenciaDocumentoProvento.DoesNotExist:
-        print 'Não existe'
         messages.error(request, 'A pendência enviada não existe')
 #         return HttpResponseRedirect(reverse('listar_pendencias'))
         return HttpResponse()
@@ -118,6 +118,32 @@ def puxar_responsabilidade_documento_provento(request):
     else:
         messages.error(request, mensagem)
 #     return HttpResponseRedirect(reverse('listar_pendencias'))
+    return HttpResponse()
+
+@login_required
+@user_passes_test(is_superuser)
+def remover_responsabilidade_documento_provento(request):
+    id_pendencia = request.GET['id_pendencia']
+    # Verifica se id_pendencia contém apenas números
+    if not id_pendencia.isdigit():
+        messages.error(request, 'Formato de pendência inválido')
+        return HttpResponse()
+    
+    pagina_atual = request.GET['pagina_atual']
+    request.session['pagina_atual_lista_pendencias'] = pagina_atual
+    
+    # Testa se pendência enviada existe
+    try:
+        pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
+    except PendenciaDocumentoProvento.DoesNotExist:
+        messages.error(request, 'A pendência enviada não existe')
+        return HttpResponse()
+    
+    retorno, mensagem = desalocar_pendencia_de_investidor(pendencia, request.user.investidor)
+    if retorno:
+        messages.success(request, mensagem)
+    else:
+        messages.error(request, mensagem)
     return HttpResponse()
 
 @login_required
