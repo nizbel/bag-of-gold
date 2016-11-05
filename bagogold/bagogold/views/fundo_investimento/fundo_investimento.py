@@ -24,6 +24,7 @@ from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
+from django.template.response import TemplateResponse
 import calendar
 import datetime
 
@@ -111,7 +112,7 @@ def historico(request):
     operacoes = OperacaoFundoInvestimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data') 
     # Se investidor não tiver operações, retornar vazio
     if not operacoes:
-        return TemplateResponse(request, 'fundo_investimento/historico.html', {'dados': {})
+        return TemplateResponse(request, 'fundo_investimento/historico.html', {'dados': {}})
     # Prepara o campo valor atual
     for operacao in operacoes:
         if operacao.tipo_operacao == 'C':

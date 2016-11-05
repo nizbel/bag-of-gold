@@ -23,8 +23,6 @@ from django.core.urlresolvers import reverse
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
 from django.http.response import HttpResponse
-from django.shortcuts import render_to_response
-from django.template.context import RequestContext
 from django.template.response import TemplateResponse
 import calendar
 import copy

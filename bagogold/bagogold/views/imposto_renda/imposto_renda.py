@@ -12,8 +12,7 @@ from collections import OrderedDict
 from decimal import Decimal, ROUND_FLOOR
 from django.contrib.auth.decorators import login_required
 from django.db.models.expressions import F
-from django.shortcuts import render_to_response
-from django.template.context import RequestContext
+from django.template.response import TemplateResponse
 from itertools import chain
 from operator import attrgetter
 import datetime

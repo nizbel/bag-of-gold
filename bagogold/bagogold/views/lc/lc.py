@@ -18,6 +18,7 @@ from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
+from django.template.response import TemplateResponse
 import calendar
 import datetime
 
@@ -114,7 +115,7 @@ def historico(request):
     
     # Se investidor não fez operações, retornar
     if not operacoes:
-        return TemplateResponse(request, 'lc/historico.html', {'dados': {})
+        return TemplateResponse(request, 'lc/historico.html', {'dados': {}})
     
     historico_porcentagem = HistoricoPorcentagemLetraCredito.objects.all() 
     # Prepara o campo valor atual
