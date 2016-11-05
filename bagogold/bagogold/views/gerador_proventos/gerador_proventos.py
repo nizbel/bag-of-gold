@@ -5,13 +5,15 @@ from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
     PendenciaDocumentoProvento
 from bagogold.bagogold.testFII import ler_documento_proventos
+from bagogold.bagogold.utils.gerador_proventos import \
+    alocar_pendencia_para_investidor
 from bagogold.bagogold.utils.investidores import is_superuser
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.forms.formsets import formset_factory
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from django.template.response import TemplateResponse
-from bagogold.bagogold.utils.gerador_proventos import alocar_pendencia_para_investidor
 
 
 @login_required
@@ -52,6 +54,9 @@ def listar_documentos(request):
         if documento.tipo == 'A':
             documento.ha_proventos_vinculados = False
             
+        # Preparar descrição de tipos
+        documento.tipo = 'Ação' if documento.tipo == 'A' else 'FII'
+            
     return TemplateResponse(request, 'gerador_proventos/listar_documentos.html', {'documentos': documentos, 'empresas': empresas, 'empresa_atual': empresa_atual})
 
 @login_required
@@ -62,6 +67,7 @@ def listar_pendencias(request):
     for pendencia in pendencias:
         pendencia.nome = pendencia.documento.documento.name.split('/')[-1]
         pendencia.tipo = 'Ação' if pendencia.documento.tipo == 'A' else 'FII'
+        pendencia.responsavel = pendencia.responsavel()
         
     return TemplateResponse(request, 'gerador_proventos/listar_pendencias.html', {'pendencias': pendencias})
 
@@ -75,8 +81,10 @@ def listar_proventos(request):
 @user_passes_test(is_superuser)
 def puxar_responsabilidade_documento_provento(request, id_pendencia):
     retorno, mensagem = alocar_pendencia_para_investidor(request.user.investidor, PendenciaDocumentoProvento.objects.get(id=id_pendencia))
-    messages
-    
+    if retorno:
+        messages.success(request, mensagem)
+    else:
+        messages.error(request, mensagem)
 
 @login_required
 @user_passes_test(is_superuser)
