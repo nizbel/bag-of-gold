@@ -3,6 +3,7 @@ from bagogold.bagogold.models.acoes import OperacaoAcao
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
+from django.template.response import TemplateResponse
 import calendar
 import datetime
 

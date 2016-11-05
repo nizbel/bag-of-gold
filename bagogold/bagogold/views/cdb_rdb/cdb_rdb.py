@@ -20,8 +20,7 @@ from django.core.urlresolvers import reverse
 from django.db.models import Count
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
-from django.shortcuts import render_to_response
-from django.template.context import RequestContext
+from django.template.response import TemplateResponse
 import calendar
 import datetime
 
@@ -299,7 +298,7 @@ def historico(request):
     operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
     # Verifica se não há operações
     if not operacoes:
-        return TemplateResponse(request, 'cdb_rdb/historico.html', {'dados': {})
+        return TemplateResponse(request, 'cdb_rdb/historico.html', {'dados': {}})
     
     # Prepara o campo valor atual
     for operacao in operacoes:
@@ -600,7 +599,7 @@ def painel(request):
         dados['total_ir'] = Decimal(0)
         dados['total_iof'] = Decimal(0)
         dados['total_ganho_prox_dia'] = Decimal(0)
-        return TemplateResponse(request, 'cdb_rdb/painel.html', {'operacoes': {})
+        return TemplateResponse(request, 'cdb_rdb/painel.html', {'operacoes': {}})
     
     # Prepara o campo valor atual
     for operacao in operacoes:

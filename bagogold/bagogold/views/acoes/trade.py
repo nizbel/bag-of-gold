@@ -24,6 +24,7 @@ import datetime
 from itertools import chain
 import json
 import operator
+from django.template.response import TemplateResponse
 
 LISTA_MESES = [['Janeiro', 1],   ['Fevereiro', 2],
                ['Março', 3],     ['Abril', 4],
@@ -75,7 +76,7 @@ def acompanhamento_mensal(request):
     operacoes = OperacaoAcao.objects.exclude(data__isnull=True).filter(destinacao='T', investidor=investidor, data__year=ano, data__month=mes).order_by('data')
     
     if not operacoes:
-        return TemplateResponse(request, 'acoes/trade/acompanhamento_mensal.html', {'lista_anos': lista_anos, 'lista_meses': lista_meses, 'dados_mes': {})
+        return TemplateResponse(request, 'acoes/trade/acompanhamento_mensal.html', {'lista_anos': lista_anos, 'lista_meses': lista_meses, 'dados_mes': {}})
         
     graf_compras_mes = list()
     graf_vendas_mes = list()

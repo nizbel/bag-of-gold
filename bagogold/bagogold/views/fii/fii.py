@@ -281,7 +281,7 @@ def historico_fii(request):
     
     # Se investidor não tiver feito operações
     if not operacoes:
-        return TemplateResponse(request, 'fii/historico.html', {'dados': {})
+        return TemplateResponse(request, 'fii/historico.html', {'dados': {}})
     
      
     for operacao in operacoes:
