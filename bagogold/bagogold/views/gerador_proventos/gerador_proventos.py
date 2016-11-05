@@ -12,7 +12,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.urlresolvers import reverse
 from django.forms.formsets import formset_factory
-from django.http.response import HttpResponseRedirect
+from django.http.response import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from django.template.response import TemplateResponse
@@ -63,12 +63,20 @@ def listar_documentos(request):
 
 @login_required
 @user_passes_test(is_superuser)
-def listar_pendencias(request, pagina_inicial='0'):
-    # Testa se página inicial é feita de dígitos numéricos
-    if not pagina_inicial.isdigit():
+def listar_pendencias(request):
+    # Testa se há página inicial
+    if 'pagina_atual_lista_pendencias' in request.session:
+        pagina_inicial = request.session['pagina_atual_lista_pendencias']
+        print 'pagina inicial', pagina_inicial
+        # Testa se página inicial é feita de dígitos numéricos
+        if not pagina_inicial.isdigit():
+            pagina_inicial = '0'
+        # Remover pagina inicial da sessão para não atrapalhar futuras iterações com a página
+        del request.session['pagina_atual_lista_pendencias']
+    else:
         pagina_inicial = '0'
         
-    pendencias = PendenciaDocumentoProvento.objects.all()
+    pendencias = PendenciaDocumentoProvento.objects.all()[:500]
     
     for pendencia in pendencias:
         pendencia.nome = pendencia.documento.documento.name.split('/')[-1]
@@ -85,13 +93,32 @@ def listar_proventos(request):
 
 @login_required
 @user_passes_test(is_superuser)
-def puxar_responsabilidade_documento_provento(request, id_pendencia, pagina_atual):
-    retorno, mensagem = alocar_pendencia_para_investidor(PendenciaDocumentoProvento.objects.get(id=id_pendencia), request.user.investidor)
+def puxar_responsabilidade_documento_provento(request):
+    id_pendencia = request.GET['id_pendencia']
+    # Verifica se id_pendencia contém apenas números
+    if not id_pendencia.isdigit():
+        messages.error(request, 'Formato de pendência inválido')
+        return HttpResponse()
+    
+    pagina_atual = request.GET['pagina_atual']
+    request.session['pagina_atual_lista_pendencias'] = pagina_atual
+    
+    # Testa se pendência enviada existe
+    try:
+        pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
+    except PendenciaDocumentoProvento.DoesNotExist:
+        print 'Não existe'
+        messages.error(request, 'A pendência enviada não existe')
+#         return HttpResponseRedirect(reverse('listar_pendencias'))
+        return HttpResponse()
+    
+    retorno, mensagem = alocar_pendencia_para_investidor(pendencia, request.user.investidor)
     if retorno:
         messages.success(request, mensagem)
     else:
         messages.error(request, mensagem)
-    return HttpResponseRedirect(reverse('listar_pendencias'), kwargs={'project_id': pagina_atual})
+#     return HttpResponseRedirect(reverse('listar_pendencias'))
+    return HttpResponse()
 
 @login_required
 @user_passes_test(is_superuser)
