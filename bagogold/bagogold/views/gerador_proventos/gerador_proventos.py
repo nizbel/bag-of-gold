@@ -13,23 +13,28 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.urlresolvers import reverse
 from django.forms.formsets import formset_factory
 from django.http.response import HttpResponseRedirect, HttpResponse
-from django.shortcuts import render_to_response
-from django.template.context import RequestContext
 from django.template.response import TemplateResponse
 
+@login_required
+@user_passes_test(is_superuser)
+def baixar_documento_provento(request, id_documento):
+    documento = DocumentoProventoBovespa.objects.get(id=id_documento)
+    filename = documento.file.name.split('/')[-1]
+    response = HttpResponse(documento.file, content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename=%s' % filename
+
+    return response
 
 @login_required
 @user_passes_test(is_superuser)
 def ler_documento_provento(request, id_pendencia):
     pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
     
-    texto_documento = ler_documento_proventos(pendencia.documento.documento)
-    
     # Preparar formset de proventos
     if pendencia.documento.tipo == 'A':
         formset = formset_factory(ProventoAcaoForm, extra=1)
     
-    return TemplateResponse(request, 'gerador_proventos/ler_documento_provento.html', {'pendencia': pendencia, 'texto_documento': texto_documento, 'formset': formset})
+    return TemplateResponse(request, 'gerador_proventos/ler_documento_provento.html', {'pendencia': pendencia, 'formset': formset})
     
 @login_required
 @user_passes_test(is_superuser)

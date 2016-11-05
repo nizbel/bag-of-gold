@@ -1,14 +1,11 @@
 {% extends "base.html" %}
 
-{% block extra_head %}
-    {{ form_pendencia.media }}
-{% endblock %}
-
 {% block content %}
-    <h1>Resolver pendência</h1>
+    <h1>Ler documento</h1>
     <div class="span12">
-    {{ texto_documento }}
+    <a href="{% url 'baixar_documento_provento' pendencia.documento.id %}" class="btn btn-warning">Download</a>
     </div>
+    {% if pendencia.responsavel.id == request.user.investidor.id %}
     <form method="POST" class="post-form form-horizontal">{% csrf_token %}
         <div id="forms">
             {{ formset.management_form }}
@@ -21,5 +18,6 @@
             <button type="submit" name="save" value="1" class="btn">Salvar</button>
         </div>
     </form>
+    {% endif %}
     
 {% endblock %}
