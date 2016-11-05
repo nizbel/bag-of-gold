@@ -550,6 +550,4 @@ def painel(request):
     dados['total_valor'] = total_valor
     dados['valor_diario_mais_recente'] = ValorDiarioFII.objects.latest('data_hora').data_hora
 
-#     return TemplateResponse(request, 'fii/painel.html', {'fiis': fiis, 'dados': dados})
-    response = TemplateResponse(request, 'fii/painel.html', {'fiis': fiis, 'dados': dados})
-    return response
+    return TemplateResponse(request, 'fii/painel.html', {'fiis': fiis, 'dados': dados})
