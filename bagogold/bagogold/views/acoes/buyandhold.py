@@ -142,8 +142,8 @@ def editar_operacao_acao(request, id):
             form_uso_proventos = UsoProventosOperacaoAcaoForm()
         formset_divisao = DivisaoFormSet(instance=operacao_acao, investidor=investidor)
             
-    return render_to_response('acoes/buyandhold/editar_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,
-                                                                       'formset_divisao': formset_divisao, 'poupanca_proventos': poupanca_proventos, 'varias_divisoes': varias_divisoes}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'acoes/buyandhold/editar_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,
+                                                                       'formset_divisao': formset_divisao, 'poupanca_proventos': poupanca_proventos, 'varias_divisoes': varias_divisoes})
 
 @login_required
 @user_passes_test(is_superuser)
@@ -162,7 +162,7 @@ def editar_provento_acao(request, id):
     else:
         form = ProventoAcaoForm(instance=provento)
             
-    return render_to_response('acoes/buyandhold/editar_provento_acao.html', {'form': form}, context_instance=RequestContext(request))  
+    return TemplateResponse(request, 'acoes/buyandhold/editar_provento_acao.html', {'form': form})  
 
 @login_required
 def estatisticas_acao(request, ticker=None):
@@ -175,10 +175,8 @@ def estatisticas_acao(request, ticker=None):
     # Buscar historicos
     historico = HistoricoAcao.objects.filter(acao__ticker=ticker).order_by('data')
     if not historico:
-        return render_to_response('acoes/buyandhold/estatisticas_acao.html', 
-                              {'graf_preco_medio': list(), 'graf_preco_medio_valor_acao': list(),
-                               'graf_historico_proventos': list(), 'graf_historico': list()},
-                              context_instance=RequestContext(request))
+        return TemplateResponse(request, 'acoes/buyandhold/estatisticas_acao.html', {'graf_preco_medio': list(), 'graf_preco_medio_valor_acao': list(),
+                               'graf_historico_proventos': list(), 'graf_historico': list()})
         
     operacoes = OperacaoAcao.objects.filter(destinacao='B', acao__ticker=ticker, investidor=investidor).exclude(data__isnull=True).order_by('data')
     # Pega os proventos em ações recebidos por outras ações
@@ -320,10 +318,8 @@ def estatisticas_acao(request, ticker=None):
         graf_preco_medio += [[data_atual_formatada, preco_medio_corrente]]
         graf_preco_medio_valor_acao += [[data_atual_formatada, float(preco_unitario)]]
     
-    return render_to_response('acoes/buyandhold/estatisticas_acao.html', 
-                              {'graf_preco_medio': graf_preco_medio, 'graf_preco_medio_valor_acao': graf_preco_medio_valor_acao,
-                               'graf_historico_proventos': graf_historico_proventos, 'graf_historico': graf_historico},
-                              context_instance=RequestContext(request))
+    return TemplateResponse(request, 'acoes/buyandhold/estatisticas_acao.html', {'graf_preco_medio': graf_preco_medio, 'graf_preco_medio_valor_acao': graf_preco_medio_valor_acao,
+                               'graf_historico_proventos': graf_historico_proventos, 'graf_historico': graf_historico})
 
 @login_required
 def historico(request):
@@ -336,12 +332,10 @@ def historico(request):
     operacoes = OperacaoAcao.objects.filter(destinacao='B', investidor=investidor).exclude(data__isnull=True).order_by('data')
     
     if not operacoes:
-        return render_to_response('acoes/buyandhold/historico.html', 
-                              {'operacoes': list(), 'graf_total_gasto': list(), 'graf_patrimonio': list(), 'graf_diario': list(),
+        return TemplateResponse(request, 'acoes/buyandhold/historico.html', {'operacoes': list(), 'graf_total_gasto': list(), 'graf_patrimonio': list(), 'graf_diario': list(),
                                'graf_proventos_mes': list(), 'graf_media_proventos_6_meses': list(), 'graf_poupanca_proventos': list(),
                                'graf_gasto_op_sem_prov_mes': list(), 'graf_uso_proventos_mes': list(),
-                                'graf_dividendos_mensal': list(), 'graf_jscp_mensal': list(), 'dados': {}},
-                              context_instance=RequestContext(request))
+                                'graf_dividendos_mensal': list(), 'graf_jscp_mensal': list(), 'dados': {}})
     
     acoes = list(set(operacoes.values_list('acao', flat=True)))
 
@@ -592,12 +586,10 @@ def historico(request):
     # Remover taxas de custódia da lista conjunta de operações e proventos
     lista_conjunta = [value for value in lista_conjunta if not isinstance(value, Object)]
 
-    return render_to_response('acoes/buyandhold/historico.html', 
-                              {'operacoes': lista_conjunta, 'graf_total_gasto': graf_total_gasto, 'graf_patrimonio': graf_patrimonio, 'graf_diario': graf_diario,
+    return TemplateResponse(request, 'acoes/buyandhold/historico.html', {'operacoes': lista_conjunta, 'graf_total_gasto': graf_total_gasto, 'graf_patrimonio': graf_patrimonio, 'graf_diario': graf_diario,
                                'graf_proventos_mes': graf_proventos_mes, 'graf_media_proventos_6_meses': graf_media_proventos_6_meses, 'graf_poupanca_proventos': graf_poupanca_proventos,
                                'graf_gasto_op_sem_prov_mes': graf_gasto_op_sem_prov_mes, 'graf_uso_proventos_mes': graf_uso_proventos_mes,
-                                'graf_dividendos_mensal': graf_dividendos_mensal, 'graf_jscp_mensal': graf_jscp_mensal, 'dados': dados},
-                              context_instance=RequestContext(request))
+                                'graf_dividendos_mensal': graf_dividendos_mensal, 'graf_jscp_mensal': graf_jscp_mensal, 'dados': dados})
     
 @login_required
 def inserir_operacao_acao(request):
@@ -656,8 +648,8 @@ def inserir_operacao_acao(request):
         form_uso_proventos = UsoProventosOperacaoAcaoForm(initial={'qtd_utilizada': Decimal('0.00')})
         formset_divisao = DivisaoFormSet(investidor=investidor)
             
-    return render_to_response('acoes/buyandhold/inserir_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,
-                                                                       'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes }, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'acoes/buyandhold/inserir_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,
+                                                                       'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes })
     
 @login_required
 @user_passes_test(is_superuser)
@@ -670,8 +662,7 @@ def inserir_provento_acao(request):
     else:
         form = ProventoAcaoForm()
             
-    return render_to_response('acoes/buyandhold/inserir_provento_acao.html', {'form': form, },
-                               context_instance=RequestContext(request))
+    return TemplateResponse(request, 'acoes/buyandhold/inserir_provento_acao.html', {'form': form, })
     
 @login_required
 def inserir_taxa_custodia_acao(request):
@@ -687,8 +678,7 @@ def inserir_taxa_custodia_acao(request):
     else:
         form = TaxaCustodiaAcaoForm()
             
-    return render_to_response('acoes/buyandhold/inserir_taxa_custodia_acao.html', {'form': form, },
-                               context_instance=RequestContext(request))
+    return TemplateResponse(request, 'acoes/buyandhold/inserir_taxa_custodia_acao.html', {'form': form, })
     
 @login_required
 def painel(request):
@@ -773,9 +763,7 @@ def painel(request):
     dados['historico_mais_recente'] = historico_mais_recente
     dados['valor_diario_mais_recente'] = valor_diario_mais_recente
 
-    return render_to_response('acoes/buyandhold/painel.html', 
-                              {'acoes': acoes, 'dados': dados},
-                              context_instance=RequestContext(request))
+    return TemplateResponse(request, 'acoes/buyandhold/painel.html', {'acoes': acoes, 'dados': dados})
     
 @login_required
 def ver_taxas_custodia_acao(request):
@@ -783,5 +771,4 @@ def ver_taxas_custodia_acao(request):
     taxas_custodia = TaxaCustodiaAcao.objects.filter(investidor=investidor).order_by('ano_vigencia', 'mes_vigencia')
     for taxa in taxas_custodia:
         taxa.ano_vigencia = str(taxa.ano_vigencia).replace('.', '')
-    return render_to_response('acoes/buyandhold/ver_taxas_custodia_acao.html', {'taxas_custodia': taxas_custodia},
-                               context_instance=RequestContext(request))
+    return TemplateResponse(request, 'acoes/buyandhold/ver_taxas_custodia_acao.html', {'taxas_custodia': taxas_custodia})
