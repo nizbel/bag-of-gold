@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold import settings
 from bagogold.bagogold.forms.provento_acao import ProventoAcaoForm
 from bagogold.bagogold.models.acoes import Acao
 from bagogold.bagogold.models.empresa import Empresa
@@ -14,14 +15,16 @@ from django.core.urlresolvers import reverse
 from django.forms.formsets import formset_factory
 from django.http.response import HttpResponseRedirect, HttpResponse
 from django.template.response import TemplateResponse
+import os
 
 @login_required
 @user_passes_test(is_superuser)
 def baixar_documento_provento(request, id_documento):
-    documento = DocumentoProventoBovespa.objects.get(id=id_documento)
-    filename = documento.file.name.split('/')[-1]
-    response = HttpResponse(documento.file, content_type='application/pdf')
+    documento_provento = DocumentoProventoBovespa.objects.get(id=id_documento)
+    filename = documento_provento.documento.name.split('/')[-1]
+    response = HttpResponse(documento_provento.documento, content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename=%s' % filename
+    response['Content-Length'] = os.path.getsize(settings.MEDIA_ROOT + documento_provento.documento.name)
 
     return response
 
@@ -29,6 +32,8 @@ def baixar_documento_provento(request, id_documento):
 @user_passes_test(is_superuser)
 def ler_documento_provento(request, id_pendencia):
     pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
+    
+    pendencia.responsavel = pendencia.responsavel() or 'Sem responsável'
     
     # Preparar formset de proventos
     if pendencia.documento.tipo == 'A':
