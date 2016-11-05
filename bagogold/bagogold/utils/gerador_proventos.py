@@ -15,5 +15,8 @@ def alocar_pendencia_para_investidor(pendencia, investidor):
     elif pendencia.tipo == 'V' and pendencia.documento.responsavel_leitura() == investidor:
         return (False, u'Investidor já fez a leitura do documento, não pode validar')
     
-    InvestidorResponsavelPendencia.objects.create(pendencia=pendencia, investidor=investidor)
+    try:
+        InvestidorResponsavelPendencia.objects.create(pendencia=pendencia, investidor=investidor)
+    except:
+        return (False, u'Não foi possível alocar a pendência')
     return (True, u'Alocação de pendência feita com sucesso!')
