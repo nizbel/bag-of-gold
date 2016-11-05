@@ -20,8 +20,8 @@ from django.template.response import TemplateResponse
 
 @login_required
 @user_passes_test(is_superuser)
-def ler_documento_provento(request, id):
-    pendencia = PendenciaDocumentoProvento.objects.get(id=id)
+def ler_documento_provento(request, id_pendencia):
+    pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
     
     texto_documento = ler_documento_proventos(pendencia.documento.documento)
     
