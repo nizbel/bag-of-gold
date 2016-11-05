@@ -95,10 +95,10 @@ def listar_proventos(request):
 @login_required
 @user_passes_test(is_superuser)
 def puxar_responsabilidade_documento_provento(request):
-    id_pendencia = request.GET['id_pendencia']
+    id_pendencia = request.GET['id_pendencia'].replace('.', '')
     # Verifica se id_pendencia contém apenas números
     if not id_pendencia.isdigit():
-        messages.error(request, 'Formato de pendência inválido')
+        messages.error(request, u'Formato de pendência inválido')
         return HttpResponse()
     
     pagina_atual = request.GET['pagina_atual']
@@ -108,7 +108,7 @@ def puxar_responsabilidade_documento_provento(request):
     try:
         pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
     except PendenciaDocumentoProvento.DoesNotExist:
-        messages.error(request, 'A pendência enviada não existe')
+        messages.error(request, u'A pendência enviada não existe')
 #         return HttpResponseRedirect(reverse('listar_pendencias'))
         return HttpResponse()
     
@@ -123,10 +123,10 @@ def puxar_responsabilidade_documento_provento(request):
 @login_required
 @user_passes_test(is_superuser)
 def remover_responsabilidade_documento_provento(request):
-    id_pendencia = request.GET['id_pendencia']
+    id_pendencia = request.GET['id_pendencia'].replace('.', '')
     # Verifica se id_pendencia contém apenas números
     if not id_pendencia.isdigit():
-        messages.error(request, 'Formato de pendência inválido')
+        messages.error(request, u'Formato de pendência inválido %s' % (id_pendencia))
         return HttpResponse()
     
     pagina_atual = request.GET['pagina_atual']
@@ -136,7 +136,7 @@ def remover_responsabilidade_documento_provento(request):
     try:
         pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
     except PendenciaDocumentoProvento.DoesNotExist:
-        messages.error(request, 'A pendência enviada não existe')
+        messages.error(request, u'A pendência enviada não existe')
         return HttpResponse()
     
     retorno, mensagem = desalocar_pendencia_de_investidor(pendencia, request.user.investidor)
