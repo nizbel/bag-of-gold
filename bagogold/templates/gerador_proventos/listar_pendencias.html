@@ -22,7 +22,7 @@
         {% if pendencia.responsavel %}
             {{pendencia.responsavel}}
         {% else %}
-            <a href="{% url 'puxar_responsabilidade_documento_provento' pendencia.id %}" class="btn btn-warning">Virar responsável</a> 
+            <button onclick="puxar_responsabilidade({{pendencia.id}});" class="btn btn-warning">Virar responsável</button> 
         {% endif %}
     </tr>
     {% endfor %}
@@ -36,6 +36,29 @@ $( document ).ready(function() {
 	var table = $('#pendencias').dataTable({"bRetrieve": true});
     console.log(table.fnPageChange(parseInt($('#pagina_inicial').val())));
 //     table.fnPageInfo().iPage
+
+    
 });
+
+function puxar_responsabilidade(id) {
+    var table = $('#pendencias').dataTable({"bRetrieve": true});
+    var id_pendencia = id;
+//     console.log(id_pendencia + "..." + table.fnPagingInfo().iPage);
+    $.ajax({
+        url : "{% url 'puxar_responsabilidade_documento_provento' %}", // the endpoint
+        type : "GET", // http method
+        data : {id_pendencia: id_pendencia, pagina_atual: table.fnPagingInfo().iPage},
+
+        // handle a successful response
+        success : function() {
+        	$(location).attr('href',"{% url 'listar_pendencias' %}");
+        },
+
+        // handle a non-successful response
+        error : function(xhr,errmsg,err) {
+            console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+        }
+    });
+}
 </script>
 {% endblock %}
