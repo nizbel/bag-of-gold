@@ -10,7 +10,9 @@ from bagogold.bagogold.utils.gerador_proventos import \
 from bagogold.bagogold.utils.investidores import is_superuser
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.urlresolvers import reverse
 from django.forms.formsets import formset_factory
+from django.http.response import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from django.template.response import TemplateResponse
@@ -61,7 +63,11 @@ def listar_documentos(request):
 
 @login_required
 @user_passes_test(is_superuser)
-def listar_pendencias(request):
+def listar_pendencias(request, pagina_inicial='0'):
+    # Testa se página inicial é feita de dígitos numéricos
+    if not pagina_inicial.isdigit():
+        pagina_inicial = '0'
+        
     pendencias = PendenciaDocumentoProvento.objects.all()
     
     for pendencia in pendencias:
@@ -69,7 +75,7 @@ def listar_pendencias(request):
         pendencia.tipo = 'Ação' if pendencia.documento.tipo == 'A' else 'FII'
         pendencia.responsavel = pendencia.responsavel()
         
-    return TemplateResponse(request, 'gerador_proventos/listar_pendencias.html', {'pendencias': pendencias})
+    return TemplateResponse(request, 'gerador_proventos/listar_pendencias.html', {'pendencias': pendencias, 'pagina_inicial': pagina_inicial})
 
 
 @login_required
@@ -79,12 +85,13 @@ def listar_proventos(request):
 
 @login_required
 @user_passes_test(is_superuser)
-def puxar_responsabilidade_documento_provento(request, id_pendencia):
-    retorno, mensagem = alocar_pendencia_para_investidor(request.user.investidor, PendenciaDocumentoProvento.objects.get(id=id_pendencia))
+def puxar_responsabilidade_documento_provento(request, id_pendencia, pagina_atual):
+    retorno, mensagem = alocar_pendencia_para_investidor(PendenciaDocumentoProvento.objects.get(id=id_pendencia), request.user.investidor)
     if retorno:
         messages.success(request, mensagem)
     else:
         messages.error(request, mensagem)
+    return HttpResponseRedirect(reverse('listar_pendencias'), kwargs={'project_id': pagina_atual})
 
 @login_required
 @user_passes_test(is_superuser)

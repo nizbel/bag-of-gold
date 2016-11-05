@@ -3,7 +3,7 @@
 {% block content %}
 <h1>Pendências de documentos de proventos</h1>
     <div class="box-content">
-    <table id="ordens" class="table table-striped table-bordered bootstrap-datatable datatable">
+    <table id="pendencias" class="table table-striped table-bordered bootstrap-datatable datatable">
     <thead>
         <tr>
             <th>Documento</th>
@@ -28,6 +28,14 @@
     {% endfor %}
     </tbody>
     </table>
+    <input type="hidden" value="{{pagina_inicial}}" id="pagina_inicial" />
 </div>
 
+<script>
+$( document ).ready(function() {
+	var table = $('#pendencias').dataTable({"bRetrieve": true});
+    console.log(table.fnPageChange(parseInt($('#pagina_inicial').val())));
+//     table.fnPageInfo().iPage
+});
+</script>
 {% endblock %}
