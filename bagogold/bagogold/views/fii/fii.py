@@ -45,8 +45,8 @@ def acompanhamento_mensal_fii(request):
             dados_mes['qtd_op_venda'] += 1
         
     
-    return render_to_response('fii/acompanhamento_mensal.html', {'dados_mes': dados_mes, 'graf_vendas_mes': graf_vendas_mes,
-                                                                         'graf_lucro_mes': graf_lucro_mes}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'fii/acompanhamento_mensal.html', {'dados_mes': dados_mes, 'graf_vendas_mes': graf_vendas_mes,
+                                                                         'graf_lucro_mes': graf_lucro_mes})
     
     
 @login_required
@@ -98,7 +98,7 @@ def aconselhamento_fii(request):
     # Ordenar lista de comparativos
     comparativos = reversed(sorted(comparativos, key=itemgetter(3)))
     
-    return render_to_response('fii/aconselhamento.html', {'comparativos': comparativos}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'fii/aconselhamento.html', {'comparativos': comparativos})
     
 # TODO remover login_required
 @login_required
@@ -130,12 +130,12 @@ def calcular_resultado_corretagem(request):
                 
             ranking.sort(key=lambda x: x[1], reverse=True)
                 
-            return render_to_response('fii/calcular_resultado_corretagem.html', {'ranking': ranking, 'form_calcular': form_calcular}, context_instance=RequestContext(request))
+            return TemplateResponse(request, 'fii/calcular_resultado_corretagem.html', {'ranking': ranking, 'form_calcular': form_calcular})
     
     ranking = list()
     form_calcular = CalculoResultadoCorretagemForm()
     
-    return render_to_response('fii/calcular_resultado_corretagem.html', {'ranking': ranking, 'form_calcular': form_calcular}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'fii/calcular_resultado_corretagem.html', {'ranking': ranking, 'form_calcular': form_calcular})
     
     
 @login_required
@@ -248,8 +248,8 @@ def editar_operacao_fii(request, id):
             form_uso_proventos = UsoProventosOperacaoFIIForm()
         formset_divisao = DivisaoFormSet(instance=operacao_fii, investidor=investidor)
             
-    return render_to_response('fii/editar_operacao_fii.html', {'form_operacao_fii': form_operacao_fii, 'form_uso_proventos': form_uso_proventos,
-                                                               'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes}, context_instance=RequestContext(request))   
+    return TemplateResponse(request, 'fii/editar_operacao_fii.html', {'form_operacao_fii': form_operacao_fii, 'form_uso_proventos': form_uso_proventos,
+                                                               'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})   
 
 
 @login_required
@@ -271,7 +271,7 @@ def editar_provento_fii(request, id):
     else:
         form = ProventoFIIForm(instance=operacao)
             
-    return render_to_response('fii/editar_provento_fii.html', {'form': form}, context_instance=RequestContext(request))   
+    return TemplateResponse(request, 'fii/editar_provento_fii.html', {'form': form})   
     
     
 @login_required
@@ -281,9 +281,7 @@ def historico_fii(request):
     
     # Se investidor não tiver feito operações
     if not operacoes:
-        return render_to_response('fii/historico.html', {'dados': {}, 'lista_conjunta': list(), 'graf_poupanca_proventos': list(), 
-                                                     'graf_gasto_total': list(), 'graf_patrimonio': list()},
-                               context_instance=RequestContext(request))
+        return TemplateResponse(request, 'fii/historico.html', {'dados': {})
     
      
     for operacao in operacoes:
@@ -397,9 +395,8 @@ def historico_fii(request):
     dados['patrimonio'] = patrimonio
     dados['lucro'] = patrimonio + total_proventos + total_gasto
     dados['lucro_percentual'] = (patrimonio + total_proventos + total_gasto) / -total_gasto * 100
-    return render_to_response('fii/historico.html', {'dados': dados, 'lista_conjunta': lista_conjunta, 'graf_poupanca_proventos': graf_poupanca_proventos, 
-                                                     'graf_gasto_total': graf_gasto_total, 'graf_patrimonio': graf_patrimonio},
-                               context_instance=RequestContext(request))
+    return TemplateResponse(request, 'fii/historico.html', {'dados': dados, 'lista_conjunta': lista_conjunta, 'graf_poupanca_proventos': graf_poupanca_proventos, 
+                                                     'graf_gasto_total': graf_gasto_total, 'graf_patrimonio': graf_patrimonio})
     
     
 @login_required
@@ -458,8 +455,8 @@ def inserir_operacao_fii(request):
         form_uso_proventos = UsoProventosOperacaoFIIForm(initial={'qtd_utilizada': Decimal('0.00')})
         formset_divisao = DivisaoFormSet(investidor=investidor)
             
-    return render_to_response('fii/inserir_operacao_fii.html', {'form_operacao_fii': form_operacao_fii, 'form_uso_proventos': form_uso_proventos,
-                                                               'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'fii/inserir_operacao_fii.html', {'form_operacao_fii': form_operacao_fii, 'form_uso_proventos': form_uso_proventos,
+                                                               'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})
 
 
 @login_required
@@ -473,7 +470,7 @@ def inserir_provento_fii(request):
     else:
         form = ProventoFIIForm()
             
-    return render_to_response('fii/inserir_provento_fii.html', {'form': form}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'fii/inserir_provento_fii.html', {'form': form})
 
 @login_required
 def painel(request):
@@ -553,8 +550,6 @@ def painel(request):
     dados['total_valor'] = total_valor
     dados['valor_diario_mais_recente'] = ValorDiarioFII.objects.latest('data_hora').data_hora
 
-#     return render_to_response('fii/painel.html', 
-#                               {'fiis': fiis, 'dados': dados},
-#                               context_instance=RequestContext(request))
+#     return TemplateResponse(request, 'fii/painel.html', {'fiis': fiis, 'dados': dados})
     response = TemplateResponse(request, 'fii/painel.html', {'fiis': fiis, 'dados': dados})
     return response

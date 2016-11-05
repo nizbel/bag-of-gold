@@ -171,7 +171,7 @@ def aconselhamento_td(request):
     fiis = [fii for fii in fiis if fii.rendimento_prov > 0]
     fiis.sort(key=lambda x: x.rendimento_prov, reverse=True)
     
-    return render_to_response('td/aconselhamento.html', {'titulos': titulos, 'letras_credito': letras_credito, 'fiis': fiis}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'td/aconselhamento.html', {'titulos': titulos, 'letras_credito': letras_credito, 'fiis': fiis})
 
 @login_required
 def editar_operacao_td(request, id):
@@ -231,8 +231,7 @@ def editar_operacao_td(request, id):
         form_operacao_td = OperacaoTituloForm(instance=operacao_td, investidor=investidor)
         formset_divisao = DivisaoFormSet(instance=operacao_td, investidor=investidor)
             
-    return render_to_response('td/editar_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes}, 
-                              context_instance=RequestContext(request))   
+    return TemplateResponse(request, 'td/editar_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})   
 
     
 @login_required
@@ -375,9 +374,8 @@ def historico_td(request):
     # Pegar valores correntes dos títulos no site do Tesouro
     
     
-    return render_to_response('td/historico.html', {'dados': dados, 'operacoes': operacoes, 'graf_total_venc': graf_total_venc,
-                                                     'graf_gasto_total': graf_gasto_total, 'graf_patrimonio': graf_patrimonio},
-                               context_instance=RequestContext(request))
+    return TemplateResponse(request, 'td/historico.html', {'dados': dados, 'operacoes': operacoes, 'graf_total_venc': graf_total_venc,
+                                                     'graf_gasto_total': graf_gasto_total, 'graf_patrimonio': graf_patrimonio})
     
     
 @login_required
@@ -425,8 +423,8 @@ def inserir_operacao_td(request):
         form_operacao_td = OperacaoTituloForm(investidor=investidor)
         formset_divisao = DivisaoFormSet(investidor=investidor)
             
-    return render_to_response('td/inserir_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao,
-                                                              'varias_divisoes': varias_divisoes}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'td/inserir_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao,
+                                                              'varias_divisoes': varias_divisoes})
 
 @login_required
 def painel(request):
@@ -556,6 +554,6 @@ def painel(request):
     dados['total_lucro'] = total_lucro
     dados['data_valor_mais_recente'] = buscar_data_valor_mais_recente()
     
-#     return render_to_response('td/painel.html', {'titulos': titulos, 'titulos_vendidos': titulos_vendidos, 'dados': dados}, context_instance=RequestContext(request))
+#     return TemplateResponse(request, 'td/painel.html', {'titulos': titulos, 'titulos_vendidos': titulos_vendidos, 'dados': dados})
     response = TemplateResponse(request, 'td/painel.html', {'titulos': titulos, 'titulos_vendidos': titulos_vendidos, 'dados': dados})
     return response

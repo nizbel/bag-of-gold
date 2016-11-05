@@ -75,10 +75,7 @@ def acompanhamento_mensal(request):
     operacoes = OperacaoAcao.objects.exclude(data__isnull=True).filter(destinacao='T', investidor=investidor, data__year=ano, data__month=mes).order_by('data')
     
     if not operacoes:
-        return render_to_response('acoes/trade/acompanhamento_mensal.html', 
-                              {'lista_anos': lista_anos, 'lista_meses': lista_meses, 'dados_mes': {}, 'graf_compras_mes': list(),
-                               'graf_vendas_mes': list(), 'graf_lucro_mes': list(), 'acoes_ranking': {}},
-                               context_instance=RequestContext(request))
+        return TemplateResponse(request, 'acoes/trade/acompanhamento_mensal.html', {'lista_anos': lista_anos, 'lista_meses': lista_meses, 'dados_mes': {})
         
     graf_compras_mes = list()
     graf_vendas_mes = list()
@@ -203,10 +200,8 @@ def acompanhamento_mensal(request):
     
     # TODO adicionar primeiro e ultimo dia ao lucro do mes
     
-    return render_to_response('acoes/trade/acompanhamento_mensal.html', 
-                              {'lista_anos': lista_anos, 'lista_meses': lista_meses, 'dados_mes': dados_mes, 'graf_compras_mes': graf_compras_mes,
-                               'graf_vendas_mes': graf_vendas_mes, 'graf_lucro_mes': graf_lucro_mes, 'acoes_ranking': acoes_lucro_ordenado},
-                               context_instance=RequestContext(request))
+    return TemplateResponse(request, 'acoes/trade/acompanhamento_mensal.html', {'lista_anos': lista_anos, 'lista_meses': lista_meses, 'dados_mes': dados_mes, 'graf_compras_mes': graf_compras_mes,
+                               'graf_vendas_mes': graf_vendas_mes, 'graf_lucro_mes': graf_lucro_mes, 'acoes_ranking': acoes_lucro_ordenado})
     
     
 @login_required
@@ -230,7 +225,7 @@ def editar_operacao(request, id):
     else:
         form = OperacaoCompraVendaForm(instance=operacao, investidor=investidor)
         
-    return render_to_response('acoes/trade/editar_operacao.html', {'form': form}, context_instance=RequestContext(request)) 
+    return TemplateResponse(request, 'acoes/trade/editar_operacao.html', {'form': form}) 
     
 @login_required
 def editar_operacao_acao(request, id):
@@ -274,8 +269,7 @@ def editar_operacao_acao(request, id):
         form_operacao_acao = OperacaoAcaoForm(instance=operacao)
         formset_divisao = DivisaoFormSet(instance=operacao, investidor=investidor)
             
-    return render_to_response('acoes/trade/editar_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'formset_divisao': formset_divisao, 'operacao_day_trade': operacao_day_trade},
-                               context_instance=RequestContext(request))   
+    return TemplateResponse(request, 'acoes/trade/editar_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'formset_divisao': formset_divisao, 'operacao_day_trade': operacao_day_trade})   
     
     
 @login_required
@@ -285,9 +279,8 @@ def historico_operacoes(request):
     operacoes = OperacaoAcao.objects.filter(destinacao='T', investidor=investidor).exclude(data__isnull=True).order_by('data')
     
     if not operacoes:
-        return render_to_response('acoes/trade/historico_operacoes.html', 
-                              {'operacoes': operacoes, 'meses_operacao': list(), 'graf_lucro_acumulado': list(),
-                               'graf_lucro_mensal': list()}, context_instance=RequestContext(request))
+        return TemplateResponse(request, 'acoes/trade/historico_operacoes.html', {'operacoes': operacoes, 'meses_operacao': list(), 'graf_lucro_acumulado': list(),
+                               'graf_lucro_mensal': list()})
     
     # Dados para acompanhamento de vendas mensal e tributavel
     ano = operacoes[0].data.year
@@ -374,9 +367,8 @@ def historico_operacoes(request):
             graf_lucro_mensal += [[str(calendar.timegm(datetime.date(ano, mes, 1).timetuple()) * 1000), float(lucro_mensal)]]
             
                 
-    return render_to_response('acoes/trade/historico_operacoes.html', 
-                              {'operacoes': operacoes, 'meses_operacao': meses_operacao, 'graf_lucro_acumulado': graf_lucro_acumulado,
-                               'graf_lucro_mensal': graf_lucro_mensal}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'acoes/trade/historico_operacoes.html', {'operacoes': operacoes, 'meses_operacao': meses_operacao, 'graf_lucro_acumulado': graf_lucro_acumulado,
+                               'graf_lucro_mensal': graf_lucro_mensal})
     
 @login_required
 def historico_operacoes_cv(request):
@@ -395,7 +387,7 @@ def historico_operacoes_cv(request):
         
         operacao.lucro_percentual = operacao.lucro / operacao.total_compra * 100
             
-    return render_to_response('acoes/trade/historico_operacoes_cv.html', {'operacoes': operacoes}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'acoes/trade/historico_operacoes_cv.html', {'operacoes': operacoes})
     
 @login_required
 def inserir_operacao(request):
@@ -410,7 +402,7 @@ def inserir_operacao(request):
     else:
         form = OperacaoCompraVendaForm(investidor=investidor)
             
-    return render_to_response('acoes/trade/inserir_operacao.html', {'form': form}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'acoes/trade/inserir_operacao.html', {'form': form})
     
 @login_required
 def inserir_operacao_acao(request):
@@ -440,4 +432,4 @@ def inserir_operacao_acao(request):
         form_operacao_acao = OperacaoAcaoForm(initial=valores_iniciais)
         formset_divisao = DivisaoFormSet(investidor=investidor)
             
-    return render_to_response('acoes/trade/inserir_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'formset_divisao': formset_divisao}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'acoes/trade/inserir_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'formset_divisao': formset_divisao})

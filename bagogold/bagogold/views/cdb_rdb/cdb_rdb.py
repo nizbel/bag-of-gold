@@ -103,9 +103,8 @@ def detalhar_cdb_rdb(request, id):
         cdb_rdb.dias_proxima_retirada = 0
     
     
-    return render_to_response('cdb_rdb/detalhar_cdb_rdb.html', {'cdb_rdb': cdb_rdb, 'historico_porcentagem': historico_porcentagem,
-                                                                       'historico_carencia': historico_carencia},
-                              context_instance=RequestContext(request))
+    return TemplateResponse(request, 'cdb_rdb/detalhar_cdb_rdb.html', {'cdb_rdb': cdb_rdb, 'historico_porcentagem': historico_porcentagem,
+                                                                       'historico_carencia': historico_carencia})
 
 @login_required
 def editar_cdb_rdb(request, id):
@@ -133,8 +132,7 @@ def editar_cdb_rdb(request, id):
     else:
         form_cdb_rdb = CDB_RDBForm(instance=cdb_rdb)
             
-    return render_to_response('cdb_rdb/editar_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb},
-                              context_instance=RequestContext(request))  
+    return TemplateResponse(request, 'cdb_rdb/editar_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb})  
     
 @login_required
 def editar_historico_carencia(request, id):
@@ -171,8 +169,7 @@ def editar_historico_carencia(request, id):
         else: 
             form_historico_carencia = HistoricoCarenciaCDB_RDBForm(instance=historico_carencia, cdb_rdb=historico_carencia.cdb_rdb)
             
-    return render_to_response('cdb_rdb/editar_historico_carencia.html', {'form_historico_carencia': form_historico_carencia},
-                              context_instance=RequestContext(request)) 
+    return TemplateResponse(request, 'cdb_rdb/editar_historico_carencia.html', {'form_historico_carencia': form_historico_carencia}) 
     
 @login_required
 def editar_historico_porcentagem(request, id):
@@ -209,8 +206,7 @@ def editar_historico_porcentagem(request, id):
         else: 
             form_historico_porcentagem = HistoricoPorcentagemCDB_RDBForm(instance=historico_porcentagem, cdb_rdb=historico_porcentagem.cdb_rdb)
             
-    return render_to_response('cdb_rdb/editar_historico_porcentagem.html', {'form_historico_porcentagem': form_historico_porcentagem},
-                              context_instance=RequestContext(request)) 
+    return TemplateResponse(request, 'cdb_rdb/editar_historico_porcentagem.html', {'form_historico_porcentagem': form_historico_porcentagem}) 
     
 @login_required
 def editar_operacao_cdb_rdb(request, id):
@@ -293,8 +289,7 @@ def editar_operacao_cdb_rdb(request, id):
                                                     investidor=investidor)
         formset_divisao = DivisaoFormSet(instance=operacao_cdb_rdb, investidor=investidor)
             
-    return render_to_response('cdb_rdb/editar_operacao_cdb_rdb.html', {'form_operacao_cdb_rdb': form_operacao_cdb_rdb, 'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes},
-                              context_instance=RequestContext(request))  
+    return TemplateResponse(request, 'cdb_rdb/editar_operacao_cdb_rdb.html', {'form_operacao_cdb_rdb': form_operacao_cdb_rdb, 'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})  
 
     
 @login_required
@@ -304,9 +299,7 @@ def historico(request):
     operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
     # Verifica se não há operações
     if not operacoes:
-        return render_to_response('cdb_rdb/historico.html', {'dados': {}, 'operacoes': list(), 
-                                                    'graf_gasto_total': list(), 'graf_patrimonio': list()},
-                               context_instance=RequestContext(request))
+        return TemplateResponse(request, 'cdb_rdb/historico.html', {'dados': {})
     
     # Prepara o campo valor atual
     for operacao in operacoes:
@@ -393,9 +386,8 @@ def historico(request):
     dados['lucro'] = total_patrimonio - total_gasto
     dados['lucro_percentual'] = (total_patrimonio - total_gasto) / total_gasto * 100
     
-    return render_to_response('cdb_rdb/historico.html', {'dados': dados, 'operacoes': operacoes, 
-                                                    'graf_gasto_total': graf_gasto_total, 'graf_patrimonio': graf_patrimonio},
-                               context_instance=RequestContext(request))
+    return TemplateResponse(request, 'cdb_rdb/historico.html', {'dados': dados, 'operacoes': operacoes, 
+                                                    'graf_gasto_total': graf_gasto_total, 'graf_patrimonio': graf_patrimonio})
     
 
 @login_required
@@ -429,8 +421,8 @@ def inserir_cdb_rdb(request):
                     # Capturar erros oriundos da hora de salvar os objetos
                     except Exception as erro:
                         messages.error(request, erro.message)
-                        return render_to_response('cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'formset_porcentagem': formset_porcentagem,
-                                                          'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
+                        return TemplateResponse(request, 'cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'formset_porcentagem': formset_porcentagem,
+                                                          'formset_carencia': formset_carencia})
                         
                     return HttpResponseRedirect(reverse('listar_cdb_rdb'))
                 
@@ -446,8 +438,8 @@ def inserir_cdb_rdb(request):
         form_cdb_rdb = CDB_RDBForm()
         formset_porcentagem = PorcentagemFormSet()
         formset_carencia = CarenciaFormSet()
-    return render_to_response('cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'formset_porcentagem': formset_porcentagem,
-                                                              'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'formset_porcentagem': formset_porcentagem,
+                                                              'formset_carencia': formset_carencia})
 
 @login_required
 def inserir_operacao_cdb_rdb(request):
@@ -538,8 +530,8 @@ def inserir_operacao_cdb_rdb(request):
     else:
         form_operacao_cdb_rdb = OperacaoCDB_RDBForm(investidor=investidor)
         formset_divisao_cdb_rdb = DivisaoCDB_RDBFormSet(investidor=investidor)
-    return render_to_response('cdb_rdb/inserir_operacao_cdb_rdb.html', {'form_operacao_cdb_rdb': form_operacao_cdb_rdb, 'formset_divisao_cdb_rdb': formset_divisao_cdb_rdb,
-                                                                        'varias_divisoes': varias_divisoes}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'cdb_rdb/inserir_operacao_cdb_rdb.html', {'form_operacao_cdb_rdb': form_operacao_cdb_rdb, 'formset_divisao_cdb_rdb': formset_divisao_cdb_rdb,
+                                                                        'varias_divisoes': varias_divisoes})
 
 @login_required
 def listar_cdb_rdb(request):
@@ -557,8 +549,7 @@ def listar_cdb_rdb(request):
         elif investimento.tipo_rendimento == 2:
             investimento.str_tipo_rendimento = 'Pós-fixado'
         
-    return render_to_response('cdb_rdb/listar_cdb_rdb.html', {'cdb_rdb': cdb_rdb},
-                              context_instance=RequestContext(request))
+    return TemplateResponse(request, 'cdb_rdb/listar_cdb_rdb.html', {'cdb_rdb': cdb_rdb})
 
 @login_required
 def modificar_carencia_cdb_rdb(request, id):
@@ -577,7 +568,7 @@ def modificar_carencia_cdb_rdb(request, id):
     else:
         form = HistoricoCarenciaCDB_RDBForm(initial={'cdb_rdb': cdb_rdb.id}, cdb_rdb=cdb_rdb)
             
-    return render_to_response('cdb_rdb/modificar_carencia_cdb_rdb.html', {'form': form}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'cdb_rdb/modificar_carencia_cdb_rdb.html', {'form': form})
 
 @login_required
 def modificar_porcentagem_cdb_rdb(request, id):
@@ -596,7 +587,7 @@ def modificar_porcentagem_cdb_rdb(request, id):
     else:
         form = HistoricoPorcentagemCDB_RDBForm(initial={'cdb_rdb': cdb_rdb.id}, cdb_rdb=cdb_rdb)
             
-    return render_to_response('cdb_rdb/modificar_porcentagem_cdb_rdb.html', {'form': form}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'cdb_rdb/modificar_porcentagem_cdb_rdb.html', {'form': form})
 
 @login_required
 def painel(request):
@@ -609,8 +600,7 @@ def painel(request):
         dados['total_ir'] = Decimal(0)
         dados['total_iof'] = Decimal(0)
         dados['total_ganho_prox_dia'] = Decimal(0)
-        return render_to_response('cdb_rdb/painel.html', {'operacoes': {}, 'dados': dados},
-                               context_instance=RequestContext(request))
+        return TemplateResponse(request, 'cdb_rdb/painel.html', {'operacoes': {})
     
     # Prepara o campo valor atual
     for operacao in operacoes:
@@ -723,5 +713,4 @@ def painel(request):
     dados['total_ganho_prox_dia'] = total_ganho_prox_dia
     dados['total_vencimento'] = total_vencimento
     
-    return render_to_response('cdb_rdb/painel.html', {'operacoes': operacoes, 'dados': dados},
-                               context_instance=RequestContext(request))
+    return TemplateResponse(request, 'cdb_rdb/painel.html', {'operacoes': operacoes, 'dados': dados})

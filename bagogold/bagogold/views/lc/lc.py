@@ -102,8 +102,7 @@ def editar_operacao_lc(request, id):
         form_operacao_lc = OperacaoLetraCreditoForm(instance=operacao_lc, investidor=investidor, initial={'operacao_compra': operacao_lc.operacao_compra_relacionada(),})
         formset_divisao = DivisaoFormSet(instance=operacao_lc, investidor=investidor)
             
-    return render_to_response('lc/editar_operacao_lc.html', {'form_operacao_lc': form_operacao_lc, 'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes},
-                              context_instance=RequestContext(request))  
+    return TemplateResponse(request, 'lc/editar_operacao_lc.html', {'form_operacao_lc': form_operacao_lc, 'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})  
 
     
 @login_required
@@ -115,8 +114,7 @@ def historico(request):
     
     # Se investidor não fez operações, retornar
     if not operacoes:
-        return render_to_response('lc/historico.html', {'dados': {}, 'operacoes': operacoes, 'graf_gasto_total': list(), 'graf_patrimonio': list()},
-                               context_instance=RequestContext(request))
+        return TemplateResponse(request, 'lc/historico.html', {'dados': {})
     
     historico_porcentagem = HistoricoPorcentagemLetraCredito.objects.all() 
     # Prepara o campo valor atual
@@ -205,9 +203,8 @@ def historico(request):
     dados['lucro'] = total_patrimonio - total_gasto
     dados['lucro_percentual'] = ((total_patrimonio - total_gasto) / total_gasto * 100) if total_gasto > 0 else 0
     
-    return render_to_response('lc/historico.html', {'dados': dados, 'operacoes': operacoes, 
-                                                    'graf_gasto_total': graf_gasto_total, 'graf_patrimonio': graf_patrimonio},
-                               context_instance=RequestContext(request))
+    return TemplateResponse(request, 'lc/historico.html', {'dados': dados, 'operacoes': operacoes, 
+                                                    'graf_gasto_total': graf_gasto_total, 'graf_patrimonio': graf_patrimonio})
     
 
 @login_required
@@ -240,8 +237,8 @@ def inserir_lc(request):
                         # Capturar erros oriundos da hora de salvar os objetos
                         except Exception as erro:
                             messages.error(request, erro.message)
-                            return render_to_response('lc/inserir_lc.html', {'form_lc': form_lc, 'formset_porcentagem': formset_porcentagem,
-                                                                         'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
+                            return TemplateResponse(request, 'lc/inserir_lc.html', {'form_lc': form_lc, 'formset_porcentagem': formset_porcentagem,
+                                                                         'formset_carencia': formset_carencia})
                         return HttpResponseRedirect(reverse('listar_lc'))
                     
             for erros in form_lc.errors.values():
@@ -256,8 +253,8 @@ def inserir_lc(request):
         form_lc = LetraCreditoForm()
         formset_porcentagem = PorcentagemFormSet()
         formset_carencia = CarenciaFormSet()
-    return render_to_response('lc/inserir_lc.html', {'form_lc': form_lc, 'formset_porcentagem': formset_porcentagem,
-                                                              'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'lc/inserir_lc.html', {'form_lc': form_lc, 'formset_porcentagem': formset_porcentagem,
+                                                              'formset_carencia': formset_carencia})
 
 @login_required
 def inserir_operacao_lc(request):
@@ -347,8 +344,7 @@ def inserir_operacao_lc(request):
     else:
         form_operacao_lc = OperacaoLetraCreditoForm(investidor=investidor)
         formset_divisao = DivisaoFormSet(investidor=investidor)
-    return render_to_response('lc/inserir_operacao_lc.html', {'form_operacao_lc': form_operacao_lc, 'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes},
-                              context_instance=RequestContext(request))
+    return TemplateResponse(request, 'lc/inserir_operacao_lc.html', {'form_operacao_lc': form_operacao_lc, 'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})
 
 @login_required
 def listar_lc(request):
@@ -369,8 +365,7 @@ def listar_lc(request):
         else:
             lc.rendimento_atual = HistoricoPorcentagemLetraCredito.objects.get(letra_credito=lc).porcentagem_di
 
-    return render_to_response('lc/listar_lc.html', {'lcs': lcs},
-                              context_instance=RequestContext(request))
+    return TemplateResponse(request, 'lc/listar_lc.html', {'lcs': lcs})
 
 @login_required
 def modificar_carencia_lc(request):
@@ -385,7 +380,7 @@ def modificar_carencia_lc(request):
     else:
         form = HistoricoCarenciaLetraCreditoForm(investidor=investidor)
             
-    return render_to_response('lc/modificar_carencia_lc.html', {'form': form}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'lc/modificar_carencia_lc.html', {'form': form})
 
 @login_required
 def modificar_porcentagem_di_lc(request):
@@ -400,7 +395,7 @@ def modificar_porcentagem_di_lc(request):
     else:
         form = HistoricoPorcentagemLetraCreditoForm(investidor=investidor)
             
-    return render_to_response('lc/modificar_porcentagem_di_lc.html', {'form': form}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'lc/modificar_porcentagem_di_lc.html', {'form': form})
 
 @login_required
 def painel(request):
@@ -411,8 +406,7 @@ def painel(request):
     
     # Se não há operações, retornar
     if not operacoes:
-        return render_to_response('lc/painel.html', {'operacoes': operacoes, 'dados': {}},
-                               context_instance=RequestContext(request))
+        return TemplateResponse(request, 'lc/painel.html', {'operacoes': operacoes, 'dados': {}})
     
     historico_porcentagem = HistoricoPorcentagemLetraCredito.objects.all() 
     # Prepara o campo valor atual
@@ -491,5 +485,4 @@ def painel(request):
     dados['total_ganho_prox_dia'] = total_ganho_prox_dia
     dados['data_di_mais_recente'] = data_final
     
-    return render_to_response('lc/painel.html', {'operacoes': operacoes, 'dados': dados},
-                               context_instance=RequestContext(request))
+    return TemplateResponse(request, 'lc/painel.html', {'operacoes': operacoes, 'dados': dados})
