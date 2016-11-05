@@ -554,6 +554,4 @@ def painel(request):
     dados['total_lucro'] = total_lucro
     dados['data_valor_mais_recente'] = buscar_data_valor_mais_recente()
     
-#     return TemplateResponse(request, 'td/painel.html', {'titulos': titulos, 'titulos_vendidos': titulos_vendidos, 'dados': dados})
-    response = TemplateResponse(request, 'td/painel.html', {'titulos': titulos, 'titulos_vendidos': titulos_vendidos, 'dados': dados})
-    return response
+    return TemplateResponse(request, 'td/painel.html', {'titulos': titulos, 'titulos_vendidos': titulos_vendidos, 'dados': dados})
