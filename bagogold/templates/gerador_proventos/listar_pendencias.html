@@ -18,7 +18,12 @@
         <td><a href="{% url 'ler_documento_provento' pendencia.id %}">{{pendencia.documento}}</a></td>
         <td>{{pendencia.tipo}}</td>
         <td>{{pendencia.data_criacao}}</td>
-        <td><a href="{% url 'puxar_responsabilidade_documento_provento' pendencia.id %}" class="btn btn-warning">Virar responsável</a> 
+        <td>
+        {% if pendencia.responsavel %}
+            {{pendencia.responsavel}}
+        {% else %}
+            <a href="{% url 'puxar_responsabilidade_documento_provento' pendencia.id %}" class="btn btn-warning">Virar responsável</a> 
+        {% endif %}
     </tr>
     {% endfor %}
     </tbody>

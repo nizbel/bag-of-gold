@@ -192,7 +192,7 @@ def baixar_demonstrativo_rendimentos(pdf_url):
     req = Request(pdf_url)
 #     print pdf_url
     try:
-        response = urlopen(req)
+        response = urlopen(req, timeout=30)
     except HTTPError as e:
         print 'The server couldn\'t fulfill the request.'
         print 'Error code: ', e.code

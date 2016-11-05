@@ -127,7 +127,7 @@ def buscar_proventos_acao(codigo_cvm, ticker, ano, num_tentativas):
     prov_url = 'http://bvmf.bmfbovespa.com.br/pt-br/mercados/acoes/empresas/ExecutaAcaoConsultaInfoRelevantes.asp?codCVM=%s&ano=%s' % (codigo_cvm, ano)
     req = Request(prov_url)
     try:
-        response = urlopen(req)
+        response = urlopen(req, timeout=30)
     except HTTPError as e:
         print 'The server couldn\'t fulfill the request.'
         print 'Error code: ', e.code
