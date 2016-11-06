@@ -133,17 +133,18 @@ class PendenciaDocumentoProvento (models.Model):
         return None
     
 class ProventoAcaoDocumento (models.Model):
-    provento = models.ForeignKey('Provento')
+    provento = models.ForeignKey('Provento', blank=True, null=True)
     documento = models.ForeignKey('DocumentoProventoBovespa')
     versao = models.SmallIntegerField(u'Versão')
+    descricao_provento = models.OneToOneField('ProventoAcaoDescritoDocumentoBovespa')
     
 class ProventoFIIDocumento (models.Model):
-    provento = models.ForeignKey('ProventoFII')
+    provento = models.ForeignKey('ProventoFII', blank=True, null=True)
     documento = models.ForeignKey('DocumentoProventoBovespa')
     versao = models.SmallIntegerField(u'Versão')
+    descricao_provento = models.OneToOneField('ProventoFIIDescritoDocumentoBovespa')
 
 class ProventoAcaoDescritoDocumentoBovespa (models.Model):
-    documento = models.ForeignKey('DocumentoProventoBovespa') 
     acao = models.ForeignKey('Acao')
     valor_unitario = models.DecimalField(u'Valor unitário', max_digits=16, decimal_places=12)
     """
@@ -179,7 +180,6 @@ class AcaoProventoTemporarioAcao (models.Model):
         return u'Ações de %s, com frações de R$%s a receber em %s' % (self.acao_recebida.ticker, self.valor_calculo_frac, self.data_pagamento_frac)
 
 class ProventoFIIDescritoDocumentoBovespa (models.Model):
-    documento = models.ForeignKey('DocumentoProventoBovespa')
     fii = models.ForeignKey('FII')
     valor_unitario = models.DecimalField(u'Valor unitário', max_digits=13, decimal_places=9)
     data_ex = models.DateField(u'Data EX')
