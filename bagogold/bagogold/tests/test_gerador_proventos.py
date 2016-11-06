@@ -105,6 +105,18 @@ class GeradorProventosTestCase(TestCase):
         
         pass
     
+    def test_converter_dividendos_acoes_para_provento_real(self):
+        pass
+    
+    def test_converter_jscp_acoes_para_provento_real(self):
+        pass
+    
+    def test_converter_proventos_em_acoes_para_provento_real(self):
+        pass
+    
+    def test_converter_rendimentos_fii_para_provento_real(self):
+        pass
+    
     def test_gerar_versao_doc_provento(self):
         """Testa criação automática de versão a partir de um documento de provento"""
         pass
