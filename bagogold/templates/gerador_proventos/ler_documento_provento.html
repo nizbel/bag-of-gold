@@ -51,12 +51,17 @@
                         <option>10</option>
                     </select>
                     <input type="submit" class="btn" value="Preparar proventos" name="preparar_proventos" id="preparar_proventos">
-                    {{ formset.management_form }}
-                    {% for form in formset.forms %}
+                    {{ formset_provento.management_form }}
+                    {{ formset_acao_provento.management_form }}
+                    {% for form_provento in formset_provento.forms %}
                         <h3>Provento {{ forloop.counter }}</h3>
-                        {{ form.as_p }}
+                        {{ form_provento.as_p }}
                         <div id="provento_em_acao-{{forloop.counter0}}">
-                            Teste
+                        {% for form_acao_provento in formset_acao_provento.forms %}
+                            {% if forloop.counter == forloop.parentloop.counter %}
+                                {{form_acao_provento.as_p}}
+                            {% endif %}
+                        {% endfor %}
                         </div>
                     {% endfor %}
                 </div>

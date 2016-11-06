@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.gerador_proventos import \
-    ProventoAcaoDescritoDocumentoBovespa
+    ProventoAcaoDescritoDocumentoBovespa, AcaoProventoAcaoDescritoDocumentoBovespa
 from django import forms
 from django.forms import widgets
 
@@ -36,3 +36,18 @@ class AcaoProventoAcaoDescritoDocumentoBovespaForm(forms.ModelForm):
     class Meta:
         model = AcaoProventoAcaoDescritoDocumentoBovespa
         fields = ('acao_recebida', 'data_pagamento_frac', 'valor_calculo_frac')
+        widgets={'data_pagamento_frac': widgets.DateInput(attrs={'class':'datepicker', 
+                                            'placeholder':'Selecione uma data'})}
+
+#     def clean_acao_recebida(self):
+#         print 'ENtrou no clean'
+#         acao_recebida = self.cleaned_data['acao_recebida']
+#         print acao_recebida
+#         if not acao_recebida:
+#             raise forms.ValidationError('Ação recebida não pode ser nula')
+#         return acao_recebida
+#     
+#     def clean(self):
+#         print 'Entrou no clean'
+#         dados = super(AcaoProventoAcaoDescritoDocumentoBovespaForm, self).clean()
+#         return dados
