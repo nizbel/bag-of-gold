@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from bagogold import settings
 from bagogold.bagogold.forms.gerador_proventos import \
-    ProventoAcaoDescritoDocumentoBovespaForm
+    ProventoAcaoDescritoDocumentoBovespaForm, \
+    AcaoProventoAcaoDescritoDocumentoBovespaForm
 from bagogold.bagogold.forms.provento_acao import ProventoAcaoForm
 from bagogold.bagogold.models.acoes import Acao
 from bagogold.bagogold.models.empresa import Empresa
@@ -34,22 +35,55 @@ def baixar_documento_provento(request, id_documento):
 def ler_documento_provento(request, id_pendencia):
     pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
     
+    # Preencher responsável
+    pendencia.responsavel = pendencia.responsavel() or 'Sem responsável'
+    
+    ProventoFormset = formset_factory(ProventoAcaoDescritoDocumentoBovespaForm)
+    AcaoProventoFormset = formset_factory(AcaoProventoAcaoDescritoDocumentoBovespaForm)
+    
     if request.method == 'POST':
         if request.POST.get('preparar_proventos'):
             if request.POST['num_proventos'].isdigit():
                 qtd_proventos = int(request.POST['num_proventos']) if int(request.POST['num_proventos']) <= 10 else 1
+                ProventoFormset = formset_factory(ProventoAcaoDescritoDocumentoBovespaForm, extra=qtd_proventos)
+                AcaoProventoFormset = formset_factory(AcaoProventoAcaoDescritoDocumentoBovespaForm, extra=qtd_proventos)
+                formset_provento = ProventoFormset(prefix='provento')
+                formset_acao_provento = AcaoProventoFormset(prefix='acao_provento')
+                
+        # Caso o botão de salvar ter sido apertado
+        elif request.POST.get('save'):
+            formset_provento = ProventoFormset(request.POST, prefix='provento')
+            formset_acao_provento = AcaoProventoFormset(request.POST, prefix='acao_provento')
+            
+            if formset_provento.is_valid():
+                # Verifica se dados inseridos são todos válidos
+                forms_validos = True
+                indice_provento = 0
+                for form_provento in formset_provento:
+                    provento = form_provento.save(commit=False)
+    #                 acao_proventos = formset_acao_provento.save(commit=False)
+                    print provento
+                    form_acao_provento = formset_acao_provento[indice_provento]
+                    # Verificar a ação do provento em ações
+                    if provento.tipo_provento == 'A':
+                        acao_provento = form_acao_provento.save(commit=False) if form_acao_provento.is_valid() and form_acao_provento.has_changed() else None
+                        if acao_provento == None:
+                            forms_validos = False
+                        else:
+                            print acao_provento
+                    indice_provento += 1
+                if forms_validos:
+                    messages.success(request, 'Proventos criados com sucesso')
+                    return HttpResponseRedirect(reverse('listar_pendencias'))
+                else:
+                    messages.error(request, 'Proventos em ações não conferem com os proventos criados')
     else:
-        qtd_proventos = 0
+        # Preparar formset de proventos
+        if pendencia.documento.tipo == 'A':
+            formset_provento = ProventoFormset(prefix='provento')
+            formset_acao_provento = AcaoProventoFormset(prefix='acao_provento')
     
-    # Preencher responsável
-    pendencia.responsavel = pendencia.responsavel() or 'Sem responsável'
-    
-    # Preparar formset de proventos
-    if pendencia.documento.tipo == 'A':
-        print 'qtd_proventos', qtd_proventos
-        formset = formset_factory(ProventoAcaoDescritoDocumentoBovespaForm, extra=qtd_proventos)
-    
-    return TemplateResponse(request, 'gerador_proventos/ler_documento_provento.html', {'pendencia': pendencia, 'formset': formset})
+    return TemplateResponse(request, 'gerador_proventos/ler_documento_provento.html', {'pendencia': pendencia, 'formset_provento': formset_provento, 'formset_acao_provento': formset_acao_provento})
     
 @login_required
 @user_passes_test(is_superuser)
