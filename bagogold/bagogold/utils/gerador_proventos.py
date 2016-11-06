@@ -35,3 +35,9 @@ def desalocar_pendencia_de_investidor(pendencia, investidor):
         return (False, u'A pendência não estava alocada para o investidor')
     except:
         return (False, u'Não foi possível desalocar a pendência')
+    
+def converter_descricao_provento_para_provento_acoes_real(descricao_provento):
+    pass
+
+def converter_descricao_provento_para_provento_fii_real(descricao_provento):
+    pass
