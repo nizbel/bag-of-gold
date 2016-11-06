@@ -3,10 +3,10 @@ from bagogold import settings
 from bagogold.bagogold.models.acoes import Acao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
-    PendenciaDocumentoProvento
+    PendenciaDocumentoProvento, InvestidorLeituraDocumento
 from bagogold.bagogold.testFII import baixar_demonstrativo_rendimentos
 from bagogold.bagogold.utils.gerador_proventos import \
-    alocar_pendencia_para_investidor
+    alocar_pendencia_para_investidor, salvar_investidor_responsavel_por_leitura
 from django.contrib.auth.models import User
 from django.core.files import File
 from django.test import TestCase
@@ -95,6 +95,26 @@ class GeradorProventosTestCase(TestCase):
         self.assertTrue(len(PendenciaDocumentoProvento.objects.filter(documento=documento)) == 1)
         # Tipo de pendência deve ser 'L'
         self.assertTrue(PendenciaDocumentoProvento.objects.filter(documento=documento)[0].tipo == 'L')
+    
+    def test_salvar_investidor_responsavel_por_leitura(self):
+        """Testa se é possível salvar o investidor responsável pela leitura do documento"""
+        documento = DocumentoProventoBovespa.objects.get(protocolo='508232')
+        pendencia = PendenciaDocumentoProvento.objects.get(documento=documento)
+        self.assertIsInstance(salvar_investidor_responsavel_por_leitura(pendencia, User.objects.get(username='tester').investidor, 'C'), InvestidorLeituraDocumento)
+        self.assertEqual(PendenciaDocumentoProvento.objects.get(documento=documento).tipo, 'V')
+        
+    def test_nao_salvar_investidor_responsavel_por_leitura(self):
+        """Testa se criar vínculo de responsabilidade de leitura no documento falha ao entrar com valores errados"""
+        documento = DocumentoProventoBovespa.objects.get(protocolo='508232')
+        pendencia = PendenciaDocumentoProvento.objects.get(documento=documento)
+        # Testa erro para decisão não permitida
+        with self.assertRaises(ValueError):
+            salvar_investidor_responsavel_por_leitura(pendencia, User.objects.get(username='tester').investidor, 'G')
+        # Testa erro para pendência que não seja de leitura
+        pendencia.tipo = 'V'
+        pendencia.save()
+        with self.assertRaises(ValueError):
+            salvar_investidor_responsavel_por_leitura(pendencia, User.objects.get(username='tester').investidor, 'C')
     
     def test_excluir_arquivo_sem_info(self):
         """Testa exclusão de arquivo por um investidor do site"""

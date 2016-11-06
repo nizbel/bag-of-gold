@@ -52,45 +52,56 @@ def ler_documento_provento(request, id_pendencia):
                 
         # Caso o botão de salvar ter sido apertado
         elif request.POST.get('save'):
-            formset_provento = ProventoFormset(request.POST, prefix='provento')
-            formset_acao_provento = AcaoProventoFormset(request.POST, prefix='acao_provento')
-            
-            if formset_provento.is_valid():
-                # Verifica se dados inseridos são todos válidos
-                forms_validos = True
-                indice_provento = 0
-                # Guarda os proventos e ações de proventos criadas para salvar caso todos os formulários sejam válidos
-                proventos_validos = list()
-                acoes_proventos_validos = list()
-                for form_provento in formset_provento:
-                    provento = form_provento.save(commit=False)
-                    print provento
-                    proventos_validos.append(provento)
-                    form_acao_provento = formset_acao_provento[indice_provento]
-                    # Verificar a ação do provento em ações
-                    if provento.tipo_provento == 'A':
-                        acao_provento = form_acao_provento.save(commit=False) if form_acao_provento.is_valid() and form_acao_provento.has_changed() else None
-                        if acao_provento == None:
-                            forms_validos = False
-                        else:
-                            acao_provento.provento = provento
-                            print acao_provento
-                            acoes_proventos_validos.append(acao_provento)
-                    indice_provento += 1
-                if forms_validos:
-                    # TODO Salvar descrições de proventos
-#                     for provento in proventos_validos:
-#                         provento.save()
-#                     for acao_provento in acoes_proventos_validos:
-#                         acao_provento.save()
-                    # TODO Desalocar pendencia de investidor
-#                     desalocar_pendencia_de_investidor(pendencia, request.user.investidor)
-                    # TODO Colocar investidor como responsável pela leitura do documento
-#                     salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao='')
-                    messages.success(request, 'Proventos criados com sucesso')
-                    return HttpResponseRedirect(reverse('listar_pendencias'))
-                else:
-                    messages.error(request, 'Proventos em ações não conferem com os proventos criados')
+            # Radio de documento estava em Gerar
+            if request.POST['radioDocumento'] == 'Gerar':
+                formset_provento = ProventoFormset(request.POST, prefix='provento')
+                formset_acao_provento = AcaoProventoFormset(request.POST, prefix='acao_provento')
+                
+                if formset_provento.is_valid():
+                    # Verifica se dados inseridos são todos válidos
+                    forms_validos = True
+                    indice_provento = 0
+                    # Guarda os proventos e ações de proventos criadas para salvar caso todos os formulários sejam válidos
+                    proventos_validos = list()
+                    acoes_proventos_validos = list()
+                    for form_provento in formset_provento:
+                        provento = form_provento.save(commit=False)
+                        print provento
+                        proventos_validos.append(provento)
+                        form_acao_provento = formset_acao_provento[indice_provento]
+                        # Verificar a ação do provento em ações
+                        if provento.tipo_provento == 'A':
+                            acao_provento = form_acao_provento.save(commit=False) if form_acao_provento.is_valid() and form_acao_provento.has_changed() else None
+                            if acao_provento == None:
+                                forms_validos = False
+                            else:
+                                acao_provento.provento = provento
+                                print acao_provento
+                                acoes_proventos_validos.append(acao_provento)
+                        indice_provento += 1
+                    if forms_validos:
+                        # TODO Salvar descrições de proventos
+    #                     for provento in proventos_validos:
+    #                         provento.save()
+    #                     for acao_provento in acoes_proventos_validos:
+    #                         acao_provento.save()
+                        # TODO Desalocar pendencia de investidor
+    #                     desalocar_pendencia_de_investidor(pendencia, request.user.investidor)
+                        # TODO Colocar investidor como responsável pela leitura do documento
+    #                     salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao='C')
+                        messages.success(request, 'Descrições de proventos criadas com sucesso')
+                        return HttpResponseRedirect(reverse('listar_pendencias'))
+                    else:
+                        messages.error(request, 'Proventos em ações não conferem com os proventos criados')
+                        
+            # Radio de documento estava em Excluir
+            elif request.POST['radioDocumento'] == 'Excluir':
+                # TODO Desalocar pendencia de investidor
+#                 desalocar_pendencia_de_investidor(pendencia, request.user.investidor)
+                # TODO Colocar investidor como responsável pela leitura do documento
+#                 salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao='E')
+                messages.success(request, 'Exclusão de arquivo registrada com sucesso')
+                return HttpResponseRedirect(reverse('listar_pendencias'))
     else:
         # Preparar formset de proventos
         if pendencia.documento.tipo == 'A':
