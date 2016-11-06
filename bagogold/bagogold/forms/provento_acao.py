@@ -22,9 +22,6 @@ class ProventoAcaoForm(forms.ModelForm):
                                             'placeholder':'Selecione uma data'}),
                  'tipo_provento': widgets.Select(choices=ESCOLHAS_TIPO_PROVENTO),}
         
-    class Media:
-        js = ('js/bagogold/acoes.js',)
-    
     def clean(self):
         dados = super(ProventoAcaoForm, self).clean()
         data_ex = dados.get('data_ex')
