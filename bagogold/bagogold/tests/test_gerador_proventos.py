@@ -105,6 +105,10 @@ class GeradorProventosTestCase(TestCase):
         
         pass
     
+    def test_nao_permitir_gerar_prov_repetido(self):
+        """Testa erro caso um provento seja gerado novamente"""
+        pass
+    
     def test_converter_dividendos_acoes_para_provento_real(self):
         pass
     
@@ -119,10 +123,6 @@ class GeradorProventosTestCase(TestCase):
     
     def test_gerar_versao_doc_provento(self):
         """Testa criação automática de versão a partir de um documento de provento"""
-        pass
-    
-    def test_nao_permitir_gerar_prov_repetido(self):
-        """Testa erro caso um provento seja gerado novamente"""
         pass
     
     def test_evitar_puxar_pendencia_com_responsavel_para_investidor(self):
