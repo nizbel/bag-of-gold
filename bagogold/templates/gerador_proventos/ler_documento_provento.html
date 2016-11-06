@@ -29,11 +29,37 @@
     <div class="box span12">
         <form method="POST" class="post-form form-horizontal">{% csrf_token %}
             <div id="forms">
-                {{ formset.management_form }}
-                {% for form in formset.forms %}
-                    {{ form.as_p }}
-                {% endfor %}
-                <input type="button" value="Add More" id="add_more">
+                <label class="radio">
+                    <input name="radioDocumento" value="Gerar" checked="" type="radio">
+                Gerar proventos
+                </label>
+                <label class="radio">
+                    <input name="radioDocumento" value="Excluir" type="radio">
+                Documento não descreve pagamento de proventos
+                </label>
+                <div id="formCriarProventos">
+                    <select id="num_proventos" name="num_proventos">
+                        <option>1</option>
+                        <option>2</option>
+                        <option>3</option>
+                        <option>4</option>
+                        <option>5</option>
+                        <option>6</option>
+                        <option>7</option>
+                        <option>8</option>
+                        <option>9</option>
+                        <option>10</option>
+                    </select>
+                    <input type="submit" class="btn" value="Preparar proventos" name="preparar_proventos" id="preparar_proventos">
+                    {{ formset.management_form }}
+                    {% for form in formset.forms %}
+                        <h3>Provento {{ forloop.counter }}</h3>
+                        {{ form.as_p }}
+                        <div id="provento_em_acao-{{forloop.counter0}}">
+                            Teste
+                        </div>
+                    {% endfor %}
+                </div>
             </div>
             <div class="form-actions">
                 <button type="submit" name="save" value="1" class="btn">Salvar</button>
@@ -41,6 +67,37 @@
         </form>
     </div>
 </div>
-    {% endif %}
+{% endif %}
+
+<script>
+$( document ).ready(function() {
+	$("input[name='radioDocumento']").click( function() {
+		if ($(this).val() == 'Gerar') {
+			$('#formCriarProventos').show();
+		} else {
+            $('#formCriarProventos').hide();
+		}
+	});
+	
+	// Inicializar proventos em ações
+	$("select[name*=tipo_provento]").each( function() {
+        var id_provento = thenum = $(this).attr('id').match(/\d+/)[0];
+        if ($(this).val() == 'A') {
+            $('#provento_em_acao-' + id_provento).show();
+        } else {
+            $('#provento_em_acao-' + id_provento).hide();
+        }
+    });
+	
+	$("select[name*=tipo_provento]").change( function() {
+        var id_provento = thenum = $(this).attr('id').match(/\d+/)[0];
+		if ($(this).val() == 'A') {
+			$('#provento_em_acao-' + id_provento).show();
+		} else {
+            $('#provento_em_acao-' + id_provento).hide();
+		}
+	});
+});
+</script>
     
 {% endblock %}

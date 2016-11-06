@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold import settings
+from bagogold.bagogold.forms.gerador_proventos import \
+    ProventoAcaoDescritoDocumentoBovespaForm
 from bagogold.bagogold.forms.provento_acao import ProventoAcaoForm
 from bagogold.bagogold.models.acoes import Acao
 from bagogold.bagogold.models.empresa import Empresa
@@ -32,12 +34,20 @@ def baixar_documento_provento(request, id_documento):
 def ler_documento_provento(request, id_pendencia):
     pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
     
+    if request.method == 'POST':
+        if request.POST.get('preparar_proventos'):
+            if request.POST['num_proventos'].isdigit():
+                qtd_proventos = int(request.POST['num_proventos']) if int(request.POST['num_proventos']) <= 10 else 1
+    else:
+        qtd_proventos = 0
+    
     # Preencher responsável
     pendencia.responsavel = pendencia.responsavel() or 'Sem responsável'
     
     # Preparar formset de proventos
     if pendencia.documento.tipo == 'A':
-        formset = formset_factory(ProventoAcaoForm, extra=1)
+        print 'qtd_proventos', qtd_proventos
+        formset = formset_factory(ProventoAcaoDescritoDocumentoBovespaForm, extra=qtd_proventos)
     
     return TemplateResponse(request, 'gerador_proventos/ler_documento_provento.html', {'pendencia': pendencia, 'formset': formset})
     
