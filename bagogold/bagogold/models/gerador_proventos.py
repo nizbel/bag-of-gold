@@ -114,14 +114,6 @@ class InvestidorValidacaoDocumento (models.Model):
     class Meta:
         unique_together=('documento', 'investidor')
             
-class ProventoAcaoDocumento (models.Model):
-    provento = models.ForeignKey('Provento')
-    documento = models.ForeignKey('DocumentoProventoBovespa')
-    
-class ProventoFIIDocumento (models.Model):
-    provento = models.ForeignKey('ProventoFII')
-    documento = models.ForeignKey('DocumentoProventoBovespa')
-
 class PendenciaDocumentoProvento (models.Model):
     documento = models.ForeignKey('DocumentoProventoBovespa')
     data_criacao = models.DateField(editable=False)
@@ -139,3 +131,63 @@ class PendenciaDocumentoProvento (models.Model):
         if hasattr(self, 'investidorresponsavelpendencia'):
             return self.investidorresponsavelpendencia.investidor
         return None
+    
+class ProventoAcaoDocumento (models.Model):
+    provento = models.ForeignKey('Provento')
+    documento = models.ForeignKey('DocumentoProventoBovespa')
+    versao = models.SmallIntegerField(u'Versão')
+    
+class ProventoFIIDocumento (models.Model):
+    provento = models.ForeignKey('ProventoFII')
+    documento = models.ForeignKey('DocumentoProventoBovespa')
+    versao = models.SmallIntegerField(u'Versão')
+
+class ProventoAcaoDescritoDocumentoBovespa (models.Model):
+    documento = models.ForeignKey('DocumentoProventoBovespa') 
+    acao = models.ForeignKey('Acao')
+    valor_unitario = models.DecimalField(u'Valor unitário', max_digits=16, decimal_places=12)
+    """
+    A = proventos em ações, D = dividendos, J = juros sobre capital próprio
+    """
+    tipo_provento = models.CharField(u'Tipo de provento', max_length=1)
+    data_ex = models.DateField(u'Data EX')
+    data_pagamento = models.DateField(u'Data do pagamento', blank=True, null=True)
+    observacao = models.CharField(u'Observação', blank=True, null=True, max_length=300)
+    oficial_bovespa = models.BooleanField(u'Oficial Bovespa?', default=False)
+    
+    def __unicode__(self):
+        tipo = ''
+        if self.tipo_provento == 'A':
+            tipo = u'Ações'
+        elif self.tipo_provento == 'D':
+            tipo = u'Dividendos'
+        elif self.tipo_provento == 'J':
+            tipo = u'JSCP'
+        return u'%s de %s com valor %s e data EX %s a ser pago em %s' % (tipo, self.acao.ticker, self.valor_unitario, self.data_ex, self.data_pagamento)
+
+
+class AcaoProventoTemporarioAcao (models.Model):
+    """
+    Define a ação recebida num evento de proventos em forma de ações
+    """
+    acao_recebida = models.ForeignKey('Acao')
+    data_pagamento_frac = models.DateField(u'Data do pagamento de frações', blank=True, null=True)
+    valor_calculo_frac = models.DecimalField(u'Valor para cálculo das frações', max_digits=14, decimal_places=10, default=0)
+    provento = models.ForeignKey('ProventoAcaoDescritoDocumentoBovespa', limit_choices_to={'tipo_provento': 'A'})
+    
+    def __unicode__(self):
+        return u'Ações de %s, com frações de R$%s a receber em %s' % (self.acao_recebida.ticker, self.valor_calculo_frac, self.data_pagamento_frac)
+
+class ProventoFIIDescritoDocumentoBovespa (models.Model):
+    documento = models.ForeignKey('DocumentoProventoBovespa')
+    fii = models.ForeignKey('FII')
+    valor_unitario = models.DecimalField(u'Valor unitário', max_digits=13, decimal_places=9)
+    data_ex = models.DateField(u'Data EX')
+    data_pagamento = models.DateField(u'Data do pagamento')
+    url_documento = models.CharField(u'URL do documento', blank=True, null=True, max_length=200)
+    
+    class Meta:
+        unique_together=(('data_ex', 'data_pagamento', 'fii',))
+        
+    def __unicode__(self):
+        return '(R$ %s de %s em %s com data EX %s' % (str(self.valor_unitario), self.fii.ticker, str(self.data_pagamento), str(self.data_ex))
