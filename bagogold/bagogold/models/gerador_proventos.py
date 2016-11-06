@@ -167,7 +167,7 @@ class ProventoAcaoDescritoDocumentoBovespa (models.Model):
         return u'%s de %s com valor %s e data EX %s a ser pago em %s' % (tipo, self.acao.ticker, self.valor_unitario, self.data_ex, self.data_pagamento)
 
 
-class AcaoProventoTemporarioAcao (models.Model):
+class AcaoProventoAcaoDescritoDocumentoBovespa (models.Model):
     """
     Define a ação recebida num evento de proventos em forma de ações
     """
