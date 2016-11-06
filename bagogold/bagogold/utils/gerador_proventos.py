@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.gerador_proventos import InvestidorResponsavelPendencia
+from bagogold.bagogold.models.gerador_proventos import InvestidorResponsavelPendencia,\
+    InvestidorLeituraDocumento
 
 def alocar_pendencia_para_investidor(pendencia, investidor):
     """
@@ -35,6 +36,24 @@ def desalocar_pendencia_de_investidor(pendencia, investidor):
         return (False, u'A pendência não estava alocada para o investidor')
     except:
         return (False, u'Não foi possível desalocar a pendência')
+    
+def salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao):   
+    """
+    Cria vínculo de responsabilidade pela leitura do documento para o investidor. Altera pendência de leitura para validação
+    Parâmetros: Pendência
+                Investidor
+                Decisão tomada na leitura ('C' (Criar provento) ou 'E' (Excluir))
+    Retorno: Vínculo de responsabilidade pela leitura
+    """
+    if pendencia.tipo != 'L':
+        raise ValueError('Pendência deve ser do tipo "Leitura"')
+    # TODO testar permissão do investidor
+    if decisao not in ['C', 'E']:
+        raise ValueError('Decisão sobre o documento inválida')
+    responsavel_leitura = InvestidorLeituraDocumento.objects.create(documento=pendencia.documento, investidor=investidor, decisao=decisao)
+    pendencia.tipo = 'V'
+    pendencia.save()
+    return responsavel_leitura
     
 def converter_descricao_provento_para_provento_acoes_real(descricao_provento):
     pass
