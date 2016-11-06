@@ -23,9 +23,6 @@ class ProventoAcaoDescritoDocumentoBovespaForm(forms.ModelForm):
                                             'placeholder':'Selecione uma data'}),
                  'tipo_provento': widgets.Select(choices=ESCOLHAS_TIPO_PROVENTO),}
         
-    class Media:
-        js = ('js/bagogold/acoes.js',)
-    
     def clean(self):
         dados = super(ProventoAcaoDescritoDocumentoBovespaForm, self).clean()
         data_ex = dados.get('data_ex')
@@ -33,3 +30,9 @@ class ProventoAcaoDescritoDocumentoBovespaForm(forms.ModelForm):
         if (data_ex > data_pagamento):
             raise forms.ValidationError("Data EX deve ser anterior a data de pagamento")
         return dados
+
+class AcaoProventoAcaoDescritoDocumentoBovespaForm(forms.ModelForm):
+    
+    class Meta:
+        model = AcaoProventoAcaoDescritoDocumentoBovespa
+        fields = ('acao_recebida', 'data_pagamento_frac', 'valor_calculo_frac')
