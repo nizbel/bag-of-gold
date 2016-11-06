@@ -32,6 +32,7 @@ def baixar_documento_provento(request, id_documento):
 def ler_documento_provento(request, id_pendencia):
     pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
     
+    # Preencher responsável
     pendencia.responsavel = pendencia.responsavel() or 'Sem responsável'
     
     # Preparar formset de proventos
