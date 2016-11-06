@@ -59,10 +59,13 @@ def ler_documento_provento(request, id_pendencia):
                 # Verifica se dados inseridos são todos válidos
                 forms_validos = True
                 indice_provento = 0
+                # Guarda os proventos e ações de proventos criadas para salvar caso todos os formulários sejam válidos
+                proventos_validos = list()
+                acoes_proventos_validos = list()
                 for form_provento in formset_provento:
                     provento = form_provento.save(commit=False)
-    #                 acao_proventos = formset_acao_provento.save(commit=False)
                     print provento
+                    proventos_validos.append(provento)
                     form_acao_provento = formset_acao_provento[indice_provento]
                     # Verificar a ação do provento em ações
                     if provento.tipo_provento == 'A':
@@ -70,9 +73,20 @@ def ler_documento_provento(request, id_pendencia):
                         if acao_provento == None:
                             forms_validos = False
                         else:
+                            acao_provento.provento = provento
                             print acao_provento
+                            acoes_proventos_validos.append(acao_provento)
                     indice_provento += 1
                 if forms_validos:
+                    # TODO Salvar descrições de proventos
+#                     for provento in proventos_validos:
+#                         provento.save()
+#                     for acao_provento in acoes_proventos_validos:
+#                         acao_provento.save()
+                    # TODO Desalocar pendencia de investidor
+#                     desalocar_pendencia_de_investidor(pendencia, request.user.investidor)
+                    # TODO Colocar investidor como responsável pela leitura do documento
+#                     salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao='')
                     messages.success(request, 'Proventos criados com sucesso')
                     return HttpResponseRedirect(reverse('listar_pendencias'))
                 else:
