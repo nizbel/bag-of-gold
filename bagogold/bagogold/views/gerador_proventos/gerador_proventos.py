@@ -5,7 +5,6 @@ from bagogold.bagogold.models.acoes import Acao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
     PendenciaDocumentoProvento
-from bagogold.bagogold.testFII import ler_documento_proventos
 from bagogold.bagogold.utils.gerador_proventos import \
     alocar_pendencia_para_investidor, desalocar_pendencia_de_investidor
 from bagogold.bagogold.utils.investidores import is_superuser
