@@ -107,8 +107,18 @@ def ler_documento_provento(request, id_pendencia):
         if pendencia.documento.tipo == 'A':
             formset_provento = ProventoFormset(prefix='provento')
             formset_acao_provento = AcaoProventoFormset(prefix='acao_provento')
+            
+    # Preencher proventos próximos
+    proventos_proximos = list()
+    for _ in range(len(formset_provento)):
+        proventos_proximos.append(list())
+
+    # Testa se requisição foi feita com ajax
+    if request.is_ajax():
+        print 'AJAX'
     
-    return TemplateResponse(request, 'gerador_proventos/ler_documento_provento.html', {'pendencia': pendencia, 'formset_provento': formset_provento, 'formset_acao_provento': formset_acao_provento})
+    return TemplateResponse(request, 'gerador_proventos/ler_documento_provento.html', {'pendencia': pendencia, 'formset_provento': formset_provento, 'formset_acao_provento': formset_acao_provento,
+                                                                                       'proventos_proximos': proventos_proximos})
     
 @login_required
 @user_passes_test(is_superuser)
