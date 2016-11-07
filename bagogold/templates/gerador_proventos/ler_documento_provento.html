@@ -54,14 +54,53 @@
                     {{ formset_provento.management_form }}
                     {{ formset_acao_provento.management_form }}
                     {% for form_provento in formset_provento.forms %}
-                        <h3>Provento {{ forloop.counter }}</h3>
-                        {{ form_provento.as_p }}
-                        <div id="provento_em_acao-{{forloop.counter0}}">
-                        {% for form_acao_provento in formset_acao_provento.forms %}
-                            {% if forloop.counter == forloop.parentloop.counter %}
-                                {{form_acao_provento.as_p}}
-                            {% endif %}
-                        {% endfor %}
+                        <div class="row-fluid">
+                            <div class="span6">
+                                <h3>Provento {{ forloop.counter }}</h3>
+                                {{ form_provento.as_p }}
+                                <div id="provento_em_acao-{{forloop.counter0}}">
+                                {% for form_acao_provento in formset_acao_provento.forms %}
+                                    {% if forloop.counter == forloop.parentloop.counter %}
+                                        {{form_acao_provento.as_p}}
+                                    {% endif %}
+                                {% endfor %}
+                                </div>
+                            </div>
+                            <div class="span6">
+                                <div class="box black span12" ontablet="span12" ondesktop="span12">
+                                    <div class="box-header">
+                                        <span><strong>Proventos próximos</strong></span>
+                                    </div>
+                                    <div class="box-content">
+                                        <ul class="dashboard-list metro">
+                                            {% for proventos in proventos_proximos %}
+                                                {% if forloop.counter0 == forloop.parentloop.counter0 %}
+                                                    {% for provento in proventos %}
+                                                    <li>
+                                                        <a href="#">
+                                                            <span style="text-align:left;" class="white span4">{{ provento.valor }}:</span>
+                                                            {% if estatistica.1 > 0 %}
+                                                                <i class="icon-arrow-up green"></i> <span class="green">R${{ estatistica.1|floatformat:"2" }}</span>
+                                                            {% elif estatistica.1 < 0 %}
+                                                                <i class="icon-arrow-down red"></i> <span class="red">R${{ estatistica.1|floatformat:"2" }}</span>
+                                                            {% else %}
+                                                                <i class="icon-minus blue"></i> <span class="blue">R${{ estatistica.1|floatformat:"2" }}</span>
+                                                            {% endif %}
+                                                        </a>
+                                                    </li>
+                                                    {% empty %}
+                                                    <li>
+                                                        <a href="#">
+                                                            <span style="text-align:left;" class="white">Não há proventos</span>
+                                                        </a>
+                                                    </li>
+                                                    {% endfor %}
+                                                {% endif %}
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     {% endfor %}
                 </div>
