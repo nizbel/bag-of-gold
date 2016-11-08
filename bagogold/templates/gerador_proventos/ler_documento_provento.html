@@ -66,41 +66,6 @@
                                 {% endfor %}
                                 </div>
                             </div>
-                            <div class="span6">
-                                <div class="box black span12" ontablet="span12" ondesktop="span12">
-                                    <div class="box-header">
-                                        <span><strong>Proventos próximos</strong></span>
-                                    </div>
-                                    <div class="box-content">
-                                        <ul class="dashboard-list metro">
-                                            {% for proventos in proventos_proximos %}
-                                                {% if forloop.counter0 == forloop.parentloop.counter0 %}
-                                                    {% for provento in proventos %}
-                                                    <li>
-                                                        <a href="#">
-                                                            <span style="text-align:left;" class="white span4">{{ provento.valor }}:</span>
-                                                            {% if estatistica.1 > 0 %}
-                                                                <i class="icon-arrow-up green"></i> <span class="green">R${{ estatistica.1|floatformat:"2" }}</span>
-                                                            {% elif estatistica.1 < 0 %}
-                                                                <i class="icon-arrow-down red"></i> <span class="red">R${{ estatistica.1|floatformat:"2" }}</span>
-                                                            {% else %}
-                                                                <i class="icon-minus blue"></i> <span class="blue">R${{ estatistica.1|floatformat:"2" }}</span>
-                                                            {% endif %}
-                                                        </a>
-                                                    </li>
-                                                    {% empty %}
-                                                    <li>
-                                                        <a href="#">
-                                                            <span style="text-align:left;" class="white">Não há proventos</span>
-                                                        </a>
-                                                    </li>
-                                                    {% endfor %}
-                                                {% endif %}
-                                            {% endfor %}
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     {% endfor %}
                 </div>

@@ -3,7 +3,6 @@ from bagogold import settings
 from bagogold.bagogold.forms.gerador_proventos import \
     ProventoAcaoDescritoDocumentoBovespaForm, \
     AcaoProventoAcaoDescritoDocumentoBovespaForm
-from bagogold.bagogold.forms.provento_acao import ProventoAcaoForm
 from bagogold.bagogold.models.acoes import Acao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
@@ -112,13 +111,8 @@ def ler_documento_provento(request, id_pendencia):
     proventos_proximos = list()
     for _ in range(len(formset_provento)):
         proventos_proximos.append(list())
-
-    # Testa se requisição foi feita com ajax
-    if request.is_ajax():
-        print 'AJAX'
     
-    return TemplateResponse(request, 'gerador_proventos/ler_documento_provento.html', {'pendencia': pendencia, 'formset_provento': formset_provento, 'formset_acao_provento': formset_acao_provento,
-                                                                                       'proventos_proximos': proventos_proximos})
+    return TemplateResponse(request, 'gerador_proventos/ler_documento_provento.html', {'pendencia': pendencia, 'formset_provento': formset_provento, 'formset_acao_provento': formset_acao_provento})
     
 @login_required
 @user_passes_test(is_superuser)
