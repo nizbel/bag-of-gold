@@ -100,8 +100,16 @@ class GeradorProventosTestCase(TestCase):
         """Testa se é possível salvar o investidor responsável pela leitura do documento"""
         documento = DocumentoProventoBovespa.objects.get(protocolo='508232')
         pendencia = PendenciaDocumentoProvento.objects.get(documento=documento)
+        alocar_pendencia_para_investidor(PendenciaDocumentoProvento.objects.get(documento=documento), User.objects.get(username='tester').investidor)
         self.assertIsInstance(salvar_investidor_responsavel_por_leitura(pendencia, User.objects.get(username='tester').investidor, 'C'), InvestidorLeituraDocumento)
         self.assertEqual(PendenciaDocumentoProvento.objects.get(documento=documento).tipo, 'V')
+        
+    def test_nao_salvar_investidor_responsavel_por_leitura_sem_alocacao(self):
+        """Testa se é recusado o salvamento da decisão caso o investidor não tenha sido alocado para a pendência"""
+        documento = DocumentoProventoBovespa.objects.get(protocolo='508232')
+        pendencia = PendenciaDocumentoProvento.objects.get(documento=documento)
+        alocar_pendencia_para_investidor(PendenciaDocumentoProvento.objects.get(documento=documento), User.objects.get(username='tester').investidor)
+        self.assertIsInstance(salvar_investidor_responsavel_por_leitura(pendencia, User.objects.get(username='tester').investidor, 'C'), InvestidorLeituraDocumento)
         
     def test_nao_salvar_investidor_responsavel_por_leitura(self):
         """Testa se criar vínculo de responsabilidade de leitura no documento falha ao entrar com valores errados"""
@@ -155,6 +163,13 @@ class GeradorProventosTestCase(TestCase):
     
     def test_evitar_mesmo_investidor_ler_e_validar(self):
         """Testa situação de falha com investidor puxando para si uma pendência de validação que tenha lido"""
+        documento = DocumentoProventoBovespa.objects.get(protocolo='508232')
+        pendencia = PendenciaDocumentoProvento.objects.get(documento=documento)
+        # Alocar leitura
+        
+        # Decidir
+        salvar_investidor_responsavel_por_leitura(pendencia, User.objects.get(username='tester').investidor, 'C')
+        # Tentar alocar validação
         pass
     
     def test_puxar_pendencia_para_investidor(self):
