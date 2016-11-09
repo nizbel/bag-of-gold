@@ -84,10 +84,10 @@ def ler_documento_provento(request, id_pendencia):
     #                         provento.save()
     #                     for acao_provento in acoes_proventos_validos:
     #                         acao_provento.save()
-                        # TODO Desalocar pendencia de investidor
-    #                     desalocar_pendencia_de_investidor(pendencia, request.user.investidor)
                         # TODO Colocar investidor como responsável pela leitura do documento
     #                     salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao='C')
+                        # TODO Desalocar pendencia de investidor
+    #                     desalocar_pendencia_de_investidor(pendencia, request.user.investidor)
                         messages.success(request, 'Descrições de proventos criadas com sucesso')
                         return HttpResponseRedirect(reverse('listar_pendencias'))
                     else:
@@ -95,10 +95,10 @@ def ler_documento_provento(request, id_pendencia):
                         
             # Radio de documento estava em Excluir
             elif request.POST['radioDocumento'] == 'Excluir':
-                # TODO Desalocar pendencia de investidor
-#                 desalocar_pendencia_de_investidor(pendencia, request.user.investidor)
                 # TODO Colocar investidor como responsável pela leitura do documento
 #                 salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao='E')
+                # TODO Desalocar pendencia de investidor
+#                 desalocar_pendencia_de_investidor(pendencia, request.user.investidor)
                 messages.success(request, 'Exclusão de arquivo registrada com sucesso')
                 return HttpResponseRedirect(reverse('listar_pendencias'))
     else:
