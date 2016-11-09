@@ -105,7 +105,7 @@ def detalhamento_investimentos(request):
     if not lista_operacoes:
         data_anterior = str(calendar.timegm((datetime.date.today() - datetime.timedelta(days=365)).timetuple()) * 1000)
         data_atual = str(calendar.timegm(datetime.date.today().timetuple()) * 1000)
-        return TemplateResponse(request, 'home.html', {'graf_patrimonio': [[data_anterior, float(0)], [data_atual, float(0)]], 'patrimonio_anual': list(), 'estatisticas': list()})
+        return TemplateResponse(request, 'detalhamento_investimentos.html', {'graf_patrimonio': [[data_anterior, float(0)], [data_atual, float(0)]], 'patrimonio_anual': list(), 'estatisticas': list()})
     
     # Pegar ano da primeira operacao feita
     ano_corrente = lista_operacoes[0].data.year
