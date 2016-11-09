@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.gerador_proventos import InvestidorResponsavelPendencia,\
-    InvestidorLeituraDocumento
+from bagogold.bagogold.models.gerador_proventos import \
+    InvestidorResponsavelPendencia, InvestidorLeituraDocumento, \
+    PendenciaDocumentoProvento
 
 def alocar_pendencia_para_investidor(pendencia, investidor):
     """
@@ -31,6 +32,7 @@ def desalocar_pendencia_de_investidor(pendencia, investidor):
     """
     try:
         InvestidorResponsavelPendencia.objects.get(pendencia=pendencia, investidor=investidor).delete()
+        pendencia = PendenciaDocumentoProvento.objects.get(id=pendencia.id)
         return (True, u'Desalocação de pendência feita com sucesso!')
     except InvestidorResponsavelPendencia.DoesNotExist:
         return (False, u'A pendência não estava alocada para o investidor')
@@ -50,7 +52,14 @@ def salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao):
     # TODO testar permissão do investidor
     if decisao not in ['C', 'E']:
         raise ValueError('Decisão sobre o documento inválida')
+    
+    retorno, mensagem = desalocar_pendencia_de_investidor(pendencia, investidor)
+    # Desaloca pendência
+    if not retorno:
+        raise ValueError(mensagem)
+    
     responsavel_leitura = InvestidorLeituraDocumento.objects.create(documento=pendencia.documento, investidor=investidor, decisao=decisao)
+    # Alterar pendência para validação
     pendencia.tipo = 'V'
     pendencia.save()
     return responsavel_leitura

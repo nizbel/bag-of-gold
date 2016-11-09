@@ -3,12 +3,16 @@ from bagogold import settings
 from bagogold.bagogold.models.acoes import Acao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
-    PendenciaDocumentoProvento, InvestidorLeituraDocumento
+    PendenciaDocumentoProvento, InvestidorLeituraDocumento, \
+    InvestidorResponsavelPendencia
 from bagogold.bagogold.testFII import baixar_demonstrativo_rendimentos
 from bagogold.bagogold.utils.gerador_proventos import \
-    alocar_pendencia_para_investidor, salvar_investidor_responsavel_por_leitura
+    alocar_pendencia_para_investidor, salvar_investidor_responsavel_por_leitura,\
+    desalocar_pendencia_de_investidor
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
+from django.db.utils import IntegrityError
 from django.test import TestCase
 from urllib2 import URLError
 import datetime
@@ -108,8 +112,8 @@ class GeradorProventosTestCase(TestCase):
         """Testa se é recusado o salvamento da decisão caso o investidor não tenha sido alocado para a pendência"""
         documento = DocumentoProventoBovespa.objects.get(protocolo='508232')
         pendencia = PendenciaDocumentoProvento.objects.get(documento=documento)
-        alocar_pendencia_para_investidor(PendenciaDocumentoProvento.objects.get(documento=documento), User.objects.get(username='tester').investidor)
-        self.assertIsInstance(salvar_investidor_responsavel_por_leitura(pendencia, User.objects.get(username='tester').investidor, 'C'), InvestidorLeituraDocumento)
+        with self.assertRaises(ValueError):
+            salvar_investidor_responsavel_por_leitura(pendencia, User.objects.get(username='tester').investidor, 'C')
         
     def test_nao_salvar_investidor_responsavel_por_leitura(self):
         """Testa se criar vínculo de responsabilidade de leitura no documento falha ao entrar com valores errados"""
@@ -166,14 +170,32 @@ class GeradorProventosTestCase(TestCase):
         documento = DocumentoProventoBovespa.objects.get(protocolo='508232')
         pendencia = PendenciaDocumentoProvento.objects.get(documento=documento)
         # Alocar leitura
-        
+        alocar_pendencia_para_investidor(pendencia, User.objects.get(username='tester').investidor)
         # Decidir
         salvar_investidor_responsavel_por_leitura(pendencia, User.objects.get(username='tester').investidor, 'C')
+        # Recarregar pendência
+        pendencia = PendenciaDocumentoProvento.objects.get(documento=documento)
         # Tentar alocar validação
-        pass
+        resultado, mensagem = alocar_pendencia_para_investidor(pendencia, User.objects.get(username='tester').investidor)
+        self.assertFalse(resultado)
+        self.assertEqual(mensagem, u'Investidor já fez a leitura do documento, não pode validar')
     
-    def test_puxar_pendencia_para_investidor(self):
+    def test_alocar_pendencia_para_investidor(self):
         """Testa situação de sucesso com investidor puxando para si uma pendência"""
         documento = DocumentoProventoBovespa.objects.get(protocolo='508232')
         resultado, mensagem = alocar_pendencia_para_investidor(PendenciaDocumentoProvento.objects.get(documento=documento), User.objects.get(username='tester').investidor)
         self.assertTrue(resultado)
+        
+    def test_desalocar_pendencia_de_investidor(self):
+        """Testa situação de sucesso para desalocar pendência de investidor"""
+        documento = DocumentoProventoBovespa.objects.get(protocolo='508232')
+        alocar_pendencia_para_investidor(PendenciaDocumentoProvento.objects.get(documento=documento), User.objects.get(username='tester').investidor)
+        resultado, mensagem = desalocar_pendencia_de_investidor(PendenciaDocumentoProvento.objects.get(documento=documento), User.objects.get(username='tester').investidor)
+        self.assertTrue(resultado)
+        
+    def test_nao_desalocar_pendencia_nao_alocada_para_investidor(self):
+        """Testa situação em que é tentado desalocar sem prévia alocação de pendência"""
+        documento = DocumentoProventoBovespa.objects.get(protocolo='508232')
+        resultado, mensagem = desalocar_pendencia_de_investidor(PendenciaDocumentoProvento.objects.get(documento=documento), User.objects.get(username='tester').investidor)
+        self.assertFalse(resultado)
+        self.assertEqual(mensagem, u'A pendência não estava alocada para o investidor')
