@@ -6,7 +6,8 @@ from bagogold.bagogold.forms.gerador_proventos import \
 from bagogold.bagogold.models.acoes import Acao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
-    PendenciaDocumentoProvento
+    PendenciaDocumentoProvento, ProventoAcaoDescritoDocumentoBovespa, \
+    ProventoAcaoDocumento
 from bagogold.bagogold.utils.gerador_proventos import \
     alocar_pendencia_para_investidor, desalocar_pendencia_de_investidor
 from bagogold.bagogold.utils.investidores import is_superuser
@@ -117,7 +118,7 @@ def ler_documento_provento(request, id_pendencia):
 @login_required
 @user_passes_test(is_superuser)
 def listar_documentos(request):
-    empresa_id = 1
+    empresa_id = Empresa.objects.all().order_by('id').values_list('id', flat=True)[0]
     if request.method == 'POST':
         if request.POST.get("busca_empresa"):
             empresa_id = Acao.objects.filter(ticker__istartswith=request.POST['busca_empresa'])[0].empresa.id
@@ -231,5 +232,13 @@ def remover_responsabilidade_documento_provento(request):
 
 @login_required
 @user_passes_test(is_superuser)
-def validar_documento_provento(request):
-    pass
+def validar_documento_provento(request, id_pendencia):
+    pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
+    
+    if pendencia.documento.investidorleituradocumento.decisao == 'C':
+        proventos_documento = ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)
+        proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento)
+    elif pendencia.documento.investidorleituradocumento.decisao == 'E':
+        proventos = {}
+    
+    return TemplateResponse(request, 'gerador_proventos/validar_documento_provento.html', {'pendencia': pendencia, 'proventos': proventos})
