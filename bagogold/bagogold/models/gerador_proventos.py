@@ -160,7 +160,6 @@ class ProventoAcaoDescritoDocumentoBovespa (models.Model):
     data_ex = models.DateField(u'Data EX')
     data_pagamento = models.DateField(u'Data do pagamento', blank=True, null=True)
     observacao = models.CharField(u'Observação', blank=True, null=True, max_length=300)
-    oficial_bovespa = models.BooleanField(u'Oficial Bovespa?', default=False)
     
     def __unicode__(self):
         tipo = ''
