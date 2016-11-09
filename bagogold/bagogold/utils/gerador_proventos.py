@@ -32,7 +32,6 @@ def desalocar_pendencia_de_investidor(pendencia, investidor):
     """
     try:
         InvestidorResponsavelPendencia.objects.get(pendencia=pendencia, investidor=investidor).delete()
-        pendencia = PendenciaDocumentoProvento.objects.get(id=pendencia.id)
         return (True, u'Desalocação de pendência feita com sucesso!')
     except InvestidorResponsavelPendencia.DoesNotExist:
         return (False, u'A pendência não estava alocada para o investidor')
