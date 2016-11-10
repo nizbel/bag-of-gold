@@ -107,11 +107,9 @@ def ler_documento_provento(request, id_pendencia):
         if pendencia.documento.tipo == 'A':
             formset_provento = ProventoFormset(prefix='provento')
             formset_acao_provento = AcaoProventoFormset(prefix='acao_provento')
-            
-    # Preencher proventos próximos
-    proventos_proximos = list()
-    for _ in range(len(formset_provento)):
-        proventos_proximos.append(list())
+    
+    for form in formset_provento:
+        form.fields['acao'].queryset = Acao.objects.filter(empresa=pendencia.documento.empresa)
     
     return TemplateResponse(request, 'gerador_proventos/ler_documento_provento.html', {'pendencia': pendencia, 'formset_provento': formset_provento, 'formset_acao_provento': formset_acao_provento})
     
@@ -238,7 +236,13 @@ def validar_documento_provento(request, id_pendencia):
     if pendencia.documento.investidorleituradocumento.decisao == 'C':
         proventos_documento = ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)
         proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento)
+        
+        # Descrição da decisão do responsável pela leitura
+        pendencia.decisao = 'Criar %s proventos' % (ProventoAcaoDescritoDocumentoBovespa.objects.get(documento=documento).count())
     elif pendencia.documento.investidorleituradocumento.decisao == 'E':
         proventos = {}
+        
+        # Descrição da decisão do responsável pela leitura
+        pendencia.decisao = 'Excluir documento'
     
     return TemplateResponse(request, 'gerador_proventos/validar_documento_provento.html', {'pendencia': pendencia, 'proventos': proventos})
