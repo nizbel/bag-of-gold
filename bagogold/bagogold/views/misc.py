@@ -11,10 +11,6 @@ from bagogold.bagogold.models.metronic_test import CarregamentoMetronic
 
 @login_required
 def ver_nova_aparencia(request, url):
-    # Apenas eu e Camila podemos acessar
-    if request.user.id not in [1,31]:
-        raise PermissionDenied
-    
     if 'testando_aparencia' in request.session:
         request.session['testando_aparencia'] = not request.session['testando_aparencia']
     else:
