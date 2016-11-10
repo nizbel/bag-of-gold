@@ -100,6 +100,9 @@ class InvestidorLeituraDocumento (models.Model):
     class Meta:
         unique_together=('documento', 'investidor')
         
+    def __unicode__(self):
+        return self.investidor
+        
 class InvestidorResponsavelPendencia (models.Model):
     pendencia = models.OneToOneField('PendenciaDocumentoProvento')
     investidor = models.ForeignKey('Investidor')
