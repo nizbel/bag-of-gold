@@ -211,8 +211,8 @@
                         <a href="{% url "login" %}"><i class="halflings-icon off"></i> Acessar conta</a>
                     </li>
                     {% endif %}
-                    {% if request.user.id == 1 or request.user.id == 31 %}
                         <a href="{% url "ver_nova_aparencia" request.path|slice:"1:-1" %}" class="btn btn-warning">Nova aparência</a>
+                    {% if request.user.id == 1 or request.user.id == 31 %}
                         <a href="{% url "carregar_nova_aparencia" request.path|slice:"1:-1" %}" class="btn btn-warning">Carregar arquivos</a>
                     {% endif %}
                     <!-- end: User Dropdown -->
