@@ -18,7 +18,13 @@
     <tr>
         <td>{{pendencia.tipo}}</td>
         <td>{{pendencia.data_criacao}}</td>
-        <td><a href="{% url 'ler_documento_provento' pendencia.id %}">{{pendencia.documento}}</a></td>
+        <td><a href="
+        {% if pendencia.tipo == 'V' %}
+            {% url 'validar_documento_provento' pendencia.id %}
+        {% else %}
+            {% url 'ler_documento_provento' pendencia.id %}
+        {% endif %}
+            ">{{pendencia.documento}}</a></td>
         <td>{{pendencia.tipo_documento}}</td>
         <td>
         {% if pendencia.responsavel %}
