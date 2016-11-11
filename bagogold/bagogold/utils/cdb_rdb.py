@@ -11,6 +11,16 @@ from django.db.models import Q
 from django.db.models.aggregates import Sum, Count
 import datetime
 
+def calcular_valor_venda_cdb_rdb(operacao_venda):
+    # Definir período do histórico relevante para a operação
+    historico_utilizado = HistoricoTaxaDI.objects.filter(data__range=[operacao_venda.operacao_compra_relacionada().data, operacao_venda.data - datetime.timedelta(days=1)]).values('taxa').annotate(qtd_dias=Count('taxa'))
+    taxas_dos_dias = {}
+    for taxa_quantidade in historico_utilizado:
+        taxas_dos_dias[taxa_quantidade['taxa']] = taxa_quantidade['qtd_dias']
+    
+    # Calcular
+    return calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao_venda.quantidade, operacao_venda.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
+
 def calcular_valor_cdb_rdb_ate_dia(investidor, dia):
     """ 
     Calcula o valor dos CDB/RDB no dia determinado
