@@ -9,7 +9,8 @@ from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa,
     PendenciaDocumentoProvento, ProventoAcaoDescritoDocumentoBovespa, \
     ProventoAcaoDocumento
 from bagogold.bagogold.utils.gerador_proventos import \
-    alocar_pendencia_para_investidor, desalocar_pendencia_de_investidor
+    alocar_pendencia_para_investidor, desalocar_pendencia_de_investidor, \
+    salvar_investidor_responsavel_por_leitura
 from bagogold.bagogold.utils.investidores import is_superuser
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -34,6 +35,7 @@ def baixar_documento_provento(request, id_documento):
 @user_passes_test(is_superuser)
 def ler_documento_provento(request, id_pendencia):
     pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
+    investidor = request.user.investidor
     
     # Preencher responsável
     pendencia.responsavel = pendencia.responsavel() or 'Sem responsável'
@@ -80,26 +82,24 @@ def ler_documento_provento(request, id_pendencia):
                                 acoes_proventos_validos.append(acao_provento)
                         indice_provento += 1
                     if forms_validos:
-                        # TODO Salvar descrições de proventos
-    #                     for provento in proventos_validos:
-    #                         provento.save()
-    #                     for acao_provento in acoes_proventos_validos:
-    #                         acao_provento.save()
-                        # TODO Colocar investidor como responsável pela leitura do documento
-    #                     salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao='C')
-                        # TODO Desalocar pendencia de investidor
-    #                     desalocar_pendencia_de_investidor(pendencia, request.user.investidor)
-                        messages.success(request, 'Descrições de proventos criadas com sucesso')
-                        return HttpResponseRedirect(reverse('listar_pendencias'))
+                        try:
+                            # Colocar investidor como responsável pela leitura do documento
+                            salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao='C')# Salvar descrições de proventos
+                            for provento in proventos_validos:
+                                provento.save()
+                            for acao_provento in acoes_proventos_validos:
+                                acao_provento.save()
+                            messages.success(request, 'Descrições de proventos criadas com sucesso')
+                            return HttpResponseRedirect(reverse('listar_pendencias'))
+                        except Exception as e:
+                            messages.error(request, str(e))
                     else:
                         messages.error(request, 'Proventos em ações não conferem com os proventos criados')
                         
             # Radio de documento estava em Excluir
             elif request.POST['radioDocumento'] == 'Excluir':
-                # TODO Colocar investidor como responsável pela leitura do documento
-#                 salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao='E')
-                # TODO Desalocar pendencia de investidor
-#                 desalocar_pendencia_de_investidor(pendencia, request.user.investidor)
+                # Colocar investidor como responsável pela leitura do documento
+                salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao='E')
                 messages.success(request, 'Exclusão de arquivo registrada com sucesso')
                 return HttpResponseRedirect(reverse('listar_pendencias'))
     else:
