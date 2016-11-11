@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.td import Titulo, OperacaoTitulo
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo, \
-    verificar_feriado_bovespa, qtd_dias_uteis_no_periodo
+    verificar_feriado_bovespa, qtd_dias_uteis_no_periodo, \
+    calcular_domingo_pascoa_no_ano
 from django.test import TestCase
 import datetime
 
@@ -25,6 +26,13 @@ class IOFTestCase(TestCase):
         
 class VerificarFeriadoBovespaTestCase(TestCase):
     
+    def test_domingo_pascoa(self):
+        """Testa as datas do domingo de páscoa para 2014, 2015, 2016, 2017"""
+        self.assertEqual(calcular_domingo_pascoa_no_ano(2014), datetime.date(2014, 4, 20))
+        self.assertEqual(calcular_domingo_pascoa_no_ano(2015), datetime.date(2015, 4, 5))
+        self.assertEqual(calcular_domingo_pascoa_no_ano(2016), datetime.date(2016, 3, 27))
+        self.assertEqual(calcular_domingo_pascoa_no_ano(2017), datetime.date(2017, 4, 16))
+        
     def test_deve_ser_feriado(self):
         """Testa o Natal"""
         self.assertTrue(verificar_feriado_bovespa(datetime.date(2016, 12, 25)))
@@ -32,6 +40,12 @@ class VerificarFeriadoBovespaTestCase(TestCase):
     def test_nao_deve_ser_feriado(self):
         """Testa dia 12 de Agosto"""
         self.assertFalse(verificar_feriado_bovespa(datetime.date(2016, 8, 12)))
+        
+    def test_feriados_moveis(self):
+        """Testa feriados móveis, carnaval, sexta-feira santa e corpus christi"""
+        self.assertTrue(verificar_feriado_bovespa(datetime.date(2016, 2, 9)))
+        self.assertTrue(verificar_feriado_bovespa(datetime.date(2016, 3, 25)))
+        self.assertTrue(verificar_feriado_bovespa(datetime.date(2016, 5, 26)))
         
 class QtdDiasUteisNoPeriodoTestCase(TestCase):
     
