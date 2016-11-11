@@ -27,15 +27,11 @@
             ">{{pendencia.documento}}</a></td>
         <td>{{pendencia.tipo_documento}}</td>
         <td>
-        {% if pendencia.responsavel %}
-            {% if pendencia.responsavel.id != request.user.investidor.id %}
-                {{pendencia.responsavel}}
-            {% else %}
-                <button onclick="remover_responsabilidade({{pendencia.id}});" class="btn btn-warning">Cancelar</button>
-            {% endif %}
-        {% else %}
-            <button onclick="puxar_responsabilidade({{pendencia.id}});" class="btn btn-success">Reservar</button> 
-        {% endif %}
+            <span {% if not pendencia.responsavel or pendencia.responsavel.id == request.user.investidor.id %}style="display: none"{% endif %}>{{pendencia.responsavel}}</span>
+            <button {% if not pendencia.responsavel or pendencia.responsavel.id != request.user.investidor.id %}style="display: none"{% endif %}
+            onclick="remover_responsabilidade({{pendencia.id}});" class="btn btn-warning">Cancelar</button>
+            <button {% if pendencia.responsavel %}style="display: none"{% endif %} onclick="puxar_responsabilidade({{pendencia.id}});" class="btn btn-success">Reservar</button> 
+        </td>
     </tr>
     {% endfor %}
     </tbody>
