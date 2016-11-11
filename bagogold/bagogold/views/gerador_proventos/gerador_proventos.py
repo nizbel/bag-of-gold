@@ -10,7 +10,7 @@ from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa,
     ProventoAcaoDocumento
 from bagogold.bagogold.utils.gerador_proventos import \
     alocar_pendencia_para_investidor, desalocar_pendencia_de_investidor, \
-    salvar_investidor_responsavel_por_leitura
+    salvar_investidor_responsavel_por_leitura, criar_descricoes_provento_acoes
 from bagogold.bagogold.utils.investidores import is_superuser
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test, \
@@ -90,11 +90,9 @@ def ler_documento_provento(request, id_pendencia):
                     if forms_validos:
                         try:
                             # Colocar investidor como responsável pela leitura do documento
-                            salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao='C')# Salvar descrições de proventos
-                            for provento in proventos_validos:
-                                provento.save()
-                            for acao_provento in acoes_proventos_validos:
-                                acao_provento.save()
+                            salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao='C')
+                            # Salvar descrições de proventos
+                            criar_descricoes_provento_acoes(proventos_validos, acoes_proventos_validos, pendencia.documento)
                             messages.success(request, 'Descrições de proventos criadas com sucesso')
                             return HttpResponseRedirect(reverse('listar_pendencias'))
                         except Exception as e:
@@ -250,7 +248,7 @@ def validar_documento_provento(request, id_pendencia):
         proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento)
         
         # Descrição da decisão do responsável pela leitura
-        pendencia.decisao = 'Criar %s proventos' % (ProventoAcaoDescritoDocumentoBovespa.objects.get(documento=documento).count())
+        pendencia.decisao = 'Criar %s proventos' % (ProventoAcaoDocumento.objects.get(documento=pendencia.documento).count())
     elif pendencia.documento.investidorleituradocumento.decisao == 'E':
         proventos = {}
         

@@ -62,6 +62,21 @@ def salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao):
     pendencia.tipo = 'V'
     pendencia.save()
     return responsavel_leitura
+
+def criar_descricoes_provento_acoes(descricoes_proventos, acoes_descricoes_proventos, documento):
+    """
+    Cria descrições para proventos em ações a partir de um documento
+    Parâmetros: Lista de proventos
+                Lista de ações recebidas em proventos
+                Documento
+    Retorno: Se operação obteve sucesso
+    """
+    for provento in descricoes_proventos:
+        provento.save()
+        ProventoAcaoDocumento.objects.create(documento=documento, descricao_provento=provento, versao=1)
+    for acao_provento in acoes_descricoes_proventos:
+        acao_provento.save()
+    
     
 def converter_descricao_provento_para_provento_acoes_real(descricao_provento):
     pass
