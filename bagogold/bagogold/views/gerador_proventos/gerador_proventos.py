@@ -13,7 +13,8 @@ from bagogold.bagogold.utils.gerador_proventos import \
     salvar_investidor_responsavel_por_leitura
 from bagogold.bagogold.utils.investidores import is_superuser
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required, user_passes_test, \
+    permission_required
 from django.core.urlresolvers import reverse
 from django.forms.formsets import formset_factory
 from django.http.response import HttpResponseRedirect, HttpResponse
@@ -21,7 +22,7 @@ from django.template.response import TemplateResponse
 import os
 
 @login_required
-@user_passes_test(is_superuser)
+@permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def baixar_documento_provento(request, id_documento):
     documento_provento = DocumentoProventoBovespa.objects.get(id=id_documento)
     filename = documento_provento.documento.name.split('/')[-1]
@@ -32,9 +33,14 @@ def baixar_documento_provento(request, id_documento):
     return response
 
 @login_required
-@user_passes_test(is_superuser)
+@permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def ler_documento_provento(request, id_pendencia):
     pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
+    # Verificar se pendência é de leitura
+    if pendencia.tipo == 'V':
+        messages.success(request, 'Pendência não é leitura')
+        return HttpResponseRedirect(reverse('listar_pendencias'))
+    
     investidor = request.user.investidor
     
     # Preencher responsável
@@ -114,7 +120,7 @@ def ler_documento_provento(request, id_pendencia):
     return TemplateResponse(request, 'gerador_proventos/ler_documento_provento.html', {'pendencia': pendencia, 'formset_provento': formset_provento, 'formset_acao_provento': formset_acao_provento})
     
 @login_required
-@user_passes_test(is_superuser)
+@permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def listar_documentos(request):
     empresa_id = Empresa.objects.all().order_by('id').values_list('id', flat=True)[0]
     if request.method == 'POST':
@@ -144,7 +150,7 @@ def listar_documentos(request):
     return TemplateResponse(request, 'gerador_proventos/listar_documentos.html', {'documentos': documentos, 'empresas': empresas, 'empresa_atual': empresa_atual})
 
 @login_required
-@user_passes_test(is_superuser)
+@permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def listar_pendencias(request):
     # Testa se há página inicial
     if 'pagina_atual_lista_pendencias' in request.session:
@@ -170,12 +176,12 @@ def listar_pendencias(request):
 
 
 @login_required
-@user_passes_test(is_superuser)
+@permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def listar_proventos(request):
     pass
 
 @login_required
-@user_passes_test(is_superuser)
+@permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def puxar_responsabilidade_documento_provento(request):
     id_pendencia = request.GET['id_pendencia'].replace('.', '')
     # Verifica se id_pendencia contém apenas números
@@ -203,7 +209,7 @@ def puxar_responsabilidade_documento_provento(request):
     return HttpResponse()
 
 @login_required
-@user_passes_test(is_superuser)
+@permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def remover_responsabilidade_documento_provento(request):
     id_pendencia = request.GET['id_pendencia'].replace('.', '')
     # Verifica se id_pendencia contém apenas números
@@ -229,7 +235,7 @@ def remover_responsabilidade_documento_provento(request):
     return HttpResponse()
 
 @login_required
-@user_passes_test(is_superuser)
+@permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def validar_documento_provento(request, id_pendencia):
     pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
     
