@@ -16,14 +16,16 @@ from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas, \
 from decimal import Decimal, ROUND_DOWN
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
+from django.db.models.aggregates import Sum
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
+from django.template.response import TemplateResponse
 from itertools import chain
 from operator import attrgetter
 import calendar
 import datetime
 import math
-from django.template.response import TemplateResponse
+from bagogold.bagogold.utils.cdb_rdb import calcular_valor_cdb_rdb_ate_dia
 
 # TODO remover login_required
 @login_required
@@ -31,6 +33,9 @@ def inicio(request):
     # Usado para criar objetos vazios
     class Object(object):
         pass
+    
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
     
     ultimas_operacoes = buscar_ultimas_operacoes(request.user.investidor, 5) if request.user.is_authenticated() else list()
 
@@ -59,11 +64,38 @@ def inicio(request):
     
     proventos_a_receber = buscar_proventos_a_receber(request.user.investidor) if request.user.is_authenticated() else list()
     
-    graf_rendimentos_mensal = [[str(calendar.timegm(data.timetuple()) * 1000), float(sum(calcular_valor_lc_ate_dia(request.user.investidor, data).values())) ] \
-                               for data in [(datetime.date.today() - datetime.timedelta(dias_subtrair)) for dias_subtrair in [30, 20, 10, 0] ]] if request.user.is_authenticated() else list()
+    qtd_ultimos_dias = 61
+    if request.user.is_authenticated():
+        data_atual = datetime.datetime.now()
+        # Guardar valores totais
+        diario_cdb_rdb = {}
+        diario_lc = {}
+        total_lc_dia_anterior = float(sum(calcular_valor_lc_ate_dia(investidor, data_atual - datetime.timedelta(days=qtd_ultimos_dias)).values()))
+        total_cdb_rdb_dia_anterior = float(sum(calcular_valor_cdb_rdb_ate_dia(investidor, data_atual - datetime.timedelta(days=qtd_ultimos_dias)).values()))
+        for dia in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))]:
+            diario_cdb_rdb[dia] = 0
+            diario_lc[dia] = 0
+            if not (dia.weekday() > 4 or not HistoricoTaxaDI.objects.filter(data=dia)):
+                # Letra de Crédito
+                total_lc = float(sum(calcular_valor_lc_ate_dia(investidor, dia).values()))
+#                     print '(%s) %s - %s =' % (dia, total_lc, total_lc_dia_anterior), total_lc - total_lc_dia_anterior
+                diario_lc[dia] += total_lc - total_lc_dia_anterior
+                total_lc_dia_anterior = total_lc
+                
+                # CDB / RDB
+                total_cdb_rdb = float(sum(calcular_valor_cdb_rdb_ate_dia(investidor, dia).values()))
+#                     print '(%s) %s - %s =' % (dia, total_cdb_rdb, total_cdb_rdb_dia_anterior), total_cdb_rdb - total_cdb_rdb_dia_anterior
+                diario_cdb_rdb[dia] += total_cdb_rdb - total_cdb_rdb_dia_anterior
+                total_cdb_rdb_dia_anterior = total_cdb_rdb
+    
+    graf_rendimentos_mensal_cdb_rdb = [[str(calendar.timegm(data.replace(hour=0).timetuple()) * 1000), diario_cdb_rdb[data] ] \
+                               for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ] if request.user.is_authenticated() else list()
+    graf_rendimentos_mensal_lc = [[str(calendar.timegm(data.replace(hour=6).timetuple()) * 1000), diario_lc[data] ] \
+                               for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ] if request.user.is_authenticated() else list()
     
     return TemplateResponse(request, 'inicio.html', {'ultimas_operacoes': ultimas_operacoes, 'investimentos_atuais': investimentos_atuais, 
-                                            'proventos_a_receber': proventos_a_receber, 'graf_rendimentos_mensal': graf_rendimentos_mensal})
+                                            'proventos_a_receber': proventos_a_receber, 'graf_rendimentos_mensal_lc': graf_rendimentos_mensal_lc,
+                                            'graf_rendimentos_mensal_cdb_rdb': graf_rendimentos_mensal_cdb_rdb})
 
 @login_required
 def detalhamento_investimentos(request):
