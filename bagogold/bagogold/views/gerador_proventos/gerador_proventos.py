@@ -169,7 +169,7 @@ def listar_pendencias(request):
     for pendencia in pendencias:
         pendencia.nome = pendencia.documento.documento.name.split('/')[-1]
         pendencia.tipo_documento = 'Ação' if pendencia.documento.tipo == 'A' else 'FII'
-        pendencia.tipo = 'Leitura' if pendencia.tipo == 'L' else 'Validação'
+        pendencia.tipo_pendencia = 'Leitura' if pendencia.tipo == 'L' else 'Validação'
         pendencia.responsavel = pendencia.responsavel()
         
     return TemplateResponse(request, 'gerador_proventos/listar_pendencias.html', {'pendencias': pendencias, 'pagina_inicial': pagina_inicial})
