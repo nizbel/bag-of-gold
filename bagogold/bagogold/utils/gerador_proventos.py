@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.gerador_proventos import \
     InvestidorResponsavelPendencia, InvestidorLeituraDocumento, \
-    PendenciaDocumentoProvento
+    PendenciaDocumentoProvento, ProventoAcaoDocumento
 
 def alocar_pendencia_para_investidor(pendencia, investidor):
     """
@@ -69,14 +69,22 @@ def criar_descricoes_provento_acoes(descricoes_proventos, acoes_descricoes_prove
     Parâmetros: Lista de proventos
                 Lista de ações recebidas em proventos
                 Documento
-    Retorno: Se operação obteve sucesso
     """
-    for provento in descricoes_proventos:
-        provento.save()
-        ProventoAcaoDocumento.objects.create(documento=documento, descricao_provento=provento, versao=1)
-    for acao_provento in acoes_descricoes_proventos:
-        acao_provento.save()
-    
+    objetos_salvos = list()
+    try:
+        for descricao_provento in descricoes_proventos:
+            descricao_provento.save()
+            objetos_salvos.append(descricao_provento)
+            provento_documento = ProventoAcaoDocumento.objects.create(documento=documento, descricao_provento=descricao_provento, versao=1)
+            objetos_salvos.append(provento_documento)
+        for descricao_acao_provento in acoes_descricoes_proventos:
+            descricao_acao_provento.save()
+            objetos_salvos.append(descricao_acao_provento)
+    except Exception as e:
+        # Apaga objetos em caso de erro
+        for objeto in objetos_salvos:
+            objeto.delete()
+        raise e
     
 def converter_descricao_provento_para_provento_acoes_real(descricao_provento):
     pass
