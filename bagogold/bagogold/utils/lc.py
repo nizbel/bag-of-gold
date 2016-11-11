@@ -30,6 +30,15 @@ def calcular_valor_atualizado_com_taxas(taxas_dos_dias, valor_atual, operacao_ta
         taxa_acumulada *= pow(((pow((Decimal(1) + taxa_do_dia/100), Decimal(1)/Decimal(252)) - Decimal(1)) * operacao_taxa/100 + Decimal(1)), taxas_dos_dias[taxa_do_dia])
     return taxa_acumulada * valor_atual
 
+def calcular_valor_venda_lc(operacao_venda):
+    # Definir período do histórico relevante para a operação
+    historico_utilizado = HistoricoTaxaDI.objects.filter(data__range=[operacao_venda.operacao_compra_relacionada().data, operacao_venda.data - datetime.timedelta(days=1)]).values('taxa').annotate(qtd_dias=Count('taxa'))
+    taxas_dos_dias = {}
+    for taxa_quantidade in historico_utilizado:
+        taxas_dos_dias[taxa_quantidade['taxa']] = taxa_quantidade['qtd_dias']
+    
+    # Calcular
+    return calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao_venda.quantidade, operacao_venda.porcentagem_di()).quantize(Decimal('.01'), ROUND_DOWN)
 
 def calcular_valor_lc_ate_dia(investidor, dia):
     """ 

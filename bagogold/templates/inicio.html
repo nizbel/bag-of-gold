@@ -87,19 +87,20 @@
         </div>
     </div>
 </div>
-{% comment %}
-<h3>Gráfico de rendimentos mensal</h3>
+<h3>Gráfico de rendimento diário (renda fixa)</h3>
 <div class="row-fluid">
 
-        <div class="span4" id="graf_rendimentos_mensal" style="width:40%;height:300px"></div>
+        <div class="span4" id="graf_rendimentos_mensal" style="width:100%;height:400px"></div>
 
 </div>
 
 <script>
 $( document ).ready(function() {
-    $.plot($("#graf_rendimentos_mensal"), [ {lines: {show:true}, label: "Rendimentos", data: {{ graf_rendimentos_mensal|safe }} } 
-                              ],
-                                {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%d-%m-%y"} }  
+    $.plot($("#graf_rendimentos_mensal"), [ {color: "#33AA33", label: "LC", bars: {show:true, align:"center", barWidth: 24 * 60 * 60 * 200, lineWidth: 1, stacked: false}, data: {{ graf_rendimentos_mensal_lc|safe }} }, 
+                                           {color: "#8811AA", label: "CDB/RDB", bars: {show:true, align:"center", barWidth: 24 * 60 * 60 * 200, lineWidth: 1, stacked: false}, data: {{ graf_rendimentos_mensal_cdb_rdb|safe }} }, 
+                                      ],
+                                        {grid: { hoverable: true}, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%d-%m"},
+                                        } 
     );
     
 function showTooltip(x, y, contents) {
@@ -142,7 +143,6 @@ function showTooltip(x, y, contents) {
 
 });
 </script>
-{% endcomment %}
 {% else %}
 <h1>Bem-vindo ao Bag of Gold!</h1>
 
