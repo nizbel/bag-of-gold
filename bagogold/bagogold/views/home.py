@@ -13,7 +13,7 @@ from bagogold.bagogold.utils.cdb_rdb import calcular_valor_cdb_rdb_ate_dia
 from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
     buscar_totais_atuais_investimentos, buscar_proventos_a_receber
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas, \
-    calcular_valor_lc_ate_dia
+    calcular_valor_lc_ate_dia, calcular_valor_venda
 from decimal import Decimal, ROUND_DOWN
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
@@ -82,7 +82,7 @@ def inicio(request):
 #                     print '(%s) %s - %s =' % (dia, total_lc, total_lc_dia_anterior), total_lc - total_lc_dia_anterior
                 # Removendo operações do dia
                 diario_lc[dia] += total_lc - total_lc_dia_anterior - float(sum(OperacaoLetraCredito.objects.filter(data=dia, investidor=investidor, tipo_operacao='C').values_list('quantidade', flat=True))) + \
-                    float(sum(OperacaoLetraCredito.objects.filter(data=dia, investidor=investidor, tipo_operacao='V').values_list('quantidade', flat=True)))
+                    float(sum([calcular_valor_venda(operacao_venda) for operacao_venda in OperacaoLetraCredito.objects.filter(data=dia, investidor=investidor, tipo_operacao='V')]))
                 total_lc_dia_anterior = total_lc
                 
                 # CDB / RDB
