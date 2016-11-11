@@ -28,7 +28,7 @@ class DocumentoProventoBovespa (models.Model):
     
     class Meta:
         unique_together = ('empresa', 'protocolo')
-        permissions = (('gerar_proventos', 'Pode gerar proventos a partir de documentos'),)
+        permissions = (('pode_gerar_proventos', 'Pode gerar proventos a partir de documentos'),)
         
     def __unicode__(self):
         return self.documento.name.split('/')[-1]
