@@ -102,7 +102,7 @@ class InvestidorLeituraDocumento (models.Model):
         unique_together=('documento', 'investidor')
         
     def __unicode__(self):
-        return self.investidor
+        return unicode(self.investidor)
         
 class InvestidorResponsavelPendencia (models.Model):
     pendencia = models.OneToOneField('PendenciaDocumentoProvento')
@@ -148,8 +148,6 @@ class ProventoFIIDocumento (models.Model):
     versao = models.PositiveSmallIntegerField(u'Versão')
     descricao_provento = models.OneToOneField('ProventoFIIDescritoDocumentoBovespa')
     
-    class Meta:
-        unique_together=('documento', 'versao')
 
 class ProventoAcaoDescritoDocumentoBovespa (models.Model):
     acao = models.ForeignKey('Acao')

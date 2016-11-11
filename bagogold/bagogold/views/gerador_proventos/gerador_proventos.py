@@ -245,14 +245,14 @@ def validar_documento_provento(request, id_pendencia):
     
     if pendencia.documento.investidorleituradocumento.decisao == 'C':
         proventos_documento = ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)
-        proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento)
+        descricoes_proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento)
         
         # Descrição da decisão do responsável pela leitura
-        pendencia.decisao = 'Criar %s proventos' % (ProventoAcaoDocumento.objects.get(documento=pendencia.documento).count())
+        pendencia.decisao = 'Criar %s proventos' % (ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).count())
     elif pendencia.documento.investidorleituradocumento.decisao == 'E':
-        proventos = {}
+        descricoes_proventos = {}
         
         # Descrição da decisão do responsável pela leitura
         pendencia.decisao = 'Excluir documento'
     
-    return TemplateResponse(request, 'gerador_proventos/validar_documento_provento.html', {'pendencia': pendencia, 'proventos': proventos})
+    return TemplateResponse(request, 'gerador_proventos/validar_documento_provento.html', {'pendencia': pendencia, 'descricoes_proventos': descricoes_proventos})
