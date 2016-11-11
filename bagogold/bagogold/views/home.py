@@ -18,9 +18,6 @@ from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas, \
 from decimal import Decimal, ROUND_DOWN
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
-from django.db.models.aggregates import Sum
-from django.shortcuts import render_to_response
-from django.template.context import RequestContext
 from django.template.response import TemplateResponse
 from itertools import chain
 from operator import attrgetter
