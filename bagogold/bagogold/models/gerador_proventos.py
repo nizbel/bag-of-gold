@@ -141,14 +141,11 @@ class ProventoAcaoDocumento (models.Model):
     documento = models.ForeignKey('DocumentoProventoBovespa')
     versao = models.SmallIntegerField(u'Versão')
     descricao_provento = models.OneToOneField('ProventoAcaoDescritoDocumentoBovespa')
-    
-    class Meta:
-        unique_together=('documento', 'versao')
-    
+        
 class ProventoFIIDocumento (models.Model):
     provento = models.ForeignKey('ProventoFII', blank=True, null=True)
     documento = models.ForeignKey('DocumentoProventoBovespa')
-    versao = models.SmallIntegerField(u'Versão')
+    versao = models.PositiveSmallIntegerField(u'Versão')
     descricao_provento = models.OneToOneField('ProventoFIIDescritoDocumentoBovespa')
     
     class Meta:
@@ -174,7 +171,6 @@ class ProventoAcaoDescritoDocumentoBovespa (models.Model):
         elif self.tipo_provento == 'J':
             tipo = u'JSCP'
         return u'%s de %s com valor %s e data EX %s a ser pago em %s' % (tipo, self.acao.ticker, self.valor_unitario, self.data_ex, self.data_pagamento)
-
 
 class AcaoProventoAcaoDescritoDocumentoBovespa (models.Model):
     """
