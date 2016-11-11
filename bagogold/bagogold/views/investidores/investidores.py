@@ -9,6 +9,7 @@ from django.dispatch import receiver
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import render_to_response, redirect
 from django.template.context import RequestContext
+from django.template.response import TemplateResponse
 from registration.signals import user_activated
 
 
@@ -31,7 +32,7 @@ def configuracoes_conta_investidor(request, id):
     if int(id) != int(request.user.id):
         raise PermissionDenied
     
-    return render_to_response('investidores/configuracoes_conta.html', {}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'investidores/configuracoes_conta.html', {})
 
 
 @login_required
@@ -50,4 +51,4 @@ def editar_dados_cadastrais(request, id):
     else:
         form_dados_cadastrais = DadosCadastraisForm(instance=request.user, username=request.user.username)
     
-    return render_to_response('investidores/editar_dados_cadastrais.html', {'form_dados_cadastrais': form_dados_cadastrais}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'investidores/editar_dados_cadastrais.html', {'form_dados_cadastrais': form_dados_cadastrais})

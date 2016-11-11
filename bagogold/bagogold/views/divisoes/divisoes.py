@@ -35,6 +35,7 @@ from django.http import HttpResponseRedirect
 from django.http.response import HttpResponse
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
+from django.template.response import TemplateResponse
 import datetime
 
 @login_required
@@ -88,8 +89,7 @@ def criar_transferencias(request):
                 transferencia.operacao = divisao_operacao.operacao
                 transferencias.append(transferencia)
         
-    return render_to_response('divisoes/criar_transferencias.html', {'transferencias': transferencias},
-                               context_instance=RequestContext(request))
+    return TemplateResponse(request, 'divisoes/criar_transferencias.html', {'transferencias': transferencias})
 
 @login_required
 def detalhar_divisao(request, id):
@@ -273,8 +273,7 @@ def detalhar_divisao(request, id):
         for operacao in item.composicao.values():
             operacao.percentual = operacao.patrimonio / item.patrimonio * 100
         
-    return render_to_response('divisoes/detalhar_divisao.html', {'divisao': divisao, 'composicao': composicao},
-                               context_instance=RequestContext(request))
+    return TemplateResponse(request, 'divisoes/detalhar_divisao.html', {'divisao': divisao, 'composicao': composicao})
 
 @login_required
 def editar_divisao(request, id):
@@ -294,18 +293,15 @@ def editar_divisao(request, id):
             for erros in form.errors.values():
                 for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
                     messages.error(request, erro.message)
-            return render_to_response('divisoes/editar_divisao.html', {'form': form, 'divisao': divisao},
-                      context_instance=RequestContext(request))
+            return TemplateResponse(request, 'divisoes/editar_divisao.html', {'form': form, 'divisao': divisao})
                 
         elif request.POST.get("delete"):
             if divisao.divisao_principal():
                 messages.error(request, 'Divisão principal não pode ser excluída')
-                return render_to_response('divisoes/editar_divisao.html', {'form': form, 'divisao': divisao},
-                          context_instance=RequestContext(request))
+                return TemplateResponse(request, 'divisoes/editar_divisao.html', {'form': form, 'divisao': divisao})
             elif divisao.possui_operacoes_registradas():
                 messages.error(request, 'Divisão possui operações registradas')
-                return render_to_response('divisoes/editar_divisao.html', {'form': form, 'divisao': divisao},
-                          context_instance=RequestContext(request))
+                return TemplateResponse(request, 'divisoes/editar_divisao.html', {'form': form, 'divisao': divisao})
             divisao.delete()
             messages.success(request, 'Divisão excluída com sucesso')
             return HttpResponseRedirect(reverse('listar_divisoes'))
@@ -313,8 +309,7 @@ def editar_divisao(request, id):
     else:
         form = DivisaoForm(instance=divisao)
             
-    return render_to_response('divisoes/editar_divisao.html', {'form': form, 'divisao': divisao},
-                              context_instance=RequestContext(request))
+    return TemplateResponse(request, 'divisoes/editar_divisao.html', {'form': form, 'divisao': divisao})
     
 @login_required
 def editar_transferencia(request, id):
@@ -338,8 +333,7 @@ def editar_transferencia(request, id):
             for erros in form.errors.values():
                 for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
                     messages.error(request, erro.message)
-            return render_to_response('divisoes/editar_transferencia.html', {'form': form},
-                      context_instance=RequestContext(request))
+            return TemplateResponse(request, 'divisoes/editar_transferencia.html', {'form': form})
                 
         elif request.POST.get("delete"):
             transferencia.delete()
@@ -349,8 +343,7 @@ def editar_transferencia(request, id):
     else:
         form = TransferenciaEntreDivisoesForm(instance=transferencia, investidor=investidor)
             
-    return render_to_response('divisoes/editar_transferencia.html', {'form': form},
-                              context_instance=RequestContext(request))
+    return TemplateResponse(request, 'divisoes/editar_transferencia.html', {'form': form})
     
 @login_required
 def inserir_divisao(request):
@@ -366,7 +359,7 @@ def inserir_divisao(request):
     else:
         form = DivisaoForm()
             
-    return render_to_response('divisoes/inserir_divisao.html', {'form': form}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'divisoes/inserir_divisao.html', {'form': form})
 
 @login_required
 def inserir_transferencia(request):
@@ -381,7 +374,7 @@ def inserir_transferencia(request):
     else:
         form = TransferenciaEntreDivisoesForm(investidor=investidor)
             
-    return render_to_response('divisoes/inserir_transferencia.html', {'form': form}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'divisoes/inserir_transferencia.html', {'form': form})
 
 @login_required
 def listar_divisoes(request):
@@ -482,7 +475,7 @@ def listar_divisoes(request):
     # Preparar parte de operações não alocadas
     operacoes_nao_alocadas = verificar_operacoes_nao_alocadas(investidor=investidor)
     
-    return render_to_response('divisoes/listar_divisoes.html', {'divisoes': divisoes, 'operacoes_nao_alocadas': operacoes_nao_alocadas}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'divisoes/listar_divisoes.html', {'divisoes': divisoes, 'operacoes_nao_alocadas': operacoes_nao_alocadas})
 
 @login_required
 def listar_transferencias(request):
@@ -494,4 +487,4 @@ def listar_transferencias(request):
         transferencia.investimento_origem = transferencia.investimento_origem_completo()
         transferencia.investimento_destino = transferencia.investimento_destino_completo()
     
-    return render_to_response('divisoes/listar_transferencias.html', {'transferencias': transferencias}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'divisoes/listar_transferencias.html', {'transferencias': transferencias})

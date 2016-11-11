@@ -12,8 +12,7 @@ from collections import OrderedDict
 from decimal import Decimal, ROUND_FLOOR
 from django.contrib.auth.decorators import login_required
 from django.db.models.expressions import F
-from django.shortcuts import render_to_response
-from django.template.context import RequestContext
+from django.template.response import TemplateResponse
 from itertools import chain
 from operator import attrgetter
 import datetime
@@ -326,10 +325,9 @@ def detalhar_imposto_renda(request, ano):
     # Editar ano para string
     ano = str(ano).replace('.', '')
     
-    return render_to_response('imposto_renda/detalhar_imposto_ano.html', {'ano': ano, 'acoes': acoes, 'ganho_abaixo_vinte_mil': ganho_abaixo_vinte_mil, 'ganho_acima_vinte_mil': ganho_acima_vinte_mil, 
+    return TemplateResponse(request, 'imposto_renda/detalhar_imposto_ano.html', {'ano': ano, 'acoes': acoes, 'ganho_abaixo_vinte_mil': ganho_abaixo_vinte_mil, 'ganho_acima_vinte_mil': ganho_acima_vinte_mil, 
                                                                           'prejuizo_a_compensar': prejuizo_a_compensar, 'prejuizo_a_compensar_dt': prejuizo_a_compensar_dt, 'cdb_rdb': cdb_rdb, 
-                                                                          'fundos_investimento': fundos_investimento, 'fiis': fiis, 'letras_credito': letras_credito,'dados': dados}, 
-                              context_instance=RequestContext(request))
+                                                                          'fundos_investimento': fundos_investimento, 'fiis': fiis, 'letras_credito': letras_credito,'dados': dados})
     
 @login_required
 def listar_anos(request):
@@ -349,7 +347,7 @@ def listar_anos(request):
     lista_primeiras_operacoes = [operacao for operacao in lista_primeiras_operacoes if operacao != None]
     
     if not lista_primeiras_operacoes:
-        return render_to_response('imposto_renda/listar_anos.html', {'impostos_renda': list()}, context_instance=RequestContext(request))
+        return TemplateResponse(request, 'imposto_renda/listar_anos.html', {'impostos_renda': list()})
     
     primeiro_ano = min([operacao.data for operacao in lista_primeiras_operacoes]).year
     
@@ -361,4 +359,4 @@ def listar_anos(request):
         imposto_renda.valor_a_pagar = Decimal(0)
         impostos_renda.append(imposto_renda)
     
-    return render_to_response('imposto_renda/listar_anos.html', {'impostos_renda': impostos_renda}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'imposto_renda/listar_anos.html', {'impostos_renda': impostos_renda})

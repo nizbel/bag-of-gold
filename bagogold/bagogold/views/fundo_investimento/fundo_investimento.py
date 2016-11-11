@@ -24,6 +24,7 @@ from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
+from django.template.response import TemplateResponse
 import calendar
 import datetime
 
@@ -39,8 +40,7 @@ def adicionar_valor_cota_historico(request):
         
     else:
         form_historico_valor_cota = HistoricoValorCotasForm(investidor=investidor)
-    return render_to_response('fundo_investimento/adicionar_valor_cota_historico.html', {'form_historico_valor_cota': form_historico_valor_cota},
-                              context_instance=RequestContext(request)) 
+    return TemplateResponse(request, 'fundo_investimento/adicionar_valor_cota_historico.html', {'form_historico_valor_cota': form_historico_valor_cota}) 
 
 @login_required
 def editar_operacao_fundo_investimento(request, id):
@@ -101,9 +101,8 @@ def editar_operacao_fundo_investimento(request, id):
         form_operacao_fundo_investimento = OperacaoFundoInvestimentoForm(instance=operacao_fundo_investimento, investidor=investidor)
         formset_divisao = DivisaoFormSet(instance=operacao_fundo_investimento, investidor=investidor)
             
-    return render_to_response('fundo_investimento/editar_operacao_fundo_investimento.html', {'form_operacao_fundo_investimento': form_operacao_fundo_investimento, 'formset_divisao': formset_divisao, \
-                                                                                             'varias_divisoes': varias_divisoes},
-                              context_instance=RequestContext(request))  
+    return TemplateResponse(request, 'fundo_investimento/editar_operacao_fundo_investimento.html', {'form_operacao_fundo_investimento': form_operacao_fundo_investimento, 'formset_divisao': formset_divisao, \
+                                                                                             'varias_divisoes': varias_divisoes})  
 
     
 @login_required
@@ -113,9 +112,7 @@ def historico(request):
     operacoes = OperacaoFundoInvestimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data') 
     # Se investidor não tiver operações, retornar vazio
     if not operacoes:
-        return render_to_response('fundo_investimento/historico.html', {'dados': {}, 'operacoes': operacoes, 
-                                                    'graf_gasto_total': list(), 'graf_patrimonio': list()},
-                               context_instance=RequestContext(request))
+        return TemplateResponse(request, 'fundo_investimento/historico.html', {'dados': {}})
     # Prepara o campo valor atual
     for operacao in operacoes:
         if operacao.tipo_operacao == 'C':
@@ -201,9 +198,8 @@ def historico(request):
     dados['lucro'] = total_patrimonio - total_gasto
     dados['lucro_percentual'] = (total_patrimonio - total_gasto) / total_gasto * 100
     
-    return render_to_response('fundo_investimento/historico.html', {'dados': dados, 'operacoes': operacoes, 
-                                                    'graf_gasto_total': graf_gasto_total, 'graf_patrimonio': graf_patrimonio},
-                               context_instance=RequestContext(request))
+    return TemplateResponse(request, 'fundo_investimento/historico.html', {'dados': dados, 'operacoes': operacoes, 
+                                                    'graf_gasto_total': graf_gasto_total, 'graf_patrimonio': graf_patrimonio})
     
 
 @login_required
@@ -230,8 +226,8 @@ def inserir_fundo_investimento(request):
                     # Capturar erros oriundos da hora de salvar os objetos
                     except Exception as erro:
                         messages.error(request, erro.message)
-                        return render_to_response('fundo_investimento/inserir_fundo_investimento.html', {'form_fundo_investimento': form_fundo_investimento,
-                                                          'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
+                        return TemplateResponse(request, 'fundo_investimento/inserir_fundo_investimento.html', {'form_fundo_investimento': form_fundo_investimento,
+                                                          'formset_carencia': formset_carencia})
                             
                     return HttpResponseRedirect(reverse('listar_fundo_investimento'))
             for erros in form_fundo_investimento.errors.values():
@@ -239,13 +235,13 @@ def inserir_fundo_investimento(request):
                     messages.error(request, erro.message)
             for erro in formset_carencia.non_form_errors():
                 messages.error(request, erro)
-            return render_to_response('fundo_investimento/inserir_fundo_investimento.html', {'form_fundo_investimento': form_fundo_investimento,
-                                                              'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
+            return TemplateResponse(request, 'fundo_investimento/inserir_fundo_investimento.html', {'form_fundo_investimento': form_fundo_investimento,
+                                                              'formset_carencia': formset_carencia})
     else:
         form_fundo_investimento = FundoInvestimentoForm()
         formset_carencia = CarenciaFormSet()
-    return render_to_response('fundo_investimento/inserir_fundo_investimento.html', {'form_fundo_investimento': form_fundo_investimento,
-                                                              'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'fundo_investimento/inserir_fundo_investimento.html', {'form_fundo_investimento': form_fundo_investimento,
+                                                              'formset_carencia': formset_carencia})
 
 @login_required
 def inserir_operacao_fundo_investimento(request):
@@ -292,8 +288,8 @@ def inserir_operacao_fundo_investimento(request):
     else:
         form_operacao_fundo_investimento = OperacaoFundoInvestimentoForm(investidor=investidor)
         formset_divisao_fundo_investimento = DivisaoFundoInvestimentoFormSet(investidor=investidor)
-    return render_to_response('fundo_investimento/inserir_operacao_fundo_investimento.html', {'form_operacao_fundo_investimento': form_operacao_fundo_investimento, \
-                                                                                              'formset_divisao_fundo_investimento': formset_divisao_fundo_investimento, 'varias_divisoes': varias_divisoes}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'fundo_investimento/inserir_operacao_fundo_investimento.html', {'form_operacao_fundo_investimento': form_operacao_fundo_investimento, \
+                                                                                              'formset_divisao_fundo_investimento': formset_divisao_fundo_investimento, 'varias_divisoes': varias_divisoes})
 
 @login_required
 def listar_fundo_investimento(request):
@@ -321,8 +317,7 @@ def listar_fundo_investimento(request):
         elif fundo.tipo_prazo == 'L':
             fundo.tipo_prazo = 'Longo'
         
-    return render_to_response('fundo_investimento/listar_fundo_investimento.html', {'fundos_investimento': fundos_investimento},
-                              context_instance=RequestContext(request))
+    return TemplateResponse(request, 'fundo_investimento/listar_fundo_investimento.html', {'fundos_investimento': fundos_investimento})
 
 @login_required
 def modificar_carencia_fundo_investimento(request):
@@ -337,7 +332,7 @@ def modificar_carencia_fundo_investimento(request):
     else:
         form = HistoricoCarenciaFundoInvestimentoForm(investidor=investidor)
             
-    return render_to_response('fundo_investimento/modificar_carencia_fundo_investimento.html', {'form': form}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'fundo_investimento/modificar_carencia_fundo_investimento.html', {'form': form})
 
 @login_required
 def modificar_porcentagem_fundo_investimento(request):
@@ -350,7 +345,7 @@ def modificar_porcentagem_fundo_investimento(request):
     else:
         form = HistoricoPorcentagemFundoInvestimentoForm()
             
-    return render_to_response('fundo_investimento/modificar_porcentagem_fundo_investimento.html', {'form': form}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'fundo_investimento/modificar_porcentagem_fundo_investimento.html', {'form': form})
 
 @login_required
 def painel(request):
@@ -359,8 +354,7 @@ def painel(request):
     operacoes = OperacaoFundoInvestimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
     # Se não há operações, retornar
     if not operacoes:
-        return render_to_response('fundo_investimento/painel.html', {'operacoes': operacoes, 'dados': {}},
-                               context_instance=RequestContext(request))
+        return TemplateResponse(request, 'fundo_investimento/painel.html', {'operacoes': operacoes, 'dados': {}})
     
     # Prepara o campo valor atual
     for operacao in operacoes:
@@ -459,5 +453,4 @@ def painel(request):
     dados['total_iof'] = total_iof
     dados['total_ganho_prox_dia'] = total_ganho_prox_dia
     
-    return render_to_response('fundo_investimento/painel.html', {'operacoes': operacoes, 'dados': dados},
-                               context_instance=RequestContext(request))
+    return TemplateResponse(request, 'fundo_investimento/painel.html', {'operacoes': operacoes, 'dados': dados})

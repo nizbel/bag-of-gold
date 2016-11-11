@@ -3,6 +3,7 @@ from bagogold.bagogold.models.acoes import OperacaoAcao
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
+from django.template.response import TemplateResponse
 import calendar
 import datetime
 
@@ -61,5 +62,5 @@ def home(request):
     graf_lucro_acumulado[len(graf_lucro_acumulado)-1] = [str(calendar.timegm(datetime.date(ano, mes, 1).timetuple()) * 1000), float(lucro_geral)]
     graf_lucro_mensal[len(graf_lucro_mensal)-1] = [str(calendar.timegm(datetime.date(ano, mes, 1).timetuple()) * 1000), float(lucro_mensal)]
             
-    return render_to_response('acoes/home_acoes.html', {'operacoes': operacoes, 'graf_lucro_acumulado': graf_lucro_acumulado,
-                                                  'graf_lucro_mensal': graf_lucro_mensal}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'acoes/home_acoes.html', {'operacoes': operacoes, 'graf_lucro_acumulado': graf_lucro_acumulado,
+                                                  'graf_lucro_mensal': graf_lucro_mensal})
