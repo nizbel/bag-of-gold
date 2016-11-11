@@ -10,7 +10,8 @@ from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa,
     ProventoAcaoDocumento
 from bagogold.bagogold.utils.gerador_proventos import \
     alocar_pendencia_para_investidor, desalocar_pendencia_de_investidor, \
-    salvar_investidor_responsavel_por_leitura, criar_descricoes_provento_acoes
+    salvar_investidor_responsavel_por_leitura, criar_descricoes_provento_acoes, \
+    retornar_investidor_responsavel_por_leitura
 from bagogold.bagogold.utils.investidores import is_superuser
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test, \
@@ -96,6 +97,7 @@ def ler_documento_provento(request, id_pendencia):
                             messages.success(request, 'Descrições de proventos criadas com sucesso')
                             return HttpResponseRedirect(reverse('listar_pendencias'))
                         except Exception as e:
+                            retornar_investidor_responsavel_por_leitura(pendencia, investidor)
                             messages.error(request, str(e))
                     else:
                         messages.error(request, 'Proventos em ações não conferem com os proventos criados')

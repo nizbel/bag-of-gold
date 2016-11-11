@@ -63,6 +63,23 @@ def salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao):
     pendencia.save()
     return responsavel_leitura
 
+def retornar_investidor_responsavel_por_leitura(pendencia, investidor):
+    """
+    Desfaz vínculo de responsabilidade pela leitura, retorna pendência para leitura, realoca pendência para investidor
+    Parâmetros: Pendência
+                Investidor
+    """
+    if pendencia.tipo != 'L':
+        pendencia.tipo = 'L'
+        pendencia.save()
+    
+    InvestidorResponsavelPendencia.objects.get_or_create(pendencia=pendencia, investidor=investidor)
+    
+    try:
+        InvestidorLeituraDocumento.objects.get(documento=pendencia.documento, investidor=investidor).delete()
+    except InvestidorLeituraDocumento.DoesNotExist:
+        pass
+
 def criar_descricoes_provento_acoes(descricoes_proventos, acoes_descricoes_proventos, documento):
     """
     Cria descrições para proventos em ações a partir de um documento
