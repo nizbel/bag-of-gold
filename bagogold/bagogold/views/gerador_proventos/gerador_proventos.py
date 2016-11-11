@@ -37,8 +37,8 @@ def baixar_documento_provento(request, id_documento):
 def ler_documento_provento(request, id_pendencia):
     pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
     # Verificar se pendência é de leitura
-    if pendencia.tipo == 'V':
-        messages.success(request, 'Pendência não é leitura')
+    if pendencia.tipo != 'L':
+        messages.success(request, 'Pendência não é de leitura')
         return HttpResponseRedirect(reverse('listar_pendencias'))
     
     investidor = request.user.investidor
@@ -238,6 +238,12 @@ def remover_responsabilidade_documento_provento(request):
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def validar_documento_provento(request, id_pendencia):
     pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
+    # Verificar se pendência é de leitura
+    if pendencia.tipo != 'V':
+        messages.success(request, 'Pendência não é de validação')
+        return HttpResponseRedirect(reverse('listar_pendencias'))
+    
+    investidor = request.user.investidor
     
     if pendencia.documento.investidorleituradocumento.decisao == 'C':
         proventos_documento = ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)
