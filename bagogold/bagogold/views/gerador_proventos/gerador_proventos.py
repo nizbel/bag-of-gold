@@ -153,18 +153,6 @@ def listar_documentos(request):
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def listar_pendencias(request):
-    # Testa se há página inicial
-#     if 'pagina_atual_lista_pendencias' in request.session:
-#         pagina_inicial = request.session['pagina_atual_lista_pendencias']
-#         print 'pagina inicial', pagina_inicial
-#         # Testa se página inicial é feita de dígitos numéricos
-#         if not pagina_inicial.isdigit():
-#             pagina_inicial = '0'
-#         # Remover pagina inicial da sessão para não atrapalhar futuras iterações com a página
-#         del request.session['pagina_atual_lista_pendencias']
-#     else:
-#     pagina_inicial = '0'
-        
     pendencias = PendenciaDocumentoProvento.objects.all()
     
     for pendencia in pendencias:
@@ -187,17 +175,12 @@ def puxar_responsabilidade_documento_provento(request):
     id_pendencia = request.GET['id_pendencia'].replace('.', '')
     # Verifica se id_pendencia contém apenas números
     if not id_pendencia.isdigit():
-#         messages.error(request, u'Formato de pendência inválido')
         return HttpResponse(json.dumps({'resultado': False, 'mensagem': u'Formato de pendência inválido', 'responsavel': None, 'usuario_responsavel': False}), content_type = "application/json") 
-    
-#     pagina_atual = request.GET['pagina_atual']
-#     request.session['pagina_atual_lista_pendencias'] = pagina_atual
     
     # Testa se pendência enviada existe
     try:
         pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
     except PendenciaDocumentoProvento.DoesNotExist:
-#         messages.error(request, u'A pendência enviada não existe')
         return HttpResponse(json.dumps({'resultado': False, 'mensagem': u'A pendência enviada não existe', 'responsavel': None, 'usuario_responsavel': False}), content_type = "application/json") 
     
     retorno, mensagem = alocar_pendencia_para_investidor(pendencia, request.user.investidor)
@@ -221,17 +204,12 @@ def remover_responsabilidade_documento_provento(request):
     id_pendencia = request.GET['id_pendencia'].replace('.', '')
     # Verifica se id_pendencia contém apenas números
     if not id_pendencia.isdigit():
-#         messages.error(request, u'Formato de pendência inválido %s' % (id_pendencia))
         return HttpResponse(json.dumps({'resultado': False, 'mensagem': u'Formato de pendência inválido %s' % (id_pendencia)}), content_type = "application/json") 
-    
-#     pagina_atual = request.GET['pagina_atual']
-#     request.session['pagina_atual_lista_pendencias'] = pagina_atual
     
     # Testa se pendência enviada existe
     try:
         pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
     except PendenciaDocumentoProvento.DoesNotExist:
-#         messages.error(request, u'A pendência enviada não existe')
         return HttpResponse(json.dumps({'resultado': False, 'mensagem': u'A pendência enviada não existe'}), content_type = "application/json") 
     
     retorno, mensagem = desalocar_pendencia_de_investidor(pendencia, request.user.investidor)
