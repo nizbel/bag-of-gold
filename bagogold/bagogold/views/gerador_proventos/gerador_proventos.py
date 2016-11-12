@@ -237,7 +237,7 @@ def validar_documento_provento(request, id_pendencia):
         descricoes_proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento)
         
         # Descrição da decisão do responsável pela leitura
-        pendencia.decisao = 'Criar %s proventos' % (ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).count())
+        pendencia.decisao = 'Criar %s provento(s)' % (ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).count())
     elif pendencia.documento.investidorleituradocumento.decisao == 'E':
         descricoes_proventos = {}
         
