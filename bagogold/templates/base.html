@@ -346,9 +346,8 @@
     <!-- start: Content -->
     <div id="content">
         
-        {% if messages %}
-        <div class="row-fluid">
-            <div class="box-content alerts span10">
+        <div class="row-fluid" id="row-messages" {% if not messages %}style="display: none;"{% endif %}>
+            <div class="box-content alerts span10" id="messages">
             {% for message in messages %}
                 <div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %}">
                     <button type="button" class="close" data-dismiss="alert">×</button>
@@ -363,7 +362,6 @@
             {% endfor %}
             </div>
         </div>
-        {% endif %}
 
         <div class="row-fluid">
             <div class="span10">

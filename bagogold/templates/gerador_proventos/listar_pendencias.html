@@ -27,39 +27,41 @@
             ">{{pendencia.documento}}</a></td>
         <td>{{pendencia.tipo_documento}}</td>
         <td>
-            <span {% if not pendencia.responsavel or pendencia.responsavel.id == request.user.investidor.id %}style="display: none"{% endif %}>{{pendencia.responsavel}}</span>
-            <button {% if not pendencia.responsavel or pendencia.responsavel.id != request.user.investidor.id %}style="display: none"{% endif %}
+            <span id="responsavel_{{pendencia.id}}" {% if not pendencia.responsavel or pendencia.responsavel.id == request.user.investidor.id %}style="display: none"{% endif %}>{{pendencia.responsavel}}</span>
+            <button id="cancelar_{{pendencia.id}}" {% if not pendencia.responsavel or pendencia.responsavel.id != request.user.investidor.id %}style="display: none"{% endif %}
             onclick="remover_responsabilidade({{pendencia.id}});" class="btn btn-warning">Cancelar</button>
-            <button {% if pendencia.responsavel %}style="display: none"{% endif %} onclick="puxar_responsabilidade({{pendencia.id}});" class="btn btn-success">Reservar</button> 
+            <button id="reservar_{{pendencia.id}}" {% if pendencia.responsavel %}style="display: none"{% endif %} onclick="puxar_responsabilidade({{pendencia.id}});" class="btn btn-success">Reservar</button> 
         </td>
     </tr>
     {% endfor %}
     </tbody>
     </table>
-    <input type="hidden" value="{{pagina_inicial}}" id="pagina_inicial" />
 </div>
 
 <script>
-$( document ).ready(function() {
-	var table = $('#pendencias').dataTable({"bRetrieve": true});
-    console.log(table.fnPageChange(parseInt($('#pagina_inicial').val())));
-//     table.fnPageInfo().iPage
-
-    
-});
-
 function puxar_responsabilidade(id) {
-    var table = $('#pendencias').dataTable({"bRetrieve": true});
     var id_pendencia = id;
 //     console.log(id_pendencia + "..." + table.fnPagingInfo().iPage);
     $.ajax({
         url : "{% url 'puxar_responsabilidade_documento_provento' %}", // the endpoint
         type : "GET", // http method
-        data : {id_pendencia: id_pendencia, pagina_atual: table.fnPagingInfo().iPage},
+        data : {id_pendencia: id_pendencia},
 
         // handle a successful response
-        success : function() {
-        	$(location).attr('href',"{% url 'listar_pendencias' %}");
+        success : function(retorno) {
+        	$('#row-messages').show();
+        	if (retorno.resultado) {
+        		$('#messages').html('<div class="alert alert-success"><button type="button" class="close" data-dismiss="alert">×</button><i class="icon-ok"></i> ' + retorno.mensagem + '</div>');
+        		$('#cancelar_' + id_pendencia).show();
+                $('#reservar_' + id_pendencia).hide();
+        	} else {
+                $('#messages').html('<div class="alert alert-error"><button type="button" class="close" data-dismiss="alert">×</button><i class="icon-ban-circle"></i> ' + retorno.mensagem + '</div>');
+                if ((retorno.responsavel != null) && (!retorno.usuario_responsavel)) {
+                	$('#responsavel_' + id_pendencia).html(retorno.responsavel);
+                	$('#responsavel_' + id_pendencia).show();
+                	$('#reservar_' + id_pendencia).hide();
+                }
+        	}
         },
 
         // handle a non-successful response
@@ -70,17 +72,23 @@ function puxar_responsabilidade(id) {
 }
 
 function remover_responsabilidade(id) {
-    var table = $('#pendencias').dataTable({"bRetrieve": true});
     var id_pendencia = id;
 //     console.log(id_pendencia + "..." + table.fnPagingInfo().iPage);
     $.ajax({
         url : "{% url 'remover_responsabilidade_documento_provento' %}", // the endpoint
         type : "GET", // http method
-        data : {id_pendencia: id_pendencia, pagina_atual: table.fnPagingInfo().iPage},
+        data : {id_pendencia: id_pendencia},
 
         // handle a successful response
-        success : function() {
-            $(location).attr('href',"{% url 'listar_pendencias' %}");
+        success : function(retorno) {
+        	$('#row-messages').show();
+            if (retorno.resultado) {
+                $('#messages').html('<div class="alert alert-success"><button type="button" class="close" data-dismiss="alert">×</button><i class="icon-ok"></i> ' + retorno.mensagem + '</div>');
+                $('#cancelar_' + id_pendencia).hide();
+                $('#reservar_' + id_pendencia).show();
+            } else {
+                $('#messages').html('<div class="alert alert-error"><button type="button" class="close" data-dismiss="alert">×</button><i class="icon-ban-circle"></i> ' + retorno.mensagem + '</div>');
+            }
         },
 
         // handle a non-successful response

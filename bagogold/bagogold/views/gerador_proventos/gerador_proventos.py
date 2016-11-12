@@ -20,6 +20,7 @@ from django.core.urlresolvers import reverse
 from django.forms.formsets import formset_factory
 from django.http.response import HttpResponseRedirect, HttpResponse
 from django.template.response import TemplateResponse
+import json
 import os
 
 @login_required
@@ -153,16 +154,16 @@ def listar_documentos(request):
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def listar_pendencias(request):
     # Testa se há página inicial
-    if 'pagina_atual_lista_pendencias' in request.session:
-        pagina_inicial = request.session['pagina_atual_lista_pendencias']
-        print 'pagina inicial', pagina_inicial
-        # Testa se página inicial é feita de dígitos numéricos
-        if not pagina_inicial.isdigit():
-            pagina_inicial = '0'
-        # Remover pagina inicial da sessão para não atrapalhar futuras iterações com a página
-        del request.session['pagina_atual_lista_pendencias']
-    else:
-        pagina_inicial = '0'
+#     if 'pagina_atual_lista_pendencias' in request.session:
+#         pagina_inicial = request.session['pagina_atual_lista_pendencias']
+#         print 'pagina inicial', pagina_inicial
+#         # Testa se página inicial é feita de dígitos numéricos
+#         if not pagina_inicial.isdigit():
+#             pagina_inicial = '0'
+#         # Remover pagina inicial da sessão para não atrapalhar futuras iterações com a página
+#         del request.session['pagina_atual_lista_pendencias']
+#     else:
+#     pagina_inicial = '0'
         
     pendencias = PendenciaDocumentoProvento.objects.all()
     
@@ -172,7 +173,7 @@ def listar_pendencias(request):
         pendencia.tipo_pendencia = 'Leitura' if pendencia.tipo == 'L' else 'Validação'
         pendencia.responsavel = pendencia.responsavel()
         
-    return TemplateResponse(request, 'gerador_proventos/listar_pendencias.html', {'pendencias': pendencias, 'pagina_inicial': pagina_inicial})
+    return TemplateResponse(request, 'gerador_proventos/listar_pendencias.html', {'pendencias': pendencias})
 
 
 @login_required
@@ -186,27 +187,33 @@ def puxar_responsabilidade_documento_provento(request):
     id_pendencia = request.GET['id_pendencia'].replace('.', '')
     # Verifica se id_pendencia contém apenas números
     if not id_pendencia.isdigit():
-        messages.error(request, u'Formato de pendência inválido')
-        return HttpResponse()
+#         messages.error(request, u'Formato de pendência inválido')
+        return HttpResponse(json.dumps({'resultado': False, 'mensagem': u'Formato de pendência inválido', 'responsavel': None, 'usuario_responsavel': False}), content_type = "application/json") 
     
-    pagina_atual = request.GET['pagina_atual']
-    request.session['pagina_atual_lista_pendencias'] = pagina_atual
+#     pagina_atual = request.GET['pagina_atual']
+#     request.session['pagina_atual_lista_pendencias'] = pagina_atual
     
     # Testa se pendência enviada existe
     try:
         pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
     except PendenciaDocumentoProvento.DoesNotExist:
-        messages.error(request, u'A pendência enviada não existe')
-#         return HttpResponseRedirect(reverse('listar_pendencias'))
-        return HttpResponse()
+#         messages.error(request, u'A pendência enviada não existe')
+        return HttpResponse(json.dumps({'resultado': False, 'mensagem': u'A pendência enviada não existe', 'responsavel': None, 'usuario_responsavel': False}), content_type = "application/json") 
     
     retorno, mensagem = alocar_pendencia_para_investidor(pendencia, request.user.investidor)
-    if retorno:
-        messages.success(request, mensagem)
+    # Carregar responsável
+    responsavel = PendenciaDocumentoProvento.objects.get(id=id_pendencia).responsavel()
+    # Definir responsável
+    if responsavel != None:
+        usuario_responsavel = True if responsavel.id == request.user.investidor.id else False
+        responsavel = unicode(responsavel)
     else:
-        messages.error(request, mensagem)
-#     return HttpResponseRedirect(reverse('listar_pendencias'))
-    return HttpResponse()
+        usuario_responsavel = False
+        
+    if retorno:
+        return HttpResponse(json.dumps({'resultado': retorno, 'mensagem': mensagem, 'responsavel': responsavel, 'usuario_responsavel': usuario_responsavel}), content_type = "application/json") 
+    else:
+        return HttpResponse(json.dumps({'resultado': retorno, 'mensagem': mensagem, 'responsavel': responsavel, 'usuario_responsavel': usuario_responsavel}), content_type = "application/json") 
 
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
@@ -214,25 +221,27 @@ def remover_responsabilidade_documento_provento(request):
     id_pendencia = request.GET['id_pendencia'].replace('.', '')
     # Verifica se id_pendencia contém apenas números
     if not id_pendencia.isdigit():
-        messages.error(request, u'Formato de pendência inválido %s' % (id_pendencia))
-        return HttpResponse()
+#         messages.error(request, u'Formato de pendência inválido %s' % (id_pendencia))
+        return HttpResponse(json.dumps({'resultado': False, 'mensagem': u'Formato de pendência inválido %s' % (id_pendencia)}), content_type = "application/json") 
     
-    pagina_atual = request.GET['pagina_atual']
-    request.session['pagina_atual_lista_pendencias'] = pagina_atual
+#     pagina_atual = request.GET['pagina_atual']
+#     request.session['pagina_atual_lista_pendencias'] = pagina_atual
     
     # Testa se pendência enviada existe
     try:
         pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
     except PendenciaDocumentoProvento.DoesNotExist:
-        messages.error(request, u'A pendência enviada não existe')
-        return HttpResponse()
+#         messages.error(request, u'A pendência enviada não existe')
+        return HttpResponse(json.dumps({'resultado': False, 'mensagem': u'A pendência enviada não existe'}), content_type = "application/json") 
     
     retorno, mensagem = desalocar_pendencia_de_investidor(pendencia, request.user.investidor)
+    # Carregar responsável
+    responsavel = PendenciaDocumentoProvento.objects.get(id=id_pendencia).responsavel()
+        
     if retorno:
-        messages.success(request, mensagem)
+        return HttpResponse(json.dumps({'resultado': retorno, 'mensagem': mensagem}), content_type = "application/json") 
     else:
-        messages.error(request, mensagem)
-    return HttpResponse()
+        return HttpResponse(json.dumps({'resultado': retorno, 'mensagem': mensagem}), content_type = "application/json") 
 
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
