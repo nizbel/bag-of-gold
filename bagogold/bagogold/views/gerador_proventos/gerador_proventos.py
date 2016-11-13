@@ -3,7 +3,7 @@ from bagogold import settings
 from bagogold.bagogold.forms.gerador_proventos import \
     ProventoAcaoDescritoDocumentoBovespaForm, \
     AcaoProventoAcaoDescritoDocumentoBovespaForm
-from bagogold.bagogold.models.acoes import Acao
+from bagogold.bagogold.models.acoes import Acao, Provento
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
     PendenciaDocumentoProvento, ProventoAcaoDescritoDocumentoBovespa, \
@@ -11,7 +11,8 @@ from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa,
 from bagogold.bagogold.utils.gerador_proventos import \
     alocar_pendencia_para_investidor, desalocar_pendencia_de_investidor, \
     salvar_investidor_responsavel_por_leitura, criar_descricoes_provento_acoes, \
-    retornar_investidor_responsavel_por_leitura
+    retornar_investidor_responsavel_por_leitura, \
+    buscar_proventos_e_descricoes_proximos_acao
 from bagogold.bagogold.utils.investidores import is_superuser
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test, \
@@ -235,7 +236,9 @@ def validar_documento_provento(request, id_pendencia):
     if pendencia.documento.investidorleituradocumento.decisao == 'C':
         proventos_documento = ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)
         descricoes_proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento)
-        
+        for descricao_provento in descricoes_proventos:
+            descricao_provento.proventos_proximos = buscar_proventos_e_descricoes_proximos_acao(descricao_provento)
+            
         # Descrição da decisão do responsável pela leitura
         pendencia.decisao = 'Criar %s provento(s)' % (ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).count())
     elif pendencia.documento.investidorleituradocumento.decisao == 'E':

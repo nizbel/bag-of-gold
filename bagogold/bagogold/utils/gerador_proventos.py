@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.models.acoes import Provento
 from bagogold.bagogold.models.gerador_proventos import \
     InvestidorResponsavelPendencia, InvestidorLeituraDocumento, \
-    PendenciaDocumentoProvento, ProventoAcaoDocumento,\
+    PendenciaDocumentoProvento, ProventoAcaoDocumento, \
     ProventoAcaoDescritoDocumentoBovespa
+from itertools import chain
+from operator import attrgetter
 
 def alocar_pendencia_para_investidor(pendencia, investidor):
     """
@@ -81,6 +84,12 @@ def retornar_investidor_responsavel_por_leitura(pendencia, investidor):
     except InvestidorLeituraDocumento.DoesNotExist:
         pass
 
+def converter_descricao_provento_para_provento_acoes_real(descricao_provento):
+    pass
+
+def converter_descricao_provento_para_provento_fii_real(descricao_provento):
+    pass
+
 def criar_descricoes_provento_acoes(descricoes_proventos, acoes_descricoes_proventos, documento):
     """
     Cria descrições para proventos em ações a partir de um documento
@@ -104,9 +113,20 @@ def criar_descricoes_provento_acoes(descricoes_proventos, acoes_descricoes_prove
         for objeto in objetos_salvos:
             objeto.delete()
         raise e
-    
-def converter_descricao_provento_para_provento_acoes_real(descricao_provento):
-    pass
 
-def converter_descricao_provento_para_provento_fii_real(descricao_provento):
-    pass
+def buscar_proventos_e_descricoes_proximos_acao(descricao_provento):
+    """
+    Retorna lista com os proventos e descrições de proventos próximas à data EX de uma descrição de provento
+    Parâmetros: Descrição de provento de ação
+    Retorno:    Lista de proventos e descrições de proventos ordenada por quantidade de dias em relação à data EX
+    """
+    # Proventos
+    proventos_proximos_ant = Provento.objects.filter(acao=descricao_provento.acao, data_ex__lte=descricao_provento.data_ex).order_by('-data_ex')[:5]
+    proventos_proximos_post = Provento.objects.filter(acao=descricao_provento.acao, data_ex__gt=descricao_provento.data_ex).order_by('data_ex')[:5]
+    # Descrições de proventos
+    desc_proventos_proximos_ant = ProventoAcaoDescritoDocumentoBovespa.objects.filter(acao=descricao_provento.acao, data_ex__lte=descricao_provento.data_ex).exclude(id=descricao_provento.id).order_by('-data_ex')[:5]
+    desc_proventos_proximos_post = ProventoAcaoDescritoDocumentoBovespa.objects.filter(acao=descricao_provento.acao, data_ex__gt=descricao_provento.data_ex).order_by('data_ex')[:5]
+    
+    # Ordenar pela diferença com a data da descrição de proento
+    return sorted(chain(proventos_proximos_ant, proventos_proximos_post, desc_proventos_proximos_ant, desc_proventos_proximos_post),
+                    key= lambda x: abs((x.data_ex - descricao_provento.data_ex).days))[:10]
