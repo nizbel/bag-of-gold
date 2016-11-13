@@ -231,7 +231,7 @@ def validar_documento_provento(request, id_pendencia):
         messages.success(request, 'Pendência não é de validação')
         return HttpResponseRedirect(reverse('listar_pendencias'))
     
-    investidor = request.user.investidor
+#     investidor = request.user.investidor
     
     if pendencia.documento.investidorleituradocumento.decisao == 'C':
         proventos_documento = ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)
