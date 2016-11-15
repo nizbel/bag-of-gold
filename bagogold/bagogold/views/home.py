@@ -12,7 +12,8 @@ from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
 from bagogold.bagogold.utils.cdb_rdb import calcular_valor_cdb_rdb_ate_dia, \
     calcular_valor_venda_cdb_rdb
 from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
-    buscar_totais_atuais_investimentos, buscar_proventos_a_receber
+    buscar_totais_atuais_investimentos, buscar_proventos_a_receber, \
+    buscar_proventos_a_receber_data_ex_futura
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas, \
     calcular_valor_lc_ate_dia, calcular_valor_venda_lc
 from decimal import Decimal, ROUND_DOWN
@@ -62,12 +63,21 @@ def inicio(request):
     
     # Ordenar proventos a receber e separar por grupos
     if request.user.is_authenticated():
+        # Proventos a receber com data EX já passada
         proventos_a_receber = buscar_proventos_a_receber(request.user.investidor)
         proventos_acoes_a_receber = [provento for provento in proventos_a_receber if isinstance(provento, Provento)]
         proventos_acoes_a_receber.sort(key=lambda provento: provento.data_ex)
         
         proventos_fiis_a_receber = [provento for provento in proventos_a_receber if isinstance(provento, ProventoFII)]
         proventos_fiis_a_receber.sort(key=lambda provento: provento.data_ex)
+        
+        # Proventos a receber com data EX ainda não passada
+        proventos_futuros = buscar_proventos_a_receber_data_ex_futura(request.user.investidor)
+        proventos_acoes_futuros = [provento for provento in proventos_futuros if isinstance(provento, Provento)]
+        proventos_acoes_futuros.sort(key=lambda provento: provento.data_ex)
+        
+        proventos_fiis_futuros = [provento for provento in proventos_futuros if isinstance(provento, ProventoFII)]
+        proventos_fiis_futuros.sort(key=lambda provento: provento.data_ex)
     else:
         proventos_acoes_a_receber = list()
         proventos_fiis_a_receber = list()
