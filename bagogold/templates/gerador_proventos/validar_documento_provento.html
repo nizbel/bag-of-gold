@@ -43,25 +43,62 @@
                         </div>
                         <div class="box-content">
                             <div class="row-fluid">
-                                <div class="span2"><strong>Ação:</strong></div>
+                                <div class="span1"><strong>Ação:</strong></div>
                                 <div class="span2">{{descricao_provento.acao}}</div>
-                                <div class="span2"><strong>Tipo:</strong></div>
-                                <div class="span2">{{descricao_provento.tipo_provento}}</div>
-                                <div class="span2"><strong>Valor unitário:</strong></div>
-                                <div class="span2">R$ {{descricao_provento.valor_unitario}}</div>
+                                <div class="span1"><strong>Tipo:</strong></div>
+                                <div class="span2">{{descricao_provento.descricao_tipo_provento}}</div>
+                                <div class="span2"><strong>Valor unit.:</strong></div>
+                                {% if descricao_provento.tipo_provento != 'A' %}
+                                    <div class="span4">R$ {{descricao_provento.valor_unitario}}</div>
+                                {% else %}
+                                    <div class="span4">{{descricao_provento.valor_unitario}}%</div>
+                                {% endif %}
                             </div>
                             <div class="row-fluid">
                                 <div class="span2"><strong>Data EX:</strong></div>
-                                <div class="span2">{{descricao_provento.data_ex}}</div>
-                                <div class="span2"><strong>Data pagamento:</strong></div>
-                                <div class="span2">{{descricao_provento.data_pagamento}}</div>
+                                <div class="span4">{{descricao_provento.data_ex}}</div>
+                                <div class="span2"><strong>Pagamento:</strong></div>
+                                <div class="span4">{{descricao_provento.data_pagamento}}</div>
                             </div>
+                            {% if descricao_provento.tipo_provento == 'A' %}
+                                {% for acao_descricao_provento in descricao_provento.acoes_recebidas %}
+                                <div class="row-fluid">
+                                    <div class="span3"><strong>Ação recebida:</strong></div>
+                                    <div class="span3">{{acao_descricao_provento.acao_recebida}}</div>
+                                    <div class="span2"><strong>Valor de frações:</strong></div>
+                                    <div class="span4">R$ {{acao_descricao_provento.valor_calculo_frac}}</div>
+                                </div>
+                                <div class="row-fluid">
+                                    <div class="span4"><strong>Pagamento de frações:</strong></div>
+                                    <div class="span4">{{acao_descricao_provento.data_pagamento_frac}}</div>
+                                </div>
+                                {% endfor%}
+                            {% endif %}
                         </div>
                         <div class="box-header">
                             Proventos próximos
                         </div>
                         <div class="box-content">
-                            {{descricao_provento.proventos_proximos}}
+                            {% for provento_proximo in descricao_provento.proventos_proximos %}
+                            <div class="row-fluid">
+                                <div class="span1"><strong>Ação:</strong></div>
+                                <div class="span2">{{provento_proximo.acao}}</div>
+                                <div class="span1"><strong>Tipo:</strong></div>
+                                <div class="span2">{{provento_proximo.descricao_tipo_provento}}</div>
+                                <div class="span2"><strong>Valor unit.:</strong></div>
+                                {% if provento_proximo.tipo_provento != 'A' %}
+                                    <div class="span4">R$ {{provento_proximo.valor_unitario}}</div>
+                                {% else %}
+                                    <div class="span4">{{provento_proximo.valor_unitario}}%</div>
+                                {% endif %}
+                            </div>
+                            <div class="row-fluid">
+                                <div class="span2"><strong>Data EX:</strong></div>
+                                <div class="span4">{{provento_proximo.data_ex}}</div>
+                                <div class="span2"><strong>Pagamento:</strong></div>
+                                <div class="span4">{{provento_proximo.data_pagamento}}</div>
+                            </div>
+                            {% endfor %}
                         </div>
                     </div>
                 {% endfor %}

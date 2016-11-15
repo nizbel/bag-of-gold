@@ -14,6 +14,7 @@ from bagogold.bagogold.utils.gerador_proventos import \
     retornar_investidor_responsavel_por_leitura, \
     buscar_proventos_e_descricoes_proximos_acao
 from bagogold.bagogold.utils.investidores import is_superuser
+from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test, \
     permission_required
@@ -237,6 +238,21 @@ def validar_documento_provento(request, id_pendencia):
         proventos_documento = ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)
         descricoes_proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento)
         for descricao_provento in descricoes_proventos:
+            # Definir tipo de provento
+            if descricao_provento.tipo_provento == 'A':
+                descricao_provento.descricao_tipo_provento = u'Ações'
+                descricao_provento.acoes_recebidas = descricao_provento.acaoproventoacaodescritodocumentobovespa_set.all()
+            elif descricao_provento.tipo_provento == 'D':
+                descricao_provento.descricao_tipo_provento = u'Dividendos'
+            elif descricao_provento.tipo_provento == 'J':
+                descricao_provento.descricao_tipo_provento = u'JSCP'
+            
+            # Remover 0s a esquerda para valores
+            descricao_provento.valor_unitario = Decimal(str(descricao_provento.valor_unitario).rstrip('0'))
+            for acao_descricao_provento in descricao_provento.acoes_recebidas:
+                acao_descricao_provento.valor_calculo_frac = Decimal(str(acao_descricao_provento.valor_calculo_frac).rstrip('0'))
+            
+            # Buscar proventos próximos
             descricao_provento.proventos_proximos = buscar_proventos_e_descricoes_proximos_acao(descricao_provento)
             
         # Descrição da decisão do responsável pela leitura
