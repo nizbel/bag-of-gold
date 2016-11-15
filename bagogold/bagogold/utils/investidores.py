@@ -76,7 +76,7 @@ def buscar_ultimas_operacoes(investidor, quantidade_operacoes):
 def buscar_totais_atuais_investimentos(investidor):
     divisoes = Divisao.objects.filter(investidor=investidor)
     
-    totais_atuais = {'Ações': Decimal(0), 'CDB/RDB': Decimal(0), 'FII': Decimal(0), 'Fundos de Investimentos': Decimal(0), 'Letras de Crédito': Decimal(0), 'Tesouro Direto': Decimal(0), }
+    totais_atuais = {'Ações': Decimal(0), 'CDB/RDB': Decimal(0), 'FII': Decimal(0), 'Fundos de Inv.': Decimal(0), 'Letras de Crédito': Decimal(0), 'Tesouro Direto': Decimal(0), }
     
     data_atual = datetime.date.today()
     
@@ -142,9 +142,9 @@ def buscar_proventos_a_receber(investidor):
     """
     Retorna proventos que o investidor irá receber futuramente, já passada a data EX
     Parâmetros: Investidor
-    Retorno:    Quantidade de proventos (em R$) {ticker: qtd}
+    Retorno:    Lista de proventos
     """
-    proventos_a_receber = {}
+    proventos_a_receber = list()
     
 #     # Buscar proventos em ações
 #     acoes_operadas = OperacaoAcao.objects.filter(investidor=investidor, data__lte=datetime.date.today()).values_list('acao', flat=True)
@@ -163,11 +163,13 @@ def buscar_proventos_a_receber(investidor):
         for provento in proventos_a_pagar:
             qtd_acoes = quantidade_acoes_ate_dia(investidor, acao.ticker, provento.data_ex - datetime.timedelta(days=1), considerar_trade=True) 
             if qtd_acoes > 0:
-                quantia_a_receber = (qtd_acoes * provento.valor_unitario) if provento.tipo_provento == 'D' else (qtd_acoes * provento.valor_unitario * Decimal(0.85))
-                if acao.ticker in proventos_a_receber:
-                    proventos_a_receber[acao.ticker] += quantia_a_receber
-                else:
-                    proventos_a_receber[acao.ticker] = quantia_a_receber
+                provento.quantia_a_receber = (qtd_acoes * provento.valor_unitario) if provento.tipo_provento == 'D' else (qtd_acoes * provento.valor_unitario * Decimal(0.85))
+                proventos_a_receber.append(provento)
+#                 quantia_a_receber = (qtd_acoes * provento.valor_unitario) if provento.tipo_provento == 'D' else (qtd_acoes * provento.valor_unitario * Decimal(0.85))
+#                 if acao.ticker in proventos_a_receber:
+#                     proventos_a_receber[acao.ticker] += quantia_a_receber
+#                 else:
+#                     proventos_a_receber[acao.ticker] = quantia_a_receber
           
     # Buscar proventos em FIIs          
     fiis_investidor = OperacaoFII.objects.filter(investidor=investidor, data__lte=datetime.date.today()).values_list('fii', flat=True)
@@ -180,14 +182,16 @@ def buscar_proventos_a_receber(investidor):
         for provento in proventos_a_pagar:
             qtd_fiis = calcular_qtd_fiis_ate_dia_por_ticker(investidor, provento.data_ex - datetime.timedelta(days=1), fii.ticker)
             if qtd_fiis > 0:
-                quantia_a_receber = (qtd_fiis * provento.valor_unitario)
-                if fii.ticker in proventos_a_receber:
-                    proventos_a_receber[fii.ticker] += quantia_a_receber
-                else:
-                    proventos_a_receber[fii.ticker] = quantia_a_receber
+                provento.quantia_a_receber = (qtd_fiis * provento.valor_unitario)
+                proventos_a_receber.append(provento)
+#                 quantia_a_receber = (qtd_fiis * provento.valor_unitario)
+#                 if fii.ticker in proventos_a_receber:
+#                     proventos_a_receber[fii.ticker] += quantia_a_receber
+#                 else:
+#                     proventos_a_receber[fii.ticker] = quantia_a_receber
     
     # Arredondar valores
-    for chave, valor in proventos_a_receber.items():
-        proventos_a_receber[chave] = valor.quantize(Decimal('0.01'))
+    for provento in proventos_a_receber:
+        provento.quantia_a_receber = provento.quantia_a_receber.quantize(Decimal('0.01'))
      
     return proventos_a_receber

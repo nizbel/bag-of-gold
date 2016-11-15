@@ -50,7 +50,7 @@ def inicio(request):
             investimento.link = 'painel_cdb_rdb'
         elif chave == 'FII':
             investimento.link = 'painel_fii'
-        elif chave == 'Fundos de Investimentos':
+        elif chave == 'Fundos de Inv.':
             investimento.link = 'painel_fundo_investimento'
         elif chave == 'Letras de Crédito':
             investimento.link = 'painel_lc'
@@ -58,10 +58,20 @@ def inicio(request):
             investimento.link = 'painel_td'
             
         investimentos_atuais.append(investimento)
-        print chave, investimento.link
+#         print chave, investimento.link
     
-    proventos_a_receber = buscar_proventos_a_receber(request.user.investidor) if request.user.is_authenticated() else list()
-    
+    # Ordenar proventos a receber e separar por grupos
+    if request.user.is_authenticated():
+        proventos_a_receber = buscar_proventos_a_receber(request.user.investidor)
+        proventos_acoes_a_receber = [provento for provento in proventos_a_receber if isinstance(provento, Provento)]
+        proventos_acoes_a_receber.sort(key=lambda provento: provento.data_ex)
+        
+        proventos_fiis_a_receber = [provento for provento in proventos_a_receber if isinstance(provento, ProventoFII)]
+        proventos_fiis_a_receber.sort(key=lambda provento: provento.data_ex)
+    else:
+        proventos_acoes_a_receber = list()
+        proventos_fiis_a_receber = list()
+        
     qtd_ultimos_dias = 31
     if request.user.is_authenticated():
         data_atual = datetime.datetime.now()
@@ -96,8 +106,8 @@ def inicio(request):
     graf_rendimentos_mensal_lc = [[str(calendar.timegm(data.replace(hour=6).timetuple()) * 1000), diario_lc[data.date()] ] \
                                for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ] if request.user.is_authenticated() else list()
     
-    return TemplateResponse(request, 'inicio.html', {'ultimas_operacoes': ultimas_operacoes, 'investimentos_atuais': investimentos_atuais, 
-                                            'proventos_a_receber': proventos_a_receber, 'graf_rendimentos_mensal_lc': graf_rendimentos_mensal_lc,
+    return TemplateResponse(request, 'inicio.html', {'ultimas_operacoes': ultimas_operacoes, 'investimentos_atuais': investimentos_atuais, 'proventos_acoes_a_receber': proventos_acoes_a_receber,
+                                            'proventos_fiis_a_receber': proventos_fiis_a_receber, 'graf_rendimentos_mensal_lc': graf_rendimentos_mensal_lc,
                                             'graf_rendimentos_mensal_cdb_rdb': graf_rendimentos_mensal_cdb_rdb})
 
 @login_required

@@ -69,11 +69,40 @@
         </div>
         <div class="box-content">
             <ul class="dashboard-list">
-                {% for provento, valor in proventos_a_receber.items %}
+                {% for provento in proventos_acoes_a_receber %}
                 <li>
                     <a href="#">
-                        <span style="text-align:left;" class="white span6">{{provento}}</span>
-                        <span class="white">R$ {{valor}}</span>
+                        <span style="text-align:left;" class="white span3">{{provento.acao.ticker}}</span>
+                        <span class="white span4">R$ {{provento.quantia_a_receber}}</span>
+                        <span class="white span5">{{provento.data_pagamento}}</span>
+                    </a>
+                </li>
+                {% empty %}
+                <li>
+                    <a href="#">
+                        <span style="text-align:left;" class="white">Não há proventos</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    
+    <div class="box span4" ontablet="span4" ondesktop="span4">
+        <div class="box-header">
+            <span><strong>Proventos a receber</strong></span>
+            <div class="box-icon">
+                <a href="#" class="btn-minimize"><i class="halflings-icon chevron-up"></i></a>
+            </div>
+        </div>
+        <div class="box-content">
+            <ul class="dashboard-list">
+                {% for provento in proventos_fiis_a_receber %}
+                <li>
+                    <a href="#">
+                        <span style="text-align:left;" class="white span3">{{provento.fii.ticker}}</span>
+                        <span class="white span4">R$ {{provento.quantia_a_receber}}</span>
+                        <span class="white span5">{{provento.data_pagamento}}</span>
                     </a>
                 </li>
                 {% empty %}
