@@ -146,14 +146,6 @@ def buscar_proventos_a_receber(investidor):
     """
     proventos_a_receber = list()
     
-#     # Buscar proventos em ações
-#     acoes_operadas = OperacaoAcao.objects.filter(investidor=investidor, data__lte=datetime.date.today()).values_list('acao', flat=True)
-#     
-#     # Remover ações repetidas
-#     acoes_operadas = list(set(acoes_operadas))
-#     
-#     proventos_em_acoes = list(set(AcaoProvento.objects.filter(provento__acao__in=acoes_operadas) \
-#                                   .values_list('acao_recebida', flat=True)))
     acoes_investidor = buscar_acoes_investidor_na_data(investidor)
     
     data_atual = datetime.date.today()
@@ -165,11 +157,6 @@ def buscar_proventos_a_receber(investidor):
             if qtd_acoes > 0:
                 provento.quantia_a_receber = (qtd_acoes * provento.valor_unitario) if provento.tipo_provento == 'D' else (qtd_acoes * provento.valor_unitario * Decimal(0.85))
                 proventos_a_receber.append(provento)
-#                 quantia_a_receber = (qtd_acoes * provento.valor_unitario) if provento.tipo_provento == 'D' else (qtd_acoes * provento.valor_unitario * Decimal(0.85))
-#                 if acao.ticker in proventos_a_receber:
-#                     proventos_a_receber[acao.ticker] += quantia_a_receber
-#                 else:
-#                     proventos_a_receber[acao.ticker] = quantia_a_receber
           
     # Buscar proventos em FIIs          
     fiis_investidor = OperacaoFII.objects.filter(investidor=investidor, data__lte=datetime.date.today()).values_list('fii', flat=True)
@@ -184,11 +171,46 @@ def buscar_proventos_a_receber(investidor):
             if qtd_fiis > 0:
                 provento.quantia_a_receber = (qtd_fiis * provento.valor_unitario)
                 proventos_a_receber.append(provento)
-#                 quantia_a_receber = (qtd_fiis * provento.valor_unitario)
-#                 if fii.ticker in proventos_a_receber:
-#                     proventos_a_receber[fii.ticker] += quantia_a_receber
-#                 else:
-#                     proventos_a_receber[fii.ticker] = quantia_a_receber
+    
+    # Arredondar valores
+    for provento in proventos_a_receber:
+        provento.quantia_a_receber = provento.quantia_a_receber.quantize(Decimal('0.01'))
+     
+    return proventos_a_receber
+
+def buscar_proventos_a_receber_data_ex_futura(investidor):
+    """
+    Retorna proventos que o investidor irá receber futuramente, não passada a data EX
+    Parâmetros: Investidor
+    Retorno:    Lista de proventos
+    """
+    proventos_a_receber = list()
+    
+    acoes_investidor = buscar_acoes_investidor_na_data(investidor)
+    
+    data_atual = datetime.date.today()
+    
+    for acao in Acao.objects.filter(id__in=acoes_investidor):
+        proventos_a_pagar = Provento.objects.filter(acao=acao, data_ex__gt=data_atual, tipo_provento__in=['D', 'J'])
+        for provento in proventos_a_pagar:
+            qtd_acoes = quantidade_acoes_ate_dia(investidor, acao.ticker, data_atual, considerar_trade=True) 
+            if qtd_acoes > 0:
+                provento.quantia_a_receber = (qtd_acoes * provento.valor_unitario) if provento.tipo_provento == 'D' else (qtd_acoes * provento.valor_unitario * Decimal(0.85))
+                proventos_a_receber.append(provento)
+          
+    # Buscar proventos em FIIs          
+    fiis_investidor = OperacaoFII.objects.filter(investidor=investidor, data__lte=datetime.date.today()).values_list('fii', flat=True)
+    
+    # Remover FIIs repetidos
+    fiis_investidor = list(set(fiis_investidor))
+    
+    for fii in FII.objects.filter(id__in=fiis_investidor):
+        proventos_a_pagar = ProventoFII.objects.filter(fii=fii, data_ex__gt=data_atual)
+        for provento in proventos_a_pagar:
+            qtd_fiis = calcular_qtd_fiis_ate_dia_por_ticker(investidor, data_atual, fii.ticker)
+            if qtd_fiis > 0:
+                provento.quantia_a_receber = (qtd_fiis * provento.valor_unitario)
+                proventos_a_receber.append(provento)
     
     # Arredondar valores
     for provento in proventos_a_receber:
