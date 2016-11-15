@@ -74,7 +74,22 @@
                     <a href="#">
                         <span style="text-align:left;" class="white span3">{{provento.acao.ticker}}</span>
                         <span class="white span4">R$ {{provento.quantia_a_receber}}</span>
-                        <span class="white span5">{{provento.data_pagamento}}</span>
+                        <span class="white span5">{{provento.data_pagamento|date:"d, N"}}</span>
+                    </a>
+                </li>
+                {% empty %}
+                <li>
+                    <a href="#">
+                        <span style="text-align:left;" class="white">Não há proventos</span>
+                    </a>
+                </li>
+                {% endfor %}
+                {% for provento in proventos_acoes_futuros %}
+                <li>
+                    <a href="#">
+                        <span style="text-align:left;" class="white span3">{{provento.acao.ticker}}</span>
+                        <span class="white span4">R$ {{provento.quantia_a_receber}}</span>
+                        <span class="white span5">{{provento.data_ex|date:"d, N"}}</span>
                     </a>
                 </li>
                 {% empty %}
@@ -102,7 +117,22 @@
                     <a href="#">
                         <span style="text-align:left;" class="white span3">{{provento.fii.ticker}}</span>
                         <span class="white span4">R$ {{provento.quantia_a_receber}}</span>
-                        <span class="white span5">{{provento.data_pagamento}}</span>
+                        <span class="white span5">{{provento.data_pagamento|date:"d, N"}}</span>
+                    </a>
+                </li>
+                {% empty %}
+                <li>
+                    <a href="#">
+                        <span style="text-align:left;" class="white">Não há proventos</span>
+                    </a>
+                </li>
+                {% endfor %}
+                {% for provento in proventos_fiis_futuros %}
+                <li>
+                    <a href="#">
+                        <span style="text-align:left;" class="white span3">{{provento.fii.ticker}}</span>
+                        <span class="white span4">R$ {{provento.quantia_a_receber}}</span>
+                        <span class="white span5">{{provento.data_ex|date:"d, N"}}</span>
                     </a>
                 </li>
                 {% empty %}
