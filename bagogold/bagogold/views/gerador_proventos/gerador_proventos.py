@@ -242,6 +242,9 @@ def validar_documento_provento(request, id_pendencia):
             if descricao_provento.tipo_provento == 'A':
                 descricao_provento.descricao_tipo_provento = u'Ações'
                 descricao_provento.acoes_recebidas = descricao_provento.acaoproventoacaodescritodocumentobovespa_set.all()
+                # Remover 0s a esquerda para valores
+                for acao_descricao_provento in descricao_provento.acoes_recebidas:
+                    acao_descricao_provento.valor_calculo_frac = Decimal(str(acao_descricao_provento.valor_calculo_frac).rstrip('0'))
             elif descricao_provento.tipo_provento == 'D':
                 descricao_provento.descricao_tipo_provento = u'Dividendos'
             elif descricao_provento.tipo_provento == 'J':
@@ -249,11 +252,41 @@ def validar_documento_provento(request, id_pendencia):
             
             # Remover 0s a esquerda para valores
             descricao_provento.valor_unitario = Decimal(str(descricao_provento.valor_unitario).rstrip('0'))
-            for acao_descricao_provento in descricao_provento.acoes_recebidas:
-                acao_descricao_provento.valor_calculo_frac = Decimal(str(acao_descricao_provento.valor_calculo_frac).rstrip('0'))
             
             # Buscar proventos próximos
             descricao_provento.proventos_proximos = buscar_proventos_e_descricoes_proximos_acao(descricao_provento)
+            for elemento in descricao_provento.proventos_proximos:
+                if isinstance(elemento, Provento):
+                    # Definir tipo de provento
+                    if elemento.tipo_provento == 'A':
+                        elemento.descricao_tipo_provento = u'Ações'
+                        elemento.acoes_recebidas = elemento.acaoprovento_set.all()
+                        # Remover 0s a esquerda para valores
+                        for acao_descricao_provento in elemento.acoes_recebidas:
+                            acao_descricao_provento.valor_calculo_frac = Decimal(str(acao_descricao_provento.valor_calculo_frac).rstrip('0'))
+                    elif elemento.tipo_provento == 'D':
+                        elemento.descricao_tipo_provento = u'Dividendos'
+                    elif elemento.tipo_provento == 'J':
+                        elemento.descricao_tipo_provento = u'JSCP'
+                    
+                    # Remover 0s a esquerda para valores
+                    elemento.valor_unitario = Decimal(str(elemento.valor_unitario).rstrip('0'))
+                        
+                elif isinstance(elemento, ProventoAcaoDescritoDocumentoBovespa):
+                    # Definir tipo de provento
+                    if elemento.tipo_provento == 'A':
+                        elemento.descricao_tipo_provento = u'Ações'
+                        elemento.acoes_recebidas = elemento.acaoproventoacaodescritodocumentobovespa_set.all()
+                        # Remover 0s a esquerda para valores
+                        for acao_descricao_provento in elemento.acoes_recebidas:
+                            acao_descricao_provento.valor_calculo_frac = Decimal(str(acao_descricao_provento.valor_calculo_frac).rstrip('0'))
+                    elif elemento.tipo_provento == 'D':
+                        elemento.descricao_tipo_provento = u'Dividendos'
+                    elif elemento.tipo_provento == 'J':
+                        elemento.descricao_tipo_provento = u'JSCP'
+                    
+                    # Remover 0s a esquerda para valores
+                    elemento.valor_unitario = Decimal(str(elemento.valor_unitario).rstrip('0'))
             
         # Descrição da decisão do responsável pela leitura
         pendencia.decisao = 'Criar %s provento(s)' % (ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).count())

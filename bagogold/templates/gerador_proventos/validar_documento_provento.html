@@ -74,6 +74,9 @@
                                 </div>
                                 {% endfor%}
                             {% endif %}
+                            <label class="checkbox inline">
+                                <div class="checker" id="uniform-inlineCheckbox1"><span><input type="checkbox" id="checkbox_alteracao_{{descricao_provento.id}}" value="option1"></span></div> É alteração?
+                            </label>
                         </div>
                         <div class="box-header">
                             Proventos próximos
@@ -97,6 +100,31 @@
                                 <div class="span4">{{provento_proximo.data_ex}}</div>
                                 <div class="span2"><strong>Pagamento:</strong></div>
                                 <div class="span4">{{provento_proximo.data_pagamento}}</div>
+                            </div>
+                            {% if provento_proximo.tipo_provento == 'A' %}
+                                {% for acao_descricao_provento in provento_proximo.acoes_recebidas %}
+                                <div class="row-fluid">
+                                    <div class="span3"><strong>Ação recebida:</strong></div>
+                                    <div class="span3">{{acao_descricao_provento.acao_recebida}}</div>
+                                    <div class="span2"><strong>Valor de frações:</strong></div>
+                                    <div class="span4">R$ {{acao_descricao_provento.valor_calculo_frac}}</div>
+                                </div>
+                                <div class="row-fluid">
+                                    <div class="span4"><strong>Pagamento de frações:</strong></div>
+                                    <div class="span4">{{acao_descricao_provento.data_pagamento_frac}}</div>
+                                </div>
+                                {% endfor %}
+                            {% endif %}
+                            <label class="radio">
+                                <input name="radioDocumento" value="{{provento_proximo.id}}" disabled="disabled" type="radio">
+                            Altera este provento
+                            </label>
+                            {% if forloop.counter < descricao_provento.proventos_proximos|length %}
+                            <hr>
+                            {% endif %}
+                            {% empty %}
+                            <div class="row-fluid">
+                                <div class="span12"><strong>Não há proventos próximos</strong></div>    
                             </div>
                             {% endfor %}
                         </div>
