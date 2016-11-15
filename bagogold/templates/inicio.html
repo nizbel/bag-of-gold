@@ -62,7 +62,7 @@
 
     <div class="box span4" ontablet="span4" ondesktop="span4">
         <div class="box-header">
-            <span><strong>Proventos a receber  Data atual: {% now "d \d\e N" %}</strong></span>
+            <span><strong>Proventos ações Qtds.:{{proventos_acoes_a_receber|length}}/{{proventos_acoes_futuras|length}} Data atual: {% now "d \d\e N" %}</strong></span>
             <div class="box-icon">
                 <a href="#" class="btn-minimize"><i class="halflings-icon chevron-up"></i></a>
             </div>
@@ -105,7 +105,7 @@
     
     <div class="box span4" ontablet="span4" ondesktop="span4">
         <div class="box-header">
-            <span><strong>Proventos a receber</strong></span>
+            <span><strong>Proventos fiis Qtds.:{{proventos_fiis_a_receber|length}}/{{proventos_fiis_futuros|length}} Data atual: {% now "d \d\e N" %}</strong></span>
             <div class="box-icon">
                 <a href="#" class="btn-minimize"><i class="halflings-icon chevron-up"></i></a>
             </div>
