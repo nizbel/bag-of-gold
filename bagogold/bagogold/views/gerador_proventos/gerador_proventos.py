@@ -226,6 +226,12 @@ def remover_responsabilidade_documento_provento(request):
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def validar_documento_provento(request, id_pendencia):
+    if request.method == 'POST':
+        pass
+        # TODO testar validar
+        
+        # TODO testar recusar
+        
     pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
     # Verificar se pendência é de leitura
     if pendencia.tipo != 'V':
