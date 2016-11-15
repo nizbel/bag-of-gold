@@ -75,7 +75,7 @@
                                 {% endfor%}
                             {% endif %}
                             <label class="checkbox inline">
-                                <div class="checker" id="uniform-inlineCheckbox1"><span><input type="checkbox" id="checkbox_alteracao_{{descricao_provento.id}}" value="option1"></span></div> É alteração?
+                                <div class="checker"><span><input type="checkbox" id="checkbox_alteracao_{{descricao_provento.id}}" value="option"></span></div> É alteração?
                             </label>
                         </div>
                         <div class="box-header">
@@ -116,7 +116,7 @@
                                 {% endfor %}
                             {% endif %}
                             <label class="radio">
-                                <input name="radioDocumento" value="{{provento_proximo.id}}" disabled="disabled" type="radio">
+                                <input name="radioDocumento" value="descricao_{{descricao_provento.id}}_{{provento_proximo.id}}" disabled="disabled" type="radio">
                             Altera este provento
                             </label>
                             {% if forloop.counter < descricao_provento.proventos_proximos|length %}
@@ -143,6 +143,9 @@
 
 <script>
 $( document ).ready(function() {
+	$('input[name*=checkbox_alteracao]').click(function() {
+		alert('oi');
+	});
 });
 </script>
     
