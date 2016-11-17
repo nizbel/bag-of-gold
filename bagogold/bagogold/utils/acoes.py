@@ -250,6 +250,7 @@ def quantidade_acoes_ate_dia(investidor, ticker, dia, considerar_trade=False):
     Parâmetros: Investidor
                 Ticker da ação
                 Dia final
+                Levar trades em consideração
     Retorno: Quantidade de ações
     """
     if considerar_trade:
