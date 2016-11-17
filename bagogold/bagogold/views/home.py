@@ -117,7 +117,8 @@ def inicio(request):
                                for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ] if request.user.is_authenticated() else list()
     
     return TemplateResponse(request, 'inicio.html', {'ultimas_operacoes': ultimas_operacoes, 'investimentos_atuais': investimentos_atuais, 'proventos_acoes_a_receber': proventos_acoes_a_receber,
-                                            'proventos_fiis_a_receber': proventos_fiis_a_receber, 'graf_rendimentos_mensal_lc': graf_rendimentos_mensal_lc,
+                                            'proventos_fiis_a_receber': proventos_fiis_a_receber, 'proventos_acoes_futuros': proventos_acoes_futuros,
+                                            'proventos_fiis_futuros': proventos_fiis_futuros,'graf_rendimentos_mensal_lc': graf_rendimentos_mensal_lc,
                                             'graf_rendimentos_mensal_cdb_rdb': graf_rendimentos_mensal_cdb_rdb})
 
 @login_required
