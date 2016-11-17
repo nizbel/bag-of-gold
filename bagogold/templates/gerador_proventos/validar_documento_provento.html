@@ -75,7 +75,7 @@
                                 {% endfor%}
                             {% endif %}
                             <label class="checkbox inline">
-                                <div class="checker"><span><input type="checkbox" id="checkbox_alteracao_{{descricao_provento.id}}" value="option"></span></div> É alteração?
+                                <div class="checker"><span><input type="checkbox" id="checkbox_alteracao_{{descricao_provento.id}}" value="{{descricao_provento.id}}"></span></div> É alteração?
                             </label>
                         </div>
                         <div class="box-header">
@@ -116,7 +116,7 @@
                                 {% endfor %}
                             {% endif %}
                             <label class="radio">
-                                <input name="radioDocumento" value="descricao_{{descricao_provento.id}}_{{provento_proximo.id}}" disabled="disabled" type="radio">
+                                <input name="descricao_{{descricao_provento.id}}" value="{{provento_proximo.id}}" disabled="disabled" type="radio">
                             Altera este provento
                             </label>
                             {% if forloop.counter < descricao_provento.proventos_proximos|length %}
@@ -143,8 +143,16 @@
 
 <script>
 $( document ).ready(function() {
-	$('input[name*=checkbox_alteracao]').click(function() {
-		alert('oi');
+	$('input[id*=checkbox_alteracao]').click(function() {
+		if ($(this).attr('checked')) {
+    		$('input[name*=descricao_' + $(this).val() + ']').each(function() {
+                $(this).removeAttr("disabled");
+    		});
+		} else {
+			$('input[name*=descricao_' + $(this).val() + ']').each(function() {
+                $(this).attr('disabled', 'disabled');
+            });
+		}
 	});
 });
 </script>
