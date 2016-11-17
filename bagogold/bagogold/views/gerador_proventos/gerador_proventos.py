@@ -231,8 +231,9 @@ def validar_documento_provento(request, id_pendencia):
         # TODO testar validar
         if request.POST.get('validar'):
             if pendencia.documento.investidorleituradocumento.decisao == 'C':
-                
+                print 'Validar criação'
             elif pendencia.documento.investidorleituradocumento.decisao == 'E':
+                print 'Validar exclusão'
         
         # TODO testar recusar
         elif request.POST.get('recusar'):
