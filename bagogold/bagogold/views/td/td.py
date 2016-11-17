@@ -109,7 +109,7 @@ def aconselhamento_td(request):
     for titulo in titulos.keys():
         for operacao in titulos[titulo]:
             try:
-                operacao.valor_atual = ValorDiarioTitulo.objects.filter(titulo__id=titulo).order_by('-data_hora')[0].preco_venda
+                operacao.valor_atual = ValorDiarioTitulo.objects.filter(titulo__id=titulo, data_hora__date=datetime.date.today()).order_by('-data_hora')[0].preco_venda
             except:
                 operacao.valor_atual = HistoricoTitulo.objects.filter(titulo__id=titulo).order_by('-data')[0].preco_venda
             operacao.variacao = operacao.valor_atual - operacao.preco_unitario
