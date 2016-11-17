@@ -36,7 +36,9 @@ def calcular_valor_acumulado_ipca(data_base, data_final=datetime.date.today()):
 def calcular_imposto_venda_td(dias, valor_venda, rendimento):
     """
     Calcula a quantidade de imposto (IR + IOF) devida de acordo com a quantidade de dias
-    Parâmetros: quantidade de dias corridos, valor total da venda, rendimento
+    Parâmetros: Quantidade de dias corridos
+                Valor total da venda
+                Rendimento
     Retorno: quantidade de imposto
     """
     if dias < 30:
