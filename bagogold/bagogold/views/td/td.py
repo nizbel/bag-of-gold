@@ -107,6 +107,8 @@ def aconselhamento_td(request):
     
     # Dados de títulos ainda em posse do usuario                
     for titulo in titulos.keys():
+        # Carregar data de vencimento do título
+        data_vencimento = Titulo.objects.get(id=titulo).data_vencimento
         for operacao in titulos[titulo]:
             try:
                 operacao.valor_atual = ValorDiarioTitulo.objects.filter(titulo__id=titulo, data_hora__date=datetime.date.today()).order_by('-data_hora')[0].preco_venda
@@ -129,11 +131,14 @@ def aconselhamento_td(request):
             else:
                 operacao.lucro = operacao.valor_total_atual - operacao.total_gasto
                 operacao.lucro_percentual = operacao.lucro / operacao.total_gasto * 100
-                
+            
+            # Quantidade de dias esperado é a quantidade de dias entre a data atual e a data de vencimento
+            qtd_dias_esperado = (data_vencimento - datetime.date.today()).days
+            # Pegar quantidade de dias entre a compra e o vencimento
+            qtd_dias_entre_compra_vencimento = qtd_dias + qtd_dias_esperado
             # Valor esperado é a quantidade que ainda vai render caso investidor espere até o dia do vencimento
-            valor_esperado = (Decimal(1000) * operacao.quantidade) - calcular_imposto_venda_td(qtd_dias, Decimal(1000) * operacao.quantidade, \
+            valor_esperado = (Decimal(1000) * operacao.quantidade) - calcular_imposto_venda_td(qtd_dias_entre_compra_vencimento, Decimal(1000) * operacao.quantidade, \
                                                                                                (Decimal(1000) * operacao.quantidade) - operacao.total_gasto) - (operacao.total_gasto + operacao.lucro)
-            qtd_dias_esperado = (Titulo.objects.get(id=titulo).data_vencimento - datetime.date.today()).days
             rendimento_esperado = math.pow(1 + (valor_esperado / (operacao.total_gasto + operacao.lucro) * 100)/100, float(1)/qtd_dias_esperado) - 1
             rendimento_esperado = (math.pow(1 + rendimento_esperado, 30) - 1) * 100
             operacao.rendimento_esperado = (math.pow(1 + rendimento_esperado/100, 12) - 1) * 100
