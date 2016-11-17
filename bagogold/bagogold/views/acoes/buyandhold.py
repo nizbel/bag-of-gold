@@ -331,7 +331,7 @@ def historico(request):
     operacoes = OperacaoAcao.objects.filter(destinacao='B', investidor=investidor).exclude(data__isnull=True).order_by('data')
     
     if not operacoes:
-        return TemplateResponse(request, 'acoes/buyandhold/historico.html', {'operacoes': list(), 'graf_total_gasto': list(), 'graf_patrimonio': list(), 'graf_diario': list(),
+        return TemplateResponse(request, 'acoes/buyandhold/historico.html', {'operacoes': list(), 'graf_total_gasto': list(), 'graf_patrimonio': list(),
                                'graf_proventos_mes': list(), 'graf_media_proventos_6_meses': list(), 'graf_poupanca_proventos': list(),
                                'graf_gasto_op_sem_prov_mes': list(), 'graf_uso_proventos_mes': list(),
                                 'graf_dividendos_mensal': list(), 'graf_jscp_mensal': list(), 'dados': {}})
@@ -403,150 +403,114 @@ def historico(request):
     
     # Guarda as ações correntes para o calculo do patrimonio
     acoes = {}
-    if not request.is_ajax():
-        # Preparar gráfico de proventos em dinheiro por mês
-#         graf_proventos_mes = calcular_provento_por_mes(proventos.exclude(data_ex__gt=datetime.date.today()).exclude(tipo_provento='A'), operacoes)
-        proventos_mes = calcular_provento_por_mes(investidor, proventos.exclude(data_ex__gt=datetime.date.today()).exclude(tipo_provento='A'), operacoes)
-        for x in proventos_mes:
-            graf_proventos_mes += [[x[0], x[1] + x[2]]]
-            graf_dividendos_mensal += [[x[0], x[1]]]
-            graf_jscp_mensal += [[x[0], x[2]]]
-        
-        graf_media_proventos_6_meses = calcular_media_proventos_6_meses(investidor, proventos.exclude(data_ex__gt=datetime.date.today()).exclude(tipo_provento='A'), operacoes)
-        
-        # Preparar gráfico de utilização de proventos por mês
-        graf_gasto_op_sem_prov_mes = calcular_operacoes_sem_proventos_por_mes(investidor, operacoes.filter(tipo_operacao='C'))
-        graf_uso_proventos_mes = calcular_uso_proventos_por_mes(investidor)
-        
-        # Calculos de patrimonio e gasto total
-        for item_lista in lista_conjunta:      
-            if item_lista.acao.ticker not in acoes.keys():
-                acoes[item_lista.acao.ticker] = 0
-            # Verifica se é uma compra/venda
-            if isinstance(item_lista, OperacaoAcao):   
-                # Verificar se se trata de compra ou venda
-                if item_lista.tipo_operacao == 'C':
-                    item_lista.tipo = 'Compra'
-                    item_lista.total_gasto = -1 * (item_lista.quantidade * item_lista.preco_unitario + \
-                    item_lista.emolumentos + item_lista.corretagem)
-                    if item_lista.utilizou_proventos():
-                        qtd_utilizada = item_lista.qtd_proventos_utilizada()
-                        proventos_gastos += qtd_utilizada
-                        # Remover proventos gastos do total gasto
-                        item_lista.total_gasto += qtd_utilizada
-                    total_gasto += item_lista.total_gasto
-                    acoes[item_lista.acao.ticker] += item_lista.quantidade
-                    
-                elif item_lista.tipo_operacao == 'V':
-                    item_lista.tipo = 'Venda'
-                    item_lista.total_gasto = (item_lista.quantidade * item_lista.preco_unitario - \
-                    item_lista.emolumentos - item_lista.corretagem)
+    # Preparar gráfico de proventos em dinheiro por mês
+#     graf_proventos_mes = calcular_provento_por_mes(proventos.exclude(data_ex__gt=datetime.date.today()).exclude(tipo_provento='A'), operacoes)
+    proventos_mes = calcular_provento_por_mes(investidor, proventos.exclude(data_ex__gt=datetime.date.today()).exclude(tipo_provento='A'), operacoes)
+    for x in proventos_mes:
+        graf_proventos_mes += [[x[0], x[1] + x[2]]]
+        graf_dividendos_mensal += [[x[0], x[1]]]
+        graf_jscp_mensal += [[x[0], x[2]]]
+    
+    graf_media_proventos_6_meses = calcular_media_proventos_6_meses(investidor, proventos.exclude(data_ex__gt=datetime.date.today()).exclude(tipo_provento='A'), operacoes)
+    
+    # Preparar gráfico de utilização de proventos por mês
+    graf_gasto_op_sem_prov_mes = calcular_operacoes_sem_proventos_por_mes(investidor, operacoes.filter(tipo_operacao='C'))
+    graf_uso_proventos_mes = calcular_uso_proventos_por_mes(investidor)
+    
+    # Calculos de patrimonio e gasto total
+    for item_lista in lista_conjunta:      
+        if item_lista.acao.ticker not in acoes.keys():
+            acoes[item_lista.acao.ticker] = 0
+        # Verifica se é uma compra/venda
+        if isinstance(item_lista, OperacaoAcao):   
+            # Verificar se se trata de compra ou venda
+            if item_lista.tipo_operacao == 'C':
+                item_lista.tipo = 'Compra'
+                item_lista.total_gasto = -1 * (item_lista.quantidade * item_lista.preco_unitario + \
+                item_lista.emolumentos + item_lista.corretagem)
+                if item_lista.utilizou_proventos():
+                    qtd_utilizada = item_lista.qtd_proventos_utilizada()
+                    proventos_gastos += qtd_utilizada
+                    # Remover proventos gastos do total gasto
+                    item_lista.total_gasto += qtd_utilizada
+                total_gasto += item_lista.total_gasto
+                acoes[item_lista.acao.ticker] += item_lista.quantidade
+                
+            elif item_lista.tipo_operacao == 'V':
+                item_lista.tipo = 'Venda'
+                item_lista.total_gasto = (item_lista.quantidade * item_lista.preco_unitario - \
+                item_lista.emolumentos - item_lista.corretagem)
 #                     total_proventos += item_lista.total_gasto
-                    total_gasto += item_lista.total_gasto
-                    acoes[item_lista.acao.ticker] -= item_lista.quantidade
-            
-            # Verifica se é recebimento de proventos
-            elif isinstance(item_lista, Provento):
-                if item_lista.data_pagamento <= datetime.date.today():
-                    if item_lista.tipo_provento in ['D', 'J']:
-                        total_recebido = acoes[item_lista.acao.ticker] * item_lista.valor_unitario
-                        if item_lista.tipo_provento == 'J':
-                            item_lista.tipo = 'JSCP'
-                            total_recebido = total_recebido * Decimal(0.85)
-                        else:
-                            item_lista.tipo = 'Dividendos'
+                total_gasto += item_lista.total_gasto
+                acoes[item_lista.acao.ticker] -= item_lista.quantidade
+        
+        # Verifica se é recebimento de proventos
+        elif isinstance(item_lista, Provento):
+            if item_lista.data_pagamento <= datetime.date.today():
+                if item_lista.tipo_provento in ['D', 'J']:
+                    total_recebido = acoes[item_lista.acao.ticker] * item_lista.valor_unitario
+                    if item_lista.tipo_provento == 'J':
+                        item_lista.tipo = 'JSCP'
+                        total_recebido = total_recebido * Decimal(0.85)
+                    else:
+                        item_lista.tipo = 'Dividendos'
 #                         total_gasto += total_recebido
-                        total_proventos += total_recebido
-                        item_lista.total_gasto = total_recebido
-                        item_lista.quantidade = acoes[item_lista.acao.ticker]
-                        item_lista.preco_unitario = item_lista.valor_unitario
-                        
-                    elif item_lista.tipo_provento == 'A':
+                    total_proventos += total_recebido
+                    item_lista.total_gasto = total_recebido
+                    item_lista.quantidade = acoes[item_lista.acao.ticker]
+                    item_lista.preco_unitario = item_lista.valor_unitario
+                    
+                elif item_lista.tipo_provento == 'A':
 #                         print '%s %s' % (type(item_lista.tipo_provento), type(u'A'))
-                        item_lista.tipo = 'Ações'
+                    item_lista.tipo = 'Ações'
 #                         print item_lista.acaoprovento_set.all()[0]
-                        provento_acao = item_lista.acaoprovento_set.all()[0]
-                        if provento_acao.acao_recebida.ticker not in acoes.keys():
-                            acoes[provento_acao.acao_recebida.ticker] = 0
-                        acoes_recebidas = int((acoes[item_lista.acao.ticker] * item_lista.valor_unitario ) / 100 )
-                        item_lista.total_gasto = acoes_recebidas
-                        acoes[provento_acao.acao_recebida.ticker] += acoes_recebidas
-                        if provento_acao.valor_calculo_frac > 0:
-                            if provento_acao.data_pagamento_frac <= datetime.date.today():
+                    provento_acao = item_lista.acaoprovento_set.all()[0]
+                    if provento_acao.acao_recebida.ticker not in acoes.keys():
+                        acoes[provento_acao.acao_recebida.ticker] = 0
+                    acoes_recebidas = int((acoes[item_lista.acao.ticker] * item_lista.valor_unitario ) / 100 )
+                    item_lista.total_gasto = acoes_recebidas
+                    acoes[provento_acao.acao_recebida.ticker] += acoes_recebidas
+                    if provento_acao.valor_calculo_frac > 0:
+                        if provento_acao.data_pagamento_frac <= datetime.date.today():
 #                                 print u'recebido fracionado %s, %s ações de %s a %s' % (total_recebido, acoes[item_lista.acao.ticker], item_lista.acao.ticker, item_lista.valor_unitario)
 #                                 total_gasto += (((acoes[item_lista.acao.ticker] * item_lista.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
-                                total_proventos += (((acoes[item_lista.acao.ticker] * item_lista.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
-                                
-            # Verifica se é pagamento de custódia
-            elif isinstance(item_lista, Object):
-                if taxas_custodia:
-                    total_gasto -= item_lista.valor
-                    total_custodia += item_lista.valor
-                    
-            patrimonio = 0
-            
-            # Rodar calculo de patrimonio
-            for acao in acoes.keys():
-                # Pegar último dia util com negociação da ação para calculo do patrimonio
-                ultimo_dia_util = item_lista.data
-                while not HistoricoAcao.objects.filter(data=ultimo_dia_util, acao__ticker=acao):
-                    ultimo_dia_util -= datetime.timedelta(days=1)
-            
-                valor_acao = HistoricoAcao.objects.get(acao__ticker=acao, data=ultimo_dia_util).preco_unitario
-                patrimonio += (valor_acao * acoes[acao])
-            
-            data_formatada = str(calendar.timegm(item_lista.data.timetuple()) * 1000)
-            # Verifica se altera ultima posicao do grafico ou adiciona novo registro
-            if len(graf_total_gasto) > 0 and graf_total_gasto[-1][0] == data_formatada:
-                graf_total_gasto[len(graf_total_gasto)-1][1] = float(-total_gasto)
-            else:
-                graf_total_gasto += [[data_formatada, float(-total_gasto)]]
-            # Verifica se altera ultima posicao do grafico ou adiciona novo registro
-            if len(graf_patrimonio) > 0 and graf_patrimonio[-1][0] == data_formatada:
-                graf_patrimonio[len(graf_patrimonio)-1][1] = float(patrimonio)
-            else:
-                graf_patrimonio += [[data_formatada, float(patrimonio)]]
-            # Verifica se altera ultima posicao do grafico ou adiciona novo registro
-            if len(graf_poupanca_proventos) > 0 and graf_poupanca_proventos[-1][0] == data_formatada:
-                graf_poupanca_proventos[len(graf_poupanca_proventos)-1][1] = float(total_proventos - proventos_gastos)
-            else:
-                graf_poupanca_proventos += [[data_formatada, float(total_proventos - proventos_gastos)]]
+                            total_proventos += (((acoes[item_lista.acao.ticker] * item_lista.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
+                            
+        # Verifica se é pagamento de custódia
+        elif isinstance(item_lista, Object):
+            if taxas_custodia:
+                total_gasto -= item_lista.valor
+                total_custodia += item_lista.valor
                 
-    else:
-        # Apenas roda para requisições ajax, atualizar grafico diario
-        for item_lista in lista_conjunta:  
-            if isinstance(item_lista, OperacaoAcao):  
-                if item_lista.acao.ticker not in acoes.keys():
-                    acoes[item_lista.acao.ticker] = 0
-                # Verificar se se trata de compra ou venda
-                if item_lista.tipo_operacao == 'C':
-                    acoes[item_lista.acao.ticker] += item_lista.quantidade
-                    
-                elif item_lista.tipo_operacao == 'V':
-                    acoes[item_lista.acao.ticker] -= item_lista.quantidade    
-                    
-            elif isinstance(item_lista, Provento):
-                if item_lista.data_pagamento <= datetime.date.today():
-                    if item_lista.tipo_provento == 'A':
-                        provento_acao = item_lista.acaoprovento_set.all()[0]
-                        if provento_acao.acao_recebida.ticker not in acoes.keys():
-                            acoes[provento_acao.acao_recebida.ticker] = 0
-                        acoes_recebidas = int((acoes[item_lista.acao.ticker] * item_lista.valor_unitario ) / 100 )
-                        acoes[provento_acao.acao_recebida.ticker] += acoes_recebidas
-    
-    graf_diario = {}
-    for acao in acoes.keys():
-        if acoes[acao] > 0:
-            graf_diario_acao = list()
-            valores_diarios = ValorDiarioAcao.objects.filter(acao__ticker=acao).order_by('data_hora')
-            for valor in valores_diarios:
-                data_hora = str(calendar.timegm(valor.data_hora.timetuple()) * 1000)
-                graf_diario_acao += [[data_hora, float(valor.preco_unitario * acoes[acao])]]
-            graf_diario[acao] = graf_diario_acao
-    # Alterar lista de meses
-    if request.is_ajax():
-        return HttpResponse(json.dumps(graf_diario), content_type = "application/json")    
-    
+        patrimonio = 0
+        
+        # Rodar calculo de patrimonio
+        for acao in acoes.keys():
+            # Pegar último dia util com negociação da ação para calculo do patrimonio
+            ultimo_dia_util = item_lista.data
+            while not HistoricoAcao.objects.filter(data=ultimo_dia_util, acao__ticker=acao):
+                ultimo_dia_util -= datetime.timedelta(days=1)
+        
+            valor_acao = HistoricoAcao.objects.get(acao__ticker=acao, data=ultimo_dia_util).preco_unitario
+            patrimonio += (valor_acao * acoes[acao])
+        
+        data_formatada = str(calendar.timegm(item_lista.data.timetuple()) * 1000)
+        # Verifica se altera ultima posicao do grafico ou adiciona novo registro
+        if len(graf_total_gasto) > 0 and graf_total_gasto[-1][0] == data_formatada:
+            graf_total_gasto[len(graf_total_gasto)-1][1] = float(-total_gasto)
+        else:
+            graf_total_gasto += [[data_formatada, float(-total_gasto)]]
+        # Verifica se altera ultima posicao do grafico ou adiciona novo registro
+        if len(graf_patrimonio) > 0 and graf_patrimonio[-1][0] == data_formatada:
+            graf_patrimonio[len(graf_patrimonio)-1][1] = float(patrimonio)
+        else:
+            graf_patrimonio += [[data_formatada, float(patrimonio)]]
+        # Verifica se altera ultima posicao do grafico ou adiciona novo registro
+        if len(graf_poupanca_proventos) > 0 and graf_poupanca_proventos[-1][0] == data_formatada:
+            graf_poupanca_proventos[len(graf_poupanca_proventos)-1][1] = float(total_proventos - proventos_gastos)
+        else:
+            graf_poupanca_proventos += [[data_formatada, float(total_proventos - proventos_gastos)]]
+                
     # Adicionar dia mais atual
     patrimonio = 0
     for acao in acoes.keys():
@@ -585,7 +549,7 @@ def historico(request):
     # Remover taxas de custódia da lista conjunta de operações e proventos
     lista_conjunta = [value for value in lista_conjunta if not isinstance(value, Object)]
 
-    return TemplateResponse(request, 'acoes/buyandhold/historico.html', {'operacoes': lista_conjunta, 'graf_total_gasto': graf_total_gasto, 'graf_patrimonio': graf_patrimonio, 'graf_diario': graf_diario,
+    return TemplateResponse(request, 'acoes/buyandhold/historico.html', {'operacoes': lista_conjunta, 'graf_total_gasto': graf_total_gasto, 'graf_patrimonio': graf_patrimonio,
                                'graf_proventos_mes': graf_proventos_mes, 'graf_media_proventos_6_meses': graf_media_proventos_6_meses, 'graf_poupanca_proventos': graf_poupanca_proventos,
                                'graf_gasto_op_sem_prov_mes': graf_gasto_op_sem_prov_mes, 'graf_uso_proventos_mes': graf_uso_proventos_mes,
                                 'graf_dividendos_mensal': graf_dividendos_mensal, 'graf_jscp_mensal': graf_jscp_mensal, 'dados': dados})

@@ -107,15 +107,6 @@
     </div>
 </div>
 
-<div class="row-fluid">
-    <div class="box span12">
-        <div class="box-header"><h2>Valores diários</h2></div>
-        <div class="box-content">
-            <div id="graf_diario" style="width:800px;height:400px"></div>
-        </div>
-    </div>
-</div>
-
 <script>
 $( document ).ready(function() {
 	$.plot($("#graf_patrimonio"), [ {color: "#FFFFFF", lines: {show:true}, data: {{ graf_patrimonio|safe }} }
@@ -158,45 +149,6 @@ $( document ).ready(function() {
                                     {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%m-%y"},
                                     }  
         );
-    
-    $.plot($("#graf_diario"), [ {% for k, graf in graf_diario.iteritems %}
-                                {label: "{{ k }}", stack: true, lines: {show:true, fill:true}, data: {{ graf|safe }} }, 
-                                {% endfor %}
-                                  ],
-                                    {legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%H:%M"},
-                                    }  
-        );
-    
-    function getDataDiaria() {
-        $.ajax({
-            url : "{% url 'historico_bh' %}", // the endpoint
-            type : "GET", // http method
-
-            // handle a successful response
-            success : function(graf_diario) {
-            	var dataset = [];
-            	for (var key in graf_diario) {
-            		dataset.push({label: key, stack: true, lines: {show: true, fill: true}, data: graf_diario[key]});
-            	}
-            	$.plot($("#graf_diario"), dataset,
-                    {legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%H:%M"}, }  
-                );
-            },
-
-            // handle a non-successful response
-            error : function(xhr,errmsg,err) {
-                console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
-            }
-        });
-    }
-    
-    function update() {
-        getDataDiaria();
- 
-        setTimeout(update, 30000);
-    }
- 
-    update();
     
 function showTooltip(x, y, contents) {
         
