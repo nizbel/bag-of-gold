@@ -11,15 +11,17 @@ from bagogold.bagogold.testTD import buscar_valores_diarios
 from bagogold.bagogold.utils.fii import \
     calcular_rendimento_proventos_fii_12_meses, \
     calcular_variacao_percentual_fii_por_periodo
+from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas
 from bagogold.bagogold.utils.td import calcular_imposto_venda_td, \
     buscar_data_valor_mais_recente, quantidade_titulos_ate_dia, \
     quantidade_titulos_ate_dia_por_titulo
 from copy import deepcopy
-from decimal import Decimal
+from decimal import Decimal, ROUND_DOWN
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
+from django.db.models.aggregates import Count
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
 from django.http.response import HttpResponse
@@ -138,25 +140,25 @@ def aconselhamento_td(request):
     
     # Data de 12 meses atrás
     data_12_meses = datetime.date.today() - datetime.timedelta(days=365)
-    
+
     letras_credito = list(LetraCredito.objects.filter(investidor=investidor))
+    historico_di = HistoricoTaxaDI.objects.filter(data__range=[data_12_meses, datetime.date.today()]).values('taxa').annotate(qtd_dias=Count('taxa'))
     # Comparativo com letras de crédito
     for lc in letras_credito:
-        lc.rendimento_atual =  lc.porcentagem_di_atual() * HistoricoTaxaDI.objects.filter(data__isnull=False).order_by('-data')[0].taxa / 100
+        # Calcular rendimento atual
+        lc.taxa_atual = lc.porcentagem_di_atual()
+        lc.rendimento_atual = calcular_valor_atualizado_com_taxas({HistoricoTaxaDI.objects.filter(data__isnull=False).order_by('-data')[0].taxa: 252}, Decimal(100),
+                                                                  lc.taxa_atual).quantize(Decimal('.01'), ROUND_DOWN) - 100
         # Calcular rendimento real dos últimos 12 meses
         lc.rendimento_12_meses = 1000
-        data_iteracao = data_12_meses
-        try:
-            lc.taxa = HistoricoPorcentagemLetraCredito.objects.filter(data__lte=data_iteracao, letra_credito=lc).order_by('-data')[0].porcentagem_di
-        except:
-            lc.taxa = HistoricoPorcentagemLetraCredito.objects.get(letra_credito=lc, data__isnull=True).porcentagem_di
-        while data_iteracao < datetime.date.today():
-            try:
-                taxa_do_dia = HistoricoTaxaDI.objects.get(data=data_iteracao).taxa
-                lc.rendimento_12_meses = Decimal((pow((float(1) + float(taxa_do_dia)/float(100)), float(1)/float(252)) - float(1)) * float(lc.taxa/100) + float(1)) * lc.rendimento_12_meses
-            except HistoricoTaxaDI.DoesNotExist:
-                pass
-            data_iteracao += datetime.timedelta(days=1)
+        # Definir taxas dos dias para o cálculo
+        taxas_dos_dias = {}
+        for taxa_quantidade in historico_di:
+            print taxa_quantidade
+            taxas_dos_dias[taxa_quantidade['taxa']] = taxa_quantidade['qtd_dias']
+
+        # Calcular
+        lc.rendimento_12_meses = calcular_valor_atualizado_com_taxas(taxas_dos_dias, lc.rendimento_12_meses, lc.taxa_atual).quantize(Decimal('.01'), ROUND_DOWN)
         lc.rendimento_12_meses = (lc.rendimento_12_meses - 1000) / 10
     letras_credito.sort(key=lambda x: x.rendimento_atual, reverse=True)
         
