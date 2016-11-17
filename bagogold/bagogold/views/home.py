@@ -66,10 +66,10 @@ def inicio(request):
         # Proventos a receber com data EX já passada
         proventos_a_receber = buscar_proventos_a_receber(request.user.investidor)
         proventos_acoes_a_receber = [provento for provento in proventos_a_receber if isinstance(provento, Provento)]
-        proventos_acoes_a_receber.sort(key=lambda provento: provento.data_ex)
+        proventos_acoes_a_receber.sort(key=lambda provento: provento.data_pagamento)
         
         proventos_fiis_a_receber = [provento for provento in proventos_a_receber if isinstance(provento, ProventoFII)]
-        proventos_fiis_a_receber.sort(key=lambda provento: provento.data_ex)
+        proventos_fiis_a_receber.sort(key=lambda provento: provento.data_pagamento)
         
         # Proventos a receber com data EX ainda não passada
         proventos_futuros = buscar_proventos_a_receber_data_ex_futura(request.user.investidor)
