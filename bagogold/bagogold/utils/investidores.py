@@ -115,7 +115,7 @@ def buscar_totais_atuais_investimentos(investidor):
                 valor_cota = historico_fundo[0].valor_cota
             else:
                 valor_cota = ultima_operacao_fundo.valor_cota()
-            totais_atuais['Fundos de Investimentos'] += (fundo_investimento_divisao[fundo_id] * valor_cota)
+            totais_atuais['Fundos de Inv.'] += (fundo_investimento_divisao[fundo_id] * valor_cota)
             
     # Letras de crédito
     letras_credito = calcular_valor_lc_ate_dia(investidor, data_atual)
