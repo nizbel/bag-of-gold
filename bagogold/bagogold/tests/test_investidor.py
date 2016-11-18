@@ -116,7 +116,7 @@ class TelaInicioTestCase(TestCase):
         self.assertIn('Ações', valores_atuais.keys())
         self.assertIn('CDB/RDB', valores_atuais.keys())
         self.assertIn('FII', valores_atuais.keys())
-        self.assertIn('Fundos de Investimentos', valores_atuais.keys())
+        self.assertIn('Fundos de Inv.', valores_atuais.keys())
         self.assertIn('Letras de Crédito', valores_atuais.keys())
         self.assertIn('Tesouro Direto', valores_atuais.keys())
         
@@ -137,5 +137,5 @@ class TelaInicioTestCase(TestCase):
         valores_atuais = buscar_totais_atuais_investimentos(investidor)
         
         self.assertEqual(valores_atuais['CDB/RDB'], Decimal(0))
-        self.assertEqual(valores_atuais['Fundos de Investimentos'], Decimal(0))
+        self.assertEqual(valores_atuais['Fundos de Inv.'], Decimal(0))
         self.assertEqual(valores_atuais['Tesouro Direto'], Decimal(0))
