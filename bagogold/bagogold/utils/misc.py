@@ -49,7 +49,36 @@ def buscar_historico_ipca():
                     historico_ipca.save()
                 except:
                     print 'Não foi possível converter', campos[mes]
-                    
+               
+def buscar_valores_diarios_selic(data_inicial, data_final):
+    """
+    Retorna os valores da taxa SELIC pelo site do Banco Central
+    Parâmetros: Data inicial
+                Data final
+    Retorno: Lista com tuplas (data, fator diário)
+    """
+    # from bagogold.bagogold.utils.misc import buscar_valores_diarios_selic
+    # http://www3.bcb.gov.br/selic/consulta/taxaSelic.do?method=listarTaxaDiaria&dataInicial=11/11/2016&dataFinal=16/11/2016&tipoApresentacao=arquivo
+    td_url = 'http://www3.bcb.gov.br/selic/consulta/taxaSelic.do?method=listarTaxaDiaria&dataInicial=11/11/2016&dataFinal=16/11/2016&tipoApresentacao=arquivo'
+    req = Request(td_url)
+    try:
+        response = urlopen(req)
+    except HTTPError as e:
+        print 'The server couldn\'t fulfill the request.'
+        print 'Error code: ', e.code
+    except URLError as e:
+        print 'We failed to reach a server.'
+        print 'Reason: ', e.reason
+    else:
+        data = response.read()
+#         print data
+        # data vem como um arquivo txt separado por linhas com \n e delimitado por ;
+        linhas = data.split('\n')
+        # ler a partir da terceira linha
+        for linha in linhas[2:]:
+            if len(linha.split(';')) > 2:
+                print linha.split(';')[0], linha.split(';')[2]
+     
 def trazer_primeiro_registro(queryset):
     """
     Traz o primeiro registro de um queryset
