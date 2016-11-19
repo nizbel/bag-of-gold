@@ -49,7 +49,59 @@ def buscar_historico_ipca():
                     historico_ipca.save()
                 except:
                     print 'Não foi possível converter', campos[mes]
-                    
+               
+def buscar_valores_diarios_selic(data_inicial=datetime.date.today() - datetime.timedelta(days=30), data_final=datetime.date.today()):
+    """
+    Retorna os valores da taxa SELIC pelo site do Banco Central
+    Parâmetros: Data inicial
+                Data final
+    Retorno: Lista com tuplas (data, fator diário)
+    """
+    if data_final < data_inicial:
+        raise ValueError('Data final deve ser igual ou posterior a data inicial')
+    # Verifica se o intervalo entre as datas inicial e final é menor do que 10 anos
+    if data_final.year - data_inicial.year > 10:
+        raise ValueError('Intervalo deve ser inferior a 10 anos')
+    elif data_final.year - data_inicial.year == 10:
+        if data_final.month > data_inicial.month:
+            raise ValueError('Intervalo deve ser inferior a 10 anos')
+        elif data_final.month == data_inicial.month:
+            if data_final.day > data_inicial.day:
+                raise ValueError('Intervalo deve ser inferior a 10 anos')
+    
+    # from bagogold.bagogold.utils.misc import buscar_valores_diarios_selic
+    # http://www3.bcb.gov.br/selic/consulta/taxaSelic.do?method=listarTaxaDiaria&dataInicial=11/11/2016&dataFinal=16/11/2016&tipoApresentacao=arquivo
+    td_url = 'http://www3.bcb.gov.br/selic/consulta/taxaSelic.do?method=listarTaxaDiaria&dataInicial=%s&dataFinal=%s&tipoApresentacao=arquivo' % (data_inicial.strftime('%d/%m/%Y'),
+                                                                                                                                                  data_final.strftime('%d/%m/%Y'))
+    req = Request(td_url)
+    try:
+        response = urlopen(req)
+    except HTTPError as e:
+        print 'The server couldn\'t fulfill the request.'
+        print 'Error code: ', e.code
+    except URLError as e:
+        print 'We failed to reach a server.'
+        print 'Reason: ', e.reason
+    else:
+        data = response.read()
+#         print data
+        lista_datas_valores = list()
+        # data vem como um arquivo txt separado por linhas com \n e delimitado por ;
+        linhas = data.split('\n')
+        # ler a partir da terceira linha
+        for linha in linhas[2:]:
+            dados_linha = linha.split(';')
+            if len(dados_linha) > 2:
+                try:
+                    data = datetime.datetime.strptime(dados_linha[0], '%d/%m/%Y').date()
+                except:
+                    continue
+                fator_diario = Decimal(dados_linha[2].replace(',', '.'))
+                if fator_diario.is_zero():
+                    continue
+                lista_datas_valores.append((data, fator_diario))
+        return lista_datas_valores
+     
 def trazer_primeiro_registro(queryset):
     """
     Traz o primeiro registro de um queryset
