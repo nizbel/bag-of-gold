@@ -60,6 +60,8 @@ def inicio(request):
             
         investimentos_atuais.append(investimento)
 #         print chave, investimento.link
+    # Pegar total atual de todos os investimentos
+    total_atual_investimentos = sum([valor for valor in investimentos.values()])
     
     # Ordenar proventos a receber e separar por grupos
     if request.user.is_authenticated():
@@ -119,6 +121,7 @@ def inicio(request):
     return TemplateResponse(request, 'inicio.html', {'ultimas_operacoes': ultimas_operacoes, 'investimentos_atuais': investimentos_atuais, 'proventos_acoes_a_receber': proventos_acoes_a_receber,
                                             'proventos_fiis_a_receber': proventos_fiis_a_receber, 'proventos_acoes_futuros': proventos_acoes_futuros,
                                             'proventos_fiis_futuros': proventos_fiis_futuros,'graf_rendimentos_mensal_lc': graf_rendimentos_mensal_lc,
+                                            'total_atual_investimentos': total_atual_investimentos,
                                             'graf_rendimentos_mensal_cdb_rdb': graf_rendimentos_mensal_cdb_rdb})
 
 @login_required
