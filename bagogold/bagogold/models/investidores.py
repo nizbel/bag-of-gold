@@ -15,11 +15,7 @@ class Investidor (models.Model):
     auto_atualizar_saldo = models.BooleanField(u'Atualizar saldo automaticamente?', default=False)
     
     def __unicode__(self):
-        nome_completo = self.user.first_name + ' ' + self.user.last_name
-        if nome_completo.strip() != '':
-            return nome_completo
-        else:
-            return self.user.username
+        return self.user.username
     
     
 @receiver(post_save, sender=User, dispatch_uid="usuario_criado")
