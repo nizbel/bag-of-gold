@@ -10,8 +10,8 @@ from django.template.response import TemplateResponse
 
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
-def detalhar_pendencias_usuario(request, usuario_id):
-    usuario = User.objects.get(id=usuario_id)
+def detalhar_pendencias_usuario(request, id_usuario):
+    usuario = User.objects.get(id=id_usuario)
     
     usuario.pendencias_alocadas = Pendencia.objects.filter(investidorresponsavelpendencia__investidor=usuario.investidor).count()
     usuario.leituras = Documento.objects.filter(investidorleituradocumento__investidor=usuario.investidor).count()

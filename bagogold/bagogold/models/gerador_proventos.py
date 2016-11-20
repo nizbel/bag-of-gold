@@ -97,6 +97,7 @@ class InvestidorLeituraDocumento (models.Model):
     A decisão que o leitor teve sobre o documento, C = Criar provento, E = Excluir
     """
     decisao = models.CharField(u'Decisão', max_length=1)
+    data_leitura = models.DateTimeField(u'Data da leitura', auto_now_add=True)
     
     class Meta:
         unique_together=('documento', 'investidor')
@@ -108,6 +109,7 @@ class InvestidorRecusaDocumento (models.Model):
     pendencia = models.OneToOneField('PendenciaDocumentoProvento')
     investidor = models.ForeignKey('Investidor')
     motivo = models.CharField(u'Motivo da recusa', max_length=500)
+    data_recusa = models.DateTimeField(u'Data da recusa', auto_now_add=True)
     
     class Meta:
         unique_together=('pendencia', 'investidor')
@@ -115,6 +117,7 @@ class InvestidorRecusaDocumento (models.Model):
 class InvestidorResponsavelPendencia (models.Model):
     pendencia = models.OneToOneField('PendenciaDocumentoProvento')
     investidor = models.ForeignKey('Investidor')
+    data_alocacao = models.DateTimeField(u'Data da alocação', auto_now_add=True)
     
     class Meta:
         unique_together=('pendencia', 'investidor')
@@ -122,6 +125,7 @@ class InvestidorResponsavelPendencia (models.Model):
 class InvestidorValidacaoDocumento (models.Model):
     documento = models.OneToOneField('DocumentoProventoBovespa')
     investidor = models.ForeignKey('Investidor')
+    data_validacao = models.DateTimeField(u'Data da validação', auto_now_add=True)
     
     class Meta:
         unique_together=('documento', 'investidor')
