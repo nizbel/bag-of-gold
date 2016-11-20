@@ -151,6 +151,7 @@ $( document ).ready(function() {
 		} else {
 			$('input[name*=descricao_' + $(this).val() + ']').each(function() {
                 $(this).attr('disabled', 'disabled');
+                $(this).parent().removeClass('checked')
             });
 		}
 	});
