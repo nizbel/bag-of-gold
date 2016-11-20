@@ -2,7 +2,7 @@
 from bagogold.bagogold.models.td import Titulo, OperacaoTitulo
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo, \
     verificar_feriado_bovespa, qtd_dias_uteis_no_periodo, \
-    calcular_domingo_pascoa_no_ano
+    calcular_domingo_pascoa_no_ano, formatar_zeros_a_direita_apos_2_casas_decimais
 from django.test import TestCase
 import datetime
 
@@ -58,3 +58,28 @@ class QtdDiasUteisNoPeriodoTestCase(TestCase):
         """Testa se retorna os 81 dias úteis"""
         self.assertEqual(qtd_dias_uteis_no_periodo(datetime.date(2016, 7, 1), datetime.date(2016, 10, 26)), 81)
 
+class FormatarZerosADireitaApos2CasasTestCase(TestCase):
+    
+    def test_formatar_para_valor_inteiro(self):
+        """Testa formatação em um valor inteiro"""
+        self.assertEqual(formatar_zeros_a_direita_apos_2_casas_decimais(1), '1.00')
+        
+    def test_formatar_para_1_casa_decimal_diferente_zero(self):
+        """Testa formatação em um número com 2 casas decimais diferentes de zero"""
+        self.assertEqual(formatar_zeros_a_direita_apos_2_casas_decimais(2.3), '2.30')
+        
+    def test_formatar_para_2_casas_decimais_iguais_zero(self):
+        """Testa formatação em um número com 2 casas decimais diferentes de zero"""
+        self.assertEqual(formatar_zeros_a_direita_apos_2_casas_decimais(2.00), '2.00')
+        
+    def test_formatar_para_2_casas_decimais_diferentes_zero(self):
+        """Testa formatação em um número com 2 casas decimais diferentes de zero"""
+        self.assertEqual(formatar_zeros_a_direita_apos_2_casas_decimais(2.34), '2.34')
+        
+    def test_formatar_para_varias_casas_decimais_iguais_zero(self):
+        """Testa formatação em um número com várias casas decimais iguais de zero"""
+        self.assertEqual(formatar_zeros_a_direita_apos_2_casas_decimais(1.0000000), '1.00')
+        
+    def test_formatar_para_varias_casas_decimais_diferentes_zero(self):
+        """Testa formatação em um número com várias casas decimais diferentes de zero"""
+        self.assertEqual(formatar_zeros_a_direita_apos_2_casas_decimais(1.4987004), '1.4987004')
