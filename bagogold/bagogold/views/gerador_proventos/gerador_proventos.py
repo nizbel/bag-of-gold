@@ -217,8 +217,6 @@ def remover_responsabilidade_documento_provento(request):
         return HttpResponse(json.dumps({'resultado': False, 'mensagem': u'A pendência enviada não existe'}), content_type = "application/json") 
     
     retorno, mensagem = desalocar_pendencia_de_investidor(pendencia, request.user.investidor)
-    # Carregar responsável
-    responsavel = PendenciaDocumentoProvento.objects.get(id=id_pendencia).responsavel()
         
     if retorno:
         return HttpResponse(json.dumps({'resultado': retorno, 'mensagem': mensagem}), content_type = "application/json") 
@@ -230,6 +228,7 @@ def remover_responsabilidade_documento_provento(request):
 def validar_documento_provento(request, id_pendencia):
     pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
     if request.method == 'POST':
+        print request.POST
         # TODO testar validar
         if request.POST.get('validar'):
             if pendencia.documento.investidorleituradocumento.decisao == 'C':
@@ -239,7 +238,7 @@ def validar_documento_provento(request, id_pendencia):
         
         # TODO testar recusar
         elif request.POST.get('recusar'):
-            pass
+            print 'Recusar'
         
     # Verificar se pendência é de validação
     if pendencia.tipo != 'V':
