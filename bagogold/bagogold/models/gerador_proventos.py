@@ -103,6 +103,14 @@ class InvestidorLeituraDocumento (models.Model):
         
     def __unicode__(self):
         return unicode(self.investidor)
+
+class InvestidorRecusaDocumento (models.Model):
+    pendencia = models.OneToOneField('PendenciaDocumentoProvento')
+    investidor = models.ForeignKey('Investidor')
+    motivo = models.CharField(u'Motivo da recusa', max_length=500)
+    
+    class Meta:
+        unique_together=('pendencia', 'investidor')
         
 class InvestidorResponsavelPendencia (models.Model):
     pendencia = models.OneToOneField('PendenciaDocumentoProvento')
@@ -117,6 +125,9 @@ class InvestidorValidacaoDocumento (models.Model):
     
     class Meta:
         unique_together=('documento', 'investidor')
+        
+    def __unicode__(self):
+        return unicode(self.investidor)
             
 class PendenciaDocumentoProvento (models.Model):
     documento = models.ForeignKey('DocumentoProventoBovespa')
