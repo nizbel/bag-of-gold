@@ -48,6 +48,7 @@ urlpatterns = [
     url(r'^gerador_proventos/ler_documento_provento/(?P<id_pendencia>\d+)/$', views.gerador_proventos.gerador_proventos.ler_documento_provento, name='ler_documento_provento'),
     url(r'^gerador_proventos/listar_documentos/$', views.gerador_proventos.gerador_proventos.listar_documentos, name='listar_documentos'),
     url(r'^gerador_proventos/listar_pendencias/$', views.gerador_proventos.gerador_proventos.listar_pendencias, name='listar_pendencias'),
+    url(r'^gerador_proventos/listar_usuarios/$', views.gerador_proventos.investidores.listar_usuarios, name='listar_usuarios'),
     url(r'^gerador_proventos/puxar_responsabilidade_documento_provento/$', views.gerador_proventos.gerador_proventos.puxar_responsabilidade_documento_provento, name='puxar_responsabilidade_documento_provento'),
     url(r'^gerador_proventos/remover_responsabilidade_documento_provento/$', views.gerador_proventos.gerador_proventos.remover_responsabilidade_documento_provento, name='remover_responsabilidade_documento_provento'),
     url(r'^gerador_proventos/validar_documento_provento/(?P<id_pendencia>\d+)/$', views.gerador_proventos.gerador_proventos.validar_documento_provento, name='validar_documento_provento'),
