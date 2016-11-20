@@ -160,7 +160,5 @@ def formatar_zeros_a_direita_apos_2_casas_decimais(valor):
         # Formatar número inteiro
         str_valor_formatado += '.00'
     
-    print valor, str_valor_formatado
-    
     return str_valor_formatado
     
