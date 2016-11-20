@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.gerador_proventos import \
     InvestidorResponsavelPendencia, InvestidorLeituraDocumento, \
-    InvestidorValidacaoDocumento
+    InvestidorValidacaoDocumento, PendenciaDocumentoProvento
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import Permission, User
 from django.db.models.query_utils import Q
@@ -13,9 +13,12 @@ from django.template.response import TemplateResponse
 def detalhar_pendencias_usuario(request, id_usuario):
     usuario = User.objects.get(id=id_usuario)
     
-    usuario.pendencias_alocadas = Pendencia.objects.filter(investidorresponsavelpendencia__investidor=usuario.investidor).count()
-    usuario.leituras = Documento.objects.filter(investidorleituradocumento__investidor=usuario.investidor).count()
-    usuario.validacoes = Documento.objects.filter(investidorvalidacaodocumento__investidor=usuario.investidor).count()
+    usuario.pendencias_alocadas = PendenciaDocumentoProvento.objects.filter(investidorresponsavelpendencia__investidor=usuario.investidor)
+    usuario.leituras = InvestidorLeituraDocumento.objects.filter(investidor=usuario.investidor)
+    usuario.validacoes = InvestidorValidacaoDocumento.objects.filter(investidor=usuario.investidor)
+    
+    for pendencia in usuario.pendencias_alocadas:
+        pendencia.tipo_pendencia = 'Leitura' if pendencia.tipo == 'L' else 'Validação'
     
     return TemplateResponse(request, 'gerador_proventos/detalhar_pendencias_usuario.html', {'usuario': usuario})
 
