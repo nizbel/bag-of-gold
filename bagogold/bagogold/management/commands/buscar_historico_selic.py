@@ -18,9 +18,6 @@ class Command(BaseCommand):
             if data_final > datetime.date.today():
                 data_final = datetime.date.today()
             
-            print 'Data inicial:', data_inicial
-            print 'Data final:', data_final
-            
             dados = buscar_valores_diarios_selic(data_inicial, data_final)
             print dados[0], dados[len(dados)-1]
             # TESTE
