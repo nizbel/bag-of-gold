@@ -135,16 +135,11 @@ class InvestidorValidacaoDocumento (models.Model):
             
 class PendenciaDocumentoProvento (models.Model):
     documento = models.ForeignKey('DocumentoProventoBovespa')
-    data_criacao = models.DateField(editable=False)
+    data_criacao = models.DateField(auto_now_add=True)
     """
     Tipo de pendência, L = Leitura, V = Validação
     """
     tipo = models.CharField(u'Tipo de pendência', max_length=1, default='L')
-    
-    def save(self, *args, **kwargs):
-        if not self.id:
-            self.data_criacao = datetime.date.today()
-        return super(PendenciaDocumentoProvento, self).save(*args, **kwargs)
     
     def responsavel(self):
         if hasattr(self, 'investidorresponsavelpendencia'):
