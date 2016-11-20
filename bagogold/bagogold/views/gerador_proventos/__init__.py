@@ -1,1 +1,2 @@
 import gerador_proventos
+import investidores
