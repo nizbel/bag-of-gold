@@ -232,7 +232,26 @@ def validar_documento_provento(request, id_pendencia):
         # TODO testar validar
         if request.POST.get('validar'):
             if pendencia.documento.investidorleituradocumento.decisao == 'C':
+                validacao_completa = True
                 print 'Validar criação'
+                # Verificar proventos descritos na pendência
+                proventos_documento = ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)
+                descricoes_proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento)
+                # Testar se ID's de descrições foram marcados para relacionamento, se sim, deve ter um provento relacionado
+                ids_descricoes = descricoes_proventos.values_list('id', flat=True)
+                for id_descricao in ids_descricoes:
+                    if str(id_descricao) in request.POST.keys():
+                        print 'Alterou', id_descricao
+                        if request.POST.get('descricao_%s' % (id_descricao)):
+                            print u'Descrição %s é relacionada a %s' % (id_descricao, request.POST.get('descricao_%s' % (id_descricao)))
+                        else:
+                            validacao_completa = False
+                            messages.error(request, 'Provento %s marcado como relacionado a outro provento, escolha um provento para a relação' % (id_descricao))
+                if validacao_completa:
+                    # TODO terminar validação
+                    for descricao in descricoes_proventos:
+                        
+                
             elif pendencia.documento.investidorleituradocumento.decisao == 'E':
                 print 'Validar exclusão'
         
