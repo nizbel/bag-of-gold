@@ -250,7 +250,7 @@ def validar_documento_provento(request, id_pendencia):
                 if validacao_completa:
                     # TODO terminar validação
                     for descricao in descricoes_proventos:
-                        
+                        pass
                 
             elif pendencia.documento.investidorleituradocumento.decisao == 'E':
                 print 'Validar exclusão'
