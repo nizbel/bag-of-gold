@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 from bagogold import settings
-from bagogold.bagogold.models.acoes import Acao, Provento
+from bagogold.bagogold.models.acoes import Acao, Provento, AcaoProvento
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
     PendenciaDocumentoProvento, InvestidorLeituraDocumento, \
-    InvestidorResponsavelPendencia, ProventoAcaoDescritoDocumentoBovespa
+    InvestidorResponsavelPendencia, ProventoAcaoDescritoDocumentoBovespa, \
+    AcaoProventoAcaoDescritoDocumentoBovespa
 from bagogold.bagogold.testFII import baixar_demonstrativo_rendimentos
 from bagogold.bagogold.utils.gerador_proventos import \
     alocar_pendencia_para_investidor, salvar_investidor_responsavel_por_leitura, \
@@ -175,7 +176,7 @@ class GeradorProventosTestCase(TestCase):
         """Testa criação de provento de dividendos a partir de descrição de provento em documento"""
         # Criar descrição de provento em dividendos
         provento_convertido = converter_descricao_provento_para_provento_acoes(ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=Acao.objects.get(ticker='BBAS3'), \
-                                                                            data_ex=datetime.date(2016, 11, 12), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(8)))
+                                                                            data_ex=datetime.date(2016, 11, 12), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(8)))[0]
         provento = Provento.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 11, 12), data_pagamento=datetime.date(2016, 11, 20),
                                            tipo_provento='D', valor_unitario=Decimal(8))
         self.assertEqual(provento_convertido.acao, provento.acao)
@@ -189,7 +190,7 @@ class GeradorProventosTestCase(TestCase):
         """Testa criação de provento de JSCP a partir de descrição de provento em documento"""
         # Criar descrição de provento em JSCP
         provento_convertido = converter_descricao_provento_para_provento_acoes(ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=Acao.objects.get(ticker='BBAS3'), \
-                                                                            data_ex=datetime.date(2016, 11, 12), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='J', valor_unitario=Decimal(8)))
+                                                                            data_ex=datetime.date(2016, 11, 12), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='J', valor_unitario=Decimal(8)))[0]
         provento = Provento.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 11, 12), data_pagamento=datetime.date(2016, 11, 20),
                                            tipo_provento='J', valor_unitario=Decimal(8))
         self.assertEqual(provento_convertido.acao, provento.acao)
@@ -199,7 +200,34 @@ class GeradorProventosTestCase(TestCase):
         self.assertEqual(provento_convertido.valor_unitario, provento.valor_unitario)
     
     def test_converter_descricao_proventos_em_acoes_para_provento(self):
-        pass
+        """Testa criação de provento em ações a partir de descrição de provento em documento"""
+        # Criar descrição de provento em ações
+        descricao = ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 11, 12), data_pagamento=datetime.date(2016, 11, 20),
+                                                            tipo_provento='A', valor_unitario=Decimal(100))
+        AcaoProventoAcaoDescritoDocumentoBovespa.objects.create(provento=descricao, data_pagamento_frac=None, valor_calculo_frac=Decimal(0),
+                                                            acao_recebida=Acao.objects.get(ticker='BBAS3'))
+        
+        # Converter
+        provento_convertido, acoes_provento_convertido = converter_descricao_provento_para_provento_acoes(descricao)
+        provento = Provento.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 11, 12), data_pagamento=datetime.date(2016, 11, 20),
+                                           tipo_provento='A', valor_unitario=Decimal(100))
+        AcaoProvento.objects.create(provento=provento, data_pagamento_frac=None, valor_calculo_frac=Decimal(0),
+                                                            acao_recebida=Acao.objects.get(ticker='BBAS3'))
+        
+        # Comparar provento
+        self.assertEqual(provento_convertido.acao, provento.acao)
+        self.assertEqual(provento_convertido.data_ex, provento.data_ex)
+        self.assertEqual(provento_convertido.data_pagamento, provento.data_pagamento)
+        self.assertEqual(provento_convertido.tipo_provento, provento.tipo_provento)
+        self.assertEqual(provento_convertido.valor_unitario, provento.valor_unitario)
+        # Comparar pagamento de ações
+        self.assertEqual(len(acoes_provento_convertido), len(AcaoProvento.objects.filter(provento=provento)))
+        for acao_provento_convertido in acoes_provento_convertido:
+            provento_cadastrado = AcaoProvento.objects.get(provento=provento, acao_recebida=acao_provento_convertido.acao_recebida, 
+                                                           valor_calculo_frac=acao_provento_convertido.valor_calculo_frac, data_pagamento_frac=acao_provento_convertido.data_pagamento_frac)
+            self.assertEqual(acao_provento_convertido.acao_recebida, provento_cadastrado.acao_recebida)
+            self.assertEqual(acao_provento_convertido.valor_calculo_frac, provento_cadastrado.valor_calculo_frac)
+            self.assertEqual(acao_provento_convertido.data_pagamento_frac, provento_cadastrado.data_pagamento_frac)
     
     def test_converter_descricao_rendimentos_fii_para_provento(self):
         pass

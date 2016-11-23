@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.acoes import Provento
+from bagogold.bagogold.models.acoes import Provento, AcaoProvento
 from bagogold.bagogold.models.gerador_proventos import \
     InvestidorResponsavelPendencia, InvestidorLeituraDocumento, \
     PendenciaDocumentoProvento, ProventoAcaoDocumento, \
-    ProventoAcaoDescritoDocumentoBovespa
+    ProventoAcaoDescritoDocumentoBovespa, AcaoProventoAcaoDescritoDocumentoBovespa
 from itertools import chain
 from operator import attrgetter
 
@@ -88,18 +88,25 @@ def converter_descricao_provento_para_provento_acoes(descricao_provento):
     """
     Cria um provento a partir de uma descrição de provento, para ações
     Parâmetros: Descrição de provento (ações)
-    Retorno:    Provento (ações)
+    Retorno:    Tupla com provento e ações recebidas, ex.: (Provento de dividendos, ), (Provento de ações, [ações recebidas])
     """
     if not isinstance(descricao_provento, ProventoAcaoDescritoDocumentoBovespa):
         raise ValueError('Objeto não é uma descrição de provento para ações')
     
     # Se dividendo ou JSCP, converter diretamente
     if descricao_provento.tipo_provento in ['D', 'J']:
-        return Provento(acao=descricao_provento.acao, tipo_provento=descricao_provento.tipo_provento, data_ex=descricao_provento.data_ex, data_pagamento=descricao_provento.data_pagamento,
-                        valor_unitario=descricao_provento.valor_unitario)
+        return (Provento(acao=descricao_provento.acao, tipo_provento=descricao_provento.tipo_provento, data_ex=descricao_provento.data_ex, data_pagamento=descricao_provento.data_pagamento,
+                        valor_unitario=descricao_provento.valor_unitario), )
     # Para dividendo em ações, copiar também a descrição de recebimento de ações
     else:
-        pass
+        provento = Provento(acao=descricao_provento.acao, tipo_provento=descricao_provento.tipo_provento, data_ex=descricao_provento.data_ex, data_pagamento=descricao_provento.data_pagamento,
+                        valor_unitario=descricao_provento.valor_unitario)
+        lista_acoes = list()
+        for acao_provento in AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento=descricao_provento):
+            lista_acoes.append(AcaoProvento(provento=provento, data_pagamento_frac=acao_provento.data_pagamento_frac, valor_calculo_frac=acao_provento.valor_calculo_frac,
+                                            acao_recebida=acao_provento.acao_recebida))
+        return (provento, lista_acoes)
+            
 
 def converter_descricao_provento_para_provento_fii(descricao_provento):
     pass
