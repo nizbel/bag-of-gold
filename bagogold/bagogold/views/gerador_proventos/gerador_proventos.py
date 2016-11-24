@@ -250,9 +250,17 @@ def validar_documento_provento(request, id_pendencia):
                             messages.error(request, 'Provento %s marcado como relacionado a outro provento, escolha um provento para a relação' % (id_descricao))
                 if validacao_completa:
                     # TODO terminar validação
+                    # Preparar lista para apagar todos os objetos que houve tentativa de criar
+                    dados_criados = list()
                     for descricao in descricoes_proventos:
                         provento_convertido, acoes_provento_convertido = converter_descricao_provento_para_provento_acoes(descricao)
                         print provento_convertido, acoes_provento_convertido
+                        # Adicionar provento convertido
+                        dados_criados.append(provento_convertido)
+                        dados_criados.extend(acoes_provento_convertido)
+                        # Se tem relação, gerar versões
+                        
+                        # Se não, criar um ProventoAcaoDocumento com versão 1
                 
             elif pendencia.documento.investidorleituradocumento.decisao == 'E':
                 print 'Validar exclusão'
