@@ -12,7 +12,8 @@ from bagogold.bagogold.utils.gerador_proventos import \
     alocar_pendencia_para_investidor, desalocar_pendencia_de_investidor, \
     salvar_investidor_responsavel_por_leitura, criar_descricoes_provento_acoes, \
     retornar_investidor_responsavel_por_leitura, \
-    buscar_proventos_e_descricoes_proximos_acao
+    buscar_proventos_e_descricoes_proximos_acao, \
+    converter_descricao_provento_para_provento_acoes
 from bagogold.bagogold.utils.investidores import is_superuser
 from bagogold.bagogold.utils.misc import \
     formatar_zeros_a_direita_apos_2_casas_decimais
@@ -250,7 +251,8 @@ def validar_documento_provento(request, id_pendencia):
                 if validacao_completa:
                     # TODO terminar validação
                     for descricao in descricoes_proventos:
-                        pass
+                        provento_convertido, acoes_provento_convertido = converter_descricao_provento_para_provento_acoes(descricao)
+                        print provento_convertido, acoes_provento_convertido
                 
             elif pendencia.documento.investidorleituradocumento.decisao == 'E':
                 print 'Validar exclusão'
