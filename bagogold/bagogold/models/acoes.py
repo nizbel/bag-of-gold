@@ -26,6 +26,34 @@ class Acao (models.Model):
                 pass
         return HistoricoAcao.objects.filter(acao__ticker=self.ticker, data__lte=dia).order_by('-data')[0].preco_unitario
     
+    def tipo(self):
+        if self.tipo == 3:
+            return u'Ordinária'
+        elif self.tipo == 4:
+            return u'Preferencial'
+        elif self.tipo == 5:
+            return u'Preferencial Classe A'
+        elif self.tipo == 6:
+            return u'Preferencial Classe B'
+        elif self.tipo == 7:
+            return u'Preferencial Classe C'
+        elif self.tipo == 8:
+            return u'Preferencial Classe D'
+        
+    def tipo_resumido(self):
+        if self.tipo == 3:
+            return u'ON'
+        elif self.tipo == 4:
+            return u'PN'
+        elif self.tipo == 5:
+            return u'PNA'
+        elif self.tipo == 6:
+            return u'PNB'
+        elif self.tipo == 7:
+            return u'PNC'
+        elif self.tipo == 8:
+            return u'PND'
+    
 class Provento (models.Model):
     acao = models.ForeignKey('Acao')
     valor_unitario = models.DecimalField(u'Valor unitário', max_digits=16, decimal_places=12)
@@ -38,6 +66,9 @@ class Provento (models.Model):
     observacao = models.CharField(u'Observação', blank=True, null=True, max_length=300)
     oficial_bovespa = models.BooleanField(u'Oficial Bovespa?', default=False)
     
+    class Meta:
+        unique_together = ['acao', 'valor_unitario', 'data_ex', 'data_pagamento']
+        
     def __unicode__(self):
         tipo = ''
         if self.tipo_provento == 'A':
