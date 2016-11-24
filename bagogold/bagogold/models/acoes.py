@@ -26,7 +26,7 @@ class Acao (models.Model):
                 pass
         return HistoricoAcao.objects.filter(acao__ticker=self.ticker, data__lte=dia).order_by('-data')[0].preco_unitario
     
-    def tipo(self):
+    def descricao_tipo(self):
         if self.tipo == 3:
             return u'Ordinária'
         elif self.tipo == 4:
@@ -40,7 +40,7 @@ class Acao (models.Model):
         elif self.tipo == 8:
             return u'Preferencial Classe D'
         
-    def tipo_resumido(self):
+    def descricao_tipo_resumido(self):
         if self.tipo == 3:
             return u'ON'
         elif self.tipo == 4:
