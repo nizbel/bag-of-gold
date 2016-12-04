@@ -132,13 +132,17 @@
                     </div>
                 {% endfor %}
                 </div>
-                <div class="row-fluid">
-                    <textarea name="motivo_recusa"></textarea>
+                <div class="row-fluid" id="motivo_recusa">
+                    <h4>Motivo da recusa:</h4>
+                    <textarea name="motivo_recusa" class="span12"></textarea>
                 </div>
             </div>
             <div class="form-actions">
-                <button type="submit" name="validar" value="1" class="btn">Validar</button>
-                <button type="submit" name="recusar" value="0" class="btn btn-danger">Recusar</button>
+                <button type="submit" name="validar" value="1" class="btn" id="btn_confirma_validar">Confirma validação</button>
+                <button type="submit" name="recusar" value="0" class="btn btn-danger" id="btn_confirma_recusar">Confirma recusa</button>
+                <a class="btn btn-warning" id="btn_cancelar">Cancelar</a>
+                <a class="btn" id="btn_validar">Validar</a>
+                <a class="btn btn-danger" id="btn_recusar">Recusar</a>
             </div>
         </form>
     </div>
@@ -159,6 +163,37 @@ $( document ).ready(function() {
             });
 		}
 	});
+	
+	// Iniciar botões
+    $('#btn_confirma_validar').hide();
+    $('#btn_confirma_recusar').hide();
+    $('#btn_cancelar').hide();
+    $('#motivo_recusa').hide();
+	
+	
+	$('#btn_validar').click(function() {
+		$('#btn_confirma_validar').show();
+        $('#btn_cancelar').show();
+        $('#btn_recusar').hide();
+        $(this).hide();
+	});
+	$('#btn_recusar').click(function() {
+        $('#btn_confirma_recusar').show();
+        $('#btn_cancelar').show();
+        $('#btn_validar').hide();
+        $(this).hide();
+        
+        $('#motivo_recusa').show();
+    });
+	$('#btn_cancelar').click(function() {
+        $('#btn_confirma_validar').hide();
+        $('#btn_confirma_recusar').hide();
+        $('#btn_validar').show();
+        $('#btn_recusar').show();
+        $(this).hide();
+        
+        $('#motivo_recusa').hide();
+    });
 });
 </script>
     
