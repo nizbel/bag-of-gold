@@ -35,6 +35,9 @@ def inicio(request):
     
     if request.user.is_authenticated():
         investidor = request.user.investidor
+        
+    # Guardar data atual
+    data_atual = datetime.datetime.now()
     
     ultimas_operacoes = buscar_ultimas_operacoes(request.user.investidor, 5) if request.user.is_authenticated() else list()
 
@@ -67,10 +70,19 @@ def inicio(request):
     if request.user.is_authenticated():
         # Proventos a receber com data EX já passada
         proventos_a_receber = buscar_proventos_a_receber(request.user.investidor)
-        proventos_acoes_a_receber = [provento for provento in proventos_a_receber if isinstance(provento, Provento)]
+        
+        # Recebidos hoje
+        proventos_acoes_recebidos_hoje = [provento for provento in proventos_a_receber if isinstance(provento, Provento) and provento.data_pagamento == data_atual.date()]
+        proventos_acoes_recebidos_hoje.sort(key=lambda provento: provento.acao)
+        
+        proventos_fiis_recebidos_hoje = [provento for provento in proventos_a_receber if isinstance(provento, ProventoFII) and provento.data_pagamento == data_atual.date()]
+        proventos_fiis_recebidos_hoje.sort(key=lambda provento: provento.fii)
+        
+        # A receber futuramente
+        proventos_acoes_a_receber = [provento for provento in proventos_a_receber if isinstance(provento, Provento) and provento.data_pagamento > data_atual.date()]
         proventos_acoes_a_receber.sort(key=lambda provento: provento.data_pagamento)
         
-        proventos_fiis_a_receber = [provento for provento in proventos_a_receber if isinstance(provento, ProventoFII)]
+        proventos_fiis_a_receber = [provento for provento in proventos_a_receber if isinstance(provento, ProventoFII) and provento.data_pagamento > data_atual.date()]
         proventos_fiis_a_receber.sort(key=lambda provento: provento.data_pagamento)
         
         # Proventos a receber com data EX ainda não passada
@@ -81,12 +93,15 @@ def inicio(request):
         proventos_fiis_futuros = [provento for provento in proventos_futuros if isinstance(provento, ProventoFII)]
         proventos_fiis_futuros.sort(key=lambda provento: provento.data_ex)
     else:
+        proventos_acoes_recebidos_hoje = list()
+        proventos_fiis_recebidos_hoje = list()
         proventos_acoes_a_receber = list()
+        proventos_acoes_futuros = list()
         proventos_fiis_a_receber = list()
+        proventos_fiis_futuros = list()
         
     qtd_ultimos_dias = 31
     if request.user.is_authenticated():
-        data_atual = datetime.datetime.now()
         # Guardar valores totais
         diario_cdb_rdb = {}
         diario_lc = {}
@@ -118,11 +133,11 @@ def inicio(request):
     graf_rendimentos_mensal_lc = [[str(calendar.timegm(data.replace(hour=6).timetuple()) * 1000), diario_lc[data.date()] ] \
                                for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ] if request.user.is_authenticated() else list()
     
-    return TemplateResponse(request, 'inicio.html', {'ultimas_operacoes': ultimas_operacoes, 'investimentos_atuais': investimentos_atuais, 'proventos_acoes_a_receber': proventos_acoes_a_receber,
-                                            'proventos_fiis_a_receber': proventos_fiis_a_receber, 'proventos_acoes_futuros': proventos_acoes_futuros,
-                                            'proventos_fiis_futuros': proventos_fiis_futuros,'graf_rendimentos_mensal_lc': graf_rendimentos_mensal_lc,
-                                            'total_atual_investimentos': total_atual_investimentos,
-                                            'graf_rendimentos_mensal_cdb_rdb': graf_rendimentos_mensal_cdb_rdb})
+    return TemplateResponse(request, 'inicio.html', {'ultimas_operacoes': ultimas_operacoes, 'investimentos_atuais': investimentos_atuais, 'proventos_acoes_recebidos_hoje': proventos_acoes_recebidos_hoje,
+                                                     'proventos_fiis_recebidos_hoje': proventos_fiis_recebidos_hoje, 'proventos_acoes_a_receber': proventos_acoes_a_receber,
+                                                     'proventos_fiis_a_receber': proventos_fiis_a_receber, 'proventos_acoes_futuros': proventos_acoes_futuros,
+                                                     'proventos_fiis_futuros': proventos_fiis_futuros,'graf_rendimentos_mensal_lc': graf_rendimentos_mensal_lc,
+                                                     'total_atual_investimentos': total_atual_investimentos, 'graf_rendimentos_mensal_cdb_rdb': graf_rendimentos_mensal_cdb_rdb})
 
 @login_required
 def detalhamento_investimentos(request):
