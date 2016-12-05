@@ -151,7 +151,7 @@ def buscar_proventos_a_receber(investidor):
     data_atual = datetime.date.today()
     
     for acao in Acao.objects.filter(id__in=acoes_investidor):
-        proventos_a_pagar = Provento.objects.filter(acao=acao, data_ex__lte=data_atual, data_pagamento__gt=data_atual, tipo_provento__in=['D', 'J'])
+        proventos_a_pagar = Provento.objects.filter(acao=acao, data_ex__lte=data_atual, data_pagamento__gte=data_atual, tipo_provento__in=['D', 'J'])
         for provento in proventos_a_pagar:
             qtd_acoes = quantidade_acoes_ate_dia(investidor, acao.ticker, provento.data_ex - datetime.timedelta(days=1), considerar_trade=True) 
             if qtd_acoes > 0:
@@ -165,7 +165,7 @@ def buscar_proventos_a_receber(investidor):
     fiis_investidor = list(set(fiis_investidor))
     
     for fii in FII.objects.filter(id__in=fiis_investidor):
-        proventos_a_pagar = ProventoFII.objects.filter(fii=fii, data_ex__lte=data_atual, data_pagamento__gt=data_atual)
+        proventos_a_pagar = ProventoFII.objects.filter(fii=fii, data_ex__lte=data_atual, data_pagamento__gte=data_atual)
         for provento in proventos_a_pagar:
             qtd_fiis = calcular_qtd_fiis_ate_dia_por_ticker(investidor, provento.data_ex - datetime.timedelta(days=1), fii.ticker)
             if qtd_fiis > 0:
