@@ -371,6 +371,10 @@ def inserir_transferencia(request):
             form.save()
             messages.success(request, 'Transferência inserida com sucesso')
             return HttpResponseRedirect(reverse('listar_transferencias'))
+        # Imprimir erors nas mensagens
+        for erro in form.non_field_errors():
+            print erro
+            messages.error(request, erro)
     else:
         form = TransferenciaEntreDivisoesForm(investidor=investidor)
             
