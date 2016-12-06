@@ -8,105 +8,117 @@
 {% endblock %}
 
 {% block content %}
-<div class="portlet box yellow-crusta">
+<div class="portlet light">
     <div class="portlet-title">
-        <div class="caption">
-            Acompanhamento de pendências
-        </div>
-        <div class="tools">
-            <a href="javascript:;" class="collapse"></a>
-        </div>
+        <div class="caption font-yellow-crusta">
+            <i class="icon-hourglass font-yellow-crusta"></i>Acompanhamento do usuáro</div>
     </div>
     <div class="portlet-body">
-        <div class="chart" id="graf_pendencias_usuario" style="width:100%;height:400px"></div>
-    </div>
-</div>
-
-<div class="col-md-4">
-    <div class="portlet light">
-    	<div class="portlet-title">
-    		<div class="caption font-yellow-crusta">
-    			<i class="icon-list font-yellow-crusta"></i>
-    			<span class="caption-subject bold uppercase">Pendências atuais</span>
-    		</div>
-    	</div>
-    	<div class="portlet-body">
-    		<table id="pendencias" class="table table-striped table-bordered table-hover table-header-fixed">
-    		<thead>
-    			<tr>
-    				<th>Tipo</th>
-    				<th>Documento</th>
-                    <th>Data da alocação</th>
-    			</tr>
-    		</thead>
-    		<tbody>
-    		{% for pendencia in usuario.pendencias_alocadas %}
-    			<tr>
-    				<td>{{pendencia.tipo_pendencia}}</td>
-                    <td>{{pendencia.documento}}</td>
-                    <td>{{pendencia.investidorresponsavelpendencia.data_alocacao|date:"d/m/Y H:i"}}</td>
-    			</tr>
-    		{% endfor %}	
-    		</tbody>
-    		</table>
-    	</div>
-    </div>
-</div>
-
-<div class="col-md-4">
-    <div class="portlet light">
-        <div class="portlet-title">
-            <div class="caption font-yellow-crusta">
-                <i class="icon-list font-yellow-crusta"></i>
-                <span class="caption-subject bold uppercase">Leituras feitas</span>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="portlet box yellow-crusta">
+                    <div class="portlet-title">
+                        <div class="caption">
+                            Acompanhamento de pendências
+                        </div>
+                        <div class="tools">
+                            <a href="javascript:;" class="collapse"></a>
+                        </div>
+                    </div>
+                    <div class="portlet-body">
+                        <div class="chart" id="graf_pendencias_usuario" style="width:100%;height:400px"></div>
+                    </div>
+                </div>
             </div>
-        </div>
-        <div class="portlet-body">
-            <table id="leituras" class="table table-striped table-bordered table-hover table-header-fixed">
-            <thead>
-                <tr>
-                    <th>Documento</th>
-                    <th>Data da leitura</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for leitura in usuario.leituras %}
-                <tr>
-                    <td>{{leitura.documento}}</a></td>
-                    <td>{{leitura.data_leitura|date:"d/m/Y H:i"}}</td>
-                </tr>
-            {% endfor %}    
-            </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<div class="col-md-4">
-    <div class="portlet light">
-        <div class="portlet-title">
-            <div class="caption font-yellow-crusta">
-                <i class="icon-list font-yellow-crusta"></i>
-                <span class="caption-subject bold uppercase">Validações feitas</span>
+            
+            <div class="col-md-4">
+                <div class="portlet box yellow-crusta">
+                	<div class="portlet-title">
+                		<div class="caption font-yellow-crusta">
+                			<i class="icon-list font-yellow-crusta"></i>
+                			<span class="caption-subject bold uppercase">Pendências atuais</span>
+                		</div>
+                	</div>
+                	<div class="portlet-body">
+                		<table id="pendencias" class="table table-striped table-bordered table-hover table-header-fixed">
+                		<thead>
+                			<tr>
+                				<th>Tipo</th>
+                				<th>Documento</th>
+                                <th>Data da alocação</th>
+                			</tr>
+                		</thead>
+                		<tbody>
+                		{% for pendencia in usuario.pendencias_alocadas %}
+                			<tr>
+                				<td>{{pendencia.tipo_pendencia}}</td>
+                                <td>{{pendencia.documento}}</td>
+                                <td>{{pendencia.investidorresponsavelpendencia.data_alocacao|date:"d/m/Y H:i"}}</td>
+                			</tr>
+                		{% endfor %}	
+                		</tbody>
+                		</table>
+                	</div>
+                </div>
             </div>
-        </div>
-        <div class="portlet-body">
-            <table id="validacoes" class="table table-striped table-bordered table-hover table-header-fixed">
-            <thead>
-                <tr>
-                    <th>Documento</th>
-                    <th>Data da validação</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for validacao in usuario.validacoes %}
-                <tr>
-                    <td>{{validacao.documento}}</a></td>
-                    <td>{{validacao.data_validacao|date:"d/m/Y H:i"}}</td>
-                </tr>
-            {% endfor %}    
-            </tbody>
-            </table>
+            
+            <div class="col-md-4">
+                <div class="portlet box yellow-crusta">
+                    <div class="portlet-title">
+                        <div class="caption font-yellow-crusta">
+                            <i class="icon-list font-yellow-crusta"></i>
+                            <span class="caption-subject bold uppercase">Leituras feitas</span>
+                        </div>
+                    </div>
+                    <div class="portlet-body">
+                        <table id="leituras" class="table table-striped table-bordered table-hover table-header-fixed">
+                        <thead>
+                            <tr>
+                                <th>Documento</th>
+                                <th>Data da leitura</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for leitura in usuario.leituras %}
+                            <tr>
+                                <td>{{leitura.documento}}</a></td>
+                                <td>{{leitura.data_leitura|date:"d/m/Y H:i"}}</td>
+                            </tr>
+                        {% endfor %}    
+                        </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="portlet box yellow-crusta">
+                    <div class="portlet-title">
+                        <div class="caption font-yellow-crusta">
+                            <i class="icon-list font-yellow-crusta"></i>
+                            <span class="caption-subject bold uppercase">Validações feitas</span>
+                        </div>
+                    </div>
+                    <div class="portlet-body">
+                        <table id="validacoes" class="table table-striped table-bordered table-hover table-header-fixed">
+                        <thead>
+                            <tr>
+                                <th>Documento</th>
+                                <th>Data da validação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for validacao in usuario.validacoes %}
+                            <tr>
+                                <td>{{validacao.documento}}</a></td>
+                                <td>{{validacao.data_validacao|date:"d/m/Y H:i"}}</td>
+                            </tr>
+                        {% endfor %}    
+                        </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
