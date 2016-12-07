@@ -100,14 +100,15 @@ def calcular_poupanca_prov_fii_ate_dia_por_divisao(dia, divisao):
                     
     return total_proventos.quantize(Decimal('0.01'))
 
-def calcular_qtd_fiis_ate_dia(dia):
+def calcular_qtd_fiis_ate_dia(investidor, dia):
     """ 
     Calcula a quantidade de FIIs até dia determinado
-    Parâmetros: Dia final
+    Parâmetros: Investidor
+                Dia final
     Retorno: Quantidade de FIIs {ticker: qtd}
     """
     
-    operacoes = OperacaoFII.objects.filter(data__lte=dia).exclude(data__isnull=True).order_by('data')
+    operacoes = OperacaoFII.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True).order_by('data')
     
     qtd_fii = {}
     

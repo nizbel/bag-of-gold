@@ -65,7 +65,8 @@ def criar_data_inicio_titulos():
 def quantidade_titulos_ate_dia(investidor, dia):
     """ 
     Calcula a quantidade de títulos do investidor até dia determinado
-    Parâmetros: Dia final
+    Parâmetros: Investidor
+                Dia final
     Retorno: Quantidade de títulos {titulo_id: qtd}
     """
     
