@@ -9,17 +9,15 @@ from bagogold.bagogold.models.fundo_investimento import \
 from bagogold.bagogold.models.lc import OperacaoLetraCredito
 from bagogold.bagogold.models.td import OperacaoTitulo, ValorDiarioTitulo, \
     HistoricoTitulo
-from bagogold.bagogold.utils.acoes import calcular_qtd_acoes_ate_dia_por_divisao, \
-    quantidade_acoes_ate_dia
+from bagogold.bagogold.utils.acoes import quantidade_acoes_ate_dia
 from bagogold.bagogold.utils.cdb_rdb import \
-    calcular_valor_cdb_rdb_ate_dia_por_divisao
-from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia_por_divisao, \
-    calcular_qtd_fiis_ate_dia_por_ticker
+    calcular_valor_cdb_rdb_ate_dia_por_divisao, calcular_valor_cdb_rdb_ate_dia
+from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia_por_ticker, \
+    calcular_qtd_fiis_ate_dia
 from bagogold.bagogold.utils.fundo_investimento import \
-    calcular_qtd_cotas_ate_dia_por_divisao
-from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia_por_divisao, \
-    calcular_valor_lc_ate_dia
-from bagogold.bagogold.utils.td import calcular_qtd_titulos_ate_dia_por_divisao
+    calcular_qtd_cotas_ate_dia
+from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia
+from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia
 from decimal import Decimal
 from django.core.exceptions import PermissionDenied
 from itertools import chain
@@ -74,8 +72,6 @@ def buscar_ultimas_operacoes(investidor, quantidade_operacoes):
     return ultimas_operacoes
 
 def buscar_totais_atuais_investimentos(investidor):
-    divisoes = Divisao.objects.filter(investidor=investidor)
-    
     totais_atuais = {'Ações': Decimal(0), 'CDB/RDB': Decimal(0), 'FII': Decimal(0), 'Fundos de Inv.': Decimal(0), 'Letras de Crédito': Decimal(0), 'Tesouro Direto': Decimal(0), }
     
     data_atual = datetime.date.today()
@@ -91,46 +87,44 @@ def buscar_totais_atuais_investimentos(investidor):
             acao_valor = HistoricoAcao.objects.filter(acao__ticker=acao.ticker).order_by('-data')[0].preco_unitario
         totais_atuais['Ações'] += (acao_qtd * acao_valor)
 
-    for divisao in divisoes:
-        # CDB / RDB
-        cdb_rdb_divisao = calcular_valor_cdb_rdb_ate_dia_por_divisao(datetime.date.today(), divisao.id)
-        for total_cdb_rdb in cdb_rdb_divisao.values():
-            totais_atuais['CDB/RDB'] += total_cdb_rdb
+    # CDB / RDB
+    cdbs_rdbs = calcular_valor_cdb_rdb_ate_dia(investidor, datetime.date.today())
+    for total_cdb_rdb in cdbs_rdbs.values():
+        totais_atuais['CDB/RDB'] += total_cdb_rdb
         
-        # Fundos de investimento imobiliário
-        fii_divisao = calcular_qtd_fiis_ate_dia_por_divisao(datetime.date.today(), divisao.id)
-        for ticker in fii_divisao.keys():
-            try:
-                fii_valor = ValorDiarioFII.objects.filter(fii__ticker=ticker, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).order_by('-data_hora')[0].preco_unitario
-            except:
-                fii_valor = HistoricoFII.objects.filter(fii__ticker=ticker).order_by('-data')[0].preco_unitario
-            totais_atuais['FII'] += (fii_divisao[ticker] * fii_valor)
+    # Fundos de investimento imobiliário
+    fiis = calcular_qtd_fiis_ate_dia(investidor, datetime.date.today())
+    for ticker in fiis.keys():
+        try:
+            fii_valor = ValorDiarioFII.objects.filter(fii__ticker=ticker, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).order_by('-data_hora')[0].preco_unitario
+        except:
+            fii_valor = HistoricoFII.objects.filter(fii__ticker=ticker).order_by('-data')[0].preco_unitario
+        totais_atuais['FII'] += (fiis[ticker] * fii_valor)
         
-        # Fundos de investimento
-        fundo_investimento_divisao = calcular_qtd_cotas_ate_dia_por_divisao(datetime.date.today(), divisao.id)
-        for fundo_id in fundo_investimento_divisao.keys():
-            historico_fundo = HistoricoValorCotas.objects.filter(fundo_investimento__id=fundo_id).order_by('-data')
-            ultima_operacao_fundo = OperacaoFundoInvestimento.objects.filter(fundo_investimento__id=fundo_id).order_by('-data')[0]
-            if historico_fundo and historico_fundo[0].data > ultima_operacao_fundo.data:
-                valor_cota = historico_fundo[0].valor_cota
-            else:
-                valor_cota = ultima_operacao_fundo.valor_cota()
-            totais_atuais['Fundos de Inv.'] += (fundo_investimento_divisao[fundo_id] * valor_cota)
+    # Fundos de investimento
+    fundos_investimento = calcular_qtd_cotas_ate_dia(investidor, datetime.date.today())
+    for fundo_id in fundos_investimento.keys():
+        historico_fundo = HistoricoValorCotas.objects.filter(fundo_investimento__id=fundo_id).order_by('-data')
+        ultima_operacao_fundo = OperacaoFundoInvestimento.objects.filter(fundo_investimento__id=fundo_id).order_by('-data')[0]
+        if historico_fundo and historico_fundo[0].data > ultima_operacao_fundo.data:
+            valor_cota = historico_fundo[0].valor_cota
+        else:
+            valor_cota = ultima_operacao_fundo.valor_cota()
+        totais_atuais['Fundos de Inv.'] += (fundos_investimento[fundo_id] * valor_cota)
             
     # Letras de crédito
     letras_credito = calcular_valor_lc_ate_dia(investidor, data_atual)
     for total_lc in letras_credito.values():
         totais_atuais['Letras de Crédito'] += total_lc
     
-    for divisao in divisoes: 
-        # Tesouro Direto
-        td_divisao = calcular_qtd_titulos_ate_dia_por_divisao(datetime.date.today(), divisao.id)
-        for titulo_id in td_divisao.keys():
-            try:
-                td_valor = ValorDiarioTitulo.objects.filter(titulo__id=titulo_id, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).order_by('-data_hora')[0].preco_venda
-            except:
-                td_valor = HistoricoTitulo.objects.filter(titulo__id=titulo_id).order_by('-data')[0].preco_venda
-            totais_atuais['Tesouro Direto'] += (td_divisao[titulo_id] * td_valor)
+    # Tesouro Direto
+    titulos = quantidade_titulos_ate_dia(investidor, datetime.date.today())
+    for titulo_id in titulos.keys():
+        try:
+            td_valor = ValorDiarioTitulo.objects.filter(titulo__id=titulo_id, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).order_by('-data_hora')[0].preco_venda
+        except:
+            td_valor = HistoricoTitulo.objects.filter(titulo__id=titulo_id).order_by('-data')[0].preco_venda
+        totais_atuais['Tesouro Direto'] += (titulos[titulo_id] * td_valor)
     
     # Arredondar todos os valores para 2 casas decimais
     for chave, valor in totais_atuais.items():
