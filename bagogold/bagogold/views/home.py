@@ -9,8 +9,10 @@ from bagogold.bagogold.models.fundo_investimento import \
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
     ValorDiarioTitulo
+from bagogold.bagogold.utils.acoes import calcular_poupanca_prov_acao_ate_dia
 from bagogold.bagogold.utils.cdb_rdb import calcular_valor_cdb_rdb_ate_dia, \
     calcular_valor_venda_cdb_rdb
+from bagogold.bagogold.utils.fii import calcular_poupanca_prov_fii_ate_dia
 from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
     buscar_totais_atuais_investimentos, buscar_proventos_a_receber, \
     buscar_proventos_a_receber_data_ex_futura
@@ -99,7 +101,28 @@ def inicio(request):
         proventos_acoes_futuros = list()
         proventos_fiis_a_receber = list()
         proventos_fiis_futuros = list()
-        
+    
+    # Buscar dados para o acumulado mensal
+    ultimo_dia_mes_anterior = data_atual.date().replace(day=1) - datetime.timedelta(days=1)
+    acumulado_mensal_atual = sum(calcular_valor_cdb_rdb_ate_dia(investidor, data_atual).values()) \
+                                    - sum(calcular_valor_cdb_rdb_ate_dia(investidor, ultimo_dia_mes_anterior).values())
+    acumulado_mensal_atual += sum(calcular_valor_lc_ate_dia(investidor, data_atual).values()) \
+                                    - sum(calcular_valor_lc_ate_dia(investidor, ultimo_dia_mes_anterior).values())
+    acumulado_mensal_atual += calcular_poupanca_prov_fii_ate_dia(investidor, data_atual) \
+                                    - calcular_poupanca_prov_fii_ate_dia(investidor, ultimo_dia_mes_anterior)
+    acumulado_mensal_atual += calcular_poupanca_prov_acao_ate_dia(investidor, data_atual) \
+                                    - calcular_poupanca_prov_acao_ate_dia(investidor, ultimo_dia_mes_anterior)
+                                                                                          
+    ultimo_dia_mes_antes_do_anterior = ultimo_dia_mes_anterior.replace(day=1) - datetime.timedelta(days=1)              
+    acumulado_mensal_anterior = sum(calcular_valor_cdb_rdb_ate_dia(investidor, ultimo_dia_mes_anterior).values()) \
+                                    - sum(calcular_valor_cdb_rdb_ate_dia(investidor, ultimo_dia_mes_antes_do_anterior).values())
+    acumulado_mensal_anterior += sum(calcular_valor_lc_ate_dia(investidor, ultimo_dia_mes_anterior).values()) \
+                                    - sum(calcular_valor_lc_ate_dia(investidor, ultimo_dia_mes_antes_do_anterior).values())
+    acumulado_mensal_anterior += calcular_poupanca_prov_fii_ate_dia(investidor, ultimo_dia_mes_anterior) \
+                                    - calcular_poupanca_prov_fii_ate_dia(investidor, ultimo_dia_mes_antes_do_anterior)
+    acumulado_mensal_anterior += calcular_poupanca_prov_acao_ate_dia(investidor, ultimo_dia_mes_anterior) \
+                                    - calcular_poupanca_prov_acao_ate_dia(investidor, ultimo_dia_mes_antes_do_anterior)
+    
     qtd_ultimos_dias = 31
     if request.user.is_authenticated():
         # Guardar valores totais
@@ -133,7 +156,8 @@ def inicio(request):
     graf_rendimentos_mensal_lc = [[str(calendar.timegm(data.replace(hour=6).timetuple()) * 1000), diario_lc[data.date()] ] \
                                for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ] if request.user.is_authenticated() else list()
     
-    return TemplateResponse(request, 'inicio.html', {'ultimas_operacoes': ultimas_operacoes, 'investimentos_atuais': investimentos_atuais, 'proventos_acoes_recebidos_hoje': proventos_acoes_recebidos_hoje,
+    return TemplateResponse(request, 'inicio.html', {'ultimas_operacoes': ultimas_operacoes, 'investimentos_atuais': investimentos_atuais, 'acumulado_mensal_atual': acumulado_mensal_atual,
+                                                     'acumulado_mensal_anterior': acumulado_mensal_anterior, 'proventos_acoes_recebidos_hoje': proventos_acoes_recebidos_hoje,
                                                      'proventos_fiis_recebidos_hoje': proventos_fiis_recebidos_hoje, 'proventos_acoes_a_receber': proventos_acoes_a_receber,
                                                      'proventos_fiis_a_receber': proventos_fiis_a_receber, 'proventos_acoes_futuros': proventos_acoes_futuros,
                                                      'proventos_fiis_futuros': proventos_fiis_futuros,'graf_rendimentos_mensal_lc': graf_rendimentos_mensal_lc,
