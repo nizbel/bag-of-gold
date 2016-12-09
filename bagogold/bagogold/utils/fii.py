@@ -19,7 +19,7 @@ def calcular_poupanca_prov_fii_ate_dia(investidor, dia):
     # Remover valores repetidos
     fiis = list(set(operacoes.values_list('fii', flat=True)))
 
-    proventos = ProventoFII.objects.filter(data_ex__lte=dia, acao__in=fiis).order_by('data_ex')
+    proventos = ProventoFII.objects.filter(data_ex__lte=dia, fii__in=fiis).order_by('data_ex')
     for provento in proventos:
         provento.data = provento.data_ex
      
