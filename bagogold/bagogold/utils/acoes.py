@@ -360,7 +360,6 @@ def calcular_poupanca_prov_acao_ate_dia(investidor, dia, destinacao='B'):
     acoes = {}
     # Calculos de patrimonio e gasto total
     for item_lista in lista_conjunta:      
-        print item_lista
         if item_lista.acao.ticker not in acoes.keys():
             acoes[item_lista.acao.ticker] = 0
             
