@@ -6,6 +6,7 @@ from bagogold.bagogold.utils.misc import calcular_iof_regressivo, \
 from decimal import Decimal
 from django.test import TestCase
 import datetime
+from bagogold.bagogold.models.cdb_rdb import CDB_RDB
 
 class IOFTestCase(TestCase):
     # TODO preparar teste com TD
@@ -77,3 +78,54 @@ class QtdDiasUteisNoPeriodoTestCase(TestCase):
         """Testa se retorna os 81 dias úteis"""
         self.assertEqual(qtd_dias_uteis_no_periodo(datetime.date(2016, 7, 1), datetime.date(2016, 10, 26)), 81)
 
+class RendimentosTestCase(TestCase):
+    
+     def setUp(self):
+         # Investidor
+         user = User.objects.create(username='tester')
+        
+         # Operações
+         # Ação
+         empresa = Empresa.objects.create(nome='Teste', nome_pregao='TEST')
+         acao = Acao.objects.create(ticker='TEST3', empresa=empresa)
+         operacao_acoes1 = OperacaoAcao.objects.create(investidor=user.investidor, destinacao='B', preco_unitario=Decimal(20), corretagem=Decimal(10), quantidade=200,
+                                       data=data_atual - datetime.timedelta(days=0), acao=acao, tipo_operacao='C', emolumentos=Decimal(0))
+         operacao_acoes2 = OperacaoAcao.objects.create(investidor=user.investidor, destinacao='B', preco_unitario=Decimal(20), corretagem=Decimal(5), quantidade=100, 
+                                       data=data_atual - datetime.timedelta(days=1), acao=acao, tipo_operacao='C', emolumentos=Decimal(0))
+         operacao_acoes3 = OperacaoAcao.objects.create(investidor=user.investidor, destinacao='B', preco_unitario=Decimal(10), corretagem=Decimal(10), quantidade=300, 
+                                       data=data_atual - datetime.timedelta(days=2), acao=acao, tipo_operacao='C', emolumentos=Decimal(0))
+        
+         # FII
+         fii = FII.objects.create(ticker='TEST11')
+         operacao_fii1 = OperacaoFII.objects.create(investidor=user.investidor, preco_unitario=Decimal(15), corretagem=Decimal(10), quantidade=400, 
+                                    data=data_atual - datetime.timedelta(days=1), tipo_operacao='C', fii=fii, emolumentos=Decimal(0))
+         operacao_fii2 = OperacaoFII.objects.create(investidor=user.investidor, preco_unitario=Decimal(100), corretagem=Decimal(10), quantidade=10, 
+                                    data=data_atual - datetime.timedelta(days=2), tipo_operacao='C', fii=fii, emolumentos=Decimal(0))
+        
+         # LC
+         lc = LetraCredito.objects.create(nome='Letra de teste', investidor=user.investidor)
+         lc_porcentagem_di = HistoricoPorcentagemLetraCredito.objects.create(letra_credito=lc, porcentagem_di=Decimal(90))
+         operacao_lc1 = OperacaoLetraCredito.objects.create(investidor=user.investidor, letra_credito=lc, data=data_atual - datetime.timedelta(days=0), tipo_operacao='C',
+                                            quantidade=Decimal(1000))
+         operacao_lc2 = OperacaoLetraCredito.objects.create(investidor=user.investidor, letra_credito=lc, data=data_atual - datetime.timedelta(days=1), tipo_operacao='C',
+                                            quantidade=Decimal(2000))
+         
+         # CDB/RDB
+         cdb_rdb = CDB_RDB.objects.create(nome='CDB de teste', investidor=user.investidor)
+         lc_porcentagem_di = HistoricoPorcentagemLetraCredito.objects.create(letra_credito=lc, porcentagem_di=Decimal(90))
+         operacao_lc1 = OperacaoLetraCredito.objects.create(investidor=user.investidor, letra_credito=lc, data=data_atual - datetime.timedelta(days=0), tipo_operacao='C',
+                                            quantidade=Decimal(1000))
+         operacao_lc2 = OperacaoLetraCredito.objects.create(investidor=user.investidor, letra_credito=lc, data=data_atual - datetime.timedelta(days=1), tipo_operacao='C',
+                                            quantidade=Decimal(2000))
+    
+    def test_deve_trazer_zero_caso_nao_haja_investimentos(self):
+        """Testa se método traz resultado 0 caso não haja investimentos"""
+        self.assertEqual(Decimal(0), calcular_rendimentos_ate_data(datetime.date()))
+        
+    def test_deve_trazer_valor_apenas_de_cdb_rdb(self):
+        """Testa se traz valor apenas para CDB/RDB"""
+        self.assertEqual(0, 0)
+        
+    def test_deve_trazer_valor_fii_e_acao(self):
+        """Testa se traz valor para FIIs e ações"""
+        self.assertEqual(0, 0)
