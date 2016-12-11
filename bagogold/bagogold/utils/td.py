@@ -75,7 +75,6 @@ def quantidade_titulos_ate_dia(investidor, dia):
     qtd_titulos = {}
     
     for item in operacoes:
-        print qtd_titulos
         # Verificar se se trata de compra ou venda
         if item.tipo_operacao == 'C':
             if item.titulo.id not in qtd_titulos:
