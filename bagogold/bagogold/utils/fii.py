@@ -26,7 +26,7 @@ def calcular_poupanca_prov_fii_ate_dia(investidor, dia):
     lista_conjunta = sorted(chain(operacoes, proventos),
                             key=attrgetter('data'))
     
-    total_proventos = 0
+    total_proventos = Decimal(0)
     
     # Guarda as cotas correntes para o calculo do patrimonio
     fiis = {}
