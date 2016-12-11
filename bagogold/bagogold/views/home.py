@@ -18,6 +18,7 @@ from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
     buscar_proventos_a_receber_data_ex_futura
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas, \
     calcular_valor_lc_ate_dia, calcular_valor_venda_lc
+from bagogold.bagogold.utils.misc import calcular_rendimentos_ate_data
 from decimal import Decimal, ROUND_DOWN
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
@@ -104,24 +105,10 @@ def inicio(request):
     
     # Buscar dados para o acumulado mensal
     ultimo_dia_mes_anterior = data_atual.date().replace(day=1) - datetime.timedelta(days=1)
-    acumulado_mensal_atual = sum(calcular_valor_cdb_rdb_ate_dia(investidor, data_atual).values()) \
-                                    - sum(calcular_valor_cdb_rdb_ate_dia(investidor, ultimo_dia_mes_anterior).values())
-    acumulado_mensal_atual += sum(calcular_valor_lc_ate_dia(investidor, data_atual).values()) \
-                                    - sum(calcular_valor_lc_ate_dia(investidor, ultimo_dia_mes_anterior).values())
-    acumulado_mensal_atual += calcular_poupanca_prov_fii_ate_dia(investidor, data_atual) \
-                                    - calcular_poupanca_prov_fii_ate_dia(investidor, ultimo_dia_mes_anterior)
-    acumulado_mensal_atual += calcular_poupanca_prov_acao_ate_dia(investidor, data_atual) \
-                                    - calcular_poupanca_prov_acao_ate_dia(investidor, ultimo_dia_mes_anterior)
+    acumulado_mensal_atual = sum(calcular_rendimentos_ate_data(investidor, data_atual).values()) - sum(calcular_rendimentos_ate_data(investidor, ultimo_dia_mes_anterior).values())
                                                                                           
-    ultimo_dia_mes_antes_do_anterior = ultimo_dia_mes_anterior.replace(day=1) - datetime.timedelta(days=1)              
-    acumulado_mensal_anterior = sum(calcular_valor_cdb_rdb_ate_dia(investidor, ultimo_dia_mes_anterior).values()) \
-                                    - sum(calcular_valor_cdb_rdb_ate_dia(investidor, ultimo_dia_mes_antes_do_anterior).values())
-    acumulado_mensal_anterior += sum(calcular_valor_lc_ate_dia(investidor, ultimo_dia_mes_anterior).values()) \
-                                    - sum(calcular_valor_lc_ate_dia(investidor, ultimo_dia_mes_antes_do_anterior).values())
-    acumulado_mensal_anterior += calcular_poupanca_prov_fii_ate_dia(investidor, ultimo_dia_mes_anterior) \
-                                    - calcular_poupanca_prov_fii_ate_dia(investidor, ultimo_dia_mes_antes_do_anterior)
-    acumulado_mensal_anterior += calcular_poupanca_prov_acao_ate_dia(investidor, ultimo_dia_mes_anterior) \
-                                    - calcular_poupanca_prov_acao_ate_dia(investidor, ultimo_dia_mes_antes_do_anterior)
+    ultimo_dia_mes_antes_do_anterior = ultimo_dia_mes_anterior.replace(day=1) - datetime.timedelta(days=1)         
+    acumulado_mensal_anterior = sum(calcular_rendimentos_ate_data(investidor, ultimo_dia_mes_anterior).values()) - sum(calcular_rendimentos_ate_data(investidor, ultimo_dia_mes_antes_do_anterior).values())
     
     qtd_ultimos_dias = 31
     if request.user.is_authenticated():

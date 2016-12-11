@@ -1,13 +1,7 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.acoes import OperacaoAcao
-from bagogold.bagogold.models.fii import OperacaoFII
-from bagogold.bagogold.models.fundo_investimento import \
-    OperacaoFundoInvestimento
 from bagogold.bagogold.models.lc import OperacaoLetraCredito
 from bagogold.bagogold.models.td import HistoricoIPCA, OperacaoTitulo
 from decimal import Decimal
-from itertools import chain
-from operator import attrgetter
 from urllib2 import Request, urlopen, URLError, HTTPError
 import datetime
 import math
@@ -102,6 +96,44 @@ def buscar_valores_diarios_selic(data_inicial=datetime.date.today() - datetime.t
                 lista_datas_valores.append((data, fator_diario))
         return lista_datas_valores
      
+def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDFILT'):
+    """
+    Calcula os rendimentos de operações até a data especificada, para os tipos de investimento definidos
+    Parâmetros: Investidor
+                Data final (inclusive)
+                Tipo de investimento (seguindo o padrão
+    B = Buy and Hold; C = CDB/RDB; D = Tesouro Direto; F = FII; I = Fundo de investimento; L = Letra de Crédito; T = Trading;
+    Retorno: Valores de rendimentos para cada tipo de investimento {Tipo: Valor}
+    """
+    from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB
+    from bagogold.bagogold.utils.acoes import calcular_poupanca_prov_acao_ate_dia
+    from bagogold.bagogold.utils.cdb_rdb import calcular_valor_cdb_rdb_ate_dia
+    from bagogold.bagogold.utils.fii import calcular_poupanca_prov_fii_ate_dia
+    from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia
+    
+    rendimentos = {}
+    # Ações (Buy and Hold)
+    if 'B' in tipo_investimentos:
+        rendimentos['B'] = calcular_poupanca_prov_acao_ate_dia(investidor, data) 
+            
+    # CDB/RDB
+    if 'C' in tipo_investimentos:
+        rendimentos['C'] = sum(calcular_valor_cdb_rdb_ate_dia(investidor, data).values()) \
+            - sum([operacao.quantidade for operacao in OperacaoCDB_RDB.objects.filter(data__lte=data, tipo_operacao='C')]) \
+            + sum([operacao.quantidade for operacao in OperacaoCDB_RDB.objects.filter(data__lte=data, tipo_operacao='V')])
+    
+    # FII
+    if 'F' in tipo_investimentos:
+        rendimentos['F'] = calcular_poupanca_prov_fii_ate_dia(investidor, data)
+        
+    # Letras de Crédito
+    if 'L' in tipo_investimentos:
+        rendimentos['L'] = sum(calcular_valor_lc_ate_dia(investidor, data).values()) \
+            - sum([operacao.quantidade for operacao in OperacaoLetraCredito.objects.filter(data__lte=data, tipo_operacao='C')]) \
+            + sum([operacao.quantidade for operacao in OperacaoLetraCredito.objects.filter(data__lte=data, tipo_operacao='V')])
+            
+    return rendimentos
+
 def trazer_primeiro_registro(queryset):
     """
     Traz o primeiro registro de um queryset

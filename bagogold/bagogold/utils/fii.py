@@ -23,10 +23,10 @@ def calcular_poupanca_prov_fii_ate_dia(investidor, dia):
     for provento in proventos:
         provento.data = provento.data_ex
      
-    lista_conjunta = sorted(chain(operacoes, proventos),
+    lista_conjunta = sorted(chain(proventos, operacoes),
                             key=attrgetter('data'))
     
-    total_proventos = 0
+    total_proventos = Decimal(0)
     
     # Guarda as cotas correntes para o calculo do patrimonio
     fiis = {}
