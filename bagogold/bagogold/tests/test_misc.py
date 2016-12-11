@@ -9,12 +9,14 @@ from bagogold.bagogold.models.fii import ProventoFII, FII, OperacaoFII, \
 from bagogold.bagogold.models.lc import LetraCredito, \
     HistoricoPorcentagemLetraCredito, OperacaoLetraCredito, HistoricoTaxaDI
 from bagogold.bagogold.models.td import Titulo, OperacaoTitulo
+from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo, \
     verificar_feriado_bovespa, qtd_dias_uteis_no_periodo, \
     calcular_domingo_pascoa_no_ano, buscar_valores_diarios_selic, \
     calcular_rendimentos_ate_data
-from decimal import Decimal
+from decimal import Decimal, ROUND_DOWN
 from django.contrib.auth.models import User
+from django.db.models.aggregates import Count
 from django.test import TestCase
 from random import uniform
 import datetime
@@ -116,18 +118,10 @@ class RendimentosTestCase(TestCase):
         operacao_fii2 = OperacaoFII.objects.create(investidor=user.investidor, preco_unitario=Decimal(100), corretagem=Decimal(10), quantidade=10, 
                                    data=data_atual - datetime.timedelta(days=20), tipo_operacao='C', fii=fii, emolumentos=Decimal(0))
         
-        # LC
-        lc = LetraCredito.objects.create(nome='Letra de teste', investidor=user.investidor)
-        lc_porcentagem_di = HistoricoPorcentagemLetraCredito.objects.create(letra_credito=lc, porcentagem_di=Decimal(90))
-        operacao_lc1 = OperacaoLetraCredito.objects.create(investidor=user.investidor, letra_credito=lc, data=data_atual - datetime.timedelta(days=0), tipo_operacao='C',
-                                           quantidade=Decimal(1000))
-        operacao_lc2 = OperacaoLetraCredito.objects.create(investidor=user.investidor, letra_credito=lc, data=data_atual - datetime.timedelta(days=10), tipo_operacao='C',
-                                           quantidade=Decimal(2000))
-        
         # CDB/RDB
         cdb_rdb = CDB_RDB.objects.create(nome='CDB de teste', investidor=user.investidor, tipo='C', tipo_rendimento='2')
         cdb_rdb_porcentagem_di = HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cdb_rdb, porcentagem=Decimal(90))
-        operacao_cdb_rdb1 = OperacaoCDB_RDB.objects.create(investidor=user.investidor, investimento=cdb_rdb, data=data_atual - datetime.timedelta(days=0), tipo_operacao='C',
+        operacao_cdb_rdb1 = OperacaoCDB_RDB.objects.create(investidor=user.investidor, investimento=cdb_rdb, data=data_atual + datetime.timedelta(days=1), tipo_operacao='C',
                                            quantidade=Decimal(1000))
         operacao_cdb_rdb2 = OperacaoCDB_RDB.objects.create(investidor=user.investidor, investimento=cdb_rdb, data=data_atual - datetime.timedelta(days=10), tipo_operacao='C',
                                            quantidade=Decimal(2000))
@@ -158,7 +152,19 @@ class RendimentosTestCase(TestCase):
         rendimentos = calcular_rendimentos_ate_data(investidor, datetime.date(2016, 12, 10), 'C')
         self.assertEqual(len(rendimentos.keys()), 1)
         self.assertIn('C', rendimentos.keys())
-        self.assertEqual(Decimal(0), rendimentos['C'])
+        
+        # Calcular valor esperado
+        operacao_cdb_rdb = OperacaoCDB_RDB.objects.all().order_by('data')[0]
+        # Definir período do histórico relevante
+        historico_utilizado = HistoricoTaxaDI.objects.filter(data__range=[operacao_cdb_rdb.data, datetime.date(2016, 12, 10)]).values('taxa').annotate(qtd_dias=Count('taxa'))
+        taxas_dos_dias = {}
+        for taxa_quantidade in historico_utilizado:
+            taxas_dos_dias[taxa_quantidade['taxa']] = taxa_quantidade['qtd_dias']
+        
+        # Calcular
+        valor_esperado = calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao_cdb_rdb.quantidade, operacao_cdb_rdb.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN) \
+            - operacao_cdb_rdb.quantidade
+        self.assertEqual(valor_esperado, rendimentos['C'])
         
     def test_deve_trazer_valor_fii_e_acao(self):
         """Testa se traz valor para FIIs e ações"""
