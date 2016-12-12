@@ -116,7 +116,7 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDFILT'
     rendimentos = {}
     # Ações (Buy and Hold)
     if 'B' in tipo_investimentos:
-        rendimentos['B'] = calcular_poupanca_prov_acao_ate_dia(investidor, data) + sum(UsoProventosOperacaoAcao.objects.filter(operacao__data__lte=data).values_list('qtd_utilizada', flat=True))
+        rendimentos['B'] = calcular_poupanca_prov_acao_ate_dia(investidor, data) + sum(UsoProventosOperacaoAcao.objects.filter(operacao__investidor=investidor, operacao__data__lte=data).values_list('qtd_utilizada', flat=True))
             
     # CDB/RDB
     if 'C' in tipo_investimentos:
@@ -126,7 +126,7 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDFILT'
     
     # FII
     if 'F' in tipo_investimentos:
-        rendimentos['F'] = calcular_poupanca_prov_fii_ate_dia(investidor, data) + sum(UsoProventosOperacaoFII.objects.filter(operacao__data__lte=data).values_list('qtd_utilizada', flat=True))
+        rendimentos['F'] = calcular_poupanca_prov_fii_ate_dia(investidor, data) + sum(UsoProventosOperacaoFII.objects.filter(operacao__investidor=investidor, operacao__data__lte=data).values_list('qtd_utilizada', flat=True))
         
     # Letras de Crédito
     if 'L' in tipo_investimentos:
