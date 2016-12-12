@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.lc import OperacaoLetraCredito
 from bagogold.bagogold.models.td import HistoricoIPCA, OperacaoTitulo
-from bagogold.bagogold.utils.cdb_rdb import calcular_valor_venda_cdb_rdb
-from bagogold.bagogold.utils.lc import calcular_valor_venda_lc
 from decimal import Decimal
 from urllib2 import Request, urlopen, URLError, HTTPError
 import datetime
@@ -109,9 +107,9 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDFILT'
     """
     from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB
     from bagogold.bagogold.utils.acoes import calcular_poupanca_prov_acao_ate_dia
-    from bagogold.bagogold.utils.cdb_rdb import calcular_valor_cdb_rdb_ate_dia
+    from bagogold.bagogold.utils.cdb_rdb import calcular_valor_cdb_rdb_ate_dia, calcular_valor_venda_cdb_rdb
     from bagogold.bagogold.utils.fii import calcular_poupanca_prov_fii_ate_dia
-    from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia
+    from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia, calcular_valor_venda_lc
     
     rendimentos = {}
     # Ações (Buy and Hold)
