@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.lc import OperacaoLetraCredito
 from bagogold.bagogold.models.td import HistoricoIPCA, OperacaoTitulo
+from bagogold.bagogold.utils.cdb_rdb import calcular_valor_venda_cdb_rdb
+from bagogold.bagogold.utils.lc import calcular_valor_venda_lc
 from decimal import Decimal
 from urllib2 import Request, urlopen, URLError, HTTPError
 import datetime
@@ -120,7 +122,7 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDFILT'
     if 'C' in tipo_investimentos:
         rendimentos['C'] = sum(calcular_valor_cdb_rdb_ate_dia(investidor, data).values()) \
             - sum([operacao.quantidade for operacao in OperacaoCDB_RDB.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='C')]) \
-            + sum([operacao.quantidade for operacao in OperacaoCDB_RDB.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='V')])
+            + sum([calcular_valor_venda_cdb_rdb(operacao) for operacao in OperacaoCDB_RDB.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='V')])
     
     # FII
     if 'F' in tipo_investimentos:
@@ -130,7 +132,7 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDFILT'
     if 'L' in tipo_investimentos:
         rendimentos['L'] = sum(calcular_valor_lc_ate_dia(investidor, data).values()) \
             - sum([operacao.quantidade for operacao in OperacaoLetraCredito.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='C')]) \
-            + sum([operacao.quantidade for operacao in OperacaoLetraCredito.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='V')])
+            + sum([calcular_valor_venda_lc(operacao) for operacao in OperacaoLetraCredito.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='V')])
             
     return rendimentos
 
