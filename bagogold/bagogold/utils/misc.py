@@ -119,8 +119,8 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDFILT'
     # CDB/RDB
     if 'C' in tipo_investimentos:
         rendimentos['C'] = sum(calcular_valor_cdb_rdb_ate_dia(investidor, data).values()) \
-            - sum([operacao.quantidade for operacao in OperacaoCDB_RDB.objects.filter(data__lte=data, tipo_operacao='C')]) \
-            + sum([operacao.quantidade for operacao in OperacaoCDB_RDB.objects.filter(data__lte=data, tipo_operacao='V')])
+            - sum([operacao.quantidade for operacao in OperacaoCDB_RDB.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='C')]) \
+            + sum([operacao.quantidade for operacao in OperacaoCDB_RDB.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='V')])
     
     # FII
     if 'F' in tipo_investimentos:
@@ -129,8 +129,8 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDFILT'
     # Letras de Crédito
     if 'L' in tipo_investimentos:
         rendimentos['L'] = sum(calcular_valor_lc_ate_dia(investidor, data).values()) \
-            - sum([operacao.quantidade for operacao in OperacaoLetraCredito.objects.filter(data__lte=data, tipo_operacao='C')]) \
-            + sum([operacao.quantidade for operacao in OperacaoLetraCredito.objects.filter(data__lte=data, tipo_operacao='V')])
+            - sum([operacao.quantidade for operacao in OperacaoLetraCredito.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='C')]) \
+            + sum([operacao.quantidade for operacao in OperacaoLetraCredito.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='V')])
             
     return rendimentos
 
