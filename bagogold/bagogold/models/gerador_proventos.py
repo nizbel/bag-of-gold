@@ -152,12 +152,18 @@ class ProventoAcaoDocumento (models.Model):
     versao = models.PositiveSmallIntegerField(u'Versão')
     descricao_provento = models.OneToOneField('ProventoAcaoDescritoDocumentoBovespa')
         
+    class Meta:
+        unique_together=(('documento', 'versao'))
+        
 class ProventoFIIDocumento (models.Model):
     provento = models.ForeignKey('ProventoFII', blank=True, null=True)
     documento = models.ForeignKey('DocumentoProventoBovespa')
     versao = models.PositiveSmallIntegerField(u'Versão')
     descricao_provento = models.OneToOneField('ProventoFIIDescritoDocumentoBovespa')
     
+    class Meta:
+        unique_together=(('documento', 'versao'))
+        
 class ProventoAcaoDescritoDocumentoBovespa (models.Model):
     acao = models.ForeignKey('Acao')
     valor_unitario = models.DecimalField(u'Valor unitário', max_digits=16, decimal_places=12)
@@ -169,6 +175,9 @@ class ProventoAcaoDescritoDocumentoBovespa (models.Model):
     data_pagamento = models.DateField(u'Data do pagamento', blank=True, null=True)
     observacao = models.CharField(u'Observação', blank=True, null=True, max_length=300)
     
+    class Meta:
+        unique_together=(('data_ex', 'data_pagamento', 'acao', 'tipo_provento'))
+        
     def __unicode__(self):
         tipo = ''
         if self.tipo_provento == 'A':
