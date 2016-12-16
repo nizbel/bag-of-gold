@@ -153,7 +153,7 @@ class ProventoAcaoDocumento (models.Model):
     descricao_provento = models.OneToOneField('ProventoAcaoDescritoDocumentoBovespa')
         
     class Meta:
-        unique_together=(('documento', 'versao'))
+        unique_together=(('documento', 'versao', 'provento'))
         
 class ProventoFIIDocumento (models.Model):
     provento = models.ForeignKey('ProventoFII', blank=True, null=True)
@@ -162,7 +162,7 @@ class ProventoFIIDocumento (models.Model):
     descricao_provento = models.OneToOneField('ProventoFIIDescritoDocumentoBovespa')
     
     class Meta:
-        unique_together=(('documento', 'versao'))
+        unique_together=(('documento', 'versao', 'provento'))
         
 class ProventoAcaoDescritoDocumentoBovespa (models.Model):
     acao = models.ForeignKey('Acao')
