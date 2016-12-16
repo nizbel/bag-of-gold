@@ -244,7 +244,13 @@ def validar_documento_provento(request, id_pendencia):
                     if str(id_descricao) in request.POST.keys():
                         print 'Alterou', id_descricao
                         if request.POST.get('descricao_%s' % (id_descricao)):
-                            print u'Descrição %s é relacionada a %s' % (id_descricao, request.POST.get('descricao_%s' % (id_descricao)))
+                            # Verificar se foi relacionado a um provento ou a uma descrição
+                            elemento_relacionado = request.POST.get('descricao_%s' % (id_descricao))
+                            if 'p' in elemento_relacionado:
+                                print 'Provento'
+                            elif 'd' in elemento_relacionado:
+                                print 'Descrição'
+                            print u'Descrição %s é relacionada a %s' % (id_descricao, elemento_relacionado)
                         else:
                             validacao_completa = False
                             messages.error(request, 'Provento %s marcado como relacionado a outro provento, escolha um provento para a relação' % (id_descricao))
@@ -296,9 +302,11 @@ def validar_documento_provento(request, id_pendencia):
             descricao_provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(descricao_provento.valor_unitario))
             
             # Buscar proventos próximos
+            # TODO filtrar para que não apareçam descrições e proventos iguais
             descricao_provento.proventos_proximos = buscar_proventos_e_descricoes_proximos_acao(descricao_provento)
             for elemento in descricao_provento.proventos_proximos:
                 if isinstance(elemento, Provento):
+                    elemento.tipo_validacao = 'p'
                     # Definir tipo de provento
                     if elemento.tipo_provento == 'A':
                         elemento.descricao_tipo_provento = u'Ações'
@@ -315,6 +323,7 @@ def validar_documento_provento(request, id_pendencia):
                     elemento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(elemento.valor_unitario))
                         
                 elif isinstance(elemento, ProventoAcaoDescritoDocumentoBovespa):
+                    elemento.tipo_validacao = 'd'
                     # Definir tipo de provento
                     if elemento.tipo_provento == 'A':
                         elemento.descricao_tipo_provento = u'Ações'
