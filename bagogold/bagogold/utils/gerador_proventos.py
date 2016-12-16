@@ -106,6 +106,16 @@ def converter_descricao_provento_para_provento_acoes(descricao_provento):
             lista_acoes.append(AcaoProvento(provento=provento, data_pagamento_frac=acao_provento.data_pagamento_frac, valor_calculo_frac=acao_provento.valor_calculo_frac,
                                             acao_recebida=acao_provento.acao_recebida))
         return (provento, lista_acoes)
+    
+def versionar_descricoes_relacionadas_acoes(descricao, descricao_relacionada):
+    """
+    Versiona descrições de proventos em ações relacionadas
+    """
+    # Buscar todas as versões do provento descrito
+    
+    # Adicionar descricao à lista de versões pelo número do protocolo do documento
+    
+    # Gerar versões a partir de 1 na ordem feita
             
 
 def converter_descricao_provento_para_provento_fii(descricao_provento):
@@ -148,6 +158,6 @@ def buscar_proventos_e_descricoes_proximos_acao(descricao_provento):
     desc_proventos_proximos_ant = ProventoAcaoDescritoDocumentoBovespa.objects.filter(acao=descricao_provento.acao, data_ex__lte=descricao_provento.data_ex).exclude(id=descricao_provento.id).order_by('-data_ex')[:5]
     desc_proventos_proximos_post = ProventoAcaoDescritoDocumentoBovespa.objects.filter(acao=descricao_provento.acao, data_ex__gt=descricao_provento.data_ex).order_by('data_ex')[:5]
     
-    # Ordenar pela diferença com a data da descrição de proento
+    # Ordenar pela diferença com a data da descrição de provento
     return sorted(chain(proventos_proximos_ant, proventos_proximos_post, desc_proventos_proximos_ant, desc_proventos_proximos_post),
                     key= lambda x: abs((x.data_ex - descricao_provento.data_ex).days))[:10]
