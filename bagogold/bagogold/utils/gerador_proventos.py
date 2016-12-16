@@ -96,7 +96,7 @@ def converter_descricao_provento_para_provento_acoes(descricao_provento):
     # Se dividendo ou JSCP, converter diretamente
     if descricao_provento.tipo_provento in ['D', 'J']:
         return (Provento(acao=descricao_provento.acao, tipo_provento=descricao_provento.tipo_provento, data_ex=descricao_provento.data_ex, data_pagamento=descricao_provento.data_pagamento,
-                        valor_unitario=descricao_provento.valor_unitario), )
+                        valor_unitario=descricao_provento.valor_unitario), list())
     # Para dividendo em ações, copiar também a descrição de recebimento de ações
     else:
         provento = Provento(acao=descricao_provento.acao, tipo_provento=descricao_provento.tipo_provento, data_ex=descricao_provento.data_ex, data_pagamento=descricao_provento.data_pagamento,
