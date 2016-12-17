@@ -147,22 +147,22 @@ class PendenciaDocumentoProvento (models.Model):
         return None
     
 class ProventoAcaoDocumento (models.Model):
-    provento = models.ForeignKey('Provento', blank=True, null=True)
+    provento = models.ForeignKey('Provento')
     documento = models.ForeignKey('DocumentoProventoBovespa')
     versao = models.PositiveSmallIntegerField(u'Versão')
     descricao_provento = models.OneToOneField('ProventoAcaoDescritoDocumentoBovespa')
         
     class Meta:
-        unique_together=(('documento', 'versao', 'provento'))
+        unique_together=(('documento', 'provento'), ('versao', 'provento'))
         
 class ProventoFIIDocumento (models.Model):
-    provento = models.ForeignKey('ProventoFII', blank=True, null=True)
+    provento = models.ForeignKey('ProventoFII')
     documento = models.ForeignKey('DocumentoProventoBovespa')
     versao = models.PositiveSmallIntegerField(u'Versão')
     descricao_provento = models.OneToOneField('ProventoFIIDescritoDocumentoBovespa')
     
     class Meta:
-        unique_together=(('documento', 'versao', 'provento'))
+        unique_together=(('documento', 'provento'), ('versao', 'provento'))
         
 class ProventoAcaoDescritoDocumentoBovespa (models.Model):
     acao = models.ForeignKey('Acao')

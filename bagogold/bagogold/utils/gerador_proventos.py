@@ -95,27 +95,42 @@ def converter_descricao_provento_para_provento_acoes(descricao_provento):
     
     # Se dividendo ou JSCP, converter diretamente
     if descricao_provento.tipo_provento in ['D', 'J']:
-        return (Provento(acao=descricao_provento.acao, tipo_provento=descricao_provento.tipo_provento, data_ex=descricao_provento.data_ex, data_pagamento=descricao_provento.data_pagamento,
-                        valor_unitario=descricao_provento.valor_unitario), list())
+        novo_provento = Provento(acao=descricao_provento.acao, tipo_provento=descricao_provento.tipo_provento, data_ex=descricao_provento.data_ex, data_pagamento=descricao_provento.data_pagamento,
+                        valor_unitario=descricao_provento.valor_unitario)
+        novo_provento.full_clean()
+        
+        return (novo_provento, list())
     # Para dividendo em ações, copiar também a descrição de recebimento de ações
     else:
-        provento = Provento(acao=descricao_provento.acao, tipo_provento=descricao_provento.tipo_provento, data_ex=descricao_provento.data_ex, data_pagamento=descricao_provento.data_pagamento,
+        novo_provento = Provento(acao=descricao_provento.acao, tipo_provento=descricao_provento.tipo_provento, data_ex=descricao_provento.data_ex, data_pagamento=descricao_provento.data_pagamento,
                         valor_unitario=descricao_provento.valor_unitario)
+        novo_provento.full_clean()
         lista_acoes = list()
         for acao_provento in AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento=descricao_provento):
-            lista_acoes.append(AcaoProvento(provento=provento, data_pagamento_frac=acao_provento.data_pagamento_frac, valor_calculo_frac=acao_provento.valor_calculo_frac,
-                                            acao_recebida=acao_provento.acao_recebida))
-        return (provento, lista_acoes)
+            nova_acao_provento = AcaoProvento(provento=novo_provento, data_pagamento_frac=acao_provento.data_pagamento_frac, valor_calculo_frac=acao_provento.valor_calculo_frac,
+                                            acao_recebida=acao_provento.acao_recebida)
+            nova_acao_provento.full_clean(exclude=('provento',))
+            lista_acoes.append(nova_acao_provento)
+        return (novo_provento, lista_acoes)
     
-def versionar_descricoes_relacionadas_acoes(descricao, descricao_relacionada):
+def versionar_descricoes_relacionadas_acoes(descricao, novo_provento, elemento_relacionado):
     """
     Versiona descrições de proventos em ações relacionadas
+    Parâmetros: Descrição a entrar para as versões
+                Provento gerado a partir da descrição
+                Elemento relacionado (Descrição ou Provento)
     """
-    # Buscar todas as versões do provento descrito
+    # Verifica se é descrição de provento
+    if isinstance(elemento_relacionado, ProventoAcaoDescritoDocumentoBovespa):
+        # Buscar todas as versões do provento descrito
+        versoes_provento = ProventoAcaoDocumento.objects.filter(provento=elemento_relacionado.proventoacaodocumento.provento)
+        # Adicionar descricao à lista de versões pelo número do protocolo do documento
     
-    # Adicionar descricao à lista de versões pelo número do protocolo do documento
+        # Gerar versões a partir de 1 na ordem feita
     
-    # Gerar versões a partir de 1 na ordem feita
+    # Se não, verifica se é um provento já cadastrado
+    elif isinstance(elemento_relacionado, Provento):
+        pass
             
 
 def converter_descricao_provento_para_provento_fii(descricao_provento):
@@ -126,7 +141,7 @@ def criar_descricoes_provento_acoes(descricoes_proventos, acoes_descricoes_prove
     Cria descrições para proventos em ações a partir de um documento
     Parâmetros: Lista de proventos
                 Lista de ações recebidas em proventos
-                Documento
+                Documento que traz os proventos
     """
     objetos_salvos = list()
     try:
