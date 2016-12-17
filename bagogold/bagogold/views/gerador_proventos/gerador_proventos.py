@@ -21,6 +21,7 @@ from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test, \
     permission_required
+from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.forms.formsets import formset_factory
 from django.http.response import HttpResponseRedirect, HttpResponse
@@ -236,34 +237,50 @@ def validar_documento_provento(request, id_pendencia):
                 validacao_completa = True
                 print 'Validar criação'
                 # Verificar proventos descritos na pendência
-                proventos_documento = ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)
-                descricoes_proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento)
-                # Testar se ID's de descrições foram marcados para relacionamento, se sim, deve ter um provento relacionado
-                ids_descricoes = descricoes_proventos.values_list('id', flat=True)
-                for id_descricao in ids_descricoes:
-                    if str(id_descricao) in request.POST.keys():
-                        print 'Alterou', id_descricao
-                        if request.POST.get('descricao_%s' % (id_descricao)):
+                proventos_documento = ProventoAcaoDocumento.objects.filter(documento=pendencia.documento)
+                descricoes_proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento.values_list('descricao_provento', flat=True))
+                for descricao in descricoes_proventos:
+                    # Cria provento
+                    try:
+                        provento_convertido, acoes_provento_convertido = converter_descricao_provento_para_provento_acoes(descricao)
+                    except Exception as e:
+                        validacao_completa = False
+                        messages.error(request, unicode(e))
+                        continue
+                    
+                    # Testar se ID's de descrições foram marcados para relacionamento, se sim, deve ter um provento relacionado
+                    # Verifica se é alteração
+                    if str(descricao.id) in request.POST.keys():
+                        # Se sim, alterar números de versão
+                        print 'Alterou', descricao.id
+                        if request.POST.get('descricao_%s' % (descricao.id)):
                             # Verificar se foi relacionado a um provento ou a uma descrição
-                            elemento_relacionado = request.POST.get('descricao_%s' % (id_descricao))
+                            elemento_relacionado = request.POST.get('descricao_%s' % (descricao.id))
                             if 'p' in elemento_relacionado:
                                 print 'Provento'
                             elif 'd' in elemento_relacionado:
                                 print 'Descrição'
-                            print u'Descrição %s é relacionada a %s' % (id_descricao, elemento_relacionado)
+                            print u'Descrição %s é relacionada a %s' % (descricao.id, elemento_relacionado)
                         else:
                             validacao_completa = False
-                            messages.error(request, 'Provento %s marcado como relacionado a outro provento, escolha um provento para a relação' % (id_descricao))
+                            messages.error(request, 'Provento %s marcado como relacionado a outro provento, escolha um provento para a relação' % (descricao.id))
+                            continue
+                    else:
+                        # Se não, apenas cria um provento novo com versão 1
+                        descricao.proventoacaodocumento.versao = 1
+                        descricao.proventoacaodocumento.provento = provento_convertido
+                        descricao.proventoacaodocumento.full_clean()
                 if validacao_completa:
+                    pass
                     # TODO terminar validação
                     # Preparar lista para apagar todos os objetos que houve tentativa de criar
-                    dados_criados = list()
-                    for descricao in descricoes_proventos:
-                        provento_convertido, acoes_provento_convertido = converter_descricao_provento_para_provento_acoes(descricao)
-                        print provento_convertido, acoes_provento_convertido
-                        # Adicionar provento convertido
-                        dados_criados.append(provento_convertido)
-                        dados_criados.extend(acoes_provento_convertido)
+#                     dados_criados = list()
+#                     for descricao in descricoes_proventos:
+#                         provento_convertido, acoes_provento_convertido = converter_descricao_provento_para_provento_acoes(descricao)
+#                         print provento_convertido, acoes_provento_convertido
+#                         # Adicionar provento convertido
+#                         dados_criados.append(provento_convertido)
+#                         dados_criados.extend(acoes_provento_convertido)
                         # Se tem relação, gerar versões
                         
                         # Se não, criar um ProventoAcaoDocumento com versão 1
