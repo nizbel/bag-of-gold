@@ -9,7 +9,7 @@ from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa,
 from bagogold.bagogold.testFII import baixar_demonstrativo_rendimentos
 from bagogold.bagogold.utils.gerador_proventos import \
     alocar_pendencia_para_investidor, salvar_investidor_responsavel_por_leitura, \
-    desalocar_pendencia_de_investidor, buscar_proventos_e_descricoes_proximos_acao, \
+    desalocar_pendencia_de_investidor, buscar_proventos_proximos_acao, \
     converter_descricao_provento_para_provento_acoes
 from decimal import Decimal
 from django.contrib.auth.models import User
@@ -51,14 +51,14 @@ class GeradorProventosTestCase(TestCase):
         Provento.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 16), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(3))
         Provento.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 13), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(2))
         Provento.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 11), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(1))
-        ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 12), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(8))
-        ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 10), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(7))
-        ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 14), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(6))
-        ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 8), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(5))
-        ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 6), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(4))
-        ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 16), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(3))
-        ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 13), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(2))
-        ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 11), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(1))
+#         ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 12), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(8))
+#         ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 10), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(7))
+#         ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 14), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(6))
+#         ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 8), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(5))
+#         ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 6), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(4))
+#         ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 16), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(3))
+#         ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 13), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(2))
+#         ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 11), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(1))
         
         # Empresa inexistente
         empresa2 = Empresa.objects.create(nome='Teste', nome_pregao='TTTT', codigo_cvm='1024')
@@ -149,15 +149,14 @@ class GeradorProventosTestCase(TestCase):
         with self.assertRaises(ValueError):
             salvar_investidor_responsavel_por_leitura(pendencia, User.objects.get(username='tester').investidor, 'C')
     
-    def test_buscar_proventos_e_descricoes_proximos_acao(self):
-        """Testa busca de proventos e descrições de proventos com data EX próxima"""
+    def test_buscar_proventos_proximos_acao(self):
+        """Testa busca de proventos com data EX próxima"""
         descricao_provento = ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 11, 12), data_pagamento=datetime.date(2016, 11, 20),
                                                                                  tipo_provento='D', valor_unitario=Decimal(10))
-        proventos_proximos = buscar_proventos_e_descricoes_proximos_acao(descricao_provento)
-        self.assertEqual(len(proventos_proximos), 10)
-        self.assertNotIn(descricao_provento, proventos_proximos)
+        proventos_proximos = buscar_proventos_proximos_acao(descricao_provento)
+        self.assertEqual(len(proventos_proximos), 8)
         for provento in proventos_proximos:
-            self.assertLessEqual(abs((provento.data_ex - descricao_provento.data_ex).days), 2)
+            self.assertLessEqual(abs((provento.data_ex - descricao_provento.data_ex).days), 6)
     
     def test_excluir_arquivo_sem_info(self):
         """Testa exclusão de arquivo por um investidor do site"""
@@ -172,12 +171,12 @@ class GeradorProventosTestCase(TestCase):
         """Testa erro caso um provento seja gerado novamente"""
         pass
     
-    def test_converter_descricao_dividendos_acoes_para_provento_real(self):
+    def test_converter_descricao_dividendos_acoes_para_provento(self):
         """Testa criação de provento de dividendos a partir de descrição de provento em documento"""
         # Criar descrição de provento em dividendos
-        provento_convertido = converter_descricao_provento_para_provento_acoes(ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=Acao.objects.get(ticker='BBAS3'), \
+        provento_convertido = converter_descricao_provento_para_provento_acoes(ProventoAcaoDescritoDocumentoBovespa(acao=Acao.objects.get(ticker='BBAS3'), \
                                                                             data_ex=datetime.date(2016, 11, 12), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(8)))[0]
-        provento = Provento.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 11, 12), data_pagamento=datetime.date(2016, 11, 20),
+        provento = Provento(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 11, 12), data_pagamento=datetime.date(2016, 11, 20),
                                            tipo_provento='D', valor_unitario=Decimal(8))
         self.assertEqual(provento_convertido.acao, provento.acao)
         self.assertEqual(provento_convertido.data_ex, provento.data_ex)
@@ -189,9 +188,9 @@ class GeradorProventosTestCase(TestCase):
     def test_converter_descricao_jscp_acoes_para_provento_real(self):
         """Testa criação de provento de JSCP a partir de descrição de provento em documento"""
         # Criar descrição de provento em JSCP
-        provento_convertido = converter_descricao_provento_para_provento_acoes(ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=Acao.objects.get(ticker='BBAS3'), \
+        provento_convertido = converter_descricao_provento_para_provento_acoes(ProventoAcaoDescritoDocumentoBovespa(acao=Acao.objects.get(ticker='BBAS3'), \
                                                                             data_ex=datetime.date(2016, 11, 12), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='J', valor_unitario=Decimal(8)))[0]
-        provento = Provento.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 11, 12), data_pagamento=datetime.date(2016, 11, 20),
+        provento = Provento(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 11, 12), data_pagamento=datetime.date(2016, 11, 20),
                                            tipo_provento='J', valor_unitario=Decimal(8))
         self.assertEqual(provento_convertido.acao, provento.acao)
         self.assertEqual(provento_convertido.data_ex, provento.data_ex)

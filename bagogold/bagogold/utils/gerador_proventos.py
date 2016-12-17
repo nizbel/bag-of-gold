@@ -123,11 +123,23 @@ def versionar_descricoes_relacionadas_acoes(descricao, novo_provento, elemento_r
     # Verifica se é descrição de provento
     if isinstance(elemento_relacionado, ProventoAcaoDescritoDocumentoBovespa):
         # Buscar todas as versões do provento descrito
-        versoes_provento = ProventoAcaoDocumento.objects.filter(provento=elemento_relacionado.proventoacaodocumento.provento)
+        versoes_provento = list(ProventoAcaoDocumento.objects.filter(provento=elemento_relacionado.proventoacaodocumento.provento))
         # Adicionar descricao à lista de versões pelo número do protocolo do documento
-    
+        versoes_provento.append(descricao.proventoacaodocumento)
+        versoes_provento.sort(key=lambda x: x.documento.protocolo)
+        print [provento_documento.documento.protocolo for provento_documento in versoes_provento]
         # Gerar versões a partir de 1 na ordem feita
-    
+        for versao, item in enumerate(versoes_provento, start=1):
+            item.versao = versao
+        # Se versão adicionada for a ultima, o provento apontado deve ser copia do novo_provento
+        if descricao.proventoacaodocumento.versao == len(versoes_provento):
+            provento_apontado = elemento_relacionado.proventoacaodocumento.provento
+            print Provento.objects.get(id=provento_apontado.id)
+            novo_provento.id = provento_apontado.id
+            novo_provento.save()
+            print Provento.objects.get(id=provento_apontado.id)
+            provento_apontado.save()
+            print Provento.objects.get(id=provento_apontado.id)
     # Se não, verifica se é um provento já cadastrado
     elif isinstance(elemento_relacionado, Provento):
         pass
@@ -160,7 +172,7 @@ def criar_descricoes_provento_acoes(descricoes_proventos, acoes_descricoes_prove
             objeto.delete()
         raise e
 
-def buscar_proventos_e_descricoes_proximos_acao(descricao_provento):
+def buscar_proventos_proximos_acao(descricao_provento):
     """
     Retorna lista com os proventos e descrições de proventos próximas à data EX de uma descrição de provento
     Parâmetros: Descrição de provento de ação

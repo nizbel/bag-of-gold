@@ -67,7 +67,7 @@ class Provento (models.Model):
     oficial_bovespa = models.BooleanField(u'Oficial Bovespa?', default=False)
     
     class Meta:
-        unique_together = ['acao', 'valor_unitario', 'data_ex', 'data_pagamento']
+        unique_together = ['acao', 'valor_unitario', 'data_ex', 'data_pagamento', 'tipo_provento']
         
     def __unicode__(self):
         tipo = ''
