@@ -12,8 +12,7 @@ from bagogold.bagogold.utils.gerador_proventos import \
     alocar_pendencia_para_investidor, desalocar_pendencia_de_investidor, \
     salvar_investidor_responsavel_por_leitura, criar_descricoes_provento_acoes, \
     retornar_investidor_responsavel_por_leitura, \
-    buscar_proventos_e_descricoes_proximos_acao, \
-    converter_descricao_provento_para_provento_acoes
+    converter_descricao_provento_para_provento_acoes, buscar_proventos_proximos_acao
 from bagogold.bagogold.utils.investidores import is_superuser
 from bagogold.bagogold.utils.misc import \
     formatar_zeros_a_direita_apos_2_casas_decimais
@@ -269,7 +268,11 @@ def validar_documento_provento(request, id_pendencia):
                         # Se não, apenas cria um provento novo com versão 1
                         descricao.proventoacaodocumento.versao = 1
                         descricao.proventoacaodocumento.provento = provento_convertido
-                        descricao.proventoacaodocumento.full_clean()
+                        try:
+                            descricao.proventoacaodocumento.full_clean(exclude=('provento'))
+                        except ValidationError:
+                            validacao_completa = False
+                            messages.error(request, 'Provento %s não pode ser criado' % (descricao.id))
                 if validacao_completa:
                     pass
                     # TODO terminar validação
@@ -320,7 +323,7 @@ def validar_documento_provento(request, id_pendencia):
             
             # Buscar proventos próximos
             # TODO filtrar para que não apareçam descrições e proventos iguais
-            descricao_provento.proventos_proximos = buscar_proventos_e_descricoes_proximos_acao(descricao_provento)
+            descricao_provento.proventos_proximos = buscar_proventos_proximos_acao(descricao_provento)
             for elemento in descricao_provento.proventos_proximos:
                 if isinstance(elemento, Provento):
                     elemento.tipo_validacao = 'p'
