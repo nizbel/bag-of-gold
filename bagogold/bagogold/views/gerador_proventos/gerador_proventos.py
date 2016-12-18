@@ -12,7 +12,8 @@ from bagogold.bagogold.utils.gerador_proventos import \
     alocar_pendencia_para_investidor, desalocar_pendencia_de_investidor, \
     salvar_investidor_responsavel_por_leitura, criar_descricoes_provento_acoes, \
     retornar_investidor_responsavel_por_leitura, \
-    converter_descricao_provento_para_provento_acoes, buscar_proventos_proximos_acao
+    converter_descricao_provento_para_provento_acoes, buscar_proventos_proximos_acao, \
+    versionar_descricoes_relacionadas_acoes
 from bagogold.bagogold.utils.investidores import is_superuser
 from bagogold.bagogold.utils.misc import \
     formatar_zeros_a_direita_apos_2_casas_decimais
@@ -238,15 +239,9 @@ def validar_documento_provento(request, id_pendencia):
                 # Verificar proventos descritos na pendência
                 proventos_documento = ProventoAcaoDocumento.objects.filter(documento=pendencia.documento)
                 descricoes_proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento.values_list('descricao_provento', flat=True))
+                # Guarda as descrições que foram apontadas como relacionadas a algum provento
+                proventos_relacionados = {}
                 for descricao in descricoes_proventos:
-                    # Cria provento
-                    try:
-                        provento_convertido, acoes_provento_convertido = converter_descricao_provento_para_provento_acoes(descricao)
-                    except Exception as e:
-                        validacao_completa = False
-                        messages.error(request, unicode(e))
-                        continue
-                    
                     # Testar se ID's de descrições foram marcados para relacionamento, se sim, deve ter um provento relacionado
                     # Verifica se é alteração
                     if str(descricao.id) in request.POST.keys():
@@ -254,40 +249,21 @@ def validar_documento_provento(request, id_pendencia):
                         print 'Alterou', descricao.id
                         if request.POST.get('descricao_%s' % (descricao.id)):
                             # Verificar se foi relacionado a um provento ou a uma descrição
-                            elemento_relacionado = request.POST.get('descricao_%s' % (descricao.id))
-                            if 'p' in elemento_relacionado:
-                                print 'Provento'
-                            elif 'd' in elemento_relacionado:
-                                print 'Descrição'
-                            print u'Descrição %s é relacionada a %s' % (descricao.id, elemento_relacionado)
+                            provento_relacionado = Provento.objects.get(id=request.POST.get('descricao_%s' % (descricao.id)))
+                            print u'Descrição %s é relacionada a %s' % (descricao.id, provento_relacionado)
+                            proventos_relacionados[descricao] = provento_relacionado
                         else:
                             validacao_completa = False
-                            messages.error(request, 'Provento %s marcado como relacionado a outro provento, escolha um provento para a relação' % (descricao.id))
+                            messages.error(request, 'Provento de identificador %s marcado como relacionado a outro provento, escolha um provento para a relação' % (descricao.id))
                             continue
-                    else:
-                        # Se não, apenas cria um provento novo com versão 1
-                        descricao.proventoacaodocumento.versao = 1
-                        descricao.proventoacaodocumento.provento = provento_convertido
-                        try:
-                            descricao.proventoacaodocumento.full_clean(exclude=('provento'))
-                        except ValidationError:
-                            validacao_completa = False
-                            messages.error(request, 'Provento %s não pode ser criado' % (descricao.id))
                 if validacao_completa:
-                    pass
-                    # TODO terminar validação
-                    # Preparar lista para apagar todos os objetos que houve tentativa de criar
-#                     dados_criados = list()
-#                     for descricao in descricoes_proventos:
-#                         provento_convertido, acoes_provento_convertido = converter_descricao_provento_para_provento_acoes(descricao)
-#                         print provento_convertido, acoes_provento_convertido
-#                         # Adicionar provento convertido
-#                         dados_criados.append(provento_convertido)
-#                         dados_criados.extend(acoes_provento_convertido)
-                        # Se tem relação, gerar versões
-                        
-                        # Se não, criar um ProventoAcaoDocumento com versão 1
-                
+                    print 'Validação completa'
+                    # Salva versões alteradas para os provento_documentos
+                    for descricao, provento in proventos_relacionados.items():
+                        versionar_descricoes_relacionadas_acoes(descricao, provento)
+                    
+                    # Coloca os proventos não oficiais como oficiais
+                                    
             elif pendencia.documento.investidorleituradocumento.decisao == 'E':
                 print 'Validar exclusão'
         
@@ -322,43 +298,23 @@ def validar_documento_provento(request, id_pendencia):
             descricao_provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(descricao_provento.valor_unitario))
             
             # Buscar proventos próximos
-            # TODO filtrar para que não apareçam descrições e proventos iguais
             descricao_provento.proventos_proximos = buscar_proventos_proximos_acao(descricao_provento)
-            for elemento in descricao_provento.proventos_proximos:
-                if isinstance(elemento, Provento):
-                    elemento.tipo_validacao = 'p'
-                    # Definir tipo de provento
-                    if elemento.tipo_provento == 'A':
-                        elemento.descricao_tipo_provento = u'Ações'
-                        elemento.acoes_recebidas = elemento.acaoprovento_set.all()
-                        # Remover 0s a esquerda para valores
-                        for acao_descricao_provento in elemento.acoes_recebidas:
-                            acao_descricao_provento.valor_calculo_frac = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(acao_descricao_provento.valor_calculo_frac))
-                    elif elemento.tipo_provento == 'D':
-                        elemento.descricao_tipo_provento = u'Dividendos'
-                    elif elemento.tipo_provento == 'J':
-                        elemento.descricao_tipo_provento = u'JSCP'
-                    
+            for provento_proximo in descricao_provento.proventos_proximos:
+                # Definir tipo de provento
+                if provento_proximo.tipo_provento == 'A':
+                    provento_proximo.descricao_tipo_provento = u'Ações'
+                    provento_proximo.acoes_recebidas = provento_proximo.acaoprovento_set.all()
                     # Remover 0s a esquerda para valores
-                    elemento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(elemento.valor_unitario))
+                    for acao_descricao_provento in provento_proximo.acoes_recebidas:
+                        acao_descricao_provento.valor_calculo_frac = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(acao_descricao_provento.valor_calculo_frac))
+                elif provento_proximo.tipo_provento == 'D':
+                    provento_proximo.descricao_tipo_provento = u'Dividendos'
+                elif provento_proximo.tipo_provento == 'J':
+                    provento_proximo.descricao_tipo_provento = u'JSCP'
+                
+                # Remover 0s a esquerda para valores
+                provento_proximo.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento_proximo.valor_unitario))
                         
-                elif isinstance(elemento, ProventoAcaoDescritoDocumentoBovespa):
-                    elemento.tipo_validacao = 'd'
-                    # Definir tipo de provento
-                    if elemento.tipo_provento == 'A':
-                        elemento.descricao_tipo_provento = u'Ações'
-                        elemento.acoes_recebidas = elemento.acaoproventoacaodescritodocumentobovespa_set.all()
-                        # Remover 0s a esquerda para valores
-                        for acao_descricao_provento in elemento.acoes_recebidas:
-                            acao_descricao_provento.valor_calculo_frac = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(acao_descricao_provento.valor_calculo_frac))
-                    elif elemento.tipo_provento == 'D':
-                        elemento.descricao_tipo_provento = u'Dividendos'
-                    elif elemento.tipo_provento == 'J':
-                        elemento.descricao_tipo_provento = u'JSCP'
-                    
-                    # Remover 0s a esquerda para valores
-                    elemento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(elemento.valor_unitario))
-            
         # Descrição da decisão do responsável pela leitura
         pendencia.decisao = 'Criar %s provento(s)' % (ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).count())
     elif pendencia.documento.investidorleituradocumento.decisao == 'E':
