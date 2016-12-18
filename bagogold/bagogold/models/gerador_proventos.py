@@ -111,9 +111,6 @@ class InvestidorRecusaDocumento (models.Model):
     motivo = models.CharField(u'Motivo da recusa', max_length=500)
     data_recusa = models.DateTimeField(u'Data da recusa', auto_now_add=True)
     
-    class Meta:
-        unique_together=('pendencia', 'investidor')
-        
 class InvestidorResponsavelPendencia (models.Model):
     pendencia = models.OneToOneField('PendenciaDocumentoProvento')
     investidor = models.ForeignKey('Investidor')
