@@ -11,6 +11,7 @@ import datetime
 import os
 import re
 import time
+from django.core.validators import MinLengthValidator
 
 def ticker_path(instance, filename):
     return 'doc proventos/{0}/{1}'.format(instance.ticker_empresa(), filename)
@@ -108,7 +109,7 @@ class InvestidorLeituraDocumento (models.Model):
 class InvestidorRecusaDocumento (models.Model):
     pendencia = models.OneToOneField('PendenciaDocumentoProvento')
     investidor = models.ForeignKey('Investidor')
-    motivo = models.CharField(u'Motivo da recusa', max_length=500)
+    motivo = models.CharField(u'Motivo da recusa', max_length=500, validators=[MinLengthValidator(10)])
     data_recusa = models.DateTimeField(u'Data da recusa', auto_now_add=True)
     
 class InvestidorResponsavelPendencia (models.Model):
