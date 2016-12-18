@@ -11,8 +11,10 @@ from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa,
 from bagogold.bagogold.utils.gerador_proventos import \
     alocar_pendencia_para_investidor, desalocar_pendencia_de_investidor, \
     salvar_investidor_responsavel_por_leitura, criar_descricoes_provento_acoes, \
-    desfazer_investidor_responsavel_por_leitura,  buscar_proventos_proximos_acao, \
-    versionar_descricoes_relacionadas_acoes
+    desfazer_investidor_responsavel_por_leitura, buscar_proventos_proximos_acao, \
+    versionar_descricoes_relacionadas_acoes, \
+    salvar_investidor_responsavel_por_validacao, \
+    desfazer_investidor_responsavel_por_validacao
 from bagogold.bagogold.utils.investidores import is_superuser
 from bagogold.bagogold.utils.misc import \
     formatar_zeros_a_direita_apos_2_casas_decimais
@@ -227,54 +229,70 @@ def remover_responsabilidade_documento_provento(request):
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def validar_documento_provento(request, id_pendencia):
+    investidor = request.user.investidor
+    
     pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
     if request.method == 'POST':
+        # Testa se o investidor atual é o responsável para mandar POST
+        if investidor != pendencia.investidorresponsavelpendencia.investidor:
+            messages.error(request, 'Você não é o responsável por esta pendência')
+            return HttpResponseRedirect(reverse('listar_pendencias'))
+        
         print request.POST
         # TODO testar validar
         if request.POST.get('validar'):
-            if pendencia.documento.investidorleituradocumento.decisao == 'C':
-                validacao_completa = True
-                print 'Validar criação'
-                # Verificar proventos descritos na pendência
-                proventos_documento = ProventoAcaoDocumento.objects.filter(documento=pendencia.documento)
-                descricoes_proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento.values_list('descricao_provento', flat=True))
-                # Guarda as descrições que foram apontadas como relacionadas a algum provento
-                proventos_relacionados = {}
-                for descricao in descricoes_proventos:
-                    # Testar se ID's de descrições foram marcados para relacionamento, se sim, deve ter um provento relacionado
-                    # Verifica se é alteração
-                    if str(descricao.id) in request.POST.keys():
-                        # Se sim, alterar números de versão
-                        print 'Alterou', descricao.id
-                        if request.POST.get('descricao_%s' % (descricao.id)):
-                            # Verificar se foi relacionado a um provento ou a uma descrição
-                            provento_relacionado = Provento.objects.get(id=request.POST.get('descricao_%s' % (descricao.id)))
-                            print u'Descrição %s é relacionada a %s' % (descricao.id, provento_relacionado)
-                            proventos_relacionados[descricao] = provento_relacionado
-                        else:
-                            validacao_completa = False
-                            messages.error(request, 'Provento de identificador %s marcado como relacionado a outro provento, escolha um provento para a relação' % (descricao.id))
-                            continue
-                if validacao_completa:
-                    print 'Validação completa'
-                    # Salva versões alteradas para os provento_documentos
-                    for descricao, provento in proventos_relacionados.items():
-                        versionar_descricoes_relacionadas_acoes(descricao, provento)
-                    # Altera proventos para serem oficiais
-                    for provento_id in ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True):
-                        provento = Provento.objects.get(id=provento_id)
-                        if not provento.oficial_bovespa:
-                            provento.oficial_bovespa = True
-                            provento.save()
-                            
-            elif pendencia.documento.investidorleituradocumento.decisao == 'E':
-                print 'Validar exclusão'
-                # Apagar documento
-                pendencia.documento.apagar_documento()
+            # Testa se investidor pode validar pendência
+            investidor_pode_validar = True
+            try:
+                salvar_investidor_responsavel_por_validacao(pendencia, investidor)
+            except ValueError as erro:
+                desfazer_investidor_responsavel_por_validacao(pendencia, investidor)
+                messages.error(request, str(erro))
+                investidor_pode_validar = False
                 
-            # Salvar usuário responsável pela validação
-            
-            # Remover pendência
+            if investidor_pode_validar:
+                if pendencia.documento.investidorleituradocumento.decisao == 'C':
+                    validacao_completa = True
+                    print 'Validar criação'
+                    # Verificar proventos descritos na pendência
+                    proventos_documento = ProventoAcaoDocumento.objects.filter(documento=pendencia.documento)
+                    descricoes_proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento.values_list('descricao_provento', flat=True))
+                    # Guarda as descrições que foram apontadas como relacionadas a algum provento
+                    proventos_relacionados = {}
+                    for descricao in descricoes_proventos:
+                        # Testar se ID's de descrições foram marcados para relacionamento, se sim, deve ter um provento relacionado
+                        # Verifica se é alteração
+                        if str(descricao.id) in request.POST.keys():
+                            # Se sim, alterar números de versão
+                            print 'Alterou', descricao.id
+                            if request.POST.get('descricao_%s' % (descricao.id)):
+                                # Verificar se foi relacionado a um provento ou a uma descrição
+                                provento_relacionado = Provento.objects.get(id=request.POST.get('descricao_%s' % (descricao.id)))
+                                print u'Descrição %s é relacionada a %s' % (descricao.id, provento_relacionado)
+                                proventos_relacionados[descricao] = provento_relacionado
+                            else:
+                                validacao_completa = False
+                                messages.error(request, 'Provento de identificador %s marcado como relacionado a outro provento, escolha um provento para a relação' % (descricao.id))
+                                continue
+                    if validacao_completa:
+                        print 'Validação completa'
+                        # Salva versões alteradas para os provento_documentos
+                        for descricao, provento in proventos_relacionados.items():
+                            versionar_descricoes_relacionadas_acoes(descricao, provento)
+                        # Altera proventos para serem oficiais
+                        for provento_id in ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True):
+                            provento = Provento.objects.get(id=provento_id)
+                            if not provento.oficial_bovespa:
+                                provento.oficial_bovespa = True
+                                provento.save()
+                                
+                elif pendencia.documento.investidorleituradocumento.decisao == 'E':
+                    print 'Validar exclusão'
+                    # Apagar documento
+                    pendencia.documento.apagar_documento()
+                    
+                # Remover pendência
+                pendencia.delete()
         
         # TODO testar recusar
         elif request.POST.get('recusar'):
@@ -284,8 +302,6 @@ def validar_documento_provento(request, id_pendencia):
     if pendencia.tipo != 'V':
         messages.success(request, 'Pendência não é de validação')
         return HttpResponseRedirect(reverse('listar_pendencias'))
-    
-#     investidor = request.user.investidor
     
     if pendencia.documento.investidorleituradocumento.decisao == 'C':
         proventos_documento = ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)

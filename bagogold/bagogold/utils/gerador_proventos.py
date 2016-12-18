@@ -3,8 +3,8 @@ from bagogold.bagogold.models.acoes import Provento, AcaoProvento
 from bagogold.bagogold.models.gerador_proventos import \
     InvestidorResponsavelPendencia, InvestidorLeituraDocumento, \
     PendenciaDocumentoProvento, ProventoAcaoDocumento, \
-    ProventoAcaoDescritoDocumentoBovespa, AcaoProventoAcaoDescritoDocumentoBovespa,\
-    InvestidorValidacaoDocumento
+    ProventoAcaoDescritoDocumentoBovespa, AcaoProventoAcaoDescritoDocumentoBovespa, \
+    InvestidorValidacaoDocumento, InvestidorRecusaDocumento
 from itertools import chain
 from operator import attrgetter
 
@@ -56,8 +56,8 @@ def salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao):
     if decisao not in ['C', 'E']:
         raise ValueError('Decisão sobre o documento inválida')
     
-    retorno, mensagem = desalocar_pendencia_de_investidor(pendencia, investidor)
     # Desaloca pendência
+    retorno, mensagem = desalocar_pendencia_de_investidor(pendencia, investidor)
     if not retorno:
         raise ValueError(mensagem)
     
@@ -84,7 +84,6 @@ def desfazer_investidor_responsavel_por_leitura(pendencia, investidor):
     except InvestidorLeituraDocumento.DoesNotExist:
         pass
 
-# TODO preparar essa função
 def salvar_investidor_responsavel_por_validacao(pendencia, investidor):   
     """
     Cria vínculo de responsabilidade pela validação do documento para o investidor
@@ -95,13 +94,58 @@ def salvar_investidor_responsavel_por_validacao(pendencia, investidor):
     if pendencia.tipo != 'V':
         raise ValueError('Pendência deve ser do tipo "Validação"')
     
-    retorno, mensagem = desalocar_pendencia_de_investidor(pendencia, investidor)
     # Desaloca pendência
+    retorno, mensagem = desalocar_pendencia_de_investidor(pendencia, investidor)
     if not retorno:
         raise ValueError(mensagem)
     
     responsavel_validacao = InvestidorValidacaoDocumento.objects.create(documento=pendencia.documento, investidor=investidor)
     return responsavel_validacao
+
+def desfazer_investidor_responsavel_por_validacao(pendencia, investidor):
+    """
+    Desfaz vínculo de responsabilidade pela validação, retorna pendência para validação, realoca pendência para investidor
+    Parâmetros: Pendência
+                Investidor
+    """
+    if pendencia.tipo != 'V':
+        pendencia.tipo = 'V'
+        pendencia.save()
+    
+    InvestidorResponsavelPendencia.objects.get_or_create(pendencia=pendencia, investidor=investidor)
+    
+    try:
+        InvestidorValidacaoDocumento.objects.get(documento=pendencia.documento, investidor=investidor).delete()
+    except InvestidorValidacaoDocumento.DoesNotExist:
+        pass
+    
+def salvar_investidor_responsavel_por_recusar_documento(pendencia, investidor, motivo):
+    """
+    Cria vínculo de responsabilidade pela recusa de documento para o investidor
+    Parâmetros: Pendência
+                Investidor
+    Retorno: Vínculo de responsabilidade pela recusa
+    """
+    if pendencia.tipo != 'V':
+        raise ValueError('Pendência deve ser do tipo "Validação"')
+    
+    # Desaloca pendência para o validador
+    retorno, mensagem = desalocar_pendencia_de_investidor(pendencia, investidor)
+    if not retorno:
+        raise ValueError(mensagem)
+    # Realoca pendência para o leitor
+    retorno, mensagem = alocar_pendencia_para_investidor(pendencia, InvestidorLeituraDocumento.objects.get(documento=pendencia.documento))
+    if not retorno:
+        raise ValueError(mensagem)
+    
+    # Pendência volta a ser de leitura
+    pendencia.tipo = 'L'
+    pendencia.save()
+    
+    # Salvar responsavel pela recusa
+    responsavel_recusa = InvestidorRecusaDocumento.objects.create(documento=pendencia.documento, investidor=investidor, motivo=motivo)
+    return responsavel_recusa
+    
 
 def converter_descricao_provento_para_provento_acoes(descricao_provento):
     """
