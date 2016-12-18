@@ -117,7 +117,7 @@
                                 {% endfor %}
                             {% endif %}
                             <label class="radio">
-                                <input name="descricao_{{descricao_provento.id}}" value="{{provento_proximo.tipo_validacao}}_{{provento_proximo.id}}" disabled="disabled" type="radio">
+                                <input name="descricao_{{descricao_provento.id}}" value="{{provento_proximo.id}}" disabled="disabled" type="radio">
                             Este provento
                             </label>
                             {% if forloop.counter < descricao_provento.proventos_proximos|length %}

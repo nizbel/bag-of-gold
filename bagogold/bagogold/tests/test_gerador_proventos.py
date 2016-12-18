@@ -5,12 +5,12 @@ from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
     PendenciaDocumentoProvento, InvestidorLeituraDocumento, \
     InvestidorResponsavelPendencia, ProventoAcaoDescritoDocumentoBovespa, \
-    AcaoProventoAcaoDescritoDocumentoBovespa
+    AcaoProventoAcaoDescritoDocumentoBovespa, ProventoAcaoDocumento
 from bagogold.bagogold.testFII import baixar_demonstrativo_rendimentos
 from bagogold.bagogold.utils.gerador_proventos import \
     alocar_pendencia_para_investidor, salvar_investidor_responsavel_por_leitura, \
     desalocar_pendencia_de_investidor, buscar_proventos_proximos_acao, \
-    converter_descricao_provento_para_provento_acoes
+    converter_descricao_provento_para_provento_acoes, copiar_proventos_acoes
 from decimal import Decimal
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
@@ -36,7 +36,7 @@ class GeradorProventosTestCase(TestCase):
         # Documento da empresa, já existe em media
         documento = DocumentoProventoBovespa()
         documento.empresa = Empresa.objects.get(codigo_cvm=empresa1.codigo_cvm)
-        documento.url = 'http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=%508232'
+        documento.url = 'http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=508232'
         documento.tipo = 'A'
         documento.protocolo = '508232'
         documento.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
@@ -51,14 +51,6 @@ class GeradorProventosTestCase(TestCase):
         Provento.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 16), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(3))
         Provento.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 13), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(2))
         Provento.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 11), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(1))
-#         ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 12), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(8))
-#         ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 10), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(7))
-#         ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 14), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(6))
-#         ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 8), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(5))
-#         ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 6), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(4))
-#         ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 16), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(3))
-#         ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 13), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(2))
-#         ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao1, data_ex=datetime.date(2016, 11, 11), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(1))
         
         # Empresa inexistente
         empresa2 = Empresa.objects.create(nome='Teste', nome_pregao='TTTT', codigo_cvm='1024')
@@ -83,7 +75,7 @@ class GeradorProventosTestCase(TestCase):
         """Testa se criação do documento na base recusa download devido a documento já existir em Media"""
         documento = DocumentoProventoBovespa()
         documento.empresa = Empresa.objects.get(codigo_cvm='1023')
-        documento.url = 'http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=%507317'
+        documento.url = 'http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=507317'
         documento.tipo = 'A'
         documento.protocolo = '507317'
         documento.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
@@ -94,7 +86,7 @@ class GeradorProventosTestCase(TestCase):
         empresa = Empresa.objects.get(codigo_cvm='1024')
         documento = DocumentoProventoBovespa()
         documento.empresa = empresa
-        documento.url = 'http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=%507317'
+        documento.url = 'http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=507317'
         documento.tipo = 'A'
         documento.protocolo = '507317'
         documento.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
@@ -110,7 +102,7 @@ class GeradorProventosTestCase(TestCase):
         empresa = Empresa.objects.get(codigo_cvm='1023')
         documento = DocumentoProventoBovespa()
         documento.empresa = empresa
-        documento.url = 'http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=%507317'
+        documento.url = 'http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=507317'
         documento.tipo = 'A'
         documento.protocolo = '507317'
         documento.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
@@ -153,6 +145,11 @@ class GeradorProventosTestCase(TestCase):
         """Testa busca de proventos com data EX próxima"""
         descricao_provento = ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 11, 12), data_pagamento=datetime.date(2016, 11, 20),
                                                                                  tipo_provento='D', valor_unitario=Decimal(10))
+        documento = DocumentoProventoBovespa.objects.get(protocolo='508232')
+        provento = converter_descricao_provento_para_provento_acoes(descricao_provento)[0]
+        provento.save()
+        documento_provento = ProventoAcaoDocumento.objects.create(documento=documento, descricao_provento=descricao_provento, provento=provento, versao=1)
+        
         proventos_proximos = buscar_proventos_proximos_acao(descricao_provento)
         self.assertEqual(len(proventos_proximos), 8)
         for provento in proventos_proximos:
@@ -175,8 +172,8 @@ class GeradorProventosTestCase(TestCase):
         """Testa criação de provento de dividendos a partir de descrição de provento em documento"""
         # Criar descrição de provento em dividendos
         provento_convertido = converter_descricao_provento_para_provento_acoes(ProventoAcaoDescritoDocumentoBovespa(acao=Acao.objects.get(ticker='BBAS3'), \
-                                                                            data_ex=datetime.date(2016, 11, 12), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(8)))[0]
-        provento = Provento(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 11, 12), data_pagamento=datetime.date(2016, 11, 20),
+                                                                            data_ex=datetime.date(2016, 10, 12), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(8)))[0]
+        provento = Provento(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 10, 12), data_pagamento=datetime.date(2016, 11, 20),
                                            tipo_provento='D', valor_unitario=Decimal(8))
         self.assertEqual(provento_convertido.acao, provento.acao)
         self.assertEqual(provento_convertido.data_ex, provento.data_ex)
@@ -277,3 +274,49 @@ class GeradorProventosTestCase(TestCase):
         resultado, mensagem = desalocar_pendencia_de_investidor(PendenciaDocumentoProvento.objects.get(documento=documento), User.objects.get(username='tester').investidor)
         self.assertFalse(resultado)
         self.assertEqual(mensagem, u'A pendência não estava alocada para o investidor')
+        
+    def test_copiar_proventos_de_dividendos_acoes(self):
+        """Testa cópia de um provento de ações, do tipo dividendos"""
+        provento_1 = Provento.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 12, 12), data_pagamento=datetime.date(2016, 12, 20),
+                                           tipo_provento='D', valor_unitario=Decimal(8))
+        id_provento_1 = provento_1.id
+        provento_2 = Provento.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 12, 13), data_pagamento=datetime.date(2016, 12, 20),
+                                           tipo_provento='D', valor_unitario=Decimal(8))
+        id_provento_2 = provento_2.id
+        
+        copiar_proventos_acoes(provento_1, provento_2)
+        
+        # Testar se provento 1 tem agora os dados do provento 2
+        self.assertEqual(Provento.objects.get(id=id_provento_1).data_ex, datetime.date(2016, 12, 13))
+        # Provento 2 não deve existir mais
+        with self.assertRaises(Provento.DoesNotExist):
+            provento_2 = Provento.objects.get(id=id_provento_2)
+            
+    def test_copiar_proventos_relacionados_a_documentos(self):
+        """Testa a cópia de um provento que tenha um documento relacionado"""
+        descricao_provento_1 = ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 12, 12), data_pagamento=datetime.date(2016, 12, 20),
+                                           tipo_provento='D', valor_unitario=Decimal(8))
+        provento_1 = Provento.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 12, 12), data_pagamento=datetime.date(2016, 12, 20),
+                                           tipo_provento='D', valor_unitario=Decimal(8))
+        id_provento_1 = provento_1.id
+        documento_1 = DocumentoProventoBovespa.objects.create(empresa=Empresa.objects.get(codigo_cvm='1023'), protocolo='199999', tipo='A', \
+                                                            url='http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=199999', \
+                                                            data_referencia=datetime.datetime.strptime('03/03/2016', '%d/%m/%Y'))
+        documento_provento_1 = ProventoAcaoDocumento.objects.create(provento=provento_1, documento=documento_1, versao=1, descricao_provento=descricao_provento_1)
+        
+        descricao_provento_2 = ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 12, 13), data_pagamento=datetime.date(2016, 12, 20),
+                                           tipo_provento='D', valor_unitario=Decimal(8))
+        provento_2 = Provento.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 12, 13), data_pagamento=datetime.date(2016, 12, 20),
+                                           tipo_provento='D', valor_unitario=Decimal(8))
+        id_provento_2 = provento_2.id
+        documento_2 = DocumentoProventoBovespa.objects.create(empresa=Empresa.objects.get(codigo_cvm='1023'), protocolo='299999', tipo='A', \
+                                                            url='http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=299999', \
+                                                            data_referencia=datetime.datetime.strptime('03/03/2016', '%d/%m/%Y'))
+        documento_provento_2 = ProventoAcaoDocumento.objects.create(provento=provento_2, documento=documento_2, versao=1, descricao_provento=descricao_provento_2)
+        
+        copiar_proventos_acoes(provento_1, provento_2)
+        # Testar se provento 1 tem agora os dados do provento 2
+        self.assertEqual(Provento.objects.get(id=id_provento_1).data_ex, datetime.date(2016, 12, 13))
+        # Provento 2 não deve existir mais
+        with self.assertRaises(Provento.DoesNotExist):
+            provento_2 = Provento.objects.get(id=id_provento_2)

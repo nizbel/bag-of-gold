@@ -113,37 +113,74 @@ def converter_descricao_provento_para_provento_acoes(descricao_provento):
             lista_acoes.append(nova_acao_provento)
         return (novo_provento, lista_acoes)
     
-def versionar_descricoes_relacionadas_acoes(descricao, novo_provento, elemento_relacionado):
+def versionar_descricoes_relacionadas_acoes(descricao, provento_relacionado):
     """
     Versiona descrições de proventos em ações relacionadas
     Parâmetros: Descrição a entrar para as versões
-                Provento gerado a partir da descrição
-                Elemento relacionado (Descrição ou Provento)
+                Provento relacionado
     """
-    # Verifica se é descrição de provento
-    if isinstance(elemento_relacionado, ProventoAcaoDescritoDocumentoBovespa):
-        # Buscar todas as versões do provento descrito
-        versoes_provento = list(ProventoAcaoDocumento.objects.filter(provento=elemento_relacionado.proventoacaodocumento.provento))
-        # Adicionar descricao à lista de versões pelo número do protocolo do documento
-        versoes_provento.append(descricao.proventoacaodocumento)
-        versoes_provento.sort(key=lambda x: x.documento.protocolo)
-        print [provento_documento.documento.protocolo for provento_documento in versoes_provento]
-        # Gerar versões a partir de 1 na ordem feita
-        for versao, item in enumerate(versoes_provento, start=1):
-            item.versao = versao
-        # Se versão adicionada for a ultima, o provento apontado deve ser copia do novo_provento
-        if descricao.proventoacaodocumento.versao == len(versoes_provento):
-            provento_apontado = elemento_relacionado.proventoacaodocumento.provento
-            print Provento.objects.get(id=provento_apontado.id)
-            novo_provento.id = provento_apontado.id
-            novo_provento.save()
-            print Provento.objects.get(id=provento_apontado.id)
-            provento_apontado.save()
-            print Provento.objects.get(id=provento_apontado.id)
-    # Se não, verifica se é um provento já cadastrado
-    elif isinstance(elemento_relacionado, Provento):
-        pass
+    # Buscar todas as versões do provento descrito
+    versoes_provento = list(ProventoAcaoDocumento.objects.filter(provento=provento_relacionado))
+    # Adicionar descricao à lista de versões pelo número do protocolo do documento
+    versoes_provento.append(descricao.proventoacaodocumento)
+    versoes_provento.sort(key=lambda x: x.documento.protocolo)
+    print [provento_documento.documento.protocolo for provento_documento in versoes_provento]
+    # Gerar versões a partir de 1 na ordem feita
+    for versao, item in enumerate(versoes_provento, start=1):
+        item.versao = versao
+        item.save()
+    # Se versão adicionada for a ultima, o provento apontado deve ser copia do novo_provento
+    if descricao.proventoacaodocumento.versao == len(versoes_provento):
+        copiar_proventos_acoes(provento_relacionado, descricao.proventoacaodocumento.provento)
+        descricao.proventoacaodocumento.provento = provento_relacionado
+        descricao.proventoacaodocumento.save()
+        
             
+def copiar_proventos_acoes(provento, provento_a_copiar):
+    """
+    Copia dados de um provento em ações para outro
+    Parâmetros: Provento a receber dados
+                Provento a ser copiado
+    """
+    dados_provento_a_salvar = list()
+    provento.acao = provento_a_copiar.acao
+    provento.valor_unitario = provento_a_copiar.valor_unitario
+    provento.tipo_provento = provento_a_copiar.tipo_provento
+    provento.data_ex = provento_a_copiar.data_ex
+    provento.data_pagamento = provento_a_copiar.data_pagamento
+    provento.observacao = provento_a_copiar.observacao
+    dados_provento_a_salvar.append(provento)
+    # Se provento a copiar for do tipo provento em ações, copiar ações recebidas
+    if provento_a_copiar.tipo_provento == 'A':
+        acoes_provento = AcaoProvento.objects.filter(provento__id=provento.id)
+        indice_acao_provento = 0
+        for acao_provento_a_copiar in AcaoProvento.objects.filter(provento__id=provento_a_copiar.id):
+            if indice_acao_provento < len(acoes_provento):
+                # Copiar ação recebida do provento
+                acoes_provento[indice_acao_provento].acao_recebida = acao_provento_a_copiar.acao_recebida
+                acoes_provento[indice_acao_provento].data_pagamento_frac = acao_provento_a_copiar.data_pagamento_frac
+                acoes_provento[indice_acao_provento].valor_calculo_frac = acao_provento_a_copiar.valor_calculo_frac
+                dados_provento_a_salvar.append(acoes_provento[indice_acao_provento])
+            else:
+                # Criar nova ação recebida do provento
+                nova_acao_provento = ProventoAcao(acao_recebida=acao_provento_a_copiar.acao_recebida, \
+                                                  data_pagamento_frac=acao_provento_a_copiar.data_pagamento_frac, \
+                                                  valor_calculo_frac=acao_provento_a_copiar.valor_calculo_frac, provento=provento)
+                dados_provento_a_salvar.append(nova_acao_provento)
+            # Passar à próxima ação recebida
+            indice_acao_provento += 1
+    # Se provento a copiar não for do tipo provento em ações, mas o provento a receber a cópia for, apagar ações recebidas
+    elif provento.tipo_provento == 'A':
+        for acao_provento in AcaoProvento.objects.filter(provento__id=provento.id):
+            acao_provento.delete()
+    # Apagar provento a ser copiado
+    for acao_provento_a_copiar in AcaoProvento.objects.filter(provento__id=provento_a_copiar.id):
+        acao_provento_a_copiar.delete()
+    provento_a_copiar.delete()
+    # Salvar provento com dados copiados
+    for dado in dados_provento_a_salvar:
+        dado.save()
+    
 
 def converter_descricao_provento_para_provento_fii(descricao_provento):
     pass
@@ -174,17 +211,15 @@ def criar_descricoes_provento_acoes(descricoes_proventos, acoes_descricoes_prove
 
 def buscar_proventos_proximos_acao(descricao_provento):
     """
-    Retorna lista com os proventos e descrições de proventos próximas à data EX de uma descrição de provento
+    Retorna lista com os proventos próximas à data EX de uma descrição de provento
     Parâmetros: Descrição de provento de ação
-    Retorno:    Lista de proventos e descrições de proventos ordenada por quantidade de dias em relação à data EX
+    Retorno:    Lista de proventos ordenada por quantidade de dias em relação à data EX
     """
-    # Proventos
-    proventos_proximos_ant = Provento.objects.filter(acao=descricao_provento.acao, data_ex__lte=descricao_provento.data_ex).order_by('-data_ex')[:5]
-    proventos_proximos_post = Provento.objects.filter(acao=descricao_provento.acao, data_ex__gt=descricao_provento.data_ex).order_by('data_ex')[:5]
-    # Descrições de proventos
-    desc_proventos_proximos_ant = ProventoAcaoDescritoDocumentoBovespa.objects.filter(acao=descricao_provento.acao, data_ex__lte=descricao_provento.data_ex).exclude(id=descricao_provento.id).order_by('-data_ex')[:5]
-    desc_proventos_proximos_post = ProventoAcaoDescritoDocumentoBovespa.objects.filter(acao=descricao_provento.acao, data_ex__gt=descricao_provento.data_ex).order_by('data_ex')[:5]
+    proventos_proximos_ant = Provento.objects.filter(acao=descricao_provento.acao, data_ex__lte=descricao_provento.data_ex) \
+        .exclude(id=descricao_provento.proventoacaodocumento.provento.id).order_by('-data_ex')[:5]
+    proventos_proximos_post = Provento.objects.filter(acao=descricao_provento.acao, data_ex__gt=descricao_provento.data_ex) \
+        .exclude(id=descricao_provento.proventoacaodocumento.provento.id).order_by('data_ex')[:5]
     
     # Ordenar pela diferença com a data da descrição de provento
-    return sorted(chain(proventos_proximos_ant, proventos_proximos_post, desc_proventos_proximos_ant, desc_proventos_proximos_post),
-                    key= lambda x: abs((x.data_ex - descricao_provento.data_ex).days))[:10]
+    return sorted(chain(proventos_proximos_ant, proventos_proximos_post),
+                    key= lambda x: abs((x.data_ex - descricao_provento.data_ex).days))
