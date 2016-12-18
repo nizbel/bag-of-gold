@@ -11,8 +11,7 @@ from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa,
 from bagogold.bagogold.utils.gerador_proventos import \
     alocar_pendencia_para_investidor, desalocar_pendencia_de_investidor, \
     salvar_investidor_responsavel_por_leitura, criar_descricoes_provento_acoes, \
-    retornar_investidor_responsavel_por_leitura, \
-    converter_descricao_provento_para_provento_acoes, buscar_proventos_proximos_acao, \
+    desfazer_investidor_responsavel_por_leitura,  buscar_proventos_proximos_acao, \
     versionar_descricoes_relacionadas_acoes
 from bagogold.bagogold.utils.investidores import is_superuser
 from bagogold.bagogold.utils.misc import \
@@ -104,7 +103,7 @@ def ler_documento_provento(request, id_pendencia):
                             messages.success(request, 'Descrições de proventos criadas com sucesso')
                             return HttpResponseRedirect(reverse('listar_pendencias'))
                         except Exception as e:
-                            retornar_investidor_responsavel_por_leitura(pendencia, investidor)
+                            desfazer_investidor_responsavel_por_leitura(pendencia, investidor)
                             messages.error(request, str(e))
                     else:
                         messages.error(request, 'Proventos em ações não conferem com os proventos criados')
@@ -261,11 +260,21 @@ def validar_documento_provento(request, id_pendencia):
                     # Salva versões alteradas para os provento_documentos
                     for descricao, provento in proventos_relacionados.items():
                         versionar_descricoes_relacionadas_acoes(descricao, provento)
-                    
-                    # Coloca os proventos não oficiais como oficiais
-                                    
+                    # Altera proventos para serem oficiais
+                    for provento_id in ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True):
+                        provento = Provento.objects.get(id=provento_id)
+                        if not provento.oficial_bovespa:
+                            provento.oficial_bovespa = True
+                            provento.save()
+                            
             elif pendencia.documento.investidorleituradocumento.decisao == 'E':
                 print 'Validar exclusão'
+                # Apagar documento
+                pendencia.documento.apagar_documento()
+                
+            # Salvar usuário responsável pela validação
+            
+            # Remover pendência
         
         # TODO testar recusar
         elif request.POST.get('recusar'):
