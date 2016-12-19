@@ -52,9 +52,9 @@ def salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao):
     Retorno: Vínculo de responsabilidade pela leitura
     """
     if pendencia.tipo != 'L':
-        raise ValueError('Pendência deve ser do tipo "Leitura"')
+        raise ValueError(u'Pendência deve ser do tipo "Leitura"')
     if decisao not in ['C', 'E']:
-        raise ValueError('Decisão sobre o documento inválida')
+        raise ValueError(u'Decisão sobre o documento inválida')
     
     # Desaloca pendência
     retorno, mensagem = desalocar_pendencia_de_investidor(pendencia, investidor)
@@ -92,7 +92,7 @@ def salvar_investidor_responsavel_por_validacao(pendencia, investidor):
     Retorno: Vínculo de responsabilidade pela validação
     """
     if pendencia.tipo != 'V':
-        raise ValueError('Pendência deve ser do tipo "Validação"')
+        raise ValueError(u'Pendência deve ser do tipo "Validação"')
     
     # Desaloca pendência
     retorno, mensagem = desalocar_pendencia_de_investidor(pendencia, investidor)
@@ -127,10 +127,11 @@ def salvar_investidor_responsavel_por_recusar_documento(pendencia, investidor, m
     Retorno: Vínculo de responsabilidade pela recusa
     """
     if pendencia.tipo != 'V':
-        raise ValueError('Pendência deve ser do tipo "Validação"')
+        raise ValueError(u'Pendência deve ser do tipo "Validação"')
     
     # Verificar se o vínculo pode ser criado
-    responsavel_recusa = InvestidorRecusaDocumento(documento=pendencia.documento, investidor=investidor, motivo=motivo)
+    responsavel_recusa = InvestidorRecusaDocumento(documento=pendencia.documento, investidor=investidor, motivo=motivo, \
+                                                   responsavel_leitura=pendencia.documento.responsavel_leitura())
     responsavel_recusa.full_clean()
     
     # Desaloca pendência para o validador
@@ -157,7 +158,7 @@ def converter_descricao_provento_para_provento_acoes(descricao_provento):
     Retorno:    Tupla com provento e ações recebidas, ex.: (Provento de dividendos, ), (Provento de ações, [ações recebidas])
     """
     if not isinstance(descricao_provento, ProventoAcaoDescritoDocumentoBovespa):
-        raise ValueError('Objeto não é uma descrição de provento para ações')
+        raise ValueError(u'Objeto não é uma descrição de provento para ações')
     
     # Se dividendo ou JSCP, converter diretamente
     if descricao_provento.tipo_provento in ['D', 'J']:

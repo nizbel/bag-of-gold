@@ -33,7 +33,7 @@
 {% if pendencia.responsavel.id == request.user.investidor.id %}
 <div class="row-fluid">
     <div class="box span12">
-        <form method="POST" class="post-form form-horizontal">{% csrf_token %}
+        <form method="POST" id="form_validacao" class="post-form form-horizontal">{% csrf_token %}
             <div id="forms">
                 <div class="row-fluid">
                 {% for descricao_provento in descricoes_proventos %}
@@ -134,7 +134,7 @@
                 </div>
                 <div class="row-fluid" id="motivo_recusa">
                     <h4>Motivo da recusa:</h4>
-                    <textarea name="motivo_recusa" class="span12"></textarea>
+                    <textarea id="texto_motivo_recusa" name="motivo_recusa" class="span12"></textarea>
                 </div>
             </div>
             <div class="form-actions">
@@ -194,6 +194,16 @@ $( document ).ready(function() {
         
         $('#motivo_recusa').hide();
     });
+	
+	$('#form_validacao').submit(function() {
+		var botao_clicado = $("button[type=submit]:focus").attr('name');
+	    if (botao_clicado == 'recusar') {
+    		if ($('#texto_motivo_recusa').val().length < 10) {
+    			alert('Texto de motivo deve ter mais de 10 caracteres');
+    			return false;
+    		}
+	    }
+	});
 });
 </script>
     
