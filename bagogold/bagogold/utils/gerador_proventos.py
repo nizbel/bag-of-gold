@@ -129,6 +129,10 @@ def salvar_investidor_responsavel_por_recusar_documento(pendencia, investidor, m
     if pendencia.tipo != 'V':
         raise ValueError('Pendência deve ser do tipo "Validação"')
     
+    # Verificar se o vínculo pode ser criado
+    responsavel_recusa = InvestidorRecusaDocumento(documento=pendencia.documento, investidor=investidor, motivo=motivo)
+    responsavel_recusa.full_clean()
+    
     # Desaloca pendência para o validador
     retorno, mensagem = desalocar_pendencia_de_investidor(pendencia, investidor)
     if not retorno:
@@ -143,7 +147,7 @@ def salvar_investidor_responsavel_por_recusar_documento(pendencia, investidor, m
     pendencia.save()
     
     # Salvar responsavel pela recusa
-    responsavel_recusa = InvestidorRecusaDocumento.objects.create(documento=pendencia.documento, investidor=investidor, motivo=motivo)
+    responsavel_recusa.save()
     return responsavel_recusa
     
 

@@ -14,7 +14,8 @@ from bagogold.bagogold.utils.gerador_proventos import \
     desfazer_investidor_responsavel_por_leitura, buscar_proventos_proximos_acao, \
     versionar_descricoes_relacionadas_acoes, \
     salvar_investidor_responsavel_por_validacao, \
-    desfazer_investidor_responsavel_por_validacao
+    desfazer_investidor_responsavel_por_validacao, \
+    salvar_investidor_responsavel_por_recusar_documento
 from bagogold.bagogold.utils.investidores import is_superuser
 from bagogold.bagogold.utils.misc import \
     formatar_zeros_a_direita_apos_2_casas_decimais
@@ -297,6 +298,14 @@ def validar_documento_provento(request, id_pendencia):
         # TODO testar recusar
         elif request.POST.get('recusar'):
             print 'Recusar'
+            # Verificar se texto de recusa foi preenchido
+            motivo_recusa = request.POST.get('motivo_recusa')
+            
+            # Criar vínculo de responsabilidade por recusa
+#             try:
+#                 salvar_investidor_responsavel_por_recusar_documento(pendencia, investidor, )
+#             except Exception as erro:
+#                 messages.error(request, str(erro))
         
     # Verificar se pendência é de validação
     if pendencia.tipo != 'V':
