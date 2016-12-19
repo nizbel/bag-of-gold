@@ -69,7 +69,7 @@ def salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao):
 
 def desfazer_investidor_responsavel_por_leitura(pendencia, investidor):
     """
-    Desfaz vínculo de responsabilidade pela leitura, retorna pendência para leitura, realoca pendência para investidor
+    Desfaz vínculo de responsabilidade pela leitura, retorna pendência para leitura, realoca pendência para leitor
     Parâmetros: Pendência
                 Investidor
     """
@@ -104,7 +104,7 @@ def salvar_investidor_responsavel_por_validacao(pendencia, investidor):
 
 def desfazer_investidor_responsavel_por_validacao(pendencia, investidor):
     """
-    Desfaz vínculo de responsabilidade pela validação, retorna pendência para validação, realoca pendência para investidor
+    Desfaz vínculo de responsabilidade pela validação, retorna pendência para validação, realoca pendência para validador
     Parâmetros: Pendência
                 Investidor
     """
@@ -149,7 +149,6 @@ def salvar_investidor_responsavel_por_recusar_documento(pendencia, investidor, m
     # Salvar responsavel pela recusa
     responsavel_recusa.save()
     return responsavel_recusa
-    
 
 def converter_descricao_provento_para_provento_acoes(descricao_provento):
     """

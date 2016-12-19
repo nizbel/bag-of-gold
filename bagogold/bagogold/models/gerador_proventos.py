@@ -107,10 +107,11 @@ class InvestidorLeituraDocumento (models.Model):
         return unicode(self.investidor)
 
 class InvestidorRecusaDocumento (models.Model):
-    pendencia = models.OneToOneField('PendenciaDocumentoProvento')
-    investidor = models.ForeignKey('Investidor')
+    documento = models.ForeignKey('DocumentoProventoBovespa')
+    investidor = models.ForeignKey('Investidor', related_name='leituras_que_recusou')
     motivo = models.CharField(u'Motivo da recusa', max_length=500, validators=[MinLengthValidator(10)])
     data_recusa = models.DateTimeField(u'Data da recusa', auto_now_add=True)
+    responsavel_leitura = models.ForeignKey('Investidor', related_name='leituras_recusadas')
     
 class InvestidorResponsavelPendencia (models.Model):
     pendencia = models.OneToOneField('PendenciaDocumentoProvento')

@@ -300,12 +300,11 @@ def validar_documento_provento(request, id_pendencia):
             print 'Recusar'
             # Verificar se texto de recusa foi preenchido
             motivo_recusa = request.POST.get('motivo_recusa')
-            
             # Criar vínculo de responsabilidade por recusa
-#             try:
-#                 salvar_investidor_responsavel_por_recusar_documento(pendencia, investidor, )
-#             except Exception as erro:
-#                 messages.error(request, str(erro))
+            try:
+                salvar_investidor_responsavel_por_recusar_documento(pendencia, investidor, motivo_recusa)
+            except Exception as erro:
+                messages.error(request, str(erro))
         
     # Verificar se pendência é de validação
     if pendencia.tipo != 'V':
