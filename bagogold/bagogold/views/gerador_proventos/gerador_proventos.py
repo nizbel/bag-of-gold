@@ -151,7 +151,7 @@ def listar_documentos(request):
         documento.pendente = documento.pendente()
         
         if documento.tipo == 'A':
-            documento.ha_proventos_vinculados = False
+            documento.ha_proventos_vinculados = documento.proventoacaodocumento_set.count() > 0
             
         # Preparar descrição de tipos
         documento.tipo = 'Ação' if documento.tipo == 'A' else 'FII'
