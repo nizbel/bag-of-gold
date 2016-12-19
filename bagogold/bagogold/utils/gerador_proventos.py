@@ -264,12 +264,18 @@ def criar_descricoes_provento_acoes(descricoes_proventos, acoes_descricoes_prove
         for descricao_provento in descricoes_proventos:
             descricao_provento.save()
             objetos_salvos.append(descricao_provento)
-            provento_documento = ProventoAcaoDocumento.objects.create(documento=documento, descricao_provento=descricao_provento, versao=1)
+            provento, acoes_provento = converter_descricao_provento_para_provento_acoes(descricao_provento)
+            provento.save()
+            objetos_salvos.append(provento)
+            provento_documento = ProventoAcaoDocumento.objects.create(provento=provento, documento=documento, descricao_provento=descricao_provento, versao=1)
             objetos_salvos.append(provento_documento)
         for descricao_acao_provento in acoes_descricoes_proventos:
             descricao_acao_provento.provento = ProventoAcaoDescritoDocumentoBovespa.objects.get(id=descricao_acao_provento.provento.id)
             descricao_acao_provento.save()
             objetos_salvos.append(descricao_acao_provento)
+        for acao_provento in acoes_provento:
+            acao_provento.save()
+            objetos_salvos.append(acao_provento)
     except Exception as e:
         # Apaga objetos em caso de erro
         for objeto in objetos_salvos:
