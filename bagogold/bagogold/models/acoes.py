@@ -53,6 +53,10 @@ class Acao (models.Model):
             return u'PNC'
         elif self.tipo == 8:
             return u'PND'
+
+class ProventoOficialManager(models.Manager):
+    def get_queryset(self):
+        return super(ProventoOficialManager, self).get_queryset().filter(oficial_bovespa=True)
     
 class Provento (models.Model):
     acao = models.ForeignKey('Acao')
@@ -78,6 +82,9 @@ class Provento (models.Model):
         elif self.tipo_provento == 'J':
             tipo = u'JSCP'
         return u'%s de %s com valor %s e data EX %s a ser pago em %s' % (tipo, self.acao.ticker, self.valor_unitario, self.data_ex, self.data_pagamento)
+    
+    objects = ProventoOficialManager()
+    gerador_objects = models.Manager()
 
 
 class AcaoProvento (models.Model):
