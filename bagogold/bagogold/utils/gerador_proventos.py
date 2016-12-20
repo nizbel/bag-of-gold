@@ -134,18 +134,19 @@ def salvar_investidor_responsavel_por_recusar_documento(pendencia, investidor, m
                                                    responsavel_leitura=pendencia.documento.responsavel_leitura())
     responsavel_recusa.full_clean()
     
+    # Pendência volta a ser de leitura
+    pendencia.tipo = 'L'
+    pendencia.save()
+    
     # Desaloca pendência para o validador
     retorno, mensagem = desalocar_pendencia_de_investidor(pendencia, investidor)
     if not retorno:
         raise ValueError(mensagem)
     # Realoca pendência para o leitor
-    retorno, mensagem = alocar_pendencia_para_investidor(pendencia, InvestidorLeituraDocumento.objects.get(documento=pendencia.documento))
+    retorno, mensagem = alocar_pendencia_para_investidor(PendenciaDocumentoProvento.objects.get(id=pendencia.id), \
+                                                         InvestidorLeituraDocumento.objects.get(documento=pendencia.documento).investidor)
     if not retorno:
         raise ValueError(mensagem)
-    
-    # Pendência volta a ser de leitura
-    pendencia.tipo = 'L'
-    pendencia.save()
     
     # Salvar responsavel pela recusa
     responsavel_recusa.save()

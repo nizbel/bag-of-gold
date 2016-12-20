@@ -44,6 +44,14 @@ def baixar_documento_provento(request, id_documento):
 
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
+def detalhar_documento(request, id_documento):
+    documento = DocumentoProventoBovespa.objects.get(id=id_documento)
+    documento.nome = documento.documento.name.split('/')[-1]
+    
+    return TemplateResponse(request, 'gerador_proventos/detalhar_documento.html', {'documento': documento})
+
+@login_required
+@permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def ler_documento_provento(request, id_pendencia):
     pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
     # Verificar se pendência é de leitura
@@ -175,7 +183,18 @@ def listar_pendencias(request):
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def listar_proventos(request):
-    pass
+    proventos = Provento.objects.all()
+    
+    for provento in proventos:
+        print dir(provento)
+        if isinstance(provento, Provento):
+            provento.documentos = DocumentoProventoBovespa.objects.filter(id__in=provento.proventoacaodocumento_set.values_list('documento', flat=True))
+        elif isinstance(provento, ProventoFII):
+            provento.documentos = DocumentoProventoBovespa.objects.filter(id__in=provento.proventofiidocumento_set.values_list('documento', flat=True))
+        for documento in provento.documentos:
+            documento.nome = documento.documento.name.split('/')[-1]
+        
+    return TemplateResponse(request, 'gerador_proventos/listar_proventos.html', {'proventos': proventos})
 
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
@@ -294,6 +313,8 @@ def validar_documento_provento(request, id_pendencia):
                     
                 # Remover pendência
                 pendencia.delete()
+                messages.success(request, 'Pendência validada com sucesso')
+                return HttpResponseRedirect(reverse('listar_pendencias'))
         
         # TODO testar recusar
         elif request.POST.get('recusar'):
@@ -303,12 +324,14 @@ def validar_documento_provento(request, id_pendencia):
             # Criar vínculo de responsabilidade por recusa
             try:
                 salvar_investidor_responsavel_por_recusar_documento(pendencia, investidor, motivo_recusa)
+                messages.success(request, 'Pendência recusada com sucesso')
+                return HttpResponseRedirect(reverse('listar_pendencias'))
             except Exception as erro:
-                messages.error(request, str(erro))
+                messages.error(request, unicode(erro))
         
     # Verificar se pendência é de validação
     if pendencia.tipo != 'V':
-        messages.success(request, 'Pendência não é de validação')
+        messages.error(request, 'Pendência não é de validação')
         return HttpResponseRedirect(reverse('listar_pendencias'))
     
     if pendencia.documento.investidorleituradocumento.decisao == 'C':
