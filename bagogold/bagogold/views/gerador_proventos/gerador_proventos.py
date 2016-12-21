@@ -183,7 +183,8 @@ def listar_pendencias(request):
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def listar_proventos(request):
-    proventos = Provento.objects.all()
+    proventos = list(Provento.gerador_objects.all())
+    proventos.extend(list(ProventoFII.gerador_objects.all()))
     
     for provento in proventos:
         print dir(provento)
@@ -287,7 +288,7 @@ def validar_documento_provento(request, id_pendencia):
                             print 'Alterou', descricao.id
                             if request.POST.get('descricao_%s' % (descricao.id)):
                                 # Verificar se foi relacionado a um provento ou a uma descrição
-                                provento_relacionado = Provento.objects.get(id=request.POST.get('descricao_%s' % (descricao.id)))
+                                provento_relacionado = Provento.gerador_objects.get(id=request.POST.get('descricao_%s' % (descricao.id)))
                                 print u'Descrição %s é relacionada a %s' % (descricao.id, provento_relacionado)
                                 proventos_relacionados[descricao] = provento_relacionado
                             else:
@@ -301,7 +302,7 @@ def validar_documento_provento(request, id_pendencia):
                             versionar_descricoes_relacionadas_acoes(descricao, provento)
                         # Altera proventos para serem oficiais
                         for provento_id in ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True):
-                            provento = Provento.objects.get(id=provento_id)
+                            provento = Provento.gerador_objects.get(id=provento_id)
                             if not provento.oficial_bovespa:
                                 provento.oficial_bovespa = True
                                 provento.save()

@@ -289,9 +289,9 @@ def buscar_proventos_proximos_acao(descricao_provento):
     Parâmetros: Descrição de provento de ação
     Retorno:    Lista de proventos ordenada por quantidade de dias em relação à data EX
     """
-    proventos_proximos_ant = Provento.objects.filter(acao=descricao_provento.acao, data_ex__lte=descricao_provento.data_ex) \
+    proventos_proximos_ant = Provento.gerador_objects.filter(acao=descricao_provento.acao, data_ex__lte=descricao_provento.data_ex) \
         .exclude(id=descricao_provento.proventoacaodocumento.provento.id).order_by('-data_ex')[:5]
-    proventos_proximos_post = Provento.objects.filter(acao=descricao_provento.acao, data_ex__gt=descricao_provento.data_ex) \
+    proventos_proximos_post = Provento.gerador_objects.filter(acao=descricao_provento.acao, data_ex__gt=descricao_provento.data_ex) \
         .exclude(id=descricao_provento.proventoacaodocumento.provento.id).order_by('data_ex')[:5]
     
     # Ordenar pela diferença com a data da descrição de provento
