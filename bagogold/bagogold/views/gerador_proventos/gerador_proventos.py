@@ -5,6 +5,7 @@ from bagogold.bagogold.forms.gerador_proventos import \
     AcaoProventoAcaoDescritoDocumentoBovespaForm
 from bagogold.bagogold.models.acoes import Acao, Provento
 from bagogold.bagogold.models.empresa import Empresa
+from bagogold.bagogold.models.fii import ProventoFII
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
     PendenciaDocumentoProvento, ProventoAcaoDescritoDocumentoBovespa, \
     ProventoAcaoDocumento
