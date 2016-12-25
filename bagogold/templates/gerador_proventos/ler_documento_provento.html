@@ -42,10 +42,8 @@
                                 <div class="m-grid-col m-grid-col-left"><strong>Responsável:</strong></div>
                                 <div class="m-grid-col m-grid-col-left">{{pendencia.responsavel}}</div>
                             </div>
-                            <div class="m-grid-row">
-                                <a href="{% url 'baixar_documento_provento' pendencia.documento.id %}" class="btn btn-warning">Download</a>
-                            </div>
                         </div>
+                        <a href="{% url 'baixar_documento_provento' pendencia.documento.id %}" class="btn btn-warning">Download</a>
                     </div>
                 </div>
             </div>
@@ -131,7 +129,7 @@
                                                     <label class="control-label col-md-4" style="text-align: left;"> Data EX: </label>
                                                     <div class="col-md-8">
                                                         <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_provento-{{forloop.counter0}}-data_ex" name="provento-{{forloop.counter0}}-data_ex" data-date="{{form_provento.data_ex.value|default:''}}" data-date-viewmode="years">
-                                                            <input type="text" class="form-control">
+                                                            <input type="text" class="form-control" name="provento-{{forloop.counter0}}-data_ex">
                                                             <span class="input-group-btn">
                                                                 <button class="btn default" type="button">
                                                                     <i class="fa fa-calendar"></i>
@@ -145,7 +143,7 @@
                                                     <label class="control-label col-md-4" style="text-align: left;"> Data de pagamento: </label>
                                                     <div class="col-md-8">
                                                         <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_provento-{{forloop.counter0}}-data_pagamento" name="provento-{{forloop.counter0}}-data_pagamento" data-date="{{form.data_pagamento.value|default:''}}" data-date-viewmode="years">
-                                                            <input type="text" class="form-control">
+                                                            <input type="text" class="form-control" name="provento-{{forloop.counter0}}-data_pagamento">
                                                             <span class="input-group-btn">
                                                                 <button class="btn default" type="button">
                                                                     <i class="fa fa-calendar"></i>
@@ -170,7 +168,7 @@
                                                     <label class="control-label col-md-4" style="text-align: left;"> Ação: </label>
                                                     <div class="col-md-8">
                                                         <select class="selectpicker form-control" id="id_provento-{{forloop.counter0}}-acao" name="provento-{{forloop.counter0}}-acao">
-                                                            {% for key, value in form_provento.fields.acao.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
+                                                            {% for key, value in form_provento.fields.acao.choices %}<option value="{{ key|cut:'.' }}">{{ value }}</option>{% endfor %}
                                                         </select>
                                                         {% if form_provento.acao.errors %} <span class="help-block"> {{ form_provento.acao.errors.as_text }} </span> {% endif %}
                                                     </div>
@@ -183,7 +181,7 @@
                                                         <label class="control-label col-md-4" style="text-align: left;"> Ação recebida: </label>
                                                         <div class="col-md-8">
                                                             <select class="selectpicker form-control" id="id_acao_provento-{{forloop.counter0}}-acao_recebida" name="acao_provento-{{forloop.counter0}}-acao_recebida">
-                                                                {% for key, value in form_acao_provento.fields.acao_recebida.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
+                                                                {% for key, value in form_acao_provento.fields.acao_recebida.choices %}<option value="{{ key|cut:'.' }}">{{ value }}</option>{% endfor %}
                                                             </select>
                                                             {% if form_acao_provento.acao_recebida.errors %} <span class="help-block"> {{ form_acao_provento.acao_recebida.errors.as_text }} </span> {% endif %}
                                                         </div>
@@ -192,7 +190,7 @@
                                                         <label class="control-label col-md-4" style="text-align: left;"> Data de pagamento de frações: </label>
                                                         <div class="col-md-8">
                                                             <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_acao_provento-{{forloop.counter0}}-data_pagamento_frac" name="acao_provento-{{forloop.counter0}}-data_pagamento_frac" data-date="{{form.data_pagamento_frac.value|default:''}}" data-date-viewmode="years">
-                                                                <input type="text" class="form-control">
+                                                                <input type="text" class="form-control" name="acao_provento-{{forloop.counter0}}-data_pagamento_frac">
                                                                 <span class="input-group-btn">
                                                                     <button class="btn default" type="button">
                                                                         <i class="fa fa-calendar"></i>
