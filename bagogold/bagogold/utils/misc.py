@@ -145,6 +145,8 @@ def formatar_zeros_a_direita_apos_2_casas_decimais(valor):
     Parâmetros: Valor (inteiro ou não)
     Retorno: Número formatado com os zeros a direita, após 2 casas decimais, removidos
     """
+    if valor == 0:
+        return '0.00'
     str_valor_formatado = str(valor)
     if '.' in str_valor_formatado:
         # Formatar número com casas decimais

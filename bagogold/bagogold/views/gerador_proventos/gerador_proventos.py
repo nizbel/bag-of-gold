@@ -80,7 +80,8 @@ def ler_documento_provento(request, id_pendencia):
         # Caso o botão de salvar ter sido apertado
         elif request.POST.get('save'):
             # Radio de documento estava em Gerar
-            if request.POST['radioDocumento'] == 'Gerar':
+            if request.POST['radioDocumento'] == '1':
+                print request.POST
                 formset_provento = ProventoFormset(request.POST, prefix='provento')
                 formset_acao_provento = AcaoProventoFormset(request.POST, prefix='acao_provento')
                 
@@ -121,7 +122,7 @@ def ler_documento_provento(request, id_pendencia):
                         messages.error(request, 'Proventos em ações não conferem com os proventos criados')
                         
             # Radio de documento estava em Excluir
-            elif request.POST['radioDocumento'] == 'Excluir':
+            elif request.POST['radioDocumento'] == '0':
                 # Colocar investidor como responsável pela leitura do documento
                 salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao='E')
                 messages.success(request, 'Exclusão de arquivo registrada com sucesso')
@@ -344,8 +345,8 @@ def validar_documento_provento(request, id_pendencia):
                 descricao_provento.descricao_tipo_provento = u'Ações'
                 descricao_provento.acoes_recebidas = descricao_provento.acaoproventoacaodescritodocumentobovespa_set.all()
                 # Remover 0s a esquerda para valores
-                for acao_descricao_provento in descricao_provento.acoes_recebidas:
-                    acao_descricao_provento.valor_calculo_frac = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(acao_descricao_provento.valor_calculo_frac))
+#                 for acao_descricao_provento in descricao_provento.acoes_recebidas:
+#                     acao_descricao_provento.valor_calculo_frac = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(acao_descricao_provento.valor_calculo_frac))
             elif descricao_provento.tipo_provento == 'D':
                 descricao_provento.descricao_tipo_provento = u'Dividendos'
             elif descricao_provento.tipo_provento == 'J':
