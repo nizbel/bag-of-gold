@@ -119,6 +119,19 @@
                                                             {% endfor%}
                                                         {% endif %}
                                                     </div>
+                                                    <div class="m-grid m-grid-responsive-xs">
+                                                        <div class="m-grid-row">
+                                                            <div class="m-grid-col">
+                                                                <div class="md-checkbox">
+                                                                    <input type="checkbox" id="checkbox_alteracao_{{descricao_provento.id}}" name="{{descricao_provento.id}}"  class="md-check">
+                                                                    <label for="checkbox_alteracao_{{descricao_provento.id}}">
+                                                                        <span></span>
+                                                                        <span class="check"></span>
+                                                                        <span class="box"></span> Relacionado a: </label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -148,47 +161,6 @@
                 <div class="row-fluid">
                 {% for descricao_provento in descricoes_proventos %}
                     <div class="box span6">
-                        <div class="box-header">
-                            <h2>Provento {{forloop.counter}} (Identificador: {{descricao_provento.id}})</h2>
-                        </div>
-                        <div class="box-content">
-                            <div class="row-fluid">
-                                <div class="span1"><strong>Ação:</strong></div>
-                                <div class="span2">{{descricao_provento.acao}}</div>
-                                <div class="span1"><strong>Tipo:</strong></div>
-                                <div class="span2">{{descricao_provento.descricao_tipo_provento}}</div>
-                                <div class="span2"><strong>Valor unit.:</strong></div>
-                                {% if descricao_provento.tipo_provento != 'A' %}
-                                    <div class="span4">R$ {{descricao_provento.valor_unitario}}</div>
-                                {% else %}
-                                    <div class="span4">{{descricao_provento.valor_unitario}}%</div>
-                                {% endif %}
-                            </div>
-                            <div class="row-fluid">
-                                <div class="span2"><strong>Data EX:</strong></div>
-                                <div class="span4">{{descricao_provento.data_ex}}</div>
-                                <div class="span2"><strong>Pagamento:</strong></div>
-                                <div class="span4">{{descricao_provento.data_pagamento}}</div>
-                            </div>
-                            {% if descricao_provento.tipo_provento == 'A' %}
-                                {% for acao_descricao_provento in descricao_provento.acoes_recebidas %}
-                                <div class="row-fluid">
-                                    <div class="span3"><strong>Ação recebida:</strong></div>
-                                    <div class="span3">{{acao_descricao_provento.acao_recebida}}</div>
-                                    <div class="span2"><strong>Valor de frações:</strong></div>
-                                    <div class="span4">R$ {{acao_descricao_provento.valor_calculo_frac}}</div>
-                                </div>
-                                <div class="row-fluid">
-                                    <div class="span4"><strong>Pagamento de frações:</strong></div>
-                                    <div class="span4">{{acao_descricao_provento.data_pagamento_frac}}</div>
-                                </div>
-                                {% endfor%}
-                            {% endif %}
-                            <label class="checkbox inline">
-                                <div class="checker"><span><input type="checkbox" id="checkbox_alteracao_{{descricao_provento.id}}" name="{{descricao_provento.id}}" 
-                                    value="{{descricao_provento.id}}"></span></div> Relacionado a:
-                            </label>
-                        </div>
                         <div class="box-header">
                             Proventos próximos
                         </div>
@@ -259,6 +231,8 @@
 </div>
 {% endif %}
 
+{% endblock %}
+{% block extra_footer %}
 <script>
 $( document ).ready(function() {
 	$('input[id*=checkbox_alteracao]').click(function() {
