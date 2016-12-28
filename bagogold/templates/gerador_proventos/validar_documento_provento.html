@@ -119,6 +119,7 @@
                                                             {% endfor%}
                                                         {% endif %}
                                                     </div>
+                                                    {% if descricao_provento.proventos_proximos %}
                                                     <div class="m-grid m-grid-responsive-xs">
                                                         <div class="m-grid-row">
                                                             <div class="m-grid-col">
@@ -131,6 +132,65 @@
                                                                 </div>
                                                             </div>
                                                         </div>
+                                                    </div>
+                                                    {% endif %}
+                                                    <hr>
+                                                    <div class="row">
+                                                        {% for provento_proximo in descricao_provento.proventos_proximos %}
+                                                        <div class="col-md-12">
+                                                            <div class="m-grid m-grid-responsive-xs">
+                                                                <div class="m-grid-row">
+                                                                    <div class="m-grid-col m-grid-col-left"><strong>Ação:</strong></div>
+                                                                    <div class="m-grid-col m-grid-col-left">{{provento_proximo.acao}}</div>
+                                                                    <div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
+                                                                    <div class="m-grid-col m-grid-col-left">{{provento_proximo.descricao_tipo_provento}}</div>
+                                                                    <div class="m-grid-col m-grid-col-left"><strong>Valor unit.:</strong></div>
+                                                                    {% if provento_proximo.tipo_provento != 'A' %}
+                                                                        <div class="m-grid-col m-grid-col-left">R$ {{provento_proximo.valor_unitario}}</div>
+                                                                    {% else %}
+                                                                        <div class="m-grid-col m-grid-col-left">{{provento_proximo.valor_unitario}}%</div>
+                                                                    {% endif %}
+                                                                </div>
+                                                                <div class="m-grid-row">
+                                                                    <div class="m-grid-col m-grid-col-left"><strong>Data EX:</strong></div>
+                                                                    <div class="m-grid-col m-grid-col-left">{{provento_proximo.data_ex|date:'d/m/Y'}}</div>
+                                                                    <div class="m-grid-col m-grid-col-left"><strong>Pagamento:</strong></div>
+                                                                    <div class="m-grid-col m-grid-col-left">{{provento_proximo.data_pagamento|date:'d/m/Y'}}</div>
+                                                                </div>
+                                                                {% if provento_proximo.tipo_provento == 'A' %}
+                                                                    {% for acao_descricao_provento in provento_proximo.acoes_recebidas %}
+                                                                    <div class="m-grid-row">
+                                                                        <div class="m-grid-col m-grid-col-left"><strong>Ação recebida:</strong></div>
+                                                                        <div class="m-grid-col m-grid-col-left">{{acao_descricao_provento.acao_recebida}}</div>
+                                                                        <div class="m-grid-col m-grid-col-left"><strong>Valor de frações:</strong></div>
+                                                                        <div class="m-grid-col m-grid-col-left">
+                                                                        {% if acao_descricao_provento.valor_calculo_frac %}
+                                                                        R$ {{acao_descricao_provento.valor_calculo_frac}}
+                                                                        {% else %}
+                                                                        N/A
+                                                                        {% endif %}
+                                                                        </div>
+                                                                        <div class="m-grid-col m-grid-col-left"><strong>Pagamento de frações:</strong></div>
+                                                                        <div class="m-grid-col m-grid-col-left">{{acao_descricao_provento.data_pagamento_frac|date:'d/m/Y'|default:'N/A'}}</div>
+                                                                    </div>
+                                                                    {% endfor %}
+                                                                {% endif %}
+                                                            </div>
+                                                            <div class="md-radio">
+                                                                <input type="radio" id="descricao_{{descricao_provento.id}}_{{provento_proximo.id}}" name="descricao_{{descricao_provento.id}}" 
+                                                                    value="{{provento_proximo.id}}" disabled="disabled" class="md-radiobtn">
+                                                                <label for="descricao_{{descricao_provento.id}}_{{provento_proximo.id}}">
+                                                                    <span></span>
+                                                                    <span class="check"></span>
+                                                                    <span class="box"></span> Este provento </label>
+                                                            </div>
+                                                            {% if forloop.counter < descricao_provento.proventos_proximos|length %}
+                                                            <hr>
+                                                            {% endif %}
+                                                        </div>
+                                                        {% empty %}
+                                                        <div class="col-md-12"><strong>Não há proventos próximos</strong></div>
+                                                        {% endfor %}
                                                     </div>
                                                 </div>
                                             </div>
