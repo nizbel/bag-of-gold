@@ -124,7 +124,7 @@
                                                         <div class="m-grid-row">
                                                             <div class="m-grid-col">
                                                                 <div class="md-checkbox">
-                                                                    <input type="checkbox" id="checkbox_alteracao_{{descricao_provento.id}}" name="{{descricao_provento.id}}"  class="md-check">
+                                                                    <input type="checkbox" value="{{descricao_provento.id}}" id="checkbox_alteracao_{{descricao_provento.id}}" name="{{descricao_provento.id}}"  class="md-check">
                                                                     <label for="checkbox_alteracao_{{descricao_provento.id}}">
                                                                         <span></span>
                                                                         <span class="check"></span>
@@ -202,9 +202,9 @@
                                             <div class="col-md-12">
                                                 <button type="submit" name="validar" value="1" class="btn green-steel" id="btn_confirma_validar">Confirma validação</button>
                                                 <button type="submit" name="recusar" value="0" class="btn btn-danger" id="btn_confirma_recusar">Confirma recusa</button>
-                                                <button class="btn btn-warning" id="btn_cancelar">Cancelar</button>
-                                                <button class="btn green-steel" id="btn_validar">Validar</button>
-                                                <button class="btn btn-danger" id="btn_recusar">Recusar</button>
+                                                <button type="button" class="btn btn-warning" id="btn_cancelar">Cancelar</button>
+                                                <button type="button" class="btn green-steel" id="btn_validar">Validar</button>
+                                                <button type="button" class="btn btn-danger" id="btn_recusar">Recusar</button>
                                             </div>
                                         </div>
                                     </div>
@@ -244,14 +244,14 @@
 <script>
 $( document ).ready(function() {
 	$('input[id*=checkbox_alteracao]').click(function() {
-		if ($(this).attr('checked')) {
+		if ($(this).is(':checked')) {
     		$('input[name*=descricao_' + $(this).val() + ']').each(function() {
                 $(this).removeAttr("disabled");
     		});
 		} else {
 			$('input[name*=descricao_' + $(this).val() + ']').each(function() {
                 $(this).attr('disabled', 'disabled');
-                $(this).parent().removeClass('checked')
+                $(this).prop('checked', false);
             });
 		}
 	});
