@@ -192,7 +192,6 @@ def versionar_descricoes_relacionadas_acoes(descricao, provento_relacionado):
     # Adicionar descricao à lista de versões pelo número do protocolo do documento
     versoes_provento.append(descricao.proventoacaodocumento)
     versoes_provento.sort(key=lambda x: x.documento.protocolo)
-    print [provento_documento.documento.protocolo for provento_documento in versoes_provento]
     # Gerar versões a partir de 1 na ordem feita
     for versao, item in enumerate(versoes_provento, start=1):
         item.versao = versao
