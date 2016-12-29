@@ -307,16 +307,21 @@ def validar_documento_provento(request, id_pendencia):
                             if not provento.oficial_bovespa:
                                 provento.oficial_bovespa = True
                                 provento.save()
+                    # Qualquer erro que deixe a validação incompleta faz necessário desfazer investidor responsável pela validação
+                    else:
+                        desfazer_investidor_responsavel_por_validacao(pendencia, investidor)
                                 
                 elif pendencia.documento.investidorleituradocumento.decisao == 'E':
                     print 'Validar exclusão'
                     # Apagar documento
                     pendencia.documento.apagar_documento()
                     
-                # Remover pendência
-                pendencia.delete()
-                messages.success(request, 'Pendência validada com sucesso')
-                return HttpResponseRedirect(reverse('listar_pendencias'))
+                # Verifica se validação passou ou foi feita uma exclusão
+                if pendencia.documento.investidorleituradocumento.decisao == 'E' or (validacao_completa and pendencia.documento.investidorleituradocumento.decisao == 'C'):
+                    # Remover pendência
+                    pendencia.delete()
+                    messages.success(request, 'Pendência validada com sucesso')
+                    return HttpResponseRedirect(reverse('listar_pendencias'))
         
         # TODO testar recusar
         elif request.POST.get('recusar'):
