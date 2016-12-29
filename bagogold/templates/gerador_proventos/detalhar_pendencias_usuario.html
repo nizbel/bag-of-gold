@@ -125,6 +125,68 @@
                     </div>
                 </div>
             </div>
+            
+            <div class="col-md-4">
+                <div class="portlet box yellow-crusta">
+                    <div class="portlet-title">
+                        <div class="caption">
+                            <i class="icon-list"></i>Leituras que recusou
+                        </div>
+                        <div class="tools">
+                            <a href="javascript:;" class="collapse"></a>
+                        </div>
+                    </div>
+                    <div class="portlet-body">
+                        <table id="validacoes" class="table table-striped table-bordered table-hover table-header-fixed">
+                        <thead>
+                            <tr>
+                                <th>Documento</th>
+                                <th>Data da validação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for recusa in usuario.leituras_que_recusou %}
+                            <tr>
+                                <td>{{recusa.documento}}</a></td>
+                                <td>{{recusa.data_recusa|date:"d/m/Y H:i"}}</td>
+                            </tr>
+                        {% endfor %}    
+                        </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="portlet box yellow-crusta">
+                    <div class="portlet-title">
+                        <div class="caption">
+                            <i class="icon-list"></i>Leituras que teve recusadas
+                        </div>
+                        <div class="tools">
+                            <a href="javascript:;" class="collapse"></a>
+                        </div>
+                    </div>
+                    <div class="portlet-body">
+                        <table id="validacoes" class="table table-striped table-bordered table-hover table-header-fixed">
+                        <thead>
+                            <tr>
+                                <th>Documento</th>
+                                <th>Data da validação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for recusa in usuario.leituras_recusadas %}
+                            <tr>
+                                <td>{{recusa.documento}}</a></td>
+                                <td>{{recusa.data_recusa|date:"d/m/Y H:i"}}</td>
+                            </tr>
+                        {% endfor %}    
+                        </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -147,6 +209,8 @@
 $( document ).ready(function() {
     $.plot($("#graf_pendencias_usuario"), [ {color: "#33AA33", label: "Leituras", bars: {show:true, align:"center", barWidth: 8 * 24 * 60 * 60 * 600, lineWidth: 1, stacked: false}, data: {{graf_leituras|safe}}},
                                             {color: "#8811AA", label: "Validações", bars: {show:true, align:"center", barWidth: 8 * 24 * 60 * 60 * 600, lineWidth: 1, stacked: false}, data: {{graf_validacoes|safe}}},
+                                            {color: "#FFBB44", label: "Recusou", bars: {show:true, align:"center", barWidth: 8 * 24 * 60 * 60 * 600, lineWidth: 1, stacked: false}, data: {{graf_leituras_que_recusou|safe}}},
+                                            {color: "#550055", label: "Foi recusado", bars: {show:true, align:"center", barWidth: 8 * 24 * 60 * 60 * 600, lineWidth: 1, stacked: false}, data: {{graf_leituras_recusadas|safe}}},
                                             ],
                                             {grid: {hoverable: true}, legend:{position:"nw"}, xaxis: {mode: "time",timeformat:"%m-%Y"},
     	}
