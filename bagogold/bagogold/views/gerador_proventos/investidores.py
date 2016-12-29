@@ -27,8 +27,8 @@ def detalhar_pendencias_usuario(request, id_usuario):
     graf_validacoes = list()
     
     # Iterar mes a mes sobre a data de 2 anos atrás
-    data_2_anos_atras = datetime.date.today().replace(year=datetime.date.today().year-2)
-    while data_2_anos_atras <= datetime.date.today():
+    data_2_anos_atras = datetime.date.today().replace(day=1, year=datetime.date.today().year-2)
+    while data_2_anos_atras <= datetime.date.today().replace(day=1):
         # Preparar data
         graf_leituras += [[str(calendar.timegm(data_2_anos_atras.replace(day=13).timetuple()) * 1000), usuario.leituras.filter(data_leitura__month=data_2_anos_atras.month, data_leitura__year=data_2_anos_atras.year).count()]]
         graf_validacoes += [[str(calendar.timegm(data_2_anos_atras.replace(day=18).timetuple()) * 1000), usuario.validacoes.filter(data_validacao__month=data_2_anos_atras.month, data_validacao__year=data_2_anos_atras.year).count()]]
