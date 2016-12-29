@@ -33,16 +33,17 @@ def detalhar_pendencias_usuario(request, id_usuario):
     data_2_anos_atras = datetime.date.today().replace(day=1, year=datetime.date.today().year-2)
     while data_2_anos_atras <= datetime.date.today().replace(day=1):
         # Preparar data
-        graf_leituras += [[str(calendar.timegm(data_2_anos_atras.replace(day=13).timetuple()) * 1000), usuario.leituras.filter(data_leitura__month=data_2_anos_atras.month, data_leitura__year=data_2_anos_atras.year).count()]]
-        graf_validacoes += [[str(calendar.timegm(data_2_anos_atras.replace(day=18).timetuple()) * 1000), usuario.validacoes.filter(data_validacao__month=data_2_anos_atras.month, data_validacao__year=data_2_anos_atras.year).count()]]
-        graf_leituras_que_recusou = [[str(calendar.timegm(data_2_anos_atras.replace(day=13).timetuple()) * 1000), usuario.leituras_que_recusou.filter().count(data_recusa__month=data_2_anos_atras.month, data_recusa__year=data_2_anos_atras.year)]]
-        graf_leituras_recusadas = [[str(calendar.timegm(data_2_anos_atras.replace(day=13).timetuple()) * 1000), usuario.leituras_recusadas.filter().count(data_recusa__month=data_2_anos_atras.month, data_recusa__year=data_2_anos_atras.year)]]
+        graf_leituras += [[str(calendar.timegm(data_2_anos_atras.replace(day=7).timetuple()) * 1000), usuario.leituras.filter(data_leitura__month=data_2_anos_atras.month, data_leitura__year=data_2_anos_atras.year).count()]]
+        graf_validacoes += [[str(calendar.timegm(data_2_anos_atras.replace(day=13).timetuple()) * 1000), usuario.validacoes.filter(data_validacao__month=data_2_anos_atras.month, data_validacao__year=data_2_anos_atras.year).count()]]
+        graf_leituras_que_recusou = [[str(calendar.timegm(data_2_anos_atras.replace(day=19).timetuple()) * 1000), usuario.leituras_que_recusou.filter(data_recusa__month=data_2_anos_atras.month, data_recusa__year=data_2_anos_atras.year).count()]]
+        graf_leituras_recusadas = [[str(calendar.timegm(data_2_anos_atras.replace(day=25).timetuple()) * 1000), usuario.leituras_recusadas.filter(data_recusa__month=data_2_anos_atras.month, data_recusa__year=data_2_anos_atras.year).count()]]
         if data_2_anos_atras.month < 12:
             data_2_anos_atras = data_2_anos_atras.replace(month=data_2_anos_atras.month+1)
         else:
             data_2_anos_atras = data_2_anos_atras.replace(year=data_2_anos_atras.year+1, month=1)
     print graf_leituras
-    return TemplateResponse(request, 'gerador_proventos/detalhar_pendencias_usuario.html', {'usuario': usuario, 'graf_leituras': graf_leituras, 'graf_validacoes': graf_validacoes})
+    return TemplateResponse(request, 'gerador_proventos/detalhar_pendencias_usuario.html', {'usuario': usuario, 'graf_leituras': graf_leituras, 'graf_validacoes': graf_validacoes,
+                                                                                            'graf_leituras_que_recusou': graf_leituras_que_recusou, 'graf_leituras_recusadas': graf_leituras_recusadas})
 
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
