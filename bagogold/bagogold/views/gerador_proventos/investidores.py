@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.gerador_proventos import \
     InvestidorResponsavelPendencia, InvestidorLeituraDocumento, \
-    InvestidorValidacaoDocumento, PendenciaDocumentoProvento
+    InvestidorValidacaoDocumento, PendenciaDocumentoProvento,\
+    InvestidorRecusaDocumento
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import Permission, User
 from django.db.models.query_utils import Q
@@ -18,6 +19,8 @@ def detalhar_pendencias_usuario(request, id_usuario):
     usuario.pendencias_alocadas = PendenciaDocumentoProvento.objects.filter(investidorresponsavelpendencia__investidor=usuario.investidor)
     usuario.leituras = InvestidorLeituraDocumento.objects.filter(investidor=usuario.investidor)
     usuario.validacoes = InvestidorValidacaoDocumento.objects.filter(investidor=usuario.investidor)
+    usuario.leituras_que_recusou = InvestidorRecusaDocumento.objects.filter(investidor=usuario.investidor)
+    usuario.leituras_recusadas = InvestidorRecusaDocumento.objects.filter(responsavel_leitura=usuario.investidor)
     
     for pendencia in usuario.pendencias_alocadas:
         pendencia.tipo_pendencia = 'Leitura' if pendencia.tipo == 'L' else 'Validação'
@@ -32,6 +35,8 @@ def detalhar_pendencias_usuario(request, id_usuario):
         # Preparar data
         graf_leituras += [[str(calendar.timegm(data_2_anos_atras.replace(day=13).timetuple()) * 1000), usuario.leituras.filter(data_leitura__month=data_2_anos_atras.month, data_leitura__year=data_2_anos_atras.year).count()]]
         graf_validacoes += [[str(calendar.timegm(data_2_anos_atras.replace(day=18).timetuple()) * 1000), usuario.validacoes.filter(data_validacao__month=data_2_anos_atras.month, data_validacao__year=data_2_anos_atras.year).count()]]
+        graf_leituras_que_recusou = [[str(calendar.timegm(data_2_anos_atras.replace(day=13).timetuple()) * 1000), usuario.leituras_que_recusou.filter().count(data_recusa__month=data_2_anos_atras.month, data_recusa__year=data_2_anos_atras.year)]]
+        graf_leituras_recusadas = [[str(calendar.timegm(data_2_anos_atras.replace(day=13).timetuple()) * 1000), usuario.leituras_recusadas.filter().count(data_recusa__month=data_2_anos_atras.month, data_recusa__year=data_2_anos_atras.year)]]
         if data_2_anos_atras.month < 12:
             data_2_anos_atras = data_2_anos_atras.replace(month=data_2_anos_atras.month+1)
         else:
