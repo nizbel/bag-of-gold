@@ -54,6 +54,12 @@ def detalhar_documento(request, id_documento):
     
     proventos_descritos_ids = ProventoAcaoDocumento.objects.filter(documento=documento).values_list('descricao_provento_id', flat=True)
     proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_descritos_ids)
+    for provento in proventos:
+        # Remover 0s a direita para valores
+        provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario))
+        provento.acoes_recebidas = provento.acaoprovento_set.all()
+        for acao_provento in provento.acoes_recebidas:
+            acao_provento.valor_calculo_frac = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(acao_provento.valor_calculo_frac))
     
     return TemplateResponse(request, 'gerador_proventos/detalhar_documento.html', {'documento': documento, 'proventos': proventos})
 
@@ -355,7 +361,7 @@ def validar_documento_provento(request, id_pendencia):
             if descricao_provento.tipo_provento == 'A':
                 descricao_provento.descricao_tipo_provento = u'Ações'
                 descricao_provento.acoes_recebidas = descricao_provento.acaoproventoacaodescritodocumentobovespa_set.all()
-                # Remover 0s a esquerda para valores
+                # Remover 0s a direita para valores
 #                 for acao_descricao_provento in descricao_provento.acoes_recebidas:
 #                     acao_descricao_provento.valor_calculo_frac = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(acao_descricao_provento.valor_calculo_frac))
             elif descricao_provento.tipo_provento == 'D':
@@ -363,7 +369,7 @@ def validar_documento_provento(request, id_pendencia):
             elif descricao_provento.tipo_provento == 'J':
                 descricao_provento.descricao_tipo_provento = u'JSCP'
             
-            # Remover 0s a esquerda para valores
+            # Remover 0s a direita para valores
             descricao_provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(descricao_provento.valor_unitario))
             
             # Buscar proventos próximos
@@ -373,7 +379,7 @@ def validar_documento_provento(request, id_pendencia):
                 if provento_proximo.tipo_provento == 'A':
                     provento_proximo.descricao_tipo_provento = u'Ações'
                     provento_proximo.acoes_recebidas = provento_proximo.acaoprovento_set.all()
-                    # Remover 0s a esquerda para valores
+                    # Remover 0s a direita para valores
                     for acao_descricao_provento in provento_proximo.acoes_recebidas:
                         acao_descricao_provento.valor_calculo_frac = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(acao_descricao_provento.valor_calculo_frac))
                 elif provento_proximo.tipo_provento == 'D':
@@ -381,7 +387,7 @@ def validar_documento_provento(request, id_pendencia):
                 elif provento_proximo.tipo_provento == 'J':
                     provento_proximo.descricao_tipo_provento = u'JSCP'
                 
-                # Remover 0s a esquerda para valores
+                # Remover 0s a direita para valores
                 provento_proximo.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento_proximo.valor_unitario))
                         
         # Descrição da decisão do responsável pela leitura
