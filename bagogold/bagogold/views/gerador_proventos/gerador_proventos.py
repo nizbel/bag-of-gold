@@ -49,7 +49,13 @@ def detalhar_documento(request, id_documento):
     documento = DocumentoProventoBovespa.objects.get(id=id_documento)
     documento.nome = documento.documento.name.split('/')[-1]
     
-    return TemplateResponse(request, 'gerador_proventos/detalhar_documento.html', {'documento': documento})
+    # Preparar descrição de tipo
+    documento.tipo = 'Ação' if documento.tipo == 'A' else 'FII'
+    
+    proventos_descritos_ids = ProventoAcaoDocumento.objects.filter(documento=documento).values_list('descricao_provento_id', flat=True)
+    proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_descritos_ids)
+    
+    return TemplateResponse(request, 'gerador_proventos/detalhar_documento.html', {'documento': documento, 'proventos': proventos})
 
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)

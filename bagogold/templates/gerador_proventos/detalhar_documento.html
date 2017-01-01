@@ -11,10 +11,77 @@
 <div class="portlet light">
     <div class="portlet-title">
         <div class="caption font-yellow-crusta">
-            <i class="icon-user font-yellow-crusta"></i>Documento {{documento.nome}}</div>
+            <i class="icon-doc font-yellow-crusta"></i>
+            <span class="caption-subject bold uppercase">Documento {{documento.nome}}</span>
+        </div>
     </div>
     <div class="portlet-body">
-        
+        <div class="row">
+            <div class="col-md-12">
+                <div class="portlet box yellow-crusta">
+                    <div class="portlet-title">
+                        <div class="caption">
+                            <i class="fa fa-folder-open-o"></i>Dados do documento
+                        </div>
+                        <div class="tools">
+                            <a href="javascript:;" class="collapse"></a>
+                        </div>
+                    </div>
+                    <div class="portlet-body">
+                        <div class="m-grid m-grid-responsive-xs">
+                            <div class="m-grid-row">
+                                <div class="m-grid-col m-grid-col-left"><strong>Empresa:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{documento.empresa}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Protocolo:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{documento.protocolo}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Data Referência:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{documento.data_referencia}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{documento.tipo}}</div>
+                            </div>
+                            <div class="m-grid-row">
+                                <div class="m-grid-col m-grid-col-left"><strong>Validado:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{documento.pendente|yesno:"Não,Sim,Indefinido"}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Responsável por ler:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{documento.responsavel_leitura|default:'N/A'}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Responsável por validar:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{documento.responsavel_validacao|default:'N/A'}}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% if proventos %}
+        <div class="row">
+            <div class="col-md-12">
+                <div class="portlet box yellow-crusta">
+                    <div class="portlet-title">
+                        <div class="caption">
+                            <i class="fa fa-money"></i>Proventos relacionados
+                        </div>
+                        <div class="tools">
+                            <a href="javascript:;" class="collapse"></a>
+                        </div>
+                    </div>
+                    <div class="portlet-body">
+                        <div class="m-grid m-grid-responsive-xs">
+                            <div class="m-grid-row">
+                                <div class="m-grid-col m-grid-col-left"><strong>Empresa:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{pendencia.documento.empresa}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Protocolo:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{pendencia.documento.protocolo}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Data Referência:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{pendencia.documento.data_referencia}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Responsável:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{pendencia.responsavel}}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
