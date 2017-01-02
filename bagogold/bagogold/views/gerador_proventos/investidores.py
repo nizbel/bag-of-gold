@@ -28,6 +28,8 @@ def detalhar_pendencias_usuario(request, id_usuario):
     # Preparar gráficos de acompanhamento
     graf_leituras = list()
     graf_validacoes = list()
+    graf_leituras_que_recusou = list()
+    graf_leituras_recusadas = list()
     
     # Iterar mes a mes sobre a data de 2 anos atrás
     data_2_anos_atras = datetime.date.today().replace(day=1, year=datetime.date.today().year-2)
@@ -35,12 +37,13 @@ def detalhar_pendencias_usuario(request, id_usuario):
         # Preparar data
         graf_leituras += [[str(calendar.timegm(data_2_anos_atras.replace(day=7).timetuple()) * 1000), usuario.leituras.filter(data_leitura__month=data_2_anos_atras.month, data_leitura__year=data_2_anos_atras.year).count()]]
         graf_validacoes += [[str(calendar.timegm(data_2_anos_atras.replace(day=13).timetuple()) * 1000), usuario.validacoes.filter(data_validacao__month=data_2_anos_atras.month, data_validacao__year=data_2_anos_atras.year).count()]]
-        graf_leituras_que_recusou = [[str(calendar.timegm(data_2_anos_atras.replace(day=19).timetuple()) * 1000), usuario.leituras_que_recusou.filter(data_recusa__month=data_2_anos_atras.month, data_recusa__year=data_2_anos_atras.year).count()]]
-        graf_leituras_recusadas = [[str(calendar.timegm(data_2_anos_atras.replace(day=25).timetuple()) * 1000), usuario.leituras_recusadas.filter(data_recusa__month=data_2_anos_atras.month, data_recusa__year=data_2_anos_atras.year).count()]]
+        graf_leituras_que_recusou += [[str(calendar.timegm(data_2_anos_atras.replace(day=19).timetuple()) * 1000), usuario.leituras_que_recusou.filter(data_recusa__month=data_2_anos_atras.month, data_recusa__year=data_2_anos_atras.year).count()]]
+        graf_leituras_recusadas += [[str(calendar.timegm(data_2_anos_atras.replace(day=25).timetuple()) * 1000), usuario.leituras_recusadas.filter(data_recusa__month=data_2_anos_atras.month, data_recusa__year=data_2_anos_atras.year).count()]]
         if data_2_anos_atras.month < 12:
             data_2_anos_atras = data_2_anos_atras.replace(month=data_2_anos_atras.month+1)
         else:
             data_2_anos_atras = data_2_anos_atras.replace(year=data_2_anos_atras.year+1, month=1)
+        print graf_leituras_que_recusou
     return TemplateResponse(request, 'gerador_proventos/detalhar_pendencias_usuario.html', {'usuario': usuario, 'graf_leituras': graf_leituras, 'graf_validacoes': graf_validacoes,
                                                                                             'graf_leituras_que_recusou': graf_leituras_que_recusou, 'graf_leituras_recusadas': graf_leituras_recusadas})
 
