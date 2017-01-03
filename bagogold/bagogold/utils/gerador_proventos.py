@@ -148,6 +148,9 @@ def salvar_investidor_responsavel_por_recusar_documento(pendencia, investidor, m
     if not retorno:
         raise ValueError(mensagem)
     
+    # Remove responsável por leitura
+    InvestidorLeituraDocumento.objects.get(documento=pendencia.documento).delete()
+    
     # Salvar responsavel pela recusa
     responsavel_recusa.save()
     return responsavel_recusa
