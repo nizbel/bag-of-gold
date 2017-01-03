@@ -158,7 +158,11 @@ def ler_documento_provento(request, id_pendencia):
     for form in formset_provento:
         form.fields['acao'].queryset = Acao.objects.filter(empresa=pendencia.documento.empresa)
     
-    return TemplateResponse(request, 'gerador_proventos/ler_documento_provento.html', {'pendencia': pendencia, 'formset_provento': formset_provento, 'formset_acao_provento': formset_acao_provento})
+    # Preparar motivo de recusa, caso haja
+    recusa = pendencia.documento.ultima_recusa()
+    
+    return TemplateResponse(request, 'gerador_proventos/ler_documento_provento.html', {'pendencia': pendencia, 'formset_provento': formset_provento, 'formset_acao_provento': formset_acao_provento, \
+                                                                                       'recusa': recusa})
     
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)

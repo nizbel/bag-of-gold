@@ -281,7 +281,8 @@ $( document ).ready(function() {
 		var botao_clicado = $("button[type=submit]:focus").attr('name');
 	    if (botao_clicado == 'recusar') {
     		if ($('#texto_motivo_recusa').val().length < 10) {
-    			App.alert({ place: 'append', // append or prepent in container 
+    			App.alert({ container: 'messages', // alerts parent container
+    			            place: 'append', // append or prepent in container 
     			            type: 'danger', // alert's type 
     			            message: 'Texto de motivo deve ter mais de 10 caracteres', // alert's message 
                             close: true, // make alert closable 
