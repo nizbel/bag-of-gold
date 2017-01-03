@@ -66,7 +66,7 @@
                     </div>
                     <div class="portlet-body form">
                         <div class="row">
-                            <form method="POST" class="col-md-12 horizontal-form">{% csrf_token %}
+                            <form method="POST" class="col-md-12 horizontal-form" id="form_validacao">{% csrf_token %}
                                 <div class="form-body" style="margin: 0px 20px;">
                                     <div class="row">
                                         {% for descricao_provento in descricoes_proventos %}
@@ -197,6 +197,12 @@
                                         </div>
                                         {% endfor %}
                                     </div>
+                                    <div class="row" id="motivo_recusa">
+                                        <label class="control-label col-md-2" style="text-align: left;"> Motiva da recusa: </label>
+                                        <div class="col-md-10">
+                                            <textarea id="texto_motivo_recusa" maxlength="500" name="motivo_recusa" class="col-md-12"></textarea>
+                                        </div>
+                                    </div>
                                     <div class="form-actions">
                                         <div class="row">
                                             <div class="col-md-12">
@@ -219,28 +225,10 @@
     </div>
 </div>
 
-            
-            
-            
-            
-
-{% if pendencia.responsavel.id == request.user.investidor.id %}
-<div class="row-fluid">
-    <div class="box span12">
-        <form method="POST" id="form_validacao" class="post-form form-horizontal">{% csrf_token %}
-            <div id="forms">
-                <div class="row-fluid" id="motivo_recusa">
-                    <h4>Motivo da recusa:</h4>
-                    <textarea id="texto_motivo_recusa" name="motivo_recusa" class="span12"></textarea>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-{% endif %}
-
 {% endblock %}
 {% block extra_footer %}
+<script src={% static "assets/global/plugins/bootstrap-maxlength/bootstrap-maxlength.min.js" %} type="text/javascript"></script>
+
 <script>
 $( document ).ready(function() {
 	$('input[id*=checkbox_alteracao]').click(function() {
@@ -287,11 +275,22 @@ $( document ).ready(function() {
         $('#motivo_recusa').hide();
     });
 	
+    $("#texto_motivo_recusa").maxlength({alwaysShow: true});
+	
 	$('#form_validacao').submit(function() {
 		var botao_clicado = $("button[type=submit]:focus").attr('name');
 	    if (botao_clicado == 'recusar') {
     		if ($('#texto_motivo_recusa').val().length < 10) {
-    			alert('Texto de motivo deve ter mais de 10 caracteres');
+    			App.alert({ place: 'append', // append or prepent in container 
+    			            type: 'danger', // alert's type 
+    			            message: 'Texto de motivo deve ter mais de 10 caracteres', // alert's message 
+                            close: true, // make alert closable 
+                            reset: false, // close all previouse alerts first 
+                            focus: true, // auto scroll to the alert after shown 
+                            closeInSeconds: 60, // auto close after defined seconds 
+                            icon: 'fa fa-warning' // put icon class before the message 
+                        });
+//     			alert('Texto de motivo deve ter mais de 10 caracteres');
     			return false;
     		}
 	    }
