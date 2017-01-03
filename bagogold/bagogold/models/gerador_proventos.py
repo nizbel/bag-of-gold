@@ -71,6 +71,12 @@ class DocumentoProventoBovespa (models.Model):
         if hasattr(self, 'investidorvalidacaodocumento'):
             return self.investidorvalidacaodocumento.investidor
         return None
+    
+    def ultima_recusa(self):
+        recusas = InvestidorRecusaDocumento.objects.filter(documento=self).order_by('-data_recusa')
+        if recusas:
+            return recusas[0]
+        return None
 
 @receiver(post_save, sender=DocumentoProventoBovespa, dispatch_uid="documento_provento_bovespa_criado")
 def criar_pendencia_on_save(sender, instance, created, **kwargs):
