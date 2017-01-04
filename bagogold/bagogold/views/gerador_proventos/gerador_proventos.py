@@ -75,6 +75,20 @@ def detalhar_documento(request, id_documento):
 
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
+def detalhar_provento_acao(request, id_provento):
+    provento = Provento.gerador_objects.get(id=id_provento)
+
+    return TemplateResponse(request, 'gerador_proventos/detalhar_provento_acao.html', {'provento': provento})
+
+@login_required
+@permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
+def detalhar_provento_fii(request, id_provento):
+    provento = ProventoFII.gerador_objects.get(id=id_provento)
+
+    return TemplateResponse(request, 'gerador_proventos/detalhar_provento_fii.html', {'provento': provento})
+
+@login_required
+@permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def ler_documento_provento(request, id_pendencia):
     pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
     # Verificar se pendência é de leitura
