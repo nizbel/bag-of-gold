@@ -48,6 +48,8 @@
                                 <div class="m-grid-col m-grid-col-left">{{provento.data_ex|date:'d/m/Y'}}</div>
                                 <div class="m-grid-col m-grid-col-left"><strong>Pagamento:</strong></div>
                                 <div class="m-grid-col m-grid-col-left">{{provento.data_pagamento|date:'d/m/Y'}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Validado:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{provento.oficial_bovespa|yesno:"Sim,Não,Não"}}</div>
                             </div>
                             {% if provento.tipo_provento == 'A' %}
                                 {% for acao_descricao_provento in provento.acoes_recebidas %}
@@ -68,6 +70,74 @@
                                 {% endfor %}
                             {% endif %}
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="portlet box yellow-crusta">
+                    <div class="portlet-title">
+                        <div class="caption">
+                            <i class="fa fa-money"></i>Versões
+                        </div>
+                        <div class="tools">
+                            <a href="javascript:;" class="collapse"></a>
+                        </div>
+                    </div>
+                    <div class="portlet-body">
+                        {% for versao in versoes %}
+                        <div class="m-grid m-grid-responsive-xs">
+                            <div class="m-grid-row">
+                                <div class="m-grid-col m-grid-col-left"><strong>Ação:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{versao.acao}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{versao.descricao_tipo_provento}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Valor unit.:</strong></div>
+                                {% if versao.tipo_provento != 'A' %}
+                                    <div class="m-grid-col m-grid-col-left">R$ {{versao.valor_unitario}}</div>
+                                {% else %}
+                                    <div class="m-grid-col m-grid-col-left">{{versao.valor_unitario}}%</div>
+                                {% endif %}
+                                <div class="m-grid-col m-grid-col-left"><strong>Versão</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{versao.proventoacaodocumento.versao}}</div>
+                            </div>
+                            <div class="m-grid-row">
+                                <div class="m-grid-col m-grid-col-left"><strong>Data EX:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{versao.data_ex|date:'d/m/Y'}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Pagamento:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{versao.data_pagamento|date:'d/m/Y'}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Documento:</strong></div>
+                                <div class="m-grid-col m-grid-col-left"><a href="{% url "detalhar_documento" versao.proventoacaodocumento.documento.id %}">{{versao.proventoacaodocumento.documento}}</a></div>
+                                
+                            </div>
+                            {% if versao.tipo_provento == 'A' %}
+                                {% for acao_descricao_versao in versao.acoes_recebidas %}
+                                <div class="m-grid-row">
+                                    <div class="m-grid-col m-grid-col-left"><strong>Ação recebida:</strong></div>
+                                    <div class="m-grid-col m-grid-col-left">{{acao_descricao_versao.acao_recebida}}</div>
+                                    <div class="m-grid-col m-grid-col-left"><strong>Valor de frações:</strong></div>
+                                    <div class="m-grid-col m-grid-col-left">
+                                    {% if acao_descricao_versao.valor_calculo_frac %}
+                                    R$ {{acao_descricao_versao.valor_calculo_frac}}
+                                    {% else %}
+                                    N/A
+                                    {% endif %}
+                                    </div>
+                                    <div class="m-grid-col m-grid-col-left"><strong>Pagamento de frações:</strong></div>
+                                    <div class="m-grid-col m-grid-col-left">{{acao_descricao_versao.data_pagamento_frac|date:'d/m/Y'|default:'N/A'}}</div>
+                                </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        {% if forloop.counter < proventos|length %}
+                        <hr>
+                        {% endif %}
+                        {% empty %}
+                        <p align="center">
+                            <strong>Não há versões cadastradas</strong>
+                        </p>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
