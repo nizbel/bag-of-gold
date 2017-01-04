@@ -53,7 +53,7 @@ class DocumentoProventoBovespa (models.Model):
         return baixou_arquivo
     
     def extensao_documento(self):
-        nome, extensao = os.path.splitext(self.documento.name)
+        _, extensao = os.path.splitext(self.documento.name)
         return extensao
     
     def ticker_empresa(self):
