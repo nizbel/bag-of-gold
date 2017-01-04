@@ -34,7 +34,7 @@
                 <tbody>
                 {% for documento in documentos %}
                 <tr>
-                    <td>{{documento.nome}}</td>
+                    <td><a href="{% url "detalhar_documento" documento.id %}">{{documento.nome}}</a></td>
                     <td>{{documento.tipo}}</td>
                     <td>{{documento.protocolo}}</td>
                     <td>{{documento.data_referencia}}</td>

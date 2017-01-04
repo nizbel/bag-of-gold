@@ -77,13 +77,32 @@ def detalhar_documento(request, id_documento):
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def detalhar_provento_acao(request, id_provento):
     provento = Provento.gerador_objects.get(id=id_provento)
+    if provento.tipo_provento == 'A':
+        provento.descricao_tipo_provento = u'Ações'
+        provento.acoes_recebidas = provento.acaoproventoacaodescritodocumentobovespa_set.all()
+        # Remover 0s a direita para valores
+        for acao_descricao_provento in provento.acoes_recebidas:
+            acao_descricao_provento.valor_calculo_frac = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(acao_descricao_provento.valor_calculo_frac))
+    elif provento.tipo_provento == 'D':
+        provento.descricao_tipo_provento = u'Dividendos'
+    elif provento.tipo_provento == 'J':
+        provento.descricao_tipo_provento = u'JSCP'
 
+    # Adicionar informação de versão
+    try:
+        provento.versao = ProventoAcaoDocumento.objects.filter(provento=provento).order_by('-versao')[0]
+    except:
+        provento.versao = 0
+    
     return TemplateResponse(request, 'gerador_proventos/detalhar_provento_acao.html', {'provento': provento})
 
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def detalhar_provento_fii(request, id_provento):
     provento = ProventoFII.gerador_objects.get(id=id_provento)
+    
+    # Adicionar informação de versão
+    provento.versao = provento.proventoacaodocumento.versao
 
     return TemplateResponse(request, 'gerador_proventos/detalhar_provento_fii.html', {'provento': provento})
 
