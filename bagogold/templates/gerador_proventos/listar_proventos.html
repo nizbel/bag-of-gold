@@ -30,7 +30,12 @@
                 <tbody>
                 {% for provento in proventos %}
                     <tr>
-                        <td>{% if provento.acao %}{{provento.acao.ticker}}{% else %}{{provento.fii.ticker}}{% endif %}</td>
+                        <td>{% if provento.acao %}
+                            <a href="{% url "detalhar_provento_acao" provento.id %}">{{provento.acao.ticker}}</a>
+                            {% else %}
+                            <a href="{% url "detalhar_provento_fii" provento.id %}">{{provento.fii.ticker}}</a>
+                            {% endif %}
+                        </td>
                         <td>{{provento.data_ex}}</td>
                         <td>{{provento.data_pagamento}}</td>
                         <td>
