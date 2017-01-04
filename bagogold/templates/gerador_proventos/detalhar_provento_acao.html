@@ -48,7 +48,6 @@
                                 <div class="m-grid-col m-grid-col-left">{{provento.data_ex|date:'d/m/Y'}}</div>
                                 <div class="m-grid-col m-grid-col-left"><strong>Pagamento:</strong></div>
                                 <div class="m-grid-col m-grid-col-left">{{provento.data_pagamento|date:'d/m/Y'}}</div>
-                                <div class="m-grid-col m-grid-col-left"><a href="#" type="button" class="btn btn-xs btn-warning">Ver provento versionado</a></div>
                             </div>
                             {% if provento.tipo_provento == 'A' %}
                                 {% for acao_descricao_provento in provento.acoes_recebidas %}
