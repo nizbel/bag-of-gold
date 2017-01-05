@@ -287,10 +287,10 @@ class GeradorProventosTestCase(TestCase):
         copiar_proventos_acoes(provento_1, provento_2)
         
         # Testar se provento 1 tem agora os dados do provento 2
-        self.assertEqual(Provento.objects.get(id=id_provento_1).data_ex, datetime.date(2016, 12, 13))
+        self.assertEqual(Provento.gerador_objects.get(id=id_provento_1).data_ex, datetime.date(2016, 12, 13))
         # Provento 2 não deve existir mais
         with self.assertRaises(Provento.DoesNotExist):
-            provento_2 = Provento.objects.get(id=id_provento_2)
+            provento_2 = Provento.gerador_objects.get(id=id_provento_2)
             
     def test_copiar_proventos_relacionados_a_documentos(self):
         """Testa a cópia de um provento que tenha um documento relacionado"""
@@ -316,7 +316,7 @@ class GeradorProventosTestCase(TestCase):
         
         copiar_proventos_acoes(provento_1, provento_2)
         # Testar se provento 1 tem agora os dados do provento 2
-        self.assertEqual(Provento.objects.get(id=id_provento_1).data_ex, datetime.date(2016, 12, 13))
+        self.assertEqual(Provento.gerador_objects.get(id=id_provento_1).data_ex, datetime.date(2016, 12, 13))
         # Provento 2 não deve existir mais
         with self.assertRaises(Provento.DoesNotExist):
-            provento_2 = Provento.objects.get(id=id_provento_2)
+            provento_2 = Provento.gerador_objects.get(id=id_provento_2)
