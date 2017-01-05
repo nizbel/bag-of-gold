@@ -308,16 +308,16 @@ $( document ).ready(function() {
 	$("input[name*='valor_unitario']").TouchSpin({
         min: 0,
         max: 1000000000,
-        step: 0.01,
-        decimals: 2,
+        step: 0.0000000001,
+        decimals: 10,
         maxboostedstep: 100,
         prefix: 'R$'
     });
 	$("input[name*='valor_calculo_frac']").TouchSpin({
         min: 0,
         max: 1000000000,
-        step: 0.01,
-        decimals: 2,
+        step: 0.0000000001,
+        decimals: 10,
         maxboostedstep: 100,
         prefix: 'R$'
     });
