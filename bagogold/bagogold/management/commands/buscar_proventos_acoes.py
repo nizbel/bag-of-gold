@@ -41,7 +41,7 @@ class GeraInfoDocumentoProtocoloThread(Thread):
                     data_referencia, protocolo = info['info_doc']
                     
         #             print protocolo, Empresa.objects.get(codigo_cvm=codigo_cvm), ano
-                    if not DocumentoProventoBovespa.objects.filter(empresa__codigo_cvm=codigo_cvm, protocolo=protocolo):
+                    if not DocumentoProventoBovespa.objects.filter(empresa__codigo_cvm=codigo_cvm, protocolo=protocolo).exists():
                         documento = DocumentoProventoBovespa()
                         documento.empresa = Empresa.objects.get(codigo_cvm=codigo_cvm)
                         documento.url = 'http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=%s' % (protocolo)
@@ -98,7 +98,7 @@ class Command(BaseCommand):
         
         # Prepara threads de busca
         acoes = Acao.objects.filter(empresa__codigo_cvm__isnull=False).order_by('empresa__codigo_cvm').distinct('empresa__codigo_cvm')
-#         acoes = Acao.objects.filter(ticker__in=['BBAS3'])
+#         acoes = Acao.objects.filter(ticker__in=['CIEL3'])
         contador = 0
         while contador < len(acoes):
             acao = acoes[contador]
@@ -112,10 +112,10 @@ class Command(BaseCommand):
             t.start()
             contador += 1
             while (len(threads_rodando) > qtd_threads):
-                print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
+#                 print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
                 time.sleep(3)
         while (len(threads_rodando) > 0 or len(documentos_para_download) > 0 or len(informacoes_rendimentos) > 0):
-            print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
+#             print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
             if 'Principal' in threads_rodando.keys():
                 del threads_rodando['Principal']
             time.sleep(3)

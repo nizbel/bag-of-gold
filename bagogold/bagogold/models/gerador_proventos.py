@@ -40,16 +40,26 @@ class DocumentoProventoBovespa (models.Model):
                 
     def baixar_e_salvar_documento(self):
         # Verificar se documento já não foi baixado
-        documento_path = '{0}doc proventos/{1}/{2}'.format(settings.MEDIA_ROOT, self.ticker_empresa(), '%s-%s.pdf' % (self.ticker_empresa(), self.protocolo))
-        if os.path.isfile(documento_path):
+        documento_existe = False
+        # Extensão padrão é PDF
+        extensao = 'pdf'
+        diretorio_path = '{0}doc proventos/{1}/'.format(settings.MEDIA_ROOT, self.ticker_empresa())
+        for (_, _, nomes_arquivo) in os.walk(diretorio_path):
+            for indice, nome_arquivo in enumerate(nomes_arquivo):
+                if '%s-%s' % (self.ticker_empresa(), self.protocolo) in nome_arquivo.split('.')[0]:
+                    extensao = nomes_arquivo[indice].split('.')[1]
+                    documento_existe = True
+                    break
+        if documento_existe:
             baixou_arquivo = False
-            self.documento.name = 'doc proventos/{0}/{1}'.format(self.ticker_empresa(), '%s-%s.pdf' % (self.ticker_empresa(), self.protocolo))
+            self.documento.name = 'doc proventos/{0}/{1}'.format(self.ticker_empresa(), '%s-%s.%s' % (self.ticker_empresa(), self.protocolo, extensao))
             self.save()
         else:
             baixou_arquivo = True
-#             time.sleep(1)
-            documento = baixar_demonstrativo_rendimentos(self.url)
-            self.documento.save('%s-%s.pdf' % (self.ticker_empresa(), self.protocolo), File(documento))
+            documento, extensao = baixar_demonstrativo_rendimentos(self.url)
+            if extensao == '':
+                extensao = 'pdf'
+            self.documento.save('%s-%s.%s' % (self.ticker_empresa(), self.protocolo, extensao), File(documento))
         return baixou_arquivo
     
     def extensao_documento(self):
