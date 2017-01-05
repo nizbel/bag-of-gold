@@ -181,7 +181,7 @@ class ProventoAcaoDescritoDocumentoBovespa (models.Model):
     observacao = models.CharField(u'Observação', blank=True, null=True, max_length=300)
     
     class Meta:
-        unique_together=(('data_ex', 'data_pagamento', 'acao', 'tipo_provento'))
+        unique_together=(('data_ex', 'data_pagamento', 'acao', 'tipo_provento', 'valor_unitario'))
         
     def __unicode__(self):
         tipo = ''
@@ -213,7 +213,7 @@ class ProventoFIIDescritoDocumentoBovespa (models.Model):
     url_documento = models.CharField(u'URL do documento', blank=True, null=True, max_length=200)
     
     class Meta:
-        unique_together=(('data_ex', 'data_pagamento', 'fii',))
+        unique_together=(('data_ex', 'data_pagamento', 'fii', 'valor_unitario'))
         
     def __unicode__(self):
         return '(R$ %s de %s em %s com data EX %s' % (str(self.valor_unitario), self.fii.ticker, str(self.data_pagamento), str(self.data_ex))
