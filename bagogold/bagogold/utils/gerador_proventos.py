@@ -267,7 +267,8 @@ def criar_descricoes_provento_acoes(descricoes_proventos, acoes_descricoes_prove
         for descricao_provento in descricoes_proventos:
             descricao_provento.save()
             objetos_salvos.append(descricao_provento)
-            for descricao_acao_provento in [acao_descricao_provento for acao_descricao_provento in acoes_descricoes_proventos if acao_descricao_provento.provento.id == descricao_provento.id]:
+            descricoes_acao_provento = [acao_descricao_provento for acao_descricao_provento in acoes_descricoes_proventos if acao_descricao_provento.provento.id == descricao_provento.id]
+            for descricao_acao_provento in descricoes_acao_provento:
                 descricao_acao_provento.provento = descricao_provento
                 descricao_acao_provento.save()
                 objetos_salvos.append(descricao_acao_provento)
@@ -277,6 +278,22 @@ def criar_descricoes_provento_acoes(descricoes_proventos, acoes_descricoes_prove
             try:
                 provento = Provento.gerador_objects.get(valor_unitario=provento.valor_unitario, acao=provento.acao, data_ex=provento.data_ex, data_pagamento=provento.data_pagamento, \
                                                tipo_provento=provento.tipo_provento)
+                
+                # Caso seja um provento de ações, verifica se as ações recebidas batem
+                if provento.tipo_provento == 'A':
+                    if len(provento.acaoprovento_set) != len(descricoes_acao_provento):
+                        raise ValueError('Há um provento não oficial cadastrado com dados incompatíveis')
+                    for acao_provento in provento.acaoprovento_set:
+                        provento_corresponde = False
+                        for descricao_acao_provento in descricoes_acao_provento:
+                            if descricao_acao_provento.acao_recebida == acao_provento.acao_recebida \
+                            and descricao_acao_provento.data_pagamento_frac == acao_provento.data_pagamento_frac \
+                            and descricao_acao_provento.valor_calculo_frac == acao_provento.valor_calculo_frac:
+                                provento_corresponde = True
+                                break
+                        if not provento_corresponde:
+                            raise ValueError('Há um provento não oficial cadastrado com dados incompatíveis')
+                            
             except Provento.DoesNotExist:
                 provento.save()
                 objetos_salvos.append(provento)
