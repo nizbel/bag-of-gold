@@ -265,27 +265,28 @@ def criar_descricoes_provento_acoes(descricoes_proventos, acoes_descricoes_prove
     objetos_salvos = list()
     try:
         for descricao_provento in descricoes_proventos:
-            print 'Provento descrição', descricao_provento
             descricao_provento.save()
             objetos_salvos.append(descricao_provento)
             for descricao_acao_provento in [acao_descricao_provento for acao_descricao_provento in acoes_descricoes_proventos if acao_descricao_provento.provento.id == descricao_provento.id]:
-                print 'Ação descrição', descricao_acao_provento
-#                 descricao_acao_provento.provento = ProventoAcaoDescritoDocumentoBovespa.objects.get(id=descricao_acao_provento.provento.id)
                 descricao_acao_provento.provento = descricao_provento
                 descricao_acao_provento.save()
                 objetos_salvos.append(descricao_acao_provento)
+            # Converte para proventos reais, porém não validados
             provento, acoes_provento = converter_descricao_provento_para_provento_acoes(descricao_provento)
-            provento.save()
-            objetos_salvos.append(provento)
-            print 'Provento', provento
+            # Busca proventos já existentes, ou cria se não existirem
+            try:
+                provento = Provento.gerador_objects.get(valor_unitario=provento.valor_unitario, acao=provento.acao, data_ex=provento.data_ex, data_pagamento=provento.data_pagamento, \
+                                               tipo_provento=provento.tipo_provento)
+            except Provento.DoesNotExist:
+                provento.save()
+                objetos_salvos.append(provento)
+                for acao_provento in acoes_provento:
+                    acao_provento.provento = provento
+                    acao_provento.save()
+                    objetos_salvos.append(acao_provento)
+            # Relaciona a descrição ao provento encontrado/criado
             provento_documento = ProventoAcaoDocumento.objects.create(provento=provento, documento=documento, descricao_provento=descricao_provento, versao=1)
             objetos_salvos.append(provento_documento)
-            for acao_provento in acoes_provento:
-                print 'Ação', descricao_acao_provento
-                acao_provento.provento = provento
-                acao_provento.save()
-                objetos_salvos.append(acao_provento)
-#         raise ValueError('teste')
     except Exception as e:
         # Apaga objetos em caso de erro
         for objeto in objetos_salvos:
