@@ -79,10 +79,16 @@ class BuscaProventosAcaoThread(Thread):
 class Command(BaseCommand):
     help = 'Busca proventos de ações na Bovespa'
 
+    def add_arguments(self, parser):
+        parser.add_argument('ano', type=int)
+
     def handle(self, *args, **options):
         inicio = datetime.datetime.now()
         # Buscar ano atual
-        ano_atual = datetime.date.today().year
+        if not options['ano'] == 0:
+            ano_atual = options['ano']
+        else:
+            ano_atual = datetime.date.today().year
         
         # O incremento mostra quantas threads de busca de documentos correrão por vez
         qtd_threads = 20
@@ -103,7 +109,7 @@ class Command(BaseCommand):
         while contador < len(acoes):
             acao = acoes[contador]
             # Verificar ano inicial para busca de documentos
-            if DocumentoProventoBovespa.objects.filter(data_referencia__year=ano_atual, empresa=acao.empresa):
+            if DocumentoProventoBovespa.objects.filter(data_referencia__year=ano_atual, empresa=acao.empresa).exists():
                 ano_inicial = ano_atual
             else:
                 ano_inicial = ano_atual - 1 
@@ -112,10 +118,10 @@ class Command(BaseCommand):
             t.start()
             contador += 1
             while (len(threads_rodando) > qtd_threads):
-#                 print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
+                print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
                 time.sleep(3)
         while (len(threads_rodando) > 0 or len(documentos_para_download) > 0 or len(informacoes_rendimentos) > 0):
-#             print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
+            print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
             if 'Principal' in threads_rodando.keys():
                 del threads_rodando['Principal']
             time.sleep(3)
