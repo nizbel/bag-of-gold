@@ -188,8 +188,8 @@ def buscar_rendimentos_fii(ticker):
                     print 'nao achou'
                 
         
-def baixar_demonstrativo_rendimentos(pdf_url):
-    req = Request(pdf_url)
+def baixar_demonstrativo_rendimentos(arquivo_url):
+    req = Request(arquivo_url)
 #     print pdf_url
     try:
         response = urlopen(req, timeout=30)
@@ -201,16 +201,22 @@ def baixar_demonstrativo_rendimentos(pdf_url):
         print 'We failed to reach a server.'
         print 'Reason: ', e.reason
         return ()
-#     else:
-#         try:
-#             meta = response.info()
-#             print "Content-Length:", meta.getheaders("Content-Length")[0]
+    # Buscar informações da extensão
+    extensao = ''
+    meta = response.info()
+    if meta.getheaders("Content-Disposition"):
+        content_disposition = meta.getheaders("Content-Disposition")[0]
+        if 'filename=' in content_disposition:
+            inicio = content_disposition.find('filename=')
+            fim = content_disposition.find(';', inicio) if content_disposition.find(';', inicio) != -1 else len(content_disposition)
+            if '.' in content_disposition[inicio:fim]:
+                extensao = content_disposition[inicio:fim].split('.')[-1]
     resposta = response.read()
     teste_resposta = resposta.decode('latin-1').strip()
     if (u'Não Existem Arquivos com essas Características' in teste_resposta):
         raise URLError('URL da bovespa inválida')
     arquivo_rendimentos = StringIO(resposta)
-    return arquivo_rendimentos
+    return (arquivo_rendimentos, extensao)
 #         except Exception as e:
 #             template = "An exception of type {0} occured. Arguments:\n{1!r}"
 #             message = template.format(type(e).__name__, e.args)
