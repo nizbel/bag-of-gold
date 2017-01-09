@@ -86,7 +86,7 @@
                             <form method="POST" class="col-md-12 horizontal-form">{% csrf_token %}
                                 <div class="form-body" style="margin: 0px 20px;">
                                     <div class="row">
-                                        <div class="form-group col-md-6">
+                                        <div class="form-group col-md-5">
                                             <label class="col-md-5 control-label"> Documento descreve proventos? </label>
                                             <div class="col-md-7">
                                                 <div class="md-radio-inline">
@@ -109,7 +109,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="form-group col-md-6" id="qtd_proventos">
+                                        <div class="form-group col-md-5" id="qtd_proventos">
                                             <label class="control-label col-md-4" style="text-align: left;"> Número de proventos: </label>
                                             <div class="col-md-2">
                                                 <select class="selectpicker form-control" id="num_proventos" name="num_proventos">
@@ -127,6 +127,7 @@
                                             </div>
                                             <input type="submit" class="btn btn-warning" value="Preparar proventos" name="preparar_proventos" id="preparar_proventos">
                                         </div>
+                                        <a href="{% url 'listar_informacoes_geracao_provento' 'acao' %}" class="btn btn-warning">Manual de geração</a>
                                     </div>
                                     <div class="row" id="form_criar_proventos">
                                         <div class="col-md-12">
