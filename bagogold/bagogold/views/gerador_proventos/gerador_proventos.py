@@ -111,7 +111,7 @@ def detalhar_provento_acao(request, id_provento):
     except Exception as e:
         provento.versao = 0
         versoes = list()
-        print e
+#         print e
     
     return TemplateResponse(request, 'gerador_proventos/detalhar_provento_acao.html', {'provento': provento, 'versoes': versoes})
 
@@ -157,7 +157,7 @@ def ler_documento_provento(request, id_pendencia):
         elif request.POST.get('save'):
             # Radio de documento estava em Gerar
             if request.POST['radioDocumento'] == '1':
-                print request.POST
+#                 print request.POST
                 formset_provento = ProventoFormset(request.POST, prefix='provento')
                 formset_acao_provento = AcaoProventoFormset(request.POST, prefix='acao_provento')
                 
@@ -170,7 +170,7 @@ def ler_documento_provento(request, id_pendencia):
                     acoes_proventos_validos = list()
                     for form_provento in formset_provento:
                         provento = form_provento.save(commit=False)
-                        print provento
+#                         print provento
                         proventos_validos.append(provento)
                         form_acao_provento = formset_acao_provento[indice_provento]
                         # Verificar a ação do provento em ações
@@ -180,7 +180,7 @@ def ler_documento_provento(request, id_pendencia):
                                 forms_validos = False
                             else:
                                 acao_provento.provento = provento
-                                print acao_provento
+#                                 print acao_provento
                                 acoes_proventos_validos.append(acao_provento)
                         indice_provento += 1
                     if forms_validos:
@@ -339,8 +339,7 @@ def validar_documento_provento(request, id_pendencia):
             messages.error(request, 'Você não é o responsável por esta pendência')
             return HttpResponseRedirect(reverse('listar_pendencias'))
         
-        print request.POST
-        # TODO testar validar
+#         print request.POST
         if request.POST.get('validar'):
             # Testa se investidor pode validar pendência
             investidor_pode_validar = True
@@ -354,7 +353,7 @@ def validar_documento_provento(request, id_pendencia):
             if investidor_pode_validar:
                 if pendencia.documento.investidorleituradocumento.decisao == 'C':
                     validacao_completa = True
-                    print 'Validar criação'
+#                     print 'Validar criação'
                     # Verificar proventos descritos na pendência
                     proventos_documento = ProventoAcaoDocumento.objects.filter(documento=pendencia.documento)
                     descricoes_proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento.values_list('descricao_provento', flat=True))
@@ -365,18 +364,18 @@ def validar_documento_provento(request, id_pendencia):
                         # Verifica se é alteração
                         if str(descricao.id) in request.POST.keys():
                             # Se sim, alterar números de versão
-                            print 'Alterou', descricao.id
+#                             print 'Alterou', descricao.id
                             if request.POST.get('descricao_%s' % (descricao.id)):
                                 # Verificar se foi relacionado a um provento ou a uma descrição
                                 provento_relacionado = Provento.gerador_objects.get(id=request.POST.get('descricao_%s' % (descricao.id)))
-                                print u'Descrição %s é relacionada a %s' % (descricao.id, provento_relacionado)
+#                                 print u'Descrição %s é relacionada a %s' % (descricao.id, provento_relacionado)
                                 proventos_relacionados[descricao] = provento_relacionado
                             else:
                                 validacao_completa = False
                                 messages.error(request, 'Provento de identificador %s marcado como relacionado a outro provento, escolha um provento para a relação' % (descricao.id))
                                 continue
                     if validacao_completa:
-                        print 'Validação completa'
+#                         print 'Validação completa'
                         # Salva versões alteradas para os provento_documentos
                         for descricao, provento in proventos_relacionados.items():
                             versionar_descricoes_relacionadas_acoes(descricao, provento)
@@ -391,7 +390,7 @@ def validar_documento_provento(request, id_pendencia):
                         desfazer_investidor_responsavel_por_validacao(pendencia, investidor)
                                 
                 elif pendencia.documento.investidorleituradocumento.decisao == 'E':
-                    print 'Validar exclusão'
+#                     print 'Validar exclusão'
                     # Apagar documento
                     pendencia.documento.apagar_documento()
                     
@@ -402,9 +401,8 @@ def validar_documento_provento(request, id_pendencia):
                     messages.success(request, 'Pendência validada com sucesso')
                     return HttpResponseRedirect(reverse('listar_pendencias'))
         
-        # TODO testar recusar
         elif request.POST.get('recusar'):
-            print 'Recusar'
+#             print 'Recusar'
             # Verificar se texto de recusa foi preenchido
             motivo_recusa = request.POST.get('motivo_recusa')
             # Criar vínculo de responsabilidade por recusa
