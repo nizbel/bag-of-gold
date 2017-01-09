@@ -4,7 +4,11 @@ from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao, \
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.fii import OperacaoFII
+from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, PendenciaDocumentoProvento
+from bagogold.bagogold.testFII import ler_demonstrativo_rendimentos, \
+    baixar_demonstrativo_rendimentos
 from decimal import Decimal, ROUND_DOWN, ROUND_HALF_DOWN, ROUND_UP
+from django.core.files import File
 from django.db.models import Sum, Case, When, IntegerField, F
 from itertools import chain
 from operator import attrgetter, itemgetter
@@ -456,126 +460,126 @@ def calcular_poupanca_prov_acao_ate_dia_por_divisao(dia, divisao, destinacao='B'
     return total_proventos.quantize(Decimal('0.01'))
 
 
-def buscar_proventos_acao(codigo_cvm, ticker, num_tentativas):
-    """
-    Busca proventos de ações no site da Bovespa
-    """
-    # Busca os dados dos proventos em 2 URLs da bovespa
-    # Proventos em dinheiro
-    prov_dinheiro_url = 'http://bvmf.bmfbovespa.com.br/cias-listadas/empresas-listadas/ResumoEventosCorporativos.aspx?codigoCvm=%s&tab=3.0&idioma=pt-br' % (codigo_cvm)
-    # Usar mechanize para simular clique do usuario no javascript
-    br = mechanize.Browser()
-    br.addheaders = [('User-agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1')]
-    response = br.open(prov_dinheiro_url)
-    
-    html = response.read()
-
-    br.select_form(nr=0)
-    br.set_all_readonly(False)
-    mnext = re.search("""<a.*?href=\"javascript:__doPostBack\('(.*?)','(.*?)'\)\".*?id=\"ctl00_contentPlaceHolderConteudo_MenuEmpresasListadas1_tabMenuEmpresa_tabEventosCorporativos_tabProventosDinheiro\".*?>\*?Proventos em dinheiro""", html, re.IGNORECASE)
-    if not mnext:
-        print 'not found'
-        return
-    br["__EVENTTARGET"] = mnext.group(1)
-    br["__EVENTARGUMENT"] = mnext.group(2)
-    br.find_control("ctl00$botaoNavegacaoVoltar").disabled = True
-    response = br.submit()
-    html = response.read()
-    if 'Sistema indisponivel' in html:
-        if num_tentativas == 3:
-            raise URLError('Sistema indisponível')
-            return
-        return buscar_proventos_acao(codigo_cvm, ticker, num_tentativas+1)
-    
-    inicio = html.find('<tbody>')
-#         print 'inicio', inicio
-    fim = html.find('</tbody>', inicio)
-    string_importante = (html[inicio:fim])
-    proventos_dinheiro_texto = re.findall('<tr.*?>(.*?)<\/tr>', string_importante, flags=re.DOTALL)
-    proventos_dinheiro = list()
-    for texto_provento in proventos_dinheiro_texto:
-        provento = re.findall('<td.*?>(.*?)<\/td>', texto_provento)
-        if provento:
-            provento[5] = datetime.datetime.strptime(provento[5],'%d/%m/%Y').date() + datetime.timedelta(days=1)
-            while provento[5].weekday() > 4:
-                provento[5] += datetime.timedelta(days=1)
-            proventos_dinheiro.append(provento)
-    proventos_dinheiro = sorted(proventos_dinheiro, key=itemgetter(5))
-#     for provento_dinheiro in proventos_dinheiro:
-#         print provento_dinheiro
-        
-    # Busca todos os proventos
-    prov_url = 'http://bvmf.bmfbovespa.com.br/cias-listadas/empresas-listadas/ResumoEventosCorporativos.aspx?codigoCvm=%s&tab=3.0&idioma=pt-br' % (codigo_cvm)
-    req = Request(prov_url)
-    try:
-        response = urlopen(req)
-    except HTTPError as e:
-        print 'The server couldn\'t fulfill the request.'
-        print 'Error code: ', e.code
-    except URLError as e:
-        print 'We failed to reach a server.'
-        print 'Reason: ', e.reason
-    else:
-        data = response.read()
-        if 'Sistema indisponivel' in data:
-            if num_tentativas == 3:
-                raise URLError('Sistema indisponível')
-                return
-            return buscar_proventos_acao(codigo_cvm, ticker, num_tentativas+1)
-        inicio = data.find('<div id="divDividendo">')
-#         print 'inicio', inicio
-        fim = data.find('<div id="divSubscricao">', inicio)
-        string_importante = (data[inicio:fim])
-        proventos = re.findall('<tr.*?>(.*?)<\/tr>', string_importante, flags=re.DOTALL)
-        contador = 1
-        total = 0
-        for provento in proventos:
-            texto_provento = re.findall('<td.*?>(.*?)<\/td>', provento)
-            texto_provento += re.findall('<span.*?>(.*?)<\/span>', provento)
-            if texto_provento:
-#                 print texto_provento
-                # Criar provento
-                data_ex = datetime.datetime.strptime(texto_provento[2],'%d/%m/%Y').date() + datetime.timedelta(days=1)
-                # Incrementa data até que não seja fim de semana
-                while data_ex.weekday() > 4:
-                    data_ex += datetime.timedelta(days=1)
-                    
-                # Preparar data pagamento (pode ser vazia)
-                try:
-                    data_pagamento = datetime.datetime.strptime(texto_provento[6],'%d/%m/%Y').date()
-                except:
-                    data_pagamento = None
-                provento = Provento(acao=Acao.objects.get(ticker=ticker), valor_unitario=Decimal(texto_provento[3].replace(',', '.')), tipo_provento=texto_provento[0][0], \
-                                    data_pagamento=data_pagamento, observacao=texto_provento[7], data_ex=data_ex)
-                
-#                 print provento
-                for provento_dinheiro in proventos_dinheiro:
-                    if provento_dinheiro[5] == data_ex:
-#                             print provento_dinheiro
-                        valor = Decimal(quantidade_acoes_ate_dia(ticker, datetime.datetime.strptime(texto_provento[2],'%d/%m/%Y').date(), True))
-                        if valor > 0:
-                            if (provento_dinheiro[4][0] == 'R'):
-                                valor *= Decimal(provento_dinheiro[2].replace(',', '.')) * Decimal(0.775)
-                                print valor, valor.quantize(Decimal('0.01'), rounding=ROUND_HALF_DOWN)
-                                total += valor.quantize(Decimal('0.01'), rounding=ROUND_HALF_DOWN)
-                            elif (provento_dinheiro[4][0] == 'J'):
-                                valor *= Decimal(provento_dinheiro[2].replace(',', '.')) * Decimal(0.85)
-                                texto_valor = str(valor)
-#                                 print len(texto_valor[texto_valor.find('.')+1:]), texto_valor[texto_valor.find('.')+1:], texto_valor[texto_valor.find('.')+1:][1]
-                                if len(texto_valor[texto_valor.find('.')+1:]) > 2 and int(texto_valor[texto_valor.find('.')+1:][1]) % 2 != 0:
-                                    print valor, valor.quantize(Decimal('0.01'), rounding=ROUND_HALF_DOWN)
-                                    total += valor.quantize(Decimal('0.01'), rounding=ROUND_HALF_DOWN)
-                                else:
-                                    print valor, valor.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
-                                    total += valor.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
-                            else:
-                                valor *= Decimal(provento_dinheiro[2].replace(',', '.'))
-                                print valor, valor.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
-                                total += valor.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
-                            # Remover elemento da lista (evitar duplicidade)
-                            proventos_dinheiro = [x for x in proventos_dinheiro if x[5] != data_ex]
-                contador += 1
-    print ticker, total
+# def buscar_proventos_acao(codigo_cvm, ticker, num_tentativas):
+#     """
+#     Busca proventos de ações no site da Bovespa
+#     """
+#     # Busca os dados dos proventos em 2 URLs da bovespa
+#     # Proventos em dinheiro
+#     prov_dinheiro_url = 'http://bvmf.bmfbovespa.com.br/cias-listadas/empresas-listadas/ResumoEventosCorporativos.aspx?codigoCvm=%s&tab=3.0&idioma=pt-br' % (codigo_cvm)
+#     # Usar mechanize para simular clique do usuario no javascript
+#     br = mechanize.Browser()
+#     br.addheaders = [('User-agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1')]
+#     response = br.open(prov_dinheiro_url)
+#     
+#     html = response.read()
+# 
+#     br.select_form(nr=0)
+#     br.set_all_readonly(False)
+#     mnext = re.search("""<a.*?href=\"javascript:__doPostBack\('(.*?)','(.*?)'\)\".*?id=\"ctl00_contentPlaceHolderConteudo_MenuEmpresasListadas1_tabMenuEmpresa_tabEventosCorporativos_tabProventosDinheiro\".*?>\*?Proventos em dinheiro""", html, re.IGNORECASE)
+#     if not mnext:
+#         print 'not found'
+#         return
+#     br["__EVENTTARGET"] = mnext.group(1)
+#     br["__EVENTARGUMENT"] = mnext.group(2)
+#     br.find_control("ctl00$botaoNavegacaoVoltar").disabled = True
+#     response = br.submit()
+#     html = response.read()
+#     if 'Sistema indisponivel' in html:
+#         if num_tentativas == 3:
+#             raise URLError('Sistema indisponível')
+#             return
+#         return buscar_proventos_acao(codigo_cvm, ticker, num_tentativas+1)
+#     
+#     inicio = html.find('<tbody>')
+# #         print 'inicio', inicio
+#     fim = html.find('</tbody>', inicio)
+#     string_importante = (html[inicio:fim])
+#     proventos_dinheiro_texto = re.findall('<tr.*?>(.*?)<\/tr>', string_importante, flags=re.DOTALL)
+#     proventos_dinheiro = list()
+#     for texto_provento in proventos_dinheiro_texto:
+#         provento = re.findall('<td.*?>(.*?)<\/td>', texto_provento)
+#         if provento:
+#             provento[5] = datetime.datetime.strptime(provento[5],'%d/%m/%Y').date() + datetime.timedelta(days=1)
+#             while provento[5].weekday() > 4:
+#                 provento[5] += datetime.timedelta(days=1)
+#             proventos_dinheiro.append(provento)
+#     proventos_dinheiro = sorted(proventos_dinheiro, key=itemgetter(5))
+# #     for provento_dinheiro in proventos_dinheiro:
+# #         print provento_dinheiro
+#         
+#     # Busca todos os proventos
+#     prov_url = 'http://bvmf.bmfbovespa.com.br/cias-listadas/empresas-listadas/ResumoEventosCorporativos.aspx?codigoCvm=%s&tab=3.0&idioma=pt-br' % (codigo_cvm)
+#     req = Request(prov_url)
+#     try:
+#         response = urlopen(req)
+#     except HTTPError as e:
+#         print 'The server couldn\'t fulfill the request.'
+#         print 'Error code: ', e.code
+#     except URLError as e:
+#         print 'We failed to reach a server.'
+#         print 'Reason: ', e.reason
+#     else:
+#         data = response.read()
+#         if 'Sistema indisponivel' in data:
+#             if num_tentativas == 3:
+#                 raise URLError('Sistema indisponível')
+#                 return
+#             return buscar_proventos_acao(codigo_cvm, ticker, num_tentativas+1)
+#         inicio = data.find('<div id="divDividendo">')
+# #         print 'inicio', inicio
+#         fim = data.find('<div id="divSubscricao">', inicio)
+#         string_importante = (data[inicio:fim])
+#         proventos = re.findall('<tr.*?>(.*?)<\/tr>', string_importante, flags=re.DOTALL)
+#         contador = 1
+#         total = 0
+#         for provento in proventos:
+#             texto_provento = re.findall('<td.*?>(.*?)<\/td>', provento)
+#             texto_provento += re.findall('<span.*?>(.*?)<\/span>', provento)
+#             if texto_provento:
+# #                 print texto_provento
+#                 # Criar provento
+#                 data_ex = datetime.datetime.strptime(texto_provento[2],'%d/%m/%Y').date() + datetime.timedelta(days=1)
+#                 # Incrementa data até que não seja fim de semana
+#                 while data_ex.weekday() > 4:
+#                     data_ex += datetime.timedelta(days=1)
+#                     
+#                 # Preparar data pagamento (pode ser vazia)
+#                 try:
+#                     data_pagamento = datetime.datetime.strptime(texto_provento[6],'%d/%m/%Y').date()
+#                 except:
+#                     data_pagamento = None
+#                 provento = Provento(acao=Acao.objects.get(ticker=ticker), valor_unitario=Decimal(texto_provento[3].replace(',', '.')), tipo_provento=texto_provento[0][0], \
+#                                     data_pagamento=data_pagamento, observacao=texto_provento[7], data_ex=data_ex)
+#                 
+# #                 print provento
+#                 for provento_dinheiro in proventos_dinheiro:
+#                     if provento_dinheiro[5] == data_ex:
+# #                             print provento_dinheiro
+#                         valor = Decimal(quantidade_acoes_ate_dia(ticker, datetime.datetime.strptime(texto_provento[2],'%d/%m/%Y').date(), True))
+#                         if valor > 0:
+#                             if (provento_dinheiro[4][0] == 'R'):
+#                                 valor *= Decimal(provento_dinheiro[2].replace(',', '.')) * Decimal(0.775)
+#                                 print valor, valor.quantize(Decimal('0.01'), rounding=ROUND_HALF_DOWN)
+#                                 total += valor.quantize(Decimal('0.01'), rounding=ROUND_HALF_DOWN)
+#                             elif (provento_dinheiro[4][0] == 'J'):
+#                                 valor *= Decimal(provento_dinheiro[2].replace(',', '.')) * Decimal(0.85)
+#                                 texto_valor = str(valor)
+# #                                 print len(texto_valor[texto_valor.find('.')+1:]), texto_valor[texto_valor.find('.')+1:], texto_valor[texto_valor.find('.')+1:][1]
+#                                 if len(texto_valor[texto_valor.find('.')+1:]) > 2 and int(texto_valor[texto_valor.find('.')+1:][1]) % 2 != 0:
+#                                     print valor, valor.quantize(Decimal('0.01'), rounding=ROUND_HALF_DOWN)
+#                                     total += valor.quantize(Decimal('0.01'), rounding=ROUND_HALF_DOWN)
+#                                 else:
+#                                     print valor, valor.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
+#                                     total += valor.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
+#                             else:
+#                                 valor *= Decimal(provento_dinheiro[2].replace(',', '.'))
+#                                 print valor, valor.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
+#                                 total += valor.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
+#                             # Remover elemento da lista (evitar duplicidade)
+#                             proventos_dinheiro = [x for x in proventos_dinheiro if x[5] != data_ex]
+#                 contador += 1
+#     print ticker, total
                     
 def preencher_codigos_cvm():
     """
