@@ -27,7 +27,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test, \
 from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.forms.formsets import formset_factory
-from django.http.response import HttpResponseRedirect, HttpResponse
+from django.http.response import HttpResponseRedirect, HttpResponse, Http404
 from django.template.response import TemplateResponse
 import json
 import os
@@ -224,7 +224,7 @@ def listar_documentos(request):
     empresa_id = Empresa.objects.all().order_by('id').values_list('id', flat=True)[0]
     if request.method == 'POST':
         if request.POST.get("busca_empresa"):
-            empresa_id = Empresa.objects.filter(id=request.POST['busca_empresa'])
+            empresa_id = Empresa.objects.filter(id=request.POST['busca_empresa']).id
     
     # Mostrar empresa atual
     empresa_atual = Empresa.objects.get(id=empresa_id)
@@ -247,10 +247,32 @@ def listar_documentos(request):
             
     return TemplateResponse(request, 'gerador_proventos/listar_documentos.html', {'documentos': documentos, 'empresas': empresas, 'empresa_atual': empresa_atual})
 
+
+@login_required
+@permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
+def listar_informacoes_geracao_provento(request, tipo_documento):
+    if tipo_documento == 'acao':
+        return TemplateResponse(request, 'gerador_proventos/listar_informacoes_geracao_provento_acao.html')
+    elif tipo_documento == 'fii':
+        return TemplateResponse(request, 'gerador_proventos/listar_informacoes_geracao_provento_fii.html')
+    else:
+        raise Http404("Página inválida")
+    
+
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def listar_pendencias(request):
-    pendencias = PendenciaDocumentoProvento.objects.all()
+    # Valor padrão para o filtro de quantidade
+    filtro_qtd = 200
+    # Verifica a quantidade de pendências escolhida para filtrar
+    if request.method == 'POST':
+        if request.POST.get("filtro_qtd"):
+            filtro_qtd = int(request.POST['filtro_qtd'])
+    if PendenciaDocumentoProvento.objects.all().count() <= filtro_qtd:
+        pendencias = PendenciaDocumentoProvento.objects.all() 
+    else:
+        pendencias = PendenciaDocumentoProvento.objects.all()[:filtro_qtd]
+        
     
     for pendencia in pendencias:
         pendencia.nome = pendencia.documento.documento.name.split('/')[-1]
@@ -258,7 +280,7 @@ def listar_pendencias(request):
         pendencia.tipo_pendencia = 'Leitura' if pendencia.tipo == 'L' else 'Validação'
         pendencia.responsavel = pendencia.responsavel()
         
-    return TemplateResponse(request, 'gerador_proventos/listar_pendencias.html', {'pendencias': pendencias})
+    return TemplateResponse(request, 'gerador_proventos/listar_pendencias.html', {'pendencias': pendencias, 'filtro_qtd': filtro_qtd})
 
 
 @login_required
@@ -276,7 +298,8 @@ def listar_proventos(request):
             documento.nome = documento.documento.name.split('/')[-1]
         
     return TemplateResponse(request, 'gerador_proventos/listar_proventos.html', {'proventos': proventos})
-
+        
+        
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def puxar_responsabilidade_documento_provento(request):
