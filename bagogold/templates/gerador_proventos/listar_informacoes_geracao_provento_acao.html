@@ -1,0 +1,34 @@
+{% extends "teste/base.html" %}
+{% load staticfiles %}
+
+{% block extra_head %}
+{% endblock %}
+
+{% block content %}
+<div class="portlet light">
+    <div class="portlet-title">
+        <div class="caption font-yellow-crusta">
+            <i class="icon-list font-yellow-crusta"></i>
+            <span class="caption-subject bold uppercase">Informações para geração de proventos para ações</span>
+        </div>
+    </div>
+    <div class="portlet-body">
+        <div class="row">
+            <div class="col-md-12">
+                <h4>Valores</h4>
+                <ul>
+                    <li>Os valores devem ser inseridos no sistema com todas as casas decimais mostradas no documento.</li>
+                </ul>
+                
+                <h4>Razões para um documento ser desconsiderado sem leitura</h4>
+                <ul>
+                    <li>Documento é uma ata de reunião.</li>
+                    <li>Documento possui <strong>mais de 10 páginas</strong>.</li>
+                    
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
