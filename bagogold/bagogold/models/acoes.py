@@ -26,6 +26,38 @@ class Acao (models.Model):
                 pass
         return HistoricoAcao.objects.filter(acao__ticker=self.ticker, data__lte=dia).order_by('-data')[0].preco_unitario
     
+    def descricao_tipo(self):
+        if self.tipo == 3:
+            return u'Ordinária'
+        elif self.tipo == 4:
+            return u'Preferencial'
+        elif self.tipo == 5:
+            return u'Preferencial Classe A'
+        elif self.tipo == 6:
+            return u'Preferencial Classe B'
+        elif self.tipo == 7:
+            return u'Preferencial Classe C'
+        elif self.tipo == 8:
+            return u'Preferencial Classe D'
+        
+    def descricao_tipo_resumido(self):
+        if self.tipo == 3:
+            return u'ON'
+        elif self.tipo == 4:
+            return u'PN'
+        elif self.tipo == 5:
+            return u'PNA'
+        elif self.tipo == 6:
+            return u'PNB'
+        elif self.tipo == 7:
+            return u'PNC'
+        elif self.tipo == 8:
+            return u'PND'
+
+class ProventoOficialManager(models.Manager):
+    def get_queryset(self):
+        return super(ProventoOficialManager, self).get_queryset().filter(oficial_bovespa=True)
+    
 class Provento (models.Model):
     acao = models.ForeignKey('Acao')
     valor_unitario = models.DecimalField(u'Valor unitário', max_digits=16, decimal_places=12)
@@ -38,6 +70,9 @@ class Provento (models.Model):
     observacao = models.CharField(u'Observação', blank=True, null=True, max_length=300)
     oficial_bovespa = models.BooleanField(u'Oficial Bovespa?', default=False)
     
+    class Meta:
+        unique_together = ['acao', 'valor_unitario', 'data_ex', 'data_pagamento', 'tipo_provento']
+        
     def __unicode__(self):
         tipo = ''
         if self.tipo_provento == 'A':
@@ -47,6 +82,9 @@ class Provento (models.Model):
         elif self.tipo_provento == 'J':
             tipo = u'JSCP'
         return u'%s de %s com valor %s e data EX %s a ser pago em %s' % (tipo, self.acao.ticker, self.valor_unitario, self.data_ex, self.data_pagamento)
+    
+    objects = ProventoOficialManager()
+    gerador_objects = models.Manager()
 
 
 class AcaoProvento (models.Model):

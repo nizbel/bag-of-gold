@@ -224,3 +224,29 @@ def qtd_dias_uteis_no_periodo(data_inicial, data_final):
     daygenerator = (data_inicial + datetime.timedelta(days=x) for x in xrange((data_final - data_inicial).days))
     return sum(1 for day in daygenerator if day.weekday() < 5 and not verificar_feriado_bovespa(day))
 
+
+def formatar_zeros_a_direita_apos_2_casas_decimais(valor):
+    """
+    Formata um valor removendo zeros a direita após as 2 casas decimais mais significativas
+    Parâmetros: Valor (inteiro ou não)
+    Retorno: Número formatado com os zeros a direita, após 2 casas decimais, removidos
+    """
+    if valor == 0:
+        return '0.00'
+    str_valor_formatado = str(valor)
+    if '.' in str_valor_formatado:
+        # Formatar número com casas decimais
+        parte_inteira = str_valor_formatado.split('.')[0]
+        parte_decimal = str_valor_formatado.split('.')[1]
+        if len(parte_decimal) < 2:
+            parte_decimal = '{:<02}'.format(parte_decimal)
+        elif len(parte_decimal) > 2:
+            parte_decimal = parte_decimal[:2] + parte_decimal[2:].rstrip('0')
+            
+        str_valor_formatado = '%s.%s' % (parte_inteira, parte_decimal)
+    else:
+        # Formatar número inteiro
+        str_valor_formatado += '.00'
+    
+    return str_valor_formatado
+    
