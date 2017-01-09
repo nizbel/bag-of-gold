@@ -279,6 +279,16 @@ def listar_proventos(request):
 
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
+def listar_informacoes_geracao_provento(request, tipo_documento):
+    if tipo_documento == 'acao':
+        return TemplateResponse(request, 'gerador_proventos/listar_informacoes_geracao_provento_acao.html')
+    elif tipo_documento == 'fii':
+        return TemplateResponse(request, 'gerador_proventos/listar_informacoes_geracao_provento_fii.html')
+    else:
+        
+        
+@login_required
+@permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def puxar_responsabilidade_documento_provento(request):
     id_pendencia = request.GET['id_pendencia'].replace('.', '')
     # Verifica se id_pendencia contém apenas números
