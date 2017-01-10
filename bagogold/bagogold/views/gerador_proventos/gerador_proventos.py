@@ -224,7 +224,7 @@ def listar_documentos(request):
     empresa_id = Empresa.objects.all().order_by('id').values_list('id', flat=True)[0]
     if request.method == 'POST':
         if request.POST.get("busca_empresa"):
-            empresa_id = Empresa.objects.filter(id=request.POST['busca_empresa']).id
+            empresa_id = Empresa.objects.get(id=request.POST['busca_empresa']).id
     
     # Mostrar empresa atual
     empresa_atual = Empresa.objects.get(id=empresa_id)
