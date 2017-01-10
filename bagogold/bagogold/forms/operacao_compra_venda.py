@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.acoes import OperacaoCompraVenda, OperacaoAcao
 from django import forms
 from django.db.models import Sum
@@ -10,7 +11,7 @@ ESCOLHAS_DAYTRADE=(
         (True, 'Sim'),
         )
 
-class OperacaoCompraVendaForm(forms.ModelForm):
+class OperacaoCompraVendaForm(LocalizedModelForm):
 
     class Meta:
         model = OperacaoCompraVenda

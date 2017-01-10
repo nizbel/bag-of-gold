@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
     TransferenciaEntreDivisoes, DivisaoOperacaoAcao, DivisaoOperacaoFII, \
     DivisaoOperacaoCDB_RDB, DivisaoOperacaoTD
@@ -12,7 +13,7 @@ from django.forms import widgets
 OPCOES_INVESTIMENTO = (('', 'Fonte externa'), ('B', 'Buy and Hold'), ('C', 'CDB/RDB'), ('D', 'Tesouro Direto'), ('F', 'Fundo de Inv. Imobiliário'), ('I', 'Fundo de Investimento'),
                        ('L', 'Letras de Crédito'), ('T', 'Trading'))
     
-class DivisaoForm(forms.ModelForm):
+class DivisaoForm(LocalizedModelForm):
 
     class Meta:
         model = Divisao
@@ -394,7 +395,7 @@ class DivisaoOperacaoTDFormSet(forms.models.BaseInlineFormSet):
                 raise forms.ValidationError('Quantidade total alocada para as divisões é menor que quantidade da operação. Repasse a quantidade da divisão excluída para a(s) remanescente(s)')
             raise forms.ValidationError('Quantidade total alocada para as divisões é menor que quantidade da operação')
 
-class TransferenciaEntreDivisoesForm(forms.ModelForm):
+class TransferenciaEntreDivisoesForm(LocalizedModelForm):
     class Meta:
         model = TransferenciaEntreDivisoes
         fields = ('divisao_cedente', 'investimento_origem', 'divisao_recebedora', 'investimento_destino', 'data', 'quantidade', 'descricao')

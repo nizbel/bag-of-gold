@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.td import OperacaoTitulo
 from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia_por_titulo
 from django import forms
@@ -15,7 +16,7 @@ ESCOLHAS_TIPO_OPERACAO=(('C', "Compra"),
                         ('V', "Venda"))
             
     
-class OperacaoTituloForm(forms.ModelForm):
+class OperacaoTituloForm(LocalizedModelForm):
     
     class Meta:
         model = OperacaoTitulo
