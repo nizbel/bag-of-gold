@@ -36,15 +36,15 @@
                 <tbody>
                 {% for pendencia in pendencias %}
                     <tr>
-                        <td>{{pendencia.tipo_pendencia}}</td>
-                        <td>{{pendencia.data_criacao}}</td>
                         <td><a href="
                         {% if pendencia.tipo == 'V' %}
                             {% url 'validar_documento_provento' pendencia.id %}
                         {% else %}
                             {% url 'ler_documento_provento' pendencia.id %}
                         {% endif %}
-                            ">{{pendencia.documento}}</a></td>
+                            ">{{pendencia.tipo_pendencia}}</a></td>
+                        <td>{{pendencia.data_criacao}}</td>
+                        <td><a href="{% url 'detalhar_documento' pendencia.documento.id %}">{{pendencia.documento}}</a></td>
                         <td>{{pendencia.tipo_documento}}</td>
                         <td>
                             <span id="responsavel_{{pendencia.id}}" {% if not pendencia.responsavel or pendencia.responsavel.id == request.user.investidor.id %}style="display: none"{% endif %}>{{pendencia.responsavel}}</span>
