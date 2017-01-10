@@ -315,6 +315,12 @@ def puxar_responsabilidade_documento_provento(request):
     if not id_pendencia.isdigit():
         return HttpResponse(json.dumps({'resultado': False, 'mensagem': u'Formato de pendência inválido', 'responsavel': None, 'usuario_responsavel': False}), content_type = "application/json") 
     
+    
+    # Calcular quantidade de pendências reservadas
+    qtd_pendencias_reservadas = InvestidorResponsavelPendencia.objects.filter(investidor=investidor).count()
+    if qtd_pendencias_reservadas == 20:
+        return HttpResponse(json.dumps({'resultado': False, 'mensagem': u'Você já possui 20 pendências reservadas', 'responsavel': None, 'usuario_responsavel': False}), content_type = "application/json") 
+    
     # Testa se pendência enviada existe
     try:
         pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
@@ -331,8 +337,9 @@ def puxar_responsabilidade_documento_provento(request):
     else:
         usuario_responsavel = False
         
-    # Calcular quantidade de pendências reservadas
-    qtd_pendencias_reservadas = InvestidorResponsavelPendencia.objects.filter(investidor=investidor).count()
+    if retorno:
+        # Adiciona reserva a quantidade de pendências reservadas
+        qtd_pendencias_reservadas += 1
     
     return HttpResponse(json.dumps({'resultado': retorno, 'mensagem': mensagem, 'responsavel': responsavel, 'usuario_responsavel': usuario_responsavel, \
                                     'qtd_pendencias_reservadas': qtd_pendencias_reservadas}), content_type = "application/json") 
