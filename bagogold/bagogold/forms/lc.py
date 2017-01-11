@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, \
-    HistoricoPorcentagemLetraCredito, LetraCredito, HistoricoCarenciaLetraCredito,\
+    HistoricoPorcentagemLetraCredito, LetraCredito, HistoricoCarenciaLetraCredito, \
     OperacaoVendaLetraCredito
 from django import forms
 from django.forms import widgets
@@ -10,13 +11,13 @@ import datetime
 ESCOLHAS_TIPO_OPERACAO=(('C', "Compra"),
                         ('V', "Venda"))
 
-class LetraCreditoForm(forms.ModelForm):
+class LetraCreditoForm(LocalizedModelForm):
     
     class Meta:
         model = LetraCredito
         fields = ('nome',)
 
-class OperacaoLetraCreditoForm(forms.ModelForm):
+class OperacaoLetraCreditoForm(LocalizedModelForm):
     # Campo verificado apenas no caso de venda de operação de lc
     operacao_compra = forms.ModelChoiceField(label='Operação de compra',queryset=OperacaoLetraCredito.objects.filter(tipo_operacao='C'), required=False)
     
@@ -89,7 +90,7 @@ class OperacaoLetraCreditoForm(forms.ModelForm):
             if OperacaoVendaLetraCredito.objects.filter(operacao_compra=self.instance):
                 raise forms.ValidationError('Não é possível alterar tipo de operação pois já há vendas registradas para essa compra')
             
-class HistoricoPorcentagemLetraCreditoForm(forms.ModelForm):
+class HistoricoPorcentagemLetraCreditoForm(LocalizedModelForm):
     
     class Meta:
         model = HistoricoPorcentagemLetraCredito
@@ -138,7 +139,7 @@ class HistoricoPorcentagemLetraCreditoForm(forms.ModelForm):
                 pass
             return cleaned_data
         
-class HistoricoCarenciaLetraCreditoForm(forms.ModelForm):
+class HistoricoCarenciaLetraCreditoForm(LocalizedModelForm):
     
     class Meta:
         model = HistoricoCarenciaLetraCredito

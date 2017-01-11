@@ -8,7 +8,7 @@ from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.fii import ProventoFII
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
     PendenciaDocumentoProvento, ProventoAcaoDescritoDocumentoBovespa, \
-    ProventoAcaoDocumento
+    ProventoAcaoDocumento, InvestidorResponsavelPendencia
 from bagogold.bagogold.utils.gerador_proventos import \
     alocar_pendencia_para_investidor, desalocar_pendencia_de_investidor, \
     salvar_investidor_responsavel_por_leitura, criar_descricoes_provento_acoes, \
@@ -224,7 +224,7 @@ def listar_documentos(request):
     empresa_id = Empresa.objects.all().order_by('id').values_list('id', flat=True)[0]
     if request.method == 'POST':
         if request.POST.get("busca_empresa"):
-            empresa_id = Empresa.objects.filter(id=request.POST['busca_empresa']).id
+            empresa_id = Empresa.objects.get(id=request.POST['busca_empresa']).id
     
     # Mostrar empresa atual
     empresa_atual = Empresa.objects.get(id=empresa_id)
@@ -262,6 +262,8 @@ def listar_informacoes_geracao_provento(request, tipo_documento):
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def listar_pendencias(request):
+    investidor = request.user.investidor
+    
     # Valor padrão para o filtro de quantidade
     filtro_qtd = 200
     # Verifica a quantidade de pendências escolhida para filtrar
@@ -274,13 +276,16 @@ def listar_pendencias(request):
         pendencias = PendenciaDocumentoProvento.objects.all()[:filtro_qtd]
         
     
+    # Calcular quantidade de pendências reservadas
+    qtd_pendencias_reservadas = InvestidorResponsavelPendencia.objects.filter(investidor=investidor).count()
+    
     for pendencia in pendencias:
         pendencia.nome = pendencia.documento.documento.name.split('/')[-1]
         pendencia.tipo_documento = 'Ação' if pendencia.documento.tipo == 'A' else 'FII'
         pendencia.tipo_pendencia = 'Leitura' if pendencia.tipo == 'L' else 'Validação'
         pendencia.responsavel = pendencia.responsavel()
         
-    return TemplateResponse(request, 'gerador_proventos/listar_pendencias.html', {'pendencias': pendencias, 'filtro_qtd': filtro_qtd})
+    return TemplateResponse(request, 'gerador_proventos/listar_pendencias.html', {'pendencias': pendencias, 'qtd_pendencias_reservadas': qtd_pendencias_reservadas,'filtro_qtd': filtro_qtd})
 
 
 @login_required
@@ -303,10 +308,18 @@ def listar_proventos(request):
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def puxar_responsabilidade_documento_provento(request):
+    investidor = request.user.investidor
+    
     id_pendencia = request.GET['id_pendencia'].replace('.', '')
     # Verifica se id_pendencia contém apenas números
     if not id_pendencia.isdigit():
         return HttpResponse(json.dumps({'resultado': False, 'mensagem': u'Formato de pendência inválido', 'responsavel': None, 'usuario_responsavel': False}), content_type = "application/json") 
+    
+    
+    # Calcular quantidade de pendências reservadas
+    qtd_pendencias_reservadas = InvestidorResponsavelPendencia.objects.filter(investidor=investidor).count()
+    if qtd_pendencias_reservadas == 20:
+        return HttpResponse(json.dumps({'resultado': False, 'mensagem': u'Você já possui 20 pendências reservadas', 'responsavel': None, 'usuario_responsavel': False}), content_type = "application/json") 
     
     # Testa se pendência enviada existe
     try:
@@ -314,24 +327,28 @@ def puxar_responsabilidade_documento_provento(request):
     except PendenciaDocumentoProvento.DoesNotExist:
         return HttpResponse(json.dumps({'resultado': False, 'mensagem': u'A pendência enviada não existe', 'responsavel': None, 'usuario_responsavel': False}), content_type = "application/json") 
     
-    retorno, mensagem = alocar_pendencia_para_investidor(pendencia, request.user.investidor)
+    retorno, mensagem = alocar_pendencia_para_investidor(pendencia, investidor)
     # Carregar responsável
     responsavel = PendenciaDocumentoProvento.objects.get(id=id_pendencia).responsavel()
     # Definir responsável
     if responsavel != None:
-        usuario_responsavel = True if responsavel.id == request.user.investidor.id else False
+        usuario_responsavel = True if responsavel.id == investidor.id else False
         responsavel = unicode(responsavel)
     else:
         usuario_responsavel = False
         
     if retorno:
-        return HttpResponse(json.dumps({'resultado': retorno, 'mensagem': mensagem, 'responsavel': responsavel, 'usuario_responsavel': usuario_responsavel}), content_type = "application/json") 
-    else:
-        return HttpResponse(json.dumps({'resultado': retorno, 'mensagem': mensagem, 'responsavel': responsavel, 'usuario_responsavel': usuario_responsavel}), content_type = "application/json") 
+        # Adiciona reserva a quantidade de pendências reservadas
+        qtd_pendencias_reservadas += 1
+    
+    return HttpResponse(json.dumps({'resultado': retorno, 'mensagem': mensagem, 'responsavel': responsavel, 'usuario_responsavel': usuario_responsavel, \
+                                    'qtd_pendencias_reservadas': qtd_pendencias_reservadas}), content_type = "application/json") 
 
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def remover_responsabilidade_documento_provento(request):
+    investidor = request.user.investidor
+    
     id_pendencia = request.GET['id_pendencia'].replace('.', '')
     # Verifica se id_pendencia contém apenas números
     if not id_pendencia.isdigit():
@@ -343,12 +360,12 @@ def remover_responsabilidade_documento_provento(request):
     except PendenciaDocumentoProvento.DoesNotExist:
         return HttpResponse(json.dumps({'resultado': False, 'mensagem': u'A pendência enviada não existe'}), content_type = "application/json") 
     
-    retorno, mensagem = desalocar_pendencia_de_investidor(pendencia, request.user.investidor)
+    retorno, mensagem = desalocar_pendencia_de_investidor(pendencia, investidor)
         
-    if retorno:
-        return HttpResponse(json.dumps({'resultado': retorno, 'mensagem': mensagem}), content_type = "application/json") 
-    else:
-        return HttpResponse(json.dumps({'resultado': retorno, 'mensagem': mensagem}), content_type = "application/json") 
+    # Calcular quantidade de pendências reservadas
+    qtd_pendencias_reservadas = InvestidorResponsavelPendencia.objects.filter(investidor=investidor).count()
+    
+    return HttpResponse(json.dumps({'resultado': retorno, 'mensagem': mensagem, 'qtd_pendencias_reservadas': qtd_pendencias_reservadas}), content_type = "application/json") 
 
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)

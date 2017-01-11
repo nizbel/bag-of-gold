@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.forms.utils import LocalizedModelForm
 from django import forms
 from django.contrib.auth.models import User
 
 
 
-class DadosCadastraisForm(forms.ModelForm):
+class DadosCadastraisForm(LocalizedModelForm):
     first_name = forms.CharField(required=False)
     last_name = forms.CharField(required=False)
     email = forms.EmailField(required=True)

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.acoes import Provento
 from django import forms
 from django.forms import widgets
@@ -9,7 +10,7 @@ ESCOLHAS_TIPO_PROVENTO=(('A', "Ações"),
                         ('D', "Dividendos"),
                         ('J', "Juros sobre capital próprio"),)
 
-class ProventoAcaoForm(forms.ModelForm):
+class ProventoAcaoForm(LocalizedModelForm):
 
 
     class Meta:

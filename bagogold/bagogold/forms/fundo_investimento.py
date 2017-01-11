@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.fundo_investimento import FundoInvestimento, \
     OperacaoFundoInvestimento, HistoricoCarenciaFundoInvestimento, \
     HistoricoValorCotas
@@ -14,13 +15,13 @@ ESCOLHAS_TIPO_PRAZO=(('L', 'Longo prazo'),
 ESCOLHAS_TIPO_OPERACAO=(('C', "Compra"),
                         ('V', "Venda"))
 
-class FundoInvestimentoForm(forms.ModelForm):
+class FundoInvestimentoForm(LocalizedModelForm):
     class Meta:
         model = FundoInvestimento
         fields = ('nome', 'tipo_prazo', 'descricao', 'taxa_adm')
         widgets={'tipo_prazo': widgets.Select(choices=ESCOLHAS_TIPO_PRAZO),}
 
-class OperacaoFundoInvestimentoForm(forms.ModelForm):
+class OperacaoFundoInvestimentoForm(LocalizedModelForm):
     
     class Meta:
         model = OperacaoFundoInvestimento
@@ -53,7 +54,7 @@ class OperacaoFundoInvestimentoForm(forms.ModelForm):
             if calcular_qtd_cotas_ate_dia_por_fundo(self.investidor, dados.get('fundo_investimento').id, data) < dados.get('quantidade'):
                 raise forms.ValidationError('Não é possível vender a quantidade informada para o fundo %s' % (dados.get('fundo_investimento')))
         
-class HistoricoValorCotasForm(forms.ModelForm):
+class HistoricoValorCotasForm(LocalizedModelForm):
     
     class Meta:
         model = HistoricoValorCotas
@@ -77,7 +78,7 @@ class HistoricoValorCotasForm(forms.ModelForm):
         return data
             
         
-class HistoricoCarenciaFundoInvestimentoForm(forms.ModelForm):
+class HistoricoCarenciaFundoInvestimentoForm(LocalizedModelForm):
     
     class Meta:
         model = HistoricoCarenciaFundoInvestimento

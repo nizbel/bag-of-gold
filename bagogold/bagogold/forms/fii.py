@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.fii import FII, OperacaoFII, ProventoFII, \
     UsoProventosOperacaoFII
 from decimal import Decimal
@@ -14,7 +15,7 @@ ESCOLHAS_CONSOLIDADO=(
 ESCOLHAS_TIPO_OPERACAO=(('C', "Compra"),
                         ('V', "Venda"))
 
-class FIIForm(forms.ModelForm):
+class FIIForm(LocalizedModelForm):
 
 
     class Meta:
@@ -22,7 +23,7 @@ class FIIForm(forms.ModelForm):
         fields = ('ticker', )
         
         
-class ProventoFIIForm(forms.ModelForm):
+class ProventoFIIForm(LocalizedModelForm):
 
 
     class Meta:
@@ -35,7 +36,7 @@ class ProventoFIIForm(forms.ModelForm):
         
     
     
-class OperacaoFIIForm(forms.ModelForm):
+class OperacaoFIIForm(LocalizedModelForm):
     
     class Meta:
         model = OperacaoFII
@@ -59,7 +60,7 @@ class OperacaoFIIForm(forms.ModelForm):
         return data
     
     
-class UsoProventosOperacaoFIIForm(forms.ModelForm):
+class UsoProventosOperacaoFIIForm(LocalizedModelForm):
 
 
     class Meta:
