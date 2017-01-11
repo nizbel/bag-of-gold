@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.acoes import TaxaCustodiaAcao
 from django import forms
 from django.forms import widgets
@@ -10,7 +11,7 @@ ESCOLHAS_MES=((1,'Janeiro'), (2,'Fevereiro'),
           (9,'Setembro'), (10,'Outubro'),
           (11,'Novembro'), (12,'Dezembro'),)
 
-class TaxaCustodiaAcaoForm(forms.ModelForm):
+class TaxaCustodiaAcaoForm(LocalizedModelForm):
 
     class Meta:
         model = TaxaCustodiaAcao

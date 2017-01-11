@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.acoes import OperacaoAcao, \
     UsoProventosOperacaoAcao
 from decimal import Decimal
@@ -14,7 +15,7 @@ ESCOLHAS_CONSOLIDADO=(
 ESCOLHAS_TIPO_OPERACAO=(('C', "Compra"),
                         ('V', "Venda"))
 
-class OperacaoAcaoForm(forms.ModelForm):
+class OperacaoAcaoForm(LocalizedModelForm):
 
 
     class Meta:
@@ -36,7 +37,7 @@ class OperacaoAcaoForm(forms.ModelForm):
             raise forms.ValidationError('Preço unitário deve ser maior que 0')
         return preco_unitario
     
-class UsoProventosOperacaoAcaoForm(forms.ModelForm):
+class UsoProventosOperacaoAcaoForm(LocalizedModelForm):
     class Meta:
         model = UsoProventosOperacaoAcao
         fields = ('qtd_utilizada', )

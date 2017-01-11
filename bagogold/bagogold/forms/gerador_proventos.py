@@ -1,17 +1,16 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.gerador_proventos import \
     ProventoAcaoDescritoDocumentoBovespa, AcaoProventoAcaoDescritoDocumentoBovespa
 from django import forms
 from django.forms import widgets
 
 
-
 ESCOLHAS_TIPO_PROVENTO=(('A', "Ações"),
                         ('D', "Dividendos"),
                         ('J', "Juros sobre capital próprio"),)
 
-class ProventoAcaoDescritoDocumentoBovespaForm(forms.ModelForm):
-
+class ProventoAcaoDescritoDocumentoBovespaForm(LocalizedModelForm):
 
     class Meta:
         model = ProventoAcaoDescritoDocumentoBovespa
@@ -31,7 +30,7 @@ class ProventoAcaoDescritoDocumentoBovespaForm(forms.ModelForm):
             raise forms.ValidationError("Data EX deve ser anterior a data de pagamento")
         return dados
 
-class AcaoProventoAcaoDescritoDocumentoBovespaForm(forms.ModelForm):
+class AcaoProventoAcaoDescritoDocumentoBovespaForm(LocalizedModelForm):
     
     class Meta:
         model = AcaoProventoAcaoDescritoDocumentoBovespa
