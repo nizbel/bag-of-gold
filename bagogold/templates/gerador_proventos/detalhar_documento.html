@@ -88,9 +88,9 @@
                                 <div class="m-grid-col m-grid-col-left">{{provento.data_pagamento|date:'d/m/Y'}}</div>
                                 <div class="m-grid-col m-grid-col-left">
                                     <a href="{% if documento.tipo == 'FII' %}
-                                                    {% url "detalhar_provento_fii" provento.id %}
+                                                    {% url "detalhar_provento_fii" provento.proventoacaodocumento.provento.id %}
                                                 {% else %}
-                                                    {% url "detalhar_provento_acao" provento.id %}
+                                                    {% url "detalhar_provento_acao" provento.proventoacaodocumento.provento.id %}
                                                 {% endif %}" type="button" class="btn btn-xs btn-warning">Ver provento versionado</a>
                                 </div>
                             </div>
