@@ -15,8 +15,22 @@ class DocumentoProventoBovespaAdmin(admin.ModelAdmin):
     
 admin.site.register(DocumentoProventoBovespa, DocumentoProventoBovespaAdmin)
     
-admin.site.register(ProventoAcaoDocumento)
+class ProventoAcaoDocumentoAdmin(admin.ModelAdmin):
+    list_display = ('provento', 'documento', 'versao')
     
-admin.site.register(ProventoFIIDocumento)
+admin.site.register(ProventoAcaoDocumento, ProventoAcaoDocumentoAdmin)
+    
+class ProventoFIIDocumentoAdmin(admin.ModelAdmin):
+    list_display = ('provento', 'documento', 'versao')
+    
+admin.site.register(ProventoFIIDocumento, ProventoFIIDocumentoAdmin)
 
-admin.site.register(PendenciaDocumentoProvento)
+class PendenciaDocumentoProventoAdmin(admin.ModelAdmin):
+    search_fields = ['empresa__nome', 'protocolo']
+    list_display = ('documento', 'data_criacao', 'tipo_completo', 'responsavel')
+    
+    def tipo_completo(self, obj):
+        return 'Leitura' if obj.tipo == 'L' else 'Validação'
+    tipo_completo.short_description = 'Tipo de pendência'
+
+admin.site.register(PendenciaDocumentoProvento, PendenciaDocumentoProventoAdmin)
