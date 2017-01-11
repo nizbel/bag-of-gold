@@ -187,9 +187,10 @@ def buscar_valores_diarios():
     else:
 #         print 'Host: %s' % (req.get_host())
         data = response.read()
-        string_importante = (data[data.find('Preços e taxas dos títulos públicos disponíveis para compra'):
-                                 data.find('Descubra o título mais indicado para você')])
-        linhas = re.findall('<tr class="camposTesouroDireto">.*?</tr>', string_importante)
+        string_importante = data[data.find('mercadostatus'):
+                                 data.find('Descubra o título mais indicado para você')]
+        string_compra = string_importante[:string_importante.rfind('mercadostatus')]
+        linhas = re.findall('<tr class="[^"]*?camposTesouroDireto[^"]*?">.*?</tr>', string_compra)
         contador = 0
         valores_diarios = []
         for linha in linhas:
@@ -202,6 +203,7 @@ def buscar_valores_diarios():
 #                 print dado
                 if contador == 0:
                     tipo_titulo = re.findall('\(.*?\)', dado)[0]
+#                     print tipo_titulo
                     tipo_titulo = tipo_titulo.replace('(', '').replace(')', '')
                     if tipo_titulo == 'NTNB Princ':
                         tipo_titulo = 'NTN-B Principal'
@@ -216,29 +218,52 @@ def buscar_valores_diarios():
                     data_formatada = time.strftime('%Y-%m-%d', data_formatada)
                     valor_diario.titulo = Titulo.objects.get(tipo=tipo_titulo, data_vencimento=data_formatada)
                 elif contador == 2:
-                    if dado == '-':
-                        valor_diario.taxa_compra = 0
-                    else:
-                        valor_diario.taxa_compra = Decimal(re.sub(r'[^\d\.]', '', dado.replace('.', '').replace(',', '.')))
-                elif contador == 3:
-                    if dado == '-':
-                        valor_diario.taxa_venda = 0
-                    else:
-                        valor_diario.taxa_venda = Decimal(re.sub(r'[^\d\.]', '', dado.replace('.', '').replace(',', '.')))
+                    valor_diario.taxa_compra = Decimal(re.sub(r'[^\d\.]', '', dado.replace('.', '').replace(',', '.')))
                 elif contador == 4:
-                    if dado == '-':
-                        valor_diario.preco_compra = 0
-                    else:
-                        valor_diario.preco_compra = Decimal(re.sub(r'[^\d\.]', '', dado.replace('.', '').replace(',', '.')))
-                elif contador == 5:
-                    if dado == '-':
-                        valor_diario.preco_venda = 0
-                    else:
-                        valor_diario.preco_venda = Decimal(re.sub(r'[^\d\.]', '', dado.replace('.', '').replace(',', '.')))
+                    valor_diario.preco_compra = Decimal(re.sub(r'[^\d\.]', '', dado.replace('.', '').replace(',', '.')))
                     valores_diarios += [valor_diario]
                 # Garante o posicionamento
                 contador += 1
-                if contador == 6:
+                if contador == 5:
+                    contador = 0
+        string_venda = string_importante[string_importante.rfind('mercadostatus'):]
+        linhas = re.findall('<tr class="[^"]*?camposTesouroDireto[^"]*?">.*?</tr>', string_venda)
+        contador = 0
+        for linha in linhas:
+            campos = re.findall('<td.*?>.*?</td>', linha)
+            tipo_titulo = ''
+            valor_diario = ValorDiarioTitulo()
+            for campo in campos:
+                # Parte importante da coluna para o preenchimento dos valores
+                dado = re.sub(r'<.*?>', "", campo).strip()
+#                 print dado
+                if contador == 0:
+                    tipo_titulo = re.findall('\(.*?\)', dado)[0]
+#                     print tipo_titulo
+                    tipo_titulo = tipo_titulo.replace('(', '').replace(')', '')
+                    if tipo_titulo == 'NTNB Princ':
+                        tipo_titulo = 'NTN-B Principal'
+                    elif tipo_titulo == 'NTNB':
+                        tipo_titulo = 'NTN-B'
+                    elif tipo_titulo == 'NTNF':
+                        tipo_titulo = 'NTN-F'
+                    elif tipo_titulo == 'NTNC':
+                        tipo_titulo = 'NTN-C'
+                elif contador == 1:
+                    data_formatada = time.strptime(dado, "%d/%m/%Y")
+                    data_formatada = time.strftime('%Y-%m-%d', data_formatada)
+                    valor_diario.titulo = Titulo.objects.get(tipo=tipo_titulo, data_vencimento=data_formatada)
+                    if valor_diario.titulo in [valor_preenchido.titulo for valor_preenchido in valores_diarios]:
+                        valor_diario = [valor_preenchido for valor_preenchido in valores_diarios if valor_preenchido.titulo == valor_diario.titulo][0]
+                elif contador == 2:
+                    valor_diario.taxa_venda = Decimal(re.sub(r'[^\d\.]', '', dado.replace('.', '').replace(',', '.')))
+                elif contador == 3:
+                    valor_diario.preco_venda = Decimal(re.sub(r'[^\d\.]', '', dado.replace('.', '').replace(',', '.')))
+                    if valor_diario.titulo not in [valor_preenchido.titulo for valor_preenchido in valores_diarios]:
+                        valores_diarios += [valor_diario]
+                # Garante o posicionamento
+                contador += 1
+                if contador == 4:
                     contador = 0
         # Buscar data e hora do valor
         data_hora = re.findall('Atualizado em:.*?</b>', string_importante)[0]
@@ -250,4 +275,14 @@ def buscar_valores_diarios():
                                                 int(hora.split(':')[0]), int(hora.split(':')[1]), 0, 0, pytz.UTC)
         for valor_diario in valores_diarios:
             valor_diario.data_hora = data_hora_formatada
+            
+            # Verifica se algum dos preços e taxas é nulo, transformando em 0
+            if valor_diario.preco_compra == None:
+                valor_diario.preco_compra = 0
+            if valor_diario.taxa_compra == None:
+                valor_diario.taxa_compra = 0
+            if valor_diario.preco_venda == None:
+                valor_diario.preco_venda = 0
+            if valor_diario.taxa_venda == None:
+                valor_diario.taxa_venda = 0
         return valores_diarios
