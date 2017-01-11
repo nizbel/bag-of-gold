@@ -250,17 +250,6 @@ def listar_documentos(request):
 
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
-def listar_informacoes_geracao_provento(request, tipo_documento):
-    if tipo_documento == 'acao':
-        return TemplateResponse(request, 'gerador_proventos/listar_informacoes_geracao_provento_acao.html')
-    elif tipo_documento == 'fii':
-        return TemplateResponse(request, 'gerador_proventos/listar_informacoes_geracao_provento_fii.html')
-    else:
-        raise Http404("Página inválida")
-    
-
-@login_required
-@permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def listar_pendencias(request):
     investidor = request.user.investidor
     
@@ -304,7 +293,17 @@ def listar_proventos(request):
         
     return TemplateResponse(request, 'gerador_proventos/listar_proventos.html', {'proventos': proventos})
         
-        
+@login_required
+@permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
+def manual_gerador(request, tipo_documento):
+    if tipo_documento == 'acao':
+        return TemplateResponse(request, 'gerador_proventos/manual_gerador.html')
+    elif tipo_documento == 'fii':
+        return TemplateResponse(request, 'gerador_proventos/listar_informacoes_geracao_provento_fii.html')
+    else:
+        raise Http404("Página inválida")
+    
+    
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def puxar_responsabilidade_documento_provento(request):
