@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.cdb_rdb import CDB_RDB, OperacaoCDB_RDB, \
     HistoricoPorcentagemCDB_RDB, HistoricoCarenciaCDB_RDB, OperacaoVendaCDB_RDB
 from django import forms
@@ -15,14 +16,14 @@ ESCOLHAS_TIPO_RENDIMENTO=((1, 'Pré-fixado'),
 ESCOLHAS_TIPO_OPERACAO=(('C', "Compra"),
                         ('V', "Venda"))
 
-class CDB_RDBForm(forms.ModelForm):
+class CDB_RDBForm(LocalizedModelForm):
     class Meta:
         model = CDB_RDB
         fields = ('nome', 'tipo', 'tipo_rendimento')
         widgets={'tipo': widgets.Select(choices=ESCOLHAS_CDB_RDB),
                  'tipo_rendimento': widgets.Select(choices=ESCOLHAS_TIPO_RENDIMENTO),}
 
-class OperacaoCDB_RDBForm(forms.ModelForm):
+class OperacaoCDB_RDBForm(LocalizedModelForm):
     # Campo verificado apenas no caso de venda de operação de cdb/rdb
     operacao_compra = forms.ModelChoiceField(label='Operação de compra', queryset=OperacaoCDB_RDB.objects.filter(tipo_operacao='C'), required=False)
     
@@ -95,7 +96,7 @@ class OperacaoCDB_RDBForm(forms.ModelForm):
             if OperacaoVendaCDB_RDB.objects.filter(operacao_compra=self.instance):
                 raise forms.ValidationError('Não é possível alterar tipo de operação pois já há vendas registradas para essa compra')
 
-class HistoricoPorcentagemCDB_RDBForm(forms.ModelForm):
+class HistoricoPorcentagemCDB_RDBForm(LocalizedModelForm):
     
     class Meta:
         model = HistoricoPorcentagemCDB_RDB
@@ -140,7 +141,7 @@ class HistoricoPorcentagemCDB_RDBForm(forms.ModelForm):
             pass
         return cleaned_data
         
-class HistoricoCarenciaCDB_RDBForm(forms.ModelForm):
+class HistoricoCarenciaCDB_RDBForm(LocalizedModelForm):
     
     class Meta:
         model = HistoricoCarenciaCDB_RDB

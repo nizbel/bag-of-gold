@@ -16,6 +16,11 @@
         </div>
     </div>
     <div class="portlet-body">
+        <div class="alert alert-warning">
+            Reserve uma pendência para poder realizar a leitura/validação.
+            </br>
+            Você tem <strong><span id="qtd_pendencias_reservadas">{{qtd_pendencias_reservadas}}</span> pendências reservadas</strong>.
+        </div>
         <div class="row">
             <div class="col-md-10">
                 <table id="pendencias_por_usuario" class="table table-striped table-bordered table-hover table-header-fixed">
@@ -31,15 +36,15 @@
                 <tbody>
                 {% for pendencia in pendencias %}
                     <tr>
-                        <td>{{pendencia.tipo_pendencia}}</td>
-                        <td>{{pendencia.data_criacao}}</td>
                         <td><a href="
                         {% if pendencia.tipo == 'V' %}
                             {% url 'validar_documento_provento' pendencia.id %}
                         {% else %}
                             {% url 'ler_documento_provento' pendencia.id %}
                         {% endif %}
-                            ">{{pendencia.documento}}</a></td>
+                            ">{{pendencia.tipo_pendencia}}</a></td>
+                        <td>{{pendencia.data_criacao}}</td>
+                        <td><a href="{% url 'detalhar_documento' pendencia.documento.id %}">{{pendencia.documento}}</a></td>
                         <td>{{pendencia.tipo_documento}}</td>
                         <td>
                             <span id="responsavel_{{pendencia.id}}" {% if not pendencia.responsavel or pendencia.responsavel.id == request.user.investidor.id %}style="display: none"{% endif %}>{{pendencia.responsavel}}</span>
@@ -112,6 +117,7 @@ function puxar_responsabilidade(id) {
         		$('#messages').html('<div class="alert alert-success"><button type="button" class="close" data-dismiss="alert">×</button><i class="icon-ok"></i> ' + retorno.mensagem + '</div>');
         		$('#cancelar_' + id_pendencia).show();
                 $('#reservar_' + id_pendencia).hide();
+                $('#qtd_pendencias_reservadas').html(retorno.qtd_pendencias_reservadas);
         	} else {
                 $('#messages').html('<div class="alert alert-error"><button type="button" class="close" data-dismiss="alert">×</button><i class="icon-ban-circle"></i> ' + retorno.mensagem + '</div>');
                 if ((retorno.responsavel != null) && (!retorno.usuario_responsavel)) {
@@ -144,6 +150,7 @@ function remover_responsabilidade(id) {
                 $('#messages').html('<div class="alert alert-success"><button type="button" class="close" data-dismiss="alert">×</button><i class="icon-ok"></i> ' + retorno.mensagem + '</div>');
                 $('#cancelar_' + id_pendencia).hide();
                 $('#reservar_' + id_pendencia).show();
+                $('#qtd_pendencias_reservadas').html(retorno.qtd_pendencias_reservadas);
             } else {
                 $('#messages').html('<div class="alert alert-error"><button type="button" class="close" data-dismiss="alert">×</button><i class="icon-ban-circle"></i> ' + retorno.mensagem + '</div>');
             }
