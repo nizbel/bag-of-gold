@@ -163,9 +163,9 @@ class RendimentosTestCase(TestCase):
             
         # Gerar proventos
         provento_acao = Provento.objects.create(valor_unitario=Decimal(1), acao=acao, data_ex=data_atual - datetime.timedelta(days=10), 
-                                                  data_pagamento=data_atual - datetime.timedelta(days=1), tipo_provento='D')
+                                                  data_pagamento=data_atual - datetime.timedelta(days=1), tipo_provento='D', oficial_bovespa=True)
         provento_fii = ProventoFII.objects.create(valor_unitario=Decimal(1), fii=fii, data_ex=data_atual - datetime.timedelta(days=10), 
-                                               data_pagamento=data_atual - datetime.timedelta(days=1))
+                                               data_pagamento=data_atual - datetime.timedelta(days=1), oficial_bovespa=True)
     
     def test_deve_trazer_zero_caso_nao_haja_investimentos(self):
         """Testa se método traz resultado 0 caso não haja investimentos"""
