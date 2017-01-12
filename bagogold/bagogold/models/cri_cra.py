@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
-from django import forms
 from django.db import models
-import datetime
 
 class CRI_CRA (models.Model):
     codigo = models.CharField(u'Código', max_length=20)
@@ -13,9 +10,13 @@ class CRI_CRA (models.Model):
     """
     tipo = models.CharField(u'Tipo', max_length=1)
     """
-    Tipo de rendimento, 1 = Pré-fixado, 2 = Pós-fixado
-    """    
-    tipo_rendimento = models.PositiveSmallIntegerField(u'Tipo de rendimento')
+    1 = Prefixado, 2 = IPCA, 3 = DI
+    """
+    tipo_indexacao = models.PositiveSmallIntegerField(u'Tipo de indexação')
+    porcentagem = models.DecimalField(u'Porcentagem sobre indexação', decimal_places=3, max_digits=6)
+    juros_adicional = models.DecimalField(u'Juros adicional', decimal_places=3, max_digits=6)
+    data_emissao = models.DateField(u'Data de emissão')
+    valor_emissao = models.DecimalField(u'Valor nominal na emissão', max_digits=15, decimal_places=8)
     data_emissao = 
     data_vencimento = 
     
