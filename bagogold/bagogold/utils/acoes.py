@@ -460,9 +460,25 @@ def calcular_poupanca_prov_acao_ate_dia_por_divisao(dia, divisao, destinacao='B'
     return total_proventos.quantize(Decimal('0.01'))
 
 
+def verificar_tipo_acao(ticker):
+    categoria = int(re.search('\d+', ticker).group(0))
+    if categoria == 3:
+        return u'ON'
+    elif categoria == 4:
+        return u'PN'
+    elif categoria == 5:
+        return u'PNA'
+    elif categoria == 6:
+        return u'PNB'
+    elif categoria == 7:
+        return u'PNC'
+    elif categoria == 8:
+        return u'PND'
+    raise ValueError('Tipo de ação inválido')
+
 def preencher_codigos_cvm():
     """
-    Preenche códigos bvmf para as ações a partir das urls na listagem de empresas
+    Preenche códigos bvmf para as empresas a partir das urls na listagem de empresas
     """
     acao_url = 'http://bvmf.bmfbovespa.com.br/cias-listadas/empresas-listadas/BuscaEmpresaListada.aspx?idioma=pt-br'
     req = Request(acao_url)
@@ -512,3 +528,29 @@ def preencher_codigos_cvm():
                     empresa.codigo_cvm = codigo
                     empresa.save()
 #                     print 'Salvou empresa', empresa
+
+def buscar_ticker_acoes(empresa_url, tentativa):
+    """
+    Busca tickers não cadastrados para empresas
+    """
+    req = Request(empresa_url)
+    try:
+        response = urlopen(req)
+    except HTTPError as e:
+        print 'The server couldn\'t fulfill the request.'
+        print 'Error code: ', e.code
+    except URLError as e:
+        print 'We failed to reach a server.'
+        print 'Reason: ', e.reason
+    else:
+        data = response.read()
+        if 'Sistema indisponivel' in data:
+            if tentativa < 3:
+                return buscar_ticker_acoes(empresa_url, tentativa+1)
+            else:
+                return
+        tickers = re.findall("var\s+?symbols\s*?=\s*?'([\w|]+)'", data, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
+        if len(tickers) > 0:
+            return tickers[0].split('|')
+        else:
+            return ''
