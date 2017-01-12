@@ -26,7 +26,7 @@ class ProventoFIIDocumentoAdmin(admin.ModelAdmin):
 admin.site.register(ProventoFIIDocumento, ProventoFIIDocumentoAdmin)
 
 class PendenciaDocumentoProventoAdmin(admin.ModelAdmin):
-    search_fields = ['empresa__nome', 'protocolo']
+    search_fields = ['documento__nome', 'data_criacao']
     list_display = ('documento', 'data_criacao', 'tipo_completo', 'responsavel')
     
     def tipo_completo(self, obj):
