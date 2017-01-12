@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
-from django import forms
 from django.db import models
 import datetime
 
