@@ -3,14 +3,11 @@ from bagogold import settings
 from bagogold.bagogold.models.acoes import Acao
 from bagogold.bagogold.testFII import baixar_demonstrativo_rendimentos
 from django.core.files import File
-from django.core.files.storage import default_storage
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-import datetime
 import os
 import re
-import time
 from django.core.validators import MinLengthValidator
 
 def ticker_path(instance, filename):

@@ -6,11 +6,11 @@ from django.contrib import admin
 
 
 class DocumentoProventoBovespaAdmin(admin.ModelAdmin):
-    search_fields = ['empresa__nome', 'protocolo']
+    search_fields = ['protocolo']
     list_display = ('nome_documento', 'data_referencia', 'protocolo', 'empresa')
     
     def nome_documento(self, obj):
-        return obj.documento.name.split('/')[-1]
+        return unicode(obj)
     nome_documento.short_description = 'Nome'
     
 admin.site.register(DocumentoProventoBovespa, DocumentoProventoBovespaAdmin)
@@ -26,11 +26,11 @@ class ProventoFIIDocumentoAdmin(admin.ModelAdmin):
 admin.site.register(ProventoFIIDocumento, ProventoFIIDocumentoAdmin)
 
 class PendenciaDocumentoProventoAdmin(admin.ModelAdmin):
-    search_fields = ['documento', 'data_criacao']
+    search_fields = ['documento__protocolo', 'data_criacao']
     list_display = ('documento', 'data_criacao', 'tipo_completo', 'responsavel')
     
     def tipo_completo(self, obj):
         return 'Leitura' if obj.tipo == 'L' else 'Validação'
     tipo_completo.short_description = 'Tipo de pendência'
-
+    
 admin.site.register(PendenciaDocumentoProvento, PendenciaDocumentoProventoAdmin)
