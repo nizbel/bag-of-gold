@@ -29,7 +29,7 @@ class Command(BaseCommand):
             dados = buscar_valores_diarios_selic(data_inicial, data_final)
             for data, valor in dados:
                 HistoricoTaxaSelic.objects.create(data=data, taxa_diaria=valor)
-            print dados[0], dados[len(dados)-1]
+#             print dados[0], dados[len(dados)-1]
             # TESTE
             data_inicial = data_final + datetime.timedelta(days=1)
 
