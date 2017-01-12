@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from django import forms
 from django.db import models
 import datetime
 
@@ -161,7 +160,5 @@ class HistoricoTaxaDI (models.Model):
     taxa = models.DecimalField(u'Rendimento anual', max_digits=5, decimal_places=2, unique_for_date='data')
     
     def save(self, *args, **kw):
-        try:
-            historico = HistoricoTaxaDI.objects.get(taxa=self.taxa, data=self.data)
-        except HistoricoTaxaDI.DoesNotExist:
+        if not HistoricoTaxaDI.objects.get(taxa=self.taxa, data=self.data).exists():
             super(HistoricoTaxaDI, self).save(*args, **kw)
