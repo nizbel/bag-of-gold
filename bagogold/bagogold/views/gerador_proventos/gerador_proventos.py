@@ -130,7 +130,12 @@ def detalhar_provento_fii(request, id_provento):
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def ler_documento_provento(request, id_pendencia):
-    pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
+    try:
+        pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
+    except PendenciaDocumentoProvento.DoesNotExist:
+        messages.error(request, 'Pendência de leitura não foi encontrada')
+        return HttpResponseRedirect(reverse('listar_pendencias'))
+        
     # Verificar se pendência é de leitura
     if pendencia.tipo != 'L':
         messages.success(request, 'Pendência não é de leitura')
@@ -371,7 +376,12 @@ def remover_responsabilidade_documento_provento(request):
 def validar_documento_provento(request, id_pendencia):
     investidor = request.user.investidor
     
-    pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
+    try:
+        pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
+    except PendenciaDocumentoProvento.DoesNotExist:
+        messages.error(request, 'Pendência de validação não foi encontrada')
+        return HttpResponseRedirect(reverse('listar_pendencias'))
+    
     if request.method == 'POST':
         # Testa se o investidor atual é o responsável para mandar POST
         if investidor != pendencia.investidorresponsavelpendencia.investidor:
