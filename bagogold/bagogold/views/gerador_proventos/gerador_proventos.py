@@ -35,9 +35,16 @@ import os
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def baixar_documento_provento(request, id_documento):
-    documento_provento = DocumentoProventoBovespa.objects.get(id=id_documento)
+    try:
+        documento_provento = DocumentoProventoBovespa.objects.get(id=id_documento)
+    except DocumentoProventoBovespa.DoesNotExist:
+        messages.error(request, 'Documento não foi encontrado para download')
+        return HttpResponseRedirect(reverse('listar_pendencias'))
     filename = documento_provento.documento.name.split('/')[-1]
-    response = HttpResponse(documento_provento.documento, content_type='application/pdf')
+    if documento_provento.extensao() == 'doc':
+        response = HttpResponse(documento_provento.documento, content_type='application/msword')
+    else:
+        response = HttpResponse(documento_provento.documento, content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename=%s' % filename
     response['Content-Length'] = os.path.getsize(settings.MEDIA_ROOT + documento_provento.documento.name)
 

@@ -32,7 +32,7 @@ class DocumentoProventoBovespa (models.Model):
         permissions = (('pode_gerar_proventos', 'Pode gerar proventos a partir de documentos'),)
         
     def __unicode__(self):
-        return self.documento.name.split('/')[-1]
+        return u'%s-%s' % (self.empresa.ticker_empresa(), self.protocolo)
         
     def apagar_documento(self):
         if os.path.isfile(self.documento.path):
