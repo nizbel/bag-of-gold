@@ -2,8 +2,7 @@
 from django.db import models
 
 class Debenture (models.Model):
-    nome = models.CharField(u'Nome', max_length=50)
-    investidor = models.ForeignKey('Investidor')
+    codigo = models.CharField(u'Código', max_length=10)
     """
     1 = Prefixado, 2 = IPCA, 3 = DI
     """
