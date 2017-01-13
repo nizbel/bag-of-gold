@@ -41,7 +41,7 @@ def baixar_documento_provento(request, id_documento):
         messages.error(request, 'Documento não foi encontrado para download')
         return HttpResponseRedirect(reverse('listar_pendencias'))
     filename = documento_provento.documento.name.split('/')[-1]
-    if documento_provento.extensao() == 'doc':
+    if documento_provento.extensao_documento() == 'doc':
         response = HttpResponse(documento_provento.documento, content_type='application/msword')
     else:
         response = HttpResponse(documento_provento.documento, content_type='application/pdf')
