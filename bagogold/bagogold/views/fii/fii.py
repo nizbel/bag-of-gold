@@ -133,8 +133,6 @@ def calcular_resultado_corretagem(request):
                 
             ranking.sort(key=lambda x: x[1], reverse=True)
                 
-            return TemplateResponse(request, 'fii/calcular_resultado_corretagem.html', {'ranking': ranking, 'form_calcular': form_calcular})
-
     else:
         form_calcular = CalculoResultadoCorretagemForm()
     
