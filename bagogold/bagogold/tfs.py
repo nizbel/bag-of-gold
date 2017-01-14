@@ -2,6 +2,7 @@
 from bagogold.bagogold.models.acoes import Acao, HistoricoAcao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.fii import FII, HistoricoFII
+from bagogold.bagogold.utils.acoes import verificar_tipo_acao
 from decimal import Decimal
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -61,7 +62,7 @@ def ler_serie_historica_anual_bovespa(nome_arquivo):
                         if not empresa_existe:
                             empresa = Empresa(nome=line[27:39].strip(), nome_pregao=line[27:39].strip())
                             empresa.save()
-                        acao = Acao(ticker=ticker, empresa=empresa)
+                        acao = Acao(ticker=ticker, empresa=empresa, tipo=verificar_tipo_acao(ticker))
                         acao.save()
                         objeto, criado = HistoricoAcao.objects.update_or_create(acao=acao, data=data, defaults={'preco_unitario':valor, 'oficial_bovespa': True})
                         print ticker, 'em', data, 'criado (TICKER)'

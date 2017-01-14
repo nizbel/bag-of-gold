@@ -3,14 +3,11 @@ from bagogold import settings
 from bagogold.bagogold.models.acoes import Acao
 from bagogold.bagogold.testFII import baixar_demonstrativo_rendimentos
 from django.core.files import File
-from django.core.files.storage import default_storage
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-import datetime
 import os
 import re
-import time
 from django.core.validators import MinLengthValidator
 
 def ticker_path(instance, filename):
@@ -32,7 +29,7 @@ class DocumentoProventoBovespa (models.Model):
         permissions = (('pode_gerar_proventos', 'Pode gerar proventos a partir de documentos'),)
         
     def __unicode__(self):
-        return self.documento.name.split('/')[-1]
+        return u'%s-%s' % (self.empresa.ticker_empresa(), self.protocolo)
         
     def apagar_documento(self):
         if os.path.isfile(self.documento.path):
