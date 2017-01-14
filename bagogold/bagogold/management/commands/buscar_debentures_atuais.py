@@ -2,6 +2,7 @@
 from decimal import Decimal
 from django.core.management.base import BaseCommand
 from urllib2 import Request, urlopen, HTTPError, URLError
+import datetime
 import re
 
 
@@ -12,9 +13,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         url_debentures = 'http://www.debentures.com.br/exploreosnd/consultaadados/emissoesdedebentures/caracteristicas_r.asp?tip_deb=publicas&op_exc=Nada'
         
-#         codigos = buscar_lista_debentures(url_debentures)
-        codigos = ['AARJ11']
-        for codigo in codigos[:1]:
+        codigos = buscar_lista_debentures(url_debentures)
+#         codigos = ['AARJ11']
+        for codigo in codigos:
             buscar_info_debenture(codigo)
 
 def buscar_lista_debentures(url_debentures):
@@ -50,6 +51,14 @@ def buscar_info_debenture(codigo):
     else:
         data = response.read()
         print response.headers['content-type']
-        for linha in data.split('\n'):
+
+        for linha in data.decode('latin-1').split('\n'):
             if codigo in linha:
-                print linha
+                campos = [campo.strip() for campo in linha.split('\t')]
+                situacao = campos[5]
+                data_emissao = datetime.datetime.strptime(campos[11] , '%d/%m/%Y').date()
+#                 data_vencimento = datetime.datetime.strptime(campos[12] , '%d/%m/%Y').date()
+                data_inicio_rentabilidade = campos[15]
+                motivo_saida = campos[13]
+                if campos[15] != campos[11]:
+                    print 'Campo difere', campos[15], campos[11]
