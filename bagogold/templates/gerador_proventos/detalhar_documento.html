@@ -47,7 +47,19 @@
                                 <div class="m-grid-col m-grid-col-left"><strong>Responsável por validar:</strong></div>
                                 <div class="m-grid-col m-grid-col-left">{{documento.responsavel_validacao|default:'N/A'}}</div>
                                 <div class="m-grid-col m-grid-col-left"><strong>Pendências</strong></div>
-                                <div class="m-grid-col m-grid-col-left">{{documento.responsavel_validacao|default:'Sem pendências'}}</div>
+                                <div class="m-grid-col m-grid-col-left">
+                                {% for pendencia in documento.pendencias %}
+                                    <a href="
+                                    {% if pendencia.tipo == 'V' %}
+                                        {% url 'validar_documento_provento' pendencia.id %}
+                                    {% else %}
+                                        {% url 'ler_documento_provento' pendencia.id %}
+                                    {% endif %}
+                                    ">{{ pendencia.tipo_completo }}</a>
+                                {% empty %}
+                                    Sem pendências
+                                {% endfor %}
+                                </div>
                             </div>
                         </div>
                     </div>
