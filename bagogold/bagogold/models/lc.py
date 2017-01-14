@@ -160,5 +160,5 @@ class HistoricoTaxaDI (models.Model):
     taxa = models.DecimalField(u'Rendimento anual', max_digits=5, decimal_places=2, unique_for_date='data')
     
     def save(self, *args, **kw):
-        if not HistoricoTaxaDI.objects.get(taxa=self.taxa, data=self.data).exists():
+        if not HistoricoTaxaDI.objects.filter(taxa=self.taxa, data=self.data).exists():
             super(HistoricoTaxaDI, self).save(*args, **kw)

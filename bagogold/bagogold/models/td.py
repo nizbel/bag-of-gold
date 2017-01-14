@@ -73,7 +73,7 @@ class HistoricoTitulo (models.Model):
     preco_venda = models.DecimalField(u'Preço de venda', max_digits=11, decimal_places=2)
     
     def __unicode__(self):
-        return str(self.titulo) + ' em ' + self.data + ': R$' + str(self.preco_compra) + '(' + str(self.taxa_compra) + ')' + \
+        return str(self.titulo) + ' em ' + str(self.data) + ': R$' + str(self.preco_compra) + '(' + str(self.taxa_compra) + ')' + \
             '/R$' + str(self.preco_venda) + '(' + str(self.taxa_venda) + ')'
     
     def save(self, *args, **kw):

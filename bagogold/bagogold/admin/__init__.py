@@ -6,4 +6,5 @@ import fundo_investimento
 import gerador_proventos
 import investidores
 import lc
+import taxas_indexacao
 import td
