@@ -150,14 +150,33 @@ def ler_documento_provento(request, id_pendencia):
     
     investidor = request.user.investidor
     
-    # Preencher responsável
-    pendencia.responsavel = pendencia.responsavel() or 'Sem responsável'
-    
     ProventoFormset = formset_factory(ProventoAcaoDescritoDocumentoBovespaForm)
     AcaoProventoFormset = formset_factory(AcaoProventoAcaoDescritoDocumentoBovespaForm)
     
     if request.method == 'POST':
-        if request.POST.get('preparar_proventos'):
+        # Verifica se pendência não possuia responsável e usuário acaba de reservá-la
+        if request.POST.get('reservar'):
+            # Calcular quantidade de pendências reservadas
+            qtd_pendencias_reservadas = InvestidorResponsavelPendencia.objects.filter(investidor=investidor).count()
+            if qtd_pendencias_reservadas == 20:
+                messages.error(request, u'Você já possui 20 pendências reservadas')
+            else:
+                # Tentar alocar para o usuário
+                retorno, mensagem = alocar_pendencia_para_investidor(pendencia, investidor)
+                
+                if retorno:
+                    # Atualizar pendência
+                    pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
+                    messages.success(request, mensagem)
+                else:
+                    messages.error(request, mensagem)
+                    
+            # Preparar formset de proventos
+            if pendencia.documento.tipo == 'A':
+                formset_provento = ProventoFormset(prefix='provento')
+                formset_acao_provento = AcaoProventoFormset(prefix='acao_provento')
+            
+        elif request.POST.get('preparar_proventos'):
             if request.POST['num_proventos'].isdigit():
                 qtd_proventos = int(request.POST['num_proventos']) if int(request.POST['num_proventos']) <= 10 else 1
                 ProventoFormset = formset_factory(ProventoAcaoDescritoDocumentoBovespaForm, extra=qtd_proventos)

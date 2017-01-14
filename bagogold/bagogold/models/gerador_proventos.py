@@ -67,7 +67,10 @@ class DocumentoProventoBovespa (models.Model):
         return re.sub('\d', '', Acao.objects.filter(empresa=self.empresa)[0].ticker)
     
     def pendente(self):
-        return len(PendenciaDocumentoProvento.objects.filter(documento=self)) > 0 
+        return PendenciaDocumentoProvento.objects.filter(documento=self).exists()
+    
+    def pendencias(self):
+        return PendenciaDocumentoProvento.objects.filter(documento=self)
     
     def responsavel_leitura(self):
         if hasattr(self, 'investidorleituradocumento'):
@@ -157,6 +160,9 @@ class PendenciaDocumentoProvento (models.Model):
         if hasattr(self, 'investidorresponsavelpendencia'):
             return self.investidorresponsavelpendencia.investidor
         return None
+    
+    def tipo_completo(self):
+        return 'Leitura' if self.tipo == 'L' else 'Validação'
     
 class ProventoAcaoDocumento (models.Model):
     provento = models.ForeignKey('Provento')
