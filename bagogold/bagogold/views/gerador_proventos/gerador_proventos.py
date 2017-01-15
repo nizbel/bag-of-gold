@@ -361,7 +361,7 @@ def listar_pendencias(request):
         # Filtrar por pendencias reserváveis
         if request.POST.get("filtro_reservaveis"):
             query_pendencias = query_pendencias.exclude(tipo='V', documento__investidorleituradocumento__investidor=investidor)
-            query_pendencias = query_pendencias.exclude(investidorresponsavelpendencia=None)
+            query_pendencias = query_pendencias.filter(investidorresponsavelpendencia=None)
         
     if PendenciaDocumentoProvento.objects.all().count() <= filtros.filtro_qtd:
         pendencias = query_pendencias
