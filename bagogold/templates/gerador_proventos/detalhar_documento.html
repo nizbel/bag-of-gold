@@ -35,7 +35,7 @@
                                 <div class="m-grid-col m-grid-col-left"><strong>Protocolo:</strong></div>
                                 <div class="m-grid-col m-grid-col-left">{{documento.protocolo}}</div>
                                 <div class="m-grid-col m-grid-col-left"><strong>Data Referência:</strong></div>
-                                <div class="m-grid-col m-grid-col-left">{{documento.data_referencia}}</div>
+                                <div class="m-grid-col m-grid-col-left">{{documento.data_referencia|date:"d/m/Y"}}</div>
                                 <div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
                                 <div class="m-grid-col m-grid-col-left">{{documento.tipo}}</div>
                             </div>
@@ -46,6 +46,20 @@
                                 <div class="m-grid-col m-grid-col-left">{{documento.responsavel_leitura|default:'N/A'}}</div>
                                 <div class="m-grid-col m-grid-col-left"><strong>Responsável por validar:</strong></div>
                                 <div class="m-grid-col m-grid-col-left">{{documento.responsavel_validacao|default:'N/A'}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Pendências</strong></div>
+                                <div class="m-grid-col m-grid-col-left">
+                                {% for pendencia in documento.pendencias %}
+                                    <a href="
+                                    {% if pendencia.tipo == 'V' %}
+                                        {% url 'validar_documento_provento' pendencia.id %}
+                                    {% else %}
+                                        {% url 'ler_documento_provento' pendencia.id %}
+                                    {% endif %}
+                                    ">{{ pendencia.tipo_completo }}</a>
+                                {% empty %}
+                                    Sem pendências
+                                {% endfor %}
+                                </div>
                             </div>
                         </div>
                     </div>
