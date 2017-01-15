@@ -216,8 +216,8 @@
                                                     <div class="form-group col-md-4 {% if form.data_pagamento_frac.errors %} has-error {% endif %}">
                                                         <label class="control-label col-md-4" style="text-align: left;"> Data de pagamento de frações: </label>
                                                         <div class="col-md-8">
-                                                            <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_acao_provento-{{forloop.counter0}}-data_pagamento_frac" name="acao_provento-{{forloop.counter0}}-data_pagamento_frac" data-date="{{form.data_pagamento_frac.value|date:'d/m/Y'|default:''}}" data-date-viewmode="years">
-                                                                <input type="text" class="form-control" name="acao_provento-{{forloop.counter0}}-data_pagamento_frac" value="{{form.data_pagamento_frac.value}}">
+                                                            <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_acao_provento-{{forloop.counter0}}-data_pagamento_frac" name="acao_provento-{{forloop.counter0}}-data_pagamento_frac" data-date="{{form_acao_provento.data_pagamento_frac.value|date:'d/m/Y'|default:''}}" data-date-viewmode="years">
+                                                                <input type="text" class="form-control" name="acao_provento-{{forloop.counter0}}-data_pagamento_frac" value="{{form_acao_provento.data_pagamento_frac.value|date:'d/m/Y'}}">
                                                                 <span class="input-group-btn">
                                                                     <button class="btn default" type="button">
                                                                         <i class="fa fa-calendar"></i>

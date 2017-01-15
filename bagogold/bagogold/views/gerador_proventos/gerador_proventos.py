@@ -3,7 +3,7 @@ from bagogold import settings
 from bagogold.bagogold.forms.gerador_proventos import \
     ProventoAcaoDescritoDocumentoBovespaForm, \
     AcaoProventoAcaoDescritoDocumentoBovespaForm
-from bagogold.bagogold.models.acoes import Acao, Provento
+from bagogold.bagogold.models.acoes import Acao, Provento, AcaoProvento
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.fii import ProventoFII
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
@@ -213,6 +213,20 @@ def ler_documento_provento(request, id_pendencia):
                 formset_provento = ProventoFormset(request.POST, prefix='provento')
                 formset_acao_provento = AcaoProventoFormset(request.POST, prefix='acao_provento')
                 
+                # Apaga descrições que já existam para poder rodar validações, serão posteriormente readicionadas caso haja algum erro
+                info_proventos_a_apagar = list(ProventoAcaoDocumento.objects.filter(documento=pendencia.documento)) \
+                    + list(AcaoProvento.objects.filter(provento__id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True))) \
+                    + list(Provento.gerador_objects.filter(id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True))) \
+                    + list(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento__id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True))) \
+                    + list(ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)))
+#                 print info_proventos_a_apagar
+#                 print list(reversed(info_proventos_a_apagar))
+                for elemento in info_proventos_a_apagar:
+                    # Mantém os IDs dos elementos
+                    elemento.guarda_id = elemento.id
+                    elemento.delete()
+                    elemento.id = elemento.guarda_id
+                
                 if formset_provento.is_valid():
                     # Verifica se dados inseridos são todos válidos
                     forms_validos = True
@@ -248,8 +262,10 @@ def ler_documento_provento(request, id_pendencia):
                             messages.error(request, str(e))
                     else:
                         messages.error(request, 'Proventos em ações não conferem com os proventos criados')
-                else:
-                    print formset_provento.errors
+                
+                # Readiciona proventos para o caso de não haver logrado sucesso na leitura
+                for elemento in list(reversed(info_proventos_a_apagar)):
+                    elemento.save()
                         
             # Radio de documento estava em Excluir
             elif request.POST['radioDocumento'] == '0':
