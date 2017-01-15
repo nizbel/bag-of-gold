@@ -114,6 +114,38 @@
                 <div class="portlet box yellow-crusta passo-2 passo-4">
                     <div class="portlet-title">
                         <div class="caption">
+                            <i class="icon-diamond"></i>Proventos
+                        </div>
+                        <div class="tools">
+                            <a href="javascript:;" class="collapse"></a>
+                        </div>
+                    </div>
+                    <div class="portlet-body">
+                        <ul>
+                            <li>Os tipos de proventos a serem encontrados nos documentos são:</li>
+                            <ul>
+                                <li><strong>Dividendos</strong>: proventos em dinheiro, descritos como uma quantia (em reais) por ação. O imposto de renda é retido na fonte.</li>
+                                <li><strong>Juros sobre Capital Próprio</strong>, (<strong>JCP</strong> ou <strong>JSCP</strong>): proventos em dinheiro, descritos como uma quantia (em reais) por ação. 
+                                O imposto de renda (<strong>15%</strong>)é retido no pagamento do acionista.</li>
+                                <li><strong>Proventos em ações</strong>: proventos em ações, descritos como uma porcentagem ou proporção da quantidade de ações do acionista.</li>
+                                <ul>
+                                    <li>Também serão inseridos como proventos em ação, desdobramentos e agrupamentos de ações.</li>
+                                    <li><strong>Desdobramentos</strong> são eventos onde a quantidade total de ações é multiplicada, num desdobramento de 1 para 5 por exemplo, o acionista tem sua posição
+                                    aumentada para 5 vezes a posição anterior, indo de 100 ações para 500.</li>
+                                    <li><strong>Agrupamentos</strong> são o oposto, a quantidade total de ações é dividida, num agrupamento de 5 para 1 o acionista vê sua posição ir de 100 para 20.</li>
+                                    <li>Caso seja encontrado um documento que anuncie um desdobramento ou agrupamento, <strong>avisar o administrador</strong>.</li>
+                                </ul>
+                            </ul>
+                            <li><strong>É importante lembrar que UNITS por enquanto não estão sendo adicionadas, caso seja encontrado um documento descrevendo proventos para UNIT, cancelar leitura.</strong></li>
+                            <li>Caso o documento mencione uma categoria de ação que não esteja disponível no sistema, <strong>avisar o administrador</strong>.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="portlet box yellow-crusta passo-2 passo-4">
+                    <div class="portlet-title">
+                        <div class="caption">
                             <i class="icon-diamond"></i>Valores
                         </div>
                         <div class="tools">
@@ -130,6 +162,7 @@
                             <li>Caso sejam descritos dois valores para uma ação, criar dois proventos. Ex: dividendos previstos e dividendos adicionais. <strong>Não somar os valores em um dividendo único</strong>.</li>
                             <li>Para os proventos em ações que possuam pagamento de frações, pegar o valor da fração descrito.</li>
                             <li>Caso seja encontrado um provento que mencione pagamento de rendimento, <strong>avisar o administrador</strong>.</li>
+                            <li>Caso o pagamento seja parcelado, cada parcela deve ser adicionada com um provento separado.</li>
                         </ul>
                     </div>
                 </div>
@@ -173,7 +206,7 @@
                             <li>Documento é uma ata de reunião/assembléia.</li>
                             <li>Documento possui <strong>mais de 10 páginas</strong>.</li>
                             <li>Documento é uma convocação para reunião/assembléia.</li>
-                            <li>Documento é um aviso a <strong>debenturistas</strong>.</li>
+                            <li>Documento é um <strong>Aviso a debenturistas</strong>.</li>
                         </ul>
                     </div>
                 </div>

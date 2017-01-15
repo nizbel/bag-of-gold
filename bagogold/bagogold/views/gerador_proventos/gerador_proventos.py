@@ -139,25 +139,43 @@ def detalhar_provento_fii(request, id_provento):
 def ler_documento_provento(request, id_pendencia):
     try:
         pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
+        # Verificar se pendência é de leitura
+        if pendencia.tipo != 'L':
+            messages.success(request, 'Pendência não é de leitura')
+            return HttpResponseRedirect(reverse('listar_pendencias'))
     except PendenciaDocumentoProvento.DoesNotExist:
         messages.error(request, 'Pendência de leitura não foi encontrada')
         return HttpResponseRedirect(reverse('listar_pendencias'))
         
-    # Verificar se pendência é de leitura
-    if pendencia.tipo != 'L':
-        messages.success(request, 'Pendência não é de leitura')
-        return HttpResponseRedirect(reverse('listar_pendencias'))
-    
     investidor = request.user.investidor
-    
-    # Preencher responsável
-    pendencia.responsavel = pendencia.responsavel() or 'Sem responsável'
     
     ProventoFormset = formset_factory(ProventoAcaoDescritoDocumentoBovespaForm)
     AcaoProventoFormset = formset_factory(AcaoProventoAcaoDescritoDocumentoBovespaForm)
     
     if request.method == 'POST':
-        if request.POST.get('preparar_proventos'):
+        # Verifica se pendência não possuia responsável e usuário acaba de reservá-la
+        if request.POST.get('reservar'):
+            # Calcular quantidade de pendências reservadas
+            qtd_pendencias_reservadas = InvestidorResponsavelPendencia.objects.filter(investidor=investidor).count()
+            if qtd_pendencias_reservadas == 20:
+                messages.error(request, u'Você já possui 20 pendências reservadas')
+            else:
+                # Tentar alocar para o usuário
+                retorno, mensagem = alocar_pendencia_para_investidor(pendencia, investidor)
+                
+                if retorno:
+                    # Atualizar pendência
+                    pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
+                    messages.success(request, mensagem)
+                else:
+                    messages.error(request, mensagem)
+                    
+            # Preparar formset de proventos
+            if pendencia.documento.tipo == 'A':
+                formset_provento = ProventoFormset(prefix='provento')
+                formset_acao_provento = AcaoProventoFormset(prefix='acao_provento')
+            
+        elif request.POST.get('preparar_proventos'):
             if request.POST['num_proventos'].isdigit():
                 qtd_proventos = int(request.POST['num_proventos']) if int(request.POST['num_proventos']) <= 10 else 1
                 ProventoFormset = formset_factory(ProventoAcaoDescritoDocumentoBovespaForm, extra=qtd_proventos)
@@ -385,13 +403,34 @@ def validar_documento_provento(request, id_pendencia):
     
     try:
         pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
+        # Verificar se pendência é de validação
+        if pendencia.tipo != 'V':
+            messages.error(request, 'Pendência não é de validação')
+            return HttpResponseRedirect(reverse('listar_pendencias'))
     except PendenciaDocumentoProvento.DoesNotExist:
         messages.error(request, 'Pendência de validação não foi encontrada')
         return HttpResponseRedirect(reverse('listar_pendencias'))
     
     if request.method == 'POST':
+        # Verifica se pendência não possuia responsável e usuário acaba de reservá-la
+        if request.POST.get('reservar'):
+            # Calcular quantidade de pendências reservadas
+            qtd_pendencias_reservadas = InvestidorResponsavelPendencia.objects.filter(investidor=investidor).count()
+            if qtd_pendencias_reservadas == 20:
+                messages.error(request, u'Você já possui 20 pendências reservadas')
+            else:
+                # Tentar alocar para o usuário
+                retorno, mensagem = alocar_pendencia_para_investidor(pendencia, investidor)
+                
+                if retorno:
+                    # Atualizar pendência
+                    pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
+                    messages.success(request, mensagem)
+                else:
+                    messages.error(request, mensagem)
+                    
         # Testa se o investidor atual é o responsável para mandar POST
-        if investidor != pendencia.investidorresponsavelpendencia.investidor:
+        elif investidor != pendencia.investidorresponsavelpendencia.investidor:
             messages.error(request, 'Você não é o responsável por esta pendência')
             return HttpResponseRedirect(reverse('listar_pendencias'))
         
@@ -469,11 +508,6 @@ def validar_documento_provento(request, id_pendencia):
             except Exception as erro:
                 messages.error(request, unicode(erro))
         
-    # Verificar se pendência é de validação
-    if pendencia.tipo != 'V':
-        messages.error(request, 'Pendência não é de validação')
-        return HttpResponseRedirect(reverse('listar_pendencias'))
-    
     if pendencia.documento.investidorleituradocumento.decisao == 'C':
         proventos_documento = ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)
         descricoes_proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento)
