@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
     ProventoAcaoDocumento, ProventoFIIDocumento, PendenciaDocumentoProvento, \
-    ProventoAcaoDescritoDocumentoBovespa
+    ProventoAcaoDescritoDocumentoBovespa, ProventoFIIDescritoDocumentoBovespa
 from django.contrib import admin
 
 
