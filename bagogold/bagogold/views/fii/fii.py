@@ -103,6 +103,9 @@ def aconselhamento_fii(request):
 # TODO remover login_required
 @login_required
 def calcular_resultado_corretagem(request):
+    # Preparar ranking
+    ranking = list()
+    
     if request.method == 'POST':
         form_calcular = CalculoResultadoCorretagemForm(request.POST)
         
@@ -130,10 +133,8 @@ def calcular_resultado_corretagem(request):
                 
             ranking.sort(key=lambda x: x[1], reverse=True)
                 
-            return TemplateResponse(request, 'fii/calcular_resultado_corretagem.html', {'ranking': ranking, 'form_calcular': form_calcular})
-    
-    ranking = list()
-    form_calcular = CalculoResultadoCorretagemForm()
+    else:
+        form_calcular = CalculoResultadoCorretagemForm()
     
     return TemplateResponse(request, 'fii/calcular_resultado_corretagem.html', {'ranking': ranking, 'form_calcular': form_calcular})
     
