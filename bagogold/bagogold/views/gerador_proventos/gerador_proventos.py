@@ -333,18 +333,40 @@ def listar_documentos(request):
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def listar_pendencias(request):
+    # Usado para criar objetos vazios
+    class Object(object):
+        pass
+    
     investidor = request.user.investidor
     
     # Valor padrão para o filtro de quantidade
-    filtro_qtd = 200
+    filtros = Object()
+    filtros.filtro_qtd = 200
+    filtros.filtro_tipo_leitura = True if not request.method == 'POST' else 'filtro_tipo_leitura' in request.POST
+    filtros.filtro_tipo_validacao = True if not request.method == 'POST' else 'filtro_tipo_validacao' in request.POST
+    filtros.filtro_reservaveis = True if not request.method == 'POST' else 'filtro_reservaveis' in request.POST
+    # Prepara a busca
+    query_pendencias = PendenciaDocumentoProvento.objects.all() 
     # Verifica a quantidade de pendências escolhida para filtrar
     if request.method == 'POST':
+        print request.POST, request.POST.get("filtro_tipo_leitura")
+        # Filtrar por quantidade
         if request.POST.get("filtro_qtd"):
-            filtro_qtd = int(request.POST['filtro_qtd'])
-    if PendenciaDocumentoProvento.objects.all().count() <= filtro_qtd:
-        pendencias = PendenciaDocumentoProvento.objects.all() 
+            filtros.filtro_qtd = int(request.POST['filtro_qtd'])
+        # Filtrar por tipo de pendencia
+        if not request.POST.get("filtro_tipo_leitura"):
+            query_pendencias = query_pendencias.exclude(tipo='L')
+        if not request.POST.get("filtro_tipo_validacao"):
+            query_pendencias = query_pendencias.exclude(tipo='V')
+        # Filtrar por pendencias reserváveis
+        if request.POST.get("filtro_reservaveis"):
+            query_pendencias = query_pendencias.exclude(tipo='V', documento__investidorleituradocumento__investidor=investidor)
+            query_pendencias = query_pendencias.exclude(investidorresponsavelpendencia=None)
+        
+    if PendenciaDocumentoProvento.objects.all().count() <= filtros.filtro_qtd:
+        pendencias = query_pendencias
     else:
-        pendencias = PendenciaDocumentoProvento.objects.all()[:filtro_qtd]
+        pendencias = query_pendencias[:filtros.filtro_qtd]
         
     
     # Calcular quantidade de pendências reservadas
@@ -356,7 +378,7 @@ def listar_pendencias(request):
         pendencia.tipo_pendencia = 'Leitura' if pendencia.tipo == 'L' else 'Validação'
         pendencia.responsavel = pendencia.responsavel()
         
-    return TemplateResponse(request, 'gerador_proventos/listar_pendencias.html', {'pendencias': pendencias, 'qtd_pendencias_reservadas': qtd_pendencias_reservadas,'filtro_qtd': filtro_qtd})
+    return TemplateResponse(request, 'gerador_proventos/listar_pendencias.html', {'pendencias': pendencias, 'qtd_pendencias_reservadas': qtd_pendencias_reservadas,'filtros': filtros})
 
 
 @login_required
