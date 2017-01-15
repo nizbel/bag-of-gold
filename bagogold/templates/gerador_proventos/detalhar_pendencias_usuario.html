@@ -56,7 +56,7 @@
                 		{% for pendencia in usuario.pendencias_alocadas %}
                 			<tr>
                 				<td>{{pendencia.tipo_pendencia}}</td>
-                                <td><a href="{% url "detalhar_documento" leitura.documento.id %}">{{pendencia.documento}}</a></td>
+                                <td><a href="{% url "detalhar_documento" pendencia.documento.id %}">{{pendencia.documento}}</a></td>
                                 <td>{{pendencia.investidorresponsavelpendencia.data_alocacao|date:"d/m/Y H:i"}}</td>
                 			</tr>
                 		{% endfor %}	
