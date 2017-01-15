@@ -11,6 +11,7 @@ class Debenture (models.Model):
     juros_adicional = models.DecimalField(u'Juros adicional', decimal_places=3, max_digits=6)
     data_emissao = models.DateField(u'Data de emissão')
     valor_emissao = models.DecimalField(u'Valor nominal na emissão', max_digits=15, decimal_places=8)
+    data_inicio_rendimento = models.DateField(u'Data de início do rendimento')
     data_vencimento = models.DateField(u'Data de vencimento')
     
     class Meta:
