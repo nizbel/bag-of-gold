@@ -12,7 +12,9 @@ class Debenture (models.Model):
     data_emissao = models.DateField(u'Data de emissão')
     valor_emissao = models.DecimalField(u'Valor nominal na emissão', max_digits=15, decimal_places=8)
     data_inicio_rendimento = models.DateField(u'Data de início do rendimento')
-    data_vencimento = models.DateField(u'Data de vencimento')
+    data_vencimento = models.DateField(u'Data de vencimento', null=True, blank=True)
+    data_fim = models.DateField(u'Data de fim', null=True, blank=True)
+    incentivada = models.BooleanField(u'É incentivada?')
     
     class Meta:
         unique_together=('nome', 'investidor')
@@ -25,3 +27,10 @@ class OperacaoDebenture (models.Model):
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=15, decimal_places=8)  
     quantidade = models.IntegerField(u'Quantidade') 
     data = models.DateField(u'Data', blank=True, null=True)
+    
+class HistoricoValorDebenture (models.Model):
+    debenture = models.ForeignKey('Debenture')
+    valor_nominal = models.DecimalField(u'Valor nominal', max_digits=15, decimal_places=6)
+    juros = models.DecimalField(u'Juros', max_digits=15, decimal_places=6)
+    premio = models.DecimalField(u'Prêmio', max_digits=15, decimal_places=6)
+    data = models.DateField(u'Data')
