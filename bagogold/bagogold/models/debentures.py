@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from decimal import Decimal
 from django.db import models
 
 class Debenture (models.Model):
@@ -7,8 +8,7 @@ class Debenture (models.Model):
     1 = Prefixado, 2 = IPCA, 3 = DI
     """
     tipo_indexacao = models.PositiveSmallIntegerField(u'Tipo de indexação')
-    porcentagem = models.DecimalField(u'Porcentagem sobre indexação', decimal_places=3, max_digits=6)
-    juros_adicional = models.DecimalField(u'Juros adicional', decimal_places=3, max_digits=6)
+    porcentagem = models.DecimalField(u'Porcentagem sobre indexação', decimal_places=3, max_digits=6, default=Decimal('100'))
     data_emissao = models.DateField(u'Data de emissão')
     valor_emissao = models.DecimalField(u'Valor nominal na emissão', max_digits=15, decimal_places=8)
     data_inicio_rendimento = models.DateField(u'Data de início do rendimento')
@@ -22,6 +22,40 @@ class Debenture (models.Model):
     
     def __unicode__(self):
         return self.nome
+    
+class AmortizacaoDebenture (models.Model):
+    tipos_amortizacao = ((1, 'Percentual fixo sobre o valor nominal atualizado em períodos não uniformes'),
+                         (2, 'Percentual fixo sobre o valor nominal atualizado em períodos uniformes'),
+                         (3, 'Percentual fixo sobre o valor nominal de emissão em períodos não uniformes'),
+                         (4, 'Percentual fixo sobre o valor nominal de emissão em períodos uniformes'),
+                         (5, 'Percentual variável sobre o valor nominal atualizado em períodos não uniformes'),
+                         (6, 'Percentual variável sobre o valor nominal atualizado em períodos uniformes'),
+                         (7, 'Percentual variável sobre o valor nominal de emissão em períodos não uniformes'),
+                         (8, 'Percentual variável sobre o valor nominal de emissão em períodos uniformes'),)
+    
+    debenture = models.OneToOneField('Debenture', on_delete=models.CASCADE, primary_key=True)
+    taxa = models.DecimalField(u'Taxa', max_digits=7, decimal_places=4)
+    periodo = models.IntegerField(u'Período')
+    unidade_periodo = models.CharField(u'Unidade do período', max_length=10)
+    carencia = models.DateField(u'Carência')
+    tipo = models.SmallIntegerField(u'Tipo de amortização')
+    data = models.DateField(u'Data')
+    
+class JurosDebenture (models.Model):
+    debenture = models.OneToOneField('Debenture', on_delete=models.CASCADE, primary_key=True)
+    taxa = models.DecimalField(u'Taxa', max_digits=7, decimal_places=4)
+    periodo = models.IntegerField(u'Período')
+    unidade_periodo = models.CharField(u'Unidade do período', max_length=10)
+    carencia = models.DateField(u'Carência')
+    data = models.DateField(u'Data')
+    
+class PremioDebenture (models.Model):
+    debenture = models.OneToOneField('Debenture', on_delete=models.CASCADE, primary_key=True)
+    taxa = models.DecimalField(u'Taxa', max_digits=7, decimal_places=4)
+    periodo = models.IntegerField(u'Período')
+    unidade_periodo = models.CharField(u'Unidade do período', max_length=10)
+    carencia = models.DateField(u'Carência')
+    data = models.DateField(u'Data')
     
 class OperacaoDebenture (models.Model):
     debenture = models.ForeignKey('Debenture')
