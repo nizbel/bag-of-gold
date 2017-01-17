@@ -17,7 +17,7 @@ class Debenture (models.Model):
     incentivada = models.BooleanField(u'É incentivada?')
     
     class Meta:
-        unique_together=('nome', 'investidor')
+        unique_together=('codigo', )
     
     def __unicode__(self):
         return self.nome
@@ -27,6 +27,7 @@ class OperacaoDebenture (models.Model):
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=15, decimal_places=8)  
     quantidade = models.IntegerField(u'Quantidade') 
     data = models.DateField(u'Data', blank=True, null=True)
+    taxa = models.DecimalField(u'Taxa', max_digits=11, decimal_places=2)
     
 class HistoricoValorDebenture (models.Model):
     debenture = models.ForeignKey('Debenture')
