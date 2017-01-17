@@ -10,7 +10,7 @@ class Debenture (models.Model):
     indice = models.PositiveSmallIntegerField(u'Índice')
     porcentagem = models.DecimalField(u'Porcentagem sobre índice', decimal_places=3, max_digits=6, default=Decimal('100'))
     data_emissao = models.DateField(u'Data de emissão')
-    valor_emissao = models.DecimalField(u'Valor nominal na emissão', max_digits=15, decimal_places=8)
+    valor_emissao = models.DecimalField(u'Valor nominal na emissão', max_digits=17, decimal_places=8)
     data_inicio_rendimento = models.DateField(u'Data de início do rendimento')
     data_vencimento = models.DateField(u'Data de vencimento', null=True, blank=True)
     data_fim = models.DateField(u'Data de fim', null=True, blank=True)
@@ -24,14 +24,15 @@ class Debenture (models.Model):
         return self.nome
     
 class AmortizacaoDebenture (models.Model):
-    TIPOS_AMORTIZACAO = ((1, 'Percentual fixo sobre o valor nominal atualizado em períodos não uniformes'),
-                         (2, 'Percentual fixo sobre o valor nominal atualizado em períodos uniformes'),
-                         (3, 'Percentual fixo sobre o valor nominal de emissão em períodos não uniformes'),
-                         (4, 'Percentual fixo sobre o valor nominal de emissão em períodos uniformes'),
-                         (5, 'Percentual variável sobre o valor nominal atualizado em períodos não uniformes'),
-                         (6, 'Percentual variável sobre o valor nominal atualizado em períodos uniformes'),
-                         (7, 'Percentual variável sobre o valor nominal de emissão em períodos não uniformes'),
-                         (8, 'Percentual variável sobre o valor nominal de emissão em períodos uniformes'),)
+    TIPOS_AMORTIZACAO = ((0, u'Indefinido'),
+                         (1, u'Percentual fixo sobre o valor nominal atualizado em períodos não uniformes'),
+                         (2, u'Percentual fixo sobre o valor nominal atualizado em períodos uniformes'),
+                         (3, u'Percentual fixo sobre o valor nominal de emissão em períodos não uniformes'),
+                         (4, u'Percentual fixo sobre o valor nominal de emissão em períodos uniformes'),
+                         (5, u'Percentual variável sobre o valor nominal atualizado em períodos não uniformes'),
+                         (6, u'Percentual variável sobre o valor nominal atualizado em períodos uniformes'),
+                         (7, u'Percentual variável sobre o valor nominal de emissão em períodos não uniformes'),
+                         (8, u'Percentual variável sobre o valor nominal de emissão em períodos uniformes'),)
     
     debenture = models.OneToOneField('Debenture', on_delete=models.CASCADE, primary_key=True)
     taxa = models.DecimalField(u'Taxa', max_digits=7, decimal_places=4)
