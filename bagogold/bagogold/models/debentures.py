@@ -15,6 +15,7 @@ class Debenture (models.Model):
     data_vencimento = models.DateField(u'Data de vencimento', null=True, blank=True)
     data_fim = models.DateField(u'Data de fim', null=True, blank=True)
     incentivada = models.BooleanField(u'É incentivada?')
+    padrao_snd = models.BooleanField(u'É padrão SND?')
     
     class Meta:
         unique_together=('codigo', )

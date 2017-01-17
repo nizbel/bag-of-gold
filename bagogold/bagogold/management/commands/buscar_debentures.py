@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.models.debentures import Debenture
 from decimal import Decimal
 from django.core.management.base import BaseCommand
 from urllib2 import Request, urlopen, HTTPError, URLError
@@ -8,7 +9,7 @@ import re
 
 
 class Command(BaseCommand):
-    help = 'Busca as Debêntures atualmente válidos'
+    help = 'Busca as Debêntures'
 
     def handle(self, *args, **options):
         url_debentures = 'http://www.debentures.com.br/exploreosnd/consultaadados/emissoesdedebentures/caracteristicas_r.asp?tip_deb=publicas&op_exc=Nada'
@@ -16,9 +17,8 @@ class Command(BaseCommand):
         codigos = buscar_lista_debentures(url_debentures)
 #         codigos = ['AARJ11']
         for codigo in codigos:
-            print codigo
-#             buscar_info_debenture(codigo)
-            buscar_historico_debenture(codigo)
+#             print codigo
+            buscar_info_debenture(codigo)
 
 def buscar_lista_debentures(url_debentures):
     req = Request(url_debentures)
@@ -59,13 +59,37 @@ def buscar_info_debenture(codigo):
 #                     print indice, campo
             if codigo in linha:
                 campos = [campo.strip() for campo in linha.split('\t')]
-                situacao = campos[5]
-                data_emissao = datetime.datetime.strptime(campos[11] , '%d/%m/%Y').date()
-                data_vencimento = None if campos[12] == 'Indeterminado' else datetime.datetime.strptime(campos[12] , '%d/%m/%Y').date()
-                data_inicio_rentabilidade = campos[15]
-                data_saida = campos[14]
+                
+                if campos[43].strip() == u'Não Padrão - SND':
+                    pass
+                elif campos[43].strip() == u'Padrão - SND':
+                    pass
+                else:
+                    print codigo, campos[43]
+                    
+                
+                if 2 == 2:
+                    return
+                
+                data_emissao = datetime.datetime.strptime(campos[11], '%d/%m/%Y').date()
+                data_vencimento = None if campos[12] == u'Indeterminado' else datetime.datetime.strptime(campos[12] , '%d/%m/%Y').date()
+                data_inicio_rentabilidade = datetime.datetime.strptime(campos[15], '%d/%m/%Y').date()
                 valor_nominal_emissao = campos[37]
                 indice = campos[41]
                 percentual_indice = campos[47]
+                situacao = campos[5]
+                data_saida = campos[14]
                 incentivada = campos[88]
-#                 print ','.join(campos[41:71])
+                
+                if Debenture.objects.filter(codigo=codigo).exists():
+                    debenture = Debenture.objects.get(codigo=codigo)
+                else:
+                    debenture = Debenture(codigo=codigo)
+                    
+                    debenture.data_emissao = data_emissao
+                    debenture.valor_emissao = valor_nominal_emissao.replace('.', '').replace(',', '.')
+                    debenture.data_vencimento = data_vencimento
+                    debenture.incentivada = False if 'N' in incentivada.upper() else True
+
+                    if situacao == 'Excluído':
+                        debenture.data_fim = datetime.datetime.strptime(data_saida, '%d/%m/%Y').date()

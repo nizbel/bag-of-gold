@@ -20,11 +20,12 @@
                 <thead>
                     <tr>
                         <th>Código</th>
+                        <th>Padrão SND</th>
                         <th>Incentivada</th>
                         <th>Juros</th>
                         <th>Amortização</th>
                         <th>Emissão</th>
-                        <th class="tooltips" data-placement="top" data-original-title="Editar">VNU na emissão</th>
+                        <th class="tooltips" data-placement="top" data-original-title="Valor Nominal Unitário">VNU na emissão</th>
                         <th>Vencimento</th>
                         <th>Fim</th>
                     </tr>
@@ -33,6 +34,7 @@
                 {% for item in debentures %}
                 <tr>
                     <td><a href="{% url 'detalhar_debenture' item.id %}">{{item.codigo}}</a></td>
+                    <td></td>
                     <td>{{item.tipo}}</td>
                     <td>{{item.str_tipo_rendimento}}</td>
                     <td>{{item.carencia_atual}} dia(s)</td>
