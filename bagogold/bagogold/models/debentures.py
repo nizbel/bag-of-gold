@@ -5,10 +5,10 @@ from django.db import models
 class Debenture (models.Model):
     codigo = models.CharField(u'Código', max_length=10)
     """
-    1 = Prefixado, 2 = IPCA, 3 = DI
+    1 = Prefixado, 2 = IPCA, 3 = DI, 4 = IGP-M, 5 = SELIC
     """
-    tipo_indexacao = models.PositiveSmallIntegerField(u'Tipo de indexação')
-    porcentagem = models.DecimalField(u'Porcentagem sobre indexação', decimal_places=3, max_digits=6, default=Decimal('100'))
+    indice = models.PositiveSmallIntegerField(u'Índice')
+    porcentagem = models.DecimalField(u'Porcentagem sobre índice', decimal_places=3, max_digits=6, default=Decimal('100'))
     data_emissao = models.DateField(u'Data de emissão')
     valor_emissao = models.DecimalField(u'Valor nominal na emissão', max_digits=15, decimal_places=8)
     data_inicio_rendimento = models.DateField(u'Data de início do rendimento')
@@ -24,7 +24,7 @@ class Debenture (models.Model):
         return self.nome
     
 class AmortizacaoDebenture (models.Model):
-    tipos_amortizacao = ((1, 'Percentual fixo sobre o valor nominal atualizado em períodos não uniformes'),
+    TIPOS_AMORTIZACAO = ((1, 'Percentual fixo sobre o valor nominal atualizado em períodos não uniformes'),
                          (2, 'Percentual fixo sobre o valor nominal atualizado em períodos uniformes'),
                          (3, 'Percentual fixo sobre o valor nominal de emissão em períodos não uniformes'),
                          (4, 'Percentual fixo sobre o valor nominal de emissão em períodos uniformes'),
@@ -38,7 +38,7 @@ class AmortizacaoDebenture (models.Model):
     periodo = models.IntegerField(u'Período')
     unidade_periodo = models.CharField(u'Unidade do período', max_length=10)
     carencia = models.DateField(u'Carência')
-    tipo = models.SmallIntegerField(u'Tipo de amortização')
+    tipo = models.PositiveSmallIntegerField(u'Tipo de amortização')
     data = models.DateField(u'Data')
     
 class JurosDebenture (models.Model):
