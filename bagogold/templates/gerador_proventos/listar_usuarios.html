@@ -30,7 +30,9 @@
 				<td><a href="{% url "detalhar_pendencias_usuario" usuario.id %}">{{usuario.investidor}}</a></td>
 				<td>{{usuario.pendencias_alocadas}}</td>
                 <td>{{usuario.leituras}}</td>
+                <td>{{usuario.taxa_leitura}}/dia</td>
                 <td>{{usuario.validacoes}}</td>
+                <td>{{usuario.taxa_validacao}}/dia</td>
 			</tr>
 		{% endfor %}	
 		</tbody>
