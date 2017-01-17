@@ -11,6 +11,7 @@ import time
 # A thread 'Principal' indica se ainda está rodando a thread principal
 threads_rodando = {'Principal': 1}
 debentures_para_processar = list()
+tipos_remuneracao = {}
 
 class ProcessaDebentureThread(Thread):
     def run(self):
@@ -22,7 +23,11 @@ class ProcessaDebentureThread(Thread):
                     codigo = debenture.keys()[0]
                     campos = debenture[codigo]
                     
-                    print codigo, campos[59]
+                    print codigo, campos[41]
+                    if campos[41] not in tipos_remuneracao:
+                        tipos_remuneracao[campos[41]] = 1
+                    else:
+                        tipos_remuneracao[campos[41]] += 1
                     
                     padrao_snd = campos[43]
                     # Por enquanto, apenas tratar os que forem padronizados
@@ -30,9 +35,28 @@ class ProcessaDebentureThread(Thread):
                         try:
                             data_emissao = datetime.datetime.strptime(campos[11], '%d/%m/%Y').date()
                             data_vencimento = None if campos[12] == u'Indeterminado' else datetime.datetime.strptime(campos[12] , '%d/%m/%Y').date()
-                            data_inicio_rentabilidade = datetime.datetime.strptime(campos[15], '%d/%m/%Y').date()
+                            data_inicio_rendimento = datetime.datetime.strptime(campos[15], '%d/%m/%Y').date()
                             valor_nominal_emissao = campos[37]
                             indice = campos[41]
+                            if indice in ['SELIC', 'PRÉ', 'IGP-M', 'IPCA', 'DI']:
+                                # Buscar juros, amortização e prêmio
+                                amortizacao_taxa = campos[52]
+                                amortizacao_periodo = campos[53]
+                                amortizacao_unidade = campos[54]
+                                amortizacao_carencia = campos[55]
+                                amortizacao_tipo = campos[57]
+                                
+                                juros_taxa = campos[58]
+                                juros_periodo = campos[60]
+                                juros_unidade = campos[61]
+                                juros_carencia = campos[62]
+                                
+                                premio_taxa = campos[65]
+                                premio_periodo = campos[67]
+                                premio_unidade = campos[68]
+                                premio_carencia = campos[69]
+                            else:
+                                raise ValueError(u'Tipo não previsto')
                             percentual_indice = campos[47]
                             situacao = campos[5]
                             data_saida = campos[14]
@@ -45,15 +69,20 @@ class ProcessaDebentureThread(Thread):
                                 
                                 debenture.data_emissao = data_emissao
                                 debenture.valor_emissao = valor_nominal_emissao.replace('.', '').replace(',', '.')
+                                debenture.data_inicio_rendimento = data_inicio_rendimento
                                 debenture.data_vencimento = data_vencimento
                                 debenture.incentivada = False if 'N' in incentivada.upper() else True
+                                debenture.padrao_snd = True
+                                debenture.indice = indice
+                                debenture.porcentagem = percentual_indice
             
                                 if situacao == u'Excluído' and data_saida != '':
                                     debenture.data_fim = datetime.datetime.strptime(data_saida, '%d/%m/%Y').date()
-                        except:
-                            print codigo, 'não possui dados suficiente'
+                        except Exception as e:
+                            print codigo, e
                 
                 time.sleep(1)
+            print tipos_remuneracao
         except Exception as e:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
             message = template.format(type(e).__name__, e.args)
