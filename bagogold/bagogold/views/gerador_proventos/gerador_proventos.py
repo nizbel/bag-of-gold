@@ -341,28 +341,33 @@ def listar_pendencias(request):
     
     # Valor padrão para o filtro de quantidade
     filtros = Object()
-    filtros.filtro_qtd = 200
-    filtros.filtro_tipo_leitura = True if not request.method == 'POST' else 'filtro_tipo_leitura' in request.POST
-    filtros.filtro_tipo_validacao = True if not request.method == 'POST' else 'filtro_tipo_validacao' in request.POST
-    filtros.filtro_reservaveis = True if not request.method == 'POST' else 'filtro_reservaveis' in request.POST
     # Prepara a busca
     query_pendencias = PendenciaDocumentoProvento.objects.all() 
     # Verifica a quantidade de pendências escolhida para filtrar
     if request.method == 'POST':
-        print request.POST, request.POST.get("filtro_tipo_leitura")
-        # Filtrar por quantidade
-        if request.POST.get("filtro_qtd"):
+        # Preparar filtro por quantidade
+        if request.POST.get("filtro_qtd") and request.POST.get('filtro_qtd').isdigit():
             filtros.filtro_qtd = int(request.POST['filtro_qtd'])
-        # Filtrar por tipo de pendencia
-        if not request.POST.get("filtro_tipo_leitura"):
-            query_pendencias = query_pendencias.exclude(tipo='L')
-        if not request.POST.get("filtro_tipo_validacao"):
-            query_pendencias = query_pendencias.exclude(tipo='V')
-        # Filtrar por pendencias reserváveis
-        if request.POST.get("filtro_reservaveis"):
-            query_pendencias = query_pendencias.exclude(tipo='V', documento__investidorleituradocumento__investidor=investidor)
-            query_pendencias = query_pendencias.filter(investidorresponsavelpendencia=None)
+        # Preparar filtro por tipo de pendência
+        filtros.filtro_tipo_leitura = 'filtro_tipo_leitura' in request.POST
+        filtros.filtro_tipo_validacao = 'filtro_tipo_validacao' in request.POST
+        # Preparar filtro por pendências reserváveis
+        filtros.filtro_reservaveis = 'filtro_reservaveis' in request.POST
+    else:
+        filtros.filtro_qtd = 200
+        filtros.filtro_tipo_leitura = True
+        filtros.filtro_tipo_validacao = True
+        filtros.filtro_reservaveis = True
         
+    # Filtrar
+    if not filtros.filtro_tipo_leitura:
+        query_pendencias = query_pendencias.exclude(tipo='L')
+    if not filtros.filtro_tipo_validacao:
+        query_pendencias = query_pendencias.exclude(tipo='V')
+    if filtros.filtro_reservaveis:
+        query_pendencias = query_pendencias.exclude(tipo='V', documento__investidorleituradocumento__investidor=investidor)
+        query_pendencias = query_pendencias.filter(investidorresponsavelpendencia=None)
+    
     if PendenciaDocumentoProvento.objects.all().count() <= filtros.filtro_qtd:
         pendencias = query_pendencias
     else:

@@ -21,7 +21,9 @@
 				<th>Usuário</th>
 				<th>Pendências alocadas</th>
 				<th>Documentos lidos</th>
+                <th>Taxa de leitura</th>
 				<th>Documentos validados</th>
+                <th>Taxa de validação</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -30,7 +32,9 @@
 				<td><a href="{% url "detalhar_pendencias_usuario" usuario.id %}">{{usuario.investidor}}</a></td>
 				<td>{{usuario.pendencias_alocadas}}</td>
                 <td>{{usuario.leituras}}</td>
+                <td>{{usuario.taxa_leitura|floatformat:'2'}}/dia</td>
                 <td>{{usuario.validacoes}}</td>
+                <td>{{usuario.taxa_validacao|floatformat:'2'}}/dia</td>
 			</tr>
 		{% endfor %}	
 		</tbody>
