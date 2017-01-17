@@ -34,7 +34,7 @@ class ProcessaDebentureThread(Thread):
                             data_inicio_rendimento = datetime.datetime.strptime(campos[15], '%d/%m/%Y').date()
                             valor_nominal_emissao = campos[37]
                             indice = campos[41]
-                            if indice in [u'SELIC', u'PRÉ', u'IGP-M', u'IPCA', u'DI']:
+                            if indice in [u'SELIC', u'PRÉ', u'IGP-M', u'IPCA', u'DI', u'PREFIXADO']:
                                 # Buscar juros, amortização e prêmio
                                 amortizacao_taxa = Decimal(re.sub('[^\d,\.]', '', campos[52]).replace(',', '.') or '0')
                                 amortizacao_periodo = re.sub('[^\d]', '', campos[53]) or '0'
@@ -56,7 +56,7 @@ class ProcessaDebentureThread(Thread):
                                 premio_unidade = campos[68]
                                 premio_carencia = None if re.sub('[^\d/]', '', campos[69]) == '' else datetime.datetime.strptime(re.sub('[^\d/]', '', campos[69]), '%d/%m/%Y').date()
                             else:
-                                raise ValueError('Tipo não previsto: %s' % (campos[41]))
+                                raise ValueError(u'Tipo não previsto: %s' % (campos[41]))
                             percentual_indice = Decimal(re.sub('[^\d,\.]', '', campos[47]).replace(',', '.') or '100')
                             situacao = campos[5]
                             data_saida = campos[14]
@@ -95,7 +95,7 @@ class ProcessaDebentureThread(Thread):
                                                                        periodo=premio_periodo, unidade_periodo=premio_unidade, carencia=premio_carencia)
                                     premio.save()
                         except Exception as e:
-                            print codigo, unicode(e.args)
+                            print codigo, e.args
                 
                 time.sleep(1)
         except Exception as e:
