@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from bagogold.bagogold.models.debentures import OperacaoDebenture, Debenture
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -43,6 +44,7 @@ def inserir_operacao_debenture(request):
 
 def listar_debentures(request):
     investidor = request.user.investidor
+    
     debentures = Debenture.objects.all()
     
     return TemplateResponse(request, 'debentures/listar_debentures.html', {'debentures': debentures})
