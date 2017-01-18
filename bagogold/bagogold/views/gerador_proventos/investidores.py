@@ -60,17 +60,17 @@ def listar_usuarios(request):
         if usuario.leituras == 0:
             usuario.taxa_leitura = 0
         else:
-            data_leituras = list(InvestidorLeituraDocumento.objects.filter(investidor=usuario.investidor) 
-                                 .order_by('data_leitura').values_list('data_leitura', flat=True))
-            usuario.taxa_leitura = Decimal(usuario.leituras) / max((data_leituras[-1] - data_leituras[0]).days, 1)
+            data_leituras = InvestidorLeituraDocumento.objects.filter(investidor=usuario.investidor) \
+                                 .order_by('data_leitura').values_list('data_leitura', flat=True).distinct().count()
+            usuario.taxa_leitura = Decimal(usuario.leituras) / max(data_leituras, 1)
         # Validações
         usuario.validacoes = InvestidorValidacaoDocumento.objects.filter(investidor=usuario.investidor).count()
         if usuario.validacoes == 0:
             usuario.taxa_validacao = 0
         else:
-            data_validacoes = list(InvestidorValidacaoDocumento.objects.filter(investidor=usuario.investidor) 
-                                   .order_by('data_validacao').values_list('data_validacao', flat=True))
-            usuario.taxa_validacao = Decimal(usuario.validacoes) / max((data_validacoes[-1] - data_validacoes[0]).days, 1)
+            data_validacoes = InvestidorValidacaoDocumento.objects.filter(investidor=usuario.investidor) \
+                                   .order_by('data_validacao').values_list('data_validacao', flat=True).distinct().count()
+            usuario.taxa_validacao = Decimal(usuario.validacoes) / max(data_validacoes, 1)
     
     return TemplateResponse(request, 'gerador_proventos/listar_usuarios.html', {'usuarios': usuarios})
 
