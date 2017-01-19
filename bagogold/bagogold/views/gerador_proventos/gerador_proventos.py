@@ -312,15 +312,10 @@ def listar_documentos(request):
     empresa_atual = Empresa.objects.get(id=empresa_id)
     
     empresas = Empresa.objects.all().order_by('nome')
-#     empresas = map(str, empresas)
-#     empresas = '["' + '","'.join(empresas) + '"]'
+
     documentos = DocumentoProventoBovespa.objects.filter(empresa__id=empresa_id).order_by('data_referencia')
     
     for documento in documentos:
-        documento.nome = documento.documento.name.split('/')[-1]
-        
-        documento.pendente = documento.pendente()
-        
         if documento.tipo == 'A':
             documento.ha_proventos_vinculados = documento.proventoacaodocumento_set.count() > 0
             
