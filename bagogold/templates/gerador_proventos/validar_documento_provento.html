@@ -2,7 +2,9 @@
 {% load staticfiles %}
 
 {% block extra_head %}
-
+<!-- PDF.js -->
+<script src={% static "assets/global/plugins/pdfjs/build/pdf.js" %}></script>
+<script src={% static "assets/global/plugins/pdfjs/build/pdf.worker.js" %}></script>
 {% endblock %}
 
 {% block content %}
@@ -56,6 +58,27 @@
                             </div>
                         </div>
                         <a href="{% url 'baixar_documento_provento' pendencia.documento.id %}" class="btn btn-warning">Download</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="portlet box yellow-crusta">
+                    <div class="portlet-title">
+                        <div class="caption">
+                            <i class="icon-magnifier"></i>Visualização prévia (Apenas 1ª página)
+                        </div>
+                        <div class="tools">
+                            <a href="javascript:;" class="collapse"></a>
+                        </div>
+                    </div>
+                    <div class="portlet-body">
+                        <div class="row">
+                            <div class="col-md-12 text-center">
+                                <canvas id="canvas"></canvas>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -304,6 +327,26 @@ $( document ).ready(function() {
     		}
 	    }
 	});
+	
+	PDFJS.getDocument('{% url "baixar_documento_provento" pendencia.documento.id %}').then(function(pdf) {
+	      // you can now use *pdf* here
+	      pdf.getPage(1).then(function(page) {
+	          // you can now use *page* here
+	          var scale = 1.75;
+	          var viewport = page.getViewport(scale);
+
+	          var canvas = document.getElementById('canvas');
+	          var context = canvas.getContext('2d');
+	          canvas.height = viewport.height;
+	          canvas.width = viewport.width;
+
+	          var renderContext = {
+	            canvasContext: context,
+	            viewport: viewport
+	          };
+	          page.render(renderContext);
+	       });
+	    });
 });
 </script>
     
