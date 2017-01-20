@@ -266,7 +266,14 @@ def ler_documento_provento(request, id_pendencia):
                 # Readiciona proventos para o caso de não haver logrado sucesso na leitura
                 for elemento in list(reversed(info_proventos_a_apagar)):
                     elemento.save()
-                        
+                
+                # Testando erros
+                print dir(formset_provento.errors)
+                print formset_provento.errors, formset_provento.non_form_errors()
+                for form in formset_provento:
+                    for erro in form.non_field_errors():
+                        messages.error(request, erro)
+                
             # Radio de documento estava em Excluir
             elif request.POST['radioDocumento'] == '0':
                 # Colocar investidor como responsável pela leitura do documento
