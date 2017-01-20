@@ -60,16 +60,16 @@ def listar_usuarios(request):
         if usuario.leituras == 0:
             usuario.taxa_leitura = 0
         else:
-            data_leituras = InvestidorLeituraDocumento.objects.filter(investidor=usuario.investidor) \
-                                 .order_by('data_leitura').values_list('data_leitura', flat=True).distinct().count()
+            data_leituras = len(list(set([data_hora.date() for data_hora in InvestidorLeituraDocumento.objects.filter(investidor=usuario.investidor) \
+                                 .order_by('data_leitura').values_list('data_leitura', flat=True)])))
             usuario.taxa_leitura = Decimal(usuario.leituras) / max(data_leituras, 1)
         # Validações
         usuario.validacoes = InvestidorValidacaoDocumento.objects.filter(investidor=usuario.investidor).count()
         if usuario.validacoes == 0:
             usuario.taxa_validacao = 0
         else:
-            data_validacoes = InvestidorValidacaoDocumento.objects.filter(investidor=usuario.investidor) \
-                                   .order_by('data_validacao').values_list('data_validacao', flat=True).distinct().count()
+            data_validacoes = len(list(set([data_hora.date() for data_hora in InvestidorValidacaoDocumento.objects.filter(investidor=usuario.investidor) \
+                                   .order_by('data_validacao').values_list('data_validacao', flat=True)])))
             usuario.taxa_validacao = Decimal(usuario.validacoes) / max(data_validacoes, 1)
     
     return TemplateResponse(request, 'gerador_proventos/listar_usuarios.html', {'usuarios': usuarios})
