@@ -5,6 +5,10 @@
 <link href={% static "assets/global/plugins/bootstrap-select/css/bootstrap-select.min.css" %} rel="stylesheet" type="text/css" />
 <link href={% static "assets/global/plugins/bootstrap-datepicker/css/bootstrap-datepicker3.min.css" %} rel="stylesheet" type="text/css" />
 <link href={% static "assets/global/plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css" %} rel="stylesheet" type="text/css" />
+
+<!-- PDF.js -->
+<script src={% static "assets/global/plugins/pdfjs/build/pdf.js" %}></script>
+<script src={% static "assets/global/plugins/pdfjs/build/pdf.worker.js" %}></script>
 {% endblock %}
 
 {% block content %}
@@ -56,6 +60,27 @@
                 </div>
             </div>
         </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="portlet box yellow-crusta">
+                    <div class="portlet-title">
+                        <div class="caption">
+                            <i class="icon-magnifier"></i>Visualização prévia
+                        </div>
+                        <div class="tools">
+                            <a href="javascript:;" class="collapse"></a>
+                        </div>
+                    </div>
+                    <div class="portlet-body">
+                        <div class="row">
+                            <div class="col-md-12 text-center">
+                                <canvas id="canvas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         {% if pendencia.responsavel.id == request.user.investidor.id %}
             {% if recusa %}
             <div class="row">
@@ -64,6 +89,9 @@
                         <div class="portlet-title">
                             <div class="caption">
                                 <i class="fa fa-warning"></i>Recusado em {{ recusa.data_recusa|date:'d/m/Y' }}
+                            </div>
+                            <div class="tools">
+                                <a href="javascript:;" class="collapse"></a>
                             </div>
                         </div>
                         <div class="portlet-body">
@@ -152,8 +180,8 @@
                                                 <div class="form-group col-md-4 {% if form_provento.data_ex.errors %} has-error {% endif %}">
                                                     <label class="control-label col-md-4" style="text-align: left;"> Data EX: </label>
                                                     <div class="col-md-8">
-                                                        <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_provento-{{forloop.counter0}}-data_ex" name="provento-{{forloop.counter0}}-data_ex" data-date="{{form_provento.data_ex.value|date:'d/m/Y'|default:''}}" data-date-viewmode="years">
-                                                            <input type="text" class="form-control" name="provento-{{forloop.counter0}}-data_ex" value="{{form_provento.data_ex.value|date:'d/m/Y'}}">
+                                                        <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_provento-{{forloop.counter0}}-data_ex" name="provento-{{forloop.counter0}}-data_ex" data-date="{{form_provento.data_ex.value|default:''}}" data-date-viewmode="years">
+                                                            <input type="text" class="form-control" name="provento-{{forloop.counter0}}-data_ex" value="{{form_provento.data_ex.value|default:''}}">
                                                             <span class="input-group-btn">
                                                                 <button class="btn default" type="button">
                                                                     <i class="fa fa-calendar"></i>
@@ -166,8 +194,8 @@
                                                 <div class="form-group col-md-4 {% if form.data_pagamento.errors %} has-error {% endif %}">
                                                     <label class="control-label col-md-4" style="text-align: left;"> Data de pagamento: </label>
                                                     <div class="col-md-8">
-                                                        <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_provento-{{forloop.counter0}}-data_pagamento" name="provento-{{forloop.counter0}}-data_pagamento" data-date="{{form.data_pagamento.value|date:'d/m/Y'|default:''}}" data-date-viewmode="years">
-                                                            <input type="text" class="form-control" name="provento-{{forloop.counter0}}-data_pagamento" value="{{form_provento.data_pagamento.value|date:'d/m/Y'}}">
+                                                        <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_provento-{{forloop.counter0}}-data_pagamento" name="provento-{{forloop.counter0}}-data_pagamento" data-date="{{form_provento.data_pagamento.value|default:''}}" data-date-viewmode="years">
+                                                            <input type="text" class="form-control" name="provento-{{forloop.counter0}}-data_pagamento" value="{{form_provento.data_pagamento.value|default:''}}">
                                                             <span class="input-group-btn">
                                                                 <button class="btn default" type="button">
                                                                     <i class="fa fa-calendar"></i>
@@ -326,6 +354,26 @@ $( document ).ready(function() {
 		} else {
             $('#provento_em_acao-' + id_provento).hide();
 		}
+	});
+	
+	PDFJS.getDocument('{% url "baixar_documento_provento" pendencia.documento.id %}').then(function(pdf) {
+	  // you can now use *pdf* here
+	  pdf.getPage(1).then(function(page) {
+    	  // you can now use *page* here
+		  var scale = 1.75;
+		  var viewport = page.getViewport(scale);
+
+		  var canvas = document.getElementById('canvas');
+		  var context = canvas.getContext('2d');
+		  canvas.height = viewport.height;
+		  canvas.width = viewport.width;
+
+		  var renderContext = {
+		    canvasContext: context,
+		    viewport: viewport
+		  };
+		  page.render(renderContext);
+	   });
 	});
 });
 </script>
