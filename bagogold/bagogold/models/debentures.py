@@ -30,7 +30,11 @@ class Debenture (models.Model):
         return self.nome
     
     def indexacao(self):
-        return '%s do %s' % (self.porcentagem, self.indice)
+        for codigo_indice in [indice for indice in self.TIPOS_INDICE]:
+            if codigo_indice[0] == self.indice:
+                self.porcentagem = str(self.porcentagem).replace('.', ',')
+                return '%s%% do %s' % (self.porcentagem, codigo_indice[1])
+        return ''
     
 class AmortizacaoDebenture (models.Model):
     TIPOS_AMORTIZACAO = ((0, u'Indefinido'),
