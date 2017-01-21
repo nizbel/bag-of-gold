@@ -21,27 +21,31 @@
                     <tr>
                         <th>Código</th>
                         <th>Padrão SND</th>
-                        <th>Incentivada</th>
-                        <th>Juros</th>
-                        <th>Amortização</th>
+                        <th><span class="tooltips" data-placement="bottom" data-original-title="Isenta de IR?">Incentivada</span></th>
                         <th>Emissão</th>
-                        <th class="tooltips" data-placement="top" data-original-title="Valor Nominal Unitário">VNU na emissão</th>
+                        <th><span class="tooltips" data-placement="bottom" data-original-title="Valor Nominal Unitário">VNU na emissão</span></th>
                         <th>Vencimento</th>
                         <th>Fim</th>
+                        <th>Indexação</th>
+                        <th>Juros</th>
+                        <th>Amortização</th>
+                        <th>Prêmio</th>
                     </tr>
                 </thead>
                 <tbody>
                 {% for item in debentures %}
                 <tr>
                     <td><a href="{% url 'detalhar_debenture' item.id %}">{{item.codigo}}</a></td>
-                    <td></td>
-                    <td>{{item.tipo}}</td>
-                    <td>{{item.str_tipo_rendimento}}</td>
-                    <td>{{item.carencia_atual}} dia(s)</td>
-                    <td>{{item.rendimento_atual}}%</td>
-                    <td>{{item.str_tipo_rendimento}}</td>
-                    <td>{{item.carencia_atual}} dia(s)</td>
-                    <td>{{item.rendimento_atual}}%</td>
+                    <td>{{item.padrao_snd|yesno:"Sim,Não,Não"}}</td>
+                    <td>{{item.incentivada|yesno:"Sim,Não,Não"}}</td>
+                    <td>{{item.data_emissao|date:'d/m/Y'}}</td>
+                    <td>R$ {{item.valor_emissao|floatformat:"2"}}</td>
+                    <td>{{item.data_vencimento|date:'d/m/Y'|default:'Indefinido'}}</td>
+                    <td>{{item.data_fim|date:'d/m/Y'|default:'Indefinido'}}</td>
+                    <td>{{item.indexacao}}</td>
+                    <td>{{item.jurosdebenture.descricao|default:'Indefinido'}}</td>
+                    <td>{{item.amortizacaodebenture.descricao|default:'Indefinido'}}</td>
+                    <td>{{item.premiodebenture.descricao|default:'Indefinido'}}</td>
                 </tr>
                 {% endfor %}
                 </tbody>
