@@ -48,6 +48,8 @@ def listar_debentures(request):
     debentures = Debenture.objects.all()
     
     for debenture in debentures:
+        debenture.porcentagem = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(debenture.porcentagem))
+        
         if hasattr(debenture, 'jurosdebenture'):
             debenture.jurosdebenture.taxa = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(debenture.jurosdebenture.taxa))
         if hasattr(debenture, 'amortizacaodebenture'):
