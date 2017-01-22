@@ -29,11 +29,25 @@ class Debenture (models.Model):
     def __unicode__(self):
         return self.nome
     
+    def buscar_codigo_tipo_indice(self, nome_indice):
+        for indice in [indice for indice in self.TIPOS_INDICE]:
+            if indice[1] == nome_indice:
+                return indice[0]
+        return -1
+    
+    def buscar_descricao_tipo_indice(self, codigo_indice):
+        for indice in [indice for indice in self.TIPOS_INDICE]:
+            if indice[0] == codigo_indice:
+                return indice[1]
+        return ''
+    
     def indexacao(self):
-        for codigo_indice in [indice for indice in self.TIPOS_INDICE]:
-            if codigo_indice[0] == self.indice:
-                self.porcentagem = str(self.porcentagem).replace('.', ',')
-                return '%s%% do %s' % (self.porcentagem, codigo_indice[1])
+        descricao_tipo_indice = self.buscar_descricao_tipo_indice(self.indice)
+        if self.buscar_descricao_tipo_indice(self.indice) > -1:
+            if descricao_tipo_indice != '' and self.porcentagem == 0:
+                self.porcentagem = Decimal(100)
+            self.porcentagem = str(self.porcentagem).replace(',', '.')
+            return '%s%% do %s' % (self.porcentagem, descricao_tipo_indice)
         return ''
     
 class AmortizacaoDebenture (models.Model):
@@ -51,7 +65,7 @@ class AmortizacaoDebenture (models.Model):
     taxa = models.DecimalField(u'Taxa', max_digits=7, decimal_places=4)
     periodo = models.IntegerField(u'Período')
     unidade_periodo = models.CharField(u'Unidade do período', max_length=10)
-    carencia = models.DateField(u'Carência')
+    carencia = models.DateField(u'Carência', blank=True, null=True)
     tipo = models.PositiveSmallIntegerField(u'Tipo de amortização', choices=TIPOS_AMORTIZACAO)
     data = models.DateField(u'Data')
     
@@ -82,7 +96,7 @@ class JurosDebenture (models.Model):
     taxa = models.DecimalField(u'Taxa', max_digits=7, decimal_places=4)
     periodo = models.IntegerField(u'Período')
     unidade_periodo = models.CharField(u'Unidade do período', max_length=10)
-    carencia = models.DateField(u'Carência')
+    carencia = models.DateField(u'Carência', blank=True, null=True)
     data = models.DateField(u'Data')
     
     def descricao(self):
@@ -113,7 +127,7 @@ class PremioDebenture (models.Model):
     taxa = models.DecimalField(u'Taxa', max_digits=7, decimal_places=4)
     periodo = models.IntegerField(u'Período')
     unidade_periodo = models.CharField(u'Unidade do período', max_length=10)
-    carencia = models.DateField(u'Carência')
+    carencia = models.DateField(u'Carência', blank=True, null=True)
     data = models.DateField(u'Data')
     
     def descricao(self):

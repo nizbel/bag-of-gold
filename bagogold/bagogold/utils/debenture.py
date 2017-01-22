@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.models.debentures import HistoricoValorDebenture, \
+    Debenture
+from decimal import Decimal
 from urllib2 import Request, urlopen, HTTPError, URLError
 import datetime
 
@@ -17,6 +20,8 @@ def buscar_historico_debenture(codigo, data_inicio=''):
         print 'Reason: ', e.reason
     else:
         data = response.read()
+        # Carregar debenture
+        debenture = Debenture.objects.get(codigo=codigo)
 
         for linha in data.decode('latin-1').split('\n'):
 #             if u'Código do Ativo' in linha:
@@ -24,9 +29,12 @@ def buscar_historico_debenture(codigo, data_inicio=''):
 #                     print indice, campo
             if codigo in linha:
                 campos = [campo.strip() for campo in linha.split('\t')]
-                if campos[4] != '-':
-                    print campos[4], codigo, 'em', campos[0]
-    
-    # TODO ler como texto separado por \t
-    
+                data = datetime.datetime.strptime(campos[0], '%d/%m/%Y').date()
+                if not HistoricoValorDebenture.objects.filter(data=data, debenture=debenture).exists():
+                    valor_nominal = Decimal(campos[2].replace('.', '').replace(',', '.'))
+                    juros = Decimal(0) if campos[3] == '-' else Decimal(campos[3].replace('.', '').replace(',', '.'))
+                    premio = Decimal(0) if campos[4] == '-' else Decimal(campos[4].replace('.', '').replace(',', '.'))
+                    historico_debenture = HistoricoValorDebenture(data=data, debenture=debenture, valor_nominal=valor_nominal,
+                                                                  juros=juros, premio=premio)
+                    historico_debenture.save()
     
