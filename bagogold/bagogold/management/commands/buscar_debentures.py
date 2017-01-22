@@ -18,31 +18,38 @@ class ProcessaDebentureThread(Thread):
         try:
             while len(threads_rodando) > 0 or len(debentures_para_processar) > 0:
                 while len(debentures_para_processar) > 0:
-                    debenture = debentures_para_processar.pop(0)
+                    dados_debenture = debentures_para_processar.pop(0)
                     # Pegar a chave do primeiro registro pois é sempre enviado um dicionário de registro único
-                    codigo = debenture.keys()[0]
-                    campos = debenture[codigo]
+                    codigo = dados_debenture.keys()[0]
+                    campos = dados_debenture[codigo]
                     
+                    # É padrão SND?
                     padrao_snd = campos[43]
-                    # Por enquanto, apenas tratar os que forem padronizados
-                    if padrao_snd == u'Padrão - SND': 
-                        print codigo
-                        try:
+                    try:
+                        if padrao_snd == u'Padrão - SND': 
+                            # Data de emissão
                             data_emissao = datetime.datetime.strptime(campos[11], '%d/%m/%Y').date()
+                            # Data de vencimento
                             data_vencimento = None if campos[12] == u'Indeterminado' else datetime.datetime.strptime(campos[12] , '%d/%m/%Y').date()
+                            # Data de início de rendimento
                             data_inicio_rendimento = datetime.datetime.strptime(campos[15], '%d/%m/%Y').date()
+                            # VNU de emissão
                             valor_nominal_emissao = campos[37]
+                            # Índice
                             indice = campos[41]
                             if indice in [u'SELIC', u'PRÉ', u'IGP-M', u'IPCA', u'DI', u'PREFIXADO']:
+                                # Alterar valor do índice para ser aceito nos tipos de indexação
+                                if indice in [u'PRÉ',u'PREFIXADO']:
+                                    indice = u'Prefixado'
                                 # Buscar juros, amortização e prêmio
                                 amortizacao_taxa = Decimal(re.sub('[^\d,\.]', '', campos[52]).replace(',', '.') or '0')
                                 amortizacao_periodo = re.sub('[^\d]', '', campos[53]) or '0'
                                 amortizacao_unidade = campos[54]
                                 amortizacao_carencia = None if re.sub('[^\d/]', '', campos[55]) == '' else datetime.datetime.strptime(re.sub('[^\d/]', '', campos[55]), '%d/%m/%Y').date()
                                 amortizacao_tipo = 0
-                                for indice, tipo in [tipo for tipo in AmortizacaoDebenture.TIPOS_AMORTIZACAO]:
+                                for indice_amortizacao, tipo in [tipo for tipo in AmortizacaoDebenture.TIPOS_AMORTIZACAO]:
                                     if campos[57] == tipo:
-                                        amortizacao_tipo = indice
+                                        amortizacao_tipo = indice_amortizacao
                                         break
                                 
                                 juros_taxa = Decimal(re.sub('[^\d,\.]', '', campos[58]).replace(',', '.') or '0')
@@ -56,9 +63,13 @@ class ProcessaDebentureThread(Thread):
                                 premio_carencia = None if re.sub('[^\d/]', '', campos[69]) == '' else datetime.datetime.strptime(re.sub('[^\d/]', '', campos[69]), '%d/%m/%Y').date()
                             else:
                                 raise ValueError(u'Tipo não previsto: %s' % (campos[41]))
+                            # Percentual multiplicador do índice
                             percentual_indice = Decimal(re.sub('[^\d,\.]', '', campos[47]).replace(',', '.') or '100')
+                            # Situação
                             situacao = campos[5]
-                            data_saida = campos[14]
+                            # Data último VNU
+                            data_saida = campos[40]
+                            # É debenture incentivada?
                             incentivada = campos[88]
                       
                             if Debenture.objects.filter(codigo=codigo).exists():
@@ -72,7 +83,7 @@ class ProcessaDebentureThread(Thread):
                                 debenture.data_vencimento = data_vencimento
                                 debenture.incentivada = False if 'N' in incentivada.upper() else True
                                 debenture.padrao_snd = True
-                                debenture.indice = indice
+                                debenture.indice = debenture.buscar_codigo_tipo_indice(indice)
                                 debenture.porcentagem = percentual_indice
             
                                 if situacao == u'Excluído' and data_saida != '':
@@ -80,7 +91,7 @@ class ProcessaDebentureThread(Thread):
                                 
                                 debenture.save()
                                 
-                                if amortizacao_carencia:
+                                if amortizacao_carencia or amortizacao_taxa > 0:
                                     amortizacao = AmortizacaoDebenture(data = datetime.date.today(), debenture=debenture, taxa=amortizacao_taxa, \
                                                                        periodo=amortizacao_periodo, unidade_periodo=amortizacao_unidade, tipo=amortizacao_tipo, \
                                                                        carencia=amortizacao_carencia)
@@ -93,8 +104,52 @@ class ProcessaDebentureThread(Thread):
                                     premio = PremioDebenture(data = datetime.date.today(), debenture=debenture, taxa=premio_taxa, \
                                                                        periodo=premio_periodo, unidade_periodo=premio_unidade, carencia=premio_carencia)
                                     premio.save()
-                        except Exception as e:
-                            print codigo, e.args
+                        else:
+                            # Data de emissão
+                            data_emissao = datetime.datetime.strptime(campos[11], '%d/%m/%Y').date()
+                            # Data de vencimento
+                            data_vencimento = None if campos[12] == u'Indeterminado' else datetime.datetime.strptime(campos[12] , '%d/%m/%Y').date()
+                            # Data de início de rendimento
+                            data_inicio_rendimento = datetime.datetime.strptime(campos[15], '%d/%m/%Y').date()
+                            # VNU de emissão
+                            valor_nominal_emissao = campos[37]
+                            # Índice
+                            indice = campos[41]
+                            if indice in [u'SELIC', u'PRÉ', u'IGP-M', u'IPCA', u'DI', u'PREFIXADO']:
+                                # Alterar valor do índice para ser aceito nos tipos de indexação
+                                if indice in [u'PRÉ',u'PREFIXADO']:
+                                    indice = u'Prefixado'
+                            else:
+                                raise ValueError(u'Tipo não previsto: %s' % (campos[41]))
+                            # Percentual multiplicador do índice
+                            percentual_indice = Decimal(re.sub('[^\d,\.]', '', campos[47]).replace(',', '.') or '100')
+                            # Situação
+                            situacao = campos[5]
+                            # Data último VNU
+                            data_saida = campos[40]
+                            # É debenture incentivada?
+                            incentivada = campos[88]
+                            
+                            if Debenture.objects.filter(codigo=codigo).exists():
+                                debenture = Debenture.objects.get(codigo=codigo)
+                            else:
+                                debenture = Debenture(codigo=codigo)
+                                
+                                debenture.data_emissao = data_emissao
+                                debenture.valor_emissao = valor_nominal_emissao.replace('.', '').replace(',', '.')
+                                debenture.data_inicio_rendimento = data_inicio_rendimento
+                                debenture.data_vencimento = data_vencimento
+                                debenture.incentivada = False if 'N' in incentivada.upper() else True
+                                debenture.padrao_snd = False
+                                debenture.indice = debenture.buscar_codigo_tipo_indice(indice)
+                                debenture.porcentagem = percentual_indice
+            
+                                if situacao == u'Excluído' and data_saida != '':
+                                    debenture.data_fim = datetime.datetime.strptime(data_saida, '%d/%m/%Y').date()
+                                
+                                debenture.save()
+                    except :
+                        print codigo, e.args
                 
                 time.sleep(1)
         except Exception as e:
