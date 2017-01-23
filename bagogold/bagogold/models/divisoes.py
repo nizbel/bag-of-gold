@@ -102,6 +102,20 @@ class Divisao (models.Model):
             
         return saldo
     
+    def saldo_debentures(self, data=datetime.date.today()):
+        """
+        Calcula o saldo de operações de Debêntures de uma divisão (dinheiro livre)
+        """
+        saldo = Decimal(0)
+                        
+        # Transferências
+        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='E', data__lte=data):
+            saldo -= transferencia.quantidade
+        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='E', data__lte=data):
+            saldo += transferencia.quantidade
+            
+        return saldo
+    
     def saldo_fii(self, data=datetime.date.today()):
         from bagogold.bagogold.utils.fii import \
             calcular_poupanca_prov_fii_ate_dia_por_divisao
@@ -214,6 +228,8 @@ class Divisao (models.Model):
         saldo += self.saldo_acoes_trade(data=data)
         # CDB/RDB
         saldo += self.saldo_cdb_rdb(data=data)
+        # Debêntures
+#         saldo += self.saldo_debentures(data=data)
         # FII
         saldo += self.saldo_fii(data=data)
         # Fundo de investimento
@@ -252,6 +268,26 @@ class DivisaoOperacaoLC (models.Model):
 class DivisaoOperacaoCDB_RDB (models.Model):
     divisao = models.ForeignKey('Divisao')
     operacao = models.ForeignKey('OperacaoCDB_RDB')
+    """
+    Guarda a quantidade da operação que pertence a divisão
+    """
+    quantidade = models.DecimalField('Quantidade (em reais)',  max_digits=11, decimal_places=2)
+    
+    class Meta:
+        unique_together=('divisao', 'operacao')
+    
+    def __unicode__(self):
+        return self.divisao.nome + ': ' + str(self.quantidade) + ' de ' + unicode(self.operacao)
+    
+    """
+    Calcula o percentual da operação que foi para a divisão
+    """
+    def percentual_divisao(self):
+        return self.quantidade / self.operacao.quantidade
+    
+class DivisaoOperacaoDebenture (models.Model):
+    divisao = models.ForeignKey('Divisao')
+    operacao = models.ForeignKey('OperacaoDebenture')
     """
     Guarda a quantidade da operação que pertence a divisão
     """
@@ -358,7 +394,8 @@ class TransferenciaEntreDivisoes(models.Model):
     divisao_recebedora = models.ForeignKey('Divisao', blank=True, null=True, related_name='divisao_recebedora')
     data = models.DateField(u'Data da transferência', blank=True, null=True)
     """
-    B = Buy and Hold; C = CDB/RDB; D = Tesouro Direto; F = FII; I = Fundo de investimento; L = Letra de Crédito; T = Trading; N = Não alocado
+    B = Buy and Hold; C = CDB/RDB; D = Tesouro Direto; E = Debênture; F = FII; 
+    I = Fundo de investimento; L = Letra de Crédito; T = Trading; N = Não alocado
     """
     investimento_origem = models.CharField('Investimento de origem', blank=True, null=True, max_length=1)
     investimento_destino = models.CharField('Investimento de destino', blank=True, null=True, max_length=1)
@@ -387,6 +424,8 @@ class TransferenciaEntreDivisoes(models.Model):
             return 'CDB/RDB'
         elif self.investimento_origem == 'D':
             return 'Tesouro Direto'
+        elif self.investimento_origem == 'E':
+            return 'Debênture'
         elif self.investimento_origem == 'F':
             return 'FII'
         elif self.investimento_origem == 'I':
@@ -405,6 +444,8 @@ class TransferenciaEntreDivisoes(models.Model):
             return 'CDB/RDB'
         elif self.investimento_destino == 'D':
             return 'Tesouro Direto'
+        elif self.investimento_destino == 'E':
+            return 'Debênture'
         elif self.investimento_destino == 'F':
             return 'FII'
         elif self.investimento_destino == 'I':

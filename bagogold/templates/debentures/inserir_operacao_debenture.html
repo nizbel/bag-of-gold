@@ -44,8 +44,8 @@
                             <div class="form-group col-md-6 {% if form_operacao_debenture.data.errors %} has-error {% endif %}">
                                 <label class="control-label col-md-4" style="text-align: left;"> Data: </label>
                                 <div class="col-md-8">
-                                    <div class="input-group input-medium date date-picker {% if not form_operacao_debenture.data.value %} disabled {% endif %}" data-date-format="dd/mm/yyyy" id="id_data" name="data" data-date="{{form_operacao_debenture.data.value|default:""}}" data-date-viewmode="years">
-                                        <input type="text" class="form-control">
+                                    <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_data" name="data" data-date="{{form_operacao_debenture.data.value|default:''}}" data-date-viewmode="years">
+                                        <input type="text" class="form-control" value="{{form_operacao_debenture.data.value|default:''}}">
                                         <span class="input-group-btn">
                                             <button class="btn default" type="button">
                                                 <i class="fa fa-calendar"></i>
@@ -56,7 +56,7 @@
                                 </div>
                             </div>
                             <div class="form-group col-md-6 {% if form_operacao_debenture.corretagem.errors %} has-error {% endif %}">
-                                <label class="control-label col-md-4"> Corretagem: </label>
+                                <label class="control-label col-md-4"> Taxa: </label>
                                 <div class="col-md-8">
                                     <input id="id_corretagem" type="text" value="0" name="corretagem" class="form-control">
                                     {% if form_operacao_debenture.corretagem.errors %} <span class="help-block"> {{ form_operacao_debenture.corretagem.errors.as_text }} </span> {% endif %}
@@ -64,13 +64,6 @@
                             </div>
                         </div>
                         <div class="row">
-                            <div class="form-group col-md-6 {% if form_operacao_debenture.emolumentos.errors %} has-error {% endif %}">
-                                <label class="control-label col-md-4" style="text-align: left;"> Emolumentos: </label>
-                                <div class="col-md-8">
-                                    <input id="id_emolumentos" type="text" value="0" name="emolumentos" class="form-control">
-                                    {% if form_operacao_debenture.emolumentos.errors %} <span class="help-block"> {{ form_operacao_debenture.emolumentos.errors.as_text }} </span> {% endif %}
-                                </div>
-                            </div>
                             <div class="form-group col-md-6 {% if form_operacao_debenture.tipo_operacao.errors %} has-error {% endif %}">
                                 <label class="control-label col-md-4" style="text-align: left;"> Tipo de operação: </label>
                                 <div class="col-md-8">
@@ -80,24 +73,13 @@
                                     {% if form_operacao_debenture.tipo_operacao.errors %} <span class="help-block"> {{ form_operacao_debenture.tipo_operacao.errors.as_text }} </span> {% endif %}
                                 </div>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="form-group col-md-6 {% if form_operacao_debenture.fii.errors %} has-error {% endif %}">
-                                <label class="control-label col-md-4" style="text-align: left;"> FII: </label>
+                            <div class="form-group col-md-6 {% if form_operacao_debenture.debenture.errors %} has-error {% endif %}">
+                                <label class="control-label col-md-4" style="text-align: left;"> Debênture: </label>
                                 <div class="col-md-8">
-                                    <select class="selectpicker form-control" id="id_fii" name="fii">
-                                        {% for key, value in form_operacao_debenture.fields.fii.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
+                                    <select class="selectpicker form-control" id="id_debenture" name="debenture">
+                                        {% for key, value in form_operacao_debenture.fields.debenture.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
                                     </select>
-                                    {% if form_operacao_debenture.fii.errors %} <span class="help-block"> {{ form_operacao_debenture.fii.errors.as_text }} </span> {% endif %}
-                                </div>
-                            </div>
-                            <div class="form-group col-md-6 {% if form_operacao_debenture.consolidada.errors %} has-error {% endif %}">
-                                <label class="control-label col-md-4" style="text-align: left;"> Consolidada? </label>
-                                <div class="col-md-8">
-                                    <select class="selectpicker form-control" id="id_tipo" name="tipo">
-                                        {% for key, value in form_operacao_debenture.fields.consolidada.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
-                                    </select>
-                                    {% if form_operacao_debenture.consolidada.errors %} <span class="help-block"> {{ form_operacao_debenture.consolidada.errors.as_text }} </span> {% endif %}
+                                    {% if form_operacao_debenture.debenture.errors %} <span class="help-block"> {{ form_operacao_debenture.debenture.errors.as_text }} </span> {% endif %}
                                 </div>
                             </div>
                         </div>
