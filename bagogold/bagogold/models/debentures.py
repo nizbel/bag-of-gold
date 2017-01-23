@@ -152,6 +152,7 @@ class OperacaoDebenture (models.Model):
     quantidade = models.IntegerField(u'Quantidade') 
     data = models.DateField(u'Data', blank=True, null=True)
     taxa = models.DecimalField(u'Taxa', max_digits=11, decimal_places=2)
+    tipo_operacao = models.CharField(u'Tipo de operação', max_length=1)
     
 class HistoricoValorDebenture (models.Model):
     debenture = models.ForeignKey('Debenture')
