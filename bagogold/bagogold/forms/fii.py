@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.forms.utils import LocalizedModelForm
-from bagogold.bagogold.models.fii import FII, OperacaoFII, ProventoFII, \
+from bagogold.bagogold.models.fii import OperacaoFII, ProventoFII, \
     UsoProventosOperacaoFII
 from decimal import Decimal
 from django import forms
@@ -15,14 +15,6 @@ ESCOLHAS_CONSOLIDADO=(
 ESCOLHAS_TIPO_OPERACAO=(('C', "Compra"),
                         ('V', "Venda"))
 
-class FIIForm(LocalizedModelForm):
-
-
-    class Meta:
-        model = FII
-        fields = ('ticker', )
-        
-        
 class ProventoFIIForm(LocalizedModelForm):
 
 
