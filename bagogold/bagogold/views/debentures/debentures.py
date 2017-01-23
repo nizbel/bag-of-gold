@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from bagogold.bagogold.models.debentures import OperacaoDebenture, Debenture,\
+from bagogold.bagogold.forms.debenture import OperacaoDebentureForm
+from bagogold.bagogold.forms.divisoes import DivisaoOperacaoDebentureFormSet
+from bagogold.bagogold.models.debentures import OperacaoDebenture, Debenture, \
     HistoricoValorDebenture
+from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoDebenture
 from bagogold.bagogold.utils.misc import \
     formatar_zeros_a_direita_apos_2_casas_decimais
 from decimal import Decimal
@@ -95,8 +98,8 @@ def inserir_operacao_debenture(request):
         form_operacao_debenture = OperacaoDebentureForm()
         formset_divisao = DivisaoFormSet(investidor=investidor)
             
-    return TemplateResponse(request, 'debentures/inserir_operacao_debenture.html', {'form_operacao_debenture': form_operacao_debenture, 'form_uso_proventos': form_uso_proventos,
-                                                               'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})
+    return TemplateResponse(request, 'debentures/inserir_operacao_debenture.html', {'form_operacao_debenture': form_operacao_debenture, 'formset_divisao': formset_divisao, 
+                                                                                    'varias_divisoes': varias_divisoes})
 
 @login_required
 def listar_debentures(request):
