@@ -27,7 +27,7 @@ class Debenture (models.Model):
         unique_together=('codigo', )
     
     def __unicode__(self):
-        return self.nome
+        return self.codigo
     
     def buscar_codigo_tipo_indice(self, nome_indice):
         for indice in [indice for indice in self.TIPOS_INDICE]:
@@ -46,7 +46,7 @@ class Debenture (models.Model):
         if self.buscar_descricao_tipo_indice(self.indice) > -1:
             if descricao_tipo_indice != '' and self.porcentagem == 0:
                 self.porcentagem = Decimal(100)
-            self.porcentagem = str(self.porcentagem).replace(',', '.')
+            self.porcentagem = str(self.porcentagem).replace('.', ',').replace(',00', '')
             return '%s%% do %s' % (self.porcentagem, descricao_tipo_indice)
         return ''
     
@@ -70,12 +70,13 @@ class AmortizacaoDebenture (models.Model):
     data = models.DateField(u'Data')
     
     def descricao(self):
+        self.carencia = '' if not self.carencia else self.carencia.strftime('%d/%m/%Y')
         if self.taxa > 0:
             self.taxa = str(self.taxa).replace('.', ',')
-            return '%s%% a cada %s %s, a partir de %s' % (self.taxa, self.periodo, self.descricao_unidade_periodo(), self.carencia.strftime('%d/%m/%Y'))
+            return '%s%% a cada %s %s, a partir de %s' % (self.taxa, self.periodo, self.descricao_unidade_periodo(), self.carencia)
         else:
             if self.tipo >= 5:
-                return 'Variável a cada %s %s, a partir de %s' % (self.periodo, self.descricao_unidade_periodo(), self.carencia.strftime('%d/%m/%Y'))
+                return 'Variável a cada %s %s, a partir de %s' % (self.periodo, self.descricao_unidade_periodo(), self.carencia)
         return 'Não sei'
     
     def descricao_unidade_periodo(self):
@@ -145,7 +146,6 @@ class PremioDebenture (models.Model):
                 return 'meses'
         return ''
         
-    
 class OperacaoDebenture (models.Model):
     debenture = models.ForeignKey('Debenture')
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=15, decimal_places=8)  

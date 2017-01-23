@@ -74,6 +74,7 @@ class ProcessaDebentureThread(Thread):
                       
                             if Debenture.objects.filter(codigo=codigo).exists():
                                 debenture = Debenture.objects.get(codigo=codigo)
+                                # TODO comparar se houve alteração
                             else:
                                 debenture = Debenture(codigo=codigo)
                                 
@@ -148,8 +149,8 @@ class ProcessaDebentureThread(Thread):
                                     debenture.data_fim = datetime.datetime.strptime(data_saida, '%d/%m/%Y').date()
                                 
                                 debenture.save()
-                    except :
-                        print codigo, e.args
+                    except:
+                        pass
                 
                 time.sleep(1)
         except Exception as e:
@@ -162,10 +163,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         try:
-            print Debenture.objects.all().count(), 'Debentures cadastradas'
-            Debenture.objects.all().delete()
-            inicio = datetime.datetime.now()
-            
             # Prepara thread de processamento de informações de debênture
             thread_processa_debenture = ProcessaDebentureThread()
             thread_processa_debenture.start()
@@ -175,8 +172,6 @@ class Command(BaseCommand):
                 if 'Principal' in threads_rodando.keys():
                     del threads_rodando['Principal']
                 time.sleep(3)
-            fim = datetime.datetime.now()
-            print (fim-inicio)
         except KeyboardInterrupt:
             while (len(threads_rodando) > 0 or len(debentures_para_processar) > 0):
                 print 'Debêntures a processar:', len(debentures_para_processar)

@@ -2,25 +2,239 @@
 {% load staticfiles %}
 
 {% block extra_head %}
-    {{ form_operacao_cdb_rdb.media }}
+    {{ form_operacao_debenture.media }}
+<link href={% static "assets/global/plugins/bootstrap-select/css/bootstrap-select.min.css" %} rel="stylesheet" type="text/css" />
+<link href={% static "assets/global/plugins/bootstrap-daterangepicker/daterangepicker.min.css" %} rel="stylesheet" type="text/css" />
+<link href={% static "assets/global/plugins/bootstrap-datepicker/css/bootstrap-datepicker3.min.css" %} rel="stylesheet" type="text/css" />
+<link href={% static "assets/global/plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css" %} rel="stylesheet" type="text/css" />
 {% endblock %}
 
 {% block content %}
-    <h1>Inserir operação em CDB/RDB</h1>
-    <form method="POST" class="post-form form-horizontal">{% csrf_token %}
-        <div id="forms">
-            {{ form_operacao_cdb_rdb.as_p }}
-            {% if varias_divisoes %}
-                <h2>Divisões <button id="add-another" class="btn btn-primary" type="button">+</button></h2>
-                {{ formset_divisao_cdb_rdb.management_form }}
-                {% for form_divisao in formset_divisao_cdb_rdb %}
-                    <h3>Divisão {{ forloop.counter }}</h3>
-                    {{ form_divisao.as_p }}
-                {% endfor %}
-            {% endif %}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light">
+            <div class="portlet-title">
+                <div class="caption font-yellow-crusta">
+                    <i class="icon-plus font-yellow-crusta"></i>
+                    <span class="caption-subject bold uppercase"> Inserir operação </span>
+                </div>
+            </div>
+            <div class="portlet-body form">
+                <!-- BEGIN FORM-->
+                <form method="POST" class="horizontal-form">{% csrf_token %}
+                    <div class="form-body">
+                        <div class="row">
+                            <div class="form-group col-md-6 {% if form_operacao_debenture.preco_unitario.errors %} has-error {% endif %}">
+                                <label class="control-label col-md-4" style="text-align: left;"> Preço unitário: </label>
+                                <div class="col-md-8">
+                                    <input id="id_preco_unitario" type="text" value="0" name="preco_unitario" class="form-control">
+                                    {% if form_operacao_debenture.preco_unitario.errors %} <span class="help-block"> {{ form_operacao_debenture.preco_unitario.errors.as_text }} </span> {% endif %}
+                                </div>
+                            </div>
+                            <div class="form-group col-md-6 {% if form_operacao_debenture.quantidade.errors %} has-error {% endif %}">
+                                <label class="control-label col-md-4"> Quantidade: </label>
+                                <div class="col-md-8">
+                                    <input id="id_quantidade" type="text" value="0" name="quantidade" class="form-control">
+                                    {% if form_operacao_debenture.quantidade.errors %} <span class="help-block"> {{ form_operacao_debenture.quantidade.errors.as_text }} </span> {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-md-6 {% if form_operacao_debenture.data.errors %} has-error {% endif %}">
+                                <label class="control-label col-md-4" style="text-align: left;"> Data: </label>
+                                <div class="col-md-8">
+                                    <div class="input-group input-medium date date-picker {% if not form_operacao_debenture.data.value %} disabled {% endif %}" data-date-format="dd/mm/yyyy" id="id_data" name="data" data-date="{{form_operacao_debenture.data.value|default:""}}" data-date-viewmode="years">
+                                        <input type="text" class="form-control">
+                                        <span class="input-group-btn">
+                                            <button class="btn default" type="button">
+                                                <i class="fa fa-calendar"></i>
+                                            </button>
+                                        </span>
+                                    </div>
+                                    <span class="help-block"> Selecione uma data </span>
+                                </div>
+                            </div>
+                            <div class="form-group col-md-6 {% if form_operacao_debenture.corretagem.errors %} has-error {% endif %}">
+                                <label class="control-label col-md-4"> Corretagem: </label>
+                                <div class="col-md-8">
+                                    <input id="id_corretagem" type="text" value="0" name="corretagem" class="form-control">
+                                    {% if form_operacao_debenture.corretagem.errors %} <span class="help-block"> {{ form_operacao_debenture.corretagem.errors.as_text }} </span> {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-md-6 {% if form_operacao_debenture.emolumentos.errors %} has-error {% endif %}">
+                                <label class="control-label col-md-4" style="text-align: left;"> Emolumentos: </label>
+                                <div class="col-md-8">
+                                    <input id="id_emolumentos" type="text" value="0" name="emolumentos" class="form-control">
+                                    {% if form_operacao_debenture.emolumentos.errors %} <span class="help-block"> {{ form_operacao_debenture.emolumentos.errors.as_text }} </span> {% endif %}
+                                </div>
+                            </div>
+                            <div class="form-group col-md-6 {% if form_operacao_debenture.tipo_operacao.errors %} has-error {% endif %}">
+                                <label class="control-label col-md-4" style="text-align: left;"> Tipo de operação: </label>
+                                <div class="col-md-8">
+                                    <select class="selectpicker form-control" id="id_tipo" name="tipo">
+                                        {% for key, value in form_operacao_debenture.fields.tipo_operacao.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
+                                    </select>
+                                    {% if form_operacao_debenture.tipo_operacao.errors %} <span class="help-block"> {{ form_operacao_debenture.tipo_operacao.errors.as_text }} </span> {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-md-6 {% if form_operacao_debenture.fii.errors %} has-error {% endif %}">
+                                <label class="control-label col-md-4" style="text-align: left;"> FII: </label>
+                                <div class="col-md-8">
+                                    <select class="selectpicker form-control" id="id_fii" name="fii">
+                                        {% for key, value in form_operacao_debenture.fields.fii.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
+                                    </select>
+                                    {% if form_operacao_debenture.fii.errors %} <span class="help-block"> {{ form_operacao_debenture.fii.errors.as_text }} </span> {% endif %}
+                                </div>
+                            </div>
+                            <div class="form-group col-md-6 {% if form_operacao_debenture.consolidada.errors %} has-error {% endif %}">
+                                <label class="control-label col-md-4" style="text-align: left;"> Consolidada? </label>
+                                <div class="col-md-8">
+                                    <select class="selectpicker form-control" id="id_tipo" name="tipo">
+                                        {% for key, value in form_operacao_debenture.fields.consolidada.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
+                                    </select>
+                                    {% if form_operacao_debenture.consolidada.errors %} <span class="help-block"> {{ form_operacao_debenture.consolidada.errors.as_text }} </span> {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% if not varias_divisoes %}
+                        <div class="row">
+                            <div class="form-group col-md-6 {% if form_operacao_debenture.qtd_utilizada.errors %} has-error {% endif %}">
+                                <label class="control-label col-md-4" style="text-align: left;"> Quantidade de proventos utilizada: </label>
+                                <div class="col-md-8">
+                                    <input id="id_qtd_utilizada" type="text" value="0" name="qtd_utilizada" class="form-control">
+                                    {% if form_operacao_debenture.qtd_utilizada.errors %} <span class="help-block"> {{ form_operacao_debenture.qtd_utilizada.errors.as_text }} </span> {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                            <h2 class="font-yellow-crusta" align="center">
+                                <strong>Divisões</strong> <button id="add-another" class="btn btn-icon-only green-steel" type="button"><i class="fa fa-plus"></i></button>
+                            </h2>
+                            {{ formset_divisao.management_form }}
+                            {% for form_divisao in formset_divisao %}
+                            <h3 class="font-yellow-crusta" align="center"><strong>Divisão {{ forloop.counter }}</strong></h3>
+                            <br/>
+                            <div class="row">
+                                <div class="form-group col-md-6 {% if form_divisao.divisao.errors %} has-error {% endif %}">
+                                    <label class="control-label col-md-4" style="text-align: left;"> Divisão: </label>
+                                    <div class="col-md-8">
+                                        <select class="selectpicker form-control" id="id_divisaooperacaofii_set-{{forloop.counter0}}-divisao" name="divisaooperacaofii_set-{{forloop.counter0}}-divisao">
+                                            {% for key, value in form_divisao.fields.divisao.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
+                                        </select>
+                                        {% if form_divisao.divisao.errors %} <span class="help-block"> {{ form_divisao.divisao.errors.as_text }} </span> {% endif %}
+                                    </div>
+                                </div>
+                                <div class="form-group col-md-6 {% if form_divisao.quantidade.errors %} has-error {% endif %}">
+                                    <label class="control-label col-md-4"> Quantidade: </label>
+                                    <div class="col-md-8">
+                                        <input id="id_divisaooperacaofii_set-{{forloop.counter0}}-quantidade" type="text" value="{{form_divisao.quantidade.value}}" name="divisaooperacaofii_set-{{forloop.counter0}}-quantidade" class="form-control">
+                                        {% if form_divisao.quantidade.errors %} <span class="help-block"> {{ form_divisao.quantidade.errors.as_text }} </span> {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="form-group col-md-6 {% if form_divisao.qtd_proventos_utilizada.errors %} has-error {% endif %}">
+                                    <label class="control-label col-md-4" style="text-align: left;"> Quantidade de proventos utilizada: </label>
+                                    <div class="col-md-8">
+                                        <input id="id_divisaooperacaofii_set-{{forloop.counter0}}-qtd_proventos_utilizada" type="text" value="0" name="divisaooperacaofii_set-{{forloop.counter0}}-qtd_proventos_utilizada" class="form-control">
+                                        {% if form_divisao.qtd_proventos_utilizada.errors %} <span class="help-block"> {{ form_divisao.qtd_proventos_utilizada.errors.as_text }} </span> {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                        <div class="form-actions">
+                            <div class="row">
+                                <div class="col-md-offset col-md-3">
+                                    <button type="submit" name="save" value="1" class="btn green-steel">Salvar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                <!-- END FORM-->
+            </div>
         </div>
-        <div class="form-actions">
-            <button type="submit" name="save" value="1" class="btn">Salvar</button>
-        </div>
-    </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_footer %}
+<script src={% static "assets/global/plugins/fuelux/js/spinner.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-touchspin/bootstrap.touchspin.js" %} type="text/javascript"></script>
+<script src={% static "assets/pages/scripts/components-bootstrap-touchspin.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/jquery-validation/js/jquery.validate.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/jquery-validation/js/additional-methods.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-select/js/bootstrap-select.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/moment.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-daterangepicker/daterangepicker.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-datepicker/js/bootstrap-datepicker.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-datetimepicker/js/bootstrap-datetimepicker.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-datepicker/locales/bootstrap-datepicker.pt-BR.min.js" %} type="text/javascript"></script>
+<script>
+$(document).ready(function() {
+    $("input[name='preco_unitario']").TouchSpin({
+        min: 0,
+        max: 1000000000,
+        step: 0.01,
+        decimals: 2,
+        maxboostedstep: 100,
+        prefix: 'R$'
+    });
+    $("input[name='quantidade']").TouchSpin({
+        min: 0,
+        max: 1000000000,
+        step: 1,
+        maxboostedstep: 100
+    });
+    $("input[name='corretagem']").TouchSpin({
+        min: 0,
+        max: 1000000000,
+        step: 0.01,
+        decimals: 2,
+        maxboostedstep: 100,
+        prefix: 'R$'
+    });
+    $("input[name='emolumentos']").TouchSpin({
+        min: 0,
+        max: 1000000000,
+        step: 0.01,
+        decimals: 2,
+        maxboostedstep: 100,
+        prefix: 'R$'
+    });
+    $("input[name='qtd_utilizada']").TouchSpin({
+        min: 0,
+        max: 1000000000,
+        step: 0.01,
+        decimals: 2,
+        maxboostedstep: 100,
+        prefix: 'R$'
+    });
+    $("input[name='divisaooperacaofii_set-0-quantidade']").TouchSpin({
+        min: 0,
+        max: 1000000000,
+        step: 1,
+        maxboostedstep: 100,
+        postfix: 'cotas'
+    });
+    $("input[name='divisaooperacaofii_set-0-qtd_proventos_utilizada']").TouchSpin({
+        min: 0,
+        max: 1000000000,
+        step: 0.01,
+        decimals: 2,
+        maxboostedstep: 100,
+        prefix: 'R$'
+    });
+    $('.date-picker').datepicker({
+            language: 'pt-BR'
+            });
+});
+</script>
 {% endblock %}
