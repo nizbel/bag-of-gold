@@ -1,5 +1,6 @@
 {% extends "teste/base.html" %}
 {% load staticfiles %}
+{% load l10n %}
 
 {% block extra_head %}
     {{ form_operacao_debenture.media }}
@@ -44,8 +45,8 @@
                             <div class="form-group col-md-6 {% if form_operacao_debenture.data.errors %} has-error {% endif %}">
                                 <label class="control-label col-md-4" style="text-align: left;"> Data: </label>
                                 <div class="col-md-8">
-                                    <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_data" name="data" data-date="{{form_operacao_debenture.data.value|default:''}}" data-date-viewmode="years">
-                                        <input type="text" class="form-control" value="{{form_operacao_debenture.data.value|default:''}}">
+                                    <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" data-date="{{form_operacao_debenture.data.value|default:''}}" data-date-viewmode="years">
+                                        <input type="text" class="form-control" id="id_data" name="data" value="{{form_operacao_debenture.data.value|default:''}}">
                                         <span class="input-group-btn">
                                             <button class="btn default" type="button">
                                                 <i class="fa fa-calendar"></i>
@@ -55,11 +56,11 @@
                                     <span class="help-block"> Selecione uma data </span>
                                 </div>
                             </div>
-                            <div class="form-group col-md-6 {% if form_operacao_debenture.corretagem.errors %} has-error {% endif %}">
+                            <div class="form-group col-md-6 {% if form_operacao_debenture.taxa.errors %} has-error {% endif %}">
                                 <label class="control-label col-md-4"> Taxa: </label>
                                 <div class="col-md-8">
-                                    <input id="id_corretagem" type="text" value="0" name="corretagem" class="form-control">
-                                    {% if form_operacao_debenture.corretagem.errors %} <span class="help-block"> {{ form_operacao_debenture.corretagem.errors.as_text }} </span> {% endif %}
+                                    <input id="id_taxa" type="text" value="0" name="taxa" class="form-control">
+                                    {% if form_operacao_debenture.taxa.errors %} <span class="help-block"> {{ form_operacao_debenture.taxa.errors.as_text }} </span> {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -67,7 +68,7 @@
                             <div class="form-group col-md-6 {% if form_operacao_debenture.tipo_operacao.errors %} has-error {% endif %}">
                                 <label class="control-label col-md-4" style="text-align: left;"> Tipo de operação: </label>
                                 <div class="col-md-8">
-                                    <select class="selectpicker form-control" id="id_tipo" name="tipo">
+                                    <select class="selectpicker form-control" id="id_tipo_operacao" name="tipo_operacao">
                                         {% for key, value in form_operacao_debenture.fields.tipo_operacao.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
                                     </select>
                                     {% if form_operacao_debenture.tipo_operacao.errors %} <span class="help-block"> {{ form_operacao_debenture.tipo_operacao.errors.as_text }} </span> {% endif %}
@@ -77,7 +78,7 @@
                                 <label class="control-label col-md-4" style="text-align: left;"> Debênture: </label>
                                 <div class="col-md-8">
                                     <select class="selectpicker form-control" id="id_debenture" name="debenture">
-                                        {% for key, value in form_operacao_debenture.fields.debenture.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
+                                        {% for key, value in form_operacao_debenture.fields.debenture.widget.choices %}<option value="{{ key|unlocalize }}">{{ value }}</option>{% endfor %}
                                     </select>
                                     {% if form_operacao_debenture.debenture.errors %} <span class="help-block"> {{ form_operacao_debenture.debenture.errors.as_text }} </span> {% endif %}
                                 </div>
@@ -105,8 +106,8 @@
                                 <div class="form-group col-md-6 {% if form_divisao.divisao.errors %} has-error {% endif %}">
                                     <label class="control-label col-md-4" style="text-align: left;"> Divisão: </label>
                                     <div class="col-md-8">
-                                        <select class="selectpicker form-control" id="id_divisaooperacaofii_set-{{forloop.counter0}}-divisao" name="divisaooperacaofii_set-{{forloop.counter0}}-divisao">
-                                            {% for key, value in form_divisao.fields.divisao.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
+                                        <select class="selectpicker form-control" id="id_divisaooperacaodebenture_set-{{forloop.counter0}}-divisao" name="divisaooperacaodebenture_set-{{forloop.counter0}}-divisao">
+                                            {% for key, value in form_divisao.fields.divisao.widget.choices %}<option value="{{ key|unlocalize }}">{{ value }}</option>{% endfor %}
                                         </select>
                                         {% if form_divisao.divisao.errors %} <span class="help-block"> {{ form_divisao.divisao.errors.as_text }} </span> {% endif %}
                                     </div>
@@ -114,17 +115,8 @@
                                 <div class="form-group col-md-6 {% if form_divisao.quantidade.errors %} has-error {% endif %}">
                                     <label class="control-label col-md-4"> Quantidade: </label>
                                     <div class="col-md-8">
-                                        <input id="id_divisaooperacaofii_set-{{forloop.counter0}}-quantidade" type="text" value="{{form_divisao.quantidade.value}}" name="divisaooperacaofii_set-{{forloop.counter0}}-quantidade" class="form-control">
+                                        <input id="id_divisaooperacaodebenture_set-{{forloop.counter0}}-quantidade" type="text" value="{{form_divisao.quantidade.value}}" name="divisaooperacaodebenture_set-{{forloop.counter0}}-quantidade" class="form-control">
                                         {% if form_divisao.quantidade.errors %} <span class="help-block"> {{ form_divisao.quantidade.errors.as_text }} </span> {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="form-group col-md-6 {% if form_divisao.qtd_proventos_utilizada.errors %} has-error {% endif %}">
-                                    <label class="control-label col-md-4" style="text-align: left;"> Quantidade de proventos utilizada: </label>
-                                    <div class="col-md-8">
-                                        <input id="id_divisaooperacaofii_set-{{forloop.counter0}}-qtd_proventos_utilizada" type="text" value="0" name="divisaooperacaofii_set-{{forloop.counter0}}-qtd_proventos_utilizada" class="form-control">
-                                        {% if form_divisao.qtd_proventos_utilizada.errors %} <span class="help-block"> {{ form_divisao.qtd_proventos_utilizada.errors.as_text }} </span> {% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -173,9 +165,10 @@ $(document).ready(function() {
         min: 0,
         max: 1000000000,
         step: 1,
-        maxboostedstep: 100
+        maxboostedstep: 100,
+        postfix: 'títulos'
     });
-    $("input[name='corretagem']").TouchSpin({
+    $("input[name='taxa']").TouchSpin({
         min: 0,
         max: 1000000000,
         step: 0.01,
@@ -183,36 +176,12 @@ $(document).ready(function() {
         maxboostedstep: 100,
         prefix: 'R$'
     });
-    $("input[name='emolumentos']").TouchSpin({
-        min: 0,
-        max: 1000000000,
-        step: 0.01,
-        decimals: 2,
-        maxboostedstep: 100,
-        prefix: 'R$'
-    });
-    $("input[name='qtd_utilizada']").TouchSpin({
-        min: 0,
-        max: 1000000000,
-        step: 0.01,
-        decimals: 2,
-        maxboostedstep: 100,
-        prefix: 'R$'
-    });
-    $("input[name='divisaooperacaofii_set-0-quantidade']").TouchSpin({
+    $("input[name='divisaooperacaodebenture_set-0-quantidade']").TouchSpin({
         min: 0,
         max: 1000000000,
         step: 1,
         maxboostedstep: 100,
-        postfix: 'cotas'
-    });
-    $("input[name='divisaooperacaofii_set-0-qtd_proventos_utilizada']").TouchSpin({
-        min: 0,
-        max: 1000000000,
-        step: 0.01,
-        decimals: 2,
-        maxboostedstep: 100,
-        prefix: 'R$'
+        postfix: 'títulos'
     });
     $('.date-picker').datepicker({
             language: 'pt-BR'
