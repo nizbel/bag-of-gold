@@ -291,7 +291,7 @@ class DivisaoOperacaoDebenture (models.Model):
     """
     Guarda a quantidade da operação que pertence a divisão
     """
-    quantidade = models.DecimalField('Quantidade (em reais)',  max_digits=11, decimal_places=2)
+    quantidade = models.DecimalField('Quantidade (em títulos)',  max_digits=11, decimal_places=2)
     
     class Meta:
         unique_together=('divisao', 'operacao')
