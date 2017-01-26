@@ -218,13 +218,16 @@ def listar_debentures(request):
 def listar_debentures_validas_na_data(request):
     # Verifica se é uma data válida
     try:
-        data = datetime.datetime.strptime(request.GET['data'], '%d/%m/%Y')
+        data = datetime.datetime.strptime(request.GET['data'], '%d/%m/%Y').date()
     except ValueError:
-        raise ValueError("Formato de data incorreto, deve ser DD/MM/AAAA")
+        return HttpResponse(json.dumps({'resultado': False, 'mensagem': 'Data deve estar no formato DD/MM/AAAA'}), content_type = "application/json") 
     
-    debentures_validas = Debenture.objects.filter(data_emissao__lte=data).filter((Q(data_fim__gt=data) | Q(data_fim__isnull=True)))
+    if data > datetime.date.today():
+        return HttpResponse(json.dumps({'resultado': False, 'mensagem': 'Data não pode ser futura'}), content_type = "application/json") 
     
-    return HttpResponse(json.dumps({'debentures_validas': debentures_validas}), content_type = "application/json") 
+    debentures_validas = list(Debenture.objects.filter(data_emissao__lte=data).filter((Q(data_fim__gt=data) | Q(data_fim__isnull=True))).values_list('id', flat=True))
+    
+    return HttpResponse(json.dumps({'resultado': True, 'debentures_validas': debentures_validas}), content_type = "application/json") 
 
 @login_required
 def painel(request):
