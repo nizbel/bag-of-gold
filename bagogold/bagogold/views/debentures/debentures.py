@@ -13,11 +13,14 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
 from django.db.models import Count
+from django.db.models.query_utils import Q
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
+from django.http.response import HttpResponse
 from django.template.response import TemplateResponse
 import calendar
 import datetime
+import json
 
 
 @login_required
@@ -113,14 +116,14 @@ def historico(request):
             for debenture in qtd_titulos.keys():
                 # Pegar último dia util com negociação da debenture para calculo do patrimonio
                 ultimo_dia_util = item.data
-                while not HistoricoValorDebenture.objects.filter(data=ultimo_dia_util, debenture=fii):
+                while not HistoricoValorDebenture.objects.filter(data=ultimo_dia_util, debenture=debenture):
                     ultimo_dia_util -= datetime.timedelta(days=1)
                 patrimonio += (qtd_titulos[debenture] * HistoricoValorDebenture.objects.get(debenture=debenture, data=ultimo_dia_util).preco_unitario)
         else:
             houve_operacao_hoje = True
             for fii in qtd_titulos.keys():
                 # Busca histórico do último dia útil
-                patrimonio += (Decimal(qtd_titulos[fii]) * debenture.objects.filter(fii__ticker=fii).order_by('-data')[0].preco_unitario)
+                patrimonio += (Decimal(qtd_titulos[fii]) * debenture.objects.filter(debenture=debenture).order_by('-data')[0].preco_unitario)
         # Verifica se altera ultima posicao do grafico ou adiciona novo registro
         if len(graf_patrimonio) > 0 and graf_patrimonio[-1][0] == data_formatada:
             graf_patrimonio[len(graf_patrimonio)-1][1] = float(patrimonio)
@@ -210,6 +213,18 @@ def listar_debentures(request):
             debenture.premiodebenture.taxa = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(debenture.premiodebenture.taxa))
     
     return TemplateResponse(request, 'debentures/listar_debentures.html', {'debentures': debentures})
+
+@login_required
+def listar_debentures_validas_na_data(request):
+    # Verifica se é uma data válida
+    try:
+        data = datetime.datetime.strptime(request.GET['data'], '%d/%m/%Y')
+    except ValueError:
+        raise ValueError("Formato de data incorreto, deve ser DD/MM/AAAA")
+    
+    debentures_validas = Debenture.objects.filter(data_emissao__lte=data).filter((Q(data_fim__gt=data) | Q(data_fim__isnull=True)))
+    
+    return HttpResponse(json.dumps({'debentures_validas': debentures_validas}), content_type = "application/json") 
 
 @login_required
 def painel(request):
