@@ -116,7 +116,6 @@ class DivisaoOperacaoDebentureFormSet(forms.models.BaseInlineFormSet):
     
     def clean(self):
         qtd_total_div = 0
-        qtd_total_prov = 0
         contador_forms = 0
         divisoes_utilizadas = {}
         divisao_a_excluir = False
@@ -147,6 +146,8 @@ class DivisaoOperacaoDebentureFormSet(forms.models.BaseInlineFormSet):
                         divisao_a_excluir = True
                         
         if self.instance.quantidade < qtd_total_div:
+            print self.instance.preco_unitario
+            print self.instance.quantidade
             raise forms.ValidationError('Quantidade total alocada para as divisões é maior que quantidade da operação')
         elif self.instance.quantidade > qtd_total_div:
             if divisao_a_excluir:

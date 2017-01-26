@@ -147,6 +147,7 @@ class PremioDebenture (models.Model):
         return ''
         
 class OperacaoDebenture (models.Model):
+    investidor = models.ForeignKey('Investidor')
     debenture = models.ForeignKey('Debenture')
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=15, decimal_places=8)  
     quantidade = models.IntegerField(u'Quantidade') 
