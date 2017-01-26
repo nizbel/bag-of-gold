@@ -142,6 +142,7 @@ urlpatterns = [
     url(r'^debentures/historico/$', views.debentures.debentures.historico, name='historico_debenture'),
     url(r'^debentures/inserir_operacao_debenture/$', views.debentures.debentures.inserir_operacao_debenture, name='inserir_operacao_debenture'),
     url(r'^debentures/listar_debentures/$', views.debentures.debentures.listar_debentures, name='listar_debentures'),
+    url(r'^debentures/listar_debentures_validas_na_data/$', views.debentures.debentures.listar_debentures_validas_na_data, name='listar_debentures_validas_na_data'),
     url(r'^debentures/painel/$', views.debentures.debentures.painel, name='painel_debenture'),
     
     # Fundo de investimento
