@@ -114,7 +114,7 @@
                                         {% localize off %}
                                         <select class="selectpicker form-control" id="id_divisaooperacaodebenture_set-{{forloop.counter0}}-divisao" name="divisaooperacaodebenture_set-{{forloop.counter0}}-divisao">
                                             {% for key, value in form_divisao.fields.divisao.widget.choices %}<option value="{{ key }}" 
-                                                {% if key == form_divisao.divisao.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                                                {% if key == form_divisao.divisao.value|add:'0' %}selected="selected"{% else %}disabled="disabled"{% endif %}>{{ value }}</option>{% endfor %}
                                         </select>
                                         {% endlocalize %}
                                         {% if form_divisao.divisao.errors %} <span class="help-block"> {{ form_divisao.divisao.errors.as_text }} </span> {% endif %}
@@ -164,6 +164,34 @@
 {{form_operacao_debenture.media}}
 
 <script>
+function mostrar_debentures_validas(id) {
+    var data = $('#id_data').val();
+//     console.log(id_pendencia + "..." + table.fnPagingInfo().iPage);
+    $.ajax({
+        url : "{% url 'listar_debentures_validas_na_data' %}", // the endpoint
+        type : "GET", // http method
+        data : {data: data},
+
+        // handle a successful response
+        success : function(retorno) {
+            $('#row-messages').show();
+            if (retorno.resultado) {
+                $('#messages').html('<div class="alert alert-success"><button type="button" class="close" data-dismiss="alert">×</button><i class="icon-ok"></i> ' + retorno.mensagem + '</div>');
+                $('#cancelar_' + id_pendencia).hide();
+                $('#reservar_' + id_pendencia).show();
+                $('#qtd_pendencias_reservadas').html(retorno.qtd_pendencias_reservadas);
+            } else {
+                $('#messages').html('<div class="alert alert-error"><button type="button" class="close" data-dismiss="alert">×</button><i class="icon-ban-circle"></i> ' + retorno.mensagem + '</div>');
+            }
+        },
+
+        // handle a non-successful response
+        error : function(xhr,errmsg,err) {
+            console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+        }
+    });
+}
+
 $(document).ready(function() {
     $("input[name='preco_unitario']").TouchSpin({
         min: 0,
