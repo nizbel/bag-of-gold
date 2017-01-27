@@ -23,7 +23,7 @@ class DocumentoProventoBovespa (models.Model):
     tipo = models.CharField(u'Tipo de provento', max_length=1)
     documento = models.FileField(upload_to=ticker_path, blank=True, null=True)
     data_referencia = models.DateField(u'Data de referência')
-    tipo_documento = models.CharField(u'Tipo de documento', max_length=50)
+    tipo_documento = models.CharField(u'Tipo de documento', max_length=100)
     
     class Meta:
         unique_together = ('empresa', 'protocolo')
