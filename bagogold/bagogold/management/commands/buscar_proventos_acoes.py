@@ -156,7 +156,7 @@ def buscar_proventos_acao(codigo_cvm, ticker, ano, num_tentativas):
         divisoes = re.findall('<div class="large-12 columns">(.*?)(?=<div class="large-12 columns">|$)', data, flags=re.IGNORECASE|re.DOTALL)
         for divisao in divisoes:
             # Pega as informações necessárias dentro da divisão, não há como existir mais de uma tupla (data, protocolo)
-            informacao_divisao = re.findall('Data Referência.*?(\d+/\d+/\d+).*?Assunto.*?(?:juro|dividendo|provento|capital social).*?<a href=".*?protocolo=(\d+).*?" target="_blank">.*?</a>', divisao, flags=re.IGNORECASE|re.DOTALL)
+            informacao_divisao = re.findall('Data Referência.*?(\d+/\d+/\d+).*?Assunto.*?(?:juro|dividendo|provento|capital social|remuneraç).*?<a href=".*?protocolo=(\d+).*?" target="_blank">.*?</a>', divisao, flags=re.IGNORECASE|re.DOTALL)
             if informacao_divisao:
                 informacoes_rendimentos.append({'info_doc': informacao_divisao[0], 'codigo_cvm': codigo_cvm})
 #         print 'Buscou', Empresa.objects.get(codigo_cvm=codigo_cvm), ano
