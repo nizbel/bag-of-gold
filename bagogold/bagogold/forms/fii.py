@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.forms.utils import LocalizedModelForm
-from bagogold.bagogold.models.fii import FII, OperacaoFII, ProventoFII, \
+from bagogold.bagogold.models.fii import OperacaoFII, ProventoFII, \
     UsoProventosOperacaoFII
 from decimal import Decimal
 from django import forms
@@ -15,14 +15,6 @@ ESCOLHAS_CONSOLIDADO=(
 ESCOLHAS_TIPO_OPERACAO=(('C', "Compra"),
                         ('V', "Venda"))
 
-class FIIForm(LocalizedModelForm):
-
-
-    class Meta:
-        model = FII
-        fields = ('ticker', )
-        
-        
 class ProventoFIIForm(LocalizedModelForm):
 
 
@@ -86,14 +78,21 @@ class UsoProventosOperacaoFIIForm(LocalizedModelForm):
         return data
     
 class CalculoResultadoCorretagemForm(forms.Form):
+    def __new__(cls, *args, **kwargs):
+        new_class = super(CalculoResultadoCorretagemForm, cls).__new__(cls, *args, **kwargs)
+        for field in new_class.base_fields.values():
+            if isinstance(field, forms.DecimalField):
+                field.localize = True
+                field.widget.is_localized = True
+        return new_class
 #     NUM_MESES = 500
 #     PRECO_COTA = 97
 #     CORRETAGEM = 9.8
 #     RENDIMENTO = 0.78
 #     QTD_COTAS = 4
     num_meses = forms.IntegerField(label='Quantidade de meses', min_value=1, max_value=1000)
-    preco_cota = forms.DecimalField(label='Preço da cota', max_digits=11, decimal_places=2, min_value=0.01)
-    corretagem = forms.DecimalField(label='Corretagem (em R$)', max_digits=9, decimal_places=2, min_value=0.01)
-    rendimento = forms.DecimalField(label='Rendimento (em R$)', max_digits=9, decimal_places=2, min_value=0.01)
+    preco_cota = forms.DecimalField(label='Preço da cota', max_digits=11, decimal_places=2, min_value=0)
+    corretagem = forms.DecimalField(label='Corretagem (em R$)', max_digits=9, decimal_places=2, min_value=0)
+    rendimento = forms.DecimalField(label='Rendimento (em R$)', max_digits=9, decimal_places=2, min_value=0)
     quantidade_cotas = forms.IntegerField(label='Quantidade inicial de cotas', min_value=0, max_value=1000)
     

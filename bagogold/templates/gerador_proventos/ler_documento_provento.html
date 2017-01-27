@@ -5,6 +5,10 @@
 <link href={% static "assets/global/plugins/bootstrap-select/css/bootstrap-select.min.css" %} rel="stylesheet" type="text/css" />
 <link href={% static "assets/global/plugins/bootstrap-datepicker/css/bootstrap-datepicker3.min.css" %} rel="stylesheet" type="text/css" />
 <link href={% static "assets/global/plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css" %} rel="stylesheet" type="text/css" />
+
+<!-- PDF.js -->
+<script src={% static "assets/global/plugins/pdfjs/build/pdf.js" %}></script>
+<script src={% static "assets/global/plugins/pdfjs/build/pdf.worker.js" %}></script>
 {% endblock %}
 
 {% block content %}
@@ -38,12 +42,41 @@
                                 <div class="m-grid-col m-grid-col-left"><strong>Protocolo:</strong></div>
                                 <div class="m-grid-col m-grid-col-left">{{pendencia.documento.protocolo}}</div>
                                 <div class="m-grid-col m-grid-col-left"><strong>Data Referência:</strong></div>
-                                <div class="m-grid-col m-grid-col-left">{{pendencia.documento.data_referencia}}</div>
+                                <div class="m-grid-col m-grid-col-left">{{pendencia.documento.data_referencia|date:"d/m/Y"}}</div>
                                 <div class="m-grid-col m-grid-col-left"><strong>Responsável:</strong></div>
-                                <div class="m-grid-col m-grid-col-left">{{pendencia.responsavel}}</div>
+                                <div class="m-grid-col m-grid-col-left">
+                                    {% if pendencia.responsavel %}
+                                        {{ pendencia.responsavel }}
+                                    {% else %}
+                                        <form method="POST">{% csrf_token %}
+                                            <button name="reservar" value="1" type="submit" class="btn btn-success btn-xs">Reservar</button>
+                                        </form>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                         <a href="{% url 'baixar_documento_provento' pendencia.documento.id %}" class="btn btn-warning">Download</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="portlet box yellow-crusta">
+                    <div class="portlet-title">
+                        <div class="caption">
+                            <i class="icon-magnifier"></i>Visualização prévia (Apenas 1ª página)
+                        </div>
+                        <div class="tools">
+                            <a href="javascript:;" class="collapse"></a>
+                        </div>
+                    </div>
+                    <div class="portlet-body">
+                        <div class="row">
+                            <div class="col-md-12 text-center">
+                                <canvas id="canvas"></canvas>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -56,6 +89,9 @@
                         <div class="portlet-title">
                             <div class="caption">
                                 <i class="fa fa-warning"></i>Recusado em {{ recusa.data_recusa|date:'d/m/Y' }}
+                            </div>
+                            <div class="tools">
+                                <a href="javascript:;" class="collapse"></a>
                             </div>
                         </div>
                         <div class="portlet-body">
@@ -113,16 +149,11 @@
                                             <label class="control-label col-md-4" style="text-align: left;"> Número de proventos: </label>
                                             <div class="col-md-2">
                                                 <select class="selectpicker form-control" id="num_proventos" name="num_proventos">
-                                                    <option>1</option>
-                                                    <option>2</option>
-                                                    <option>3</option>
-                                                    <option>4</option>
-                                                    <option>5</option>
-                                                    <option>6</option>
-                                                    <option>7</option>
-                                                    <option>8</option>
-                                                    <option>9</option>
-                                                    <option>10</option>
+                                                    {% with ''|center:30 as range %}
+                                                        {% for _ in range %}
+                                                            <option>{{ forloop.counter }}</option>
+                                                        {% endfor %}
+                                                    {% endwith %}
                                                 </select>
                                             </div>
                                             <input type="submit" class="btn btn-warning" value="Gerar campos para proventos" name="preparar_proventos" id="preparar_proventos">
@@ -142,7 +173,7 @@
                                                 <div class="form-group col-md-4 {% if form_provento.valor_unitario.errors %} has-error {% endif %}">
                                                     <label class="control-label col-md-4"> Valor unitário: </label>
                                                     <div class="col-md-8">
-                                                        <input id="id_provento-{{forloop.counter0}}-valor_unitario" type="text" value="0" name="provento-{{forloop.counter0}}-valor_unitario" class="form-control">
+                                                        <input id="id_provento-{{forloop.counter0}}-valor_unitario" type="text" value="{{form_provento.valor_unitario.value}}" name="provento-{{forloop.counter0}}-valor_unitario" class="form-control">
                                                         {% if form_provento.valor_unitario.errors %} <span class="help-block"> {{ form_provento.valor_unitario.errors.as_text }} </span> {% endif %}
                                                     </div>
                                                 </div>
@@ -150,7 +181,7 @@
                                                     <label class="control-label col-md-4" style="text-align: left;"> Data EX: </label>
                                                     <div class="col-md-8">
                                                         <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_provento-{{forloop.counter0}}-data_ex" name="provento-{{forloop.counter0}}-data_ex" data-date="{{form_provento.data_ex.value|default:''}}" data-date-viewmode="years">
-                                                            <input type="text" class="form-control" name="provento-{{forloop.counter0}}-data_ex">
+                                                            <input type="text" class="form-control" name="provento-{{forloop.counter0}}-data_ex" value="{{form_provento.data_ex.value|default:''}}">
                                                             <span class="input-group-btn">
                                                                 <button class="btn default" type="button">
                                                                     <i class="fa fa-calendar"></i>
@@ -163,8 +194,8 @@
                                                 <div class="form-group col-md-4 {% if form.data_pagamento.errors %} has-error {% endif %}">
                                                     <label class="control-label col-md-4" style="text-align: left;"> Data de pagamento: </label>
                                                     <div class="col-md-8">
-                                                        <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_provento-{{forloop.counter0}}-data_pagamento" name="provento-{{forloop.counter0}}-data_pagamento" data-date="{{form.data_pagamento.value|default:''}}" data-date-viewmode="years">
-                                                            <input type="text" class="form-control" name="provento-{{forloop.counter0}}-data_pagamento">
+                                                        <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_provento-{{forloop.counter0}}-data_pagamento" name="provento-{{forloop.counter0}}-data_pagamento" data-date="{{form_provento.data_pagamento.value|default:''}}" data-date-viewmode="years">
+                                                            <input type="text" class="form-control" name="provento-{{forloop.counter0}}-data_pagamento" value="{{form_provento.data_pagamento.value|default:''}}">
                                                             <span class="input-group-btn">
                                                                 <button class="btn default" type="button">
                                                                     <i class="fa fa-calendar"></i>
@@ -180,7 +211,8 @@
                                                     <label class="control-label col-md-4" style="text-align: left;"> Tipo de provento: </label>
                                                     <div class="col-md-8">
                                                         <select class="selectpicker form-control" id="id_provento-{{forloop.counter0}}-tipo_provento" name="provento-{{forloop.counter0}}-tipo_provento">
-                                                            {% for key, value in form_provento.fields.tipo_provento.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
+                                                            {% for key, value in form_provento.fields.tipo_provento.widget.choices %}<option value="{{ key }}" 
+                                                                {% if key == form_provento.tipo_provento.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
                                                         </select>
                                                         {% if form_provento.tipo_provento.errors %} <span class="help-block"> {{ form_provento.tipo_provento.errors.as_text }} </span> {% endif %}
                                                     </div>
@@ -189,7 +221,8 @@
                                                     <label class="control-label col-md-4" style="text-align: left;"> Ação: </label>
                                                     <div class="col-md-8">
                                                         <select class="selectpicker form-control" id="id_provento-{{forloop.counter0}}-acao" name="provento-{{forloop.counter0}}-acao">
-                                                            {% for key, value in form_provento.fields.acao.choices %}<option value="{{ key|cut:'.' }}">{{ value }}</option>{% endfor %}
+                                                            {% for key, value in form_provento.fields.acao.choices %}<option value="{{ key|cut:'.' }}" 
+                                                                {% if key == form_provento.acao.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
                                                         </select>
                                                         {% if form_provento.acao.errors %} <span class="help-block"> {{ form_provento.acao.errors.as_text }} </span> {% endif %}
                                                     </div>
@@ -202,7 +235,8 @@
                                                         <label class="control-label col-md-4" style="text-align: left;"> Ação recebida: </label>
                                                         <div class="col-md-8">
                                                             <select class="selectpicker form-control" id="id_acao_provento-{{forloop.counter0}}-acao_recebida" name="acao_provento-{{forloop.counter0}}-acao_recebida">
-                                                                {% for key, value in form_acao_provento.fields.acao_recebida.choices %}<option value="{{ key|cut:'.' }}">{{ value }}</option>{% endfor %}
+                                                                {% for key, value in form_acao_provento.fields.acao_recebida.choices %}<option value="{{ key|cut:'.' }}" 
+                                                                    {% if key == form_acao_provento.acao_recebida.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
                                                             </select>
                                                             {% if form_acao_provento.acao_recebida.errors %} <span class="help-block"> {{ form_acao_provento.acao_recebida.errors.as_text }} </span> {% endif %}
                                                         </div>
@@ -210,8 +244,8 @@
                                                     <div class="form-group col-md-4 {% if form.data_pagamento_frac.errors %} has-error {% endif %}">
                                                         <label class="control-label col-md-4" style="text-align: left;"> Data de pagamento de frações: </label>
                                                         <div class="col-md-8">
-                                                            <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_acao_provento-{{forloop.counter0}}-data_pagamento_frac" name="acao_provento-{{forloop.counter0}}-data_pagamento_frac" data-date="{{form.data_pagamento_frac.value|default:''}}" data-date-viewmode="years">
-                                                                <input type="text" class="form-control" name="acao_provento-{{forloop.counter0}}-data_pagamento_frac">
+                                                            <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_acao_provento-{{forloop.counter0}}-data_pagamento_frac" name="acao_provento-{{forloop.counter0}}-data_pagamento_frac" data-date="{{form_acao_provento.data_pagamento_frac.value|date:'d/m/Y'|default:''}}" data-date-viewmode="years">
+                                                                <input type="text" class="form-control" name="acao_provento-{{forloop.counter0}}-data_pagamento_frac" value="{{form_acao_provento.data_pagamento_frac.value|date:'d/m/Y'}}">
                                                                 <span class="input-group-btn">
                                                                     <button class="btn default" type="button">
                                                                         <i class="fa fa-calendar"></i>
@@ -224,7 +258,7 @@
                                                     <div class="form-group col-md-4 {% if form_acao_provento.valor_calculo_frac.errors %} has-error {% endif %}">
                                                         <label class="control-label col-md-4"> Valor das frações: </label>
                                                         <div class="col-md-8">
-                                                            <input id="id_acao_provento-{{forloop.counter0}}-valor_calculo_frac" type="text" value="0" name="acao_provento-{{forloop.counter0}}-valor_calculo_frac" class="form-control">
+                                                            <input id="id_acao_provento-{{forloop.counter0}}-valor_calculo_frac" type="text" value="{{form_acao_provento.valor_calculo_frac.value}}" name="acao_provento-{{forloop.counter0}}-valor_calculo_frac" class="form-control">
                                                             {% if form_acao_provento.valor_calculo_frac.errors %} <span class="help-block"> {{ form_acao_provento.valor_calculo_frac.errors.as_text }} </span> {% endif %}
                                                         </div>
                                                     </div>
@@ -253,39 +287,6 @@
     </div>
 </div>
             
-            
-{% comment %}
-{% if pendencia.responsavel.id == request.user.investidor.id %}
-<div class="row-fluid">
-    <div class="box span12">
-        <form method="POST" class="post-form form-horizontal">{% csrf_token %}
-            <div id="forms">
-                <div id="form_criar_proventos">
-                    {{ formset_provento.management_form }}
-                    {{ formset_acao_provento.management_form }}
-                    {% for form_provento in formset_provento.forms %}
-                        <div class="row-fluid">
-                            <div class="span6">
-                                <h3>Provento {{ forloop.counter }}</h3>
-                                {{ form_provento.as_p }}
-                                <div id="provento_em_acao-{{forloop.counter0}}">
-                                {% for form_acao_provento in formset_acao_provento.forms %}
-                                    {% if forloop.counter == forloop.parentloop.counter %}
-                                        {{form_acao_provento.as_p}}
-                                    {% endif %}
-                                {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-{% endif %}
-{% endcomment %}
-
 {% endblock %}
 
 {% block extra_footer %}
@@ -353,6 +354,26 @@ $( document ).ready(function() {
 		} else {
             $('#provento_em_acao-' + id_provento).hide();
 		}
+	});
+	
+	PDFJS.getDocument('{% url "baixar_documento_provento" pendencia.documento.id %}').then(function(pdf) {
+	  // you can now use *pdf* here
+	  pdf.getPage(1).then(function(page) {
+    	  // you can now use *page* here
+		  var scale = 1.75;
+		  var viewport = page.getViewport(scale);
+
+		  var canvas = document.getElementById('canvas');
+		  var context = canvas.getContext('2d');
+		  canvas.height = viewport.height;
+		  canvas.width = viewport.width;
+
+		  var renderContext = {
+		    canvasContext: context,
+		    viewport: viewport
+		  };
+		  page.render(renderContext);
+	   });
 	});
 });
 </script>
