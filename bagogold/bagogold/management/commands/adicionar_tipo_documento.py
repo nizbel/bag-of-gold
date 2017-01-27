@@ -38,13 +38,12 @@ class GeraInfoDocumentoProtocoloThread(Thread):
                 while len(informacoes_rendimentos) > 0:
                     info = informacoes_rendimentos.pop(0)
                     codigo_cvm = info['codigo_cvm']
-                    data_referencia, protocolo, tipo_documento = info['info_doc']
+                    data_referencia, protocolo = info['info_doc']
                     
         #             print protocolo, Empresa.objects.get(codigo_cvm=codigo_cvm), ano
                     if not DocumentoProventoBovespa.objects.filter(empresa__codigo_cvm=codigo_cvm, protocolo=protocolo).exists():
                         documento = DocumentoProventoBovespa()
                         documento.empresa = Empresa.objects.get(codigo_cvm=codigo_cvm)
-                        documento.tipo_documento = tipo_documento
                         documento.url = 'http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=%s' % (protocolo)
                         documento.tipo = 'A'
                         documento.protocolo = protocolo
@@ -67,7 +66,7 @@ class BuscaProventosAcaoThread(Thread):
     def run(self):
         try:
             for ano in range(self.ano_inicial, datetime.date.today().year+1):
-                buscar_proventos_acao(self.codigo_cvm, ano, 0)
+                buscar_proventos_acao(self.codigo_cvm, self.ticker, ano, 0)
         except Exception as e:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
             message = template.format(type(e).__name__, e.args)
@@ -129,7 +128,7 @@ class Command(BaseCommand):
         fim = datetime.datetime.now()
         print (fim-inicio)
         
-def buscar_proventos_acao(codigo_cvm, ano, num_tentativas):
+def buscar_proventos_acao(codigo_cvm, ticker, ano, num_tentativas):
     # Busca todos os proventos
     prov_url = 'http://bvmf.bmfbovespa.com.br/pt-br/mercados/acoes/empresas/ExecutaAcaoConsultaInfoRelevantes.asp?codCVM=%s&ano=%s' % (codigo_cvm, ano)
     req = Request(prov_url)
@@ -148,7 +147,7 @@ def buscar_proventos_acao(codigo_cvm, ano, num_tentativas):
             if num_tentativas == 3:
                 raise URLError('Sistema indisponível')
                 return
-            return buscar_proventos_acao(codigo_cvm, ano, num_tentativas+1)
+            return buscar_proventos_acao(codigo_cvm, ticker, ano, num_tentativas+1)
         inicio = data.find('id="frmConsultaEmpresas"')
         fim = data.find('</form>', inicio)
         data = data[inicio : fim]
@@ -157,7 +156,7 @@ def buscar_proventos_acao(codigo_cvm, ano, num_tentativas):
         divisoes = re.findall('<div class="large-12 columns">(.*?)(?=<div class="large-12 columns">|$)', data, flags=re.IGNORECASE|re.DOTALL)
         for divisao in divisoes:
             # Pega as informações necessárias dentro da divisão, não há como existir mais de uma tupla (data, protocolo)
-            informacao_divisao = re.findall('Data Referência.*?(\d+/\d+/\d+).*?Assunto.*?(?:juro|dividendo|provento|capital social|remuneraç).*?<a href=".*?protocolo=(\d+).*?" target="_blank">(.*?)</a>', divisao, flags=re.IGNORECASE|re.DOTALL)
+            informacao_divisao = re.findall('Data Referência.*?(\d+/\d+/\d+).*?Assunto.*?(?:juro|dividendo|provento|capital social|remuneraç).*?<a href=".*?protocolo=(\d+).*?" target="_blank">.*?</a>', divisao, flags=re.IGNORECASE|re.DOTALL)
             if informacao_divisao:
                 informacoes_rendimentos.append({'info_doc': informacao_divisao[0], 'codigo_cvm': codigo_cvm})
 #         print 'Buscou', Empresa.objects.get(codigo_cvm=codigo_cvm), ano
