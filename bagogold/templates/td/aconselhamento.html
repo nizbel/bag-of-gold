@@ -1,4 +1,5 @@
-    {% extends "base.html" %}
+{% extends "base.html" %}
+{% load l10n %}
 
 {% block content %}
 <div class="row-fluid">
@@ -22,7 +23,7 @@
             {% for operacao in operacoes %}
         <tr>
             <td>{{operacao.nome}}</td>
-            <td>{{operacao.data}}</td>
+            <td>{{operacao.data|unlocalize}}</td>
             <td>{{operacao.quantidade}}</td>
             <td>R${{operacao.valor_atual}}</td>
             <td>R${{operacao.valor_total_atual|floatformat:"2"}}</td>

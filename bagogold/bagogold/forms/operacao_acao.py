@@ -27,20 +27,16 @@ class OperacaoAcaoForm(forms.ModelForm):
                  'consolidada': widgets.Select(choices=ESCOLHAS_CONSOLIDADO),}
         
     class Media:
-        js = ('js/bagogold/acoes.js',)
+        js = ('js/bagogold/calculo_emolumentos.js', 
+              'js/bagogold/acoes.js',)
     
-    def clean(self):
-        data = super(OperacaoAcaoForm, self).clean()
-        preco_unitario = str(data.get('preco_unitario'))
-        preco_unitario = preco_unitario.replace(",", ".")
-        preco_unitario = Decimal(preco_unitario)
-        data['preco_unitario'] = preco_unitario
-
-        return data
-
+    def clean_preco_unitario(self):
+        preco_unitario = Decimal(self.cleaned_data['preco_unitario'])
+        if preco_unitario <= Decimal(0):
+            raise forms.ValidationError('Preço unitário deve ser maior que 0')
+        return preco_unitario
+    
 class UsoProventosOperacaoAcaoForm(forms.ModelForm):
-
-
     class Meta:
         model = UsoProventosOperacaoAcao
         fields = ('qtd_utilizada', )
@@ -58,5 +54,7 @@ class UsoProventosOperacaoAcaoForm(forms.ModelForm):
             qtd_utilizada = qtd_utilizada.replace(",", ".")
             qtd_utilizada = Decimal(qtd_utilizada)
             data['qtd_utilizada'] = qtd_utilizada
+        else:
+            data['qtd_utilizada'] = 0
 
         return data

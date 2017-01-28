@@ -1,0 +1,10 @@
+* 10-18 * * 1-5 /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py preencher_valores_diarios_acao_fii 0
+# * 10-18 * * 1-5 /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py preencher_valores_diarios_acao_fii 30
+59 8,22 * * 1-5 /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py apagar_valores_diarios
+30 9,23 * * 1-5 /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py preencher_historico
+*/15 9-18 * * 1-5 /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py preencher_valores_diarios_td
+50 8,20 * * 1-5 /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py  preencher_historico_ano_atual_td
+30 8,22 * * 1-5 /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py preencher_historico_di_lc
+0 * * * * /home/nizbel/bagogold/db_dump.sh
+0 * * * * /home/bagofgold/bagogold/db_prod_dump.sh
+0 23 12-16 * * /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py buscar_historico_ipca

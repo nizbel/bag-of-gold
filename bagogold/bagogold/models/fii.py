@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII
 from django.db import models
 import datetime
  
 class FII (models.Model):
-    ticker = models.CharField(u'Ticker da ação', max_length=10) 
+    ticker = models.CharField(u'Ticker do FII', max_length=10, unique=True) 
     
+    class Meta:
+        ordering = ['ticker']
+        
     def __unicode__(self):
         return self.ticker
     
@@ -21,7 +25,14 @@ class ProventoFII (models.Model):
     valor_unitario = models.DecimalField(u'Valor unitário', max_digits=13, decimal_places=9)
     data_ex = models.DateField(u'Data EX')
     data_pagamento = models.DateField(u'Data do pagamento')
+    url_documento = models.CharField(u'URL do documento', blank=True, null=True, max_length=200)
     
+    class Meta:
+        unique_together=(('data_ex', 'data_pagamento', 'fii',))
+        
+    def __unicode__(self):
+        return 'R$ %s de %s em %s com data EX %s' % (str(self.valor_unitario), self.fii.ticker, str(self.data_pagamento), str(self.data_ex))
+        
 class OperacaoFII (models.Model):
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)  
     quantidade = models.IntegerField(u'Quantidade') 
@@ -31,19 +42,34 @@ class OperacaoFII (models.Model):
     tipo_operacao = models.CharField(u'Tipo de operação', max_length=1)
     fii = models.ForeignKey('FII')
     consolidada = models.NullBooleanField(u'Consolidada?', blank=True)
+    investidor = models.ForeignKey('Investidor')
      
     def __unicode__(self):
         return '(' + self.tipo_operacao + ') ' + str(self.quantidade) + ' ' + self.fii.ticker + ' a R$' + str(self.preco_unitario)
     
+    def qtd_proventos_utilizada(self):
+        qtd_total = 0
+        for divisao in DivisaoOperacaoFII.objects.filter(operacao=self):
+            if hasattr(divisao, 'usoproventosoperacaofii'):
+                qtd_total += divisao.usoproventosoperacaofii.qtd_utilizada
+        return qtd_total
+        
+    def utilizou_proventos(self):
+        return self.qtd_proventos_utilizada() > 0
+    
 class UsoProventosOperacaoFII (models.Model):
     operacao = models.ForeignKey('OperacaoFII')
     qtd_utilizada = models.DecimalField(u'Quantidade de proventos utilizada', max_digits=11, decimal_places=2, blank=True)
+    divisao_operacao = models.OneToOneField('DivisaoOperacaoFII')
 
+    def __unicode__(self):
+        return 'R$ ' + str(self.qtd_utilizada) + ' em ' + self.divisao_operacao.divisao.nome + ' para ' + unicode(self.divisao_operacao.operacao)
     
 class HistoricoFII (models.Model):
     fii = models.ForeignKey('FII', unique_for_date='data')
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)
     data = models.DateField(u'Data de referência')
+    oficial_bovespa = models.BooleanField(u'Oficial Bovespa?', default=False)
         
 class ValorDiarioFII (models.Model):
     fii = models.ForeignKey('FII')

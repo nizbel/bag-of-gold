@@ -59,6 +59,7 @@
 
 <div class="row-fluid">
     <div class="span4" id="graf_uso_proventos_mes" style="width:800px;height:400px"></div>
+    <div class="span" id="graf_saldo_geral" style="width:220px;height:110px"></div> 
 </div>
 
 <div class="row-fluid">
@@ -192,7 +193,7 @@ $( document ).ready(function() {
     function update() {
         getDataDiaria();
  
-        setTimeout(update, 10000);
+        setTimeout(update, 30000);
     }
  
     update();

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block extra_head %}
-    {{ form.media }}
+    {{ form_operacao_acao.media }}
 {% endblock %}
 
 {% block content %}
@@ -10,7 +10,23 @@
         <div class="box span12">
             <div class="box-content">
                 <form method="POST" class="post-form form-horizontal">{% csrf_token %}
-                    {{ form.as_p }}
+                    <div id="forms">
+                        <label class="radio">
+                            <input name="radioDT" value="0" {% if not operacao_day_trade %}checked=""{% endif %} type="radio">
+                        Operação comum
+                        </label>
+                        <label class="radio">
+                            <input name="radioDT" value="1" {% if operacao_day_trade %}checked=""{% endif %} type="radio">
+                        Operação Daytrade
+                        </label>
+                        {{ form_operacao_acao.as_p }}
+                        <h2>Divisões <button id="add-another" class="btn btn-primary" type="button">+</button></h2>
+                        {{ formset_divisao.management_form }}
+                        {% for form_divisao in formset_divisao %}
+                            <h3>Divisão {{ forloop.counter }}</h3>
+                            {{ form_divisao.as_p }}
+                        {% endfor %}
+                    </div>
                     <div class="form-actions">
                         <button type="submit" name="save" value="1" class="btn">Salvar</button>
                         <button type="submit" name="delete" value="1" class="btn btn-danger">Excluir</button>

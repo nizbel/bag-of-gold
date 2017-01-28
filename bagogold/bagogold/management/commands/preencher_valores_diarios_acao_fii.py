@@ -3,8 +3,11 @@ from bagogold.bagogold.models.acoes import Acao, ValorDiarioAcao
 from bagogold.bagogold.models.fii import FII, ValorDiarioFII
 from bagogold.bagogold.tfs import buscar_ultimos_valores_geral_acao, \
     buscar_ultimos_valores_geral_fii
+from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
 from django.core.management.base import BaseCommand
 from django.utils import timezone
+
+import datetime
 import time
 
 
@@ -17,6 +20,11 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if not options['sleep'] == 0:
             time.sleep(options['sleep'])
+        
+        # Testa se é dia útil
+        if datetime.date.today().weekday() > 4 or verificar_feriado_bovespa(datetime.date.today()):
+            return
+            
         # Acoes
         valores_diarios = buscar_ultimos_valores_geral_acao()
         for k, v in valores_diarios.iteritems():

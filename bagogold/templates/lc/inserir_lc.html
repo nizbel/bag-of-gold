@@ -6,15 +6,15 @@
 
 {% block content %}
     <h1>Inserir Letra de Crédito</h1>
-                <form method="POST" class="post-form form-horizontal">{% csrf_token %}
-                    <div id="forms">
-                        {{ form_lc.as_p }}
-                        {{ formset_porcentagem }}
-                        {{ formset_carencia }}
-                    </div>
-                    <div class="form-actions">
-                        <button type="submit" name="save" value="1" class="btn">Salvar</button>
-                    </div>
-                </form>
+    <form method="POST" class="post-form form-horizontal">{% csrf_token %}
+        <div id="forms">
+            {{ form_lc.as_p }}
+            {{ formset_porcentagem }}
+            {{ formset_carencia }}
+        </div>
+        <div class="form-actions">
+            <button type="submit" name="save" value="1" class="btn">Salvar</button>
+        </div>
+    </form>
     
 {% endblock %}

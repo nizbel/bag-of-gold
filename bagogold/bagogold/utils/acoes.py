@@ -1,24 +1,31 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao, \
-    OperacaoAcao, AcaoProvento
+    OperacaoAcao, AcaoProvento, Acao, Provento
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao
-from decimal import Decimal
+from bagogold.bagogold.models.empresa import Empresa
+from bagogold.bagogold.models.fii import OperacaoFII
+from decimal import Decimal, ROUND_DOWN, ROUND_HALF_DOWN, ROUND_UP
 from django.db.models import Sum, Case, When, IntegerField, F
 from itertools import chain
-from operator import attrgetter
+from operator import attrgetter, itemgetter
+from urllib2 import Request, urlopen, HTTPError, URLError
 import calendar
 import datetime
+import mechanize
+import re
 
-def calcular_operacoes_sem_proventos_por_mes(operacoes):
+def calcular_operacoes_sem_proventos_por_mes(investidor, operacoes):
     """ 
-    Calcula a quantidade de ações compradas sem usar proventos por mes
-    Parâmetros: Queryset de operações ordenadas por data
+    Calcula a quantidade investida em compras de ações sem usar proventos por mes
+    Parâmetros: Investidor, Queryset de operações ordenadas por data
     Retorno: Lista de tuplas (data, quantidade)
     """
     lista_ids_operacoes = list()
     usos_proventos = UsoProventosOperacaoAcao.objects.filter()
     for uso_proventos in usos_proventos:
-        lista_ids_operacoes.append(uso_proventos.operacao.id)
+        lista_ids_operacoes.append(uso_proventos.divisao_operacao.operacao.id)
+    # Remover elementos repetidos
+    lista_ids_operacoes = list(set(lista_ids_operacoes))
     
     anos_meses = list()
     for operacao in operacoes:
@@ -36,7 +43,7 @@ def calcular_operacoes_sem_proventos_por_mes(operacoes):
                 total_mes += (operacao.quantidade * operacao.preco_unitario + \
                 operacao.emolumentos + operacao.corretagem)
             else:
-                qtd_usada = usos_proventos.get(operacao__id=operacao.id).qtd_utilizada
+                qtd_usada = operacao.qtd_proventos_utilizada()
 #                 print 'Com uso de proventos: %s' % (qtd_usada)
                 total_mes += (operacao.quantidade * operacao.preco_unitario + \
                 operacao.emolumentos + operacao.corretagem) - qtd_usada
@@ -45,15 +52,18 @@ def calcular_operacoes_sem_proventos_por_mes(operacoes):
         
     return graf_gasto_op_sem_prov_mes
 
-def calcular_uso_proventos_por_mes():
+def calcular_uso_proventos_por_mes(investidor):
     """ 
     Calcula a quantidade de uso de proventos em operações por mes
+    Parâmetros: Investidor
     Retorno: Lista de tuplas (data, quantidade)
     """
     lista_ids_operacoes = list()
     usos_proventos = UsoProventosOperacaoAcao.objects.filter()
     for uso_proventos in usos_proventos:
         lista_ids_operacoes.append(uso_proventos.operacao.id)
+    # Remover elementos repetidos
+    lista_ids_operacoes = list(set(lista_ids_operacoes))
     
     # Guarda as operações que tiveram uso de proventos
     operacoes = OperacaoAcao.objects.filter(id__in=lista_ids_operacoes)
@@ -69,15 +79,16 @@ def calcular_uso_proventos_por_mes():
         operacoes_mes = operacoes.filter(data__month=mes, data__year=ano)
         total_mes = 0
         for operacao in operacoes_mes:                      
-            total_mes += usos_proventos.get(operacao__id=operacao.id).qtd_utilizada
+            total_mes += operacao.qtd_proventos_utilizada()
         data_formatada = str(calendar.timegm(datetime.date(ano, mes, 15).timetuple()) * 1000)
         graf_uso_proventos_mes += [[data_formatada, float(total_mes)]]
         
     return graf_uso_proventos_mes
 
-def calcular_media_uso_proventos_6_meses():
+def calcular_media_uso_proventos_6_meses(investidor):
     """ 
     Calcula a média de uso de proventos em operações nos últimos 6 meses
+    Parâmetros: Investidor
     Retorno: Lista de tuplas (data, quantidade)
     """
     ultimos_6_meses = list()
@@ -113,10 +124,11 @@ def calcular_media_uso_proventos_6_meses():
         
     return graf_uso_proventos_mes
     
-def calcular_provento_por_mes(proventos, operacoes):
+def calcular_provento_por_mes(investidor, proventos, operacoes):
     """ 
     Calcula a quantidade de proventos em dinheiro recebido por mes
-    Parâmetros: Queryset de proventos ordenados por data
+    Parâmetros: Investidor
+                Queryset de proventos ordenados por data
                 Queryset de operações ordenadas por data
     Retorno: Lista de tuplas (data, quantidade)
     """
@@ -152,13 +164,17 @@ def calcular_provento_por_mes(proventos, operacoes):
         
     return graf_proventos_mes
 
-def calcular_media_proventos_6_meses(proventos, operacoes):
+def calcular_media_proventos_6_meses(investidor, proventos, operacoes):
     """ 
     Calcula a média de proventos recebida nos últimos 6 meses
-    Parâmetros: Queryset de proventos ordenados por data
+    Parâmetros: Investidor
+                Queryset de proventos ordenados por data
                 Queryset de operações ordenadas por data
     Retorno: Lista de tuplas (data, quantidade)
     """
+    # Verifica se há proventos a serem calculados
+    if not proventos:
+        return list()
     
     ultimos_6_meses = list()
     meses_anos = list()
@@ -198,14 +214,48 @@ def calcular_media_proventos_6_meses(proventos, operacoes):
         
     return graf_proventos_mes
 
-def quantidade_acoes_ate_dia(ticker, dia):
+def calcular_lucro_trade_ate_data(investidor, data):
+    """
+    Calcula o lucro acumulado em trades até a data especificada
+    Parâmetros: Investidor
+				Data
+    Retorno: Lucro/Prejuízo
+    """
+    trades = OperacaoAcao.objects.exclude(data__isnull=True).filter(investidor=investidor, tipo_operacao='V', destinacao='T', data__lt=data).order_by('data')
+    lucro_acumulado = 0
+    
+    for operacao in trades:
+        venda_com_taxas = operacao.quantidade * operacao.preco_unitario - operacao.emolumentos - operacao.corretagem
+        
+        # Calcular lucro bruto da operação de venda
+        # Pegar operações de compra
+        # TODO PREPARAR CASO DE MUITAS COMPRAS PARA MUITAS VENDAS
+        qtd_compra = 0
+        gasto_total_compras = 0
+        for operacao_compra in operacao.venda.get_queryset().order_by('compra__preco_unitario'):
+            qtd_compra += min(operacao_compra.compra.quantidade, operacao.quantidade)
+            # TODO NAO PREVÊ MUITAS COMPRAS PARA MUITAS VENDAS
+            gasto_total_compras += (qtd_compra * operacao_compra.compra.preco_unitario + operacao_compra.compra.emolumentos + \
+                                    operacao_compra.compra.corretagem)
+        
+        lucro_bruto_venda = (operacao.quantidade * operacao.preco_unitario - operacao.corretagem - operacao.emolumentos) - \
+            gasto_total_compras
+        lucro_acumulado += lucro_bruto_venda
+        
+    return lucro_acumulado
+
+def quantidade_acoes_ate_dia(investidor, ticker, dia, considerar_trade=False):
     """ 
     Calcula a quantidade de ações até dia determinado
-    Parâmetros: Ticker da ação
+    Parâmetros: Investidor
+                Ticker da ação
                 Dia final
     Retorno: Quantidade de ações
     """
-    operacoes = OperacaoAcao.objects.filter(destinacao='B', acao__ticker=ticker, data__lte=dia).exclude(data__isnull=True).order_by('data')
+    if considerar_trade:
+        operacoes = OperacaoAcao.objects.filter(investidor=investidor, acao__ticker=ticker, data__lte=dia).exclude(data__isnull=True).order_by('data')
+    else:
+        operacoes = OperacaoAcao.objects.filter(investidor=investidor, destinacao='B', acao__ticker=ticker, data__lte=dia).exclude(data__isnull=True).order_by('data')
     # Pega os proventos em ações recebidos por outras ações
     proventos_em_acoes = AcaoProvento.objects.filter(acao_recebida__ticker=ticker, provento__data_ex__lte=dia).exclude(provento__data_ex__isnull=True).order_by('provento__data_ex')
     for provento in proventos_em_acoes:
@@ -228,11 +278,11 @@ def quantidade_acoes_ate_dia(ticker, dia):
             if item.provento.acao.ticker == ticker:
                 qtd_acoes += int(item.provento.valor_unitario * qtd_acoes / 100)
             else:
-                qtd_acoes += int(item.provento.valor_unitario * quantidade_acoes_ate_dia(item.provento.acao.ticker, item.data) / 100)
+                qtd_acoes += int(item.provento.valor_unitario * quantidade_acoes_ate_dia(investidor, item.provento.acao.ticker, item.data, considerar_trade) / 100)
     
     return qtd_acoes
 
-def calcular_qtd_acoes_ate_dia_por_divisao(dia, divisao_id):
+def calcular_qtd_acoes_ate_dia_por_divisao(dia, divisao_id, destinacao='B'):
     """ 
     Calcula a quantidade de ações até dia determinado por divisão
     Parâmetros: Dia final
@@ -242,7 +292,7 @@ def calcular_qtd_acoes_ate_dia_por_divisao(dia, divisao_id):
     operacoes_divisao_id = DivisaoOperacaoAcao.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).values('operacao__id')
     if len(operacoes_divisao_id) == 0:
         return {}
-    operacoes = OperacaoAcao.objects.filter(destinacao='B', id__in=operacoes_divisao_id).exclude(data__isnull=True).order_by('data')
+    operacoes = OperacaoAcao.objects.filter(destinacao=destinacao, id__in=operacoes_divisao_id).exclude(data__isnull=True).order_by('data')
     # Pega os proventos em ações recebidos por outras ações
     proventos_em_acoes = AcaoProvento.objects.filter(provento__acao__in=operacoes.values_list('acao', flat=True), provento__data_ex__lte=dia).exclude(provento__data_ex__isnull=True).order_by('provento__data_ex')
     for provento in proventos_em_acoes:
@@ -282,3 +332,299 @@ def calcular_qtd_acoes_ate_dia_por_divisao(dia, divisao_id):
             del qtd_acoes[key]
     
     return qtd_acoes
+
+def calcular_poupanca_prov_acao_ate_dia(investidor, dia, destinacao='B'):
+    """
+    Calcula a quantidade de proventos provisionada até dia determinado para ações
+    Parâmetros: Investidor
+				Dia da posição de proventos
+				Destinação ('B' ou 'T')
+    Retorno: Quantidade provisionada no dia
+    """
+    operacoes = OperacaoAcao.objects.filter(investidor=investidor, destinacao=destinacao, data__lte=dia).order_by('data')
+    
+    # Remover valores repetidos
+    acoes = list(set(operacoes.values_list('acao', flat=True)))
+
+    proventos = Provento.objects.filter(data_ex__lte=dia, acao__in=acoes).order_by('data_ex')
+    for provento in proventos:
+        provento.data = provento.data_ex
+     
+    lista_conjunta = sorted(chain(operacoes, proventos),
+                            key=attrgetter('data'))
+    
+    total_proventos = Decimal(0)
+    
+    # Guarda as ações correntes para o calculo do patrimonio
+    acoes = {}
+    # Calculos de patrimonio e gasto total
+    for item_lista in lista_conjunta:      
+        if item_lista.acao.ticker not in acoes.keys():
+            acoes[item_lista.acao.ticker] = 0
+            
+        # Verifica se é uma compra/venda
+        if isinstance(item_lista, OperacaoAcao):   
+            # Verificar se se trata de compra ou venda
+            if item_lista.tipo_operacao == 'C':
+                if item_lista.utilizou_proventos():
+                    total_proventos -= item_lista.qtd_proventos_utilizada()
+                acoes[item_lista.acao.ticker] += item_lista.quantidade
+                
+            elif item_lista.tipo_operacao == 'V':
+                acoes[item_lista.acao.ticker] -= item_lista.quantidade
+        
+        # Verifica se é recebimento de proventos
+        elif isinstance(item_lista, Provento):
+            if item_lista.data_pagamento <= datetime.date.today() and acoes[item_lista.acao.ticker] > 0:
+                if item_lista.tipo_provento in ['D', 'J']:
+                    total_recebido = acoes[item_lista.acao.ticker] * item_lista.valor_unitario
+                    if item_lista.tipo_provento == 'J':
+                        total_recebido = total_recebido * Decimal(0.85)
+                    total_proventos += total_recebido
+                    
+                elif item_lista.tipo_provento == 'A':
+                    provento_acao = item_lista.acaoprovento_set.all()[0]
+                    if provento_acao.acao_recebida.ticker not in acoes.keys():
+                        acoes[provento_acao.acao_recebida.ticker] = 0
+                    acoes_recebidas = int((acoes[item_lista.acao.ticker] * item_lista.valor_unitario ) / 100 )
+                    item_lista.total_gasto = acoes_recebidas
+                    acoes[provento_acao.acao_recebida.ticker] += acoes_recebidas
+                    if provento_acao.valor_calculo_frac > 0:
+                        if provento_acao.data_pagamento_frac <= datetime.date.today():
+                            total_proventos += (((acoes[item_lista.acao.ticker] * item_lista.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
+    
+    return total_proventos.quantize(Decimal('0.01'))
+
+def calcular_poupanca_prov_acao_ate_dia_por_divisao(dia, divisao, destinacao='B'):
+    """
+    Calcula a quantidade de proventos provisionada até dia determinado para uma divisão para ações
+    Parâmetros: Dia da posição de proventos, divisão escolhida, destinação ('B' ou 'T')
+    Retorno: Quantidade provisionada no dia
+    """
+    operacoes_divisao = DivisaoOperacaoAcao.objects.filter(divisao=divisao, operacao__destinacao=destinacao, operacao__data__lte=dia).values_list('operacao__id', flat=True)
+    
+    operacoes = OperacaoAcao.objects.filter(id__in=operacoes_divisao).order_by('data')
+
+    proventos = Provento.objects.filter(data_ex__lte=dia).order_by('data_ex')
+    for provento in proventos:
+        provento.data = provento.data_ex
+     
+    lista_conjunta = sorted(chain(operacoes, proventos),
+                            key=attrgetter('data'))
+    
+    total_proventos = Decimal(0)
+    
+    # Guarda as ações correntes para o calculo do patrimonio
+    acoes = {}
+    # Calculos de patrimonio e gasto total
+    for item_lista in lista_conjunta:      
+        if item_lista.acao.ticker not in acoes.keys():
+            acoes[item_lista.acao.ticker] = 0
+            
+        # Verifica se é uma compra/venda
+        if isinstance(item_lista, OperacaoAcao):   
+            # Verificar se se trata de compra ou venda
+            if item_lista.tipo_operacao == 'C':
+                if item_lista.utilizou_proventos():
+                    total_proventos -= item_lista.qtd_proventos_utilizada()
+                acoes[item_lista.acao.ticker] += item_lista.quantidade
+                
+            elif item_lista.tipo_operacao == 'V':
+                acoes[item_lista.acao.ticker] -= item_lista.quantidade
+        
+        # Verifica se é recebimento de proventos
+        elif isinstance(item_lista, Provento):
+            if item_lista.data_pagamento <= datetime.date.today() and acoes[item_lista.acao.ticker] > 0:
+                if item_lista.tipo_provento in ['D', 'J']:
+                    total_recebido = acoes[item_lista.acao.ticker] * item_lista.valor_unitario
+                    if item_lista.tipo_provento == 'J':
+                        total_recebido = total_recebido * Decimal(0.85)
+                    total_proventos += total_recebido
+                    
+                elif item_lista.tipo_provento == 'A':
+                    provento_acao = item_lista.acaoprovento_set.all()[0]
+                    if provento_acao.acao_recebida.ticker not in acoes.keys():
+                        acoes[provento_acao.acao_recebida.ticker] = 0
+                    acoes_recebidas = int((acoes[item_lista.acao.ticker] * item_lista.valor_unitario ) / 100 )
+                    item_lista.total_gasto = acoes_recebidas
+                    acoes[provento_acao.acao_recebida.ticker] += acoes_recebidas
+                    if provento_acao.valor_calculo_frac > 0:
+                        if provento_acao.data_pagamento_frac <= datetime.date.today():
+                            total_proventos += (((acoes[item_lista.acao.ticker] * item_lista.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
+    
+    return total_proventos.quantize(Decimal('0.01'))
+
+
+def buscar_proventos_acao(codigo_cvm, ticker, num_tentativas):
+    """
+    Busca proventos de ações no site da Bovespa
+    """
+    # Busca os dados dos proventos em 2 URLs da bovespa
+    # Proventos em dinheiro
+    prov_dinheiro_url = 'http://bvmf.bmfbovespa.com.br/cias-listadas/empresas-listadas/ResumoEventosCorporativos.aspx?codigoCvm=%s&tab=3.0&idioma=pt-br' % (codigo_cvm)
+    # Usar mechanize para simular clique do usuario no javascript
+    br = mechanize.Browser()
+    br.addheaders = [('User-agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1')]
+    response = br.open(prov_dinheiro_url)
+    
+    html = response.read()
+
+    br.select_form(nr=0)
+    br.set_all_readonly(False)
+    mnext = re.search("""<a.*?href=\"javascript:__doPostBack\('(.*?)','(.*?)'\)\".*?id=\"ctl00_contentPlaceHolderConteudo_MenuEmpresasListadas1_tabMenuEmpresa_tabEventosCorporativos_tabProventosDinheiro\".*?>\*?Proventos em dinheiro""", html, re.IGNORECASE)
+    if not mnext:
+        print 'not found'
+        return
+    br["__EVENTTARGET"] = mnext.group(1)
+    br["__EVENTARGUMENT"] = mnext.group(2)
+    br.find_control("ctl00$botaoNavegacaoVoltar").disabled = True
+    response = br.submit()
+    html = response.read()
+    if 'Sistema indisponivel' in html:
+        if num_tentativas == 3:
+            raise URLError('Sistema indisponível')
+            return
+        return buscar_proventos_acao(codigo_cvm, ticker, num_tentativas+1)
+    
+    inicio = html.find('<tbody>')
+#         print 'inicio', inicio
+    fim = html.find('</tbody>', inicio)
+    string_importante = (html[inicio:fim])
+    proventos_dinheiro_texto = re.findall('<tr.*?>(.*?)<\/tr>', string_importante, flags=re.DOTALL)
+    proventos_dinheiro = list()
+    for texto_provento in proventos_dinheiro_texto:
+        provento = re.findall('<td.*?>(.*?)<\/td>', texto_provento)
+        if provento:
+            provento[5] = datetime.datetime.strptime(provento[5],'%d/%m/%Y').date() + datetime.timedelta(days=1)
+            while provento[5].weekday() > 4:
+                provento[5] += datetime.timedelta(days=1)
+            proventos_dinheiro.append(provento)
+    proventos_dinheiro = sorted(proventos_dinheiro, key=itemgetter(5))
+#     for provento_dinheiro in proventos_dinheiro:
+#         print provento_dinheiro
+        
+    # Busca todos os proventos
+    prov_url = 'http://bvmf.bmfbovespa.com.br/cias-listadas/empresas-listadas/ResumoEventosCorporativos.aspx?codigoCvm=%s&tab=3.0&idioma=pt-br' % (codigo_cvm)
+    req = Request(prov_url)
+    try:
+        response = urlopen(req)
+    except HTTPError as e:
+        print 'The server couldn\'t fulfill the request.'
+        print 'Error code: ', e.code
+    except URLError as e:
+        print 'We failed to reach a server.'
+        print 'Reason: ', e.reason
+    else:
+        data = response.read()
+        if 'Sistema indisponivel' in data:
+            if num_tentativas == 3:
+                raise URLError('Sistema indisponível')
+                return
+            return buscar_proventos_acao(codigo_cvm, ticker, num_tentativas+1)
+        inicio = data.find('<div id="divDividendo">')
+#         print 'inicio', inicio
+        fim = data.find('<div id="divSubscricao">', inicio)
+        string_importante = (data[inicio:fim])
+        proventos = re.findall('<tr.*?>(.*?)<\/tr>', string_importante, flags=re.DOTALL)
+        contador = 1
+        total = 0
+        for provento in proventos:
+            texto_provento = re.findall('<td.*?>(.*?)<\/td>', provento)
+            texto_provento += re.findall('<span.*?>(.*?)<\/span>', provento)
+            if texto_provento:
+#                 print texto_provento
+                # Criar provento
+                data_ex = datetime.datetime.strptime(texto_provento[2],'%d/%m/%Y').date() + datetime.timedelta(days=1)
+                # Incrementa data até que não seja fim de semana
+                while data_ex.weekday() > 4:
+                    data_ex += datetime.timedelta(days=1)
+                    
+                # Preparar data pagamento (pode ser vazia)
+                try:
+                    data_pagamento = datetime.datetime.strptime(texto_provento[6],'%d/%m/%Y').date()
+                except:
+                    data_pagamento = None
+                provento = Provento(acao=Acao.objects.get(ticker=ticker), valor_unitario=Decimal(texto_provento[3].replace(',', '.')), tipo_provento=texto_provento[0][0], \
+                                    data_pagamento=data_pagamento, observacao=texto_provento[7], data_ex=data_ex)
+                
+#                 print provento
+                for provento_dinheiro in proventos_dinheiro:
+                    if provento_dinheiro[5] == data_ex:
+#                             print provento_dinheiro
+                        valor = Decimal(quantidade_acoes_ate_dia(ticker, datetime.datetime.strptime(texto_provento[2],'%d/%m/%Y').date(), True))
+                        if valor > 0:
+                            if (provento_dinheiro[4][0] == 'R'):
+                                valor *= Decimal(provento_dinheiro[2].replace(',', '.')) * Decimal(0.775)
+                                print valor, valor.quantize(Decimal('0.01'), rounding=ROUND_HALF_DOWN)
+                                total += valor.quantize(Decimal('0.01'), rounding=ROUND_HALF_DOWN)
+                            elif (provento_dinheiro[4][0] == 'J'):
+                                valor *= Decimal(provento_dinheiro[2].replace(',', '.')) * Decimal(0.85)
+                                texto_valor = str(valor)
+#                                 print len(texto_valor[texto_valor.find('.')+1:]), texto_valor[texto_valor.find('.')+1:], texto_valor[texto_valor.find('.')+1:][1]
+                                if len(texto_valor[texto_valor.find('.')+1:]) > 2 and int(texto_valor[texto_valor.find('.')+1:][1]) % 2 != 0:
+                                    print valor, valor.quantize(Decimal('0.01'), rounding=ROUND_HALF_DOWN)
+                                    total += valor.quantize(Decimal('0.01'), rounding=ROUND_HALF_DOWN)
+                                else:
+                                    print valor, valor.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
+                                    total += valor.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
+                            else:
+                                valor *= Decimal(provento_dinheiro[2].replace(',', '.'))
+                                print valor, valor.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
+                                total += valor.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
+                            # Remover elemento da lista (evitar duplicidade)
+                            proventos_dinheiro = [x for x in proventos_dinheiro if x[5] != data_ex]
+                contador += 1
+    print ticker, total
+                    
+def preencher_codigos_cvm():
+    """
+    Preenche códigos bvmf para as ações a partir das urls na listagem de empresas
+    """
+    acao_url = 'http://bvmf.bmfbovespa.com.br/cias-listadas/empresas-listadas/BuscaEmpresaListada.aspx?idioma=pt-br'
+    req = Request(acao_url)
+    try:
+        response = urlopen(req)
+    except HTTPError as e:
+        print 'The server couldn\'t fulfill the request.'
+        print 'Error code: ', e.code
+    except URLError as e:
+        print 'We failed to reach a server.'
+        print 'Reason: ', e.reason
+    else:
+        data = response.read()
+        if 'Sistema indisponivel' in data:
+            return preencher_codigos_cvm()
+        inicio = data.find('<div class="inline-list-letra">')
+        fim = data.find('</div>', inicio)
+        string_importante = (data[inicio:fim])
+        letras = re.findall('<a.*?>(.*?)<\/a>', string_importante, flags=re.DOTALL)
+#         print letras
+        # Buscar empresas
+        empresas = Empresa.objects.all()
+        for letra in letras:
+            letra_url = 'http://bvmf.bmfbovespa.com.br/cias-listadas/empresas-listadas/BuscaEmpresaListada.aspx?Letra=%s&idioma=pt-br' % letra
+            req = Request(letra_url)
+            conectou = False
+            while not conectou:
+                try:
+                    response = urlopen(req)
+                except HTTPError as e:
+                    print 'The server couldn\'t fulfill the request.'
+                    print 'Error code: ', e.code
+                except URLError as e:
+                    print 'We failed to reach a server.'
+                    print 'Reason: ', e.reason
+                else:
+                    data = response.read()
+                    if 'Sistema indisponivel' not in data:
+                        conectou = True
+            inicio = data.find('<tbody>')
+            fim = data.find('</tbody>', inicio)
+            string_importante = (data[inicio:fim])
+            urls = re.findall('<a.*?codigoCvm=(.*?)\">(.*?)<\/a>', string_importante, flags=re.DOTALL)
+            for codigo, nome in urls:
+                if nome in empresas.values_list('nome_pregao', flat=True):
+                    empresa = empresas.filter(nome_pregao=nome).order_by('-id')[0]
+                    empresa.codigo_cvm = codigo
+                    empresa.save()
+#                     print 'Salvou empresa', empresa

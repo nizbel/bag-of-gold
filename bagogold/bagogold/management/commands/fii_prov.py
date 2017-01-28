@@ -25,7 +25,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # O incremento mostra quantas threads correrão por vez
         incremento = 16
-        fiis = FII.objects.filter(ticker__in=['BBPO11','RNGO11','HGRE11','BRCR11'])
+        fiis = FII.objects.filter(ticker__in=['BRCR11'])
         contador = 0
         while contador <= len(fiis):
             threads = []

@@ -5,18 +5,12 @@
 {% endblock %}
 
 {% block content %}
-    <h1>Inserir divisão</h1>
-    <div class="row-fluid">
-        <div class="box span12">
-            <div class="box-content">
-                <form method="POST" class="post-form form-horizontal">{% csrf_token %}
-                    {{ form.as_p }}
-                    <div class="form-actions">
-                        <button type="submit" class="btn">Salvar</button>
-                    </div>
-                </form>
-            </div>
+    <h1>Inserir transferência</h1>
+    <form method="POST" class="post-form form-horizontal">{% csrf_token %}
+        {{ form.as_p }}
+        <div class="form-actions">
+            <button type="submit" class="btn">Salvar</button>
         </div>
-    </div>
+    </form>
 {% endblock %}
 

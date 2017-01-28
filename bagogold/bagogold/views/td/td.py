@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoTDFormSet
 from bagogold.bagogold.forms.td import OperacaoTituloForm
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD, Divisao
 from bagogold.bagogold.models.fii import FII
-from bagogold.bagogold.models.lc import LetraCredito, HistoricoTaxaDI,\
+from bagogold.bagogold.models.lc import LetraCredito, HistoricoTaxaDI, \
     HistoricoPorcentagemLetraCredito
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
     ValorDiarioTitulo, Titulo
@@ -11,22 +11,35 @@ from bagogold.bagogold.testTD import buscar_valores_diarios
 from bagogold.bagogold.utils.fii import \
     calcular_rendimento_proventos_fii_12_meses, \
     calcular_variacao_percentual_fii_por_periodo
-from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia_por_titulo, \
-    calcular_imposto_venda_td
+from bagogold.bagogold.utils.td import calcular_imposto_venda_td, \
+    buscar_data_valor_mais_recente, quantidade_titulos_ate_dia, \
+    quantidade_titulos_ate_dia_por_titulo
 from copy import deepcopy
 from decimal import Decimal
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
+from django.http.response import HttpResponse
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 import calendar
 import copy
 import datetime
+import json
 import math
 
+
+def buscar_titulos_validos_na_data(request):
+    data = datetime.datetime.strptime(request.GET['dataEscolhida'], '%d/%m/%Y').date()
+    tipo_operacao = request.GET['tipoOperacao']
+    if tipo_operacao == 'C':
+        lista_titulos_validos = list(Titulo.objects.filter(data_vencimento__gt=data).values_list('id', flat=True))
+    else:
+        lista_titulos_validos = list(quantidade_titulos_ate_dia(request.user.investidor, data).keys())
+    return HttpResponse(json.dumps(lista_titulos_validos), content_type = "application/json") 
 
 @login_required
 def aconselhamento_td(request):
@@ -34,10 +47,12 @@ def aconselhamento_td(request):
     class Object():
         pass
     
+    investidor = request.user.investidor
+    
     titulos = {}
     titulos_vendidos = {}
     
-    for operacao in OperacaoTitulo.objects.filter().order_by('data'):
+    for operacao in OperacaoTitulo.objects.filter(investidor=investidor).order_by('data'):
         # Verificar se se trata de compra
         if operacao.tipo_operacao == 'C':
             if operacao.titulo.id not in titulos.keys():
@@ -49,6 +64,7 @@ def aconselhamento_td(request):
             compra_titulo.data = operacao.data
             compra_titulo.preco_unitario = operacao.preco_unitario 
             compra_titulo.total_gasto = operacao.quantidade * operacao.preco_unitario
+            compra_titulo.data_vencimento = operacao.titulo.data_vencimento
             titulos[operacao.titulo.id].append(compra_titulo)
 #             valor_atual = ValorDiarioTitulo.objects.filter(titulo__id=operacao.titulo.id).order_by('-data_hora')[0].preco_venda
 #             print '%s comprado a %s valendo %s (%s (%s%%) de lucro)' % (operacao.titulo.nome(), operacao.preco_unitario, valor_atual, \
@@ -97,20 +113,24 @@ def aconselhamento_td(request):
                 operacao.valor_atual = HistoricoTitulo.objects.filter(titulo__id=titulo).order_by('-data')[0].preco_venda
             operacao.variacao = operacao.valor_atual - operacao.preco_unitario
             operacao.variacao_percentual = operacao.variacao / operacao.preco_unitario * 100
+            # Definir quantidade de dias já passados, mínimo de 1 considerando uma operação de hoje
+            qtd_dias = max((datetime.date.today() - operacao.data).days, 1)
             # Pegar a taxa diária
-            operacao.variacao_percentual_mensal = math.pow(1 + operacao.variacao_percentual/100, float(1)/(datetime.date.today() - operacao.data).days) - 1
+            operacao.variacao_percentual_mensal = math.pow(1 + operacao.variacao_percentual/100, float(1)/qtd_dias) - 1
             # Pegar a taxa mensal
             operacao.variacao_percentual_mensal = (math.pow(1 + operacao.variacao_percentual_mensal, 30) - 1) * 100
             # Pegar a taxa anual
             operacao.variacao_percentual_anual = (math.pow(1 + operacao.variacao_percentual_mensal/100, 12) - 1) * 100
             operacao.valor_total_atual = operacao.valor_atual * operacao.quantidade
             if operacao.valor_total_atual > operacao.total_gasto:
-                operacao.lucro = operacao.valor_total_atual - operacao.total_gasto - calcular_imposto_venda_td((datetime.date.today() - operacao.data).days, operacao.valor_total_atual, operacao.valor_total_atual - operacao.total_gasto)
+                operacao.lucro = operacao.valor_total_atual - operacao.total_gasto - calcular_imposto_venda_td(qtd_dias, operacao.valor_total_atual, operacao.valor_total_atual - operacao.total_gasto)
                 operacao.lucro_percentual = operacao.lucro / operacao.total_gasto * 100
             else:
                 operacao.lucro = operacao.valor_total_atual - operacao.total_gasto
                 operacao.lucro_percentual = operacao.lucro / operacao.total_gasto * 100
-            valor_esperado = (Decimal(1000) * operacao.quantidade) - calcular_imposto_venda_td((datetime.date.today() - operacao.data).days, Decimal(1000) * operacao.quantidade, \
+                
+            # Valor esperado é a quantidade que ainda vai render caso investidor espere até o dia do vencimento
+            valor_esperado = (Decimal(1000) * operacao.quantidade) - calcular_imposto_venda_td(qtd_dias, Decimal(1000) * operacao.quantidade, \
                                                                                                (Decimal(1000) * operacao.quantidade) - operacao.total_gasto) - (operacao.total_gasto + operacao.lucro)
             qtd_dias_esperado = (Titulo.objects.get(id=titulo).data_vencimento - datetime.date.today()).days
             rendimento_esperado = math.pow(1 + (valor_esperado / (operacao.total_gasto + operacao.lucro) * 100)/100, float(1)/qtd_dias_esperado) - 1
@@ -120,7 +140,7 @@ def aconselhamento_td(request):
     # Data de 12 meses atrás
     data_12_meses = datetime.date.today() - datetime.timedelta(days=365)
     
-    letras_credito = list(LetraCredito.objects.all())
+    letras_credito = list(LetraCredito.objects.filter(investidor=investidor))
     # Comparativo com letras de crédito
     for lc in letras_credito:
         lc.rendimento_atual =  lc.porcentagem_di_atual() * HistoricoTaxaDI.objects.filter(data__isnull=False).order_by('-data')[0].taxa / 100
@@ -146,7 +166,7 @@ def aconselhamento_td(request):
         fii.rendimento_prov = calcular_rendimento_proventos_fii_12_meses(fii)
         if fii.rendimento_prov > 0:
             fii.variacao_12_meses = calcular_variacao_percentual_fii_por_periodo(fii, data_12_meses, datetime.date.today())
-            print type(fii.rendimento_prov)
+#             print type(fii.rendimento_prov)
     fiis = [fii for fii in fiis if fii.rendimento_prov > 0]
     fiis.sort(key=lambda x: x.rendimento_prov, reverse=True)
     
@@ -154,48 +174,71 @@ def aconselhamento_td(request):
 
 @login_required
 def editar_operacao_td(request, id):
+    investidor = request.user.investidor
+    
+    operacao_td = OperacaoTitulo.objects.get(pk=id)
+    # Verifica se a operação é do investidor, senão, jogar erro de permissão
+    if operacao_td.investidor != investidor:
+        raise PermissionDenied
+    
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoTitulo, DivisaoOperacaoTD, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoTDFormSet)
-    operacao_td = OperacaoTitulo.objects.get(pk=id)
+    
+    # Testa se investidor possui mais de uma divisão
+    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
     
     if request.method == 'POST':
         if request.POST.get("save"):
-            form_operacao_td = OperacaoTituloForm(request.POST, instance=operacao_td)
-            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_td)
+            form_operacao_td = OperacaoTituloForm(request.POST, instance=operacao_td, investidor=investidor)
+            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_td, investidor=investidor) if varias_divisoes else None
             
             if form_operacao_td.is_valid():
-                if formset_divisao.is_valid():
+                if varias_divisoes:
+                    if formset_divisao.is_valid():
+                        operacao_td.save()
+                        formset_divisao.save()
+                        messages.success(request, 'Operação alterada com sucesso')
+                        return HttpResponseRedirect(reverse('historico_td'))
+                    for erro in formset_divisao.non_form_errors():
+                        messages.error(request, erro)
+                
+                else:
                     operacao_td.save()
-                    formset_divisao.save()
-                    messages.success(request, 'Operação alterada com sucesso')
+                    divisao_operacao = DivisaoOperacaoTD.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_td)
+                    divisao_operacao.quantidade = operacao_td.quantidade
+                    divisao_operacao.save()
+                    messages.success(request, 'Operação editada com sucesso')
                     return HttpResponseRedirect(reverse('historico_td'))
             for erros in form_operacao_td.errors.values():
-                for erro in erros:
-                    messages.error(request, erro)
-            for erro in formset_divisao.non_form_errors():
-                messages.error(request, erro)
-            return render_to_response('td/editar_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao }, 
-                                      context_instance=RequestContext(request))
+                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
+                    messages.error(request, erro.message)
+                    
         elif request.POST.get("delete"):
-            divisao_td = DivisaoOperacaoTD.objects.filter(operacao=operacao_td)
-            for divisao in divisao_td:
-                divisao.delete()
-            operacao_td.delete()
-            messages.success(request, 'Operação apagada com sucesso')
-            return HttpResponseRedirect(reverse('historico_td'))
+            # Verifica se, em caso de compra, a quantidade de títulos do investidor não fica negativa
+            if operacao_td.tipo_operacao == 'C' and quantidade_titulos_ate_dia_por_titulo(investidor, operacao_td.titulo.id, datetime.date.today()) - operacao_td.quantidade < 0:
+                messages.error(request, 'Operação de compra não pode ser apagada pois quantidade atual para o título %s seria negativa' % (operacao_td.titulo))
+            else:
+                divisao_td = DivisaoOperacaoTD.objects.filter(operacao=operacao_td)
+                for divisao in divisao_td:
+                    divisao.delete()
+                operacao_td.delete()
+                messages.success(request, 'Operação apagada com sucesso')
+                return HttpResponseRedirect(reverse('historico_td'))
 
     else:
-        form_operacao_td = OperacaoTituloForm(instance=operacao_td)
-        formset_divisao = DivisaoFormSet(instance=operacao_td)
+        form_operacao_td = OperacaoTituloForm(instance=operacao_td, investidor=investidor)
+        formset_divisao = DivisaoFormSet(instance=operacao_td, investidor=investidor)
             
-    return render_to_response('td/editar_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao }, 
+    return render_to_response('td/editar_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes}, 
                               context_instance=RequestContext(request))   
 
     
 @login_required
 def historico_td(request):
-    operacoes = OperacaoTitulo.objects.exclude(data__isnull=True).order_by('data')  
+    investidor = request.user.investidor
+    
+    operacoes = OperacaoTitulo.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
     for operacao in operacoes:
         operacao.valor_unitario = operacao.preco_unitario
     
@@ -219,20 +262,21 @@ def historico_td(request):
                 item.taxa_bvmf + item.taxa_custodia)
                 total_gasto += item.total
                 qtd_titulos[item.titulo] += item.quantidade
-                graf_gasto_total += [[str(calendar.timegm(item.data.timetuple()) * 1000), float(-total_gasto)]]
                 total_patrimonio = 0
                 qtd_total_titulos = 0
                 for titulo in qtd_titulos.keys():
                     qtd_total_titulos += qtd_titulos[titulo]
                     if not item.data == datetime.date.today():
-                        total_patrimonio += (qtd_titulos[titulo] * HistoricoTitulo.objects.get(data=item.data, titulo=titulo).preco_venda)
+                        total_patrimonio += (qtd_titulos[titulo] * HistoricoTitulo.objects.filter(data__lte=item.data, titulo=titulo).order_by('-data')[0].preco_venda)
                     else:
-                        for valor_diario in buscar_valores_diarios():
-                            if valor_diario.titulo == titulo:
-                                total_patrimonio += (qtd_titulos[titulo] * valor_diario.preco_venda)
-                                break
-                graf_patrimonio += [[str(calendar.timegm(item.data.timetuple()) * 1000), float(total_patrimonio)]]
-                graf_total_venc += [[str(calendar.timegm(item.data.timetuple()) * 1000), float(qtd_total_titulos * 1000)]]
+                        # Buscar valor mais atual de valor diário, se existir
+                        if ValorDiarioTitulo.objects.filter(titulo=item.titulo, data_hora__date=item.data).order_by('-data_hora'):
+                            valor_diario = ValorDiarioTitulo.objects.filter(titulo=item.titulo, data_hora__date=item.data).order_by('-data_hora')[0]
+                            total_patrimonio += (qtd_titulos[titulo] * valor_diario.preco_venda)
+                            break
+                        else:
+                            # Se não há valor diário, buscar histórico mais atual mesmo
+                            total_patrimonio += (qtd_titulos[titulo] * HistoricoTitulo.objects.filter(titulo=titulo).order_by('-data')[0].preco_venda)
                 
             elif item.tipo_operacao == 'V':
                 item.tipo = 'Venda'
@@ -240,24 +284,57 @@ def historico_td(request):
                 item.taxa_bvmf - item.taxa_custodia)
                 total_gasto += item.total
                 qtd_titulos[item.titulo] -= item.quantidade
-                graf_gasto_total += [[str(calendar.timegm(item.data.timetuple()) * 1000), float(-total_gasto)]]
                 total_patrimonio = 0
                 qtd_total_titulos = 0
                 for titulo in qtd_titulos.keys():
                     qtd_total_titulos += qtd_titulos[titulo]
                     if item.data is not datetime.date.today():
-                        total_patrimonio += (qtd_titulos[titulo] * HistoricoTitulo.objects.get(data=item.data, titulo=titulo).preco_venda)
+                        total_patrimonio += (qtd_titulos[titulo] * HistoricoTitulo.objects.filter(data__lte=item.data, titulo=titulo).order_by('-data')[0].preco_venda)
                     else:
-                        for valor_diario in buscar_valores_diarios():
-                            if valor_diario.titulo == titulo:
-                                total_patrimonio += (qtd_titulos[titulo] * valor_diario.preco_venda)
-                                break
-                graf_patrimonio += [[str(calendar.timegm(item.data.timetuple()) * 1000), float(total_patrimonio)]]
-                graf_total_venc += [[str(calendar.timegm(item.data.timetuple()) * 1000), float(qtd_total_titulos * 1000)]]
+                        # Buscar valor mais atual de valor diário, se existir
+                        if ValorDiarioTitulo.objects.filter(titulo=item.titulo, data_hora__date=item.data).order_by('-data_hora'):
+                            valor_diario = ValorDiarioTitulo.objects.filter(titulo=item.titulo, data_hora__date=item.data).order_by('-data_hora')[0]
+                            total_patrimonio += (qtd_titulos[titulo] * valor_diario.preco_venda)
+                            break
+                        else:
+                            # Se não há valor diário, buscar histórico mais atual mesmo
+                            total_patrimonio += (qtd_titulos[titulo] * HistoricoTitulo.objects.filter(titulo=titulo).order_by('-data')[0].preco_venda)
+        
+        # Formatar data para inserir nos gráficos
+        data_formatada = str(calendar.timegm(item.data.timetuple()) * 1000)        
+        # Patrimônio
+        # Verifica se altera ultima posicao do grafico ou adiciona novo registro
+        if len(graf_patrimonio) > 0 and graf_patrimonio[-1][0] == data_formatada:
+            graf_patrimonio[len(graf_patrimonio)-1][1] = float(total_patrimonio)
+        else:
+            graf_patrimonio += [[data_formatada, float(total_patrimonio)]]
+            
+        # Total gasto
+        if len(graf_gasto_total) > 0 and graf_gasto_total[-1][0] == data_formatada:
+            graf_gasto_total[len(graf_gasto_total)-1][1] = float(-total_gasto)
+        else:
+            graf_gasto_total += [[data_formatada, float(-total_gasto)]]
+            
+        # Calcular o total a receber no vencimento com base nas quantidades
+        total_vencimento_atual = 0
+        for titulo in qtd_titulos.keys():
+            if qtd_titulos[titulo] > 0:
+#                 print titulo, titulo.valor_vencimento()
+                total_vencimento_atual += qtd_titulos[titulo] * titulo.valor_vencimento(data=item.data)
+        # Verifica se altera ultima posicao do grafico ou adiciona novo registro
+        if len(graf_total_venc) > 0 and graf_total_venc[-1][0] == data_formatada:
+            graf_total_venc[len(graf_total_venc)-1][1] = float(total_vencimento_atual)
+        else:
+            graf_total_venc += [[data_formatada, float(total_vencimento_atual)]]
             
     # Adicionar valor mais atual para todos os gráficos
-    data_mais_atual = datetime.datetime.now()
-    graf_gasto_total += [[str(calendar.timegm(data_mais_atual.timetuple()) * 1000), float(-total_gasto)]]
+    data_mais_atual_formatada = str(calendar.timegm(datetime.datetime.now().timetuple()) * 1000)  
+    # Total gasto
+    if len(graf_gasto_total) > 0 and graf_gasto_total[-1][0] == data_mais_atual_formatada:
+        graf_gasto_total[len(graf_gasto_total)-1][1] = float(-total_gasto)
+    else:
+        graf_gasto_total += [[data_mais_atual_formatada, float(-total_gasto)]]
+        
     patrimonio_atual = 0
     total_vencimento_atual = 0
     for titulo in qtd_titulos.keys():
@@ -271,16 +348,28 @@ def historico_td(request):
                 patrimonio_atual += (qtd_titulos[titulo] * valores_diarios_titulo[0].preco_venda)
             
             # Calcular o total a receber no vencimento com base nas quantidades
-            total_vencimento_atual += qtd_titulos[titulo] * 1000
-    graf_patrimonio += [[str(calendar.timegm(data_mais_atual.timetuple()) * 1000), float(patrimonio_atual)]]
-    graf_total_venc += [[str(calendar.timegm(data_mais_atual.timetuple()) * 1000), float(total_vencimento_atual)]]
+            total_vencimento_atual += qtd_titulos[titulo] * titulo.valor_vencimento()
+    # Patrimônio
+    if len(graf_patrimonio) > 0 and graf_patrimonio[-1][0] == data_mais_atual_formatada:
+        graf_patrimonio[len(graf_patrimonio)-1][1] = float(patrimonio_atual)
+    else:
+        graf_patrimonio += [[data_mais_atual_formatada, float(patrimonio_atual)]]
+        
+    # Total vencimento
+    if len(graf_total_venc) > 0 and graf_total_venc[-1][0] == data_mais_atual_formatada:
+        graf_total_venc[len(graf_total_venc)-1][1] = float(total_vencimento_atual)
+    else:
+        graf_total_venc += [[data_mais_atual_formatada, float(total_vencimento_atual)]]
         
     dados = {}
     dados['total_venc_atual'] = total_vencimento_atual
     dados['total_gasto'] = -total_gasto
     dados['patrimonio'] = patrimonio_atual
     dados['lucro'] = patrimonio_atual + total_gasto
-    dados['lucro_percentual'] = (patrimonio_atual + total_gasto) / -total_gasto * 100
+    if total_gasto == 0:
+        dados['lucro_percentual'] = 0
+    else:
+        dados['lucro_percentual'] = (patrimonio_atual + total_gasto) / -total_gasto * 100
     
     # Pegar valores correntes dos títulos no site do Tesouro
     
@@ -289,35 +378,54 @@ def historico_td(request):
                                                      'graf_gasto_total': graf_gasto_total, 'graf_patrimonio': graf_patrimonio},
                                context_instance=RequestContext(request))
     
-
     
 @login_required
 def inserir_operacao_td(request):
+    investidor = request.user.investidor
+    
     # Preparar formset para divisoes
-    DivisaoFormSet = inlineformset_factory(OperacaoTitulo, DivisaoOperacaoTD, fields=('divisao', 'quantidade'),
+    DivisaoFormSet = inlineformset_factory(OperacaoTitulo, DivisaoOperacaoTD, fields=('divisao', 'quantidade'), can_delete=False,
                                             extra=1, formset=DivisaoOperacaoTDFormSet)
     
+    # Testa se investidor possui mais de uma divisão
+    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    
     if request.method == 'POST':
-        form_operacao_td = OperacaoTituloForm(request.POST)
+        form_operacao_td = OperacaoTituloForm(request.POST, investidor=investidor)
+        formset_divisao = DivisaoFormSet(request.POST, investidor=investidor) if varias_divisoes else None
+        
+        # Validar título
         if form_operacao_td.is_valid():
             operacao_td = form_operacao_td.save(commit=False)
-            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_td)
-            if formset_divisao.is_valid():
-                operacao_td.save()
-                formset_divisao.save()
-                messages.success(request, 'Operação inserida com sucesso')
-            return HttpResponseRedirect(reverse('historico_td'))
-            for erro in formset_divisao.non_form_errors():
-                messages.error(request, erro)
-            return render_to_response('td/inserir_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao }, 
-                                      context_instance=RequestContext(request))
-        
-    else:
-        form_operacao_td = OperacaoTituloForm()
-        formset_divisao = DivisaoFormSet()
+            operacao_td.investidor = investidor
             
-    return render_to_response('td/inserir_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao }, 
-                                      context_instance=RequestContext(request))
+            # Testar se várias divisões
+            if varias_divisoes:
+                formset_divisao = DivisaoFormSet(request.POST, instance=operacao_td, investidor=investidor)
+                if formset_divisao.is_valid():
+                    operacao_td.save()
+                    formset_divisao.save()
+                    messages.success(request, 'Operação inserida com sucesso')
+                    return HttpResponseRedirect(reverse('historico_td'))
+                for erro in formset_divisao.non_form_errors():
+                    messages.error(request, erro)
+            else:
+                operacao_td.save()
+                divisao_operacao = DivisaoOperacaoTD(operacao=operacao_td, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_td.quantidade)
+                divisao_operacao.save()
+                messages.success(request, 'Operação inserida com sucesso')
+                return HttpResponseRedirect(reverse('historico_td'))
+            
+        for erros in form_operacao_td.errors.values():
+            for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
+                messages.error(request, erro.message)
+                    
+    else:
+        form_operacao_td = OperacaoTituloForm(investidor=investidor)
+        formset_divisao = DivisaoFormSet(investidor=investidor)
+            
+    return render_to_response('td/inserir_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao,
+                                                              'varias_divisoes': varias_divisoes}, context_instance=RequestContext(request))
 
 @login_required
 def painel(request):
@@ -325,10 +433,15 @@ def painel(request):
     class Object():
         pass
     
+    investidor = request.user.investidor
+    
     titulos = {}
     titulos_vendidos = {}
     
-    for operacao in OperacaoTitulo.objects.filter().order_by('data'):
+    total_atual = 0
+    total_lucro = 0
+    
+    for operacao in OperacaoTitulo.objects.filter(investidor=investidor).order_by('data'):
         # Verificar se se trata de compra
         if operacao.tipo_operacao == 'C':
             if operacao.titulo.id not in titulos.keys():
@@ -383,37 +496,44 @@ def painel(request):
     for titulo in titulos.keys():
         for operacao in titulos[titulo]:
             try:
-                operacao.valor_atual = ValorDiarioTitulo.objects.filter(titulo__id=titulo).order_by('-data_hora')[0].preco_venda
+                operacao.valor_atual = ValorDiarioTitulo.objects.filter(titulo__id=titulo, data_hora__date=datetime.date.today()).order_by('-data_hora')[0].preco_venda
             except:
                 operacao.valor_atual = HistoricoTitulo.objects.filter(titulo__id=titulo).order_by('-data')[0].preco_venda
             operacao.variacao = operacao.valor_atual - operacao.preco_unitario
             operacao.variacao_percentual = operacao.variacao / operacao.preco_unitario * 100
+            # Definir quantidade de dias já passados, mínimo de 1 considerando uma operação de hoje
+            qtd_dias = max((datetime.date.today() - operacao.data).days, 1)
             # Pegar a taxa diária
-            operacao.variacao_percentual_mensal = math.pow(1 + operacao.variacao_percentual/100, float(1)/(datetime.date.today() - operacao.data).days) - 1
+            operacao.variacao_percentual_mensal = math.pow(1 + operacao.variacao_percentual/100, float(1)/qtd_dias) - 1
             # Pegar a taxa mensal
             operacao.variacao_percentual_mensal = (math.pow(1 + operacao.variacao_percentual_mensal, 30) - 1) * 100
             # Pegar a taxa anual
             operacao.variacao_percentual_anual = (math.pow(1 + operacao.variacao_percentual_mensal/100, 12) - 1) * 100
             operacao.valor_total_atual = operacao.valor_atual * operacao.quantidade
+            total_atual += operacao.valor_total_atual
             if operacao.valor_total_atual > operacao.total_gasto:
-                operacao.lucro = (operacao.valor_total_atual - operacao.total_gasto) - calcular_imposto_venda_td((datetime.date.today() - operacao.data).days, operacao.valor_total_atual, operacao.valor_total_atual - operacao.total_gasto)
+                operacao.lucro = (operacao.valor_total_atual - operacao.total_gasto) - calcular_imposto_venda_td(qtd_dias, operacao.valor_total_atual, operacao.valor_total_atual - operacao.total_gasto)
                 operacao.lucro_percentual = operacao.lucro / operacao.total_gasto * 100
             else:
-                operacao.lucro = float(operacao.valor_total_atual - operacao.total_gasto)
+                operacao.lucro = operacao.valor_total_atual - operacao.total_gasto
                 operacao.lucro_percentual = operacao.lucro / operacao.total_gasto * 100
 #             print '%s: %s ao preço %s valendo %s (%s (%s%%) de lucro)' % (titulo, operacao.quantidade, operacao.preco_unitario, valor_atual, \
 #                                                                     valor_atual - operacao.preco_unitario, (valor_atual - operacao.preco_unitario) / operacao.preco_unitario * 100)
-    
+            total_lucro += operacao.lucro
+            
+            
     # Dados de títulos vendidos
     for titulo in titulos_vendidos.keys():
         for operacao in titulos_vendidos[titulo]:
 #             print titulo
             operacao.variacao = operacao.valor_atual - operacao.preco_unitario
             operacao.variacao_percentual = operacao.variacao / operacao.preco_unitario * 100
+            # Definir quantidade de dias já passados, mínimo de 1 considerando uma operação de hoje
+            qtd_dias = max((datetime.date.today() - operacao.data).days, 1)
 #             print operacao.variacao_percentual
-#             print (datetime.date.today() - operacao.data).days
+#             print qtd_dias
             # Pegar a taxa diária
-            operacao.variacao_percentual_mensal = math.pow(1 + operacao.variacao_percentual/100, float(1)/(operacao.data_venda - operacao.data).days) - 1
+            operacao.variacao_percentual_mensal = math.pow(1 + operacao.variacao_percentual/100, float(1)/qtd_dias) - 1
 #             print operacao.variacao_percentual_mensal
             # Pegar a taxa mensal percentual
             operacao.variacao_percentual_mensal = (math.pow(1 + operacao.variacao_percentual_mensal, 30) - 1) * 100
@@ -422,11 +542,17 @@ def painel(request):
             operacao.variacao_percentual_anual = (math.pow(1 + operacao.variacao_percentual_mensal/100, 12) - 1) * 100
             operacao.valor_total_atual = operacao.valor_atual * operacao.quantidade
             if operacao.valor_total_atual > operacao.total_gasto:
-                operacao.lucro = (operacao.valor_total_atual - operacao.total_gasto) - calcular_imposto_venda_td((operacao.data_venda - operacao.data).days, operacao.valor_total_atual, operacao.valor_total_atual - operacao.total_gasto)
+                operacao.lucro = (operacao.valor_total_atual - operacao.total_gasto) - calcular_imposto_venda_td(qtd_dias, operacao.valor_total_atual, operacao.valor_total_atual - operacao.total_gasto)
                 operacao.lucro -= operacao.valor_taxas
                 operacao.lucro_percentual = operacao.lucro / operacao.total_gasto * 100
             else:
-                operacao.lucro = float(operacao.valor_total_atual - operacao.total_gasto - operacao.valor_taxas)
+                operacao.lucro = operacao.valor_total_atual - operacao.total_gasto - operacao.valor_taxas
                 operacao.lucro_percentual = operacao.lucro / operacao.total_gasto * 100
     
-    return render_to_response('td/painel.html', {'titulos': titulos, 'titulos_vendidos': titulos_vendidos}, context_instance=RequestContext(request))
+    # Popular dados
+    dados = {}
+    dados['total_atual'] = total_atual
+    dados['total_lucro'] = total_lucro
+    dados['data_valor_mais_recente'] = buscar_data_valor_mais_recente()
+    
+    return render_to_response('td/painel.html', {'titulos': titulos, 'titulos_vendidos': titulos_vendidos, 'dados': dados}, context_instance=RequestContext(request))

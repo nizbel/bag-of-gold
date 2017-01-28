@@ -1,13 +1,19 @@
 # -*- coding: utf-8 -*-
 from django.db import models
 import datetime
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao
  
 class Acao (models.Model):
     ticker = models.CharField(u'Ticker da ação', max_length=10)
     empresa = models.ForeignKey('Empresa') 
+    """
+    Tipos 3 (ON), 4 (PN), 5 (PNA), 6 (PNB), 7 (PNC), e 8 (PND)
+    """
+    tipo = models.CharField(u'Tipo de ação', max_length=5)
     
     class Meta:
         ordering = ['ticker']
+        unique_together = ['ticker', 'empresa', 'tipo']
     
     def __unicode__(self):
         return self.ticker
@@ -28,7 +34,9 @@ class Provento (models.Model):
     """
     tipo_provento = models.CharField(u'Tipo de provento', max_length=1)
     data_ex = models.DateField(u'Data EX')
-    data_pagamento = models.DateField(u'Data do pagamento')
+    data_pagamento = models.DateField(u'Data do pagamento', blank=True, null=True)
+    observacao = models.CharField(u'Observação', blank=True, null=True, max_length=300)
+    oficial_bovespa = models.BooleanField(u'Oficial Bovespa?', default=False)
     
     def __unicode__(self):
         tipo = ''
@@ -66,18 +74,40 @@ class OperacaoAcao (models.Model):
     B = Buy and Hold; T = Trading
     """
     destinacao = models.CharField(u'Destinação', max_length=1)
+    investidor = models.ForeignKey('Investidor')
      
     def __unicode__(self):
         return '(' + self.tipo_operacao + ') ' +str(self.quantidade) + ' ' + self.acao.ticker + ' a R$' + str(self.preco_unitario) + ' em ' + str(self.data)
 
+    def qtd_proventos_utilizada(self):
+        qtd_total = 0
+        for divisao in DivisaoOperacaoAcao.objects.filter(operacao=self):
+            if hasattr(divisao, 'usoproventosoperacaoacao'):
+                qtd_total += divisao.usoproventosoperacaoacao.qtd_utilizada
+        return qtd_total
+        
+    def utilizou_proventos(self):
+        return self.qtd_proventos_utilizada() > 0
+
 class UsoProventosOperacaoAcao (models.Model):
     operacao = models.ForeignKey('OperacaoAcao')
     qtd_utilizada = models.DecimalField(u'Quantidade de proventos utilizada', max_digits=11, decimal_places=2)
+    divisao_operacao = models.OneToOneField('DivisaoOperacaoAcao')
 
+    def __unicode__(self):
+        return 'R$ ' + str(self.qtd_utilizada) + ' em ' + self.divisao_operacao.divisao.nome + ' para ' + unicode(self.divisao_operacao.operacao)
+    
 class OperacaoCompraVenda (models.Model):
     compra = models.ForeignKey('OperacaoAcao', limit_choices_to={'tipo_operacao': 'C'}, related_name='compra')
     venda = models.ForeignKey('OperacaoAcao', limit_choices_to={'tipo_operacao': 'V'}, related_name='venda')
     day_trade = models.NullBooleanField(u'É day trade?', blank=True)
+    quantidade = models.IntegerField(u'Quantidade de ações')
+    
+    class Meta:
+        unique_together = ('compra', 'venda')
+        
+    def __unicode__(self):
+        return 'Compra: ' + self.compra.__unicode__() + ', Venda: ' + self.venda.__unicode__()
     
 class HistoricoAcao (models.Model):
     acao = models.ForeignKey('Acao', unique_for_date='data')
@@ -93,9 +123,13 @@ class ValorDiarioAcao (models.Model):
     data_hora = models.DateTimeField(u'Horário')
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)
     
+    def __unicode__(self):
+        return self.acao.ticker + ' em ' + str(self.data_hora) + ': R$' + str(self.preco_unitario)
+    
 class TaxaCustodiaAcao (models.Model):
     valor_mensal = models.DecimalField(u'Valor mensal', max_digits=11, decimal_places=2)
     ano_vigencia = models.IntegerField(u'Ano de início de vigência')
     mes_vigencia = models.IntegerField(u'Mês de início de vigência')
+    investidor = models.ForeignKey('Investidor')
     
     
