@@ -14,7 +14,7 @@ class Command(BaseCommand):
         
         print 'Tipos excluidos:'
         pendencias = PendenciaDocumentoProvento.objects.all().values_list('documento', flat=True)
-        print DocumentoProventoBovespa.objects.all().exclude(id__in=pendencias).values('tipo_documento').annotate(Count('tipo_documento')).values_list('tipo_documento', 'tipo_documento__count')
+        print DocumentoProventoBovespa.objects.filter(investidorleituradocumento__decisao='E').exclude(id__in=pendencias).values('tipo_documento').annotate(Count('tipo_documento')).values_list('tipo_documento', 'tipo_documento__count')
         
         print 'Tipos total:'
         print DocumentoProventoBovespa.objects.all().values('tipo_documento').annotate(Count('tipo_documento')).values_list('tipo_documento', 'tipo_documento__count')
