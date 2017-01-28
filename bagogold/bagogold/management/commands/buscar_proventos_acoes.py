@@ -2,7 +2,7 @@
 from bagogold.bagogold.models.acoes import Acao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
-    PendenciaDocumentoProvento
+    PendenciaDocumentoProvento, InvestidorRecusaDocumento, ProventoAcaoDocumento
 from django.core.management.base import BaseCommand
 from threading import Thread
 from urllib2 import Request, urlopen, HTTPError, URLError
@@ -39,9 +39,11 @@ class GeraInfoDocumentoProtocoloThread(Thread):
                     info = informacoes_rendimentos.pop(0)
                     codigo_cvm = info['codigo_cvm']
                     data_referencia, protocolo, tipo_documento = info['info_doc']
-                    
+
         #             print protocolo, Empresa.objects.get(codigo_cvm=codigo_cvm), ano
-                    if not DocumentoProventoBovespa.objects.filter(empresa__codigo_cvm=codigo_cvm, protocolo=protocolo).exists():
+                    # Apenas adiciona caso seja dos tipos válidos, decodificando de utf-8
+                    if not DocumentoProventoBovespa.objects.filter(empresa__codigo_cvm=codigo_cvm, protocolo=protocolo).exists() \
+                        and tipo_documento.decode('utf-8') in DocumentoProventoBovespa.TIPOS_DOCUMENTO_VALIDOS:
                         documento = DocumentoProventoBovespa()
                         documento.empresa = Empresa.objects.get(codigo_cvm=codigo_cvm)
                         documento.tipo_documento = tipo_documento
@@ -107,21 +109,27 @@ class Command(BaseCommand):
         acoes = Acao.objects.filter(empresa__codigo_cvm__isnull=False).order_by('empresa__codigo_cvm').distinct('empresa__codigo_cvm')
 #         acoes = Acao.objects.filter(ticker__in=['CIEL3'])
         contador = 0
-        while contador < len(acoes):
-            acao = acoes[contador]
-            # Verificar ano inicial para busca de documentos
-            if DocumentoProventoBovespa.objects.filter(data_referencia__year=ano_atual, empresa=acao.empresa).exists():
-                ano_inicial = ano_atual
-            else:
-                ano_inicial = ano_atual - 1 
-            t = BuscaProventosAcaoThread(acao.empresa.codigo_cvm, re.sub(r'\d', '', acao.ticker), ano_inicial)
-            threads_rodando[acao.empresa.codigo_cvm] = 1
-            t.start()
-            contador += 1
-            while (len(threads_rodando) > qtd_threads):
+        try:
+            while contador < len(acoes):
+                acao = acoes[contador]
+                # Verificar ano inicial para busca de documentos
+                if DocumentoProventoBovespa.objects.filter(data_referencia__year=ano_atual, empresa=acao.empresa).exists():
+                    ano_inicial = ano_atual
+                else:
+                    ano_inicial = ano_atual - 1 
+                t = BuscaProventosAcaoThread(acao.empresa.codigo_cvm, re.sub(r'\d', '', acao.ticker), ano_inicial)
+                threads_rodando[acao.empresa.codigo_cvm] = 1
+                t.start()
+                contador += 1
+                while (len(threads_rodando) > qtd_threads):
+#                     print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
+                    time.sleep(3)
+            while (len(threads_rodando) > 0 or len(documentos_para_download) > 0 or len(informacoes_rendimentos) > 0):
 #                 print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
+                if 'Principal' in threads_rodando.keys():
+                    del threads_rodando['Principal']
                 time.sleep(3)
-        while (len(threads_rodando) > 0 or len(documentos_para_download) > 0 or len(informacoes_rendimentos) > 0):
+        except KeyboardInterrupt:
 #             print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
             if 'Principal' in threads_rodando.keys():
                 del threads_rodando['Principal']
@@ -157,7 +165,7 @@ def buscar_proventos_acao(codigo_cvm, ano, num_tentativas):
         divisoes = re.findall('<div class="large-12 columns">(.*?)(?=<div class="large-12 columns">|$)', data, flags=re.IGNORECASE|re.DOTALL)
         for divisao in divisoes:
             # Pega as informações necessárias dentro da divisão, não há como existir mais de uma tupla (data, protocolo)
-            informacao_divisao = re.findall('Data Referência.*?(\d+/\d+/\d+).*?Assunto.*?(?:juro|dividendo|provento|capital social|remuneraç).*?<a href=".*?protocolo=(\d+).*?" target="_blank">(.*?)</a>', divisao, flags=re.IGNORECASE|re.DOTALL)
+            informacao_divisao = re.findall('Data Referência.*?(\d+/\d+/\d+).*?Assunto.*?(?:juro|dividendo|provento|capital social|remuneraç|agrupamento|desdobramento|orçamento de capital|bonus|bônus|bonificaç).*?<a href=".*?protocolo=(\d+).*?" target="_blank">(.*?)</a>', divisao, flags=re.IGNORECASE|re.DOTALL)
             if informacao_divisao:
                 informacoes_rendimentos.append({'info_doc': informacao_divisao[0], 'codigo_cvm': codigo_cvm})
 #         print 'Buscou', Empresa.objects.get(codigo_cvm=codigo_cvm), ano
