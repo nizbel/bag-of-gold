@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
     ProventoAcaoDocumento, ProventoFIIDocumento, PendenciaDocumentoProvento, \
-    ProventoAcaoDescritoDocumentoBovespa, ProventoFIIDescritoDocumentoBovespa
+    ProventoAcaoDescritoDocumentoBovespa, ProventoFIIDescritoDocumentoBovespa, \
+    InvestidorLeituraDocumento, InvestidorRecusaDocumento, \
+    InvestidorResponsavelPendencia, InvestidorValidacaoDocumento
 from django.contrib import admin
 
 
@@ -15,6 +17,26 @@ class DocumentoProventoBovespaAdmin(admin.ModelAdmin):
     nome_documento.short_description = 'Nome'
     
 admin.site.register(DocumentoProventoBovespa, DocumentoProventoBovespaAdmin)
+    
+class InvestidorLeituraDocumentoAdmin(admin.ModelAdmin):
+    list_display = ('investidor', 'documento', 'decisao', 'data_leitura')
+
+admin.site.register(InvestidorLeituraDocumento, InvestidorLeituraDocumentoAdmin)
+
+class InvestidorRecusaDocumentoAdmin(admin.ModelAdmin):
+    list_display = ('investidor', 'documento', 'responsavel_leitura', 'data_recusa')
+
+admin.site.register(InvestidorRecusaDocumento, InvestidorRecusaDocumentoAdmin)
+    
+class InvestidorResponsavelPendenciaAdmin(admin.ModelAdmin):
+    list_display = ('investidor', 'pendencia')
+
+admin.site.register(InvestidorResponsavelPendencia, InvestidorResponsavelPendenciaAdmin)
+        
+class InvestidorValidacaoDocumentoAdmin(admin.ModelAdmin):
+    list_display = ('investidor', 'documento', 'data_validacao')
+
+admin.site.register(InvestidorValidacaoDocumento, InvestidorValidacaoDocumentoAdmin)
     
 class ProventoAcaoDocumentoAdmin(admin.ModelAdmin):
     list_display = ('provento', 'documento', 'versao')
