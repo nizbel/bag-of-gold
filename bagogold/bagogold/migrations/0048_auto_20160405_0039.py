@@ -12,6 +12,10 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RenameModel(
+            old_name='DivisaoOperacaoAcoes',
+            new_name='DivisaoOperacaoAcao',
+        ),
         migrations.AlterField(
             model_name='fii',
             name='ticker',

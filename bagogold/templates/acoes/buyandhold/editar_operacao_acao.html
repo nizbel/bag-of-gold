@@ -9,18 +9,46 @@
     <form method="POST" class="post-form form-horizontal">{% csrf_token %}
         <div id="forms">
             {{ form_operacao_acao.as_p }}
-            {{ form_uso_proventos.as_p }}
-            <h2>Divisões <button id="add-another" class="btn btn-primary" type="button">+</button></h2>
-            {{ formset_divisao.management_form }}
-            {% for form_divisao in formset_divisao %}
-                <h3>Divisão {{ forloop.counter }}</h3>
-                {{ form_divisao.as_p }}
-            {% endfor %}
+            {% if not varias_divisoes %}
+                {{ form_uso_proventos.as_p }}
+                <span id="poupanca_proventos">R$ {{ poupanca_proventos|floatformat:"2" }}</span>
+            {% else %}
+                <h2>Divisões <button id="add-another" class="btn btn-primary" type="button">+</button></h2>
+                {{ formset_divisao.management_form }}
+                {% for form_divisao in formset_divisao %}
+                    <h3>Divisão {{ forloop.counter }}</h3>
+                    {{ form_divisao.as_p }}
+                {% endfor %}
+            {% endif %}
         </div>
         <div class="form-actions">
             <button type="submit" name="save" value="1" class="btn">Salvar</button>
             <button type="submit" name="delete" value="1" class="btn btn-danger">Excluir</button>
         </div>
     </form>
+    
+    <script type="text/javascript">
+    $( document ).ready(function() {
+        $( "#id_data" ).change(function() {
+            var dataEscolhida = $(this).val();
+            console.log(dataEscolhida);
+            $.ajax({
+                url : "{% url 'calcular_poupanca_proventos_na_data' %}", // the endpoint
+                type : "GET", // http method
+                data: {dataEscolhida: dataEscolhida},
+                
+                // handle a successful response
+                success : function(poupanca_proventos) {
+                    $("#poupanca_proventos").text("R$ " + poupanca_proventos);
+                    }, 
+                	
+                // handle a non-successful response
+                error : function(xhr,errmsg,err) {
+                    console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+                }
+            });
+        });
+    });
+    </script>
 {% endblock %}
 

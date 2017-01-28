@@ -6,54 +6,62 @@ from django.forms import widgets
 
 
 ESCOLHAS_DAYTRADE=(
-        (False, "Não"),
-        (True, "Sim"),
+        (False, 'Não'),
+        (True, 'Sim'),
         )
 
 class OperacaoCompraVendaForm(forms.ModelForm):
 
+    class Meta:
+        model = OperacaoCompraVenda
+        fields = ('compra', 'venda', 'day_trade', 'quantidade')
+        widgets={'day_trade': widgets.Select(choices=ESCOLHAS_DAYTRADE),}
+    
     def __init__(self, *args, **kwargs):
+        # Pegar investidor atual
+        self.investidor = kwargs.pop('investidor')
+        
         super(OperacaoCompraVendaForm, self).__init__(*args, **kwargs)
-
+        
         # lista de compras
-        operacoes_compra = OperacaoAcao.objects.filter(tipo_operacao='C', destinacao='T')
-        self.fields["compra"].choices = []
+        operacoes_compra = OperacaoAcao.objects.filter(investidor=self.investidor, tipo_operacao='C', destinacao='T')
+        self.fields['compra'].choices = []
         for operacao in operacoes_compra:
             adicionar = True
             if operacao.compra.get_queryset():
                 if operacao.compra.get_queryset().aggregate(total_venda=Sum('venda__quantidade'))['total_venda'] == operacao.quantidade:
                     adicionar = False
             if adicionar:
-                self.fields["compra"].choices += [[operacao.id, operacao]]
+                self.fields['compra'].choices += [[operacao.id, operacao]]
         
         # lista de vendas
-        operacoes_venda = OperacaoAcao.objects.filter(tipo_operacao='V', destinacao='T')
-        self.fields["venda"].choices = []
+        operacoes_venda = OperacaoAcao.objects.filter(investidor=self.investidor, tipo_operacao='V', destinacao='T')
+        self.fields['venda'].choices = []
         for operacao in operacoes_venda:
             adicionar = True
             if operacao.venda.get_queryset():
                 if operacao.venda.get_queryset().aggregate(total_compra=Sum('venda__quantidade'))['total_compra'] == operacao.quantidade:
                     adicionar = False
             if adicionar:
-                self.fields["venda"].choices += [[operacao.id, operacao]]
-
-    class Meta:
-        model = OperacaoCompraVenda
-        fields = ('compra', 'venda', 'day_trade', )
-        widgets={'day_trade': widgets.Select(choices=ESCOLHAS_DAYTRADE),}
-        
+                self.fields['venda'].choices += [[operacao.id, operacao]]
+    
     def clean(self):
         data = super(OperacaoCompraVendaForm, self).clean()
-        compra = data["compra"]
-        venda = data["venda"]
-        day_trade = data["day_trade"]
+        compra = data['compra']
+        venda = data['venda']
+        day_trade = data['day_trade']
+        quantidade = data['quantidade']
         
         if compra.acao != venda.acao:
-            raise forms.ValidationError("Compra e venda devem ser da mesma ação")
+            raise forms.ValidationError('Compra e venda devem ser da mesma ação')
         elif compra.data != venda.data and day_trade:
-            raise forms.ValidationError("Operações de day trade devem ser feitas no mesmo dia")
+            raise forms.ValidationError('Operações de day trade devem ser feitas no mesmo dia')
         elif compra.data == venda.data and not day_trade:
-            raise forms.ValidationError("Operações feitas no mesmo dia configuram day trade")
+            raise forms.ValidationError('Operações feitas no mesmo dia configuram day trade')
+        elif quantidade > compra.quantidade:
+            raise forms.ValidationError('Quantidade negociada entre compra/venda maior que a quantidade da compra')
+        elif quantidade > compra.venda:
+            raise forms.ValidationError('Quantidade negociada entre compra/venda maior que a quantidade da venda')
 
         #always return the cleaned data
         return data

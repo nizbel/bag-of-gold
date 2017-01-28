@@ -1,19 +1,4 @@
 $(document).ready(function() {
-    //for every field change
-    $('#id_preco_unitario').blur(function() {
-        var preco = $('#id_preco_unitario').val().replace(/,/g, '.');
-        var emolumentos = (preco * $('#id_quantidade').val()) * 0.0325 / 100;
-        
-        $('#id_emolumentos').val(Math.floor(emolumentos*100)/100);
-    });
-    
-    $('#id_quantidade').blur(function() {
-        var preco = $('#id_preco_unitario').val().replace(/,/g, '.');
-        var emolumentos = (preco * $('#id_quantidade').val()) * 0.0325 / 100;
-
-        $('#id_emolumentos').val(Math.floor(emolumentos*100)/100);
-    });
-    
     form_count = $("input[name=divisaooperacaoacao_set-TOTAL_FORMS]").val();
     // get extra form count so we know what index to use for the next item.
      $("#add-another").click(function() {
@@ -29,7 +14,6 @@ $(document).ready(function() {
          par_divisao.append(label_divisao);
          par_divisao.append(divisao);
          
-    
          label_quantidade = $("<label for=id_divisaooperacaoacao_set-" + form_count + "-quantidade>Quantidade:</label>");
          quantidade = $("#id_divisaooperacaoacao_set-0-quantidade").clone();
          quantidade.attr("name", "divisaooperacaoacao_set-" + form_count + "-quantidade");
@@ -38,6 +22,15 @@ $(document).ready(function() {
          par_quantidade = $('<p></p>');
          par_quantidade.append(label_quantidade);
          par_quantidade.append(quantidade);
+         
+         label_qtd_proventos_utilizada = $("<label for=id_divisaooperacaoacao_set-" + form_count + "-qtd_proventos_utilizada>Quantidade de proventos utilizada:</label>");
+         qtd_proventos_utilizada = $("#id_divisaooperacaoacao_set-0-qtd_proventos_utilizada").clone();
+         qtd_proventos_utilizada.attr("name", "divisaooperacaoacao_set-" + form_count + "-qtd_proventos_utilizada");
+         qtd_proventos_utilizada.attr('id', "id_divisaooperacaoacao_set-" + form_count + "-qtd_proventos_utilizada");
+         qtd_proventos_utilizada.removeAttr('value');
+         par_qtd_proventos_utilizada = $('<p></p>');
+         par_qtd_proventos_utilizada.append(label_qtd_proventos_utilizada);
+         par_qtd_proventos_utilizada.append(qtd_proventos_utilizada);
          
          id = $("#id_divisaooperacaoacao_set-0-id").clone();
          id.attr("name", "divisaooperacaoacao_set-" + form_count + "-id");
@@ -55,6 +48,7 @@ $(document).ready(function() {
          $("#forms").append(titulo);
          $("#forms").append(par_divisao);
          $("#forms").append(par_quantidade);
+         $("#forms").append(par_qtd_proventos_utilizada);
          $("#forms").append(par_id);
          $("#forms").append(par_operacao);
          // build divisao and append it to our forms container

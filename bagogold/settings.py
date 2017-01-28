@@ -12,10 +12,10 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 
+
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
@@ -26,7 +26,11 @@ SECRET_KEY = '3$z^a73@q+n$h@v)j-$vo0j5k((s6u#jebu5t9qhcl+k!@zg=s'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# ALLOWED_HOSTS = ['bagofgold.com.br']
+
+ADMINS = [('Guilherme', 'kingbowserii@gmail.com'), ]
+MANAGERS = [('Guilherme', 'kingbowserii@gmail.com'), ]
+SERVER_EMAIL = 'django@bagofgold.com.br'
 
 
 # Application definition
@@ -69,6 +73,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'bagogold.bagogold.context_processors.env',
             ],
         },
     },
@@ -88,6 +93,8 @@ DATABASES = {
     }
 }
 
+LOGIN_REDIRECT_URL = 'home'
+
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
 
@@ -96,7 +103,7 @@ MESSAGE_TAGS = {
     messages.INFO: 'alert',
 }
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'pt-br'
 
 TIME_ZONE = 'America/Sao_Paulo'
 
@@ -106,8 +113,20 @@ USE_L10N = True
 
 USE_TZ = True
 
+USE_THOUSAND_SEPARATOR = True
 
 LOGIN_URL= '/login/'
+
+# Django-registration
+DEFAULT_FROM_EMAIL = 'Bag of Gold <do-not-reply@bagofgold.com.br>'
+ACCOUNT_ACTIVATION_DAYS = 3
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = 'bagofgold@bagofgold.com.br'
+EMAIL_HOST_PASSWORD = '9jU3IU8hse'
+EMAIL_PORT = 587
+# TODO Remover quando estivermos prontos para funcionar
+REGISTRATION_OPEN = False
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
@@ -118,3 +137,6 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR + '/bagogold', "static"),
     '/var/www/static/',
 ]
+
+# Buscar configuracoes adicionais
+from conf.settings_local import *

@@ -47,7 +47,7 @@ class OperacaoFIIForm(forms.ModelForm):
                  'consolidada': widgets.Select(choices=ESCOLHAS_CONSOLIDADO),}
         
     class Media:
-        js = ('js/bagogold/acoes.js', 
+        js = ('js/bagogold/calculo_emolumentos.js', 
               'js/bagogold/fii.js',)
         
     def clean(self):
@@ -65,7 +65,11 @@ class UsoProventosOperacaoFIIForm(forms.ModelForm):
     class Meta:
         model = UsoProventosOperacaoFII
         fields = ('qtd_utilizada', )
-            
+    
+    def __init__(self, *args, **kwargs):
+        super(UsoProventosOperacaoFIIForm, self).__init__(*args, **kwargs)
+        self.fields['qtd_utilizada'].required = False
+        
     def clean(self):
         data = super(UsoProventosOperacaoFIIForm, self).clean()
         if data.get('qtd_utilizada') is not None:
@@ -75,5 +79,20 @@ class UsoProventosOperacaoFIIForm(forms.ModelForm):
             qtd_utilizada = qtd_utilizada.replace(",", ".")
             qtd_utilizada = Decimal(qtd_utilizada)
             data['qtd_utilizada'] = qtd_utilizada
+        else:
+            data['qtd_utilizada'] = 0
 
         return data
+    
+class CalculoResultadoCorretagemForm(forms.Form):
+#     NUM_MESES = 500
+#     PRECO_COTA = 97
+#     CORRETAGEM = 9.8
+#     RENDIMENTO = 0.78
+#     QTD_COTAS = 4
+    num_meses = forms.IntegerField(label='Quantidade de meses', min_value=1, max_value=1000)
+    preco_cota = forms.DecimalField(label='Preço da cota', max_digits=11, decimal_places=2, min_value=0.01)
+    corretagem = forms.DecimalField(label='Corretagem (em R$)', max_digits=9, decimal_places=2, min_value=0.01)
+    rendimento = forms.DecimalField(label='Rendimento (em R$)', max_digits=9, decimal_places=2, min_value=0.01)
+    quantidade_cotas = forms.IntegerField(label='Quantidade inicial de cotas', min_value=0, max_value=1000)
+    

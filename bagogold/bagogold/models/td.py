@@ -24,13 +24,31 @@ class Titulo (models.Model):
             return u'Título não encontrado'
     
     def __unicode__(self):
-        return '%s %s (%s)' % (self.nome(), self.data_vencimento.year,self.tipo)
+        return '%s (%s)' % (self.nome(), self.tipo)
     
     def titulo_vencido(self):
         if datetime.date.today() >= self.data_vencimento:
             return True
         else:
             return False
+        
+    def valor_vencimento(self, data=datetime.date.today()):
+        from bagogold.bagogold.utils.td import calcular_valor_acumulado_ipca
+        
+        if self.tipo == 'LTN':
+            return 1000
+        elif self.tipo == 'LFT':
+            return 1000
+        elif self.tipo == 'NTN-B':
+            return (1 + calcular_valor_acumulado_ipca(datetime.date(2000, 7, 15), data_final=data)) * 1000
+        elif self.tipo == 'NTN-B Principal':
+            return (1 + calcular_valor_acumulado_ipca(datetime.date(2000, 7, 15), data_final=data)) * 1000
+        elif self.tipo == 'NTN-F':
+            return 1000
+        elif self.tipo == 'NTN-C':
+            return 1000
+        else:
+            return 0
     
 class OperacaoTitulo (models.Model):
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)  
@@ -41,6 +59,7 @@ class OperacaoTitulo (models.Model):
     tipo_operacao = models.CharField(u'Tipo de operação', max_length=1)
     titulo = models.ForeignKey('Titulo')
     consolidada = models.NullBooleanField(u'Consolidada?', blank=True, null=True)
+    investidor = models.ForeignKey('Investidor')
     
     def __unicode__(self):
         return '(' + self.tipo_operacao + ') ' +str(self.quantidade) + ' ' + self.titulo.tipo + ' a R$' + str(self.preco_unitario)
@@ -52,6 +71,10 @@ class HistoricoTitulo (models.Model):
     taxa_venda = models.DecimalField(u'Taxa de venda', max_digits=5, decimal_places=2)
     preco_compra = models.DecimalField(u'Preço de compra', max_digits=11, decimal_places=2)
     preco_venda = models.DecimalField(u'Preço de venda', max_digits=11, decimal_places=2)
+    
+    def __unicode__(self):
+        return str(self.titulo) + ' em ' + self.data + ': R$' + str(self.preco_compra) + '(' + str(self.taxa_compra) + ')' + \
+            '/R$' + str(self.preco_venda) + '(' + str(self.taxa_venda) + ')'
     
     def save(self, *args, **kw):
         try:
@@ -72,3 +95,14 @@ class ValorDiarioTitulo (models.Model):
             ValorDiarioTitulo.objects.get(titulo=self.titulo, data_hora=self.data_hora)
         except ValorDiarioTitulo.DoesNotExist:
             super(ValorDiarioTitulo, self).save(*args, **kw)
+            
+class HistoricoIPCA (models.Model):
+    valor = models.DecimalField(u'Valor IPCA', max_digits=5, decimal_places=2)
+    mes = models.SmallIntegerField(u'Mês')
+    ano = models.SmallIntegerField(u'Ano')
+    
+    def save(self, *args, **kw):
+        try:
+            HistoricoIPCA.objects.get(mes=self.mes, ano=self.ano)
+        except HistoricoIPCA.DoesNotExist:
+            super(HistoricoIPCA, self).save(*args, **kw)
