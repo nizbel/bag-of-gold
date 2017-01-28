@@ -14,6 +14,8 @@ def ticker_path(instance, filename):
     return 'doc proventos/{0}/{1}'.format(instance.ticker_empresa(), filename)
 
 class DocumentoProventoBovespa (models.Model):
+    TIPOS_DOCUMENTO_VALIDOS = [u'Fato Relevante', u'Comunicado ao Mercado', u'Aviso aos Acionistas']
+    
     url = models.CharField(u'URL do documento', blank=True, null=True, max_length=200)
     empresa = models.ForeignKey('Empresa')
     protocolo =  models.CharField(u'Protocolo', max_length=10)
@@ -173,6 +175,9 @@ class ProventoAcaoDocumento (models.Model):
         
     class Meta:
         unique_together=(('documento', 'provento'), ('versao', 'provento'))
+        
+    def __unicode__(self):
+        return u'Versão %s no documento %s' % (self.versao, self.documento)
         
 class ProventoFIIDocumento (models.Model):
     provento = models.ForeignKey('ProventoFII')
