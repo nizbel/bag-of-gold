@@ -18,9 +18,12 @@ from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
 from django.http.response import HttpResponse
 from django.template.response import TemplateResponse
+from itertools import chain
+from operator import attrgetter
 import calendar
 import datetime
 import json
+
 
 
 @login_required
@@ -83,8 +86,8 @@ def historico(request):
     houve_operacao_hoje = False
     
     for item in lista_conjunta:   
-        if item.fii.ticker not in qtd_titulos.keys():
-            qtd_titulos[item.fii.ticker] = Decimal(0)       
+        if item.debenture.codigo not in qtd_titulos.keys():
+            qtd_titulos[item.debenture.codigo] = Decimal(0)       
         if isinstance(item, OperacaoDebenture):
             # Verificar se se trata de compra ou venda
             if item.tipo_operacao == 'C':
@@ -92,14 +95,14 @@ def historico(request):
                 item.total = Decimal(-1) * (item.quantidade * item.preco_unitario + \
                 item.taxa)
                 total_investido += item.total
-                qtd_titulos[item.fii.ticker] += item.quantidade
+                qtd_titulos[item.debenture.codigo] += item.quantidade
                 
             elif item.tipo_operacao == 'V':
                 item.tipo = 'Venda'
                 item.total = (item.quantidade * item.preco_unitario - \
                 item.taxa)
                 total_investido += item.total
-                qtd_titulos[item.fii.ticker] -= item.quantidade
+                qtd_titulos[item.debenture.codigo] -= item.quantidade
                 
         # Prepara data
         data_formatada = str(calendar.timegm(item.data.timetuple()) * 1000)
@@ -116,14 +119,14 @@ def historico(request):
             for debenture in qtd_titulos.keys():
                 # Pegar último dia util com negociação da debenture para calculo do patrimonio
                 ultimo_dia_util = item.data
-                while not HistoricoValorDebenture.objects.filter(data=ultimo_dia_util, debenture=debenture):
+                while not HistoricoValorDebenture.objects.filter(data=ultimo_dia_util, debenture__codigo=debenture):
                     ultimo_dia_util -= datetime.timedelta(days=1)
-                patrimonio += (qtd_titulos[debenture] * HistoricoValorDebenture.objects.get(debenture=debenture, data=ultimo_dia_util).preco_unitario)
+                patrimonio += (qtd_titulos[debenture] * HistoricoValorDebenture.objects.get(debenture__codigo=debenture, data=ultimo_dia_util).valor_total())
         else:
             houve_operacao_hoje = True
             for fii in qtd_titulos.keys():
                 # Busca histórico do último dia útil
-                patrimonio += (Decimal(qtd_titulos[fii]) * debenture.objects.filter(debenture=debenture).order_by('-data')[0].preco_unitario)
+                patrimonio += (Decimal(qtd_titulos[fii]) * debenture.objects.filter(debenture__codigo=debenture).order_by('-data')[0].valor_total())
         # Verifica se altera ultima posicao do grafico ou adiciona novo registro
         if len(graf_patrimonio) > 0 and graf_patrimonio[-1][0] == data_formatada:
             graf_patrimonio[len(graf_patrimonio)-1][1] = float(patrimonio)
@@ -138,7 +141,7 @@ def historico(request):
         patrimonio = 0
         for debenture in qtd_titulos.keys():
             if qtd_titulos[debenture] > 0:
-                patrimonio += (qtd_titulos[debenture] * HistoricoValorDebenture.objects.filter(debenture=debenture)[0].preco_unitario)
+                patrimonio += (qtd_titulos[debenture] * HistoricoValorDebenture.objects.filter(debenture__codigo=debenture)[0].valor_total())
                 
         graf_patrimonio += [[str(calendar.timegm(data_mais_atual.timetuple()) * 1000), float(patrimonio)]]
         
@@ -173,8 +176,8 @@ def inserir_operacao_debenture(request):
             if varias_divisoes:
                 formset_divisao = DivisaoFormSet(request.POST, instance=operacao_debenture, investidor=investidor)
                 if formset_divisao.is_valid():
-#                     operacao_debenture.save()
-#                     formset_divisao.save()
+                    operacao_debenture.save()
+                    formset_divisao.save()
                         
                     messages.success(request, 'Operação inserida com sucesso')
                     return HttpResponseRedirect(reverse('historico_debenture'))

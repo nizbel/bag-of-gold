@@ -161,3 +161,6 @@ class HistoricoValorDebenture (models.Model):
     juros = models.DecimalField(u'Juros', max_digits=15, decimal_places=6)
     premio = models.DecimalField(u'Prêmio', max_digits=15, decimal_places=6)
     data = models.DateField(u'Data')
+    
+    def valor_total(self):
+        return self.valor_nominal + self.juros + self.premio

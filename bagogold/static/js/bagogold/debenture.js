@@ -5,6 +5,12 @@ $(document).ready(function() {
          divisao_id = parseInt(form_count) + 1;
          titulo = $("<h3 class='font-yellow-crusta' align='center'><strong>Divisão " + divisao_id + "</strong></h3><br/>");
          row = $('#divisao-0').clone();
+         row.attr('id', 'divisao-' + form_count);
+         $(row).find("*").each(function() { 
+        	 $.each(this.attributes, function() {
+        		 this.value = this.value.replace('_set-0', '_set-' + form_count);
+        	 });
+         });
          
          $("#forms").append(titulo);
          $("#forms").append(row);
@@ -48,5 +54,7 @@ $(document).ready(function() {
          $("[name=divisaooperacaodebenture_set-TOTAL_FORMS]").val(form_count);
          // increment form count so our view knows to populate 
          // that many fields for validation
+         row.find('.bootstrap-select').replaceWith(function() { return $('select', this); });
+         row.find('select').selectpicker('refresh');
      });
 });
