@@ -16,25 +16,6 @@ $(document).ready(function() {
          $("#forms").append(row);
          // build divisao and append it to our forms container
          
-//         label_divisao = $("<label for=id_divisaooperacaodebenture_set-" + form_count + "-divisao>Divisão:</label>");
-//         divisao = $("#id_divisaooperacaodebenture_set-0-divisao").clone();
-//         divisao.attr("name", "divisaooperacaodebenture_set-" + form_count + "-divisao");
-//         divisao.attr('id', "id_divisaooperacaodebenture_set-" + form_count + "-divisao");
-//         divisao.removeAttr('value');
-//         par_divisao = $('<p></p>');
-//         par_divisao.append(label_divisao);
-//         par_divisao.append(divisao);
-//         
-//
-//         label_quantidade = $("<label for=id_divisaooperacaodebenture_set-" + form_count + "-quantidade>Quantidade:</label>");
-//         quantidade = $("#id_divisaooperacaodebenture_set-0-quantidade").clone();
-//         quantidade.attr("name", "divisaooperacaodebenture_set-" + form_count + "-quantidade");
-//         quantidade.attr('id', "id_divisaooperacaodebenture_set-" + form_count + "-quantidade");
-//         quantidade.removeAttr('value');
-//         par_quantidade = $('<p></p>');
-//         par_quantidade.append(label_quantidade);
-//         par_quantidade.append(quantidade);
-         
          if ($("#id_divisaooperacaodebenture_set-0-id").length > 0) {
 	         id = $("#id_divisaooperacaodebenture_set-0-id").clone();
 	         id.attr("name", "divisaooperacaodebenture_set-" + form_count + "-id");
@@ -48,7 +29,6 @@ $(document).ready(function() {
 	         operacao.attr('id', "id_divisaooperacaodebenture_set-" + form_count + "-operacao");
 	         $("#forms").append(operacao);
          }
-      
     
          form_count ++;
          $("[name=divisaooperacaodebenture_set-TOTAL_FORMS]").val(form_count);
@@ -56,5 +36,14 @@ $(document).ready(function() {
          // that many fields for validation
          row.find('.bootstrap-select').replaceWith(function() { return $('select', this); });
          row.find('select').selectpicker('refresh');
+         var campo_quantidade = row.find('.bootstrap-touchspin input').detach();
+         row.find('.bootstrap-touchspin').empty().append(campo_quantidade);
+         row.find("input[name$='-quantidade']").TouchSpin({
+             min: 0,
+             max: 1000000000,
+             step: 1,
+             maxboostedstep: 100,
+             postfix: 'títulos'
+         });
      });
 });
