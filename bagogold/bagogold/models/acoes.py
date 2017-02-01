@@ -7,7 +7,7 @@ class Acao (models.Model):
     ticker = models.CharField(u'Ticker da ação', max_length=10)
     empresa = models.ForeignKey('Empresa') 
     """
-    Tipos 3 (ON), 4 (PN), 5 (PNA), 6 (PNB), 7 (PNC), e 8 (PND)
+    Tipos 3 (ON), 4 (PN), 5 (PNA), 6 (PNB), 7 (PNC), 8 (PND), 11 (UNT)
     """
     tipo = models.CharField(u'Tipo de ação', max_length=5)
     
@@ -39,6 +39,8 @@ class Acao (models.Model):
             return u'Preferencial Classe C'
         elif self.tipo == 8:
             return u'Preferencial Classe D'
+        elif self.tipo == 11:
+            return u'UNIT'
         
     def descricao_tipo_resumido(self):
         if self.tipo == 3:
@@ -53,6 +55,8 @@ class Acao (models.Model):
             return u'PNC'
         elif self.tipo == 8:
             return u'PND'
+        elif self.tipo == 11:
+            return u'UNT'
 
 class ProventoOficialManager(models.Manager):
     def get_queryset(self):
@@ -71,7 +75,7 @@ class Provento (models.Model):
     oficial_bovespa = models.BooleanField(u'Oficial Bovespa?', default=False)
     
     class Meta:
-        unique_together = ['acao', 'valor_unitario', 'data_ex', 'data_pagamento', 'tipo_provento']
+        unique_together = ['acao', 'valor_unitario', 'data_ex', 'data_pagamento', 'tipo_provento', 'oficial_bovespa']
         
     def __unicode__(self):
         tipo = ''
