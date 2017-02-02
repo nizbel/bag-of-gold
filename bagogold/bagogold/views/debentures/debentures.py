@@ -93,6 +93,9 @@ def editar_operacao_debenture(request, operacao_id):
                         messages.success(request, 'Operação alterada com sucesso')
                         return HttpResponseRedirect(reverse('historico_debenture'))
                     
+                    for erro in formset_divisao.non_form_errors():
+                        messages.error(request, erro)
+                    
                 else:    
                     operacao_debenture.save()
                     divisao_operacao = DivisaoOperacaoDebenture.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_debenture)
@@ -101,10 +104,7 @@ def editar_operacao_debenture(request, operacao_id):
                     messages.success(request, 'Operação alterada com sucesso')
                     return HttpResponseRedirect(reverse('historico_debenture'))
                         
-            for erros in form_operacao_debenture.errors.values():
-                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
-                    messages.error(request, erro.message)
-            for erro in formset_divisao.non_form_errors():
+            for erro in [erro for erro in form_operacao_debenture.non_field_errors()]:
                 messages.error(request, erro)
                 
         elif request.POST.get("delete"):

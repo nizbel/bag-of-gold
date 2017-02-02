@@ -196,7 +196,7 @@ $( document ).ready(function() {
       {grid: {show: false}}  
     );
     
-    $.plot($("#graf_historico"), [{stack: true, lines: {show:true, fill: true}, label: "Valor dos títulos", data: {{ graf_patrimonio|safe }}},
+    $.plot($("#graf_historico"), [{stack: true, lines: {show:true}, label: "Valor dos títulos", data: {{ graf_patrimonio|safe }}},
                                 {lines: {show:true}, label: "Total investido", data: {{ graf_investido_total|safe }}}
                               ],
                                 {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%d-%m-%y"} }  
