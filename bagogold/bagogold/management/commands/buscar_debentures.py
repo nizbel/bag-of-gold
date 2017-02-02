@@ -78,30 +78,36 @@ class ProcessaDebentureThread(Thread):
                             else:
                                 debenture = Debenture(codigo=codigo)
                                 
-                                debenture.data_emissao = data_emissao
-                                debenture.valor_emissao = valor_nominal_emissao.replace('.', '').replace(',', '.')
-                                debenture.data_inicio_rendimento = data_inicio_rendimento
-                                debenture.data_vencimento = data_vencimento
-                                debenture.incentivada = False if 'N' in incentivada.upper() else True
-                                debenture.padrao_snd = True
-                                debenture.indice = debenture.buscar_codigo_tipo_indice(indice)
-                                debenture.porcentagem = percentual_indice
-            
-                                if situacao == u'Excluído' and data_saida != '':
-                                    debenture.data_fim = datetime.datetime.strptime(data_saida, '%d/%m/%Y').date()
+                            debenture.data_emissao = data_emissao
+                            debenture.valor_emissao = valor_nominal_emissao.replace('.', '').replace(',', '.')
+                            debenture.data_inicio_rendimento = data_inicio_rendimento
+                            debenture.data_vencimento = data_vencimento
+                            debenture.incentivada = False if 'N' in incentivada.upper() else True
+                            debenture.padrao_snd = True
+                            debenture.indice = debenture.buscar_codigo_tipo_indice(indice)
+                            debenture.porcentagem = percentual_indice
+        
+                            if situacao == u'Excluído' and data_saida != '':
+                                debenture.data_fim = datetime.datetime.strptime(data_saida, '%d/%m/%Y').date()
+                            
+                            debenture.save()
                                 
-                                debenture.save()
-                                
-                                if amortizacao_carencia or amortizacao_taxa > 0:
+                            if amortizacao_carencia or amortizacao_taxa > 0:
+                                if not AmortizacaoDebenture.objects.filter(debenture=debenture, taxa=amortizacao_taxa, periodo=amortizacao_periodo, \
+                                                                           unidade_periodo=amortizacao_unidade, tipo=amortizacao_tipo, carencia=amortizacao_carencia).exists():
                                     amortizacao = AmortizacaoDebenture(data = datetime.date.today(), debenture=debenture, taxa=amortizacao_taxa, \
                                                                        periodo=amortizacao_periodo, unidade_periodo=amortizacao_unidade, tipo=amortizacao_tipo, \
                                                                        carencia=amortizacao_carencia)
                                     amortizacao.save()
-                                if juros_carencia:
+                            if juros_carencia:
+                                if not JurosDebenture.objects.filter(debenture=debenture, taxa=juros_taxa, periodo=juros_periodo, \
+                                                                     unidade_periodo=juros_unidade, carencia=juros_carencia).exists():
                                     juros = JurosDebenture(data = datetime.date.today(), debenture=debenture, taxa=juros_taxa, \
                                                                        periodo=juros_periodo, unidade_periodo=juros_unidade, carencia=juros_carencia)
                                     juros.save()
-                                if premio_carencia:
+                            if premio_carencia:
+                                if not PremioDebenture.objects.filter(debenture=debenture, taxa=premio_taxa, periodo=premio_periodo, \
+                                                                      unidade_periodo=premio_unidade, carencia=premio_carencia).exists():
                                     premio = PremioDebenture(data = datetime.date.today(), debenture=debenture, taxa=premio_taxa, \
                                                                        periodo=premio_periodo, unidade_periodo=premio_unidade, carencia=premio_carencia)
                                     premio.save()
@@ -136,19 +142,19 @@ class ProcessaDebentureThread(Thread):
                             else:
                                 debenture = Debenture(codigo=codigo)
                                 
-                                debenture.data_emissao = data_emissao
-                                debenture.valor_emissao = valor_nominal_emissao.replace('.', '').replace(',', '.')
-                                debenture.data_inicio_rendimento = data_inicio_rendimento
-                                debenture.data_vencimento = data_vencimento
-                                debenture.incentivada = False if 'N' in incentivada.upper() else True
-                                debenture.padrao_snd = False
-                                debenture.indice = debenture.buscar_codigo_tipo_indice(indice)
-                                debenture.porcentagem = percentual_indice
-            
-                                if situacao == u'Excluído' and data_saida != '':
-                                    debenture.data_fim = datetime.datetime.strptime(data_saida, '%d/%m/%Y').date()
-                                
-                                debenture.save()
+                            debenture.data_emissao = data_emissao
+                            debenture.valor_emissao = valor_nominal_emissao.replace('.', '').replace(',', '.')
+                            debenture.data_inicio_rendimento = data_inicio_rendimento
+                            debenture.data_vencimento = data_vencimento
+                            debenture.incentivada = False if 'N' in incentivada.upper() else True
+                            debenture.padrao_snd = False
+                            debenture.indice = debenture.buscar_codigo_tipo_indice(indice)
+                            debenture.porcentagem = percentual_indice
+        
+                            if situacao == u'Excluído' and data_saida != '':
+                                debenture.data_fim = datetime.datetime.strptime(data_saida, '%d/%m/%Y').date()
+                            
+                            debenture.save()
                     except:
                         pass
                 
