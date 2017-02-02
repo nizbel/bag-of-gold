@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import OperacaoAcao, ValorDiarioAcao, \
     HistoricoAcao, AcaoProvento, Acao, Provento
+from bagogold.bagogold.models.debentures import HistoricoValorDebenture
 from bagogold.bagogold.models.divisoes import Divisao
 from bagogold.bagogold.models.fii import OperacaoFII, ValorDiarioFII, \
     HistoricoFII, FII, ProventoFII
@@ -12,6 +13,7 @@ from bagogold.bagogold.models.td import OperacaoTitulo, ValorDiarioTitulo, \
 from bagogold.bagogold.utils.acoes import quantidade_acoes_ate_dia
 from bagogold.bagogold.utils.cdb_rdb import \
     calcular_valor_cdb_rdb_ate_dia_por_divisao, calcular_valor_cdb_rdb_ate_dia
+from bagogold.bagogold.utils.debenture import calcular_qtd_debentures_ate_dia
 from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia_por_ticker, \
     calcular_qtd_fiis_ate_dia
 from bagogold.bagogold.utils.fundo_investimento import \
@@ -72,7 +74,8 @@ def buscar_ultimas_operacoes(investidor, quantidade_operacoes):
     return ultimas_operacoes
 
 def buscar_totais_atuais_investimentos(investidor):
-    totais_atuais = {'Ações': Decimal(0), 'CDB/RDB': Decimal(0), 'FII': Decimal(0), 'Fundos de Inv.': Decimal(0), 'Letras de Crédito': Decimal(0), 'Tesouro Direto': Decimal(0), }
+    totais_atuais = {'Ações': Decimal(0), 'CDB/RDB': Decimal(0), 'Debênture': Decimal(0), 'FII': Decimal(0), 'Fundos de Inv.': Decimal(0), 'Letras de Crédito': Decimal(0), 
+                     'Tesouro Direto': Decimal(0), }
     
     data_atual = datetime.date.today()
     
@@ -88,21 +91,27 @@ def buscar_totais_atuais_investimentos(investidor):
         totais_atuais['Ações'] += (acao_qtd * acao_valor)
 
     # CDB / RDB
-    cdbs_rdbs = calcular_valor_cdb_rdb_ate_dia(investidor, datetime.date.today())
+    cdbs_rdbs = calcular_valor_cdb_rdb_ate_dia(investidor, data_atual)
     for total_cdb_rdb in cdbs_rdbs.values():
         totais_atuais['CDB/RDB'] += total_cdb_rdb
         
+    # Debêntures
+    debentures = calcular_qtd_debentures_ate_dia(investidor, data_atual)
+    for codigo in debentures.keys():
+        valor_atual = HistoricoValorDebenture.objects.filter(debenture__codigo=codigo).order_by('-data')[0].preco_unitario
+        totais_atuais['Debênture'] += (debentures[codigo] * valor_atual)
+        
     # Fundos de investimento imobiliário
-    fiis = calcular_qtd_fiis_ate_dia(investidor, datetime.date.today())
+    fiis = calcular_qtd_fiis_ate_dia(investidor, data_atual)
     for ticker in fiis.keys():
         try:
-            fii_valor = ValorDiarioFII.objects.filter(fii__ticker=ticker, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).order_by('-data_hora')[0].preco_unitario
+            fii_valor = ValorDiarioFII.objects.filter(fii__ticker=ticker, data_hora__day=data_atual.day, data_hora__month=data_atual.month).order_by('-data_hora')[0].preco_unitario
         except:
             fii_valor = HistoricoFII.objects.filter(fii__ticker=ticker).order_by('-data')[0].preco_unitario
         totais_atuais['FII'] += (fiis[ticker] * fii_valor)
         
     # Fundos de investimento
-    fundos_investimento = calcular_qtd_cotas_ate_dia(investidor, datetime.date.today())
+    fundos_investimento = calcular_qtd_cotas_ate_dia(investidor, data_atual)
     for fundo_id in fundos_investimento.keys():
         historico_fundo = HistoricoValorCotas.objects.filter(fundo_investimento__id=fundo_id).order_by('-data')
         ultima_operacao_fundo = OperacaoFundoInvestimento.objects.filter(fundo_investimento__id=fundo_id).order_by('-data')[0]
@@ -118,10 +127,10 @@ def buscar_totais_atuais_investimentos(investidor):
         totais_atuais['Letras de Crédito'] += total_lc
     
     # Tesouro Direto
-    titulos = quantidade_titulos_ate_dia(investidor, datetime.date.today())
+    titulos = quantidade_titulos_ate_dia(investidor, data_atual)
     for titulo_id in titulos.keys():
         try:
-            td_valor = ValorDiarioTitulo.objects.filter(titulo__id=titulo_id, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).order_by('-data_hora')[0].preco_venda
+            td_valor = ValorDiarioTitulo.objects.filter(titulo__id=titulo_id, data_hora__day=data_atual.day, data_hora__month=data_atual.month).order_by('-data_hora')[0].preco_venda
         except:
             td_valor = HistoricoTitulo.objects.filter(titulo__id=titulo_id).order_by('-data')[0].preco_venda
         totais_atuais['Tesouro Direto'] += (titulos[titulo_id] * td_valor)
