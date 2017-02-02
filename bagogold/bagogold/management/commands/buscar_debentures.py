@@ -180,7 +180,7 @@ class Command(BaseCommand):
                 time.sleep(3)
         except KeyboardInterrupt:
             while (len(threads_rodando) > 0 or len(debentures_para_processar) > 0):
-                print 'Debêntures a processar:', len(debentures_para_processar)
+#                 print 'Debêntures a processar:', len(debentures_para_processar)
                 if 'Principal' in threads_rodando.keys():
                     del threads_rodando['Principal']
                 time.sleep(3)
@@ -198,7 +198,6 @@ def buscar_info_debentures():
         print 'Reason: ', e.reason
     else:
         data = response.read()
-        print len(data)
         
         ler_debenture_prox_linha = False
 
