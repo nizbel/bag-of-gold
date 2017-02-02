@@ -184,11 +184,11 @@
                         <ul>
                             <li>As datas inseridas no sistema são:</li>
                             <ul>
-                                <li><strong>Data EX</strong>: data a partir da qual não é mais considerada a posição acionária do investidor. Também chamada de <strong>Data de Corte</strong>.</li>
+                                <li><strong>Data EX</strong>: data a partir da qual não é mais considerada a posição acionária do investidor.</li>
                                 <li><strong>Data de pagamento</strong>: data na qual o investidor recebe os proventos indicados.</li>
                                 <li><strong>Data de pagamento de frações</strong>: data na qual o investidor recebe o valor fracionário correspondente a proventos em ações (apenas para o caso de proventos em ações).</li>
                             </ul>
-                            <li>Caso o documento não descreva a <strong>DATA EX</strong>, pegar o próximo dia útil após a <strong>DATA BASE</strong>, geralmente mencionada como 
+                            <li>Caso o documento não descreva a <strong>DATA EX</strong>, pegar o próximo dia útil após a <strong>DATA BASE</strong> (também chamada de <strong>DATA DE CORTE</strong>), geralmente mencionada como 
                                 data na qual os detentores da ação fazem jus ao provento.</li>
                         </ul>
                     </div>
@@ -227,7 +227,12 @@
                     <div class="portlet-body">
                         <ul>
                             <li>Verificar se dados dos proventos criados na leitura batem com os do documento.</li>
-                            <li>Caso o documento seja uma errata ou alguma alteração sobre um provento, selecionar o provento ao qual ele se relaciona. Será criada uma nova versão para o provento.</li>
+                            <li>Caso o documento seja uma errata ou alguma alteração sobre um provento, selecionar o provento ao qual ele se relaciona. Será criada uma nova versão para o provento.
+                            <ul>
+                                <li><strong>Verificar se entre os proventos próximos listados, não se encontra algum com mesma DATA EX e TIPO DE PROVENTO</strong>, pois pode ser uma alteração de provento
+                                já cadastrado.</li>
+                            </ul>
+                            </li>
                             <li>Proventos que são alterações de proventos anteriores, que ainda não foram cadastrados, devem ter <strong>validação adiada</strong>.</li>
                             <li>Se os dados de algum dos proventos criados na etapa de leitura não estiver condizente com o texto do documento, recusar. Os passos são:
                             <ul>
@@ -236,6 +241,7 @@
                                 <li>Confirmar no botão <strong>Confirmar recusa</strong>.</li>
                             </ul>
                             <li>Ao ser recusado, o documento volta como uma pendência de leitura para o usuário que foi responsável por sua leitura.</li>
+                            <li><strong>Evite</strong> abrir várias abas ao mesmo tempo, valide um documento por vez pois uma validação pode influenciar na outra, caso sejam de uma mesma empresa.</li>
                         </ul>
                     </div>
                 </div>
