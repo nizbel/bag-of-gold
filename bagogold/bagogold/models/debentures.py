@@ -51,7 +51,7 @@ class Debenture (models.Model):
         return ''
     
     def descricao_amortizacaodebenture(self):
-        if AmortizacaDebenture.objects.filter(debenture=self).exists():
+        if AmortizacaoDebenture.objects.filter(debenture=self).exists():
             return AmortizacaoDebenture.objects.filter(debenture=self).order_by('-data')[0]
         return ''
     
