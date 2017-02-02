@@ -552,15 +552,19 @@ def validar_documento_provento(request, id_pendencia):
                                 continue
                     if validacao_completa:
 #                         print 'Validação completa'
-                        # Salva versões alteradas para os provento_documentos
-                        for descricao, provento in proventos_relacionados.items():
-                            versionar_descricoes_relacionadas_acoes(descricao, provento)
-                        # Altera proventos para serem oficiais
-                        for provento_id in ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True):
-                            provento = Provento.gerador_objects.get(id=provento_id)
-                            if not provento.oficial_bovespa:
-                                provento.oficial_bovespa = True
-                                provento.save()
+                        try:
+                            # Salva versões alteradas para os provento_documentos
+                            for descricao, provento in proventos_relacionados.items():
+                                versionar_descricoes_relacionadas_acoes(descricao, provento)
+                            # Altera proventos para serem oficiais
+                            for provento_id in ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True):
+                                provento = Provento.gerador_objects.get(id=provento_id)
+                                if not provento.oficial_bovespa:
+                                    provento.oficial_bovespa = True
+                                    provento.save()
+                        except:
+                            messages.error(request, 'Houve erro no relacionamento de proventos')
+                            desfazer_investidor_responsavel_por_validacao(pendencia, investidor)
                     # Qualquer erro que deixe a validação incompleta faz necessário desfazer investidor responsável pela validação
                     else:
                         desfazer_investidor_responsavel_por_validacao(pendencia, investidor)

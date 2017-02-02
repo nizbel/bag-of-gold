@@ -202,8 +202,17 @@ def versionar_descricoes_relacionadas_acoes(descricao, provento_relacionado):
     # Se versão adicionada for a ultima, o provento apontado deve ser copia do novo_provento
     if descricao.proventoacaodocumento.versao == len(versoes_provento):
         copiar_proventos_acoes(provento_relacionado, descricao.proventoacaodocumento.provento)
-        descricao.proventoacaodocumento.provento = provento_relacionado
-        descricao.proventoacaodocumento.save()
+    # Guardar provento anterior para apagar posteriormente
+    provento_anterior = Provento.gerador_objects.get(id=descricao.proventoacaodocumento.provento.id)
+    
+    descricao.proventoacaodocumento.provento = provento_relacionado
+    descricao.proventoacaodocumento.save()
+    
+    # Apagar provento anterior
+    for acao_provento_anterior in AcaoProvento.objects.filter(provento__id=provento_anterior.id):
+        acao_provento_anterior.delete()
+    provento_anterior.delete()
+        
         
             
 def copiar_proventos_acoes(provento, provento_a_copiar):
@@ -243,10 +252,6 @@ def copiar_proventos_acoes(provento, provento_a_copiar):
     elif provento.tipo_provento == 'A':
         for acao_provento in AcaoProvento.objects.filter(provento__id=provento.id):
             acao_provento.delete()
-    # Apagar provento a ser copiado
-    for acao_provento_a_copiar in AcaoProvento.objects.filter(provento__id=provento_a_copiar.id):
-        acao_provento_a_copiar.delete()
-    provento_a_copiar.delete()
     # Salvar provento com dados copiados
     for dado in dados_provento_a_salvar:
         dado.save()
