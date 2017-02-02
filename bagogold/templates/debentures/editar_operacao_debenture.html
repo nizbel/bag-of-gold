@@ -45,7 +45,7 @@
                                 <label class="control-label col-md-4" style="text-align: left;"> Data: </label>
                                 <div class="col-md-8">
                                     <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" data-date="{{form_operacao_debenture.data.value|default:''}}" data-date-viewmode="years">
-                                        <input type="text" class="form-control" id="id_data" name="data" value="{{form_operacao_debenture.data.value|default:''}}">
+                                        <input type="text" class="form-control" id="id_data" name="data" value="{{form_operacao_debenture.data.value|date:'d/m/Y'|default:''}}">
                                         <span class="input-group-btn">
                                             <button class="btn default" type="button">
                                                 <i class="fa fa-calendar"></i>
@@ -128,6 +128,8 @@
                                     </div>
                                 </div>
                             </div>
+                            <input id="id_divisaooperacaodebenture_set-{{forloop.counter0}}-id" name="divisaooperacaodebenture_set-{{forloop.counter0}}-id" value="{{form_divisao.instance.id}}" type="hidden">
+                            <input id="id_divisaooperacaodebenture_set-{{forloop.counter0}}-operacao" name="divisaooperacaodebenture_set-{{forloop.counter0}}-operacao" value="{{form_operacao_debenture.instance.id}}" type="hidden">
                             {% endfor %}
                         </div>
                         {% endif %}
