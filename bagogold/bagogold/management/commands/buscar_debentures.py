@@ -168,8 +168,6 @@ class Command(BaseCommand):
     help = 'Busca as Debêntures'
 
     def handle(self, *args, **options):
-        for debenture in Debenture.objects.all():
-            debenture.delete()
         try:
             # Prepara thread de processamento de informações de debênture
             thread_processa_debenture = ProcessaDebentureThread()

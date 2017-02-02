@@ -50,6 +50,21 @@ class Debenture (models.Model):
             return '%s%% do %s' % (self.porcentagem, descricao_tipo_indice)
         return ''
     
+    def descricao_amortizacaodebenture(self):
+        if AmortizacaDebenture.objets.filter(debenture=self).exists():
+            return AmortizacaoDebenture.objects.filter(debenture=self).order_by('-data')[0]
+        return ''
+    
+    def descricao_jurosdebenture(self):
+        if JurosDebenture.objets.filter(debenture=self).exists():
+            return JurosDebenture.objects.filter(debenture=self).order_by('-data')[0]
+        return ''
+    
+    def descricao_premiodebenture(self):
+        if PremioDebenture.objets.filter(debenture=self).exists():
+            return PremioDebenture.objects.filter(debenture=self).order_by('-data')[0]
+        return ''
+    
 class AmortizacaoDebenture (models.Model):
     TIPOS_AMORTIZACAO = ((0, u'Indefinido'),
                          (1, u'Percentual fixo sobre o valor nominal atualizado em períodos não uniformes'),
