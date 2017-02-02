@@ -61,7 +61,7 @@ class AmortizacaoDebenture (models.Model):
                          (7, u'Percentual variável sobre o valor nominal de emissão em períodos não uniformes'),
                          (8, u'Percentual variável sobre o valor nominal de emissão em períodos uniformes'),)
     
-    debenture = models.OneToOneField('Debenture', on_delete=models.CASCADE, primary_key=True)
+    debenture = models.ForeignKey('Debenture')
     taxa = models.DecimalField(u'Taxa', max_digits=7, decimal_places=4)
     periodo = models.IntegerField(u'Período')
     unidade_periodo = models.CharField(u'Unidade do período', max_length=10)
@@ -93,7 +93,7 @@ class AmortizacaoDebenture (models.Model):
         return ''
     
 class JurosDebenture (models.Model):
-    debenture = models.OneToOneField('Debenture', on_delete=models.CASCADE, primary_key=True)
+    debenture = models.ForeignKey('Debenture')
     taxa = models.DecimalField(u'Taxa', max_digits=7, decimal_places=4)
     periodo = models.IntegerField(u'Período')
     unidade_periodo = models.CharField(u'Unidade do período', max_length=10)
@@ -124,7 +124,7 @@ class JurosDebenture (models.Model):
         return ''
     
 class PremioDebenture (models.Model):
-    debenture = models.OneToOneField('Debenture', on_delete=models.CASCADE, primary_key=True)
+    debenture = models.ForeignKey('Debenture')
     taxa = models.DecimalField(u'Taxa', max_digits=7, decimal_places=4)
     periodo = models.IntegerField(u'Período')
     unidade_periodo = models.CharField(u'Unidade do período', max_length=10)
