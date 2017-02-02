@@ -46,10 +46,4 @@ class Migration(migrations.Migration):
             field=models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID'),
             preserve_default=False,
         ),
-        migrations.AddField(
-            model_name='documentoproventobovespa',
-            name='tipo_documento',
-            field=models.CharField(default='', max_length=50, verbose_name='Tipo de documento'),
-            preserve_default=False,
-        ),
     ]
