@@ -49,6 +49,7 @@
 					<div class="portlet-body">
 						<div class="row number-stats margin-bottom-30">
 							<div class="col-md-3">
+                            {% comment %}
 								<div class="stat-left" style="width:100%;">
 									<div class="stat-chart" style="width:30%;">
 										<div id="graf_proventos" style="width:100%;height:50px"></div>
@@ -58,6 +59,7 @@
 										<div class="number"> R${{ dados.total_proventos }} </div>
 									</div>
 								</div>
+                            {% endcomment %}
 							</div>
 							<div class="col-md-3">
 								<div class="stat-left" style="width:100%;">
@@ -87,7 +89,7 @@
 									</div>
 									<div class="stat-number">
 										<div class="title"> Lucro/Prejuízo: </div>
-										<div class="number"> R${{ dados.lucro }} ({{ dados.lucro_percentual|floatformat:2 }}%) </div>
+										<div class="number"> R${{ dados.lucro|floatformat:2 }} ({{ dados.lucro_percentual|floatformat:2 }}%) </div>
 									</div>
 								</div>
 							</div>

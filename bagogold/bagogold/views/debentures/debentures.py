@@ -49,10 +49,80 @@ def editar_operacao_debenture(request, operacao_id):
     investidor = request.user.investidor
     
     operacao_debenture = OperacaoDebenture.objects.get(pk=operacao_id)
+    
+    # Verificar se a operação é do investidor logado
     if operacao_debenture.investidor != investidor:
         raise PermissionDenied
     
-    return TemplateResponse(request, 'debentures/editar_operacao_debenture.html', {})  
+    # Preparar formset para divisoes
+    DivisaoFormSet = inlineformset_factory(OperacaoDebenture, DivisaoOperacaoDebenture, fields=('divisao', 'quantidade'),
+                                            extra=0, formset=DivisaoOperacaoDebentureFormSet)
+    
+    # Testa se investidor possui mais de uma divisão
+    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    
+    if request.method == 'POST':
+        if request.POST.get("save"):
+            form_operacao_debenture = OperacaoDebentureForm(request.POST, instance=operacao_debenture)
+            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_debenture, investidor=investidor) if varias_divisoes else None
+            
+            if form_operacao_debenture.is_valid():
+                # Validar de acordo com a quantidade de divisões
+                if varias_divisoes:
+                    if formset_divisao.is_valid():
+                        operacao_debenture.save()
+                        formset_divisao.save()
+#                         for form_divisao_operacao in [form for form in formset_divisao if form.cleaned_data]:
+#                             # Ignorar caso seja apagado
+#                             if 'DELETE' in form_divisao_operacao.cleaned_data and form_divisao_operacao.cleaned_data['DELETE']:
+#                                 pass
+#                             else:
+#                                 divisao_operacao = form_divisao_operacao.save(commit=False)
+#                                 if hasattr(divisao_operacao, 'usoproventosoperacaofii'):
+#                                     if form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] == None or form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] == 0:
+#                                         divisao_operacao.usoproventosoperacaofii.delete()
+#                                     else:
+#                                         divisao_operacao.usoproventosoperacaofii.qtd_utilizada = form_divisao_operacao.cleaned_data['qtd_proventos_utilizada']
+#                                         divisao_operacao.usoproventosoperacaofii.save()
+#                                 else:
+#                                     if form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] != None and form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] > 0:
+#                                         # TODO remover operação de uso proventos
+#                                         divisao_operacao.usoproventosoperacaofii = UsoProventosOperacaoDebenture(qtd_utilizada=form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'], operacao=operacao_debenture)
+#                                         divisao_operacao.usoproventosoperacaofii.save()
+                        
+                        messages.success(request, 'Operação alterada com sucesso')
+                        return HttpResponseRedirect(reverse('historico_debenture'))
+                    
+                else:    
+                    operacao_debenture.save()
+                    divisao_operacao = DivisaoOperacaoDebenture.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_debenture)
+                    divisao_operacao.quantidade = operacao_debenture.quantidade
+                    divisao_operacao.save()
+                    messages.success(request, 'Operação alterada com sucesso')
+                    return HttpResponseRedirect(reverse('historico_debenture'))
+                        
+            for erros in form_operacao_debenture.errors.values():
+                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
+                    messages.error(request, erro.message)
+            for erro in formset_divisao.non_form_errors():
+                messages.error(request, erro)
+                
+        elif request.POST.get("delete"):
+            divisao_debenture = DivisaoOperacaoDebenture.objects.filter(operacao=operacao_debenture)
+            for divisao in divisao_debenture:
+                if hasattr(divisao, 'usoproventosoperacaofii'):
+                    divisao.usoproventosoperacaofii.delete()
+                divisao.delete()
+            operacao_debenture.delete()
+            messages.success(request, 'Operação apagada com sucesso')
+            return HttpResponseRedirect(reverse('historico_debenture'))
+
+    else:
+        form_operacao_debenture = OperacaoDebentureForm(instance=operacao_debenture)
+        formset_divisao = DivisaoFormSet(instance=operacao_debenture, investidor=investidor)
+            
+    return TemplateResponse(request, 'debentures/editar_operacao_debenture.html', {'form_operacao_debenture': form_operacao_debenture,
+                                                               'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})   
 
     
 @login_required

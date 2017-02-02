@@ -138,7 +138,7 @@ urlpatterns = [
     
     # Debêntures
     url(r'^debentures/detalhar_debenture/(?P<debenture_id>\d+)/$', views.debentures.debentures.detalhar_debenture, name='detalhar_debenture'),
-    url(r'^debentures/editar_operacao/(?P<debenture_id>\d+)/$', views.debentures.debentures.editar_operacao_debenture, name='editar_operacao_debenture'),
+    url(r'^debentures/editar_operacao/(?P<operacao_id>\d+)/$', views.debentures.debentures.editar_operacao_debenture, name='editar_operacao_debenture'),
     url(r'^debentures/historico/$', views.debentures.debentures.historico, name='historico_debenture'),
     url(r'^debentures/inserir_operacao_debenture/$', views.debentures.debentures.inserir_operacao_debenture, name='inserir_operacao_debenture'),
     url(r'^debentures/listar_debentures/$', views.debentures.debentures.listar_debentures, name='listar_debentures'),
