@@ -56,7 +56,7 @@ def inicio(request):
         elif chave == 'CDB/RDB':
             investimento.link = 'painel_cdb_rdb'
         elif chave == 'Debêntures':
-            investimento.link = 'painel_debentures'
+            investimento.link = 'painel_debenture'
         elif chave == 'FII':
             investimento.link = 'painel_fii'
         elif chave == 'Fundos de Inv.':
