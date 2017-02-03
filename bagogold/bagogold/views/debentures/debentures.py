@@ -278,13 +278,6 @@ def listar_debentures(request):
     for debenture in debentures:
         debenture.porcentagem = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(debenture.porcentagem))
         
-        if debenture.descricao_jurosdebenture():
-            debenture.descricao_jurosdebenture().taxa = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(debenture.descricao_jurosdebenture().taxa))
-        if debenture.descricao_amortizacaodebenture():
-            debenture.descricao_amortizacaodebenture.taxa = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(debenture.descricao_amortizacaodebenture.taxa))
-        if debenture.descricao_premiodebenture():
-            debenture.descricao_premiodebenture.taxa = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(debenture.descricao_premiodebenture.taxa))
-    
     return TemplateResponse(request, 'debentures/listar_debentures.html', {'debentures': debentures})
 
 @login_required
