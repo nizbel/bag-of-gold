@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.debentures import Debenture,  OperacaoDebenture, HistoricoValorDebenture
+from bagogold.bagogold.models.debentures import Debenture, AmortizacaoDebenture, \
+    JurosDebenture, PremioDebenture, OperacaoDebenture, HistoricoValorDebenture
 from django.contrib import admin
  
 admin.site.register(Debenture)
     
-# admin.site.register(AmortizacaoDebenture)
+admin.site.register(AmortizacaoDebenture)
     
-# admin.site.register(JurosDebenture)
+admin.site.register(JurosDebenture)
     
-# admin.site.register(PremioDebenture)
+admin.site.register(PremioDebenture)
         
 admin.site.register(OperacaoDebenture)
     
