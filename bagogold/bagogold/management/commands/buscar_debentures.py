@@ -155,7 +155,7 @@ class ProcessaDebentureThread(Thread):
                                 debenture.data_fim = datetime.datetime.strptime(data_saida, '%d/%m/%Y').date()
                             
                             debenture.save()
-                    except:
+                    except Exception as e:
                         pass
                 
                 time.sleep(1)
@@ -168,6 +168,8 @@ class Command(BaseCommand):
     help = 'Busca as Debêntures'
 
     def handle(self, *args, **options):
+#         for debenture in Debenture.objects.all():
+#             debenture.delete()
         try:
             # Prepara thread de processamento de informações de debênture
             thread_processa_debenture = ProcessaDebentureThread()
