@@ -74,7 +74,7 @@ def buscar_ultimas_operacoes(investidor, quantidade_operacoes):
     return ultimas_operacoes
 
 def buscar_totais_atuais_investimentos(investidor):
-    totais_atuais = {'Ações': Decimal(0), 'CDB/RDB': Decimal(0), 'Debênture': Decimal(0), 'FII': Decimal(0), 'Fundos de Inv.': Decimal(0), 'Letras de Crédito': Decimal(0), 
+    totais_atuais = {'Ações': Decimal(0), 'CDB/RDB': Decimal(0), 'Debêntures': Decimal(0), 'FII': Decimal(0), 'Fundos de Inv.': Decimal(0), 'Letras de Crédito': Decimal(0), 
                      'Tesouro Direto': Decimal(0), }
     
     data_atual = datetime.date.today()
@@ -99,7 +99,7 @@ def buscar_totais_atuais_investimentos(investidor):
     debentures = calcular_qtd_debentures_ate_dia(investidor, data_atual)
     for codigo in debentures.keys():
         valor_atual = HistoricoValorDebenture.objects.filter(debenture__codigo=codigo).order_by('-data')[0].preco_unitario
-        totais_atuais['Debênture'] += (debentures[codigo] * valor_atual)
+        totais_atuais['Debêntures'] += (debentures[codigo] * valor_atual)
         
     # Fundos de investimento imobiliário
     fiis = calcular_qtd_fiis_ate_dia(investidor, data_atual)
