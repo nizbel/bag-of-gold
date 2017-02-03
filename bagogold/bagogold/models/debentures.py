@@ -51,115 +51,115 @@ class Debenture (models.Model):
         return ''
     
     def descricao_amortizacaodebenture(self):
-#         if AmortizacaoDebenture.objects.filter(debenture=self).exists():
-#             return AmortizacaoDebenture.objects.filter(debenture=self).order_by('-data')[0]
+        if AmortizacaoDebenture.objects.filter(debenture=self).exists():
+            return AmortizacaoDebenture.objects.filter(debenture=self).order_by('-data')[0]
         return ''
     
     def descricao_jurosdebenture(self):
-#         if JurosDebenture.objects.filter(debenture=self).exists():
-#             return JurosDebenture.objects.filter(debenture=self).order_by('-data')[0]
+        if JurosDebenture.objects.filter(debenture=self).exists():
+            return JurosDebenture.objects.filter(debenture=self).order_by('-data')[0]
         return ''
     
     def descricao_premiodebenture(self):
-#         if PremioDebenture.objects.filter(debenture=self).exists():
-#             return PremioDebenture.objects.filter(debenture=self).order_by('-data')[0]
+        if PremioDebenture.objects.filter(debenture=self).exists():
+            return PremioDebenture.objects.filter(debenture=self).order_by('-data')[0]
         return ''
     
-# class AmortizacaoDebenture (models.Model):
-#     TIPOS_AMORTIZACAO = ((0, u'Indefinido'),
-#                          (1, u'Percentual fixo sobre o valor nominal atualizado em períodos não uniformes'),
-#                          (2, u'Percentual fixo sobre o valor nominal atualizado em períodos uniformes'),
-#                          (3, u'Percentual fixo sobre o valor nominal de emissão em períodos não uniformes'),
-#                          (4, u'Percentual fixo sobre o valor nominal de emissão em períodos uniformes'),
-#                          (5, u'Percentual variável sobre o valor nominal atualizado em períodos não uniformes'),
-#                          (6, u'Percentual variável sobre o valor nominal atualizado em períodos uniformes'),
-#                          (7, u'Percentual variável sobre o valor nominal de emissão em períodos não uniformes'),
-#                          (8, u'Percentual variável sobre o valor nominal de emissão em períodos uniformes'),)
-#     
-#     debenture = models.ForeignKey('Debenture')
-#     taxa = models.DecimalField(u'Taxa', max_digits=7, decimal_places=4)
-#     periodo = models.IntegerField(u'Período')
-#     unidade_periodo = models.CharField(u'Unidade do período', max_length=10)
-#     carencia = models.DateField(u'Carência', blank=True, null=True)
-#     tipo = models.PositiveSmallIntegerField(u'Tipo de amortização', choices=TIPOS_AMORTIZACAO)
-#     data = models.DateField(u'Data')
-#     
-#     def descricao(self):
-#         self.carencia = '' if not self.carencia else self.carencia.strftime('%d/%m/%Y')
-#         if self.taxa > 0:
-#             self.taxa = str(self.taxa).replace('.', ',')
-#             return '%s%% a cada %s %s, a partir de %s' % (self.taxa, self.periodo, self.descricao_unidade_periodo(), self.carencia)
-#         else:
-#             if self.tipo >= 5:
-#                 return 'Variável a cada %s %s, a partir de %s' % (self.periodo, self.descricao_unidade_periodo(), self.carencia)
-#         return 'Não sei'
-#     
-#     def descricao_unidade_periodo(self):
-#         if self.unidade_periodo == 'MES':
-#             if self.periodo == 1:
-#                 return 'mes'
-#             else:
-#                 return 'meses'
-#         elif self.unidade_periodo == 'DIA':
-#             if self.periodo == 1:
-#                 return 'dia'
-#             else:
-#                 return 'dias'
-#         return ''
-#     
-# class JurosDebenture (models.Model):
-#     debenture = models.ForeignKey('Debenture')
-#     taxa = models.DecimalField(u'Taxa', max_digits=7, decimal_places=4)
-#     periodo = models.IntegerField(u'Período')
-#     unidade_periodo = models.CharField(u'Unidade do período', max_length=10)
-#     carencia = models.DateField(u'Carência', blank=True, null=True)
-#     data = models.DateField(u'Data')
-#     
-#     def descricao(self):
-#         if self.taxa > 0:
-#             self.taxa = str(self.taxa).replace('.', ',')
-#             if (self.periodo == 0 and self.unidade_periodo == '-'):
-#                 return '%s%% ao ano, a partir de %s' % (self.taxa, self.carencia.strftime('%d/%m/%Y'))
-#             else:
-#                 return '%s%% a cada %s %s, a partir de %s' % (self.taxa, self.periodo, self.descricao_unidade_periodo(), self.carencia.strftime('%d/%m/%Y'))
-#         else:
-#             return ''
-#     
-#     def descricao_unidade_periodo(self):
-#         if self.unidade_periodo == 'MES':
-#             if self.periodo == 1:
-#                 return 'mes'
-#             else:
-#                 return 'meses'
-#         elif self.unidade_periodo == 'DIA':
-#             if self.periodo == 1:
-#                 return 'dia'
-#             else:
-#                 return 'dias'
-#         return ''
-#     
-# class PremioDebenture (models.Model):
-#     debenture = models.ForeignKey('Debenture')
-#     taxa = models.DecimalField(u'Taxa', max_digits=7, decimal_places=4)
-#     periodo = models.IntegerField(u'Período')
-#     unidade_periodo = models.CharField(u'Unidade do período', max_length=10)
-#     carencia = models.DateField(u'Carência', blank=True, null=True)
-#     data = models.DateField(u'Data')
-#     
-#     def descricao(self):
-#         if self.taxa > 0:
-#             self.taxa = str(self.taxa).replace('.', ',')
-#             return '%s%% a cada %s %s, a partir de %s' % (self.taxa, self.periodo, self.descricao_unidade_periodo(), self.carencia.strftime('%d/%m/%Y'))
-#         else:
-#             return ''
-#     
-#     def descricao_unidade_periodo(self):
-#         if self.unidade_periodo == 'MES':
-#             if self.periodo == 1:
-#                 return 'mes'
-#             else:
-#                 return 'meses'
-#         return ''
+class AmortizacaoDebenture (models.Model):
+    TIPOS_AMORTIZACAO = ((0, u'Indefinido'),
+                         (1, u'Percentual fixo sobre o valor nominal atualizado em períodos não uniformes'),
+                         (2, u'Percentual fixo sobre o valor nominal atualizado em períodos uniformes'),
+                         (3, u'Percentual fixo sobre o valor nominal de emissão em períodos não uniformes'),
+                         (4, u'Percentual fixo sobre o valor nominal de emissão em períodos uniformes'),
+                         (5, u'Percentual variável sobre o valor nominal atualizado em períodos não uniformes'),
+                         (6, u'Percentual variável sobre o valor nominal atualizado em períodos uniformes'),
+                         (7, u'Percentual variável sobre o valor nominal de emissão em períodos não uniformes'),
+                         (8, u'Percentual variável sobre o valor nominal de emissão em períodos uniformes'),)
+    
+    debenture = models.ForeignKey('Debenture')
+    taxa = models.DecimalField(u'Taxa', max_digits=7, decimal_places=4)
+    periodo = models.IntegerField(u'Período')
+    unidade_periodo = models.CharField(u'Unidade do período', max_length=10)
+    carencia = models.DateField(u'Carência', blank=True, null=True)
+    tipo = models.PositiveSmallIntegerField(u'Tipo de amortização', choices=TIPOS_AMORTIZACAO)
+    data = models.DateField(u'Data')
+    
+    def descricao(self):
+        self.carencia = '' if not self.carencia else self.carencia.strftime('%d/%m/%Y')
+        if self.taxa > 0:
+            self.taxa = str(self.taxa).replace('.', ',')
+            return '%s%% a cada %s %s, a partir de %s' % (self.taxa, self.periodo, self.descricao_unidade_periodo(), self.carencia)
+        else:
+            if self.tipo >= 5:
+                return 'Variável a cada %s %s, a partir de %s' % (self.periodo, self.descricao_unidade_periodo(), self.carencia)
+        return 'Não sei'
+    
+    def descricao_unidade_periodo(self):
+        if self.unidade_periodo == 'MES':
+            if self.periodo == 1:
+                return 'mes'
+            else:
+                return 'meses'
+        elif self.unidade_periodo == 'DIA':
+            if self.periodo == 1:
+                return 'dia'
+            else:
+                return 'dias'
+        return ''
+    
+class JurosDebenture (models.Model):
+    debenture = models.ForeignKey('Debenture')
+    taxa = models.DecimalField(u'Taxa', max_digits=7, decimal_places=4)
+    periodo = models.IntegerField(u'Período')
+    unidade_periodo = models.CharField(u'Unidade do período', max_length=10)
+    carencia = models.DateField(u'Carência', blank=True, null=True)
+    data = models.DateField(u'Data')
+    
+    def descricao(self):
+        if self.taxa > 0:
+            self.taxa = str(self.taxa).replace('.', ',')
+            if (self.periodo == 0 and self.unidade_periodo == '-'):
+                return '%s%% ao ano, a partir de %s' % (self.taxa, self.carencia.strftime('%d/%m/%Y'))
+            else:
+                return '%s%% a cada %s %s, a partir de %s' % (self.taxa, self.periodo, self.descricao_unidade_periodo(), self.carencia.strftime('%d/%m/%Y'))
+        else:
+            return ''
+    
+    def descricao_unidade_periodo(self):
+        if self.unidade_periodo == 'MES':
+            if self.periodo == 1:
+                return 'mes'
+            else:
+                return 'meses'
+        elif self.unidade_periodo == 'DIA':
+            if self.periodo == 1:
+                return 'dia'
+            else:
+                return 'dias'
+        return ''
+    
+class PremioDebenture (models.Model):
+    debenture = models.ForeignKey('Debenture')
+    taxa = models.DecimalField(u'Taxa', max_digits=7, decimal_places=4)
+    periodo = models.IntegerField(u'Período')
+    unidade_periodo = models.CharField(u'Unidade do período', max_length=10)
+    carencia = models.DateField(u'Carência', blank=True, null=True)
+    data = models.DateField(u'Data')
+    
+    def descricao(self):
+        if self.taxa > 0:
+            self.taxa = str(self.taxa).replace('.', ',')
+            return '%s%% a cada %s %s, a partir de %s' % (self.taxa, self.periodo, self.descricao_unidade_periodo(), self.carencia.strftime('%d/%m/%Y'))
+        else:
+            return ''
+    
+    def descricao_unidade_periodo(self):
+        if self.unidade_periodo == 'MES':
+            if self.periodo == 1:
+                return 'mes'
+            else:
+                return 'meses'
+        return ''
         
 class OperacaoDebenture (models.Model):
     investidor = models.ForeignKey('Investidor')
