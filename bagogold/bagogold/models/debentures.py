@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.utils.misc import \
+    formatar_zeros_a_direita_apos_2_casas_decimais
 from decimal import Decimal
 from django.db import models
 
@@ -52,17 +54,17 @@ class Debenture (models.Model):
     
     def descricao_amortizacaodebenture(self):
         if AmortizacaoDebenture.objects.filter(debenture=self).exists():
-            return AmortizacaoDebenture.objects.filter(debenture=self).order_by('-data')[0]
+            return AmortizacaoDebenture.objects.filter(debenture=self).order_by('-data')[0].descricao()
         return ''
     
     def descricao_jurosdebenture(self):
         if JurosDebenture.objects.filter(debenture=self).exists():
-            return JurosDebenture.objects.filter(debenture=self).order_by('-data')[0]
+            return JurosDebenture.objects.filter(debenture=self).order_by('-data')[0].descricao()
         return ''
     
     def descricao_premiodebenture(self):
         if PremioDebenture.objects.filter(debenture=self).exists():
-            return PremioDebenture.objects.filter(debenture=self).order_by('-data')[0]
+            return PremioDebenture.objects.filter(debenture=self).order_by('-data')[0].descricao()
         return ''
     
 class AmortizacaoDebenture (models.Model):
@@ -87,12 +89,13 @@ class AmortizacaoDebenture (models.Model):
     def descricao(self):
         self.carencia = '' if not self.carencia else self.carencia.strftime('%d/%m/%Y')
         if self.taxa > 0:
+            self.taxa = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(self.taxa))
             self.taxa = str(self.taxa).replace('.', ',')
             return '%s%% a cada %s %s, a partir de %s' % (self.taxa, self.periodo, self.descricao_unidade_periodo(), self.carencia)
         else:
             if self.tipo >= 5:
                 return 'Variável a cada %s %s, a partir de %s' % (self.periodo, self.descricao_unidade_periodo(), self.carencia)
-        return 'Não sei'
+        return ''
     
     def descricao_unidade_periodo(self):
         if self.unidade_periodo == 'MES':
@@ -117,6 +120,7 @@ class JurosDebenture (models.Model):
     
     def descricao(self):
         if self.taxa > 0:
+            self.taxa = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(self.taxa))
             self.taxa = str(self.taxa).replace('.', ',')
             if (self.periodo == 0 and self.unidade_periodo == '-'):
                 return '%s%% ao ano, a partir de %s' % (self.taxa, self.carencia.strftime('%d/%m/%Y'))
@@ -148,6 +152,7 @@ class PremioDebenture (models.Model):
     
     def descricao(self):
         if self.taxa > 0:
+            self.taxa = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(self.taxa))
             self.taxa = str(self.taxa).replace('.', ',')
             return '%s%% a cada %s %s, a partir de %s' % (self.taxa, self.periodo, self.descricao_unidade_periodo(), self.carencia.strftime('%d/%m/%Y'))
         else:
