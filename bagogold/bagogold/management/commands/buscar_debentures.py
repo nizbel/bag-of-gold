@@ -92,6 +92,7 @@ class ProcessaDebentureThread(Thread):
                             
                             debenture.save()
                                 
+                            print 'amort'
                             if amortizacao_carencia or amortizacao_taxa > 0:
                                 if not AmortizacaoDebenture.objects.filter(debenture=debenture, taxa=amortizacao_taxa, periodo=amortizacao_periodo, \
                                                                            unidade_periodo=amortizacao_unidade, tipo=amortizacao_tipo, carencia=amortizacao_carencia).exists():
@@ -99,12 +100,14 @@ class ProcessaDebentureThread(Thread):
                                                                        periodo=amortizacao_periodo, unidade_periodo=amortizacao_unidade, tipo=amortizacao_tipo, \
                                                                        carencia=amortizacao_carencia)
                                     amortizacao.save()
+                            print 'juros'
                             if juros_carencia:
                                 if not JurosDebenture.objects.filter(debenture=debenture, taxa=juros_taxa, periodo=juros_periodo, \
                                                                      unidade_periodo=juros_unidade, carencia=juros_carencia).exists():
                                     juros = JurosDebenture(data = datetime.date.today(), debenture=debenture, taxa=juros_taxa, \
                                                                        periodo=juros_periodo, unidade_periodo=juros_unidade, carencia=juros_carencia)
                                     juros.save()
+                            print 'premio'
                             if premio_carencia:
                                 if not PremioDebenture.objects.filter(debenture=debenture, taxa=premio_taxa, periodo=premio_periodo, \
                                                                       unidade_periodo=premio_unidade, carencia=premio_carencia).exists():
@@ -155,7 +158,8 @@ class ProcessaDebentureThread(Thread):
                                 debenture.data_fim = datetime.datetime.strptime(data_saida, '%d/%m/%Y').date()
                             
                             debenture.save()
-                    except:
+                    except Exception as e:
+                        print e.args
                         pass
                 
                 time.sleep(1)
@@ -168,6 +172,8 @@ class Command(BaseCommand):
     help = 'Busca as Debêntures'
 
     def handle(self, *args, **options):
+#         for debenture in Debenture.objects.all():
+#             debenture.delete()
         try:
             # Prepara thread de processamento de informações de debênture
             thread_processa_debenture = ProcessaDebentureThread()
