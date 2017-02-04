@@ -128,7 +128,7 @@
 								<td><a href="{% url 'editar_operacao_debenture' item.id %}">{{item.tipo}}</a></td>
 								<td>{{ item.data|date:"d/m/Y" }}</td>
 								<td>{{item.quantidade}}</td>
-								<td>R$ {{item.valor_unitario}}</td>
+								<td>R$ {{item.valor_unitario|floatformat:2}}</td>
 								<td>{% if item.taxa != None %}<span class="font-red-thunderbird">R$ {{item.taxa|floatformat:"2"}}</span>{% else %}N/A{% endif %}</td>
 								<td><span class="
 								{% if item.total < 0 %}

@@ -22,7 +22,6 @@ class OperacaoDebentureForm(LocalizedModelForm):
         
     def clean(self):
         data = super(OperacaoDebentureForm, self).clean()
-        print data
         debenture = data.get('debenture')
         if debenture.data_fim and data.get('data') >= debenture.data_fim:
             raise forms.ValidationError('Operação deve ter sido realizado antes da data de fim da debênture')
