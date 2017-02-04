@@ -237,11 +237,8 @@ def inserir_operacao_debenture(request):
     if request.method == 'POST':
         form_operacao_debenture = OperacaoDebentureForm(request.POST)
         formset_divisao = DivisaoFormSet(request.POST, investidor=investidor) if varias_divisoes else None
-        print 'Ver se operacao vale'
         if form_operacao_debenture.is_valid():
-            print 'vale'
             operacao_debenture = form_operacao_debenture.save(commit=False)
-            print 'quantidade:', operacao_debenture.quantidade
             operacao_debenture.investidor = investidor
             if varias_divisoes:
                 formset_divisao = DivisaoFormSet(request.POST, instance=operacao_debenture, investidor=investidor)

@@ -98,7 +98,7 @@ def buscar_totais_atuais_investimentos(investidor):
     # Debêntures
     debentures = calcular_qtd_debentures_ate_dia(investidor, data_atual)
     for codigo in debentures.keys():
-        valor_atual = HistoricoValorDebenture.objects.filter(debenture__codigo=codigo).order_by('-data')[0].preco_unitario
+        valor_atual = HistoricoValorDebenture.objects.filter(debenture__codigo=codigo).order_by('-data')[0].valor_total()
         totais_atuais['Debêntures'] += (debentures[codigo] * valor_atual)
         
     # Fundos de investimento imobiliário
