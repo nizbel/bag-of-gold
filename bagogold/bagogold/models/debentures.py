@@ -67,6 +67,12 @@ class Debenture (models.Model):
             return PremioDebenture.objects.filter(debenture=self).order_by('-data')[0].descricao()
         return ''
     
+    def taxa_juros_atual(self):
+        if JurosDebenture.objects.filter(debenture=self).exists():
+            return JurosDebenture.objects.filter(debenture=self).order_by('-data')[0].taxa
+        return Decimal(0)
+        
+    
 class AmortizacaoDebenture (models.Model):
     TIPOS_AMORTIZACAO = ((0, u'Indefinido'),
                          (1, u'Percentual fixo sobre o valor nominal atualizado em períodos não uniformes'),
