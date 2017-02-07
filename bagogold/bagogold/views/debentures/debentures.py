@@ -358,7 +358,12 @@ def painel(request):
         
         # Calcular valor estimado no vencimento
         qtd_dias_uteis_ate_vencimento = qtd_dias_uteis_no_periodo(valores_atuais_debenture.data, debentures[debenture_id].data_vencimento)
-        if debentures[debenture_id].indice == Debenture.IPCA:
+        if debentures[debenture_id].indice == Debenture.PREFIXADO:
+            taxa_anual_pre_mais_juros = debentures[debenture_id].porcentagem + debentures[debenture_id].taxa_juros_atual()
+            taxa_mensal_pre_mais_juros = pow(1 + taxa_anual_pre_mais_juros/100, Decimal(1)/12) - 1
+            taxa_diaria_pre_mais_juros = pow(1 + taxa_mensal_pre_mais_juros, Decimal(1)/12) - 1
+            debentures[debenture_id].valor_rendimento_ate_vencimento = debentures[debenture_id].total * pow(1 + taxa_diaria_pre_mais_juros, qtd_dias_uteis_ate_vencimento)
+        elif debentures[debenture_id].indice == Debenture.IPCA:
             # Transformar taxa mensal em anual para somar aos juros da debenture
             ipca_anual = pow(1 + ultima_taxa_ipca.valor * (debentures[debenture_id].porcentagem/100) /Decimal(100), Decimal(12)) - 1
             taxa_mensal_ipca_mais_juros = pow(1 + (ipca_anual + debentures[debenture_id].taxa_juros_atual())/Decimal(100), Decimal(1)/12) - 1
@@ -375,7 +380,7 @@ def painel(request):
             taxa_anual_selic_mais_juros = selic_anual * (debentures[debenture_id].porcentagem / 100) + debentures[debenture_id].taxa_juros_atual() / 100
             taxa_mensal_selic_mais_juros = pow(1 + taxa_anual_selic_mais_juros, Decimal(1)/12) - 1
             taxa_diaria_selic_mais_juros = pow(1 + taxa_mensal_selic_mais_juros, Decimal(1)/30) - 1
-            debentures[debenture_id].valor_rendimento_ate_vencimento = debentures[debenture_id].total * pow(1 + taxa_diaria_ipca_mais_juros, qtd_dias_uteis_ate_vencimento)
+            debentures[debenture_id].valor_rendimento_ate_vencimento = debentures[debenture_id].total * pow(1 + taxa_diaria_selic_mais_juros, qtd_dias_uteis_ate_vencimento)
             
         total_rendimento_ate_vencimento += debentures[debenture_id].valor_rendimento_ate_vencimento
     
