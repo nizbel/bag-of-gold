@@ -55,6 +55,8 @@ def inicio(request):
             investimento.link = 'painel_bh'
         elif chave == 'CDB/RDB':
             investimento.link = 'painel_cdb_rdb'
+        elif chave == 'Debêntures':
+            investimento.link = 'painel_debenture'
         elif chave == 'FII':
             investimento.link = 'painel_fii'
         elif chave == 'Fundos de Inv.':
@@ -138,9 +140,9 @@ def inicio(request):
                     float(sum([calcular_valor_venda_cdb_rdb(operacao_venda) for operacao_venda in OperacaoCDB_RDB.objects.filter(data=dia, investidor=investidor, tipo_operacao='V')]))
                 total_cdb_rdb_dia_anterior = total_cdb_rdb
                 
-    graf_rendimentos_mensal_cdb_rdb = [[str(calendar.timegm(data.replace(hour=0).timetuple()) * 1000), diario_cdb_rdb[data.date()] ] \
+    graf_rendimentos_mensal_cdb_rdb = [[str(calendar.timegm(data.replace(hour=3).timetuple()) * 1000), diario_cdb_rdb[data.date()] ] \
                                for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ] if request.user.is_authenticated() else list()
-    graf_rendimentos_mensal_lc = [[str(calendar.timegm(data.replace(hour=6).timetuple()) * 1000), diario_lc[data.date()] ] \
+    graf_rendimentos_mensal_lc = [[str(calendar.timegm(data.replace(hour=9).timetuple()) * 1000), diario_lc[data.date()] ] \
                                for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ] if request.user.is_authenticated() else list()
     
     return TemplateResponse(request, 'inicio.html', {'ultimas_operacoes': ultimas_operacoes, 'investimentos_atuais': investimentos_atuais, 'acumulado_mensal_atual': acumulado_mensal_atual,

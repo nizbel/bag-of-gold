@@ -24,4 +24,10 @@ class Migration(migrations.Migration):
             name='quantidade',
             field=models.DecimalField(decimal_places=2, max_digits=11, verbose_name=b'Quantidade (em t\xc3\xadtulos)'),
         ),
+        migrations.AddField(
+            model_name='documentoproventobovespa',
+            name='tipo_documento',
+            field=models.CharField(default='', max_length=50, verbose_name='Tipo de documento'),
+            preserve_default=False,
+        ),
     ]
