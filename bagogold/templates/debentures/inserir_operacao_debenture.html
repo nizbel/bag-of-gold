@@ -61,9 +61,9 @@
                                 <label class="control-label col-md-4" style="text-align: left;"> Debênture: </label>
                                 <div class="col-md-8">
                                     {% localize off %}
-                                    <select class="selectpicker form-control" id="id_debenture" name="debenture" data-hide-disabled="true">
+                                    <select class="selectpicker form-control" id="id_debenture" name="debenture">
                                         {% for key, value in form_operacao_debenture.fields.debenture.widget.choices %}<option value="{{ key }}" 
-                                                {% if key == form_operacao_debenture.debenture.value|add:'0' %}selected="selected"{% else %}disabled="disabled"{% endif %}>{{ value }}</option>{% endfor %}
+                                                {% if key == form_operacao_debenture.debenture.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
                                     </select>
                                     {% endlocalize %}
                                     {% if form_operacao_debenture.debenture.errors %} <span class="help-block"> {{ form_operacao_debenture.debenture.errors.as_text }} </span> {% endif %}
@@ -233,22 +233,22 @@ $(document).ready(function() {
     $("#id_debenture").selectpicker('refresh');
     $("select[id$='-divisao']").selectpicker('refresh');
     
-    $('#id_data').change(function() {
-        var data_texto = $('#id_data').val();
-        var comp = data_texto.split('/');
-        // Tamanho de comp deve ser 3
-        if (comp.length != 3) {
-        	return;
-        }
-        var m = parseInt(comp[1], 10);
-        var d = parseInt(comp[0], 10);
-        var y = parseInt(comp[2], 10);
-        var data = new Date(y,m-1,d);
-        console.log(data, data_texto)
-        if (data.getFullYear() == y && data.getMonth() + 1 == m && data.getDate() == d) {
-    	   mostrar_debentures_validas(data_texto);
-        }
-    }); 
+//     $('#id_data').change(function() {
+//         var data_texto = $('#id_data').val();
+//         var comp = data_texto.split('/');
+//         // Tamanho de comp deve ser 3
+//         if (comp.length != 3) {
+//         	return;
+//         }
+//         var m = parseInt(comp[1], 10);
+//         var d = parseInt(comp[0], 10);
+//         var y = parseInt(comp[2], 10);
+//         var data = new Date(y,m-1,d);
+//         console.log(data, data_texto)
+//         if (data.getFullYear() == y && data.getMonth() + 1 == m && data.getDate() == d) {
+//     	   mostrar_debentures_validas(data_texto);
+//         }
+//     }); 
 });
 </script>
 {% endblock %}

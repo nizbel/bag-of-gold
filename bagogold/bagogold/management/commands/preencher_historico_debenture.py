@@ -56,7 +56,6 @@ class Command(BaseCommand):
         parser.add_argument('busca_completa', type=int)
 
     def handle(self, *args, **options):
-        HistoricoValorDebenture.objects.filter(data__gt=(datetime.date.today() - datetime.timedelta(days=15))).delete()
         inicio = datetime.datetime.now()
         try:
             limite_historicos_a_processar = 20000
@@ -71,7 +70,7 @@ class Command(BaseCommand):
                 for debenture in Debenture.objects.all():
                     while len(threads_rodando) >= limite_threads_busca + 1 or len(historicos_a_processar) > limite_historicos_a_processar:
                         time.sleep(2)
-                        print debenture.codigo, 'Históricos a processar:', len(historicos_a_processar)
+#                         print debenture.codigo, 'Históricos a processar:', len(historicos_a_processar)
                     if HistoricoValorDebenture.objects.filter(debenture=debenture).exists():
                         ultima_data = HistoricoValorDebenture.objects.filter(debenture=debenture).order_by('-data') \
                                                           .values_list('data', flat=True)[0]
@@ -89,19 +88,19 @@ class Command(BaseCommand):
                 except Exception as e:
                     print e.args
             while (len(threads_rodando) > 0 or len(historicos_a_processar) > 0):
-                print 'Históricos a processar:', len(historicos_a_processar)
+#                 print 'Históricos a processar:', len(historicos_a_processar)
                 if 'Principal' in threads_rodando.keys():
                     del threads_rodando['Principal']
                 time.sleep(3)
         except KeyboardInterrupt:
             while (len(threads_rodando) > 0 or len(historicos_a_processar) > 0):
-                print 'Históricos a processar:', len(historicos_a_processar)
+#                 print 'Históricos a processar:', len(historicos_a_processar)
                 if 'Principal' in threads_rodando.keys():
                     del threads_rodando['Principal']
                 time.sleep(3)
         
         fim = datetime.datetime.now()
-        print (fim-inicio)
+#         print (fim-inicio)
     
     
 def buscar_historico_debenture(debenture, data_inicio=''):
