@@ -5,6 +5,11 @@ from decimal import Decimal
 from django.db import models
 
 class Debenture (models.Model):
+    PREFIXADO = 1
+    IPCA = 2
+    DI = 3
+    IGPM = 4
+    SELIC = 5
     TIPOS_INDICE = ((1, 'Prefixado'),
                     (2, 'IPCA'),
                     (3, 'DI'),
