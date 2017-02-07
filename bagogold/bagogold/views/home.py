@@ -2,6 +2,8 @@
 from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, Provento, \
     ValorDiarioAcao
 from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB
+from bagogold.bagogold.models.debentures import OperacaoDebenture, \
+    HistoricoValorDebenture
 from bagogold.bagogold.models.fii import OperacaoFII, HistoricoFII, ProventoFII, \
     ValorDiarioFII
 from bagogold.bagogold.models.fundo_investimento import \
@@ -182,10 +184,13 @@ def detalhamento_investimentos(request):
     
     operacoes_cdb_rdb = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
     
+    operacoes_debentures = OperacaoDebenture.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
+    
     operacoes_fundo_investimento = OperacaoFundoInvestimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
     
     # Juntar todas as operações
-    lista_operacoes = sorted(chain(proventos_fii, operacoes_fii, operacoes_td, proventos_bh,  operacoes_bh, operacoes_lc, operacoes_cdb_rdb, operacoes_fundo_investimento),
+    lista_operacoes = sorted(chain(proventos_fii, operacoes_fii, operacoes_td, proventos_bh,  operacoes_bh, operacoes_lc, operacoes_cdb_rdb, 
+                                   operacoes_debentures, operacoes_fundo_investimento),
                             key=attrgetter('data'))
 
 	# Se não houver operações, retornar vazio
@@ -267,6 +272,7 @@ def detalhamento_investimentos(request):
     except:
         ultima_data_calculada_cdb_rdb = datetime.date.today()
     fundos_investimento = {}
+    debentures = {}
     total_proventos_fii = 0
     total_proventos_bh = 0
     
@@ -283,6 +289,7 @@ def detalhamento_investimentos(request):
 #     total_td = datetime.timedelta(hours=0)
 #     total_lc = datetime.timedelta(hours=0)
 #     total_cdb_rdb = datetime.timedelta(hours=0)
+#     total_debentures = datetime.timedelta(hours=0)
 #     total_fundo_investimento = datetime.timedelta(hours=0)
     ############# TESTE
     
@@ -376,6 +383,15 @@ def detalhamento_investimentos(request):
                     del cdb_rdb[item.operacao_compra_relacionada().id]
                 else:
                     cdb_rdb[item.operacao_compra_relacionada().id].quantidade -= cdb_rdb[item.operacao_compra_relacionada().id].quantidade * item.quantidade / item.operacao_compra_relacionada().quantidade
+            
+        elif isinstance(item, OperacaoDebenture):
+            if item.debenture not in debentures.keys():
+                debentures[item.debenture] = 0    
+            if item.tipo_operacao == 'C':
+                debentures[item.debenture] += item.quantidade 
+                
+            elif item.tipo_operacao == 'V':
+                debentures[item.debenture] -= item.quantidade 
                 
         elif isinstance(item, OperacaoFundoInvestimento):
             if item.fundo_investimento not in fundos_investimento.keys():
@@ -523,6 +539,17 @@ def detalhamento_investimentos(request):
 #             fim_cdb_rdb = datetime.datetime.now()
 #             total_cdb_rdb += fim_cdb_rdb - inicio_cdb_rdb
 
+            # Debênture
+#             inicio_debentures = datetime.datetime.now()
+            patrimonio_debentures = 0
+            for debenture in debentures.keys():
+                historico_fundo = HistoricoValorDebenture.objects.filter(debenture=debenture, data__lte=item.data).order_by('-data')[0]
+                patrimonio_debentures += debentures[debenture] * historico_fundo.valor_total()
+            patrimonio['Debêntures'] = patrimonio_debentures
+            patrimonio['patrimonio_total'] += patrimonio['Debêntures'] 
+#             fim_debentures = datetime.datetime.now()
+#             total_debentures += fim_debentures - inicio_debentures
+
             # Fundo de investimento
 #             inicio_fundo_investimento = datetime.datetime.now()
             patrimonio_fundo_investimento = 0
@@ -546,6 +573,7 @@ def detalhamento_investimentos(request):
 #             print 'Prov. FII  ', total_prov_fii
 #             print 'LC         ', total_lc
 #             print 'CDB/RDB:   ', total_cdb_rdb
+#             print 'Debêntures:', total_debentures
 #             print 'Fundo Inv. ', total_fundo_investimento
             
             # Preparar estatísticas
@@ -582,6 +610,7 @@ def detalhamento_investimentos(request):
 #     print 'TD:           ', total_td 
 #     print 'LC:           ', total_lc 
 #     print 'CDB/RDB:      ', total_cdb_rdb
+#     print 'Debêntures:', total_debentures
 #     print 'Fundo Inv.:   ', total_fundo_investimento
     
     return TemplateResponse(request, 'detalhamento_investimentos.html', {'graf_patrimonio': graf_patrimonio, 'patrimonio_anual': patrimonio_anual,
