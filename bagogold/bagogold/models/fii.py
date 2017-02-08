@@ -78,6 +78,9 @@ class HistoricoFII (models.Model):
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)
     data = models.DateField(u'Data de referência')
     oficial_bovespa = models.BooleanField(u'Oficial Bovespa?', default=False)
+    
+    class Meta:
+        unique_together = ('fii', 'data')
         
 class ValorDiarioFII (models.Model):
     fii = models.ForeignKey('FII')
