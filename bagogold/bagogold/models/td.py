@@ -72,16 +72,13 @@ class HistoricoTitulo (models.Model):
     preco_compra = models.DecimalField(u'Preço de compra', max_digits=11, decimal_places=2)
     preco_venda = models.DecimalField(u'Preço de venda', max_digits=11, decimal_places=2)
     
+    class Meta:
+        unique_together=('titulo', 'data')
+    
     def __unicode__(self):
         return str(self.titulo) + ' em ' + str(self.data) + ': R$' + str(self.preco_compra) + '(' + str(self.taxa_compra) + ')' + \
             '/R$' + str(self.preco_venda) + '(' + str(self.taxa_venda) + ')'
     
-    def save(self, *args, **kw):
-        try:
-            HistoricoTitulo.objects.get(titulo=self.titulo, data=self.data)
-        except HistoricoTitulo.DoesNotExist:
-            super(HistoricoTitulo, self).save(*args, **kw)
-            
 class ValorDiarioTitulo (models.Model):
     titulo = models.ForeignKey('Titulo')
     data_hora = models.DateTimeField(u'Horário')
