@@ -5,8 +5,9 @@ from bagogold.bagogold.forms.divisoes import DivisaoOperacaoDebentureFormSet
 from bagogold.bagogold.models.debentures import OperacaoDebenture, Debenture, \
     HistoricoValorDebenture
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoDebenture
+from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas
 from bagogold.bagogold.utils.misc import \
-    formatar_zeros_a_direita_apos_2_casas_decimais
+    formatar_zeros_a_direita_apos_2_casas_decimais, qtd_dias_uteis_no_periodo
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -23,6 +24,10 @@ from operator import attrgetter
 import calendar
 import datetime
 import json
+from bagogold.bagogold.models.lc import HistoricoTaxaDI
+from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
+from bagogold.bagogold.models.td import HistoricoIPCA
+from bagogold.bagogold.utils.td import calcular_valor_acumulado_ipca
 
 
 
@@ -296,4 +301,96 @@ def listar_debentures_validas_na_data(request):
 def painel(request):
     investidor = request.user.investidor
     
-    return TemplateResponse(request, 'debentures/painel.html', {})
+    # Processa primeiro operações de venda (V), depois compra (C)
+    operacoes = OperacaoDebenture.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data') 
+    if not operacoes:
+        dados = {}
+        dados['total_atual'] = Decimal(0)
+        return TemplateResponse(request, 'debentures/painel.html', {'debentures': {}})
+    
+    # Quantidade de debêntures do investidor
+    debentures = {}
+    
+    # Prepara o campo valor atual
+    for operacao in operacoes:
+        if operacao.debenture.id not in debentures.keys():
+            debentures[operacao.debenture.id] = operacao.debenture
+            debentures[operacao.debenture.id].quantidade = 0
+            debentures[operacao.debenture.id].preco_medio = 0
+        if operacao.tipo_operacao == 'C':
+            debentures[operacao.debenture.id].preco_medio = (debentures[operacao.debenture.id].preco_medio * debentures[operacao.debenture.id].quantidade \
+                + operacao.quantidade * operacao.preco_unitario + operacao.taxa)/(debentures[operacao.debenture.id].quantidade + operacao.quantidade)
+            debentures[operacao.debenture.id].quantidade += operacao.quantidade
+        else:
+            debentures[operacao.debenture.id].preco_medio = (debentures[operacao.debenture.id].preco_medio * debentures[operacao.debenture.id].quantidade \
+                - operacao.quantidade * operacao.preco_unitario + operacao.taxa)/(debentures[operacao.debenture.id].quantidade - operacao.quantidade)
+            debentures[operacao.debenture.id].quantidade -= operacao.quantidade
+    
+    # Remover debentures com quantidade zerada
+    for debenture_id in debentures.keys():
+        if debentures[debenture_id].quantidade == 0:
+            del debentures[debenture_id]
+    
+    total_investido = Decimal(0)
+    total_nominal = Decimal(0)
+    total_juros = Decimal(0)
+    total_premio = Decimal(0)
+    total_somado = Decimal(0)
+    total_rendimento_ate_vencimento = Decimal(0)
+    
+    ultima_taxa_di = HistoricoTaxaDI.objects.all().order_by('-data')[0]
+    ultima_taxa_selic = HistoricoTaxaSelic.objects.all().order_by('-data')[0]
+    ultima_taxa_ipca = HistoricoIPCA.objects.all().order_by('-ano', '-mes')[0]
+    
+    for debenture_id in debentures.keys():
+        debentures[debenture_id].total_investido = debentures[debenture_id].quantidade * debentures[debenture_id].preco_medio
+        total_investido += debentures[debenture_id].total_investido
+        
+        valores_atuais_debenture = HistoricoValorDebenture.objects.filter(debenture__id=debenture_id).order_by('-data')[0]
+        debentures[debenture_id].juros_atual = valores_atuais_debenture.juros * debentures[debenture_id].quantidade
+        debentures[debenture_id].valor_nominal_atual = valores_atuais_debenture.valor_nominal * debentures[debenture_id].quantidade
+        debentures[debenture_id].premio_atual = valores_atuais_debenture.premio * debentures[debenture_id].quantidade
+        debentures[debenture_id].total = valores_atuais_debenture.valor_total() * debentures[debenture_id].quantidade
+        total_juros += valores_atuais_debenture.juros * debentures[debenture_id].quantidade
+        total_nominal += valores_atuais_debenture.valor_nominal * debentures[debenture_id].quantidade
+        total_premio += valores_atuais_debenture.premio * debentures[debenture_id].quantidade
+        total_somado += valores_atuais_debenture.valor_total() * debentures[debenture_id].quantidade
+        
+        # Calcular valor estimado no vencimento
+        qtd_dias_uteis_ate_vencimento = qtd_dias_uteis_no_periodo(valores_atuais_debenture.data, debentures[debenture_id].data_vencimento)
+        if debentures[debenture_id].indice == Debenture.PREFIXADO:
+            taxa_anual_pre_mais_juros = debentures[debenture_id].porcentagem + debentures[debenture_id].taxa_juros_atual()
+            taxa_mensal_pre_mais_juros = pow(1 + taxa_anual_pre_mais_juros/100, Decimal(1)/12) - 1
+            taxa_diaria_pre_mais_juros = pow(1 + taxa_mensal_pre_mais_juros, Decimal(1)/12) - 1
+            debentures[debenture_id].valor_rendimento_ate_vencimento = debentures[debenture_id].total * pow(1 + taxa_diaria_pre_mais_juros, qtd_dias_uteis_ate_vencimento)
+        elif debentures[debenture_id].indice == Debenture.IPCA:
+            # Transformar taxa mensal em anual para somar aos juros da debenture
+            ipca_anual = pow(1 + ultima_taxa_ipca.valor * (debentures[debenture_id].porcentagem/100) /Decimal(100), Decimal(12)) - 1
+            taxa_mensal_ipca_mais_juros = pow(1 + (ipca_anual + debentures[debenture_id].taxa_juros_atual())/Decimal(100), Decimal(1)/12) - 1
+            taxa_diaria_ipca_mais_juros = pow(1 + taxa_mensal_ipca_mais_juros, Decimal(1)/30) - 1
+            debentures[debenture_id].valor_rendimento_ate_vencimento = debentures[debenture_id].total * pow(1 + taxa_diaria_ipca_mais_juros, qtd_dias_uteis_ate_vencimento)
+        elif debentures[debenture_id].indice == Debenture.DI:
+            debentures[debenture_id].valor_rendimento_ate_vencimento = calcular_valor_atualizado_com_taxas({Decimal(ultima_taxa_di.taxa): qtd_dias_uteis_ate_vencimento},
+                                                                                                           debentures[debenture_id].total, 
+                                                                                                           debentures[debenture_id].porcentagem + debentures[debenture_id].taxa_juros_atual())
+        elif debentures[debenture_id].indice == Debenture.SELIC:
+            # Transformar SELIC em anual para adicionar juros
+            selic_mensal = pow(1 + ultima_taxa_selic.taxa, 30) - 1
+            selic_anual = pow(1 + selic_mensal, 12) - 1
+            taxa_anual_selic_mais_juros = selic_anual * (debentures[debenture_id].porcentagem / 100) + debentures[debenture_id].taxa_juros_atual() / 100
+            taxa_mensal_selic_mais_juros = pow(1 + taxa_anual_selic_mais_juros, Decimal(1)/12) - 1
+            taxa_diaria_selic_mais_juros = pow(1 + taxa_mensal_selic_mais_juros, Decimal(1)/30) - 1
+            debentures[debenture_id].valor_rendimento_ate_vencimento = debentures[debenture_id].total * pow(1 + taxa_diaria_selic_mais_juros, qtd_dias_uteis_ate_vencimento)
+            
+        total_rendimento_ate_vencimento += debentures[debenture_id].valor_rendimento_ate_vencimento
+    
+    # Popular dados
+    dados = {}
+    dados['total_investido'] = total_investido
+    dados['total_nominal'] = total_nominal
+    dados['total_juros'] = total_juros
+    dados['total_premio'] = total_premio
+    dados['total_somado'] = total_somado
+    dados['total_rendimento_ate_vencimento'] = total_rendimento_ate_vencimento
+    
+    return TemplateResponse(request, 'debentures/painel.html', {'debentures': debentures, 'dados': dados})

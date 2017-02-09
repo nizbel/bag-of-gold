@@ -2,6 +2,8 @@
 from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, Provento, \
     ValorDiarioAcao
 from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB
+from bagogold.bagogold.models.debentures import OperacaoDebenture, \
+    HistoricoValorDebenture
 from bagogold.bagogold.models.fii import OperacaoFII, HistoricoFII, ProventoFII, \
     ValorDiarioFII
 from bagogold.bagogold.models.fundo_investimento import \
@@ -19,6 +21,7 @@ from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas, \
     calcular_valor_lc_ate_dia, calcular_valor_venda_lc
 from bagogold.bagogold.utils.misc import calcular_rendimentos_ate_data
+from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia
 from decimal import Decimal, ROUND_DOWN
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
@@ -117,12 +120,18 @@ def inicio(request):
         # Guardar valores totais
         diario_cdb_rdb = {}
         diario_lc = {}
+        diario_td = {}
+        
         total_lc_dia_anterior = float(sum(calcular_valor_lc_ate_dia(investidor, data_atual - datetime.timedelta(days=qtd_ultimos_dias)).values()))
         total_cdb_rdb_dia_anterior = float(sum(calcular_valor_cdb_rdb_ate_dia(investidor, data_atual - datetime.timedelta(days=qtd_ultimos_dias)).values()))
+        total_td_dia_anterior = float(sum(calcular_valor_td_ate_dia(investidor, data_atual - datetime.timedelta(days=qtd_ultimos_dias)).values()))
+        
         for dia in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))]:
             dia = dia.date()
             diario_cdb_rdb[dia] = 0
             diario_lc[dia] = 0
+            diario_td[dia] = 0
+            
             if not (dia.weekday() > 4 or not HistoricoTaxaDI.objects.filter(data=dia)):
                 # Letra de Crédito
                 total_lc = float(sum(calcular_valor_lc_ate_dia(investidor, dia).values()))
@@ -140,9 +149,22 @@ def inicio(request):
                     float(sum([calcular_valor_venda_cdb_rdb(operacao_venda) for operacao_venda in OperacaoCDB_RDB.objects.filter(data=dia, investidor=investidor, tipo_operacao='V')]))
                 total_cdb_rdb_dia_anterior = total_cdb_rdb
                 
+                # Tesouro Direto
+                total_td = float(sum(calcular_valor_td_ate_dia(investidor, dia).values()))
+                # Removendo operações do dia
+                compras_do_dia = [HistoricoTitulo.objects.get(data=dia, titulo__id=titulo).preco_venda * quantidade for (titulo, quantidade) in \
+                                   OperacaoTitulo.objects.filter(data=dia, investidor=investidor, tipo_operacao='C').values('titulo', 'quantidade')]
+                vendas_do_dia = [HistoricoTitulo.objects.get(data=dia, titulo__id=titulo).preco_venda * quantidade for (titulo, quantidade) in \
+                                   OperacaoTitulo.objects.filter(data=dia, investidor=investidor, tipo_operacao='V').values('titulo', 'quantidade')]
+                print total_td
+                diario_td[dia] += total_td - total_td_dia_anterior - float(sum(compras_do_dia)) + float(sum(vendas_do_dia))
+                total_td_dia_anterior = total_td
+                
     graf_rendimentos_mensal_cdb_rdb = [[str(calendar.timegm(data.replace(hour=3).timetuple()) * 1000), diario_cdb_rdb[data.date()] ] \
                                for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ] if request.user.is_authenticated() else list()
     graf_rendimentos_mensal_lc = [[str(calendar.timegm(data.replace(hour=9).timetuple()) * 1000), diario_lc[data.date()] ] \
+                               for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ] if request.user.is_authenticated() else list()
+    graf_rendimentos_mensal_td = [[str(calendar.timegm(data.replace(hour=15).timetuple()) * 1000), diario_td[data.date()] ] \
                                for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ] if request.user.is_authenticated() else list()
     
     return TemplateResponse(request, 'inicio.html', {'ultimas_operacoes': ultimas_operacoes, 'investimentos_atuais': investimentos_atuais, 'acumulado_mensal_atual': acumulado_mensal_atual,
@@ -150,7 +172,8 @@ def inicio(request):
                                                      'proventos_fiis_recebidos_hoje': proventos_fiis_recebidos_hoje, 'proventos_acoes_a_receber': proventos_acoes_a_receber,
                                                      'proventos_fiis_a_receber': proventos_fiis_a_receber, 'proventos_acoes_futuros': proventos_acoes_futuros,
                                                      'proventos_fiis_futuros': proventos_fiis_futuros,'graf_rendimentos_mensal_lc': graf_rendimentos_mensal_lc,
-                                                     'total_atual_investimentos': total_atual_investimentos, 'graf_rendimentos_mensal_cdb_rdb': graf_rendimentos_mensal_cdb_rdb})
+                                                     'total_atual_investimentos': total_atual_investimentos, 'graf_rendimentos_mensal_cdb_rdb': graf_rendimentos_mensal_cdb_rdb,
+                                                     'graf_rendimentos_mensal_td': graf_rendimentos_mensal_td})
 
 @login_required
 def detalhamento_investimentos(request):
@@ -182,10 +205,13 @@ def detalhamento_investimentos(request):
     
     operacoes_cdb_rdb = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
     
+    operacoes_debentures = OperacaoDebenture.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
+    
     operacoes_fundo_investimento = OperacaoFundoInvestimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
     
     # Juntar todas as operações
-    lista_operacoes = sorted(chain(proventos_fii, operacoes_fii, operacoes_td, proventos_bh,  operacoes_bh, operacoes_lc, operacoes_cdb_rdb, operacoes_fundo_investimento),
+    lista_operacoes = sorted(chain(proventos_fii, operacoes_fii, operacoes_td, proventos_bh,  operacoes_bh, operacoes_lc, operacoes_cdb_rdb, 
+                                   operacoes_debentures, operacoes_fundo_investimento),
                             key=attrgetter('data'))
 
 	# Se não houver operações, retornar vazio
@@ -267,6 +293,7 @@ def detalhamento_investimentos(request):
     except:
         ultima_data_calculada_cdb_rdb = datetime.date.today()
     fundos_investimento = {}
+    debentures = {}
     total_proventos_fii = 0
     total_proventos_bh = 0
     
@@ -283,6 +310,7 @@ def detalhamento_investimentos(request):
 #     total_td = datetime.timedelta(hours=0)
 #     total_lc = datetime.timedelta(hours=0)
 #     total_cdb_rdb = datetime.timedelta(hours=0)
+#     total_debentures = datetime.timedelta(hours=0)
 #     total_fundo_investimento = datetime.timedelta(hours=0)
     ############# TESTE
     
@@ -376,6 +404,15 @@ def detalhamento_investimentos(request):
                     del cdb_rdb[item.operacao_compra_relacionada().id]
                 else:
                     cdb_rdb[item.operacao_compra_relacionada().id].quantidade -= cdb_rdb[item.operacao_compra_relacionada().id].quantidade * item.quantidade / item.operacao_compra_relacionada().quantidade
+            
+        elif isinstance(item, OperacaoDebenture):
+            if item.debenture not in debentures.keys():
+                debentures[item.debenture] = 0    
+            if item.tipo_operacao == 'C':
+                debentures[item.debenture] += item.quantidade 
+                
+            elif item.tipo_operacao == 'V':
+                debentures[item.debenture] -= item.quantidade 
                 
         elif isinstance(item, OperacaoFundoInvestimento):
             if item.fundo_investimento not in fundos_investimento.keys():
@@ -523,6 +560,17 @@ def detalhamento_investimentos(request):
 #             fim_cdb_rdb = datetime.datetime.now()
 #             total_cdb_rdb += fim_cdb_rdb - inicio_cdb_rdb
 
+            # Debênture
+#             inicio_debentures = datetime.datetime.now()
+            patrimonio_debentures = 0
+            for debenture in debentures.keys():
+                historico_fundo = HistoricoValorDebenture.objects.filter(debenture=debenture, data__lte=item.data).order_by('-data')[0]
+                patrimonio_debentures += debentures[debenture] * historico_fundo.valor_total()
+            patrimonio['Debêntures'] = patrimonio_debentures
+            patrimonio['patrimonio_total'] += patrimonio['Debêntures'] 
+#             fim_debentures = datetime.datetime.now()
+#             total_debentures += fim_debentures - inicio_debentures
+
             # Fundo de investimento
 #             inicio_fundo_investimento = datetime.datetime.now()
             patrimonio_fundo_investimento = 0
@@ -546,6 +594,7 @@ def detalhamento_investimentos(request):
 #             print 'Prov. FII  ', total_prov_fii
 #             print 'LC         ', total_lc
 #             print 'CDB/RDB:   ', total_cdb_rdb
+#             print 'Debêntures:', total_debentures
 #             print 'Fundo Inv. ', total_fundo_investimento
             
             # Preparar estatísticas
@@ -582,6 +631,7 @@ def detalhamento_investimentos(request):
 #     print 'TD:           ', total_td 
 #     print 'LC:           ', total_lc 
 #     print 'CDB/RDB:      ', total_cdb_rdb
+#     print 'Debêntures:', total_debentures
 #     print 'Fundo Inv.:   ', total_fundo_investimento
     
     return TemplateResponse(request, 'detalhamento_investimentos.html', {'graf_patrimonio': graf_patrimonio, 'patrimonio_anual': patrimonio_anual,
