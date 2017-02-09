@@ -474,6 +474,8 @@ def verificar_tipo_acao(ticker):
         return u'PNC'
     elif categoria == 8:
         return u'PND'
+    elif categoria == 11:
+        return u'UNT'
     raise ValueError('Tipo de ação inválido')
 
 def preencher_codigos_cvm():

@@ -148,6 +148,21 @@ def calcular_qtd_titulos_ate_dia_por_divisao(dia, divisao_id):
         
     return qtd_titulos
 
+def calcular_valor_td_ate_dia(investidor, dia):
+    """ 
+    Calcula o valor dos títulos do investidor até dia determinado
+    Parâmetros: Investidor
+                Dia final
+    Retorno: Valor dos títulos {titulo_id: valor_da_data}
+    """
+    
+    qtd_titulos = quantidade_titulos_ate_dia(investidor, dia)
+    
+    for titulo_id in qtd_titulos.keys():
+        qtd_titulos[titulo_id] = HistoricoTitulo.objects.filter(data__lte=dia, titulo__id=titulo_id).order_by('-data')[0].preco_venda * qtd_titulos[titulo_id]
+        
+    return qtd_titulos
+
 def buscar_data_valor_mais_recente():
     """
     Traz a data para o valor mais recente registrado na base
