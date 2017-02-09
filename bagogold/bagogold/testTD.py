@@ -33,7 +33,7 @@ def baixar_historico_td_total():
     inicio = data.find('Histórico de preços e taxas')
     fim = data.find('</div>', inicio)
     string_importante = data[inicio:fim]
-    print string_importante
+#     print string_importante
     
     urls = re.findall('href="(.*?)"', string_importante)
     for url in urls:
@@ -56,11 +56,9 @@ def baixar_historico_td_total():
 #                 print(data)
             try:
                 titulo = Titulo.objects.get(tipo=tipo, data_vencimento=data)
-                print tipo, data
             except Titulo.DoesNotExist:
-                titulo = Titulo(tipo=tipo, data_vencimento=data)
+                titulo = Titulo(tipo=tipo, data_vencimento=data, data_inicio=data)
                 titulo.save()
-                print tipo, data, 'Criado'
             for linha in range(2,len(titulo_vencimento)):
                 # Testar se a linha de data está vazia, passar ao proximo
                 if titulo_vencimento[linha][0] == '':
@@ -76,16 +74,18 @@ def baixar_historico_td_total():
                 if data_formatada >= data:
                     break
                 # Testar se os valores estao ok
-                try:
-                    float(titulo_vencimento[linha][1])
-                    float(titulo_vencimento[linha][2])
-                    float(titulo_vencimento[linha][3])
-                    float(titulo_vencimento[linha][4])
-                    historico = HistoricoTitulo(titulo=titulo, data=data_formatada, taxa_compra=titulo_vencimento[linha][1]*100, taxa_venda=titulo_vencimento[linha][2]*100,
-                                                preco_compra=titulo_vencimento[linha][3], preco_venda=titulo_vencimento[linha][4])
-                    historico.save()
-                except ValueError:
-                    pass
+                if not HistoricoTitulo.objects.filter(titulo=titulo, data=data_formatada).exists():
+                    try:
+                        float(titulo_vencimento[linha][1])
+                        float(titulo_vencimento[linha][2])
+                        float(titulo_vencimento[linha][3])
+                        float(titulo_vencimento[linha][4])
+                    except ValueError:
+                        pass
+                    else:
+                        historico = HistoricoTitulo(titulo=titulo, data=data_formatada, taxa_compra=titulo_vencimento[linha][1]*100, taxa_venda=titulo_vencimento[linha][2]*100,
+                                                    preco_compra=titulo_vencimento[linha][3], preco_venda=titulo_vencimento[linha][4])
+                        historico.save()
 
 def baixar_historico_td_ano(ano):
     """
@@ -130,7 +130,6 @@ def baixar_historico_td_ano(ano):
                 data = time.strftime('%Y-%m-%d', data)
     #                 print(data)
                 try:
-                    print tipo, data
                     titulo = Titulo.objects.get(tipo=tipo, data_vencimento=data)
                 except Titulo.DoesNotExist:
                     titulo = Titulo(tipo=tipo, data_vencimento=data, data_inicio=data)
