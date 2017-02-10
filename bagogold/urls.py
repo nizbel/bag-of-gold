@@ -13,4 +13,6 @@ urlpatterns = [
     
     # App bagogold
     url(r'', include('bagogold.bagogold.urls')),
+    # App pendencias
+    url(r'', include('bagogold.pendencias.urls')),
 ]

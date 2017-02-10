@@ -156,7 +156,6 @@ def inicio(request):
                                    OperacaoTitulo.objects.filter(data=dia, investidor=investidor, tipo_operacao='C').values('titulo', 'quantidade')]
                 vendas_do_dia = [HistoricoTitulo.objects.get(data=dia, titulo__id=titulo).preco_venda * quantidade for (titulo, quantidade) in \
                                    OperacaoTitulo.objects.filter(data=dia, investidor=investidor, tipo_operacao='V').values('titulo', 'quantidade')]
-                print total_td
                 diario_td[dia] += total_td - total_td_dia_anterior - float(sum(compras_do_dia)) + float(sum(vendas_do_dia))
                 total_td_dia_anterior = total_td
                 
