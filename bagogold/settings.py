@@ -46,6 +46,7 @@ INSTALLED_APPS = (
     
     #Bag-O-Gold
     'bagogold.bagogold',
+    'bagogold.pendencias',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -74,6 +75,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'bagogold.bagogold.context_processors.env',
+                'bagogold.bagogold.context_processors.pendencias_investidor',
             ],
         },
     },
