@@ -3,9 +3,6 @@ from bagogold.bagogold.models.acoes import Acao, Provento, AcaoProvento, \
     OperacaoAcao, UsoProventosOperacaoAcao, OperacaoCompraVenda, HistoricoAcao, \
     ValorDiarioAcao, TaxaCustodiaAcao
 from django.contrib import admin
-from django.db import models
-import datetime
-
 
 
 admin.site.register(Acao)
