@@ -39,11 +39,11 @@ class Titulo (models.Model):
             return 1000
         elif self.tipo == 'LFT':
             return 1000
-        elif self.tipo == 'NTN-B':
+        elif self.tipo in ['NTN-B', 'NTNB']:
             return (1 + calcular_valor_acumulado_ipca(datetime.date(2000, 7, 15), data_final=data)) * 1000
-        elif self.tipo == 'NTN-B Principal':
+        elif self.tipo in ['NTN-B Principal', 'NTNBP']:
             return (1 + calcular_valor_acumulado_ipca(datetime.date(2000, 7, 15), data_final=data)) * 1000
-        elif self.tipo == 'NTN-F':
+        elif self.tipo in ['NTN-F', 'NTNF']:
             return 1000
         elif self.tipo == 'NTN-C':
             return 1000

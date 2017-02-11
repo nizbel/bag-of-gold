@@ -18,19 +18,7 @@ class Pendencia (models.Model):
 @receiver(post_save, sender=Investidor, dispatch_uid="pendencias_primeiro_acesso_dia")
 def verificar_pendencias_primeiro_acesso_dia(sender, instance, **kwargs):
     print instance
-    titulo = Titulo.objects.get(tipo='LTN', data_vencimento=datetime.date(2017, 1, 1))
-    # Verificar quantidade atual de operações do investidor
-    qtd_atual = quantidade_titulos_ate_dia_por_titulo(instance, titulo.id, datetime.date.today())
-    print qtd_atual
-    if qtd_atual > 0:
-        pendencia_vencimento_td, criada = PendenciaVencimentoTesouroDireto.objects.get_or_create(investidor=instance, titulo=titulo, defaults={'quantidade': qtd_atual})
-        if (not criada) and pendencia_vencimento_td.quantidade != qtd_atual:
-            pendencia_vencimento_td.quantidade = qtd_atual
-            pendencia_vencimento_td.save()
-    else:
-        if PendenciaVencimentoTesouroDireto.objects.filter(investidor=instance, titulo=titulo).exists():
-            PendenciaVencimentoTesouroDireto.objects.filter(investidor=instance, titulo=titulo).delete()
-    
+    #TODO Buscar pendencias
         
 class PendenciaVencimentoTesouroDireto (Pendencia):
     titulo = models.ForeignKey('bagogold.Titulo')
@@ -47,10 +35,10 @@ def verificar_pendencias_vencimento_td(sender, instance, **kwargs):
     if instance.titulo.titulo_vencido():
         # Verificar quantidade atual de operações do investidor
         qtd_atual = quantidade_titulos_ate_dia_por_titulo(instance.investidor, instance.titulo.id, datetime.date.today())
-        print qtd_atual
         if qtd_atual > 0:
-            pendencia_vencimento_td = PendenciaVencimentoTesouroDireto.objects.get_or_create(investidor=instance.investidor, titulo=instance.titulo)
-            if pendencia_vencimento_td.quantidade != qtd_atual:
+            pendencia_vencimento_td, criada = PendenciaVencimentoTesouroDireto.objects.get_or_create(investidor=instance.investidor, titulo=instance.titulo, 
+                                                                                             defaults={'quantidade': qtd_atual})
+            if (not criada) and pendencia_vencimento_td.quantidade != qtd_atual:
                 pendencia_vencimento_td.quantidade = qtd_atual
                 pendencia_vencimento_td.save()
         else:
