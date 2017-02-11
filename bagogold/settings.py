@@ -59,6 +59,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'bagogold.bagogold.middleware.teste_nova_aparencia.TesteNovaAparenciaMiddleWare',
+    'bagogold.bagogold.middleware.ultimo_acesso.UltimoAcessoMiddleWare',
 )
 
 ROOT_URLCONF = 'bagogold.urls'

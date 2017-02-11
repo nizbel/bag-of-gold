@@ -6,6 +6,8 @@ def env(context):
     return {'ENV': settings.ENV}
 
 def pendencias_investidor(context):
-    pendencias = buscar_pendencias_investidor(context.user.investidor)
-    num_pendencias = len(pendencias)
-    return {'num_pendencias': num_pendencias}
+    if not context.user.is_anonymous():
+        pendencias = buscar_pendencias_investidor(context.user.investidor)
+        num_pendencias = len(pendencias)
+        return {'num_pendencias': num_pendencias}
+    return {}

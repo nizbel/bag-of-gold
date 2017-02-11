@@ -13,6 +13,7 @@ class Investidor (models.Model):
     """
     tipo_corretagem = models.CharField(u'Tipo de corretagem', max_length=1, default='F')
     auto_atualizar_saldo = models.BooleanField(u'Atualizar saldo automaticamente?', default=False)
+    data_ultimo_acesso = models.DateField(u'Último dia de acesso a uma página', blank=True, null=True)
     
     def __unicode__(self):
         return self.user.username
