@@ -13,3 +13,9 @@ def buscar_pendencias_investidor(investidor):
     for classe in lista_classes_pendencias:
         lista_pendencias += list(classe.objects.filter(investidor=investidor))
     return lista_pendencias
+
+def verificar_pendencias_investidor(investidor):
+    """
+    Verifica todas as pendências que um investidor pode ter
+    Parâmetros: Investidor
+    """
