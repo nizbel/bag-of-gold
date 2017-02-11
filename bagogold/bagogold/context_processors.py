@@ -9,5 +9,5 @@ def pendencias_investidor(context):
     if not context.user.is_anonymous():
         pendencias = buscar_pendencias_investidor(context.user.investidor)
         num_pendencias = len(pendencias)
-        return {'num_pendencias': num_pendencias}
+        return {'num_pendencias': num_pendencias, 'textos_pendencias': [pendencia.texto() for pendencia in pendencias]}
     return {}

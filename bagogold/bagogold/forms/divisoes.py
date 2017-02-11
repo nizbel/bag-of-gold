@@ -430,9 +430,9 @@ class DivisaoOperacaoTDFormSet(forms.models.BaseInlineFormSet):
                         # Verificar em caso de venda
                         if self.instance.tipo_operacao == 'V':
                             titulos_disponiveis = calcular_qtd_titulos_ate_dia_por_divisao(self.instance.data, form_divisao.cleaned_data['divisao'].id)
-                            qtd_disponivel_divisao = titulos_disponiveis[form_divisao.cleaned_data['divisao'].id] if form_divisao.cleaned_data['divisao'] in titulos_disponiveis else 0 
+                            qtd_disponivel_divisao = titulos_disponiveis[self.instance.titulo.id] if self.instance.titulo.id in titulos_disponiveis else 0 
                             if qtd_disponivel_divisao < div_qtd:
-                                raise forms.ValidationError('Venda de quantidade acima da disponível para divisão %s, disponível: R$ %s' % (form_divisao.cleaned_data['divisao'], qtd_disponivel_divisao))
+                                raise forms.ValidationError('Venda de quantidade acima da disponível para divisão %s, disponível: %s' % (form_divisao.cleaned_data['divisao'], qtd_disponivel_divisao))
                         
                     # Divisão será apagada
                     elif form_divisao.cleaned_data['DELETE']:
