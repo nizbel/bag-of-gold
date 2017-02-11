@@ -12,13 +12,13 @@ class Titulo (models.Model):
             return u'Tesouro Prefixado %s' % (self.data_vencimento.year)
         elif self.tipo == 'LFT':
             return u'Tesouro Selic %s' % (self.data_vencimento.year)
-        elif self.tipo == 'NTN-B':
+        elif self.tipo in ['NTN-B', 'NTNB']:
             return u'Tesouro IPCA+ com Juros Semestrais %s' % (self.data_vencimento.year)
-        elif self.tipo == 'NTN-B Principal':
+        elif self.tipo in ['NTN-B Principal', 'NTNBP']:
             return u'Tesouro IPCA+ %s' % (self.data_vencimento.year)
-        elif self.tipo == 'NTN-F':
+        elif self.tipo in ['NTN-F', 'NTNF']:
             return u'Tesouro Prefixado com Juros Semestrais %s' % (self.data_vencimento.year)
-        elif self.tipo == 'NTN-C':
+        elif self.tipo in ['NTN-C','NTNC']:
             return u'Tesouro IGP-M com Juros Semestrais %s' % (self.data_vencimento.year)
         else:
             return u'Título não encontrado'
