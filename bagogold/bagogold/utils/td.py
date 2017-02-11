@@ -84,7 +84,7 @@ def quantidade_titulos_ate_dia(investidor, dia):
         else:
             qtd_titulos[titulo_qtd['titulo']] += titulo_qtd['total']
 
-    for key, item in qtd_titulos.items():
+    for key in qtd_titulos.keys():
         if qtd_titulos[key] == 0:
             del qtd_titulos[key]
             
@@ -126,7 +126,7 @@ def calcular_qtd_titulos_ate_dia_por_divisao(dia, divisao_id):
         else:
             qtd_titulos[titulo_qtd['titulo']] += titulo_qtd['qtd_soma']
             
-    for key, item in qtd_titulos.items():
+    for key in qtd_titulos.keys():
         if qtd_titulos[key] == 0:
             del qtd_titulos[key]
     
