@@ -20,10 +20,10 @@ class TesouroDiretoTestCase(TestCase):
         titulo_3 = Titulo.objects.create(tipo='LFT', data_vencimento=datetime.date(2021, 1, 1), data_inicio=datetime.date(2013, 1, 1))
         
         for titulo in Titulo.objects.all():
-            for _ in range(90):
+            for _ in range(9):
                 operacao_titulo = OperacaoTitulo.objects.create(investidor=user.investidor, titulo=titulo, quantidade=randint(1,5), preco_unitario=Decimal(760),
                                                                 data=datetime.date(2015, 3, 5), taxa_bvmf=Decimal('2.50'), taxa_custodia=Decimal('1.52'), tipo_operacao='C')
-            for _ in range(40):
+            for _ in range(4):
                 operacao_titulo = OperacaoTitulo.objects.create(investidor=user.investidor, titulo=titulo, quantidade=randint(1,5), preco_unitario=Decimal(800),
                                                                 data=datetime.date(2016, 3, 5), taxa_bvmf=Decimal('2.50'), taxa_custodia=Decimal('1.52'), tipo_operacao='V')
         
