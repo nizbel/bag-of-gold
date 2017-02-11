@@ -11,6 +11,5 @@ def buscar_pendencias_investidor(investidor):
     lista_pendencias = list()
     lista_classes_pendencias = [PendenciaVencimentoTesouroDireto]
     for classe in lista_classes_pendencias:
-        print dir(classe)
         lista_pendencias += list(classe.objects.filter(investidor=investidor))
     return lista_pendencias
