@@ -6,6 +6,8 @@ from bagogold.bagogold.utils.misc import calcular_iof_regressivo
 from decimal import Decimal
 from django.db.models import Q
 from django.db.models.aggregates import Sum
+from django.db.models.expressions import Case, When, F
+from django.db.models.fields import DecimalField
 import calendar
 import datetime
 
@@ -111,43 +113,23 @@ def calcular_qtd_titulos_ate_dia_por_divisao(dia, divisao_id):
                 ID da divisão
     Retorno: Quantidade de títulos {titulo_id: qtd}
     """
-    operacoes_divisao_id = DivisaoOperacaoTD.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).values('operacao__id')
-    if len(operacoes_divisao_id) == 0:
-        return {}
-    operacoes = OperacaoTitulo.objects.filter(id__in=operacoes_divisao_id).exclude(data__isnull=True).order_by('data')
-    
     qtd_titulos = {}
+    operacoes_divisao = list(DivisaoOperacaoTD.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).annotate(titulo=F('operacao__titulo')) \
+        .values('titulo') \
+        .annotate(qtd_soma=Sum(Case(When(operacao__tipo_operacao='C', then=F('quantidade')),
+                            When(operacao__tipo_operacao='V', then=F('quantidade')*-1),
+                            output_field=DecimalField()))))
+        
+    for titulo_qtd in operacoes_divisao:
+        if titulo_qtd['titulo'] not in qtd_titulos.keys():
+            qtd_titulos[titulo_qtd['titulo']] = titulo_qtd['qtd_soma']
+        else:
+            qtd_titulos[titulo_qtd['titulo']] += titulo_qtd['qtd_soma']
+            
+    for key, item in qtd_titulos.items():
+        if qtd_titulos[key] == 0:
+            del qtd_titulos[key]
     
-    for operacao in operacoes:
-        # Preparar a quantidade da operação pela quantidade que foi destinada a essa divisão
-        operacao.quantidade = DivisaoOperacaoTD.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade
-        
-        if operacao.titulo.id not in qtd_titulos:
-            qtd_titulos[operacao.titulo.id] = 0
-            
-        # Verificar se se trata de compra ou venda
-        if operacao.tipo_operacao == 'C':
-            qtd_titulos[operacao.titulo.id] += operacao.quantidade
-            
-        elif operacao.tipo_operacao == 'V':
-            qtd_titulos[operacao.titulo.id] -= operacao.quantidade
-            
-#     compras = list(OperacaoTitulo.objects.filter(id__in=operacoes_divisao_id, data__lte=dia, tipo_operacao='C').exclude(data__isnull=True).values('titulo') \
-#         .annotate(total=Sum('quantidade')))
-#     vendas = list(OperacaoTitulo.objects.filter(id__in=operacoes_divisao_id, data__lte=dia, tipo_operacao='V').exclude(data__isnull=True).values('titulo') \
-#         .annotate(total=Sum('quantidade')*-1))
-#     
-#     qtd_titulos = {}
-#     for titulo_qtd in (compras + vendas):
-#         if titulo_qtd['titulo'] not in qtd_titulos.keys():
-#             qtd_titulos[titulo_qtd['titulo']] = titulo_qtd['total']
-#         else:
-#             qtd_titulos[titulo_qtd['titulo']] += titulo_qtd['total']
-#             
-#     for key, item in qtd_titulos.items():
-#         if qtd_titulos[key] == 0:
-#             del qtd_titulos[key]
-        
     return qtd_titulos
 
 def calcular_valor_td_ate_dia(investidor, dia):
