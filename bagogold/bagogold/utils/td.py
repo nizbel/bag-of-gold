@@ -5,6 +5,7 @@ from bagogold.bagogold.models.td import OperacaoTitulo, Titulo, HistoricoTitulo,
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo
 from decimal import Decimal
 from django.db.models import Q
+from django.db.models.aggregates import Sum
 import calendar
 import datetime
 
@@ -69,27 +70,22 @@ def quantidade_titulos_ate_dia(investidor, dia):
                 Dia final
     Retorno: Quantidade de títulos {titulo_id: qtd}
     """
-    
-    operacoes = OperacaoTitulo.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True).order_by('data')
+    compras = list(OperacaoTitulo.objects.filter(investidor=investidor, data__lte=dia, tipo_operacao='C').exclude(data__isnull=True).values('titulo') \
+        .annotate(total=Sum('quantidade')))
+    vendas = list(OperacaoTitulo.objects.filter(investidor=investidor, data__lte=dia, tipo_operacao='V').exclude(data__isnull=True).values('titulo') \
+        .annotate(total=Sum('quantidade')*-1))
     
     qtd_titulos = {}
-    
-    for item in operacoes:
-        # Verificar se se trata de compra ou venda
-        if item.tipo_operacao == 'C':
-            if item.titulo.id not in qtd_titulos:
-                qtd_titulos[item.titulo.id] = item.quantidade
-            else:
-                qtd_titulos[item.titulo.id] += item.quantidade
+    for titulo_qtd in (compras + vendas):
+        if titulo_qtd['titulo'] not in qtd_titulos.keys():
+            qtd_titulos[titulo_qtd['titulo']] = titulo_qtd['total']
+        else:
+            qtd_titulos[titulo_qtd['titulo']] += titulo_qtd['total']
+
+    for key, item in qtd_titulos.items():
+        if qtd_titulos[key] == 0:
+            del qtd_titulos[key]
             
-        elif item.tipo_operacao == 'V':
-            qtd_titulos[item.titulo.id] -= item.quantidade
-    
-    # Remover títulos com quantidade 0
-    for titulo_id in qtd_titulos.keys():
-        if qtd_titulos[titulo_id] == 0:
-            del qtd_titulos[titulo_id]
-    
     return qtd_titulos
 
 def quantidade_titulos_ate_dia_por_titulo(investidor, titulo_id, dia):
@@ -99,19 +95,13 @@ def quantidade_titulos_ate_dia_por_titulo(investidor, titulo_id, dia):
                 Dia final
     Retorno: Quantidade de títulos
     """
+    compras = OperacaoTitulo.objects.filter(investidor=investidor, titulo__id=titulo_id, data__lte=dia, tipo_operacao='C').exclude(data__isnull=True) \
+        .aggregate(total_compras=Sum('quantidade'))['total_compras'] or Decimal(0)
+    vendas = OperacaoTitulo.objects.filter(investidor=investidor, titulo__id=titulo_id, data__lte=dia, tipo_operacao='V').exclude(data__isnull=True) \
+        .aggregate(total_vendas=Sum('quantidade'))['total_vendas'] or Decimal(0)
     
-    operacoes = OperacaoTitulo.objects.filter(investidor=investidor, titulo__id=titulo_id, data__lte=dia).exclude(data__isnull=True).order_by('data')
+    qtd_titulos = compras - vendas
     
-    qtd_titulos = 0
-    
-    for item in operacoes:
-        # Verificar se se trata de compra ou venda
-        if item.tipo_operacao == 'C':
-            qtd_titulos += item.quantidade
-            
-        elif item.tipo_operacao == 'V':
-            qtd_titulos -= item.quantidade
-        
     return qtd_titulos
 
 def calcular_qtd_titulos_ate_dia_por_divisao(dia, divisao_id):
@@ -142,9 +132,21 @@ def calcular_qtd_titulos_ate_dia_por_divisao(dia, divisao_id):
         elif operacao.tipo_operacao == 'V':
             qtd_titulos[operacao.titulo.id] -= operacao.quantidade
             
-    for key, item in qtd_titulos.items():
-        if qtd_titulos[key] == 0:
-            del qtd_titulos[key]
+#     compras = list(OperacaoTitulo.objects.filter(id__in=operacoes_divisao_id, data__lte=dia, tipo_operacao='C').exclude(data__isnull=True).values('titulo') \
+#         .annotate(total=Sum('quantidade')))
+#     vendas = list(OperacaoTitulo.objects.filter(id__in=operacoes_divisao_id, data__lte=dia, tipo_operacao='V').exclude(data__isnull=True).values('titulo') \
+#         .annotate(total=Sum('quantidade')*-1))
+#     
+#     qtd_titulos = {}
+#     for titulo_qtd in (compras + vendas):
+#         if titulo_qtd['titulo'] not in qtd_titulos.keys():
+#             qtd_titulos[titulo_qtd['titulo']] = titulo_qtd['total']
+#         else:
+#             qtd_titulos[titulo_qtd['titulo']] += titulo_qtd['total']
+#             
+#     for key, item in qtd_titulos.items():
+#         if qtd_titulos[key] == 0:
+#             del qtd_titulos[key]
         
     return qtd_titulos
 
