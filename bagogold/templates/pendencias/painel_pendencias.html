@@ -9,22 +9,65 @@
 
 {% block content %}
 
-<div class="row">
-    <div class="col-md-12">
-		<div class="portlet light">
-			<div class="portlet-title">
-				<div class="caption font-yellow-crusta">
-                {% comment %}
-                TROCAR ICONE DE PENDENCIAS 
-                {% endcomment %}
-					<i class="icon-pin font-yellow-crusta"></i>
-					<span class="caption-subject bold uppercase">Painel de pendências</span>
-				</div>
-			</div>
-			<div class="portlet-body">
-			</div>
+<div class="portlet light">
+	<div class="portlet-title">
+		<div class="caption font-yellow-crusta">
+        {% comment %}
+        TROCAR ICONE DE PENDENCIAS 
+        {% endcomment %}
+			<i class="icon-pin font-yellow-crusta"></i>
+			<span class="caption-subject bold uppercase">Painel de pendências</span>
 		</div>
 	</div>
+	<div class="portlet-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="portlet box yellow-crusta">
+                    <div class="portlet-title">
+                        <div class="caption">
+                            <i class="icon-grid"></i>Tesouro Direto</div>
+                        <div class="tools">
+                            <a href="javascript:;" class="collapse"></a>
+                        </div>
+                    </div>
+                    <div class="portlet-body">
+                        <div class="list-group">
+                            {% for pendencia in pendencias_tesouro_direto %}
+                            <div class="list-group-item">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <span class="label bg-grey-gallery col-md-2">{{pendencia.texto_label}}</span>
+                                        <span class="col-md-8">{{pendencia.texto|safe}}</span> 
+                                        <a href="#basic" data-toggle="modal" onclick="preparar_modal({{pendencia.id}}, '{{pendencia.texto_label}}');" class="btn btn-warning col-md-2">Resolver</a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+	</div>
+    <div class="modal fade" id="basic" tabindex="-1" role="basic" aria-hidden="true" data-backdrop="static" data-keyboard="false"  style="display: none;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                    <h4 class="modal-title" id="titulo_modal"></h4>
+                </div>
+                <div class="modal-body" id="texto_modal"></div>
+                <div class="modal-footer">
+                    <input type="hidden" id="guarda_id_pendencia">
+                    <input type="hidden" id="guarda_tipo_pendencia">
+                    <button type="button" class="btn dark btn-outline" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn green" onclick="confirmar_pendencia()" data-dismiss="modal">Confirmar</button>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
 </div>
 
 {% endblock %}
@@ -34,4 +77,52 @@
 <script src={% static "assets/global/plugins/datatables/datatables.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.js" %} type="text/javascript"></script>
 <script src={% static "assets/pages/scripts/table-datatables-fixedheader.min.js" %} type="text/javascript"></script>
+
+<script>
+function preparar_modal(id_pendencia, tipo_pendencia) {
+	$('#guarda_id_pendencia').val(id_pendencia);
+    $('#guarda_tipo_pendencia').val(tipo_pendencia);
+	$.ajax({
+        url : "{% url 'resolver_pendencia_vencimento_td' %}", // the endpoint
+        type : "GET", // http method
+        data : {id_pendencia: id_pendencia},
+
+        // handle a successful response
+        success : function(retorno) {
+        	$('#titulo_modal').html(retorno.titulo_modal);
+            $('#texto_modal').html(retorno.texto_modal);
+        },
+
+        // handle a non-successful response
+        error : function(xhr,errmsg,err) {
+            console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+        }
+    });
+}
+
+function confirmar_pendencia() {
+    var id_pendencia = $('#guarda_id_pendencia').val();
+    var tipo_pendencia = $('#guarda_tipo_pendencia').val();
+    $.ajax({
+        url : "{% url 'resolver_pendencia_vencimento_td' %}", // the endpoint
+        type : "GET", // http method
+        data : {id_pendencia: id_pendencia, confirmar: 1},
+
+        // handle a successful response
+        success : function(retorno) {
+        	$('#row-messages').show();
+            if (retorno.resultado) {
+                $('#messages').html('<div class="alert alert-success"><button type="button" class="close" data-dismiss="alert">×</button><i class="icon-ok"></i> ' + retorno.mensagem + '</div>');
+            } else {
+                $('#messages').html('<div class="alert alert-error"><button type="button" class="close" data-dismiss="alert">×</button><i class="icon-ban-circle"></i> ' + retorno.mensagem + '</div>');
+            }
+        },
+
+        // handle a non-successful response
+        error : function(xhr,errmsg,err) {
+            console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+        }
+    });
+}
+</script>
 {% endblock %}

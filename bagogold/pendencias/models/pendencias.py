@@ -9,6 +9,11 @@ from django.dispatch.dispatcher import receiver
 import datetime
  
 class Pendencia (models.Model):
+    # Tipos de investimento para pendências
+    CDB_RDB = 2
+    LCI_LCA = 3
+    TESOURO_DIRETO = 4
+    
     investidor = models.ForeignKey('bagogold.Investidor')
     data_criacao = models.DateTimeField(u'Data de criação', auto_now_add=True)
     
@@ -27,8 +32,17 @@ class PendenciaVencimentoTesouroDireto (Pendencia):
     class Meta:
         unique_together=('titulo', 'investidor')
         
-    def texto(self):
+    def texto_descricao(self):
         return u'Título %s atingiu o vencimento, gerar vendas' % (self.titulo.nome())
+    
+    def texto(self):
+        return u'Título: <strong>%s</strong> <br>Quantidade: <strong>%s</strong>' % (self.titulo.nome(), str(self.quantidade).replace('.', ','))
+    
+    def texto_label(self):
+        return u'Título vencido'
+    
+    def tipo_investimento(self):
+        return Pendencia.TESOURO_DIRETO
     
     @staticmethod
     def verificar_pendencia(investidor, titulo_id, qtd_atual):

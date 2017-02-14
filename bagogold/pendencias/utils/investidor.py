@@ -30,8 +30,6 @@ def verificar_pendencias_investidor(investidor):
                             When(tipo_operacao='V', then=F('quantidade')*-1),
                             output_field=DecimalField()))))
     
-    print qtd_titulos_vencidos
-    
     for titulo_qtd in qtd_titulos_vencidos:
         if titulo_qtd['qtd_soma'] > 0:
             PendenciaVencimentoTesouroDireto.verificar_pendencia(investidor, titulo_qtd['titulo'], titulo_qtd['qtd_soma'])

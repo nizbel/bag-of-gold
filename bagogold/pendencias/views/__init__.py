@@ -1,1 +1,2 @@
 import painel
+import resolver
