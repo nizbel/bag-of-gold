@@ -35,7 +35,7 @@ class Command(BaseCommand):
 #                     historicos_apagar[0].delete()
                     
         # O incremento mostra quantas threads correrão por vez
-        incremento = 2
+        incremento = 1
         anos = range(2002, datetime.date.today().year+1)
         contador = 0
         while contador <= len(anos):

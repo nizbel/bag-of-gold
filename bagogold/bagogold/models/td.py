@@ -12,13 +12,13 @@ class Titulo (models.Model):
             return u'Tesouro Prefixado %s' % (self.data_vencimento.year)
         elif self.tipo == 'LFT':
             return u'Tesouro Selic %s' % (self.data_vencimento.year)
-        elif self.tipo == 'NTN-B':
+        elif self.tipo in ['NTN-B', 'NTNB']:
             return u'Tesouro IPCA+ com Juros Semestrais %s' % (self.data_vencimento.year)
-        elif self.tipo == 'NTN-B Principal':
+        elif self.tipo in ['NTN-B Principal', 'NTNBP']:
             return u'Tesouro IPCA+ %s' % (self.data_vencimento.year)
-        elif self.tipo == 'NTN-F':
+        elif self.tipo in ['NTN-F', 'NTNF']:
             return u'Tesouro Prefixado com Juros Semestrais %s' % (self.data_vencimento.year)
-        elif self.tipo == 'NTN-C':
+        elif self.tipo in ['NTN-C','NTNC']:
             return u'Tesouro IGP-M com Juros Semestrais %s' % (self.data_vencimento.year)
         else:
             return u'Título não encontrado'
@@ -39,11 +39,11 @@ class Titulo (models.Model):
             return 1000
         elif self.tipo == 'LFT':
             return 1000
-        elif self.tipo == 'NTN-B':
+        elif self.tipo in ['NTN-B', 'NTNB']:
             return (1 + calcular_valor_acumulado_ipca(datetime.date(2000, 7, 15), data_final=data)) * 1000
-        elif self.tipo == 'NTN-B Principal':
+        elif self.tipo in ['NTN-B Principal', 'NTNBP']:
             return (1 + calcular_valor_acumulado_ipca(datetime.date(2000, 7, 15), data_final=data)) * 1000
-        elif self.tipo == 'NTN-F':
+        elif self.tipo in ['NTN-F', 'NTNF']:
             return 1000
         elif self.tipo == 'NTN-C':
             return 1000
@@ -72,16 +72,13 @@ class HistoricoTitulo (models.Model):
     preco_compra = models.DecimalField(u'Preço de compra', max_digits=11, decimal_places=2)
     preco_venda = models.DecimalField(u'Preço de venda', max_digits=11, decimal_places=2)
     
+    class Meta:
+        unique_together=('titulo', 'data')
+    
     def __unicode__(self):
         return str(self.titulo) + ' em ' + str(self.data) + ': R$' + str(self.preco_compra) + '(' + str(self.taxa_compra) + ')' + \
             '/R$' + str(self.preco_venda) + '(' + str(self.taxa_venda) + ')'
     
-    def save(self, *args, **kw):
-        try:
-            HistoricoTitulo.objects.get(titulo=self.titulo, data=self.data)
-        except HistoricoTitulo.DoesNotExist:
-            super(HistoricoTitulo, self).save(*args, **kw)
-            
 class ValorDiarioTitulo (models.Model):
     titulo = models.ForeignKey('Titulo')
     data_hora = models.DateTimeField(u'Horário')
