@@ -8,6 +8,9 @@ class Empresa (models.Model):
     nome_pregao = models.CharField('Nome de pregão', max_length=30)
     codigo_cvm = models.CharField('Código CVM', max_length=10, blank=True, null=True)
     
+    class Meta:
+        unique_together=('codigo_cvm',)
+    
     def __unicode__(self):
         return self.nome
     

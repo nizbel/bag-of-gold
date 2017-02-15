@@ -5,6 +5,11 @@ from decimal import Decimal
 from django.db import models
 
 class Debenture (models.Model):
+    PREFIXADO = 1
+    IPCA = 2
+    DI = 3
+    IGPM = 4
+    SELIC = 5
     TIPOS_INDICE = ((1, 'Prefixado'),
                     (2, 'IPCA'),
                     (3, 'DI'),
@@ -66,6 +71,12 @@ class Debenture (models.Model):
         if PremioDebenture.objects.filter(debenture=self).exists():
             return PremioDebenture.objects.filter(debenture=self).order_by('-data')[0].descricao()
         return ''
+    
+    def taxa_juros_atual(self):
+        if JurosDebenture.objects.filter(debenture=self).exists():
+            return JurosDebenture.objects.filter(debenture=self).order_by('-data')[0].taxa
+        return Decimal(0)
+        
     
 class AmortizacaoDebenture (models.Model):
     TIPOS_AMORTIZACAO = ((0, u'Indefinido'),

@@ -47,10 +47,10 @@
                         <td><a href="{% url 'detalhar_documento' pendencia.documento.id %}">{{pendencia.documento}}</a></td>
                         <td>{{pendencia.tipo_documento}}</td>
                         <td>
-                            <span id="responsavel_{{pendencia.id}}" {% if not pendencia.responsavel or pendencia.responsavel.id == request.user.investidor.id %}style="display: none"{% endif %}>{{pendencia.responsavel}}</span>
-                            <button id="cancelar_{{pendencia.id}}" {% if not pendencia.responsavel or pendencia.responsavel.id != request.user.investidor.id %}style="display: none"{% endif %}
-                            onclick="remover_responsabilidade({{pendencia.id}});" class="btn btn-warning">Cancelar</button>
-                            <button id="reservar_{{pendencia.id}}" {% if pendencia.responsavel %}style="display: none"{% endif %} onclick="puxar_responsabilidade({{pendencia.id}});" class="btn btn-success">Reservar</button> 
+                            <span id="responsavel_{{pendencia.id|floatformat:'f'}}" {% if not pendencia.responsavel or pendencia.responsavel.id == request.user.investidor.id %}style="display: none"{% endif %}>{{pendencia.responsavel}}</span>
+                            <button id="cancelar_{{pendencia.id|floatformat:'f'}}" {% if not pendencia.responsavel or pendencia.responsavel.id != request.user.investidor.id %}style="display: none"{% endif %}
+                            onclick="remover_responsabilidade({{pendencia.id|floatformat:'f'}});" class="btn btn-warning">Cancelar</button>
+                            <button id="reservar_{{pendencia.id|floatformat:'f'}}" {% if pendencia.responsavel %}style="display: none"{% endif %} onclick="puxar_responsabilidade({{pendencia.id|floatformat:'f'}});" class="btn btn-success">Reservar</button> 
                         </td>
                     </tr>
                 {% endfor %}    
