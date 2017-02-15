@@ -38,6 +38,9 @@ class PendenciaVencimentoTesouroDireto (Pendencia):
     def texto(self):
         return u'Título: <strong>%s</strong> <br>Quantidade: <strong>%s</strong>' % (self.titulo.nome(), str(self.quantidade).replace('.', ','))
     
+    def texto_id(self):
+        return 'titulo_vencido_%s' % (self.id)
+    
     def texto_label(self):
         return u'Título vencido'
     

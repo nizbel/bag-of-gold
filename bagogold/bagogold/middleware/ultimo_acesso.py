@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from django.template.exceptions import TemplateDoesNotExist
 import datetime
 
 
