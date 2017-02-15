@@ -20,7 +20,15 @@
 		</div>
 	</div>
 	<div class="portlet-body">
+        <div class="alert alert-warning">
+            {% if qtd_pendencias == 0 %}
+            <strong>Não há pendências</strong>
+            {% else %}
+            Você possui <strong>{{ qtd_pendencias }} pendência{% if qtd_pendencias > 1 %}s{% endif %}</strong>
+            {% endif %}
+        </div>
         <div class="row">
+            {% if pendencias_tesouro_direto %}
             <div class="col-md-6">
                 <div class="portlet box yellow-crusta">
                     <div class="portlet-title">
@@ -38,7 +46,8 @@
                                     <div class="col-md-12">
                                         <span class="label bg-grey-gallery col-md-2">{{pendencia.texto_label}}</span>
                                         <span class="col-md-8">{{pendencia.texto|safe}}</span> 
-                                        <a href="#basic" data-toggle="modal" onclick="preparar_modal({{pendencia.id}}, '{{pendencia.texto_label}}');" class="btn btn-warning col-md-2">Resolver</a>
+                                        <a href="#basic" id="{{pendencia.texto_id}}" data-toggle="modal" onclick="preparar_modal({{pendencia.id}}, '{{pendencia.texto_label}}');" 
+                                        class="btn btn-warning col-md-2">Resolver</a>
                                     </div>
                                 </div>
                             </div>
@@ -47,6 +56,7 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
         </div>
 	</div>
     <div class="modal fade" id="basic" tabindex="-1" role="basic" aria-hidden="true" data-backdrop="static" data-keyboard="false"  style="display: none;">
@@ -113,6 +123,7 @@ function confirmar_pendencia() {
         	$('#row-messages').show();
             if (retorno.resultado) {
                 $('#messages').html('<div class="alert alert-success"><button type="button" class="close" data-dismiss="alert">×</button><i class="icon-ok"></i> ' + retorno.mensagem + '</div>');
+                $('#' + retorno.pendencia_id).prop('onclick',null).off('click').removeAttr('href').attr('disabled', 'disabled').removeAttr('data-toggle').html('<i class="fa fa-check"/>');
             } else {
                 $('#messages').html('<div class="alert alert-error"><button type="button" class="close" data-dismiss="alert">×</button><i class="icon-ban-circle"></i> ' + retorno.mensagem + '</div>');
             }

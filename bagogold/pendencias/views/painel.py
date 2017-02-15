@@ -17,4 +17,4 @@ def painel_pendencias(request):
     pendencias = buscar_pendencias_investidor(investidor)
     pendencias_tesouro_direto = [pendencia for pendencia in pendencias if pendencia.tipo_investimento() == Pendencia.TESOURO_DIRETO]
     
-    return TemplateResponse(request, 'pendencias/painel_pendencias.html', {'pendencias_tesouro_direto': pendencias_tesouro_direto})
+    return TemplateResponse(request, 'pendencias/painel_pendencias.html', {'qtd_pendencias': len(pendencias), 'pendencias_tesouro_direto': pendencias_tesouro_direto})
