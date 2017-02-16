@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.fii import FII
-from bagogold.bagogold.testFII import buscar_rendimentos_fii, \
-    ler_demonstrativo_rendimentos
+from bagogold.bagogold.testFII import buscar_rendimentos_fii
 from django.core.management.base import BaseCommand
 from threading import Thread
 

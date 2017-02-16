@@ -120,15 +120,15 @@ def buscar_rendimentos_fii(ticker):
         fim = data.find('</div>', inicio)
         string_importante = (data[inicio:fim])
 #         http://bvmf.bmfbovespa.com.br/sig/FormConsultaPdfDocumentoFundos.asp?strSigla=BBPO&amp;strData=
-        urls = re.findall('href=\"(.*?)\".*?>Distribuição', string_importante,flags=re.IGNORECASE)
-        urls += re.findall('href=\"(.*?)\".*?>Amortização', string_importante,flags=re.IGNORECASE)
+        urls = re.findall('href=\"(.*?)\".*?>Distribuiç', string_importante,flags=re.IGNORECASE)
+        urls += re.findall('href=\"(.*?)\".*?>Amortizaç', string_importante,flags=re.IGNORECASE)
 #         print len(urls)
-        proventos = list()
         for url in urls:
             url = url.replace('&amp;', '&')
-#             print url
-            proventos.append((ler_demonstrativo_rendimentos(url, ticker),url))
-        
+            print url, ticker
+#             proventos.append((ler_demonstrativo_rendimentos(url, ticker),url))
+    
+    print 'novo formato' 
     # Pesquisar no novo formato
     fii_url = 'http://bvmf.bmfbovespa.com.br/Fundos-Listados/FundosListadosDetalhe.aspx?Sigla=%s&tipoFundo=Imobiliario&aba=tabInformacoesRelevantes&idioma=pt-br' % ticker[0:4]
     # Usar mechanize para simular clique do usuario no javascript
@@ -143,7 +143,7 @@ def buscar_rendimentos_fii(ticker):
     br.find_control("ctl00$botaoNavegacaoVoltar").disabled = True
     br.find_control(id='ctl00_contentPlaceHolderConteudo_ucInformacoesRelevantes_txtPeriodoDe').value = '01/01/2001'
     br.find_control(id='ctl00_contentPlaceHolderConteudo_ucInformacoesRelevantes_txtPeriodoAte').value = time.strftime("%d/%m/%Y")
-    br.find_control(id='ctl00_contentPlaceHolderConteudo_ucInformacoesRelevantes_ddlCategoria').value = ['4']
+    br.find_control(id='ctl00_contentPlaceHolderConteudo_ucInformacoesRelevantes_ddlCategoria').value = ['0']
     
     response = br.submit()
     html = response.read()
@@ -158,35 +158,9 @@ def buscar_rendimentos_fii(ticker):
     
 #     proventos_novo = list()
     for url in urls:
-        rendimento = ler_demonstrativo_rendimentos(url, ticker)
-        print rendimento in [provento[0] for provento in proventos]
-        proventos.append((rendimento,url))
+        print url, ticker
+#         rendimento = ler_demonstrativo_rendimentos(url, ticker)
     
-    # Adicionar proventos
-    # Buscar FII
-    fii = FII.objects.get(ticker=ticker)
-    for provento in proventos:
-        if provento[0][0] and provento[0][1]:
-            datas_lidas = list()
-            for data_lida in provento[0][0]:
-                datas_lidas.append(datetime.datetime.strptime(data_lida, "%d/%m/%Y").date())
-            # Retirar datas duplicadas
-            datas_lidas = list(set(datas_lidas))
-            # Ordenar por data
-            datas_lidas.sort()
-            # Se lista tiver pelo menos 2 datas diferentes, preparar para adicionar
-            if len(datas_lidas) >= 2:
-                # Primeiro valor é o do provento
-                valor = Decimal(provento[0][1][0].replace(' ', '').replace(',', '.'))
-                print ticker, ':', datas_lidas[-2:], valor 
-                novo_provento = ProventoFII(fii=fii, data_ex=datas_lidas[-2], data_pagamento=datas_lidas[-1], valor_unitario=valor, url_documento=provento[1])
-#                     novo_provento.save()
-                try:
-                    provento_atual = ProventoFII.objects.get(fii__ticker=ticker, data_ex=datas_lidas[-2])
-                    print provento_atual
-                except:
-                    print 'nao achou'
-                
         
 def baixar_demonstrativo_rendimentos(arquivo_url):
     req = Request(arquivo_url)
@@ -313,52 +287,3 @@ def ler_demonstrativo_rendimentos(pdf_url, ticker):
             print pdf_url, "->", message
             return ()
         
-def ler_documento_proventos(documento):
-    try:
-        documento.open()
-        arquivo_rendimentos = StringIO(documento.read())
-        
-        rsrcmgr = PDFResourceManager()
-        retstr = StringIO()
-        codec = 'utf-8'
-        laparams = LAParams()
-        device = TextConverter(rsrcmgr, retstr, codec=codec, laparams=laparams)
-        interpreter = PDFPageInterpreter(rsrcmgr, device)
-        password = ""
-        maxpages = 0
-        caching = True
-        pagenos=set()
-        
-        for page in PDFPage.get_pages(arquivo_rendimentos, pagenos, maxpages=maxpages, password=password,caching=caching, check_extractable=True):
-            interpreter.process_page(page)
-         
-        arquivo_rendimentos.close()
-        device.close()
-        text = retstr.getvalue()
-        retstr.close()
-        return text
-    except Exception as e:
-        template = "An exception of type {0} occured. Arguments:\n{1!r}"
-        message = template.format(type(e).__name__, e.args)
-        print "->", message
-        return ()
-
-def buscar_info_proventos_no_texto(texto):
-#     print 'Ações'
-    possui_dividendo = len(re.findall('dividendo', texto, re.IGNORECASE)) > 0
-    possui_jscp = len(re.findall('j[s]{0,1}cp|[^a-z]juro[s]{0,1}[^a-z]', texto, re.IGNORECASE)) > 0
-    mencoes_com = re.findall('[^a-z]com[^a-z]', texto, re.IGNORECASE)
-    mencoes_ex = re.findall('[^a-z]ex[^a-z]|[^a-z]exjur[^a-z]', texto, re.IGNORECASE)
-    mencoes_pagamento = re.findall('pagamento|pago', texto, re.IGNORECASE)
-    datas = re.findall('(\d{1,2}[\.\/]\d{1,2}[\.\/]\d\d\d\d)', texto)
-    valor = re.findall('(\d+\s*?,\s*?\d+)', texto)
-#     print 'datas:', datas, 'valor', valor
-    return (datas, valor)
-
-def buscar_info_proventos_fii_no_texto(texto):
-#     print 'FII'
-    # TODO Preparar leitura de datas e valores a partir de texto mais proximo
-    datas = re.findall('(\d{1,2}[\.\/]\d{1,2}[\.\/]\d\d\d\d)', texto)
-    valor = re.findall('(\d+\s*?,\s*?\d+)', texto)
-#     print 'datas:', datas, 'valor', valor
-    return (datas, valor)
