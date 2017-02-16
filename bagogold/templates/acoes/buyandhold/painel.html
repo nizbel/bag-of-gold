@@ -21,7 +21,7 @@
     <tbody>
     {% for ticker, acao in acoes.items %}
     <tr>
-        <td><a href="{% url 'estatisticas_acao_bh' ticker %}" data-original-title="Estatísticas ação"
+        <td><a href="{% url 'acoes:estatisticas_acao_bh' ticker %}" data-original-title="Estatísticas ação"
             data-rel="tooltip" >{{ticker}}</a></td>
         <td>{{acao.quantidade}} ({{acao.quantidade_percentual|floatformat:"2"}}%)</td>
         <td>R${{acao.valor_dia_anterior}}</td>
