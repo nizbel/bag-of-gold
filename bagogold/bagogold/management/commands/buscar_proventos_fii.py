@@ -3,6 +3,7 @@ from bagogold.bagogold.models.fii import FII
 from bagogold.bagogold.testFII import buscar_rendimentos_fii
 from django.core.management.base import BaseCommand
 from threading import Thread
+import datetime
 
 class BuscaRendimentosFIIThread(Thread):
     def __init__(self, ticker):
@@ -19,7 +20,11 @@ class BuscaRendimentosFIIThread(Thread):
             pass
 
 class Command(BaseCommand):
-    help = 'Teste buscar distribuições de rendimentos na bovespa'
+    help = 'Teste buscar distribuições de rendimentos na bovespa para FII'
+    
+    def add_arguments(self, parser):
+        parser.add_argument('--ano', default=datetime.date.today().year)
+        parser.add_argument('--total', action='store_true')
 
     def handle(self, *args, **options):
         # O incremento mostra quantas threads correrão por vez
