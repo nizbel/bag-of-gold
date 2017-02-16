@@ -120,12 +120,13 @@ def buscar_rendimentos_fii(ticker):
         fim = data.find('</div>', inicio)
         string_importante = (data[inicio:fim])
 #         http://bvmf.bmfbovespa.com.br/sig/FormConsultaPdfDocumentoFundos.asp?strSigla=BBPO&amp;strData=
-        urls = re.findall('href=\"(.*?)\".*?>Distribuiç', string_importante,flags=re.IGNORECASE)
-        urls += re.findall('href=\"(.*?)\".*?>Amortizaç', string_importante,flags=re.IGNORECASE)
+        urls = re.findall('<a[^>]*?href=\"([^>]*?)\"[^>]*?>Distribuiç.*?<span.*?>(.*?)</span>.*?</tr>', string_importante,flags=re.IGNORECASE|re.MULTILINE|re.DOTALL)
+        urls += re.findall('<a[^>]*?href=\"([^>]*?)\"[^>]*?>Amortizaç.*?<span.*?>(.*?)</span>.*?</tr>', string_importante,flags=re.IGNORECASE|re.MULTILINE|re.DOTALL)
 #         print len(urls)
         for url in urls:
-            url = url.replace('&amp;', '&')
+            url[0].replace('&amp;', '&')
             print url, ticker
+            print baixar_demonstrativo_rendimentos(url[0])[1]
 #             proventos.append((ler_demonstrativo_rendimentos(url, ticker),url))
     
     print 'novo formato' 
@@ -154,11 +155,12 @@ def buscar_rendimentos_fii(ticker):
     fim = html.find('id="ctl00_contentPlaceHolderConteudo_pvwItem2"', inicio)
     string_importante = (html[inicio:fim])
     
-    urls = re.findall('<tr><td>Assunto:</td><td>Distribuição de (?:Rendimento[s]?|Amortização)</td></tr>.*?<a href=\"(https://fnet.bmfbovespa.com.br/fnet/publico/downloadDocumento\?id=[\d]*?)\">Aviso aos Cotistas</a>', string_importante,flags=re.IGNORECASE|re.DOTALL)
+    urls = re.findall('<tr><td>Assunto:</td><td>[^<]*(?:Distribuiç|Rendimento|Amortizaç)[^<]*</td></tr>.*?<a href=\"(https://fnet.bmfbovespa.com.br/fnet/publico/downloadDocumento\?id=[\d]*?)\">(.*?)</a>', string_importante,flags=re.IGNORECASE|re.DOTALL)
     
 #     proventos_novo = list()
     for url in urls:
         print url, ticker
+        print baixar_demonstrativo_rendimentos(url)[1]
 #         rendimento = ler_demonstrativo_rendimentos(url, ticker)
     
         
@@ -178,6 +180,8 @@ def baixar_demonstrativo_rendimentos(arquivo_url):
     # Buscar informações da extensão
     extensao = ''
     meta = response.info()
+    print meta
+    # Busca extensão pelo content disposition, depois pelo content-type se não encontrar
     if meta.getheaders("Content-Disposition"):
         content_disposition = meta.getheaders("Content-Disposition")[0]
         if 'filename=' in content_disposition:
