@@ -1,62 +1,182 @@
-{% extends "base.html" %}
+{% extends "teste/base.html" %}
+{% load staticfiles %}
 
 {% block extra_head %}
-    {{ form.media }}
+	{{ form.media }}
+<link href={% static "assets/global/plugins/bootstrap-select/css/bootstrap-select.min.css" %} rel="stylesheet" type="text/css" />
+<link href={% static "assets/global/plugins/bootstrap-daterangepicker/daterangepicker.min.css" %} rel="stylesheet" type="text/css" />
+<link href={% static "assets/global/plugins/bootstrap-datepicker/css/bootstrap-datepicker3.min.css" %} rel="stylesheet" type="text/css" />
+<link href={% static "assets/global/plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css" %} rel="stylesheet" type="text/css" />
 {% endblock %}
 
 {% block content %}
-    <h1>Inserir transferência entre divisões</h1>
-    <form method="POST" class="post-form form-horizontal">{% csrf_token %}
-        {{ form.as_p }}
-        <div class="form-actions">
-            <button type="submit" class="btn">Salvar</button>
-        </div>
-    </form>
-    
-    <script>
+
+<div class="row">
+    <div class="col-md-12">
+		<div class="portlet light">
+			<div class="portlet-title">
+				<div class="caption font-yellow-crusta">
+					<i class="icon-plus font-yellow-crusta"></i>
+					<span class="caption-subject bold uppercase"> Transferência </span>
+				</div>
+			</div>
+			<div class="portlet-body form">
+				<!-- BEGIN FORM-->
+				<form method="POST" class="horizontal-form">{% csrf_token %}
+					<div class="form-body">
+						<div class="row">
+							<div class="form-group col-md-6 {% if form.divisao_cedente.errors %} has-error {% endif %}">
+								<label class="control-label col-md-4" style="text-align: left;"> Divisão cedente: </label>
+								<div class="col-md-8">
+									<select class="selectpicker form-control" id="id_divisao_cedente" name="divisao_cedente">
+										{% for key, value in form.fields.divisao_cedente.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
+									</select>
+									{% if form.divisao_cedente.errors %} <span class="help-block"> {{ form.divisao_cedente.errors.as_text }} </span> {% endif %}
+								</div>
+							</div>
+							<div class="form-group col-md-6 {% if form.investimento_origem.errors %} has-error {% endif %}">
+								<label class="control-label col-md-4"> Investimento de origem: </label>
+								<div class="col-md-8">
+									<select class="selectpicker form-control" id="id_investimento_origem" name="investimento_origem" data-hide-disabled="true">
+										{% for key, value in form.fields.investimento_origem.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
+									</select>
+									{% if form.investimento_origem.errors %} <span class="help-block"> {{ form.investimento_origem.errors.as_text }} </span> {% endif %}
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="form-group col-md-6 {% if form.divisao_recebedora.errors %} has-error {% endif %}">
+								<label class="control-label col-md-4" style="text-align: left;"> Divisão recebedora: </label>
+								<div class="col-md-8">
+									<select class="selectpicker form-control" id="id_divisao_recebedora" name="divisao_recebedora">
+										{% for key, value in form.fields.divisao_recebedora.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
+									</select>
+									{% if form.divisao_recebedora.errors %} <span class="help-block"> {{ form.divisao_recebedora.errors.as_text }} </span> {% endif %}
+								</div>
+							</div>
+							<div class="form-group col-md-6 {% if form.investimento_destino.errors %} has-error {% endif %}">
+								<label class="control-label col-md-4"> Investimento de destino: </label>
+								<div class="col-md-8">
+									<select class="selectpicker form-control" id="id_investimento_destino" name="investimento_destino" data-hide-disabled="true">
+                                        {% for key, value in form.fields.investimento_destino.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
+									</select>
+									{% if form.investimento_destino.errors %} <span class="help-block"> {{ form.investimento_destino.errors.as_text }} </span> {% endif %}
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="form-group col-md-6 {% if form.data.errors %} has-error {% endif %}">
+								<label class="control-label col-md-4" style="text-align: left;"> Data da transferência: </label>
+								<div class="col-md-8">
+									<div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_data" name="data" data-date="{{form.data.value|default:""}}" data-date-viewmode="years">
+										<input type="text" class="form-control" name="data">
+										<span class="input-group-btn">
+											<button class="btn default" type="button">
+												<i class="fa fa-calendar"></i>
+											</button>
+										</span>
+									</div>
+									{% if form.data.errors %} <span class="help-block"> {{ form.data.errors.as_text }} </span> 
+									{% else %} <span class="help-block"> Selecione uma data </span>
+									{% endif %}
+								</div>
+							</div>
+							<div class="form-group col-md-6 {% if form.quantidade.errors %} has-error {% endif %}">
+								<label class="control-label col-md-4"> Quantidade transferida: </label>
+								<div class="col-md-8">
+									<input id="id_quantidade" type="text" value="0" name="quantidade" class="form-control">
+									{% if form.quantidade.errors %} <span class="help-block"> {{ form.quantidade.errors.as_text }} </span> {% endif %}
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="form-group col-md-6 {% if form.descricao.errors %} has-error {% endif %}">
+								<label class="control-label col-md-4" style="text-align: left;"> Descrição :</label>
+								<div class="col-md-8">
+									<input type="text" class="form-control" maxlength="150" name="descricao" id="id_descricao">
+									{% if form.descricao.errors %} <span class="help-block"> {{ form.descricao.errors.as_text }} </span> {% endif %}
+								</div>
+							</div>
+						</div>
+						<div class="form-actions">
+							<div class="row">
+								<div class="col-md-2">
+									<button type="submit" class="btn green-steel">Salvar</button>
+								</div>
+							</div>
+						</div>
+					</div>
+				</form>
+				<!-- END FORM-->
+			</div>
+		</div>
+	</div>
+</div>
+
+{% endblock %}
+
+{% block extra_footer %}
+<script src={% static "assets/global/plugins/bootstrap-maxlength/bootstrap-maxlength.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/pages/scripts/components-bootstrap-maxlength.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/fuelux/js/spinner.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-touchspin/bootstrap.touchspin.js" %} type="text/javascript"></script>
+<script src={% static "assets/pages/scripts/components-bootstrap-touchspin.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/jquery-validation/js/jquery.validate.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/jquery-validation/js/additional-methods.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-select/js/bootstrap-select.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/moment.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-daterangepicker/daterangepicker.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-datepicker/js/bootstrap-datepicker.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-datetimepicker/js/bootstrap-datetimepicker.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-datepicker/locales/bootstrap-datepicker.pt-BR.min.js" %} type="text/javascript"></script>
+<script>
     $(document).ready(function() {
     	// Ao iniciar, deixar apenas fonte externa para divisões
     	$("#id_investimento_origem option").each(function() {
             if ($(this).val() != '') {
-                $(this).hide();
+                $(this).attr('disabled', 'disabled');
             } else {
-                $(this).show();
+                $(this).removeAttr('disabled');
             }
+            $('#id_investimento_origem').selectpicker('refresh');
          });
     	$("#id_investimento_destino option").each(function() {
             if ($(this).val() != '') {
-                $(this).hide();
+                $(this).attr('disabled', 'disabled');
             } else {
-                $(this).show();
+                $(this).removeAttr('disabled');
             }
+            $('#id_investimento_destino').selectpicker('refresh');
          });
     	
         // Altera opções de investimento de acordo com escolha da divisão cedente
         $("#id_divisao_cedente").change(function() {
+            console.log($(this).val());
            if ($(this).val() == '') {
                $("#id_investimento_origem option").each(function() {
     	          if ($(this).val() != '') {
-    	        	  $(this).hide();
+    	                $(this).attr('disabled', 'disabled');
     	          } else {
-                      $(this).show();
+    	                $(this).removeAttr('disabled');
     	          }
     		   });
                if ($("#id_investimento_origem option:selected").val() != '') {
-            	   $("#id_investimento_origem").val($("#id_investimento_origem option:not(:hidden):first").val());
+            	   $("#id_investimento_origem").val($("#id_investimento_origem option:enabled:first").val());
                }
            } else {
         	   $("#id_investimento_origem option").each(function() {
                    if ($(this).val() != '') {
-                       $(this).show();
+                       $(this).removeAttr('disabled');
                    } else {
-                       $(this).hide();
+                       $(this).attr('disabled', 'disabled');
                    }
                });
                if ($("#id_investimento_origem option:selected").val() == '') {
-                   $("#id_investimento_origem").val($("#id_investimento_origem option:not(:hidden):first").val());
+                   $("#id_investimento_origem").val($("#id_investimento_origem option:enabled:first").val());
                }
            }
-        })
+           $('#id_investimento_origem').selectpicker('refresh');
+        });
         
         
         // Altera opções de investimento de acordo com escolha da divisão recebedora
@@ -64,29 +184,42 @@
            if ($(this).val() == '') {
                $("#id_investimento_destino option").each(function() {
                   if ($(this).val() != '') {
-                      $(this).hide();
+                      $(this).attr('disabled', 'disabled');
                   } else {
-                      $(this).show();
+                      $(this).removeAttr('disabled');
                   }
                });
                if ($("#id_investimento_destino option:selected").val() != '') {
-                   $("#id_investimento_destino").val($("#id_investimento_destino option:not(:hidden):first").val());
+                   $("#id_investimento_destino").val($("#id_investimento_destino option:enabled:first").val());
                }
            } else {
                $("#id_investimento_destino option").each(function() {
                    if ($(this).val() != '') {
-                       $(this).show();
+                       $(this).removeAttr('disabled');
                    } else {
-                       $(this).hide();
+                       $(this).attr('disabled', 'disabled');
                    }
                });
                if ($("#id_investimento_destino option:selected").val() == '') {
-                   $("#id_investimento_destino").val($("#id_investimento_destino option:not(:hidden):first").val());
+                   $("#id_investimento_destino").val($("#id_investimento_destino option:enabled:first").val());
                }
            }
-        })
+           $('#id_investimento_destino').selectpicker('refresh');
+        });
+        
+		$("input[name='quantidade']").TouchSpin({
+			min: 0,
+			max: 1000000000,
+			step: 0.01,
+			decimals: 2,
+			maxboostedstep: 100,
+			prefix: 'R$'
+		});
+		$("input[name='descricao']").maxlength();
+		$('.date-picker').datepicker({
+			language: 'pt-BR'
+			});
     });
 
     </script>
 {% endblock %}
-
