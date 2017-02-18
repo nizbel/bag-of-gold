@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import Acao
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
-    PendenciaDocumentoProvento, InvestidorRecusaDocumento, ProventoAcaoDocumento
+from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa
 from django.core.management.base import BaseCommand
 from threading import Thread
 from urllib2 import Request, urlopen, HTTPError, URLError
