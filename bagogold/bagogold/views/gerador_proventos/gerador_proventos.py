@@ -67,15 +67,10 @@ def detalhar_documento(request, id_documento):
             # Remover 0s a direita para valores
             provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario))
             if provento.tipo_provento == 'A':
-                provento.descricao_tipo_provento = u'Ações'
                 provento.acoes_recebidas = provento.acaoproventoacaodescritodocumentobovespa_set.all()
                 # Remover 0s a direita para valores
                 for acao_descricao_provento in provento.acoes_recebidas:
                     acao_descricao_provento.valor_calculo_frac = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(acao_descricao_provento.valor_calculo_frac))
-            elif provento.tipo_provento == 'D':
-                provento.descricao_tipo_provento = u'Dividendos'
-            elif provento.tipo_provento == 'J':
-                provento.descricao_tipo_provento = u'JSCP'
             
             # Adicionar informação de versão
             provento.versao = provento.proventoacaodocumento.versao
@@ -99,15 +94,10 @@ def detalhar_provento_acao(request, id_provento):
     # Remover 0s a direita para valores
     provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario))
     if provento.tipo_provento == 'A':
-        provento.descricao_tipo_provento = u'Ações'
         provento.acoes_recebidas = provento.acaoprovento_set.all()
         # Remover 0s a direita para valores
         for acao_descricao_provento in provento.acoes_recebidas:
             acao_descricao_provento.valor_calculo_frac = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(acao_descricao_provento.valor_calculo_frac))
-    elif provento.tipo_provento == 'D':
-        provento.descricao_tipo_provento = u'Dividendos'
-    elif provento.tipo_provento == 'J':
-        provento.descricao_tipo_provento = u'JSCP'
 
     # Adicionar informação de versão
     try:
@@ -117,15 +107,10 @@ def detalhar_provento_acao(request, id_provento):
             # Remover 0s a direita para valores
             versao.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(versao.valor_unitario))
             if versao.tipo_provento == 'A':
-                versao.descricao_tipo_provento = u'Ações'
                 versao.acoes_recebidas = versao.acaoproventoacaodescritodocumentobovespa_set.all()
                 # Remover 0s a direita para valores
                 for acao_descricao_provento in versao.acoes_recebidas:
                     acao_descricao_provento.valor_calculo_frac = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(acao_descricao_provento.valor_calculo_frac))
-            elif versao.tipo_provento == 'D':
-                versao.descricao_tipo_provento = u'Dividendos'
-            elif versao.tipo_provento == 'J':
-                versao.descricao_tipo_provento = u'JSCP'
     except Exception as e:
         provento.versao = 0
         versoes = list()
@@ -608,15 +593,10 @@ def validar_documento_provento(request, id_pendencia):
         for descricao_provento in descricoes_proventos:
             # Definir tipo de provento
             if descricao_provento.tipo_provento == 'A':
-                descricao_provento.descricao_tipo_provento = u'Ações'
                 descricao_provento.acoes_recebidas = descricao_provento.acaoproventoacaodescritodocumentobovespa_set.all()
                 # Remover 0s a direita para valores
 #                 for acao_descricao_provento in descricao_provento.acoes_recebidas:
 #                     acao_descricao_provento.valor_calculo_frac = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(acao_descricao_provento.valor_calculo_frac))
-            elif descricao_provento.tipo_provento == 'D':
-                descricao_provento.descricao_tipo_provento = u'Dividendos'
-            elif descricao_provento.tipo_provento == 'J':
-                descricao_provento.descricao_tipo_provento = u'JSCP'
             
             # Remover 0s a direita para valores
             descricao_provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(descricao_provento.valor_unitario))
@@ -626,15 +606,10 @@ def validar_documento_provento(request, id_pendencia):
             for provento_proximo in descricao_provento.proventos_proximos:
                 # Definir tipo de provento
                 if provento_proximo.tipo_provento == 'A':
-                    provento_proximo.descricao_tipo_provento = u'Ações'
                     provento_proximo.acoes_recebidas = provento_proximo.acaoprovento_set.all()
                     # Remover 0s a direita para valores
                     for acao_descricao_provento in provento_proximo.acoes_recebidas:
                         acao_descricao_provento.valor_calculo_frac = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(acao_descricao_provento.valor_calculo_frac))
-                elif provento_proximo.tipo_provento == 'D':
-                    provento_proximo.descricao_tipo_provento = u'Dividendos'
-                elif provento_proximo.tipo_provento == 'J':
-                    provento_proximo.descricao_tipo_provento = u'JSCP'
                 
                 # Remover 0s a direita para valores
                 provento_proximo.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento_proximo.valor_unitario))
