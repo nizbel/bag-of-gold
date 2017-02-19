@@ -87,6 +87,16 @@ class Provento (models.Model):
             tipo = u'JSCP'
         return u'%s de %s com valor %s e data EX %s a ser pago em %s' % (tipo, self.acao.ticker, self.valor_unitario, self.data_ex, self.data_pagamento)
     
+    def descricao_tipo_provento(self):
+        if self.tipo_provento == 'A':
+            return u'Ações'
+        elif self.tipo_provento == 'D':
+            return u'Dividendos'
+        elif self.tipo_provento == 'J':
+            return u'JSCP'
+        else:
+            return u'Indefinido'
+    
     objects = ProventoOficialManager()
     gerador_objects = models.Manager()
 
