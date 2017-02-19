@@ -85,6 +85,14 @@ class DocumentoProventoBovespa (models.Model):
             return self.investidorvalidacaodocumento.investidor
         return None
     
+    def descricao_tipo(self):
+        if self.tipo == 'A':
+            return 'Ação'
+        elif self.tipo == 'F':
+            return 'FII'
+        else:
+            return 'Tipo indefinido'
+    
     def ultima_recusa(self):
         recusas = InvestidorRecusaDocumento.objects.filter(documento=self).order_by('-data_recusa')
         if recusas:
