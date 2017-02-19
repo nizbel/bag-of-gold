@@ -130,9 +130,9 @@ class Command(BaseCommand):
                 time.sleep(3)
         except KeyboardInterrupt:
 #             print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
-            if 'Principal' in threads_rodando.keys():
+            while 'Principal' in threads_rodando.keys():
                 del threads_rodando['Principal']
-            time.sleep(3)
+                time.sleep(3)
         fim = datetime.datetime.now()
         print (fim-inicio)
         

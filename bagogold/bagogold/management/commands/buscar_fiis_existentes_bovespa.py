@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.fii import FII
+from bagogold.bagogold.utils.bovespa import preencher_empresa_fii_nao_listado
 from django.core.management.base import BaseCommand
 from threading import Thread
 from urllib2 import Request, urlopen, HTTPError, URLError
@@ -19,21 +20,18 @@ class VerificarFIIThread(Thread):
                 while len(fiis_para_verificar) > 0:
                     sigla, ticker, empresa_nome, empresa_nome_pregao = fiis_para_verificar.pop(0)
                     
-                    try:
-                        empresa = Empresa.objects.get(codigo_cvm=sigla)
-                    except Empresa.DoesNotExist:
+                    if not Empresa.objects.get(codigo_cvm=sigla).exists():
                         empresa = Empresa(nome=empresa_nome, codigo_cvm=sigla, nome_pregao=empresa_nome_pregao)
                         empresa.save()
                         print 'Empresa nao existia'
                     
-                    try:
-                        fii = FII.objects.get(ticker=ticker)
+                    if FII.objects.filter(ticker=ticker).exists():
                         print 'FII:', ticker, 'ja existia'
                         if not fii.empresa:
                             fii.empresa = empresa
                             fii.save()
                             print 'FII', ticker, 'não possuia empresa'
-                    except FII.DoesNotExist:
+                    else:
                         fii = FII(ticker=ticker, empresa=empresa)
                         fii.save()
                         print 'FII:', fii, 'criado'
@@ -67,6 +65,10 @@ class Command(BaseCommand):
     help = 'Busca FIIs listados na bovespa'
 
     def handle(self, *args, **options):
+        for fii in FII.objects.filter(empresa__isnull=True):
+            preencher_empresa_fii_nao_listado(fii.ticker)
+        if 2 == 2:
+            return
         fiis = verificar_fiis_listados()
         
         qtd_threads = 12
@@ -95,9 +97,9 @@ class Command(BaseCommand):
                 time.sleep(3)
         except KeyboardInterrupt:
 #             print 'FIIs para verificar:', len(fiis_para_verificar), '... Threads:', len(threads_rodando), contador
-            if 'Principal' in threads_rodando.keys():
+            while 'Principal' in threads_rodando.keys():
                 del threads_rodando['Principal']
-            time.sleep(3)
+                time.sleep(3)
         print time.time() - start_time, len(fiis)
 
 def verificar_fiis_listados():
@@ -118,8 +120,6 @@ def verificar_fiis_listados():
         string_importante = (data[data.find('<table>'):data.find('</table>')])
         return re.findall('<a.*?>(.+?)</a>.*?<a.*?>(.+?)</a>.*?<td>.*?</td>.*?<td><span.*?>(.+?)</span></td>.*?</tr>', string_importante, flags=re.DOTALL)
         
-            
-
 def busca_ticker(sigla, num_tentativas):
     sigla_url = 'http://bvmf.bmfbovespa.com.br/Fundos-Listados/FundosListadosDetalhe.aspx?Sigla=%s&tipoFundo=Imobiliario&aba=abaPrincipal&idioma=pt-br' % (sigla)
     resposta = urlopen(sigla_url)
