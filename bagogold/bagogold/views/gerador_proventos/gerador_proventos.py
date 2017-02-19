@@ -9,7 +9,8 @@ from bagogold.bagogold.models.fii import ProventoFII
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
     PendenciaDocumentoProvento, ProventoAcaoDescritoDocumentoBovespa, \
     ProventoAcaoDocumento, InvestidorResponsavelPendencia, \
-    AcaoProventoAcaoDescritoDocumentoBovespa
+    AcaoProventoAcaoDescritoDocumentoBovespa, ProventoFIIDocumento, \
+    ProventoFIIDescritoDocumentoBovespa
 from bagogold.bagogold.utils.gerador_proventos import \
     alocar_pendencia_para_investidor, desalocar_pendencia_de_investidor, \
     salvar_investidor_responsavel_por_leitura, criar_descricoes_provento_acoes, \
@@ -58,28 +59,36 @@ def detalhar_documento(request, id_documento):
     documento = DocumentoProventoBovespa.objects.get(id=id_documento)
     documento.nome = documento.documento.name.split('/')[-1]
     
-    # Preparar descrição de tipo
-    documento.tipo = 'Ação' if documento.tipo == 'A' else 'FII'
-    
-    proventos_descritos_ids = ProventoAcaoDocumento.objects.filter(documento=documento).values_list('descricao_provento_id', flat=True)
-    proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_descritos_ids)
-    for provento in proventos:
-        # Remover 0s a direita para valores
-        provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario))
-        if provento.tipo_provento == 'A':
-            provento.descricao_tipo_provento = u'Ações'
-            provento.acoes_recebidas = provento.acaoproventoacaodescritodocumentobovespa_set.all()
+    # Se documento for ação
+    if documento.tipo == 'A':
+        proventos_descritos_ids = ProventoAcaoDocumento.objects.filter(documento=documento).values_list('descricao_provento_id', flat=True)
+        proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_descritos_ids)
+        for provento in proventos:
             # Remover 0s a direita para valores
-            for acao_descricao_provento in provento.acoes_recebidas:
-                acao_descricao_provento.valor_calculo_frac = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(acao_descricao_provento.valor_calculo_frac))
-        elif provento.tipo_provento == 'D':
-            provento.descricao_tipo_provento = u'Dividendos'
-        elif provento.tipo_provento == 'J':
-            provento.descricao_tipo_provento = u'JSCP'
+            provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario))
+            if provento.tipo_provento == 'A':
+                provento.descricao_tipo_provento = u'Ações'
+                provento.acoes_recebidas = provento.acaoproventoacaodescritodocumentobovespa_set.all()
+                # Remover 0s a direita para valores
+                for acao_descricao_provento in provento.acoes_recebidas:
+                    acao_descricao_provento.valor_calculo_frac = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(acao_descricao_provento.valor_calculo_frac))
+            elif provento.tipo_provento == 'D':
+                provento.descricao_tipo_provento = u'Dividendos'
+            elif provento.tipo_provento == 'J':
+                provento.descricao_tipo_provento = u'JSCP'
             
-        # Adicionar informação de versão
-        provento.versao = provento.proventoacaodocumento.versao
-    
+            # Adicionar informação de versão
+            provento.versao = provento.proventoacaodocumento.versao
+    # Se for FII
+    elif documento.tipo == 'F':
+        proventos_descritos_ids = ProventoFIIDocumento.objects.filter(documento=documento).values_list('descricao_provento_id', flat=True)
+        proventos = ProventoFIIDescritoDocumentoBovespa.objects.filter(id__in=proventos_descritos_ids)
+        for provento in proventos:
+            # Remover 0s a direita para valores
+            provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario))
+            # Adicionar informação de versão
+            provento.versao = provento.proventoacaodocumento.versao
+        
     return TemplateResponse(request, 'gerador_proventos/detalhar_documento.html', {'documento': documento, 'proventos': proventos})
 
 @login_required
