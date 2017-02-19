@@ -37,8 +37,10 @@ class GeraInfoDocumentoProtocoloThread(Thread):
             while len(threads_rodando) > 0 or len(informacoes_rendimentos) > 0:
                 while len(informacoes_rendimentos) > 0:
                     info = informacoes_rendimentos.pop(0)
-                    codigo_cvm = info['codigo_cvm']
-                    url, data, tipo_documento = info['info_doc']
+                    ticker = info['ticker']
+                    url = info['url']
+                    data_referencia = info['data_ref']
+                    tipo_documento = info['tipo']
 
         #             print protocolo, Empresa.objects.get(codigo_cvm=codigo_cvm), ano
                     # Apenas adiciona caso seja dos tipos válidos, decodificando de utf-8
@@ -48,7 +50,7 @@ class GeraInfoDocumentoProtocoloThread(Thread):
                         documento.empresa = Empresa.objects.get(codigo_cvm=codigo_cvm)
                         documento.tipo_documento = tipo_documento
                         documento.url = 'http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=%s' % (protocolo)
-                        documento.tipo = 'A'
+                        documento.tipo = 'F'
                         documento.protocolo = protocolo
                         documento.data_referencia = datetime.datetime.strptime(data_referencia, '%d/%m/%Y')
                         documentos_para_download.append(documento)
@@ -141,8 +143,7 @@ def buscar_rendimentos_fii_antigos(ticker):
 #         print len(urls)
         for info in info_documentos:
             info[0].replace('&amp;', '&')
-            info[2] = 'Aviso aos cotistas'
-            informacoes_rendimentos.append({'info_doc': info, 'ticker': ticker})
+            informacoes_rendimentos.append({'url': info[0], 'data_ref': info[1], 'ticker': ticker, 'tipo': 'Aviso aos cotistas'})
     
 def buscar_rendimentos_fii(ticker, ano_inicial):
     """

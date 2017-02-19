@@ -5,6 +5,7 @@ import datetime
  
 class FII (models.Model):
     ticker = models.CharField(u'Ticker do FII', max_length=10, unique=True) 
+    empresa = models.ForeignKey('Empresa', blank=True, null=True) 
     
     class Meta:
         ordering = ['ticker']
