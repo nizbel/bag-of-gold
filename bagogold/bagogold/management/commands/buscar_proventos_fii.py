@@ -111,15 +111,6 @@ class Command(BaseCommand):
         qtd_threads = 8
         fiis = FII.objects.filter(ticker__in=['BRCR11'])
         contador = 0
-        while contador <= len(fiis):
-            threads = []
-            for fii in fiis[contador : min(contador+incremento,len(fiis))]:
-                t = BuscaRendimentosFIIThread(fii.ticker, antigos, ano_inicial)
-                threads.append(t)
-                t.start()
-            for t in threads:
-                t.join()
-            contador += incremento
         try:
             while contador < len(fiis):
                 fii = fiis[contador]
