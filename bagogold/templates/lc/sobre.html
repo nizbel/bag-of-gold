@@ -1,0 +1,109 @@
+{% extends "teste/base.html" %}
+{% load staticfiles %}
+
+{% block extra_head %}
+{% endblock %}
+
+{% block content %}
+
+<div class="portlet light">
+    <div class="portlet-title">
+        <div class="caption font-yellow-crusta">
+            <i class="icon-pin font-yellow-crusta"></i>
+            <span class="caption-subject bold uppercase">LCA/LCI</span>
+        </div>
+    </div>
+    <div class="portlet-body">
+        As Letras de Crédito do Agronegócio e Imobiliário são investimentos de baixo risco, isentos de <strong>imposto de renda</strong>.
+        A diferença entre elas é basicamente o setor no qual a instituição financeira está lastreando seus empréstimos, agronegócio ou imobiliário.
+        São garantidas pelo FGC (Fundo Garantidor de Crédito),<strong>até um limite de R$ 250.000,00 por CPF por instituição</strong>).
+        Podem ser pré-fixadas ou pós-fixadas. As pré-fixadas já mostram ao investidor quanto ele irá receber na data de vencimento. Nas pós-fixadas,
+        a taxa de rendimento é atrelada a um índice, como o DI (mais comum) ou o IPCA, portanto o investidor só irá saber o rendimento final ao 
+        término do investimento.
+        O investidor apenas pode resgatar o dinheiro após um período de carência ou na data de vencimento.
+        Para mais informações: 
+        <a href="http://www.infomoney.com.br/lci-lca">Infomoney</a>
+        <a href="http://mepoupenaweb.uol.com.br/investimentos/tudo-sobre-lci-e-lca/">Me Poupe!</a>
+        
+        Últimos valores para o DI e o IPCA:
+        <div class="portlet box yellow-crusta">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-line-chart"></i>Últimos valores para o DI</div>
+                <div class="tools">
+                    <a href="javascript:;" class="collapse"></a>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="chart" id="graf_historico_di" style="width:100%;height:400px"></div>
+            </div>
+        </div>
+        
+        Simulador:
+        
+        
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_footer %}
+<script>
+$( document ).ready(function() {    
+    $.plot($("#graf_valor"), [ {color: "#7D8C9D", lines: {show:true}, data: {{ graf_patrimonio|safe }} } 
+    ],
+      {grid: {show: false}}  
+    );
+    
+    $.plot($("#graf_gasto"), [ {color: "#7D8C9D", lines: {show:true}, data: {{ graf_gasto_total|safe }} } 
+    ],
+      {grid: {show: false}}  
+    );
+    
+    $.plot($("#graf_historico"), [{lines: {show:true}, label: "Valor títulos", data: {{ graf_patrimonio|safe }}},
+                                {lines: {show:true}, label: "Total gasto", data: {{ graf_gasto_total|safe }}}
+                              ],
+                                {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%d-%m-%y"} }  
+    );
+    
+    function showTooltip(x, y, contents) {
+        
+        $('<div id="tooltip">' + contents + '</div>').css( {
+            position: 'absolute',
+            display: 'none',
+            top: y + 5,
+            left: x + 5,
+            border: '1px solid #fdd',
+            padding: '2px',
+            'background-color': '#fee',
+            opacity: 0.80
+        }).appendTo("body").fadeIn(200);
+    }
+
+    var previousPoint = null;
+    $("#graf_historico").bind("plothover", function (event, pos, item) {
+        $("#x").text(pos.x.toFixed(2));
+        $("#y").text(pos.y.toFixed(2));
+
+        if (item) {
+            if (previousPoint != item.datapoint) {
+                previousPoint = item.datapoint;
+                
+                $("#tooltip").remove();
+                var x = item.datapoint[0].toFixed(2),
+                    y = item.datapoint[1].toFixed(2);
+                
+                var date = new Date(parseInt(x));
+                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d-%m-%y") +"</br>" + item.series.label + ": R$" + y);
+            }
+        }
+        else {
+            $("#tooltip").remove();
+            clicksYet = false;
+            previousPoint = null;            
+        }
+    });
+
+});
+</script>
+{% endblock %}

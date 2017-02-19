@@ -146,6 +146,7 @@ urlpatterns = [
     url(r'^lc/modificar_carencia_lc/$', views.lc.lc.modificar_carencia_lc, name='modificar_carencia_lc'),
     url(r'^lc/modificar_porcentagem_di_lc/$', views.lc.lc.modificar_porcentagem_di_lc, name='modificar_porcentagem_di_lc'),
     url(r'^lc/painel/$', views.lc.lc.painel, name='painel_lc'),
+    url(r'^lc/sobre/$', views.lc.lc.sobre, name='sobre_lc'),
     
     # CDB e RDB
     url(r'^cdb_rdb/detalhar_cdb_rdb/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.detalhar_cdb_rdb, name='detalhar_cdb_rdb'),
