@@ -64,11 +64,10 @@ class BuscaTickerThread(Thread):
 class Command(BaseCommand):
     help = 'Busca FIIs listados na bovespa'
 
+    def add_arguments(self, parser):
+        parser.add_argument('--n', action='store_true')
+        
     def handle(self, *args, **options):
-        for fii in FII.objects.filter(empresa__isnull=True):
-            preencher_empresa_fii_nao_listado(fii.ticker)
-        if 2 == 2:
-            return
         fiis = verificar_fiis_listados()
         
         qtd_threads = 12
@@ -101,6 +100,16 @@ class Command(BaseCommand):
                 del threads_rodando['Principal']
                 time.sleep(3)
         print time.time() - start_time, len(fiis)
+        if options['n']:
+            # Buscar não listados
+            for fii in FII.objects.filter(empresa__isnull=True):
+                try:
+                    print fii
+                    preencher_empresa_fii_nao_listado(fii.ticker)
+                    fii.empresa = Empresa.objects.get(codigo_cvm=fii.ticker[0:4])
+                    fii.save()
+                except Exception as e:
+                    print 'Erro no FII', fii.ticker, e
 
 def verificar_fiis_listados():
 #     http://bvmf.bmfbovespa.com.br/Fundos-Listados/FundosListadosDetalhe.aspx?Sigla=AEFI&tipoFundo=Imobiliario&aba=abaPrincipal&idioma=pt-br

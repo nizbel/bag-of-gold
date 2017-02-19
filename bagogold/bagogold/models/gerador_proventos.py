@@ -18,7 +18,7 @@ class DocumentoProventoBovespa (models.Model):
     
     url = models.CharField(u'URL do documento', blank=True, null=True, max_length=200)
     empresa = models.ForeignKey('Empresa')
-    protocolo =  models.CharField(u'Protocolo', max_length=10)
+    protocolo =  models.CharField(u'Protocolo', max_length=15)
     """
     Define se é provento de ação ou FII, A = Ação, F = FII
     """
