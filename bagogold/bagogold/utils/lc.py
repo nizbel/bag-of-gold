@@ -40,7 +40,7 @@ def calcular_valor_venda_lc(operacao_venda):
     # Calcular
     return calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao_venda.quantidade, operacao_venda.porcentagem_di()).quantize(Decimal('.01'), ROUND_DOWN)
 
-def calcular_valor_lc_ate_dia(investidor, dia):
+def calcular_valor_lc_ate_dia(investidor, dia=datetime.date.today()):
     """ 
     Calcula o valor das letras de crédito no dia determinado
     Parâmetros: Investidor
