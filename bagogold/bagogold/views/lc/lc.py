@@ -8,7 +8,9 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoLC, Divisao
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI, \
     HistoricoPorcentagemLetraCredito, LetraCredito, HistoricoCarenciaLetraCredito, \
     OperacaoVendaLetraCredito
-from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa
+from bagogold.bagogold.models.td import HistoricoIPCA
+from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa,\
+    calcular_valor_lc_ate_dia
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -488,9 +490,20 @@ def painel(request):
     
     return TemplateResponse(request, 'lc/painel.html', {'operacoes': operacoes, 'dados': dados})
 
+@login_required
 def sobre(request):
-    historico_di = HistoricoTaxaDI.objects.filter(data__gte=datetime.date.today().replace(year=datetime.date.today().year-3))
-    
+    data_atual = datetime.date.today()
+    historico_di = HistoricoTaxaDI.objects.filter(data__gte=data_atual.replace(year=data_atual.year-3))
     graf_historico_di = [[str(calendar.timegm(valor_historico.data.timetuple()) * 1000), float(valor_historico.taxa)] for valor_historico in historico_di]
     
-    return TemplateResponse(request, 'lc/sobre.html', {'graf_historico_di': graf_historico_di})
+    historico_ipca = HistoricoIPCA.objects.filter(ano__gte=(data_atual.year-3)).exclude(mes__lt=data_atual.month, ano=data_atual.year-3)
+    graf_historico_ipca = [[str(calendar.timegm(valor_historico.data().timetuple()) * 1000), float(valor_historico.valor)] for valor_historico in historico_ipca]
+    
+    if request.user.is_authenticated():
+        total_investido = sum(calcular_valor_lc_ate_dia(request.user.investidor).values())
+    else:
+        total_investido = 0
+    print total_investido
+    
+    return TemplateResponse(request, 'lc/sobre.html', {'graf_historico_di': graf_historico_di, 'graf_historico_ipca': graf_historico_ipca,
+                                                       'total_investido': total_investido})

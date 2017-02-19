@@ -106,3 +106,6 @@ class HistoricoIPCA (models.Model):
             HistoricoIPCA.objects.get(mes=self.mes, ano=self.ano)
         except HistoricoIPCA.DoesNotExist:
             super(HistoricoIPCA, self).save(*args, **kw)
+            
+    def data(self):
+        return datetime.date(self.ano, self.mes, 1)
