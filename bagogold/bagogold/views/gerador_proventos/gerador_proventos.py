@@ -126,7 +126,17 @@ def detalhar_provento_fii(request, id_provento):
     # Remover 0s a direita para valores
     provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario))
     # Adicionar informação de versão
-    provento.versao = provento.proventoacaodocumento.versao
+    provento.versao = provento.proventofiidocumento.versao
+    # Adicionar informação de versão
+    try:
+        provento.versao = ProventoFIIDocumento.objects.filter(provento=provento).order_by('-versao')[0].versao
+        versoes = ProventoFIIDescritoDocumentoBovespa.objects.filter(proventofiidocumento__provento=provento).order_by('proventofiidocumento__versao')
+        for versao in versoes:
+            # Remover 0s a direita para valores
+            versao.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(versao.valor_unitario))
+    except Exception as e:
+        provento.versao = 0
+        versoes = list()
 
     return TemplateResponse(request, 'gerador_proventos/detalhar_provento_fii.html', {'provento': provento, 'versoes': versoes})
 
