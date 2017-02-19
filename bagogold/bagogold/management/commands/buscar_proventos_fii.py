@@ -41,19 +41,23 @@ class GeraInfoDocumentoProtocoloThread(Thread):
                     url = info['url']
                     data_referencia = info['data_ref']
                     tipo_documento = info['tipo']
+                    # Se não há protocolo, é modelo antigo. Criar de acordo com um padrão para os antigos
+                    if 'protocolo' not in info.keys():
+                        protocolo = url.split('strData=')[1]
 
         #             print protocolo, Empresa.objects.get(codigo_cvm=codigo_cvm), ano
                     # Apenas adiciona caso seja dos tipos válidos, decodificando de utf-8
-                    if not DocumentoProventoBovespa.objects.filter(empresa__codigo_cvm=codigo_cvm, protocolo=protocolo).exists() \
+                    if not DocumentoProventoBovespa.objects.filter(empresa__codigo_cvm=ticker, protocolo=protocolo).exists() \
                         and tipo_documento.decode('utf-8') in DocumentoProventoBovespa.TIPOS_DOCUMENTO_VALIDOS:
                         documento = DocumentoProventoBovespa()
-                        documento.empresa = Empresa.objects.get(codigo_cvm=codigo_cvm)
+                        documento.empresa = Empresa.objects.get(codigo_cvm=ticker[0:4])
                         documento.tipo_documento = tipo_documento
                         documento.url = 'http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=%s' % (protocolo)
                         documento.tipo = 'F'
                         documento.protocolo = protocolo
                         documento.data_referencia = datetime.datetime.strptime(data_referencia, '%d/%m/%Y')
-                        documentos_para_download.append(documento)
+                        print documento
+#                         documentos_para_download.append(documento)
                 
                 time.sleep(10)
         except Exception as e:
@@ -71,15 +75,18 @@ class BuscaRendimentosFIIThread(Thread):
     def run(self):
         try:
             if self.antigos:
-                buscar_rendimentos_fii_antigos(self.ticker)
+                buscar_rendimentos_fii_antigos(self.ticker, 0)
             if self.ano_inicial != 0:
                 pass
-#                 buscar_rendimentos_fii(self.ticker, self.ano_inicial)
+#                 buscar_rendimentos_fii(self.ticker, self.ano_inicial, 0)
         except Exception as e:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
             message = template.format(type(e).__name__, e.args)
             print self.ticker, "Thread:", message
-            pass
+#             pass
+        # Tenta remover seu código da listagem de threads até conseguir
+        while self.ticker in threads_rodando:
+            del threads_rodando[self.ticker]
 
 class Command(BaseCommand):
     help = 'Busca rendimentos de FII na Bovespa'
@@ -100,8 +107,8 @@ class Command(BaseCommand):
                 raise ValueError('Ano inicial tem de ser no mínimo 2016')
             ano_inicial = options['ano_inicial']
             antigos = options['antigos']
-        # O incremento mostra quantas threads correrão por vez
-        incremento = 8
+        # Quantas threads correrão por vez
+        qtd_threads = 8
         fiis = FII.objects.filter(ticker__in=['BRCR11'])
         contador = 0
         while contador <= len(fiis):
@@ -113,8 +120,28 @@ class Command(BaseCommand):
             for t in threads:
                 t.join()
             contador += incremento
+        try:
+            while contador < len(fiis):
+                fii = fiis[contador]
+                t = BuscaRendimentosFIIThread(fii.ticker, antigos, ano_inicial)
+                threads_rodando[fii.ticker] = 1
+                t.start()
+                contador += 1
+                while (len(threads_rodando) > qtd_threads):
+                    print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
+                    time.sleep(3)
+            while (len(threads_rodando) > 0 or len(documentos_para_download) > 0 or len(informacoes_rendimentos) > 0):
+#                 print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
+                if 'Principal' in threads_rodando.keys():
+                    del threads_rodando['Principal']
+                time.sleep(3)
+        except KeyboardInterrupt:
+#             print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
+            while 'Principal' in threads_rodando.keys():
+                del threads_rodando['Principal']
+                time.sleep(3)
 
-def buscar_rendimentos_fii_antigos(ticker):
+def buscar_rendimentos_fii_antigos(ticker, num_tentativas):
     """
     Busca distribuições de rendimentos de FII no formato antigo no site da Bovespa
     """
@@ -132,7 +159,9 @@ def buscar_rendimentos_fii_antigos(ticker):
 #         print 'Host: %s' % (req.get_host())
         data = response.read()
         if 'Sistema indisponivel' in data:
-            return buscar_rendimentos_fii(ticker)
+            if num_tentativas == 3:
+                raise ValueError(u'O sistema está indisponível')
+            return buscar_rendimentos_fii_antigos(ticker, num_tentativas+1)
         inicio = data.find('<div id="tbArqListados">')
 #         print 'inicio', inicio
         fim = data.find('</div>', inicio)
@@ -145,7 +174,7 @@ def buscar_rendimentos_fii_antigos(ticker):
             info[0].replace('&amp;', '&')
             informacoes_rendimentos.append({'url': info[0], 'data_ref': info[1], 'ticker': ticker, 'tipo': 'Aviso aos cotistas'})
     
-def buscar_rendimentos_fii(ticker, ano_inicial):
+def buscar_rendimentos_fii(ticker, ano_inicial, num_tentativas):
     """
     Busca distribuições de rendimentos de FII no formato atual no site da Bovespa
     """
@@ -168,7 +197,9 @@ def buscar_rendimentos_fii(ticker, ano_inicial):
     response = br.submit()
     html = response.read()
     if 'Sistema indisponivel' in html:
-        return buscar_rendimentos_fii(ticker)
+        if num_tentativas == 3:
+            raise ValueError(u'O sistema está indisponível')
+        return buscar_rendimentos_fii(ticker, ano_inicial, num_tentativas+1)
     
     inicio = html.find('<div id="ctl00_contentPlaceHolderConteudo_pvwInfoRelevantes">')
     fim = html.find('id="ctl00_contentPlaceHolderConteudo_pvwItem2"', inicio)
