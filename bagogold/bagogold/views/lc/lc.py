@@ -491,4 +491,6 @@ def painel(request):
 def sobre(request):
     historico_di = HistoricoTaxaDI.objects.filter(data__gte=datetime.date.today().replace(year=datetime.date.today().year-3))
     
-    return TemplateResponse(request, 'lc/sobre.html', {'historico_di': historico_di})
+    graf_historico_di = [[str(calendar.timegm(valor_historico.data.timetuple()) * 1000), float(valor_historico.taxa)] for valor_historico in historico_di]
+    
+    return TemplateResponse(request, 'lc/sobre.html', {'graf_historico_di': graf_historico_di})
