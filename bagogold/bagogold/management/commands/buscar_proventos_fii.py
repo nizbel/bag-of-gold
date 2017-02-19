@@ -55,7 +55,7 @@ class GeraInfoDocumentoProtocoloThread(Thread):
                         documento.tipo = 'F'
                         documento.protocolo = protocolo
                         documento.data_referencia = datetime.datetime.strptime(data_referencia, '%d/%m/%Y')
-                        print documento
+#                         print documento
 #                         documentos_para_download.append(documento)
                 
                 time.sleep(10)
@@ -64,7 +64,6 @@ class GeraInfoDocumentoProtocoloThread(Thread):
                 template = "An exception of type {0} occured. Arguments:\n{1!r}"
                 message = template.format(type(e).__name__, e.args)
                 print message
-                self.run()
                 
 class BuscaRendimentosFIIThread(Thread):
     def __init__(self, ticker, antigos, ano_inicial):
@@ -78,8 +77,8 @@ class BuscaRendimentosFIIThread(Thread):
             if self.antigos:
                 buscar_rendimentos_fii_antigos(self.ticker, 0)
             if self.ano_inicial != 0:
-                pass
-#                 buscar_rendimentos_fii(self.ticker, self.ano_inicial, 0)
+#                 pass
+                buscar_rendimentos_fii(self.ticker, self.ano_inicial, 0)
         except Exception as e:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
             message = template.format(type(e).__name__, e.args)
@@ -120,8 +119,8 @@ class Command(BaseCommand):
             
         # Quantas threads correrão por vez
         qtd_threads = 8
-        fiis = Empresa.objects.filter(codigo_cvm__in=[fii.ticker[:4] for fii in FII.objects.filter(ticker='BRCR11')]).values_list('codigo_cvm', flat=True)
-#         fiis = Empresa.objects.filter(codigo_cvm__in=[fii.ticker[:4] for fii in FII.objects.all()]).values_list('codigo_cvm', flat=True)
+#         fiis = Empresa.objects.filter(codigo_cvm__in=[fii.ticker[:4] for fii in FII.objects.filter(ticker='BRCR11')]).values_list('codigo_cvm', flat=True)
+        fiis = Empresa.objects.filter(codigo_cvm__in=[fii.ticker[:4] for fii in FII.objects.all()]).values_list('codigo_cvm', flat=True)
         contador = 0
         try:
             while contador < len(fiis):

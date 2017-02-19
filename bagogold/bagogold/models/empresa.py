@@ -15,4 +15,9 @@ class Empresa (models.Model):
         return self.nome
     
     def ticker_empresa(self):
-        return re.sub('\d', '', Acao.objects.filter(empresa=self)[0].ticker)
+        try:
+            # Retorna se for ação
+            return re.sub('\d', '', Acao.objects.filter(empresa=self)[0].ticker)
+        except:
+            # Retorna para FII
+            return self.codigo_cvm
