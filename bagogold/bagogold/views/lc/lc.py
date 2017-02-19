@@ -487,3 +487,8 @@ def painel(request):
     dados['data_di_mais_recente'] = data_final
     
     return TemplateResponse(request, 'lc/painel.html', {'operacoes': operacoes, 'dados': dados})
+
+def sobre(request):
+    historico_di = HistoricoTaxaDI.objects.filter(data__gte=datetime.date.today().replace(year=datetime.date.today().year-3))
+    
+    return TemplateResponse(request, 'lc/sobre.html', {'historico_di': historico_di})
