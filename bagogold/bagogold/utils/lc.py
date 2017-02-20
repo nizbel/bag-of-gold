@@ -171,7 +171,7 @@ def simulador_lci_lca(filtros):
     """
     qtd_atual = filtros['aplicacao']
     data_atual = datetime.date.today()
-    resultado = list()
+    resultado = [(data_atual, qtd_atual)]
     if filtros['tipo'] == 'POS':
         for _ in range(filtros['periodo']):
             qtd_dias_uteis = qtd_dias_uteis_no_periodo(data_atual, data_atual + datetime.timedelta(days=30))
