@@ -178,5 +178,4 @@ def simulador_lci_lca(filtros):
             data_atual = data_atual + datetime.timedelta(days=30)
             qtd_atual = calcular_valor_atualizado_com_taxas({Decimal('14.13'): qtd_dias_uteis}, qtd_atual, filtros['percentual_indice'])
             resultado.append((data_atual, qtd_atual))
-    print resultado
     return resultado
