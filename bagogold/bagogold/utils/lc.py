@@ -6,6 +6,7 @@ from decimal import Decimal, ROUND_DOWN
 from django.db.models import Q
 from django.db.models.aggregates import Sum, Count
 import datetime
+from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo
 
 def calcular_valor_atualizado_com_taxa(taxa_do_dia, valor_atual, operacao_taxa):
     """
@@ -161,3 +162,21 @@ def calcular_valor_lc_ate_dia_por_divisao(dia, divisao_id):
                 letras_credito[letra_credito_id] += operacao.atual
     
     return letras_credito
+
+def simulador_lci_lca(filtros):
+    """
+    Simula uma aplicação em LCI/LCA para os valores especificados nos filtros
+    Parâmetros:
+    Retorno:    Lista de datas (mes a mes) com valores, ex.: [(data, valor),...]
+    """
+    qtd_atual = filtros['aplicacao']
+    data_atual = datetime.date.today()
+    resultado = list()
+    if filtros['tipo'] == 'POS':
+        for _ in range(filtros['periodo']):
+            qtd_dias_uteis = qtd_dias_uteis_no_periodo(data_atual, data_atual + datetime.timedelta(days=30))
+            data_atual = data_atual + datetime.timedelta(days=30)
+            qtd_atual = calcular_valor_atualizado_com_taxas({Decimal('14.13'): qtd_dias_uteis}, qtd_atual, filtros['percentual_indice'])
+            resultado.append((data_atual, qtd_atual))
+    print resultado
+    return resultado

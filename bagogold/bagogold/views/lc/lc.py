@@ -9,8 +9,8 @@ from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI, \
     HistoricoPorcentagemLetraCredito, LetraCredito, HistoricoCarenciaLetraCredito, \
     OperacaoVendaLetraCredito
 from bagogold.bagogold.models.td import HistoricoIPCA
-from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa,\
-    calcular_valor_lc_ate_dia
+from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa, \
+    calcular_valor_lc_ate_dia, simulador_lci_lca
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -18,11 +18,13 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
+from django.http.response import HttpResponse
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from django.template.response import TemplateResponse
 import calendar
 import datetime
+import json
 
 @login_required
 def editar_operacao_lc(request, id):
@@ -492,18 +494,30 @@ def painel(request):
 
 @login_required
 def sobre(request):
-    data_atual = datetime.date.today()
-    historico_di = HistoricoTaxaDI.objects.filter(data__gte=data_atual.replace(year=data_atual.year-3))
-    graf_historico_di = [[str(calendar.timegm(valor_historico.data.timetuple()) * 1000), float(valor_historico.taxa)] for valor_historico in historico_di]
-    
-    historico_ipca = HistoricoIPCA.objects.filter(ano__gte=(data_atual.year-3)).exclude(mes__lt=data_atual.month, ano=data_atual.year-3)
-    graf_historico_ipca = [[str(calendar.timegm(valor_historico.data().timetuple()) * 1000), float(valor_historico.valor)] for valor_historico in historico_ipca]
-    
-    if request.user.is_authenticated():
-        total_investido = sum(calcular_valor_lc_ate_dia(request.user.investidor).values())
+    if request.is_ajax():
+        filtros_simulador = {'periodo': Decimal(request.GET.get('periodo')), 'percentual_indice': Decimal(request.GET.get('percentual_indice')), \
+                             'tipo': 'POS', 'indice': 'DI', 'aplicacao': Decimal(1000)}
+        
+        graf_simulador = [[str(calendar.timegm(data.timetuple()) * 1000), float(valor_lci_lca)] for data, valor_lci_lca in simulador_lci_lca(filtros_simulador)]
+        return HttpResponse(json.dumps({'graf_simulador': graf_simulador}), content_type = "application/json") 
     else:
-        total_investido = 0
-    print total_investido
-    
-    return TemplateResponse(request, 'lc/sobre.html', {'graf_historico_di': graf_historico_di, 'graf_historico_ipca': graf_historico_ipca,
-                                                       'total_investido': total_investido})
+        data_atual = datetime.date.today()
+        historico_di = HistoricoTaxaDI.objects.filter(data__gte=data_atual.replace(year=data_atual.year-3))
+        graf_historico_di = [[str(calendar.timegm(valor_historico.data.timetuple()) * 1000), float(valor_historico.taxa)] for valor_historico in historico_di]
+        
+        historico_ipca = HistoricoIPCA.objects.filter(ano__gte=(data_atual.year-3)).exclude(mes__lt=data_atual.month, ano=data_atual.year-3)
+        graf_historico_ipca = [[str(calendar.timegm(valor_historico.data().timetuple()) * 1000), float(valor_historico.valor)] for valor_historico in historico_ipca]
+        
+        if request.user.is_authenticated():
+            total_investido = sum(calcular_valor_lc_ate_dia(request.user.investidor).values())
+        else:
+            total_investido = 0
+        print total_investido
+        
+        filtros_simulador = {'periodo': Decimal(12), 'percentual_indice': Decimal(85), 'tipo': 'POS', 'indice': 'DI', 'aplicacao': Decimal(1000)}
+        
+        graf_simulador = [[str(calendar.timegm(data.timetuple()) * 1000), float(valor_lci_lca)] for data, valor_lci_lca in simulador_lci_lca(filtros_simulador)]
+        
+        return TemplateResponse(request, 'lc/sobre.html', {'graf_historico_di': graf_historico_di, 'graf_historico_ipca': graf_historico_ipca,
+                                                           'total_investido': total_investido, 'filtros_simulador': filtros_simulador,
+                                                           'graf_simulador': graf_simulador})
