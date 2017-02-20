@@ -2,6 +2,7 @@
 {% load staticfiles %}
 
 {% block extra_head %}
+<link href={% static "assets/global/plugins/nouislider/nouislider.min.css" %} rel="stylesheet" type="text/css" />
 {% endblock %}
 
 {% block content %}
@@ -31,6 +32,31 @@
                         diferença entre elas é basicamente o setor no qual a instituição financeira está lastreando seus empréstimos, agronegócio ou imobiliário.
                         </p>
                     </div>
+                    <div class="col-md-12">
+                        <div class="mt-element-step">
+                            <div class="row step-line">
+                                <div class="mt-step-desc text-center">
+                                    <h3>Como funciona</h3>
+                                </div>
+                                <div class="col-md-4 mt-step-col first ">
+                                    <div class="mt-step-number bg-white"><i class="icon-user font-yellow-crusta"></i></div>
+                                    <div class="mt-step-title uppercase">Investidor</div>
+                                    <div class="mt-step-content">Empresta dinheiro a instituição através da Letra de Crédito</div>
+                                </div>
+                                <div class="col-md-4 mt-step-col">
+                                    <div class="mt-step-number bg-white"><i class="fa fa-bank font-yellow-crusta"></i></div>
+                                    <div class="mt-step-title uppercase">Instituição</div>
+                                    <div class="mt-step-content">Realiza empréstimos, no setor específico</div>
+                                </div>
+                                <div class="col-md-4 mt-step-col last">
+                                    <div class="mt-step-number bg-white"><i class="fa fa-money font-yellow-crusta"></i></div>
+                                    <div class="mt-step-title uppercase">Retorno</div>
+                                    <div class="mt-step-content">Na data de vencimento, ou após o período de carência caso investidor queira resgatar, o dinheiro volta ao
+                                    investidor, somado ao rendimento acordado na primeira etapa</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="col-md-6">
                         <h3>Garantia</h3>
                         <p>
@@ -56,31 +82,6 @@
                         <p>
                         Isenção desde 2004.
                         </p>
-                    </div>
-                    <div class="col-md-12">
-                        <div class="mt-element-step">
-                            <div class="row step-line">
-                                <div class="mt-step-desc text-center">
-                                    <h3>Como funciona</h3>
-                                </div>
-                                <div class="col-md-4 mt-step-col first ">
-                                    <div class="mt-step-number bg-white"><i class="icon-user font-yellow-crusta"></i></div>
-                                    <div class="mt-step-title uppercase">Investidor</div>
-                                    <div class="mt-step-content">Empresta dinheiro a instituição através da Letra de Crédito</div>
-                                </div>
-                                <div class="col-md-4 mt-step-col">
-                                    <div class="mt-step-number bg-white"><i class="fa fa-bank font-yellow-crusta"></i></div>
-                                    <div class="mt-step-title uppercase">Instituição</div>
-                                    <div class="mt-step-content">Realiza empréstimos, no setor específico</div>
-                                </div>
-                                <div class="col-md-4 mt-step-col last">
-                                    <div class="mt-step-number bg-white"><i class="fa fa-money font-yellow-crusta"></i></div>
-                                    <div class="mt-step-title uppercase">Retorno</div>
-                                    <div class="mt-step-content">Na data de vencimento, ou após o período de carência caso investidor queira resgatar, o dinheiro volta ao
-                                    investidor, somado ao rendimento acordado na primeira etapa</div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                     <div class="col-md-6">
                         <h3>Para mais informações:</h3>
@@ -151,10 +152,41 @@
                     </div>
                 </div>
             </div>
+            <div class="col-md-12">
+                <div class="portlet box yellow-crusta">
+                    <div class="portlet-title">
+                        <div class="caption">
+                            <i class="fa fa-money"></i>Simulador</div>
+                        <div class="tools">
+                            <a href="javascript:;" class="collapse"></a>
+                        </div>
+                    </div>
+                    <div class="portlet-body">
+                        <div class="row">
+                            <div class="col-md-9">
+                                <div class="chart" id="graf_simulador" style="width:100%;height:400px"></div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <label class="col-md-12 control-label">Período (em meses):</label>
+                                        <div class="col-md-12">
+                                            <div id="rangePeriodo" class="noUi-primary margin-top-40"></div>
+                                            <input type="hidden" id="rangePeriodoInput" class="filtro-simulador" value="{{filtros_simulador.periodo}}">
+                                        </div>
+                                        <label class="col-md-12 control-label">Rendimento (% do índice):</label>
+                                        <div class="col-md-12">
+                                            <div id="rangePercentual" class="noUi-primary margin-top-40"></div>
+                                            <input type="hidden" id="rangePercentualInput" class="filtro-simulador" value="{{filtros_simulador.percentual_indice}}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        
-        Simulador:
-        
         
     </div>
 </div>
@@ -172,16 +204,23 @@
 <script src={% static "assets/global/plugins/flot/jquery.flot.resize.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.stack.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.time.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/nouislider/wNumb.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/nouislider/nouislider.min.js" %} type="text/javascript"></script>
 <script>
 $( document ).ready(function() {    
     $.plot($("#graf_historico_di"), [ {color: "#33AA33", lines: {show:true}, data: {{ graf_historico_di|safe }} } 
     ],
-    {grid: { hoverable: true, clickable: true }, xaxis: {mode: "time",timeformat: "%d/%m/%y"} }  
+    {grid: { hoverable: true, clickable: true}, xaxis: {mode: "time", timeformat: "%d/%m/%Y", tickSize: [6, "month"] } }  
     );
     
     $.plot($("#graf_historico_ipca"), [ {color: "#33AA33", lines: {show:true}, data: {{ graf_historico_ipca|safe }} } 
     ],
-    {grid: { hoverable: true, clickable: true }, xaxis: {mode: "time",timeformat: "%d/%m/%y"} }  
+    {grid: { hoverable: true, clickable: true}, xaxis: {mode: "time", timeformat: "%d/%m/%Y", tickSize: [6, "month"]} }  
+    );
+    
+    var graf_simulador = $.plot($("#graf_simulador"), [ {color: "#33AA33", lines: {show:true}, data: {{ graf_simulador|safe }} } 
+    ],
+    {grid: { hoverable: true, clickable: true}, xaxis: {mode: "time", timeformat: "%d/%m/%Y"} }  
     );
     
     function showTooltip(x, y, contents) {
@@ -209,10 +248,10 @@ $( document ).ready(function() {
                 
                 $("#tooltip").remove();
                 var x = item.datapoint[0].toFixed(2),
-                    y = item.datapoint[1].toFixed(2);
+                    y = item.datapoint[1].toFixed(2).toString().replace('.', ',');
                 
                 var date = new Date(parseInt(x));
-                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%y") +"</br>Taxa: " + y + "%");
+                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%Y") +"</br>Taxa: " + y + "%");
             }
         }
         else {
@@ -231,10 +270,10 @@ $( document ).ready(function() {
                 
                 $("#tooltip").remove();
                 var x = item.datapoint[0].toFixed(2),
-                    y = item.datapoint[1].toFixed(2);
+                    y = item.datapoint[1].toFixed(2).toString().replace('.', ',');
                 
                 var date = new Date(parseInt(x));
-                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%y") +"</br>Taxa: " + y + "%");
+                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%Y") +"</br>Taxa: " + y + "%");
             }
         }
         else {
@@ -243,7 +282,136 @@ $( document ).ready(function() {
             previousPoint = null;            
         }
     });
+    $("#graf_simulador").bind("plothover", function (event, pos, item) {
+        $("#x").text(pos.x.toFixed(2));
+        $("#y").text(pos.y.toFixed(2));
 
+        if (item) {
+            if (previousPoint != item.datapoint) {
+                previousPoint = item.datapoint;
+                
+                $("#tooltip").remove();
+                var x = item.datapoint[0].toFixed(2),
+                    y = item.datapoint[1].toFixed(2).toString().replace('.', ',');
+                
+                var date = new Date(parseInt(x));
+                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%Y") +"</br>Valor: R$ " + y);
+            }
+        }
+        else {
+            $("#tooltip").remove();
+            clicksYet = false;
+            previousPoint = null;            
+        }
+    });
+    
+    // Periodo
+    var periodoSlider = document.getElementById('rangePeriodo');
+    
+    noUiSlider.create(periodoSlider, {
+        start: [{{filtros_simulador.periodo}}],
+        connect: false,
+        format: wNumb({
+            decimals: 0
+        }),
+        step: 1,
+        range: {
+            'min': 2,
+            'max': 36
+        }
+    });
+    
+    var periodoTipHandles = periodoSlider.getElementsByClassName('noUi-handle'),
+    periodoTooltips = [];
+
+    // Add divs to the slider handles.
+    for ( var i = 0; i < periodoTipHandles.length; i++ ){
+        periodoTooltips[i] = document.createElement('div');
+        periodoTipHandles[i].appendChild(periodoTooltips[i]);
+    }
+    
+    // Add a class for styling
+    periodoTooltips[0].className += 'noUi-tooltip margin-top-20';
+    // Add additional markup
+    periodoTooltips[0].innerHTML = '<strong><span></span></strong>';
+    // Replace the tooltip reference with the span we just added
+    periodoTooltips[0] = periodoTooltips[0].getElementsByTagName('span')[0];
+    
+    // When the slider changes, write the value to the tooltips.
+    periodoSlider.noUiSlider.on('update', function( values, handle ){
+    	periodoTooltips[handle].innerHTML = values[handle];
+        $('#rangePeriodoInput').val(values[handle]);
+        $('#rangePeriodoInput').change();
+    });
+
+    // Percentual do Indice
+    var percentualSlider = document.getElementById('rangePercentual');
+    
+    noUiSlider.create(percentualSlider, {
+        start: [{{filtros_simulador.percentual_indice}}],
+        connect: false,
+        format: wNumb({
+            decimals: 0
+        }),
+        step: 1,
+        range: {
+            'min': 10,
+            'max': 110
+        }
+    });
+    
+    var percentualTipHandles = percentualSlider.getElementsByClassName('noUi-handle'),
+    percentualTooltips = [];
+
+    // Add divs to the slider handles.
+    for ( var i = 0; i < percentualTipHandles.length; i++ ){
+        percentualTooltips[i] = document.createElement('div');
+        percentualTipHandles[i].appendChild(percentualTooltips[i]);
+    }
+    
+    // Add a class for styling
+    percentualTooltips[0].className += 'noUi-tooltip margin-top-20';
+    // Add additional markup
+    percentualTooltips[0].innerHTML = '<strong><span></span></strong>';
+    // Replace the tooltip reference with the span we just added
+    percentualTooltips[0] = percentualTooltips[0].getElementsByTagName('span')[0];
+    
+    // When the slider changes, write the value to the percentualTooltips.
+    percentualSlider.noUiSlider.on('update', function( values, handle ){
+        percentualTooltips[handle].innerHTML = values[handle];
+        $('#rangePercentualInput').val(values[handle]);
+        $('#rangePercentualInput').change();
+    });
+    
+    var ultima_chamada = new Date();
+    // Alterar gráfico
+    $('.filtro-simulador').change(function() {
+    	setTimeout(function(){
+        	var hora_chamada = new Date();
+        	if (hora_chamada.getTime() - ultima_chamada.getTime() > 500) { 
+        		ultima_chamada = hora_chamada;
+                $.ajax({
+                    url : "{% url 'sobre_lc' %}", // the endpoint
+                    type : "GET", // http method
+                    data : {periodo: $('#rangePeriodoInput').val(), percentual_indice: $('#rangePercentualInput').val()},
+        
+                    // handle a successful response
+                    success : function(retorno) {
+                        $('#graf_simulador').empty();
+                        $.plot($("#graf_simulador"), [ {color: "#33AA33", lines: {show:true}, data: retorno.graf_simulador } 
+                        ],
+                        {grid: { hoverable: true, clickable: true}, xaxis: {mode: "time", timeformat: "%d/%m/%Y"} }  
+                        );
+                    },
+        
+                    // handle a non-successful response
+                    error : function(xhr,errmsg,err) {
+                        console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+                    }
+                });
+        	}
+    	}, 500);
+    });
 });
 </script>
 {% endblock %}
