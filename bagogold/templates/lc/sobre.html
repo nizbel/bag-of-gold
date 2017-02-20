@@ -383,13 +383,13 @@ $( document ).ready(function() {
         $('#rangePercentualInput').change();
     });
     
-    var ultima_chamada = new Date();
+    var polling = [];
     // Alterar gráfico
     $('.filtro-simulador').change(function() {
+        polling.push(1);
     	setTimeout(function(){
-        	var hora_chamada = new Date();
-        	if (hora_chamada.getTime() - ultima_chamada.getTime() > 500) { 
-        		ultima_chamada = hora_chamada;
+    		polling.splice(0, 1);
+    		if (polling.length == 0) {
                 $.ajax({
                     url : "{% url 'sobre_lc' %}", // the endpoint
                     type : "GET", // http method
@@ -409,7 +409,7 @@ $( document ).ready(function() {
                         console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
                     }
                 });
-        	}
+    		}
     	}, 500);
     });
 });
