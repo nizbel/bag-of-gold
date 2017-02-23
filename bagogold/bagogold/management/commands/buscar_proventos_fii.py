@@ -43,7 +43,6 @@ class GeraInfoDocumentoProtocoloThread(Thread):
                     data_referencia = info['data_ref']
                     tipo_documento = info['tipo']
                     protocolo = info['protocolo']
-#                     prot.append((url.split('strData=')[1], protocolo))
                     
                     # Apenas adiciona caso seja dos tipos válidos, decodificando de utf-8
                     if not DocumentoProventoBovespa.objects.filter(empresa__codigo_cvm=ticker[0:4], protocolo=protocolo).exists() \
@@ -56,7 +55,7 @@ class GeraInfoDocumentoProtocoloThread(Thread):
                         documento.protocolo = protocolo
                         documento.data_referencia = datetime.datetime.strptime(data_referencia, '%d/%m/%Y')
 #                         print documento
-#                         documentos_para_download.append(documento)
+                        documentos_para_download.append(documento)
                 
                 time.sleep(10)
 #             print list(reversed(sorted(prot, key=lambda tup: tup[0])))
@@ -97,6 +96,9 @@ class Command(BaseCommand):
         parser.add_argument('--antigos', action='store_true')
 
     def handle(self, *args, **options):
+        # Apaga documentos FII
+        for documento in DocumentoProventoBovespa.objects.filter(tipo='F'):
+            documento.delete()
         # Checa primeiro se é para buscar todos os rendimentos
         if options['todos']:
             antigos = True
@@ -119,8 +121,8 @@ class Command(BaseCommand):
             
         # Quantas threads correrão por vez
         qtd_threads = 8
-#         fiis = Empresa.objects.filter(codigo_cvm__in=[fii.ticker[:4] for fii in FII.objects.filter(ticker='BRCR11')]).values_list('codigo_cvm', flat=True)
-        fiis = Empresa.objects.filter(codigo_cvm__in=[fii.ticker[:4] for fii in FII.objects.all()]).values_list('codigo_cvm', flat=True)
+        fiis = Empresa.objects.filter(codigo_cvm__in=[fii.ticker[:4] for fii in FII.objects.filter(ticker='BRCR11')]).values_list('codigo_cvm', flat=True)
+#         fiis = Empresa.objects.filter(codigo_cvm__in=[fii.ticker[:4] for fii in FII.objects.all()]).values_list('codigo_cvm', flat=True)
         contador = 0
         try:
             while contador < len(fiis):
@@ -212,14 +214,13 @@ def buscar_rendimentos_fii(ticker, ano_inicial, num_tentativas):
             raise ValueError(u'O sistema está indisponível')
         return buscar_rendimentos_fii(ticker, ano_inicial, num_tentativas+1)
     
-    inicio = html.find('<div id="ctl00_contentPlaceHolderConteudo_pvwInfoRelevantes">')
-    fim = html.find('id="ctl00_contentPlaceHolderConteudo_pvwItem2"', inicio)
+    inicio = html.find('<div id="ctl00_contentPlaceHolderConteudo_ucInformacoesRelevantes_conteudoDetalhes">')
+    fim = html.find('<script', inicio)
     string_importante = (html[inicio:fim])
     
-    urls = re.findall('<tr><td>Assunto:</td><td>[^<]*(?:Distribuiç|Rendimento|Amortizaç)[^<]*</td></tr>.*?<a href=\"(https://fnet.bmfbovespa.com.br/fnet/publico/downloadDocumento\?id=[\d]*?)\">(.*?)</a>', string_importante,flags=re.IGNORECASE|re.DOTALL)
-    
-#     proventos_novo = list()
-    for url in urls:
-        print url, ticker
-#         informacoes_rendimentos.append({'info_doc': info, 'ticker': ticker})
+    infos = re.findall('Data Referência:.*?(\d{2}/\d{2}/\d{4}).*?<tr><td>Assunto:</td><td>[^<]*(?:Distribuiç|Rendimento|Amortizaç)[^<]*</td></tr>.*?<a href=\"(https://fnet.bmfbovespa.com.br/fnet/publico/downloadDocumento\?id=[\d]*?)\">(.*?)</a>', string_importante,flags=re.IGNORECASE|re.DOTALL)
+
+    for info in infos:
+#         print info, ticker
+        informacoes_rendimentos.append({'url': info[1], 'data_ref': info[0], 'ticker': ticker, 'tipo': info[2], 'protocolo': info[1].split('id=')[1]})
     

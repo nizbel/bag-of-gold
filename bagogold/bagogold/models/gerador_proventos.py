@@ -67,7 +67,8 @@ class DocumentoProventoBovespa (models.Model):
         return extensao
     
     def ticker_empresa(self):
-        return re.sub('\d', '', Acao.objects.filter(empresa=self.empresa)[0].ticker)
+#         return re.sub('\d', '', Acao.objects.filter(empresa=self.empresa)[0].ticker)
+        return self.empresa.ticker_empresa()
     
     def pendente(self):
         return PendenciaDocumentoProvento.objects.filter(documento=self).exists()
