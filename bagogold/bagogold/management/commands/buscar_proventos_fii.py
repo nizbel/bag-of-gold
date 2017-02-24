@@ -9,6 +9,7 @@ import datetime
 import mechanize
 import re
 import time
+from mechanize._form import ControlNotFoundError
 
 # A thread 'Principal' indica se ainda está rodando a thread principal
 threads_rodando = {'Principal': 1}
@@ -97,18 +98,22 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # Apaga documentos FII
-        for documento in DocumentoProventoBovespa.objects.filter(tipo='F'):
-            documento.delete()
+#         for documento in DocumentoProventoBovespa.objects.filter(tipo='F'):
+#             documento.delete()
+        inicio = datetime.datetime.now()
         # Checa primeiro se é para buscar todos os rendimentos
         if options['todos']:
             antigos = True
             ano_inicial = 2016
+        elif options['antigos']:
+            antigos = True
+            ano_inicial = 0
         else:
             # Ano inicial não pode ser abaixo de 2016
             if options['ano_inicial'] < 2016:
                 raise ValueError('Ano inicial tem de ser no mínimo 2016')
             ano_inicial = options['ano_inicial']
-            antigos = options['antigos']
+            antigos = False
             
         # Prepara thread de criação de documentos no sistema
         for _ in range(6):
@@ -121,8 +126,8 @@ class Command(BaseCommand):
             
         # Quantas threads correrão por vez
         qtd_threads = 8
-        fiis = Empresa.objects.filter(codigo_cvm__in=[fii.ticker[:4] for fii in FII.objects.filter(ticker='BRCR11')]).values_list('codigo_cvm', flat=True)
-#         fiis = Empresa.objects.filter(codigo_cvm__in=[fii.ticker[:4] for fii in FII.objects.all()]).values_list('codigo_cvm', flat=True)
+#         fiis = Empresa.objects.filter(codigo_cvm__in=[fii.ticker[:4] for fii in FII.objects.filter(ticker='BRCR11')]).values_list('codigo_cvm', flat=True)
+        fiis = Empresa.objects.filter(codigo_cvm__in=[fii.ticker[:4] for fii in FII.objects.all()]).values_list('codigo_cvm', flat=True)
         contador = 0
         try:
             while contador < len(fiis):
@@ -134,16 +139,17 @@ class Command(BaseCommand):
                 while (len(threads_rodando) > qtd_threads):
                     print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
                     time.sleep(3)
-            while (len(threads_rodando) > 0 or len(documentos_para_download) > 0 or len(informacoes_rendimentos) > 0):
+            while (len(threads_rodando) > 1 or len(documentos_para_download) > 0 or len(informacoes_rendimentos) > 0):
                 print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
-                if 'Principal' in threads_rodando.keys():
-                    del threads_rodando['Principal']
                 time.sleep(3)
+            while 'Principal' in threads_rodando.keys():
+                del threads_rodando['Principal']
         except KeyboardInterrupt:
 #             print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
             while 'Principal' in threads_rodando.keys():
                 del threads_rodando['Principal']
                 time.sleep(3)
+        print datetime.datetime.now() - inicio
 
 def buscar_rendimentos_fii_antigos(ticker, num_tentativas):
     """
@@ -175,17 +181,12 @@ def buscar_rendimentos_fii_antigos(ticker, num_tentativas):
         info_documentos += re.findall('<a[^>]*?href=\"([^>]*?)\"[^>]*?>Amortizaç.*?<span.*?>(.*?)</span>.*?</tr>', string_importante,flags=re.IGNORECASE|re.MULTILINE|re.DOTALL)
 #         print len(urls)
         for index, info in enumerate(reversed(info_documentos)):
-            info[0].replace('&amp;', '&')
-            # Protocolo é gerado a partir da data
-#             protocolo = 'D%s' % (index)
-#             protocolo = 'A%sm%s' % ((datetime.datetime.strptime(info[1], "%d/%m/%Y") - datetime.date(2000, 1, 1)).days,
-#                                     info[0].split('strData=')[1].split('.')[1])
             data_hora = datetime.datetime.strptime(info[0].split('strData=')[1], "%Y-%m-%dT%H:%M:%S.%f") 
             qtd_dias = (data_hora.date() - datetime.date(2010, 1, 1)).days
             qtd_mili = qtd_dias * 24 * 3600 * 1000 + data_hora.hour * 3600 * 1000 + data_hora.minute * 60 * 1000 \
                 + data_hora.second * 1000 + int(info[0].split('strData=')[1].split('.')[1])
             protocolo = 'A' + str(hex(qtd_mili))[2:-1]
-            informacoes_rendimentos.append({'url': info[0], 'data_ref': info[1], 'ticker': ticker, 'tipo': 'Aviso aos Cotistas', 'protocolo': protocolo})
+            informacoes_rendimentos.append({'url': info[0].replace('&amp;', '&'), 'data_ref': info[1], 'ticker': ticker, 'tipo': 'Aviso aos Cotistas', 'protocolo': protocolo})
     
 def buscar_rendimentos_fii(ticker, ano_inicial, num_tentativas):
     """
@@ -198,14 +199,27 @@ def buscar_rendimentos_fii(ticker, ano_inicial, num_tentativas):
     br.addheaders = [('User-agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1')]
     response = br.open(fii_url)
     
-    html = response.read()
+    response.read()
 
-    br.select_form(nr=0)
-    br.set_all_readonly(False)
-    br.find_control("ctl00$botaoNavegacaoVoltar").disabled = True
-    br.find_control(id='ctl00_contentPlaceHolderConteudo_ucInformacoesRelevantes_txtPeriodoDe').value = '01/01/%s' % (ano_inicial)
-    br.find_control(id='ctl00_contentPlaceHolderConteudo_ucInformacoesRelevantes_txtPeriodoAte').value = time.strftime("%d/%m/%Y")
-    br.find_control(id='ctl00_contentPlaceHolderConteudo_ucInformacoesRelevantes_ddlCategoria').value = ['0']
+    try:
+        br.select_form(nr=0)
+        br.set_all_readonly(False)
+        if not 'ctl00_contentPlaceHolderConteudo_ucInformacoesRelevantes_txtPeriodoDe' in [control.id for control in br.form.controls]:
+            br.find_control("ctl00$botaoNavegacaoVoltar").disabled = True
+            br.find_control(id='ctl00_contentPlaceHolderConteudo_ucInformacoesRelevantes_cmbAno').value = ['2016']
+            response = br.submit()
+            response.read()
+    #     try:
+        br.select_form(nr=0)
+        br.set_all_readonly(False)
+        br.find_control("ctl00$botaoNavegacaoVoltar").disabled = True
+        br.find_control(id='ctl00_contentPlaceHolderConteudo_ucInformacoesRelevantes_txtPeriodoDe').value = '01/01/%s' % (ano_inicial)
+        br.find_control(id='ctl00_contentPlaceHolderConteudo_ucInformacoesRelevantes_txtPeriodoAte').value = time.strftime("%d/%m/%Y")
+        br.find_control(id='ctl00_contentPlaceHolderConteudo_ucInformacoesRelevantes_ddlCategoria').value = ['0']
+    except ControlNotFoundError:
+        if num_tentativas == 3:
+            raise ValueError(u'Não encontrou os controles')
+        return buscar_rendimentos_fii(ticker, ano_inicial, num_tentativas+1)
     
     response = br.submit()
     html = response.read()
