@@ -29,7 +29,6 @@ except ImportError:
         
 def baixar_demonstrativo_rendimentos(arquivo_url):
     req = Request(arquivo_url)
-#     print pdf_url
     try:
         response = urlopen(req, timeout=30)
     except HTTPError as e:
@@ -43,6 +42,7 @@ def baixar_demonstrativo_rendimentos(arquivo_url):
     # Buscar informações da extensão
     extensao = ''
     meta = response.info()
+#     print meta
     # Busca extensão pelo content disposition, depois pelo content-type se não encontrar
     if meta.getheaders("Content-Disposition"):
         content_disposition = meta.getheaders("Content-Disposition")[0]
@@ -57,6 +57,7 @@ def baixar_demonstrativo_rendimentos(arquivo_url):
             if '/' in content_type:
                 extensao = content_type.split('/')[1]
     resposta = response.read()
+#     print resposta
     teste_resposta = resposta.decode('latin-1').strip()
     if (u'Não Existem Arquivos com essas Características' in teste_resposta):
         raise URLError('URL da bovespa inválida')
@@ -92,10 +93,10 @@ def ler_demonstrativo_rendimentos(pdf_url, ticker):
             if not os.path.exists(pasta):
                 os.makedirs(pasta)
                 
-            with open('%s/%s-%s.pdf' % (pasta, ticker, re.findall('protocolo=(\d+)', pdf_url,flags=re.IGNORECASE)[0]), "wb") as local_file:
-                local_file.write(arquivo_rendimentos.getvalue())
-            if True:
-                return
+#             with open('%s/%s-%s.pdf' % (pasta, ticker, re.findall('protocolo=(\d+)', pdf_url,flags=re.IGNORECASE)[0]), "wb") as local_file:
+#                 local_file.write(arquivo_rendimentos.getvalue())
+#             if True:
+#                 return
             rsrcmgr = PDFResourceManager()
             retstr = StringIO()
             codec = 'utf-8'
