@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.gerador_proventos import \
     InvestidorResponsavelPendencia, InvestidorLeituraDocumento, \
-    InvestidorValidacaoDocumento, PendenciaDocumentoProvento,\
+    InvestidorValidacaoDocumento, PendenciaDocumentoProvento, \
     InvestidorRecusaDocumento
+from decimal import Decimal
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import Permission, User
 from django.db.models.query_utils import Q
@@ -54,8 +55,22 @@ def listar_usuarios(request):
     
     for usuario in usuarios:
         usuario.pendencias_alocadas = InvestidorResponsavelPendencia.objects.filter(investidor=usuario.investidor).count()
+        # Leituras
         usuario.leituras = InvestidorLeituraDocumento.objects.filter(investidor=usuario.investidor).count()
+        if usuario.leituras == 0:
+            usuario.taxa_leitura = 0
+        else:
+            data_leituras = len(list(set([data_hora.date() for data_hora in InvestidorLeituraDocumento.objects.filter(investidor=usuario.investidor) \
+                                 .order_by('data_leitura').values_list('data_leitura', flat=True)])))
+            usuario.taxa_leitura = Decimal(usuario.leituras) / max(data_leituras, 1)
+        # Validações
         usuario.validacoes = InvestidorValidacaoDocumento.objects.filter(investidor=usuario.investidor).count()
+        if usuario.validacoes == 0:
+            usuario.taxa_validacao = 0
+        else:
+            data_validacoes = len(list(set([data_hora.date() for data_hora in InvestidorValidacaoDocumento.objects.filter(investidor=usuario.investidor) \
+                                   .order_by('data_validacao').values_list('data_validacao', flat=True)])))
+            usuario.taxa_validacao = Decimal(usuario.validacoes) / max(data_validacoes, 1)
     
     return TemplateResponse(request, 'gerador_proventos/listar_usuarios.html', {'usuarios': usuarios})
 

@@ -47,10 +47,10 @@
                         <td><a href="{% url 'detalhar_documento' pendencia.documento.id %}">{{pendencia.documento}}</a></td>
                         <td>{{pendencia.tipo_documento}}</td>
                         <td>
-                            <span id="responsavel_{{pendencia.id}}" {% if not pendencia.responsavel or pendencia.responsavel.id == request.user.investidor.id %}style="display: none"{% endif %}>{{pendencia.responsavel}}</span>
-                            <button id="cancelar_{{pendencia.id}}" {% if not pendencia.responsavel or pendencia.responsavel.id != request.user.investidor.id %}style="display: none"{% endif %}
-                            onclick="remover_responsabilidade({{pendencia.id}});" class="btn btn-warning">Cancelar</button>
-                            <button id="reservar_{{pendencia.id}}" {% if pendencia.responsavel %}style="display: none"{% endif %} onclick="puxar_responsabilidade({{pendencia.id}});" class="btn btn-success">Reservar</button> 
+                            <span id="responsavel_{{pendencia.id|floatformat:'f'}}" {% if not pendencia.responsavel or pendencia.responsavel.id == request.user.investidor.id %}style="display: none"{% endif %}>{{pendencia.responsavel}}</span>
+                            <button id="cancelar_{{pendencia.id|floatformat:'f'}}" {% if not pendencia.responsavel or pendencia.responsavel.id != request.user.investidor.id %}style="display: none"{% endif %}
+                            onclick="remover_responsabilidade({{pendencia.id|floatformat:'f'}});" class="btn btn-warning">Cancelar</button>
+                            <button id="reservar_{{pendencia.id|floatformat:'f'}}" {% if pendencia.responsavel %}style="display: none"{% endif %} onclick="puxar_responsabilidade({{pendencia.id|floatformat:'f'}});" class="btn btn-success">Reservar</button> 
                         </td>
                     </tr>
                 {% endfor %}    
@@ -84,14 +84,53 @@
                     {% endcomment %}
                         <div class="row">
                             <form method="POST" class="col-md-12 horizontal-form">{% csrf_token %}
-                                <div class="form-group">
-                                    <label class="col-md-12 control-label">Qtd. de pendências:</label>
+                                <div class="row">
                                     <div class="col-md-12">
-                                        <div id="rangeFiltro" class="noUi-primary margin-top-40"></div>
-                                        <input type="hidden" id="rangeFiltroInput" name="filtro_qtd" value="{{filtro_qtd}}">
+                                        <div class="form-group">
+                                            <label class="col-md-12 control-label">Quantidade:</label>
+                                            <div class="col-md-12">
+                                                <div id="rangeFiltro" class="noUi-primary margin-top-40"></div>
+                                                <input type="hidden" id="rangeFiltroInput" name="filtro_qtd" value="{{filtros.filtro_qtd}}">
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <button type="submit" class="btn green-steel">Filtrar</i></button>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label class="col-md-12 control-label">Tipo:</label>
+                                            <div class="md-checkbox col-md-12">
+                                                <input type="checkbox" value="1" id="checkbox_filtro_tipo_leitura" name="filtro_tipo_leitura" 
+                                                {% if filtros.filtro_tipo_leitura %}checked="checked"{% endif%} class="md-check">
+                                                <label for="checkbox_filtro_tipo_leitura">
+                                                    <span></span>
+                                                    <span class="check"></span>
+                                                    <span class="box"></span> Leitura</label>
+                                            </div>
+                                            <div class="md-checkbox col-md-12">
+                                                <input type="checkbox" value="1" id="checkbox_filtro_tipo_validacao" name="filtro_tipo_validacao"
+                                                {% if filtros.filtro_tipo_validacao %}checked="checked"{% endif%} class="md-check">
+                                                <label for="checkbox_filtro_tipo_validacao">
+                                                    <span></span>
+                                                    <span class="check"></span>
+                                                    <span class="box"></span> Validação</label>
+                                            </div>
+                                            <div class="md-checkbox col-md-12">
+                                                <input type="checkbox" value="1" id="checkbox_filtro_reservaveis" name="filtro_reservaveis"
+                                                {% if filtros.filtro_reservaveis %}checked="checked"{% endif%} class="md-check">
+                                                <label for="checkbox_filtro_reservaveis">
+                                                    <span></span>
+                                                    <span class="check"></span>
+                                                    <span class="box"></span> Apenas reserváveis</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <button type="submit" class="btn green-steel">Filtrar</i></button>
+                                    </div>
+                                </div>
                             </form>
                         </div>
                     </div>
@@ -178,7 +217,7 @@ $( document ).ready(function() {
     var tooltipSlider = document.getElementById('rangeFiltro');
     
     noUiSlider.create(tooltipSlider, {
-        start: [{{filtro_qtd}}],
+        start: [{{filtros.filtro_qtd}}],
         connect: false,
         format: wNumb({
             decimals: 0

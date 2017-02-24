@@ -33,7 +33,7 @@
             var dataEscolhida = $(this).val();
             console.log(dataEscolhida);
             $.ajax({
-                url : "{% url 'calcular_poupanca_proventos_na_data' %}", // the endpoint
+                url : "{% url "acoes:calcular_poupanca_proventos_na_data" %}", // the endpoint
                 type : "GET", // http method
                 data: {dataEscolhida: dataEscolhida},
                 
