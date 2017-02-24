@@ -14,6 +14,8 @@ def ticker_path(instance, filename):
     return 'doc proventos/{0}/{1}'.format(instance.ticker_empresa(), filename)
 
 class DocumentoProventoBovespa (models.Model):
+    TIPOS_DOCUMENTO_VALIDOS = [u'Fato Relevante', u'Comunicado ao Mercado', u'Aviso aos Acionistas']
+    
     url = models.CharField(u'URL do documento', blank=True, null=True, max_length=200)
     empresa = models.ForeignKey('Empresa')
     protocolo =  models.CharField(u'Protocolo', max_length=10)
@@ -23,6 +25,7 @@ class DocumentoProventoBovespa (models.Model):
     tipo = models.CharField(u'Tipo de provento', max_length=1)
     documento = models.FileField(upload_to=ticker_path, blank=True, null=True)
     data_referencia = models.DateField(u'Data de referência')
+    tipo_documento = models.CharField(u'Tipo de documento', max_length=100)
     
     class Meta:
         unique_together = ('empresa', 'protocolo')
@@ -67,7 +70,10 @@ class DocumentoProventoBovespa (models.Model):
         return re.sub('\d', '', Acao.objects.filter(empresa=self.empresa)[0].ticker)
     
     def pendente(self):
-        return len(PendenciaDocumentoProvento.objects.filter(documento=self)) > 0 
+        return PendenciaDocumentoProvento.objects.filter(documento=self).exists()
+    
+    def pendencias(self):
+        return PendenciaDocumentoProvento.objects.filter(documento=self)
     
     def responsavel_leitura(self):
         if hasattr(self, 'investidorleituradocumento'):
@@ -158,6 +164,9 @@ class PendenciaDocumentoProvento (models.Model):
             return self.investidorresponsavelpendencia.investidor
         return None
     
+    def tipo_completo(self):
+        return 'Leitura' if self.tipo == 'L' else 'Validação'
+    
 class ProventoAcaoDocumento (models.Model):
     provento = models.ForeignKey('Provento')
     documento = models.ForeignKey('DocumentoProventoBovespa')
@@ -166,6 +175,9 @@ class ProventoAcaoDocumento (models.Model):
         
     class Meta:
         unique_together=(('documento', 'provento'), ('versao', 'provento'))
+        
+    def __unicode__(self):
+        return u'Versão %s no documento %s' % (self.versao, self.documento)
         
 class ProventoFIIDocumento (models.Model):
     provento = models.ForeignKey('ProventoFII')
@@ -187,9 +199,6 @@ class ProventoAcaoDescritoDocumentoBovespa (models.Model):
     data_pagamento = models.DateField(u'Data do pagamento', blank=True, null=True)
     observacao = models.CharField(u'Observação', blank=True, null=True, max_length=300)
     
-    class Meta:
-        unique_together=(('data_ex', 'data_pagamento', 'acao', 'tipo_provento', 'valor_unitario'))
-        
     def __unicode__(self):
         tipo = ''
         if self.tipo_provento == 'A':
@@ -219,8 +228,5 @@ class ProventoFIIDescritoDocumentoBovespa (models.Model):
     data_pagamento = models.DateField(u'Data do pagamento')
     url_documento = models.CharField(u'URL do documento', blank=True, null=True, max_length=200)
     
-    class Meta:
-        unique_together=(('data_ex', 'data_pagamento', 'fii', 'valor_unitario'))
-        
     def __unicode__(self):
         return '(R$ %s de %s em %s com data EX %s' % (str(self.valor_unitario), self.fii.ticker, str(self.data_pagamento), str(self.data_ex))

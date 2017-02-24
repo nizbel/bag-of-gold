@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="row-fluid">
-<form action="{% url 'acompanhamento_mensal' %}" method="POST">
+<form action="{% url 'acoes:acompanhamento_mensal' %}" method="POST">
     {% csrf_token %}
     <div class="control-group span3">
         <label class="control-label" for="selectAno">Selecione o ano</label>
@@ -133,7 +133,7 @@ $(document).ready(function() {
     //for every field change
     $('#selectAno').change(function() {
         $.ajax({
-            url : "{% url 'acompanhamento_mensal' %}", // the endpoint
+            url : "{% url 'acoes:acompanhamento_mensal' %}", // the endpoint
             type : "POST", // http method
             data : { select_ano : $('#selectAno').val() }, // data sent with the post request
 
