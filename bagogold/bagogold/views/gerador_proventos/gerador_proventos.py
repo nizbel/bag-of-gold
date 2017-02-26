@@ -2,7 +2,8 @@
 from bagogold import settings
 from bagogold.bagogold.forms.gerador_proventos import \
     ProventoAcaoDescritoDocumentoBovespaForm, \
-    AcaoProventoAcaoDescritoDocumentoBovespaForm
+    AcaoProventoAcaoDescritoDocumentoBovespaForm, \
+    ProventoFIIDescritoDocumentoBovespaForm
 from bagogold.bagogold.models.acoes import Acao, Provento, AcaoProvento
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.fii import ProventoFII
@@ -19,14 +20,11 @@ from bagogold.bagogold.utils.gerador_proventos import \
     salvar_investidor_responsavel_por_validacao, \
     desfazer_investidor_responsavel_por_validacao, \
     salvar_investidor_responsavel_por_recusar_documento
-from bagogold.bagogold.utils.investidores import is_superuser
 from bagogold.bagogold.utils.misc import \
     formatar_zeros_a_direita_apos_2_casas_decimais
 from decimal import Decimal
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required, user_passes_test, \
-    permission_required
-from django.core.exceptions import ValidationError
+from django.contrib.auth.decorators import login_required, permission_required
 from django.core.urlresolvers import reverse
 from django.forms.formsets import formset_factory
 from django.forms.models import model_to_dict
@@ -156,9 +154,15 @@ def ler_documento_provento(request, id_pendencia):
     investidor = request.user.investidor
     
     # Verifica se pendência já possui proventos descritos (foi feita recusa)
-    form_extra = 0 if ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).exists() else 1
-    ProventoFormset = formset_factory(ProventoAcaoDescritoDocumentoBovespaForm, extra=form_extra)
-    AcaoProventoFormset = formset_factory(AcaoProventoAcaoDescritoDocumentoBovespaForm, extra=form_extra)
+    # Para ações
+    if pendencia.documento.tipo == 'A':
+        form_extra = 0 if ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).exists() else 1
+        ProventoFormset = formset_factory(ProventoAcaoDescritoDocumentoBovespaForm, extra=form_extra)
+        AcaoProventoFormset = formset_factory(AcaoProventoAcaoDescritoDocumentoBovespaForm, extra=form_extra)
+    # PAra FIIs
+    elif pendencia.documento.tipo == 'F':
+        form_extra = 0 if ProventoFIIDocumento.objects.filter(documento=pendencia.documento).exists() else 1
+        ProventoFormset = formset_factory(ProventoFIIDescritoDocumentoBovespaForm, extra=form_extra)
     
     if request.method == 'POST':
         # Verifica se pendência não possuia responsável e usuário acaba de reservá-la
@@ -300,10 +304,17 @@ def ler_documento_provento(request, id_pendencia):
                 else:
                     acoes_provento_iniciais.append({})
             formset_acao_provento = AcaoProventoFormset(prefix='acao_provento', initial=acoes_provento_iniciais)
-                
     
-    for form in formset_provento:
-        form.fields['acao'].queryset = Acao.objects.filter(empresa=pendencia.documento.empresa)
+            for form in formset_provento:
+                form.fields['acao'].queryset = Acao.objects.filter(empresa=pendencia.documento.empresa)
+        
+        elif pendencia.documento.tipo == 'F':
+            # Proventos de FII
+            proventos_iniciais = list()
+            for provento_fii_documento in pendencia.documento.proventofiidocumento_set.all():
+                proventos_iniciais.append(model_to_dict(provento_fii_documento.descricao_provento))
+            formset_provento = ProventoFormset(prefix='provento', initial=proventos_iniciais)
+            formset_acao_provento = {}
     
     # Preparar motivo de recusa, caso haja
     recusa = pendencia.documento.ultima_recusa()
