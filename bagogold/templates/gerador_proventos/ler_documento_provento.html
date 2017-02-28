@@ -303,8 +303,7 @@
 
 {% block extra_footer %}
 <script src={% static "assets/global/plugins/fuelux/js/spinner.min.js" %} type="text/javascript"></script>
-<script src={% static "assets/global/plugins/bootstrap-touchspin/bootstrap.touchspin.js" %} type="text/javascript"></script>
-<script src={% static "assets/pages/scripts/components-bootstrap-touchspin.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-touchspin/bootstrap.touchspin.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/jquery-validation/js/jquery.validate.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/jquery-validation/js/additional-methods.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/bootstrap-select/js/bootstrap-select.min.js" %} type="text/javascript"></script>
@@ -318,15 +317,8 @@
 $( document ).ready(function() {
 	$('#num_proventos').selectpicker();
 	
-	$("input[name*='valor_unitario']").TouchSpin({
-        min: 0,
-        max: 1000000000,
-        step: 0.000000000001,
-        decimals: 12,
-        maxboostedstep: 100,
-        prefix: 'R$'
-    });
 	$("input[name*='valor_calculo_frac']").TouchSpin({
+		initval: 0,
         min: 0,
         max: 1000000000,
         step: 0.0000000001,
@@ -354,8 +346,26 @@ $( document ).ready(function() {
         var id_provento = $(this).attr('id').match(/\d+/)[0];
         if ($(this).val() == 'A') {
             $('#provento_em_acao-' + id_provento).show();
+            $('#id_provento-' + id_provento + '-valor_unitario').TouchSpin({
+                initval: 0,
+                min: 0,
+                max: 1000000000,
+                step: 0.000000000001,
+                decimals: 12,
+                maxboostedstep: 100,
+                postfix: '%'
+            });
         } else {
             $('#provento_em_acao-' + id_provento).hide();
+            $('#id_provento-' + id_provento + '-valor_unitario').TouchSpin({
+                initval: 0,
+                min: 0,
+                max: 1000000000,
+                step: 0.000000000001,
+                decimals: 12,
+                maxboostedstep: 100,
+                prefix: 'R$'
+            });
         }
     });
 	
@@ -363,30 +373,50 @@ $( document ).ready(function() {
         var id_provento = $(this).attr('id').match(/\d+/)[0];
 		if ($(this).val() == 'A') {
 			$('#provento_em_acao-' + id_provento).show();
+            // Alterar Touchspin de valor para porcentagem 
+            $('#id_provento-' + id_provento + '-valor_unitario').trigger("touchspin.updatesettings", {
+                initval: 0,
+                min: 0,
+                max: 1000000000,
+                step: 0.000000000001,
+                decimals: 12,
+                maxboostedstep: 100,
+                postfix: '%'
+            });
 		} else {
             $('#provento_em_acao-' + id_provento).hide();
+            // Voltar Touchspin de valor para o modelo inicial
+            $('#id_provento-' + id_provento + '-valor_unitario').trigger("touchspin.updatesettings", {
+                initval: 0,
+                min: 0,
+                max: 1000000000,
+                step: 0.000000000001,
+                decimals: 12,
+                maxboostedstep: 100,
+                prefix: 'R$'
+            });
 		}
 	});
 	
-	PDFJS.getDocument('{% url "baixar_documento_provento" pendencia.documento.id %}').then(function(pdf) {
-	  // you can now use *pdf* here
-	  pdf.getPage(1).then(function(page) {
-    	  // you can now use *page* here
-		  var scale = 1.75;
-		  var viewport = page.getViewport(scale);
+// 	PDFJS.getDocument('{% url "baixar_documento_provento" pendencia.documento.id %}').then(function(pdf) {
+// 	  // you can now use *pdf* here
+// 	  pdf.getPage(1).then(function(page) {
+//     	  // you can now use *page* here
+// 		  var scale = 1.75;
+// 		  var viewport = page.getViewport(scale);
 
-		  var canvas = document.getElementById('canvas');
-		  var context = canvas.getContext('2d');
-		  canvas.height = viewport.height;
-		  canvas.width = viewport.width;
+// 		  var canvas = document.getElementById('canvas');
+// 		  var context = canvas.getContext('2d');
+// 		  canvas.height = viewport.height;
+// 		  canvas.width = viewport.width;
 
-		  var renderContext = {
-		    canvasContext: context,
-		    viewport: viewport
-		  };
-		  page.render(renderContext);
-	   });
-	});
+// 		  var renderContext = {
+// 		    canvasContext: context,
+// 		    viewport: viewport
+// 		  };
+// 		  page.render(renderContext);
+// 	   });
+// 	});
 });
 </script>
     
