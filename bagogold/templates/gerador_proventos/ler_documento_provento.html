@@ -353,8 +353,10 @@ $( document ).ready(function() {
                 step: 0.000000000001,
                 decimals: 12,
                 maxboostedstep: 100,
+                prefix: 'R$',
                 postfix: '%'
             });
+            $('#id_provento-' + id_provento + '-valor_unitario').parent().find('.bootstrap-touchspin-prefix').hide();
         } else {
             $('#provento_em_acao-' + id_provento).hide();
             $('#id_provento-' + id_provento + '-valor_unitario').TouchSpin({
@@ -364,8 +366,10 @@ $( document ).ready(function() {
                 step: 0.000000000001,
                 decimals: 12,
                 maxboostedstep: 100,
-                prefix: 'R$'
+                prefix: 'R$',
+                postfix: '%'
             });
+            $('#id_provento-' + id_provento + '-valor_unitario').parent().find('.bootstrap-touchspin-postfix').hide();
         }
     });
 	
@@ -374,27 +378,13 @@ $( document ).ready(function() {
 		if ($(this).val() == 'A') {
 			$('#provento_em_acao-' + id_provento).show();
             // Alterar Touchspin de valor para porcentagem 
-            $('#id_provento-' + id_provento + '-valor_unitario').trigger("touchspin.updatesettings", {
-                initval: 0,
-                min: 0,
-                max: 1000000000,
-                step: 0.000000000001,
-                decimals: 12,
-                maxboostedstep: 100,
-                postfix: '%'
-            });
+            $('#id_provento-' + id_provento + '-valor_unitario').parent().find('.bootstrap-touchspin-prefix').hide();
+            $('#id_provento-' + id_provento + '-valor_unitario').parent().find('.bootstrap-touchspin-postfix').show();
 		} else {
             $('#provento_em_acao-' + id_provento).hide();
             // Voltar Touchspin de valor para o modelo inicial
-            $('#id_provento-' + id_provento + '-valor_unitario').trigger("touchspin.updatesettings", {
-                initval: 0,
-                min: 0,
-                max: 1000000000,
-                step: 0.000000000001,
-                decimals: 12,
-                maxboostedstep: 100,
-                prefix: 'R$'
-            });
+            $('#id_provento-' + id_provento + '-valor_unitario').parent().find('.bootstrap-touchspin-prefix').show();
+            $('#id_provento-' + id_provento + '-valor_unitario').parent().find('.bootstrap-touchspin-postfix').hide();
 		}
 	});
 	
