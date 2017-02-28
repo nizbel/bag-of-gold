@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.forms.utils import LocalizedModelForm
+from bagogold.bagogold.models.acoes import Provento
 from bagogold.bagogold.models.fii import ProventoFII
 from bagogold.bagogold.models.gerador_proventos import \
     ProventoAcaoDescritoDocumentoBovespa, AcaoProventoAcaoDescritoDocumentoBovespa, \
@@ -7,10 +8,6 @@ from bagogold.bagogold.models.gerador_proventos import \
 from django import forms
 from django.forms import widgets
 
-
-ESCOLHAS_TIPO_PROVENTO_ACAO=(('A', "Ações"),
-                        ('D', "Dividendos"),
-                        ('J', "Juros sobre capital próprio"),)
 
 class ProventoAcaoDescritoDocumentoBovespaForm(LocalizedModelForm):
 
@@ -22,7 +19,7 @@ class ProventoAcaoDescritoDocumentoBovespaForm(LocalizedModelForm):
                                             'placeholder':'Selecione uma data'}),
                  'data_pagamento': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),
-                 'tipo_provento': widgets.Select(choices=ESCOLHAS_TIPO_PROVENTO_ACAO),}
+                 'tipo_provento': widgets.Select(choices=Provento.ESCOLHAS_TIPO_PROVENTO_ACAO),}
         
     def clean(self):
         dados = super(ProventoAcaoDescritoDocumentoBovespaForm, self).clean()
@@ -44,7 +41,7 @@ class ProventoFIIDescritoDocumentoBovespaForm(LocalizedModelForm):
 
     class Meta:
         model = ProventoFIIDescritoDocumentoBovespa
-        fields = ('valor_unitario', 'data_ex', 'data_pagamento',
+        fields = ('valor_unitario', 'data_ex', 'data_pagamento', 'tipo_provento',
                   'fii',)
         widgets={'data_ex': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),
