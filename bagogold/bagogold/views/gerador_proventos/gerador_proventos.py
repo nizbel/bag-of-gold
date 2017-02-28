@@ -19,7 +19,8 @@ from bagogold.bagogold.utils.gerador_proventos import \
     versionar_descricoes_relacionadas_acoes, \
     salvar_investidor_responsavel_por_validacao, \
     desfazer_investidor_responsavel_por_validacao, \
-    salvar_investidor_responsavel_por_recusar_documento
+    salvar_investidor_responsavel_por_recusar_documento, \
+    criar_descricoes_provento_fiis
 from bagogold.bagogold.utils.misc import \
     formatar_zeros_a_direita_apos_2_casas_decimais
 from decimal import Decimal
@@ -239,69 +240,118 @@ def ler_documento_provento(request, id_pendencia):
             # Radio de documento estava em Gerar
             if request.POST['radioDocumento'] == '1':
 #                 print request.POST
-                formset_provento = ProventoFormset(request.POST, prefix='provento')
-                formset_acao_provento = AcaoProventoFormset(request.POST, prefix='acao_provento')
-                
-                # Apaga descrições que já existam para poder rodar validações, serão posteriormente readicionadas caso haja algum erro
-                info_proventos_a_apagar = list(ProventoAcaoDocumento.objects.filter(documento=pendencia.documento)) \
-                    + list(AcaoProvento.objects.filter(provento__id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True))) \
-                    + list(Provento.gerador_objects.filter(id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True))) \
-                    + list(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento__id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True))) \
-                    + list(ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)))
-#                 print info_proventos_a_apagar
-#                 print list(reversed(info_proventos_a_apagar))
-                for elemento in info_proventos_a_apagar:
-                    # Mantém os IDs dos elementos
-                    elemento.guarda_id = elemento.id
-                    elemento.delete()
-                    elemento.id = elemento.guarda_id
-                
-                if formset_provento.is_valid():
-                    # Verifica se dados inseridos são todos válidos
-                    forms_validos = True
-                    indice_provento = 0
-                    # Guarda os proventos e ações de proventos criadas para salvar caso todos os formulários sejam válidos
-                    proventos_validos = list()
-                    acoes_proventos_validos = list()
-                    for form_provento in formset_provento:
-                        provento = form_provento.save(commit=False)
-#                         print provento
-                        proventos_validos.append(provento)
-                        form_acao_provento = formset_acao_provento[indice_provento]
-                        # Verificar a ação do provento em ações
-                        if provento.tipo_provento == 'A':
-                            acao_provento = form_acao_provento.save(commit=False) if form_acao_provento.is_valid() and form_acao_provento.has_changed() else None
-                            if acao_provento == None:
-                                forms_validos = False
-                            else:
-                                acao_provento.provento = provento
-#                                 print acao_provento
-                                acoes_proventos_validos.append(acao_provento)
-                        indice_provento += 1
-                    if forms_validos:
+                if pendencia.documento.tipo == 'A':
+                    formset_provento = ProventoFormset(request.POST, prefix='provento')
+                    formset_acao_provento = AcaoProventoFormset(request.POST, prefix='acao_provento')
+                    
+                    # Apaga descrições que já existam para poder rodar validações, serão posteriormente readicionadas caso haja algum erro
+                    info_proventos_a_apagar = list(ProventoAcaoDocumento.objects.filter(documento=pendencia.documento)) \
+                        + list(AcaoProvento.objects.filter(provento__id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True))) \
+                        + list(Provento.gerador_objects.filter(id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True))) \
+                        + list(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento__id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True))) \
+                        + list(ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)))
+    #                 print info_proventos_a_apagar
+    #                 print list(reversed(info_proventos_a_apagar))
+                    for elemento in info_proventos_a_apagar:
+                        # Mantém os IDs dos elementos
+                        elemento.guarda_id = elemento.id
+                        elemento.delete()
+                        elemento.id = elemento.guarda_id
+                    
+                    if formset_provento.is_valid():
+                        # Verifica se dados inseridos são todos válidos
+                        forms_validos = True
+                        indice_provento = 0
+                        # Guarda os proventos e ações de proventos criadas para salvar caso todos os formulários sejam válidos
+                        proventos_validos = list()
+                        acoes_proventos_validos = list()
+                        for form_provento in formset_provento:
+                            provento = form_provento.save(commit=False)
+    #                         print provento
+                            proventos_validos.append(provento)
+                            form_acao_provento = formset_acao_provento[indice_provento]
+                            # Verificar a ação do provento em ações
+                            if provento.tipo_provento == 'A':
+                                acao_provento = form_acao_provento.save(commit=False) if form_acao_provento.is_valid() and form_acao_provento.has_changed() else None
+                                if acao_provento == None:
+                                    forms_validos = False
+                                else:
+                                    acao_provento.provento = provento
+    #                                 print acao_provento
+                                    acoes_proventos_validos.append(acao_provento)
+                            indice_provento += 1
+                        if forms_validos:
+                            try:
+                                # Colocar investidor como responsável pela leitura do documento
+                                salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao='C')
+                                # Salvar descrições de proventos
+                                criar_descricoes_provento_acoes(proventos_validos, acoes_proventos_validos, pendencia.documento)
+                                messages.success(request, 'Descrições de proventos criadas com sucesso')
+                                return HttpResponseRedirect(reverse('listar_pendencias'))
+                            except Exception as e:
+                                desfazer_investidor_responsavel_por_leitura(pendencia, investidor)
+                                messages.error(request, str(e))
+                        else:
+                            messages.error(request, 'Proventos em ações não conferem com os proventos criados')
+                    
+                    # Readiciona proventos para o caso de não haver logrado sucesso na leitura
+                    for elemento in list(reversed(info_proventos_a_apagar)):
+                        elemento.save()
+                    
+                    # Testando erros
+#                     print dir(formset_provento.errors)
+#                     print formset_provento.errors, formset_provento.non_form_errors()
+                    for form in formset_provento:
+                        for erro in form.non_field_errors():
+                            messages.error(request, erro)
+                elif pendencia.documento.tipo == 'F':
+                    formset_provento = ProventoFormset(request.POST, prefix='provento')
+                    formset_acao_provento = {}
+                    
+                    # Apaga descrições que já existam para poder rodar validações, serão posteriormente readicionadas caso haja algum erro
+                    info_proventos_a_apagar = list(ProventoFIIDocumento.objects.filter(documento=pendencia.documento)) \
+                        + list(ProventoFII.gerador_objects.filter(id__in=ProventoFIIDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True))) \
+                        + list(ProventoFIIDescritoDocumentoBovespa.objects.filter(id__in=ProventoFIIDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)))
+    #                 print info_proventos_a_apagar
+    #                 print list(reversed(info_proventos_a_apagar))
+                    for elemento in info_proventos_a_apagar:
+                        # Mantém os IDs dos elementos
+                        elemento.guarda_id = elemento.id
+                        elemento.delete()
+                        elemento.id = elemento.guarda_id
+                    
+                    if formset_provento.is_valid():
+                        # Verifica se dados inseridos são todos válidos
+                        indice_provento = 0
+                        # Guarda os proventos e ações de proventos criadas para salvar caso todos os formulários sejam válidos
+                        proventos_validos = list()
+                        acoes_proventos_validos = list()
+                        for form_provento in formset_provento:
+                            provento = form_provento.save(commit=False)
+    #                         print provento
+                            proventos_validos.append(provento)
+                            indice_provento += 1
                         try:
                             # Colocar investidor como responsável pela leitura do documento
                             salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao='C')
                             # Salvar descrições de proventos
-                            criar_descricoes_provento_acoes(proventos_validos, acoes_proventos_validos, pendencia.documento)
+                            criar_descricoes_provento_fiis(proventos_validos, pendencia.documento)
                             messages.success(request, 'Descrições de proventos criadas com sucesso')
                             return HttpResponseRedirect(reverse('listar_pendencias'))
                         except Exception as e:
                             desfazer_investidor_responsavel_por_leitura(pendencia, investidor)
                             messages.error(request, str(e))
-                    else:
-                        messages.error(request, 'Proventos em ações não conferem com os proventos criados')
-                
-                # Readiciona proventos para o caso de não haver logrado sucesso na leitura
-                for elemento in list(reversed(info_proventos_a_apagar)):
-                    elemento.save()
-                
-                # Testando erros
-                print dir(formset_provento.errors)
-                print formset_provento.errors, formset_provento.non_form_errors()
-                for form in formset_provento:
-                    for erro in form.non_field_errors():
-                        messages.error(request, erro)
+                    
+                    # Readiciona proventos para o caso de não haver logrado sucesso na leitura
+                    for elemento in list(reversed(info_proventos_a_apagar)):
+                        elemento.save()
+                    
+                    # Testando erros
+#                     print dir(formset_provento.errors)
+#                     print formset_provento.errors, formset_provento.non_form_errors()
+                    for form in formset_provento:
+                        for erro in form.non_field_errors():
+                            messages.error(request, erro)
                 
             # Radio de documento estava em Excluir
             elif request.POST['radioDocumento'] == '0':
