@@ -6,7 +6,7 @@ from bagogold.bagogold.forms.gerador_proventos import \
     ProventoFIIDescritoDocumentoBovespaForm
 from bagogold.bagogold.models.acoes import Acao, Provento, AcaoProvento
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.bagogold.models.fii import ProventoFII
+from bagogold.bagogold.models.fii import ProventoFII, FII
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
     PendenciaDocumentoProvento, ProventoAcaoDescritoDocumentoBovespa, \
     ProventoAcaoDocumento, InvestidorResponsavelPendencia, \
@@ -186,32 +186,53 @@ def ler_documento_provento(request, id_pendencia):
             if pendencia.documento.tipo == 'A':
                 formset_provento = ProventoFormset(prefix='provento')
                 formset_acao_provento = AcaoProventoFormset(prefix='acao_provento')
+            elif pendencia.documento.tipo == 'F':
+                formset_provento = ProventoFormset(prefix='provento')
+                formset_acao_provento = {}
             
         elif request.POST.get('preparar_proventos'):
             if request.POST['num_proventos'].isdigit():
                 qtd_proventos = int(request.POST['num_proventos']) if request.POST['num_proventos'] in [str(valor) for valor in range(0, 31)] else 1
-                # Testa se quantidade de proventos engloba todos os proventos já cadastrados
-                if qtd_proventos >= ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).count():
-                    qtd_proventos_extra = qtd_proventos - ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).count()
-                else:
-                    qtd_proventos_extra = 0
-                ProventoFormset = formset_factory(ProventoAcaoDescritoDocumentoBovespaForm, extra=qtd_proventos_extra)
-                AcaoProventoFormset = formset_factory(AcaoProventoAcaoDescritoDocumentoBovespaForm, extra=qtd_proventos_extra)
-
-                # Proventos
-                proventos_iniciais = list()
-                # Limita a quantidade de proventos a mostrar dependendo da quantidade de proventos escolhida no formulario
-                for provento_acao_documento in pendencia.documento.proventoacaodocumento_set.all()[:min(qtd_proventos, pendencia.documento.proventoacaodocumento_set.count())]:
-                    proventos_iniciais.append(model_to_dict(provento_acao_documento.descricao_provento))
-                formset_provento = ProventoFormset(prefix='provento', initial=proventos_iniciais)
-                # Ações de proventos
-                acoes_provento_iniciais = list()
-                for provento in proventos_iniciais:
-                    if AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento__id=provento['id']).exists():
-                        acoes_provento_iniciais.append(model_to_dict(AcaoProventoAcaoDescritoDocumentoBovespa.objects.get(provento__id=provento['id'])))
+                # Ações
+                if pendencia.documento.tipo == 'A':
+                    # Testa se quantidade de proventos engloba todos os proventos já cadastrados
+                    if qtd_proventos >= ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).count():
+                        qtd_proventos_extra = qtd_proventos - ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).count()
                     else:
-                        acoes_provento_iniciais.append({})
-                formset_acao_provento = AcaoProventoFormset(prefix='acao_provento', initial=acoes_provento_iniciais)
+                        qtd_proventos_extra = 0
+                    ProventoFormset = formset_factory(ProventoAcaoDescritoDocumentoBovespaForm, extra=qtd_proventos_extra)
+                    AcaoProventoFormset = formset_factory(AcaoProventoAcaoDescritoDocumentoBovespaForm, extra=qtd_proventos_extra)
+    
+                    # Proventos
+                    proventos_iniciais = list()
+                    # Limita a quantidade de proventos a mostrar dependendo da quantidade de proventos escolhida no formulario
+                    for provento_acao_documento in pendencia.documento.proventoacaodocumento_set.all()[:min(qtd_proventos, pendencia.documento.proventoacaodocumento_set.count())]:
+                        proventos_iniciais.append(model_to_dict(provento_acao_documento.descricao_provento))
+                    formset_provento = ProventoFormset(prefix='provento', initial=proventos_iniciais)
+                    # Ações de proventos
+                    acoes_provento_iniciais = list()
+                    for provento in proventos_iniciais:
+                        if AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento__id=provento['id']).exists():
+                            acoes_provento_iniciais.append(model_to_dict(AcaoProventoAcaoDescritoDocumentoBovespa.objects.get(provento__id=provento['id'])))
+                        else:
+                            acoes_provento_iniciais.append({})
+                    formset_acao_provento = AcaoProventoFormset(prefix='acao_provento', initial=acoes_provento_iniciais)
+                # FII
+                elif pendencia.documento.tipo == 'F':
+                    # Testa se quantidade de proventos engloba todos os proventos já cadastrados
+                    if qtd_proventos >= ProventoFIIDocumento.objects.filter(documento=pendencia.documento).count():
+                        qtd_proventos_extra = qtd_proventos - ProventoFIIDocumento.objects.filter(documento=pendencia.documento).count()
+                    else:
+                        qtd_proventos_extra = 0
+                    ProventoFormset = formset_factory(ProventoFIIDescritoDocumentoBovespaForm, extra=qtd_proventos_extra)
+    
+                    # Proventos
+                    proventos_iniciais = list()
+                    # Limita a quantidade de proventos a mostrar dependendo da quantidade de proventos escolhida no formulario
+                    for provento_fii_documento in pendencia.documento.proventoacaodocumento_set.all()[:min(qtd_proventos, pendencia.documento.proventoacaodocumento_set.count())]:
+                        proventos_iniciais.append(model_to_dict(provento_fii_documento.descricao_provento))
+                    formset_provento = ProventoFormset(prefix='provento', initial=proventos_iniciais)
+                    formset_acao_provento = {}
                 
         # Caso o botão de salvar ter sido apertado
         elif request.POST.get('save'):
@@ -305,8 +326,6 @@ def ler_documento_provento(request, id_pendencia):
                     acoes_provento_iniciais.append({})
             formset_acao_provento = AcaoProventoFormset(prefix='acao_provento', initial=acoes_provento_iniciais)
     
-            for form in formset_provento:
-                form.fields['acao'].queryset = Acao.objects.filter(empresa=pendencia.documento.empresa)
         
         elif pendencia.documento.tipo == 'F':
             # Proventos de FII
@@ -315,6 +334,14 @@ def ler_documento_provento(request, id_pendencia):
                 proventos_iniciais.append(model_to_dict(provento_fii_documento.descricao_provento))
             formset_provento = ProventoFormset(prefix='provento', initial=proventos_iniciais)
             formset_acao_provento = {}
+            
+    # Preparar opções de busca, tanto para POST quanto para GET
+    if pendencia.documento.tipo == 'A':
+        for form in formset_provento:
+            form.fields['acao'].queryset = Acao.objects.filter(empresa=pendencia.documento.empresa)
+    elif pendencia.documento.tipo == 'F':
+        for form in formset_provento:
+            form.fields['fii'].queryset = FII.objects.filter(empresa=pendencia.documento.empresa)
     
     # Preparar motivo de recusa, caso haja
     recusa = pendencia.documento.ultima_recusa()
