@@ -204,7 +204,7 @@ def converter_descricao_provento_para_provento_fiis(descricao_provento):
 
 def versionar_descricoes_relacionadas_acoes(descricao, provento_relacionado):
     """
-    Versiona descrições de proventos em ações relacionadas
+    Versiona descrições de proventos de ações relacionados
     Parâmetros: Descrição a entrar para as versões
                 Provento relacionado
     """
@@ -231,6 +231,32 @@ def versionar_descricoes_relacionadas_acoes(descricao, provento_relacionado):
         acao_provento_anterior.delete()
     provento_anterior.delete()
         
+def versionar_descricoes_relacionadas_fiis(descricao, provento_relacionado):
+    """
+    Versiona descrições de proventos de FIIs relacionados
+    Parâmetros: Descrição a entrar para as versões
+                Provento relacionado
+    """
+    # Buscar todas as versões do provento descrito
+    versoes_provento = list(ProventoFIIDocumento.objects.filter(provento=provento_relacionado))
+    # Adicionar descricao à lista de versões pelo número do protocolo do documento
+    versoes_provento.append(descricao.proventofiidocumento)
+    versoes_provento.sort(key=lambda x: x.documento.protocolo)
+    # Gerar versões a partir de 1 na ordem feita
+    for versao, item in enumerate(versoes_provento, start=1):
+        item.versao = versao
+        item.save()
+    # Se versão adicionada for a ultima, o provento apontado deve ser copia do novo_provento
+    if descricao.proventofiidocumento.versao == len(versoes_provento):
+        copiar_proventos_fiis(provento_relacionado, descricao.proventofiidocumento.provento)
+    # Guardar provento anterior para apagar posteriormente
+    provento_anterior = ProventoFII.gerador_objects.get(id=descricao.proventofiidocumento.provento.id)
+    
+    descricao.proventofiidocumento.provento = provento_relacionado
+    descricao.proventofiidocumento.save()
+    
+    # Apagar provento anterior
+    provento_anterior.delete()
             
 def copiar_proventos_acoes(provento, provento_a_copiar):
     """
@@ -238,40 +264,37 @@ def copiar_proventos_acoes(provento, provento_a_copiar):
     Parâmetros: Provento a receber dados
                 Provento a ser copiado
     """
-    dados_provento_a_salvar = list()
-    provento.acao = provento_a_copiar.acao
-    provento.valor_unitario = provento_a_copiar.valor_unitario
-    provento.tipo_provento = provento_a_copiar.tipo_provento
-    provento.data_ex = provento_a_copiar.data_ex
-    provento.data_pagamento = provento_a_copiar.data_pagamento
-    provento.observacao = provento_a_copiar.observacao
-    dados_provento_a_salvar.append(provento)
-    # Se provento a copiar for do tipo provento em ações, copiar ações recebidas
-    if provento_a_copiar.tipo_provento == 'A':
-        acoes_provento = AcaoProvento.objects.filter(provento__id=provento.id)
-        indice_acao_provento = 0
-        for acao_provento_a_copiar in AcaoProvento.objects.filter(provento__id=provento_a_copiar.id):
-            if indice_acao_provento < len(acoes_provento):
-                # Copiar ação recebida do provento
-                acoes_provento[indice_acao_provento].acao_recebida = acao_provento_a_copiar.acao_recebida
-                acoes_provento[indice_acao_provento].data_pagamento_frac = acao_provento_a_copiar.data_pagamento_frac
-                acoes_provento[indice_acao_provento].valor_calculo_frac = acao_provento_a_copiar.valor_calculo_frac
-                dados_provento_a_salvar.append(acoes_provento[indice_acao_provento])
-            else:
-                # Criar nova ação recebida do provento
-                nova_acao_provento = ProventoAcao(acao_recebida=acao_provento_a_copiar.acao_recebida, \
-                                                  data_pagamento_frac=acao_provento_a_copiar.data_pagamento_frac, \
-                                                  valor_calculo_frac=acao_provento_a_copiar.valor_calculo_frac, provento=provento)
-                dados_provento_a_salvar.append(nova_acao_provento)
-            # Passar à próxima ação recebida
-            indice_acao_provento += 1
-    # Se provento a copiar não for do tipo provento em ações, mas o provento a receber a cópia for, apagar ações recebidas
-    elif provento.tipo_provento == 'A':
-        for acao_provento in AcaoProvento.objects.filter(provento__id=provento.id):
-            acao_provento.delete()
-    # Salvar provento com dados copiados
-    for dado in dados_provento_a_salvar:
-        dado.save()
+    with transaction.atomic():
+        provento.acao = provento_a_copiar.acao
+        provento.valor_unitario = provento_a_copiar.valor_unitario
+        provento.tipo_provento = provento_a_copiar.tipo_provento
+        provento.data_ex = provento_a_copiar.data_ex
+        provento.data_pagamento = provento_a_copiar.data_pagamento
+        provento.observacao = provento_a_copiar.observacao
+        provento.save()
+        # Se provento a copiar for do tipo provento em ações, copiar ações recebidas
+        if provento_a_copiar.tipo_provento == 'A':
+            acoes_provento = AcaoProvento.objects.filter(provento__id=provento.id)
+            indice_acao_provento = 0
+            for acao_provento_a_copiar in AcaoProvento.objects.filter(provento__id=provento_a_copiar.id):
+                if indice_acao_provento < len(acoes_provento):
+                    # Copiar ação recebida do provento
+                    acoes_provento[indice_acao_provento].acao_recebida = acao_provento_a_copiar.acao_recebida
+                    acoes_provento[indice_acao_provento].data_pagamento_frac = acao_provento_a_copiar.data_pagamento_frac
+                    acoes_provento[indice_acao_provento].valor_calculo_frac = acao_provento_a_copiar.valor_calculo_frac
+                    acoes_provento[indice_acao_provento].save()
+                else:
+                    # Criar nova ação recebida do provento
+                    nova_acao_provento = ProventoAcao(acao_recebida=acao_provento_a_copiar.acao_recebida, \
+                                                      data_pagamento_frac=acao_provento_a_copiar.data_pagamento_frac, \
+                                                      valor_calculo_frac=acao_provento_a_copiar.valor_calculo_frac, provento=provento)
+                    nova_acao_provento.save()
+                # Passar à próxima ação recebida
+                indice_acao_provento += 1
+        # Se provento a copiar não for do tipo provento em ações, mas o provento a receber a cópia for, apagar ações recebidas
+        elif provento.tipo_provento == 'A':
+            for acao_provento in AcaoProvento.objects.filter(provento__id=provento.id):
+                acao_provento.delete()
         
 def copiar_proventos_fiis(provento, provento_a_copiar):
     """
