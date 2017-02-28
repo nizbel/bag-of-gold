@@ -37,11 +37,10 @@ class ProventoFII (models.Model):
     tipo_provento = models.CharField(u'Tipo de provento', max_length=1)
     data_ex = models.DateField(u'Data EX')
     data_pagamento = models.DateField(u'Data do pagamento')
-    url_documento = models.CharField(u'URL do documento', blank=True, null=True, max_length=200)
     oficial_bovespa = models.BooleanField(u'Oficial Bovespa?', default=False)
     
     class Meta:
-        unique_together=('data_ex', 'data_pagamento', 'fii', 'valor_unitario')
+        unique_together=('data_ex', 'data_pagamento', 'fii', 'valor_unitario', 'oficial_bovespa')
         
     def __unicode__(self):
         return 'R$ %s de %s em %s com data EX %s' % (str(self.valor_unitario), self.fii.ticker, str(self.data_pagamento), str(self.data_ex))
