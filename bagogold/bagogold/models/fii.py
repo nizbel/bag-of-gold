@@ -26,8 +26,15 @@ class ProventoFIIOficialManager(models.Manager):
         return super(ProventoFIIOficialManager, self).get_queryset().filter(oficial_bovespa=True)
 
 class ProventoFII (models.Model):
+    ESCOLHAS_TIPO_PROVENTO_FII=(('R', "Rendimento"),
+                        ('A', "Amortização"),)
+    
     fii = models.ForeignKey('FII')
     valor_unitario = models.DecimalField(u'Valor unitário', max_digits=13, decimal_places=9)
+    """
+    A = amortização, R = rendimentos
+    """
+    tipo_provento = models.CharField(u'Tipo de provento', max_length=1)
     data_ex = models.DateField(u'Data EX')
     data_pagamento = models.DateField(u'Data do pagamento')
     url_documento = models.CharField(u'URL do documento', blank=True, null=True, max_length=200)

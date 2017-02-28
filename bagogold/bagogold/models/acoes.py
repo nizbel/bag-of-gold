@@ -63,6 +63,10 @@ class ProventoOficialManager(models.Manager):
         return super(ProventoOficialManager, self).get_queryset().filter(oficial_bovespa=True)
     
 class Provento (models.Model):
+    ESCOLHAS_TIPO_PROVENTO_ACAO=(('A', "Ações"),
+                            ('D', "Dividendos"),
+                            ('J', "Juros sobre capital próprio"),)
+    
     acao = models.ForeignKey('Acao')
     valor_unitario = models.DecimalField(u'Valor unitário', max_digits=16, decimal_places=12)
     """
