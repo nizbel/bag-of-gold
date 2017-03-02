@@ -615,12 +615,6 @@ def validar_documento_provento(request, id_pendencia):
             try:
                 with transaction.atomic():
                     salvar_investidor_responsavel_por_validacao(pendencia, investidor)
-#             except ValueError as erro:
-#                 desfazer_investidor_responsavel_por_validacao(pendencia, investidor)
-#                 messages.error(request, str(erro))
-#                 investidor_pode_validar = False
-                
-#             if investidor_pode_validar:
                     if pendencia.documento.investidorleituradocumento.decisao == 'C':
                         # Ações
                         if pendencia.documento.tipo == 'A':
@@ -662,11 +656,8 @@ def validar_documento_provento(request, id_pendencia):
                                 except:
                                     messages.error(request, 'Houve erro no relacionamento de proventos')
                                     raise ValueError('Não foi possível validar provento')
-#                                     desfazer_investidor_responsavel_por_validacao(pendencia, investidor)
-#                                     validacao_completa = False
                             # Qualquer erro que deixe a validação incompleta faz necessário desfazer investidor responsável pela validação
                             else:
-#                                 desfazer_investidor_responsavel_por_validacao(pendencia, investidor)
                                 raise ValueError('Não foi possível validar provento')
                             
                         # FII
@@ -709,21 +700,16 @@ def validar_documento_provento(request, id_pendencia):
                                 except:
                                     messages.error(request, 'Houve erro no relacionamento de proventos')
                                     raise ValueError('Não foi possível validar provento')
-#                                     desfazer_investidor_responsavel_por_validacao(pendencia, investidor)
-#                                     validacao_completa = False
                             # Qualquer erro que deixe a validação incompleta faz necessário desfazer investidor responsável pela validação
                             else:
-#                                 desfazer_investidor_responsavel_por_validacao(pendencia, investidor)
                                 raise ValueError('Não foi possível validar provento')
                                     
                     elif pendencia.documento.investidorleituradocumento.decisao == 'E':
-    #                     print 'Validar exclusão'
                         # Apagar documento
                         pendencia.documento.apagar_documento()
                         pendencia_finalizada = True
                         
                 # Verifica se validação passou ou foi feita uma exclusão
-#                 if pendencia.documento.investidorleituradocumento.decisao == 'E' or (validacao_completa and pendencia.documento.investidorleituradocumento.decisao == 'C'):
                 if pendencia_finalizada:
                     # Remover pendência
                     pendencia.delete()
