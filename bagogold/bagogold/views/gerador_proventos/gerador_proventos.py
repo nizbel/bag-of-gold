@@ -81,7 +81,7 @@ def detalhar_documento(request, id_documento):
             # Remover 0s a direita para valores
             provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario))
             # Adicionar informação de versão
-            provento.versao = provento.proventoacaodocumento.versao
+            provento.versao = provento.proventofiidocumento.versao
         
     return TemplateResponse(request, 'gerador_proventos/detalhar_documento.html', {'documento': documento, 'proventos': proventos})
 
@@ -124,8 +124,7 @@ def detalhar_provento_fii(request, id_provento):
     
     # Remover 0s a direita para valores
     provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario))
-    # Adicionar informação de versão
-    provento.versao = provento.proventofiidocumento.versao
+    
     # Adicionar informação de versão
     try:
         provento.versao = ProventoFIIDocumento.objects.filter(provento=provento).order_by('-versao')[0].versao
@@ -320,7 +319,9 @@ def ler_documento_provento(request, id_pendencia):
                         elemento.delete()
                         elemento.id = elemento.guarda_id
                     
+                    print u'testar se é valido'
                     if formset_provento.is_valid():
+                        print u'é valido'
                         # Verifica se dados inseridos são todos válidos
                         indice_provento = 0
                         # Guarda os proventos e ações de proventos criadas para salvar caso todos os formulários sejam válidos
@@ -332,6 +333,7 @@ def ler_documento_provento(request, id_pendencia):
                             proventos_validos.append(provento)
                             indice_provento += 1
                         try:
+                            print 'chegou no try'
                             # Colocar investidor como responsável pela leitura do documento
                             salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao='C')
                             # Salvar descrições de proventos
@@ -348,7 +350,7 @@ def ler_documento_provento(request, id_pendencia):
                     
                     # Testando erros
 #                     print dir(formset_provento.errors)
-#                     print formset_provento.errors, formset_provento.non_form_errors()
+                    print formset_provento.errors, formset_provento.non_form_errors()
                     for form in formset_provento:
                         for erro in form.non_field_errors():
                             messages.error(request, erro)

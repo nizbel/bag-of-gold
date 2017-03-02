@@ -209,14 +209,17 @@ class ProventoAcaoDescritoDocumentoBovespa (models.Model):
     observacao = models.CharField(u'Observação', blank=True, null=True, max_length=300)
     
     def __unicode__(self):
-        tipo = ''
+        return u'%s de %s com valor %s e data EX %s a ser pago em %s' % (self.descricao_tipo_provento(), self.acao.ticker, self.valor_unitario, self.data_ex, self.data_pagamento)
+    
+    def descricao_tipo_provento(self):
         if self.tipo_provento == 'A':
-            tipo = u'Ações'
+            return u'Ações'
         elif self.tipo_provento == 'D':
-            tipo = u'Dividendos'
+            return u'Dividendos'
         elif self.tipo_provento == 'J':
-            tipo = u'JSCP'
-        return u'%s de %s com valor %s e data EX %s a ser pago em %s' % (tipo, self.acao.ticker, self.valor_unitario, self.data_ex, self.data_pagamento)
+            return u'JSCP'
+        else:
+            return u'Indefinido'
 
 class AcaoProventoAcaoDescritoDocumentoBovespa (models.Model):
     """
@@ -243,3 +246,11 @@ class ProventoFIIDescritoDocumentoBovespa (models.Model):
     
     def __unicode__(self):
         return '(R$ %s de %s em %s com data EX %s' % (str(self.valor_unitario), self.fii.ticker, str(self.data_pagamento), str(self.data_ex))
+    
+    def descricao_tipo_provento(self):
+        if self.tipo_provento == 'A':
+            return u'Amortização'
+        elif self.tipo_provento == 'R':
+            return u'Rendimento'
+        else:
+            return u'Indefinido'
