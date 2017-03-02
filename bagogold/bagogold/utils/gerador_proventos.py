@@ -391,7 +391,7 @@ def criar_descricoes_provento_fiis(descricoes_proventos, documento):
     
 def buscar_proventos_proximos_acao(descricao_provento):
     """
-    Retorna lista com os proventos próximas à data EX de uma descrição de provento
+    Retorna lista com os proventos próximas à data EX de uma descrição de provento de ação
     Parâmetros: Descrição de provento de ação
     Retorno:    Lista de proventos ordenada por quantidade de dias em relação à data EX
     """
@@ -399,6 +399,21 @@ def buscar_proventos_proximos_acao(descricao_provento):
         .exclude(id=descricao_provento.proventoacaodocumento.provento.id).order_by('-data_ex')[:5]
     proventos_proximos_post = Provento.objects.filter(acao=descricao_provento.acao, data_ex__gt=descricao_provento.data_ex) \
         .exclude(id=descricao_provento.proventoacaodocumento.provento.id).order_by('data_ex')[:5]
+    
+    # Ordenar pela diferença com a data da descrição de provento
+    return sorted(chain(proventos_proximos_ant, proventos_proximos_post),
+                    key= lambda x: abs((x.data_ex - descricao_provento.data_ex).days))
+    
+def buscar_proventos_proximos_fii(descricao_provento):
+    """
+    Retorna lista com os proventos próximas à data EX de uma descrição de provento de FII
+    Parâmetros: Descrição de provento de FII
+    Retorno:    Lista de proventos ordenada por quantidade de dias em relação à data EX
+    """
+    proventos_proximos_ant = ProventoFII.objects.filter(fii=descricao_provento.fii, data_ex__lte=descricao_provento.data_ex) \
+        .exclude(id=descricao_provento.proventofiidocumento.provento.id).order_by('-data_ex')[:5]
+    proventos_proximos_post = ProventoFII.objects.filter(fii=descricao_provento.fii, data_ex__gt=descricao_provento.data_ex) \
+        .exclude(id=descricao_provento.proventofiidocumento.provento.id).order_by('data_ex')[:5]
     
     # Ordenar pela diferença com a data da descrição de provento
     return sorted(chain(proventos_proximos_ant, proventos_proximos_post),

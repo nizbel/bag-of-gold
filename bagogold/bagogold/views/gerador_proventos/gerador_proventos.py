@@ -20,7 +20,7 @@ from bagogold.bagogold.utils.gerador_proventos import \
     salvar_investidor_responsavel_por_validacao, \
     desfazer_investidor_responsavel_por_validacao, \
     salvar_investidor_responsavel_por_recusar_documento, \
-    criar_descricoes_provento_fiis
+    criar_descricoes_provento_fiis, buscar_proventos_proximos_fii
 from bagogold.bagogold.utils.misc import \
     formatar_zeros_a_direita_apos_2_casas_decimais
 from decimal import Decimal
@@ -319,9 +319,7 @@ def ler_documento_provento(request, id_pendencia):
                         elemento.delete()
                         elemento.id = elemento.guarda_id
                     
-                    print u'testar se é valido'
                     if formset_provento.is_valid():
-                        print u'é valido'
                         # Verifica se dados inseridos são todos válidos
                         indice_provento = 0
                         # Guarda os proventos e ações de proventos criadas para salvar caso todos os formulários sejam válidos
@@ -333,7 +331,6 @@ def ler_documento_provento(request, id_pendencia):
                             proventos_validos.append(provento)
                             indice_provento += 1
                         try:
-                            print 'chegou no try'
                             # Colocar investidor como responsável pela leitura do documento
                             salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao='C')
                             # Salvar descrições de proventos
@@ -688,34 +685,50 @@ def validar_documento_provento(request, id_pendencia):
                 messages.error(request, unicode(erro))
         
     if pendencia.documento.investidorleituradocumento.decisao == 'C':
-        proventos_documento = ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)
-        descricoes_proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento)
-        for descricao_provento in descricoes_proventos:
-            # Definir tipo de provento
-            if descricao_provento.tipo_provento == 'A':
-                descricao_provento.acoes_recebidas = descricao_provento.acaoproventoacaodescritodocumentobovespa_set.all()
-                # Remover 0s a direita para valores
-#                 for acao_descricao_provento in descricao_provento.acoes_recebidas:
-#                     acao_descricao_provento.valor_calculo_frac = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(acao_descricao_provento.valor_calculo_frac))
-            
-            # Remover 0s a direita para valores
-            descricao_provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(descricao_provento.valor_unitario))
-            
-            # Buscar proventos próximos
-            descricao_provento.proventos_proximos = buscar_proventos_proximos_acao(descricao_provento)
-            for provento_proximo in descricao_provento.proventos_proximos:
+        if pendencia.documento.tipo == 'A':
+            proventos_documento = ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)
+            descricoes_proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento)
+            for descricao_provento in descricoes_proventos:
                 # Definir tipo de provento
-                if provento_proximo.tipo_provento == 'A':
-                    provento_proximo.acoes_recebidas = provento_proximo.acaoprovento_set.all()
+                if descricao_provento.tipo_provento == 'A':
+                    descricao_provento.acoes_recebidas = descricao_provento.acaoproventoacaodescritodocumentobovespa_set.all()
                     # Remover 0s a direita para valores
-                    for acao_descricao_provento in provento_proximo.acoes_recebidas:
-                        acao_descricao_provento.valor_calculo_frac = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(acao_descricao_provento.valor_calculo_frac))
+    #                 for acao_descricao_provento in descricao_provento.acoes_recebidas:
+    #                     acao_descricao_provento.valor_calculo_frac = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(acao_descricao_provento.valor_calculo_frac))
                 
                 # Remover 0s a direita para valores
-                provento_proximo.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento_proximo.valor_unitario))
-                        
-        # Descrição da decisão do responsável pela leitura
-        pendencia.decisao = 'Criar %s provento(s)' % (ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).count())
+                descricao_provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(descricao_provento.valor_unitario))
+                
+                # Buscar proventos próximos
+                descricao_provento.proventos_proximos = buscar_proventos_proximos_acao(descricao_provento)
+                for provento_proximo in descricao_provento.proventos_proximos:
+                    # Definir tipo de provento
+                    if provento_proximo.tipo_provento == 'A':
+                        provento_proximo.acoes_recebidas = provento_proximo.acaoprovento_set.all()
+                        # Remover 0s a direita para valores
+                        for acao_descricao_provento in provento_proximo.acoes_recebidas:
+                            acao_descricao_provento.valor_calculo_frac = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(acao_descricao_provento.valor_calculo_frac))
+                    
+                    # Remover 0s a direita para valores
+                    provento_proximo.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento_proximo.valor_unitario))
+                            
+            # Descrição da decisão do responsável pela leitura
+            pendencia.decisao = 'Criar %s provento(s)' % (ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).count())
+        elif pendencia.documento.tipo == 'F':
+            proventos_documento = ProventoFIIDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)
+            descricoes_proventos = ProventoFIIDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento)
+            for descricao_provento in descricoes_proventos:
+                # Remover 0s a direita para valores
+                descricao_provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(descricao_provento.valor_unitario))
+                
+                # Buscar proventos próximos
+                descricao_provento.proventos_proximos = buscar_proventos_proximos_fii(descricao_provento)
+                for provento_proximo in descricao_provento.proventos_proximos:
+                    # Remover 0s a direita para valores
+                    provento_proximo.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento_proximo.valor_unitario))
+                            
+            # Descrição da decisão do responsável pela leitura
+            pendencia.decisao = 'Criar %s provento(s)' % (ProventoFIIDocumento.objects.filter(documento=pendencia.documento).count())
     elif pendencia.documento.investidorleituradocumento.decisao == 'E':
         descricoes_proventos = {}
         
