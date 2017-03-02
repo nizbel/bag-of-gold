@@ -344,14 +344,14 @@
                                                         {% if form_provento.tipo_provento.errors %} <span class="help-block"> {{ form_provento.tipo_provento.errors.as_text }} </span> {% endif %}
                                                     </div>
                                                 </div>
-                                                <div class="form-group col-md-4 {% if form_provento.acao.errors %} has-error {% endif %}">
+                                                <div class="form-group col-md-4 {% if form_provento.fii.errors %} has-error {% endif %}">
                                                     <label class="control-label col-md-4" style="text-align: left;"> FII: </label>
                                                     <div class="col-md-8">
-                                                        <select class="selectpicker form-control" id="id_provento-{{forloop.counter0}}-acao" name="provento-{{forloop.counter0}}-acao">
+                                                        <select class="selectpicker form-control" id="id_provento-{{forloop.counter0}}-fii" name="provento-{{forloop.counter0}}-fii">
                                                             {% for key, value in form_provento.fields.fii.choices %}<option value="{{ key|cut:'.' }}" 
-                                                                {% if key == form_provento.acao.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                                                                {% if key == form_provento.fii.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
                                                         </select>
-                                                        {% if form_provento.acao.errors %} <span class="help-block"> {{ form_provento.acao.errors.as_text }} </span> {% endif %}
+                                                        {% if form_provento.fii.errors %} <span class="help-block"> {{ form_provento.fii.errors.as_text }} </span> {% endif %}
                                                     </div>
                                                 </div>
                                             </div>
@@ -429,8 +429,13 @@ $( document ).ready(function() {
                 initval: 0,
                 min: 0,
                 max: 1000000000,
+                {% if pendencia.documento.tipo == 'A' %}
                 step: 0.000000000001,
                 decimals: 12,
+                {% elif pendencia.documento.tipo == 'F' %}
+                step: 0.000000001,
+                decimals: 9,
+                {% endif %}
                 maxboostedstep: 100,
                 prefix: 'R$',
                 postfix: '%'
@@ -442,8 +447,13 @@ $( document ).ready(function() {
                 initval: 0,
                 min: 0,
                 max: 1000000000,
+                {% if pendencia.documento.tipo == 'A' %}
                 step: 0.000000000001,
                 decimals: 12,
+                {% elif pendencia.documento.tipo == 'F' %}
+                step: 0.000000001,
+                decimals: 9,
+                {% endif %}
                 maxboostedstep: 100,
                 prefix: 'R$',
                 postfix: '%'

@@ -45,6 +45,14 @@ class ProventoFII (models.Model):
     def __unicode__(self):
         return 'R$ %s de %s em %s com data EX %s' % (str(self.valor_unitario), self.fii.ticker, str(self.data_pagamento), str(self.data_ex))
     
+    def descricao_tipo_provento(self):
+        if self.tipo_provento == 'A':
+            return u'Amortização'
+        elif self.tipo_provento == 'R':
+            return u'Rendimento'
+        else:
+            return u'Indefinido'
+        
     objects = ProventoFIIOficialManager()
     gerador_objects = models.Manager()
         
