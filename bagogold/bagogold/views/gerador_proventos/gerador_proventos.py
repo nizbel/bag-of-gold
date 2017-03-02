@@ -661,11 +661,13 @@ def validar_documento_provento(request, id_pendencia):
                                     pendencia_finalizada = True
                                 except:
                                     messages.error(request, 'Houve erro no relacionamento de proventos')
-                                    desfazer_investidor_responsavel_por_validacao(pendencia, investidor)
-                                    validacao_completa = False
+                                    raise ValueError('Não foi possível validar provento')
+#                                     desfazer_investidor_responsavel_por_validacao(pendencia, investidor)
+#                                     validacao_completa = False
                             # Qualquer erro que deixe a validação incompleta faz necessário desfazer investidor responsável pela validação
                             else:
-                                desfazer_investidor_responsavel_por_validacao(pendencia, investidor)
+#                                 desfazer_investidor_responsavel_por_validacao(pendencia, investidor)
+                                raise ValueError('Não foi possível validar provento')
                             
                         # FII
                         elif pendencia.documento.tipo == 'F':
