@@ -64,9 +64,9 @@
                         <div class="row">
                             <form method="POST" class="col-md-12 horizontal-form">{% csrf_token %}
                                 <label for="empresa">Procurar por ticker:
-                                    <select id="empresa" name="busca_empresa">
+                                    <select id="empresa" name="busca_empresa" style="width: 100%">
                                         {% for empresa in empresas %}
-                                            <option value="{{empresa.id}}">{{empresa.nome}} ({{empresa.ticker_empresa}})</option>
+                                            <option value="{{empresa.id|floatformat:'f'}}">{{empresa.nome}} ({{empresa.ticker_empresa}})</option>
                                         {% endfor %}
                                     </select>
                                 </label>

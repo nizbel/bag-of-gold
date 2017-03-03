@@ -14,7 +14,12 @@ def ticker_path(instance, filename):
     return 'doc proventos/{0}/{1}'.format(instance.ticker_empresa(), filename)
 
 class DocumentoProventoBovespa (models.Model):
-    TIPOS_DOCUMENTO_VALIDOS = [u'Fato Relevante', u'Comunicado ao Mercado', u'Aviso aos Acionistas', u'Aviso aos Cotistas', u'Aviso aos Cotistas - Estruturado']
+    TIPO_DOCUMENTO_FATO_RELEVANTE = u'Fato Relevante'
+    TIPO_DOCUMENTO_COMUNICADO_MERCADO = u'Comunicado ao Mercado'
+    TIPO_DOCUMENTO_AVISO_ACIONISTAS = u'Aviso aos Acionistas'
+    TIPO_DOCUMENTO_AVISO_COTISTAS = u'Aviso aos Cotistas'
+    TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO = u'Aviso aos Cotistas - Estruturado'
+    TIPOS_DOCUMENTO_VALIDOS = [TIPO_DOCUMENTO_FATO_RELEVANTE, TIPO_DOCUMENTO_COMUNICADO_MERCADO, TIPO_DOCUMENTO_AVISO_ACIONISTAS, TIPO_DOCUMENTO_AVISO_COTISTAS, TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO]
     
     url = models.CharField(u'URL do documento', blank=True, null=True, max_length=200)
     empresa = models.ForeignKey('Empresa')
