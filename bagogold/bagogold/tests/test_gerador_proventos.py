@@ -564,4 +564,5 @@ class LeitorProventosEstruturadosTestCase(TestCase):
         self.assertEqual(provento_fii_documento.descricao_provento.tipo_provento, provento_fii_documento.provento.tipo_provento)
         self.assertEqual(ProventoFII.objects.filter(id=provento_fii_documento.provento.id).count(), 1)
         self.assertEqual(ProventoFIIDescritoDocumentoBovespa.objects.filter(id=provento_fii_documento.descricao_provento.id).count(), 1)
+        self.assertFalse(documento.pendente())
         

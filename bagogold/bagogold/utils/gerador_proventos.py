@@ -456,4 +456,7 @@ def ler_provento_estruturado_fii(documento_fii):
                 if not provento.oficial_bovespa:
                     provento.oficial_bovespa = True
                     provento.save()
+        # Apagar pendência
+        for pendencia_provento in PendenciaDocumentoProvento.objects.filter(documento=documento_fii):
+            pendencia_provento.delete()
             
