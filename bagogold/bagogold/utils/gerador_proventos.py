@@ -429,12 +429,13 @@ def ler_provento_estruturado_fii(documento_fii):
         raise ValueError('Documento deve ser do %s' % (DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO))
     
     tree = etree.parse(documento_fii.documento)
-    fii = FII.objects.get(ticker=list(tree.getroot().iter('CodNegociacaoCota'))[0].text)
+    # Pega o último (maior ID) FII que contenha o código de negociação em seu ticker
+    fii = FII.objects.filter(ticker__icontains=list(tree.getroot().iter('CodNegociacaoCota'))[0].text.strip()).order_by('-id')[0]
     with transaction.atomic():
         for element in tree.getroot().iter('Rendimento', 'Amortizacao'):
             descricao_provento = ProventoFIIDescritoDocumentoBovespa()
-            # Se há mais de um elemento na iteração, o provento não é vazio
-            if len(list(element.iter())) > 1:
+            # Se há pelo menos 5 campos, o provento pode ser prenchido
+            if len(list(element.iter())) >= 5:
                 if element.tag == 'Rendimento':
                     descricao_provento.tipo_provento = 'R'
                 else:
@@ -442,18 +443,16 @@ def ler_provento_estruturado_fii(documento_fii):
                 descricao_provento.fii = fii
                 for dado in element.iter():
                     if dado.tag == 'DataBase':
-                        descricao_provento.data_ex = datetime.datetime.strptime(dado.text, '%Y-%m-%d')
+                        descricao_provento.data_ex = datetime.datetime.strptime(dado.text.strip(), '%Y-%m-%d')
                     if dado.tag == 'DataPagamento':
-                        descricao_provento.data_pagamento = datetime.datetime.strptime(dado.text, '%Y-%m-%d')
+                        descricao_provento.data_pagamento = datetime.datetime.strptime(dado.text.strip(), '%Y-%m-%d')
                     if dado.tag == 'ValorProventoCota':
-                        descricao_provento.valor_unitario = Decimal(dado.text)
+                        descricao_provento.valor_unitario = Decimal(dado.text.strip())
                 descricao_provento.save()
                 provento, criado = ProventoFII.gerador_objects.get_or_create(valor_unitario=descricao_provento.valor_unitario, fii=descricao_provento.fii, \
                                                                   data_ex=descricao_provento.data_ex, data_pagamento=descricao_provento.data_pagamento, \
                                                                   tipo_provento=descricao_provento.tipo_provento)
                 ProventoFIIDocumento.objects.create(documento=documento_fii, provento=provento, versao=1, descricao_provento=descricao_provento)
-                if not criado:
-                    versionar_descricoes_relacionadas_fiis(descricao_provento, provento)
                 if not provento.oficial_bovespa:
                     provento.oficial_bovespa = True
                     provento.save()
