@@ -14,7 +14,9 @@ from bagogold.bagogold.utils.gerador_proventos import \
     desalocar_pendencia_de_investidor, buscar_proventos_proximos_acao, \
     converter_descricao_provento_para_provento_acoes, copiar_proventos_acoes, \
     converter_descricao_provento_para_provento_fiis, \
-    versionar_descricoes_relacionadas_acoes, versionar_descricoes_relacionadas_fiis
+    versionar_descricoes_relacionadas_acoes, versionar_descricoes_relacionadas_fiis, \
+    ler_provento_estruturado_fii
+from cStringIO import StringIO
 from decimal import Decimal
 from django.contrib.auth.models import User
 from django.core.files import File
@@ -41,6 +43,7 @@ class GeradorProventosTestCase(TestCase):
         documento.url = 'http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=508232'
         documento.tipo = 'A'
         documento.protocolo = '508232'
+        documento.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_ACIONISTAS
         documento.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
         documento.baixar_e_salvar_documento()
         
@@ -489,3 +492,76 @@ class GeradorProventosTestCase(TestCase):
         copiar_proventos_acoes(provento_1, provento_2)
         # Testar se provento 1 tem agora os dados do provento 2
         self.assertEqual(Provento.gerador_objects.get(id=id_provento_1).data_ex, datetime.date(2016, 1, 13))
+
+class LeitorProventosEstruturadosTestCase(TestCase):
+
+    def setUp(self):
+        # Investidor
+        user = User.objects.create(username='tester')
+        
+        # Empresa para FII
+        empresa1 = Empresa.objects.create(nome='Fundo BBPO', nome_pregao='BBPO')
+        fii1 = FII.objects.create(empresa=empresa1, ticker='BBPO11')
+        
+        # Documento da empresa, já existe em media
+        documento = DocumentoProventoBovespa()
+        documento.empresa = Empresa.objects.get(codigo_cvm=empresa1.codigo_cvm)
+        documento.url = 'https://fnet.bmfbovespa.com.br/fnet/publico/visualizarDocumento?id=8679'
+        documento.tipo = 'F'
+        documento.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO
+        documento.protocolo = '8679'
+        documento.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
+        conteudo = StringIO('<?xml version="1.0" encoding="UTF-8" standalone="yes"?> \
+<DadosEconomicoFinanceiros xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"> \
+    <DadosGerais> \
+        <NomeFundo>BB PROGRESSIVO II FUNDO DE INVESTIMENTO IMOBILIÁRIO – FII</NomeFundo> \
+        <CNPJFundo>14410722000129</CNPJFundo> \
+        <NomeAdministrador>VOTORANTIM ASSET MANAGEMENT DTVM LTDA.</NomeAdministrador> \
+        <CNPJAdministrador>03384738000198</CNPJAdministrador> \
+        <ResponsavelInformacao>Reinaldo Holanda de Lacerda</ResponsavelInformacao> \
+        <TelefoneContato>(11) 5171-5038</TelefoneContato> \
+        <CodISINCota>BRBBPOCTF003</CodISINCota> \
+        <CodNegociacaoCota>BBPO11</CodNegociacaoCota> \
+    </DadosGerais> \
+    <InformeRendimentos> \
+        <Rendimento> \
+            <DataAprovacao>2017-02-24</DataAprovacao> \
+            <DataBase>2017-02-24</DataBase> \
+            <DataPagamento>2017-03-14</DataPagamento> \
+            <ValorProventoCota>0.9550423</ValorProventoCota> \
+            <PeriodoReferencia>fevereiro</PeriodoReferencia> \
+            <Ano>2017</Ano> \
+            <RendimentoIsentoIR>true</RendimentoIsentoIR> \
+        </Rendimento> \
+        <Amortizacao tipo=""/> \
+    </InformeRendimentos> \
+</DadosEconomicoFinanceiros>')
+        documento.documento.save('%s-%s.%s' % (documento.ticker_empresa(), documento.protocolo, 'xml'), File(conteudo))
+        
+
+    def test_falhar_por_tipo_fii(self):
+        """Testa se a função joga erro para arquivo que não seja de FII"""
+        with self.assertRaises(ValueError):
+            documento = DocumentoProventoBovespa.objects.get(protocolo='8679')
+            documento.tipo = 'A'
+            ler_provento_estruturado_fii(documento)
+            
+    def test_falhar_por_tipo_documento_fii(self):
+        """Testa se a função joga erro para arquivo que não seja de FII"""
+        with self.assertRaises(ValueError):
+            documento = DocumentoProventoBovespa.objects.get(protocolo='8679')
+            documento.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS
+            ler_provento_estruturado_fii(documento)
+            
+    def test_leitura_com_sucesso_fii(self):
+        """Testa se provento e descrição de provento são criados"""
+        documento = DocumentoProventoBovespa.objects.get(protocolo='8679')
+        ler_provento_estruturado_fii(documento)
+        provento_fii_documento = ProventoFIIDocumento.objects.get(documento=documento)
+        self.assertEqual(provento_fii_documento.descricao_provento.valor_unitario, provento_fii_documento.provento.valor_unitario)
+        self.assertEqual(provento_fii_documento.descricao_provento.data_ex, provento_fii_documento.provento.data_ex)
+        self.assertEqual(provento_fii_documento.descricao_provento.data_pagamento, provento_fii_documento.provento.data_pagamento)
+        self.assertEqual(provento_fii_documento.descricao_provento.tipo_provento, provento_fii_documento.provento.tipo_provento)
+        self.assertEqual(ProventoFII.objects.filter(id=provento_fii_documento.provento.id).count(), 1)
+        self.assertEqual(ProventoFIIDescritoDocumentoBovespa.objects.filter(id=provento_fii_documento.descricao_provento.id).count(), 1)
+        

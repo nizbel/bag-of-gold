@@ -1,15 +1,18 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import Provento, AcaoProvento
-from bagogold.bagogold.models.fii import ProventoFII
+from bagogold.bagogold.models.fii import ProventoFII, FII
 from bagogold.bagogold.models.gerador_proventos import \
     InvestidorResponsavelPendencia, InvestidorLeituraDocumento, \
     PendenciaDocumentoProvento, ProventoAcaoDocumento, \
     ProventoAcaoDescritoDocumentoBovespa, AcaoProventoAcaoDescritoDocumentoBovespa, \
     InvestidorValidacaoDocumento, InvestidorRecusaDocumento, ProventoFIIDocumento, \
-    ProventoFIIDescritoDocumentoBovespa
+    ProventoFIIDescritoDocumentoBovespa, DocumentoProventoBovespa
+from decimal import Decimal
 from django.db import transaction
+from io import StringIO, BytesIO
 from itertools import chain
-from operator import attrgetter
+from lxml import etree
+import datetime
 
 def alocar_pendencia_para_investidor(pendencia, investidor):
     """
@@ -418,3 +421,40 @@ def buscar_proventos_proximos_fii(descricao_provento):
     # Ordenar pela diferença com a data da descrição de provento
     return sorted(chain(proventos_proximos_ant, proventos_proximos_post),
                     key= lambda x: abs((x.data_ex - descricao_provento.data_ex).days))
+    
+def ler_provento_estruturado_fii(documento_fii):
+    if documento_fii.tipo != 'F':
+        raise ValueError('Documento deve ser de um FII')
+    if documento_fii.tipo_documento != DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO:
+        raise ValueError('Documento deve ser do %s' % (DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO))
+    
+    tree = etree.parse(documento_fii.documento)
+    fii = FII.objects.get(ticker=list(tree.getroot().iter('CodNegociacaoCota'))[0].text)
+    with transaction.atomic():
+        for element in tree.getroot().iter('Rendimento', 'Amortizacao'):
+            descricao_provento = ProventoFIIDescritoDocumentoBovespa()
+            # Se há mais de um elemento na iteração, o provento não é vazio
+            if len(list(element.iter())) > 1:
+                if element.tag == 'Rendimento':
+                    descricao_provento.tipo_provento = 'R'
+                else:
+                    descricao_provento.tipo_provento = 'A'
+                descricao_provento.fii = fii
+                for dado in element.iter():
+                    if dado.tag == 'DataBase':
+                        descricao_provento.data_ex = datetime.datetime.strptime(dado.text, '%Y-%m-%d')
+                    if dado.tag == 'DataPagamento':
+                        descricao_provento.data_pagamento = datetime.datetime.strptime(dado.text, '%Y-%m-%d')
+                    if dado.tag == 'ValorProventoCota':
+                        descricao_provento.valor_unitario = Decimal(dado.text)
+                descricao_provento.save()
+                provento, criado = ProventoFII.gerador_objects.get_or_create(valor_unitario=descricao_provento.valor_unitario, fii=descricao_provento.fii, \
+                                                                  data_ex=descricao_provento.data_ex, data_pagamento=descricao_provento.data_pagamento, \
+                                                                  tipo_provento=descricao_provento.tipo_provento)
+                ProventoFIIDocumento.objects.create(documento=documento_fii, provento=provento, versao=1, descricao_provento=descricao_provento)
+                if not criado:
+                    versionar_descricoes_relacionadas_fiis(descricao_provento, provento)
+                if not provento.oficial_bovespa:
+                    provento.oficial_bovespa = True
+                    provento.save()
+            

@@ -47,6 +47,8 @@ def baixar_documento_provento(request, id_documento):
     filename = documento_provento.documento.name.split('/')[-1]
     if documento_provento.extensao_documento() == 'doc':
         response = HttpResponse(documento_provento.documento, content_type='application/msword')
+    elif documento_provento.extensao_documento() == 'xml':
+        response = HttpResponse(documento_provento.documento, content_type='application/xml')
     else:
         response = HttpResponse(documento_provento.documento, content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename=%s' % filename
@@ -406,7 +408,7 @@ def listar_documentos(request):
     empresa_id = Empresa.objects.all().order_by('id').values_list('id', flat=True)[0]
     if request.method == 'POST':
         if request.POST.get("busca_empresa"):
-            empresa_id = Empresa.objects.get(id=request.POST['busca_empresa']).id
+            empresa_id = Empresa.objects.get(id=request.POST['busca_empresa'].replace('.', '')).id
     
     # Mostrar empresa atual
     empresa_atual = Empresa.objects.get(id=empresa_id)
