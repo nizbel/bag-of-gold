@@ -250,7 +250,7 @@ class ProventoFIIDescritoDocumentoBovespa (models.Model):
     url_documento = models.CharField(u'URL do documento', blank=True, null=True, max_length=200)
     
     def __unicode__(self):
-        return '(R$ %s de %s em %s com data EX %s' % (str(self.valor_unitario), self.fii.ticker, str(self.data_pagamento), str(self.data_ex))
+        return 'R$ %s de %s em %s com data EX %s' % (str(self.valor_unitario), self.fii.ticker, str(self.data_pagamento), str(self.data_ex))
     
     def descricao_tipo_provento(self):
         if self.tipo_provento == 'A':
