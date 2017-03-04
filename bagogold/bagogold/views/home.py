@@ -55,7 +55,7 @@ def inicio(request):
         investimento.valor = valor
         investimento.descricao = chave
         if chave == 'Ações':
-            investimento.link = 'painel_bh'
+            investimento.link = 'acoes:painel_bh'
         elif chave == 'CDB/RDB':
             investimento.link = 'painel_cdb_rdb'
         elif chave == 'Debêntures':

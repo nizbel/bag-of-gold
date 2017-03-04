@@ -74,7 +74,7 @@
                                 <div class="m-grid-col m-grid-col-left"><strong>Pagamento:</strong></div>
                                 <div class="m-grid-col m-grid-col-left">{{versao.data_pagamento|date:'d/m/Y'}}</div>
                                 <div class="m-grid-col m-grid-col-left"><strong>Documento:</strong></div>
-                                <div class="m-grid-col m-grid-col-left"><a href="{% url "detalhar_documento" versao.proventofiidocumento.documento.id %}">{{versao.proventofiidocumento.documento}}</a></div>
+                                <div class="m-grid-col m-grid-col-left"><a href="{% url "gerador_proventos:detalhar_documento" versao.proventofiidocumento.documento.id %}">{{versao.proventofiidocumento.documento}}</a></div>
                             </div>
                         </div>
                         {% if forloop.counter < versoes|length %}

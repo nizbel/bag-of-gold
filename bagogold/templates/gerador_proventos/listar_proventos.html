@@ -31,16 +31,16 @@
                 {% for provento in proventos %}
                     <tr>
                         <td>{% if provento.acao %}
-                            <a href="{% url "detalhar_provento_acao" provento.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar provento">{{provento.acao.ticker}}</a>
+                            <a href="{% url "gerador_proventos:detalhar_provento_acao" provento.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar provento">{{provento.acao.ticker}}</a>
                             {% else %}
-                            <a href="{% url "detalhar_provento_fii" provento.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar provento">{{provento.fii.ticker}}</a>
+                            <a href="{% url "gerador_proventos:detalhar_provento_fii" provento.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar provento">{{provento.fii.ticker}}</a>
                             {% endif %}
                         </td>
                         <td>{{provento.data_ex}}</td>
                         <td>{{provento.data_pagamento}}</td>
                         <td>
                         {% for documento in provento.documentos %}
-                            <a href="{% url "detalhar_documento" documento.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar documento">{{documento.nome}}</a>
+                            <a href="{% url "gerador_proventos:detalhar_documento" documento.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar documento">{{documento.nome}}</a>
                         {% empty %}
                             Sem documentos
                         {% endfor %}
@@ -72,7 +72,7 @@
 {% endblock %}
 
 {% block extra_footer %}
-<script src={% static "assets/global/scripts/datatable.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/scripts/datatable.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/datatables/datatables.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.js" %} type="text/javascript"></script>
 <script src={% static "assets/pages/scripts/table-datatables-fixedheader.min.js" %} type="text/javascript"></script>
