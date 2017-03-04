@@ -27,6 +27,7 @@
             Você possui <strong>{{ qtd_pendencias }} pendência{% if qtd_pendencias > 1 %}s{% endif %}</strong>
             {% endif %}
         </div>
+        {% if qtd_pendencias > 0 %}
         <div class="row">
             {% if pendencias_tesouro_direto %}
             <div class="col-md-6">
@@ -57,7 +58,38 @@
                 </div>
             </div>
             {% endif %}
+            {% if pendencia_doc_gerador_proventos %}
+            <div class="col-md-6">
+                <div class="portlet box yellow-crusta">
+                    <div class="portlet-title">
+                        <div class="caption">
+                            <i class="icon-grid"></i>Gerador Proventos</div>
+                        <div class="tools">
+                            <a href="javascript:;" class="collapse"></a>
+                        </div>
+                    </div>
+                    <div class="portlet-body">
+                        <div class="list-group">
+                            {% for pendencia in pendencia_doc_gerador_proventos %}
+                            <div class="list-group-item">
+                                <div class="row">
+                                    <div class="col-md-9">
+                                        <span class="label bg-grey-gallery col-md-4">{{pendencia.texto_label}}</span>
+                                        <span class="col-md-12">{{pendencia.texto|safe}}</span> 
+                                    </div>
+                                    <div class="col-md-3">
+                                        <a href="{% url "listar_pendencias" %}" class="btn btn-warning col-md-12">Ver pendências</a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
+        {% endif %}
 	</div>
     <div class="modal fade" id="basic" tabindex="-1" role="basic" aria-hidden="true" data-backdrop="static" data-keyboard="false"  style="display: none;">
         <div class="modal-dialog">

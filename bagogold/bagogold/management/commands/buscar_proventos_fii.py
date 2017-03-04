@@ -1,15 +1,19 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.bagogold.models.fii import FII
-from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa
+from bagogold.bagogold.models.fii import FII, ProventoFII
+from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
+    PendenciaDocumentoProvento, ProventoFIIDocumento, \
+    ProventoFIIDescritoDocumentoBovespa
+from bagogold.bagogold.utils.gerador_proventos import \
+    ler_provento_estruturado_fii
 from django.core.management.base import BaseCommand
+from mechanize._form import ControlNotFoundError
 from threading import Thread
 from urllib2 import Request, urlopen, HTTPError, URLError
 import datetime
 import mechanize
 import re
 import time
-from mechanize._form import ControlNotFoundError
 
 # A thread 'Principal' indica se ainda está rodando a thread principal
 threads_rodando = {'Principal': 1}
@@ -77,7 +81,6 @@ class BuscaRendimentosFIIThread(Thread):
             if self.antigos:
                 buscar_rendimentos_fii_antigos(self.ticker, 0)
             if self.ano_inicial != 0:
-#                 pass
                 buscar_rendimentos_fii(self.ticker, self.ano_inicial, 0)
         except Exception as e:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
@@ -98,8 +101,18 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # Apaga documentos FII
-#         for documento in DocumentoProventoBovespa.objects.filter(tipo='F'):
-#             documento.delete()
+        documento_ids = DocumentoProventoBovespa.objects.filter(tipo='F').values_list('id', flat=True)
+        lista_ids_prov = list(ProventoFIIDocumento.objects.filter(documento__id__in=documento_ids).values_list('provento', flat=True))
+        lista_ids_desc_prov = list(ProventoFIIDocumento.objects.filter(documento__id__in=documento_ids).values_list('descricao_provento', flat=True))
+        for prov_doc in ProventoFIIDocumento.objects.filter(documento__id__in=documento_ids):
+            prov_doc.delete()
+        for prov in ProventoFII.objects.filter(id__in=lista_ids_prov):
+            prov.delete()
+        for desc_prov in ProventoFIIDescritoDocumentoBovespa.objects.filter(id__in=lista_ids_desc_prov):
+            desc_prov.delete()
+        for documento in DocumentoProventoBovespa.objects.filter(tipo='F'):
+            documento.delete()
+            
         inicio = datetime.datetime.now()
         # Checa primeiro se é para buscar todos os rendimentos
         if options['todos']:
@@ -144,6 +157,14 @@ class Command(BaseCommand):
                 time.sleep(3)
             while 'Principal' in threads_rodando.keys():
                 del threads_rodando['Principal']
+                
+            # Após buscar, tenta ler os proventos com documento estruturado
+            for pendencia in PendenciaDocumentoProvento.objects.filter(documento__tipo_documento=DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO,
+                                                                   documento__tipo='F').order_by('documento__protocolo'):
+                try:
+                    ler_provento_estruturado_fii(pendencia.documento)
+                except:
+                    pass
         except KeyboardInterrupt:
 #             print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
             while 'Principal' in threads_rodando.keys():
