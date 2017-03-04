@@ -37,20 +37,20 @@ acoes_patterns = [
     ]
 
 gerador_proventos_patterns = [
-    url(r'^gerador_proventos/baixar_documento_provento/(?P<id_documento>\d+)/$', views.gerador_proventos.gerador_proventos.baixar_documento_provento, name='baixar_documento_provento'),
-    url(r'^gerador_proventos/detalhar_documento/(?P<id_documento>\d+)/$', views.gerador_proventos.gerador_proventos.detalhar_documento, name='detalhar_documento'),
-    url(r'^gerador_proventos/detalhar_pendencias_usuario/(?P<id_usuario>\d+)/$', views.gerador_proventos.investidores.detalhar_pendencias_usuario, name='detalhar_pendencias_usuario'),
-    url(r'^gerador_proventos/detalhar_provento_acao/(?P<id_provento>\d+)/$', views.gerador_proventos.gerador_proventos.detalhar_provento_acao, name='detalhar_provento_acao'),
-    url(r'^gerador_proventos/detalhar_provento_fii/(?P<id_provento>\d+)/$', views.gerador_proventos.gerador_proventos.detalhar_provento_fii, name='detalhar_provento_fii'),
-    url(r'^gerador_proventos/ler_documento_provento/(?P<id_pendencia>\d+)/$', views.gerador_proventos.gerador_proventos.ler_documento_provento, name='ler_documento_provento'),
-    url(r'^gerador_proventos/listar_documentos/$', views.gerador_proventos.gerador_proventos.listar_documentos, name='listar_documentos'),
-    url(r'^gerador_proventos/manual_gerador/(?P<tipo_documento>[a-z]+)/$', views.gerador_proventos.gerador_proventos.manual_gerador, name='manual_gerador'),
-    url(r'^gerador_proventos/listar_pendencias/$', views.gerador_proventos.gerador_proventos.listar_pendencias, name='listar_pendencias'),
-    url(r'^gerador_proventos/listar_proventos/$', views.gerador_proventos.gerador_proventos.listar_proventos, name='listar_proventos'),
-    url(r'^gerador_proventos/listar_usuarios/$', views.gerador_proventos.investidores.listar_usuarios, name='listar_usuarios'),
-    url(r'^gerador_proventos/puxar_responsabilidade_documento_provento/$', views.gerador_proventos.gerador_proventos.puxar_responsabilidade_documento_provento, name='puxar_responsabilidade_documento_provento'),
-    url(r'^gerador_proventos/remover_responsabilidade_documento_provento/$', views.gerador_proventos.gerador_proventos.remover_responsabilidade_documento_provento, name='remover_responsabilidade_documento_provento'),
-    url(r'^gerador_proventos/validar_documento_provento/(?P<id_pendencia>\d+)/$', views.gerador_proventos.gerador_proventos.validar_documento_provento, name='validar_documento_provento'),
+    url(r'^baixar_documento_provento/(?P<id_documento>\d+)/$', views.gerador_proventos.gerador_proventos.baixar_documento_provento, name='baixar_documento_provento'),
+    url(r'^detalhar_documento/(?P<id_documento>\d+)/$', views.gerador_proventos.gerador_proventos.detalhar_documento, name='detalhar_documento'),
+    url(r'^detalhar_pendencias_usuario/(?P<id_usuario>\d+)/$', views.gerador_proventos.investidores.detalhar_pendencias_usuario, name='detalhar_pendencias_usuario'),
+    url(r'^detalhar_provento_acao/(?P<id_provento>\d+)/$', views.gerador_proventos.gerador_proventos.detalhar_provento_acao, name='detalhar_provento_acao'),
+    url(r'^detalhar_provento_fii/(?P<id_provento>\d+)/$', views.gerador_proventos.gerador_proventos.detalhar_provento_fii, name='detalhar_provento_fii'),
+    url(r'^ler_documento_provento/(?P<id_pendencia>\d+)/$', views.gerador_proventos.gerador_proventos.ler_documento_provento, name='ler_documento_provento'),
+    url(r'^listar_documentos/$', views.gerador_proventos.gerador_proventos.listar_documentos, name='listar_documentos'),
+    url(r'^manual_gerador/(?P<tipo_documento>[a-z]+)/$', views.gerador_proventos.gerador_proventos.manual_gerador, name='manual_gerador'),
+    url(r'^listar_pendencias/$', views.gerador_proventos.gerador_proventos.listar_pendencias, name='listar_pendencias'),
+    url(r'^listar_proventos/$', views.gerador_proventos.gerador_proventos.listar_proventos, name='listar_proventos'),
+    url(r'^listar_usuarios/$', views.gerador_proventos.investidores.listar_usuarios, name='listar_usuarios'),
+    url(r'^puxar_responsabilidade_documento_provento/$', views.gerador_proventos.gerador_proventos.puxar_responsabilidade_documento_provento, name='puxar_responsabilidade_documento_provento'),
+    url(r'^remover_responsabilidade_documento_provento/$', views.gerador_proventos.gerador_proventos.remover_responsabilidade_documento_provento, name='remover_responsabilidade_documento_provento'),
+    url(r'^validar_documento_provento/(?P<id_pendencia>\d+)/$', views.gerador_proventos.gerador_proventos.validar_documento_provento, name='validar_documento_provento'),
     ]
 
 urlpatterns = [

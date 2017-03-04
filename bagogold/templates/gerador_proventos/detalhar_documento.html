@@ -51,9 +51,9 @@
                                 {% for pendencia in documento.pendencias %}
                                     <a href="
                                     {% if pendencia.tipo == 'V' %}
-                                        {% url 'validar_documento_provento' pendencia.id %}
+                                        {% url 'gerador_proventos:validar_documento_provento' pendencia.id %}
                                     {% else %}
-                                        {% url 'ler_documento_provento' pendencia.id %}
+                                        {% url 'gerador_proventos:ler_documento_provento' pendencia.id %}
                                     {% endif %}
                                     ">{{ pendencia.tipo_completo }}</a>
                                 {% empty %}
@@ -61,7 +61,7 @@
                                 {% endfor %}
                                 </div>
                             </div>
-                            <a href="{% url 'baixar_documento_provento' documento.id %}" class="btn btn-warning">Download</a>
+                            <a href="{% url 'gerador_proventos:baixar_documento_provento' documento.id %}" class="btn btn-warning">Download</a>
                         </div>
                     </div>
                 </div>
@@ -103,7 +103,7 @@
                                     <div class="m-grid-col m-grid-col-left"><strong>Pagamento:</strong></div>
                                     <div class="m-grid-col m-grid-col-left">{{provento.data_pagamento|date:'d/m/Y'}}</div>
                                     <div class="m-grid-col m-grid-col-left">
-                                        <a href="{% url "detalhar_provento_acao" provento.proventoacaodocumento.provento.id %}" type="button" class="btn btn-xs btn-warning">
+                                        <a href="{% url "gerador_proventos:detalhar_provento_acao" provento.proventoacaodocumento.provento.id %}" type="button" class="btn btn-xs btn-warning">
                                         Ver provento versionado
                                         </a>
                                     </div>
@@ -145,7 +145,7 @@
                                     <div class="m-grid-col m-grid-col-left"><strong>Pagamento:</strong></div>
                                     <div class="m-grid-col m-grid-col-left">{{provento.data_pagamento|date:'d/m/Y'}}</div>
                                     <div class="m-grid-col m-grid-col-left">
-                                        <a href="{% url "detalhar_provento_fii" provento.proventofiidocumento.provento.id %}" type="button" class="btn btn-xs btn-warning">
+                                        <a href="{% url "gerador_proventos:detalhar_provento_fii" provento.proventofiidocumento.provento.id %}" type="button" class="btn btn-xs btn-warning">
                                         Ver provento versionado
                                         </a>
                                     </div>

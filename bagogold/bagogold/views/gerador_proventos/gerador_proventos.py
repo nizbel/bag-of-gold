@@ -43,7 +43,7 @@ def baixar_documento_provento(request, id_documento):
         documento_provento = DocumentoProventoBovespa.objects.get(id=id_documento)
     except DocumentoProventoBovespa.DoesNotExist:
         messages.error(request, 'Documento não foi encontrado para download')
-        return HttpResponseRedirect(reverse('listar_pendencias'))
+        return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
     filename = documento_provento.documento.name.split('/')[-1]
     if documento_provento.extensao_documento() == 'doc':
         response = HttpResponse(documento_provento.documento, content_type='application/msword')
@@ -150,10 +150,10 @@ def ler_documento_provento(request, id_pendencia):
         # Verificar se pendência é de leitura
         if pendencia.tipo != 'L':
             messages.success(request, 'Pendência não é de leitura')
-            return HttpResponseRedirect(reverse('listar_pendencias'))
+            return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
     except PendenciaDocumentoProvento.DoesNotExist:
         messages.error(request, 'Pendência de leitura não foi encontrada')
-        return HttpResponseRedirect(reverse('listar_pendencias'))
+        return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
         
     investidor = request.user.investidor
     
@@ -290,7 +290,7 @@ def ler_documento_provento(request, id_pendencia):
                                 # Salvar descrições de proventos
                                 criar_descricoes_provento_acoes(proventos_validos, acoes_proventos_validos, pendencia.documento)
                                 messages.success(request, 'Descrições de proventos criadas com sucesso')
-                                return HttpResponseRedirect(reverse('listar_pendencias'))
+                                return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
                             except Exception as e:
                                 desfazer_investidor_responsavel_por_leitura(pendencia, investidor)
                                 messages.error(request, str(e))
@@ -340,7 +340,7 @@ def ler_documento_provento(request, id_pendencia):
                             # Salvar descrições de proventos
                             criar_descricoes_provento_fiis(proventos_validos, pendencia.documento)
                             messages.success(request, 'Descrições de proventos criadas com sucesso')
-                            return HttpResponseRedirect(reverse('listar_pendencias'))
+                            return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
                         except Exception as e:
                             desfazer_investidor_responsavel_por_leitura(pendencia, investidor)
                             messages.error(request, str(e))
@@ -361,7 +361,7 @@ def ler_documento_provento(request, id_pendencia):
                 # Colocar investidor como responsável pela leitura do documento
                 salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao='E')
                 messages.success(request, 'Exclusão de arquivo registrada com sucesso')
-                return HttpResponseRedirect(reverse('listar_pendencias'))
+                return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
     else:
         # Preparar formset de proventos
         if pendencia.documento.tipo == 'A':
@@ -582,10 +582,10 @@ def validar_documento_provento(request, id_pendencia):
         # Verificar se pendência é de validação
         if pendencia.tipo != 'V':
             messages.error(request, 'Pendência não é de validação')
-            return HttpResponseRedirect(reverse('listar_pendencias'))
+            return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
     except PendenciaDocumentoProvento.DoesNotExist:
         messages.error(request, 'Pendência de validação não foi encontrada')
-        return HttpResponseRedirect(reverse('listar_pendencias'))
+        return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
     
     if request.method == 'POST':
         # Verifica se pendência não possuia responsável e usuário acaba de reservá-la
@@ -608,7 +608,7 @@ def validar_documento_provento(request, id_pendencia):
         # Testa se o investidor atual é o responsável para mandar POST
         elif investidor != pendencia.investidorresponsavelpendencia.investidor:
             messages.error(request, 'Você não é o responsável por esta pendência')
-            return HttpResponseRedirect(reverse('listar_pendencias'))
+            return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
         
 #         print request.POST
         if request.POST.get('validar'):
@@ -716,7 +716,7 @@ def validar_documento_provento(request, id_pendencia):
                     # Remover pendência
                     pendencia.delete()
                     messages.success(request, 'Pendência validada com sucesso')
-                    return HttpResponseRedirect(reverse('listar_pendencias'))
+                    return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
             except:
                 pass
         
@@ -728,7 +728,7 @@ def validar_documento_provento(request, id_pendencia):
             try:
                 salvar_investidor_responsavel_por_recusar_documento(pendencia, investidor, motivo_recusa)
                 messages.success(request, 'Pendência recusada com sucesso')
-                return HttpResponseRedirect(reverse('listar_pendencias'))
+                return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
             except Exception as erro:
                 messages.error(request, unicode(erro))
         

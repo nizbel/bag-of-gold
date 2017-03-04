@@ -55,7 +55,7 @@
                                 </div>
                             </div>
                         </div>
-                        <a href="{% url 'baixar_documento_provento' pendencia.documento.id %}" class="btn btn-warning">Download</a>
+                        <a href="{% url 'gerador_proventos:baixar_documento_provento' pendencia.documento.id %}" class="btn btn-warning">Download</a>
                     </div>
                 </div>
             </div>
@@ -477,7 +477,7 @@ $( document ).ready(function() {
 		}
 	});
 	
-	PDFJS.getDocument('{% url "baixar_documento_provento" pendencia.documento.id %}').then(function(pdf) {
+	PDFJS.getDocument('{% url "gerador_proventos:baixar_documento_provento" pendencia.documento.id %}').then(function(pdf) {
 	  // you can now use *pdf* here
 	  pdf.getPage(1).then(function(page) {
     	  // you can now use *page* here

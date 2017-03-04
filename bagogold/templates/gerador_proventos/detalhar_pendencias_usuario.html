@@ -56,7 +56,7 @@
                 		{% for pendencia in usuario.pendencias_alocadas %}
                 			<tr>
                 				<td>{{pendencia.tipo_pendencia}}</td>
-                                <td><a href="{% url "detalhar_documento" pendencia.documento.id %}">{{pendencia.documento}}</a></td>
+                                <td><a href="{% url "gerador_proventos:detalhar_documento" pendencia.documento.id %}">{{pendencia.documento}}</a></td>
                                 <td>{{pendencia.investidorresponsavelpendencia.data_alocacao|date:"d/m/Y H:i"}}</td>
                 			</tr>
                 		{% endfor %}	
@@ -87,7 +87,7 @@
                         <tbody>
                         {% for leitura in usuario.leituras %}
                             <tr>
-                                <td><a href="{% url "detalhar_documento" leitura.documento.id %}">{{leitura.documento}}</a></td>
+                                <td><a href="{% url "gerador_proventos:detalhar_documento" leitura.documento.id %}">{{leitura.documento}}</a></td>
                                 <td>{{leitura.data_leitura|date:"d/m/Y H:i"}}</td>
                             </tr>
                         {% endfor %}    
@@ -118,7 +118,7 @@
                         <tbody>
                         {% for validacao in usuario.validacoes %}
                             <tr>
-                                <td><a href="{% url "detalhar_documento" validacao.documento.id %}">{{validacao.documento}}</a></td>
+                                <td><a href="{% url "gerador_proventos:detalhar_documento" validacao.documento.id %}">{{validacao.documento}}</a></td>
                                 <td>{{validacao.data_validacao|date:"d/m/Y H:i"}}</td>
                             </tr>
                         {% endfor %}    
@@ -151,7 +151,7 @@
                         <tbody>
                         {% for recusa in usuario.leituras_que_recusou %}
                             <tr>
-                                <td><a href="{% url "detalhar_documento" recusa.documento.id %}">{{recusa.documento}}</a></td>
+                                <td><a href="{% url "gerador_proventos:detalhar_documento" recusa.documento.id %}">{{recusa.documento}}</a></td>
                                 <td>{{recusa.data_recusa|date:"d/m/Y H:i"}}</td>
                             </tr>
                         {% endfor %}    
@@ -182,7 +182,7 @@
                         <tbody>
                         {% for recusa in usuario.leituras_recusadas %}
                             <tr>
-                                <td><a href="{% url "detalhar_documento" recusa.documento.id %}">{{recusa.documento}}</a></td>
+                                <td><a href="{% url "gerador_proventos:detalhar_documento" recusa.documento.id %}">{{recusa.documento}}</a></td>
                                 <td>{{recusa.data_recusa|date:"d/m/Y H:i"}}</td>
                             </tr>
                         {% endfor %}    

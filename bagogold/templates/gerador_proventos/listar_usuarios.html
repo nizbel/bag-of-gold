@@ -29,7 +29,7 @@
 		<tbody>
 		{% for usuario in usuarios %}
 			<tr>
-				<td><a href="{% url "detalhar_pendencias_usuario" usuario.id %}">{{usuario.investidor}}</a></td>
+				<td><a href="{% url "gerador_proventos:detalhar_pendencias_usuario" usuario.id %}">{{usuario.investidor}}</a></td>
 				<td>{{usuario.pendencias_alocadas}}</td>
                 <td>{{usuario.leituras}}</td>
                 <td>{{usuario.taxa_leitura|floatformat:'2'}}/dia</td>
