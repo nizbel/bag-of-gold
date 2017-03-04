@@ -1,53 +1,71 @@
-{% extends "base.html" %}
+{% extends "teste/base.html" %}
+{% load staticfiles %}
 
 {% block content %}
-<div class="row-fluid">
-    <h1>Olá, {% if request.user.first_name %}{{request.user.first_name}}{% else %}{{request.user}}{% endif %}</h1>
+<div class="portlet light">
+	<div class="portlet-title">
+		<div class="caption font-yellow-crusta">
+			<i class="icon-user font-yellow-crusta"></i>
+			<span class="caption-subject bold uppercase"> Minha conta </span>
+		</div>
+	</div>
+	<div class="portlet-body">
+		<div class="row">
+			<div class="col-md-12">
+				<!-- BEGIN Portlet PORTLET-->
+				<div class="portlet box yellow-crusta">
+					<div class="portlet-title">
+						<div class="caption">
+							<i class="fa fa-folder-open-o"></i>Dados da conta</div>
+						<div class="tools">
+							<a href="{% url "editar_dados_cadastrais" request.user.id %}" class="tooltips" data-placement="top" data-original-title="Editar"><i class="icon-pencil font-white"></i></a>
+							<a href="javascript:;" class="collapse"></a>
+						</div>
+					</div>
+					<div class="portlet-body">
+						<div class="m-grid m-grid-responsive-xs">
+							<div class="m-grid-row">
+								<div class="m-grid-col m-grid-col-left"><strong>Usuário:</strong></div>
+								<div class="m-grid-col m-grid-col-left">{{request.user}}</div>
+								<div class="m-grid-col m-grid-col-center"><a class="btn btn-xs yellow-crusta" href="{% url "password_change" %}">Alterar senha <i class="fa fa-key"></i></a></div>
+								<div class="m-grid-col m-grid-col-left"><strong>Último login:</strong></div>
+								<div class="m-grid-col m-grid-col-left">{{request.user.last_login}}</div>
+							</div>
+							<div class="m-grid-row">
+								<div class="m-grid-col m-grid-col-left"><strong>Email:</strong></div>
+								<div class="m-grid-col m-grid-col-left">{{request.user.email}}</div>
+								<div class="m-grid-col m-grid-col-left"></div>
+								<div class="m-grid-col m-grid-col-left"><strong>Criação da conta:</strong></div>
+								<div class="m-grid-col m-grid-col-left">{{request.user.date_joined}}</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- END Portlet PORTLET-->
+			</div>
+			<div class="col-md-12">
+				<!-- BEGIN Portlet PORTLET-->
+				<div class="portlet box yellow-crusta">
+					<div class="portlet-title">
+						<div class="caption">
+							<i class="fa fa-folder-open-o"></i>Dados de investimento</div>
+						<div class="tools">
+							<a href="javascript:;" class="collapse"></a>
+						</div>
+					</div>
+					<div class="portlet-body">
+						<div class="m-grid m-grid-responsive-xs">
+							<div class="m-grid-row">
+								<div class="m-grid-col m-grid-col-left m-grid-col-md-2"><strong>Corretagem padrão:</strong></div>
+								<div class="m-grid-col m-grid-col-left">{% if request.user.investidor.tipo_corretagem == 'F' %}R${% endif %}{{request.user.investidor.corretagem_padrao}}{% if request.user.investidor.tipo_corretagem == 'P' %}%{% endif %}</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- END Portlet PORTLET-->
+			</div>
+		</div>
+	</div>
 </div>
-<div class="row-fluid">
-    <div class="box span12">
-        <div class="box-header">
-            <h2>Dados da conta</h2>
-            <div class="box-icon">
-                <a href="{% url "editar_dados_cadastrais" request.user.id %}" data-original-title="Editar"
-            data-rel="tooltip"><i class="halflings-icon pencil"></i></a>
-                <a href="#" class="btn-minimize"><i class="halflings-icon chevron-up"></i></a>
-            </div>
-        </div>
-        <div class="box-content">
-            <div class="row-fluid">
-                <div class="span1"><strong>Usuário:</strong></div>
-                <div class="span3">{{request.user}} <a class="btn btn-small btn-warning" href="{% url "password_change" %}">Alterar senha</a></div>
-                <div class="span1"><strong>Nome:</strong></div>
-                <div class="span3">{{request.user.first_name}}</div>
-                <div class="span1"><strong>Sobrenome:</strong></div>
-                <div class="span3">{{request.user.last_name}}</div>
-            </div>
-            <div class="row-fluid">
-                <div class="span1"><strong>Email:</strong></div>
-                <div class="span3">{{request.user.email}}</div>
-                <div class="span1"><strong>Último login:</strong></div>
-                <div class="span3">{{request.user.last_login}}</div>
-                <div class="span1"><strong>Criação da conta:</strong></div>
-                <div class="span3">{{request.user.date_joined}}</div>
-            </div>
-        </div>
-    </div>
-</div>
-<div class="row-fluid">
-    <div class="box span12">
-        <div class="box-header">
-            <h2>Dados de investimento</h2>
-            <div class="box-icon">
-                <a href="#" class="btn-minimize"><i class="halflings-icon chevron-up"></i></a>
-            </div>
-        </div>
-        <div class="box-content">
-            <div class="row-fluid">
-                <div class="span1"><strong>Corretagem padrão:</strong></div>
-                <div class="span3">{% if request.user.investidor.tipo_corretagem == 'F' %}R${% endif %}{{request.user.investidor.corretagem_padrao}}{% if request.user.investidor.tipo_corretagem == 'P' %}%{% endif %}</div>
-            </div>
-        </div>
-    </div>
-</div>
+
 {% endblock %}
