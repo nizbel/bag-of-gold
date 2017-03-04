@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.models.gerador_proventos import \
+    PendenciaDocumentoProvento
 from bagogold.bagogold.models.investidores import Investidor
 from bagogold.bagogold.models.td import OperacaoTitulo, Titulo
 from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia_por_titulo
@@ -58,7 +60,7 @@ class PendenciaVencimentoTesouroDireto (Pendencia):
         else:
             if PendenciaVencimentoTesouroDireto.objects.filter(investidor=investidor, titulo__id=titulo_id).exists():
                 PendenciaVencimentoTesouroDireto.objects.filter(investidor=investidor, titulo__id=titulo_id).delete()
-        
+                
 @receiver(post_save, sender=OperacaoTitulo, dispatch_uid="pendencia_vencimento_td_on_save")
 def verificar_pendencia_vencimento_td_on_save(sender, instance, **kwargs):
     if instance.titulo.titulo_vencido():
@@ -73,3 +75,30 @@ def verificar_pendencia_vencimento_td_on_delete(sender, instance, **kwargs):
         qtd_atual = quantidade_titulos_ate_dia_por_titulo(instance.investidor, instance.titulo.id, datetime.date.today())
         PendenciaVencimentoTesouroDireto.verificar_pendencia(instance.investidor, instance.titulo.id, qtd_atual)
     
+class PendenciaDocumentoGeradorProventos (Pendencia):   
+
+    class Meta:
+        unique_together=('investidor',)
+        
+    def texto_descricao(self):
+        return u'%s documentos a serem lidos/validados' % (self.quantidade())
+    
+    def texto(self):
+        return u'Quantidade de documentos: <strong>%s</strong>' % (self.quantidade())
+    
+    def texto_id(self):
+        return 'provento_documento_%s' % (self.id)
+    
+    def texto_label(self):
+        return u'Documentos a ler/validar'
+    
+    def quantidade(self):
+        return PendenciaDocumentoProvento.objects.all().count()
+    
+    @staticmethod
+    def verificar_pendencia(investidor):
+        if PendenciaDocumentoProvento.objects.filter().exists():
+            pendencia_vencimento_td, criada = PendenciaDocumentoGeradorProventos.objects.get_or_create(investidor=investidor)
+        else:
+            if PendenciaDocumentoGeradorProventos.objects.filter(investidor=investidor).exists():
+                PendenciaDocumentoGeradorProventos.objects.filter(investidor=investidor).delete()

@@ -63,6 +63,10 @@ class ProventoOficialManager(models.Manager):
         return super(ProventoOficialManager, self).get_queryset().filter(oficial_bovespa=True)
     
 class Provento (models.Model):
+    ESCOLHAS_TIPO_PROVENTO_ACAO=(('A', "Ações"),
+                            ('D', "Dividendos"),
+                            ('J', "Juros sobre capital próprio"),)
+    
     acao = models.ForeignKey('Acao')
     valor_unitario = models.DecimalField(u'Valor unitário', max_digits=16, decimal_places=12)
     """
@@ -86,6 +90,16 @@ class Provento (models.Model):
         elif self.tipo_provento == 'J':
             tipo = u'JSCP'
         return u'%s de %s com valor %s e data EX %s a ser pago em %s' % (tipo, self.acao.ticker, self.valor_unitario, self.data_ex, self.data_pagamento)
+    
+    def descricao_tipo_provento(self):
+        if self.tipo_provento == 'A':
+            return u'Ações'
+        elif self.tipo_provento == 'D':
+            return u'Dividendos'
+        elif self.tipo_provento == 'J':
+            return u'JSCP'
+        else:
+            return u'Indefinido'
     
     objects = ProventoOficialManager()
     gerador_objects = models.Manager()
