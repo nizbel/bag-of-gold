@@ -14,26 +14,43 @@ import views
 validators.DUPLICATE_EMAIL = 'Já existe um usuário cadastrado com esse email'
 
 acoes_patterns = [
-        url(r'^$', views.acoes.home.home, name='home_acoes'),
-#         url(r'^$', views.acoes.buyandhold.listar_acoes, name='listar_acoes'),
-        url(r'^buyandhold/calcular_poupanca_proventos_na_data/$', views.acoes.buyandhold.calcular_poupanca_proventos_na_data, name='calcular_poupanca_proventos_na_data'),
-        url(r'^buyandhold/editar_operacao_acao/(?P<id>\d+)/$', views.acoes.buyandhold.editar_operacao_acao, name='editar_operacao_bh'),
-        url(r'^buyandhold/editar_provento_acao/(?P<id>\d+)/$', views.acoes.buyandhold.editar_provento_acao, name='editar_provento_bh'),
-        url(r'^buyandhold/estatisticas_acao/(?P<ticker>\w+)/$', views.acoes.buyandhold.estatisticas_acao, name='estatisticas_acao_bh'),
-        url(r'^buyandhold/historico/$', views.acoes.buyandhold.historico, name='historico_bh'),
-        url(r'^buyandhold/inserir_operacao_acao/$', views.acoes.buyandhold.inserir_operacao_acao, name='inserir_operacao_bh'),
-        url(r'^buyandhold/inserir_provento_acao/$', views.acoes.buyandhold.inserir_provento_acao, name='inserir_provento_bh'),
-        url(r'^buyandhold/inserir_taxa_custodia_acao/$', views.acoes.buyandhold.inserir_taxa_custodia_acao, name='inserir_taxa_custodia_acao'),
-        url(r'^buyandhold/painel/$', views.acoes.buyandhold.painel, name='painel_bh'),
-        url(r'^buyandhold/ver_taxas_custodia_acao/$', views.acoes.buyandhold.ver_taxas_custodia_acao, name='ver_taxas_custodia_acao'),
-    
-        url(r'^trading/acompanhamento_mensal/$', views.acoes.trade.acompanhamento_mensal, name='acompanhamento_mensal'),
-        url(r'^trading/editar_operacao/(?P<id>\d+)/$', views.acoes.trade.editar_operacao, name='editar_operacao_t'),
-        url(r'^trading/editar_operacao_acao/(?P<id>\d+)/$', views.acoes.trade.editar_operacao_acao, name='editar_operacao_acao_t'),
-        url(r'^trading/historico_operacoes/$', views.acoes.trade.historico_operacoes, name='historico_operacoes'),
-        url(r'^trading/historico_operacoes_cv/$', views.acoes.trade.historico_operacoes_cv, name='historico_operacoes_cv'),
-        url(r'^trading/inserir_operacao/$', views.acoes.trade.inserir_operacao, name='inserir_operacao_t'),
-        url(r'^trading/inserir_operacao_acao/$', views.acoes.trade.inserir_operacao_acao, name='inserir_operacao_acao_t'),
+    url(r'^$', views.acoes.home.home, name='home_acoes'),
+#     url(r'^$', views.acoes.buyandhold.listar_acoes, name='listar_acoes'),
+    url(r'^buyandhold/calcular_poupanca_proventos_na_data/$', views.acoes.buyandhold.calcular_poupanca_proventos_na_data, name='calcular_poupanca_proventos_na_data'),
+    url(r'^buyandhold/editar_operacao_acao/(?P<id>\d+)/$', views.acoes.buyandhold.editar_operacao_acao, name='editar_operacao_bh'),
+    url(r'^buyandhold/editar_provento_acao/(?P<id>\d+)/$', views.acoes.buyandhold.editar_provento_acao, name='editar_provento_bh'),
+    url(r'^buyandhold/estatisticas_acao/(?P<ticker>\w+)/$', views.acoes.buyandhold.estatisticas_acao, name='estatisticas_acao_bh'),
+    url(r'^buyandhold/historico/$', views.acoes.buyandhold.historico, name='historico_bh'),
+    url(r'^buyandhold/inserir_operacao_acao/$', views.acoes.buyandhold.inserir_operacao_acao, name='inserir_operacao_bh'),
+    url(r'^buyandhold/inserir_provento_acao/$', views.acoes.buyandhold.inserir_provento_acao, name='inserir_provento_bh'),
+    url(r'^buyandhold/inserir_taxa_custodia_acao/$', views.acoes.buyandhold.inserir_taxa_custodia_acao, name='inserir_taxa_custodia_acao'),
+    url(r'^buyandhold/painel/$', views.acoes.buyandhold.painel, name='painel_bh'),
+    url(r'^buyandhold/ver_taxas_custodia_acao/$', views.acoes.buyandhold.ver_taxas_custodia_acao, name='ver_taxas_custodia_acao'),
+
+    url(r'^trading/acompanhamento_mensal/$', views.acoes.trade.acompanhamento_mensal, name='acompanhamento_mensal'),
+    url(r'^trading/editar_operacao/(?P<id>\d+)/$', views.acoes.trade.editar_operacao, name='editar_operacao_t'),
+    url(r'^trading/editar_operacao_acao/(?P<id>\d+)/$', views.acoes.trade.editar_operacao_acao, name='editar_operacao_acao_t'),
+    url(r'^trading/historico_operacoes/$', views.acoes.trade.historico_operacoes, name='historico_operacoes'),
+    url(r'^trading/historico_operacoes_cv/$', views.acoes.trade.historico_operacoes_cv, name='historico_operacoes_cv'),
+    url(r'^trading/inserir_operacao/$', views.acoes.trade.inserir_operacao, name='inserir_operacao_t'),
+    url(r'^trading/inserir_operacao_acao/$', views.acoes.trade.inserir_operacao_acao, name='inserir_operacao_acao_t'),
+    ]
+
+gerador_proventos_patterns = [
+    url(r'^baixar_documento_provento/(?P<id_documento>\d+)/$', views.gerador_proventos.gerador_proventos.baixar_documento_provento, name='baixar_documento_provento'),
+    url(r'^detalhar_documento/(?P<id_documento>\d+)/$', views.gerador_proventos.gerador_proventos.detalhar_documento, name='detalhar_documento'),
+    url(r'^detalhar_pendencias_usuario/(?P<id_usuario>\d+)/$', views.gerador_proventos.investidores.detalhar_pendencias_usuario, name='detalhar_pendencias_usuario'),
+    url(r'^detalhar_provento_acao/(?P<id_provento>\d+)/$', views.gerador_proventos.gerador_proventos.detalhar_provento_acao, name='detalhar_provento_acao'),
+    url(r'^detalhar_provento_fii/(?P<id_provento>\d+)/$', views.gerador_proventos.gerador_proventos.detalhar_provento_fii, name='detalhar_provento_fii'),
+    url(r'^ler_documento_provento/(?P<id_pendencia>\d+)/$', views.gerador_proventos.gerador_proventos.ler_documento_provento, name='ler_documento_provento'),
+    url(r'^listar_documentos/$', views.gerador_proventos.gerador_proventos.listar_documentos, name='listar_documentos'),
+    url(r'^manual_gerador/(?P<tipo_documento>[a-z]+)/$', views.gerador_proventos.gerador_proventos.manual_gerador, name='manual_gerador'),
+    url(r'^listar_pendencias/$', views.gerador_proventos.gerador_proventos.listar_pendencias, name='listar_pendencias'),
+    url(r'^listar_proventos/$', views.gerador_proventos.gerador_proventos.listar_proventos, name='listar_proventos'),
+    url(r'^listar_usuarios/$', views.gerador_proventos.investidores.listar_usuarios, name='listar_usuarios'),
+    url(r'^puxar_responsabilidade_documento_provento/$', views.gerador_proventos.gerador_proventos.puxar_responsabilidade_documento_provento, name='puxar_responsabilidade_documento_provento'),
+    url(r'^remover_responsabilidade_documento_provento/$', views.gerador_proventos.gerador_proventos.remover_responsabilidade_documento_provento, name='remover_responsabilidade_documento_provento'),
+    url(r'^validar_documento_provento/(?P<id_pendencia>\d+)/$', views.gerador_proventos.gerador_proventos.validar_documento_provento, name='validar_documento_provento'),
     ]
 
 urlpatterns = [
@@ -67,20 +84,7 @@ urlpatterns = [
     url(r'^minha_conta/editar_dados_cadastrais/(?P<id>\d+)/$', views.investidores.investidores.editar_dados_cadastrais, name='editar_dados_cadastrais'),
     
     # Gerador de proventos
-    url(r'^gerador_proventos/baixar_documento_provento/(?P<id_documento>\d+)/$', views.gerador_proventos.gerador_proventos.baixar_documento_provento, name='baixar_documento_provento'),
-    url(r'^gerador_proventos/detalhar_documento/(?P<id_documento>\d+)/$', views.gerador_proventos.gerador_proventos.detalhar_documento, name='detalhar_documento'),
-    url(r'^gerador_proventos/detalhar_pendencias_usuario/(?P<id_usuario>\d+)/$', views.gerador_proventos.investidores.detalhar_pendencias_usuario, name='detalhar_pendencias_usuario'),
-    url(r'^gerador_proventos/detalhar_provento_acao/(?P<id_provento>\d+)/$', views.gerador_proventos.gerador_proventos.detalhar_provento_acao, name='detalhar_provento_acao'),
-    url(r'^gerador_proventos/detalhar_provento_fii/(?P<id_provento>\d+)/$', views.gerador_proventos.gerador_proventos.detalhar_provento_fii, name='detalhar_provento_fii'),
-    url(r'^gerador_proventos/ler_documento_provento/(?P<id_pendencia>\d+)/$', views.gerador_proventos.gerador_proventos.ler_documento_provento, name='ler_documento_provento'),
-    url(r'^gerador_proventos/listar_documentos/$', views.gerador_proventos.gerador_proventos.listar_documentos, name='listar_documentos'),
-    url(r'^gerador_proventos/manual_gerador/(?P<tipo_documento>[a-z]+)/$', views.gerador_proventos.gerador_proventos.manual_gerador, name='manual_gerador'),
-    url(r'^gerador_proventos/listar_pendencias/$', views.gerador_proventos.gerador_proventos.listar_pendencias, name='listar_pendencias'),
-    url(r'^gerador_proventos/listar_proventos/$', views.gerador_proventos.gerador_proventos.listar_proventos, name='listar_proventos'),
-    url(r'^gerador_proventos/listar_usuarios/$', views.gerador_proventos.investidores.listar_usuarios, name='listar_usuarios'),
-    url(r'^gerador_proventos/puxar_responsabilidade_documento_provento/$', views.gerador_proventos.gerador_proventos.puxar_responsabilidade_documento_provento, name='puxar_responsabilidade_documento_provento'),
-    url(r'^gerador_proventos/remover_responsabilidade_documento_provento/$', views.gerador_proventos.gerador_proventos.remover_responsabilidade_documento_provento, name='remover_responsabilidade_documento_provento'),
-    url(r'^gerador_proventos/validar_documento_provento/(?P<id_pendencia>\d+)/$', views.gerador_proventos.gerador_proventos.validar_documento_provento, name='validar_documento_provento'),
+    url(r'^gerador_proventos/', include(gerador_proventos_patterns, namespace='gerador_proventos')),
     
     # Ações
     url(r'^acoes/', include(acoes_patterns, namespace='acoes')),

@@ -334,11 +334,11 @@
                 <li>
                     <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> Gerador de proventos</span></a>
                     <ul>
-                        <li><a class="submenu" href="{% url "listar_documentos" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar documentos</span></a></li>
-                        <li><a class="submenu" href="{% url "listar_pendencias" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar pendências</span></a></li>
-                        <li><a class="submenu" href="{% url "listar_proventos" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar proventos</span></a></li>
-                        <li><a class="submenu" href="{% url "listar_usuarios" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar usuários</span></a></li>
-                        <li><a class="submenu" href="{% url "manual_gerador" 'acao' %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Manual do gerador</span></a></li>
+                        <li><a class="submenu" href="{% url "gerador_proventos:listar_documentos" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar documentos</span></a></li>
+                        <li><a class="submenu" href="{% url "gerador_proventos:listar_pendencias" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar pendências</span></a></li>
+                        <li><a class="submenu" href="{% url "gerador_proventos:listar_proventos" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar proventos</span></a></li>
+                        <li><a class="submenu" href="{% url "gerador_proventos:listar_usuarios" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar usuários</span></a></li>
+                        <li><a class="submenu" href="{% url "gerador_proventos:manual_gerador" 'acao' %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Manual do gerador</span></a></li>
                     </ul>   
                 </li>
                 {% endif %}

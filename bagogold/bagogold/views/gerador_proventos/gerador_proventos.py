@@ -2,14 +2,16 @@
 from bagogold import settings
 from bagogold.bagogold.forms.gerador_proventos import \
     ProventoAcaoDescritoDocumentoBovespaForm, \
-    AcaoProventoAcaoDescritoDocumentoBovespaForm
+    AcaoProventoAcaoDescritoDocumentoBovespaForm, \
+    ProventoFIIDescritoDocumentoBovespaForm
 from bagogold.bagogold.models.acoes import Acao, Provento, AcaoProvento
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.bagogold.models.fii import ProventoFII
+from bagogold.bagogold.models.fii import ProventoFII, FII
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
     PendenciaDocumentoProvento, ProventoAcaoDescritoDocumentoBovespa, \
     ProventoAcaoDocumento, InvestidorResponsavelPendencia, \
-    AcaoProventoAcaoDescritoDocumentoBovespa
+    AcaoProventoAcaoDescritoDocumentoBovespa, ProventoFIIDocumento, \
+    ProventoFIIDescritoDocumentoBovespa
 from bagogold.bagogold.utils.gerador_proventos import \
     alocar_pendencia_para_investidor, desalocar_pendencia_de_investidor, \
     salvar_investidor_responsavel_por_leitura, criar_descricoes_provento_acoes, \
@@ -17,16 +19,16 @@ from bagogold.bagogold.utils.gerador_proventos import \
     versionar_descricoes_relacionadas_acoes, \
     salvar_investidor_responsavel_por_validacao, \
     desfazer_investidor_responsavel_por_validacao, \
-    salvar_investidor_responsavel_por_recusar_documento
-from bagogold.bagogold.utils.investidores import is_superuser
+    salvar_investidor_responsavel_por_recusar_documento, \
+    criar_descricoes_provento_fiis, buscar_proventos_proximos_fii, \
+    versionar_descricoes_relacionadas_fiis
 from bagogold.bagogold.utils.misc import \
     formatar_zeros_a_direita_apos_2_casas_decimais
 from decimal import Decimal
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required, user_passes_test, \
-    permission_required
-from django.core.exceptions import ValidationError
+from django.contrib.auth.decorators import login_required, permission_required
 from django.core.urlresolvers import reverse
+from django.db import transaction
 from django.forms.formsets import formset_factory
 from django.forms.models import model_to_dict
 from django.http.response import HttpResponseRedirect, HttpResponse, Http404
@@ -41,10 +43,12 @@ def baixar_documento_provento(request, id_documento):
         documento_provento = DocumentoProventoBovespa.objects.get(id=id_documento)
     except DocumentoProventoBovespa.DoesNotExist:
         messages.error(request, 'Documento não foi encontrado para download')
-        return HttpResponseRedirect(reverse('listar_pendencias'))
+        return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
     filename = documento_provento.documento.name.split('/')[-1]
     if documento_provento.extensao_documento() == 'doc':
         response = HttpResponse(documento_provento.documento, content_type='application/msword')
+    elif documento_provento.extensao_documento() == 'xml':
+        response = HttpResponse(documento_provento.documento, content_type='application/xml')
     else:
         response = HttpResponse(documento_provento.documento, content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename=%s' % filename
@@ -58,28 +62,31 @@ def detalhar_documento(request, id_documento):
     documento = DocumentoProventoBovespa.objects.get(id=id_documento)
     documento.nome = documento.documento.name.split('/')[-1]
     
-    # Preparar descrição de tipo
-    documento.tipo = 'Ação' if documento.tipo == 'A' else 'FII'
-    
-    proventos_descritos_ids = ProventoAcaoDocumento.objects.filter(documento=documento).values_list('descricao_provento_id', flat=True)
-    proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_descritos_ids)
-    for provento in proventos:
-        # Remover 0s a direita para valores
-        provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario))
-        if provento.tipo_provento == 'A':
-            provento.descricao_tipo_provento = u'Ações'
-            provento.acoes_recebidas = provento.acaoproventoacaodescritodocumentobovespa_set.all()
+    # Se documento for ação
+    if documento.tipo == 'A':
+        proventos_descritos_ids = ProventoAcaoDocumento.objects.filter(documento=documento).values_list('descricao_provento_id', flat=True)
+        proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_descritos_ids)
+        for provento in proventos:
             # Remover 0s a direita para valores
-            for acao_descricao_provento in provento.acoes_recebidas:
-                acao_descricao_provento.valor_calculo_frac = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(acao_descricao_provento.valor_calculo_frac))
-        elif provento.tipo_provento == 'D':
-            provento.descricao_tipo_provento = u'Dividendos'
-        elif provento.tipo_provento == 'J':
-            provento.descricao_tipo_provento = u'JSCP'
+            provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario))
+            if provento.tipo_provento == 'A':
+                provento.acoes_recebidas = provento.acaoproventoacaodescritodocumentobovespa_set.all()
+                # Remover 0s a direita para valores
+                for acao_descricao_provento in provento.acoes_recebidas:
+                    acao_descricao_provento.valor_calculo_frac = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(acao_descricao_provento.valor_calculo_frac))
             
-        # Adicionar informação de versão
-        provento.versao = provento.proventoacaodocumento.versao
-    
+            # Adicionar informação de versão
+            provento.versao = provento.proventoacaodocumento.versao
+    # Se for FII
+    elif documento.tipo == 'F':
+        proventos_descritos_ids = ProventoFIIDocumento.objects.filter(documento=documento).values_list('descricao_provento_id', flat=True)
+        proventos = ProventoFIIDescritoDocumentoBovespa.objects.filter(id__in=proventos_descritos_ids)
+        for provento in proventos:
+            # Remover 0s a direita para valores
+            provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario))
+            # Adicionar informação de versão
+            provento.versao = provento.proventofiidocumento.versao
+        
     return TemplateResponse(request, 'gerador_proventos/detalhar_documento.html', {'documento': documento, 'proventos': proventos})
 
 @login_required
@@ -90,15 +97,10 @@ def detalhar_provento_acao(request, id_provento):
     # Remover 0s a direita para valores
     provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario))
     if provento.tipo_provento == 'A':
-        provento.descricao_tipo_provento = u'Ações'
         provento.acoes_recebidas = provento.acaoprovento_set.all()
         # Remover 0s a direita para valores
         for acao_descricao_provento in provento.acoes_recebidas:
             acao_descricao_provento.valor_calculo_frac = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(acao_descricao_provento.valor_calculo_frac))
-    elif provento.tipo_provento == 'D':
-        provento.descricao_tipo_provento = u'Dividendos'
-    elif provento.tipo_provento == 'J':
-        provento.descricao_tipo_provento = u'JSCP'
 
     # Adicionar informação de versão
     try:
@@ -108,15 +110,10 @@ def detalhar_provento_acao(request, id_provento):
             # Remover 0s a direita para valores
             versao.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(versao.valor_unitario))
             if versao.tipo_provento == 'A':
-                versao.descricao_tipo_provento = u'Ações'
                 versao.acoes_recebidas = versao.acaoproventoacaodescritodocumentobovespa_set.all()
                 # Remover 0s a direita para valores
                 for acao_descricao_provento in versao.acoes_recebidas:
                     acao_descricao_provento.valor_calculo_frac = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(acao_descricao_provento.valor_calculo_frac))
-            elif versao.tipo_provento == 'D':
-                versao.descricao_tipo_provento = u'Dividendos'
-            elif versao.tipo_provento == 'J':
-                versao.descricao_tipo_provento = u'JSCP'
     except Exception as e:
         provento.versao = 0
         versoes = list()
@@ -131,8 +128,17 @@ def detalhar_provento_fii(request, id_provento):
     
     # Remover 0s a direita para valores
     provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario))
+    
     # Adicionar informação de versão
-    provento.versao = provento.proventoacaodocumento.versao
+    try:
+        provento.versao = ProventoFIIDocumento.objects.filter(provento=provento).order_by('-versao')[0].versao
+        versoes = ProventoFIIDescritoDocumentoBovespa.objects.filter(proventofiidocumento__provento=provento).order_by('proventofiidocumento__versao')
+        for versao in versoes:
+            # Remover 0s a direita para valores
+            versao.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(versao.valor_unitario))
+    except Exception as e:
+        provento.versao = 0
+        versoes = list()
 
     return TemplateResponse(request, 'gerador_proventos/detalhar_provento_fii.html', {'provento': provento, 'versoes': versoes})
 
@@ -144,17 +150,23 @@ def ler_documento_provento(request, id_pendencia):
         # Verificar se pendência é de leitura
         if pendencia.tipo != 'L':
             messages.success(request, 'Pendência não é de leitura')
-            return HttpResponseRedirect(reverse('listar_pendencias'))
+            return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
     except PendenciaDocumentoProvento.DoesNotExist:
         messages.error(request, 'Pendência de leitura não foi encontrada')
-        return HttpResponseRedirect(reverse('listar_pendencias'))
+        return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
         
     investidor = request.user.investidor
     
     # Verifica se pendência já possui proventos descritos (foi feita recusa)
-    form_extra = 0 if ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).exists() else 1
-    ProventoFormset = formset_factory(ProventoAcaoDescritoDocumentoBovespaForm, extra=form_extra)
-    AcaoProventoFormset = formset_factory(AcaoProventoAcaoDescritoDocumentoBovespaForm, extra=form_extra)
+    # Para ações
+    if pendencia.documento.tipo == 'A':
+        form_extra = 0 if ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).exists() else 1
+        ProventoFormset = formset_factory(ProventoAcaoDescritoDocumentoBovespaForm, extra=form_extra)
+        AcaoProventoFormset = formset_factory(AcaoProventoAcaoDescritoDocumentoBovespaForm, extra=form_extra)
+    # PAra FIIs
+    elif pendencia.documento.tipo == 'F':
+        form_extra = 0 if ProventoFIIDocumento.objects.filter(documento=pendencia.documento).exists() else 1
+        ProventoFormset = formset_factory(ProventoFIIDescritoDocumentoBovespaForm, extra=form_extra)
     
     if request.method == 'POST':
         # Verifica se pendência não possuia responsável e usuário acaba de reservá-la
@@ -178,108 +190,178 @@ def ler_documento_provento(request, id_pendencia):
             if pendencia.documento.tipo == 'A':
                 formset_provento = ProventoFormset(prefix='provento')
                 formset_acao_provento = AcaoProventoFormset(prefix='acao_provento')
+            elif pendencia.documento.tipo == 'F':
+                formset_provento = ProventoFormset(prefix='provento')
+                formset_acao_provento = {}
             
         elif request.POST.get('preparar_proventos'):
             if request.POST['num_proventos'].isdigit():
                 qtd_proventos = int(request.POST['num_proventos']) if request.POST['num_proventos'] in [str(valor) for valor in range(0, 31)] else 1
-                # Testa se quantidade de proventos engloba todos os proventos já cadastrados
-                if qtd_proventos >= ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).count():
-                    qtd_proventos_extra = qtd_proventos - ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).count()
-                else:
-                    qtd_proventos_extra = 0
-                ProventoFormset = formset_factory(ProventoAcaoDescritoDocumentoBovespaForm, extra=qtd_proventos_extra)
-                AcaoProventoFormset = formset_factory(AcaoProventoAcaoDescritoDocumentoBovespaForm, extra=qtd_proventos_extra)
-
-                # Proventos
-                proventos_iniciais = list()
-                # Limita a quantidade de proventos a mostrar dependendo da quantidade de proventos escolhida no formulario
-                for provento_acao_documento in pendencia.documento.proventoacaodocumento_set.all()[:min(qtd_proventos, pendencia.documento.proventoacaodocumento_set.count())]:
-                    proventos_iniciais.append(model_to_dict(provento_acao_documento.descricao_provento))
-                formset_provento = ProventoFormset(prefix='provento', initial=proventos_iniciais)
-                # Ações de proventos
-                acoes_provento_iniciais = list()
-                for provento in proventos_iniciais:
-                    if AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento__id=provento['id']).exists():
-                        acoes_provento_iniciais.append(model_to_dict(AcaoProventoAcaoDescritoDocumentoBovespa.objects.get(provento__id=provento['id'])))
+                # Ações
+                if pendencia.documento.tipo == 'A':
+                    # Testa se quantidade de proventos engloba todos os proventos já cadastrados
+                    if qtd_proventos >= ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).count():
+                        qtd_proventos_extra = qtd_proventos - ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).count()
                     else:
-                        acoes_provento_iniciais.append({})
-                formset_acao_provento = AcaoProventoFormset(prefix='acao_provento', initial=acoes_provento_iniciais)
+                        qtd_proventos_extra = 0
+                    ProventoFormset = formset_factory(ProventoAcaoDescritoDocumentoBovespaForm, extra=qtd_proventos_extra)
+                    AcaoProventoFormset = formset_factory(AcaoProventoAcaoDescritoDocumentoBovespaForm, extra=qtd_proventos_extra)
+    
+                    # Proventos
+                    proventos_iniciais = list()
+                    # Limita a quantidade de proventos a mostrar dependendo da quantidade de proventos escolhida no formulario
+                    for provento_acao_documento in pendencia.documento.proventoacaodocumento_set.all()[:min(qtd_proventos, pendencia.documento.proventoacaodocumento_set.count())]:
+                        proventos_iniciais.append(model_to_dict(provento_acao_documento.descricao_provento))
+                    formset_provento = ProventoFormset(prefix='provento', initial=proventos_iniciais)
+                    # Ações de proventos
+                    acoes_provento_iniciais = list()
+                    for provento in proventos_iniciais:
+                        if AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento__id=provento['id']).exists():
+                            acoes_provento_iniciais.append(model_to_dict(AcaoProventoAcaoDescritoDocumentoBovespa.objects.get(provento__id=provento['id'])))
+                        else:
+                            acoes_provento_iniciais.append({})
+                    formset_acao_provento = AcaoProventoFormset(prefix='acao_provento', initial=acoes_provento_iniciais)
+                # FII
+                elif pendencia.documento.tipo == 'F':
+                    # Testa se quantidade de proventos engloba todos os proventos já cadastrados
+                    if qtd_proventos >= ProventoFIIDocumento.objects.filter(documento=pendencia.documento).count():
+                        qtd_proventos_extra = qtd_proventos - ProventoFIIDocumento.objects.filter(documento=pendencia.documento).count()
+                    else:
+                        qtd_proventos_extra = 0
+                    ProventoFormset = formset_factory(ProventoFIIDescritoDocumentoBovespaForm, extra=qtd_proventos_extra)
+    
+                    # Proventos
+                    proventos_iniciais = list()
+                    # Limita a quantidade de proventos a mostrar dependendo da quantidade de proventos escolhida no formulario
+                    for provento_fii_documento in pendencia.documento.proventoacaodocumento_set.all()[:min(qtd_proventos, pendencia.documento.proventoacaodocumento_set.count())]:
+                        proventos_iniciais.append(model_to_dict(provento_fii_documento.descricao_provento))
+                    formset_provento = ProventoFormset(prefix='provento', initial=proventos_iniciais)
+                    formset_acao_provento = {}
                 
         # Caso o botão de salvar ter sido apertado
         elif request.POST.get('save'):
             # Radio de documento estava em Gerar
             if request.POST['radioDocumento'] == '1':
 #                 print request.POST
-                formset_provento = ProventoFormset(request.POST, prefix='provento')
-                formset_acao_provento = AcaoProventoFormset(request.POST, prefix='acao_provento')
-                
-                # Apaga descrições que já existam para poder rodar validações, serão posteriormente readicionadas caso haja algum erro
-                info_proventos_a_apagar = list(ProventoAcaoDocumento.objects.filter(documento=pendencia.documento)) \
-                    + list(AcaoProvento.objects.filter(provento__id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True))) \
-                    + list(Provento.gerador_objects.filter(id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True))) \
-                    + list(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento__id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True))) \
-                    + list(ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)))
-#                 print info_proventos_a_apagar
-#                 print list(reversed(info_proventos_a_apagar))
-                for elemento in info_proventos_a_apagar:
-                    # Mantém os IDs dos elementos
-                    elemento.guarda_id = elemento.id
-                    elemento.delete()
-                    elemento.id = elemento.guarda_id
-                
-                if formset_provento.is_valid():
-                    # Verifica se dados inseridos são todos válidos
-                    forms_validos = True
-                    indice_provento = 0
-                    # Guarda os proventos e ações de proventos criadas para salvar caso todos os formulários sejam válidos
-                    proventos_validos = list()
-                    acoes_proventos_validos = list()
-                    for form_provento in formset_provento:
-                        provento = form_provento.save(commit=False)
-#                         print provento
-                        proventos_validos.append(provento)
-                        form_acao_provento = formset_acao_provento[indice_provento]
-                        # Verificar a ação do provento em ações
-                        if provento.tipo_provento == 'A':
-                            acao_provento = form_acao_provento.save(commit=False) if form_acao_provento.is_valid() and form_acao_provento.has_changed() else None
-                            if acao_provento == None:
-                                forms_validos = False
-                            else:
-                                acao_provento.provento = provento
-#                                 print acao_provento
-                                acoes_proventos_validos.append(acao_provento)
-                        indice_provento += 1
-                    if forms_validos:
+                if pendencia.documento.tipo == 'A':
+                    formset_provento = ProventoFormset(request.POST, prefix='provento')
+                    formset_acao_provento = AcaoProventoFormset(request.POST, prefix='acao_provento')
+                    
+                    # Apaga descrições que já existam para poder rodar validações, serão posteriormente readicionadas caso haja algum erro
+                    info_proventos_a_apagar = list(ProventoAcaoDocumento.objects.filter(documento=pendencia.documento)) \
+                        + list(AcaoProvento.objects.filter(provento__id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True))) \
+                        + list(Provento.gerador_objects.filter(id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True))) \
+                        + list(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento__id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True))) \
+                        + list(ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)))
+    #                 print info_proventos_a_apagar
+    #                 print list(reversed(info_proventos_a_apagar))
+                    for elemento in info_proventos_a_apagar:
+                        # Mantém os IDs dos elementos
+                        elemento.guarda_id = elemento.id
+                        elemento.delete()
+                        elemento.id = elemento.guarda_id
+                    
+                    if formset_provento.is_valid():
+                        # Verifica se dados inseridos são todos válidos
+                        forms_validos = True
+                        indice_provento = 0
+                        # Guarda os proventos e ações de proventos criadas para salvar caso todos os formulários sejam válidos
+                        proventos_validos = list()
+                        acoes_proventos_validos = list()
+                        for form_provento in formset_provento:
+                            provento = form_provento.save(commit=False)
+    #                         print provento
+                            proventos_validos.append(provento)
+                            form_acao_provento = formset_acao_provento[indice_provento]
+                            # Verificar a ação do provento em ações
+                            if provento.tipo_provento == 'A':
+                                acao_provento = form_acao_provento.save(commit=False) if form_acao_provento.is_valid() and form_acao_provento.has_changed() else None
+                                if acao_provento == None:
+                                    forms_validos = False
+                                else:
+                                    acao_provento.provento = provento
+    #                                 print acao_provento
+                                    acoes_proventos_validos.append(acao_provento)
+                            indice_provento += 1
+                        if forms_validos:
+                            try:
+                                # Colocar investidor como responsável pela leitura do documento
+                                salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao='C')
+                                # Salvar descrições de proventos
+                                criar_descricoes_provento_acoes(proventos_validos, acoes_proventos_validos, pendencia.documento)
+                                messages.success(request, 'Descrições de proventos criadas com sucesso')
+                                return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
+                            except Exception as e:
+                                desfazer_investidor_responsavel_por_leitura(pendencia, investidor)
+                                messages.error(request, str(e))
+                        else:
+                            messages.error(request, 'Proventos em ações não conferem com os proventos criados')
+                    
+                    # Readiciona proventos para o caso de não haver logrado sucesso na leitura
+                    for elemento in list(reversed(info_proventos_a_apagar)):
+                        elemento.save()
+                    
+                    # Testando erros
+#                     print dir(formset_provento.errors)
+#                     print formset_provento.errors, formset_provento.non_form_errors()
+                    for form in formset_provento:
+                        for erro in form.non_field_errors():
+                            messages.error(request, erro)
+                elif pendencia.documento.tipo == 'F':
+                    formset_provento = ProventoFormset(request.POST, prefix='provento')
+                    formset_acao_provento = {}
+                    
+                    # Apaga descrições que já existam para poder rodar validações, serão posteriormente readicionadas caso haja algum erro
+                    info_proventos_a_apagar = list(ProventoFIIDocumento.objects.filter(documento=pendencia.documento)) \
+                        + list(ProventoFII.gerador_objects.filter(id__in=ProventoFIIDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True))) \
+                        + list(ProventoFIIDescritoDocumentoBovespa.objects.filter(id__in=ProventoFIIDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)))
+    #                 print info_proventos_a_apagar
+    #                 print list(reversed(info_proventos_a_apagar))
+                    for elemento in info_proventos_a_apagar:
+                        # Mantém os IDs dos elementos
+                        elemento.guarda_id = elemento.id
+                        elemento.delete()
+                        elemento.id = elemento.guarda_id
+                    
+                    if formset_provento.is_valid():
+                        # Verifica se dados inseridos são todos válidos
+                        indice_provento = 0
+                        # Guarda os proventos e ações de proventos criadas para salvar caso todos os formulários sejam válidos
+                        proventos_validos = list()
+                        acoes_proventos_validos = list()
+                        for form_provento in formset_provento:
+                            provento = form_provento.save(commit=False)
+    #                         print provento
+                            proventos_validos.append(provento)
+                            indice_provento += 1
                         try:
                             # Colocar investidor como responsável pela leitura do documento
                             salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao='C')
                             # Salvar descrições de proventos
-                            criar_descricoes_provento_acoes(proventos_validos, acoes_proventos_validos, pendencia.documento)
+                            criar_descricoes_provento_fiis(proventos_validos, pendencia.documento)
                             messages.success(request, 'Descrições de proventos criadas com sucesso')
-                            return HttpResponseRedirect(reverse('listar_pendencias'))
+                            return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
                         except Exception as e:
                             desfazer_investidor_responsavel_por_leitura(pendencia, investidor)
                             messages.error(request, str(e))
-                    else:
-                        messages.error(request, 'Proventos em ações não conferem com os proventos criados')
-                
-                # Readiciona proventos para o caso de não haver logrado sucesso na leitura
-                for elemento in list(reversed(info_proventos_a_apagar)):
-                    elemento.save()
-                
-                # Testando erros
-                print dir(formset_provento.errors)
-                print formset_provento.errors, formset_provento.non_form_errors()
-                for form in formset_provento:
-                    for erro in form.non_field_errors():
-                        messages.error(request, erro)
+                    
+                    # Readiciona proventos para o caso de não haver logrado sucesso na leitura
+                    for elemento in list(reversed(info_proventos_a_apagar)):
+                        elemento.save()
+                    
+                    # Testando erros
+#                     print dir(formset_provento.errors)
+                    print formset_provento.errors, formset_provento.non_form_errors()
+                    for form in formset_provento:
+                        for erro in form.non_field_errors():
+                            messages.error(request, erro)
                 
             # Radio de documento estava em Excluir
             elif request.POST['radioDocumento'] == '0':
                 # Colocar investidor como responsável pela leitura do documento
                 salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao='E')
                 messages.success(request, 'Exclusão de arquivo registrada com sucesso')
-                return HttpResponseRedirect(reverse('listar_pendencias'))
+                return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
     else:
         # Preparar formset de proventos
         if pendencia.documento.tipo == 'A':
@@ -296,10 +378,23 @@ def ler_documento_provento(request, id_pendencia):
                 else:
                     acoes_provento_iniciais.append({})
             formset_acao_provento = AcaoProventoFormset(prefix='acao_provento', initial=acoes_provento_iniciais)
-                
     
-    for form in formset_provento:
-        form.fields['acao'].queryset = Acao.objects.filter(empresa=pendencia.documento.empresa)
+        
+        elif pendencia.documento.tipo == 'F':
+            # Proventos de FII
+            proventos_iniciais = list()
+            for provento_fii_documento in pendencia.documento.proventofiidocumento_set.all():
+                proventos_iniciais.append(model_to_dict(provento_fii_documento.descricao_provento))
+            formset_provento = ProventoFormset(prefix='provento', initial=proventos_iniciais)
+            formset_acao_provento = {}
+            
+    # Preparar opções de busca, tanto para POST quanto para GET
+    if pendencia.documento.tipo == 'A':
+        for form in formset_provento:
+            form.fields['acao'].queryset = Acao.objects.filter(empresa=pendencia.documento.empresa)
+    elif pendencia.documento.tipo == 'F':
+        for form in formset_provento:
+            form.fields['fii'].queryset = FII.objects.filter(empresa=pendencia.documento.empresa)
     
     # Preparar motivo de recusa, caso haja
     recusa = pendencia.documento.ultima_recusa()
@@ -313,7 +408,7 @@ def listar_documentos(request):
     empresa_id = Empresa.objects.all().order_by('id').values_list('id', flat=True)[0]
     if request.method == 'POST':
         if request.POST.get("busca_empresa"):
-            empresa_id = Empresa.objects.get(id=request.POST['busca_empresa']).id
+            empresa_id = Empresa.objects.get(id=request.POST['busca_empresa'].replace('.', '')).id
     
     # Mostrar empresa atual
     empresa_atual = Empresa.objects.get(id=empresa_id)
@@ -487,10 +582,10 @@ def validar_documento_provento(request, id_pendencia):
         # Verificar se pendência é de validação
         if pendencia.tipo != 'V':
             messages.error(request, 'Pendência não é de validação')
-            return HttpResponseRedirect(reverse('listar_pendencias'))
+            return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
     except PendenciaDocumentoProvento.DoesNotExist:
         messages.error(request, 'Pendência de validação não foi encontrada')
-        return HttpResponseRedirect(reverse('listar_pendencias'))
+        return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
     
     if request.method == 'POST':
         # Verifica se pendência não possuia responsável e usuário acaba de reservá-la
@@ -513,73 +608,117 @@ def validar_documento_provento(request, id_pendencia):
         # Testa se o investidor atual é o responsável para mandar POST
         elif investidor != pendencia.investidorresponsavelpendencia.investidor:
             messages.error(request, 'Você não é o responsável por esta pendência')
-            return HttpResponseRedirect(reverse('listar_pendencias'))
+            return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
         
 #         print request.POST
         if request.POST.get('validar'):
             # Testa se investidor pode validar pendência
-            investidor_pode_validar = True
+            pendencia_finalizada = False
             try:
-                salvar_investidor_responsavel_por_validacao(pendencia, investidor)
-            except ValueError as erro:
-                desfazer_investidor_responsavel_por_validacao(pendencia, investidor)
-                messages.error(request, str(erro))
-                investidor_pode_validar = False
-                
-            if investidor_pode_validar:
-                if pendencia.documento.investidorleituradocumento.decisao == 'C':
-                    validacao_completa = True
-#                     print 'Validar criação'
-                    # Verificar proventos descritos na pendência
-                    proventos_documento = ProventoAcaoDocumento.objects.filter(documento=pendencia.documento)
-                    descricoes_proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento.values_list('descricao_provento', flat=True))
-                    # Guarda as descrições que foram apontadas como relacionadas a algum provento
-                    proventos_relacionados = {}
-                    for descricao in descricoes_proventos:
-                        # Testar se ID's de descrições foram marcados para relacionamento, se sim, deve ter um provento relacionado
-                        # Verifica se é alteração
-                        if str(descricao.id) in request.POST.keys():
-                            # Se sim, alterar números de versão
-#                             print 'Alterou', descricao.id
-                            if request.POST.get('descricao_%s' % (descricao.id)):
-                                # Verificar se foi relacionado a um provento ou a uma descrição
-                                provento_relacionado = Provento.gerador_objects.get(id=request.POST.get('descricao_%s' % (descricao.id)))
-#                                 print u'Descrição %s é relacionada a %s' % (descricao.id, provento_relacionado)
-                                proventos_relacionados[descricao] = provento_relacionado
+                with transaction.atomic():
+                    salvar_investidor_responsavel_por_validacao(pendencia, investidor)
+                    if pendencia.documento.investidorleituradocumento.decisao == 'C':
+                        # Ações
+                        if pendencia.documento.tipo == 'A':
+                            validacao_completa = True
+        #                     print 'Validar criação'
+                            # Verificar proventos descritos na pendência
+                            proventos_documento = ProventoAcaoDocumento.objects.filter(documento=pendencia.documento)
+                            descricoes_proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento.values_list('descricao_provento', flat=True))
+                            # Guarda as descrições que foram apontadas como relacionadas a algum provento
+                            proventos_relacionados = {}
+                            for descricao in descricoes_proventos:
+                                # Testar se ID's de descrições foram marcados para relacionamento, se sim, deve ter um provento relacionado
+                                # Verifica se é alteração
+                                if str(descricao.id) in request.POST.keys():
+                                    # Se sim, alterar números de versão
+        #                             print 'Alterou', descricao.id
+                                    if request.POST.get('descricao_%s' % (descricao.id)):
+                                        # Verificar se foi relacionado a um provento ou a uma descrição
+                                        provento_relacionado = Provento.gerador_objects.get(id=request.POST.get('descricao_%s' % (descricao.id)))
+        #                                 print u'Descrição %s é relacionada a %s' % (descricao.id, provento_relacionado)
+                                        proventos_relacionados[descricao] = provento_relacionado
+                                    else:
+                                        validacao_completa = False
+                                        messages.error(request, 'Provento de identificador %s marcado como relacionado a outro provento, escolha um provento para a relação' % (descricao.id))
+                                        continue
+                            if validacao_completa:
+        #                         print 'Validação completa'
+                                try:
+                                    # Salva versões alteradas para os provento_documentos
+                                    for descricao, provento in proventos_relacionados.items():
+                                        versionar_descricoes_relacionadas_acoes(descricao, provento)
+                                    # Altera proventos para serem oficiais
+                                    for provento_id in ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True):
+                                        provento = Provento.gerador_objects.get(id=provento_id)
+                                        if not provento.oficial_bovespa:
+                                            provento.oficial_bovespa = True
+                                            provento.save()
+                                    pendencia_finalizada = True
+                                except:
+                                    messages.error(request, 'Houve erro no relacionamento de proventos')
+                                    raise ValueError('Não foi possível validar provento')
+                            # Qualquer erro que deixe a validação incompleta faz necessário desfazer investidor responsável pela validação
                             else:
-                                validacao_completa = False
-                                messages.error(request, 'Provento de identificador %s marcado como relacionado a outro provento, escolha um provento para a relação' % (descricao.id))
-                                continue
-                    if validacao_completa:
-#                         print 'Validação completa'
-                        try:
-                            # Salva versões alteradas para os provento_documentos
-                            for descricao, provento in proventos_relacionados.items():
-                                versionar_descricoes_relacionadas_acoes(descricao, provento)
-                            # Altera proventos para serem oficiais
-                            for provento_id in ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True):
-                                provento = Provento.gerador_objects.get(id=provento_id)
-                                if not provento.oficial_bovespa:
-                                    provento.oficial_bovespa = True
-                                    provento.save()
-                        except:
-                            messages.error(request, 'Houve erro no relacionamento de proventos')
-                            desfazer_investidor_responsavel_por_validacao(pendencia, investidor)
-                    # Qualquer erro que deixe a validação incompleta faz necessário desfazer investidor responsável pela validação
-                    else:
-                        desfazer_investidor_responsavel_por_validacao(pendencia, investidor)
-                                
-                elif pendencia.documento.investidorleituradocumento.decisao == 'E':
-#                     print 'Validar exclusão'
-                    # Apagar documento
-                    pendencia.documento.apagar_documento()
-                    
+                                raise ValueError('Não foi possível validar provento')
+                            
+                        # FII
+                        elif pendencia.documento.tipo == 'F':
+                            validacao_completa = True
+        #                     print 'Validar criação'
+                            # Verificar proventos descritos na pendência
+                            proventos_documento = ProventoFIIDocumento.objects.filter(documento=pendencia.documento)
+                            descricoes_proventos = ProventoFIIDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento.values_list('descricao_provento', flat=True))
+                            # Guarda as descrições que foram apontadas como relacionadas a algum provento
+                            proventos_relacionados = {}
+                            for descricao in descricoes_proventos:
+                                # Testar se ID's de descrições foram marcados para relacionamento, se sim, deve ter um provento relacionado
+                                # Verifica se é alteração
+                                if str(descricao.id) in request.POST.keys():
+                                    # Se sim, alterar números de versão
+        #                             print 'Alterou', descricao.id
+                                    if request.POST.get('descricao_%s' % (descricao.id)):
+                                        # Verificar se foi relacionado a um provento ou a uma descrição
+                                        provento_relacionado = ProventoFII.gerador_objects.get(id=request.POST.get('descricao_%s' % (descricao.id)))
+        #                                 print u'Descrição %s é relacionada a %s' % (descricao.id, provento_relacionado)
+                                        proventos_relacionados[descricao] = provento_relacionado
+                                    else:
+                                        validacao_completa = False
+                                        messages.error(request, 'Provento de identificador %s marcado como relacionado a outro provento, escolha um provento para a relação' % (descricao.id))
+                                        continue
+                            if validacao_completa:
+        #                         print 'Validação completa'
+                                try:
+                                    # Salva versões alteradas para os provento_documentos
+                                    for descricao, provento in proventos_relacionados.items():
+                                        versionar_descricoes_relacionadas_fiis(descricao, provento)
+                                    # Altera proventos para serem oficiais
+                                    for provento_id in ProventoFIIDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True):
+                                        provento = ProventoFII.gerador_objects.get(id=provento_id)
+                                        if not provento.oficial_bovespa:
+                                            provento.oficial_bovespa = True
+                                            provento.save()
+                                    pendencia_finalizada = True
+                                except:
+                                    messages.error(request, 'Houve erro no relacionamento de proventos')
+                                    raise ValueError('Não foi possível validar provento')
+                            # Qualquer erro que deixe a validação incompleta faz necessário desfazer investidor responsável pela validação
+                            else:
+                                raise ValueError('Não foi possível validar provento')
+                                    
+                    elif pendencia.documento.investidorleituradocumento.decisao == 'E':
+                        # Apagar documento
+                        pendencia.documento.apagar_documento()
+                        pendencia_finalizada = True
+                        
                 # Verifica se validação passou ou foi feita uma exclusão
-                if pendencia.documento.investidorleituradocumento.decisao == 'E' or (validacao_completa and pendencia.documento.investidorleituradocumento.decisao == 'C'):
+                if pendencia_finalizada:
                     # Remover pendência
                     pendencia.delete()
                     messages.success(request, 'Pendência validada com sucesso')
-                    return HttpResponseRedirect(reverse('listar_pendencias'))
+                    return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
+            except:
+                pass
         
         elif request.POST.get('recusar'):
 #             print 'Recusar'
@@ -589,49 +728,55 @@ def validar_documento_provento(request, id_pendencia):
             try:
                 salvar_investidor_responsavel_por_recusar_documento(pendencia, investidor, motivo_recusa)
                 messages.success(request, 'Pendência recusada com sucesso')
-                return HttpResponseRedirect(reverse('listar_pendencias'))
+                return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
             except Exception as erro:
                 messages.error(request, unicode(erro))
         
     if pendencia.documento.investidorleituradocumento.decisao == 'C':
-        proventos_documento = ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)
-        descricoes_proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento)
-        for descricao_provento in descricoes_proventos:
-            # Definir tipo de provento
-            if descricao_provento.tipo_provento == 'A':
-                descricao_provento.descricao_tipo_provento = u'Ações'
-                descricao_provento.acoes_recebidas = descricao_provento.acaoproventoacaodescritodocumentobovespa_set.all()
-                # Remover 0s a direita para valores
-#                 for acao_descricao_provento in descricao_provento.acoes_recebidas:
-#                     acao_descricao_provento.valor_calculo_frac = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(acao_descricao_provento.valor_calculo_frac))
-            elif descricao_provento.tipo_provento == 'D':
-                descricao_provento.descricao_tipo_provento = u'Dividendos'
-            elif descricao_provento.tipo_provento == 'J':
-                descricao_provento.descricao_tipo_provento = u'JSCP'
-            
-            # Remover 0s a direita para valores
-            descricao_provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(descricao_provento.valor_unitario))
-            
-            # Buscar proventos próximos
-            descricao_provento.proventos_proximos = buscar_proventos_proximos_acao(descricao_provento)
-            for provento_proximo in descricao_provento.proventos_proximos:
+        if pendencia.documento.tipo == 'A':
+            proventos_documento = ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)
+            descricoes_proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento)
+            for descricao_provento in descricoes_proventos:
                 # Definir tipo de provento
-                if provento_proximo.tipo_provento == 'A':
-                    provento_proximo.descricao_tipo_provento = u'Ações'
-                    provento_proximo.acoes_recebidas = provento_proximo.acaoprovento_set.all()
+                if descricao_provento.tipo_provento == 'A':
+                    descricao_provento.acoes_recebidas = descricao_provento.acaoproventoacaodescritodocumentobovespa_set.all()
                     # Remover 0s a direita para valores
-                    for acao_descricao_provento in provento_proximo.acoes_recebidas:
-                        acao_descricao_provento.valor_calculo_frac = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(acao_descricao_provento.valor_calculo_frac))
-                elif provento_proximo.tipo_provento == 'D':
-                    provento_proximo.descricao_tipo_provento = u'Dividendos'
-                elif provento_proximo.tipo_provento == 'J':
-                    provento_proximo.descricao_tipo_provento = u'JSCP'
+    #                 for acao_descricao_provento in descricao_provento.acoes_recebidas:
+    #                     acao_descricao_provento.valor_calculo_frac = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(acao_descricao_provento.valor_calculo_frac))
                 
                 # Remover 0s a direita para valores
-                provento_proximo.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento_proximo.valor_unitario))
-                        
-        # Descrição da decisão do responsável pela leitura
-        pendencia.decisao = 'Criar %s provento(s)' % (ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).count())
+                descricao_provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(descricao_provento.valor_unitario))
+                
+                # Buscar proventos próximos
+                descricao_provento.proventos_proximos = buscar_proventos_proximos_acao(descricao_provento)
+                for provento_proximo in descricao_provento.proventos_proximos:
+                    # Definir tipo de provento
+                    if provento_proximo.tipo_provento == 'A':
+                        provento_proximo.acoes_recebidas = provento_proximo.acaoprovento_set.all()
+                        # Remover 0s a direita para valores
+                        for acao_descricao_provento in provento_proximo.acoes_recebidas:
+                            acao_descricao_provento.valor_calculo_frac = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(acao_descricao_provento.valor_calculo_frac))
+                    
+                    # Remover 0s a direita para valores
+                    provento_proximo.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento_proximo.valor_unitario))
+                            
+            # Descrição da decisão do responsável pela leitura
+            pendencia.decisao = 'Criar %s provento(s)' % (ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).count())
+        elif pendencia.documento.tipo == 'F':
+            proventos_documento = ProventoFIIDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)
+            descricoes_proventos = ProventoFIIDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento)
+            for descricao_provento in descricoes_proventos:
+                # Remover 0s a direita para valores
+                descricao_provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(descricao_provento.valor_unitario))
+                
+                # Buscar proventos próximos
+                descricao_provento.proventos_proximos = buscar_proventos_proximos_fii(descricao_provento)
+                for provento_proximo in descricao_provento.proventos_proximos:
+                    # Remover 0s a direita para valores
+                    provento_proximo.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento_proximo.valor_unitario))
+                            
+            # Descrição da decisão do responsável pela leitura
+            pendencia.decisao = 'Criar %s provento(s)' % (ProventoFIIDocumento.objects.filter(documento=pendencia.documento).count())
     elif pendencia.documento.investidorleituradocumento.decisao == 'E':
         descricoes_proventos = {}
         

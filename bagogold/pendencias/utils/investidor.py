@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.td import OperacaoTitulo
 from bagogold.pendencias.models.pendencias import \
-    PendenciaVencimentoTesouroDireto, Pendencia
+    PendenciaVencimentoTesouroDireto, Pendencia, PendenciaDocumentoGeradorProventos
 from django.db.models.aggregates import Sum
 from django.db.models.expressions import Case, When, F
 from django.db.models.fields import DecimalField
@@ -33,3 +33,6 @@ def verificar_pendencias_investidor(investidor):
     for titulo_qtd in qtd_titulos_vencidos:
         if titulo_qtd['qtd_soma'] > 0:
             PendenciaVencimentoTesouroDireto.verificar_pendencia(investidor, titulo_qtd['titulo'], titulo_qtd['qtd_soma'])
+
+    # Pendência de documento do gerador de proventos
+    PendenciaDocumentoGeradorProventos.verificar_pendencia(investidor)

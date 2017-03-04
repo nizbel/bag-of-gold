@@ -14,11 +14,16 @@ def ticker_path(instance, filename):
     return 'doc proventos/{0}/{1}'.format(instance.ticker_empresa(), filename)
 
 class DocumentoProventoBovespa (models.Model):
-    TIPOS_DOCUMENTO_VALIDOS = [u'Fato Relevante', u'Comunicado ao Mercado', u'Aviso aos Acionistas']
+    TIPO_DOCUMENTO_FATO_RELEVANTE = u'Fato Relevante'
+    TIPO_DOCUMENTO_COMUNICADO_MERCADO = u'Comunicado ao Mercado'
+    TIPO_DOCUMENTO_AVISO_ACIONISTAS = u'Aviso aos Acionistas'
+    TIPO_DOCUMENTO_AVISO_COTISTAS = u'Aviso aos Cotistas'
+    TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO = u'Aviso aos Cotistas - Estruturado'
+    TIPOS_DOCUMENTO_VALIDOS = [TIPO_DOCUMENTO_FATO_RELEVANTE, TIPO_DOCUMENTO_COMUNICADO_MERCADO, TIPO_DOCUMENTO_AVISO_ACIONISTAS, TIPO_DOCUMENTO_AVISO_COTISTAS, TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO]
     
     url = models.CharField(u'URL do documento', blank=True, null=True, max_length=200)
     empresa = models.ForeignKey('Empresa')
-    protocolo =  models.CharField(u'Protocolo', max_length=10)
+    protocolo =  models.CharField(u'Protocolo', max_length=15)
     """
     Define se é provento de ação ou FII, A = Ação, F = FII
     """
@@ -67,7 +72,8 @@ class DocumentoProventoBovespa (models.Model):
         return extensao
     
     def ticker_empresa(self):
-        return re.sub('\d', '', Acao.objects.filter(empresa=self.empresa)[0].ticker)
+#         return re.sub('\d', '', Acao.objects.filter(empresa=self.empresa)[0].ticker)
+        return self.empresa.ticker_empresa()
     
     def pendente(self):
         return PendenciaDocumentoProvento.objects.filter(documento=self).exists()
@@ -84,6 +90,14 @@ class DocumentoProventoBovespa (models.Model):
         if hasattr(self, 'investidorvalidacaodocumento'):
             return self.investidorvalidacaodocumento.investidor
         return None
+    
+    def descricao_tipo(self):
+        if self.tipo == 'A':
+            return 'Ação'
+        elif self.tipo == 'F':
+            return 'FII'
+        else:
+            return 'Tipo indefinido'
     
     def ultima_recusa(self):
         recusas = InvestidorRecusaDocumento.objects.filter(documento=self).order_by('-data_recusa')
@@ -200,14 +214,17 @@ class ProventoAcaoDescritoDocumentoBovespa (models.Model):
     observacao = models.CharField(u'Observação', blank=True, null=True, max_length=300)
     
     def __unicode__(self):
-        tipo = ''
+        return u'%s de %s com valor %s e data EX %s a ser pago em %s' % (self.descricao_tipo_provento(), self.acao.ticker, self.valor_unitario, self.data_ex, self.data_pagamento)
+    
+    def descricao_tipo_provento(self):
         if self.tipo_provento == 'A':
-            tipo = u'Ações'
+            return u'Ações'
         elif self.tipo_provento == 'D':
-            tipo = u'Dividendos'
+            return u'Dividendos'
         elif self.tipo_provento == 'J':
-            tipo = u'JSCP'
-        return u'%s de %s com valor %s e data EX %s a ser pago em %s' % (tipo, self.acao.ticker, self.valor_unitario, self.data_ex, self.data_pagamento)
+            return u'JSCP'
+        else:
+            return u'Indefinido'
 
 class AcaoProventoAcaoDescritoDocumentoBovespa (models.Model):
     """
@@ -224,9 +241,21 @@ class AcaoProventoAcaoDescritoDocumentoBovespa (models.Model):
 class ProventoFIIDescritoDocumentoBovespa (models.Model):
     fii = models.ForeignKey('FII')
     valor_unitario = models.DecimalField(u'Valor unitário', max_digits=13, decimal_places=9)
+    """
+    A = amortização, R = rendimentos
+    """
+    tipo_provento = models.CharField(u'Tipo de provento', max_length=1)
     data_ex = models.DateField(u'Data EX')
     data_pagamento = models.DateField(u'Data do pagamento')
     url_documento = models.CharField(u'URL do documento', blank=True, null=True, max_length=200)
     
     def __unicode__(self):
-        return '(R$ %s de %s em %s com data EX %s' % (str(self.valor_unitario), self.fii.ticker, str(self.data_pagamento), str(self.data_ex))
+        return 'R$ %s de %s em %s com data EX %s' % (str(self.valor_unitario), self.fii.ticker, str(self.data_pagamento), str(self.data_ex))
+    
+    def descricao_tipo_provento(self):
+        if self.tipo_provento == 'A':
+            return u'Amortização'
+        elif self.tipo_provento == 'R':
+            return u'Rendimento'
+        else:
+            return u'Indefinido'
