@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from bagogold.cri_cra.models.cri_cra import CRI_CRA
 from django.contrib.auth.decorators import login_required
 from django.template.response import TemplateResponse
 
@@ -10,8 +11,8 @@ TIPO_CRA = '2'
 def detalhar_cri_cra(request, id):
     investidor = request.user.investidor
     
-    cdb_rdb = CDB_RDB.objects.get(id=id)
-    if cdb_rdb.investidor != investidor:
+    cri_cra = CRI_CRA.objects.get(id=id)
+    if cri_cra.investidor != investidor:
         raise PermissionDenied
     
     historico_porcentagem = HistoricoPorcentagemCDB_RDB.objects.filter(cdb_rdb=cdb_rdb)
@@ -299,52 +300,21 @@ def historico(request):
 def inserir_cri_cra(request):
     investidor = request.user.investidor
     
-    # Preparar formsets 
-    PorcentagemFormSet = inlineformset_factory(CDB_RDB, HistoricoPorcentagemCDB_RDB, fields=('porcentagem',),
-                                            extra=1, can_delete=False, max_num=1, validate_max=True)
-    CarenciaFormSet = inlineformset_factory(CDB_RDB, HistoricoCarenciaCDB_RDB, fields=('carencia',),
-                                            extra=1, can_delete=False, max_num=1, validate_max=True, labels = {'carencia': 'Período de carência (em dias)',})
-    
     if request.method == 'POST':
-        form_cdb_rdb = CDB_RDBForm(request.POST)
-        formset_porcentagem = PorcentagemFormSet(request.POST)
-        formset_carencia = CarenciaFormSet(request.POST)
-        if form_cdb_rdb.is_valid():
-            cdb_rdb = form_cdb_rdb.save(commit=False)
-            cdb_rdb.investidor = investidor
-            formset_porcentagem = PorcentagemFormSet(request.POST, instance=cdb_rdb)
-            formset_porcentagem.forms[0].empty_permitted=False
-            formset_carencia = CarenciaFormSet(request.POST, instance=cdb_rdb)
-            formset_carencia.forms[0].empty_permitted=False
-            
-            if formset_porcentagem.is_valid():
-                if formset_carencia.is_valid():
-                    try:
-                        cdb_rdb.save()
-                        formset_porcentagem.save()
-                        formset_carencia.save()
-                    # Capturar erros oriundos da hora de salvar os objetos
-                    except Exception as erro:
-                        messages.error(request, erro.message)
-                        return TemplateResponse(request, 'cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'formset_porcentagem': formset_porcentagem,
-                                                          'formset_carencia': formset_carencia})
-                        
-                    return HttpResponseRedirect(reverse('listar_cdb_rdb'))
-                
-        for erros in form_cdb_rdb.errors.values():
-            for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
-                messages.error(request, erro.message)
-        for erro in formset_porcentagem.non_form_errors():
-            messages.error(request, erro)
-        for erro in formset_carencia.non_form_errors():
+        form_cri_cra = CRI_CRAForm(request.POST)
+        if form_cri_cra.is_valid():
+            cri_cra = form_cri_cra.save(commit=False)
+            cri_cra.investidor = investidor
+            cri_cra.save()
+            messages.error(request, erro.message)
+            return TemplateResponse(request, 'cri_cra/inserir_cdb_rdb.html', {'form_cri_cra': form_cri_cra})
+        
+        for erro in [erro for erro in form_cri_cra.non_field_errors()]:
             messages.error(request, erro)
             
     else:
-        form_cdb_rdb = CDB_RDBForm()
-        formset_porcentagem = PorcentagemFormSet()
-        formset_carencia = CarenciaFormSet()
-    return TemplateResponse(request, 'cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'formset_porcentagem': formset_porcentagem,
-                                                              'formset_carencia': formset_carencia})
+        form_cri_cra = CRI_CRAForm()
+    return TemplateResponse(request, 'cdb_rdb/inserir_cdb_rdb.html', {'form_cri_cra': form_cri_cra})
 
 @login_required
 def inserir_operacao_cri_cra(request):
@@ -441,20 +411,9 @@ def inserir_operacao_cri_cra(request):
 @login_required
 def listar_cri_cra(request):
     investidor = request.user.investidor
-    cdb_rdb = CDB_RDB.objects.filter(investidor=investidor)
+    cri_cra = CRI_CRA.objects.filter(investidor=investidor)
     
-    for investimento in cdb_rdb:
-        # Preparar o valor mais atual para carência
-        investimento.carencia_atual = investimento.carencia_atual()
-        # Preparar o valor mais atual de rendimento
-        investimento.rendimento_atual = investimento.porcentagem_atual()
-        
-        if investimento.tipo_rendimento == 1:
-            investimento.str_tipo_rendimento = 'Pré-fixado'
-        elif investimento.tipo_rendimento == 2:
-            investimento.str_tipo_rendimento = 'Pós-fixado'
-        
-    return TemplateResponse(request, 'cdb_rdb/listar_cdb_rdb.html', {'cdb_rdb': cdb_rdb})
+    return TemplateResponse(request, 'cri_cra/listar_cri_cra.html', {'cri_cra': cri_cra})
 
 @login_required
 def painel(request):
