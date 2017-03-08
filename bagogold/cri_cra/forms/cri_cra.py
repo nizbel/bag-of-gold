@@ -1,15 +1,11 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.forms.utils import LocalizedModelForm
-from bagogold.bagogold.models.cdb_rdb import CRI_CRA, OperacaoCRI_CRA, \
-    HistoricoPorcentagemCRI_CRA, HistoricoCarenciaCRI_CRA, OperacaoVendaCRI_CRA
 from bagogold.cri_cra.models.cri_cra import CRI_CRA, DataRemuneracaoCRI_CRA, \
-    DataAmortizacaoCRI_CRA
+    DataAmortizacaoCRI_CRA, OperacaoCRI_CRA
 from bagogold.cri_cra.utils.utils import \
     quantidade_cri_cra_na_data_por_certificado
 from django import forms
 from django.forms import widgets
-import datetime
-
 
 ESCOLHAS_TIPO_OPERACAO=(('C', "Compra"),
                         ('V', "Venda"))
@@ -17,7 +13,7 @@ ESCOLHAS_TIPO_OPERACAO=(('C', "Compra"),
 class CRI_CRAForm(LocalizedModelForm):
     class Meta:
         model = CRI_CRA
-        fields = ('nome', 'codigo', 'tipo', 'tipo_indexacao', 'porcentagem', 'juros_adicional', 'data_emissao',
+        fields = ('nome', 'codigo_isin', 'tipo', 'tipo_indexacao', 'porcentagem', 'juros_adicional', 'data_emissao',
                   'valor_emissao', 'data_vencimento')
         widgets={'tipo': widgets.Select(choices=CRI_CRA.ESCOLHAS_TIPO_CRI_CRA),
                  'tipo_indexacao': widgets.Select(choices=CRI_CRA.ESCOLHAS_TIPO_INDEXACAO),}
