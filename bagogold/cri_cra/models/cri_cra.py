@@ -19,7 +19,7 @@ class CRI_CRA (models.Model):
                                (TIPO_INDEXACAO_IGPM, 'IGP-M'))
     
     nome = models.CharField(u'Nome', max_length=50)
-    codigo = models.CharField(u'Código', max_length=20)
+    codigo_isin = models.CharField(u'Código ISIN', max_length=20)
     """
     Tipo de investimento, CRA = 'A', CRI = 'I'
     """
@@ -29,7 +29,7 @@ class CRI_CRA (models.Model):
     """
     tipo_indexacao = models.PositiveSmallIntegerField(u'Tipo de indexação', choices=ESCOLHAS_TIPO_INDEXACAO)
     porcentagem = models.DecimalField(u'Porcentagem sobre indexação', decimal_places=3, max_digits=6)
-    juros_adicional = models.DecimalField(u'Juros adicional', decimal_places=3, max_digits=6)
+    juros_adicional = models.DecimalField(u'Juros adicional', decimal_places=3, max_digits=6, default=0)
     data_emissao = models.DateField(u'Data de emissão')
     valor_emissao = models.DecimalField(u'Valor nominal na emissão', max_digits=15, decimal_places=8)
     data_vencimento = models.DateField(u'Data de vencimento')
