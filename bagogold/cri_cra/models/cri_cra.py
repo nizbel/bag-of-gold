@@ -7,19 +7,33 @@ class CRI_CRA (models.Model):
     ESCOLHAS_TIPO_CRI_CRA = ((TIPO_CRI, 'CRI'),
                              (TIPO_CRA, 'CRA'))
     
+    TIPO_INDEXACAO_DI = 1
+    TIPO_INDEXACAO_PREFIXADO = 2
+    TIPO_INDEXACAO_IPCA = 3
+    TIPO_INDEXACAO_SELIC = 4
+    TIPO_INDEXACAO_IGPM = 5
+    ESCOLHAS_TIPO_INDEXACAO = ((TIPO_INDEXACAO_DI, 'DI'),
+                               (TIPO_INDEXACAO_PREFIXADO, 'Prefixado'),
+                               (TIPO_INDEXACAO_IPCA, 'IPCA'),
+                               (TIPO_INDEXACAO_SELIC, 'Selic'),
+                               (TIPO_INDEXACAO_IGPM, 'IGP-M'))
     
+    nome = models.CharField(u'Nome', max_length=50)
     codigo = models.CharField(u'Código', max_length=20)
+    """
+    Tipo de investimento, CRA = 'A', CRI = 'I'
+    """
     tipo = models.CharField(u'Tipo', max_length=1, choices=ESCOLHAS_TIPO_CRI_CRA)
     """
-    1 = Prefixado, 2 = IPCA, 3 = DI
+    1 = DI, 2 = Prefixado, 3 = IPCA, 4 = Selic, 5 = IGP-M
     """
-    tipo_indexacao = models.PositiveSmallIntegerField(u'Tipo de indexação')
+    tipo_indexacao = models.PositiveSmallIntegerField(u'Tipo de indexação', choices=ESCOLHAS_TIPO_INDEXACAO)
     porcentagem = models.DecimalField(u'Porcentagem sobre indexação', decimal_places=3, max_digits=6)
     juros_adicional = models.DecimalField(u'Juros adicional', decimal_places=3, max_digits=6)
     data_emissao = models.DateField(u'Data de emissão')
     valor_emissao = models.DecimalField(u'Valor nominal na emissão', max_digits=15, decimal_places=8)
     data_vencimento = models.DateField(u'Data de vencimento')
-    amortizacao_integral_vencimento = models.BooleanField(u'Amortização integral no vencimento?')
+    investidor = models.ForeignKey('bagogold.Investidor')
     
     def __unicode__(self):
         return '%s, emitida em %s a R$ %s, com vencimento em %s' % (self.codigo, str(self.data_emissao), self.valor_emissao, str(self.data_vencimento))
@@ -30,8 +44,10 @@ class CRI_CRA (models.Model):
                 return escolha[1]
         return 'Indefinido'
     
+    def amortizacao_integral_vencimento(self):
+        return not (DataAmortizacaoCRI_CRA.objects.filter(cri_cra=self).count() > 0)
+    
 class OperacaoCRI_CRA (models.Model):
-    investidor = models.ForeignKey('bagogold.Investidor')
     cri_cra = models.ForeignKey('CRI_CRA')
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)
     quantidade = models.IntegerField(u'Quantidade')
@@ -42,7 +58,13 @@ class DataRemuneracaoCRI_CRA (models.Model):
     data = models.DateField(u'Data de remuneração')
     cri_cra = models.ForeignKey('CRI_CRA')
     
+    class Meta:
+        unique_together=('data', 'cri_cra')
+    
 class DataAmortizacaoCRI_CRA (models.Model):
     data = models.DateField(u'Data de remuneração')
     quantidade = models.DecimalField(u'Percentual de amortização', decimal_places=4, max_digits=7)
     cri_cra = models.ForeignKey('CRI_CRA')
+    
+    class Meta:
+        unique_together=('data', 'cri_cra')
