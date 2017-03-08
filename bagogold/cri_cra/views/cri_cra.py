@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 
 from bagogold.cri_cra.forms.cri_cra import CRI_CRAForm
-from bagogold.cri_cra.models.cri_cra import CRI_CRA, DataRemuneracaoCRI_CRA
+from bagogold.cri_cra.models.cri_cra import CRI_CRA, DataRemuneracaoCRI_CRA, \
+    DataAmortizacaoCRI_CRA
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
+from django.forms.models import inlineformset_factory
 from django.http.response import HttpResponseRedirect
 from django.template.response import TemplateResponse
 import datetime
@@ -306,21 +308,30 @@ def historico(request):
 def inserir_cri_cra(request):
     investidor = request.user.investidor
     
+    # Preparar formsets 
+    DataRendimentoFormSet = inlineformset_factory(CRI_CRA, DataRemuneracaoCRI_CRA, fields=('data',),
+                                            extra=1, can_delete=False)
+    DataAmortizacaoFormSet = inlineformset_factory(CRI_CRA, DataAmortizacaoCRI_CRA, fields=('data',),
+                                            extra=1, can_delete=False)
+    
     if request.method == 'POST':
         form_cri_cra = CRI_CRAForm(request.POST)
+        formset_data_rendimento = DataRendimentoFormSet(request.POST)
+        formset_data_amortizacao = DataAmortizacaoFormSet(request.POST)
         if form_cri_cra.is_valid():
             cri_cra = form_cri_cra.save(commit=False)
             cri_cra.investidor = investidor
             cri_cra.save()
-            messages.error(request, erro.message)
-            return TemplateResponse(request, 'cri_cra/inserir_cdb_rdb.html', {'form_cri_cra': form_cri_cra})
         
         for erro in [erro for erro in form_cri_cra.non_field_errors()]:
             messages.error(request, erro)
             
     else:
         form_cri_cra = CRI_CRAForm()
-    return TemplateResponse(request, 'cri_cra/inserir_cri_cra.html', {'form_cri_cra': form_cri_cra})
+        formset_data_rendimento = DataRendimentoFormSet()
+        formset_data_amortizacao = DataAmortizacaoFormSet()
+    return TemplateResponse(request, 'cri_cra/inserir_cri_cra.html', {'form_cri_cra': form_cri_cra, 'formset_data_rendimento': formset_data_rendimento,
+                                                                      'formset_data_amortizacao': formset_data_amortizacao})
 
 @login_required
 # def inserir_operacao_cri_cra(request):
