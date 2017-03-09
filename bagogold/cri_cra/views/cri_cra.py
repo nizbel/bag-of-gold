@@ -309,14 +309,14 @@ def inserir_cri_cra(request):
     investidor = request.user.investidor
     
     # Preparar formsets 
-    DataRendimentoFormSet = inlineformset_factory(CRI_CRA, DataRemuneracaoCRI_CRA, fields=('data',),
+    DataRemuneracaoFormSet = inlineformset_factory(CRI_CRA, DataRemuneracaoCRI_CRA, fields=('data',),
                                             extra=1, can_delete=False)
-    DataAmortizacaoFormSet = inlineformset_factory(CRI_CRA, DataAmortizacaoCRI_CRA, fields=('data',),
+    DataAmortizacaoFormSet = inlineformset_factory(CRI_CRA, DataAmortizacaoCRI_CRA, fields=('data', 'percentual'),
                                             extra=1, can_delete=False)
     
     if request.method == 'POST':
         form_cri_cra = CRI_CRAForm(request.POST)
-        formset_data_rendimento = DataRendimentoFormSet(request.POST)
+        formset_data_remuneracao = DataRemuneracaoFormSet(request.POST)
         formset_data_amortizacao = DataAmortizacaoFormSet(request.POST)
         if form_cri_cra.is_valid():
             cri_cra = form_cri_cra.save(commit=False)
@@ -328,9 +328,9 @@ def inserir_cri_cra(request):
             
     else:
         form_cri_cra = CRI_CRAForm()
-        formset_data_rendimento = DataRendimentoFormSet()
+        formset_data_remuneracao = DataRemuneracaoFormSet()
         formset_data_amortizacao = DataAmortizacaoFormSet()
-    return TemplateResponse(request, 'cri_cra/inserir_cri_cra.html', {'form_cri_cra': form_cri_cra, 'formset_data_rendimento': formset_data_rendimento,
+    return TemplateResponse(request, 'cri_cra/inserir_cri_cra.html', {'form_cri_cra': form_cri_cra, 'formset_data_remuneracao': formset_data_remuneracao,
                                                                       'formset_data_amortizacao': formset_data_amortizacao})
 
 @login_required

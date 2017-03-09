@@ -118,14 +118,106 @@
                             {% endif %}
                         </div>
                     </div>
-                {{ formset_data_rendimento.management_form }}
-                {% for form_data_rendimento in formset_data_rendimento %}
-                    <div class="form-group col-md-6 {% if form_data_rendimento.data.errors %} has-error {% endif %}">
-                        <label class="control-label col-md-4">{{form_data_rendimento.data.label}}:</label>
-                        <div class="col-md-8">
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="portlet box yellow-crusta">
+                            <div class="portlet-title">
+                                <div class="caption">
+                                    <i class="fa fa-calendar-plus-o"></i>Datas de remuneração
+                                </div>
+                                <div class="tools">
+                                    <a href="javascript:;" class="collapse"></a>
+                                </div>
+                            </div>
+                            <div class="portlet-body">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        {{ formset_data_remuneracao.management_form }}
+                                        {% for form_data_remuneracao in formset_data_remuneracao %}
+                                            <div class="form-group col-md-12 {% if form_data_remuneracao.data.errors %} has-error {% endif %}">
+                                                <label class="control-label col-md-4" style="text-align: left;">Data {{forloop.counter}}:</label>
+                                                <div class="col-md-8">
+                                                    <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_data_remuneracao_cri_cra-{{forloop.counter0}}-data" name="data_remuneracao_cri_cra-{{forloop.counter0}}-data" 
+                                                    data-date="{% if form_data_remuneracao.data.value|date:'d/m/Y'|default:'' == '' %}{{form_data_remuneracao.data.value|default:''}}{% else %}{{form_data_remuneracao.data.value|date:'d/m/Y'}}{% endif %}" data-date-viewmode="years">
+                                                        <input type="text" class="form-control" name="data_remuneracao_cri_cra-{{forloop.counter0}}-data" 
+                                                        value="{% if form_data_remuneracao.data.value|date:'d/m/Y'|default:'' == '' %}{{form_data_remuneracao.data.value|default:''}}{% else %}{{form_data_remuneracao.data.value|date:'d/m/Y'}}{% endif %}">
+                                                        <span class="input-group-btn">
+                                                            <button class="btn default" type="button">
+                                                                <i class="fa fa-calendar"></i>
+                                                            </button>
+                                                        </span>
+                                                    </div>
+                                                    {% if form_data_remuneracao.data.errors %} <span class="help-block"> {{ form_data_remuneracao.data.errors.as_text }} </span> 
+                                                    {% else %} <span class="help-block"> Selecione uma data </span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="col-md-12 text-center">
+                                        <input type="button" value="Adicionar data" class="btn btn-warning">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                {% endfor %}
+                    <div class="col-md-8">
+                        <div class="portlet box yellow-crusta">
+                            <div class="portlet-title">
+                                <div class="caption">
+                                    <i class="fa fa-calendar-plus-o"></i>Datas de amortização
+                                </div>
+                                <div class="tools">
+                                    <a href="javascript:;" class="collapse"></a>
+                                </div>
+                            </div>
+                            <div class="portlet-body">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="md-checkbox">
+                                            <input type="checkbox" value="1" id="checkbox_amortizacao_integral_venc" name="amortizacao_integral_venc"  class="md-check">
+                                            <label for="checkbox_amortizacao_integral_venc">
+                                                <span></span>
+                                                <span class="check"></span>
+                                                <span class="box"></span> Amortização integral no vencimento? </label>
+                                        </div>
+                                        {{ formset_data_amortizacao.management_form }}
+                                        {% for form_data_amortizacao in formset_data_amortizacao %}
+                                            <div class="form-group col-md-6 {% if form_data_amortizacao.data.errors %} has-error {% endif %}">
+                                                <label class="control-label col-md-4" style="text-align: left;">Data {{forloop.counter}}:</label>
+                                                <div class="col-md-8">
+                                                    <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_data_amortizacao_cri_cra-{{forloop.counter0}}-data" name="data_amortizacao_cri_cra-{{forloop.counter0}}-data" 
+                                                    data-date="{% if form_data_amortizacao.data.value|date:'d/m/Y'|default:'' == '' %}{{form_data_amortizacao.data.value|default:''}}{% else %}{{form_data_amortizacao.data.value|date:'d/m/Y'}}{% endif %}" data-date-viewmode="years">
+                                                        <input type="text" class="form-control" name="data_amortizacao_cri_cra-{{forloop.counter0}}-data" 
+                                                        value="{% if form_data_amortizacao.data.value|date:'d/m/Y'|default:'' == '' %}{{form_data_amortizacao.data.value|default:''}}{% else %}{{form_data_amortizacao.data.value|date:'d/m/Y'}}{% endif %}">
+                                                        <span class="input-group-btn">
+                                                            <button class="btn default" type="button">
+                                                                <i class="fa fa-calendar"></i>
+                                                            </button>
+                                                        </span>
+                                                    </div>
+                                                    {% if form_data_amortizacao.data.errors %} <span class="help-block"> {{ form_data_amortizacao.data.errors.as_text }} </span> 
+                                                    {% else %} <span class="help-block"> Selecione uma data </span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="form-group col-md-6 {% if form_data_amortizacao.percentual.errors %} has-error {% endif %}">
+                                                <label class="control-label col-md-4" style="text-align: left;">Percentual:</label>
+                                                <div class="col-md-8">
+                                                    <input id="id_data_amortizacao_cri_cra-{{forloop.counter0}}-percentual" type="text" value="{{form_data_amortizacao.percentual.value}}" name="data_amortizacao_cri_cra-{{forloop.counter0}}-percentual" class="form-control">
+                                                    {% if form_data_amortizacao.percentual.errors %} <span class="help-block"> {{ form_data_amortizacao.percentual.errors.as_text }} </span> {% endif %}
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="col-md-12 text-center">
+                                        <input type="button" value="Adicionar data" class="btn btn-warning">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="form-actions">
                     <div class="row">
@@ -160,7 +252,7 @@ $(document).ready(function() {
     $('.date-picker').datepicker({
         language: 'pt-BR'
     });
-    $("input[name*='porcentagem']").TouchSpin({
+    $("id_porcentagem").TouchSpin({
         initval: 0,
         min: 0,
         max: 100,
@@ -169,7 +261,7 @@ $(document).ready(function() {
         maxboostedstep: 100,
         postfix: '%'
     });
-    $("input[name*='juros_adicional']").TouchSpin({
+    $("id_juros_adicional").TouchSpin({
         initval: 0,
         min: 0,
         max: 100,
@@ -178,7 +270,7 @@ $(document).ready(function() {
         maxboostedstep: 100,
         postfix: '%'
     });
-    $("input[name*='valor_emissao']").TouchSpin({
+    $("#id_valor_emissao").TouchSpin({
         initval: 0,
         min: 0,
         max: 1000000,
@@ -186,6 +278,28 @@ $(document).ready(function() {
         decimals: 8,
         maxboostedstep: 100,
         prefix: 'R$'
+    });
+    $("#id_data_amortizacao_cri_cra-0-percentual").TouchSpin({
+        initval: 0,
+        min: 0,
+        max: 100,
+        step: 0.0001,
+        decimals: 4,
+        maxboostedstep: 100,
+        postfix: '%'
+    });
+    
+    $('#checkbox_amortizacao_integral_venc').click(function() {
+        if ($(this).is(':checked')) {
+            $('input[name^=data_amortizacao_cri_cra]').each(function() {
+                $(this).attr('disabled', 'disabled');
+                $(this).prop('checked', false);
+            });
+        } else {
+            $('input[name^=data_amortizacao_cri_cra]').each(function() {
+                $(this).removeAttr("disabled");
+            });
+        }
     });
 });
 </script>

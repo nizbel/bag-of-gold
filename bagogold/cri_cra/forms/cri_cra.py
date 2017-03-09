@@ -86,7 +86,7 @@ class DataAmortizacaoCRI_CRAForm(LocalizedModelForm):
     
     class Meta:
         model = DataAmortizacaoCRI_CRA
-        fields = ('data', 'cri_cra', 'quantidade')
+        fields = ('data', 'cri_cra', 'percentual')
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),}
         
