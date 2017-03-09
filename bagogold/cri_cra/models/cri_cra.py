@@ -62,8 +62,8 @@ class DataRemuneracaoCRI_CRA (models.Model):
         unique_together=('data', 'cri_cra')
     
 class DataAmortizacaoCRI_CRA (models.Model):
-    data = models.DateField(u'Data de remuneração')
-    quantidade = models.DecimalField(u'Percentual de amortização', decimal_places=4, max_digits=7)
+    data = models.DateField(u'Data de amortização')
+    percentual = models.DecimalField(u'Percentual de amortização', decimal_places=4, max_digits=7)
     cri_cra = models.ForeignKey('CRI_CRA')
     
     class Meta:
