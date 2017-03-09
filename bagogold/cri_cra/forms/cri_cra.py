@@ -17,6 +17,9 @@ class CRI_CRAForm(LocalizedModelForm):
                   'valor_emissao', 'data_vencimento')
         widgets={'tipo': widgets.Select(choices=CRI_CRA.ESCOLHAS_TIPO_CRI_CRA),
                  'tipo_indexacao': widgets.Select(choices=CRI_CRA.ESCOLHAS_TIPO_INDEXACAO),}
+        
+    class Media:
+        js = ('js/bagogold/form_cri_cra.js',)
 
 class OperacaoCRI_CRAForm(LocalizedModelForm):
     class Meta:
@@ -25,9 +28,6 @@ class OperacaoCRI_CRAForm(LocalizedModelForm):
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),
                  'tipo_operacao': widgets.Select(choices=ESCOLHAS_TIPO_OPERACAO),}
-        
-    class Media:
-        js = ('js/bagogold/cri_cra.js',)
         
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')

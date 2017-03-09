@@ -29,11 +29,12 @@ $(document).ready(function() {
 	         operacao.attr('id', "id_divisaooperacaodebenture_set-" + form_count + "-operacao");
 	         $("#forms").append(operacao);
          }
-    
-         form_count ++;
-         $("[name=divisaooperacaodebenture_set-TOTAL_FORMS]").val(form_count);
+
          // increment form count so our view knows to populate 
          // that many fields for validation
+         form_count ++;
+         $("[name=divisaooperacaodebenture_set-TOTAL_FORMS]").val(form_count);
+         // ready bootstrap elements
          row.find('.bootstrap-select').replaceWith(function() { return $('select', this); });
          row.find('select').selectpicker('refresh');
          var campo_quantidade = row.find('.bootstrap-touchspin input').detach();
