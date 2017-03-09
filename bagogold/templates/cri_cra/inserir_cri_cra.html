@@ -173,7 +173,7 @@
                             </div>
                             <div class="portlet-body">
                                 <div class="row">
-                                    <div id="amortizacoes" class="col-md-12">
+                                    <div class="col-md-12">
                                         <div class="md-checkbox">
                                             <input type="checkbox" value="1" id="checkbox_amortizacao_integral_venc" name="amortizacao_integral_venc"  class="md-check">
                                             <label for="checkbox_amortizacao_integral_venc">
@@ -182,6 +182,7 @@
                                                 <span class="box"></span> Amortização integral no vencimento? </label>
                                         </div>
                                         {{ formset_data_amortizacao.management_form }}
+                                        <div id="amortizacoes" class="col-md-12">
                                         {% for form_data_amortizacao in formset_data_amortizacao %}
                                             <div id="amortizacao-0" class="col-md-12">
                                                 <div class="form-group col-md-6 {% if form_data_amortizacao.data.errors %} has-error {% endif %}">
@@ -211,6 +212,7 @@
                                                 </div>
                                             </div>
                                         {% endfor %}
+                                        </div>
                                     </div>
                                     <div class="col-md-12 text-center">
                                         <input type="button" value="Adicionar data" class="btn btn-warning" id="add_data_amortizacao">
@@ -255,7 +257,7 @@ $(document).ready(function() {
     $('.date-picker').datepicker({
         language: 'pt-BR'
     });
-    $("id_porcentagem").TouchSpin({
+    $("#id_porcentagem").TouchSpin({
         initval: 0,
         min: 0,
         max: 100,
@@ -264,7 +266,7 @@ $(document).ready(function() {
         maxboostedstep: 100,
         postfix: '%'
     });
-    $("id_juros_adicional").TouchSpin({
+    $("#id_juros_adicional").TouchSpin({
         initval: 0,
         min: 0,
         max: 100,
@@ -282,7 +284,7 @@ $(document).ready(function() {
         maxboostedstep: 100,
         prefix: 'R$'
     });
-    $("#id_dataamortizacaocri_cra_set-0-percentual").TouchSpin({
+    $("input[name$='-percentual'").TouchSpin({
         initval: 0,
         min: 0,
         max: 100,
@@ -294,12 +296,12 @@ $(document).ready(function() {
     
     $('#checkbox_amortizacao_integral_venc').click(function() {
         if ($(this).is(':checked')) {
-            $('input[name^=dataamortizacaocri_cra]').each(function() {
+            $('#amortizacoes').find('input[name^=dataamortizacaocri_cra]').each(function() {
                 $(this).attr('disabled', 'disabled');
                 $(this).prop('checked', false);
             });
         } else {
-            $('input[name^=dataamortizacaocri_cra]').each(function() {
+            $('#amortizacoes').find('input[name^=dataamortizacaocri_cra]').each(function() {
                 $(this).removeAttr("disabled");
             });
         }
