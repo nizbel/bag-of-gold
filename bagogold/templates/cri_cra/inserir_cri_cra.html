@@ -23,14 +23,14 @@
                     <div class="form-group col-md-6 {% if form_cri_cra.nome.errors %} has-error {% endif %}">
                         <label class="control-label col-md-4" style="text-align: left;">{{form_cri_cra.nome.label}}:</label>
                         <div class="col-md-8">
-                            <input type="text" class="form-control" maxlength="50" name="nome" id="id_nome">
+                            <input type="text" class="form-control" maxlength="50" name="nome" id="id_nome" value="{{form_cri_cra.nome.value|default:''}}">
                             {% if form_cri_cra.nome.errors %} <span class="help-block"> {{ form_cri_cra.nome.errors.as_text }} </span> {% endif %}
                         </div>
                     </div>
                     <div class="form-group col-md-6 {% if form_cri_cra.codigo_isin.errors %} has-error {% endif %}">
                         <label class="control-label col-md-4" style="text-align: left;">{{form_cri_cra.codigo_isin.label}}:</label>
                         <div class="col-md-8">
-                            <input type="text" class="form-control" maxlength="20" name="codigo_isin" id="id_codigo_isin">
+                            <input type="text" class="form-control" maxlength="20" name="codigo_isin" id="id_codigo_isin" value="{{form_cri_cra.codigo_isin.value|default:''}}">
                             {% if form_cri_cra.codigo_isin.errors %} <span class="help-block"> {{ form_cri_cra.codigo_isin.errors.as_text }} </span> {% endif %}
                         </div>
                     </div>
@@ -40,7 +40,8 @@
                         <label class="control-label col-md-4" style="text-align: left;">{{form_cri_cra.tipo.label}}:</label>
                         <div class="col-md-8">
                             <select class="selectpicker form-control" id="id_tipo" name="tipo">
-                                {% for key, value in form_cri_cra.fields.tipo.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
+                                {% for key, value in form_cri_cra.fields.tipo.widget.choices %}<option value="{{ key }}"
+                                {% if key == form_cri_cra.tipo.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
                             </select>
                             {% if form_cri_cra.tipo.errors %} <span class="help-block"> {{ form_cri_cra.tipo.errors.as_text }} </span> {% endif %}
                         </div>
@@ -49,7 +50,8 @@
                         <label class="control-label col-md-4" style="text-align: left;">{{form_cri_cra.tipo_indexacao.label}}:</label>
                         <div class="col-md-8">
                             <select class="selectpicker form-control" id="id_tipo_indexacao" name="tipo_indexacao">
-                                {% for key, value in form_cri_cra.fields.tipo_indexacao.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
+                                {% for key, value in form_cri_cra.fields.tipo_indexacao.widget.choices %}<option value="{{ key }}"
+                                {% if key|stringformat:"i" == form_cri_cra.tipo_indexacao.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
                             </select>
                             {% if form_cri_cra.tipo_indexacao.errors %} <span class="help-block"> {{ form_cri_cra.tipo_indexacao.errors.as_text }} </span> {% endif %}
                         </div>
@@ -294,11 +296,17 @@ $(document).ready(function() {
         postfix: '%'
     });
     
+    {% if amortizacao_integral_venc %}
+    $('#checkbox_amortizacao_integral_venc').attr('checked', 'checked');
+    $('#amortizacoes').find('input[name^=dataamortizacaocri_cra]').each(function() {
+        $(this).attr('disabled', 'disabled');
+    });
+    {% endif %}
+    
     $('#checkbox_amortizacao_integral_venc').click(function() {
         if ($(this).is(':checked')) {
             $('#amortizacoes').find('input[name^=dataamortizacaocri_cra]').each(function() {
                 $(this).attr('disabled', 'disabled');
-                $(this).prop('checked', false);
             });
         } else {
             $('#amortizacoes').find('input[name^=dataamortizacaocri_cra]').each(function() {
