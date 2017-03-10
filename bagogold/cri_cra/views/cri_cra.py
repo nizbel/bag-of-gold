@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
 
-from bagogold.cri_cra.forms.cri_cra import CRI_CRAForm
+from bagogold.bagogold.forms.utils import LocalizedModelForm
+from bagogold.cri_cra.forms.cri_cra import CRI_CRAForm, \
+    DataRemuneracaoCRI_CRAForm, DataRemuneracaoCRI_CRAFormSet, \
+    DataAmortizacaoCRI_CRAFormSet
 from bagogold.cri_cra.models.cri_cra import CRI_CRA, DataRemuneracaoCRI_CRA, \
     DataAmortizacaoCRI_CRA
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, NON_FIELD_ERRORS
 from django.core.urlresolvers import reverse
+from django.db import transaction
 from django.forms.models import inlineformset_factory
 from django.http.response import HttpResponseRedirect
 from django.template.response import TemplateResponse
@@ -309,21 +313,52 @@ def inserir_cri_cra(request):
     investidor = request.user.investidor
     
     # Preparar formsets 
-    DataRemuneracaoFormSet = inlineformset_factory(CRI_CRA, DataRemuneracaoCRI_CRA, fields=('data',),
-                                            extra=1, can_delete=False)
-    DataAmortizacaoFormSet = inlineformset_factory(CRI_CRA, DataAmortizacaoCRI_CRA, fields=('data', 'percentual'),
-                                            extra=1, can_delete=False)
+    DataRemuneracaoFormSet = inlineformset_factory(CRI_CRA, DataRemuneracaoCRI_CRA, fields=('data', 'cri_cra'), extra=1, can_delete=False,
+                                                   formset=DataRemuneracaoCRI_CRAFormSet)
+    DataAmortizacaoFormSet = inlineformset_factory(CRI_CRA, DataAmortizacaoCRI_CRA, form=LocalizedModelForm, fields=('data', 'percentual', 'cri_cra'),
+                                                   extra=1, can_delete=False, formset=DataAmortizacaoCRI_CRAFormSet)
+    amortizacao_integral_venc = False
     
     if request.method == 'POST':
+        amortizacao_integral_venc = 'amortizacao_integral_venc' in request.POST.keys()
+        print request.POST
         form_cri_cra = CRI_CRAForm(request.POST)
         formset_data_remuneracao = DataRemuneracaoFormSet(request.POST)
         formset_data_amortizacao = DataAmortizacaoFormSet(request.POST)
         if form_cri_cra.is_valid():
-            cri_cra = form_cri_cra.save(commit=False)
-            cri_cra.investidor = investidor
-            cri_cra.save()
+            try:
+                with transaction.atomic():
+                    cri_cra = form_cri_cra.save(commit=False)
+                    cri_cra.investidor = investidor
+                    cri_cra.save()
+                    formset_data_remuneracao = DataRemuneracaoFormSet(request.POST, instance=cri_cra)
+                    formset_data_amortizacao = DataAmortizacaoFormSet(request.POST, instance=cri_cra)
+                    formset_data_remuneracao.forms[0].empty_permitted = False
+                    if formset_data_remuneracao.is_valid():
+                        if amortizacao_integral_venc:
+                            print 'Amortização integral no vencimento'
+                            formset_data_remuneracao.save()
+                            raise ValueError('Salvou tudo')
+                        else:
+                            formset_data_amortizacao = DataAmortizacaoFormSet(request.POST, instance=cri_cra)
+                            formset_data_amortizacao.forms[0].empty_permitted = False
+                            if formset_data_amortizacao.is_valid():
+                                formset_data_remuneracao.save()
+                                formset_data_amortizacao.save()
+                                raise ValueError('Salvou tudo')
+                            else:
+                                raise ValueError('Amortizacoes invalido')
+                    else:
+                        raise ValueError('Remuneracoes invalido')
+                                    
+            except Exception as e:
+                print e.args
         
         for erro in [erro for erro in form_cri_cra.non_field_errors()]:
+            messages.error(request, erro)
+        for erro in formset_data_remuneracao.non_form_errors():
+            messages.error(request, erro)
+        for erro in formset_data_amortizacao.non_form_errors():
             messages.error(request, erro)
             
     else:
@@ -331,7 +366,7 @@ def inserir_cri_cra(request):
         formset_data_remuneracao = DataRemuneracaoFormSet()
         formset_data_amortizacao = DataAmortizacaoFormSet()
     return TemplateResponse(request, 'cri_cra/inserir_cri_cra.html', {'form_cri_cra': form_cri_cra, 'formset_data_remuneracao': formset_data_remuneracao,
-                                                                      'formset_data_amortizacao': formset_data_amortizacao})
+                                                                      'formset_data_amortizacao': formset_data_amortizacao, 'amortizacao_integral_venc': amortizacao_integral_venc})
 
 @login_required
 # def inserir_operacao_cri_cra(request):

@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from decimal import Decimal
+from django.core.validators import MinValueValidator
 from django.db import models
 
 class CRI_CRA (models.Model):
@@ -36,7 +38,7 @@ class CRI_CRA (models.Model):
     investidor = models.ForeignKey('bagogold.Investidor')
     
     def __unicode__(self):
-        return '%s, emitida em %s a R$ %s, com vencimento em %s' % (self.codigo, str(self.data_emissao), self.valor_emissao, str(self.data_vencimento))
+        return '%s, emitida em %s a R$ %s, com vencimento em %s' % (self.codigo_isin, str(self.data_emissao), self.valor_emissao, str(self.data_vencimento))
     
     def descricao_tipo(self):
         for escolha in self.ESCOLHAS_TIPO_CRI_CRA:
@@ -63,7 +65,7 @@ class DataRemuneracaoCRI_CRA (models.Model):
     
 class DataAmortizacaoCRI_CRA (models.Model):
     data = models.DateField(u'Data de amortização')
-    percentual = models.DecimalField(u'Percentual de amortização', decimal_places=4, max_digits=7)
+    percentual = models.DecimalField(u'Percentual de amortização', decimal_places=4, max_digits=7, validators = [MinValueValidator(Decimal('0.0001'))])
     cri_cra = models.ForeignKey('CRI_CRA')
     
     class Meta:
