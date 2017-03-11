@@ -98,7 +98,6 @@
 						<thead>
 							<tr>
 								<th>Data</th>
-								<th>Rendimento</th>
 								<th><a class="btn btn-sm green-steel">Adicionar</a></th>
 							</tr>
 						</thead>
@@ -106,6 +105,7 @@
 						{% for data in datas_remuneracao %}
 						<tr>
 							<td>{{data.data|date:"d/m/Y"}}</td>
+                            <td></td>
 						</tr>
 						{% endfor %}
 						</tbody>
@@ -129,15 +129,16 @@
 						<thead>
 							<tr>
 								<th>Data</th>
-								<th>Carência (dias)</th>
+								<th>Amortização</th>
 								<th><a class="btn btn-sm green-steel">Adicionar</a></th>
 							</tr>
 						</thead>
 						<tbody>
-						{% for data in historico_carencia %}
+						{% for data in datas_amortizacao %}
 						<tr>
 							<td>{{data.data|date:"d/m/Y"}}</td>
-							<td>{{data.percentual}} dia(s)</td>
+							<td>{{data.percentual}}%</td>
+                            <td></td>
 						</tr>
 						{% endfor %}
 						</tbody>

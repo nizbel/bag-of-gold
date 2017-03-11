@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from bagogold.bagogold.forms.utils import LocalizedModelForm
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoCRI_CRA, Divisao
 from bagogold.cri_cra.forms.cri_cra import CRI_CRAForm, \
     DataRemuneracaoCRI_CRAForm, DataRemuneracaoCRI_CRAFormSet, \
-    DataAmortizacaoCRI_CRAFormSet
+    DataAmortizacaoCRI_CRAFormSet, OperacaoCRI_CRAForm
 from bagogold.cri_cra.models.cri_cra import CRI_CRA, DataRemuneracaoCRI_CRA, \
-    DataAmortizacaoCRI_CRA
+    DataAmortizacaoCRI_CRA, OperacaoCRI_CRA
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -30,6 +31,10 @@ def detalhar_cri_cra(request, id_cri_cra):
     
     datas_remuneracao = DataRemuneracaoCRI_CRA.objects.filter(cri_cra=cri_cra)
     datas_amortizacao = DataAmortizacaoCRI_CRA.objects.filter(cri_cra=cri_cra)
+    if DataAmortizacaoCRI_CRA.objects.filter(cri_cra=cri_cra).exists():
+        datas_amortizacao = DataAmortizacaoCRI_CRA.objects.filter(cri_cra=cri_cra)
+    else:
+        datas_amortizacao = [DataAmortizacaoCRI_CRA(cri_cra=cri_cra, data=cri_cra.data_vencimento, percentual=Decimal(100))]
     
     # Data pŕoxima remuneração
     if DataRemuneracaoCRI_CRA.objects.filter(cri_cra=cri_cra, data__gt=datetime.date.today()).exists():
@@ -105,25 +110,70 @@ def editar_cri_cra(request, id_cri_cra):
         raise PermissionDenied
     
     # Preparar formsets 
-    DataRemuneracaoFormSet = inlineformset_factory(CRI_CRA, DataRemuneracaoCRI_CRA, fields=('data', 'cri_cra'), extra=1, can_delete=False,
+    DataRemuneracaoFormSet = inlineformset_factory(CRI_CRA, DataRemuneracaoCRI_CRA, fields=('data', 'cri_cra'), extra=1, validate_min=1,
                                                    formset=DataRemuneracaoCRI_CRAFormSet)
     DataAmortizacaoFormSet = inlineformset_factory(CRI_CRA, DataAmortizacaoCRI_CRA, form=LocalizedModelForm, fields=('data', 'percentual', 'cri_cra'),
-                                                   extra=1, can_delete=False, formset=DataAmortizacaoCRI_CRAFormSet)
+                                                   extra=1, formset=DataAmortizacaoCRI_CRAFormSet)
     
     if request.method == 'POST':
         if request.POST.get("save"):
+            amortizacao_integral_venc = 'amortizacao_integral_venc' in request.POST.keys()
             form_cri_cra = CRI_CRAForm(request.POST, instance=cri_cra)
-             
+            formset_data_remuneracao = DataRemuneracaoFormSet(request.POST, instance=cri_cra)
+            formset_data_amortizacao = DataAmortizacaoFormSet(request.POST, instance=cri_cra)
             if form_cri_cra.is_valid():
-                cri_cra.save()
-                messages.success(request, 'CRI/CRA editado com sucesso')
-                return HttpResponseRedirect(reverse('detalhar_cri_cra', kwargs={'id': cri_cra.id}))
-                 
-        # TODO verificar o que pode acontecer na exclusão
+                try:
+                    with transaction.atomic():
+                        cri_cra = form_cri_cra.save()
+                        formset_data_remuneracao = DataRemuneracaoFormSet(request.POST, instance=cri_cra)
+                        formset_data_amortizacao = DataAmortizacaoFormSet(request.POST, instance=cri_cra)
+                        formset_data_remuneracao.forms[0].empty_permitted = False
+                        if formset_data_remuneracao.is_valid():
+                            if amortizacao_integral_venc:
+                                formset_data_remuneracao.save()
+                                # Verifica se foi marcado como amortização integral no vencimento porém já possuia amortizações anteriormente
+                                if DataAmortizacaoCRI_CRA.objects.filter(cri_cra=cri_cra).exists():
+                                    for data in DataAmortizacaoCRI_CRA.objects.filter(cri_cra=cri_cra).exists():
+                                        data.delete()
+                                
+                                messages.success(request, '%s editado com sucesso' % (cri_cra.descricao_tipo()))
+                                return HttpResponseRedirect(reverse('cri_cra:detalhar_cri_cra', kwargs={'id_cri_cra': cri_cra.id}))
+                            else:
+                                formset_data_amortizacao.forms[0].empty_permitted = False
+                                if formset_data_amortizacao.is_valid():
+                                    formset_data_remuneracao.save()
+                                    formset_data_amortizacao.save()
+                                    messages.success(request, '%s editado com sucesso' % (cri_cra.descricao_tipo()))
+                                    return HttpResponseRedirect(reverse('cri_cra:detalhar_cri_cra', kwargs={'id_cri_cra': cri_cra.id}))
+                        raise ValueError('Validações falharam')
+
+                except:
+                    pass
+                # Erros de remuneração
+                for erro in formset_data_remuneracao.non_form_errors():
+                    messages.error(request, erro)
+                # Erros de amortização
+                for erro in formset_data_amortizacao.non_form_errors():
+                    messages.error(request, erro)
+                    
+            for erro in [erro for erro in form_cri_cra.non_field_errors()]:
+                messages.error(request, erro)
+            
+        # Pode excluir desde que não haja operações cadastradas para o investimento
         elif request.POST.get("delete"):
-            cri_cra.delete()
-            messages.success(request, 'CRI/CRA excluído com sucesso')
-            return HttpResponseRedirect(reverse('listar_cri_cra'))
+            if not OperacaoCRI_CRA.objects.filter(cri_cra=cri_cra).exists():
+                for data in DataRemuneracaoCRI_CRA.objects.filter(cri_cra=cri_cra):
+                    data.delete()
+                for data in DataAmortizacaoCRI_CRA.objects.filter(cri_cra=cri_cra):
+                    data.delete()
+                cri_cra.delete()
+                messages.success(request, 'CRI/CRA excluído com sucesso')
+                return HttpResponseRedirect(reverse('listar_cri_cra'))
+            else:
+                form_cri_cra = CRI_CRAForm(instance=cri_cra)
+                formset_data_remuneracao = DataRemuneracaoFormSet(instance=cri_cra)
+                formset_data_amortizacao = DataAmortizacaoFormSet(instance=cri_cra)
+                messages.error(request, u'Não é possível excluir o %s pois já existem operações cadastradas' % (cri_cra.descricao_tipo()))
   
     else:
         form_cri_cra = CRI_CRAForm(instance=cri_cra)
@@ -349,21 +399,22 @@ def inserir_cri_cra(request):
                             messages.success(request, '%s criado com sucesso' % (cri_cra.descricao_tipo()))
                             return HttpResponseRedirect(reverse('cri_cra:listar_cri_cra'))
                         else:
-                            formset_data_amortizacao = DataAmortizacaoFormSet(request.POST, instance=cri_cra)
                             formset_data_amortizacao.forms[0].empty_permitted = False
                             if formset_data_amortizacao.is_valid():
                                 formset_data_remuneracao.save()
                                 formset_data_amortizacao.save()
                                 messages.success(request, '%s criado com sucesso' % (cri_cra.descricao_tipo()))
                                 return HttpResponseRedirect(reverse('cri_cra:listar_cri_cra'))
-                            
+                    raise ValueError('Validações falharam')
+
             except:
-                # Erros de remuneração
-                for erro in formset_data_remuneracao.non_form_errors():
-                    messages.error(request, erro)
-                # Erros de amortização
-                for erro in formset_data_amortizacao.non_form_errors():
-                    messages.error(request, erro)
+                pass
+            # Erros de remuneração
+            for erro in formset_data_remuneracao.non_form_errors():
+                messages.error(request, erro)
+            # Erros de amortização
+            for erro in formset_data_amortizacao.non_form_errors():
+                messages.error(request, erro)
         
         for erro in [erro for erro in form_cri_cra.non_field_errors()]:
             messages.error(request, erro)
@@ -375,97 +426,97 @@ def inserir_cri_cra(request):
     return TemplateResponse(request, 'cri_cra/inserir_cri_cra.html', {'form_cri_cra': form_cri_cra, 'formset_data_remuneracao': formset_data_remuneracao,
                                                                       'formset_data_amortizacao': formset_data_amortizacao, 'amortizacao_integral_venc': amortizacao_integral_venc})
 
-#@login_required
-# def inserir_operacao_cri_cra(request):
-#     investidor = request.user.investidor
-#     
-#     # Preparar formset para divisoes
-#     DivisaoCDB_RDBFormSet = inlineformset_factory(OperacaoCDB_RDB, DivisaoOperacaoCDB_RDB, fields=('divisao', 'quantidade'), can_delete=False,
-#                                             extra=1, formset=DivisaoOperacaoCDB_RDBFormSet)
-#     
-#     # Testa se investidor possui mais de uma divisão
-#     varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
-#     
-#     if request.method == 'POST':
-#         form_operacao_cdb_rdb = OperacaoCDB_RDBForm(request.POST, investidor=investidor)
-#         formset_divisao_cdb_rdb = DivisaoCDB_RDBFormSet(request.POST, investidor=investidor) if varias_divisoes else None
-#         
-#         # Validar CDB/RDB
-#         if form_operacao_cdb_rdb.is_valid():
-#             operacao_cdb_rdb = form_operacao_cdb_rdb.save(commit=False)
-#             operacao_cdb_rdb.investidor = investidor
-#             operacao_compra = form_operacao_cdb_rdb.cleaned_data['operacao_compra']
-#             formset_divisao_cdb_rdb = DivisaoCDB_RDBFormSet(request.POST, instance=operacao_cdb_rdb, operacao_compra=operacao_compra, investidor=investidor) if varias_divisoes else None
-#                 
-#             # Validar em caso de venda
-#             if form_operacao_cdb_rdb.cleaned_data['tipo_operacao'] == 'V':
-#                 operacao_compra = form_operacao_cdb_rdb.cleaned_data['operacao_compra']
-#                 # Caso de venda total do cdb/rdb
-#                 if form_operacao_cdb_rdb.cleaned_data['quantidade'] == operacao_compra.quantidade:
-#                     # Desconsiderar divisões inseridas, copiar da operação de compra
-#                     operacao_cdb_rdb.save()
-#                     for divisao_cdb_rdb in DivisaoOperacaoCDB_RDB.objects.filter(operacao=operacao_compra):
-#                         divisao_cdb_rdb_venda = DivisaoOperacaoCDB_RDB(quantidade=divisao_cdb_rdb.quantidade, divisao=divisao_cdb_rdb.divisao, \
-#                                                              operacao=operacao_cdb_rdb)
-#                         divisao_cdb_rdb_venda.save()
-#                     operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
-#                     operacao_venda_cdb_rdb.save()
-#                     messages.success(request, 'Operação inserida com sucesso')
-#                     return HttpResponseRedirect(reverse('historico_cdb_rdb'))
-#                 # Vendas parciais
-#                 else:
-#                     # Verificar se varias divisões
-#                     if varias_divisoes:
-#                         if formset_divisao_cdb_rdb.is_valid():
-#                             operacao_cdb_rdb.save()
-#                             formset_divisao_cdb_rdb.save()
-#                             operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
-#                             operacao_venda_cdb_rdb.save()
-#                             messages.success(request, 'Operação inserida com sucesso')
-#                             return HttpResponseRedirect(reverse('historico_cdb_rdb'))
-#                         for erro in formset_divisao_cdb_rdb.non_form_errors():
-#                                 messages.error(request, erro)
-#                                 
-#                     else:
-#                         operacao_cdb_rdb.save()
-#                         divisao_operacao = DivisaoOperacaoCDB_RDB(operacao=operacao_cdb_rdb, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_cdb_rdb.quantidade)
-#                         divisao_operacao.save()
-#                         operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
-#                         operacao_venda_cdb_rdb.save()
-#                         messages.success(request, 'Operação inserida com sucesso')
-#                         return HttpResponseRedirect(reverse('historico_cdb_rdb'))
-#             
-#             # Compra
-#             else:
-#                 # Verificar se várias divisões
-#                 if varias_divisoes:
-#                     if formset_divisao_cdb_rdb.is_valid():
-#                         operacao_cdb_rdb.save()
-#                         formset_divisao_cdb_rdb.save()
-#                         messages.success(request, 'Operação inserida com sucesso')
-#                         return HttpResponseRedirect(reverse('historico_cdb_rdb'))
-#                     for erro in formset_divisao_cdb_rdb.non_form_errors():
-#                                 messages.error(request, erro)
-#                                 
-#                 else:
-#                         operacao_cdb_rdb.save()
-#                         divisao_operacao = DivisaoOperacaoCDB_RDB(operacao=operacao_cdb_rdb, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_cdb_rdb.quantidade)
-#                         divisao_operacao.save()
-#                         messages.success(request, 'Operação inserida com sucesso')
-#                         return HttpResponseRedirect(reverse('historico_cdb_rdb'))
-#                     
-#         for erros in form_operacao_cdb_rdb.errors.values():
-#             for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
-#                 messages.error(request, erro.message)
-#         for erro in formset_divisao_cdb_rdb.non_form_errors():
-#             messages.error(request, erro)
-# #                         print '%s %s'  % (divisao_cdb_rdb.quantidade, divisao_cdb_rdb.divisao)
-#                 
-#     else:
-#         form_operacao_cdb_rdb = OperacaoCDB_RDBForm(investidor=investidor)
-#         formset_divisao_cdb_rdb = DivisaoCDB_RDBFormSet(investidor=investidor)
-#     return TemplateResponse(request, 'cdb_rdb/inserir_operacao_cdb_rdb.html', {'form_operacao_cdb_rdb': form_operacao_cdb_rdb, 'formset_divisao_cdb_rdb': formset_divisao_cdb_rdb,
-#                                                                         'varias_divisoes': varias_divisoes})
+@login_required
+def inserir_operacao_cri_cra(request):
+    investidor = request.user.investidor
+     
+    # Preparar formset para divisoes
+    DivisaoCRI_CRAFormSet = inlineformset_factory(OperacaoCRI_CRA, DivisaoOperacaoCRI_CRA, fields=('divisao', 'quantidade'), can_delete=False,
+                                            extra=1, formset=DivisaoOperacaoCRI_CRAFormSet)
+    
+    # Testa se investidor possui mais de uma divisão
+    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    
+    if request.method == 'POST':
+        form_operacao_cri_cra = OperacaoCRI_CRAForm(request.POST, investidor=investidor)
+        formset_divisao_cri_cra = DivisaoCRI_CRAFormSet(request.POST, investidor=investidor) if varias_divisoes else None
+        
+        # Validar CDB/RDB
+        if form_operacao_cri_cra.is_valid():
+            operacao_cri_cra = form_operacao_cri_cra.save(commit=False)
+            operacao_cri_cra.investidor = investidor
+            operacao_compra = form_operacao_cri_cra.cleaned_data['operacao_compra']
+            formset_divisao_cri_cra = DivisaoCRI_CRAFormSet(request.POST, instance=operacao_cri_cra, operacao_compra=operacao_compra, investidor=investidor) if varias_divisoes else None
+                
+            # Validar em caso de venda
+            if form_operacao_cri_cra.cleaned_data['tipo_operacao'] == 'V':
+                operacao_compra = form_operacao_cri_cra.cleaned_data['operacao_compra']
+                # Caso de venda total do cdb/rdb
+                if form_operacao_cri_cra.cleaned_data['quantidade'] == operacao_compra.quantidade:
+                    # Desconsiderar divisões inseridas, copiar da operação de compra
+                    operacao_cri_cra.save()
+                    for divisao_cri_cra in DivisaoOperacaoCRI_CRA.objects.filter(operacao=operacao_compra):
+                        divisao_cri_cra_venda = DivisaoOperacaoCRI_CRA(quantidade=divisao_cri_cra.quantidade, divisao=divisao_cri_cra.divisao, \
+                                                             operacao=operacao_cri_cra)
+                        divisao_cri_cra_venda.save()
+                    operacao_venda_cri_cra = OperacaoVendaCRI_CRA(operacao_compra=operacao_compra, operacao_venda=operacao_cri_cra)
+                    operacao_venda_cri_cra.save()
+                    messages.success(request, 'Operação inserida com sucesso')
+                    return HttpResponseRedirect(reverse('cri_cra:historico_cri_cra'))
+                # Vendas parciais
+                else:
+                    # Verificar se varias divisões
+                    if varias_divisoes:
+                        if formset_divisao_cri_cra.is_valid():
+                            operacao_cri_cra.save()
+                            formset_divisao_cri_cra.save()
+                            operacao_venda_cri_cra = OperacaoVendaCRI_CRA(operacao_compra=operacao_compra, operacao_venda=operacao_cri_cra)
+                            operacao_venda_cri_cra.save()
+                            messages.success(request, 'Operação inserida com sucesso')
+                            return HttpResponseRedirect(reverse('cri_cra:historico_cri_cra'))
+                        for erro in formset_divisao_cri_cra.non_form_errors():
+                                messages.error(request, erro)
+                                
+                    else:
+                        operacao_cri_cra.save()
+                        divisao_operacao = DivisaoOperacaoCRI_CRA(operacao=operacao_cri_cra, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_cri_cra.quantidade)
+                        divisao_operacao.save()
+                        operacao_venda_cri_cra = OperacaoVendaCRI_CRA(operacao_compra=operacao_compra, operacao_venda=operacao_cri_cra)
+                        operacao_venda_cri_cra.save()
+                        messages.success(request, 'Operação inserida com sucesso')
+                        return HttpResponseRedirect(reverse('cri_cra:historico_cri_cra'))
+            
+            # Compra
+            else:
+                # Verificar se várias divisões
+                if varias_divisoes:
+                    if formset_divisao_cri_cra.is_valid():
+                        operacao_cri_cra.save()
+                        formset_divisao_cri_cra.save()
+                        messages.success(request, 'Operação inserida com sucesso')
+                        return HttpResponseRedirect(reverse('cri_cra:historico_cri_cra'))
+                    for erro in formset_divisao_cri_cra.non_form_errors():
+                                messages.error(request, erro)
+                                
+                else:
+                        operacao_cri_cra.save()
+                        divisao_operacao = DivisaoOperacaoCRI_CRA(operacao=operacao_cri_cra, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_cri_cra.quantidade)
+                        divisao_operacao.save()
+                        messages.success(request, 'Operação inserida com sucesso')
+                        return HttpResponseRedirect(reverse('cri_cra:historico_cri_cra'))
+                    
+        
+        for erro in [erro for erro in form_cri_cra.non_field_errors()]:
+            messages.error(request, erro)
+        for erro in formset_divisao_cri_cra.non_form_errors():
+            messages.error(request, erro)
+#                         print '%s %s'  % (divisao_cri_cra.quantidade, divisao_cri_cra.divisao)
+                 
+    else:
+        form_operacao_cri_cra = OperacaoCRI_CRAForm(investidor=investidor)
+        formset_divisao_cri_cra = DivisaoCRI_CRAFormSet(investidor=investidor)
+    return TemplateResponse(request, 'cri_cra/inserir_operacao_cri_cra.html', {'form_operacao_cri_cra': form_operacao_cri_cra, 'formset_divisao_cri_cra': formset_divisao_cri_cra,
+                                                                         'varias_divisoes': varias_divisoes})
 
 @login_required
 def listar_cri_cra(request):
