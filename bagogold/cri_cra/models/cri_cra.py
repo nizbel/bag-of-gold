@@ -49,6 +49,15 @@ class CRI_CRA (models.Model):
                 return escolha[1]
         return 'Indefinido'
     
+    def descricao_tipo_indexacao(self):
+        for escolha in self.ESCOLHAS_TIPO_INDEXACAO:
+            if self.tipo_indexacao == escolha[0]:
+                return escolha[1]
+        return 'Indefinido'
+    
+    def indexacao_completa(self):
+        return '%s%% do %s' % (self.porcentagem, self.descricao_tipo_indexacao())
+    
     def amortizacao_integral_vencimento(self):
         return not (DataAmortizacaoCRI_CRA.objects.filter(cri_cra=self).count() > 0)
     

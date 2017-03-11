@@ -10,9 +10,9 @@
 <div class="portlet light">
 	<div class="portlet-title">
 		<div class="caption font-yellow-crusta">
-			<i class="icon-diamond font-yellow-crusta"></i>{{cdb_rdb.nome}}</div>
+			<i class="icon-diamond font-yellow-crusta"></i>{{cri_cra.nome}}</div>
 		<div class="actions">
-			<a href="{% url 'editar_cdb_rdb' cdb_rdb.id %}" class="btn btn-small btn-warning">Editar {{cdb_rdb.tipo}}</a>
+			<a href="{% url 'cri_cra:editar_cri_cra' cri_cra.id %}" class="btn btn-small btn-warning">Editar {{cri_cra.descricao_tipo}}</a>
 		</div>
 	</div>
 	<div class="portlet-body">
@@ -31,15 +31,19 @@
 						<div class="m-grid m-grid-responsive-xs">
 							<div class="m-grid-row">
 								<div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
-								<div class="m-grid-col m-grid-col-left">{{cdb_rdb.tipo}}</div>
-								<div class="m-grid-col m-grid-col-left"><strong>Rendimento atual:</strong></div>
-								<div class="m-grid-col m-grid-col-left">{{cdb_rdb.porcentagem_atual}}% {% if cdb_rdb.tipo_rendimento == 1 %}ao ano{% elif cdb_rdb.tipo_rendimento == 2 %}do DI{% endif %}</div>
-								<div class="m-grid-col m-grid-col-left"><strong>Carência atual:</strong></div>
-								<div class="m-grid-col m-grid-col-left">{{cdb_rdb.carencia_atual}} dia(s)</div>
+								<div class="m-grid-col m-grid-col-left">{{cri_cra.descricao_tipo}}</div>
+								<div class="m-grid-col m-grid-col-left"><strong>Indexação:</strong></div>
+								<div class="m-grid-col m-grid-col-left">{{cri_cra.indexacao_completa}}</div>
+								<div class="m-grid-col m-grid-col-left"><strong>Juros adicional:</strong></div>
+								<div class="m-grid-col m-grid-col-left">{{cri_cra.juros_adicional}}%</div>
 							</div>
 							<div class="m-grid-row">
+                                <div class="m-grid-col m-grid-col-left"><strong>Data de emissão:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{cri_cra.data_emissao|date:'d/m/Y'}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Data de vencimento:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{cri_cra.data_vencimento|date:'d/m/Y'}}</div>
 								<div class="m-grid-col m-grid-col-left"><strong>Total de operações:</strong></div>
-								<div class="m-grid-col m-grid-col-left">{{cdb_rdb.total_operacoes}}</div>
+								<div class="m-grid-col m-grid-col-left">{{cri_cra.total_operacoes}}</div>
 							</div>
 						</div>
 					</div>
@@ -60,19 +64,19 @@
 						<div class="m-grid m-grid-responsive-xs">
 							<div class="m-grid-row">
 								<div class="m-grid-col m-grid-col-left"><strong>Total investido:</strong></div>
-								<div class="m-grid-col m-grid-col-left">R$ {{cdb_rdb.total_investido|floatformat:2}}</div>
+								<div class="m-grid-col m-grid-col-left">R$ {{cri_cra.total_investido|floatformat:2}}</div>
 								<div class="m-grid-col m-grid-col-left"><strong>Saldo atual:</strong></div>
-								<div class="m-grid-col m-grid-col-left">R$ {{cdb_rdb.saldo_atual|floatformat:2}}</div>
+								<div class="m-grid-col m-grid-col-left">R$ {{cri_cra.saldo_atual|floatformat:2}}</div>
 								<div class="m-grid-col m-grid-col-left"><strong>Lucro:</strong></div>
-								<div class="m-grid-col m-grid-col-left">R$ {{ cdb_rdb.lucro|floatformat:2 }} ({{ cdb_rdb.lucro_percentual|floatformat:2 }}%)</div>
+								<div class="m-grid-col m-grid-col-left">R$ {{ cri_cra.lucro|floatformat:2 }} ({{ cdb_rdb.lucro_percentual|floatformat:2 }}%)</div>
 							</div>
 							<div class="m-grid-row">
 								<div class="m-grid-col m-grid-col-left"><strong>Dias para próx. retirada:</strong></div>
-								<div class="m-grid-col m-grid-col-left">{{ cdb_rdb.dias_proxima_retirada }} dia(s)</div>
+								<div class="m-grid-col m-grid-col-left">{{ cri_cra.proxima_data_remuneracao|date:'d/m/Y'|default:'Não há' }}</div>
 								<div class="m-grid-col m-grid-col-left"><strong>IR:</strong></div>
-								<div class="m-grid-col m-grid-col-left">R$ {{cdb_rdb.total_ir|floatformat:2}}</div>
+								<div class="m-grid-col m-grid-col-left">R$ {{cri_cra.total_ir|floatformat:2}}</div>
 								<div class="m-grid-col m-grid-col-left"><strong>IOF:</strong></div>
-								<div class="m-grid-col m-grid-col-left">R$ {{cdb_rdb.total_iof|floatformat:2}}</div>
+								<div class="m-grid-col m-grid-col-left">R$ {{cri_cra.total_iof|floatformat:2}}</div>
 							</div>
 						</div>
 					</div>
@@ -84,7 +88,7 @@
 				<div class="portlet box yellow-crusta">
 					<div class="portlet-title">
 						<div class="caption">
-							<i class="fa fa-money"></i>Rendimento</div>
+							<i class="fa fa-money"></i>Datas de remuneração</div>
 						<div class="tools">
 							<a href="javascript:;" class="collapse"></a>
 						</div>
@@ -95,15 +99,13 @@
 							<tr>
 								<th>Data</th>
 								<th>Rendimento</th>
-								<th><a href="{% url 'modificar_porcentagem_cdb_rdb' cdb_rdb.id %}" class="btn btn-sm green-steel">Adicionar</a></th>
+								<th><a class="btn btn-sm green-steel">Adicionar</a></th>
 							</tr>
 						</thead>
 						<tbody>
-						{% for item in historico_porcentagem %}
+						{% for data in datas_remuneracao %}
 						<tr>
-							<td>{{item.data|default:"Inicial"}}</td>
-							<td>{{item.porcentagem}}%</td>
-							<td><a href="{% url 'editar_historico_porcentagem' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
+							<td>{{data.data|date:"d/m/Y"}}</td>
 						</tr>
 						{% endfor %}
 						</tbody>
@@ -117,7 +119,7 @@
 				<div class="portlet box yellow-crusta">
 					<div class="portlet-title">
 						<div class="caption">
-							<i class="fa fa-calendar-check-o"></i>Carência</div>
+							<i class="fa fa-calendar-check-o"></i>Datas de amortização</div>
 						<div class="tools">
 							<a href="javascript:;" class="collapse"></a>
 						</div>
@@ -128,15 +130,14 @@
 							<tr>
 								<th>Data</th>
 								<th>Carência (dias)</th>
-								<th><a href="{% url 'modificar_carencia_cdb_rdb' cdb_rdb.id %}" class="btn btn-sm green-steel">Adicionar</a></th>
+								<th><a class="btn btn-sm green-steel">Adicionar</a></th>
 							</tr>
 						</thead>
 						<tbody>
-						{% for item in historico_carencia %}
+						{% for data in historico_carencia %}
 						<tr>
-							<td>{{item.data|default:"Inicial"}}</td>
-							<td>{{item.carencia}} dia(s)</td>
-							<td><a href="{% url 'editar_historico_carencia' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
+							<td>{{data.data|date:"d/m/Y"}}</td>
+							<td>{{data.percentual}} dia(s)</td>
 						</tr>
 						{% endfor %}
 						</tbody>
