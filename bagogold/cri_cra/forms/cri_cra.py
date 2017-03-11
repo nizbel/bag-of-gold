@@ -90,13 +90,11 @@ class DataRemuneracaoCRI_CRAFormSet(forms.models.BaseInlineFormSet):
         datas_remuneracao = list()
         for form_remuneracao in self.forms:
             if form_remuneracao.is_valid():
-                print 'is valid'
-                # Verifica se pode passar pelo form, e se não está configurado para ser apagada
+                # Verifica se pode passar pelo form
                 if not (form_remuneracao.instance.id == None and not form_remuneracao.has_changed()):
                     data = form_remuneracao.cleaned_data.get('data')
                     cri_cra = form_remuneracao.cleaned_data.get('cri_cra')
-                    print data, cri_cra
-                    if data <= cri_cra.data_emissao or data >= cri_cra.data_vencimento:
+                    if data <= cri_cra.data_emissao or data > cri_cra.data_vencimento:
                         raise ValidationError('Data de remuneração %s está fora do período de duração do %s' % (data.strftime('%d/%m/%Y'), cri_cra.descricao_tipo()))
                     if data in datas_remuneracao:
                         raise ValidationError('%s já possui remuneração cadastrada para a data %s' % (cri_cra.descricao_tipo(), data.strftime('%d/%m/%Y')))
@@ -145,7 +143,7 @@ class DataAmortizacaoCRI_CRAFormSet(forms.models.BaseInlineFormSet):
         total_amortizacao = Decimal(0)
         for form_amortizacao in self.forms:
             if form_amortizacao.is_valid():
-                # Verifica se pode passar pelo form, e se não está configurado para ser apagada
+                # Verifica se pode passar pelo form
                 if not (form_amortizacao.instance.id == None and not form_amortizacao.has_changed()):
 #                     print form_divisao.cleaned_data.get('quantidade')
                     data = form_amortizacao.cleaned_data.get('data')

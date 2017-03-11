@@ -37,6 +37,9 @@ class CRI_CRA (models.Model):
     data_vencimento = models.DateField(u'Data de vencimento')
     investidor = models.ForeignKey('bagogold.Investidor')
     
+    class Meta:
+        unique_together=('investidor', 'codigo_isin')
+    
     def __unicode__(self):
         return '%s, emitida em %s a R$ %s, com vencimento em %s' % (self.codigo_isin, str(self.data_emissao), self.valor_emissao, str(self.data_vencimento))
     
@@ -62,6 +65,9 @@ class DataRemuneracaoCRI_CRA (models.Model):
     
     class Meta:
         unique_together=('data', 'cri_cra')
+        
+    def __unicode__(self):
+        return u'Remuneração na data %s' % (self.data.strftime('%d/%m/%Y'))
     
 class DataAmortizacaoCRI_CRA (models.Model):
     data = models.DateField(u'Data de amortização')
@@ -70,3 +76,6 @@ class DataAmortizacaoCRI_CRA (models.Model):
     
     class Meta:
         unique_together=('data', 'cri_cra')
+        
+    def __unicode__(self):
+        return u'Amortização de %s%% na data %s' % (self.percentual, self.data.strftime('%d/%m/%Y'))

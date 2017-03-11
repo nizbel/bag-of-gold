@@ -336,29 +336,27 @@ def inserir_cri_cra(request):
                     formset_data_remuneracao.forms[0].empty_permitted = False
                     if formset_data_remuneracao.is_valid():
                         if amortizacao_integral_venc:
-                            print 'Amortização integral no vencimento'
                             formset_data_remuneracao.save()
-                            raise ValueError('Salvou tudo')
+                            messages.success(request, '%s criado com sucesso' % (cri_cra.descricao_tipo()))
+                            return HttpResponseRedirect(reverse('cri_cra:listar_cri_cra'))
                         else:
                             formset_data_amortizacao = DataAmortizacaoFormSet(request.POST, instance=cri_cra)
                             formset_data_amortizacao.forms[0].empty_permitted = False
                             if formset_data_amortizacao.is_valid():
                                 formset_data_remuneracao.save()
                                 formset_data_amortizacao.save()
-                                raise ValueError('Salvou tudo')
-                            else:
-                                raise ValueError('Amortizacoes invalido')
-                    else:
-                        raise ValueError('Remuneracoes invalido')
-                                    
-            except Exception as e:
-                print e.args
+                                messages.success(request, '%s criado com sucesso' % (cri_cra.descricao_tipo()))
+                                return HttpResponseRedirect(reverse('cri_cra:listar_cri_cra'))
+                            
+            except:
+                # Erros de remuneração
+                for erro in formset_data_remuneracao.non_form_errors():
+                    messages.error(request, erro)
+                # Erros de amortização
+                for erro in formset_data_amortizacao.non_form_errors():
+                    messages.error(request, erro)
         
         for erro in [erro for erro in form_cri_cra.non_field_errors()]:
-            messages.error(request, erro)
-        for erro in formset_data_remuneracao.non_form_errors():
-            messages.error(request, erro)
-        for erro in formset_data_amortizacao.non_form_errors():
             messages.error(request, erro)
             
     else:

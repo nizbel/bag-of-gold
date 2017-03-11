@@ -140,7 +140,7 @@
                                                 <label id="label_data_remuneracao_set-0" class="control-label col-md-4" style="text-align: left;">Data {{forloop.counter}}:</label>
                                                 <div class="col-md-8">
                                                     <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_dataremuneracaocri_cra_set-{{forloop.counter0}}-data" name="dataremuneracaocri_cra_set-{{forloop.counter0}}-data" 
-                                                    data-date="{% if form_data_remuneracao.data.value|date:'d/m/Y'|default:'' == '' %}{{form_data_remuneracao.data.value|default:''}}{% else %}{{form_data_remuneracao.data.value|date:'d/m/Y'}}{% endif %}" data-date-viewmode="years">
+                                                    {% comment %}data-date="{% if form_data_remuneracao.data.value|date:'d/m/Y'|default:'' == '' %}{{form_data_remuneracao.data.value|default:''}}{% else %}{{form_data_remuneracao.data.value|date:'d/m/Y'}}{% endif %}"{% endcomment %} data-date-viewmode="years">
                                                         <input type="text" class="form-control" name="dataremuneracaocri_cra_set-{{forloop.counter0}}-data" 
                                                         value="{% if form_data_remuneracao.data.value|date:'d/m/Y'|default:'' == '' %}{{form_data_remuneracao.data.value|default:''}}{% else %}{{form_data_remuneracao.data.value|date:'d/m/Y'}}{% endif %}">
                                                         <span class="input-group-btn">
@@ -191,7 +191,7 @@
                                                     <label id="label_data_amortizacao_set-0" class="control-label col-md-4" style="text-align: left;">Data {{forloop.counter}}:</label>
                                                     <div class="col-md-8">
                                                         <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_dataamortizacaocri_cra_set-{{forloop.counter0}}-data" name="dataamortizacaocri_cra_set-{{forloop.counter0}}-data" 
-                                                        data-date="{% if form_data_amortizacao.data.value|date:'d/m/Y'|default:'' == '' %}{{form_data_amortizacao.data.value|default:''}}{% else %}{{form_data_amortizacao.data.value|date:'d/m/Y'}}{% endif %}" data-date-viewmode="years">
+                                                        {% comment %}data-date="{% if form_data_amortizacao.data.value|date:'d/m/Y'|default:'' == '' %}{{form_data_amortizacao.data.value|default:''}}{% else %}{{form_data_amortizacao.data.value|date:'d/m/Y'}}{% endif %}"{% endcomment %} data-date-viewmode="years">
                                                             <input type="text" class="form-control" name="dataamortizacaocri_cra_set-{{forloop.counter0}}-data" 
                                                             value="{% if form_data_amortizacao.data.value|date:'d/m/Y'|default:'' == '' %}{{form_data_amortizacao.data.value|default:''}}{% else %}{{form_data_amortizacao.data.value|date:'d/m/Y'}}{% endif %}">
                                                             <span class="input-group-btn">
