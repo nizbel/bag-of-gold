@@ -6,6 +6,7 @@ from bagogold.cri_cra.forms.cri_cra import CRI_CRAForm, \
     DataAmortizacaoCRI_CRAFormSet
 from bagogold.cri_cra.models.cri_cra import CRI_CRA, DataRemuneracaoCRI_CRA, \
     DataAmortizacaoCRI_CRA
+from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, NON_FIELD_ERRORS
@@ -27,24 +28,22 @@ def detalhar_cri_cra(request, id_cri_cra):
     if cri_cra.investidor != investidor:
         raise PermissionDenied
     
-#     historico_porcentagem = HistoricoPorcentagemCDB_RDB.objects.filter(cdb_rdb=cdb_rdb)
-#     historico_carencia = HistoricoCarenciaCDB_RDB.objects.filter(cdb_rdb=cdb_rdb)
-#     
-#     # Inserir dados do investimento
-#     if cdb_rdb.tipo == 'R':
-#         cdb_rdb.tipo = 'RDB'
-#     elif cdb_rdb.tipo == 'C':
-#         cdb_rdb.tipo = 'CDB'
-#     cdb_rdb.carencia_atual = cdb_rdb.carencia_atual()
-#     cdb_rdb.porcentagem_atual = cdb_rdb.porcentagem_atual()
-#     
-#     # Preparar estatísticas zeradas
-#     cdb_rdb.total_investido = Decimal(0)
-#     cdb_rdb.saldo_atual = Decimal(0)
-#     cdb_rdb.total_ir = Decimal(0)
-#     cdb_rdb.total_iof = Decimal(0)
-#     cdb_rdb.lucro = Decimal(0)
-#     cdb_rdb.lucro_percentual = Decimal(0)
+    datas_remuneracao = DataRemuneracaoCRI_CRA.objects.filter(cri_cra=cri_cra)
+    datas_amortizacao = DataAmortizacaoCRI_CRA.objects.filter(cri_cra=cri_cra)
+    
+    # Data pŕoxima remuneração
+    if DataRemuneracaoCRI_CRA.objects.filter(cri_cra=cri_cra, data__gt=datetime.date.today()).exists():
+        cri_cra.proxima_data_remuneracao = DataRemuneracaoCRI_CRA.objects.filter(cri_cra=cri_cra, data__gt=datetime.date.today()).order_by('data')[0].data
+    else:
+        cri_cra.proxima_data_remuneracao = None
+     
+    # Preparar estatísticas zeradas
+    cri_cra.total_investido = Decimal(0)
+    cri_cra.saldo_atual = Decimal(0)
+    cri_cra.total_ir = Decimal(0)
+    cri_cra.total_iof = Decimal(0)
+    cri_cra.lucro = Decimal(0)
+    cri_cra.lucro_percentual = Decimal(0)
 #     
 #     operacoes = OperacaoCDB_RDB.objects.filter(investimento=cdb_rdb).order_by('data')
 #     # Contar total de operações já realizadas 
@@ -94,7 +93,8 @@ def detalhar_cri_cra(request, id_cri_cra):
 #         cdb_rdb.dias_proxima_retirada = 0
     
     
-    return TemplateResponse(request, 'cdb_rdb/detalhar_cdb_rdb.html', {'cri_cra': cri_cra})
+    return TemplateResponse(request, 'cri_cra/detalhar_cri_cra.html', {'cri_cra': cri_cra, 'datas_remuneracao': datas_remuneracao, 
+                                                                       'datas_amortizacao': datas_amortizacao})
 
 @login_required
 def editar_cri_cra(request, id_cri_cra):
@@ -103,6 +103,12 @@ def editar_cri_cra(request, id_cri_cra):
     
     if cri_cra.investidor != investidor:
         raise PermissionDenied
+    
+    # Preparar formsets 
+    DataRemuneracaoFormSet = inlineformset_factory(CRI_CRA, DataRemuneracaoCRI_CRA, fields=('data', 'cri_cra'), extra=1, can_delete=False,
+                                                   formset=DataRemuneracaoCRI_CRAFormSet)
+    DataAmortizacaoFormSet = inlineformset_factory(CRI_CRA, DataAmortizacaoCRI_CRA, form=LocalizedModelForm, fields=('data', 'percentual', 'cri_cra'),
+                                                   extra=1, can_delete=False, formset=DataAmortizacaoCRI_CRAFormSet)
     
     if request.method == 'POST':
         if request.POST.get("save"):
@@ -121,8 +127,11 @@ def editar_cri_cra(request, id_cri_cra):
   
     else:
         form_cri_cra = CRI_CRAForm(instance=cri_cra)
-            
-    return TemplateResponse(request, 'cdb_rdb/editar_cri_cra.html', {'form_cri_cra': form_cri_cra})  
+        formset_data_remuneracao = DataRemuneracaoFormSet(instance=cri_cra)
+        formset_data_amortizacao = DataAmortizacaoFormSet(instance=cri_cra)
+    return TemplateResponse(request, 'cri_cra/editar_cri_cra.html', {'form_cri_cra': form_cri_cra, 'formset_data_remuneracao': formset_data_remuneracao,
+                                                                      'formset_data_amortizacao': formset_data_amortizacao, 
+                                                                      'amortizacao_integral_venc': cri_cra.amortizacao_integral_vencimento()})
     
     
 # @login_required
@@ -366,7 +375,7 @@ def inserir_cri_cra(request):
     return TemplateResponse(request, 'cri_cra/inserir_cri_cra.html', {'form_cri_cra': form_cri_cra, 'formset_data_remuneracao': formset_data_remuneracao,
                                                                       'formset_data_amortizacao': formset_data_amortizacao, 'amortizacao_integral_venc': amortizacao_integral_venc})
 
-@login_required
+#@login_required
 # def inserir_operacao_cri_cra(request):
 #     investidor = request.user.investidor
 #     

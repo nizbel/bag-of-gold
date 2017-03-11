@@ -22,7 +22,7 @@
 				<thead>
 					<tr>
 						<th>Nome</th>
-						<th>Código</th>
+						<th>Código ISIN</th>
                         <th>Data de emissão</th>
 						<th>Indexação</th>
 						<th>Juros adicional</th>
@@ -33,13 +33,13 @@
 				<tbody>
 				{% for item in cri_cra %}
 				<tr>
-					<td><a href="{% url 'detalhar_cri_cra' item.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar CRI/CRA">{{item.nome}}</a></td>
+					<td><a href="{% url 'cri_cra:detalhar_cri_cra' item.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar CRI/CRA">{{item.nome}}</a></td>
 					<td>{{item.codigo_isin}}</td>
 					<td>{{item.data_emissao}}</td>
-					<td>{{item.tipo_indexacao}}</td>
+					<td>{{item.indexacao_completa}}</td>
 					<td>{{item.juros_adicional}}%</td>
                     <td>{{item.data_vencimento}}</td>
-                    <td>{{item.data_proxima_remuneracao|default:'Não há'}}</td>
+                    <td>{{item.proxima_data_remuneracao|default:'Não há'}}</td>
 				</tr>
 				{% endfor %}
 				</tbody>
