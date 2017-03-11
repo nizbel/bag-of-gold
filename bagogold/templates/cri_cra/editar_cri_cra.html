@@ -51,7 +51,7 @@
                         <div class="col-md-8">
                             <select class="selectpicker form-control" id="id_tipo_indexacao" name="tipo_indexacao">
                                 {% for key, value in form_cri_cra.fields.tipo_indexacao.widget.choices %}<option value="{{ key }}"
-                                {% if key|stringformat:"i" == form_cri_cra.tipo_indexacao.value|stringformat:"i" %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                                {% if key|stringformat:'s' == form_cri_cra.tipo_indexacao.value|stringformat:'s' %}selected="selected{{form_cri_cra.tipo_indexacao.value}}"{% endif %}>{{ value }}</option>{% endfor %}
                             </select>
                             {% if form_cri_cra.tipo_indexacao.errors %} <span class="help-block"> {{ form_cri_cra.tipo_indexacao.errors.as_text }} </span> {% endif %}
                         </div>
@@ -136,10 +136,10 @@
                                     <div id="remuneracoes" class="col-md-12">
                                         {{ formset_data_remuneracao.management_form }}
                                         {% for form_data_remuneracao in formset_data_remuneracao %}
-                                            <div id="remuneracao-0" class="form-group col-md-12 {% if form_data_remuneracao.data.errors %} has-error {% endif %}">
-                                                <label id="label_data_remuneracao_set-0" class="control-label col-md-4" style="text-align: left;">Data {{forloop.counter}}:</label>
+                                            <div id="remuneracao-{{forloop.counter0}}" class="form-group col-md-9 {% if form_data_remuneracao.data.errors %} has-error {% endif %}">
+                                                <label id="label_data_remuneracao_set-{{forloop.counter0}}" class="control-label col-md-4" style="text-align: left;">Data {{forloop.counter}}:</label>
                                                 <div class="col-md-8">
-                                                    <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_dataremuneracaocri_cra_set-{{forloop.counter0}}-data" name="dataremuneracaocri_cra_set-{{forloop.counter0}}-data" 
+                                                    <div class="input-group input-small date date-picker" data-date-format="dd/mm/yyyy" id="id_dataremuneracaocri_cra_set-{{forloop.counter0}}-data" name="dataremuneracaocri_cra_set-{{forloop.counter0}}-data" 
                                                     data-date-viewmode="years">
                                                         <input type="text" class="form-control" name="dataremuneracaocri_cra_set-{{forloop.counter0}}-data" 
                                                         value="{% if form_data_remuneracao.data.value|date:'d/m/Y'|default:'' == '' %}{{form_data_remuneracao.data.value|default:''}}{% else %}{{form_data_remuneracao.data.value|date:'d/m/Y'}}{% endif %}">
@@ -154,6 +154,19 @@
                                                     {% endif %}
                                                 </div>
                                             </div>
+                                            {% if form_data_remuneracao.instance.id %}
+                                            <div class="md-checkbox col-md-3">
+                                                <input type="checkbox" value="1" id="id_dataremuneracaocri_cra_set-{{forloop.counter0}}-DELETE" name="dataremuneracaocri_cra_set-{{forloop.counter0}}-DELETE"  class="md-check">
+                                                <label for="id_dataremuneracaocri_cra_set-{{forloop.counter0}}-DELETE">
+                                                    <span></span>
+                                                    <span class="check"></span>
+                                                    <span class="box"></span> Excluir </label>
+                                            </div>
+                                            {% endif %}
+                                            {% if form_data_remuneracao.instance.id %}
+                                                <input id="id_dataremuneracaocri_cra_set-{{forloop.counter0}}-id" name="dataremuneracaocri_cra_set-{{forloop.counter0}}-id" value="{{form_data_remuneracao.instance.id}}" type="hidden">
+                                                <input id="id_dataremuneracaocri_cra_set-{{forloop.counter0}}-cri_cra" name="dataremuneracaocri_cra_set-{{forloop.counter0}}-cri_cra" value="{{form_data_remuneracao.cri_cra.id}}" type="hidden">
+                                            {% endif %}
                                         {% endfor %}
                                     </div>
                                     <div class="col-md-12 text-center">
@@ -186,11 +199,11 @@
                                         {{ formset_data_amortizacao.management_form }}
                                         <div id="amortizacoes" class="col-md-12">
                                         {% for form_data_amortizacao in formset_data_amortizacao %}
-                                            <div id="amortizacao-0" class="col-md-12">
-                                                <div class="form-group col-md-6 {% if form_data_amortizacao.data.errors %} has-error {% endif %}">
-                                                    <label id="label_data_amortizacao_set-0" class="control-label col-md-4" style="text-align: left;">Data {{forloop.counter}}:</label>
+                                            <div id="amortizacao-{{forloop.counter0}}" class="col-md-9">
+                                                <div class="form-group col-md-5 {% if form_data_amortizacao.data.errors %} has-error {% endif %}">
+                                                    <label id="label_data_amortizacao_set-{{forloop.counter0}}" class="control-label col-md-4" style="text-align: left;">Data {{forloop.counter}}:</label>
                                                     <div class="col-md-8">
-                                                        <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_dataamortizacaocri_cra_set-{{forloop.counter0}}-data" name="dataamortizacaocri_cra_set-{{forloop.counter0}}-data" 
+                                                        <div class="input-group input-small date date-picker" data-date-format="dd/mm/yyyy" id="id_dataamortizacaocri_cra_set-{{forloop.counter0}}-data" name="dataamortizacaocri_cra_set-{{forloop.counter0}}-data" 
                                                         data-date-viewmode="years">
                                                             <input type="text" class="form-control" name="dataamortizacaocri_cra_set-{{forloop.counter0}}-data" 
                                                             value="{% if form_data_amortizacao.data.value|date:'d/m/Y'|default:'' == '' %}{{form_data_amortizacao.data.value|default:''}}{% else %}{{form_data_amortizacao.data.value|date:'d/m/Y'}}{% endif %}">
@@ -205,7 +218,7 @@
                                                         {% endif %}
                                                     </div>
                                                 </div>
-                                                <div class="form-group col-md-6 {% if form_data_amortizacao.percentual.errors %} has-error {% endif %}">
+                                                <div class="form-group col-md-7 {% if form_data_amortizacao.percentual.errors %} has-error {% endif %}">
                                                     <label class="control-label col-md-4" style="text-align: left;">Percentual:</label>
                                                     <div class="col-md-8">
                                                         <input id="id_dataamortizacaocri_cra_set-{{forloop.counter0}}-percentual" type="text" value="{{form_data_amortizacao.percentual.value}}" name="dataamortizacaocri_cra_set-{{forloop.counter0}}-percentual" class="form-control">
@@ -213,11 +226,24 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                            {% if form_data_amortizacao.instance.id %}
+                                                <div class="md-checkbox col-md-2">
+                                                    <input type="checkbox" value="1" id="id_dataamortizacaocri_cra_set-{{forloop.counter0}}-DELETE" name="dataamortizacaocri_cra_set-{{forloop.counter0}}-DELETE"  class="md-check">
+                                                    <label for="id_dataamortizacaocri_cra_set-{{forloop.counter0}}-DELETE">
+                                                        <span></span>
+                                                        <span class="check"></span>
+                                                        <span class="box"></span> Excluir </label>
+                                                </div>
+                                            {% endif %}
+                                            {% if form_data_amortizacao.instance.id %}
+                                                <input id="id_dataamortizacaocri_cra_set-{{forloop.counter0}}-id" name="dataamortizacaocri_cra_set-{{forloop.counter0}}-id" value="{{form_data_amortizacao.instance.id}}" type="hidden">
+                                                <input id="id_dataamortizacaocri_cra_set-{{forloop.counter0}}-cri_cra" name="dataamortizacaocri_cra_set-{{forloop.counter0}}-cri_cra" value="{{form_data_amortizacao.cri_cra.id}}" type="hidden">
+                                            {% endif %}
                                         {% endfor %}
                                         </div>
-                                    </div>
-                                    <div class="col-md-12 text-center">
-                                        <input type="button" value="Adicionar data" class="btn btn-warning" id="add_data_amortizacao">
+                                        <div class="col-md-12 text-center">
+                                            <input type="button" value="Adicionar data" class="btn btn-warning" id="add_data_amortizacao">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -228,6 +254,7 @@
                     <div class="row">
                         <div class="col-md-offset col-md-3">
                             <button type="submit" name="save" value="1" class="btn green-steel">Salvar</button>
+                            <button type="submit" name="delete" value="1" class="btn red-thunderbird">Excluir</button>
                         </div>
                     </div>
                 </div>

@@ -90,18 +90,20 @@ class DataRemuneracaoCRI_CRAFormSet(forms.models.BaseInlineFormSet):
         datas_remuneracao = list()
         for form_remuneracao in self.forms:
             if form_remuneracao.is_valid():
-                # Verifica se pode passar pelo form
+                # Verifica se pode passar pelo form, e se data não será apagada
                 if not (form_remuneracao.instance.id == None and not form_remuneracao.has_changed()):
-                    data = form_remuneracao.cleaned_data.get('data')
-                    cri_cra = form_remuneracao.cleaned_data.get('cri_cra')
-                    if data <= cri_cra.data_emissao or data > cri_cra.data_vencimento:
-                        raise ValidationError('Data de remuneração %s está fora do período de duração do %s' % (data.strftime('%d/%m/%Y'), cri_cra.descricao_tipo()))
-                    if data in datas_remuneracao:
-                        raise ValidationError('%s já possui remuneração cadastrada para a data %s' % (cri_cra.descricao_tipo(), data.strftime('%d/%m/%Y')))
-                    datas_remuneracao.append(data)
-           
-            
+                    if ('DELETE' not in form_remuneracao.cleaned_data or not form_remuneracao.cleaned_data['DELETE']):
+                        data = form_remuneracao.cleaned_data.get('data')
+                        cri_cra = form_remuneracao.cleaned_data.get('cri_cra')
+                        if data <= cri_cra.data_emissao or data > cri_cra.data_vencimento:
+                            raise ValidationError('Data de remuneração %s está fora do período de duração do %s' % (data.strftime('%d/%m/%Y'), cri_cra.descricao_tipo()))
+                        if data in datas_remuneracao:
+                            raise ValidationError('%s já possui remuneração cadastrada para a data %s' % (cri_cra.descricao_tipo(), data.strftime('%d/%m/%Y')))
+                        datas_remuneracao.append(data)
         
+        if len(datas_remuneracao) == 0:
+            raise ValidationError('Deve haver pelo menos uma data de remuneração')
+           
 class DataAmortizacaoCRI_CRAForm(LocalizedModelForm):
     
     class Meta:
@@ -141,22 +143,34 @@ class DataAmortizacaoCRI_CRAFormSet(forms.models.BaseInlineFormSet):
     def clean(self):
         datas_amortizacao = list()
         total_amortizacao = Decimal(0)
+        data_vencimento_cri_cra = None
         for form_amortizacao in self.forms:
             if form_amortizacao.is_valid():
                 # Verifica se pode passar pelo form
                 if not (form_amortizacao.instance.id == None and not form_amortizacao.has_changed()):
-#                     print form_divisao.cleaned_data.get('quantidade')
-                    data = form_amortizacao.cleaned_data.get('data')
-                    cri_cra = form_amortizacao.cleaned_data.get('cri_cra')
-                    percentual = form_amortizacao.cleaned_data.get('percentual')
-                    if percentual <= 0:
-                        raise ValidationError('Percentual de amortização deve ser maior que 0')
-                    if data <= cri_cra.data_emissao or data >= cri_cra.data_vencimento:
-                        raise ValidationError('Data de remuneração %s está fora do período de duração do %s' % (data, cri_cra.descricao_tipo()))
-                    if data in datas_amortizacao:
-                        raise ValidationError('%s já possui amortização cadastrada para a data %s' % (cri_cra.descricao_tipo(), data.strftime('%d/%m/%Y')))
-                    datas_amortizacao.append(data)
-                    total_amortizacao += percentual
-                    # Não se pode amortizar mais de 100%
-                    if total_amortizacao > 100:
-                        raise ValidationError('Total amortizado não pode superar 100%')
+                    if ('DELETE' not in form_amortizacao.cleaned_data or not form_amortizacao.cleaned_data['DELETE']):
+                        data = form_amortizacao.cleaned_data.get('data')
+                        cri_cra = form_amortizacao.cleaned_data.get('cri_cra')
+                        percentual = form_amortizacao.cleaned_data.get('percentual')
+                        if percentual <= 0:
+                            raise ValidationError('Percentual de amortização deve ser maior que 0')
+                        if data <= cri_cra.data_emissao or data >= cri_cra.data_vencimento:
+                            raise ValidationError('Data de remuneração %s está fora do período de duração do %s' % (data, cri_cra.descricao_tipo()))
+                        if data in datas_amortizacao:
+                            raise ValidationError('%s já possui amortização cadastrada para a data %s' % (cri_cra.descricao_tipo(), data.strftime('%d/%m/%Y')))
+                        datas_amortizacao.append(data)
+                        total_amortizacao += percentual
+                        
+                        # Preencher data de vencimento do investimento
+                        if not data_vencimento_cri_cra:
+                            data_vencimento_cri_cra = cri_cra.data_vencimento
+        # Valida valor amortizado para o caso de ter sido inserido alguma amortização
+        if len(datas_amortizacao) > 0:
+            # Não se pode amortizar mais nem menos de 100%, e a última data deve ser igual a data de vencimento
+            if total_amortizacao > 100:
+                raise ValidationError('Total amortizado não pode superar 100%')
+            elif total_amortizacao < 100:
+                raise ValidationError('Total amortizado deve ser de 100%')
+            elif data_vencimento_cri_cra not in datas_amortizacao:
+                raise ValidationError('Última data de amortização deve ser no vencimento')
+            
