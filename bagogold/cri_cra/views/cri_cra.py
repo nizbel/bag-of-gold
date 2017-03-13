@@ -18,6 +18,7 @@ from django.forms.models import inlineformset_factory
 from django.http.response import HttpResponseRedirect
 from django.template.response import TemplateResponse
 import datetime
+from bagogold.bagogold.models.lc import HistoricoTaxaDI
 
 TIPO_CRI = '1'
 TIPO_CRA = '2'
@@ -185,187 +186,133 @@ def editar_cri_cra(request, id_cri_cra):
                                                                       'amortizacao_integral_venc': cri_cra.amortizacao_integral_vencimento()})
     
     
-# @login_required
-# def editar_operacao_cri_cra(request, id_cri_cra):
-#     investidor = request.user.investidor
-#     
-#     operacao_cdb_rdb = OperacaoCDB_RDB.objects.get(pk=id)
-#     if operacao_cdb_rdb.investidor != investidor:
-#         raise PermissionDenied
-#     
-#     # Testa se investidor possui mais de uma divisão
-#     varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
-#     
-#     # Preparar formset para divisoes
-#     DivisaoFormSet = inlineformset_factory(OperacaoCDB_RDB, DivisaoOperacaoCDB_RDB, fields=('divisao', 'quantidade'),
-#                                             extra=1, formset=DivisaoOperacaoCDB_RDBFormSet)
-#     
-#     if request.method == 'POST':
-#         form_operacao_cdb_rdb = OperacaoCDB_RDBForm(request.POST, instance=operacao_cdb_rdb, investidor=investidor)
-#         formset_divisao = DivisaoFormSet(request.POST, instance=operacao_cdb_rdb, investidor=investidor) if varias_divisoes else None
-#         
-#         if request.POST.get("save"):
-#             if form_operacao_cdb_rdb.is_valid():
-#                 operacao_compra = form_operacao_cdb_rdb.cleaned_data['operacao_compra']
-#                 formset_divisao = DivisaoFormSet(request.POST, instance=operacao_cdb_rdb, operacao_compra=operacao_compra, investidor=investidor) if varias_divisoes else None
-#                 if varias_divisoes:
-#                     if formset_divisao.is_valid():
-#                         operacao_cdb_rdb.save()
-#                         if operacao_cdb_rdb.tipo_operacao == 'V':
-#                             if not OperacaoVendaCDB_RDB.objects.filter(operacao_venda=operacao_cdb_rdb):
-#                                 operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
-#                                 operacao_venda_cdb_rdb.save()
-#                             else: 
-#                                 operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB.objects.get(operacao_venda=operacao_cdb_rdb)
-#                                 if operacao_venda_cdb_rdb.operacao_compra != operacao_compra:
-#                                     operacao_venda_cdb_rdb.operacao_compra = operacao_compra
-#                                     operacao_venda_cdb_rdb.save()
-#                         formset_divisao.save()
-#                         messages.success(request, 'Operação editada com sucesso')
-#                         return HttpResponseRedirect(reverse('historico_cdb_rdb'))
-#                     for erro in formset_divisao.non_form_errors():
-#                         messages.error(request, erro)
-#                         
-#                 else:
-#                     operacao_cdb_rdb.save()
-#                     if operacao_cdb_rdb.tipo_operacao == 'V':
-#                         if not OperacaoVendaCDB_RDB.objects.filter(operacao_venda=operacao_cdb_rdb):
-#                             operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
-#                             operacao_venda_cdb_rdb.save()
-#                         else: 
-#                             operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB.objects.get(operacao_venda=operacao_cdb_rdb)
-#                             if operacao_venda_cdb_rdb.operacao_compra != operacao_compra:
-#                                 operacao_venda_cdb_rdb.operacao_compra = operacao_compra
-#                                 operacao_venda_cdb_rdb.save()
-#                     divisao_operacao = DivisaoOperacaoCDB_RDB.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_cdb_rdb)
-#                     divisao_operacao.quantidade = operacao_cdb_rdb.quantidade
-#                     divisao_operacao.save()
-#                     messages.success(request, 'Operação editada com sucesso')
-#                     return HttpResponseRedirect(reverse('historico_cdb_rdb'))
-#             for erros in form_operacao_cdb_rdb.errors.values():
-#                 for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
-#                     messages.error(request, erro.message)
-# #                         print '%s %s'  % (divisao_cdb_rdb.quantidade, divisao_cdb_rdb.divisao)
-#                 
-#         elif request.POST.get("delete"):
-#             # Testa se operação a excluir não é uma operação de compra com vendas já registradas
-#             if not OperacaoVendaCDB_RDB.objects.filter(operacao_compra=operacao_cdb_rdb):
-#                 divisao_cdb_rdb = DivisaoOperacaoCDB_RDB.objects.filter(operacao=operacao_cdb_rdb)
-#                 for divisao in divisao_cdb_rdb:
-#                     divisao.delete()
-#                 if operacao_cdb_rdb.tipo_operacao == 'V':
-#                     OperacaoVendaCDB_RDB.objects.get(operacao_venda=operacao_cdb_rdb).delete()
-#                 operacao_cdb_rdb.delete()
-#                 messages.success(request, 'Operação excluída com sucesso')
-#                 return HttpResponseRedirect(reverse('historico_cdb_rdb'))
-#             else:
-#                 messages.error(request, 'Não é possível excluir operação de compra que já tenha vendas registradas')
-#  
-#     else:
-#         form_operacao_cdb_rdb = OperacaoCDB_RDBForm(instance=operacao_cdb_rdb, initial={'operacao_compra': operacao_cdb_rdb.operacao_compra_relacionada(),}, \
-#                                                     investidor=investidor)
-#         formset_divisao = DivisaoFormSet(instance=operacao_cdb_rdb, investidor=investidor)
-#             
-#     return TemplateResponse(request, 'cdb_rdb/editar_operacao_cdb_rdb.html', {'form_operacao_cdb_rdb': form_operacao_cdb_rdb, 'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})  
+@login_required
+def editar_operacao_cri_cra(request, id_operacao):
+    investidor = request.user.investidor
+     
+    operacao_cri_cra = OperacaoCRI_CRA.objects.get(pk=id_operacao)
+    if operacao_cri_cra.cri_cra.investidor != investidor:
+        raise PermissionDenied
+     
+    # Testa se investidor possui mais de uma divisão
+    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+     
+    # Preparar formset para divisoes
+    DivisaoFormSet = inlineformset_factory(OperacaoCRI_CRA, DivisaoOperacaoCRI_CRA, fields=('divisao', 'quantidade'),
+                                            extra=1, formset=DivisaoOperacaoCRI_CRAFormSet)
+     
+    if request.method == 'POST':
+        form_operacao_cri_cra = OperacaoCRI_CRAForm(request.POST, instance=operacao_cri_cra, investidor=investidor)
+        formset_divisao = DivisaoFormSet(request.POST, instance=operacao_cri_cra, investidor=investidor) if varias_divisoes else None
+         
+        if request.POST.get("save"):
+            if form_operacao_cri_cra.is_valid():
+                operacao_compra = form_operacao_cdb_rdb.cleaned_data['operacao_compra']
+                formset_divisao = DivisaoFormSet(request.POST, instance=operacao_cdb_rdb, operacao_compra=operacao_compra, investidor=investidor) if varias_divisoes else None
+                if varias_divisoes:
+                    if formset_divisao.is_valid():
+                        operacao_cdb_rdb.save()
+                        if operacao_cdb_rdb.tipo_operacao == 'V':
+                            if not OperacaoVendaCDB_RDB.objects.filter(operacao_venda=operacao_cdb_rdb):
+                                operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
+                                operacao_venda_cdb_rdb.save()
+                            else: 
+                                operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB.objects.get(operacao_venda=operacao_cdb_rdb)
+                                if operacao_venda_cdb_rdb.operacao_compra != operacao_compra:
+                                    operacao_venda_cdb_rdb.operacao_compra = operacao_compra
+                                    operacao_venda_cdb_rdb.save()
+                        formset_divisao.save()
+                        messages.success(request, 'Operação editada com sucesso')
+                        return HttpResponseRedirect(reverse('historico_cdb_rdb'))
+                    for erro in formset_divisao.non_form_errors():
+                        messages.error(request, erro)
+                         
+                else:
+                    operacao_cdb_rdb.save()
+                    if operacao_cdb_rdb.tipo_operacao == 'V':
+                        if not OperacaoVendaCDB_RDB.objects.filter(operacao_venda=operacao_cdb_rdb):
+                            operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
+                            operacao_venda_cdb_rdb.save()
+                        else: 
+                            operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB.objects.get(operacao_venda=operacao_cdb_rdb)
+                            if operacao_venda_cdb_rdb.operacao_compra != operacao_compra:
+                                operacao_venda_cdb_rdb.operacao_compra = operacao_compra
+                                operacao_venda_cdb_rdb.save()
+                    divisao_operacao = DivisaoOperacaoCDB_RDB.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_cdb_rdb)
+                    divisao_operacao.quantidade = operacao_cdb_rdb.quantidade
+                    divisao_operacao.save()
+                    messages.success(request, 'Operação editada com sucesso')
+                    return HttpResponseRedirect(reverse('historico_cdb_rdb'))
+            for erros in form_operacao_cdb_rdb.errors.values():
+                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
+                    messages.error(request, erro.message)
+#                         print '%s %s'  % (divisao_cdb_rdb.quantidade, divisao_cdb_rdb.divisao)
+                 
+        elif request.POST.get("delete"):
+            # Testa se operação a excluir não é uma operação de compra com vendas já registradas
+            if not OperacaoVendaCDB_RDB.objects.filter(operacao_compra=operacao_cdb_rdb):
+                divisao_cdb_rdb = DivisaoOperacaoCDB_RDB.objects.filter(operacao=operacao_cdb_rdb)
+                for divisao in divisao_cdb_rdb:
+                    divisao.delete()
+                if operacao_cdb_rdb.tipo_operacao == 'V':
+                    OperacaoVendaCDB_RDB.objects.get(operacao_venda=operacao_cdb_rdb).delete()
+                operacao_cdb_rdb.delete()
+                messages.success(request, 'Operação excluída com sucesso')
+                return HttpResponseRedirect(reverse('historico_cdb_rdb'))
+  
+    else:
+        form_operacao_cri_cra = OperacaoCRI_CRAForm(instance=operacao_cri_cra, investidor=investidor)
+        formset_divisao = DivisaoFormSet(instance=operacao_cri_cra, investidor=investidor)
+             
+    return TemplateResponse(request, 'cdb_rdb/editar_operacao_cdb_rdb.html', {'form_operacao_cdb_rdb': form_operacao_cri_cra, 'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})  
 
     
 @login_required
 def historico(request):
     investidor = request.user.investidor
     # Processa primeiro operações de venda (V), depois compra (C)
-#     operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
-#     # Verifica se não há operações
-#     if not operacoes:
-#         return TemplateResponse(request, 'cdb_rdb/historico.html', {'dados': {}})
-#     
-#     # Prepara o campo valor atual
-#     for operacao in operacoes:
-#         operacao.atual = operacao.quantidade
-#         if operacao.tipo_operacao == 'C':
-#             operacao.tipo = 'Compra'
-#             operacao.taxa = operacao.porcentagem()
-#         else:
-#             operacao.tipo = 'Venda'
-#     
-#     # Pegar data inicial
-#     data_inicial = operacoes.order_by('data')[0].data
-#     
-#     # Pegar data final
-#     data_final = max(HistoricoTaxaDI.objects.filter().order_by('-data')[0].data, datetime.date.today())
-#     
-#     data_iteracao = data_inicial
-#     
-#     total_gasto = 0
-#     total_patrimonio = 0
-#     
-#     # Gráfico de acompanhamento de gastos vs patrimonio
-#     graf_gasto_total = list()
-#     graf_patrimonio = list()
-# 
-#     while data_iteracao <= data_final:
-#         try:
-#             taxa_do_dia = HistoricoTaxaDI.objects.get(data=data_iteracao).taxa
-#         except:
-#             taxa_do_dia = 0
-#             
-#         # Calcular o valor atualizado do patrimonio diariamente
-#         total_patrimonio = 0
-#         
-#         # Processar operações
-#         for operacao in operacoes:     
-#             if (operacao.data <= data_iteracao):     
-#                 # Verificar se se trata de compra ou venda
-#                 if operacao.tipo_operacao == 'C':
-#                         if (operacao.data == data_iteracao):
-#                             operacao.total = operacao.quantidade
-#                             total_gasto += operacao.total
-#                         if taxa_do_dia > 0:
-#                             # Calcular o valor atualizado para cada operacao
-#                             operacao.atual = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa)
-#                         # Arredondar na última iteração
-#                         if (data_iteracao == data_final):
-#                             str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
-#                             operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-#                         total_patrimonio += operacao.atual
-#                         
-#                 elif operacao.tipo_operacao == 'V':
-#                     if (operacao.data == data_iteracao):
-#                         operacao.total = operacao.quantidade
-#                         total_gasto -= operacao.total
-#                         # Remover quantidade da operação de compra
-#                         operacao_compra_id = operacao.operacao_compra_relacionada().id
-#                         for operacao_c in operacoes:
-#                             if (operacao_c.id == operacao_compra_id):
-#                                 # Configurar taxa para a mesma quantidade da compra
-#                                 operacao.taxa = operacao_c.taxa
-#                                 operacao.atual = (operacao.quantidade/operacao_c.quantidade) * operacao_c.atual
-#                                 operacao_c.atual -= operacao.atual
-#                                 str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
-#                                 operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-#                                 break
-#                 
-#         if len(operacoes.filter(data=data_iteracao)) > 0 or data_iteracao == data_final:
-#             graf_gasto_total += [[str(calendar.timegm(data_iteracao.timetuple()) * 1000), float(total_gasto)]]
+    operacoes = OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor).exclude(data__isnull=True).order_by('data') 
+    # Verifica se não há operações
+    if not operacoes:
+        return TemplateResponse(request, 'cri_cra/historico.html', {'dados': {}})
+     
+    # Prepara o campo valor atual
+    for operacao in operacoes:
+        if operacao.tipo_operacao == 'C':
+            operacao.tipo = 'Compra'
+        else:
+            operacao.tipo = 'Venda'
+     
+    # Pegar data inicial
+    historico_di = HistoricoTaxaDI.objects.filter(data__gte=operacoes[0].data)
+     
+    total_investido = 0
+    total_patrimonio = 0
+     
+    for operacao in operacoes:
+        if operacao.tipo_operacao == 'C':
+            total_investido += operacao.taxa + operacao.quantidade * operacao.preco_unitario
+        if operacao.tipo_operacao == 'V':
+            total_investido -= (operacao.quantidade * operacao.preco_unitario - operacao.taxa)
+            
+            
+            
+     
+    # Gráfico de acompanhamento de investimentos vs patrimonio
+    graf_investido_total = list()
+    graf_patrimonio = list()
+ 
+#             graf_investido_total += [[str(calendar.timegm(data_iteracao.timetuple()) * 1000), float(total_investido)]]
 #             graf_patrimonio += [[str(calendar.timegm(data_iteracao.timetuple()) * 1000), float(total_patrimonio)]]
-#         
-#         # Proximo dia útil
-#         proximas_datas = HistoricoTaxaDI.objects.filter(data__gt=data_iteracao).order_by('data')
-#         if len(proximas_datas) > 0:
-#             data_iteracao = proximas_datas[0].data
-#         elif data_iteracao < data_final:
-#             data_iteracao = data_final
-#         else:
-#             break
-# 
-#     dados = {}
-#     dados['total_gasto'] = total_gasto
-#     dados['patrimonio'] = total_patrimonio
-#     dados['lucro'] = total_patrimonio - total_gasto
-#     dados['lucro_percentual'] = (total_patrimonio - total_gasto) / total_gasto * 100
-#     
-#     return TemplateResponse(request, 'cdb_rdb/historico.html', {'dados': dados, 'operacoes': operacoes, 
-#                                                     'graf_gasto_total': graf_gasto_total, 'graf_patrimonio': graf_patrimonio})
-    return TemplateResponse(request, 'cri_cra/historico.html', {})
+ 
+    dados = {}
+    dados['total_investido'] = total_investido
+    dados['patrimonio'] = total_patrimonio
+    dados['lucro'] = total_patrimonio - total_investido
+    dados['lucro_percentual'] = (total_patrimonio - total_investido) / total_investido * 100
+     
+    return TemplateResponse(request, 'cri_cra/historico.html', {'dados': dados, 'operacoes': operacoes, 
+                                                    'graf_investido_total': graf_investido_total, 'graf_patrimonio': graf_patrimonio})
     
 
 @login_required
