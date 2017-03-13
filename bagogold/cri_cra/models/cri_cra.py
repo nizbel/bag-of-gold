@@ -63,10 +63,11 @@ class CRI_CRA (models.Model):
     
 class OperacaoCRI_CRA (models.Model):
     cri_cra = models.ForeignKey('CRI_CRA')
-    preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)
-    quantidade = models.IntegerField(u'Quantidade')
+    preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
+    quantidade = models.IntegerField(u'Quantidade', validators=[MinValueValidator(1)])
     data = models.DateField(u'Data da operação')
     tipo_operacao = models.CharField(u'Tipo de operação', max_length=1)
+    taxa = models.DecimalField(u'Taxa', max_digits=11, decimal_places=2)
     
 class DataRemuneracaoCRI_CRA (models.Model):
     data = models.DateField(u'Data de remuneração')

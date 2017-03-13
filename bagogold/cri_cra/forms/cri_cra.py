@@ -3,7 +3,7 @@ from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.cri_cra.models.cri_cra import CRI_CRA, DataRemuneracaoCRI_CRA, \
     DataAmortizacaoCRI_CRA, OperacaoCRI_CRA
 from bagogold.cri_cra.utils.utils import \
-    quantidade_cri_cra_na_data_por_certificado
+    quantidade_cri_cra_na_data_para_certificado
 from decimal import Decimal
 from django import forms
 from django.core.exceptions import ValidationError
@@ -26,29 +26,33 @@ class CRI_CRAForm(LocalizedModelForm):
 class OperacaoCRI_CRAForm(LocalizedModelForm):
     class Meta:
         model = OperacaoCRI_CRA
-        fields = ('tipo_operacao', 'quantidade', 'preco_unitario', 'data', 'cri_cra')
+        fields = ('tipo_operacao', 'quantidade', 'preco_unitario', 'data', 'cri_cra',
+                  'taxa')
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),
                  'tipo_operacao': widgets.Select(choices=ESCOLHAS_TIPO_OPERACAO),}
+        
+    class Media:
+        js = ('js/bagogold/form_operacao_cri_cra.js',)
         
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
         # first call parent's constructor
         super(OperacaoCRI_CRAForm, self).__init__(*args, **kwargs)
         # there's a `fields` property now
-        self.fields['cri_cra'].required = False
         self.fields['cri_cra'].queryset = CRI_CRA.objects.filter(investidor=self.investidor)
     
     def clean(self):
         data = super(OperacaoCRI_CRAForm, self).clean()
-        if data.get('tipo_operacao') == 'V':
-            # Testa se quantidade da venda condiz com a quantidade que o investidor possui
-            quantidade_atual = quantidade_cri_cra_na_data_por_certificado(data.get('data'), data.get('cri_cra'))
-            # Se for uma operação de compra sendo convertida em venda, remover sua quantidade da quantidade atual
-            if self.instance.tipo_operacao == 'C':
-                quantidade_atual -= self.instance.quantidade
-            if data.get('quantidade') > quantidade_atual:
-                raise forms.ValidationError('Quantidade da venda é maior do que %s, quantidade possuída na data %s' % (quantidade_atual, data.get('data')))
+        if data.get('cri_cra'):
+            if data.get('tipo_operacao') == 'V':
+                # Testa se quantidade da venda condiz com a quantidade que o investidor possui
+                quantidade_atual = quantidade_cri_cra_na_data_para_certificado(data.get('data'), data.get('cri_cra'))
+                # Se for uma operação de compra sendo convertida em venda, remover sua quantidade da quantidade atual
+                if self.instance.tipo_operacao == 'C':
+                    quantidade_atual -= self.instance.quantidade
+                if data.get('quantidade') > quantidade_atual:
+                    raise forms.ValidationError('Quantidade da venda é maior do que %s, quantidade possuída na data %s' % (quantidade_atual, data.get('data').strftime('%d/%m/%Y')))
             
 class DataRemuneracaoCRI_CRAForm(LocalizedModelForm):
     
