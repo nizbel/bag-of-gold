@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
+from bagogold.bagogold.forms.divisoes import DivisaoOperacaoCRI_CRAFormSet
 from bagogold.bagogold.forms.utils import LocalizedModelForm
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoCRI_CRA, Divisao
+from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoCRI_CRA
 from bagogold.cri_cra.forms.cri_cra import CRI_CRAForm, \
     DataRemuneracaoCRI_CRAForm, DataRemuneracaoCRI_CRAFormSet, \
     DataAmortizacaoCRI_CRAFormSet, OperacaoCRI_CRAForm
@@ -10,7 +11,7 @@ from bagogold.cri_cra.models.cri_cra import CRI_CRA, DataRemuneracaoCRI_CRA, \
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied, NON_FIELD_ERRORS
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.forms.models import inlineformset_factory
@@ -433,89 +434,49 @@ def inserir_operacao_cri_cra(request):
     # Preparar formset para divisoes
     DivisaoCRI_CRAFormSet = inlineformset_factory(OperacaoCRI_CRA, DivisaoOperacaoCRI_CRA, fields=('divisao', 'quantidade'), can_delete=False,
                                             extra=1, formset=DivisaoOperacaoCRI_CRAFormSet)
-    
+     
     # Testa se investidor possui mais de uma divisão
     varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
-    
+     
     if request.method == 'POST':
         form_operacao_cri_cra = OperacaoCRI_CRAForm(request.POST, investidor=investidor)
-        formset_divisao_cri_cra = DivisaoCRI_CRAFormSet(request.POST, investidor=investidor) if varias_divisoes else None
-        
-        # Validar CDB/RDB
+        formset_divisao = DivisaoCRI_CRAFormSet(request.POST, investidor=investidor) if varias_divisoes else None
+         
+        # Validar CRI/CRA
         if form_operacao_cri_cra.is_valid():
-            operacao_cri_cra = form_operacao_cri_cra.save(commit=False)
-            operacao_cri_cra.investidor = investidor
-            operacao_compra = form_operacao_cri_cra.cleaned_data['operacao_compra']
-            formset_divisao_cri_cra = DivisaoCRI_CRAFormSet(request.POST, instance=operacao_cri_cra, operacao_compra=operacao_compra, investidor=investidor) if varias_divisoes else None
-                
-            # Validar em caso de venda
-            if form_operacao_cri_cra.cleaned_data['tipo_operacao'] == 'V':
-                operacao_compra = form_operacao_cri_cra.cleaned_data['operacao_compra']
-                # Caso de venda total do cdb/rdb
-                if form_operacao_cri_cra.cleaned_data['quantidade'] == operacao_compra.quantidade:
-                    # Desconsiderar divisões inseridas, copiar da operação de compra
-                    operacao_cri_cra.save()
-                    for divisao_cri_cra in DivisaoOperacaoCRI_CRA.objects.filter(operacao=operacao_compra):
-                        divisao_cri_cra_venda = DivisaoOperacaoCRI_CRA(quantidade=divisao_cri_cra.quantidade, divisao=divisao_cri_cra.divisao, \
-                                                             operacao=operacao_cri_cra)
-                        divisao_cri_cra_venda.save()
-                    operacao_venda_cri_cra = OperacaoVendaCRI_CRA(operacao_compra=operacao_compra, operacao_venda=operacao_cri_cra)
-                    operacao_venda_cri_cra.save()
-                    messages.success(request, 'Operação inserida com sucesso')
-                    return HttpResponseRedirect(reverse('cri_cra:historico_cri_cra'))
-                # Vendas parciais
-                else:
-                    # Verificar se varias divisões
+            try:
+                with transaction.atomic():
+                    operacao_cri_cra = form_operacao_cri_cra.save(commit=False)
+                    operacao_cri_cra.investidor = investidor
+                    formset_divisao = DivisaoCRI_CRAFormSet(request.POST, instance=operacao_cri_cra, investidor=investidor) if varias_divisoes else None
+                     
+                    # Verificar se várias divisões
                     if varias_divisoes:
-                        if formset_divisao_cri_cra.is_valid():
+                        if formset_divisao.is_valid():
                             operacao_cri_cra.save()
-                            formset_divisao_cri_cra.save()
-                            operacao_venda_cri_cra = OperacaoVendaCRI_CRA(operacao_compra=operacao_compra, operacao_venda=operacao_cri_cra)
-                            operacao_venda_cri_cra.save()
+                            formset_divisao.save()
                             messages.success(request, 'Operação inserida com sucesso')
                             return HttpResponseRedirect(reverse('cri_cra:historico_cri_cra'))
-                        for erro in formset_divisao_cri_cra.non_form_errors():
-                                messages.error(request, erro)
-                                
+                        for erro in formset_divisao.non_form_errors():
+                            messages.error(request, erro)
+                                     
                     else:
                         operacao_cri_cra.save()
                         divisao_operacao = DivisaoOperacaoCRI_CRA(operacao=operacao_cri_cra, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_cri_cra.quantidade)
                         divisao_operacao.save()
-                        operacao_venda_cri_cra = OperacaoVendaCRI_CRA(operacao_compra=operacao_compra, operacao_venda=operacao_cri_cra)
-                        operacao_venda_cri_cra.save()
                         messages.success(request, 'Operação inserida com sucesso')
                         return HttpResponseRedirect(reverse('cri_cra:historico_cri_cra'))
-            
-            # Compra
-            else:
-                # Verificar se várias divisões
-                if varias_divisoes:
-                    if formset_divisao_cri_cra.is_valid():
-                        operacao_cri_cra.save()
-                        formset_divisao_cri_cra.save()
-                        messages.success(request, 'Operação inserida com sucesso')
-                        return HttpResponseRedirect(reverse('cri_cra:historico_cri_cra'))
-                    for erro in formset_divisao_cri_cra.non_form_errors():
-                                messages.error(request, erro)
-                                
-                else:
-                        operacao_cri_cra.save()
-                        divisao_operacao = DivisaoOperacaoCRI_CRA(operacao=operacao_cri_cra, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_cri_cra.quantidade)
-                        divisao_operacao.save()
-                        messages.success(request, 'Operação inserida com sucesso')
-                        return HttpResponseRedirect(reverse('cri_cra:historico_cri_cra'))
-                    
-        
-        for erro in [erro for erro in form_cri_cra.non_field_errors()]:
+                    raise ValueError('Validações falharam')
+            except:
+                pass
+                     
+        for erro in [erro for erro in form_operacao_cri_cra.non_field_errors()]:
             messages.error(request, erro)
-        for erro in formset_divisao_cri_cra.non_form_errors():
-            messages.error(request, erro)
-#                         print '%s %s'  % (divisao_cri_cra.quantidade, divisao_cri_cra.divisao)
-                 
+                  
     else:
         form_operacao_cri_cra = OperacaoCRI_CRAForm(investidor=investidor)
-        formset_divisao_cri_cra = DivisaoCRI_CRAFormSet(investidor=investidor)
-    return TemplateResponse(request, 'cri_cra/inserir_operacao_cri_cra.html', {'form_operacao_cri_cra': form_operacao_cri_cra, 'formset_divisao_cri_cra': formset_divisao_cri_cra,
+        formset_divisao = DivisaoCRI_CRAFormSet(investidor=investidor)
+    return TemplateResponse(request, 'cri_cra/inserir_operacao_cri_cra.html', {'form_operacao_cri_cra': form_operacao_cri_cra, 'formset_divisao': formset_divisao,
                                                                          'varias_divisoes': varias_divisoes})
 
 @login_required

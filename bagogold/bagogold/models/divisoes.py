@@ -318,18 +318,18 @@ class DivisaoOperacaoCDB_RDB (models.Model):
     
 class DivisaoOperacaoCRI_CRA (models.Model):
     divisao = models.ForeignKey('Divisao')
-    operacao = models.ForeignKey('OperacaoCRI_CRA')
+    operacao = models.ForeignKey('cri_cra.OperacaoCRI_CRA')
     """
     Guarda a quantidade da operação que pertence a divisão
     """
     quantidade = models.DecimalField('Quantidade (em certificados)',  max_digits=11, decimal_places=2)
-    
+     
     class Meta:
         unique_together=('divisao', 'operacao')
-    
+     
     def __unicode__(self):
         return self.divisao.nome + ': ' + str(self.quantidade) + ' de ' + unicode(self.operacao)
-    
+     
     """
     Calcula o percentual da operação que foi para a divisão
     """

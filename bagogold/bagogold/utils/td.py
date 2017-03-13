@@ -134,7 +134,7 @@ def calcular_qtd_titulos_ate_dia_por_divisao(dia, divisao_id):
 
 def calcular_qtd_um_titulo_ate_dia_por_divisao(investidor, dia, titulo_id):
     """ 
-    Calcula a quantidade de um título específico até dia determinado para uma cada divisão
+    Calcula a quantidade de um título específico até dia determinado para cada divisão
     Parâmetros: Dia final
                 ID da divisão
                 ID do título

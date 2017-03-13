@@ -7,6 +7,9 @@ from bagogold.bagogold.models.lc import OperacaoVendaLetraCredito
 from bagogold.bagogold.utils.fundo_investimento import \
     calcular_qtd_cotas_ate_dia_por_divisao
 from bagogold.bagogold.utils.td import calcular_qtd_titulos_ate_dia_por_divisao
+from bagogold.cri_cra.utils.utils import \
+    qtd_cri_cra_ate_dia_para_divisao_para_certificado
+from decimal import Decimal
 from django import forms
 from django.forms import widgets
 
@@ -34,6 +37,8 @@ class DivisaoOperacaoAcaoFormSet(forms.models.BaseInlineFormSet):
 
         for form in self.forms:
             form.fields['divisao'].queryset = Divisao.objects.filter(investidor=self.investidor)
+            form.fields['quantidade'].initial = Decimal('0')
+            form.fields['quantidade'].localize = True
             
     def add_fields(self, form, index):
         super(DivisaoOperacaoAcaoFormSet, self).add_fields(form, index)
@@ -113,6 +118,8 @@ class DivisaoOperacaoDebentureFormSet(forms.models.BaseInlineFormSet):
 
         for form in self.forms:
             form.fields['divisao'].queryset = Divisao.objects.filter(investidor=self.investidor)
+            form.fields['quantidade'].initial = Decimal('0')
+            form.fields['quantidade'].localize = True
     
     def clean(self):
         qtd_total_div = 0
@@ -163,6 +170,8 @@ class DivisaoOperacaoFIIFormSet(forms.models.BaseInlineFormSet):
 
         for form in self.forms:
             form.fields['divisao'].queryset = Divisao.objects.filter(investidor=self.investidor)
+            form.fields['quantidade'].initial = Decimal('0')
+            form.fields['quantidade'].localize = True
     
     def add_fields(self, form, index):
         super(DivisaoOperacaoFIIFormSet, self).add_fields(form, index)
@@ -238,6 +247,8 @@ class DivisaoOperacaoLCFormSet(forms.models.BaseInlineFormSet):
     
         for form in self.forms:
             form.fields['divisao'].queryset = Divisao.objects.filter(investidor=self.investidor)
+            form.fields['quantidade'].initial = Decimal('0')
+            form.fields['quantidade'].localize = True
             
     def clean(self):
         qtd_total_div = 0
@@ -267,7 +278,7 @@ class DivisaoOperacaoLCFormSet(forms.models.BaseInlineFormSet):
                     
                         # Verificar em caso de venda
                         if self.instance.tipo_operacao == 'V':
-                            if not DivisaoOperacaoLC.objects.filter(divisao=form_divisao.cleaned_data['divisao'], operacao=self.operacao_compra):
+                            if not DivisaoOperacaoLC.objects.filter(divisao=form_divisao.cleaned_data['divisao'], operacao=self.operacao_compra).exists():
                                 raise forms.ValidationError('Venda para divisão %s não é permitida, não há alocação para a operação de compra selecionada' % (form_divisao.cleaned_data['divisao']))
                             if DivisaoOperacaoLC.objects.get(divisao=form_divisao.cleaned_data['divisao'], operacao=self.operacao_compra).quantidade < div_qtd:
                                 raise forms.ValidationError('Venda de quantidade acima da disponível para divisão %s' % (form_divisao.cleaned_data['divisao']))
@@ -292,6 +303,8 @@ class DivisaoOperacaoCDB_RDBFormSet(forms.models.BaseInlineFormSet):
         
         for form in self.forms:
             form.fields['divisao'].queryset = Divisao.objects.filter(investidor=self.investidor)
+            form.fields['quantidade'].initial = Decimal('0')
+            form.fields['quantidade'].localize = True
     
     def clean(self):
         qtd_total_div = 0
@@ -321,7 +334,7 @@ class DivisaoOperacaoCDB_RDBFormSet(forms.models.BaseInlineFormSet):
                         
                         # Verificar em caso de venda
                         if self.instance.tipo_operacao == 'V':
-                            if not DivisaoOperacaoCDB_RDB.objects.filter(divisao=form_divisao.cleaned_data['divisao'], operacao=self.operacao_compra):
+                            if not DivisaoOperacaoCDB_RDB.objects.filter(divisao=form_divisao.cleaned_data['divisao'], operacao=self.operacao_compra).exists():
                                 raise forms.ValidationError('Venda para divisão %s não é permitida, não há alocação para a operação de compra selecionada' % (form_divisao.cleaned_data['divisao']))
                             if DivisaoOperacaoCDB_RDB.objects.get(divisao=form_divisao.cleaned_data['divisao'], operacao=self.operacao_compra).quantidade < div_qtd:
                                 raise forms.ValidationError('Venda de quantidade acima da disponível para divisão %s' % (form_divisao.cleaned_data['divisao']))
@@ -339,12 +352,13 @@ class DivisaoOperacaoCDB_RDBFormSet(forms.models.BaseInlineFormSet):
         
 class DivisaoOperacaoCRI_CRAFormSet(forms.models.BaseInlineFormSet):
     def __init__(self, *args, **kwargs):
-        self.operacao_compra = kwargs.pop('operacao_compra', None)
         self.investidor = kwargs.pop('investidor')
         super(DivisaoOperacaoCRI_CRAFormSet, self).__init__(*args, **kwargs)
         
         for form in self.forms:
             form.fields['divisao'].queryset = Divisao.objects.filter(investidor=self.investidor)
+            form.fields['quantidade'].initial = Decimal('0')
+            form.fields['quantidade'].localize = True
     
     def clean(self):
         qtd_total_div = 0
@@ -374,15 +388,13 @@ class DivisaoOperacaoCRI_CRAFormSet(forms.models.BaseInlineFormSet):
                         
                         # Verificar em caso de venda
                         if self.instance.tipo_operacao == 'V':
-                            if not DivisaoOperacaoCDB_RDB.objects.filter(divisao=form_divisao.cleaned_data['divisao'], operacao=self.operacao_compra):
-                                raise forms.ValidationError('Venda para divisão %s não é permitida, não há alocação para a operação de compra selecionada' % (form_divisao.cleaned_data['divisao']))
-                            if DivisaoOperacaoCDB.objects.get(divisao=form_divisao.cleaned_data['divisao'], operacao=self.operacao_compra).quantidade < div_qtd:
+                            if qtd_cri_cra_ate_dia_para_divisao_para_certificado(self.instance.data, form_divisao.cleaned_data['divisao'].id, self.instance.cri_cra.id) < div_qtd:
                                 raise forms.ValidationError('Venda de quantidade acima da disponível para divisão %s' % (form_divisao.cleaned_data['divisao']))
                         
                     # Divisão será apagada
                     elif form_divisao.cleaned_data['DELETE']:
                         divisao_a_excluir = True
-                        
+
         if self.instance.quantidade < qtd_total_div:
             raise forms.ValidationError('Quantidade total alocada para as divisões é maior que quantidade da operação')
         elif self.instance.quantidade > qtd_total_div:
@@ -398,6 +410,8 @@ class DivisaoOperacaoFundoInvestimentoFormSet(forms.models.BaseInlineFormSet):
         
         for form in self.forms:
             form.fields['divisao'].queryset = Divisao.objects.filter(investidor=self.investidor)
+            form.fields['quantidade'].initial = Decimal('0')
+            form.fields['quantidade'].localize = True
     
     def clean(self):
         qtd_total_div = 0
@@ -452,6 +466,8 @@ class DivisaoOperacaoTDFormSet(forms.models.BaseInlineFormSet):
 
         for form in self.forms:
             form.fields['divisao'].queryset = Divisao.objects.filter(investidor=self.investidor)
+            form.fields['quantidade'].initial = Decimal('0')
+            form.fields['quantidade'].localize = True
             
     def clean(self):
         qtd_total_div = 0
