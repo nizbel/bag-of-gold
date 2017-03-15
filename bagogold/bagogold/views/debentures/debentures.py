@@ -167,15 +167,13 @@ def historico(request):
             # Verificar se se trata de compra ou venda
             if item.tipo_operacao == 'C':
                 item.tipo = 'Compra'
-                item.total = Decimal(-1) * (item.quantidade * item.preco_unitario + \
-                item.taxa)
+                item.total = -(item.quantidade * item.preco_unitario + item.taxa)
                 total_investido += item.total
                 qtd_titulos[item.debenture.codigo] += item.quantidade
                 
             elif item.tipo_operacao == 'V':
                 item.tipo = 'Venda'
-                item.total = (item.quantidade * item.preco_unitario - \
-                item.taxa)
+                item.total = (item.quantidade * item.preco_unitario - item.taxa)
                 total_investido += item.total
                 qtd_titulos[item.debenture.codigo] -= item.quantidade
                 

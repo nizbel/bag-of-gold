@@ -3,11 +3,13 @@
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoCRI_CRAFormSet
 from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoCRI_CRA
+from bagogold.bagogold.models.lc import HistoricoTaxaDI
 from bagogold.cri_cra.forms.cri_cra import CRI_CRAForm, \
     DataRemuneracaoCRI_CRAForm, DataRemuneracaoCRI_CRAFormSet, \
     DataAmortizacaoCRI_CRAFormSet, OperacaoCRI_CRAForm
 from bagogold.cri_cra.models.cri_cra import CRI_CRA, DataRemuneracaoCRI_CRA, \
     DataAmortizacaoCRI_CRA, OperacaoCRI_CRA
+from bagogold.cri_cra.utils.valorizacao import calcular_valor_cri_cra_na_data
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -17,8 +19,8 @@ from django.db import transaction
 from django.forms.models import inlineformset_factory
 from django.http.response import HttpResponseRedirect
 from django.template.response import TemplateResponse
+import calendar
 import datetime
-from bagogold.bagogold.models.lc import HistoricoTaxaDI
 
 TIPO_CRI = '1'
 TIPO_CRA = '2'
@@ -189,22 +191,22 @@ def editar_cri_cra(request, id_cri_cra):
 @login_required
 def editar_operacao_cri_cra(request, id_operacao):
     investidor = request.user.investidor
-     
+      
     operacao_cri_cra = OperacaoCRI_CRA.objects.get(pk=id_operacao)
     if operacao_cri_cra.cri_cra.investidor != investidor:
         raise PermissionDenied
-     
+      
     # Testa se investidor possui mais de uma divisão
     varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
-     
+      
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoCRI_CRA, DivisaoOperacaoCRI_CRA, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoCRI_CRAFormSet)
-     
+      
     if request.method == 'POST':
         form_operacao_cri_cra = OperacaoCRI_CRAForm(request.POST, instance=operacao_cri_cra, investidor=investidor)
         formset_divisao = DivisaoFormSet(request.POST, instance=operacao_cri_cra, investidor=investidor) if varias_divisoes else None
-         
+          
         if request.POST.get("save"):
             if form_operacao_cri_cra.is_valid():
                 operacao_compra = form_operacao_cdb_rdb.cleaned_data['operacao_compra']
@@ -226,7 +228,7 @@ def editar_operacao_cri_cra(request, id_operacao):
                         return HttpResponseRedirect(reverse('historico_cdb_rdb'))
                     for erro in formset_divisao.non_form_errors():
                         messages.error(request, erro)
-                         
+                          
                 else:
                     operacao_cdb_rdb.save()
                     if operacao_cdb_rdb.tipo_operacao == 'V':
@@ -247,7 +249,7 @@ def editar_operacao_cri_cra(request, id_operacao):
                 for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
                     messages.error(request, erro.message)
 #                         print '%s %s'  % (divisao_cdb_rdb.quantidade, divisao_cdb_rdb.divisao)
-                 
+                  
         elif request.POST.get("delete"):
             # Testa se operação a excluir não é uma operação de compra com vendas já registradas
             if not OperacaoVendaCDB_RDB.objects.filter(operacao_compra=operacao_cdb_rdb):
@@ -259,11 +261,11 @@ def editar_operacao_cri_cra(request, id_operacao):
                 operacao_cdb_rdb.delete()
                 messages.success(request, 'Operação excluída com sucesso')
                 return HttpResponseRedirect(reverse('historico_cdb_rdb'))
-  
+   
     else:
         form_operacao_cri_cra = OperacaoCRI_CRAForm(instance=operacao_cri_cra, investidor=investidor)
         formset_divisao = DivisaoFormSet(instance=operacao_cri_cra, investidor=investidor)
-             
+              
     return TemplateResponse(request, 'cdb_rdb/editar_operacao_cdb_rdb.html', {'form_operacao_cdb_rdb': form_operacao_cri_cra, 'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})  
 
     
@@ -276,41 +278,51 @@ def historico(request):
     if not operacoes:
         return TemplateResponse(request, 'cri_cra/historico.html', {'dados': {}})
      
-    # Prepara o campo valor atual
-    for operacao in operacoes:
-        if operacao.tipo_operacao == 'C':
-            operacao.tipo = 'Compra'
-        else:
-            operacao.tipo = 'Venda'
-     
     # Pegar data inicial
     historico_di = HistoricoTaxaDI.objects.filter(data__gte=operacoes[0].data)
      
     total_investido = 0
-    total_patrimonio = 0
-     
-    for operacao in operacoes:
-        if operacao.tipo_operacao == 'C':
-            total_investido += operacao.taxa + operacao.quantidade * operacao.preco_unitario
-        if operacao.tipo_operacao == 'V':
-            total_investido -= (operacao.quantidade * operacao.preco_unitario - operacao.taxa)
-            
-            
-            
      
     # Gráfico de acompanhamento de investimentos vs patrimonio
     graf_investido_total = list()
     graf_patrimonio = list()
- 
-#             graf_investido_total += [[str(calendar.timegm(data_iteracao.timetuple()) * 1000), float(total_investido)]]
-#             graf_patrimonio += [[str(calendar.timegm(data_iteracao.timetuple()) * 1000), float(total_patrimonio)]]
- 
+    
+    qtd_certificados = {}
+    
+    for operacao in operacoes:
+        if operacao.cri_cra not in qtd_certificados.keys():
+            qtd_certificados[operacao.cri_cra] = 0
+        
+        total_patrimonio = 0
+        
+        if operacao.tipo_operacao == 'C':
+            operacao.tipo = 'Compra'
+            operacao.total = -(operacao.taxa + operacao.quantidade * operacao.preco_unitario)
+            total_investido += operacao.total
+            qtd_certificados[operacao.cri_cra] += operacao.quantidade
+        
+        elif operacao.tipo_operacao == 'V':
+            operacao.tipo = 'Venda'
+            operacao.total = (operacao.quantidade * operacao.preco_unitario - operacao.taxa)
+            total_investido -= operacao.total
+            qtd_certificados[operacao.cri_cra] -= operacao.quantidade
+        
+        for cri_cra in qtd_certificados.keys():
+            if qtd_certificados[cri_cra] > 0:
+                total_patrimonio += qtd_certificados[cri_cra] * calcular_valor_cri_cra_na_data(operacao.cri_cra, operacao.data)
+        
+        graf_investido_total += [[str(calendar.timegm(operacao.data.timetuple()) * 1000), float(-total_investido)]]
+        graf_patrimonio += [[str(calendar.timegm(operacao.data.timetuple()) * 1000), float(total_patrimonio)]]
+            
     dados = {}
-    dados['total_investido'] = total_investido
+    dados['total_investido'] = -total_investido
     dados['patrimonio'] = total_patrimonio
-    dados['lucro'] = total_patrimonio - total_investido
-    dados['lucro_percentual'] = (total_patrimonio - total_investido) / total_investido * 100
-     
+    dados['lucro'] = total_patrimonio + total_investido
+    if total_investido > 0:
+        dados['lucro_percentual'] = (total_patrimonio + total_investido) / total_investido * 100
+    else:
+        dados['lucro_percentual'] = 0
+        
     return TemplateResponse(request, 'cri_cra/historico.html', {'dados': dados, 'operacoes': operacoes, 
                                                     'graf_investido_total': graf_investido_total, 'graf_patrimonio': graf_patrimonio})
     
