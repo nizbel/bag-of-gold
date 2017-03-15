@@ -73,7 +73,8 @@
                                 <label class="control-label col-md-4" style="text-align: left;"> Tipo de operação: </label>
                                 <div class="col-md-8">
                                     <select class="selectpicker form-control" id="id_tipo_operacao" name="tipo_operacao" value="{{ form_operacao_cri_cra.tipo_operacao.value }}">
-                                        {% for key, value in form_operacao_cri_cra.fields.tipo_operacao.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
+                                        {% for key, value in form_operacao_cri_cra.fields.tipo_operacao.widget.choices %}<option value="{{ key }}"
+                                            {% if key == form_operacao_cri_cra.tipo_operacao.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
                                     </select>
                                     {% if form_operacao_cri_cra.tipo_operacao.errors %} <span class="help-block"> {{ form_operacao_cri_cra.tipo_operacao.errors.as_text }} </span> {% endif %}
                                 </div>

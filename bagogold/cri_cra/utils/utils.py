@@ -22,13 +22,30 @@ def qtd_cri_cra_ate_dia_para_divisao_para_certificado(dia, divisao_id, cri_cra_i
     Calcula a quantidade de certificados de determinado CRI/CRA até dia determinado para uma divisão
     Parâmetros: Dia final
                 ID da divisão
+                ID do certificado
     Retorno: Quantidade de títulos {titulo_id: qtd}
     """
     qtd_titulos = {}
-    operacoes_divisao = list(DivisaoOperacaoCRI_CRA.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id, operacao__cri_cra__id=cri_cra_id).annotate(titulo=F('operacao__cri_cra')) \
-        .annotate(qtd_soma=Sum(Case(When(operacao__tipo_operacao='C', then=F('quantidade')),
+    qtd_total = DivisaoOperacaoCRI_CRA.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id, operacao__cri_cra__id=cri_cra_id).annotate(cri_cra=F('operacao__cri_cra')) \
+        .values('cri_cra').annotate(qtd=Sum(Case(When(operacao__tipo_operacao='C', then=F('quantidade')),
                             When(operacao__tipo_operacao='V', then=F('quantidade')*-1),
-                            output_field=DecimalField()))))
+                            output_field=DecimalField()))).aggregate(qtd_total=Sum('qtd'))['qtd_total']
+        
+    return qtd_total
+
+
+def qtd_cri_cra_ate_dia_para_divisao(dia, divisao_id):
+    """ 
+    Calcula a quantidade de certificados até dia determinado para uma divisão
+    Parâmetros: Dia final
+                ID da divisão
+    Retorno: Quantidade de títulos {titulo_id: qtd}
+    """
+    qtd_titulos = {}
+    operacoes_divisao = list(DivisaoOperacaoCRI_CRA.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).annotate(cri_cra=F('operacao__cri_cra')) \
+        .values('cri_cra').annotate(qtd_soma=Sum(Case(When(operacao__tipo_operacao='C', then=F('quantidade')),
+                            When(operacao__tipo_operacao='V', then=F('quantidade')*-1),
+                            output_field=DecimalField()))).values('cri_cra', 'qtd_soma'))
         
     print operacoes_divisao
     
