@@ -447,6 +447,17 @@ class TransferenciaEntreDivisoes(models.Model):
     TIPO_INVESTIMENTO_CRI_CRA = 'R'
     TIPO_INVESTIMENTO_TRADING = 'T'
     
+    ESCOLHAS_TIPO_INVESTIMENTO = (('', 'Fonte externa'), 
+                                  (TIPO_INVESTIMENTO_BUY_AND_HOLD, 'Buy and Hold'), 
+                                  (TIPO_INVESTIMENTO_CDB_RDB, 'CDB/RDB'), 
+                                  (TIPO_INVESTIMENTO_TESOURO_DIRETO, 'Tesouro Direto'), 
+                                  (TIPO_INVESTIMENTO_DEBENTURE, 'Debênture'),
+                                  (TIPO_INVESTIMENTO_FII, 'Fundo de Inv. Imobiliário'), 
+                                  (TIPO_INVESTIMENTO_FUNDO_INV, 'Fundo de Investimento'),
+                                  (TIPO_INVESTIMENTO_LCI_LCA, 'Letras de Crédito'), 
+                                  (TIPO_INVESTIMENTO_CRI_CRA, 'CRI/CRA'), 
+                                  (TIPO_INVESTIMENTO_TRADING, 'Trading'))
+    
     """
     Transferências em dinheiro entre as divisões, cedente ou recebedor nulos significa que
     é uma transferência de dinheiro de/para meio externo

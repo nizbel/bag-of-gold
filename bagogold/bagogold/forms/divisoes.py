@@ -13,9 +13,6 @@ from decimal import Decimal
 from django import forms
 from django.forms import widgets
 
-OPCOES_INVESTIMENTO = (('', 'Fonte externa'), ('B', 'Buy and Hold'), ('C', 'CDB/RDB'), ('D', 'Tesouro Direto'), ('F', 'Fundo de Inv. Imobiliário'), ('I', 'Fundo de Investimento'),
-                       ('L', 'Letras de Crédito'), ('T', 'Trading'))
-    
 class DivisaoForm(LocalizedModelForm):
 
     class Meta:
@@ -521,8 +518,8 @@ class TransferenciaEntreDivisoesForm(LocalizedModelForm):
         fields = ('divisao_cedente', 'investimento_origem', 'divisao_recebedora', 'investimento_destino', 'data', 'quantidade', 'descricao')
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),
-                 'investimento_origem': widgets.Select(choices=OPCOES_INVESTIMENTO),
-                 'investimento_destino': widgets.Select(choices=OPCOES_INVESTIMENTO),}
+                 'investimento_origem': widgets.Select(choices=TransferenciaEntreDivisoes.ESCOLHAS_TIPO_INVESTIMENTO),
+                 'investimento_destino': widgets.Select(choices=TransferenciaEntreDivisoes.ESCOLHAS_TIPO_INVESTIMENTO),}
     
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
