@@ -109,13 +109,19 @@
                         <tbody>
                         {% for item in operacoes %}
                         <tr>
-                            <td><a href="{% url 'cri_cra:editar_operacao_cri_cra' item.id %}">{{item.investimento.nome}}</a></td>
-                            <td>{{ item.tipo }}</td>
-                            <td>{{ item.data|date:"Y-m-d" }}</td>
+                            <td><a href="{% url 'cri_cra:detalhar_cri_cra' item.cri_cra.id %}">{{item.cri_cra.nome}}</a></td>
+                            <td><a href="{% url 'cri_cra:editar_operacao_cri_cra' item.id %}">{{ item.tipo }}</a></td>
+                            <td>{{ item.data|date:"d/m/Y" }}</td>
                             <td>R$ {{item.preco_unitario}}</td>
-                            <td>R$ {{item.quantidade}}</td>
-                            <td>R$ {{item.taxa}}</td>
-                            <td>R$ {{item.total}}</td>
+                            <td>{{item.quantidade}}</td>
+                            <td><span {% if item.taxa > 0 %}class="font-red-thunderbird"{% endif %}>R$ {{item.taxa}}</span></td>
+                            <td><span class="
+                                {% if item.total < 0 %}
+                                font-red-thunderbird
+                                {% else %}
+                                font-blue
+                                {% endif %}
+                                ">R$ {{item.total}}</span></td>
                         </tr>
                         {% endfor %}
                         </tbody>
