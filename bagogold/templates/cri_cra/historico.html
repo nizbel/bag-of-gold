@@ -109,8 +109,8 @@
                         <tbody>
                         {% for item in operacoes %}
                         <tr>
-                            <td><a href="{% url 'cri_cra:detalhar_cri_cra' item.cri_cra.id %}">{{item.cri_cra.nome}}</a></td>
-                            <td><a href="{% url 'cri_cra:editar_operacao_cri_cra' item.id %}">{{ item.tipo }}</a></td>
+                            <td><a href="{% url 'cri_cra:detalhar_cri_cra' item.cri_cra.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar {{item.cri_cra.descricao_tipo}}">{{item.cri_cra.nome}}</a></td>
+                            <td><a href="{% url 'cri_cra:editar_operacao_cri_cra' item.id %}" class="tooltips" data-placement="top" data-original-title="Editar operação">{{ item.tipo }}</a></td>
                             <td>{{ item.data|date:"d/m/Y" }}</td>
                             <td>R$ {{item.preco_unitario}}</td>
                             <td>{{item.quantidade}}</td>

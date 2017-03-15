@@ -9,139 +9,135 @@
 
 {% block content %}
 
-<div class="row">
-    <div class="col-md-12">
-        <div class="portlet light">
-            <div class="portlet-title">
-                <div class="caption font-yellow-crusta">
-                    <i class="icon-plus font-yellow-crusta"></i>
-                    <span class="caption-subject bold uppercase"> Editar operação </span>
+<div class="portlet light">
+    <div class="portlet-title">
+        <div class="caption font-yellow-crusta">
+            <i class="icon-plus font-yellow-crusta"></i>
+            <span class="caption-subject bold uppercase"> Editar operação </span>
+        </div>
+    </div>
+    <div class="portlet-body form">
+        <!-- BEGIN FORM-->
+        <form method="POST" class="horizontal-form">{% csrf_token %}
+            <div class="form-body">
+                <div class="row">
+                    <div class="form-group col-md-6 {% if form_operacao_cri_cra.preco_unitario.errors %} has-error {% endif %}">
+                        <label class="control-label col-md-4" style="text-align: left;"> Preço unitário: </label>
+                        <div class="col-md-8">
+                            <input id="id_preco_unitario" type="text" name="preco_unitario" class="form-control" value="{{ form_operacao_cri_cra.preco_unitario.value }}">
+                            {% if form_operacao_cri_cra.preco_unitario.errors %} <span class="help-block"> {{ form_operacao_cri_cra.preco_unitario.errors.as_text }} </span> {% endif %}
+                        </div>
+                    </div>
+                    <div class="form-group col-md-6 {% if form_operacao_cri_cra.quantidade.errors %} has-error {% endif %}">
+                        <label class="control-label col-md-4"> Quantidade: </label>
+                        <div class="col-md-8">
+                            <input id="id_quantidade" type="text" name="quantidade" class="form-control" value="{{ form_operacao_cri_cra.quantidade.value }}">
+                            {% if form_operacao_cri_cra.quantidade.errors %} <span class="help-block"> {{ form_operacao_cri_cra.quantidade.errors.as_text }} </span> {% endif %}
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="portlet-body form">
-                <!-- BEGIN FORM-->
-                <form method="POST" class="horizontal-form">{% csrf_token %}
-                    <div class="form-body">
-                        <div class="row">
-                            <div class="form-group col-md-6 {% if form_operacao_cri_cra.preco_unitario.errors %} has-error {% endif %}">
-                                <label class="control-label col-md-4" style="text-align: left;"> Preço unitário: </label>
-                                <div class="col-md-8">
-                                    <input id="id_preco_unitario" type="text" name="preco_unitario" class="form-control" value="{{ form_operacao_cri_cra.preco_unitario.value }}">
-                                    {% if form_operacao_cri_cra.preco_unitario.errors %} <span class="help-block"> {{ form_operacao_cri_cra.preco_unitario.errors.as_text }} </span> {% endif %}
-                                </div>
+                <div class="row">
+                    <div class="form-group col-md-6 {% if form_operacao_cri_cra.data.errors %} has-error {% endif %}">
+                        <label class="control-label col-md-4" style="text-align: left;"> Data: </label>
+                        <div class="col-md-8">
+                            <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" data-date-viewmode="years">
+                                <input type="text" class="form-control" id="id_data" name="data" value="{{form_operacao_cri_cra.data.value|default:''}}">
+                                <span class="input-group-btn">
+                                    <button class="btn default" type="button">
+                                        <i class="fa fa-calendar"></i>
+                                    </button>
+                                </span>
                             </div>
-                            <div class="form-group col-md-6 {% if form_operacao_cri_cra.quantidade.errors %} has-error {% endif %}">
-                                <label class="control-label col-md-4"> Quantidade: </label>
-                                <div class="col-md-8">
-                                    <input id="id_quantidade" type="text" name="quantidade" class="form-control" value="{{ form_operacao_cri_cra.quantidade.value }}">
-                                    {% if form_operacao_cri_cra.quantidade.errors %} <span class="help-block"> {{ form_operacao_cri_cra.quantidade.errors.as_text }} </span> {% endif %}
-                                </div>
+                            {% if form_operacao_cri_cra.data.errors %} <span class="help-block"> {{ form_operacao_cri_cra.data.errors.as_text }} </span> 
+                            {% else %} <span class="help-block"> Selecione uma data </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="form-group col-md-6 {% if form_operacao_cri_cra.cri_cra.errors %} has-error {% endif %}">
+                        <label class="control-label col-md-4" style="text-align: left;"> CRI/CRA: </label>
+                        <div class="col-md-8">
+                            {% localize off %}
+                            <select class="selectpicker form-control" id="id_cri_cra" name="cri_cra">
+                                {% for key, value in form_operacao_cri_cra.fields.cri_cra.widget.choices %}<option value="{{ key }}" 
+                                        {% if key == form_operacao_cri_cra.cri_cra.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                            </select>
+                            {% endlocalize %}
+                            {% if form_operacao_cri_cra.cri_cra.errors %} <span class="help-block"> {{ form_operacao_cri_cra.cri_cra.errors.as_text }} </span> {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-md-6 {% if form_operacao_cri_cra.tipo_operacao.errors %} has-error {% endif %}">
+                        <label class="control-label col-md-4" style="text-align: left;"> Tipo de operação: </label>
+                        <div class="col-md-8">
+                            <select class="selectpicker form-control" id="id_tipo_operacao" name="tipo_operacao" value="{{ form_operacao_cri_cra.tipo_operacao.value }}">
+                                {% for key, value in form_operacao_cri_cra.fields.tipo_operacao.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
+                            </select>
+                            {% if form_operacao_cri_cra.tipo_operacao.errors %} <span class="help-block"> {{ form_operacao_cri_cra.tipo_operacao.errors.as_text }} </span> {% endif %}
+                        </div>
+                    </div>
+                    <div class="form-group col-md-6 {% if form_operacao_cri_cra.taxa.errors %} has-error {% endif %}">
+                        <label class="control-label col-md-4"> Taxa: </label>
+                        <div class="col-md-8">
+                            <input id="id_taxa" type="text" name="taxa" class="form-control" value="{{ form_operacao_cri_cra.taxa.value }}">
+                            {% if form_operacao_cri_cra.taxa.errors %} <span class="help-block"> {{ form_operacao_cri_cra.taxa.errors.as_text }} </span> {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% if not varias_divisoes %}
+                <div class="row">
+                    <div class="form-group col-md-6 {% if form_operacao_cri_cra.qtd_utilizada.errors %} has-error {% endif %}">
+                        <label class="control-label col-md-4" style="text-align: left;"> Quantidade de proventos utilizada: </label>
+                        <div class="col-md-8">
+                            <input id="id_qtd_utilizada" type="text" value="0" name="qtd_utilizada" class="form-control">
+                            {% if form_operacao_cri_cra.qtd_utilizada.errors %} <span class="help-block"> {{ form_operacao_cri_cra.qtd_utilizada.errors.as_text }} </span> {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="row" id="forms">
+                    <h2 class="font-yellow-crusta" align="center">
+                        <strong>Divisões</strong> <button id="add-another" class="btn btn-icon-only green-steel" type="button"><i class="fa fa-plus"></i></button>
+                    </h2>
+                    {{ formset_divisao.management_form }}
+                    {% for form_divisao in formset_divisao %}
+                    <h3 class="font-yellow-crusta" align="center"><strong>Divisão {{ forloop.counter }}</strong></h3>
+                    <br/>
+                    <div class="row" id="divisao-{{forloop.counter0}}">
+                        <div class="form-group col-md-6 {% if form_divisao.divisao.errors %} has-error {% endif %}">
+                            <label class="control-label col-md-4" style="text-align: left;"> Divisão: </label>
+                            <div class="col-md-8">
+                                {% localize off %}
+                                <select class="selectpicker form-control" id="id_divisaooperacaocri_cra_set-{{forloop.counter0}}-divisao" name="divisaooperacaocri_cra_set-{{forloop.counter0}}-divisao">
+                                    {% for key, value in form_divisao.fields.divisao.widget.choices %}<option value="{{ key }}" 
+                                        {% if key == form_divisao.divisao.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                                </select>
+                                {% endlocalize %}
+                                {% if form_divisao.divisao.errors %} <span class="help-block"> {{ form_divisao.divisao.errors.as_text }} </span> {% endif %}
                             </div>
                         </div>
-                        <div class="row">
-                            <div class="form-group col-md-6 {% if form_operacao_cri_cra.data.errors %} has-error {% endif %}">
-                                <label class="control-label col-md-4" style="text-align: left;"> Data: </label>
-                                <div class="col-md-8">
-                                    <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" data-date-viewmode="years">
-                                        <input type="text" class="form-control" id="id_data" name="data" value="{{form_operacao_cri_cra.data.value|default:''}}">
-                                        <span class="input-group-btn">
-                                            <button class="btn default" type="button">
-                                                <i class="fa fa-calendar"></i>
-                                            </button>
-                                        </span>
-                                    </div>
-                                    {% if form_operacao_cri_cra.data.errors %} <span class="help-block"> {{ form_operacao_cri_cra.data.errors.as_text }} </span> 
-                                    {% else %} <span class="help-block"> Selecione uma data </span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="form-group col-md-6 {% if form_operacao_cri_cra.cri_cra.errors %} has-error {% endif %}">
-                                <label class="control-label col-md-4" style="text-align: left;"> CRI/CRA: </label>
-                                <div class="col-md-8">
-                                    {% localize off %}
-                                    <select class="selectpicker form-control" id="id_cri_cra" name="cri_cra">
-                                        {% for key, value in form_operacao_cri_cra.fields.cri_cra.widget.choices %}<option value="{{ key }}" 
-                                                {% if key == form_operacao_cri_cra.cri_cra.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
-                                    </select>
-                                    {% endlocalize %}
-                                    {% if form_operacao_cri_cra.cri_cra.errors %} <span class="help-block"> {{ form_operacao_cri_cra.cri_cra.errors.as_text }} </span> {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="form-group col-md-6 {% if form_operacao_cri_cra.tipo_operacao.errors %} has-error {% endif %}">
-                                <label class="control-label col-md-4" style="text-align: left;"> Tipo de operação: </label>
-                                <div class="col-md-8">
-                                    <select class="selectpicker form-control" id="id_tipo_operacao" name="tipo_operacao" value="{{ form_operacao_cri_cra.tipo_operacao.value }}">
-                                        {% for key, value in form_operacao_cri_cra.fields.tipo_operacao.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
-                                    </select>
-                                    {% if form_operacao_cri_cra.tipo_operacao.errors %} <span class="help-block"> {{ form_operacao_cri_cra.tipo_operacao.errors.as_text }} </span> {% endif %}
-                                </div>
-                            </div>
-                            <div class="form-group col-md-6 {% if form_operacao_cri_cra.taxa.errors %} has-error {% endif %}">
-                                <label class="control-label col-md-4"> Taxa: </label>
-                                <div class="col-md-8">
-                                    <input id="id_taxa" type="text" name="taxa" class="form-control" value="{{ form_operacao_cri_cra.taxa.value }}">
-                                    {% if form_operacao_cri_cra.taxa.errors %} <span class="help-block"> {{ form_operacao_cri_cra.taxa.errors.as_text }} </span> {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        {% if not varias_divisoes %}
-                        <div class="row">
-                            <div class="form-group col-md-6 {% if form_operacao_cri_cra.qtd_utilizada.errors %} has-error {% endif %}">
-                                <label class="control-label col-md-4" style="text-align: left;"> Quantidade de proventos utilizada: </label>
-                                <div class="col-md-8">
-                                    <input id="id_qtd_utilizada" type="text" value="0" name="qtd_utilizada" class="form-control">
-                                    {% if form_operacao_cri_cra.qtd_utilizada.errors %} <span class="help-block"> {{ form_operacao_cri_cra.qtd_utilizada.errors.as_text }} </span> {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        {% else %}
-                        <div class="row" id="forms">
-                            <h2 class="font-yellow-crusta" align="center">
-                                <strong>Divisões</strong> <button id="add-another" class="btn btn-icon-only green-steel" type="button"><i class="fa fa-plus"></i></button>
-                            </h2>
-                            {{ formset_divisao.management_form }}
-                            {% for form_divisao in formset_divisao %}
-                            <h3 class="font-yellow-crusta" align="center"><strong>Divisão {{ forloop.counter }}</strong></h3>
-                            <br/>
-                            <div class="row" id="divisao-{{forloop.counter0}}">
-                                <div class="form-group col-md-6 {% if form_divisao.divisao.errors %} has-error {% endif %}">
-                                    <label class="control-label col-md-4" style="text-align: left;"> Divisão: </label>
-                                    <div class="col-md-8">
-                                        {% localize off %}
-                                        <select class="selectpicker form-control" id="id_divisaooperacaocri_cra_set-{{forloop.counter0}}-divisao" name="divisaooperacaocri_cra_set-{{forloop.counter0}}-divisao">
-                                            {% for key, value in form_divisao.fields.divisao.widget.choices %}<option value="{{ key }}" 
-                                                {% if key == form_divisao.divisao.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
-                                        </select>
-                                        {% endlocalize %}
-                                        {% if form_divisao.divisao.errors %} <span class="help-block"> {{ form_divisao.divisao.errors.as_text }} </span> {% endif %}
-                                    </div>
-                                </div>
-                                <div class="form-group col-md-6 {% if form_divisao.quantidade.errors %} has-error {% endif %}">
-                                    <label class="control-label col-md-4"> Quantidade: </label>
-                                    <div class="col-md-8">
-                                        <input id="id_divisaooperacaocri_cra_set-{{forloop.counter0}}-quantidade" type="text" value="{{form_divisao.quantidade.value}}" name="divisaooperacaocri_cra_set-{{forloop.counter0}}-quantidade" class="form-control">
-                                        {% if form_divisao.quantidade.errors %} <span class="help-block"> {{ form_divisao.quantidade.errors.as_text }} </span> {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
-                        <div class="form-actions">
-                            <div class="row">
-                                <div class="col-md-offset col-md-3">
-                                    <button type="submit" name="save" value="1" class="btn green-steel">Salvar</button>
-                                    <button type="submit" name="delete" value="1" class="btn red-thunderbird">Excluir</button>
-                                </div>
+                        <div class="form-group col-md-6 {% if form_divisao.quantidade.errors %} has-error {% endif %}">
+                            <label class="control-label col-md-4"> Quantidade: </label>
+                            <div class="col-md-8">
+                                <input id="id_divisaooperacaocri_cra_set-{{forloop.counter0}}-quantidade" type="text" value="{{form_divisao.quantidade.value}}" name="divisaooperacaocri_cra_set-{{forloop.counter0}}-quantidade" class="form-control">
+                                {% if form_divisao.quantidade.errors %} <span class="help-block"> {{ form_divisao.quantidade.errors.as_text }} </span> {% endif %}
                             </div>
                         </div>
                     </div>
-                </form>
-                <!-- END FORM-->
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <div class="form-actions">
+                    <div class="row">
+                        <div class="col-md-offset col-md-3">
+                            <button type="submit" name="save" value="1" class="btn green-steel">Salvar</button>
+                            <button type="submit" name="delete" value="1" class="btn red-thunderbird">Excluir</button>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
+        </form>
+        <!-- END FORM-->
     </div>
 </div>
 
