@@ -2,7 +2,6 @@
 {% load staticfiles %}
 
 {% block extra_head %}
-    {{ form.media }}
 <link href={% static "assets/global/plugins/bootstrap-select/css/bootstrap-select.min.css" %} rel="stylesheet" type="text/css" />
 {% endblock %}
 
@@ -57,20 +56,12 @@
 					<div class="portlet-body">
 						<div class="table-scrollable table-scrollable-borderless">
 							<table class="table table-hover table-light">
-								<thead style="display: none;">
-									<tr>
-										<th width="25%"></th>
-										<th width="25%"></th>
-										<th width="25%"></th>
-										<th width="25%"></th>
-									</tr>
-								</thead>
 								<tbody>
 									<tr>
-										<td> Operações de compra: </td>
-										<td> <span id="qtd_op_compra">{{ dados_mes.qtd_op_compra }}</span> </td>
-										<td> Operações de venda: </td>
-										<td> <span id="qtd_op_venda">{{ dados_mes.qtd_op_venda }}</span> </td>
+										<td width="25%"> Operações de compra: </td>
+										<td width="25%"> <span id="qtd_op_compra">{{ dados_mes.qtd_op_compra }}</span> </td>
+										<td width="25%"> Operações de venda: </td>
+										<td width="25%"> <span id="qtd_op_venda">{{ dados_mes.qtd_op_venda }}</span> </td>
 									</tr>
 									<tr>
 										<td> Total movimentado (compra): </td>
@@ -171,7 +162,6 @@ $(document).ready(function() {
 
             // handle a successful response
             success : function(resultado) {
-            	console.log(resultado);
             	$("#selectMes option").each(function() {
                     if ($(this).val() > resultado.dados_mes.ultimo_mes) {
                         $(this).attr('disabled', 'disabled');
@@ -223,7 +213,7 @@ $(document).ready(function() {
                                             {color: "#AA2222", label: "Compras", bars: {show:true, align:"center", barWidth: 12 * 60 * 60 * 600, lineWidth: 1}, data: resultado.graf_compras_mes }, 
                                             {label: "Lucro mensal", lines: {show:true}, yaxis: 2, data: resultado.graf_lucro_mes } 
                                           ],
-                                            {legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%d-%m-%y"}, 
+                                            {legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%d/%m/%y"}, 
                                              yaxes: [{tickFormatter: function (val, axis) {
                                                return "R$" + val;
                                            },
@@ -258,9 +248,9 @@ $(document).ready(function() {
                                 {color: "#AA2222", label: "Compras", bars: {show:true, align:"center", barWidth: 12 * 60 * 60 * 600, lineWidth: 1}, data: {{ graf_compras_mes|safe }} }, 
                                 {label: "Lucro mensal", lines: {show:true}, yaxis: 2, data: {{ graf_lucro_mes|safe }} } 
                               ],
-                                {legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%d-%m-%y"}, 
+                                {legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%d/%m/%y"}, 
                                  yaxes: [{tickFormatter: function (val, axis) {
-                                   return "R$" + val;
+                                   return "R$ " + val;
                                },
                                axisLabel: "Valor operações",
                                axisLabelUseCanvas: true,
@@ -271,7 +261,7 @@ $(document).ready(function() {
                                {
                                position: 0,
                                tickFormatter: function (val, axis) {
-                                   return "R$" + val;
+                                   return "R$ " + val;
                                },
                                axisLabel: "Lucro",
                                axisLabelUseCanvas: true,
