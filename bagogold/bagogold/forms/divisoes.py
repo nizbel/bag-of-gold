@@ -387,6 +387,7 @@ class DivisaoOperacaoCRI_CRAFormSet(forms.models.BaseInlineFormSet):
                             raise forms.ValidationError('Quantidade da divisão %s é inválida, quantidade deve ser maior que 0' % (contador_forms))
                         
                         # Verificar em caso de venda
+                        print self.instance.tipo_operacao
                         if self.instance.tipo_operacao == 'V':
                             if qtd_cri_cra_ate_dia_para_divisao_para_certificado(self.instance.data, form_divisao.cleaned_data['divisao'].id, self.instance.cri_cra.id) < div_qtd:
                                 raise forms.ValidationError('Venda de quantidade acima da disponível para divisão %s' % (form_divisao.cleaned_data['divisao']))
