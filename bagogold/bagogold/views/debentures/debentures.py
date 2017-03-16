@@ -303,8 +303,13 @@ def painel(request):
     operacoes = OperacaoDebenture.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data') 
     if not operacoes:
         dados = {}
-        dados['total_atual'] = Decimal(0)
-        return TemplateResponse(request, 'debentures/painel.html', {'debentures': {}})
+        dados['total_investido'] = Decimal(0)
+        dados['total_nominal'] = Decimal(0)
+        dados['total_juros'] = Decimal(0)
+        dados['total_premio'] = Decimal(0)
+        dados['total_somado'] = Decimal(0)
+        dados['total_rendimento_ate_vencimento'] = Decimal(0)
+        return TemplateResponse(request, 'debentures/painel.html', {'debentures': {}, 'dados': dados})
     
     # Quantidade de debêntures do investidor
     debentures = {}

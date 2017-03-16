@@ -18,7 +18,8 @@ class CRI_CRA (models.Model):
                                (TIPO_INDEXACAO_PREFIXADO, 'Prefixado'),
                                (TIPO_INDEXACAO_IPCA, 'IPCA'),
                                (TIPO_INDEXACAO_SELIC, 'Selic'),
-                               (TIPO_INDEXACAO_IGPM, 'IGP-M'))
+#                                (TIPO_INDEXACAO_IGPM, 'IGP-M')
+                                )
     
     nome = models.CharField(u'Nome', max_length=50)
     codigo_isin = models.CharField(u'Código ISIN', max_length=20)

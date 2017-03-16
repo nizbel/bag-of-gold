@@ -4,6 +4,10 @@ from bagogold.bagogold.forms.divisoes import DivisaoOperacaoCRI_CRAFormSet
 from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoCRI_CRA
 from bagogold.bagogold.models.lc import HistoricoTaxaDI
+from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
+from bagogold.bagogold.models.td import HistoricoIPCA
+from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas
+from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo
 from bagogold.cri_cra.forms.cri_cra import CRI_CRAForm, \
     DataRemuneracaoCRI_CRAForm, DataRemuneracaoCRI_CRAFormSet, \
     DataAmortizacaoCRI_CRAFormSet, OperacaoCRI_CRAForm
@@ -458,125 +462,97 @@ def listar_cri_cra(request):
 def painel(request):
     investidor = request.user.investidor
     # Processa primeiro operações de venda (V), depois compra (C)
-#     operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
-#     if not operacoes:
-#         dados = {}
-#         dados['total_atual'] = Decimal(0)
-#         dados['total_ir'] = Decimal(0)
-#         dados['total_iof'] = Decimal(0)
-#         dados['total_ganho_prox_dia'] = Decimal(0)
-#         return TemplateResponse(request, 'cdb_rdb/painel.html', {'operacoes': {}})
+    operacoes = OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
+    if not operacoes:
+        dados = {}
+        dados['total_investido'] = Decimal(0)
+        dados['total_valor_atual'] = Decimal(0)
+        dados['total_rendimento_ate_vencimento'] = Decimal(0)
+        return TemplateResponse(request, 'cri_cra/painel.html', {'cri_cra': {}, 'dados': dados})
+
+    # Quantidade de debêntures do investidor
+    cri_cra = {}
+    
+    # Prepara o campo valor atual
+    for operacao in operacoes:
+        if operacao.cri_cra.id not in cri_cra.keys():
+            cri_cra[operacao.cri_cra.id] = operacao.cri_cra
+            cri_cra[operacao.cri_cra.id].quantidade = 0
+            cri_cra[operacao.cri_cra.id].preco_medio = 0
+        if operacao.tipo_operacao == 'C':
+            cri_cra[operacao.cri_cra.id].preco_medio = (cri_cra[operacao.cri_cra.id].preco_medio * cri_cra[operacao.cri_cra.id].quantidade \
+                + operacao.quantidade * operacao.preco_unitario + operacao.taxa)/(cri_cra[operacao.cri_cra.id].quantidade + operacao.quantidade)
+            cri_cra[operacao.cri_cra.id].quantidade += operacao.quantidade
+        else:
+            cri_cra[operacao.cri_cra.id].preco_medio = (cri_cra[operacao.cri_cra.id].preco_medio * cri_cra[operacao.cri_cra.id].quantidade \
+                - operacao.quantidade * operacao.preco_unitario + operacao.taxa)/(cri_cra[operacao.cri_cra.id].quantidade - operacao.quantidade)
+            cri_cra[operacao.cri_cra.id].quantidade -= operacao.quantidade
+    
+    # Remover cri_cra com quantidade zerada
+    for cri_cra_id in cri_cra.keys():
+        if cri_cra[cri_cra_id].quantidade == 0:
+            del cri_cra[cri_cra_id]
+    
+    total_investido = Decimal(0)
+    total_valor_atual = Decimal(0)
+    total_rendimento_ate_vencimento = Decimal(0)
+    
+    ultima_taxa_di = HistoricoTaxaDI.objects.all().order_by('-data')[0]
+    ultima_taxa_selic = HistoricoTaxaSelic.objects.all().order_by('-data')[0]
+    ultima_taxa_ipca = HistoricoIPCA.objects.all().order_by('-ano', '-mes')[0]
+    
+    for cri_cra_id in cri_cra.keys():
+        cri_cra[cri_cra_id].total_investido = cri_cra[cri_cra_id].quantidade * cri_cra[cri_cra_id].preco_medio
+        total_investido += cri_cra[cri_cra_id].total_investido
+        
+        cri_cra[cri_cra_id].valor_atual = calcular_valor_cri_cra_na_data(cri_cra[cri_cra_id])
+        cri_cra[cri_cra_id].total_atual = cri_cra[cri_cra_id].valor_atual * cri_cra[cri_cra_id].quantidade
+        
+        # Próxima remuneração
+        if DataRemuneracaoCRI_CRA.objects.filter(cri_cra=cri_cra[cri_cra_id], data__gt=datetime.date.today()).exists():
+            cri_cra[cri_cra_id].data_prox_remuneracao = DataRemuneracaoCRI_CRA.objects.filter(cri_cra=cri_cra[cri_cra_id], data__gt=datetime.date.today()).order_by('data')[0].data
+            qtd_dias_uteis = qtd_dias_uteis_no_periodo(datetime.date.today(), cri_cra[cri_cra_id].data_prox_remuneracao)
+            # TODO adicionar outros indexadores
+            if cri_cra[cri_cra_id].tipo_indexacao == CRI_CRA.TIPO_INDEXACAO_DI:
+                cri_cra[cri_cra_id].valor_prox_remuneracao = calcular_valor_atualizado_com_taxas({Decimal(ultima_taxa_di.taxa): qtd_dias_uteis},
+                                                                                                           cri_cra[cri_cra_id].total_atual, 
+                                                                                                           cri_cra[cri_cra_id].porcentagem) - cri_cra[cri_cra_id].total_atual
+        else:
+            cri_cra[cri_cra_id].data_prox_remuneracao = None
+            cri_cra[cri_cra_id].valor_prox_remuneracao = Decimal(0)
+        
+        # Calcular valor estimado no vencimento
+        qtd_dias_uteis_ate_vencimento = qtd_dias_uteis_no_periodo(datetime.date.today(), cri_cra[cri_cra_id].data_vencimento)
+        if cri_cra[cri_cra_id].tipo_indexacao == CRI_CRA.TIPO_INDEXACAO_PREFIXADO:
+            taxa_anual_pre_mais_juros = cri_cra[cri_cra_id].porcentagem + cri_cra[cri_cra_id].taxa_juros_atual()
+            taxa_mensal_pre_mais_juros = pow(1 + taxa_anual_pre_mais_juros/100, Decimal(1)/12) - 1
+            taxa_diaria_pre_mais_juros = pow(1 + taxa_mensal_pre_mais_juros, Decimal(1)/12) - 1
+            cri_cra[cri_cra_id].valor_rendimento_ate_vencimento = cri_cra[cri_cra_id].total_investido * pow(1 + taxa_diaria_pre_mais_juros, qtd_dias_uteis_ate_vencimento)
+        elif cri_cra[cri_cra_id].tipo_indexacao == CRI_CRA.TIPO_INDEXACAO_IPCA:
+            # Transformar taxa mensal em anual para somar aos juros da cri_cra
+            ipca_anual = pow(1 + ultima_taxa_ipca.valor * (cri_cra[cri_cra_id].porcentagem/100) /Decimal(100), Decimal(12)) - 1
+            taxa_mensal_ipca_mais_juros = pow(1 + (ipca_anual + cri_cra[cri_cra_id].taxa_juros_atual())/Decimal(100), Decimal(1)/12) - 1
+            taxa_diaria_ipca_mais_juros = pow(1 + taxa_mensal_ipca_mais_juros, Decimal(1)/30) - 1
+            cri_cra[cri_cra_id].valor_rendimento_ate_vencimento = cri_cra[cri_cra_id].total_investido * pow(1 + taxa_diaria_ipca_mais_juros, qtd_dias_uteis_ate_vencimento)
+        elif cri_cra[cri_cra_id].tipo_indexacao == CRI_CRA.TIPO_INDEXACAO_DI:
+            cri_cra[cri_cra_id].valor_rendimento_ate_vencimento = calcular_valor_atualizado_com_taxas({Decimal(ultima_taxa_di.taxa): qtd_dias_uteis_ate_vencimento},
+                                                                                                           cri_cra[cri_cra_id].total_atual, 
+                                                                                                           cri_cra[cri_cra_id].porcentagem)
+        elif cri_cra[cri_cra_id].tipo_indexacao == CRI_CRA.TIPO_INDEXACAO_SELIC:
+            # Transformar SELIC em anual para adicionar juros
+            selic_mensal = pow(1 + ultima_taxa_selic.taxa, 30) - 1
+            selic_anual = pow(1 + selic_mensal, 12) - 1
+            taxa_anual_selic_mais_juros = selic_anual * (cri_cra[cri_cra_id].porcentagem / 100) + cri_cra[cri_cra_id].taxa_juros_atual() / 100
+            taxa_mensal_selic_mais_juros = pow(1 + taxa_anual_selic_mais_juros, Decimal(1)/12) - 1
+            taxa_diaria_selic_mais_juros = pow(1 + taxa_mensal_selic_mais_juros, Decimal(1)/30) - 1
+            cri_cra[cri_cra_id].valor_rendimento_ate_vencimento = cri_cra[cri_cra_id].total_investido * pow(1 + taxa_diaria_selic_mais_juros, qtd_dias_uteis_ate_vencimento)
+            
+        total_rendimento_ate_vencimento += cri_cra[cri_cra_id].valor_rendimento_ate_vencimento
+    
+    # Popular dados
+    dados = {}
+    dados['total_investido'] = total_investido
+    dados['total_valor_atual'] = total_valor_atual
+    dados['total_rendimento_ate_vencimento'] = total_rendimento_ate_vencimento
 #     
-#     # Prepara o campo valor atual
-#     for operacao in operacoes:
-#         operacao.atual = operacao.quantidade
-#         operacao.inicial = operacao.quantidade
-#         if operacao.tipo_operacao == 'C':
-#             operacao.tipo = 'Compra'
-#             operacao.taxa = operacao.porcentagem()
-#         else:
-#             operacao.tipo = 'Venda'
-#     
-#     # Pegar data inicial
-#     data_inicial = operacoes.order_by('data')[0].data
-#     
-#     # Pegar data final
-#     data_final = HistoricoTaxaDI.objects.filter().order_by('-data')[0].data
-#     
-#     data_iteracao = data_inicial
-#     
-#     while data_iteracao <= data_final:
-#         taxa_do_dia = HistoricoTaxaDI.objects.get(data=data_iteracao).taxa
-#         
-#         # Processar operações
-#         for operacao in operacoes:     
-#             if (operacao.data <= data_iteracao):     
-#                 # Verificar se se trata de compra ou venda
-#                 if operacao.tipo_operacao == 'C':
-#                         # Calcular o valor atualizado para cada operacao
-#                         operacao.atual = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa)
-#                         # Arredondar na última iteração
-#                         if (data_iteracao == data_final):
-#                             str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
-#                             operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-#                         
-#                 elif operacao.tipo_operacao == 'V':
-#                     if (operacao.data == data_iteracao):
-#                         operacao.inicial = operacao.quantidade
-#                         # Remover quantidade da operação de compra
-#                         operacao_compra_id = operacao.operacao_compra_relacionada().id
-#                         for operacao_c in operacoes:
-#                             if (operacao_c.id == operacao_compra_id):
-#                                 # Configurar taxa para a mesma quantidade da compra
-#                                 operacao.taxa = operacao_c.taxa
-#                                 operacao.atual = (operacao.quantidade/operacao_c.quantidade) * operacao_c.atual
-#                                 operacao_c.atual -= operacao.atual
-#                                 operacao_c.inicial -= operacao.inicial
-#                                 str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
-#                                 operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-#                                 break
-#                 
-#         # Proximo dia útil
-#         proximas_datas = HistoricoTaxaDI.objects.filter(data__gt=data_iteracao).order_by('data')
-#         if len(proximas_datas) > 0:
-#             data_iteracao = proximas_datas[0].data
-#         else:
-#             break
-#     
-#     # Remover operações que não estejam mais rendendo
-#     operacoes = [operacao for operacao in operacoes if (operacao.atual > 0 and operacao.tipo_operacao == 'C')]
-#     
-#     total_atual = 0
-#     total_ir = 0
-#     total_iof = 0
-#     total_ganho_prox_dia = 0
-#     total_vencimento = 0
-#     for operacao in operacoes:
-#         # Calcular o ganho no dia seguinte, considerando taxa do dia anterior
-#         operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa) - operacao.atual
-#         str_auxiliar = str(operacao.ganho_prox_dia.quantize(Decimal('.0001')))
-#         operacao.ganho_prox_dia = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-#         total_ganho_prox_dia += operacao.ganho_prox_dia
-#         
-#         # Calcular impostos
-#         qtd_dias = (datetime.date.today() - operacao.data).days
-# #         print qtd_dias, calcular_iof_regressivo(qtd_dias)
-#         # IOF
-#         operacao.iof = Decimal(calcular_iof_regressivo(qtd_dias)) * (operacao.atual - operacao.inicial)
-#         # IR
-#         if qtd_dias <= 180:
-#             operacao.imposto_renda =  Decimal(0.225) * (operacao.atual - operacao.inicial - operacao.iof)
-#         elif qtd_dias <= 360:
-#             operacao.imposto_renda =  Decimal(0.2) * (operacao.atual - operacao.inicial - operacao.iof)
-#         elif qtd_dias <= 720:
-#             operacao.imposto_renda =  Decimal(0.175) * (operacao.atual - operacao.inicial - operacao.iof)
-#         else: 
-#             operacao.imposto_renda =  Decimal(0.15) * (operacao.atual - operacao.inicial - operacao.iof)
-#         
-#         # Valor líquido
-#         operacao.valor_liquido = operacao.atual - operacao.imposto_renda - operacao.iof
-#         
-#         # Estimativa para o valor do investimento na data de vencimento
-#         qtd_dias_uteis_ate_vencimento = qtd_dias_uteis_no_periodo(data_final + datetime.timedelta(days=1), operacao.data_vencimento())
-#         operacao.valor_vencimento = calcular_valor_atualizado_com_taxas({HistoricoTaxaDI.objects.get(data=data_final).taxa: qtd_dias_uteis_ate_vencimento},
-#                                              operacao.atual, operacao.taxa)
-#         str_auxiliar = str(operacao.valor_vencimento.quantize(Decimal('.0001')))
-#         operacao.valor_vencimento = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-#         
-#         total_atual += operacao.atual
-#         total_ir += operacao.imposto_renda
-#         total_iof += operacao.iof
-#         total_vencimento += operacao.valor_vencimento
-#     
-#     # Popular dados
-#     dados = {}
-#     dados['data_di_mais_recente'] = data_final
-#     dados['total_atual'] = total_atual
-#     dados['total_ir'] = total_ir
-#     dados['total_iof'] = total_iof
-#     dados['total_liquido'] = total_atual - total_ir - total_iof
-#     dados['total_ganho_prox_dia'] = total_ganho_prox_dia
-#     dados['total_vencimento'] = total_vencimento
-#     
-#     return TemplateResponse(request, 'cri_cra/painel.html', {'operacoes': operacoes, 'dados': dados})
-    return TemplateResponse(request, 'cri_cra/painel.html', {})
+    return TemplateResponse(request, 'cri_cra/painel.html', {'cri_cra': cri_cra, 'dados': dados})
