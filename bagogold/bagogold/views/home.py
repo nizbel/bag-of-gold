@@ -58,6 +58,8 @@ def inicio(request):
             investimento.link = 'acoes:painel_bh'
         elif chave == 'CDB/RDB':
             investimento.link = 'painel_cdb_rdb'
+        elif chave == 'CRI/CRA':
+            investimento.link = 'cri_cra:painel_cri_cra'
         elif chave == 'Debêntures':
             investimento.link = 'painel_debenture'
         elif chave == 'FII':
