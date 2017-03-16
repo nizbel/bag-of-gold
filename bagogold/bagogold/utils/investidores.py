@@ -20,6 +20,10 @@ from bagogold.bagogold.utils.fundo_investimento import \
     calcular_qtd_cotas_ate_dia
 from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia
 from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia
+from bagogold.cri_cra.models.cri_cra import CRI_CRA
+from bagogold.cri_cra.utils.utils import qtd_cri_cra_ate_dia
+from bagogold.cri_cra.utils.valorizacao import calcular_valor_cri_cra_di, \
+    calcular_valor_cri_cra_na_data
 from decimal import Decimal
 from django.core.exceptions import PermissionDenied
 from itertools import chain
@@ -74,8 +78,8 @@ def buscar_ultimas_operacoes(investidor, quantidade_operacoes):
     return ultimas_operacoes
 
 def buscar_totais_atuais_investimentos(investidor):
-    totais_atuais = {'Ações': Decimal(0), 'CDB/RDB': Decimal(0), 'Debêntures': Decimal(0), 'FII': Decimal(0), 'Fundos de Inv.': Decimal(0), 'Letras de Crédito': Decimal(0), 
-                     'Tesouro Direto': Decimal(0), }
+    totais_atuais = {'Ações': Decimal(0), 'CDB/RDB': Decimal(0), 'CRI/CRA': Decimal(0), 'Debêntures': Decimal(0), 'FII': Decimal(0), 'Fundos de Inv.': Decimal(0), 
+                     'Letras de Crédito': Decimal(0), 'Tesouro Direto': Decimal(0), }
     
     data_atual = datetime.date.today()
     
@@ -94,6 +98,12 @@ def buscar_totais_atuais_investimentos(investidor):
     cdbs_rdbs = calcular_valor_cdb_rdb_ate_dia(investidor, data_atual)
     for total_cdb_rdb in cdbs_rdbs.values():
         totais_atuais['CDB/RDB'] += total_cdb_rdb
+        
+    # CRI / CRA
+    cri_cra = qtd_cri_cra_ate_dia(investidor, data_atual)
+    for cri_cra_id in cri_cra.keys():
+        valor_atual = calcular_valor_cri_cra_na_data(CRI_CRA.objects.get(id=cri_cra_id, investidor=investidor))
+        totais_atuais['CRI/CRA'] += (cri_cra[cri_cra_id] * valor_atual)
         
     # Debêntures
     debentures = calcular_qtd_debentures_ate_dia(investidor, data_atual)

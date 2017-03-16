@@ -32,6 +32,20 @@ def qtd_cri_cra_ate_dia_para_divisao_para_certificado(dia, divisao_id, cri_cra_i
         
     return qtd_total
 
+def qtd_cri_cra_ate_dia(investidor, dia):
+    """ 
+    Calcula a quantidade de certificados até dia determinado para investidor
+    Parâmetros: Investidor
+                Dia final
+    Retorno: Quantidade de títulos {titulo_id: qtd}
+    """
+    qtd_cri_cra = OperacaoCRI_CRA.objects.filter(data__lte=dia) \
+        .values('cri_cra').annotate(qtd=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
+                            When(tipo_operacao='V', then=F('quantidade')*-1),
+                            output_field=DecimalField()))).values_list('cri_cra', 'qtd')
+        
+    return dict(qtd_cri_cra)
+
 def qtd_cri_cra_ate_dia_para_certificado(dia, cri_cra_id):
     """ 
     Calcula a quantidade de certificados de determinado CRI/CRA até dia determinado para investidor
