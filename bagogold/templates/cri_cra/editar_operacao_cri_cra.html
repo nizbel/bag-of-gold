@@ -41,7 +41,8 @@
                         <label class="control-label col-md-4" style="text-align: left;"> Data: </label>
                         <div class="col-md-8">
                             <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" data-date-viewmode="years">
-                                <input type="text" class="form-control" id="id_data" name="data" value="{{form_operacao_cri_cra.data.value|date:'d/m/Y'|default:''}}">
+                                <input type="text" class="form-control" id="id_data" name="data"
+                                value="{% if form_operacao_cri_cra.data.value|date:'d/m/Y'|default:'' == '' %}{{form_operacao_cri_cra.data.value|default:''}}{% else %}{{form_operacao_cri_cra.data.value|date:'d/m/Y'}}{% endif %}">
                                 <span class="input-group-btn">
                                     <button class="btn default" type="button">
                                         <i class="fa fa-calendar"></i>
@@ -102,9 +103,8 @@
                     </h2>
                     {{ formset_divisao.management_form }}
                     {% for form_divisao in formset_divisao %}
-                    <h3 class="font-yellow-crusta" align="center"><strong>Divisão {{ forloop.counter }}</strong></h3>
-                    <br/>
-                    <div class="row" id="divisao-{{forloop.counter0}}">
+                    <div class="col-md-12"><h3 class="font-yellow-crusta" align="center"><strong>Divisão {{ forloop.counter }}</strong></h3><br/></div>
+                    <div class="col-md-11" id="divisao-{{forloop.counter0}}">
                         <div class="form-group col-md-6 {% if form_divisao.divisao.errors %} has-error {% endif %}">
                             <label class="control-label col-md-4" style="text-align: left;"> Divisão: </label>
                             <div class="col-md-8">
@@ -125,6 +125,18 @@
                             </div>
                         </div>
                     </div>
+                    {% if form_divisao.instance.id %}
+                        <div class="md-checkbox col-md-1">
+                            <input type="checkbox" value="1" id="id_divisaooperacaocri_cra_set-{{forloop.counter0}}-DELETE" name="divisaooperacaocri_cra_set-{{forloop.counter0}}-DELETE"  class="md-check">
+                            <label for="id_divisaooperacaocri_cra_set-{{forloop.counter0}}-DELETE">
+                                <span></span>
+                                <span class="check"></span>
+                                <span class="box"></span> Excluir </label>
+                        </div>
+                    {% endif %}
+                    {% if form_divisao.instance.id %}
+                        <input id="id_divisaooperacaocri_cra_set-{{forloop.counter0}}-id" name="divisaooperacaocri_cra_set-{{forloop.counter0}}-id" value="{{form_divisao.instance.id}}" type="hidden">
+                    {% endif %}
                     {% endfor %}
                 </div>
                 {% endif %}

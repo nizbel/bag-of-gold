@@ -17,20 +17,6 @@ $(document).ready(function() {
          
          row.find('#label_data_remuneracao_set-' + form_count_remuneracao).text(row.find('#label_data_remuneracao_set-' + form_count_remuneracao).text().replace('1', remuneracao_id));
          
-//         if ($("#id_dataremuneracaocri_cra_set-0-id").length > 0) {
-//	         id = $("#id_dataremuneracaocri_cra_set-0-id").clone();
-//	         id.attr("name", "dataremuneracaocri_cra_set-" + form_count_remuneracao + "-id");
-//	         id.attr('id', "id_dataremuneracaocri_cra_set-" + form_count_remuneracao + "-id");
-//	         $("#remuneracoes").append(id);
-//         }
-//
-//         if ($("#id_dataremuneracaocri_cra_set-0-cri_cra").length > 0) {
-//	         cri_cra = $("#id_dataremuneracaocri_cra_set-0-cri_cra").clone();
-//	         cri_cra.attr("name", "dataremuneracaocri_cra_set-" + form_count_remuneracao + "-cri_cra");
-//	         cri_cra.attr('id', "id_dataremuneracaocri_cra_set-" + form_count_remuneracao + "-cri_cra");
-//	         $("#remuneracoes").append(operacao);
-//         }
-
          // increment form count so our view knows to populate 
          // that many fields for validation
          form_count_remuneracao ++;
