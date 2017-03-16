@@ -7,9 +7,8 @@ $(document).ready(function() {
          row = $('#divisao-0').clone();
          row.attr('id', 'divisao-' + form_count);
          $(row).find("*").each(function() { 
-        	 console.log($(this), $(this).val());
         	 if ($(this).is('input')) {
-        		 $(this).val(undefined);
+        		 $(this).val('');
         	 }
         	 if ($(this).is('option')) {
         		 $(this).removeAttr('selected');
@@ -33,6 +32,7 @@ $(document).ready(function() {
          var campo_quantidade = row.find('.bootstrap-touchspin input').detach();
          row.find('.bootstrap-touchspin').empty().append(campo_quantidade);
          row.find("input[name$='-quantidade']").TouchSpin({
+        	 initval: 0,
              min: 0,
              max: 1000000000,
              step: 0.01,

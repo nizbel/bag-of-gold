@@ -207,7 +207,7 @@ def editar_operacao_cri_cra(request, id_operacao):
       
     # Preparar formset para divisoes
     DivisaoCRI_CRAFormSet = inlineformset_factory(OperacaoCRI_CRA, DivisaoOperacaoCRI_CRA, form=LocalizedModelForm, fields=('divisao', 'quantidade'),
-                                            extra=1, formset=DivisaoOperacaoCRI_CRAFormSet)
+                                            extra=0, formset=DivisaoOperacaoCRI_CRAFormSet)
       
     if request.method == 'POST':
         form_operacao_cri_cra = OperacaoCRI_CRAForm(request.POST, instance=operacao_cri_cra, investidor=investidor)

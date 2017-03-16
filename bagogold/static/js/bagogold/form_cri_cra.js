@@ -7,6 +7,9 @@ $(document).ready(function() {
          row = $('#remuneracao-0').clone();
          row.attr('id', 'remuneracao-' + form_count_remuneracao);
          $(row).find("*").each(function() { 
+        	 if ($(this).is('input')) {
+        		 $(this).val('');
+        	 }
         	 $.each(this.attributes, function() {
         		 this.value = this.value.replace('_set-0', '_set-' + form_count_remuneracao);
         	 });
