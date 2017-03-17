@@ -222,7 +222,10 @@ def historico(request):
     dados['total_investido'] = -total_investido
     dados['patrimonio'] = patrimonio
     dados['lucro'] = patrimonio + total_investido
-    dados['lucro_percentual'] = (patrimonio + total_investido) / -total_investido * 100
+    if total_investido != 0:
+        dados['lucro_percentual'] = (patrimonio + total_investido) / -total_investido * 100
+    else:
+        dados['lucro_percentual'] = 0
     return TemplateResponse(request, 'debentures/historico.html', {'dados': dados, 'lista_conjunta': lista_conjunta, 'graf_investido_total': graf_investido_total, 
                                                                    'graf_patrimonio': graf_patrimonio, 'usuario_tem_operacoes': True})
     

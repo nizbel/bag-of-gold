@@ -14,7 +14,7 @@ from bagogold.cri_cra.forms.cri_cra import CRI_CRAForm, \
 from bagogold.cri_cra.models.cri_cra import CRI_CRA, DataRemuneracaoCRI_CRA, \
     DataAmortizacaoCRI_CRA, OperacaoCRI_CRA
 from bagogold.cri_cra.utils.utils import qtd_cri_cra_ate_dia_para_certificado
-from bagogold.cri_cra.utils.valorizacao import calcular_valor_cri_cra_na_data
+from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -316,7 +316,7 @@ def historico(request):
         
         for cri_cra in qtd_certificados.keys():
             if qtd_certificados[cri_cra] > 0:
-                total_patrimonio += qtd_certificados[cri_cra] * calcular_valor_cri_cra_na_data(operacao.cri_cra, operacao.data)
+                total_patrimonio += qtd_certificados[cri_cra] * calcular_valor_um_cri_cra_na_data(operacao.cri_cra, operacao.data)
         
         graf_investido_total += [[str(calendar.timegm(operacao.data.timetuple()) * 1000), float(-total_investido)]]
         graf_patrimonio += [[str(calendar.timegm(operacao.data.timetuple()) * 1000), float(total_patrimonio)]]
@@ -325,8 +325,8 @@ def historico(request):
     dados['total_investido'] = -total_investido
     dados['patrimonio'] = total_patrimonio
     dados['lucro'] = total_patrimonio + total_investido
-    if total_investido > 0:
-        dados['lucro_percentual'] = (total_patrimonio + total_investido) / total_investido * 100
+    if total_investido != 0:
+        dados['lucro_percentual'] = (total_patrimonio + total_investido) / -total_investido * 100
     else:
         dados['lucro_percentual'] = 0
         
@@ -505,7 +505,7 @@ def painel(request):
         cri_cra[cri_cra_id].total_investido = cri_cra[cri_cra_id].quantidade * cri_cra[cri_cra_id].preco_medio
         total_investido += cri_cra[cri_cra_id].total_investido
         
-        cri_cra[cri_cra_id].valor_atual = calcular_valor_cri_cra_na_data(cri_cra[cri_cra_id])
+        cri_cra[cri_cra_id].valor_atual = calcular_valor_um_cri_cra_na_data(cri_cra[cri_cra_id])
         cri_cra[cri_cra_id].total_atual = cri_cra[cri_cra_id].valor_atual * cri_cra[cri_cra_id].quantidade
         
         # Próxima remuneração

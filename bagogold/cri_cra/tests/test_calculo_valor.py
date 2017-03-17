@@ -5,7 +5,7 @@ from bagogold.bagogold.models.lc import OperacaoLetraCredito, LetraCredito, \
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa, \
     calcular_valor_lc_ate_dia
 from bagogold.cri_cra.models.cri_cra import CRI_CRA
-from bagogold.cri_cra.utils.valorizacao import calcular_valor_cri_cra_na_data
+from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
 from decimal import Decimal, ROUND_DOWN
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -45,10 +45,10 @@ class AtualizarCRI_CRAPorDITestCase(TestCase):
         # 22/11/2016    1.008,63
         # 01/12/2016    1.012,21
         
-        self.assertAlmostEqual(calcular_valor_cri_cra_na_data(CRI_CRA.objects.get(codigo_isin='BRCYRELA'), datetime.date(2016, 12, 20)), Decimal('1018.77'), delta=Decimal('0.01'))
-#         self.assertAlmostEqual(calcular_valor_cri_cra_na_data(CRI_CRA.objects.get(codigo_isin='BRCYRELA'), datetime.date(2017, 3, 14)), Decimal('1047.21'), delta=Decimal('0.01'))
-        self.assertAlmostEqual(calcular_valor_cri_cra_na_data(CRI_CRA.objects.get(codigo_isin='BRCYRELA'), datetime.date(2016, 11, 22)), Decimal('1008.63'), delta=Decimal('0.01'))
-        self.assertAlmostEqual(calcular_valor_cri_cra_na_data(CRI_CRA.objects.get(codigo_isin='BRCYRELA'), datetime.date(2016, 12, 1)), Decimal('1012.21'), delta=Decimal('0.01'))
+        self.assertAlmostEqual(calcular_valor_um_cri_cra_na_data(CRI_CRA.objects.get(codigo_isin='BRCYRELA'), datetime.date(2016, 12, 20)), Decimal('1018.77'), delta=Decimal('0.01'))
+#         self.assertAlmostEqual(calcular_valor_um_cri_cra_na_data(CRI_CRA.objects.get(codigo_isin='BRCYRELA'), datetime.date(2017, 3, 14)), Decimal('1047.21'), delta=Decimal('0.01'))
+        self.assertAlmostEqual(calcular_valor_um_cri_cra_na_data(CRI_CRA.objects.get(codigo_isin='BRCYRELA'), datetime.date(2016, 11, 22)), Decimal('1008.63'), delta=Decimal('0.01'))
+        self.assertAlmostEqual(calcular_valor_um_cri_cra_na_data(CRI_CRA.objects.get(codigo_isin='BRCYRELA'), datetime.date(2016, 12, 1)), Decimal('1012.21'), delta=Decimal('0.01'))
 
 
 # "2016-09-30";14.13
