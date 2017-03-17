@@ -24,6 +24,7 @@ from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas, \
 from bagogold.bagogold.utils.misc import calcular_rendimentos_ate_data, \
     verificar_feriado_bovespa
 from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia
+from bagogold.cri_cra.utils.utils import calcular_valor_cri_cra_ate_dia
 from decimal import Decimal, ROUND_DOWN
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoCRI_CRA
-from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA
+from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA, CRI_CRA
+from bagogold.cri_cra.utils.valorizacao import calcular_valor_cri_cra_na_data
 from django.db.models.aggregates import Sum
 from django.db.models.expressions import F, Case, When
 from django.db.models.fields import DecimalField
@@ -12,9 +13,11 @@ def quantidade_cri_cra_na_data_para_certificado(data, cri_cra):
                 CRI/CRA
     Retorno: Quantidade possuída
     """
-    qtd = 0
-    qtd += OperacaoCRI_CRA.objects.filter(tipo_operacao='C', data__lte=data, cri_cra=cri_cra).aggregate(Sum('quantidade'))['quantidade__sum'] or 0
-    qtd -= OperacaoCRI_CRA.objects.filter(tipo_operacao='V', data__lte=data, cri_cra=cri_cra).aggregate(Sum('quantidade'))['quantidade__sum'] or 0
+    qtd = OperacaoCRI_CRA.objects.filter(data__lte=data, cri_cra=cri_cra).values('cri_cra') \
+        .annotate(qtd=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
+                            When(tipo_operacao='V', then=F('quantidade')*-1),
+                            output_field=DecimalField()))).aggregate(qtd_total=Sum('qtd'))['qtd_total'] or 0
+                            
     return qtd
 
 def qtd_cri_cra_ate_dia_para_divisao_para_certificado(dia, divisao_id, cri_cra_id):
@@ -37,14 +40,14 @@ def qtd_cri_cra_ate_dia(investidor, dia):
     Calcula a quantidade de certificados até dia determinado para investidor
     Parâmetros: Investidor
                 Dia final
-    Retorno: Quantidade de títulos {titulo_id: qtd}
+    Retorno: Quantidade de certificados {cri_cra_id: qtd}
     """
-    qtd_cri_cra = OperacaoCRI_CRA.objects.filter(data__lte=dia) \
+    qtd_cri_cra = dict(OperacaoCRI_CRA.objects.filter(data__lte=dia) \
         .values('cri_cra').annotate(qtd=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
                             When(tipo_operacao='V', then=F('quantidade')*-1),
-                            output_field=DecimalField()))).values_list('cri_cra', 'qtd')
+                            output_field=DecimalField()))).values_list('cri_cra', 'qtd').exclude(qtd=0))
         
-    return dict(qtd_cri_cra)
+    return qtd_cri_cra
 
 def qtd_cri_cra_ate_dia_para_certificado(dia, cri_cra_id):
     """ 
@@ -60,6 +63,7 @@ def qtd_cri_cra_ate_dia_para_certificado(dia, cri_cra_id):
         
     return qtd_total
 
+# TODO completar operação
 def qtd_cri_cra_ate_dia_para_divisao(dia, divisao_id):
     """ 
     Calcula a quantidade de certificados até dia determinado para uma divisão
@@ -76,3 +80,18 @@ def qtd_cri_cra_ate_dia_para_divisao(dia, divisao_id):
     print operacoes_divisao
     
     return 0
+
+def calcular_valor_cri_cra_ate_dia(investidor, dia):
+    """ 
+    Calcula o valor dos certificados do investidor até dia determinado
+    Parâmetros: Investidor
+                Dia final
+    Retorno: Valor dos certificados {cri_cra_id: valor_da_data}
+    """
+    
+    qtd_cri_cra = qtd_cri_cra_ate_dia(investidor, dia)
+    
+    for cri_cra_id in qtd_cri_cra.keys():
+        qtd_cri_cra[cri_cra_id] = calcular_valor_cri_cra_na_data(CRI_CRA.objects.get(id=cri_cra_id)) * qtd_cri_cra[cri_cra_id]
+        
+    return qtd_cri_cra
