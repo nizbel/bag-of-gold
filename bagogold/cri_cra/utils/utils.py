@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoCRI_CRA
 from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA, CRI_CRA
-from bagogold.cri_cra.utils.valorizacao import calcular_valor_cri_cra_na_data
+from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
 from django.db.models.aggregates import Sum
 from django.db.models.expressions import F, Case, When
 from django.db.models.fields import DecimalField
@@ -92,6 +92,6 @@ def calcular_valor_cri_cra_ate_dia(investidor, dia):
     qtd_cri_cra = qtd_cri_cra_ate_dia(investidor, dia)
     
     for cri_cra_id in qtd_cri_cra.keys():
-        qtd_cri_cra[cri_cra_id] = calcular_valor_cri_cra_na_data(CRI_CRA.objects.get(id=cri_cra_id)) * qtd_cri_cra[cri_cra_id]
-        
+        qtd_cri_cra[cri_cra_id] = calcular_valor_um_cri_cra_na_data(CRI_CRA.objects.get(id=cri_cra_id), dia) * qtd_cri_cra[cri_cra_id]
+    print qtd_cri_cra
     return qtd_cri_cra

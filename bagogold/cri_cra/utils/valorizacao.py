@@ -6,15 +6,16 @@ from decimal import Decimal
 import datetime
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas
 
-def calcular_valor_cri_cra_na_data(certificado, data=datetime.date.today()):
+def calcular_valor_um_cri_cra_na_data(certificado, data=datetime.date.today()):
     """
     Calcula o valor de um certificado na data apontada
     Parâmetros: Certificado (CRI/CRA)
                 Data
     Retorno:    Valor na data
     """
+    # Data não pode ser posterior a data de vencimento
     if data > certificado.data_vencimento:
-        raise ValueError('Data posterior à data de vencimento do certificado')
+        data = certificado.data_vencimento
     elif data < certificado.data_emissao:
         raise ValueError('Data anterior à data de emissão do certificado')
         
@@ -25,8 +26,7 @@ def calcular_valor_cri_cra_na_data(certificado, data=datetime.date.today()):
     if DataRemuneracaoCRI_CRA.objects.filter(cri_cra=certificado, data__lte=data).exists():
         data_inicial = DataRemuneracaoCRI_CRA.objects.filter(cri_cra=certificado, data__lte=data).order_by('-data')[0].data
     else:
-#         data_inicial = certificado.data_emissao
-        data_inicial = datetime.date(2016, 10, 27)
+        data_inicial = certificado.data_emissao
     
     # TODO incluir amortizações
     valor_inicial = certificado.valor_emissao
