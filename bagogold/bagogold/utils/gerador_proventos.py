@@ -1,12 +1,18 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import Provento, AcaoProvento
+from bagogold.bagogold.models.fii import ProventoFII, FII
 from bagogold.bagogold.models.gerador_proventos import \
     InvestidorResponsavelPendencia, InvestidorLeituraDocumento, \
     PendenciaDocumentoProvento, ProventoAcaoDocumento, \
     ProventoAcaoDescritoDocumentoBovespa, AcaoProventoAcaoDescritoDocumentoBovespa, \
-    InvestidorValidacaoDocumento, InvestidorRecusaDocumento
+    InvestidorValidacaoDocumento, InvestidorRecusaDocumento, ProventoFIIDocumento, \
+    ProventoFIIDescritoDocumentoBovespa, DocumentoProventoBovespa
+from decimal import Decimal
+from django.db import transaction
+from io import StringIO, BytesIO
 from itertools import chain
-from operator import attrgetter
+from lxml import etree
+import datetime
 
 def alocar_pendencia_para_investidor(pendencia, investidor):
     """
@@ -184,9 +190,24 @@ def converter_descricao_provento_para_provento_acoes(descricao_provento):
             lista_acoes.append(nova_acao_provento)
         return (novo_provento, lista_acoes)
     
+def converter_descricao_provento_para_provento_fiis(descricao_provento):
+    """
+    Cria um provento a partir de uma descrição de provento, para FIIs
+    Parâmetros: Descrição de provento (FIIs)
+    Retorno:    Provento
+    """
+    if not isinstance(descricao_provento, ProventoFIIDescritoDocumentoBovespa):
+        raise ValueError(u'Objeto não é uma descrição de provento para FIIS')
+    
+    novo_provento = ProventoFII(fii=descricao_provento.fii, tipo_provento=descricao_provento.tipo_provento, data_ex=descricao_provento.data_ex, data_pagamento=descricao_provento.data_pagamento,
+                    valor_unitario=descricao_provento.valor_unitario)
+    novo_provento.full_clean()
+    
+    return novo_provento
+
 def versionar_descricoes_relacionadas_acoes(descricao, provento_relacionado):
     """
-    Versiona descrições de proventos em ações relacionadas
+    Versiona descrições de proventos de ações relacionados
     Parâmetros: Descrição a entrar para as versões
                 Provento relacionado
     """
@@ -213,56 +234,88 @@ def versionar_descricoes_relacionadas_acoes(descricao, provento_relacionado):
         acao_provento_anterior.delete()
     provento_anterior.delete()
         
-        
+def versionar_descricoes_relacionadas_fiis(descricao, provento_relacionado):
+    """
+    Versiona descrições de proventos de FIIs relacionados
+    Parâmetros: Descrição a entrar para as versões
+                Provento relacionado
+    """
+    # Buscar todas as versões do provento descrito
+    versoes_provento = list(ProventoFIIDocumento.objects.filter(provento=provento_relacionado))
+    # Adicionar descricao à lista de versões pelo número do protocolo do documento
+    versoes_provento.append(descricao.proventofiidocumento)
+    versoes_provento.sort(key=lambda x: x.documento.protocolo)
+    # Gerar versões a partir de 1 na ordem feita
+    for versao, item in enumerate(versoes_provento, start=1):
+        item.versao = versao
+        item.save()
+    # Se versão adicionada for a ultima, o provento apontado deve ser copia do novo_provento
+    if descricao.proventofiidocumento.versao == len(versoes_provento):
+        copiar_proventos_fiis(provento_relacionado, descricao.proventofiidocumento.provento)
+    # Guardar provento anterior para apagar posteriormente
+    provento_anterior = ProventoFII.gerador_objects.get(id=descricao.proventofiidocumento.provento.id)
+    
+    descricao.proventofiidocumento.provento = provento_relacionado
+    descricao.proventofiidocumento.save()
+    
+    # Apagar provento anterior
+    provento_anterior.delete()
             
 def copiar_proventos_acoes(provento, provento_a_copiar):
     """
-    Copia dados de um provento em ações para outro
+    Copia dados de um provento de ações para outro
     Parâmetros: Provento a receber dados
                 Provento a ser copiado
     """
-    dados_provento_a_salvar = list()
-    provento.acao = provento_a_copiar.acao
+    with transaction.atomic():
+        provento.acao = provento_a_copiar.acao
+        provento.valor_unitario = provento_a_copiar.valor_unitario
+        provento.tipo_provento = provento_a_copiar.tipo_provento
+        provento.data_ex = provento_a_copiar.data_ex
+        provento.data_pagamento = provento_a_copiar.data_pagamento
+        provento.observacao = provento_a_copiar.observacao
+        provento.save()
+        # Se provento a copiar for do tipo provento em ações, copiar ações recebidas
+        if provento_a_copiar.tipo_provento == 'A':
+            acoes_provento = AcaoProvento.objects.filter(provento__id=provento.id)
+            indice_acao_provento = 0
+            for acao_provento_a_copiar in AcaoProvento.objects.filter(provento__id=provento_a_copiar.id):
+                if indice_acao_provento < len(acoes_provento):
+                    # Copiar ação recebida do provento
+                    acoes_provento[indice_acao_provento].acao_recebida = acao_provento_a_copiar.acao_recebida
+                    acoes_provento[indice_acao_provento].data_pagamento_frac = acao_provento_a_copiar.data_pagamento_frac
+                    acoes_provento[indice_acao_provento].valor_calculo_frac = acao_provento_a_copiar.valor_calculo_frac
+                    acoes_provento[indice_acao_provento].save()
+                else:
+                    # Criar nova ação recebida do provento
+                    nova_acao_provento = ProventoAcao(acao_recebida=acao_provento_a_copiar.acao_recebida, \
+                                                      data_pagamento_frac=acao_provento_a_copiar.data_pagamento_frac, \
+                                                      valor_calculo_frac=acao_provento_a_copiar.valor_calculo_frac, provento=provento)
+                    nova_acao_provento.save()
+                # Passar à próxima ação recebida
+                indice_acao_provento += 1
+        # Se provento a copiar não for do tipo provento em ações, mas o provento a receber a cópia for, apagar ações recebidas
+        elif provento.tipo_provento == 'A':
+            for acao_provento in AcaoProvento.objects.filter(provento__id=provento.id):
+                acao_provento.delete()
+        
+def copiar_proventos_fiis(provento, provento_a_copiar):
+    """
+    Copia dados de um provento de FIIs para outro
+    Parâmetros: Provento a receber dados
+                Provento a ser copiado
+    """
+    provento.fii = provento_a_copiar.fii
     provento.valor_unitario = provento_a_copiar.valor_unitario
     provento.tipo_provento = provento_a_copiar.tipo_provento
     provento.data_ex = provento_a_copiar.data_ex
     provento.data_pagamento = provento_a_copiar.data_pagamento
-    provento.observacao = provento_a_copiar.observacao
-    dados_provento_a_salvar.append(provento)
-    # Se provento a copiar for do tipo provento em ações, copiar ações recebidas
-    if provento_a_copiar.tipo_provento == 'A':
-        acoes_provento = AcaoProvento.objects.filter(provento__id=provento.id)
-        indice_acao_provento = 0
-        for acao_provento_a_copiar in AcaoProvento.objects.filter(provento__id=provento_a_copiar.id):
-            if indice_acao_provento < len(acoes_provento):
-                # Copiar ação recebida do provento
-                acoes_provento[indice_acao_provento].acao_recebida = acao_provento_a_copiar.acao_recebida
-                acoes_provento[indice_acao_provento].data_pagamento_frac = acao_provento_a_copiar.data_pagamento_frac
-                acoes_provento[indice_acao_provento].valor_calculo_frac = acao_provento_a_copiar.valor_calculo_frac
-                dados_provento_a_salvar.append(acoes_provento[indice_acao_provento])
-            else:
-                # Criar nova ação recebida do provento
-                nova_acao_provento = ProventoAcao(acao_recebida=acao_provento_a_copiar.acao_recebida, \
-                                                  data_pagamento_frac=acao_provento_a_copiar.data_pagamento_frac, \
-                                                  valor_calculo_frac=acao_provento_a_copiar.valor_calculo_frac, provento=provento)
-                dados_provento_a_salvar.append(nova_acao_provento)
-            # Passar à próxima ação recebida
-            indice_acao_provento += 1
-    # Se provento a copiar não for do tipo provento em ações, mas o provento a receber a cópia for, apagar ações recebidas
-    elif provento.tipo_provento == 'A':
-        for acao_provento in AcaoProvento.objects.filter(provento__id=provento.id):
-            acao_provento.delete()
-    # Salvar provento com dados copiados
-    for dado in dados_provento_a_salvar:
-        dado.save()
+    provento.save()
     
-
-def converter_descricao_provento_para_provento_fii(descricao_provento):
-    pass
 
 def criar_descricoes_provento_acoes(descricoes_proventos, acoes_descricoes_proventos, documento):
     """
-    Cria descrições para proventos em ações a partir de um documento
+    Cria descrições para proventos de ações a partir de um documento
     Parâmetros: Lista de proventos
                 Lista de ações recebidas em proventos
                 Documento que traz os proventos
@@ -314,10 +367,34 @@ def criar_descricoes_provento_acoes(descricoes_proventos, acoes_descricoes_prove
         for objeto in objetos_salvos:
             objeto.delete()
         raise e
-
+    
+def criar_descricoes_provento_fiis(descricoes_proventos, documento):
+    """
+    Cria descrições para proventos de FIIs a partir de um documento
+    Parâmetros: Lista de proventos
+                Documento que traz os proventos
+    """
+    try:
+        with transaction.atomic():
+            for descricao_provento in descricoes_proventos:
+                descricao_provento.save()
+                # Converte para proventos reais, porém não validados
+                provento = converter_descricao_provento_para_provento_fiis(descricao_provento)
+                # Busca proventos já existentes, ou cria se não existirem
+                if ProventoFII.gerador_objects.filter(valor_unitario=provento.valor_unitario, fii=provento.fii, data_ex=provento.data_ex, data_pagamento=provento.data_pagamento, \
+                                                      tipo_provento=provento.tipo_provento).exists():
+                    provento = ProventoFII.gerador_objects.get(valor_unitario=provento.valor_unitario, fii=provento.fii, data_ex=provento.data_ex, data_pagamento=provento.data_pagamento, \
+                                                   tipo_provento=provento.tipo_provento)
+                else:
+                    provento.save()
+                # Relaciona a descrição ao provento encontrado/criado
+                provento_documento = ProventoFIIDocumento.objects.create(provento=provento, documento=documento, descricao_provento=descricao_provento, versao=1)
+    except Exception as e:
+        raise e
+    
 def buscar_proventos_proximos_acao(descricao_provento):
     """
-    Retorna lista com os proventos próximas à data EX de uma descrição de provento
+    Retorna lista com os proventos próximas à data EX de uma descrição de provento de ação
     Parâmetros: Descrição de provento de ação
     Retorno:    Lista de proventos ordenada por quantidade de dias em relação à data EX
     """
@@ -329,3 +406,57 @@ def buscar_proventos_proximos_acao(descricao_provento):
     # Ordenar pela diferença com a data da descrição de provento
     return sorted(chain(proventos_proximos_ant, proventos_proximos_post),
                     key= lambda x: abs((x.data_ex - descricao_provento.data_ex).days))
+    
+def buscar_proventos_proximos_fii(descricao_provento):
+    """
+    Retorna lista com os proventos próximas à data EX de uma descrição de provento de FII
+    Parâmetros: Descrição de provento de FII
+    Retorno:    Lista de proventos ordenada por quantidade de dias em relação à data EX
+    """
+    proventos_proximos_ant = ProventoFII.objects.filter(fii=descricao_provento.fii, data_ex__lte=descricao_provento.data_ex) \
+        .exclude(id=descricao_provento.proventofiidocumento.provento.id).order_by('-data_ex')[:5]
+    proventos_proximos_post = ProventoFII.objects.filter(fii=descricao_provento.fii, data_ex__gt=descricao_provento.data_ex) \
+        .exclude(id=descricao_provento.proventofiidocumento.provento.id).order_by('data_ex')[:5]
+    
+    # Ordenar pela diferença com a data da descrição de provento
+    return sorted(chain(proventos_proximos_ant, proventos_proximos_post),
+                    key= lambda x: abs((x.data_ex - descricao_provento.data_ex).days))
+    
+def ler_provento_estruturado_fii(documento_fii):
+    if documento_fii.tipo != 'F':
+        raise ValueError('Documento deve ser de um FII')
+    if documento_fii.tipo_documento != DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO:
+        raise ValueError('Documento deve ser do %s' % (DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO))
+    
+    tree = etree.parse(documento_fii.documento)
+    # Pega o último (maior ID) FII que contenha o código de negociação em seu ticker
+    fii = FII.objects.filter(ticker__icontains=list(tree.getroot().iter('CodNegociacaoCota'))[0].text.strip()).order_by('-id')[0]
+    with transaction.atomic():
+        for element in tree.getroot().iter('Rendimento', 'Amortizacao'):
+            descricao_provento = ProventoFIIDescritoDocumentoBovespa()
+            # Se há pelo menos 5 campos, o provento pode ser prenchido
+            if len(list(element.iter())) >= 5:
+                if element.tag == 'Rendimento':
+                    descricao_provento.tipo_provento = 'R'
+                else:
+                    descricao_provento.tipo_provento = 'A'
+                descricao_provento.fii = fii
+                for dado in element.iter():
+                    if dado.tag == 'DataBase':
+                        descricao_provento.data_ex = datetime.datetime.strptime(dado.text.strip(), '%Y-%m-%d')
+                    if dado.tag == 'DataPagamento':
+                        descricao_provento.data_pagamento = datetime.datetime.strptime(dado.text.strip(), '%Y-%m-%d')
+                    if dado.tag == 'ValorProventoCota':
+                        descricao_provento.valor_unitario = Decimal(dado.text.strip())
+                descricao_provento.save()
+                provento, criado = ProventoFII.gerador_objects.get_or_create(valor_unitario=descricao_provento.valor_unitario, fii=descricao_provento.fii, \
+                                                                  data_ex=descricao_provento.data_ex, data_pagamento=descricao_provento.data_pagamento, \
+                                                                  tipo_provento=descricao_provento.tipo_provento)
+                ProventoFIIDocumento.objects.create(documento=documento_fii, provento=provento, versao=1, descricao_provento=descricao_provento)
+                if not provento.oficial_bovespa:
+                    provento.oficial_bovespa = True
+                    provento.save()
+        # Apagar pendência
+        for pendencia_provento in PendenciaDocumentoProvento.objects.filter(documento=documento_fii):
+            pendencia_provento.delete()
+            

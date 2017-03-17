@@ -5,6 +5,7 @@ import datetime
  
 class FII (models.Model):
     ticker = models.CharField(u'Ticker do FII', max_length=10, unique=True) 
+    empresa = models.ForeignKey('Empresa', blank=True, null=True) 
     
     class Meta:
         ordering = ['ticker']
@@ -25,19 +26,33 @@ class ProventoFIIOficialManager(models.Manager):
         return super(ProventoFIIOficialManager, self).get_queryset().filter(oficial_bovespa=True)
 
 class ProventoFII (models.Model):
+    ESCOLHAS_TIPO_PROVENTO_FII=(('R', "Rendimento"),
+                        ('A', "Amortização"),)
+    
     fii = models.ForeignKey('FII')
     valor_unitario = models.DecimalField(u'Valor unitário', max_digits=13, decimal_places=9)
+    """
+    A = amortização, R = rendimentos
+    """
+    tipo_provento = models.CharField(u'Tipo de provento', max_length=1)
     data_ex = models.DateField(u'Data EX')
     data_pagamento = models.DateField(u'Data do pagamento')
-    url_documento = models.CharField(u'URL do documento', blank=True, null=True, max_length=200)
     oficial_bovespa = models.BooleanField(u'Oficial Bovespa?', default=False)
     
     class Meta:
-        unique_together=('data_ex', 'data_pagamento', 'fii', 'valor_unitario')
+        unique_together=('data_ex', 'data_pagamento', 'fii', 'valor_unitario', 'oficial_bovespa')
         
     def __unicode__(self):
         return 'R$ %s de %s em %s com data EX %s' % (str(self.valor_unitario), self.fii.ticker, str(self.data_pagamento), str(self.data_ex))
     
+    def descricao_tipo_provento(self):
+        if self.tipo_provento == 'A':
+            return u'Amortização'
+        elif self.tipo_provento == 'R':
+            return u'Rendimento'
+        else:
+            return u'Indefinido'
+        
     objects = ProventoFIIOficialManager()
     gerador_objects = models.Manager()
         

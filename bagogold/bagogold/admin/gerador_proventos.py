@@ -9,8 +9,8 @@ from django.contrib import admin
 
 
 class DocumentoProventoBovespaAdmin(admin.ModelAdmin):
-    search_fields = ['protocolo']
-    list_display = ('nome_documento', 'data_referencia', 'protocolo', 'empresa')
+    search_fields = ['protocolo', 'tipo_documento']
+    list_display = ('nome_documento', 'data_referencia', 'protocolo', 'empresa', 'tipo_documento')
     
     def nome_documento(self, obj):
         return unicode(obj)

@@ -102,6 +102,37 @@ class Divisao (models.Model):
             
         return saldo
     
+    def saldo_cri_cra(self, data=datetime.date.today()):
+        """
+        Calcula o saldo de operações de CRI/CRA de uma divisão (dinheiro livre)
+        """
+        saldo = Decimal(0)
+#         historico_di = HistoricoTaxaDI.objects.all()
+#         for operacao_divisao in DivisaoOperacaoCDB_RDB.objects.filter(divisao=self, operacao__data__lte=data):
+#             operacao = operacao_divisao.operacao
+#             if operacao.tipo_operacao == 'C':
+#                 saldo -= operacao_divisao.quantidade 
+#             elif operacao.tipo_operacao == 'V':
+#                 # Para venda, calcular valor da letra no dia da venda
+#                 valor_venda = operacao_divisao.quantidade
+#                 dias_de_rendimento = historico_di.filter(data__gte=operacao.operacao_compra_relacionada().data, data__lt=operacao.data)
+#                 operacao.taxa = operacao.porcentagem()
+#                 for dia in dias_de_rendimento:
+#                     # Calcular o valor atualizado para cada operacao
+#                     valor_venda = Decimal((pow((float(1) + float(dia.taxa)/float(100)), float(1)/float(252)) - float(1)) * float(operacao.taxa/100) + float(1)) * valor_venda
+#                 # Arredondar
+#                 str_auxiliar = str(valor_venda.quantize(Decimal('.0001')))
+#                 valor_venda = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+#                 saldo += valor_venda
+#                 
+#         # Transferências
+#         for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='C', data__lte=data):
+#             saldo -= transferencia.quantidade
+#         for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='C', data__lte=data):
+#             saldo += transferencia.quantidade
+            
+        return saldo
+    
     def saldo_debentures(self, data=datetime.date.today()):
         """
         Calcula o saldo de operações de Debêntures de uma divisão (dinheiro livre)
@@ -285,6 +316,26 @@ class DivisaoOperacaoCDB_RDB (models.Model):
     def percentual_divisao(self):
         return self.quantidade / self.operacao.quantidade
     
+class DivisaoOperacaoCRI_CRA (models.Model):
+    divisao = models.ForeignKey('Divisao')
+    operacao = models.ForeignKey('cri_cra.OperacaoCRI_CRA')
+    """
+    Guarda a quantidade da operação que pertence a divisão
+    """
+    quantidade = models.DecimalField('Quantidade (em certificados)',  max_digits=11, decimal_places=2)
+     
+    class Meta:
+        unique_together=('divisao', 'operacao')
+     
+    def __unicode__(self):
+        return self.divisao.nome + ': ' + str(self.quantidade) + ' de ' + unicode(self.operacao)
+     
+    """
+    Calcula o percentual da operação que foi para a divisão
+    """
+    def percentual_divisao(self):
+        return self.quantidade / self.operacao.quantidade
+    
 class DivisaoOperacaoDebenture (models.Model):
     divisao = models.ForeignKey('Divisao')
     operacao = models.ForeignKey('OperacaoDebenture')
@@ -386,6 +437,27 @@ class DivisaoOperacaoFII (models.Model):
         return self.quantidade / self.operacao.quantidade
     
 class TransferenciaEntreDivisoes(models.Model):
+    TIPO_INVESTIMENTO_BUY_AND_HOLD = 'B'
+    TIPO_INVESTIMENTO_CDB_RDB = 'C'
+    TIPO_INVESTIMENTO_TESOURO_DIRETO = 'D'
+    TIPO_INVESTIMENTO_DEBENTURE = 'E'
+    TIPO_INVESTIMENTO_FII = 'F'
+    TIPO_INVESTIMENTO_FUNDO_INV = 'I'
+    TIPO_INVESTIMENTO_LCI_LCA = 'L'
+    TIPO_INVESTIMENTO_CRI_CRA = 'R'
+    TIPO_INVESTIMENTO_TRADING = 'T'
+    
+    ESCOLHAS_TIPO_INVESTIMENTO = (('', 'Fonte externa'), 
+                                  (TIPO_INVESTIMENTO_BUY_AND_HOLD, 'Buy and Hold'), 
+                                  (TIPO_INVESTIMENTO_CDB_RDB, 'CDB/RDB'), 
+                                  (TIPO_INVESTIMENTO_TESOURO_DIRETO, 'Tesouro Direto'), 
+                                  (TIPO_INVESTIMENTO_DEBENTURE, 'Debênture'),
+                                  (TIPO_INVESTIMENTO_FII, 'Fundo de Inv. Imobiliário'), 
+                                  (TIPO_INVESTIMENTO_FUNDO_INV, 'Fundo de Investimento'),
+                                  (TIPO_INVESTIMENTO_LCI_LCA, 'Letras de Crédito'), 
+                                  (TIPO_INVESTIMENTO_CRI_CRA, 'CRI/CRA'), 
+                                  (TIPO_INVESTIMENTO_TRADING, 'Trading'))
+    
     """
     Transferências em dinheiro entre as divisões, cedente ou recebedor nulos significa que
     é uma transferência de dinheiro de/para meio externo
@@ -395,7 +467,7 @@ class TransferenciaEntreDivisoes(models.Model):
     data = models.DateField(u'Data da transferência', blank=True, null=True)
     """
     B = Buy and Hold; C = CDB/RDB; D = Tesouro Direto; E = Debênture; F = FII; 
-    I = Fundo de investimento; L = Letra de Crédito; T = Trading; N = Não alocado
+    I = Fundo de investimento; L = Letra de Crédito; R = CRI/CRA; T = Trading; N = Não alocado
     """
     investimento_origem = models.CharField('Investimento de origem', blank=True, null=True, max_length=1)
     investimento_destino = models.CharField('Investimento de destino', blank=True, null=True, max_length=1)
@@ -418,41 +490,45 @@ class TransferenciaEntreDivisoes(models.Model):
         return self.divisao_cedente == self.divisao_recebedora
     
     def investimento_origem_completo(self):
-        if self.investimento_origem == 'B':
+        if self.investimento_origem == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_BUY_AND_HOLD:
             return 'Buy and Hold'
-        elif self.investimento_origem == 'C':
+        elif self.investimento_origem == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_CDB_RDB:
             return 'CDB/RDB'
-        elif self.investimento_origem == 'D':
+        elif self.investimento_origem == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_TESOURO_DIRETO:
             return 'Tesouro Direto'
-        elif self.investimento_origem == 'E':
+        elif self.investimento_origem == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_DEBENTURE:
             return 'Debênture'
-        elif self.investimento_origem == 'F':
+        elif self.investimento_origem == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_FII:
             return 'FII'
-        elif self.investimento_origem == 'I':
+        elif self.investimento_origem == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_FUNDO_INV:
             return 'Fundo de inv.'
-        elif self.investimento_origem == 'L':
+        elif self.investimento_origem == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_LCI_LCA:
             return 'Letra de Crédito'
-        elif self.investimento_origem == 'T':
+        elif self.investimento_origem == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_CRI_CRA:
+            return 'CRI/CRA'
+        elif self.investimento_origem == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_TRADING:
             return 'Trading'
         elif self.investimento_origem == 'N':
             return 'Não alocado'
     
     def investimento_destino_completo(self):
-        if self.investimento_destino == 'B':
+        if self.investimento_destino == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_BUY_AND_HOLD:
             return 'Buy and Hold'
-        elif self.investimento_destino == 'C':
+        elif self.investimento_destino == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_CDB_RDB:
             return 'CDB/RDB'
-        elif self.investimento_destino == 'D':
+        elif self.investimento_destino == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_TESOURO_DIRETO:
             return 'Tesouro Direto'
-        elif self.investimento_destino == 'E':
+        elif self.investimento_destino == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_DEBENTURE:
             return 'Debênture'
-        elif self.investimento_destino == 'F':
+        elif self.investimento_destino == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_FII:
             return 'FII'
-        elif self.investimento_destino == 'I':
+        elif self.investimento_destino == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_FUNDO_INV:
             return 'Fundo de inv.'
-        elif self.investimento_destino == 'L':
+        elif self.investimento_destino == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_LCI_LCA:
             return 'Letra de Crédito'
-        elif self.investimento_destino == 'T':
+        elif self.investimento_destino == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_CRI_CRA:
+            return 'CRI/CRA'
+        elif self.investimento_destino == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_TRADING:
             return 'Trading'
         elif self.investimento_destino == 'N':
             return 'Não alocado'

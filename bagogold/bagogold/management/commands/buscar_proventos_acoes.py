@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import Acao
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
-    PendenciaDocumentoProvento, InvestidorRecusaDocumento, ProventoAcaoDocumento
+from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa
 from django.core.management.base import BaseCommand
 from threading import Thread
 from urllib2 import Request, urlopen, HTTPError, URLError
@@ -131,9 +130,9 @@ class Command(BaseCommand):
                 time.sleep(3)
         except KeyboardInterrupt:
 #             print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
-            if 'Principal' in threads_rodando.keys():
+            while 'Principal' in threads_rodando.keys():
                 del threads_rodando['Principal']
-            time.sleep(3)
+                time.sleep(3)
         fim = datetime.datetime.now()
         print (fim-inicio)
         

@@ -12,13 +12,13 @@ class Titulo (models.Model):
             return u'Tesouro Prefixado %s' % (self.data_vencimento.year)
         elif self.tipo == 'LFT':
             return u'Tesouro Selic %s' % (self.data_vencimento.year)
-        elif self.tipo == 'NTN-B':
+        elif self.tipo in ['NTN-B', 'NTNB']:
             return u'Tesouro IPCA+ com Juros Semestrais %s' % (self.data_vencimento.year)
-        elif self.tipo == 'NTN-B Principal':
+        elif self.tipo in ['NTN-B Principal', 'NTNBP']:
             return u'Tesouro IPCA+ %s' % (self.data_vencimento.year)
-        elif self.tipo == 'NTN-F':
+        elif self.tipo in ['NTN-F', 'NTNF']:
             return u'Tesouro Prefixado com Juros Semestrais %s' % (self.data_vencimento.year)
-        elif self.tipo == 'NTN-C':
+        elif self.tipo in ['NTN-C','NTNC']:
             return u'Tesouro IGP-M com Juros Semestrais %s' % (self.data_vencimento.year)
         else:
             return u'Título não encontrado'
@@ -39,11 +39,11 @@ class Titulo (models.Model):
             return 1000
         elif self.tipo == 'LFT':
             return 1000
-        elif self.tipo == 'NTN-B':
+        elif self.tipo in ['NTN-B', 'NTNB']:
             return (1 + calcular_valor_acumulado_ipca(datetime.date(2000, 7, 15), data_final=data)) * 1000
-        elif self.tipo == 'NTN-B Principal':
+        elif self.tipo in ['NTN-B Principal', 'NTNBP']:
             return (1 + calcular_valor_acumulado_ipca(datetime.date(2000, 7, 15), data_final=data)) * 1000
-        elif self.tipo == 'NTN-F':
+        elif self.tipo in ['NTN-F', 'NTNF']:
             return 1000
         elif self.tipo == 'NTN-C':
             return 1000
@@ -106,3 +106,6 @@ class HistoricoIPCA (models.Model):
             HistoricoIPCA.objects.get(mes=self.mes, ano=self.ano)
         except HistoricoIPCA.DoesNotExist:
             super(HistoricoIPCA, self).save(*args, **kw)
+            
+    def data(self):
+        return datetime.date(self.ano, self.mes, 1)
