@@ -38,22 +38,15 @@ LISTA_MESES = [['Janeiro', 1],   ['Fevereiro', 2],
 def acompanhamento_mensal(request):
     investidor = request.user.investidor
     
-    if request.method == 'POST':
-        ano = int(request.POST.get('select_ano', datetime.date.today().year).replace('.', ''))
-        # Valor padrão para mês
-        mes = datetime.date.today().month
-        for possivel_mes in range(1,13):
-            if str(possivel_mes) in request.POST:
-                mes = possivel_mes
-    else: 
-        ano = datetime.date.today().year
-        mes = datetime.date.today().month
+    # TODO validar entradas
+    ano = int(request.GET.get('ano', datetime.date.today().year))
+    mes = int(request.GET.get('mes', datetime.date.today().month))
     
     # Pegar primeiro ano que uma operação foi feita
-    try:
+    if OperacaoAcao.objects.filter(destinacao='T', investidor=investidor).exclude(data__isnull=True).order_by('data').exists():
         primeira_operacao = OperacaoAcao.objects.filter(destinacao='T', investidor=investidor).exclude(data__isnull=True).order_by('data')[0]
         primeira_operacao_ano = primeira_operacao.data.year
-    except:
+    else:
         primeira_operacao_ano = datetime.date.today().year
     
     # Preparar lista de anos
@@ -61,22 +54,28 @@ def acompanhamento_mensal(request):
     for ano_operacoes in reversed(range(primeira_operacao_ano, datetime.date.today().year+1)):
 #         print type(ano_operacoes)
         lista_anos += [str(ano_operacoes)]
-    
-    # Preparar lista de meses
-    lista_meses = list()
+    print lista_anos
+
     if ano == datetime.date.today().year:
-        lista_meses = LISTA_MESES[0:datetime.date.today().month]
+        ultimo_mes = datetime.date.today().month
     else:
-        lista_meses = LISTA_MESES
+        ultimo_mes = 12
+    lista_meses = LISTA_MESES
     
-    # Alterar lista de meses
-    if request.method == 'POST' and request.is_ajax():
-        return HttpResponse(json.dumps(lista_meses), content_type = "application/json")
+#     # Alterar lista de meses
+#     if request.is_ajax():
+#         return HttpResponse(json.dumps(lista_meses), content_type = "application/json")
         
     operacoes = OperacaoAcao.objects.exclude(data__isnull=True).filter(destinacao='T', investidor=investidor, data__year=ano, data__month=mes).order_by('data')
     
-    if not operacoes:
-        return TemplateResponse(request, 'acoes/trade/acompanhamento_mensal.html', {'lista_anos': lista_anos, 'lista_meses': lista_meses, 'dados_mes': {}})
+#     if not operacoes:
+#         if request.is_ajax():
+#             return HttpResponse(json.dumps({'lista_anos': lista_anos, 'lista_meses': lista_meses,
+#                                              'dados_mes': {'ultimo_mes': ultimo_mes, 'ano': str(ano).replace('.', ''), 'mes': mes}}), content_type = "application/json")
+#         else:
+#             return TemplateResponse(request, 'acoes/trade/acompanhamento_mensal.html', {'lista_anos': lista_anos, 'lista_meses': lista_meses, 
+#                                                                                         'dados_mes': {'ultimo_mes': ultimo_mes, 'ano': str(ano).replace('.', ''), 'mes': mes},
+#                                                                                         'graf_compras_mes': {}, 'graf_vendas_mes': {}, 'graf_lucro_mes': {}})
         
     graf_compras_mes = list()
     graf_vendas_mes = list()
@@ -89,7 +88,7 @@ def acompanhamento_mensal(request):
     for divisao in Divisao.objects.filter():
         saldo_inicial_mes += divisao.saldo_acoes_trade(data=datetime.date(ano, mes, 1) - datetime.timedelta(days=1))
     
-    dados_mes = {'ano': str(ano).replace('.', ''), 'mes': mes, 'qtd_compra': 0, 'qtd_venda': 0, 'qtd_op_compra': 0, 'saldo_trades': saldo_inicial_mes,
+    dados_mes = {'ultimo_mes': ultimo_mes, 'ano': str(ano).replace('.', ''), 'mes': mes, 'qtd_compra': 0, 'qtd_venda': 0, 'qtd_op_compra': 0, 'saldo_trades': saldo_inicial_mes,
                  'qtd_op_venda': 0, 'lucro_bruto': 0, 'total_corretagem' : 0, 'total_emolumentos': 0}
     acoes_lucro = {}
     
@@ -200,9 +199,21 @@ def acompanhamento_mensal(request):
         graf_lucro_mes += [[ultimo_dia, float(dados_mes['lucro_bruto'])]]
     
     # TODO adicionar primeiro e ultimo dia ao lucro do mes
-    
-    return TemplateResponse(request, 'acoes/trade/acompanhamento_mensal.html', {'lista_anos': lista_anos, 'lista_meses': lista_meses, 'dados_mes': dados_mes, 'graf_compras_mes': graf_compras_mes,
-                               'graf_vendas_mes': graf_vendas_mes, 'graf_lucro_mes': graf_lucro_mes, 'acoes_ranking': acoes_lucro_ordenado})
+    if request.is_ajax():
+        lista_temp = [(ticker, '{0:,}'.format(Decimal(valor).quantize(Decimal('0.01'))).replace(',', '.')[::-1].replace('.', ',', 1)[::-1]) for ticker, valor in acoes_lucro_ordenado]
+        acoes_lucro_ordenado = lista_temp
+        for chave in dados_mes.keys():
+            if isinstance(dados_mes[chave], Decimal):
+                # Formata números com separador de mil, trocando , por . e depois inverte a string para trocar o último . por ,
+                dados_mes[chave] = '{0:,}'.format(dados_mes[chave].quantize(Decimal('0.01'))).replace(',', '.')[::-1].replace('.', ',', 1)[::-1]
+            if isinstance(dados_mes[chave], float):
+                # Formata números com separador de mil, trocando , por . e depois inverte a string para trocar o último . por ,
+                dados_mes[chave] = '{0:,}'.format(Decimal(dados_mes[chave]).quantize(Decimal('0.01'))).replace(',', '.')[::-1].replace('.', ',', 1)[::-1]
+        return HttpResponse(json.dumps({'lista_anos': lista_anos, 'lista_meses': lista_meses, 'dados_mes': dados_mes, 'graf_compras_mes': graf_compras_mes,
+                                        'graf_vendas_mes': graf_vendas_mes, 'graf_lucro_mes': graf_lucro_mes, 'acoes_ranking': acoes_lucro_ordenado}), content_type = "application/json")
+    else:
+        return TemplateResponse(request, 'acoes/trade/acompanhamento_mensal.html', {'lista_anos': lista_anos, 'lista_meses': lista_meses, 'dados_mes': dados_mes, 'graf_compras_mes': graf_compras_mes,
+                                                                                    'graf_vendas_mes': graf_vendas_mes, 'graf_lucro_mes': graf_lucro_mes, 'acoes_ranking': acoes_lucro_ordenado})
     
     
 @login_required
