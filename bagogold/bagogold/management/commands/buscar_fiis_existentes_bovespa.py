@@ -26,6 +26,7 @@ class VerificarFIIThread(Thread):
                         print 'Empresa nao existia'
                     
                     if FII.objects.filter(ticker=ticker).exists():
+                        fii = FII.objects.get(ticker=ticker)
                         print 'FII:', ticker, 'ja existia'
                         if not fii.empresa:
                             fii.empresa = empresa
