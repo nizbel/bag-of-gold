@@ -103,21 +103,21 @@ def calcular_qtd_titulos_ate_dia_por_divisao(dia, divisao_id):
     Retorno: Quantidade de títulos {titulo_id: qtd}
     """
     qtd_titulos = {}
-    operacoes_divisao = list(DivisaoOperacaoTD.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).annotate(titulo=F('operacao__titulo')) \
+    operacoes_divisao = dict(DivisaoOperacaoTD.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).annotate(titulo=F('operacao__titulo')) \
         .values('titulo') \
-        .annotate(qtd_soma=Sum(Case(When(operacao__tipo_operacao='C', then=F('quantidade')),
+        .annotate(total=Sum(Case(When(operacao__tipo_operacao='C', then=F('quantidade')),
                             When(operacao__tipo_operacao='V', then=F('quantidade')*-1),
-                            output_field=DecimalField()))))
+                            output_field=DecimalField()))).values_list('titulo', 'total').exclude(total=0))
         
-    for titulo_qtd in operacoes_divisao:
-        if titulo_qtd['titulo'] not in qtd_titulos.keys():
-            qtd_titulos[titulo_qtd['titulo']] = titulo_qtd['qtd_soma']
-        else:
-            qtd_titulos[titulo_qtd['titulo']] += titulo_qtd['qtd_soma']
-            
-    for key in qtd_titulos.keys():
-        if qtd_titulos[key] == 0:
-            del qtd_titulos[key]
+#     for titulo_qtd in operacoes_divisao:
+#         if titulo_qtd['titulo'] not in qtd_titulos.keys():
+#             qtd_titulos[titulo_qtd['titulo']] = titulo_qtd['qtd_soma']
+#         else:
+#             qtd_titulos[titulo_qtd['titulo']] += titulo_qtd['qtd_soma']
+#             
+#     for key in qtd_titulos.keys():
+#         if qtd_titulos[key] == 0:
+#             del qtd_titulos[key]
     
     return qtd_titulos
 

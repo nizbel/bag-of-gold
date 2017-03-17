@@ -104,7 +104,6 @@ def calcular_valor_debentures_ate_dia(investidor, dia):
     qtd_debentures = calcular_qtd_debentures_ate_dia(investidor, dia)
     
     for debenture_id in qtd_debentures.keys():
-        print dia, HistoricoValorDebenture.objects.filter(data__lte=dia, debenture__id=debenture_id).order_by('-data')[0].valor_total()
         qtd_debentures[debenture_id] = HistoricoValorDebenture.objects.filter(data__lte=dia, debenture__id=debenture_id).order_by('-data')[0].valor_total() * qtd_debentures[debenture_id]
         
     return qtd_debentures
