@@ -167,15 +167,13 @@ def historico(request):
             # Verificar se se trata de compra ou venda
             if item.tipo_operacao == 'C':
                 item.tipo = 'Compra'
-                item.total = Decimal(-1) * (item.quantidade * item.preco_unitario + \
-                item.taxa)
+                item.total = -(item.quantidade * item.preco_unitario + item.taxa)
                 total_investido += item.total
                 qtd_titulos[item.debenture.codigo] += item.quantidade
                 
             elif item.tipo_operacao == 'V':
                 item.tipo = 'Venda'
-                item.total = (item.quantidade * item.preco_unitario - \
-                item.taxa)
+                item.total = (item.quantidade * item.preco_unitario - item.taxa)
                 total_investido += item.total
                 qtd_titulos[item.debenture.codigo] -= item.quantidade
                 
@@ -224,7 +222,10 @@ def historico(request):
     dados['total_investido'] = -total_investido
     dados['patrimonio'] = patrimonio
     dados['lucro'] = patrimonio + total_investido
-    dados['lucro_percentual'] = (patrimonio + total_investido) / -total_investido * 100
+    if total_investido != 0:
+        dados['lucro_percentual'] = (patrimonio + total_investido) / -total_investido * 100
+    else:
+        dados['lucro_percentual'] = 0
     return TemplateResponse(request, 'debentures/historico.html', {'dados': dados, 'lista_conjunta': lista_conjunta, 'graf_investido_total': graf_investido_total, 
                                                                    'graf_patrimonio': graf_patrimonio, 'usuario_tem_operacoes': True})
     
@@ -305,8 +306,13 @@ def painel(request):
     operacoes = OperacaoDebenture.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data') 
     if not operacoes:
         dados = {}
-        dados['total_atual'] = Decimal(0)
-        return TemplateResponse(request, 'debentures/painel.html', {'debentures': {}})
+        dados['total_investido'] = Decimal(0)
+        dados['total_nominal'] = Decimal(0)
+        dados['total_juros'] = Decimal(0)
+        dados['total_premio'] = Decimal(0)
+        dados['total_somado'] = Decimal(0)
+        dados['total_rendimento_ate_vencimento'] = Decimal(0)
+        return TemplateResponse(request, 'debentures/painel.html', {'debentures': {}, 'dados': dados})
     
     # Quantidade de debêntures do investidor
     debentures = {}

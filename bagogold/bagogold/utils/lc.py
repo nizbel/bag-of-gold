@@ -21,7 +21,7 @@ def calcular_valor_atualizado_com_taxa(taxa_do_dia, valor_atual, operacao_taxa):
 def calcular_valor_atualizado_com_taxas(taxas_dos_dias, valor_atual, operacao_taxa):
     """
     Calcula o valor atualizado de uma operação em LC, a partir das taxa DI dos dias
-    Parâmetros: Taxas DI dos dias {taxa: quantidade_de_dias}
+    Parâmetros: Taxas DI dos dias {taxa(Decimal): quantidade_de_dias}
                 Valor atual da operação
                 Taxa da operação
     Retorno: Valor atualizado com a taxa DI

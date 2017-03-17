@@ -2,6 +2,7 @@
 from bagogold.bagogold.utils.misc import \
     formatar_zeros_a_direita_apos_2_casas_decimais
 from decimal import Decimal
+from django.core.validators import MinValueValidator
 from django.db import models
 
 class Debenture (models.Model):
@@ -181,7 +182,7 @@ class OperacaoDebenture (models.Model):
     investidor = models.ForeignKey('Investidor')
     debenture = models.ForeignKey('Debenture')
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=15, decimal_places=8)  
-    quantidade = models.IntegerField(u'Quantidade') 
+    quantidade = models.IntegerField(u'Quantidade', validators=[MinValueValidator(1)]) 
     data = models.DateField(u'Data', blank=True, null=True)
     taxa = models.DecimalField(u'Taxa', max_digits=11, decimal_places=2)
     tipo_operacao = models.CharField(u'Tipo de operação', max_length=1)
