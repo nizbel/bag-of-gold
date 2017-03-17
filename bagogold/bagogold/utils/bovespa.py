@@ -5,7 +5,7 @@ import re
 
 def preencher_empresa_fii_nao_listado(ticker, num_tentativas=0):
     """
-    Preenche a empresa para um FII que nã está mais listado na Bovespa
+    Preenche a empresa para um FII que não está mais listado na Bovespa
     Parâmetros: Ticker do FII
     """
     print ticker
