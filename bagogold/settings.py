@@ -47,6 +47,7 @@ INSTALLED_APPS = (
     #Bag-O-Gold
     'bagogold.bagogold',
     'bagogold.pendencias',
+    'bagogold.cri_cra',
 )
 
 MIDDLEWARE_CLASSES = (

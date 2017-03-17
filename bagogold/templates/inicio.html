@@ -346,11 +346,13 @@ Basta registrar suas operações que o sistema se encarrega de atualizá-la diar
 <script src={% static "assets/global/plugins/flot/jquery.flot.time.min.js" %} type="text/javascript"></script>
 <script>
 $( document ).ready(function() {
-    $.plot($("#graf_rendimentos_mensal"), [ {color: "#33AA33", label: "LC", bars: {show:true, align:"center", barWidth: 24 * 60 * 60 * 200, lineWidth: 1, stacked: false}, data: {{ graf_rendimentos_mensal_lc|safe }} }, 
-                                           {color: "#8811AA", label: "CDB/RDB", bars: {show:true, align:"center", barWidth: 24 * 60 * 60 * 200, lineWidth: 1, stacked: false}, data: {{ graf_rendimentos_mensal_cdb_rdb|safe }} }, 
-                                           {color: "#AABB33", label: "Tesouro Direto", bars: {show:true, align:"center", barWidth: 24 * 60 * 60 * 200, lineWidth: 1, stacked: false}, data: {{ graf_rendimentos_mensal_td|safe }} },
+    $.plot($("#graf_rendimentos_mensal"), [ {color: "#33AA33", label: "Letras de Crédito", bars: {show:true, align:"center", barWidth: 24 * 60 * 60 * 100, lineWidth: 1, stacked: false}, data: {{ graf_rendimentos_mensal_lc|safe }} }, 
+                                           {color: "#8811AA", label: "CDB/RDB", bars: {show:true, align:"center", barWidth: 24 * 60 * 60 * 100, lineWidth: 1, stacked: false}, data: {{ graf_rendimentos_mensal_cdb_rdb|safe }} },
+                                           {color: "#AABB33", label: "Tesouro Direto", bars: {show:true, align:"center", barWidth: 24 * 60 * 60 * 100, lineWidth: 1, stacked: false}, data: {{ graf_rendimentos_mensal_td|safe }} },
+                                           {color: "#FF1100", label: "Debêntures", bars: {show:true, align:"center", barWidth: 24 * 60 * 60 * 100, lineWidth: 1, stacked: false}, data: {{ graf_rendimentos_mensal_debentures|safe }} },
+                                           {color: "#222222", label: "CRI/CRA", bars: {show:true, align:"center", barWidth: 24 * 60 * 60 * 100, lineWidth: 1, stacked: false}, data: {{ graf_rendimentos_mensal_cri_cra|safe }} },
                                       ],
-                                        {grid: { hoverable: true}, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%d-%m"},
+                                        {grid: { hoverable: true}, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%d/%m"},
                                         } 
     );
     
@@ -382,7 +384,7 @@ function showTooltip(x, y, contents) {
                     y = String(item.datapoint[1].toFixed(2)).replace('.', ',');
                 
                 var date = new Date(parseInt(x));
-                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d-%m-%y") +"</br>" + item.series.label + ": R$" + y);
+                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%y") +"</br>" + item.series.label + ": R$" + y);
             }
         }
         else {
