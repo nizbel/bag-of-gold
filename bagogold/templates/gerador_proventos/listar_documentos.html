@@ -34,7 +34,7 @@
                 <tbody>
                 {% for documento in documentos %}
                 <tr>
-                    <td><a href="{% url "detalhar_documento" documento.id %}">{{documento}}</a></td>
+                    <td><a href="{% url "gerador_proventos:detalhar_documento" documento.id %}">{{documento}}</a></td>
                     <td>{{documento.tipo}}</td>
                     <td>{{documento.protocolo}}</td>
                     <td>{{documento.data_referencia}}</td>
@@ -64,9 +64,9 @@
                         <div class="row">
                             <form method="POST" class="col-md-12 horizontal-form">{% csrf_token %}
                                 <label for="empresa">Procurar por ticker:
-                                    <select id="empresa" name="busca_empresa">
+                                    <select id="empresa" name="busca_empresa" style="width: 100%">
                                         {% for empresa in empresas %}
-                                            <option value="{{empresa.id}}">{{empresa.nome}} ({{empresa.ticker_empresa}})</option>
+                                            <option value="{{empresa.id|floatformat:'f'}}">{{empresa.nome}} ({{empresa.ticker_empresa}})</option>
                                         {% endfor %}
                                     </select>
                                 </label>
@@ -82,7 +82,7 @@
 {% endblock %}
 
 {% block extra_footer %}
-<script src={% static "assets/global/scripts/datatable.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/scripts/datatable.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/datatables/datatables.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.js" %} type="text/javascript"></script>
 <script src={% static "assets/pages/scripts/table-datatables-fixedheader.min.js" %} type="text/javascript"></script>

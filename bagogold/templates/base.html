@@ -234,24 +234,24 @@
                 <li>
                     <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> Ações (B & H)</span></a>
                     <ul>
-                        <li><a class="submenu" href="{% url "historico_bh" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico</span></a></li>
-                        <li><a class="submenu" href="{% url "inserir_operacao_bh" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir operação</span></a></li>
+                        <li><a class="submenu" href="{% url "acoes:historico_bh" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico</span></a></li>
+                        <li><a class="submenu" href="{% url "acoes:inserir_operacao_bh" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir operação</span></a></li>
                         {% if request.user.is_superuser %}
-                        <li><a class="submenu" href="{% url "inserir_provento_bh" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir provento</span></a></li>
+                        <li><a class="submenu" href="{% url "acoes:inserir_provento_bh" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir provento</span></a></li>
                         {% endif %}
-                        <li><a class="submenu" href="{% url "inserir_taxa_custodia_acao" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Ins. taxa de custódia</span></a></li>
-                        <li><a class="submenu" href="{% url "painel_bh" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Painel</span></a></li>
-                        <li><a class="submenu" href="{% url "ver_taxas_custodia_acao" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Ver taxas de custódia</span></a></li>
+                        <li><a class="submenu" href="{% url "acoes:inserir_taxa_custodia_acao" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Ins. taxa de custódia</span></a></li>
+                        <li><a class="submenu" href="{% url "acoes:painel_bh" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Painel</span></a></li>
+                        <li><a class="submenu" href="{% url "acoes:ver_taxas_custodia_acao" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Ver taxas de custódia</span></a></li>
                     </ul>   
                 </li>
                 <li>
                     <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> Ações (Trading)</span></a>
                     <ul>
-                        <li><a class="submenu" href="{% url "acompanhamento_mensal" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Acomp. mensal</span></a></li>
-                        <li><a class="submenu" href="{% url "historico_operacoes" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico operações</span></a></li>
-                        <li><a class="submenu" href="{% url "historico_operacoes_cv" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico compras/vendas</span></a></li>
-                        <li><a class="submenu" href="{% url "inserir_operacao_acao_t" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir operação</span></a></li>
-                        <li><a class="submenu" href="{% url "inserir_operacao_t" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir compra/venda</span></a></li>
+                        <li><a class="submenu" href="{% url "acoes:acompanhamento_mensal" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Acomp. mensal</span></a></li>
+                        <li><a class="submenu" href="{% url "acoes:historico_operacoes" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico operações</span></a></li>
+                        <li><a class="submenu" href="{% url "acoes:historico_operacoes_cv" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico compras/vendas</span></a></li>
+                        <li><a class="submenu" href="{% url "acoes:inserir_operacao_acao_t" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir operação</span></a></li>
+                        <li><a class="submenu" href="{% url "acoes:inserir_operacao_t" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir compra/venda</span></a></li>
                     </ul>   
                 </li>
                 <li>
@@ -334,11 +334,11 @@
                 <li>
                     <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> Gerador de proventos</span></a>
                     <ul>
-                        <li><a class="submenu" href="{% url "listar_documentos" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar documentos</span></a></li>
-                        <li><a class="submenu" href="{% url "listar_pendencias" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar pendências</span></a></li>
-                        <li><a class="submenu" href="{% url "listar_proventos" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar proventos</span></a></li>
-                        <li><a class="submenu" href="{% url "listar_usuarios" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar usuários</span></a></li>
-                        <li><a class="submenu" href="{% url "manual_gerador" 'acao' %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Manual do gerador</span></a></li>
+                        <li><a class="submenu" href="{% url "gerador_proventos:listar_documentos" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar documentos</span></a></li>
+                        <li><a class="submenu" href="{% url "gerador_proventos:listar_pendencias" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar pendências</span></a></li>
+                        <li><a class="submenu" href="{% url "gerador_proventos:listar_proventos" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar proventos</span></a></li>
+                        <li><a class="submenu" href="{% url "gerador_proventos:listar_usuarios" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar usuários</span></a></li>
+                        <li><a class="submenu" href="{% url "gerador_proventos:manual_gerador" 'acao' %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Manual do gerador</span></a></li>
                     </ul>   
                 </li>
                 {% endif %}

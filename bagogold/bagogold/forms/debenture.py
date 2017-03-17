@@ -18,12 +18,11 @@ class OperacaoDebentureForm(LocalizedModelForm):
                  'tipo_operacao': widgets.Select(choices=ESCOLHAS_TIPO_OPERACAO),}
         
     class Media:
-        js = ('js/bagogold/debenture.js',)
+        js = ('js/bagogold/form_operacao_debenture.js',)
         
     def clean(self):
         data = super(OperacaoDebentureForm, self).clean()
-        debenture = data.get('debenture')
-        if debenture.data_fim and data.get('data') >= debenture.data_fim:
-            raise forms.ValidationError('Operação deve ter sido realizado antes da data de fim da debênture')
-
-        return data
+        if data.get('debenture'):
+            debenture = data.get('debenture')
+            if debenture.data_fim and data.get('data') >= debenture.data_fim:
+                raise forms.ValidationError('Operação deve ter sido realizada antes da data de fim da debênture')

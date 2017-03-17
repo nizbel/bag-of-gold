@@ -5,14 +5,7 @@ from django import forms
 from django.forms import widgets
 
 
-
-ESCOLHAS_TIPO_PROVENTO=(('A', "Ações"),
-                        ('D', "Dividendos"),
-                        ('J', "Juros sobre capital próprio"),)
-
 class ProventoAcaoForm(LocalizedModelForm):
-
-
     class Meta:
         model = Provento
         fields = ('valor_unitario', 'data_ex', 'data_pagamento', 'tipo_provento',
@@ -21,7 +14,7 @@ class ProventoAcaoForm(LocalizedModelForm):
                                             'placeholder':'Selecione uma data'}),
                  'data_pagamento': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),
-                 'tipo_provento': widgets.Select(choices=ESCOLHAS_TIPO_PROVENTO),}
+                 'tipo_provento': widgets.Select(choices=Provento.ESCOLHAS_TIPO_PROVENTO_ACAO),}
         
     def clean(self):
         dados = super(ProventoAcaoForm, self).clean()

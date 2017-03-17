@@ -1,158 +1,241 @@
-{% extends "base.html" %}
+{% extends "teste/base.html" %}
+{% load staticfiles %}
+
+{% block extra_head %}
+<link href={% static "assets/global/plugins/bootstrap-select/css/bootstrap-select.min.css" %} rel="stylesheet" type="text/css" />
+{% endblock %}
 
 {% block content %}
-<div class="row-fluid">
-<form action="{% url 'acompanhamento_mensal' %}" method="POST">
-    {% csrf_token %}
-    <div class="control-group span3">
-        <label class="control-label" for="selectAno">Selecione o ano</label>
-        <div class="controls">
-            <select id="selectAno" name="select_ano">
-                {% for ano in lista_anos %}
-                <option value="{{ ano }}"{% if ano == dados_mes.ano %}selected="selected"{% endif %}>
-                    {{ ano }}
-                </option>    
-                {% endfor %}
-            </select>
-        </div>
-    </div>
-    <div class="control-group span3">
-        <label class="control-label" for="selectMes">Selecione o mês</label>
-        <div class="controls">
-            <div class="input-append" id="selectMes" name="select_mes">
-                {% for mes, valor in lista_meses %}
-                <input class="btn {% if valor == dados_mes.mes %}btn-primary{% endif %}" type="submit" name="{{ valor }}" value="{{ mes }}"/>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-</form>
+<div class="portlet light">
+	<div class="portlet-title">
+		<div class="caption font-yellow-crusta">
+			<i class="icon-eye font-yellow-crusta"></i>
+			<span class="caption-subject bold uppercase"> Acompanhamento mensal </span>
+		</div>
+	</div>
+	<div class="portlet-body form">
+		<div class="row">
+			<div class="form-group col-md-3">
+				<label class="control-label col-md-4" for="selectAno" style="text-align: left;"> Ano: </label>
+				<div class="col-md-8">
+					<select class="selectpicker form-control" id="selectAno" name="select_ano">
+						{% for ano in lista_anos %}
+						<option value="{{ ano }}"{% if ano == dados_mes.ano %}selected="selected"{% endif %}>
+							{{ ano }}
+						</option>    
+						{% endfor %}
+					</select>
+				</div>
+			</div>
+			<div class="form-group col-md-3">
+				<label class="control-label col-md-4" for="selectMes" style="text-align: left;"> Mês: </label>
+				<div class="col-md-8">
+					<select class="selectpicker form-control" id="selectMes" name="select_mes" data-hide-disabled="true">
+						{% for mes, valor in lista_meses %}
+						<option value="{{ valor }}" {% if valor == dados_mes.mes %}selected="selected"{% endif %} {% if valor > dados_mes.ultimo_mes %}disabled="disabled"{% endif %}>
+							{{ mes }}
+						</option>    
+						{% endfor %}
+					</select>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="portlet-body">
+		<div class="row">
+			<div class="col-md-8">
+				<!-- BEGIN Portlet PORTLET-->
+				<div class="portlet box yellow-crusta">
+					<div class="portlet-title">
+						<div class="caption">
+							<i class="fa fa-bar-chart"></i> Estatísticas do mês </div>
+						<div class="tools">
+							<a href="javascript:;" class="collapse"></a>
+						</div>
+					</div>
+					<div class="portlet-body">
+						<div class="table-scrollable table-scrollable-borderless">
+							<table class="table table-hover table-light">
+								<tbody>
+									<tr>
+										<td width="25%"> Operações de compra: </td>
+										<td width="25%"> <span id="qtd_op_compra">{{ dados_mes.qtd_op_compra }}</span> </td>
+										<td width="25%"> Operações de venda: </td>
+										<td width="25%"> <span id="qtd_op_venda">{{ dados_mes.qtd_op_venda }}</span> </td>
+									</tr>
+									<tr>
+										<td> Total movimentado (compra): </td>
+										<td> <span id="qtd_compra">R$ {{ dados_mes.qtd_compra }}</span> </td>
+										<td> Total movimentado (venda): </td>
+										<td> <span id="qtd_venda">R$ {{ dados_mes.qtd_venda }}</span> </td>
+									</tr>
+									<tr>
+										<td> Lucro bruto: </td>
+										<td> <span id="lucro_bruto">R$ {{ dados_mes.lucro_bruto }}</span> </td>
+										<td> IR devido: </td>
+										<td> <span id="ir_devido">R$ {{ dados_mes.ir_devido|floatformat:2 }}</span> </td>
+									</tr>
+									<tr>
+										<td> Corretagem/Emolumentos: </td>
+										<td> <span id="corretagem">R$ {{ dados_mes.total_corretagem }}/R$ {{ dados_mes.total_emolumentos }}</span> </td>
+										<td> Saldo para trades: </td>
+										<td> <span id="saldo_trades">R$ {{ dados_mes.saldo_trades }}</span> </td>
+									</tr>
+									<tr>
+										<td> Ação mais lucrativa: </td>
+										<td> <span id="mais_lucrativa">{% if dados_mes.mais_lucrativa %}{{ dados_mes.mais_lucrativa.0 }} (R$ {{ dados_mes.mais_lucrativa.1 }}){% else %}Indisponível{% endif %}</span> </td>
+										<td> Ação menos lucrativa: </td>
+										<td> <span id="menos_lucrativa">{% if dados_mes.menos_lucrativa %}{{ dados_mes.menos_lucrativa.0 }} (R$ {{ dados_mes.menos_lucrativa.1 }}){% else %}Indisponível{% endif %}</span> </td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+				<!-- END Portlet PORTLET-->
+			</div>
+			<div class="col-md-4">
+				<!-- BEGIN Portlet PORTLET-->
+				<div class="portlet box yellow-crusta">
+					<div class="portlet-title">
+						<div class="caption">
+							<i class="icon-badge"></i> Ranking mensal </div>
+						<div class="tools">
+							<a href="javascript:;" class="collapse"></a>
+						</div>
+					</div>
+					<div class="portlet-body">
+						<div class="list-group" id="ranking">
+							{% for acao in acoes_ranking %}
+							{% if acao.1 >= 0 %}
+							<span class="font-blue list-group-item"><i class="fa fa-arrow-up font-blue"></i> {{ acao.0 }} (R$ {{ acao.1 }})</a>
+							{% else %}
+							<span class="font-red-thunderbird list-group-item"><i class="fa fa-arrow-down font-red-thunderbird"></i> {{ acao.0 }} (R$ {{ acao.1 }})</a>
+							{% endif %}
+							
+							{% empty %}
+							<span class="list-group-item">Não houve vendas</a>
+							{% endfor %}
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-md-12">
+				<!-- BEGIN Portlet PORTLET-->
+				<div class="portlet box yellow-crusta">
+					<div class="portlet-title">
+						<div class="caption">
+							<i class="fa fa-line-chart"></i> Gráfico mensal </div>
+						<div class="tools">
+							<a href="javascript:;" class="collapse"></a>
+						</div>
+					</div>
+					<div class="portlet-body">
+						<div class="chart" id="graf_mensal" style="width:100%;height:400px"></div>
+					</div>
+				</div>
+				<!-- END Portlet PORTLET-->
+			</div>
+		</div>
+	</div>
 </div>
 
-<div class="span8">
-    <div class="sparkLineStats widget black">
-        <ul class="unstyled">
-            <li class="row-fluid">
-                <div class="span6">Operações de compra: 
-                    <span class="number">{{ dados_mes.qtd_op_compra }}</span>
-                </div>
-                <div class="span6">Operações venda: 
-                    <span class="number">{{ dados_mes.qtd_op_venda }}</span>
-                </div>
-            </li>
-            <li class="row-fluid">
-                <div class="span6">Total movimentado (compra): 
-                    <span class="number">R${{ dados_mes.qtd_compra }}</span>
-                </div>
-                <div class="span6">Total movimentado (venda): 
-                    <span class="number">R${{ dados_mes.qtd_venda }}</span>
-                </div>
-            </li>
-            <li class="row-fluid">
-                <div class="span6">Lucro bruto: 
-                    <span class="number">R${{ dados_mes.lucro_bruto }}</span>
-                </div>
-                <div class="span6">IR devido: 
-                    <span class="number">R${{ dados_mes.ir_devido|floatformat:2 }}</span>
-                </div>
-            </li>
-            <li class="row-fluid">
-                <div class="span6">Corretagem/Emolumentos: 
-                    <span class="number">R${{ dados_mes.total_corretagem }}/R${{ dados_mes.total_emolumentos }}</span>
-                </div>
-                <div class="span6">Saldo para trades: 
-                    <span class="number">R${{ dados_mes.saldo_trades }}</span>
-                </div>
-            </li>
-            <li class="row-fluid">
-                <div class="span6">Ação mais lucrativa: 
-                    <span class="number">{{ dados_mes.mais_lucrativa.0 }} (R${{ dados_mes.mais_lucrativa.1 }})</span>
-                </div>
-                <div class="span6">Ação menos lucrativa: 
-                    <span class="number">{{ dados_mes.menos_lucrativa.0 }} (R${{ dados_mes.menos_lucrativa.1 }})</span>
-                </div>
-            </li>
-        </ul>
-    </div>
-    <div class="clearfix" style="height: 50px;"></div>
-    <div id="placeholder" style="width:800px;height:400px"></div>
-</div>
-    
-    <div class="box black span3" ontablet="span3" ondesktop="span3">
-        <div class="box-header">
-            <span>Ranking mensal</span>
-            <div class="box-icon">
-                <a href="#" class="btn-minimize"><i class="halflings-icon chevron-up"></i></a>
-            </div>
-        </div>
-        <div class="box-content">
-            <ul class="dashboard-list metro">
-                {% for acao in acoes_ranking %}
-                <li>
-                    <a href="#">
-                        {% comment %}
-                        <i class="icon-arrow-up green"></i>                               
-                        <span class="green">92</span>
-                        {% endcomment %}
-                        <span class="{% if acao.1 >= 0 %} green {% else %} red {% endif %}">{{ acao.0 }} (R${{ acao.1 }})</span>                                  
-                    </a>
-                </li>
-                {% empty %}
-                <li>
-                    <a><span>Não houve vendas</span></a>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-    </div>
+{% endblock %}
 
-
-
+{% block extra_footer %}
+<script src={% static "assets/global/plugins/flot/jquery.flot.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/flot/jquery.flot.resize.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/flot/jquery.flot.categories.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/flot/jquery.flot.stack.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/flot/jquery.flot.crosshair.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/flot/jquery.flot.axislabels.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/flot/jquery.flot.time.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-select/js/bootstrap-select.min.js" %} type="text/javascript"></script>
 <script>
 $(document).ready(function() {
-	function getCookie(c_name)
-	{
-	    if (document.cookie.length > 0)
-	    {
-	        c_start = document.cookie.indexOf(c_name + "=");
-	        if (c_start != -1)
-	        {
-	            c_start = c_start + c_name.length + 1;
-	            c_end = document.cookie.indexOf(";", c_start);
-	            if (c_end == -1) c_end = document.cookie.length;
-	            return unescape(document.cookie.substring(c_start,c_end));
-	        }
-	    }
-	    return "";
-	}
-	$(function () {
-	    $.ajaxSetup({
-	        headers: { "X-CSRFToken": getCookie("csrftoken") }
-	    });
-	});
     //for every field change
-    $('#selectAno').change(function() {
+    $('#selectAno,#selectMes').change(function() {
         $.ajax({
-            url : "{% url 'acompanhamento_mensal' %}", // the endpoint
-            type : "POST", // http method
-            data : { select_ano : $('#selectAno').val() }, // data sent with the post request
+            url : "{% url 'acoes:acompanhamento_mensal' %}", // the endpoint
+            type : "GET", // http method
+            data : { ano : $('#selectAno').val(), mes: $('#selectMes').val() }, // data sent with the post request
 
             // handle a successful response
-            success : function(lista_meses) {
-            	var i;
-            	// Clean select options
-                $('#selectMes').empty();
-            	for (i = 0; i < lista_meses.length; ++i) {
-            		// Append new
-            		if (i == lista_meses.length-1) {
-            			$('#selectMes').append('<input class="btn" type="submit" name="' + lista_meses[i][1] + '" value="' + lista_meses[i][0] + '"/>');
-            			//$('#selectMes').append('<option value="' + lista_meses[i][1] + '" selected="selected">' + lista_meses[i][0] + '</option>');
-            		}
-            		else {
-                        $('#selectMes').append('<input class="btn" type="submit" name="' + lista_meses[i][1] + '" value="' + lista_meses[i][0] + '"/>');
-            			  //$('#selectMes').append('<option value="' + lista_meses[i][1] + '">' + lista_meses[i][0] + '</option>');
-            		}
-            	}
+            success : function(resultado) {
+            	$("#selectMes option").each(function() {
+                    if ($(this).val() > resultado.dados_mes.ultimo_mes) {
+                        $(this).attr('disabled', 'disabled');
+                    } else {
+                        $(this).removeAttr('disabled');
+                    }
+                    if (resultado.dados_mes.mes > resultado.dados_mes.ultimo_mes) {
+                    	$('#selectMes').val(resultado.dados_mes.ultimo_mes);
+                    }
+                 });
+                $('#selectMes').selectpicker('refresh');
+                // Set fields
+                $('#qtd_op_compra').text(resultado.dados_mes.qtd_op_compra);
+                $('#qtd_op_venda').text(resultado.dados_mes.qtd_op_venda);
+                $('#qtd_compra').text('R$ ' + resultado.dados_mes.qtd_compra);
+                $('#qtd_venda').text('R$ ' + resultado.dados_mes.qtd_venda);
+                $('#lucro_bruto').text('R$ ' + resultado.dados_mes.lucro_bruto);
+                $('#ir_devido').text('R$ ' + resultado.dados_mes.ir_devido);
+                $('#corretagem').text('R$ ' + resultado.dados_mes.total_corretagem + '/R$ ' + resultado.dados_mes.total_emolumentos);
+                $('#saldo_trades').text('R$ ' + resultado.dados_mes.saldo_trades);
+                $('#saldo_trades').text(resultado.dados_mes.qtd_op_compra);
+                if (resultado.dados_mes.mais_lucrativa) {
+                    $('#mais_lucrativa').text(resultado.dados_mes.mais_lucrativa[0] + ' (R$ ' + resultado.dados_mes.mais_lucrativa[1] + ')');
+                } else {
+                	$('#mais_lucrativa').text('Indisponível');
+                }
+                if (resultado.dados_mes.menos_lucrativa) {
+                    $('#menos_lucrativa').text(resultado.dados_mes.menos_lucrativa[0] + ' (R$ ' + resultado.dados_mes.menos_lucrativa[1] + ')');
+                } else {
+                    $('#menos_lucrativa').text('Indisponível');
+                }
+                
+                $('#ranking').empty();
+                if (resultado.acoes_ranking.length == 0) {
+                    $('#ranking').append('<span class="list-group-item">Não houve vendas</a>');
+                } else {
+                	for (var i = 0; i < resultado.acoes_ranking.length; i++) {
+                		if (parseFloat(resultado.acoes_ranking[i][1]) > 0) {
+                			$('#ranking').append('<span class="font-blue list-group-item"><i class="fa fa-arrow-up font-blue"></i> ' 
+                                    + resultado.acoes_ranking[i][0] + ' (R$ ' + resultado.acoes_ranking[i][1] + ')</a>');
+                		} else {
+                			$('#ranking').append('<span class="font-red-thunderbird list-group-item"><i class="fa fa-arrow-down font-red-thunderbird"></i> ' 
+                					+ resultado.acoes_ranking[i][0] + ' (R$ ' + resultado.acoes_ranking[i][1] + ')</a>');
+                		}
+                	}
+                }
+                
+                $.plot($("#graf_mensal"), [ {color: "#2222AA", label: "Vendas", bars: {show:true, align:"center", barWidth: 12 * 60 * 60 * 600, lineWidth: 1}, data: resultado.graf_vendas_mes }, 
+                                            {color: "#AA2222", label: "Compras", bars: {show:true, align:"center", barWidth: 12 * 60 * 60 * 600, lineWidth: 1}, data: resultado.graf_compras_mes }, 
+                                            {label: "Lucro mensal", lines: {show:true}, yaxis: 2, data: resultado.graf_lucro_mes } 
+                                          ],
+                                            {legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%d/%m/%y"}, 
+                                             yaxes: [{tickFormatter: function (val, axis) {
+                                               return "R$" + val;
+                                           },
+                                           axisLabel: "Valor operações",
+                                           axisLabelUseCanvas: true,
+                                           axisLabelFontSizePixels: 12,
+                                           axisLabelFontFamily: "Verdana, Arial, Helvetica, Tahoma, sans-serif",
+                                           axisLabelPadding: 5
+                                           },
+                                           {
+                                           position: 0,
+                                           tickFormatter: function (val, axis) {
+                                               return "R$" + val;
+                                           },
+                                           axisLabel: "Lucro",
+                                           axisLabelUseCanvas: true,
+                                           axisLabelFontSizePixels: 12,
+                                           axisLabelFontFamily: "Verdana, Arial, Helvetica, Tahoma, sans-serif",
+                                           axisLabelPadding: 5
+                                           }
+                                       ]}  
+                );
             },
 
             // handle a non-successful response
@@ -161,13 +244,13 @@ $(document).ready(function() {
             }
         });
     });
-    $.plot($("#placeholder"), [ {color: "#2222AA", label: "Vendas", bars: {show:true, align:"center", barWidth: 12 * 60 * 60 * 600, lineWidth: 1}, data: {{ graf_vendas_mes|safe }} }, 
+    $.plot($("#graf_mensal"), [ {color: "#2222AA", label: "Vendas", bars: {show:true, align:"center", barWidth: 12 * 60 * 60 * 600, lineWidth: 1}, data: {{ graf_vendas_mes|safe }} }, 
                                 {color: "#AA2222", label: "Compras", bars: {show:true, align:"center", barWidth: 12 * 60 * 60 * 600, lineWidth: 1}, data: {{ graf_compras_mes|safe }} }, 
                                 {label: "Lucro mensal", lines: {show:true}, yaxis: 2, data: {{ graf_lucro_mes|safe }} } 
                               ],
-                                {legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%d-%m-%y"}, 
+                                {legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%d/%m/%y"}, 
                                  yaxes: [{tickFormatter: function (val, axis) {
-                                   return "R$" + val;
+                                   return "R$ " + val;
                                },
                                axisLabel: "Valor operações",
                                axisLabelUseCanvas: true,
@@ -178,7 +261,7 @@ $(document).ready(function() {
                                {
                                position: 0,
                                tickFormatter: function (val, axis) {
-                                   return "R$" + val;
+                                   return "R$ " + val;
                                },
                                axisLabel: "Lucro",
                                axisLabelUseCanvas: true,

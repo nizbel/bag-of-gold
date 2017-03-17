@@ -1,12 +1,6 @@
 {% extends "teste/base.html" %}
 {% load staticfiles %}
 
-{% block extra_head %}
-<link href={% static "assets/global/plugins/datatables/datatables.min.css" %} rel="stylesheet" type="text/css" />
-<link href={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.css" %} rel="stylesheet" type="text/css" />
-<link href={% static "assets/global/plugins/bootstrap-datepicker/css/bootstrap-datepicker3.min.css" %} rel="stylesheet" type="text/css" />
-{% endblock %}
-
 {% block content %}
 <div class="portlet light">
     <div class="portlet-title">
@@ -30,54 +24,72 @@
                     <div class="portlet-body">
                         <div class="m-grid m-grid-responsive-xs">
                             <div class="m-grid-row">
-                                <div class="m-grid-col m-grid-col-left"><strong>Ação:</strong></div>
-                                <div class="m-grid-col m-grid-col-left">{{provento.acao}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>FII:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{provento.fii}}</div>
                                 <div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
                                 <div class="m-grid-col m-grid-col-left">{{provento.descricao_tipo_provento}}</div>
                                 <div class="m-grid-col m-grid-col-left"><strong>Valor unit.:</strong></div>
-                                {% if provento.tipo_provento != 'A' %}
-                                    <div class="m-grid-col m-grid-col-left">R$ {{provento.valor_unitario}}</div>
-                                {% else %}
-                                    <div class="m-grid-col m-grid-col-left">{{provento.valor_unitario}}%</div>
-                                {% endif %}
+                                <div class="m-grid-col m-grid-col-left">R$ {{provento.valor_unitario}}</div>
                                 <div class="m-grid-col m-grid-col-left"><strong>Versão</strong></div>
                                 <div class="m-grid-col m-grid-col-left">{{provento.versao}}</div>
+                            </div>
+                            <div class="m-grid-row">
                                 <div class="m-grid-col m-grid-col-left"><strong>Data EX:</strong></div>
                                 <div class="m-grid-col m-grid-col-left">{{provento.data_ex|date:'d/m/Y'}}</div>
                                 <div class="m-grid-col m-grid-col-left"><strong>Pagamento:</strong></div>
                                 <div class="m-grid-col m-grid-col-left">{{provento.data_pagamento|date:'d/m/Y'}}</div>
                             </div>
-                            {% if provento.tipo_provento == 'A' %}
-                                {% for acao_descricao_provento in provento.acoes_recebidas %}
-                                <div class="m-grid-row">
-                                    <div class="m-grid-col m-grid-col-left"><strong>Ação recebida:</strong></div>
-                                    <div class="m-grid-col m-grid-col-left">{{acao_descricao_provento.acao_recebida}}</div>
-                                    <div class="m-grid-col m-grid-col-left"><strong>Valor de frações:</strong></div>
-                                    <div class="m-grid-col m-grid-col-left">
-                                    {% if acao_descricao_provento.valor_calculo_frac %}
-                                    R$ {{acao_descricao_provento.valor_calculo_frac}}
-                                    {% else %}
-                                    N/A
-                                    {% endif %}
-                                    </div>
-                                    <div class="m-grid-col m-grid-col-left"><strong>Pagamento de frações:</strong></div>
-                                    <div class="m-grid-col m-grid-col-left">{{acao_descricao_provento.data_pagamento_frac|date:'d/m/Y'|default:'N/A'}}</div>
-                                </div>
-                                {% endfor %}
-                            {% endif %}
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="portlet box yellow-crusta">
+                    <div class="portlet-title">
+                        <div class="caption">
+                            <i class="fa fa-money"></i>Versões
+                        </div>
+                        <div class="tools">
+                            <a href="javascript:;" class="collapse"></a>
+                        </div>
+                    </div>
+                    <div class="portlet-body">
+                        {% for versao in versoes %}
+                        <div class="m-grid m-grid-responsive-xs">
+                            <div class="m-grid-row">
+                                <div class="m-grid-col m-grid-col-left"><strong>FII:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{versao.fii}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{versao.descricao_tipo_provento}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Valor unit.:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">R$ {{versao.valor_unitario}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Versão</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{versao.proventofiidocumento.versao}}</div>
+                            </div>
+                            <div class="m-grid-row">
+                                <div class="m-grid-col m-grid-col-left"><strong>Data EX:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{versao.data_ex|date:'d/m/Y'}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Pagamento:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{versao.data_pagamento|date:'d/m/Y'}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Documento:</strong></div>
+                                <div class="m-grid-col m-grid-col-left"><a href="{% url "gerador_proventos:detalhar_documento" versao.proventofiidocumento.documento.id %}">{{versao.proventofiidocumento.documento}}</a></div>
+                            </div>
+                        </div>
+                        {% if forloop.counter < versoes|length %}
+                        <hr>
+                        {% endif %}
+                        {% empty %}
+                        <p align="center">
+                            <strong>Não há versões cadastradas</strong>
+                        </p>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_footer %}
-<script src={% static "assets/global/scripts/datatable.js" %} type="text/javascript"></script>
-<script src={% static "assets/global/plugins/datatables/datatables.min.js" %} type="text/javascript"></script>
-<script src={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.js" %} type="text/javascript"></script>
-<script src={% static "assets/pages/scripts/table-datatables-fixedheader.min.js" %} type="text/javascript"></script>
 {% endblock %}
 

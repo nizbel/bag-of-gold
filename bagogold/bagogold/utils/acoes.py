@@ -1,17 +1,12 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao, \
-    OperacaoAcao, AcaoProvento, Acao, Provento
+    OperacaoAcao, AcaoProvento, Provento
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.bagogold.models.fii import OperacaoFII
-from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, PendenciaDocumentoProvento
-from bagogold.bagogold.testFII import ler_demonstrativo_rendimentos, \
-    baixar_demonstrativo_rendimentos
-from decimal import Decimal, ROUND_DOWN, ROUND_HALF_DOWN, ROUND_UP
-from django.core.files import File
+from decimal import Decimal
 from django.db.models import Sum, Case, When, IntegerField, F
 from itertools import chain
-from operator import attrgetter, itemgetter
+from operator import attrgetter
 from urllib2 import Request, urlopen, HTTPError, URLError
 import calendar
 import datetime

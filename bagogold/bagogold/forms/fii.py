@@ -20,11 +20,12 @@ class ProventoFIIForm(LocalizedModelForm):
 
     class Meta:
         model = ProventoFII
-        fields = ('valor_unitario', 'data_ex', 'data_pagamento', 'fii', )
+        fields = ('valor_unitario', 'tipo_provento', 'data_ex', 'data_pagamento', 'fii', )
         widgets={'data_ex': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),
                  'data_pagamento': widgets.DateInput(attrs={'class':'datepicker', 
-                                            'placeholder':'Selecione uma data'}),}
+                                            'placeholder':'Selecione uma data'}),
+                 'tipo_provento': widgets.Select(choices=ProventoFII.ESCOLHAS_TIPO_PROVENTO_FII),}
         
     
     
