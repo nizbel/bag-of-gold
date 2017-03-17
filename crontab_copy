@@ -9,7 +9,8 @@
 0 * * * * /home/nizbel/bagogold/db_dump.sh
 0 * * * * /home/bagofgold/bagogold/db_prod_dump.sh
 0 23 12-16 * * /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py buscar_historico_ipca
-0 6,21 * * * /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py buscar_proventos_acoes 0
+0 21 * * * /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py buscar_proventos_acoes 0
+30 21 * * * /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py buscar_proventos_fii
 0 4 * * 6 /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py buscar_debentures
 0 5 * * 1-5 /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py preencher_historico_debenture 0
 # Apenas Prod
