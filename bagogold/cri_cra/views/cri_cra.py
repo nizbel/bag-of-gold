@@ -7,7 +7,8 @@ from bagogold.bagogold.models.lc import HistoricoTaxaDI
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
 from bagogold.bagogold.models.td import HistoricoIPCA
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas
-from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo
+from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo,\
+    formatar_zeros_a_direita_apos_2_casas_decimais
 from bagogold.cri_cra.forms.cri_cra import CRI_CRAForm, \
     DataRemuneracaoCRI_CRAForm, DataRemuneracaoCRI_CRAFormSet, \
     DataAmortizacaoCRI_CRAFormSet, OperacaoCRI_CRAForm
@@ -35,6 +36,9 @@ def detalhar_cri_cra(request, id_cri_cra):
     if cri_cra.investidor != investidor:
         raise PermissionDenied
     
+    # Formatar valor de emissão
+    cri_cra.valor_emissao = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(cri_cra.valor_emissao))
+    
     datas_remuneracao = DataRemuneracaoCRI_CRA.objects.filter(cri_cra=cri_cra)
     datas_amortizacao = DataAmortizacaoCRI_CRA.objects.filter(cri_cra=cri_cra)
     if DataAmortizacaoCRI_CRA.objects.filter(cri_cra=cri_cra).exists():
@@ -50,59 +54,15 @@ def detalhar_cri_cra(request, id_cri_cra):
      
     # Preparar estatísticas zeradas
     cri_cra.total_investido = Decimal(0)
-    cri_cra.saldo_atual = Decimal(0)
-    cri_cra.total_ir = Decimal(0)
-    cri_cra.total_iof = Decimal(0)
+    cri_cra.valor_atual = Decimal(0)
     cri_cra.lucro = Decimal(0)
     cri_cra.lucro_percentual = Decimal(0)
      
     operacoes = OperacaoCRI_CRA.objects.filter(cri_cra=cri_cra).order_by('data')
     # Contar total de operações já realizadas 
     cri_cra.total_operacoes = len(operacoes)
-#     # Remover operacoes totalmente vendidas
-#     operacoes = [operacao for operacao in operacoes if operacao.qtd_disponivel_venda() > 0]
-#     if operacoes:
-#         historico_di = HistoricoTaxaDI.objects.filter(data__range=[operacoes[0].data, datetime.date.today()])
-#         for operacao in operacoes:
-#             # Total investido
-#             cdb_rdb.total_investido += operacao.qtd_disponivel_venda()
-#             
-#             # Saldo atual
-#             taxas = historico_di.filter(data__gte=operacao.data).values('taxa').annotate(qtd_dias=Count('taxa'))
-#             taxas_dos_dias = {}
-#             for taxa in taxas:
-#                 taxas_dos_dias[taxa['taxa']] = taxa['qtd_dias']
-#             operacao.atual = calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao.qtd_disponivel_venda(), operacao.porcentagem())
-#             cdb_rdb.saldo_atual += operacao.atual
-#             
-#             # Calcular impostos
-#             qtd_dias = (datetime.date.today() - operacao.data).days
-#             # IOF
-#             operacao.iof = Decimal(calcular_iof_regressivo(qtd_dias)) * (operacao.atual - operacao.quantidade)
-#             # IR
-#             if qtd_dias <= 180:
-#                 operacao.imposto_renda =  Decimal(0.225) * (operacao.atual - operacao.quantidade - operacao.iof)
-#             elif qtd_dias <= 360:
-#                 operacao.imposto_renda =  Decimal(0.2) * (operacao.atual - operacao.quantidade - operacao.iof)
-#             elif qtd_dias <= 720:
-#                 operacao.imposto_renda =  Decimal(0.175) * (operacao.atual - operacao.quantidade - operacao.iof)
-#             else: 
-#                 operacao.imposto_renda =  Decimal(0.15) * (operacao.atual - operacao.quantidade - operacao.iof)
-#             cdb_rdb.total_ir += operacao.imposto_renda
-#             cdb_rdb.total_iof += operacao.iof
-#     
-#         # Pegar outras estatísticas
-#         str_auxiliar = str(cdb_rdb.saldo_atual.quantize(Decimal('.0001')))
-#         cdb_rdb.saldo_atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-#         
-#         cdb_rdb.lucro = cdb_rdb.saldo_atual - cdb_rdb.total_investido
-#         cdb_rdb.lucro_percentual = cdb_rdb.lucro / cdb_rdb.total_investido * 100
-#     try: 
-#         cdb_rdb.dias_proxima_retirada = (min(operacao.data + datetime.timedelta(days=operacao.carencia()) for operacao in operacoes if \
-#                                              (operacao.data + datetime.timedelta(days=operacao.carencia())) > datetime.date.today()) - datetime.date.today()).days
-#     except ValueError:
-#         cdb_rdb.dias_proxima_retirada = 0
     
+    # TODO preencher estatísticas totais
     
     return TemplateResponse(request, 'cri_cra/detalhar_cri_cra.html', {'cri_cra': cri_cra, 'datas_remuneracao': datas_remuneracao, 
                                                                        'datas_amortizacao': datas_amortizacao})
@@ -507,6 +467,7 @@ def painel(request):
         
         cri_cra[cri_cra_id].valor_atual = calcular_valor_um_cri_cra_na_data(cri_cra[cri_cra_id])
         cri_cra[cri_cra_id].total_atual = cri_cra[cri_cra_id].valor_atual * cri_cra[cri_cra_id].quantidade
+        total_valor_atual += cri_cra[cri_cra_id].total_atual
         
         # Próxima remuneração
         if DataRemuneracaoCRI_CRA.objects.filter(cri_cra=cri_cra[cri_cra_id], data__gt=datetime.date.today()).exists():
