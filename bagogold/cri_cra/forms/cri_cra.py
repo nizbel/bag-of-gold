@@ -16,7 +16,7 @@ class CRI_CRAForm(LocalizedModelForm):
     class Meta:
         model = CRI_CRA
         fields = ('nome', 'codigo_isin', 'tipo', 'tipo_indexacao', 'porcentagem', 'juros_adicional', 'data_emissao',
-                  'valor_emissao', 'data_vencimento')
+                  'valor_emissao', 'data_inicio_rendimento', 'data_vencimento')
         widgets={'tipo': widgets.Select(choices=CRI_CRA.ESCOLHAS_TIPO_CRI_CRA),
                  'tipo_indexacao': widgets.Select(choices=CRI_CRA.ESCOLHAS_TIPO_INDEXACAO),}
         

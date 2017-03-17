@@ -33,7 +33,7 @@
         <tbody>
         {% for item in cri_cra.values %}
             <tr>
-                <td>{{ item.nome }}</td>
+                <td><a href="{% url 'cri_cra:detalhar_cri_cra' item.id %}" class="tooltips" data-placement="bottom" data-original-title="Detalhar {{item.descricao_tipo}}">{{ item.nome }}</a></td>
                 <td>R$ {{ item.preco_medio|floatformat:2 }}</td>
                 <td>{{ item.quantidade }}</td>
                 <td>R$ {{ item.total_investido|floatformat:2 }}</td>

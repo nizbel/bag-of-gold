@@ -40,6 +40,12 @@
 							<div class="m-grid-row">
                                 <div class="m-grid-col m-grid-col-left"><strong>Data de emissão:</strong></div>
                                 <div class="m-grid-col m-grid-col-left">{{cri_cra.data_emissao|date:'d/m/Y'}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Valor de emissão:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">R$ {{cri_cra.valor_emissao}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Data de início do rendimento:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{cri_cra.data_inicio_rendimento|date:'d/m/Y'}}</div>
+                            </div>
+                            <div class="m-grid-row">
                                 <div class="m-grid-col m-grid-col-left"><strong>Data de vencimento:</strong></div>
                                 <div class="m-grid-col m-grid-col-left">{{cri_cra.data_vencimento|date:'d/m/Y'}}</div>
 								<div class="m-grid-col m-grid-col-left"><strong>Total de operações:</strong></div>
@@ -65,18 +71,14 @@
 							<div class="m-grid-row">
 								<div class="m-grid-col m-grid-col-left"><strong>Total investido:</strong></div>
 								<div class="m-grid-col m-grid-col-left">R$ {{cri_cra.total_investido|floatformat:2}}</div>
-								<div class="m-grid-col m-grid-col-left"><strong>Saldo atual:</strong></div>
-								<div class="m-grid-col m-grid-col-left">R$ {{cri_cra.saldo_atual|floatformat:2}}</div>
+								<div class="m-grid-col m-grid-col-left"><strong>Valor atual:</strong></div>
+								<div class="m-grid-col m-grid-col-left">R$ {{cri_cra.valor_atual|floatformat:2}}</div>
 								<div class="m-grid-col m-grid-col-left"><strong>Lucro:</strong></div>
 								<div class="m-grid-col m-grid-col-left">R$ {{ cri_cra.lucro|floatformat:2 }} ({{ cdb_rdb.lucro_percentual|floatformat:2 }}%)</div>
 							</div>
 							<div class="m-grid-row">
 								<div class="m-grid-col m-grid-col-left"><strong>Dias para próx. retirada:</strong></div>
 								<div class="m-grid-col m-grid-col-left">{{ cri_cra.proxima_data_remuneracao|date:'d/m/Y'|default:'Não há' }}</div>
-								<div class="m-grid-col m-grid-col-left"><strong>IR:</strong></div>
-								<div class="m-grid-col m-grid-col-left">R$ {{cri_cra.total_ir|floatformat:2}}</div>
-								<div class="m-grid-col m-grid-col-left"><strong>IOF:</strong></div>
-								<div class="m-grid-col m-grid-col-left">R$ {{cri_cra.total_iof|floatformat:2}}</div>
 							</div>
 						</div>
 					</div>
