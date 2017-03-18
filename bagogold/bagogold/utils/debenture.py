@@ -5,6 +5,7 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoDebenture
 from django.db.models.aggregates import Sum
 from django.db.models.expressions import Case, When, F
 from django.db.models.fields import DecimalField
+import datetime
 
 
 def calcular_qtd_debentures_ate_dia(investidor, dia):
@@ -93,7 +94,7 @@ def calcular_qtd_debentures_ate_dia_por_divisao(dia, divisao_id):
             
     return qtd_debenture
 
-def calcular_valor_debentures_ate_dia(investidor, dia):
+def calcular_valor_debentures_ate_dia(investidor, dia=datetime.date.today()):
     """ 
     Calcula o valor das debêntures do investidor até dia determinado
     Parâmetros: Investidor
@@ -105,5 +106,20 @@ def calcular_valor_debentures_ate_dia(investidor, dia):
     
     for debenture_id in qtd_debentures.keys():
         qtd_debentures[debenture_id] = HistoricoValorDebenture.objects.filter(data__lte=dia, debenture__id=debenture_id).order_by('-data')[0].valor_total() * qtd_debentures[debenture_id]
+        
+    return qtd_debentures
+
+def calcular_valor_debentures_ate_dia_por_divisao(divisao_id, dia=datetime.date.today()):
+    """ 
+    Calcula o valor das debêntures do investidor até dia determinado para uma divisão
+    Parâmetros: ID da divisão
+                Dia final
+    Retorno: Valor das debêntures {debenture_id: valor_da_data}
+    """
+    
+    qtd_debentures = calcular_qtd_debentures_ate_dia_por_divisao(dia, divisao_id)
+    
+    for debenture_codigo in qtd_debentures.keys():
+        qtd_debentures[debenture_codigo] = HistoricoValorDebenture.objects.filter(data__lte=dia, debenture__codigo=debenture_codigo).order_by('-data')[0].valor_total() * qtd_debentures[debenture_codigo]
         
     return qtd_debentures
