@@ -100,7 +100,7 @@ class Command(BaseCommand):
         parser.add_argument('--antigos', action='store_true')
 
     def handle(self, *args, **options):
-        inicio = datetime.datetime.now()
+#         inicio = datetime.datetime.now()
         # Checa primeiro se é para buscar todos os rendimentos
         if options['todos']:
             antigos = True
@@ -137,10 +137,10 @@ class Command(BaseCommand):
                 t.start()
                 contador += 1
                 while (len(threads_rodando) > qtd_threads):
-                    print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
+#                     print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
                     time.sleep(3)
             while (len(threads_rodando) > 1 or len(documentos_para_download) > 0 or len(informacoes_rendimentos) > 0):
-                print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
+#                 print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
                 time.sleep(3)
             while 'Principal' in threads_rodando.keys():
                 del threads_rodando['Principal']
@@ -157,7 +157,7 @@ class Command(BaseCommand):
             while 'Principal' in threads_rodando.keys():
                 del threads_rodando['Principal']
                 time.sleep(3)
-        print datetime.datetime.now() - inicio
+#         print datetime.datetime.now() - inicio
 
 def buscar_rendimentos_fii_antigos(ticker, num_tentativas):
     """
