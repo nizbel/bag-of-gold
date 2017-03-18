@@ -100,19 +100,6 @@ class Command(BaseCommand):
         parser.add_argument('--antigos', action='store_true')
 
     def handle(self, *args, **options):
-        # Apaga documentos FII
-        documento_ids = DocumentoProventoBovespa.objects.filter(tipo='F').values_list('id', flat=True)
-        lista_ids_prov = list(ProventoFIIDocumento.objects.filter(documento__id__in=documento_ids).values_list('provento', flat=True))
-        lista_ids_desc_prov = list(ProventoFIIDocumento.objects.filter(documento__id__in=documento_ids).values_list('descricao_provento', flat=True))
-        for prov_doc in ProventoFIIDocumento.objects.filter(documento__id__in=documento_ids):
-            prov_doc.delete()
-        for prov in ProventoFII.objects.filter(id__in=lista_ids_prov):
-            prov.delete()
-        for desc_prov in ProventoFIIDescritoDocumentoBovespa.objects.filter(id__in=lista_ids_desc_prov):
-            desc_prov.delete()
-        for documento in DocumentoProventoBovespa.objects.filter(tipo='F'):
-            documento.delete()
-            
         inicio = datetime.datetime.now()
         # Checa primeiro se é para buscar todos os rendimentos
         if options['todos']:
