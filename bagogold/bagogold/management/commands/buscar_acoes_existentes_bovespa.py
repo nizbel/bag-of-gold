@@ -20,7 +20,7 @@ class Command(BaseCommand):
             for ticker in tickers:
                 if not Acao.objects.filter(ticker=ticker).exists():
                     nova_acao = Acao.objects.create(empresa=empresa, ticker=ticker, tipo=verificar_tipo_acao(ticker))
-                    print 'Criada', nova_acao
+#                     print 'Criada', nova_acao
 
 
 # USAR ESSE ENDEREÇO PARA BUSCAR VALORES DIARIOS: https://s.tradingview.com/bovespa/widgetembed/?symbol=EGIE3&interval=1&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=f1f3f6&editablewatchlist=1&details=1&studies=&widgetbarwidth=300&hideideas=1&theme=White&style=3&timezone=exchange&withdateranges=1&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=pt&utmsource=www.bmfbovespa.com.br&utmmedium=widget&utmcampaign=chart&utmterm=EGIE3

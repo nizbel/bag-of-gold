@@ -85,7 +85,7 @@ class Command(BaseCommand):
         parser.add_argument('ano', type=int)
 
     def handle(self, *args, **options):
-        inicio = datetime.datetime.now()
+#         inicio = datetime.datetime.now()
         # Buscar ano atual
         if not options['ano'] == 0:
             ano_atual = options['ano']
@@ -133,8 +133,8 @@ class Command(BaseCommand):
             while 'Principal' in threads_rodando.keys():
                 del threads_rodando['Principal']
                 time.sleep(3)
-        fim = datetime.datetime.now()
-        print (fim-inicio)
+#         fim = datetime.datetime.now()
+#         print (fim-inicio)
         
 def buscar_proventos_acao(codigo_cvm, ano, num_tentativas):
     # Busca todos os proventos
