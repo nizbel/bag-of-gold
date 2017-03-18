@@ -20,12 +20,13 @@ class VerificarFIIThread(Thread):
                 while len(fiis_para_verificar) > 0:
                     sigla, ticker, empresa_nome, empresa_nome_pregao = fiis_para_verificar.pop(0)
                     
-                    if not Empresa.objects.get(codigo_cvm=sigla).exists():
+                    if not Empresa.objects.filter(codigo_cvm=sigla).exists():
                         empresa = Empresa(nome=empresa_nome, codigo_cvm=sigla, nome_pregao=empresa_nome_pregao)
                         empresa.save()
                         print 'Empresa nao existia'
                     
                     if FII.objects.filter(ticker=ticker).exists():
+                        fii = FII.objects.get(ticker=ticker)
                         print 'FII:', ticker, 'ja existia'
                         if not fii.empresa:
                             fii.empresa = empresa
