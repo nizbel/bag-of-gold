@@ -47,7 +47,7 @@ class OperacaoCRI_CRAForm(LocalizedModelForm):
         if data.get('cri_cra'):
             if data.get('tipo_operacao') == 'V':
                 # Testa se quantidade da venda condiz com a quantidade que o investidor possui
-                quantidade_atual = quantidade_cri_cra_na_data_para_certificado(data.get('data'), data.get('cri_cra'))
+                quantidade_atual = quantidade_cri_cra_na_data_para_certificado(data.get('cri_cra'), data.get('data'))
                 # Se for uma operação de compra sendo convertida em venda, remover sua quantidade da quantidade atual
                 if self.instance.tipo_operacao == 'C':
                     quantidade_atual -= self.instance.quantidade
