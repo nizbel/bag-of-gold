@@ -31,6 +31,8 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
 from django.db.models import Q
+from django.db.models.aggregates import Max
+from django.db.models.expressions import F
 from django.http import HttpResponseRedirect
 from django.http.response import HttpResponse
 from django.shortcuts import render_to_response
@@ -401,39 +403,39 @@ def listar_divisoes(request):
         data_atual = datetime.date.today()
         
         # Ações (B&H)
-        acao_divisao = calcular_qtd_acoes_ate_dia_por_divisao(datetime.date.today(), divisao.id, destinacao='B')
+        acao_divisao = calcular_qtd_acoes_ate_dia_por_divisao(data_atual, divisao.id, destinacao='B')
         for ticker in acao_divisao.keys():
-            try:
+            if ValorDiarioAcao.objects.filter(acao__ticker=ticker, data_hora__day=data_atual.day, data_hora__month=data_atual.month).exists():
                 acao_valor = ValorDiarioAcao.objects.filter(acao__ticker=ticker, data_hora__day=data_atual.day, data_hora__month=data_atual.month).order_by('-data_hora')[0].preco_unitario
-            except:
+            else:
                 acao_valor = HistoricoAcao.objects.filter(acao__ticker=ticker).order_by('-data')[0].preco_unitario
             divisao.valor_atual_bh += (acao_divisao[ticker] * acao_valor)
-            
+        
         # Ações (Trade)
-        acao_divisao = calcular_qtd_acoes_ate_dia_por_divisao(datetime.date.today(), divisao.id, destinacao='T')
+        acao_divisao = calcular_qtd_acoes_ate_dia_por_divisao(data_atual, divisao.id, destinacao='T')
         for ticker in acao_divisao.keys():
-            try:
+            if ValorDiarioAcao.objects.filter(acao__ticker=ticker, data_hora__day=data_atual.day, data_hora__month=data_atual.month).exists():
                 acao_valor = ValorDiarioAcao.objects.filter(acao__ticker=ticker, data_hora__day=data_atual.day, data_hora__month=data_atual.month).order_by('-data_hora')[0].preco_unitario
-            except:
+            else:
                 acao_valor = HistoricoAcao.objects.filter(acao__ticker=ticker).order_by('-data')[0].preco_unitario
             divisao.valor_atual_trade += (acao_divisao[ticker] * acao_valor)
         divisao.valor_atual += divisao.valor_atual_bh + divisao.valor_atual_trade
-        
+         
         # CDB / RDB
         cdb_rdb_divisao = calcular_valor_cdb_rdb_ate_dia_por_divisao(data_atual, divisao.id)
         divisao.valor_atual_cdb_rdb += sum(cdb_rdb_divisao.values())
         divisao.valor_atual += divisao.valor_atual_cdb_rdb
-        
+         
         # Fundos de investimento imobiliário
         fii_divisao = calcular_qtd_fiis_ate_dia_por_divisao(data_atual, divisao.id)
         for ticker in fii_divisao.keys():
-            try:
+            if ValorDiarioFII.objects.filter(fii__ticker=ticker, data_hora__day=data_atual.day, data_hora__month=data_atual.month).exists():
                 fii_valor = ValorDiarioFII.objects.filter(fii__ticker=ticker, data_hora__day=data_atual.day, data_hora__month=data_atual.month).order_by('-data_hora')[0].preco_unitario
-            except:
+            else:
                 fii_valor = HistoricoFII.objects.filter(fii__ticker=ticker).order_by('-data')[0].preco_unitario
             divisao.valor_atual_fii += (fii_divisao[ticker] * fii_valor)
         divisao.valor_atual += divisao.valor_atual_fii
-        
+         
         # Fundos de investimento
         fundo_investimento_divisao = calcular_qtd_cotas_ate_dia_por_divisao(data_atual, divisao.id)
         for fundo_id in fundo_investimento_divisao.keys():
@@ -445,23 +447,23 @@ def listar_divisoes(request):
                 valor_cota = ultima_operacao_fundo.valor_cota()
             divisao.valor_atual_fundo_investimento += (fundo_investimento_divisao[fundo_id] * valor_cota)
         divisao.valor_atual += divisao.valor_atual_fundo_investimento
-            
+             
         # Letras de crédito
         lc_divisao = calcular_valor_lc_ate_dia_por_divisao(data_atual, divisao.id)
         divisao.valor_atual_lc += sum(lc_divisao.values())
         divisao.valor_atual += divisao.valor_atual_lc
-        
+         
         # Tesouro Direto
         td_divisao = calcular_qtd_titulos_ate_dia_por_divisao(data_atual, divisao.id)
         for titulo_id in td_divisao.keys():
-            try:
+            if ValorDiarioTitulo.objects.filter(titulo__id=titulo_id, data_hora__day=data_atual.day, data_hora__month=data_atual.month).exists():
                 td_valor = ValorDiarioTitulo.objects.filter(titulo__id=titulo_id, data_hora__day=data_atual.day, data_hora__month=data_atual.month).order_by('-data_hora')[0].preco_venda
-            except:
+            else:
                 td_valor = HistoricoTitulo.objects.filter(titulo__id=titulo_id).order_by('-data')[0].preco_venda
             divisao.valor_atual_td += (td_divisao[titulo_id] * td_valor)
         divisao.valor_atual += divisao.valor_atual_td
 #             print 'valor:', divisao.valor_atual
-        
+         
         if not divisao.objetivo_indefinido():
             divisao.quantidade_percentual = divisao.valor_atual / divisao.valor_objetivo * 100
         else:
@@ -476,11 +478,8 @@ def listar_divisoes(request):
         divisao.saldo_td = divisao.saldo_td()
         divisao.saldo_trade = divisao.saldo_acoes_trade()
         divisao.saldo = divisao.saldo_bh + divisao.saldo_cdb_rdb + divisao.saldo_lc + divisao.saldo_fii + divisao.saldo_trade + divisao.saldo_td
-          
-    # TODO REMOVER Preparar parte de operações não alocadas
-    #operacoes_nao_alocadas = verificar_operacoes_nao_alocadas(investidor=investidor)
-    
-    return TemplateResponse(request, 'divisoes/listar_divisoes.html', {'divisoes': divisoes, 'operacoes_nao_alocadas': operacoes_nao_alocadas})
+              
+    return TemplateResponse(request, 'divisoes/listar_divisoes.html', {'divisoes': divisoes})
 
 @login_required
 def listar_transferencias(request):
