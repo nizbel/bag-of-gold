@@ -194,7 +194,6 @@ def inicio(request):
                                for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ] 
     graf_rendimentos_mensal_cri_cra = [[str(calendar.timegm(data.replace(hour=15).timetuple()) * 1000), diario_cri_cra[data.date()] ] \
                                for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ]
-    print graf_rendimentos_mensal_cri_cra
     
     return TemplateResponse(request, 'inicio.html', {'ultimas_operacoes': ultimas_operacoes, 'investimentos_atuais': investimentos_atuais, 'acumulado_mensal_atual': acumulado_mensal_atual,
                                                      'acumulado_mensal_anterior': acumulado_mensal_anterior, 'proventos_acoes_recebidos_hoje': proventos_acoes_recebidos_hoje,
