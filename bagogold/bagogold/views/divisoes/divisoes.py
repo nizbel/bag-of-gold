@@ -8,8 +8,7 @@ from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
     DivisaoOperacaoFII, DivisaoOperacaoTD, DivisaoOperacaoAcao, \
     TransferenciaEntreDivisoes, DivisaoOperacaoFundoInvestimento, \
     DivisaoOperacaoCDB_RDB
-from bagogold.bagogold.models.fii import ValorDiarioFII, HistoricoFII, \
-    OperacaoFII, FII
+from bagogold.bagogold.models.fii import ValorDiarioFII, HistoricoFII, FII
 from bagogold.bagogold.models.fundo_investimento import HistoricoValorCotas, \
     OperacaoFundoInvestimento, FundoInvestimento
 from bagogold.bagogold.models.lc import HistoricoTaxaDI, \
@@ -19,12 +18,15 @@ from bagogold.bagogold.models.td import ValorDiarioTitulo, HistoricoTitulo, \
 from bagogold.bagogold.utils.acoes import calcular_qtd_acoes_ate_dia_por_divisao
 from bagogold.bagogold.utils.cdb_rdb import \
     calcular_valor_cdb_rdb_ate_dia_por_divisao
+from bagogold.bagogold.utils.debenture import \
+    calcular_valor_debentures_ate_dia_por_divisao
 from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia_por_divisao
 from bagogold.bagogold.utils.fundo_investimento import \
     calcular_qtd_cotas_ate_dia_por_divisao
 from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia_por_divisao
 from bagogold.bagogold.utils.td import calcular_qtd_titulos_ate_dia_por_divisao
-from bagogold.cri_cra.utils.utils import calcular_valor_cri_cra_ate_dia_para_divisao
+from bagogold.cri_cra.utils.utils import \
+    calcular_valor_cri_cra_ate_dia_para_divisao
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -428,6 +430,11 @@ def listar_divisoes(request):
         cri_cra_divisao = calcular_valor_cri_cra_ate_dia_para_divisao(divisao.id, data_atual)
         divisao.valor_atual_cri_cra += sum(cri_cra_divisao.values())
         divisao.valor_atual += divisao.valor_atual_cri_cra
+        
+        # Debêntures
+        debentures_divisao = calcular_valor_debentures_ate_dia_por_divisao(divisao.id, data_atual)
+        divisao.valor_atual_debentures += sum(debentures_divisao.values())
+        divisao.valor_atual += divisao.valor_atual_debentures
          
         # Fundos de investimento imobiliário
         fii_divisao = calcular_qtd_fiis_ate_dia_por_divisao(data_atual, divisao.id)
