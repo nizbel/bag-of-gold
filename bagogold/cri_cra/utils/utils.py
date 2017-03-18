@@ -5,8 +5,9 @@ from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
 from django.db.models.aggregates import Sum
 from django.db.models.expressions import F, Case, When
 from django.db.models.fields import DecimalField
+import datetime
 
-def quantidade_cri_cra_na_data_para_certificado(data, cri_cra):
+def quantidade_cri_cra_na_data_para_certificado(cri_cra, data=datetime.date.today()):
     """
     Traz a quantidade que o investidor possui de determinado CRI/CRA até data definida
     Parâmetros: Data
@@ -20,7 +21,7 @@ def quantidade_cri_cra_na_data_para_certificado(data, cri_cra):
                             
     return qtd
 
-def qtd_cri_cra_ate_dia_para_divisao_para_certificado(dia, divisao_id, cri_cra_id):
+def qtd_cri_cra_ate_dia_para_divisao_para_certificado(divisao_id, cri_cra_id, dia=datetime.date.today()):
     """ 
     Calcula a quantidade de certificados de determinado CRI/CRA até dia determinado para uma divisão
     Parâmetros: Dia final
@@ -35,7 +36,7 @@ def qtd_cri_cra_ate_dia_para_divisao_para_certificado(dia, divisao_id, cri_cra_i
         
     return qtd_total
 
-def qtd_cri_cra_ate_dia(investidor, dia):
+def qtd_cri_cra_ate_dia(investidor, dia=datetime.date.today()):
     """ 
     Calcula a quantidade de certificados até dia determinado para investidor
     Parâmetros: Investidor
@@ -49,7 +50,7 @@ def qtd_cri_cra_ate_dia(investidor, dia):
         
     return qtd_cri_cra
 
-def qtd_cri_cra_ate_dia_para_certificado(dia, cri_cra_id):
+def qtd_cri_cra_ate_dia_para_certificado(cri_cra_id, dia=datetime.date.today()):
     """ 
     Calcula a quantidade de certificados de determinado CRI/CRA até dia determinado para investidor
     Parâmetros: Dia final
@@ -63,35 +64,44 @@ def qtd_cri_cra_ate_dia_para_certificado(dia, cri_cra_id):
         
     return qtd_total
 
-# TODO completar operação
-def qtd_cri_cra_ate_dia_para_divisao(dia, divisao_id):
+def qtd_cri_cra_ate_dia_para_divisao(divisao_id, dia=datetime.date.today()):
     """ 
     Calcula a quantidade de certificados até dia determinado para uma divisão
     Parâmetros: Dia final
                 ID da divisão
     Retorno: Quantidade de títulos {titulo_id: qtd}
     """
-    qtd_titulos = {}
-    operacoes_divisao = list(DivisaoOperacaoCRI_CRA.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).annotate(cri_cra=F('operacao__cri_cra')) \
+    qtd_titulos = dict(list(DivisaoOperacaoCRI_CRA.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).annotate(cri_cra=F('operacao__cri_cra')) \
         .values('cri_cra').annotate(qtd_soma=Sum(Case(When(operacao__tipo_operacao='C', then=F('quantidade')),
                             When(operacao__tipo_operacao='V', then=F('quantidade')*-1),
-                            output_field=DecimalField()))).values('cri_cra', 'qtd_soma'))
+                            output_field=DecimalField()))).values_list('cri_cra', 'qtd_soma').exclude(qtd_soma=0)))
         
-    print operacoes_divisao
-    
-    return 0
+    return qtd_titulos
 
-def calcular_valor_cri_cra_ate_dia(investidor, dia):
+def calcular_valor_cri_cra_ate_dia(investidor, dia=datetime.date.today()):
     """ 
     Calcula o valor dos certificados do investidor até dia determinado
     Parâmetros: Investidor
                 Dia final
     Retorno: Valor dos certificados {cri_cra_id: valor_da_data}
     """
-    
     qtd_cri_cra = qtd_cri_cra_ate_dia(investidor, dia)
     
-    for cri_cra_id in qtd_cri_cra.keys():
-        qtd_cri_cra[cri_cra_id] = calcular_valor_um_cri_cra_na_data(CRI_CRA.objects.get(id=cri_cra_id), dia) * qtd_cri_cra[cri_cra_id]
+    for cri_cra in CRI_CRA.objects.filter(id__in=qtd_cri_cra.keys()):
+        qtd_cri_cra[cri_cra.id] = calcular_valor_um_cri_cra_na_data(cri_cra, dia) * qtd_cri_cra[cri_cra.id]
+
+    return qtd_cri_cra
+
+def calcular_valor_cri_cra_ate_dia_para_divisao(divisao_id, dia=datetime.date.today()):
+    """ 
+    Calcula o valor dos certificados do investidor até dia determinado
+    Parâmetros: Investidor
+                Dia final
+    Retorno: Valor dos certificados {cri_cra_id: valor_da_data}
+    """
+    qtd_cri_cra = qtd_cri_cra_ate_dia_para_divisao(divisao_id, dia)
+    
+    for cri_cra in CRI_CRA.objects.filter(id__in=qtd_cri_cra.keys()):
+        qtd_cri_cra[cri_cra.id] = calcular_valor_um_cri_cra_na_data(cri_cra, dia) * qtd_cri_cra[cri_cra.id]
 
     return qtd_cri_cra

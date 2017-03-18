@@ -75,15 +75,10 @@ def calcular_valor_cdb_rdb_ate_dia_por_divisao(dia, divisao_id):
     
     operacoes_divisao_id = DivisaoOperacaoCDB_RDB.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).values('operacao__id')
     
-    operacoes_queryset = OperacaoCDB_RDB.objects.exclude(data__isnull=True).filter(id__in=operacoes_divisao_id).order_by('-tipo_operacao', 'data') 
-    operacoes = list(operacoes_queryset)
+    operacoes = list(OperacaoCDB_RDB.objects.exclude(data__isnull=True).filter(id__in=operacoes_divisao_id).order_by('-tipo_operacao', 'data'))
     for operacao in operacoes:
         if operacao.tipo_operacao == 'C':
             operacao.atual = DivisaoOperacaoCDB_RDB.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade
-            operacao.taxa = operacao.porcentagem()
-    
-    # Pegar data inicial
-    data_inicial = operacoes_queryset.order_by('data')[0].data
     
     cdb_rdb = {}
     for operacao in operacoes:
@@ -103,13 +98,15 @@ def calcular_valor_cdb_rdb_ate_dia_por_divisao(dia, divisao_id):
                 
     # Remover operações de venda e operações de compra totalmente vendidas
     operacoes = [operacao for operacao in operacoes if operacao.tipo_operacao == 'C' and operacao.atual > 0]
+    # Pegar data inicial
+    data_inicial = operacoes[0].data
     
     # Calcular o valor atualizado do patrimonio
     historico = HistoricoTaxaDI.objects.filter(data__range=[data_inicial, dia])
     
     for operacao in operacoes:
         taxas_dos_dias = dict(historico.filter(data__range=[operacao.data, dia]).values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
-        operacao.atual = calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao.atual, operacao.taxa)
+        operacao.atual = calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao.atual, operacao.porcentagem())
         # Arredondar valores
         str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
         operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
@@ -118,8 +115,4 @@ def calcular_valor_cdb_rdb_ate_dia_por_divisao(dia, divisao_id):
     for cdb_rdb_id in cdb_rdb.keys():
         cdb_rdb[cdb_rdb_id] += sum([operacao.atual for operacao in operacoes if operacao.investimento.id == cdb_rdb_id])
         
-        if cdb_rdb[cdb_rdb_id] == 0:
-            del cdb_rdb[cdb_rdb_id]
-    
-    
     return cdb_rdb

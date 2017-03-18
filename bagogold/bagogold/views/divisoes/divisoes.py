@@ -19,12 +19,12 @@ from bagogold.bagogold.models.td import ValorDiarioTitulo, HistoricoTitulo, \
 from bagogold.bagogold.utils.acoes import calcular_qtd_acoes_ate_dia_por_divisao
 from bagogold.bagogold.utils.cdb_rdb import \
     calcular_valor_cdb_rdb_ate_dia_por_divisao
-from bagogold.bagogold.utils.divisoes import verificar_operacoes_nao_alocadas
 from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia_por_divisao
 from bagogold.bagogold.utils.fundo_investimento import \
     calcular_qtd_cotas_ate_dia_por_divisao
 from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia_por_divisao
 from bagogold.bagogold.utils.td import calcular_qtd_titulos_ate_dia_por_divisao
+from bagogold.cri_cra.utils.utils import calcular_valor_cri_cra_ate_dia_para_divisao
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -35,8 +35,6 @@ from django.db.models.aggregates import Max
 from django.db.models.expressions import F
 from django.http import HttpResponseRedirect
 from django.http.response import HttpResponse
-from django.shortcuts import render_to_response
-from django.template.context import RequestContext
 from django.template.response import TemplateResponse
 import datetime
 
@@ -425,6 +423,11 @@ def listar_divisoes(request):
         cdb_rdb_divisao = calcular_valor_cdb_rdb_ate_dia_por_divisao(data_atual, divisao.id)
         divisao.valor_atual_cdb_rdb += sum(cdb_rdb_divisao.values())
         divisao.valor_atual += divisao.valor_atual_cdb_rdb
+         
+        # CRI / CRA
+        cri_cra_divisao = calcular_valor_cri_cra_ate_dia_para_divisao(divisao.id, data_atual)
+        divisao.valor_atual_cri_cra += sum(cri_cra_divisao.values())
+        divisao.valor_atual += divisao.valor_atual_cri_cra
          
         # Fundos de investimento imobiliário
         fii_divisao = calcular_qtd_fiis_ate_dia_por_divisao(data_atual, divisao.id)
