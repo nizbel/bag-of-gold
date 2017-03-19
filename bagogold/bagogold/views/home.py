@@ -212,6 +212,7 @@ def detalhamento_investimentos(request):
 
     investidor = request.user.investidor
     
+    # Adicionar FIIs do investidor
     operacoes_fii = OperacaoFII.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
     if operacoes_fii:
         proventos_fii = ProventoFII.objects.exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).filter(fii__in=operacoes_fii.values_list('fii', flat=True), data_ex__gt=operacoes_fii[0].data).order_by('data_ex')  
@@ -220,8 +221,10 @@ def detalhamento_investimentos(request):
     else:
         proventos_fii = list()
     
+    # Adicionar operações de Trading do investidor
     operacoes_td = OperacaoTitulo.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
     
+    # Adicionar operações de Buy and Hold do investidor
     operacoes_bh = OperacaoAcao.objects.filter(investidor=investidor, destinacao='B').exclude(data__isnull=True).order_by('data')
     if operacoes_bh:
         proventos_bh = Provento.objects.exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).filter(acao__in=operacoes_bh.values_list('acao', flat=True), data_ex__gt=operacoes_bh[0].data).order_by('data_ex')
@@ -229,18 +232,25 @@ def detalhamento_investimentos(request):
             provento.data = provento.data_ex
     else:
         proventos_bh = list()
-        
-    operacoes_lc = OperacaoLetraCredito.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
     
+    # Adicionar operações de LCI/LCA do investidor
+    operacoes_lc = OperacaoLetraCredito.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
+
+    # Adicionar operações de CDB/RDB do investidor    
     operacoes_cdb_rdb = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
     
+    # Adicionar operações de CRI/CRA do investidor    
+    operacoes_cri_cra = OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor).exclude(data__isnull=True).order_by('data') 
+    
+    # Adicionar operações de Debêntures do investidor
     operacoes_debentures = OperacaoDebenture.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
     
+    # Adicionar operações de Fundo de Investimento do investidor
     operacoes_fundo_investimento = OperacaoFundoInvestimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
     
     # Juntar todas as operações
     lista_operacoes = sorted(chain(proventos_fii, operacoes_fii, operacoes_td, proventos_bh,  operacoes_bh, operacoes_lc, operacoes_cdb_rdb, 
-                                   operacoes_debentures, operacoes_fundo_investimento),
+                                   operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento),
                             key=attrgetter('data'))
 
 	# Se não houver operações, retornar vazio
@@ -321,6 +331,7 @@ def detalhamento_investimentos(request):
         ultima_data_calculada_cdb_rdb = operacoes_cdb_rdb[0].data
     except:
         ultima_data_calculada_cdb_rdb = datetime.date.today()
+    cri_cra = {}
     fundos_investimento = {}
     debentures = {}
     total_proventos_fii = 0
@@ -339,6 +350,7 @@ def detalhamento_investimentos(request):
 #     total_td = datetime.timedelta(hours=0)
 #     total_lc = datetime.timedelta(hours=0)
 #     total_cdb_rdb = datetime.timedelta(hours=0)
+#     total_cri_cra = datetime.timedelta(hours=0)
 #     total_debentures = datetime.timedelta(hours=0)
 #     total_fundo_investimento = datetime.timedelta(hours=0)
     ############# TESTE
@@ -413,8 +425,6 @@ def detalhamento_investimentos(request):
             total_proventos_fii += item.total
                 
         elif isinstance(item, OperacaoLetraCredito):
-#             if item.letra_credito not in letras_credito.keys():
-#                 letras_credito[item.letra_credito] = 0    
             if item.tipo_operacao == 'C':
                 letras_credito[item.id] = item
                 
@@ -433,6 +443,15 @@ def detalhamento_investimentos(request):
                     del cdb_rdb[item.operacao_compra_relacionada().id]
                 else:
                     cdb_rdb[item.operacao_compra_relacionada().id].quantidade -= cdb_rdb[item.operacao_compra_relacionada().id].quantidade * item.quantidade / item.operacao_compra_relacionada().quantidade
+                    
+        elif isinstance(item, OperacaoCRI_CRA):
+            if item.cri_cra not in cri_cra.keys():
+                cri_cra[item.cri_cra] = 0    
+            if item.tipo_operacao == 'C':
+                cri_cra[item.cri_cra] += item.quantidade 
+                
+            elif item.tipo_operacao == 'V':
+                cri_cra[item.cri_cra] -= item.quantidade 
             
         elif isinstance(item, OperacaoDebenture):
             if item.debenture not in debentures.keys():
@@ -589,6 +608,16 @@ def detalhamento_investimentos(request):
 #             fim_cdb_rdb = datetime.datetime.now()
 #             total_cdb_rdb += fim_cdb_rdb - inicio_cdb_rdb
 
+            # CRI/CRA
+#             inicio_cri_cra = datetime.datetime.now()
+            patrimonio_cri_cra = 0
+            for certificado in cri_cra.keys():
+                patrimonio_cri_cra += cri_cra[certificado] * calcular_valor_um_cri_cra_na_data(certificado, item.data)
+            patrimonio['CRI/CRA'] = patrimonio_cri_cra
+            patrimonio['patrimonio_total'] += patrimonio['CRI/CRA'] 
+#             fim_cri_cra = datetime.datetime.now()
+#             total_cri_cra += fim_cri_cra - inicio_cri_cra
+
             # Debênture
 #             inicio_debentures = datetime.datetime.now()
             patrimonio_debentures = 0
@@ -623,6 +652,7 @@ def detalhamento_investimentos(request):
 #             print 'Prov. FII  ', total_prov_fii
 #             print 'LC         ', total_lc
 #             print 'CDB/RDB:   ', total_cdb_rdb
+#             print 'CRI/CRA:   ', total_cri_cra
 #             print 'Debêntures:', total_debentures
 #             print 'Fundo Inv. ', total_fundo_investimento
             
@@ -660,6 +690,7 @@ def detalhamento_investimentos(request):
 #     print 'TD:           ', total_td 
 #     print 'LC:           ', total_lc 
 #     print 'CDB/RDB:      ', total_cdb_rdb
+#     print 'CRI/CRA:      ', total_cri_cra
 #     print 'Debêntures:', total_debentures
 #     print 'Fundo Inv.:   ', total_fundo_investimento
     
