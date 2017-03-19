@@ -30,6 +30,7 @@ from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
 from decimal import Decimal, ROUND_DOWN
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
+from django.db.models.expressions import F
 from django.template.response import TemplateResponse
 from itertools import chain
 from operator import attrgetter
@@ -215,21 +216,19 @@ def detalhamento_investimentos(request):
     # Adicionar FIIs do investidor
     operacoes_fii = OperacaoFII.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
     if operacoes_fii:
-        proventos_fii = ProventoFII.objects.exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).filter(fii__in=operacoes_fii.values_list('fii', flat=True), data_ex__gt=operacoes_fii[0].data).order_by('data_ex')  
-        for provento in proventos_fii:
-            provento.data = provento.data_ex
+        proventos_fii = ProventoFII.objects.exclude(data_ex__isnull=True).filter(fii__in=operacoes_fii.values_list('fii', flat=True), data_ex__range=[operacoes_fii[0].data, datetime.date.today()]) \
+            .order_by('data_ex').annotate(data=F('data_ex'))
     else:
         proventos_fii = list()
     
-    # Adicionar operações de Trading do investidor
+    # Adicionar operações de Título Direto do investidor
     operacoes_td = OperacaoTitulo.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
     
     # Adicionar operações de Buy and Hold do investidor
     operacoes_bh = OperacaoAcao.objects.filter(investidor=investidor, destinacao='B').exclude(data__isnull=True).order_by('data')
     if operacoes_bh:
-        proventos_bh = Provento.objects.exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).filter(acao__in=operacoes_bh.values_list('acao', flat=True), data_ex__gt=operacoes_bh[0].data).order_by('data_ex')
-        for provento in proventos_bh:
-            provento.data = provento.data_ex
+        proventos_bh = Provento.objects.exclude(data_ex__isnull=True).filter(acao__in=operacoes_bh.values_list('acao', flat=True), data_ex__range=[operacoes_bh[0].data, datetime.date.today()]) \
+            .order_by('data_ex').annotate(data=F('data_ex'))
     else:
         proventos_bh = list()
     
