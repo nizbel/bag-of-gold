@@ -46,13 +46,9 @@ class Divisao (models.Model):
         saldo += calcular_poupanca_prov_acao_ate_dia_por_divisao(data, self)        
         
         # Transferências
-#         for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='B', data__lte=data):
-#             saldo -= transferencia.quantidade
-#         for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='B', data__lte=data):
-#             saldo += transferencia.quantidade
             
-        saldo += -(TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='B', data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
-            + (TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='B', data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
+        saldo += -(TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_BUY_AND_HOLD, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
+            + (TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_BUY_AND_HOLD, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
             
         return saldo
     
@@ -69,13 +65,9 @@ class Divisao (models.Model):
                 saldo += (operacao_divisao.quantidade * operacao.preco_unitario - (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
                 
         # Transferências
-#         for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='T', data__lte=data):
-#             saldo -= transferencia.quantidade
-#         for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='T', data__lte=data):
-#             saldo += transferencia.quantidade
 
-        saldo += -(TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='T', data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
-            + (TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='T', data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
+        saldo += -(TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_TRADING, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
+            + (TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_TRADING, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
             
         return saldo
     
@@ -103,13 +95,8 @@ class Divisao (models.Model):
                 saldo += valor_venda
                 
         # Transferências
-#         for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='C', data__lte=data):
-#             saldo -= transferencia.quantidade
-#         for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='C', data__lte=data):
-#             saldo += transferencia.quantidade
-            
-        saldo += -(TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='C', data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
-            + (TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='C', data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
+        saldo += -(TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_CDB_RDB, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
+            + (TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_CDB_RDB, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
             
         return saldo
     
@@ -117,30 +104,16 @@ class Divisao (models.Model):
         """
         Calcula o saldo de operações de CRI/CRA de uma divisão (dinheiro livre)
         """
-        saldo = Decimal(0)
-#         historico_di = HistoricoTaxaDI.objects.all()
-#         for operacao_divisao in DivisaoOperacaoCDB_RDB.objects.filter(divisao=self, operacao__data__lte=data):
-#             operacao = operacao_divisao.operacao
-#             if operacao.tipo_operacao == 'C':
-#                 saldo -= operacao_divisao.quantidade 
-#             elif operacao.tipo_operacao == 'V':
-#                 # Para venda, calcular valor da letra no dia da venda
-#                 valor_venda = operacao_divisao.quantidade
-#                 dias_de_rendimento = historico_di.filter(data__gte=operacao.operacao_compra_relacionada().data, data__lt=operacao.data)
-#                 operacao.taxa = operacao.porcentagem()
-#                 for dia in dias_de_rendimento:
-#                     # Calcular o valor atualizado para cada operacao
-#                     valor_venda = Decimal((pow((float(1) + float(dia.taxa)/float(100)), float(1)/float(252)) - float(1)) * float(operacao.taxa/100) + float(1)) * valor_venda
-#                 # Arredondar
-#                 str_auxiliar = str(valor_venda.quantize(Decimal('.0001')))
-#                 valor_venda = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-#                 saldo += valor_venda
-#                 
-#         # Transferências
-#         for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='C', data__lte=data):
-#             saldo -= transferencia.quantidade
-#         for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='C', data__lte=data):
-#             saldo += transferencia.quantidade
+        saldo = DivisaoOperacaoCRI_CRA.objects.filter(divisao=self, operacao__data__lte=data) \
+        .annotate(total=Case(When(operacao__tipo_operacao='C', then=-1 * (F('quantidade') * F('operacao__preco_unitario') + F('operacao__taxa') * (F('quantidade') / F('operacao__quantidade')))),
+                            When(operacao__tipo_operacao='V', then=F('quantidade') * F('operacao__preco_unitario') - F('operacao__taxa') * (F('quantidade') / F('operacao__quantidade'))),
+                            output_field=DecimalField())).aggregate(soma_total=Sum('total'))['soma_total'] or Decimal(0)
+
+        # TODO adicionar remunerações
+        
+        # Transferências
+        saldo += -(TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_CRI_CRA, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
+            + (TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_CRI_CRA, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
             
         return saldo
     
@@ -148,15 +121,16 @@ class Divisao (models.Model):
         """
         Calcula o saldo de operações de Debêntures de uma divisão (dinheiro livre)
         """
-        saldo = Decimal(0)
+        saldo = DivisaoOperacaoDebenture.objects.filter(divisao=self, operacao__data__lte=data) \
+        .annotate(total=Case(When(operacao__tipo_operacao='C', then=-1 * (F('quantidade') * F('operacao__preco_unitario') + F('operacao__taxa') * (F('quantidade') / F('operacao__quantidade')))),
+                            When(operacao__tipo_operacao='V', then=F('quantidade') * F('operacao__preco_unitario') - F('operacao__taxa') * (F('quantidade') / F('operacao__quantidade'))),
+                            output_field=DecimalField())).aggregate(soma_total=Sum('total'))['soma_total'] or Decimal(0)
         
         # TODO adicionar pagamentos
                         
         # Transferências
-        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='E', data__lte=data):
-            saldo -= transferencia.quantidade
-        for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='E', data__lte=data):
-            saldo += transferencia.quantidade
+        saldo += -(TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_DEBENTURE, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
+            + (TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_DEBENTURE, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
             
         return saldo
     
@@ -166,22 +140,20 @@ class Divisao (models.Model):
         """
         Calcula o saldo de operações de FII de uma divisão (dinheiro livre)
         """
-        saldo = DivisaoOperacaoFII.objects.filter(divisao=self, operacao__data__lte=data) \
-            .annotate(total=Case(When(operacao__tipo_operacao='C', then=-1 * (F('quantidade') * F('operacao__preco_unitario') + (F('operacao__corretagem') + F('operacao__emolumentos')) * (F('quantidade') / F('operacao__quantidade')))),
-                            When(operacao__tipo_operacao='V', then=F('quantidade') * F('operacao__preco_unitario') - (F('operacao__corretagem') + F('operacao__emolumentos')) * (F('quantidade') / F('operacao__quantidade'))),
-                            output_field=DecimalField())).aggregate(soma_total=Sum('total'))['soma_total'] or Decimal(0)
+        saldo = Decimal(0)
+        for operacao_divisao in DivisaoOperacaoFII.objects.filter(divisao=self, operacao__data__lte=data):
+            operacao = operacao_divisao.operacao
+            if operacao.tipo_operacao == 'C':
+                saldo -= (operacao_divisao.quantidade * operacao.preco_unitario + (operacao.corretagem + operacao.emolumentos - operacao.qtd_proventos_utilizada()) * operacao_divisao.percentual_divisao())
+            elif operacao.tipo_operacao == 'V':
+                saldo += (operacao_divisao.quantidade * operacao.preco_unitario - (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
         
         # Proventos
         saldo += calcular_poupanca_prov_fii_ate_dia_por_divisao(data, self)    
         
         # Transferências
-#         for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='F', data__lte=data):
-#             saldo -= transferencia.quantidade
-#         for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='F', data__lte=data):
-#             saldo += transferencia.quantidade
-        
-        saldo += -(TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='F', data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
-            + (TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='F', data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
+        saldo += -(TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_FII, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
+            + (TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_FII, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
         
         return saldo
     
@@ -198,13 +170,8 @@ class Divisao (models.Model):
                 saldo += (operacao_divisao.quantidade * operacao.valor_cota())
                 
         # Transferências
-#         for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='I', data__lte=data):
-#             saldo -= transferencia.quantidade
-#         for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='I', data__lte=data):
-#             saldo += transferencia.quantidade
-        
-        saldo += -(TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='I', data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
-            + (TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='I', data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
+        saldo += -(TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_FUNDO_INV, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
+            + (TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_FUNDO_INV, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
         
         return saldo
     
@@ -232,13 +199,8 @@ class Divisao (models.Model):
                 saldo += valor_venda
         
         # Transferências
-#         for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='L', data__lte=data):
-#             saldo -= transferencia.quantidade
-#         for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='L', data__lte=data):
-#             saldo += transferencia.quantidade
-        
-        saldo += -(TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='L', data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
-            + (TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='L', data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
+        saldo += -(TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_LCI_LCA, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
+            + (TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_LCI_LCA, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
         
         return saldo
     
@@ -255,13 +217,8 @@ class Divisao (models.Model):
                 saldo += (operacao_divisao.quantidade * operacao.preco_unitario - (operacao.taxa_custodia + operacao.taxa_bvmf) * operacao_divisao.percentual_divisao())
                 
         # Transferências
-#         for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='D', data__lte=data):
-#             saldo -= transferencia.quantidade
-#         for transferencia in TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='D', data__lte=data):
-#             saldo += transferencia.quantidade
-        
-        saldo += -(TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem='D', data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
-            + (TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino='D', data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
+        saldo += -(TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_TESOURO_DIRETO, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
+            + (TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_TESOURO_DIRETO, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
         
         # Arredondar
         saldo = saldo.quantize(Decimal('.01'))
@@ -281,8 +238,10 @@ class Divisao (models.Model):
         saldo += self.saldo_acoes_trade(data=data)
         # CDB/RDB
         saldo += self.saldo_cdb_rdb(data=data)
+        # CRI/CRA
+        saldo += self.saldo_cri_cra(data=data)
         # Debêntures
-#         saldo += self.saldo_debentures(data=data)
+        saldo += self.saldo_debentures(data=data)
         # FII
         saldo += self.saldo_fii(data=data)
         # Fundo de investimento
