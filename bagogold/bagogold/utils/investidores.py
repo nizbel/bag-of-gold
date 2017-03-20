@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import OperacaoAcao, ValorDiarioAcao, \
     HistoricoAcao, AcaoProvento, Acao, Provento
-from bagogold.bagogold.models.debentures import HistoricoValorDebenture,\
+from bagogold.bagogold.models.debentures import HistoricoValorDebenture, \
     OperacaoDebenture
 from bagogold.bagogold.models.divisoes import Divisao
 from bagogold.bagogold.models.fii import OperacaoFII, ValorDiarioFII, \
@@ -11,13 +11,13 @@ from bagogold.bagogold.models.fundo_investimento import \
 from bagogold.bagogold.models.lc import OperacaoLetraCredito
 from bagogold.bagogold.models.td import OperacaoTitulo, ValorDiarioTitulo, \
     HistoricoTitulo
-from bagogold.bagogold.utils.acoes import quantidade_acoes_ate_dia,\
+from bagogold.bagogold.utils.acoes import quantidade_acoes_ate_dia, \
     calcular_poupanca_prov_acao_ate_dia
 from bagogold.bagogold.utils.cdb_rdb import \
     calcular_valor_cdb_rdb_ate_dia_por_divisao, calcular_valor_cdb_rdb_ate_dia
 from bagogold.bagogold.utils.debenture import calcular_qtd_debentures_ate_dia
 from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia_por_ticker, \
-    calcular_qtd_fiis_ate_dia
+    calcular_qtd_fiis_ate_dia, calcular_poupanca_prov_fii_ate_dia
 from bagogold.bagogold.utils.fundo_investimento import \
     calcular_qtd_cotas_ate_dia
 from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia
@@ -93,11 +93,12 @@ def buscar_totais_atuais_investimentos(investidor):
     # Cálculo de quantidade
     for acao in Acao.objects.filter(id__in=acoes_investidor):
         acao_qtd = quantidade_acoes_ate_dia(investidor, acao.ticker, data_atual, considerar_trade=True)
-        if ValorDiarioAcao.objects.filter(acao__ticker=acao.ticker, data_hora__day=data_atual.day, data_hora__month=data_atual.month).exists():
-            acao_valor = ValorDiarioAcao.objects.filter(acao__ticker=acao.ticker, data_hora__day=data_atual.day, data_hora__month=data_atual.month).order_by('-data_hora')[0].preco_unitario
-        else:
-            acao_valor = HistoricoAcao.objects.filter(acao__ticker=acao.ticker).order_by('-data')[0].preco_unitario
-        totais_atuais['Ações'] += (acao_qtd * acao_valor)
+        if acao_qtd > 0:
+            if ValorDiarioAcao.objects.filter(acao__ticker=acao.ticker, data_hora__day=data_atual.day, data_hora__month=data_atual.month).exists():
+                acao_valor = ValorDiarioAcao.objects.filter(acao__ticker=acao.ticker, data_hora__day=data_atual.day, data_hora__month=data_atual.month).order_by('-data_hora')[0].preco_unitario
+            else:
+                acao_valor = HistoricoAcao.objects.filter(acao__ticker=acao.ticker).order_by('-data')[0].preco_unitario
+            totais_atuais['Ações'] += (acao_qtd * acao_valor)
     totais_atuais['Ações'] += calcular_poupanca_prov_acao_ate_dia(investidor, data_atual)
 
     # CDB / RDB
@@ -125,6 +126,7 @@ def buscar_totais_atuais_investimentos(investidor):
         else:
             fii_valor = HistoricoFII.objects.filter(fii__ticker=ticker).order_by('-data')[0].preco_unitario
         totais_atuais['FII'] += (fiis[ticker] * fii_valor)
+    totais_atuais['FII'] += calcular_poupanca_prov_fii_ate_dia(investidor, data_atual)
         
     # Fundos de investimento
     fundos_investimento = calcular_qtd_cotas_ate_dia(investidor, data_atual)
