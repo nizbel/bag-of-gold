@@ -50,13 +50,12 @@ $(document).ready(function() {
          // that many fields for validation
      })
 	
-	
-	if ($('#id_tipo_operacao').val() == 'C') {
-        $("#id_operacao_compra").parent().hide();
-        $("#id_investimento").parent().show();
-    } else {
+	if ($('#id_tipo_operacao').val() == 'V') {
         $("#id_operacao_compra").parent().show();
         $("#id_investimento").parent().hide();
+    } else {
+        $("#id_operacao_compra").parent().hide();
+        $("#id_investimento").parent().show();
     }
 	
 	// Adiciona alterações para o form dependendo do tipo de operação
