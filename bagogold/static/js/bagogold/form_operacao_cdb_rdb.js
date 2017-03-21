@@ -65,10 +65,10 @@ $(document).ready(function() {
  	});
      $("select[id$='-divisao']").selectpicker('refresh');
      $("#id_tipo_operacao").selectpicker('refresh');
-     
-	if ($('#id_tipo_operacao').parent().find('button').attr('title') == 'Venda') {
-        $("#grupo_operacao_compra").addClass('hidden');
-        $("#grupo_investimento").removeClass('hidden');
+
+     if ($('#id_tipo_operacao').parent().find('button').attr('title') == 'Venda') {
+        $("#grupo_operacao_compra").removeClass('hidden');
+        $("#grupo_investimento").addClass('hidden');
     } else {
         $("#grupo_operacao_compra").addClass('hidden');
         $("#grupo_investimento").removeClass('hidden');
