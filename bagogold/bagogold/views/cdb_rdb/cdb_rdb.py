@@ -632,15 +632,16 @@ def painel(request):
         
         # Processar operações
         for operacao in operacoes:     
-            if (operacao.data <= data_iteracao):     
+            if (operacao.data <= data_iteracao) and (data_iteracao <= operacao.data_vencimento()):     
                 # Verificar se se trata de compra ou venda
                 if operacao.tipo_operacao == 'C':
+                    if (data_iteracao < operacao.data_vencimento()):
                         # Calcular o valor atualizado para cada operacao
                         operacao.atual = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa)
-                        # Arredondar na última iteração
-                        if (data_iteracao == data_final):
-                            str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
-                            operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+                    # Arredondar na última iteração
+                    if (data_iteracao == data_final) or (data_iteracao == operacao.data_vencimento()):
+                        str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
+                        operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
                         
                 elif operacao.tipo_operacao == 'V':
                     if (operacao.data == data_iteracao):
@@ -675,10 +676,13 @@ def painel(request):
     total_vencimento = 0
     for operacao in operacoes:
         # Calcular o ganho no dia seguinte, considerando taxa do dia anterior
-        operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa) - operacao.atual
-        str_auxiliar = str(operacao.ganho_prox_dia.quantize(Decimal('.0001')))
-        operacao.ganho_prox_dia = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-        total_ganho_prox_dia += operacao.ganho_prox_dia
+        if data_final < operacao.data_vencimento():
+            operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa) - operacao.atual
+            str_auxiliar = str(operacao.ganho_prox_dia.quantize(Decimal('.0001')))
+            operacao.ganho_prox_dia = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+            total_ganho_prox_dia += operacao.ganho_prox_dia
+        else:
+            operacao.ganho_prox_dia = Decimal(0)
         
         # Calcular impostos
         qtd_dias = (datetime.date.today() - operacao.data).days
@@ -699,11 +703,15 @@ def painel(request):
         operacao.valor_liquido = operacao.atual - operacao.imposto_renda - operacao.iof
         
         # Estimativa para o valor do investimento na data de vencimento
-        qtd_dias_uteis_ate_vencimento = qtd_dias_uteis_no_periodo(data_final + datetime.timedelta(days=1), operacao.data_vencimento())
-        operacao.valor_vencimento = calcular_valor_atualizado_com_taxas({HistoricoTaxaDI.objects.get(data=data_final).taxa: qtd_dias_uteis_ate_vencimento},
-                                             operacao.atual, operacao.taxa)
-        str_auxiliar = str(operacao.valor_vencimento.quantize(Decimal('.0001')))
-        operacao.valor_vencimento = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+        if data_final < operacao.data_vencimento():
+            qtd_dias_uteis_ate_vencimento = qtd_dias_uteis_no_periodo(data_final + datetime.timedelta(days=1), operacao.data_vencimento())
+            operacao.valor_vencimento = calcular_valor_atualizado_com_taxas({HistoricoTaxaDI.objects.get(data=data_final).taxa: qtd_dias_uteis_ate_vencimento},
+                                                 operacao.atual, operacao.taxa)
+            str_auxiliar = str(operacao.valor_vencimento.quantize(Decimal('.0001')))
+            operacao.valor_vencimento = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+        else:
+            operacao.valor_vencimento = operacao.atual
+            print operacao.data_vencimento()
         
         total_atual += operacao.atual
         total_ir += operacao.imposto_renda
