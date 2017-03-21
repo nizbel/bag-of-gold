@@ -85,17 +85,7 @@
                         </div>
                     </div>
                 </div>
-                {% if not varias_divisoes %}
-                <div class="row">
-                    <div class="form-group col-md-6 {% if form_operacao_cri_cra.qtd_utilizada.errors %} has-error {% endif %}">
-                        <label class="control-label col-md-4" style="text-align: left;"> Quantidade de proventos utilizada: </label>
-                        <div class="col-md-8">
-                            <input id="id_qtd_utilizada" type="text" value="0" name="qtd_utilizada" class="form-control">
-                            {% if form_operacao_cri_cra.qtd_utilizada.errors %} <span class="help-block"> {{ form_operacao_cri_cra.qtd_utilizada.errors.as_text }} </span> {% endif %}
-                        </div>
-                    </div>
-                </div>
-                {% else %}
+                {% varias_divisoes %}
                 <div class="row" id="forms">
                     <h2 class="font-yellow-crusta" align="center">
                         <strong>Divisões</strong> <button id="add-another" class="btn btn-icon-only green-steel" type="button"><i class="fa fa-plus"></i></button>
