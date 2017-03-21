@@ -36,7 +36,7 @@ class OperacaoCDB_RDBForm(LocalizedModelForm):
                  'tipo_operacao': widgets.Select(choices=ESCOLHAS_TIPO_OPERACAO),}
         
     class Media:
-        js = ('js/bagogold/cdb_rdb.js',)
+        js = ('js/bagogold/form_operacao_cdb_rdb.js',)
         
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')

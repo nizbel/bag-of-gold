@@ -537,7 +537,7 @@ def inserir_operacao_cdb_rdb(request):
     else:
         form_operacao_cdb_rdb = OperacaoCDB_RDBForm(investidor=investidor)
         formset_divisao_cdb_rdb = DivisaoCDB_RDBFormSet(investidor=investidor)
-    return TemplateResponse(request, 'cdb_rdb/inserir_operacao_cdb_rdb.html', {'form_operacao_cdb_rdb': form_operacao_cdb_rdb, 'formset_divisao_cdb_rdb': formset_divisao_cdb_rdb,
+    return TemplateResponse(request, 'cdb_rdb/inserir_operacao_cdb_rdb.html', {'form_operacao_cdb_rdb': form_operacao_cdb_rdb, 'formset_divisao': formset_divisao_cdb_rdb,
                                                                         'varias_divisoes': varias_divisoes})
 
 @login_required
