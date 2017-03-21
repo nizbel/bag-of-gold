@@ -291,7 +291,7 @@ def editar_divisao(request, id):
             if form.is_valid():
                 divisao.save()
                 messages.success(request, 'Divisão editada com sucesso')
-                return HttpResponseRedirect(reverse('listar_divisoes'))
+                return HttpResponseRedirect(reverse('divisoes:listar_divisoes'))
             for erros in form.errors.values():
                 for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
                     messages.error(request, erro.message)
@@ -306,7 +306,7 @@ def editar_divisao(request, id):
                 return TemplateResponse(request, 'divisoes/editar_divisao.html', {'form': form, 'divisao': divisao})
             divisao.delete()
             messages.success(request, 'Divisão excluída com sucesso')
-            return HttpResponseRedirect(reverse('listar_divisoes'))
+            return HttpResponseRedirect(reverse('divisoes:listar_divisoes'))
  
     else:
         form = DivisaoForm(instance=divisao)
@@ -331,7 +331,7 @@ def editar_transferencia(request, id):
             if form.is_valid():
                 transferencia.save()
                 messages.success(request, 'Transferência editada com sucesso')
-                return HttpResponseRedirect(reverse('listar_transferencias'))
+                return HttpResponseRedirect(reverse('divisoes:listar_transferencias'))
             for erros in form.errors.values():
                 for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
                     messages.error(request, erro.message)
@@ -340,7 +340,7 @@ def editar_transferencia(request, id):
         elif request.POST.get("delete"):
             transferencia.delete()
             messages.success(request, 'Operação excluída com sucesso')
-            return HttpResponseRedirect(reverse('listar_transferencias'))
+            return HttpResponseRedirect(reverse('divisoes:listar_transferencias'))
  
     else:
         form = TransferenciaEntreDivisoesForm(instance=transferencia, investidor=investidor)
@@ -357,7 +357,7 @@ def inserir_divisao(request):
             divisao = form.save(commit=False)
             divisao.investidor = investidor
             divisao.save()
-            return HttpResponseRedirect(reverse('listar_divisoes'))
+            return HttpResponseRedirect(reverse('divisoes:listar_divisoes'))
     else:
         form = DivisaoForm()
             
@@ -372,7 +372,7 @@ def inserir_transferencia(request):
         if form.is_valid():
             form.save()
             messages.success(request, 'Transferência inserida com sucesso')
-            return HttpResponseRedirect(reverse('listar_transferencias'))
+            return HttpResponseRedirect(reverse('divisoes:listar_transferencias'))
         # Imprimir erors nas mensagens
         for erro in form.non_field_errors():
             print erro

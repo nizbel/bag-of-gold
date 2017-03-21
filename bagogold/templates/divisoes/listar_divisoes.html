@@ -40,7 +40,7 @@
 						<tbody>
 						{% for divisao in divisoes %}
 						<tr>
-							<td><a href="{% url 'detalhar_divisao' divisao.id %}">{{divisao.nome}}</a></td>
+							<td><a href="{% url 'divisoes:detalhar_divisao' divisao.id %}">{{divisao.nome}}</a></td>
 							<td>R${{divisao.valor_objetivo}}</td>
 							<td>R${{divisao.valor_atual|floatformat:"2"}} ({{divisao.quantidade_percentual|floatformat:"2"}}%)</td>
 							<td><span class="
@@ -90,7 +90,7 @@
 						<tbody>
 						{% for divisao in divisoes %}
 						<tr>
-							<td><a href="{% url 'detalhar_divisao' divisao.id %}">{{divisao.nome}}</a></td>
+							<td><a href="{% url 'divisoes:detalhar_divisao' divisao.id %}">{{divisao.nome}}</a></td>
 							<td><span class="
 								{% if divisao.valor_atual_bh < 0 %}
 								font-red-thunderbird
@@ -194,7 +194,7 @@
 						<tbody>
 						{% for divisao in divisoes %}
 						<tr>
-							<td><a href="{% url 'detalhar_divisao' divisao.id %}">{{divisao.nome}}</a></td>
+							<td><a href="{% url 'divisoes:detalhar_divisao' divisao.id %}">{{divisao.nome}}</a></td>
 							<td><span class="
 								{% if divisao.saldo_bh < 0 %}
 								font-red-thunderbird

@@ -41,7 +41,7 @@
 			<td>{{transferencia.data|date:"Y-m-d"}}</td>
 			<td>R${{transferencia.quantidade}}</td>
 			<td>{{transferencia.descricao|default:"Sem descrição"}}</td>
-			<td><a href="{% url "editar_transferencia" transferencia.id %}" class="btn btn-sm btn-warning">Editar</a></td>
+			<td><a href="{% url "divisoes:editar_transferencia" transferencia.id %}" class="btn btn-sm btn-warning">Editar</a></td>
 		</tr>
 		{% endfor %}
 		</tbody>

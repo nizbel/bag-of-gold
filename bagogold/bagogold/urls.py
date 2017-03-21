@@ -36,6 +36,16 @@ acoes_patterns = [
     url(r'^trading/inserir_operacao_acao/$', views.acoes.trade.inserir_operacao_acao, name='inserir_operacao_acao_t'),
     ]
 
+divisoes_patterns = [
+    url(r'^divisoes/criar_transferencias/$', views.divisoes.divisoes.criar_transferencias, name='criar_transferencias'),
+    url(r'^divisoes/detalhar_divisao/(?P<id>\d+)/$', views.divisoes.divisoes.detalhar_divisao, name='detalhar_divisao'),
+    url(r'^divisoes/editar_divisao/(?P<id>\d+)/$', views.divisoes.divisoes.editar_divisao, name='editar_divisao'),
+    url(r'^divisoes/editar_transferencia/(?P<id>\d+)/$', views.divisoes.divisoes.editar_transferencia, name='editar_transferencia'),
+    url(r'^divisoes/inserir_divisao/$', views.divisoes.divisoes.inserir_divisao, name='inserir_divisao'),
+    url(r'^divisoes/inserir_transferencia/$', views.divisoes.divisoes.inserir_transferencia, name='inserir_transferencia'),
+    url(r'^divisoes/listar_divisoes/$', views.divisoes.divisoes.listar_divisoes, name='listar_divisoes'),
+    url(r'^divisoes/listar_transferencias/$', views.divisoes.divisoes.listar_transferencias, name='listar_transferencias'),]
+
 gerador_proventos_patterns = [
     url(r'^baixar_documento_provento/(?P<id_documento>\d+)/$', views.gerador_proventos.gerador_proventos.baixar_documento_provento, name='baixar_documento_provento'),
     url(r'^detalhar_documento/(?P<id_documento>\d+)/$', views.gerador_proventos.gerador_proventos.detalhar_documento, name='detalhar_documento'),
@@ -89,36 +99,8 @@ urlpatterns = [
     # Ações
     url(r'^acoes/', include(acoes_patterns, namespace='acoes')),
     
-#     url(r'^acoes/$', views.acoes.home.home, name='home_acoes'),
-# #     url(r'^$', views.acoes.buyandhold.listar_acoes, name='listar_acoes'),
-#     url(r'^acoes/buyandhold/calcular_poupanca_proventos_na_data/$', views.acoes.buyandhold.calcular_poupanca_proventos_na_data, name='calcular_poupanca_proventos_na_data'),
-#     url(r'^acoes/buyandhold/editar_operacao_acao/(?P<id>\d+)/$', views.acoes.buyandhold.editar_operacao_acao, name='editar_operacao_bh'),
-#     url(r'^acoes/buyandhold/editar_provento_acao/(?P<id>\d+)/$', views.acoes.buyandhold.editar_provento_acao, name='editar_provento_bh'),
-#     url(r'^acoes/buyandhold/estatisticas_acao/(?P<ticker>\w+)/$', views.acoes.buyandhold.estatisticas_acao, name='estatisticas_acao_bh'),
-#     url(r'^acoes/buyandhold/historico/$', views.acoes.buyandhold.historico, name='historico_bh'),
-#     url(r'^acoes/buyandhold/inserir_operacao_acao/$', views.acoes.buyandhold.inserir_operacao_acao, name='inserir_operacao_bh'),
-#     url(r'^acoes/buyandhold/inserir_provento_acao/$', views.acoes.buyandhold.inserir_provento_acao, name='inserir_provento_bh'),
-#     url(r'^acoes/buyandhold/inserir_taxa_custodia_acao/$', views.acoes.buyandhold.inserir_taxa_custodia_acao, name='inserir_taxa_custodia_acao'),
-#     url(r'^acoes/buyandhold/painel/$', views.acoes.buyandhold.painel, name='painel_bh'),
-#     url(r'^acoes/buyandhold/ver_taxas_custodia_acao/$', views.acoes.buyandhold.ver_taxas_custodia_acao, name='ver_taxas_custodia_acao'),
-#     
-#     url(r'^acoes/trading/acompanhamento_mensal/$', views.acoes.trade.acompanhamento_mensal, name='acompanhamento_mensal'),
-#     url(r'^acoes/trading/editar_operacao/(?P<id>\d+)/$', views.acoes.trade.editar_operacao, name='editar_operacao_t'),
-#     url(r'^acoes/trading/editar_operacao_acao/(?P<id>\d+)/$', views.acoes.trade.editar_operacao_acao, name='editar_operacao_acao_t'),
-#     url(r'^acoes/trading/historico_operacoes/$', views.acoes.trade.historico_operacoes, name='historico_operacoes'),
-#     url(r'^acoes/trading/historico_operacoes_cv/$', views.acoes.trade.historico_operacoes_cv, name='historico_operacoes_cv'),
-#     url(r'^acoes/trading/inserir_operacao/$', views.acoes.trade.inserir_operacao, name='inserir_operacao_t'),
-#     url(r'^acoes/trading/inserir_operacao_acao/$', views.acoes.trade.inserir_operacao_acao, name='inserir_operacao_acao_t'),
-    
     # Divisões
-    url(r'^divisoes/criar_transferencias/$', views.divisoes.divisoes.criar_transferencias, name='criar_transferencias'),
-    url(r'^divisoes/detalhar_divisao/(?P<id>\d+)/$', views.divisoes.divisoes.detalhar_divisao, name='detalhar_divisao'),
-    url(r'^divisoes/editar_divisao/(?P<id>\d+)/$', views.divisoes.divisoes.editar_divisao, name='editar_divisao'),
-    url(r'^divisoes/editar_transferencia/(?P<id>\d+)/$', views.divisoes.divisoes.editar_transferencia, name='editar_transferencia'),
-    url(r'^divisoes/inserir_divisao/$', views.divisoes.divisoes.inserir_divisao, name='inserir_divisao'),
-    url(r'^divisoes/inserir_transferencia/$', views.divisoes.divisoes.inserir_transferencia, name='inserir_transferencia'),
-    url(r'^divisoes/listar_divisoes/$', views.divisoes.divisoes.listar_divisoes, name='listar_divisoes'),
-    url(r'^divisoes/listar_transferencias/$', views.divisoes.divisoes.listar_transferencias, name='listar_transferencias'),
+    url(r'^divisoes/', include(divisoes_patterns, namespace='divisoes')),
     
     # FII
     url(r'^fii/acompanhamento_mensal/$', views.fii.fii.acompanhamento_mensal_fii, name='acompanhamento_mensal_fii'),
