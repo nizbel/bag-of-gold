@@ -26,7 +26,8 @@
 						<label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_cdb_rdb.fields.tipo_operacao.label}}: </label>
 						<div class="col-md-8">
 							<select class="selectpicker form-control" id="id_tipo_operacao" name="tipo_operacao">
-								{% for key, value in form_operacao_cdb_rdb.fields.tipo_operacao.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
+								{% for key, value in form_operacao_cdb_rdb.fields.tipo_operacao.widget.choices %}<option value="{{ key }}"
+                                {% if key == form_operacao_cdb_rdb.tipo_operacao.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
 							</select>
 							{% if form_operacao_cdb_rdb.tipo_operacao.errors %} <span class="help-block"> {{ form_operacao_cdb_rdb.tipo_operacao.errors.as_text }} </span> {% endif %}
 						</div>
@@ -70,7 +71,8 @@
                         <label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_cdb_rdb.fields.operacao_compra.label}}: </label>
                         <div class="col-md-8">
                             <select class="selectpicker form-control" id="id_operacao_compra" name="operacao_compra">
-                                {% for key, value in form_operacao_cdb_rdb.fields.operacao_compra.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
+                                {% for key, value in form_operacao_cdb_rdb.fields.operacao_compra.widget.choices %}<option value="{{ key }}"
+                                {% if key == form_operacao_cdb_rdb.operacao_compra.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
                             </select>
                             {% if form_operacao_cdb_rdb.operacao_compra.errors %} <span class="help-block"> {{ form_operacao_cdb_rdb.operacao_compra.errors.as_text }} </span> {% endif %}
                         </div>
