@@ -211,7 +211,7 @@ def editar_operacao_cri_cra(request, id_operacao):
                   
         elif request.POST.get("delete"):
             # Testa se operação a excluir não deixará operações de venda excedendo a posição do investidor
-            if operacao_cri_cra.tipo_operacao == 'V' or qtd_cri_cra_ate_dia_para_certificado(datetime.date.today(), operacao_cri_cra.cri_cra) - operacao_cri_cra.quantidade > 0:
+            if operacao_cri_cra.tipo_operacao == 'V' or qtd_cri_cra_ate_dia_para_certificado(operacao_cri_cra.cri_cra) - operacao_cri_cra.quantidade > 0:
                 try:
                     with transaction.atomic():
                         divisao_cri_cra = DivisaoOperacaoCRI_CRA.objects.filter(operacao=operacao_cri_cra)

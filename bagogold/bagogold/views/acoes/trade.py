@@ -232,7 +232,7 @@ def editar_operacao(request, id):
                 form.save()
         elif request.POST.get("delete"):
             operacao.delete()
-            return HttpResponseRedirect(reverse('historico_operacoes_cv'))
+            return HttpResponseRedirect(reverse('acoes:historico_operacoes_cv'))
 
     else:
         form = OperacaoCompraVendaForm(instance=operacao, investidor=investidor)
@@ -268,14 +268,14 @@ def editar_operacao_acao(request, id):
                     operacao.save()
                     formset_divisao.save()
                     messages.success(request, 'Operação alterada com sucesso')
-                    return HttpResponseRedirect(reverse('historico_operacoes'))
+                    return HttpResponseRedirect(reverse('acoes:historico_operacoes'))
         elif request.POST.get("delete"):
             divisao_acao = DivisaoOperacaoAcao.objects.filter(operacao=operacao)
             for divisao in divisao_acao:
                 divisao.delete()
             operacao.delete()
             messages.success(request, 'Operação apagada com sucesso')
-            return HttpResponseRedirect(reverse('historico_operacoes'))
+            return HttpResponseRedirect(reverse('acoes:historico_operacoes'))
 
     else:
         form_operacao_acao = OperacaoAcaoForm(instance=operacao)
@@ -410,7 +410,7 @@ def inserir_operacao(request):
             operacao_trade = form.save(commit=False)
             operacao_trade.investidor = investidor
             operacao_trade.save()
-            return HttpResponseRedirect(reverse('historico_operacoes_cv'))
+            return HttpResponseRedirect(reverse('acoes:historico_operacoes_cv'))
     else:
         form = OperacaoCompraVendaForm(investidor=investidor)
             
@@ -434,7 +434,7 @@ def inserir_operacao_acao(request):
                 operacao_acao.save()
                 formset_divisao.save()
                 messages.success(request, 'Operação inserida com sucesso')
-                return HttpResponseRedirect(reverse('historico_operacoes'))
+                return HttpResponseRedirect(reverse('acoes:historico_operacoes'))
             for erro in formset_divisao.non_form_errors():
                 messages.error(request, erro)
     else:

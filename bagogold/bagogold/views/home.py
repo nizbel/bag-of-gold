@@ -24,12 +24,13 @@ from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas, \
 from bagogold.bagogold.utils.misc import calcular_rendimentos_ate_data, \
     verificar_feriado_bovespa
 from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia
-from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA, CRI_CRA
+from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA
 from bagogold.cri_cra.utils.utils import calcular_valor_cri_cra_ate_dia
 from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
 from decimal import Decimal, ROUND_DOWN
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
+from django.db.models.expressions import F
 from django.template.response import TemplateResponse
 from itertools import chain
 from operator import attrgetter
@@ -194,7 +195,6 @@ def inicio(request):
                                for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ] 
     graf_rendimentos_mensal_cri_cra = [[str(calendar.timegm(data.replace(hour=15).timetuple()) * 1000), diario_cri_cra[data.date()] ] \
                                for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ]
-    print graf_rendimentos_mensal_cri_cra
     
     return TemplateResponse(request, 'inicio.html', {'ultimas_operacoes': ultimas_operacoes, 'investimentos_atuais': investimentos_atuais, 'acumulado_mensal_atual': acumulado_mensal_atual,
                                                      'acumulado_mensal_anterior': acumulado_mensal_anterior, 'proventos_acoes_recebidos_hoje': proventos_acoes_recebidos_hoje,
@@ -213,35 +213,46 @@ def detalhamento_investimentos(request):
 
     investidor = request.user.investidor
     
+    # Adicionar FIIs do investidor
     operacoes_fii = OperacaoFII.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
     if operacoes_fii:
-        proventos_fii = ProventoFII.objects.exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).filter(fii__in=operacoes_fii.values_list('fii', flat=True), data_ex__gt=operacoes_fii[0].data).order_by('data_ex')  
-        for provento in proventos_fii:
-            provento.data = provento.data_ex
+        proventos_fii = ProventoFII.objects.exclude(data_ex__isnull=True).filter(fii__in=operacoes_fii.values_list('fii', flat=True), data_ex__range=[operacoes_fii[0].data, datetime.date.today()]) \
+            .order_by('data_ex').annotate(data=F('data_ex'))
     else:
         proventos_fii = list()
     
+    # Adicionar operações de Tesouro Direto do investidor
     operacoes_td = OperacaoTitulo.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
     
+    # Adicionar operações de Buy and Hold do investidor
     operacoes_bh = OperacaoAcao.objects.filter(investidor=investidor, destinacao='B').exclude(data__isnull=True).order_by('data')
     if operacoes_bh:
-        proventos_bh = Provento.objects.exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).filter(acao__in=operacoes_bh.values_list('acao', flat=True), data_ex__gt=operacoes_bh[0].data).order_by('data_ex')
-        for provento in proventos_bh:
-            provento.data = provento.data_ex
+        proventos_bh = Provento.objects.exclude(data_ex__isnull=True).filter(acao__in=operacoes_bh.values_list('acao', flat=True), data_ex__range=[operacoes_bh[0].data, datetime.date.today()]) \
+            .order_by('data_ex').annotate(data=F('data_ex'))
     else:
         proventos_bh = list()
         
-    operacoes_lc = OperacaoLetraCredito.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
+    # Adicionar operações de Trading do investidor
+    operacoes_t = OperacaoAcao.objects.filter(investidor=investidor, destinacao='T').exclude(data__isnull=True).order_by('data')
     
+    # Adicionar operações de LCI/LCA do investidor
+    operacoes_lc = OperacaoLetraCredito.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
+
+    # Adicionar operações de CDB/RDB do investidor    
     operacoes_cdb_rdb = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
     
+    # Adicionar operações de CRI/CRA do investidor    
+    operacoes_cri_cra = OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor).exclude(data__isnull=True).order_by('data') 
+    
+    # Adicionar operações de Debêntures do investidor
     operacoes_debentures = OperacaoDebenture.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
     
+    # Adicionar operações de Fundo de Investimento do investidor
     operacoes_fundo_investimento = OperacaoFundoInvestimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
     
     # Juntar todas as operações
-    lista_operacoes = sorted(chain(proventos_fii, operacoes_fii, operacoes_td, proventos_bh,  operacoes_bh, operacoes_lc, operacoes_cdb_rdb, 
-                                   operacoes_debentures, operacoes_fundo_investimento),
+    lista_operacoes = sorted(chain(proventos_fii, operacoes_fii, operacoes_td, proventos_bh,  operacoes_bh, operacoes_t, operacoes_lc, operacoes_cdb_rdb, 
+                                   operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento),
                             key=attrgetter('data'))
 
 	# Se não houver operações, retornar vazio
@@ -308,7 +319,8 @@ def detalhamento_investimentos(request):
                             key=attrgetter('data'))
     
     fii = {}
-    acoes = {}
+    acoes_bh = {}
+    acoes_t = {}
     titulos_td = {}
     letras_credito = {}
     # Caso haja LC, preparar para o cálculo
@@ -322,6 +334,7 @@ def detalhamento_investimentos(request):
         ultima_data_calculada_cdb_rdb = operacoes_cdb_rdb[0].data
     except:
         ultima_data_calculada_cdb_rdb = datetime.date.today()
+    cri_cra = {}
     fundos_investimento = {}
     debentures = {}
     total_proventos_fii = 0
@@ -333,13 +346,15 @@ def detalhamento_investimentos(request):
     estatisticas = list()
     
     ############# TESTE
-#     total_acoes = datetime.timedelta(hours=0)
-#     total_prov_acoes = datetime.timedelta(hours=0)
+#     total_acoes_bh = datetime.timedelta(hours=0)
+#     total_acoes_t = datetime.timedelta(hours=0)
+#     total_prov_acoes_bh = datetime.timedelta(hours=0)
 #     total_fii = datetime.timedelta(hours=0)
 #     total_prov_fii = datetime.timedelta(hours=0)
 #     total_td = datetime.timedelta(hours=0)
 #     total_lc = datetime.timedelta(hours=0)
 #     total_cdb_rdb = datetime.timedelta(hours=0)
+#     total_cri_cra = datetime.timedelta(hours=0)
 #     total_debentures = datetime.timedelta(hours=0)
 #     total_fundo_investimento = datetime.timedelta(hours=0)
     ############# TESTE
@@ -354,38 +369,45 @@ def detalhamento_investimentos(request):
             patrimonio_anual += [[str(ano_corrente).replace('.', ''), patrimonio, diferenca]]
             ano_corrente = item.data.year
         
-        if isinstance(item, OperacaoAcao):  
-            if item.acao.ticker not in acoes.keys():
-                acoes[item.acao.ticker] = 0 
-            if item.tipo_operacao == 'C':
-                acoes[item.acao.ticker] += item.quantidade
-                if len(item.usoproventosoperacaoacao_set.all()) > 0:
-                    total_proventos_bh -= item.qtd_proventos_utilizada()
-                
-            elif item.tipo_operacao == 'V':
-                acoes[item.acao.ticker] -= item.quantidade
-                total_venda = (item.quantidade * item.preco_unitario - \
-                    item.emolumentos - item.corretagem)
-#                 total_proventos_bh += total_venda
+        if isinstance(item, OperacaoAcao):
+            if item.destinacao == 'B':
+                if item.acao.ticker not in acoes_bh.keys():
+                    acoes_bh[item.acao.ticker] = 0 
+                if item.tipo_operacao == 'C':
+                    acoes_bh[item.acao.ticker] += item.quantidade
+                    if len(item.usoproventosoperacaoacao_set.all()) > 0:
+                        total_proventos_bh -= item.qtd_proventos_utilizada()
+                elif item.tipo_operacao == 'V':
+                    acoes_bh[item.acao.ticker] -= item.quantidade
+            
+            elif item.destinacao == 'T':
+                if item.acao.ticker not in acoes_t.keys():
+                    acoes_t[item.acao.ticker] = 0 
+                if item.tipo_operacao == 'C':
+                    acoes_t[item.acao.ticker] += item.quantidade
+#                     if len(item.usoproventosoperacaoacao_set.all()) > 0:
+#                         total_proventos_t -= item.qtd_proventos_utilizada()
+                elif item.tipo_operacao == 'V':
+                    acoes_t[item.acao.ticker] -= item.quantidade
                 
         elif isinstance(item, Provento):
             if item.data_pagamento <= datetime.date.today():
-                if item.acao.ticker not in acoes.keys():
-                    acoes[item.acao.ticker] = 0 
+                if item.acao.ticker not in acoes_bh.keys():
+                    acoes_bh[item.acao.ticker] = 0 
                 if item.tipo_provento in ['D', 'J']:
-                    total_recebido = acoes[item.acao.ticker] * item.valor_unitario
+                    total_recebido = acoes_bh[item.acao.ticker] * item.valor_unitario
                     if item.tipo_provento == 'J':
                         total_recebido = total_recebido * Decimal(0.85)
                     total_proventos_bh += total_recebido
                 elif item.tipo_provento == 'A':
                     provento_acao = item.acaoprovento_set.all()[0]
-                    if provento_acao.acao_recebida.ticker not in acoes.keys():
-                        acoes[provento_acao.acao_recebida.ticker] = 0
-                    acoes_recebidas = int((acoes[item.acao.ticker] * item.valor_unitario ) / 100 )
-                    acoes[provento_acao.acao_recebida.ticker] += acoes_recebidas
+                    if provento_acao.acao_recebida.ticker not in acoes_bh.keys():
+                        acoes_bh[provento_acao.acao_recebida.ticker] = 0
+                    acoes_recebidas = int((acoes_bh[item.acao.ticker] * item.valor_unitario ) / 100 )
+                    acoes_bh[provento_acao.acao_recebida.ticker] += acoes_recebidas
                     if provento_acao.valor_calculo_frac > 0:
                         if provento_acao.data_pagamento_frac <= datetime.date.today():
-                            total_proventos_bh += (((acoes[item.acao.ticker] * item.valor_unitario ) / 100 ) % 1 * provento_acao.valor_calculo_frac)
+                            total_proventos_bh += (((acoes_bh[item.acao.ticker] * item.valor_unitario ) / 100 ) % 1 * provento_acao.valor_calculo_frac)
                 
         elif isinstance(item, OperacaoTitulo):  
             if item.titulo not in titulos_td.keys():
@@ -414,8 +436,6 @@ def detalhamento_investimentos(request):
             total_proventos_fii += item.total
                 
         elif isinstance(item, OperacaoLetraCredito):
-#             if item.letra_credito not in letras_credito.keys():
-#                 letras_credito[item.letra_credito] = 0    
             if item.tipo_operacao == 'C':
                 letras_credito[item.id] = item
                 
@@ -434,6 +454,15 @@ def detalhamento_investimentos(request):
                     del cdb_rdb[item.operacao_compra_relacionada().id]
                 else:
                     cdb_rdb[item.operacao_compra_relacionada().id].quantidade -= cdb_rdb[item.operacao_compra_relacionada().id].quantidade * item.quantidade / item.operacao_compra_relacionada().quantidade
+                    
+        elif isinstance(item, OperacaoCRI_CRA):
+            if item.cri_cra not in cri_cra.keys():
+                cri_cra[item.cri_cra] = 0    
+            if item.tipo_operacao == 'C':
+                cri_cra[item.cri_cra] += item.quantidade 
+                
+            elif item.tipo_operacao == 'V':
+                cri_cra[item.cri_cra] -= item.quantidade 
             
         elif isinstance(item, OperacaoDebenture):
             if item.debenture not in debentures.keys():
@@ -461,11 +490,11 @@ def detalhamento_investimentos(request):
             patrimonio['patrimonio_total'] = 0
     
             # Rodar calculo de patrimonio
-            # Acoes
-#             inicio_acoes = datetime.datetime.now()
-            patrimonio['Ações'] = 0
+            # Acoes (B&H)
+#             inicio_acoes_bh = datetime.datetime.now()
+            patrimonio['Ações (Buy and Hold)'] = 0
             periodo_1_ano = item.data - datetime.timedelta(days=365)
-            for acao, quantidade in acoes.items():
+            for acao, quantidade in acoes_bh.items():
                 if quantidade > 0:
                     # Verifica se valor foi preenchido com valor mais atual (válido apenas para data atual)
                     preenchido = False
@@ -480,17 +509,41 @@ def detalhamento_investimentos(request):
                     if (not preenchido):
                         # Pegar último dia util com negociação da ação para calculo do patrimonio
                         valor_acao = HistoricoAcao.objects.filter(acao__ticker=acao, data__range=[periodo_1_ano, item.data]).order_by('-data')[0].preco_unitario
-                    patrimonio['Ações'] += (valor_acao * quantidade)
-            patrimonio['patrimonio_total'] += patrimonio['Ações'] 
-#             fim_acoes = datetime.datetime.now()
-#             total_acoes += fim_acoes - inicio_acoes
+                    patrimonio['Ações (Buy and Hold)'] += (valor_acao * quantidade)
+            patrimonio['patrimonio_total'] += patrimonio['Ações (Buy and Hold)'] 
+#             fim_acoes_bh = datetime.datetime.now()
+#             total_acoes_bh += fim_acoes - inicio_acoes_bh
             
             # Proventos Acoes
 #             inicio_prov_acoes = datetime.datetime.now()
             patrimonio['Proventos Ações'] = Decimal(int(total_proventos_bh * 100) / Decimal(100))
             patrimonio['patrimonio_total'] += patrimonio['Proventos Ações']
-#             fim_prov_acoes = datetime.datetime.now()
-#             total_prov_acoes += fim_prov_acoes - inicio_prov_acoes
+#             fim_prov_acoes_bh = datetime.datetime.now()
+#             total_prov_acoes_bh += fim_prov_acoes - inicio_prov_acoes_bh
+            
+            # Acoes (Trading)
+#             inicio_acoes_t = datetime.datetime.now()
+            patrimonio['Ações (Trading)'] = 0
+            periodo_1_ano = item.data - datetime.timedelta(days=365)
+            for acao, quantidade in acoes_t.items():
+                if quantidade > 0:
+                    # Verifica se valor foi preenchido com valor mais atual (válido apenas para data atual)
+                    preenchido = False
+                    if item.data == datetime.date.today():
+                        try:
+                            valor_diario_mais_recente = ValorDiarioAcao.objects.filter(acao__ticker=acao).order_by('-data_hora')
+                            if valor_diario_mais_recente and valor_diario_mais_recente[0].data_hora.date() == datetime.date.today():
+                                valor_acao = valor_diario_mais_recente[0].preco_unitario
+                                preenchido = True
+                        except:
+                            preenchido = False
+                    if (not preenchido):
+                        # Pegar último dia util com negociação da ação para calculo do patrimonio
+                        valor_acao = HistoricoAcao.objects.filter(acao__ticker=acao, data__range=[periodo_1_ano, item.data]).order_by('-data')[0].preco_unitario
+                    patrimonio['Ações (Trading)'] += (valor_acao * quantidade)
+            patrimonio['patrimonio_total'] += patrimonio['Ações (Trading)'] 
+#             fim_acoes_t = datetime.datetime.now()
+#             total_acoes_t += fim_acoes - inicio_acoes_t
             
             # TD
 #             inicio_td = datetime.datetime.now()
@@ -590,6 +643,16 @@ def detalhamento_investimentos(request):
 #             fim_cdb_rdb = datetime.datetime.now()
 #             total_cdb_rdb += fim_cdb_rdb - inicio_cdb_rdb
 
+            # CRI/CRA
+#             inicio_cri_cra = datetime.datetime.now()
+            patrimonio_cri_cra = 0
+            for certificado in cri_cra.keys():
+                patrimonio_cri_cra += cri_cra[certificado] * calcular_valor_um_cri_cra_na_data(certificado, item.data)
+            patrimonio['CRI/CRA'] = patrimonio_cri_cra
+            patrimonio['patrimonio_total'] += patrimonio['CRI/CRA'] 
+#             fim_cri_cra = datetime.datetime.now()
+#             total_cri_cra += fim_cri_cra - inicio_cri_cra
+
             # Debênture
 #             inicio_debentures = datetime.datetime.now()
             patrimonio_debentures = 0
@@ -617,15 +680,17 @@ def detalhamento_investimentos(request):
 #             total_fundo_investimento += fim_fundo_investimento - inicio_fundo_investimento
             
             
-#             print 'Ações      ', total_acoes
-#             print 'Prov. Ações', total_prov_acoes
-#             print 'TD         ', total_td
-#             print 'FII        ', total_fii
-#             print 'Prov. FII  ', total_prov_fii
-#             print 'LC         ', total_lc
-#             print 'CDB/RDB:   ', total_cdb_rdb
-#             print 'Debêntures:', total_debentures
-#             print 'Fundo Inv. ', total_fundo_investimento
+#             print 'Ações (B&H)          ', total_acoes_bh
+#             print 'Ações (Trading)      ', total_acoes_t
+#             print 'Prov. Ações          ', total_prov_acoes_bh
+#             print 'TD                   ', total_td
+#             print 'FII                  ', total_fii
+#             print 'Prov. FII            ', total_prov_fii
+#             print 'LC                   ', total_lc
+#             print 'CDB/RDB              ', total_cdb_rdb
+#             print 'CRI/CRA              ', total_cri_cra
+#             print 'Debêntures           ', total_debentures
+#             print 'Fundo Inv.           ', total_fundo_investimento
             
             # Preparar estatísticas
             for data_estatistica in datas_estatisticas:
@@ -654,15 +719,17 @@ def detalhamento_investimentos(request):
     for index, estatistica in enumerate(estatisticas):
         estatisticas[index] = [estatistica[0], float(patrimonio['patrimonio_total']) - estatistica[1]]
     
-#     print 'Ações:        ', total_acoes 
-#     print 'Prov. ações:  ', total_prov_acoes 
-#     print 'FII:          ', total_fii 
-#     print 'Prov. FII:    ', total_prov_fii 
-#     print 'TD:           ', total_td 
-#     print 'LC:           ', total_lc 
-#     print 'CDB/RDB:      ', total_cdb_rdb
-#     print 'Debêntures:', total_debentures
-#     print 'Fundo Inv.:   ', total_fundo_investimento
+#     print 'Ações (B&H):      ', total_acoes_bh
+#     print 'Ações (Trading):  ', total_acoes_t
+#     print 'Prov. ações:      ', total_prov_acoes_bh
+#     print 'FII:              ', total_fii 
+#     print 'Prov. FII:        ', total_prov_fii 
+#     print 'TD:               ', total_td 
+#     print 'LC:               ', total_lc 
+#     print 'CDB/RDB:          ', total_cdb_rdb
+#     print 'CRI/CRA:          ', total_cri_cra
+#     print 'Debêntures:       ', total_debentures
+#     print 'Fundo Inv.:       ', total_fundo_investimento
     
     return TemplateResponse(request, 'detalhamento_investimentos.html', {'graf_patrimonio': graf_patrimonio, 'patrimonio_anual': patrimonio_anual,
                                             'estatisticas': estatisticas})

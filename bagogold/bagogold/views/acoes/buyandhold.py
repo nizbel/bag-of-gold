@@ -96,7 +96,7 @@ def editar_operacao_acao(request, id):
                                         divisao_operacao.usoproventosoperacaoacao.save()
                         
                         messages.success(request, 'Operação alterada com sucesso')
-                        return HttpResponseRedirect(reverse('historico_bh'))
+                        return HttpResponseRedirect(reverse('acoes:historico_bh'))
                         
                 else:
                     if form_uso_proventos.is_valid():
@@ -113,7 +113,7 @@ def editar_operacao_acao(request, id):
                         elif uso_proventos.qtd_utilizada == 0 and UsoProventosOperacaoAcao.objects.filter(divisao_operacao__operacao=operacao_acao):
                             uso_proventos.delete()
                         messages.success(request, 'Operação alterada com sucesso')
-                        return HttpResponseRedirect(reverse('historico_bh'))
+                        return HttpResponseRedirect(reverse('acoes:historico_bh'))
             for erros in form_operacao_acao.errors.values():
                 for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
                     messages.error(request, erro.message)
@@ -128,7 +128,7 @@ def editar_operacao_acao(request, id):
                 divisao.delete()
             operacao_acao.delete()
             messages.success(request, 'Operação apagada com sucesso')
-            return HttpResponseRedirect(reverse('historico_bh'))
+            return HttpResponseRedirect(reverse('acoes:historico_bh'))
 
     else:
         form_operacao_acao = OperacaoAcaoForm(instance=operacao_acao)
@@ -153,10 +153,10 @@ def editar_provento_acao(request, id):
             form = ProventoAcaoForm(request.POST, instance=provento)
             if form.is_valid():
                 form.save()
-                return HttpResponseRedirect(reverse('historico_bh'))
+                return HttpResponseRedirect(reverse('acoes:historico_bh'))
         elif request.POST.get("delete"):
             provento.delete()
-            return HttpResponseRedirect(reverse('historico_bh'))
+            return HttpResponseRedirect(reverse('acoes:historico_bh'))
 
     else:
         form = ProventoAcaoForm(instance=provento)
@@ -587,7 +587,7 @@ def inserir_operacao_acao(request):
                             divisao_operacao.usoproventosoperacaoacao.save()
                         
                     messages.success(request, 'Operação inserida com sucesso')
-                    return HttpResponseRedirect(reverse('historico_bh'))
+                    return HttpResponseRedirect(reverse('acoes:historico_bh'))
                 for erro in formset_divisao.non_form_errors():
                     messages.error(request, erro)
                 
@@ -602,7 +602,7 @@ def inserir_operacao_acao(request):
                         uso_proventos.divisao_operacao = divisao_operacao
                         uso_proventos.save()
                     messages.success(request, 'Operação inserida com sucesso')
-                    return HttpResponseRedirect(reverse('historico_bh'))
+                    return HttpResponseRedirect(reverse('acoes:historico_bh'))
     else:
         valores_iniciais = {}
         if investidor.tipo_corretagem == 'F':
@@ -621,7 +621,7 @@ def inserir_provento_acao(request):
         form = ProventoAcaoForm(request.POST)
         if form.is_valid():
             operacao_acao = form.save()
-            return HttpResponseRedirect(reverse('historico_bh'))
+            return HttpResponseRedirect(reverse('acoes:historico_bh'))
     else:
         form = ProventoAcaoForm()
             
@@ -637,7 +637,7 @@ def inserir_taxa_custodia_acao(request):
             taxa_custodia = form.save(commit=False)
             taxa_custodia.investidor = investidor
             taxa_custodia.save()
-            return HttpResponseRedirect(reverse('ver_taxas_custodia_acao'))
+            return HttpResponseRedirect(reverse('acoes:ver_taxas_custodia_acao'))
     else:
         form = TaxaCustodiaAcaoForm()
             

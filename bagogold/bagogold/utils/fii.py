@@ -3,6 +3,9 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII
 from bagogold.bagogold.models.fii import OperacaoFII, ProventoFII, \
     ValorDiarioFII, HistoricoFII
 from decimal import Decimal
+from django.db.models.aggregates import Sum
+from django.db.models.expressions import F, Case, When
+from django.db.models.fields import DecimalField
 from itertools import chain
 from operator import attrgetter
 import datetime
@@ -153,31 +156,11 @@ def calcular_qtd_fiis_ate_dia_por_divisao(dia, divisao_id):
                 Dia final
     Retorno: Quantidade de FIIs {ticker: qtd}
     """
-    operacoes_divisao_id = DivisaoOperacaoFII.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).values('operacao__id')
-    if len(operacoes_divisao_id) == 0:
-        return {}
-    operacoes = OperacaoFII.objects.filter(id__in=operacoes_divisao_id).exclude(data__isnull=True).order_by('data')
+    qtd_fii = dict(DivisaoOperacaoFII.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).annotate(ticker=F('operacao__fii__ticker')) \
+        .values('ticker').annotate(qtd=Sum(Case(When(operacao__tipo_operacao='C', then=F('quantidade')),
+                            When(operacao__tipo_operacao='V', then=F('quantidade')*-1),
+                            output_field=DecimalField()))).values_list('ticker', 'qtd').exclude(qtd=0))
     
-    qtd_fii = {}
-    
-    for operacao in operacoes:
-        # Preparar a quantidade da operação pela quantidade que foi destinada a essa divisão
-        operacao.quantidade = DivisaoOperacaoFII.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade
-        
-        if operacao.fii.ticker not in qtd_fii:
-            qtd_fii[operacao.fii.ticker] = 0
-            
-        # Verificar se se trata de compra ou venda
-        if operacao.tipo_operacao == 'C':
-            qtd_fii[operacao.fii.ticker] += operacao.quantidade
-            
-        elif operacao.tipo_operacao == 'V':
-            qtd_fii[operacao.fii.ticker] -= operacao.quantidade
-        
-    for key, item in qtd_fii.items():
-        if qtd_fii[key] == 0:
-            del qtd_fii[key]
-            
     return qtd_fii
 
 def calcular_rendimento_proventos_fii_12_meses(fii):

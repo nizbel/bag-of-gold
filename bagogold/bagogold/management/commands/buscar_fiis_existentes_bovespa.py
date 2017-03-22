@@ -20,22 +20,20 @@ class VerificarFIIThread(Thread):
                 while len(fiis_para_verificar) > 0:
                     sigla, ticker, empresa_nome, empresa_nome_pregao = fiis_para_verificar.pop(0)
                     
+                    # Testa se empresa não existia
                     if not Empresa.objects.filter(codigo_cvm=sigla).exists():
                         empresa = Empresa(nome=empresa_nome, codigo_cvm=sigla, nome_pregao=empresa_nome_pregao)
                         empresa.save()
-                        print 'Empresa nao existia'
                     
+                    # FII existia
                     if FII.objects.filter(ticker=ticker).exists():
                         fii = FII.objects.get(ticker=ticker)
-                        print 'FII:', ticker, 'ja existia'
                         if not fii.empresa:
                             fii.empresa = empresa
                             fii.save()
-                            print 'FII', ticker, 'não possuia empresa'
                     else:
                         fii = FII(ticker=ticker, empresa=empresa)
                         fii.save()
-                        print 'FII:', fii, 'criado'
                 time.sleep(10)
         except Exception as e:
                 template = "An exception of type {0} occured. Arguments:\n{1!r}"
@@ -79,7 +77,7 @@ class Command(BaseCommand):
         thread_verificar_fii.start()
         
         threads = []
-        start_time = time.time()
+#         start_time = time.time()
         try:
             while contador < len(fiis):
                 fii = fiis[contador]
@@ -88,7 +86,7 @@ class Command(BaseCommand):
                 t.start()
                 contador += 1
                 while (len(threads_rodando) > qtd_threads):
-                    print 'FIIs para verificar:', len(fiis_para_verificar), '... Threads:', len(threads_rodando), contador
+#                     print 'FIIs para verificar:', len(fiis_para_verificar), '... Threads:', len(threads_rodando), contador
                     time.sleep(3)
             while (len(threads_rodando) > 0 or len(fiis_para_verificar) > 0):
 #                 print 'FIIs para verificar:', len(fiis_para_verificar), '... Threads:', len(threads_rodando), contador
@@ -100,12 +98,11 @@ class Command(BaseCommand):
             while 'Principal' in threads_rodando.keys():
                 del threads_rodando['Principal']
                 time.sleep(3)
-        print time.time() - start_time, len(fiis)
+#         print time.time() - start_time
         if options['n']:
             # Buscar não listados
             for fii in FII.objects.filter(empresa__isnull=True):
                 try:
-                    print fii
                     preencher_empresa_fii_nao_listado(fii.ticker)
                     fii.empresa = Empresa.objects.get(codigo_cvm=fii.ticker[0:4])
                     fii.save()
