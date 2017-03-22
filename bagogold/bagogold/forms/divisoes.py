@@ -386,7 +386,7 @@ class DivisaoOperacaoCRI_CRAFormSet(forms.models.BaseInlineFormSet):
                         # Verificar em caso de venda
                         print self.instance.tipo_operacao
                         if self.instance.tipo_operacao == 'V':
-                            if qtd_cri_cra_ate_dia_para_divisao_para_certificado(self.instance.data, form_divisao.cleaned_data['divisao'].id, self.instance.cri_cra.id) < div_qtd:
+                            if qtd_cri_cra_ate_dia_para_divisao_para_certificado(form_divisao.cleaned_data['divisao'].id, self.instance.cri_cra.id, self.instance.data) < div_qtd:
                                 raise forms.ValidationError('Venda de quantidade acima da disponível para divisão %s' % (form_divisao.cleaned_data['divisao']))
                         
                     # Divisão será apagada
