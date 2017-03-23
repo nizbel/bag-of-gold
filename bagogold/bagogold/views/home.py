@@ -70,7 +70,7 @@ def inicio(request):
         elif chave == 'Debêntures':
             investimento.link = 'painel_debenture'
         elif chave == 'FII':
-            investimento.link = 'painel_fii'
+            investimento.link = 'fii:painel_fii'
         elif chave == 'Fundos de Inv.':
             investimento.link = 'painel_fundo_investimento'
         elif chave == 'Letras de Crédito':

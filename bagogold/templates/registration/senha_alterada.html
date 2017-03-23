@@ -1,10 +1,19 @@
-{% extends "base.html" %}
+{% extends "teste/base.html" %}
 
 {% block content %}
-<div class="row-fluid">
-
-<p>Senha alterada com sucesso.</p>
-
+<div class="portlet light">
+    <div class="portlet-title">
+        <div class="caption font-yellow-crusta">
+            <i class="icon-note font-yellow-crusta"></i>
+            <span class="caption-subject bold uppercase"> Alterar senha </span>
+        </div>
+    </div>
+    <div class="portlet-body form">
+        <div class="alert alert-warning">
+            Senha alterada com sucesso.
+        </div>
+        <a class="btn yellow-crusta" href="{% url "configuracoes_conta_investidor" request.user.id %}">Voltar</a>
+    </div>
 </div>
 
 {% endblock %}
