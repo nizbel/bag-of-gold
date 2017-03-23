@@ -268,17 +268,17 @@
                     <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> FII</span></a>
                     <ul>
                         {% if request.user.is_superuser %}
-                        <li><a class="submenu" href="{% url "acompanhamento_mensal_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Acomp. mensal</span></a></li>
+                        <li><a class="submenu" href="{% url "fii:acompanhamento_mensal_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Acomp. mensal</span></a></li>
                         {% endif %}
-                        <li><a class="submenu" href="{% url "aconselhamento_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Aconselhamento</span></a></li>
-                        <li><a class="submenu" href="{% url "calcular_resultado_corretagem" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Cálculo de res. da corretagem</span></a></li>
+                        <li><a class="submenu" href="{% url "fii:aconselhamento_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Aconselhamento</span></a></li>
+                        <li><a class="submenu" href="{% url "fii:calcular_resultado_corretagem" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Cálculo de res. da corretagem</span></a></li>
                        
-                        <li><a class="submenu" href="{% url "historico_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico</span></a></li>
-                        <li><a class="submenu" href="{% url "inserir_operacao_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir operação</span></a></li>
+                        <li><a class="submenu" href="{% url "fii:historico_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico</span></a></li>
+                        <li><a class="submenu" href="{% url "fii:inserir_operacao_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir operação</span></a></li>
                         {% if request.user.is_superuser %}
-                        <li><a class="submenu" href="{% url "inserir_provento_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir provento</span></a></li>
+                        <li><a class="submenu" href="{% url "fii:inserir_provento_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir provento</span></a></li>
                         {% endif %}
-                        <li><a class="submenu" href="{% url "painel_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Painel</span></a></li>
+                        <li><a class="submenu" href="{% url "fii:painel_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Painel</span></a></li>
                     </ul>   
                 </li>
                 <li>

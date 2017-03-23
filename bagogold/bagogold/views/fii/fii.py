@@ -203,7 +203,7 @@ def editar_operacao_fii(request, id):
                                         divisao_operacao.usoproventosoperacaofii.save()
                         
                         messages.success(request, 'Operação alterada com sucesso')
-                        return HttpResponseRedirect(reverse('historico_fii'))
+                        return HttpResponseRedirect(reverse('fii:historico_fii'))
                     
                 else:    
                     if form_uso_proventos.is_valid():
@@ -220,7 +220,7 @@ def editar_operacao_fii(request, id):
                         elif uso_proventos.qtd_utilizada == 0 and UsoProventosOperacaoFII.objects.filter(divisao_operacao__operacao=operacao_fii):
                             uso_proventos.delete()
                         messages.success(request, 'Operação alterada com sucesso')
-                        return HttpResponseRedirect(reverse('historico_fii'))
+                        return HttpResponseRedirect(reverse('fii:historico_fii'))
                         
             for erros in form_operacao_fii.errors.values():
                 for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
@@ -236,7 +236,7 @@ def editar_operacao_fii(request, id):
                 divisao.delete()
             operacao_fii.delete()
             messages.success(request, 'Operação apagada com sucesso')
-            return HttpResponseRedirect(reverse('historico_fii'))
+            return HttpResponseRedirect(reverse('fii:historico_fii'))
 
     else:
         form_operacao_fii = OperacaoFIIForm(instance=operacao_fii)
@@ -263,11 +263,11 @@ def editar_provento_fii(request, id):
             if form.is_valid():
                 form.save()
             messages.success(request, 'Provento alterado com sucesso')
-            return HttpResponseRedirect(reverse('historico_fii'))
+            return HttpResponseRedirect(reverse('fii:historico_fii'))
         elif request.POST.get("delete"):
             operacao.delete()
             messages.success(request, 'Provento apagado com sucesso')
-            return HttpResponseRedirect(reverse('historico_fii'))
+            return HttpResponseRedirect(reverse('fii:historico_fii'))
 
     else:
         form = ProventoFIIForm(instance=operacao)
@@ -431,7 +431,7 @@ def inserir_operacao_fii(request):
                             divisao_operacao.usoproventosoperacaofii.save()
                         
                     messages.success(request, 'Operação inserida com sucesso')
-                    return HttpResponseRedirect(reverse('historico_fii'))
+                    return HttpResponseRedirect(reverse('fii:historico_fii'))
                 
                 for erro in formset_divisao.non_form_errors():
                     messages.error(request, erro)
@@ -447,7 +447,7 @@ def inserir_operacao_fii(request):
                         uso_proventos.divisao_operacao = divisao_operacao
                         uso_proventos.save()
                     messages.success(request, 'Operação inserida com sucesso')
-                    return HttpResponseRedirect(reverse('historico_fii'))
+                    return HttpResponseRedirect(reverse('fii:historico_fii'))
         for erro in formset_divisao.non_form_errors():
             messages.error(request, erro)
             
@@ -467,7 +467,7 @@ def inserir_provento_fii(request):
         form = ProventoFIIForm(request.POST)
         if form.is_valid():
             form.save()
-            return HttpResponseRedirect(reverse('historico_fii'))
+            return HttpResponseRedirect(reverse('fii:historico_fii'))
     else:
         form = ProventoFIIForm()
             

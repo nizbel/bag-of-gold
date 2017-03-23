@@ -37,14 +37,27 @@ acoes_patterns = [
     ]
 
 divisoes_patterns = [
-    url(r'^divisoes/criar_transferencias/$', views.divisoes.divisoes.criar_transferencias, name='criar_transferencias'),
-    url(r'^divisoes/detalhar_divisao/(?P<id>\d+)/$', views.divisoes.divisoes.detalhar_divisao, name='detalhar_divisao'),
-    url(r'^divisoes/editar_divisao/(?P<id>\d+)/$', views.divisoes.divisoes.editar_divisao, name='editar_divisao'),
-    url(r'^divisoes/editar_transferencia/(?P<id>\d+)/$', views.divisoes.divisoes.editar_transferencia, name='editar_transferencia'),
-    url(r'^divisoes/inserir_divisao/$', views.divisoes.divisoes.inserir_divisao, name='inserir_divisao'),
-    url(r'^divisoes/inserir_transferencia/$', views.divisoes.divisoes.inserir_transferencia, name='inserir_transferencia'),
-    url(r'^divisoes/listar_divisoes/$', views.divisoes.divisoes.listar_divisoes, name='listar_divisoes'),
-    url(r'^divisoes/listar_transferencias/$', views.divisoes.divisoes.listar_transferencias, name='listar_transferencias'),]
+    url(r'^criar_transferencias/$', views.divisoes.divisoes.criar_transferencias, name='criar_transferencias'),
+    url(r'^detalhar_divisao/(?P<id>\d+)/$', views.divisoes.divisoes.detalhar_divisao, name='detalhar_divisao'),
+    url(r'^editar_divisao/(?P<id>\d+)/$', views.divisoes.divisoes.editar_divisao, name='editar_divisao'),
+    url(r'^editar_transferencia/(?P<id>\d+)/$', views.divisoes.divisoes.editar_transferencia, name='editar_transferencia'),
+    url(r'^inserir_divisao/$', views.divisoes.divisoes.inserir_divisao, name='inserir_divisao'),
+    url(r'^inserir_transferencia/$', views.divisoes.divisoes.inserir_transferencia, name='inserir_transferencia'),
+    url(r'^listar_divisoes/$', views.divisoes.divisoes.listar_divisoes, name='listar_divisoes'),
+    url(r'^listar_transferencias/$', views.divisoes.divisoes.listar_transferencias, name='listar_transferencias'),
+    ]
+
+fiis_patterns = [
+    url(r'^acompanhamento_mensal/$', views.fii.fii.acompanhamento_mensal_fii, name='acompanhamento_mensal_fii'),
+    url(r'^aconselhamento/$', views.fii.fii.aconselhamento_fii, name='aconselhamento_fii'),
+    url(r'^calcular_resultado_corretagem/$', views.fii.fii.calcular_resultado_corretagem, name='calcular_resultado_corretagem'),
+    url(r'^editar_operacao/(?P<id>\d+)/$', views.fii.fii.editar_operacao_fii, name='editar_operacao_fii'),
+    url(r'^historico/$', views.fii.fii.historico_fii, name='historico_fii'),
+    url(r'^inserir_operacao_fii/$', views.fii.fii.inserir_operacao_fii, name='inserir_operacao_fii'),
+    url(r'^editar_provento/(?P<id>\d+)/$', views.fii.fii.editar_provento_fii, name='editar_provento_fii'),
+    url(r'^inserir_provento_fii/$', views.fii.fii.inserir_provento_fii, name='inserir_provento_fii'),
+    url(r'^painel/$', views.fii.fii.painel, name='painel_fii'),
+    ]
 
 gerador_proventos_patterns = [
     url(r'^baixar_documento_provento/(?P<id_documento>\d+)/$', views.gerador_proventos.gerador_proventos.baixar_documento_provento, name='baixar_documento_provento'),
@@ -103,15 +116,7 @@ urlpatterns = [
     url(r'^divisoes/', include(divisoes_patterns, namespace='divisoes')),
     
     # FII
-    url(r'^fii/acompanhamento_mensal/$', views.fii.fii.acompanhamento_mensal_fii, name='acompanhamento_mensal_fii'),
-    url(r'^fii/aconselhamento/$', views.fii.fii.aconselhamento_fii, name='aconselhamento_fii'),
-    url(r'^fii/calcular_resultado_corretagem/$', views.fii.fii.calcular_resultado_corretagem, name='calcular_resultado_corretagem'),
-    url(r'^fii/editar_operacao/(?P<id>\d+)/$', views.fii.fii.editar_operacao_fii, name='editar_operacao_fii'),
-    url(r'^fii/historico/$', views.fii.fii.historico_fii, name='historico_fii'),
-    url(r'^fii/inserir_operacao_fii/$', views.fii.fii.inserir_operacao_fii, name='inserir_operacao_fii'),
-    url(r'^fii/editar_provento/(?P<id>\d+)/$', views.fii.fii.editar_provento_fii, name='editar_provento_fii'),
-    url(r'^fii/inserir_provento_fii/$', views.fii.fii.inserir_provento_fii, name='inserir_provento_fii'),
-    url(r'^fii/painel/$', views.fii.fii.painel, name='painel_fii'),
+    url(r'^fii/', include(fiis_patterns, namespace='fii')),
 
     # Tesouro direto
     url(r'^td/aconselhamento/$', views.td.td.aconselhamento_td, name='aconselhamento_td'),
