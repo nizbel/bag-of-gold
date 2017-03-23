@@ -1,50 +1,61 @@
-{% extends "base.html" %}
+{% extends "teste/base.html" %}
+{% load staticfiles %}
 
 {% block content %}
-<div class="row-fluid">
 
-<form method="post">{% csrf_token %}
-<div>
-{% if form.errors %}
-    <p class="errornote">
-    {% if form.errors.items|length == 1 %}Corrija o erro abaixo.{% else %}Corrija os erros abaixo.{% endif %}
-    </p>
-{% endif %}
-
-
-<p>Por favor insira sua senha antiga, por segurança, e então entre com a nova senha duas vezes para que verifiquemos que foi digitada corretamente.</p>
-
-<fieldset class="module aligned wide">
-
-<div class="form-row">
-    {{ form.old_password.errors }}
-    {{ form.old_password.label_tag }} {{ form.old_password }}
-</div>
-
-<div class="form-row">
-    {{ form.new_password1.errors }}
-    {{ form.new_password1.label_tag }} {{ form.new_password1 }}
-    {% if form.new_password1.help_text %}
-    <p class="help">{{ form.new_password1.help_text|safe }}</p>
-    {% endif %}
-</div>
-
-<div class="form-row">
-{{ form.new_password2.errors }}
-    {{ form.new_password2.label_tag }} {{ form.new_password2 }}
-    {% if form.new_password2.help_text %}
-    <p class="help">{{ form.new_password2.help_text|safe }}</p>
-    {% endif %}
-</div>
-
-</fieldset>
-
-<div class="submit-row">
-    <input type="submit" value="Alterar senha" class="btn btn-warning" />
-</div>
-
-</div>
-</form>
+<div class="portlet light">
+	<div class="portlet-title">
+		<div class="caption font-yellow-crusta">
+			<i class="icon-note font-yellow-crusta"></i>
+			<span class="caption-subject bold uppercase"> Alterar senha </span>
+		</div>
+	</div>
+	<div class="portlet-body form">
+		<div class="alert alert-warning">
+            Por favor insira sua senha antiga, por segurança, e então entre com a nova senha duas vezes para que verifiquemos que foi digitada corretamente.
+		</div>
+		<!-- BEGIN FORM-->
+		<form method="POST" class="horizontal-form">{% csrf_token %}
+			<div class="form-body">
+				<div class="row">
+					<div class="form-group col-md-6 {% if form.old_password.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4" style="text-align: left;"> Senha antiga: </label>
+						<div class="col-md-8">
+							<input type="password" class="form-control" name="old_password" id="id_old_password">
+							{% if form.old_password.errors %} <span class="help-block"> {{ form.old_password.errors.as_text }} </span> {% endif %}
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="form-group col-md-6 {% if form.new_password1.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4" style="text-align: left;"> Nova senha: </label>
+						<div class="col-md-8">
+							<input type="password" class="form-control" name="new_password1" id="id_new_password1">
+							{% if form.new_password1.errors %} <span class="help-block"> {{ form.new_password1.errors.as_text }} </span> {% endif %}
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="form-group col-md-6 {% if form.new_password2.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4" style="text-align: left;"> Confirmação da nova senha: </label>
+						<div class="col-md-8">
+							<input type="password" class="form-control" name="new_password2" id="id_new_password1">
+							{% if form.new_password2.errors %} <span class="help-block"> {{ form.new_password2.errors.as_text }} </span> {% endif %}
+						</div>
+					</div>
+				</div>
+				<div class="form-actions">
+					<div class="row">
+						<div class="col-md-offset col-md-3">
+							<button type="submit" name="save" value="1" class="btn yellow-crusta"> Alterar senha </button>
+                            <a class="btn red-thunderbird" href="{% url "configuracoes_conta_investidor" request.user.id %}">Cancelar</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</form>
+		<!-- END FORM-->
+	</div>
 </div>
 
 {% endblock %}
