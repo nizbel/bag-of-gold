@@ -95,23 +95,25 @@
                     {% for form_divisao in formset_divisao %}
                     <div class="col-md-12"><h3 class="font-yellow-crusta" align="center"><strong>Divisão {{ forloop.counter }}</strong></h3><br/></div>
                     <div class="col-md-11" id="divisao-{{forloop.counter0}}">
-                        <div class="form-group col-md-6 {% if form_divisao.divisao.errors %} has-error {% endif %}">
-                            <label class="control-label col-md-4" style="text-align: left;"> Divisão: </label>
-                            <div class="col-md-8">
-                                {% localize off %}
-                                <select class="selectpicker form-control" id="id_divisaooperacaocri_cra_set-{{forloop.counter0}}-divisao" name="divisaooperacaocri_cra_set-{{forloop.counter0}}-divisao">
-                                    {% for key, value in form_divisao.fields.divisao.widget.choices %}<option value="{{ key }}" 
-                                        {% if key == form_divisao.divisao.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
-                                </select>
-                                {% endlocalize %}
-                                {% if form_divisao.divisao.errors %} <span class="help-block"> {{ form_divisao.divisao.errors.as_text }} </span> {% endif %}
+                        <div class="row">
+                            <div class="form-group col-md-6 {% if form_divisao.divisao.errors %} has-error {% endif %}">
+                                <label class="control-label col-md-4" style="text-align: left;"> {{form_divisao.divisao.label}}: </label>
+                                <div class="col-md-8">
+                                    {% localize off %}
+                                    <select class="selectpicker form-control" id="id_divisaooperacaocri_cra_set-{{forloop.counter0}}-divisao" name="divisaooperacaocri_cra_set-{{forloop.counter0}}-divisao">
+                                        {% for key, value in form_divisao.fields.divisao.widget.choices %}<option value="{{ key }}" 
+                                            {% if key == form_divisao.divisao.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                                    </select>
+                                    {% endlocalize %}
+                                    {% if form_divisao.divisao.errors %} <span class="help-block"> {{ form_divisao.divisao.errors.as_text }} </span> {% endif %}
+                                </div>
                             </div>
-                        </div>
-                        <div class="form-group col-md-6 {% if form_divisao.quantidade.errors %} has-error {% endif %}">
-                            <label class="control-label col-md-4"> Quantidade: </label>
-                            <div class="col-md-8">
-                                <input id="id_divisaooperacaocri_cra_set-{{forloop.counter0}}-quantidade" type="text" value="{{form_divisao.quantidade.value}}" name="divisaooperacaocri_cra_set-{{forloop.counter0}}-quantidade" class="form-control">
-                                {% if form_divisao.quantidade.errors %} <span class="help-block"> {{ form_divisao.quantidade.errors.as_text }} </span> {% endif %}
+                            <div class="form-group col-md-6 {% if form_divisao.quantidade.errors %} has-error {% endif %}">
+                                <label class="control-label col-md-4"> {{form_divisao.quantidade.label}}: </label>
+                                <div class="col-md-8">
+                                    <input id="id_divisaooperacaocri_cra_set-{{forloop.counter0}}-quantidade" type="text" value="{{form_divisao.quantidade.value}}" name="divisaooperacaocri_cra_set-{{forloop.counter0}}-quantidade" class="form-control">
+                                    {% if form_divisao.quantidade.errors %} <span class="help-block"> {{ form_divisao.quantidade.errors.as_text }} </span> {% endif %}
+                                </div>
                             </div>
                         </div>
                     </div>
