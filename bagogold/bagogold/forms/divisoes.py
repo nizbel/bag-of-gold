@@ -42,6 +42,7 @@ class DivisaoOperacaoAcaoFormSet(forms.models.BaseInlineFormSet):
         form.fields['qtd_proventos_utilizada'] = forms.DecimalField(max_digits=11, decimal_places=2)
         form.fields['qtd_proventos_utilizada'].label = 'Quantidade de proventos utilizada'
         form.fields['qtd_proventos_utilizada'].required = False
+        form.fields['qtd_proventos_utilizada'].localize = True
         
         if 'divisao' in form.initial:
             divisao_operacao = DivisaoOperacaoAcao.objects.get(divisao=form.initial['divisao'], operacao=self.instance)
@@ -175,6 +176,7 @@ class DivisaoOperacaoFIIFormSet(forms.models.BaseInlineFormSet):
         form.fields['qtd_proventos_utilizada'] = forms.DecimalField(max_digits=11, decimal_places=2)
         form.fields['qtd_proventos_utilizada'].label = 'Quantidade de proventos utilizada'
         form.fields['qtd_proventos_utilizada'].required = False
+        form.fields['qtd_proventos_utilizada'].localize = True
         
         if 'divisao' in form.initial:
             divisao_operacao = DivisaoOperacaoFII.objects.get(divisao=form.initial['divisao'], operacao=self.instance)

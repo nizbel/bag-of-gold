@@ -1,6 +1,6 @@
 $(document).ready(function() {
 	//for every field change
-    $('#id_preco_unitario').blur(function() {
+    $('#id_preco_unitario').change(function() {
         var preco = $('#id_preco_unitario').val().replace(/,/g, '.');
         
         var selected = $("input[type='radio'][name='radioDT']:checked");
@@ -9,11 +9,10 @@ $(document).ready(function() {
         } else {
             var emolumentos = (preco * $('#id_quantidade').val()) * 0.0325 / 100;
         }
-        
-        $('#id_emolumentos').val(Math.floor(emolumentos*100)/100);
+        $('#id_emolumentos').val((Math.floor(emolumentos*100)/100).toFixed(2).replace('.', ','));
     });
     
-    $('#id_quantidade').blur(function() {
+    $('#id_quantidade').change(function() {
         var preco = $('#id_preco_unitario').val().replace(/,/g, '.');
         
         var selected = $("input[type='radio'][name='radioDT']:checked");
@@ -22,6 +21,6 @@ $(document).ready(function() {
         } else {
             var emolumentos = (preco * $('#id_quantidade').val()) * 0.0325 / 100;
         }
-        $('#id_emolumentos').val(Math.floor(emolumentos*100)/100);
+        $('#id_emolumentos').val((Math.floor(emolumentos*100)/100).toFixed(2).replace('.', ','));
     });
 });
