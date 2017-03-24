@@ -254,11 +254,11 @@ class Divisao (models.Model):
         return saldo
     
 class DivisaoPrincipal (models.Model):
-    divisao = models.ForeignKey('Divisao')
+    divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
     investidor = models.OneToOneField('Investidor', on_delete=models.CASCADE, primary_key=True)
     
 class DivisaoOperacaoLC (models.Model):
-    divisao = models.ForeignKey('Divisao')
+    divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
     operacao = models.ForeignKey('OperacaoLetraCredito')
     """
     Guarda a quantidade da operação que pertence a divisão
@@ -278,7 +278,7 @@ class DivisaoOperacaoLC (models.Model):
         return self.quantidade / self.operacao.quantidade
     
 class DivisaoOperacaoCDB_RDB (models.Model):
-    divisao = models.ForeignKey('Divisao')
+    divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
     operacao = models.ForeignKey('OperacaoCDB_RDB')
     """
     Guarda a quantidade da operação que pertence a divisão
@@ -298,7 +298,7 @@ class DivisaoOperacaoCDB_RDB (models.Model):
         return self.quantidade / self.operacao.quantidade
     
 class DivisaoOperacaoCRI_CRA (models.Model):
-    divisao = models.ForeignKey('Divisao')
+    divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
     operacao = models.ForeignKey('cri_cra.OperacaoCRI_CRA')
     """
     Guarda a quantidade da operação que pertence a divisão
@@ -318,7 +318,7 @@ class DivisaoOperacaoCRI_CRA (models.Model):
         return self.quantidade / self.operacao.quantidade
     
 class DivisaoOperacaoDebenture (models.Model):
-    divisao = models.ForeignKey('Divisao')
+    divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
     operacao = models.ForeignKey('OperacaoDebenture')
     """
     Guarda a quantidade da operação que pertence a divisão
@@ -338,7 +338,7 @@ class DivisaoOperacaoDebenture (models.Model):
         return self.quantidade / self.operacao.quantidade
     
 class DivisaoOperacaoFundoInvestimento (models.Model):
-    divisao = models.ForeignKey('Divisao')
+    divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
     operacao = models.ForeignKey('OperacaoFundoInvestimento')
     """
     Guarda a quantidade de cotas que pertence a divisão
@@ -358,7 +358,7 @@ class DivisaoOperacaoFundoInvestimento (models.Model):
         return self.quantidade / self.operacao.quantidade
     
 class DivisaoOperacaoAcao (models.Model):
-    divisao = models.ForeignKey('Divisao')
+    divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
     operacao = models.ForeignKey('OperacaoAcao')
     """
     Guarda a quantidade de ações que pertence a divisão
@@ -378,7 +378,7 @@ class DivisaoOperacaoAcao (models.Model):
         return self.quantidade / self.operacao.quantidade
     
 class DivisaoOperacaoTD (models.Model):
-    divisao = models.ForeignKey('Divisao')
+    divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
     operacao = models.ForeignKey('OperacaoTitulo')
     """
     Guarda a quantidade de títulos que pertence a divisão
@@ -398,7 +398,7 @@ class DivisaoOperacaoTD (models.Model):
         return self.quantidade / self.operacao.quantidade
     
 class DivisaoOperacaoFII (models.Model):
-    divisao = models.ForeignKey('Divisao')
+    divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
     operacao = models.ForeignKey('OperacaoFII')
     """
     Guarda a quantidade de FIIs que pertence a divisão
@@ -443,8 +443,8 @@ class TransferenciaEntreDivisoes(models.Model):
     Transferências em dinheiro entre as divisões, cedente ou recebedor nulos significa que
     é uma transferência de dinheiro de/para meio externo
     """
-    divisao_cedente = models.ForeignKey('Divisao', blank=True, null=True, related_name='divisao_cedente')
-    divisao_recebedora = models.ForeignKey('Divisao', blank=True, null=True, related_name='divisao_recebedora')
+    divisao_cedente = models.ForeignKey('Divisao', verbose_name=u'Divisão cedente', blank=True, null=True, related_name='divisao_cedente')
+    divisao_recebedora = models.ForeignKey('Divisao', verbose_name=u'Divisão recebedora', blank=True, null=True, related_name='divisao_recebedora')
     data = models.DateField(u'Data da transferência', blank=True, null=True)
     """
     B = Buy and Hold; C = CDB/RDB; D = Tesouro Direto; E = Debênture; F = FII; 
