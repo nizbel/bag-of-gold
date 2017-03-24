@@ -44,13 +44,13 @@ $(document).ready(function() {
 
      // Preparar campos
  	$("input[name='quantidade']").TouchSpin({
-         initval: 0.01,
+ 		initval: 0.01,
  		min: 0.01,
  		max: 999999999,
-         step: 0.01,
-         decimals: 2,
- 		maxboostedstep: 100,
-         prefix: 'R$'
+        step: 0.01,
+        decimals: 2,
+        maxboostedstep: 100,
+        prefix: 'R$'
  	});
  	$("input[name='divisaooperacaocdb_rdb_set-0-quantidade']").TouchSpin({
  		min: 0,
