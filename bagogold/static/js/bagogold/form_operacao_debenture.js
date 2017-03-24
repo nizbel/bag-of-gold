@@ -21,21 +21,6 @@ $(document).ready(function() {
          $("#forms").append(titulo);
          $("#forms").append(row);
          // build divisao and append it to our forms container
-         
-//         if ($("#id_divisaooperacaodebenture_set-0-id").length > 0) {
-//	         id = $("#id_divisaooperacaodebenture_set-0-id").clone();
-//	         id.attr("name", "divisaooperacaodebenture_set-" + form_count + "-id");
-//	         id.attr('id', "id_divisaooperacaodebenture_set-" + form_count + "-id");
-//	         $("#forms").append(id);
-//         }
-//
-//         if ($("#id_divisaooperacaodebenture_set-0-operacao").length > 0) {
-//	         operacao = $("#id_divisaooperacaodebenture_set-0-operacao").clone();
-//	         operacao.attr("name", "divisaooperacaodebenture_set-" + form_count + "-operacao");
-//	         operacao.attr('id', "id_divisaooperacaodebenture_set-" + form_count + "-operacao");
-//	         $("#forms").append(operacao);
-//         }
-
          // increment form count so our view knows to populate 
          // that many fields for validation
          form_count ++;
@@ -43,8 +28,7 @@ $(document).ready(function() {
          // ready bootstrap elements
          row.find('.bootstrap-select').replaceWith(function() { return $('select', this); });
          row.find('select').selectpicker('refresh');
-         var campo_quantidade = row.find('.bootstrap-touchspin input').detach();
-         row.find('.bootstrap-touchspin').empty().append(campo_quantidade);
+         row.find('.bootstrap-touchspin').find('*').not('input').remove();
          row.find("input[name$='-quantidade']").TouchSpin({
         	 initval: 0,
              min: 0,

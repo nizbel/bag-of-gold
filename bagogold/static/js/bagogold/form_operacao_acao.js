@@ -29,12 +29,7 @@ $(document).ready(function() {
         // ready bootstrap elements
         row.find('.bootstrap-select').replaceWith(function() { return $('select', this); });
         row.find('select').selectpicker('refresh');
-        row.find('.bootstrap-touchspin input').each(function() {
-        	var campo_quantidade = $(this).detach();
-            console.log(campo_quantidade);
-            $(this).parent().empty().append(campo_quantidade);
-        });
-        var campo_quantidade = row.find('.bootstrap-touchspin input').detach();
+        row.find('.bootstrap-touchspin').find('*').not('input').remove();
         row.find("input[name$='-quantidade']").TouchSpin({
        	 	initval: 0,
             min: 0,
