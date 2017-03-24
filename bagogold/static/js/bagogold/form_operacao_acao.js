@@ -88,15 +88,14 @@ $(document).ready(function() {
 		maxboostedstep: 100,
 		prefix: 'R$'
 	});
-	$("input[name='divisaooperacaoacao_set-0-quantidade']").TouchSpin({
+	$("input[name$='-quantidade']").TouchSpin({
 		min: 0,
 		max: 1000000000,
-        step: 0.01,
-        decimals: 2,
+        step: 1,
 		maxboostedstep: 100,
 		postfix: 'ações'
 	});
-	$("input[name='divisaooperacaoacao_set-0-qtd_proventos_utilizada']").TouchSpin({
+	$("input[name$='-qtd_proventos_utilizada']").TouchSpin({
 		min: 0,
 		max: 1000000000,
 		step: 0.01,
