@@ -67,7 +67,7 @@ class Provento (models.Model):
                             ('D', "Dividendos"),
                             ('J', "Juros sobre capital próprio"),)
     
-    acao = models.ForeignKey('Acao')
+    acao = models.ForeignKey('Acao', verbose_name='Ação')
     valor_unitario = models.DecimalField(u'Valor unitário', max_digits=16, decimal_places=12)
     """
     A = proventos em ações, D = dividendos, J = juros sobre capital próprio
@@ -109,7 +109,7 @@ class AcaoProvento (models.Model):
     """
     Define a ação recebida num evento de proventos em forma de ações
     """
-    acao_recebida = models.ForeignKey('Acao')
+    acao_recebida = models.ForeignKey('Acao', verbose_name='Ação')
     data_pagamento_frac = models.DateField(u'Data do pagamento de frações', blank=True, null=True)
     valor_calculo_frac = models.DecimalField(u'Valor para cálculo das frações', max_digits=14, decimal_places=10, default=0)
     provento = models.ForeignKey('Provento', limit_choices_to={'tipo_provento': 'A'})
@@ -124,7 +124,7 @@ class OperacaoAcao (models.Model):
     corretagem = models.DecimalField(u'Corretagem', max_digits=11, decimal_places=2)
     emolumentos = models.DecimalField(u'Emolumentos', max_digits=11, decimal_places=2)
     tipo_operacao = models.CharField(u'Tipo de operação', max_length=1)
-    acao = models.ForeignKey('Acao')
+    acao = models.ForeignKey('Acao', verbose_name='Ação')
     consolidada = models.NullBooleanField(u'Consolidada?', blank=True, null=True)
     """
     B = Buy and Hold; T = Trading
@@ -146,7 +146,7 @@ class OperacaoAcao (models.Model):
         return self.qtd_proventos_utilizada() > 0
 
 class UsoProventosOperacaoAcao (models.Model):
-    operacao = models.ForeignKey('OperacaoAcao')
+    operacao = models.ForeignKey('OperacaoAcao', verbose_name='Operação')
     qtd_utilizada = models.DecimalField(u'Quantidade de proventos utilizada', max_digits=11, decimal_places=2)
     divisao_operacao = models.OneToOneField('DivisaoOperacaoAcao')
 
@@ -154,8 +154,8 @@ class UsoProventosOperacaoAcao (models.Model):
         return 'R$ ' + str(self.qtd_utilizada) + ' em ' + self.divisao_operacao.divisao.nome + ' para ' + unicode(self.divisao_operacao.operacao)
     
 class OperacaoCompraVenda (models.Model):
-    compra = models.ForeignKey('OperacaoAcao', limit_choices_to={'tipo_operacao': 'C'}, related_name='compra')
-    venda = models.ForeignKey('OperacaoAcao', limit_choices_to={'tipo_operacao': 'V'}, related_name='venda')
+    compra = models.ForeignKey('OperacaoAcao', limit_choices_to={'tipo_operacao': 'C'}, related_name='compra', verbose_name='Compra')
+    venda = models.ForeignKey('OperacaoAcao', limit_choices_to={'tipo_operacao': 'V'}, related_name='venda', verbose_name='Venda')
     day_trade = models.NullBooleanField(u'É day trade?', blank=True)
     quantidade = models.IntegerField(u'Quantidade de ações')
     
@@ -166,7 +166,7 @@ class OperacaoCompraVenda (models.Model):
         return 'Compra: ' + self.compra.__unicode__() + ', Venda: ' + self.venda.__unicode__()
     
 class HistoricoAcao (models.Model):
-    acao = models.ForeignKey('Acao', unique_for_date='data')
+    acao = models.ForeignKey('Acao', unique_for_date='data', verbose_name='Ação')
     data = models.DateField(u'Data')
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)
     oficial_bovespa = models.BooleanField(u'Oficial Bovespa?', default=False)
@@ -175,7 +175,7 @@ class HistoricoAcao (models.Model):
         unique_together = ('acao', 'data')
     
 class ValorDiarioAcao (models.Model):
-    acao = models.ForeignKey('Acao')
+    acao = models.ForeignKey('Acao', verbose_name='Ação')
     data_hora = models.DateTimeField(u'Horário')
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)
     
