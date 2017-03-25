@@ -31,6 +31,7 @@ import copy
 import datetime
 import json
 import math
+from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
 
 @login_required
 def buscar_titulos_validos_na_data(request):
@@ -567,13 +568,16 @@ def sobre(request):
     historico_ipca = HistoricoIPCA.objects.filter(ano__gte=(data_atual.year-3)).exclude(mes__lt=data_atual.month, ano=data_atual.year-3)
     graf_historico_ipca = [[str(calendar.timegm(valor_historico.data().timetuple()) * 1000), float(valor_historico.valor)] for valor_historico in historico_ipca]
     
-    historico_selic = HistoricoTaxaDI.objects.filter(data__gte=data_atual.replace(year=data_atual.year-3))
-    graf_historico_selic = [[str(calendar.timegm(valor_historico.data.timetuple()) * 1000), float(valor_historico.taxa)] for valor_historico in historico_selic]
+    historico_selic = HistoricoTaxaSelic.objects.filter(data__gte=data_atual.replace(year=data_atual.year-3))
+    graf_historico_selic = [[str(calendar.timegm(valor_historico.data.timetuple()) * 1000), float(pow(valor_historico.taxa_diaria, 252) - 1)*100] for valor_historico in historico_selic]
     
     if request.user.is_authenticated():
         total_atual = sum(calcular_valor_td_ate_dia(request.user.investidor).values()).quantize(Decimal('0.01'))
     else:
         total_atual = 0
     
+    ultima_data_hora_atualizacao = ValorDiarioTitulo.objects.all().order_by('-data_hora')[0].data_hora
+    ultimos_valores = ValorDiarioTitulo.objects.filter(data_hora=ultima_data_hora_atualizacao)
+    
     return TemplateResponse(request, 'td/sobre.html', {'graf_historico_ipca': graf_historico_ipca, 'graf_historico_selic': graf_historico_selic,
-                                                       'total_atual': total_atual})
+                                                       'total_atual': total_atual, 'ultimos_valores': ultimos_valores, 'ultima_data_hora_atualizacao': ultima_data_hora_atualizacao})

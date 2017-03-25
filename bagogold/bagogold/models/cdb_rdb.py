@@ -11,7 +11,7 @@ class CDB_RDB (models.Model):
     """
     tipo = models.CharField(u'Tipo', max_length=1)
     """
-    Tipo de rendimento, 1 = Pré-fixado, 2 = Pós-fixado
+    Tipo de rendimento, 1 = Prefixado, 2 = Pós-fixado
     """    
     tipo_rendimento = models.PositiveSmallIntegerField(u'Tipo de rendimento')
     

@@ -10,7 +10,7 @@ import datetime
 ESCOLHAS_CDB_RDB=(('C', 'CDB'), 
                   ('R', 'RDB'))
 
-ESCOLHAS_TIPO_RENDIMENTO=((1, 'Pré-fixado'), 
+ESCOLHAS_TIPO_RENDIMENTO=((1, 'Prefixado'), 
                             (2, 'Pós-fixado'))
 
 ESCOLHAS_TIPO_OPERACAO=(('C', "Compra"),
