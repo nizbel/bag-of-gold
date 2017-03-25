@@ -5,6 +5,8 @@ from bagogold.bagogold.forms.fii import OperacaoFIIForm, ProventoFIIForm, \
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII, Divisao
 from bagogold.bagogold.models.fii import OperacaoFII, ProventoFII, HistoricoFII, \
     FII, UsoProventosOperacaoFII, ValorDiarioFII
+from bagogold.bagogold.utils.fii import calcular_valor_fii_ate_dia, \
+    calcular_poupanca_prov_fii_ate_dia
 from bagogold.bagogold.utils.investidores import is_superuser
 from decimal import Decimal, ROUND_FLOOR
 from django.contrib import messages
@@ -15,13 +17,13 @@ from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
+from django.template.response import TemplateResponse
 from itertools import chain
 from operator import attrgetter, itemgetter
 from yahoo_finance import Share
 import calendar
 import datetime
 import math
-from django.template.response import TemplateResponse
 
 
 
@@ -556,8 +558,9 @@ def painel(request):
 @login_required
 def sobre(request):
     if request.user.is_authenticated():
-        total_investido = sum(calcular_valor_(request.user.investidor).values())
+        total_atual = sum(calcular_valor_fii_ate_dia(request.user.investidor).values())
+        total_atual += calcular_poupanca_prov_fii_ate_dia(request.user.investidor)
     else:
-        total_investido = 0
+        total_atual = 0
     
-    return TemplateResponse(request, 'fii/sobre.html', {'total_investido': total_investido})
+    return TemplateResponse(request, 'fii/sobre.html', {'total_atual': total_atual})

@@ -509,14 +509,14 @@ def sobre(request):
         graf_historico_ipca = [[str(calendar.timegm(valor_historico.data().timetuple()) * 1000), float(valor_historico.valor)] for valor_historico in historico_ipca]
         
         if request.user.is_authenticated():
-            total_investido = sum(calcular_valor_lc_ate_dia(request.user.investidor).values())
+            total_atual = sum(calcular_valor_lc_ate_dia(request.user.investidor).values())
         else:
-            total_investido = 0
+            total_atual = 0
         
         filtros_simulador = {'periodo': Decimal(12), 'percentual_indice': Decimal(85), 'tipo': 'POS', 'indice': 'DI', 'aplicacao': Decimal(1000)}
         
         graf_simulador = [[str(calendar.timegm(data.timetuple()) * 1000), float(valor_lci_lca)] for data, valor_lci_lca in simulador_lci_lca(filtros_simulador)]
         
         return TemplateResponse(request, 'lc/sobre.html', {'graf_historico_di': graf_historico_di, 'graf_historico_ipca': graf_historico_ipca,
-                                                           'total_investido': total_investido, 'filtros_simulador': filtros_simulador,
+                                                           'total_atual': total_atual, 'filtros_simulador': filtros_simulador,
                                                            'graf_simulador': graf_simulador})

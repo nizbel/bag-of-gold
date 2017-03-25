@@ -3,7 +3,6 @@ from bagogold.bagogold.models.acoes import OperacaoAcao, ValorDiarioAcao, \
     HistoricoAcao, AcaoProvento, Acao, Provento
 from bagogold.bagogold.models.debentures import HistoricoValorDebenture, \
     OperacaoDebenture
-from bagogold.bagogold.models.divisoes import Divisao
 from bagogold.bagogold.models.fii import OperacaoFII, ValorDiarioFII, \
     HistoricoFII, FII, ProventoFII
 from bagogold.bagogold.models.fundo_investimento import \
@@ -24,8 +23,7 @@ from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia
 from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia
 from bagogold.cri_cra.models.cri_cra import CRI_CRA, OperacaoCRI_CRA
 from bagogold.cri_cra.utils.utils import qtd_cri_cra_ate_dia
-from bagogold.cri_cra.utils.valorizacao import calcular_valor_cri_cra_di, \
-    calcular_valor_um_cri_cra_na_data
+from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
 from decimal import Decimal
 from django.core.exceptions import PermissionDenied
 from itertools import chain
