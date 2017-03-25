@@ -554,7 +554,7 @@ def listar_cdb_rdb(request):
         investimento.rendimento_atual = investimento.porcentagem_atual()
         
         if investimento.tipo_rendimento == 1:
-            investimento.str_tipo_rendimento = 'Pré-fixado'
+            investimento.str_tipo_rendimento = 'Prefixado'
         elif investimento.tipo_rendimento == 2:
             investimento.str_tipo_rendimento = 'Pós-fixado'
         
