@@ -512,7 +512,6 @@ def sobre(request):
             total_investido = sum(calcular_valor_lc_ate_dia(request.user.investidor).values())
         else:
             total_investido = 0
-        print total_investido
         
         filtros_simulador = {'periodo': Decimal(12), 'percentual_indice': Decimal(85), 'tipo': 'POS', 'indice': 'DI', 'aplicacao': Decimal(1000)}
         
