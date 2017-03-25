@@ -552,3 +552,12 @@ def painel(request):
     dados['valor_diario_mais_recente'] = ValorDiarioFII.objects.latest('data_hora').data_hora
 
     return TemplateResponse(request, 'fii/painel.html', {'fiis': fiis, 'dados': dados})
+
+@login_required
+def sobre(request):
+    if request.user.is_authenticated():
+        total_investido = sum(calcular_valor_(request.user.investidor).values())
+    else:
+        total_investido = 0
+    
+    return TemplateResponse(request, 'fii/sobre.html', {'total_investido': total_investido})
