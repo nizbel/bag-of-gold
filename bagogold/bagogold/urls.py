@@ -57,6 +57,7 @@ fiis_patterns = [
     url(r'^editar_provento/(?P<id>\d+)/$', views.fii.fii.editar_provento_fii, name='editar_provento_fii'),
     url(r'^inserir_provento_fii/$', views.fii.fii.inserir_provento_fii, name='inserir_provento_fii'),
     url(r'^painel/$', views.fii.fii.painel, name='painel_fii'),
+    url(r'^sobre/$', views.fii.fii.sobre, name='sobre_fii'),
     ]
 
 gerador_proventos_patterns = [
