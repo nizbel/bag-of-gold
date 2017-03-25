@@ -10,7 +10,7 @@ from itertools import chain
 from operator import attrgetter
 import datetime
 
-def calcular_poupanca_prov_fii_ate_dia(investidor, dia):
+def calcular_poupanca_prov_fii_ate_dia(investidor, dia=datetime.date.today()):
     """
     Calcula a quantidade de proventos provisionada até dia determinado para FII
     Parâmetros: Investidor
@@ -205,3 +205,21 @@ def calcular_variacao_percentual_fii_por_periodo(fii, periodo_inicio, periodo_fi
         return 0
     
     return (valor_final - valor_inicial) / valor_final * 100
+
+def calcular_valor_fii_ate_dia(investidor, dia=datetime.date.today()):
+    """ 
+    Calcula o valor das cotas do investidor até dia determinado
+    Parâmetros: Investidor
+                Dia final
+    Retorno: Valor das cotas {ticker: valor_da_data}
+    """
+    
+    qtd_fii = calcular_qtd_fiis_ate_dia(investidor, dia)
+    
+    for ticker in qtd_fii.keys():
+        if ValorDiarioFII.objects.filter(fii__ticker=ticker, data_hora__day=dia.day, data_hora__month=dia.month).exists():
+            qtd_fii[ticker] = ValorDiarioFII.objects.filter(fii__ticker=ticker, data_hora__day=dia.day, data_hora__month=dia.month).order_by('-data_hora')[0].preco_unitario * qtd_fii[ticker]
+        else:
+            qtd_fii[ticker] = HistoricoFII.objects.filter(fii__ticker=ticker, data__lte=dia).order_by('-data')[0].preco_unitario * qtd_fii[ticker]
+        
+    return qtd_fii
