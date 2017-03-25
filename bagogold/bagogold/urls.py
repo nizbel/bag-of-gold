@@ -153,6 +153,7 @@ urlpatterns = [
     url(r'^cdb_rdb/modificar_carencia_cdb_rdb/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.modificar_carencia_cdb_rdb, name='modificar_carencia_cdb_rdb'),
     url(r'^cdb_rdb/modificar_porcentagem_cdb_rdb/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.modificar_porcentagem_cdb_rdb, name='modificar_porcentagem_cdb_rdb'),
     url(r'^cdb_rdb/painel/$', views.cdb_rdb.cdb_rdb.painel, name='painel_cdb_rdb'),
+    url(r'^cdb_rdb/sobre/$', views.cdb_rdb.cdb_rdb.sobre, name='sobre_cdb_rdb'),
     
     # Debêntures
     url(r'^debentures/detalhar_debenture/(?P<debenture_id>\d+)/$', views.debentures.debentures.detalhar_debenture, name='detalhar_debenture'),

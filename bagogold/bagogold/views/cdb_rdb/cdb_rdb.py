@@ -8,6 +8,8 @@ from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB, \
     OperacaoVendaCDB_RDB
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoCDB_RDB, Divisao
 from bagogold.bagogold.models.lc import HistoricoTaxaDI
+from bagogold.bagogold.models.td import HistoricoIPCA
+from bagogold.bagogold.utils.cdb_rdb import calcular_valor_cdb_rdb_ate_dia
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa, \
     calcular_valor_atualizado_com_taxas
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo, \
@@ -729,3 +731,20 @@ def painel(request):
     dados['total_vencimento'] = total_vencimento
     
     return TemplateResponse(request, 'cdb_rdb/painel.html', {'operacoes': operacoes, 'dados': dados})
+
+@login_required
+def sobre(request):
+    data_atual = datetime.date.today()
+    historico_di = HistoricoTaxaDI.objects.filter(data__gte=data_atual.replace(year=data_atual.year-3))
+    graf_historico_di = [[str(calendar.timegm(valor_historico.data.timetuple()) * 1000), float(valor_historico.taxa)] for valor_historico in historico_di]
+    
+    historico_ipca = HistoricoIPCA.objects.filter(ano__gte=(data_atual.year-3)).exclude(mes__lt=data_atual.month, ano=data_atual.year-3)
+    graf_historico_ipca = [[str(calendar.timegm(valor_historico.data().timetuple()) * 1000), float(valor_historico.valor)] for valor_historico in historico_ipca]
+    
+    if request.user.is_authenticated():
+        total_atual = sum(calcular_valor_cdb_rdb_ate_dia(request.user.investidor).values())
+    else:
+        total_atual = 0
+    
+    return TemplateResponse(request, 'cdb_rdb/sobre.html', {'graf_historico_di': graf_historico_di, 'graf_historico_ipca': graf_historico_ipca,
+                                                            'total_atual': total_atual})
