@@ -148,7 +148,7 @@ def calcular_qtd_um_titulo_ate_dia_por_divisao(investidor, dia, titulo_id):
     
     return qtd_titulos
 
-def calcular_valor_td_ate_dia(investidor, dia):
+def calcular_valor_td_ate_dia(investidor, dia=datetime.date.today()):
     """ 
     Calcula o valor dos títulos do investidor até dia determinado
     Parâmetros: Investidor

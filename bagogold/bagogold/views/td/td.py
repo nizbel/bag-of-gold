@@ -6,7 +6,7 @@ from bagogold.bagogold.models.fii import FII
 from bagogold.bagogold.models.lc import LetraCredito, HistoricoTaxaDI, \
     HistoricoPorcentagemLetraCredito
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
-    ValorDiarioTitulo, Titulo
+    ValorDiarioTitulo, Titulo, HistoricoIPCA
 from bagogold.bagogold.testTD import buscar_valores_diarios
 from bagogold.bagogold.utils.fii import \
     calcular_rendimento_proventos_fii_12_meses, \
@@ -14,7 +14,7 @@ from bagogold.bagogold.utils.fii import \
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas
 from bagogold.bagogold.utils.td import calcular_imposto_venda_td, \
     buscar_data_valor_mais_recente, quantidade_titulos_ate_dia, \
-    quantidade_titulos_ate_dia_por_titulo
+    quantidade_titulos_ate_dia_por_titulo, calcular_valor_td_ate_dia
 from copy import deepcopy
 from decimal import Decimal, ROUND_DOWN
 from django.contrib import messages
@@ -560,3 +560,20 @@ def painel(request):
     dados['data_valor_mais_recente'] = buscar_data_valor_mais_recente()
     
     return TemplateResponse(request, 'td/painel.html', {'titulos': titulos, 'titulos_vendidos': titulos_vendidos, 'dados': dados})
+
+@login_required
+def sobre(request):
+    data_atual = datetime.date.today()
+    historico_ipca = HistoricoIPCA.objects.filter(ano__gte=(data_atual.year-3)).exclude(mes__lt=data_atual.month, ano=data_atual.year-3)
+    graf_historico_ipca = [[str(calendar.timegm(valor_historico.data().timetuple()) * 1000), float(valor_historico.valor)] for valor_historico in historico_ipca]
+    
+    historico_selic = HistoricoTaxaDI.objects.filter(data__gte=data_atual.replace(year=data_atual.year-3))
+    graf_historico_selic = [[str(calendar.timegm(valor_historico.data.timetuple()) * 1000), float(valor_historico.taxa)] for valor_historico in historico_selic]
+    
+    if request.user.is_authenticated():
+        total_atual = sum(calcular_valor_td_ate_dia(request.user.investidor).values()).quantize(Decimal('0.01'))
+    else:
+        total_atual = 0
+    
+    return TemplateResponse(request, 'td/sobre.html', {'graf_historico_ipca': graf_historico_ipca, 'graf_historico_selic': graf_historico_selic,
+                                                       'total_atual': total_atual})

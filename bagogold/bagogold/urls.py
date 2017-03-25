@@ -126,6 +126,7 @@ urlpatterns = [
     url(r'^td/historico/$', views.td.td.historico_td, name='historico_td'),
     url(r'^td/inserir_operacao_td/$', views.td.td.inserir_operacao_td, name='inserir_operacao_td'),
     url(r'^td/painel/$', views.td.td.painel, name='painel_td'),
+    url(r'^td/sobre/$', views.td.td.sobre, name='sobre_td'),
 
     # Poupança
     
