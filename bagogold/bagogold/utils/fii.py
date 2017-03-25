@@ -110,22 +110,11 @@ def calcular_qtd_fiis_ate_dia(investidor, dia):
                 Dia final
     Retorno: Quantidade de FIIs {ticker: qtd}
     """
-    
-    operacoes = OperacaoFII.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True).order_by('data')
-    
-    qtd_fii = {}
-    
-    for operacao in operacoes:
-        if operacao.fii.ticker not in qtd_fii:
-            qtd_fii[operacao.fii.ticker] = 0
-            
-        # Verificar se se trata de compra ou venda
-        if operacao.tipo_operacao == 'C':
-            qtd_fii[operacao.fii.ticker] += operacao.quantidade
-            
-        elif operacao.tipo_operacao == 'V':
-            qtd_fii[operacao.fii.ticker] -= operacao.quantidade
-        
+    qtd_fii = dict(OperacaoFII.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True).annotate(ticker=F('fii__ticker')).values('ticker') \
+        .annotate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
+                            When(tipo_operacao='V', then=F('quantidade')*-1),
+                            output_field=DecimalField()))).values_list('ticker', 'total').exclude(total=0))
+
     return qtd_fii
 
 def calcular_qtd_fiis_ate_dia_por_ticker(investidor, dia, ticker):
