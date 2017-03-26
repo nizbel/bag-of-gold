@@ -18,3 +18,7 @@ def pendencias_investidor(context):
         num_pendencias = len(pendencias)
         return {'num_pendencias': num_pendencias, 'pendencias': pendencias}
     return {}
+
+def breadcrumbs(context):
+    print context.resolver_match.namespaces
+    return ''
