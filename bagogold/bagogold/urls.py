@@ -87,6 +87,17 @@ fiis_patterns = [
     url(r'^sobre/$', views.fii.fii.sobre, name='sobre_fii'),
     ]
 
+fundo_investimento_patterns = [
+    url(r'^adicionar_valor_cota_historico/$', views.fundo_investimento.fundo_investimento.adicionar_valor_cota_historico, name='adicionar_valor_cota_historico'),
+    url(r'^editar_operacao/(?P<id>\d+)/$', views.fundo_investimento.fundo_investimento.editar_operacao_fundo_investimento, name='editar_operacao_fundo_investimento'),
+    url(r'^historico/$', views.fundo_investimento.fundo_investimento.historico, name='historico_fundo_investimento'),
+    url(r'^inserir_fundo_investimento/$', views.fundo_investimento.fundo_investimento.inserir_fundo_investimento, name='inserir_fundo_investimento'),
+    url(r'^inserir_operacao_fundo_investimento/$', views.fundo_investimento.fundo_investimento.inserir_operacao_fundo_investimento, name='inserir_operacao_fundo_investimento'),
+    url(r'^listar_fundo_investimento/$', views.fundo_investimento.fundo_investimento.listar_fundo_investimento, name='listar_fundo_investimento'),
+    url(r'^modificar_carencia_fundo_investimento/$', views.fundo_investimento.fundo_investimento.modificar_carencia_fundo_investimento, name='modificar_carencia_fundo_investimento'),
+    url(r'^painel/$', views.fundo_investimento.fundo_investimento.painel, name='painel_fundo_investimento'),
+    ]
+
 gerador_proventos_patterns = [
     url(r'^baixar_documento_provento/(?P<id_documento>\d+)/$', views.gerador_proventos.gerador_proventos.baixar_documento_provento, name='baixar_documento_provento'),
     url(r'^detalhar_documento/(?P<id_documento>\d+)/$', views.gerador_proventos.gerador_proventos.detalhar_documento, name='detalhar_documento'),
@@ -107,6 +118,18 @@ gerador_proventos_patterns = [
 imposto_renda_patterns = [
     url(r'^detalhar_imposto_renda/(?P<ano>\d+)/$', views.imposto_renda.imposto_renda.detalhar_imposto_renda, name='detalhar_imposto_renda'),
     url(r'^listar_anos/$', views.imposto_renda.imposto_renda.listar_anos, name='listar_anos_imposto_renda'),
+    ]
+
+lci_lca_patterns = [
+    url(r'^editar_operacao/(?P<id>\d+)/$', views.lc.lc.editar_operacao_lc, name='editar_operacao_lci_lca'),
+    url(r'^historico/$', views.lc.lc.historico, name='historico_lci_lca'),
+    url(r'^inserir_letra_credito/$', views.lc.lc.inserir_lc, name='inserir_lci_lca'),
+    url(r'^inserir_operacao_lc/$', views.lc.lc.inserir_operacao_lc, name='inserir_operacao_lci_lca'),
+    url(r'^listar_letras_credito/$', views.lc.lc.listar_lc, name='listar_lci_lca'),
+    url(r'^modificar_carencia_lc/$', views.lc.lc.modificar_carencia_lc, name='modificar_carencia_lci_lca'),
+    url(r'^modificar_porcentagem_di_lc/$', views.lc.lc.modificar_porcentagem_di_lc, name='modificar_porcentagem_di_lci_lca'),
+    url(r'^painel/$', views.lc.lc.painel, name='painel_lci_lca'),
+    url(r'^sobre/$', views.lc.lc.sobre, name='sobre_lci_lca'),
     ]
 
 td_patterns = [
@@ -167,15 +190,7 @@ urlpatterns = [
     # Poupança
     
     # LCA e LCI
-    url(r'^lc/editar_operacao/(?P<id>\d+)/$', views.lc.lc.editar_operacao_lc, name='editar_operacao_lc'),
-    url(r'^lc/historico/$', views.lc.lc.historico, name='historico_lc'),
-    url(r'^lc/inserir_letra_credito/$', views.lc.lc.inserir_lc, name='inserir_lc'),
-    url(r'^lc/inserir_operacao_lc/$', views.lc.lc.inserir_operacao_lc, name='inserir_operacao_lc'),
-    url(r'^lc/listar_letras_credito/$', views.lc.lc.listar_lc, name='listar_lc'),
-    url(r'^lc/modificar_carencia_lc/$', views.lc.lc.modificar_carencia_lc, name='modificar_carencia_lc'),
-    url(r'^lc/modificar_porcentagem_di_lc/$', views.lc.lc.modificar_porcentagem_di_lc, name='modificar_porcentagem_di_lc'),
-    url(r'^lc/painel/$', views.lc.lc.painel, name='painel_lc'),
-    url(r'^lc/sobre/$', views.lc.lc.sobre, name='sobre_lc'),
+    url(r'^lci_lca/', include(lci_lca_patterns, namespace='lci_lca')),
     
     # CDB e RDB
     url(r'^cdb_rdb/', include(cdb_rdb_patterns, namespace='cdb_rdb')),
@@ -184,14 +199,7 @@ urlpatterns = [
     url(r'^debentures/', include(debentures_patterns, namespace='debentures')),
     
     # Fundo de investimento
-    url(r'^fundo_investimento/adicionar_valor_cota_historico/$', views.fundo_investimento.fundo_investimento.adicionar_valor_cota_historico, name='adicionar_valor_cota_historico'),
-    url(r'^fundo_investimento/editar_operacao/(?P<id>\d+)/$', views.fundo_investimento.fundo_investimento.editar_operacao_fundo_investimento, name='editar_operacao_fundo_investimento'),
-    url(r'^fundo_investimento/historico/$', views.fundo_investimento.fundo_investimento.historico, name='historico_fundo_investimento'),
-    url(r'^fundo_investimento/inserir_fundo_investimento/$', views.fundo_investimento.fundo_investimento.inserir_fundo_investimento, name='inserir_fundo_investimento'),
-    url(r'^fundo_investimento/inserir_operacao_fundo_investimento/$', views.fundo_investimento.fundo_investimento.inserir_operacao_fundo_investimento, name='inserir_operacao_fundo_investimento'),
-    url(r'^fundo_investimento/listar_fundo_investimento/$', views.fundo_investimento.fundo_investimento.listar_fundo_investimento, name='listar_fundo_investimento'),
-    url(r'^fundo_investimento/modificar_carencia_fundo_investimento/$', views.fundo_investimento.fundo_investimento.modificar_carencia_fundo_investimento, name='modificar_carencia_fundo_investimento'),
-    url(r'^fundo_investimento/painel/$', views.fundo_investimento.fundo_investimento.painel, name='painel_fundo_investimento'),
+    url(r'^fundo_investimento/', include(fundo_investimento_patterns, namespace='fundo_investimento')),
 
     # Imposto de renda
     url(r'^imposto_renda/', include(imposto_renda_patterns, namespace='imposto_renda')),
