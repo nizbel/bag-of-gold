@@ -21,4 +21,4 @@ def pendencias_investidor(context):
 
 def breadcrumbs(context):
     print context.resolver_match.namespaces
-    return ''
+    return {}
