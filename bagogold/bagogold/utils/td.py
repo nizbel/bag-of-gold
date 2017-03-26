@@ -109,16 +109,6 @@ def calcular_qtd_titulos_ate_dia_por_divisao(dia, divisao_id):
                             When(operacao__tipo_operacao='V', then=F('quantidade')*-1),
                             output_field=DecimalField()))).values_list('titulo', 'total').exclude(total=0))
         
-#     for titulo_qtd in operacoes_divisao:
-#         if titulo_qtd['titulo'] not in qtd_titulos.keys():
-#             qtd_titulos[titulo_qtd['titulo']] = titulo_qtd['qtd_soma']
-#         else:
-#             qtd_titulos[titulo_qtd['titulo']] += titulo_qtd['qtd_soma']
-#             
-#     for key in qtd_titulos.keys():
-#         if qtd_titulos[key] == 0:
-#             del qtd_titulos[key]
-    
     return qtd_titulos
 
 def calcular_qtd_um_titulo_ate_dia_por_divisao(investidor, dia, titulo_id):

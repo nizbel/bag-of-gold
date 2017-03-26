@@ -5,9 +5,14 @@ from bagogold.bagogold.forms.divisoes import DivisaoOperacaoDebentureFormSet
 from bagogold.bagogold.models.debentures import OperacaoDebenture, Debenture, \
     HistoricoValorDebenture
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoDebenture
+from bagogold.bagogold.models.lc import HistoricoTaxaDI
+from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
+from bagogold.bagogold.models.td import HistoricoIPCA
+from bagogold.bagogold.utils.debenture import calcular_valor_debentures_ate_dia
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas
 from bagogold.bagogold.utils.misc import \
     formatar_zeros_a_direita_apos_2_casas_decimais, qtd_dias_uteis_no_periodo
+from bagogold.bagogold.utils.td import calcular_valor_acumulado_ipca
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -24,10 +29,6 @@ from operator import attrgetter
 import calendar
 import datetime
 import json
-from bagogold.bagogold.models.lc import HistoricoTaxaDI
-from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
-from bagogold.bagogold.models.td import HistoricoIPCA
-from bagogold.bagogold.utils.td import calcular_valor_acumulado_ipca
 
 
 
@@ -400,3 +401,24 @@ def painel(request):
     dados['total_rendimento_ate_vencimento'] = total_rendimento_ate_vencimento
     
     return TemplateResponse(request, 'debentures/painel.html', {'debentures': debentures, 'dados': dados})
+
+@login_required
+def sobre(request):
+    data_atual = datetime.date.today()
+    historico_di = HistoricoTaxaDI.objects.filter(data__gte=data_atual.replace(year=data_atual.year-3))
+    graf_historico_di = [[str(calendar.timegm(valor_historico.data.timetuple()) * 1000), float(valor_historico.taxa)] for valor_historico in historico_di]
+        
+    historico_ipca = HistoricoIPCA.objects.filter(ano__gte=(data_atual.year-3)).exclude(mes__lt=data_atual.month, ano=data_atual.year-3)
+    graf_historico_ipca = [[str(calendar.timegm(valor_historico.data().timetuple()) * 1000), float(valor_historico.valor)] for valor_historico in historico_ipca]
+    
+    historico_selic = HistoricoTaxaSelic.objects.filter(data__gte=data_atual.replace(year=data_atual.year-3))
+    graf_historico_selic = [[str(calendar.timegm(valor_historico.data.timetuple()) * 1000), float(pow(valor_historico.taxa_diaria, 252) - 1)*100] for valor_historico in historico_selic]
+    
+    if request.user.is_authenticated():
+        total_atual = sum(calcular_valor_debentures_ate_dia(request.user.investidor).values()).quantize(Decimal('0.01'))
+    else:
+        total_atual = 0
+    
+    
+    return TemplateResponse(request, 'debentures/sobre.html', {'graf_historico_di': graf_historico_di, 'graf_historico_ipca': graf_historico_ipca, 
+                                                               'graf_historico_selic': graf_historico_selic, 'total_atual': total_atual})

@@ -7,27 +7,24 @@
     <div class="portlet-title">
         <div class="caption font-yellow-crusta">
             <i class="icon-pin font-yellow-crusta"></i>
-            <span class="caption-subject bold uppercase">CDB/RDB</span>
+            <span class="caption-subject bold uppercase">Debêntures</span>
         </div>
     </div>
     <div class="portlet-body">
         <div class="row">
             <div class="{% if user.is_authenticated %}col-md-10{% else %}col-md-12{% endif %}">
                 <div class="row">
-                    <div class="col-md-6">
-                        <h3>Significado das siglas</h3>
-                        <ul class="list-unstyled">
-                            <li><strong>CDB</strong>: Certificado de Depósito Bancário</li>
-                            <li><strong>RDB</strong>: Recibo de Depósito Bancário</li>
-                        </ul>
-                    </div>
+<!--                     <div class="col-md-6"> -->
+<!--                         <h3>Significado das siglas</h3> -->
+<!--                         <ul class="list-unstyled"> -->
+<!--                             <li><strong>CDB</strong>: Certificado de Depósito Bancário</li> -->
+<!--                             <li><strong>RDB</strong>: Recibo de Depósito Bancário</li> -->
+<!--                         </ul> -->
+<!--                     </div> -->
                     <div class="col-md-6">
                         <h3>O que são?</h3>
                         <p>
-                        CDB e RDB são títulos que bancos emitem para poder arrecadar capital. Na prática é como se o investidor emprestasse dinheiro para que o
-                        banco exerça suas atividades, e em contrapartida recebe juros sobre esse dinheiro. Ambos os títulos pagam Imposto de Renda, sendo a 
-                        diferença entre eles a data de carência, enquanto no CDB o investidor pode resgatar o dinheiro antecipadamente (abrindo mão de parte do
-                        rendimento), no RDB o dinheiro só é pago ao investidor na data de vencimento.
+                        Debêntures são títulos de crédito emitidos por empresas para captar recursos a fim de financiar projetos. No documento da emissão
                         </p>
                     </div>
                     <div class="col-md-12">
@@ -36,21 +33,25 @@
                                 <div class="mt-step-desc text-center">
                                     <h3>Como funciona</h3>
                                 </div>
-                                <div class="col-md-4 mt-step-col first ">
+                                <div class="col-md-3 mt-step-col first ">
                                     <div class="mt-step-number bg-white"><i class="icon-user font-yellow-crusta"></i></div>
                                     <div class="mt-step-title uppercase">Investidor</div>
-                                    <div class="mt-step-content">Empresta dinheiro ao Banco ao adquirir um título</div>
+                                    <div class="mt-step-content">Empresta dinheiro a Empresa ao adquirir uma debênture</div>
                                 </div>
-                                <div class="col-md-4 mt-step-col">
+                                <div class="col-md-3 mt-step-col">
                                     <div class="mt-step-number bg-white"><i class="fa fa-bank font-yellow-crusta"></i></div>
-                                    <div class="mt-step-title uppercase">Banco</div>
-                                    <div class="mt-step-content">Opera com o dinheiro recebido</div>
+                                    <div class="mt-step-title uppercase">Empresa</div>
+                                    <div class="mt-step-content">Investe o dinheiro</div>
                                 </div>
-                                <div class="col-md-4 mt-step-col last">
+                                <div class="col-md-3 mt-step-col">
                                     <div class="mt-step-number bg-white"><i class="fa fa-money font-yellow-crusta"></i></div>
-                                    <div class="mt-step-title uppercase">Retorno</div>
-                                    <div class="mt-step-content">Na data de vencimento, ou após o período de carência caso o investidor queira resgatar, o dinheiro volta ao
-                                    investidor, somado ao rendimento acordado na primeira etapa</div>
+                                    <div class="mt-step-title uppercase">Datas de remuneração/amortização</div>
+                                    <div class="mt-step-content">De acordo com os termos de emissão da debênture, podem ser pagas remunerações e/ou amortizações antes da data de vencimento</div>
+                                </div>
+                                <div class="col-md-3 mt-step-col last">
+                                    <div class="mt-step-number bg-white"><i class="fa fa-money font-yellow-crusta"></i></div>
+                                    <div class="mt-step-title uppercase">Data de vencimento</div>
+                                    <div class="mt-step-content">Na data de vencimento, a parcela restante do investimento corrigido pela taxa acordada, retorna ao investidor</div>
                                 </div>
                             </div>
                         </div>
@@ -58,31 +59,35 @@
                     <div class="col-md-6">
                         <h3>Garantia</h3>
                         <p>
-                        São garantidos pelo FGC (Fundo Garantidor de Crédito), <strong>até um limite de R$ 250.000,00 por CPF por instituição</strong>).
+                        Não há.
                         </p>
                     </div>
                     <div class="col-md-6">
                         <h3>Tipos</h3>
                         <p>
-                        Podem ser prefixados ou pós-fixados. Os prefixados já mostram ao investidor quanto ele irá receber na data de vencimento. Nos pós-fixados,
-                        a taxa de rendimento é atrelada a um índice, como o DI (mais comum) ou o IPCA, portanto o investidor só irá saber o rendimento final ao 
-                        término do investimento.
+                        Debêntures podem ser <strong>prefixadas</strong> ou atreladas a algum <strong>índice</strong> (Selic, IPCA, DI, IGP-M, entre outros).
+                        </p>
+                        <p>
+                        Debêntures incentivadas, ou "de estrutura", são <strong>isentas de IR</strong>.
+                        </p>
+                        <p>
+                        Debêntures podem ser convertidas em ações da empresa, nos termos previstos em seus regulamentos.
                         </p>
                     </div>
                     <div class="col-md-6">
                         <h3>Liquidez</h3>
                         <p>
-                        <strong>CDB</strong>: O investidor apenas pode resgatar o dinheiro após um período de carência, se houver, ou na data de vencimento. Resgates em um
-                        período inferior a 30 dias também pagam IOF de acordo com a tabela regressiva de IOF.
-                        </p>
-                        <p>
-                        <strong>RDB</strong>: O investidor apenas pode resgatar o dinheiro na data de vencimento.
+                        O investidor pode vender as debêntures no mercado secundário, a preço de mercado. Para receber na totalidade o investimento atualizado com as taxas, é necessário esperar até 
+                        a data de vencimento.
                         </p>
                     </div>
                     <div class="col-md-6">
                         <h3>Imposto de Renda</h3>
                         <p>
-                        Os investimentos em CDB/RDB seguem a Tabela Regressiva:
+                        <strong>Debêntures incentivadas</strong>: São isentas de IR.
+                        </p>
+                        <p>
+                        <strong>Demais debêntures</strong>: Seguem a Tabela Regressiva:
                         </p>
                         <ul class="list-unstyled">
                             <li>Até 180 dias: <strong>22,5% </strong>
@@ -94,8 +99,8 @@
                     <div class="col-md-6">
                         <h3>Para mais informações:</h3>
                         <ul class="list-unstyled">
-                            <li><a href="http://www.infomoney.com.br/cdb">Infomoney</a></li>
-                            <li><a href="http://www.startpoint.com.br/InvRDB.htm">Start Point</a></li>
+                            <li><a href="http://www.debentures.com.br">debentures.com.br</a></li>
+                            <li><a href="http://www.bmfbovespa.com.br/pt_br/produtos/listados-a-vista-e-derivativos/renda-fixa-privada-e-publica/debentures.htm">BM&F Bovespa - Debêntures</a></li>
                         </ul>
                     </div>
                 </div>
@@ -121,9 +126,9 @@
                         {% endif %}
                         <h4>Investimentos</h4>
                         <ul class="list-unstyled">
-                            <li><a href="{% url "inserir_operacao_cdb_rdb" %}">Inserir operação</a></li>
-                            <li><a href="{% url "historico_cdb_rdb" %}">Histórico de operações</a></li>
-                            <li><a href="{% url "painel_cdb_rdb" %}">Painel de CDB/RDB</a></li>
+                            <li><a href="{% url "inserir_operacao_debenture" %}">Inserir operação</a></li>
+                            <li><a href="{% url "historico_debenture" %}">Histórico de operações</a></li>
+                            <li><a href="{% url "painel_debenture" %}">Painel de Debêntures</a></li>
                         </ul>
                     </div>
                 </div>
@@ -160,6 +165,20 @@
                     </div>
                 </div>
             </div>
+            <div class="col-md-6">
+                <div class="portlet box yellow-crusta">
+                    <div class="portlet-title">
+                        <div class="caption">
+                            <i class="fa fa-line-chart"></i>Últimos valores para a Selic</div>
+                        <div class="tools">
+                            <a href="javascript:;" class="collapse"></a>
+                        </div>
+                    </div>
+                    <div class="portlet-body">
+                        <div class="chart" id="graf_historico_selic" style="width:100%;height:300px"></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -185,6 +204,11 @@ $( document ).ready(function() {
     );
     
     $.plot($("#graf_historico_ipca"), [ {color: "#33AA33", lines: {show:true}, data: {{ graf_historico_ipca|safe }} } 
+    ],
+    {grid: { hoverable: true, clickable: true}, xaxis: {mode: "time", timeformat: "%d/%m/%Y", tickSize: [6, "month"]} }  
+    );
+
+    $.plot($("#graf_historico_selic"), [ {color: "#33AA33", lines: {show:true}, data: {{ graf_historico_selic|safe }} } 
     ],
     {grid: { hoverable: true, clickable: true}, xaxis: {mode: "time", timeformat: "%d/%m/%Y", tickSize: [6, "month"]} }  
     );
@@ -228,6 +252,28 @@ $( document ).ready(function() {
         }
     });
     $("#graf_historico_ipca").bind("plothover", function (event, pos, item) {
+        $("#x").text(pos.x.toFixed(2));
+        $("#y").text(pos.y.toFixed(2));
+
+        if (item) {
+            if (previousPoint != item.datapoint) {
+                previousPoint = item.datapoint;
+                
+                $("#tooltip").remove();
+                var x = item.datapoint[0].toFixed(2),
+                    y = item.datapoint[1].toFixed(2).toString().replace('.', ',');
+                
+                var date = new Date(parseInt(x));
+                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%Y") +"</br>Taxa: " + y + "%");
+            }
+        }
+        else {
+            $("#tooltip").remove();
+            clicksYet = false;
+            previousPoint = null;            
+        }
+    });
+    $("#graf_historico_selic").bind("plothover", function (event, pos, item) {
         $("#x").text(pos.x.toFixed(2));
         $("#y").text(pos.y.toFixed(2));
 
