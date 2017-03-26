@@ -104,12 +104,17 @@ gerador_proventos_patterns = [
     url(r'^validar_documento_provento/(?P<id_pendencia>\d+)/$', views.gerador_proventos.gerador_proventos.validar_documento_provento, name='validar_documento_provento'),
     ]
 
+imposto_renda_patterns = [
+    url(r'^detalhar_imposto_renda/(?P<ano>\d+)/$', views.imposto_renda.imposto_renda.detalhar_imposto_renda, name='detalhar_imposto_renda'),
+    url(r'^listar_anos/$', views.imposto_renda.imposto_renda.listar_anos, name='listar_anos_imposto_renda'),
+    ]
+
 td_patterns = [
     url(r'^aconselhamento/$', views.td.td.aconselhamento_td, name='aconselhamento_td'),
     url(r'^buscar_titulos_validos_na_data/$', views.td.td.buscar_titulos_validos_na_data, name='buscar_titulos_validos_na_data'),
     url(r'^editar_operacao/(?P<id>\d+)/$', views.td.td.editar_operacao_td, name='editar_operacao_td'),
     url(r'^historico/$', views.td.td.historico_td, name='historico_td'),
-    url(r'^inserir_operacao_$', views.td.td.inserir_operacao_td, name='inserir_operacao_td'),
+    url(r'^inserir_operacao_td/$', views.td.td.inserir_operacao_td, name='inserir_operacao_td'),
     url(r'^painel/$', views.td.td.painel, name='painel_td'),
     url(r'^sobre/$', views.td.td.sobre, name='sobre_td'),
     ]
@@ -189,7 +194,5 @@ urlpatterns = [
     url(r'^fundo_investimento/painel/$', views.fundo_investimento.fundo_investimento.painel, name='painel_fundo_investimento'),
 
     # Imposto de renda
-    url(r'^imposto_renda/detalhar_imposto_renda/(?P<ano>\d+)/$', views.imposto_renda.imposto_renda.detalhar_imposto_renda, name='detalhar_imposto_renda'),
-    url(r'^imposto_renda/listar_anos/$', views.imposto_renda.imposto_renda.listar_anos, name='listar_anos_imposto_renda'),
-
+    url(r'^imposto_renda/', include(imposto_renda_patterns, namespace='imposto_renda')),
 ]

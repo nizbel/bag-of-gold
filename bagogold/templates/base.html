@@ -327,7 +327,7 @@
                 <li>
                     <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> Imposto de Renda</span></a>
                     <ul>
-                        <li><a class="submenu" href="{% url "listar_anos_imposto_renda" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar anos</span></a></li>
+                        <li><a class="submenu" href="{% url "imposto_renda:listar_anos_imposto_renda" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar anos</span></a></li>
                     </ul>   
                 </li>
                 {% if perms.bagogold.pode_gerar_proventos %}
