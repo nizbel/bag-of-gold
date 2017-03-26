@@ -1,0 +1,19 @@
+{% extends "teste/base.html" %}
+{% load staticfiles %}
+
+{% block extra_head %}
+<link href={% static "assets/pages/css/error.min.css" %} rel="stylesheet" type="text/css" />
+{% endblock %}
+
+{% block content %}
+
+<div class="row">
+	<div class="col-md-12 page-500">
+		<div class="number font-red-thunderbird"> 500 </div>
+		<div class="details">
+			<h3> Oops! Algo saiu fora do esperado </h3>
+			<p> Estamos trabalhando nisso </p>
+		</div>
+	</div>
+</div>
+{% endblock %}
