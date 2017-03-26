@@ -38,7 +38,7 @@ def detalhar_debenture(request, debenture_id):
         debenture = Debenture.objects.get(id=debenture_id)
     except Debenture.DoesNotExist:
         messages.error(request, 'Debênture selecionado é inválido')
-        return HttpResponseRedirect(reverse('listar_debentures'))
+        return HttpResponseRedirect(reverse('debentures:listar_debentures'))
     
     debenture.valor_emissao = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(debenture.valor_emissao))
     if debenture.data_fim:
@@ -97,7 +97,7 @@ def editar_operacao_debenture(request, operacao_id):
 #                                         divisao_operacao.usoproventosoperacaofii.save()
                         
                         messages.success(request, 'Operação alterada com sucesso')
-                        return HttpResponseRedirect(reverse('historico_debenture'))
+                        return HttpResponseRedirect(reverse('debentures:historico_debenture'))
                     
                     for erro in formset_divisao.non_form_errors():
                         messages.error(request, erro)
@@ -108,7 +108,7 @@ def editar_operacao_debenture(request, operacao_id):
                     divisao_operacao.quantidade = operacao_debenture.quantidade
                     divisao_operacao.save()
                     messages.success(request, 'Operação alterada com sucesso')
-                    return HttpResponseRedirect(reverse('historico_debenture'))
+                    return HttpResponseRedirect(reverse('debentures:historico_debenture'))
                         
             for erro in [erro for erro in form_operacao_debenture.non_field_errors()]:
                 messages.error(request, erro)
@@ -121,7 +121,7 @@ def editar_operacao_debenture(request, operacao_id):
                 divisao.delete()
             operacao_debenture.delete()
             messages.success(request, 'Operação apagada com sucesso')
-            return HttpResponseRedirect(reverse('historico_debenture'))
+            return HttpResponseRedirect(reverse('debentures:historico_debenture'))
 
     else:
         form_operacao_debenture = OperacaoDebentureForm(instance=operacao_debenture)
@@ -254,7 +254,7 @@ def inserir_operacao_debenture(request):
                     formset_divisao.save()
                         
                     messages.success(request, 'Operação inserida com sucesso')
-                    return HttpResponseRedirect(reverse('historico_debenture'))
+                    return HttpResponseRedirect(reverse('debentures:historico_debenture'))
                 
                 for erro in formset_divisao.non_form_errors():
                     messages.error(request, erro)
@@ -264,7 +264,7 @@ def inserir_operacao_debenture(request):
                 divisao_operacao = DivisaoOperacaoDebenture(operacao=operacao_debenture, quantidade=operacao_debenture.quantidade, divisao=investidor.divisaoprincipal.divisao)
                 divisao_operacao.save()
                 messages.success(request, 'Operação inserida com sucesso')
-                return HttpResponseRedirect(reverse('historico_debenture'))
+                return HttpResponseRedirect(reverse('debentures:historico_debenture'))
         for erro in [erro for erro in form_operacao_debenture.non_field_errors()]:
             messages.error(request, erro)
             

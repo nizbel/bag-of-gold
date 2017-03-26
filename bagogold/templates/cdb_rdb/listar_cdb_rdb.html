@@ -31,7 +31,7 @@
 				<tbody>
 				{% for item in cdb_rdb %}
 				<tr>
-					<td><a href="{% url 'detalhar_cdb_rdb' item.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar CDB/RDB">{{item.nome}}</a></td>
+					<td><a href="{% url 'cdb_rdb:detalhar_cdb_rdb' item.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar CDB/RDB">{{item.nome}}</a></td>
 					<td>{{item.tipo}}</td>
 					<td>{{item.str_tipo_rendimento}}</td>
 					<td>{{item.carencia_atual}} dia(s)</td>

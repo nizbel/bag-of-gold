@@ -122,13 +122,13 @@ def editar_cdb_rdb(request, id):
             if form_cdb_rdb.is_valid():
                 cdb_rdb.save()
                 messages.success(request, 'CDB/RDB editado com sucesso')
-                return HttpResponseRedirect(reverse('detalhar_cdb_rdb', kwargs={'id': cdb_rdb.id}))
+                return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'id': cdb_rdb.id}))
                 
         # TODO verificar o que pode acontecer na exclusão
         elif request.POST.get("delete"):
             cdb_rdb.delete()
             messages.success(request, 'CDB/RDB excluído com sucesso')
-            return HttpResponseRedirect(reverse('listar_cdb_rdb'))
+            return HttpResponseRedirect(reverse('cdb_rdb:listar_cdb_rdb'))
  
     else:
         form_cdb_rdb = CDB_RDBForm(instance=cdb_rdb)
@@ -154,17 +154,17 @@ def editar_historico_carencia(request, id):
             if form_historico_carencia.is_valid():
                 historico_carencia.save()
                 messages.success(request, 'Histórico de carência editado com sucesso')
-                return HttpResponseRedirect(reverse('detalhar_cdb_rdb', kwargs={'id': historico_carencia.cdb_rdb.id}))
+                return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'id': historico_carencia.cdb_rdb.id}))
                 
         elif request.POST.get("delete"):
             if historico_carencia.data is None:
                 messages.error(request, 'Valor inicial de carência não pode ser excluído')
-                return HttpResponseRedirect(reverse('detalhar_cdb_rdb', kwargs={'id': historico_carencia.cdb_rdb.id}))
+                return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'id': historico_carencia.cdb_rdb.id}))
             # Pegar investimento para o redirecionamento no caso de exclusão
             cdb_rdb = historico_carencia.cdb_rdb
             historico_carencia.delete()
             messages.success(request, 'Histórico de carência excluído com sucesso')
-            return HttpResponseRedirect(reverse('detalhar_cdb_rdb', kwargs={'id': cdb_rdb.id}))
+            return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'id': cdb_rdb.id}))
  
     else:
         if historico_carencia.data is None:
@@ -195,17 +195,17 @@ def editar_historico_porcentagem(request, id):
             if form_historico_porcentagem.is_valid():
                 historico_porcentagem.save(force_update=True)
                 messages.success(request, 'Histórico de porcentagem editado com sucesso')
-                return HttpResponseRedirect(reverse('detalhar_cdb_rdb', kwargs={'id': historico_porcentagem.cdb_rdb.id}))
+                return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'id': historico_porcentagem.cdb_rdb.id}))
                 
         elif request.POST.get("delete"):
             if historico_porcentagem.data is None:
                 messages.error(request, 'Valor inicial de porcentagem não pode ser excluído')
-                return HttpResponseRedirect(reverse('detalhar_cdb_rdb', kwargs={'id': historico_porcentagem.cdb_rdb.id}))
+                return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'id': historico_porcentagem.cdb_rdb.id}))
             # Pegar investimento para o redirecionamento no caso de exclusão
             cdb_rdb = historico_porcentagem.cdb_rdb
             historico_porcentagem.delete()
             messages.success(request, 'Histórico de porcentagem excluído com sucesso')
-            return HttpResponseRedirect(reverse('detalhar_cdb_rdb', kwargs={'id': cdb_rdb.id}))
+            return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'id': cdb_rdb.id}))
  
     else:
         if historico_porcentagem.data is None:
@@ -254,7 +254,7 @@ def editar_operacao_cdb_rdb(request, id):
                                     operacao_venda_cdb_rdb.save()
                         formset_divisao.save()
                         messages.success(request, 'Operação editada com sucesso')
-                        return HttpResponseRedirect(reverse('historico_cdb_rdb'))
+                        return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
                     for erro in formset_divisao.non_form_errors():
                         messages.error(request, erro)
                         
@@ -273,7 +273,7 @@ def editar_operacao_cdb_rdb(request, id):
                     divisao_operacao.quantidade = operacao_cdb_rdb.quantidade
                     divisao_operacao.save()
                     messages.success(request, 'Operação editada com sucesso')
-                    return HttpResponseRedirect(reverse('historico_cdb_rdb'))
+                    return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
             for erros in form_operacao_cdb_rdb.errors.values():
                 for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
                     messages.error(request, erro.message)
@@ -289,7 +289,7 @@ def editar_operacao_cdb_rdb(request, id):
                     OperacaoVendaCDB_RDB.objects.get(operacao_venda=operacao_cdb_rdb).delete()
                 operacao_cdb_rdb.delete()
                 messages.success(request, 'Operação excluída com sucesso')
-                return HttpResponseRedirect(reverse('historico_cdb_rdb'))
+                return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
             else:
                 messages.error(request, 'Não é possível excluir operação de compra que já tenha vendas registradas')
  
@@ -433,7 +433,7 @@ def inserir_cdb_rdb(request):
                         return TemplateResponse(request, 'cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'formset_porcentagem': formset_porcentagem,
                                                           'formset_carencia': formset_carencia})
                         
-                    return HttpResponseRedirect(reverse('listar_cdb_rdb'))
+                    return HttpResponseRedirect(reverse('cdb_rdb:listar_cdb_rdb'))
                 
         for erros in form_cdb_rdb.errors.values():
             for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
@@ -486,7 +486,7 @@ def inserir_operacao_cdb_rdb(request):
                     operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
                     operacao_venda_cdb_rdb.save()
                     messages.success(request, 'Operação inserida com sucesso')
-                    return HttpResponseRedirect(reverse('historico_cdb_rdb'))
+                    return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
                 # Vendas parciais
                 else:
                     # Verificar se varias divisões
@@ -497,7 +497,7 @@ def inserir_operacao_cdb_rdb(request):
                             operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
                             operacao_venda_cdb_rdb.save()
                             messages.success(request, 'Operação inserida com sucesso')
-                            return HttpResponseRedirect(reverse('historico_cdb_rdb'))
+                            return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
                         for erro in formset_divisao_cdb_rdb.non_form_errors():
                                 messages.error(request, erro)
                                 
@@ -508,7 +508,7 @@ def inserir_operacao_cdb_rdb(request):
                         operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
                         operacao_venda_cdb_rdb.save()
                         messages.success(request, 'Operação inserida com sucesso')
-                        return HttpResponseRedirect(reverse('historico_cdb_rdb'))
+                        return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
             
             # Compra
             else:
@@ -518,7 +518,7 @@ def inserir_operacao_cdb_rdb(request):
                         operacao_cdb_rdb.save()
                         formset_divisao_cdb_rdb.save()
                         messages.success(request, 'Operação inserida com sucesso')
-                        return HttpResponseRedirect(reverse('historico_cdb_rdb'))
+                        return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
                     for erro in formset_divisao_cdb_rdb.non_form_errors():
                                 messages.error(request, erro)
                                 
@@ -527,7 +527,7 @@ def inserir_operacao_cdb_rdb(request):
                         divisao_operacao = DivisaoOperacaoCDB_RDB(operacao=operacao_cdb_rdb, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_cdb_rdb.quantidade)
                         divisao_operacao.save()
                         messages.success(request, 'Operação inserida com sucesso')
-                        return HttpResponseRedirect(reverse('historico_cdb_rdb'))
+                        return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
                     
         for erros in form_operacao_cdb_rdb.errors.values():
             for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
@@ -573,7 +573,7 @@ def modificar_carencia_cdb_rdb(request, id):
         if form.is_valid():
             historico = form.save()
             messages.success(request, 'Histórico de carência para %s alterado com sucesso' % historico.cdb_rdb)
-            return HttpResponseRedirect(reverse('detalhar_cdb_rdb', kwargs={'id': cdb_rdb.id}))
+            return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'id': cdb_rdb.id}))
     else:
         form = HistoricoCarenciaCDB_RDBForm(initial={'cdb_rdb': cdb_rdb.id}, cdb_rdb=cdb_rdb, investidor=investidor)
             
@@ -592,7 +592,7 @@ def modificar_porcentagem_cdb_rdb(request, id):
         if form.is_valid():
             historico = form.save()
             messages.success(request, 'Histórico de porcentagem de rendimento para %s alterado com sucesso' % historico.cdb_rdb)
-            return HttpResponseRedirect(reverse('detalhar_cdb_rdb', kwargs={'id': cdb_rdb.id}))
+            return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'id': cdb_rdb.id}))
     else:
         form = HistoricoPorcentagemCDB_RDBForm(initial={'cdb_rdb': cdb_rdb.id}, cdb_rdb=cdb_rdb, investidor=investidor)
             

@@ -206,7 +206,7 @@ def editar_operacao_td(request, id):
                         operacao_td.save()
                         formset_divisao.save()
                         messages.success(request, 'Operação alterada com sucesso')
-                        return HttpResponseRedirect(reverse('historico_td'))
+                        return HttpResponseRedirect(reverse('td:historico_td'))
                     for erro in formset_divisao.non_form_errors():
                         messages.error(request, erro)
                 
@@ -216,7 +216,7 @@ def editar_operacao_td(request, id):
                     divisao_operacao.quantidade = operacao_td.quantidade
                     divisao_operacao.save()
                     messages.success(request, 'Operação editada com sucesso')
-                    return HttpResponseRedirect(reverse('historico_td'))
+                    return HttpResponseRedirect(reverse('td:historico_td'))
             for erros in form_operacao_td.errors.values():
                 for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
                     messages.error(request, erro.message)
@@ -231,7 +231,7 @@ def editar_operacao_td(request, id):
                     divisao.delete()
                 operacao_td.delete()
                 messages.success(request, 'Operação apagada com sucesso')
-                return HttpResponseRedirect(reverse('historico_td'))
+                return HttpResponseRedirect(reverse('td:historico_td'))
 
     else:
         form_operacao_td = OperacaoTituloForm(instance=operacao_td, investidor=investidor)
@@ -411,7 +411,7 @@ def inserir_operacao_td(request):
                     operacao_td.save()
                     formset_divisao.save()
                     messages.success(request, 'Operação inserida com sucesso')
-                    return HttpResponseRedirect(reverse('historico_td'))
+                    return HttpResponseRedirect(reverse('td:historico_td'))
                 for erro in formset_divisao.non_form_errors():
                     messages.error(request, erro)
             else:
@@ -419,7 +419,7 @@ def inserir_operacao_td(request):
                 divisao_operacao = DivisaoOperacaoTD(operacao=operacao_td, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_td.quantidade)
                 divisao_operacao.save()
                 messages.success(request, 'Operação inserida com sucesso')
-                return HttpResponseRedirect(reverse('historico_td'))
+                return HttpResponseRedirect(reverse('td:historico_td'))
             
         for erros in form_operacao_td.errors.values():
             for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:

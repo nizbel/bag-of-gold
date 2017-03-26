@@ -35,7 +35,7 @@
                 <tbody>
                 {% for item in debentures %}
                 <tr>
-                    <td><a href="{% url 'detalhar_debenture' item.id %}">{{item.codigo}}</a></td>
+                    <td><a href="{% url 'debentures:detalhar_debenture' item.id %}">{{item.codigo}}</a></td>
                     <td>{{item.padrao_snd|yesno:"Sim,Não,Não"}}</td>
                     <td>{{item.incentivada|yesno:"Sim,Não,Não"}}</td>
                     <td>{{item.data_emissao|date:'d/m/Y'}}</td>

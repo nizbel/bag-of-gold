@@ -95,7 +95,7 @@ def editar_operacao_fundo_investimento(request, id):
                     divisao.delete()
                 operacao_fundo_investimento.delete()
                 messages.success(request, 'Operação apagada com sucesso')
-                return HttpResponseRedirect(reverse('historico_td'))
+                return HttpResponseRedirect(reverse('td:historico_td'))
  
     else:
         form_operacao_fundo_investimento = OperacaoFundoInvestimentoForm(instance=operacao_fundo_investimento, investidor=investidor)
