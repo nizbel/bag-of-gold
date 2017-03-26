@@ -14,7 +14,8 @@ from bagogold.cri_cra.forms.cri_cra import CRI_CRAForm, \
     DataAmortizacaoCRI_CRAFormSet, OperacaoCRI_CRAForm
 from bagogold.cri_cra.models.cri_cra import CRI_CRA, DataRemuneracaoCRI_CRA, \
     DataAmortizacaoCRI_CRA, OperacaoCRI_CRA
-from bagogold.cri_cra.utils.utils import qtd_cri_cra_ate_dia_para_certificado
+from bagogold.cri_cra.utils.utils import qtd_cri_cra_ate_dia_para_certificado,\
+    calcular_valor_cri_cra_ate_dia
 from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
 from decimal import Decimal
 from django.contrib import messages
@@ -517,3 +518,24 @@ def painel(request):
     dados['total_rendimento_ate_vencimento'] = total_rendimento_ate_vencimento
 #     
     return TemplateResponse(request, 'cri_cra/painel.html', {'cri_cra': cri_cra, 'dados': dados})
+
+@login_required
+def sobre(request):
+    data_atual = datetime.date.today()
+    historico_di = HistoricoTaxaDI.objects.filter(data__gte=data_atual.replace(year=data_atual.year-3))
+    graf_historico_di = [[str(calendar.timegm(valor_historico.data.timetuple()) * 1000), float(valor_historico.taxa)] for valor_historico in historico_di]
+        
+    historico_ipca = HistoricoIPCA.objects.filter(ano__gte=(data_atual.year-3)).exclude(mes__lt=data_atual.month, ano=data_atual.year-3)
+    graf_historico_ipca = [[str(calendar.timegm(valor_historico.data().timetuple()) * 1000), float(valor_historico.valor)] for valor_historico in historico_ipca]
+    
+    historico_selic = HistoricoTaxaSelic.objects.filter(data__gte=data_atual.replace(year=data_atual.year-3))
+    graf_historico_selic = [[str(calendar.timegm(valor_historico.data.timetuple()) * 1000), float(pow(valor_historico.taxa_diaria, 252) - 1)*100] for valor_historico in historico_selic]
+    
+    if request.user.is_authenticated():
+        total_atual = sum(calcular_valor_cri_cra_ate_dia(request.user.investidor).values()).quantize(Decimal('0.01'))
+    else:
+        total_atual = 0
+    
+    
+    return TemplateResponse(request, 'cri_cra/sobre.html', {'graf_historico_di': graf_historico_di, 'graf_historico_ipca': graf_historico_ipca, 
+                                                               'graf_historico_selic': graf_historico_selic, 'total_atual': total_atual})

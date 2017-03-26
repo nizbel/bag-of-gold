@@ -11,4 +11,5 @@ urlpatterns = [
     url(r'^inserir_operacao_cri_cra$', views.cri_cra.inserir_operacao_cri_cra, name='inserir_operacao_cri_cra'),
     url(r'^listar_cri_cra$', views.cri_cra.listar_cri_cra, name='listar_cri_cra'),
     url(r'^painel/$', views.cri_cra.painel, name='painel_cri_cra'),
+    url(r'^sobre/$', views.cri_cra.sobre, name='sobre_cri_cra'),
 ]
