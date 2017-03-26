@@ -78,6 +78,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'bagogold.bagogold.context_processors.env',
                 'bagogold.bagogold.context_processors.pendencias_investidor',
+                'bagogold.bagogold.context_processors.breadcrumbs',
             ],
         },
     },
