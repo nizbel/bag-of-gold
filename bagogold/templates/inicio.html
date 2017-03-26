@@ -9,7 +9,7 @@
 	<div class="portlet-title">
 		<div class="caption font-yellow-crusta">
 			<i class="icon-user font-yellow-crusta"></i>
-            <span class="caption-subject bold uppercase"> Bem-vindo, {{request.user.investidor}}! </span>
+            <span class="caption-subject bold uppercase"> Olá, {{request.user.investidor}}! </span>
 		</div>
 		<div class="actions">
 			<a href="{% url "detalhamento_investimentos" %}" class="btn btn-warning">Ver histórico detalhado</a>
@@ -35,11 +35,11 @@
 							<div class="row">
 								{% for investimento in investimentos_atuais %}
 								<div class="col-md-2">
-									<div class="mt-overlay-6">
-										<img src={% static "assets/pages/img/page_general_search/gold.png" %}>
+									<div class="mt-overlay-6" style="background: none;">
+										<img src={% static "assets/global/img/bag-logo-overlay.png" %}>
 										<div class="mt-overlay">
-											<h2>{{investimento.descricao}}<br/>R$<span data-counter="counterup" data-value="{{investimento.valor}}">0</span></h2>
-											<a class="mt-info uppercase btn default btn-outline" href="{% url investimento.link %}">Detalhar</a>
+											<h2 class="font-dark"><strong>{{investimento.descricao}}<br/>R$<span data-counter="counterup" data-value="{{investimento.valor}}">0</span></strong></h2>
+											<a class="mt-info uppercase btn dark btn-outline" href="{% url investimento.link %}">Detalhar</a>
 										</div>
 									</div>
 								</div>
