@@ -1,7 +1,19 @@
-{% extends "base.html" %}
+{% extends "teste/base.html" %}
+{% load staticfiles %}
+
+{% block extra_head %}
+<link href={% static "assets/pages/css/error.min.css" %} rel="stylesheet" type="text/css" />
+{% endblock %}
 
 {% block content %}
-<h1>Acesso negado</h1>
 
-<h3>Você não possui permissão para acessar essa página</h3>
+<div class="row">
+	<div class="col-md-12 page-404">
+		<div class="number font-red-thunderbird"> 403 </div>
+		<div class="details">
+			<h3>Acesso negado</h3>
+			<p> Você não possui permissão para acessar essa página </p>
+		</div>
+	</div>
+</div>
 {% endblock %}
