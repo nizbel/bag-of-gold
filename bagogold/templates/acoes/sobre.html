@@ -7,7 +7,7 @@
     <div class="portlet-title">
         <div class="caption font-yellow-crusta">
             <i class="icon-pin font-yellow-crusta"></i>
-            <span class="caption-subject bold uppercase">FII</span>
+            <span class="caption-subject bold uppercase">Ações</span>
         </div>
     </div>
     <div class="portlet-body">
@@ -15,18 +15,20 @@
             <div class="{% if user.is_authenticated %}col-md-10{% else %}col-md-12{% endif %}">
                 <div class="row">
                     <div class="col-md-6">
-                        <h3>Significado da sigla</h3>
+                        <h3>Significado das siglas</h3>
                         <ul class="list-unstyled">
-                            <li><strong>FII</strong>: Fundo de Investimento Imobiliário</li>
+                            <li><strong>ON</strong>: Ordinária</li>
+                            <li><strong>PN</strong>: Preferencial</li>
+                            <li><strong>JSCP</strong>, ou <strong>JCP</strong>: Juros sobre capital próprio</li>
                         </ul>
                     </div>
                     <div class="col-md-6">
                         <h3>O que são?</h3>
                         <p>
-                        Fundos de investimento imobiliário são fundos onde o capital é aplicado no mercado imobiliário. Podem ser comprados imóveis (<strong>fundos de tijolo</strong>) ou valores 
-                        relacionados ao setor imobiliário (<strong>fundos de papel</strong>). O investidor recebe sua cota sobre os rendimentos/amortizações do fundo (aluguéis ou vendas de 
-                        imóveis, rendimentos sobre ativos financeiros ou ganho de capital) periodicamente, e ao final, a amortização proporcional do valor patrimonial do fundo. Caso deseje se 
-                        desfazer de sua posição em FIIs, é possível negociar as cotas na bolsa de valores, como ações.
+                        CDB e RDB são títulos que bancos emitem para poder arrecadar capital. Na prática é como se o investidor emprestasse dinheiro para que o
+                        banco exerça suas atividades, e em contrapartida recebe juros sobre esse dinheiro. Ambos os títulos pagam Imposto de Renda, sendo a 
+                        diferença entre eles a data de carência, enquanto no CDB o investidor pode resgatar o dinheiro antecipadamente (abrindo mão de parte do
+                        rendimento), no RDB o dinheiro só é pago ao investidor na data de vencimento.
                         </p>
                     </div>
                     <div class="col-md-12">
@@ -35,25 +37,21 @@
                                 <div class="mt-step-desc text-center">
                                     <h3>Como funciona</h3>
                                 </div>
-                                <div class="col-md-3 mt-step-col first ">
+                                <div class="col-md-4 mt-step-col first ">
                                     <div class="mt-step-number bg-white"><i class="icon-user font-yellow-crusta"></i></div>
                                     <div class="mt-step-title uppercase">Investidor</div>
-                                    <div class="mt-step-content">Adquire cota do FII</div>
+                                    <div class="mt-step-content">Empresta dinheiro ao Banco ao adquirir um título</div>
                                 </div>
-                                <div class="col-md-3 mt-step-col">
+                                <div class="col-md-4 mt-step-col">
                                     <div class="mt-step-number bg-white"><i class="fa fa-bank font-yellow-crusta"></i></div>
-                                    <div class="mt-step-title uppercase">Administradora</div>
-                                    <div class="mt-step-content">Adquire imóveis ou aplicações financeiras do setor imobiliário</div>
+                                    <div class="mt-step-title uppercase">Banco</div>
+                                    <div class="mt-step-content">Opera com o dinheiro recebido</div>
                                 </div>
-                                <div class="col-md-3 mt-step-col">
+                                <div class="col-md-4 mt-step-col last">
                                     <div class="mt-step-number bg-white"><i class="fa fa-money font-yellow-crusta"></i></div>
-                                    <div class="mt-step-title uppercase">Periodicamente</div>
-                                    <div class="mt-step-content">Investidor recebe sua parte nos aluguéis, rendimentos e/ou ganhos do fundo</div>
-                                </div>
-                                <div class="col-md-3 mt-step-col last">
-                                    <div class="mt-step-number bg-white"><i class="fa fa-money font-yellow-crusta"></i></div>
-                                    <div class="mt-step-title uppercase">Data de vencimento</div>
-                                    <div class="mt-step-content">Investidor recebe sua parte sobre o patrimônio do fundo</div>
+                                    <div class="mt-step-title uppercase">Retorno</div>
+                                    <div class="mt-step-content">Na data de vencimento, ou após o período de carência caso o investidor queira resgatar, o dinheiro volta ao
+                                    investidor, somado ao rendimento acordado na primeira etapa</div>
                                 </div>
                             </div>
                         </div>
@@ -67,34 +65,37 @@
                     <div class="col-md-6">
                         <h3>Tipos</h3>
                         <p>
-                        Podem ser focados em imóveis, também chamados de <strong>fundos de tijolo</strong>, ou em valores do setor imobíliario, os <strong>fundos de papel</strong>. Isso
-                        é determinado no regulamento do fundo, que pode trazer inclusive uma política de investimentos generalista, permitindo que o capital seja investido nas duas áreas.
+                        Podem ser prefixados ou pós-fixados. Os prefixados já mostram ao investidor quanto ele irá receber na data de vencimento. Nos pós-fixados,
+                        a taxa de rendimento é atrelada a um índice, como o DI (mais comum) ou o IPCA, portanto o investidor só irá saber o rendimento final ao 
+                        término do investimento.
                         </p>
                     </div>
                     <div class="col-md-6">
                         <h3>Liquidez</h3>
                         <p>
-                        O investidor pode vender suas cotas no mercado secundário (como feito com ações). Do contrário, apenas terá liquidez na data de vencimento do fundo.
+                        Podem ser negociadas durante dias úteis no horário de pregão da Bovespa.
                         </p>
                     </div>
                     <div class="col-md-6">
                         <h3>Imposto de Renda</h3>
                         <p>
-                        Operações de venda: <strong>20%</strong> sobre o lucro auferido, podendo abater prejuízos de vendas de FII dos meses anteriores.
+                        Day trade: <strong>20%</strong> sobre o lucro auferido, podendo abater prejuízos de trades dos meses anteriores.
                         </p>
                         <p>
-                        Rendimentos: <strong>Isentos</strong>.
+                        Operações em datas diferentes: <strong>15%</strong> sobre o lucro auferido, podendo abater prejuízos em operações (<strong>que não sejam day trades</strong>) dos meses anteriores.
                         </p>
                         <p>
-                        Amortizações: <strong>Isentas desde que seja amortizado quantidade inferior ao preço médio do investidor</strong>. Do contrário,
-                        <strong>20%</strong> sobre o lucro auferido entre o preço médio e o total amortizado.
+                        Dividendos: <strong>Isentos</strong>.
+                        </p>
+                        <p>
+                        JSCP: <strong>15%</strong>, retido na fonte.
                         </p>
                     </div>
                     <div class="col-md-6">
                         <h3>Para mais informações:</h3>
                         <ul class="list-unstyled">
-                            <li><a href="http://fiis.com.br/">FIIS</a></li>
-                            <li><a href="http://www.bmfbovespa.com.br/pt_br/produtos/listados-a-vista-e-derivativos/renda-variavel/fundos-de-investimento-imobiliario-fii.htm">BM&F Bovespa - FII</a></li>
+                            <li><a href="http://www.bmfbovespa.com.br/pt_br/produtos/listados-a-vista-e-derivativos/renda-variavel/acoes.htm">BM&F Bovespa - Ações</a></li>
+                            <li><a href="https://www.bastter.com/Mercado/acao/default.aspx">Bastter</a></li>
                         </ul>
                     </div>
                 </div>
@@ -120,9 +121,9 @@
                         {% endif %}
                         <h4>Investimentos</h4>
                         <ul class="list-unstyled">
-                            <li><a href="{% url "fii:inserir_operacao_fii" %}">Inserir operação</a></li>
-                            <li><a href="{% url "fii:historico_fii" %}">Histórico de operações</a></li>
-                            <li><a href="{% url "fii:painel_fii" %}">Painel de FII</a></li>
+                            <li><a href="{% url "acoes:inserir_operacao_cdb_rdb" %}">Inserir operação</a></li>
+                            <li><a href="{% url "acoes:historico_cdb_rdb" %}">Histórico de operações</a></li>
+                            <li><a href="{% url "acoes:painel_cdb_rdb" %}">Painel de CDB/RDB</a></li>
                         </ul>
                     </div>
                 </div>
