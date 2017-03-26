@@ -33,7 +33,7 @@
             }
             var tipoOperacao = $('#id_tipo_operacao').val();
             $.ajax({
-                url : "{% url 'buscar_titulos_validos_na_data' %}", // the endpoint
+                url : "{% url 'td:buscar_titulos_validos_na_data' %}", // the endpoint
                 type : "GET", // http method
                 data: {dataEscolhida: dataEscolhida, tipoOperacao: tipoOperacao},
                 
@@ -62,7 +62,7 @@
             }
             var tipoOperacao = $(this).val();
             $.ajax({
-                url : "{% url 'buscar_titulos_validos_na_data' %}", // the endpoint
+                url : "{% url 'td:buscar_titulos_validos_na_data' %}", // the endpoint
                 type : "GET", // http method
                 data: {dataEscolhida: dataEscolhida, tipoOperacao: tipoOperacao},
                 

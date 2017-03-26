@@ -12,7 +12,7 @@
 		<div class="caption font-yellow-crusta">
 			<i class="icon-diamond font-yellow-crusta"></i>{{cdb_rdb.nome}}</div>
 		<div class="actions">
-			<a href="{% url 'editar_cdb_rdb' cdb_rdb.id %}" class="btn btn-small btn-warning">Editar {{cdb_rdb.tipo}}</a>
+			<a href="{% url 'cdb_rdb:editar_cdb_rdb' cdb_rdb.id %}" class="btn btn-small btn-warning">Editar {{cdb_rdb.tipo}}</a>
 		</div>
 	</div>
 	<div class="portlet-body">
@@ -95,7 +95,7 @@
 							<tr>
 								<th>Data</th>
 								<th>Rendimento</th>
-								<th><a href="{% url 'modificar_porcentagem_cdb_rdb' cdb_rdb.id %}" class="btn btn-sm green-steel">Adicionar</a></th>
+								<th><a href="{% url 'cdb_rdb:modificar_porcentagem_cdb_rdb' cdb_rdb.id %}" class="btn btn-sm green-steel">Adicionar</a></th>
 							</tr>
 						</thead>
 						<tbody>
@@ -103,7 +103,7 @@
 						<tr>
 							<td>{{item.data|default:"Inicial"}}</td>
 							<td>{{item.porcentagem}}%</td>
-							<td><a href="{% url 'editar_historico_porcentagem' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
+							<td><a href="{% url 'cdb_rdb:editar_historico_porcentagem' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
 						</tr>
 						{% endfor %}
 						</tbody>
@@ -128,7 +128,7 @@
 							<tr>
 								<th>Data</th>
 								<th>Carência (dias)</th>
-								<th><a href="{% url 'modificar_carencia_cdb_rdb' cdb_rdb.id %}" class="btn btn-sm green-steel">Adicionar</a></th>
+								<th><a href="{% url 'cdb_rdb:modificar_carencia_cdb_rdb' cdb_rdb.id %}" class="btn btn-sm green-steel">Adicionar</a></th>
 							</tr>
 						</thead>
 						<tbody>
@@ -136,7 +136,7 @@
 						<tr>
 							<td>{{item.data|default:"Inicial"}}</td>
 							<td>{{item.carencia}} dia(s)</td>
-							<td><a href="{% url 'editar_historico_carencia' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
+							<td><a href="{% url 'cdb_rdb:editar_historico_carencia' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
 						</tr>
 						{% endfor %}
 						</tbody>

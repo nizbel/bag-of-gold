@@ -175,7 +175,7 @@
 <script>
 function mostrar_debentures_validas(data) {
     $.ajax({
-        url : "{% url 'listar_debentures_validas_na_data' %}", // the endpoint
+        url : "{% url 'debentures:listar_debentures_validas_na_data' %}", // the endpoint
         type : "GET", // http method
         data : {data: data},
 

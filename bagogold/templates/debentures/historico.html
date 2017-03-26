@@ -124,8 +124,8 @@
 						<tbody>
 						{% for item in lista_conjunta %}
 							<tr>
-								<td><a href="{% url 'detalhar_debenture' item.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar debênture">{{item.debenture.codigo}}</a></td>
-								<td><a href="{% url 'editar_operacao_debenture' item.id %}" class="tooltips" data-placement="top" data-original-title="Editar operação">{{item.tipo}}</a></td>
+								<td><a href="{% url 'debentures:detalhar_debenture' item.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar debênture">{{item.debenture.codigo}}</a></td>
+								<td><a href="{% url 'debentures:editar_operacao_debenture' item.id %}" class="tooltips" data-placement="top" data-original-title="Editar operação">{{item.tipo}}</a></td>
 								<td>{{ item.data|date:"d/m/Y" }}</td>
 								<td>{{item.quantidade}}</td>
 								<td>R$ {{item.valor_unitario|floatformat:2}}</td>

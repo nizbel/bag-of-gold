@@ -36,6 +36,33 @@ acoes_patterns = [
     url(r'^trading/inserir_operacao_acao/$', views.acoes.trade.inserir_operacao_acao, name='inserir_operacao_acao_t'),
     ]
 
+cdb_rdb_patterns = [
+    url(r'^detalhar_cdb_rdb/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.detalhar_cdb_rdb, name='detalhar_cdb_rdb'),
+    url(r'^editar_cdb_rdb/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.editar_cdb_rdb, name='editar_cdb_rdb'),
+    url(r'^editar_historico_carencia/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.editar_historico_carencia, name='editar_historico_carencia'),
+    url(r'^editar_historico_porcentagem/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.editar_historico_porcentagem, name='editar_historico_porcentagem'),
+    url(r'^editar_operacao/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.editar_operacao_cdb_rdb, name='editar_operacao_cdb_rdb'),
+    url(r'^historico/$', views.cdb_rdb.cdb_rdb.historico, name='historico_cdb_rdb'),
+    url(r'^inserir_cdb_rdb/$', views.cdb_rdb.cdb_rdb.inserir_cdb_rdb, name='inserir_cdb_rdb'),
+    url(r'^inserir_operacao_cdb_rdb/$', views.cdb_rdb.cdb_rdb.inserir_operacao_cdb_rdb, name='inserir_operacao_cdb_rdb'),
+    url(r'^listar_cdb_rdb/$', views.cdb_rdb.cdb_rdb.listar_cdb_rdb, name='listar_cdb_rdb'),
+    url(r'^modificar_carencia_cdb_rdb/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.modificar_carencia_cdb_rdb, name='modificar_carencia_cdb_rdb'),
+    url(r'^modificar_porcentagem_cdb_rdb/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.modificar_porcentagem_cdb_rdb, name='modificar_porcentagem_cdb_rdb'),
+    url(r'^painel/$', views.cdb_rdb.cdb_rdb.painel, name='painel_cdb_rdb'),
+    url(r'^sobre/$', views.cdb_rdb.cdb_rdb.sobre, name='sobre_cdb_rdb'),
+    ]
+
+debentures_patterns = [
+    url(r'^detalhar_debenture/(?P<debenture_id>\d+)/$', views.debentures.debentures.detalhar_debenture, name='detalhar_debenture'),
+    url(r'^editar_operacao/(?P<operacao_id>\d+)/$', views.debentures.debentures.editar_operacao_debenture, name='editar_operacao_debenture'),
+    url(r'^historico/$', views.debentures.debentures.historico, name='historico_debenture'),
+    url(r'^inserir_operacao_debenture/$', views.debentures.debentures.inserir_operacao_debenture, name='inserir_operacao_debenture'),
+    url(r'^listar_debentures/$', views.debentures.debentures.listar_debentures, name='listar_debentures'),
+    url(r'^listar_debentures_validas_na_data/$', views.debentures.debentures.listar_debentures_validas_na_data, name='listar_debentures_validas_na_data'),
+    url(r'^painel/$', views.debentures.debentures.painel, name='painel_debenture'),
+    url(r'^sobre/$', views.debentures.debentures.sobre, name='sobre_debenture'),
+    ]
+
 divisoes_patterns = [
     url(r'^criar_transferencias/$', views.divisoes.divisoes.criar_transferencias, name='criar_transferencias'),
     url(r'^detalhar_divisao/(?P<id>\d+)/$', views.divisoes.divisoes.detalhar_divisao, name='detalhar_divisao'),
@@ -75,6 +102,16 @@ gerador_proventos_patterns = [
     url(r'^puxar_responsabilidade_documento_provento/$', views.gerador_proventos.gerador_proventos.puxar_responsabilidade_documento_provento, name='puxar_responsabilidade_documento_provento'),
     url(r'^remover_responsabilidade_documento_provento/$', views.gerador_proventos.gerador_proventos.remover_responsabilidade_documento_provento, name='remover_responsabilidade_documento_provento'),
     url(r'^validar_documento_provento/(?P<id_pendencia>\d+)/$', views.gerador_proventos.gerador_proventos.validar_documento_provento, name='validar_documento_provento'),
+    ]
+
+td_patterns = [
+    url(r'^aconselhamento/$', views.td.td.aconselhamento_td, name='aconselhamento_td'),
+    url(r'^buscar_titulos_validos_na_data/$', views.td.td.buscar_titulos_validos_na_data, name='buscar_titulos_validos_na_data'),
+    url(r'^editar_operacao/(?P<id>\d+)/$', views.td.td.editar_operacao_td, name='editar_operacao_td'),
+    url(r'^historico/$', views.td.td.historico_td, name='historico_td'),
+    url(r'^inserir_operacao_$', views.td.td.inserir_operacao_td, name='inserir_operacao_td'),
+    url(r'^painel/$', views.td.td.painel, name='painel_td'),
+    url(r'^sobre/$', views.td.td.sobre, name='sobre_td'),
     ]
 
 urlpatterns = [
@@ -120,13 +157,7 @@ urlpatterns = [
     url(r'^fii/', include(fiis_patterns, namespace='fii')),
 
     # Tesouro direto
-    url(r'^td/aconselhamento/$', views.td.td.aconselhamento_td, name='aconselhamento_td'),
-    url(r'^td/buscar_titulos_validos_na_data/$', views.td.td.buscar_titulos_validos_na_data, name='buscar_titulos_validos_na_data'),
-    url(r'^td/editar_operacao/(?P<id>\d+)/$', views.td.td.editar_operacao_td, name='editar_operacao_td'),
-    url(r'^td/historico/$', views.td.td.historico_td, name='historico_td'),
-    url(r'^td/inserir_operacao_td/$', views.td.td.inserir_operacao_td, name='inserir_operacao_td'),
-    url(r'^td/painel/$', views.td.td.painel, name='painel_td'),
-    url(r'^td/sobre/$', views.td.td.sobre, name='sobre_td'),
+    url(r'^td/', include(td_patterns, namespace='td')),
 
     # Poupança
     
@@ -142,29 +173,10 @@ urlpatterns = [
     url(r'^lc/sobre/$', views.lc.lc.sobre, name='sobre_lc'),
     
     # CDB e RDB
-    url(r'^cdb_rdb/detalhar_cdb_rdb/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.detalhar_cdb_rdb, name='detalhar_cdb_rdb'),
-    url(r'^cdb_rdb/editar_cdb_rdb/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.editar_cdb_rdb, name='editar_cdb_rdb'),
-    url(r'^cdb_rdb/editar_historico_carencia/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.editar_historico_carencia, name='editar_historico_carencia'),
-    url(r'^cdb_rdb/editar_historico_porcentagem/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.editar_historico_porcentagem, name='editar_historico_porcentagem'),
-    url(r'^cdb_rdb/editar_operacao/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.editar_operacao_cdb_rdb, name='editar_operacao_cdb_rdb'),
-    url(r'^cdb_rdb/historico/$', views.cdb_rdb.cdb_rdb.historico, name='historico_cdb_rdb'),
-    url(r'^cdb_rdb/inserir_cdb_rdb/$', views.cdb_rdb.cdb_rdb.inserir_cdb_rdb, name='inserir_cdb_rdb'),
-    url(r'^cdb_rdb/inserir_operacao_cdb_rdb/$', views.cdb_rdb.cdb_rdb.inserir_operacao_cdb_rdb, name='inserir_operacao_cdb_rdb'),
-    url(r'^cdb_rdb/listar_cdb_rdb/$', views.cdb_rdb.cdb_rdb.listar_cdb_rdb, name='listar_cdb_rdb'),
-    url(r'^cdb_rdb/modificar_carencia_cdb_rdb/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.modificar_carencia_cdb_rdb, name='modificar_carencia_cdb_rdb'),
-    url(r'^cdb_rdb/modificar_porcentagem_cdb_rdb/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.modificar_porcentagem_cdb_rdb, name='modificar_porcentagem_cdb_rdb'),
-    url(r'^cdb_rdb/painel/$', views.cdb_rdb.cdb_rdb.painel, name='painel_cdb_rdb'),
-    url(r'^cdb_rdb/sobre/$', views.cdb_rdb.cdb_rdb.sobre, name='sobre_cdb_rdb'),
+    url(r'^cdb_rdb/', include(cdb_rdb_patterns, namespace='cdb_rdb')),
     
     # Debêntures
-    url(r'^debentures/detalhar_debenture/(?P<debenture_id>\d+)/$', views.debentures.debentures.detalhar_debenture, name='detalhar_debenture'),
-    url(r'^debentures/editar_operacao/(?P<operacao_id>\d+)/$', views.debentures.debentures.editar_operacao_debenture, name='editar_operacao_debenture'),
-    url(r'^debentures/historico/$', views.debentures.debentures.historico, name='historico_debenture'),
-    url(r'^debentures/inserir_operacao_debenture/$', views.debentures.debentures.inserir_operacao_debenture, name='inserir_operacao_debenture'),
-    url(r'^debentures/listar_debentures/$', views.debentures.debentures.listar_debentures, name='listar_debentures'),
-    url(r'^debentures/listar_debentures_validas_na_data/$', views.debentures.debentures.listar_debentures_validas_na_data, name='listar_debentures_validas_na_data'),
-    url(r'^debentures/painel/$', views.debentures.debentures.painel, name='painel_debenture'),
-    url(r'^debentures/sobre/$', views.debentures.debentures.sobre, name='sobre_debenture'),
+    url(r'^debentures/', include(debentures_patterns, namespace='debentures')),
     
     # Fundo de investimento
     url(r'^fundo_investimento/adicionar_valor_cota_historico/$', views.fundo_investimento.fundo_investimento.adicionar_valor_cota_historico, name='adicionar_valor_cota_historico'),

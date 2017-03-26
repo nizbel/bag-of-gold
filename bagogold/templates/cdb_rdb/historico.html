@@ -107,7 +107,7 @@
 						<tbody>
 						{% for item in operacoes %}
 						<tr>
-							<td><a href="{% url 'editar_operacao_cdb_rdb' item.id %}">{{item.investimento.nome}}</a></td>
+							<td><a href="{% url 'cdb_rdb:editar_operacao_cdb_rdb' item.id %}">{{item.investimento.nome}}</a></td>
 							<td>{{ item.tipo }}</td>
 							<td>{{ item.data|date:"Y-m-d" }}</td>
 							<td>R$ {{item.quantidade}}</td>
