@@ -14,8 +14,9 @@ import views
 validators.DUPLICATE_EMAIL = 'Já existe um usuário cadastrado com esse email'
 
 acoes_patterns = [
-    url(r'^sobre/$', views.acoes.fii.sobre, name='sobre_acoes'),
-#     url(r'^$', views.acoes.buyandhold.listar_acoes, name='listar_acoes'),
+    url(r'^sobre/$', views.acoes.acoes.sobre, name='sobre_acoes'),
+#     url(r'^listar_acoes/$', views.acoes.acoes.listar_acoes, name='listar_acoes'),
+    
     url(r'^buyandhold/calcular_poupanca_proventos_na_data/$', views.acoes.buyandhold.calcular_poupanca_proventos_na_data, name='calcular_poupanca_proventos_na_data'),
     url(r'^buyandhold/editar_operacao_acao/(?P<id>\d+)/$', views.acoes.buyandhold.editar_operacao_acao, name='editar_operacao_bh'),
     url(r'^buyandhold/editar_provento_acao/(?P<id>\d+)/$', views.acoes.buyandhold.editar_provento_acao, name='editar_provento_bh'),
