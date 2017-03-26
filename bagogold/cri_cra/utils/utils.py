@@ -43,7 +43,7 @@ def qtd_cri_cra_ate_dia(investidor, dia=datetime.date.today()):
                 Dia final
     Retorno: Quantidade de certificados {cri_cra_id: qtd}
     """
-    qtd_cri_cra = dict(OperacaoCRI_CRA.objects.filter(data__lte=dia) \
+    qtd_cri_cra = dict(OperacaoCRI_CRA.objects.filter(data__lte=dia, cri_cra__investidor=investidor) \
         .values('cri_cra').annotate(qtd=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
                             When(tipo_operacao='V', then=F('quantidade')*-1),
                             output_field=DecimalField()))).values_list('cri_cra', 'qtd').exclude(qtd=0))
