@@ -36,7 +36,7 @@ def adicionar_valor_cota_historico(request):
         form_historico_valor_cota = HistoricoValorCotasForm(request.POST, investidor=investidor)
         if form_historico_valor_cota.is_valid():
             form_historico_valor_cota.save()
-            return HttpResponseRedirect(reverse('listar_fundo_investimento'))
+            return HttpResponseRedirect(reverse('fundo_investimento:listar_fundo_investimento'))
         
     else:
         form_historico_valor_cota = HistoricoValorCotasForm(investidor=investidor)
@@ -69,7 +69,7 @@ def editar_operacao_fundo_investimento(request, id):
                         operacao_fundo_investimento.save()
                         formset_divisao.save()
                         messages.success(request, 'Operação editada com sucesso')
-                        return HttpResponseRedirect(reverse('historico_fundo_investimento'))
+                        return HttpResponseRedirect(reverse('fundo_investimento:historico_fundo_investimento'))
                     for erro in formset_divisao.non_form_errors():
                         messages.error(request, erro)
                         
@@ -79,7 +79,7 @@ def editar_operacao_fundo_investimento(request, id):
                     divisao_operacao.quantidade = operacao_fundo_investimento.quantidade
                     divisao_operacao.save()
                     messages.success(request, 'Operação editada com sucesso')
-                    return HttpResponseRedirect(reverse('historico_fundo_investimento'))
+                    return HttpResponseRedirect(reverse('fundo_investimento:historico_fundo_investimento'))
             for erros in form_operacao_fundo_investimento.errors.values():
                 for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
                     messages.error(request, erro.message)
@@ -229,7 +229,7 @@ def inserir_fundo_investimento(request):
                         return TemplateResponse(request, 'fundo_investimento/inserir_fundo_investimento.html', {'form_fundo_investimento': form_fundo_investimento,
                                                           'formset_carencia': formset_carencia})
                             
-                    return HttpResponseRedirect(reverse('listar_fundo_investimento'))
+                    return HttpResponseRedirect(reverse('fundo_investimento:listar_fundo_investimento'))
             for erros in form_fundo_investimento.errors.values():
                 for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
                     messages.error(request, erro.message)
@@ -270,7 +270,7 @@ def inserir_operacao_fundo_investimento(request):
                     operacao_fundo_investimento.save()
                     formset_divisao_fundo_investimento.save()
                     messages.success(request, 'Operação inserida com sucesso')
-                    return HttpResponseRedirect(reverse('historico_fundo_investimento'))
+                    return HttpResponseRedirect(reverse('fundo_investimento:historico_fundo_investimento'))
                 for erro in formset_divisao_fundo_investimento.non_form_errors():
                     messages.error(request, erro)
             else:
@@ -278,7 +278,7 @@ def inserir_operacao_fundo_investimento(request):
                 divisao_operacao = DivisaoOperacaoFundoInvestimento(operacao=operacao_fundo_investimento, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_fundo_investimento.quantidade)
                 divisao_operacao.save()
                 messages.success(request, 'Operação inserida com sucesso')
-                return HttpResponseRedirect(reverse('historico_fundo_investimento'))
+                return HttpResponseRedirect(reverse('fundo_investimento:historico_fundo_investimento'))
             
         for erros in form_operacao_fundo_investimento.errors.values():
             for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
@@ -328,7 +328,7 @@ def modificar_carencia_fundo_investimento(request):
         if form.is_valid():
             historico = form.save()
             messages.success(request, 'Histórico de carência para %s alterado com sucesso' % historico.letra_credito)
-            return HttpResponseRedirect(reverse('historico_fundo_investimento'))
+            return HttpResponseRedirect(reverse('fundo_investimento:historico_fundo_investimento'))
     else:
         form = HistoricoCarenciaFundoInvestimentoForm(investidor=investidor)
             
@@ -341,7 +341,7 @@ def modificar_porcentagem_fundo_investimento(request):
         if form.is_valid():
             historico = form.save()
             messages.success(request, 'Histórico de porcentagem de rendimento para %s alterado com sucesso' % historico.letra_credito)
-            return HttpResponseRedirect(reverse('historico_fundo_investimento'))
+            return HttpResponseRedirect(reverse('fundo_investimento:historico_fundo_investimento'))
     else:
         form = HistoricoPorcentagemFundoInvestimentoForm()
             

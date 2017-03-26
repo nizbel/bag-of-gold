@@ -113,9 +113,9 @@
                         {% endif %}
                         <h4>Investimentos</h4>
                         <ul class="list-unstyled">
-                            <li><a href="{% url "inserir_operacao_lc" %}">Inserir operação</a></li>
-                            <li><a href="{% url "historico_lc" %}">Histórico de operações</a></li>
-                            <li><a href="{% url "painel_lc" %}">Painel de LCI/LCA</a></li>
+                            <li><a href="{% url "lci_lca:inserir_operacao_lci_lca" %}">Inserir operação</a></li>
+                            <li><a href="{% url "lci_lca:historico_lci_lca" %}">Histórico de operações</a></li>
+                            <li><a href="{% url "lci_lca:painel_lci_lca" %}">Painel de LCI/LCA</a></li>
                         </ul>
                     </div>
                 </div>
@@ -392,7 +392,7 @@ $( document ).ready(function() {
     		polling.splice(0, 1);
     		if (polling.length == 0) {
                 $.ajax({
-                    url : "{% url 'sobre_lc' %}", // the endpoint
+                    url : "{% url 'lci_lca:sobre_lci_lca' %}", // the endpoint
                     type : "GET", // http method
                     data : {periodo: $('#rangePeriodoInput').val(), percentual_indice: $('#rangePercentualInput').val()},
         

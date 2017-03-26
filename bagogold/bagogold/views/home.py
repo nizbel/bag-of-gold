@@ -64,19 +64,19 @@ def inicio(request):
         if chave == 'Ações':
             investimento.link = 'acoes:painel_bh'
         elif chave == 'CDB/RDB':
-            investimento.link = 'painel_cdb_rdb'
+            investimento.link = 'cdb_rdb:painel_cdb_rdb'
         elif chave == 'CRI/CRA':
             investimento.link = 'cri_cra:painel_cri_cra'
         elif chave == 'Debêntures':
-            investimento.link = 'painel_debenture'
+            investimento.link = 'debentures:painel_debenture'
         elif chave == 'FII':
             investimento.link = 'fii:painel_fii'
         elif chave == 'Fundos de Inv.':
-            investimento.link = 'painel_fundo_investimento'
+            investimento.link = 'fundo_investimento:painel_fundo_investimento'
         elif chave == 'Letras de Crédito':
-            investimento.link = 'painel_lc'
+            investimento.link = 'lci_lca:painel_lci_lca'
         elif chave == 'Tesouro Direto':
-            investimento.link = 'painel_td'
+            investimento.link = 'td:painel_td'
             
         investimentos_atuais.append(investimento)
 #         print chave, investimento.link

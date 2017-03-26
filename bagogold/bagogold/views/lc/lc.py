@@ -65,7 +65,7 @@ def editar_operacao_lc(request, id):
                                     operacao_venda_lc.save()
                         formset_divisao.save()
                         messages.success(request, 'Operação editada com sucesso')
-                        return HttpResponseRedirect(reverse('historico_lc'))
+                        return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))
                     for erro in formset_divisao.non_form_errors():
                         messages.error(request, erro)
                 else:
@@ -83,7 +83,7 @@ def editar_operacao_lc(request, id):
                     divisao_operacao.quantidade = operacao_lc.quantidade
                     divisao_operacao.save()
                     messages.success(request, 'Operação editada com sucesso')
-                    return HttpResponseRedirect(reverse('historico_lc'))
+                    return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))
             for erros in form_operacao_lc.errors.values():
                 for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
                     messages.error(request, erro.message)
@@ -99,7 +99,7 @@ def editar_operacao_lc(request, id):
                     OperacaoVendaLetraCredito.objects.get(operacao_venda=operacao_lc).delete()
                 operacao_lc.delete()
                 messages.success(request, 'Operação excluída com sucesso')
-                return HttpResponseRedirect(reverse('historico_lc'))
+                return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))
             else:
                 messages.error(request, 'Não é possível excluir operação de compra que já tenha vendas registradas')
  
@@ -244,7 +244,7 @@ def inserir_lc(request):
                             messages.error(request, erro.message)
                             return TemplateResponse(request, 'lc/inserir_lc.html', {'form_lc': form_lc, 'formset_porcentagem': formset_porcentagem,
                                                                          'formset_carencia': formset_carencia})
-                        return HttpResponseRedirect(reverse('listar_lc'))
+                        return HttpResponseRedirect(reverse('lci_lca:listar_lci_lca'))
                     
             for erros in form_lc.errors.values():
                 for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
@@ -298,7 +298,7 @@ def inserir_operacao_lc(request):
                         operacao_venda_lc = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_lc)
                         operacao_venda_lc.save()
                         messages.success(request, 'Operação inserida com sucesso')
-                        return HttpResponseRedirect(reverse('historico_lc'))
+                        return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))
                     # Vendas parciais
                     else:
                         # Verificar se varias divisões
@@ -309,7 +309,7 @@ def inserir_operacao_lc(request):
                                 operacao_venda_lc = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_lc)
                                 operacao_venda_lc.save()
                                 messages.success(request, 'Operação inserida com sucesso')
-                                return HttpResponseRedirect(reverse('historico_lc'))
+                                return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))
                             for erro in formset_divisao.non_form_errors():
                                 messages.error(request, erro)
                                 
@@ -320,7 +320,7 @@ def inserir_operacao_lc(request):
                             operacao_venda_lc = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_lc)
                             operacao_venda_lc.save()
                             messages.success(request, 'Operação inserida com sucesso')
-                            return HttpResponseRedirect(reverse('historico_lc'))
+                            return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))
                         
                 # Compra
                 else:
@@ -330,7 +330,7 @@ def inserir_operacao_lc(request):
                             operacao_lc.save()
                             formset_divisao.save()
                             messages.success(request, 'Operação inserida com sucesso')
-                            return HttpResponseRedirect(reverse('historico_lc'))
+                            return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))
                         for erro in formset_divisao.non_form_errors():
                             messages.error(request, erro)
                             
@@ -339,7 +339,7 @@ def inserir_operacao_lc(request):
                         divisao_operacao = DivisaoOperacaoLC(operacao=operacao_lc, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_lc.quantidade)
                         divisao_operacao.save()
                         messages.success(request, 'Operação inserida com sucesso')
-                        return HttpResponseRedirect(reverse('historico_lc'))
+                        return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))
                         
             for erros in form_operacao_lc.errors.values():
                 for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
@@ -381,7 +381,7 @@ def modificar_carencia_lc(request):
         if form.is_valid():
             historico = form.save()
             messages.success(request, 'Histórico de carência para %s alterado com sucesso' % historico.letra_credito)
-            return HttpResponseRedirect(reverse('historico_lc'))
+            return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))
     else:
         form = HistoricoCarenciaLetraCreditoForm(investidor=investidor)
             
@@ -396,7 +396,7 @@ def modificar_porcentagem_di_lc(request):
         if form.is_valid():
             historico = form.save()
             messages.success(request, 'Histórico de porcentagem de rendimento para %s alterado com sucesso' % historico.letra_credito)
-            return HttpResponseRedirect(reverse('historico_lc'))
+            return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))
     else:
         form = HistoricoPorcentagemLetraCreditoForm(investidor=investidor)
             
