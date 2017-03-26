@@ -658,16 +658,6 @@ def painel(request):
     
     investidor = request.user.investidor
     
-#     # Buscar ações que o usuário já teve
-#     operacoes = OperacaoAcao.objects.filter(destinacao='B', investidor=investidor).exclude(data__isnull=True)
-# 
-#     acoes_investidor = list(set(operacoes.values_list('acao', flat=True)))
-#     
-#     proventos_em_acoes = list(set(AcaoProvento.objects.filter(provento__acao__in=acoes_investidor) \
-#                                   .values_list('acao_recebida', flat=True)))
-#     
-#     # Adicionar ações recebidas pelo investidor
-#     acoes_investidor = list(set(acoes_investidor + proventos_em_acoes))
     acoes_investidor = buscar_acoes_investidor_na_data(investidor, destinacao='B')
     
     # Guarda as ações correntes para o calculo do patrimonio
@@ -689,7 +679,6 @@ def painel(request):
     total_valor = 0
     total_variacao = 0
     total_variacao_percentual = 0
-    
     
     # Preencher totais   
     for acao in acoes.keys():
