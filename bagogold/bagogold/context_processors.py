@@ -20,4 +20,4 @@ def pendencias_investidor(context):
     return {}
 
 def breadcrumbs(context):
-    return ''
+    return {}
