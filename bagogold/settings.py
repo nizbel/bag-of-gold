@@ -106,8 +106,8 @@ LOGIN_REDIRECT_URL = 'inicio'
 from django.contrib.messages import constants as messages
 MESSAGE_TAGS = {
     messages.INFO: 'alert',
-    messages.SUCCESS: 'bg-green-steel bg-font-green-steel',
-    messages.ERROR: 'bg-red-thunderbird bg-font-red-thunderbird',
+    messages.SUCCESS: 'success bg-green-steel bg-font-green-steel',
+    messages.ERROR: 'error bg-red-thunderbird bg-font-red-thunderbird',
 }
 
 LANGUAGE_CODE = 'pt-br'
