@@ -20,4 +20,10 @@ def pendencias_investidor(context):
     return {}
 
 def breadcrumbs(context):
-    return {}
+    breadcrumbs = list()
+    breadcrumbs.append(('Início', 'inicio'))
+    if context.resolver_match and context.resolver_match.namespace:
+        namespace = context.resolver_match.namespace
+        if 'cdb_rdb' in namespace:
+            breadcrumbs.append(('CDB/RDB', 'cdb_rdb:sobre_cdb_rdb'))
+    return {'breadcrumbs': breadcrumbs}
