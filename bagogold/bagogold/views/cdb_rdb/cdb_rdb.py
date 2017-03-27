@@ -30,10 +30,14 @@ TIPO_CDB = '1'
 TIPO_RDB = '2'
 
 @login_required
-def detalhar_cdb_rdb(request, id):
+def detalhar_cdb_rdb(request, cdb_rdb_id):
     investidor = request.user.investidor
     
-    cdb_rdb = CDB_RDB.objects.get(id=id)
+    if not CDB_RDB.objects.filter(id=cdb_rdb_id).exists():
+        messages.error(request, 'O investimento informado não existe')
+        return HttpResponseRedirect(reverse('cdb_rdb:listar_cdb_rdb'))
+        
+    cdb_rdb = CDB_RDB.objects.get(id=cdb_rdb_id)
     if cdb_rdb.investidor != investidor:
         raise PermissionDenied
     
