@@ -34,8 +34,7 @@ $(document).ready(function() {
        	 	initval: 0,
             min: 0,
             max: 1000000000,
-            step: 0.01,
-            decimals: 2,
+            step: 1,
             maxboostedstep: 100,
         	postfix: 'ações'
         });
