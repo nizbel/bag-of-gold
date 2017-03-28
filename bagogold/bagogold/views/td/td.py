@@ -160,7 +160,6 @@ def aconselhamento_td(request):
         # Definir taxas dos dias para o cálculo
         taxas_dos_dias = {}
         for taxa_quantidade in historico_di:
-            print taxa_quantidade
             taxas_dos_dias[taxa_quantidade['taxa']] = taxa_quantidade['qtd_dias']
 
         # Calcular
