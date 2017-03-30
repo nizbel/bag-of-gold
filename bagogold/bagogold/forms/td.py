@@ -42,6 +42,10 @@ class OperacaoTituloForm(LocalizedModelForm):
         if dados.get('titulo') is None:
             return
         data = dados.get('data')
+        
+        if data is None:
+            return
+        
         data_vencimento = dados.get('titulo').data_vencimento
 #         print '%s %s %s' % (data_ex, data_pagamento, data_ex < data_pagamento)
         if (data > data_vencimento):
