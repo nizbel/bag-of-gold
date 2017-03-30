@@ -51,7 +51,7 @@ $(document).ready(function() {
         maxboostedstep: 100,
         prefix: 'R$'
  	});
- 	$("input[name='divisaooperacaocdb_rdb_set-0-quantidade']").TouchSpin({
+ 	$("input[name$='-quantidade']").TouchSpin({
  		min: 0,
  		max: 1000000000,
  		step: 0.01,

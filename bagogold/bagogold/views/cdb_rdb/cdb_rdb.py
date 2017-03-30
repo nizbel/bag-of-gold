@@ -524,19 +524,16 @@ def inserir_operacao_cdb_rdb(request):
                         messages.success(request, 'Operação inserida com sucesso')
                         return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
                     for erro in formset_divisao_cdb_rdb.non_form_errors():
-                                messages.error(request, erro)
+                        messages.error(request, erro)
                                 
                 else:
-                        operacao_cdb_rdb.save()
-                        divisao_operacao = DivisaoOperacaoCDB_RDB(operacao=operacao_cdb_rdb, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_cdb_rdb.quantidade)
-                        divisao_operacao.save()
-                        messages.success(request, 'Operação inserida com sucesso')
-                        return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
+                    operacao_cdb_rdb.save()
+                    divisao_operacao = DivisaoOperacaoCDB_RDB(operacao=operacao_cdb_rdb, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_cdb_rdb.quantidade)
+                    divisao_operacao.save()
+                    messages.success(request, 'Operação inserida com sucesso')
+                    return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
                     
-        for erros in form_operacao_cdb_rdb.errors.values():
-            for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
-                messages.error(request, erro.message)
-        for erro in formset_divisao_cdb_rdb.non_form_errors():
+        for erro in [erro for erro in form_operacao_cdb_rdb.non_field_errors()]:
             messages.error(request, erro)
 #                         print '%s %s'  % (divisao_cdb_rdb.quantidade, divisao_cdb_rdb.divisao)
                 
