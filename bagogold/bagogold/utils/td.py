@@ -102,13 +102,12 @@ def calcular_qtd_titulos_ate_dia_por_divisao(dia, divisao_id):
                 ID da divisão
     Retorno: Quantidade de títulos {titulo_id: qtd}
     """
-    qtd_titulos = {}
-    operacoes_divisao = dict(DivisaoOperacaoTD.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).annotate(titulo=F('operacao__titulo')) \
+    qtd_titulos = dict(DivisaoOperacaoTD.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).annotate(titulo=F('operacao__titulo')) \
         .values('titulo') \
         .annotate(total=Sum(Case(When(operacao__tipo_operacao='C', then=F('quantidade')),
                             When(operacao__tipo_operacao='V', then=F('quantidade')*-1),
                             output_field=DecimalField()))).values_list('titulo', 'total').exclude(total=0))
-        
+    
     return qtd_titulos
 
 def calcular_qtd_um_titulo_ate_dia_por_divisao(investidor, dia, titulo_id):
