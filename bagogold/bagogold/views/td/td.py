@@ -3,11 +3,9 @@ from bagogold.bagogold.forms.divisoes import DivisaoOperacaoTDFormSet
 from bagogold.bagogold.forms.td import OperacaoTituloForm
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD, Divisao
 from bagogold.bagogold.models.fii import FII
-from bagogold.bagogold.models.lc import LetraCredito, HistoricoTaxaDI, \
-    HistoricoPorcentagemLetraCredito
+from bagogold.bagogold.models.lc import LetraCredito, HistoricoTaxaDI
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
     ValorDiarioTitulo, Titulo, HistoricoIPCA
-from bagogold.bagogold.testTD import buscar_valores_diarios
 from bagogold.bagogold.utils.fii import \
     calcular_rendimento_proventos_fii_12_meses, \
     calcular_variacao_percentual_fii_por_periodo
@@ -420,9 +418,8 @@ def inserir_operacao_td(request):
                 messages.success(request, 'Operação inserida com sucesso')
                 return HttpResponseRedirect(reverse('td:historico_td'))
             
-        for erros in form_operacao_td.errors.values():
-            for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
-                messages.error(request, erro.message)
+        for erro in [erro for erro in form_operacao_td.non_field_errors()]:
+            messages.error(request, erro)
                     
     else:
         form_operacao_td = OperacaoTituloForm(investidor=investidor)

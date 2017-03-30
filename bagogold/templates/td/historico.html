@@ -73,7 +73,7 @@
 										<div id="graf_gasto" style="width:100%;height:50px"></div>
 									</div>
 									<div class="stat-number">
-										<div class="title"> Total gasto: </div>
+										<div class="title"> Total investido: </div>
 										<div class="number"> R${{ dados.total_gasto|floatformat:2 }} </div>
 									</div>
 								</div>
@@ -179,7 +179,7 @@ $( document ).ready(function() {
     
     $.plot($("#graf_historico"), [{lines: {show:true}, label: "Valor total venc.", data: {{ graf_total_venc|safe }}},
                                 {lines: {show:true}, label: "Valor títulos", data: {{ graf_patrimonio|safe }}},
-                                {lines: {show:true}, label: "Total gasto", data: {{ graf_gasto_total|safe }}}
+                                {lines: {show:true}, label: "Total investido", data: {{ graf_gasto_total|safe }}}
                               ],
                                 {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%d/%m/%y"} }  
     );
