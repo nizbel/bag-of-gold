@@ -136,10 +136,27 @@
                     <div class="row">
                         <div class="col-md-offset col-md-3">
                             <button type="submit" name="save" value="1" class="btn green-steel">Salvar</button>
-                            <button type="submit" name="delete" value="1" class="btn red-thunderbird">Excluir</button>
+                            <a data-toggle="modal" href="#exclusao" class="btn red-thunderbird">Excluir</a>
                         </div>
                     </div>
                 </div>
+            </div>
+            <div class="modal fade" id="exclusao" tabindex="-1" role="basic" aria-hidden="true" data-backdrop="static" data-keyboard="false"  style="display: none;">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                            <h4 class="modal-title">Confirmar exclusão de operação</h4>
+                        </div>
+                        <div class="modal-body">Confirma a exclusão da operação?</div>
+                        <div class="modal-footer">
+                            <a class="btn dark btn-outline" data-dismiss="modal">Cancelar</a>
+                            <button type="submit" name="delete" value="1" class="btn red-thunderbird">Confirmar</button>
+                        </div>
+                    </div>
+                    <!-- /.modal-content -->
+                </div>
+                <!-- /.modal-dialog -->
             </div>
         </form>
         <!-- END FORM-->
