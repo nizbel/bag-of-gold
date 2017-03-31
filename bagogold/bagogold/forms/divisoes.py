@@ -43,6 +43,7 @@ class DivisaoOperacaoAcaoFormSet(forms.models.BaseInlineFormSet):
         form.fields['qtd_proventos_utilizada'].label = 'Quantidade de proventos utilizada'
         form.fields['qtd_proventos_utilizada'].required = False
         form.fields['qtd_proventos_utilizada'].localize = True
+        form.fields['qtd_proventos_utilizada'].initial = Decimal('0')
         
         if 'divisao' in form.initial:
             divisao_operacao = DivisaoOperacaoAcao.objects.get(divisao=form.initial['divisao'], operacao=self.instance)
@@ -177,6 +178,7 @@ class DivisaoOperacaoFIIFormSet(forms.models.BaseInlineFormSet):
         form.fields['qtd_proventos_utilizada'].label = 'Quantidade de proventos utilizada'
         form.fields['qtd_proventos_utilizada'].required = False
         form.fields['qtd_proventos_utilizada'].localize = True
+        form.fields['qtd_proventos_utilizada'].initial = Decimal('0')
         
         if 'divisao' in form.initial:
             divisao_operacao = DivisaoOperacaoFII.objects.get(divisao=form.initial['divisao'], operacao=self.instance)
@@ -197,6 +199,7 @@ class DivisaoOperacaoFIIFormSet(forms.models.BaseInlineFormSet):
         divisao_a_excluir = False
         for form_divisao in self.forms:
             contador_forms += 1
+            print form_divisao.changed_data
             if form_divisao.is_valid():
 #                 print form_divisao.cleaned_data.get('quantidade')
                 if not (form_divisao.instance.id == None and not form_divisao.has_changed()):
