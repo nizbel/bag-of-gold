@@ -450,9 +450,9 @@ def inserir_operacao_fii(request):
                         uso_proventos.save()
                     messages.success(request, 'Operação inserida com sucesso')
                     return HttpResponseRedirect(reverse('fii:historico_fii'))
-        for erro in formset_divisao.non_form_errors():
-            messages.error(request, erro)
-            
+        for erro in [erro for erro in form_operacao_fii.non_field_errors()]:
+            messages.error(request, erro)    
+                    
     else:
         form_operacao_fii = OperacaoFIIForm()
         form_uso_proventos = UsoProventosOperacaoFIIForm(initial={'qtd_utilizada': Decimal('0.00')})
