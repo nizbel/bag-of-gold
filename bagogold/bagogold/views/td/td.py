@@ -4,6 +4,7 @@ from bagogold.bagogold.forms.td import OperacaoTituloForm
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD, Divisao
 from bagogold.bagogold.models.fii import FII
 from bagogold.bagogold.models.lc import LetraCredito, HistoricoTaxaDI
+from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
     ValorDiarioTitulo, Titulo, HistoricoIPCA
 from bagogold.bagogold.utils.fii import \
@@ -23,13 +24,13 @@ from django.db.models.aggregates import Count
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
 from django.http.response import HttpResponse
+from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
 import calendar
 import copy
 import datetime
 import json
 import math
-from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
 
 @login_required
 def buscar_titulos_validos_na_data(request):
@@ -177,10 +178,10 @@ def aconselhamento_td(request):
     return TemplateResponse(request, 'td/aconselhamento.html', {'titulos': titulos, 'letras_credito': letras_credito, 'fiis': fiis})
 
 @login_required
-def editar_operacao_td(request, id):
+def editar_operacao_td(request, operacao_id):
     investidor = request.user.investidor
     
-    operacao_td = OperacaoTitulo.objects.get(pk=id)
+    operacao_td = get_object_or_404(OperacaoTitulo, id=operacao_id)
     # Verifica se a operação é do investidor, senão, jogar erro de permissão
     if operacao_td.investidor != investidor:
         raise PermissionDenied
@@ -214,9 +215,8 @@ def editar_operacao_td(request, id):
                     divisao_operacao.save()
                     messages.success(request, 'Operação editada com sucesso')
                     return HttpResponseRedirect(reverse('td:historico_td'))
-            for erros in form_operacao_td.errors.values():
-                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
-                    messages.error(request, erro.message)
+            for erro in [erro for erro in form_operacao_td.non_field_errors()]:
+                messages.error(request, erro)
                     
         elif request.POST.get("delete"):
             # Verifica se, em caso de compra, a quantidade de títulos do investidor não fica negativa
