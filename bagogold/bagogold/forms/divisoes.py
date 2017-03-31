@@ -199,7 +199,6 @@ class DivisaoOperacaoFIIFormSet(forms.models.BaseInlineFormSet):
         divisao_a_excluir = False
         for form_divisao in self.forms:
             contador_forms += 1
-            print form_divisao.changed_data
             if form_divisao.is_valid():
 #                 print form_divisao.cleaned_data.get('quantidade')
                 if not (form_divisao.instance.id == None and not form_divisao.has_changed()):
