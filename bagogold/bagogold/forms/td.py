@@ -57,5 +57,5 @@ class OperacaoTituloForm(LocalizedModelForm):
                 if quantidade_titulos_ate_dia_por_titulo(self.investidor, self.instance.titulo.id, datetime.date.today()) - self.instance.quantidade < 0:
                     raise forms.ValidationError('Não é possível alterar tipo de operação pois a quantidade atual para o título %s seria negativa' % (self.instance.titulo))
             # Verifica se é possível vender o título apontado
-            if quantidade_titulos_ate_dia_por_titulo(self.investidor, dados.get('titulo').id, data) < dados.get('quantidade'):
+            if quantidade_titulos_ate_dia_por_titulo(self.investidor, dados.get('titulo').id, data) + self.instance.quantidade < dados.get('quantidade'):
                 raise forms.ValidationError('Não é possível vender a quantidade informada para o título %s' % (dados.get('titulo')))
