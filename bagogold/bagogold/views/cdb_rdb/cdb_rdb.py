@@ -25,6 +25,7 @@ from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
 import calendar
 import datetime
+from django.shortcuts import get_object_or_404
 
 TIPO_CDB = '1'
 TIPO_RDB = '2'
@@ -33,11 +34,7 @@ TIPO_RDB = '2'
 def detalhar_cdb_rdb(request, cdb_rdb_id):
     investidor = request.user.investidor
     
-    if not CDB_RDB.objects.filter(id=cdb_rdb_id).exists():
-        messages.error(request, 'O investimento informado não existe')
-        return HttpResponseRedirect(reverse('cdb_rdb:listar_cdb_rdb'))
-        
-    cdb_rdb = CDB_RDB.objects.get(id=cdb_rdb_id)
+    cdb_rdb = get_object_or_404(CDB_RDB, id=cdb_rdb_id)
     if cdb_rdb.investidor != investidor:
         raise PermissionDenied
     
@@ -225,7 +222,7 @@ def editar_historico_porcentagem(request, id):
 def editar_operacao_cdb_rdb(request, id):
     investidor = request.user.investidor
     
-    operacao_cdb_rdb = OperacaoCDB_RDB.objects.get(pk=id)
+    operacao_cdb_rdb = get_object_or_404(OperacaoCDB_RDB, id=id)
     if operacao_cdb_rdb.investidor != investidor:
         raise PermissionDenied
     
@@ -278,9 +275,9 @@ def editar_operacao_cdb_rdb(request, id):
                     divisao_operacao.save()
                     messages.success(request, 'Operação editada com sucesso')
                     return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
-            for erros in form_operacao_cdb_rdb.errors.values():
-                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
-                    messages.error(request, erro.message)
+                
+            for erro in [erro for erro in form_operacao_cdb_rdb.non_field_errors()]:
+                messages.error(request, erro)
 #                         print '%s %s'  % (divisao_cdb_rdb.quantidade, divisao_cdb_rdb.divisao)
                 
         elif request.POST.get("delete"):
@@ -439,9 +436,8 @@ def inserir_cdb_rdb(request):
                         
                     return HttpResponseRedirect(reverse('cdb_rdb:listar_cdb_rdb'))
                 
-        for erros in form_cdb_rdb.errors.values():
-            for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
-                messages.error(request, erro.message)
+        for erro in [erro for erro in form_cdb_rdb.non_field_errors()]:
+            messages.error(request, erro)
         for erro in formset_porcentagem.non_form_errors():
             messages.error(request, erro)
         for erro in formset_carencia.non_form_errors():
@@ -503,7 +499,7 @@ def inserir_operacao_cdb_rdb(request):
                             messages.success(request, 'Operação inserida com sucesso')
                             return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
                         for erro in formset_divisao_cdb_rdb.non_form_errors():
-                                messages.error(request, erro)
+                            messages.error(request, erro)
                                 
                     else:
                         operacao_cdb_rdb.save()
