@@ -7,8 +7,6 @@ from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.dispatch import receiver
 from django.http.response import HttpResponseRedirect
-from django.shortcuts import render_to_response, redirect
-from django.template.context import RequestContext
 from django.template.response import TemplateResponse
 from registration.signals import user_activated
 
