@@ -34,7 +34,7 @@ class CRI_CRA (models.Model):
     porcentagem = models.DecimalField(u'Porcentagem sobre indexação', decimal_places=3, max_digits=6)
     juros_adicional = models.DecimalField(u'Juros adicional', decimal_places=3, max_digits=6, default=0)
     data_emissao = models.DateField(u'Data de emissão')
-    valor_emissao = models.DecimalField(u'Valor nominal na emissão', max_digits=15, decimal_places=8)
+    valor_emissao = models.DecimalField(u'Valor nominal na emissão', max_digits=15, decimal_places=8, validators=[MinValueValidator(Decimal('0.00000001'))])
     data_inicio_rendimento = models.DateField(u'Data de início do rendimento')
     data_vencimento = models.DateField(u'Data de vencimento')
     investidor = models.ForeignKey('bagogold.Investidor')
