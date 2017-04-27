@@ -219,10 +219,10 @@ def editar_historico_porcentagem(request, id):
     return TemplateResponse(request, 'cdb_rdb/editar_historico_porcentagem.html', {'form_historico_porcentagem': form_historico_porcentagem}) 
     
 @login_required
-def editar_operacao_cdb_rdb(request, id):
+def editar_operacao_cdb_rdb(request, operacao_id):
     investidor = request.user.investidor
     
-    operacao_cdb_rdb = get_object_or_404(OperacaoCDB_RDB, id=id)
+    operacao_cdb_rdb = get_object_or_404(OperacaoCDB_RDB, id=operacao_id)
     if operacao_cdb_rdb.investidor != investidor:
         raise PermissionDenied
     
