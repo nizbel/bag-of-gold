@@ -197,6 +197,8 @@ def editar_operacao_fii(request, operacao_id):
                         
                         messages.success(request, 'Operação alterada com sucesso')
                         return HttpResponseRedirect(reverse('fii:historico_fii'))
+                    for erro in formset_divisao.non_form_errors():
+                        messages.error(request, erro)
                     
                 else:    
                     if form_uso_proventos.is_valid():
@@ -215,10 +217,7 @@ def editar_operacao_fii(request, operacao_id):
                         messages.success(request, 'Operação alterada com sucesso')
                         return HttpResponseRedirect(reverse('fii:historico_fii'))
                         
-            for erros in form_operacao_fii.errors.values():
-                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
-                    messages.error(request, erro.message)
-            for erro in formset_divisao.non_form_errors():
+            for erro in [erro for erro in form_operacao_fii.non_field_errors()]:
                 messages.error(request, erro)
                 
         elif request.POST.get("delete"):
