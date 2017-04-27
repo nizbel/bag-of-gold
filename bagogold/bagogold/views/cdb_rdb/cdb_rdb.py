@@ -27,9 +27,6 @@ import calendar
 import datetime
 from django.shortcuts import get_object_or_404
 
-TIPO_CDB = '1'
-TIPO_RDB = '2'
-
 @login_required
 def detalhar_cdb_rdb(request, cdb_rdb_id):
     investidor = request.user.investidor
@@ -42,10 +39,7 @@ def detalhar_cdb_rdb(request, cdb_rdb_id):
     historico_carencia = HistoricoCarenciaCDB_RDB.objects.filter(cdb_rdb=cdb_rdb)
     
     # Inserir dados do investimento
-    if cdb_rdb.tipo == 'R':
-        cdb_rdb.tipo = 'RDB'
-    elif cdb_rdb.tipo == 'C':
-        cdb_rdb.tipo = 'CDB'
+    cdb_rdb.tipo = cdb_rdb.descricao_tipo()
     cdb_rdb.carencia_atual = cdb_rdb.carencia_atual()
     cdb_rdb.porcentagem_atual = cdb_rdb.porcentagem_atual()
     
@@ -109,9 +103,9 @@ def detalhar_cdb_rdb(request, cdb_rdb_id):
                                                                        'historico_carencia': historico_carencia})
 
 @login_required
-def editar_cdb_rdb(request, id):
+def editar_cdb_rdb(request, cdb_rdb_id):
     investidor = request.user.investidor
-    cdb_rdb = CDB_RDB.objects.get(pk=id)
+    cdb_rdb = CDB_RDB.objects.get(pk=cdb_rdb_id)
     
     if cdb_rdb.investidor != investidor:
         raise PermissionDenied
@@ -127,14 +121,17 @@ def editar_cdb_rdb(request, id):
                 
         # TODO verificar o que pode acontecer na exclusão
         elif request.POST.get("delete"):
-            cdb_rdb.delete()
-            messages.success(request, 'CDB/RDB excluído com sucesso')
-            return HttpResponseRedirect(reverse('cdb_rdb:listar_cdb_rdb'))
+            if OperacaoCDB_RDB.objects.filter(investimento=cdb_rdb).exists():
+                messages.error(request, 'Não é possível excluir o %s pois existem operações cadastradas' % (cdb_rdb.descricao_tipo()))
+            else:
+                cdb_rdb.delete()
+                messages.success(request, 'CDB/RDB excluído com sucesso')
+                return HttpResponseRedirect(reverse('cdb_rdb:listar_cdb_rdb'))
  
     else:
         form_cdb_rdb = CDB_RDBForm(instance=cdb_rdb)
             
-    return TemplateResponse(request, 'cdb_rdb/editar_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb})  
+    return TemplateResponse(request, 'cdb_rdb/editar_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'cdb_rdb': cdb_rdb})  
     
 @login_required
 def editar_historico_carencia(request, id):
