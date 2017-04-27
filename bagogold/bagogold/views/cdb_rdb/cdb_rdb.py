@@ -105,7 +105,7 @@ def detalhar_cdb_rdb(request, cdb_rdb_id):
 @login_required
 def editar_cdb_rdb(request, cdb_rdb_id):
     investidor = request.user.investidor
-    cdb_rdb = CDB_RDB.objects.get(pk=cdb_rdb_id)
+    cdb_rdb = get_object_or_404(CDB_RDB, id=cdb_rdb_id)
     
     if cdb_rdb.investidor != investidor:
         raise PermissionDenied
@@ -135,9 +135,9 @@ def editar_cdb_rdb(request, cdb_rdb_id):
     return TemplateResponse(request, 'cdb_rdb/editar_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'cdb_rdb': cdb_rdb})  
     
 @login_required
-def editar_historico_carencia(request, id):
+def editar_historico_carencia(request, historico_carencia_id):
     investidor = request.user.investidor
-    historico_carencia = HistoricoCarenciaCDB_RDB.objects.get(pk=id)
+    historico_carencia = get_object_or_404(HistoricoCarenciaCDB_RDB, id=historico_carencia_id)
     
     if historico_carencia.cdb_rdb.investidor != investidor:
         raise PermissionDenied
@@ -153,17 +153,20 @@ def editar_historico_carencia(request, id):
             if form_historico_carencia.is_valid():
                 historico_carencia.save()
                 messages.success(request, 'Histórico de carência editado com sucesso')
-                return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'id': historico_carencia.cdb_rdb.id}))
+                return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': historico_carencia.cdb_rdb.id}))
+            
+            for erro in [erro for erro in form_historico_carencia.non_field_errors()]:
+                messages.error(request, erro)
                 
         elif request.POST.get("delete"):
             if historico_carencia.data is None:
                 messages.error(request, 'Valor inicial de carência não pode ser excluído')
-                return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'id': historico_carencia.cdb_rdb.id}))
+                return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': historico_carencia.cdb_rdb.id}))
             # Pegar investimento para o redirecionamento no caso de exclusão
             cdb_rdb = historico_carencia.cdb_rdb
             historico_carencia.delete()
             messages.success(request, 'Histórico de carência excluído com sucesso')
-            return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'id': cdb_rdb.id}))
+            return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': cdb_rdb.id}))
  
     else:
         if historico_carencia.data is None:
@@ -194,17 +197,17 @@ def editar_historico_porcentagem(request, id):
             if form_historico_porcentagem.is_valid():
                 historico_porcentagem.save(force_update=True)
                 messages.success(request, 'Histórico de porcentagem editado com sucesso')
-                return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'id': historico_porcentagem.cdb_rdb.id}))
+                return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': historico_porcentagem.cdb_rdb.id}))
                 
         elif request.POST.get("delete"):
             if historico_porcentagem.data is None:
                 messages.error(request, 'Valor inicial de porcentagem não pode ser excluído')
-                return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'id': historico_porcentagem.cdb_rdb.id}))
+                return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': historico_porcentagem.cdb_rdb.id}))
             # Pegar investimento para o redirecionamento no caso de exclusão
             cdb_rdb = historico_porcentagem.cdb_rdb
             historico_porcentagem.delete()
             messages.success(request, 'Histórico de porcentagem excluído com sucesso')
-            return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'id': cdb_rdb.id}))
+            return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': cdb_rdb.id}))
  
     else:
         if historico_porcentagem.data is None:
