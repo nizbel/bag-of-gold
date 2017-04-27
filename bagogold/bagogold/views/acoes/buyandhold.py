@@ -98,6 +98,8 @@ def editar_operacao_acao(request, id):
                         
                         messages.success(request, 'Operação alterada com sucesso')
                         return HttpResponseRedirect(reverse('acoes:historico_bh'))
+                    for erro in formset_divisao.non_form_errors():
+                        messages.error(request, erro)
                         
                 else:
                     if form_uso_proventos.is_valid():
@@ -115,10 +117,8 @@ def editar_operacao_acao(request, id):
                             uso_proventos.delete()
                         messages.success(request, 'Operação alterada com sucesso')
                         return HttpResponseRedirect(reverse('acoes:historico_bh'))
-            for erros in form_operacao_acao.errors.values():
-                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
-                    messages.error(request, erro.message)
-            for erro in formset_divisao.non_form_errors():
+            
+            for erro in [erro for erro in form_operacao_acao.non_field_errors()]:
                 messages.error(request, erro)
 
         elif request.POST.get("delete"):
