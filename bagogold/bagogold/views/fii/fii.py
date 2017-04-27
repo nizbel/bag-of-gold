@@ -15,7 +15,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response, get_object_or_404
 from django.template.context import RequestContext
 from django.template.response import TemplateResponse
 from itertools import chain
@@ -142,10 +142,10 @@ def calcular_resultado_corretagem(request):
     
     
 @login_required
-def editar_operacao_fii(request, id):
+def editar_operacao_fii(request, operacao_id):
     investidor = request.user.investidor
     
-    operacao_fii = OperacaoFII.objects.get(pk=id)
+    operacao_fii = get_object_or_404(OperacaoFII, pk=operacao_id)
     
     # Verificar se a operação é do investidor logado
     if operacao_fii.investidor != investidor:
