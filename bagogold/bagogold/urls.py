@@ -18,7 +18,7 @@ acoes_patterns = [
 #     url(r'^listar_acoes/$', views.acoes.acoes.listar_acoes, name='listar_acoes'),
     
     url(r'^buyandhold/calcular_poupanca_proventos_na_data/$', views.acoes.buyandhold.calcular_poupanca_proventos_na_data, name='calcular_poupanca_proventos_na_data'),
-    url(r'^buyandhold/editar_operacao_acao/(?P<id>\d+)/$', views.acoes.buyandhold.editar_operacao_acao, name='editar_operacao_bh'),
+    url(r'^buyandhold/editar_operacao_acao/(?P<operacao_id>\d+)/$', views.acoes.buyandhold.editar_operacao_acao, name='editar_operacao_bh'),
     url(r'^buyandhold/editar_provento_acao/(?P<id>\d+)/$', views.acoes.buyandhold.editar_provento_acao, name='editar_provento_bh'),
     url(r'^buyandhold/estatisticas_acao/(?P<ticker>\w+)/$', views.acoes.buyandhold.estatisticas_acao, name='estatisticas_acao_bh'),
     url(r'^buyandhold/historico/$', views.acoes.buyandhold.historico, name='historico_bh'),
@@ -42,7 +42,7 @@ cdb_rdb_patterns = [
     url(r'^editar_cdb_rdb/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.editar_cdb_rdb, name='editar_cdb_rdb'),
     url(r'^editar_historico_carencia/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.editar_historico_carencia, name='editar_historico_carencia'),
     url(r'^editar_historico_porcentagem/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.editar_historico_porcentagem, name='editar_historico_porcentagem'),
-    url(r'^editar_operacao/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.editar_operacao_cdb_rdb, name='editar_operacao_cdb_rdb'),
+    url(r'^editar_operacao/(?P<operacao_id>\d+)/$', views.cdb_rdb.cdb_rdb.editar_operacao_cdb_rdb, name='editar_operacao_cdb_rdb'),
     url(r'^historico/$', views.cdb_rdb.cdb_rdb.historico, name='historico_cdb_rdb'),
     url(r'^inserir_cdb_rdb/$', views.cdb_rdb.cdb_rdb.inserir_cdb_rdb, name='inserir_cdb_rdb'),
     url(r'^inserir_operacao_cdb_rdb/$', views.cdb_rdb.cdb_rdb.inserir_operacao_cdb_rdb, name='inserir_operacao_cdb_rdb'),

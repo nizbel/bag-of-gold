@@ -40,10 +40,10 @@ def calcular_poupanca_proventos_na_data(request):
     return HttpResponse(json.dumps(poupanca_proventos), content_type = "application/json") 
 
 @login_required
-def editar_operacao_acao(request, id):
+def editar_operacao_acao(request, operacao_id):
     investidor = request.user.investidor
     
-    operacao_acao = get_object_or_404(OperacaoAcao, pk=id, destinacao='B')
+    operacao_acao = get_object_or_404(OperacaoAcao, pk=operacao_id, destinacao='B')
     
     # Verifica se a operação é do investidor, senão, jogar erro de permissão
     if operacao_acao.investidor != investidor:
