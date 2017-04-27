@@ -179,9 +179,9 @@ def editar_historico_carencia(request, historico_carencia_id):
     return TemplateResponse(request, 'cdb_rdb/editar_historico_carencia.html', {'form_historico_carencia': form_historico_carencia}) 
     
 @login_required
-def editar_historico_porcentagem(request, id):
+def editar_historico_porcentagem(request, historico_porcentagem_id):
     investidor = request.user.investidor
-    historico_porcentagem = HistoricoPorcentagemCDB_RDB.objects.get(pk=id)
+    historico_porcentagem = get_object_or_404(HistoricoPorcentagemCDB_RDB, id=historico_porcentagem_id)
     
     if historico_porcentagem.cdb_rdb.investidor != investidor:
         raise PermissionDenied
@@ -198,6 +198,9 @@ def editar_historico_porcentagem(request, id):
                 historico_porcentagem.save(force_update=True)
                 messages.success(request, 'Histórico de porcentagem editado com sucesso')
                 return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': historico_porcentagem.cdb_rdb.id}))
+                
+            for erro in [erro for erro in form_historico_porcentagem.non_field_errors()]:
+                messages.error(request, erro)
                 
         elif request.POST.get("delete"):
             if historico_porcentagem.data is None:
