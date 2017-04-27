@@ -158,10 +158,6 @@ def editar_operacao_fii(request, operacao_id):
     # Testa se investidor possui mais de uma divisão
     varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
     
-#     try:
-#         uso_proventos = UsoProventosOperacaoFII.objects.get(operacao=operacao_fii)
-#     except UsoProventosOperacaoFII.DoesNotExist:
-#         uso_proventos = None
     if request.method == 'POST':
         if request.POST.get("save"):
             form_operacao_fii = OperacaoFIIForm(request.POST, instance=operacao_fii)
@@ -175,11 +171,6 @@ def editar_operacao_fii(request, operacao_id):
             else:
                 form_uso_proventos = UsoProventosOperacaoFIIForm()    
                 
-#             if uso_proventos is not None:
-#                 form_uso_proventos = UsoProventosOperacaoFIIForm(request.POST, instance=uso_proventos)
-#             else:
-#                 form_uso_proventos = UsoProventosOperacaoFIIForm(request.POST)
-            
             if form_operacao_fii.is_valid():
                 # Validar de acordo com a quantidade de divisões
                 if varias_divisoes:
