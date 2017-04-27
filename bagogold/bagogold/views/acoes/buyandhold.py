@@ -725,6 +725,23 @@ def painel(request):
     return TemplateResponse(request, 'acoes/buyandhold/painel.html', {'acoes': acoes, 'dados': dados})
     
 @login_required
+def remover_taxas_custodia_acao(request, taxa_id):
+    investidor = request.user.investidor
+    taxa = get_object_or_404(TaxaCustodiaAcao, pk=taxa_id)
+    
+    # Verifica se a taxa é do investidor, senão, jogar erro de permissão
+    if taxa.investidor != investidor:
+        raise PermissionDenied
+    
+    try:
+        taxa.delete()
+        messages.success(request, 'Taxa de custódia excluída com sucesso')
+    except Exception as e:
+        messages.error(request, e)
+    
+    return HttpResponseRedirect(reverse('acoes:ver_taxas_custodia_acao'))
+
+@login_required
 def ver_taxas_custodia_acao(request):
     investidor = request.user.investidor
     taxas_custodia = TaxaCustodiaAcao.objects.filter(investidor=investidor).order_by('ano_vigencia', 'mes_vigencia')

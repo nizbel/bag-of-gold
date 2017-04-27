@@ -26,6 +26,7 @@ acoes_patterns = [
     url(r'^buyandhold/inserir_provento_acao/$', views.acoes.buyandhold.inserir_provento_acao, name='inserir_provento_bh'),
     url(r'^buyandhold/inserir_taxa_custodia_acao/$', views.acoes.buyandhold.inserir_taxa_custodia_acao, name='inserir_taxa_custodia_acao'),
     url(r'^buyandhold/painel/$', views.acoes.buyandhold.painel, name='painel_bh'),
+    url(r'^buyandhold/remover_taxas_custodia_acao/(?P<taxa_id>\d+)/$', views.acoes.buyandhold.remover_taxas_custodia_acao, name='remover_taxas_custodia_acao'),
     url(r'^buyandhold/ver_taxas_custodia_acao/$', views.acoes.buyandhold.ver_taxas_custodia_acao, name='ver_taxas_custodia_acao'),
 
     url(r'^trading/acompanhamento_mensal/$', views.acoes.trade.acompanhamento_mensal, name='acompanhamento_mensal'),
