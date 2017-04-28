@@ -48,8 +48,8 @@ cdb_rdb_patterns = [
     url(r'^inserir_cdb_rdb/$', views.cdb_rdb.cdb_rdb.inserir_cdb_rdb, name='inserir_cdb_rdb'),
     url(r'^inserir_operacao_cdb_rdb/$', views.cdb_rdb.cdb_rdb.inserir_operacao_cdb_rdb, name='inserir_operacao_cdb_rdb'),
     url(r'^listar_cdb_rdb/$', views.cdb_rdb.cdb_rdb.listar_cdb_rdb, name='listar_cdb_rdb'),
-    url(r'^modificar_carencia_cdb_rdb/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.modificar_carencia_cdb_rdb, name='modificar_carencia_cdb_rdb'),
-    url(r'^modificar_porcentagem_cdb_rdb/(?P<id>\d+)/$', views.cdb_rdb.cdb_rdb.modificar_porcentagem_cdb_rdb, name='modificar_porcentagem_cdb_rdb'),
+    url(r'^inserir_historico_carencia_cdb_rdb/(?P<cdb_rdb_id>\d+)/$', views.cdb_rdb.cdb_rdb.inserir_historico_carencia_cdb_rdb, name='inserir_historico_carencia_cdb_rdb'),
+    url(r'^inserir_historico_porcentagem_cdb_rdb/(?P<cdb_rdb_id>\d+)/$', views.cdb_rdb.cdb_rdb.inserir_historico_porcentagem_cdb_rdb, name='inserir_historico_porcentagem_cdb_rdb'),
     url(r'^painel/$', views.cdb_rdb.cdb_rdb.painel, name='painel_cdb_rdb'),
     url(r'^sobre/$', views.cdb_rdb.cdb_rdb.sobre, name='sobre_cdb_rdb'),
     ]
