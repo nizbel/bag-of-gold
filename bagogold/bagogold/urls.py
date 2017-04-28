@@ -123,13 +123,17 @@ imposto_renda_patterns = [
     ]
 
 lci_lca_patterns = [
+    url(r'^detalhar_lci_lca/(?P<lci_lca_id>\d+)/$', views.lc.lc.detalhar_lci_lca, name='detalhar_lci_lca'),
+    url(r'^editar_historico_carencia/(?P<historico_carencia_id>\d+)/$', views.lc.lc.editar_historico_carencia, name='editar_historico_carencia_lci_lca'),
+    url(r'^editar_historico_porcentagem/(?P<historico_porcentagem_id>\d+)/$', views.lc.lc.editar_historico_porcentagem, name='editar_historico_porcentagem_lci_lca'),
+    url(r'^editar_lci_lca/(?P<lci_lca_id>\d+)/$', views.lc.lc.editar_lci_lca, name='editar_lci_lca'),
     url(r'^editar_operacao/(?P<id>\d+)/$', views.lc.lc.editar_operacao_lc, name='editar_operacao_lci_lca'),
     url(r'^historico/$', views.lc.lc.historico, name='historico_lci_lca'),
     url(r'^inserir_letra_credito/$', views.lc.lc.inserir_lc, name='inserir_lci_lca'),
     url(r'^inserir_operacao_lc/$', views.lc.lc.inserir_operacao_lc, name='inserir_operacao_lci_lca'),
     url(r'^listar_letras_credito/$', views.lc.lc.listar_lc, name='listar_lci_lca'),
-    url(r'^modificar_carencia_lc/$', views.lc.lc.modificar_carencia_lc, name='modificar_carencia_lci_lca'),
-    url(r'^modificar_porcentagem_di_lc/$', views.lc.lc.modificar_porcentagem_di_lc, name='modificar_porcentagem_di_lci_lca'),
+    url(r'^inserir_historico_carencia_lci_lca/(?P<lci_lca_id>\d+)/$', views.lc.lc.inserir_historico_carencia, name='inserir_historico_carencia_lci_lca'),
+    url(r'^inserir_historico_porcentagem_lci_lca/(?P<lci_lca_id>\d+)/$', views.lc.lc.inserir_historico_porcentagem, name='inserir_historico_porcentagem_lci_lca'),
     url(r'^painel/$', views.lc.lc.painel, name='painel_lci_lca'),
     url(r'^sobre/$', views.lc.lc.sobre, name='sobre_lci_lca'),
     ]

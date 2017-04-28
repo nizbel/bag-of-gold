@@ -27,7 +27,7 @@
 		<tbody>
 		{% for lc in lcs %}
 		<tr>
-			<td>{{lc.nome}}</td>
+			<td><a href="{% url 'lci_lca:detalhar_lci_lca' lc.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar Letra de Crédito">{{lc.nome}}</a></td>
 			<td>{{lc.carencia_atual}} dia(s)</td>
 			<td>{{lc.rendimento_atual}}%</td>
 		</tr>
