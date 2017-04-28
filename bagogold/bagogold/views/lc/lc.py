@@ -96,23 +96,23 @@ def editar_historico_carencia(request, historico_carencia_id):
     investidor = request.user.investidor
     historico_carencia = get_object_or_404(HistoricoCarenciaLetraCredito, id=historico_carencia_id)
     
-    if historico_carencia.lci_lca.investidor != investidor:
+    if historico_carencia.letra_credito.investidor != investidor:
         raise PermissionDenied
     
     if request.method == 'POST':
         if request.POST.get("save"):
             if historico_carencia.data is None:
                 inicial = True
-                form_historico_carencia = HistoricoCarenciaLetraCreditoForm(request.POST, instance=historico_carencia, lci_lca=historico_carencia.lci_lca, \
+                form_historico_carencia = HistoricoCarenciaLetraCreditoForm(request.POST, instance=historico_carencia, letra_credito=historico_carencia.letra_credito, \
                                                                        investidor=investidor, inicial=inicial)
             else:
                 inicial = False
-                form_historico_carencia = HistoricoCarenciaLetraCreditoForm(request.POST, instance=historico_carencia, lci_lca=historico_carencia.lci_lca, \
+                form_historico_carencia = HistoricoCarenciaLetraCreditoForm(request.POST, instance=historico_carencia, letra_credito=historico_carencia.letra_credito, \
                                                                        investidor=investidor)
             if form_historico_carencia.is_valid():
                 historico_carencia.save()
                 messages.success(request, 'Histórico de carência editado com sucesso')
-                return HttpResponseRedirect(reverse('lci_lca:detalhar_lci_lca', kwargs={'lci_lca_id': historico_carencia.lci_lca.id}))
+                return HttpResponseRedirect(reverse('lci_lca:detalhar_lci_lca', kwargs={'lci_lca_id': historico_carencia.letra_credito.id}))
             
             for erro in [erro for erro in form_historico_carencia.non_field_errors()]:
                 messages.error(request, erro)
@@ -120,10 +120,10 @@ def editar_historico_carencia(request, historico_carencia_id):
         elif request.POST.get("delete"):
             if historico_carencia.data is None:
                 messages.error(request, 'Valor inicial de carência não pode ser excluído')
-                return HttpResponseRedirect(reverse('lci_lca:detalhar_lci_lca', kwargs={'lci_lca_id': historico_carencia.lci_lca.id}))
+                return HttpResponseRedirect(reverse('lci_lca:detalhar_lci_lca', kwargs={'lci_lca_id': historico_carencia.letra_credito.id}))
             # Pegar investimento para o redirecionamento no caso de exclusão
             inicial = False
-            lci_lca = historico_carencia.lci_lca
+            lci_lca = historico_carencia.letra_credito
             historico_carencia.delete()
             messages.success(request, 'Histórico de carência excluído com sucesso')
             return HttpResponseRedirect(reverse('lci_lca:detalhar_lci_lca', kwargs={'lci_lca_id': lci_lca.id}))
@@ -131,11 +131,11 @@ def editar_historico_carencia(request, historico_carencia_id):
     else:
         if historico_carencia.data is None:
             inicial = True
-            form_historico_carencia = HistoricoCarenciaCDB_RDBForm(instance=historico_carencia, lci_lca=historico_carencia.lci_lca, \
+            form_historico_carencia = HistoricoCarenciaLetraCreditoForm(instance=historico_carencia, letra_credito=historico_carencia.letra_credito, \
                                                                    investidor=investidor, inicial=inicial)
         else: 
             inicial = False
-            form_historico_carencia = HistoricoCarenciaCDB_RDBForm(instance=historico_carencia, lci_lca=historico_carencia.lci_lca, \
+            form_historico_carencia = HistoricoCarenciaLetraCreditoForm(instance=historico_carencia, letra_credito=historico_carencia.letra_credito, \
                                                                    investidor=investidor)
             
     return TemplateResponse(request, 'lc/editar_historico_carencia.html', {'form_historico_carencia': form_historico_carencia, 'inicial': inicial}) 
@@ -143,25 +143,25 @@ def editar_historico_carencia(request, historico_carencia_id):
 @login_required
 def editar_historico_porcentagem(request, historico_porcentagem_id):
     investidor = request.user.investidor
-    historico_porcentagem = get_object_or_404(HistoricoPorcentagemCDB_RDB, id=historico_porcentagem_id)
+    historico_porcentagem = get_object_or_404(HistoricoPorcentagemLetraCredito, id=historico_porcentagem_id)
     
-    if historico_porcentagem.lci_lca.investidor != investidor:
+    if historico_porcentagem.letra_credito.investidor != investidor:
         raise PermissionDenied
     
     if request.method == 'POST':
         if request.POST.get("save"):
             if historico_porcentagem.data is None:
                 inicial = True
-                form_historico_porcentagem = HistoricoPorcentagemCDB_RDBForm(request.POST, instance=historico_porcentagem, lci_lca=historico_porcentagem.lci_lca, \
+                form_historico_porcentagem = HistoricoPorcentagemLetraCreditoForm(request.POST, instance=historico_porcentagem, letra_credito=historico_porcentagem.letra_credito, \
                                                                              investidor=investidor, inicial=inicial)
             else:
                 inicial = False
-                form_historico_porcentagem = HistoricoPorcentagemCDB_RDBForm(request.POST, instance=historico_porcentagem, lci_lca=historico_porcentagem.lci_lca, \
+                form_historico_porcentagem = HistoricoPorcentagemLetraCreditoForm(request.POST, instance=historico_porcentagem, letra_credito=historico_porcentagem.letra_credito, \
                                                                              investidor=investidor)
             if form_historico_porcentagem.is_valid():
                 historico_porcentagem.save(force_update=True)
                 messages.success(request, 'Histórico de porcentagem editado com sucesso')
-                return HttpResponseRedirect(reverse('lci_lca:detalhar_lci_lca', kwargs={'lci_lca_id': historico_porcentagem.lci_lca.id}))
+                return HttpResponseRedirect(reverse('lci_lca:detalhar_lci_lca', kwargs={'lci_lca_id': historico_porcentagem.letra_credito.id}))
                 
             for erro in [erro for erro in form_historico_porcentagem.non_field_errors()]:
                 messages.error(request, erro)
@@ -169,10 +169,10 @@ def editar_historico_porcentagem(request, historico_porcentagem_id):
         elif request.POST.get("delete"):
             if historico_porcentagem.data is None:
                 messages.error(request, 'Valor inicial de porcentagem não pode ser excluído')
-                return HttpResponseRedirect(reverse('lci_lca:detalhar_lci_lca', kwargs={'lci_lca_id': historico_porcentagem.lci_lca.id}))
+                return HttpResponseRedirect(reverse('lci_lca:detalhar_lci_lca', kwargs={'lci_lca_id': historico_porcentagem.letra_credito.id}))
             # Pegar investimento para o redirecionamento no caso de exclusão
             inicial = False
-            lci_lca = historico_porcentagem.lci_lca
+            lci_lca = historico_porcentagem.letra_credito
             historico_porcentagem.delete()
             messages.success(request, 'Histórico de porcentagem excluído com sucesso')
             return HttpResponseRedirect(reverse('lci_lca:detalhar_lci_lca', kwargs={'lci_lca_id': lci_lca.id}))
@@ -180,11 +180,11 @@ def editar_historico_porcentagem(request, historico_porcentagem_id):
     else:
         if historico_porcentagem.data is None:
             inicial = True
-            form_historico_porcentagem = HistoricoPorcentagemCDB_RDBForm(instance=historico_porcentagem, lci_lca=historico_porcentagem.lci_lca, \
+            form_historico_porcentagem = HistoricoPorcentagemLetraCreditoForm(instance=historico_porcentagem, letra_credito=historico_porcentagem.letra_credito, \
                                                                          investidor=investidor, inicial=inicial)
         else: 
             inicial = False
-            form_historico_porcentagem = HistoricoPorcentagemCDB_RDBForm(instance=historico_porcentagem, lci_lca=historico_porcentagem.lci_lca, \
+            form_historico_porcentagem = HistoricoPorcentagemLetraCreditoForm(instance=historico_porcentagem, letra_credito=historico_porcentagem.letra_credito, \
                                                                          investidor=investidor)
             
     return TemplateResponse(request, 'lc/editar_historico_porcentagem.html', {'form_historico_porcentagem': form_historico_porcentagem, 'inicial': inicial}) 
@@ -409,9 +409,13 @@ def historico(request):
 @login_required
 def inserir_historico_carencia(request, lci_lca_id):
     investidor = request.user.investidor
+    lci_lca = get_object_or_404(LetraCredito, id=lci_lca_id)
+    
+    if lci_lca.investidor != investidor:
+        raise PermissionDenied
     
     if request.method == 'POST':
-        form = HistoricoCarenciaLetraCreditoForm(request.POST, investidor=investidor)
+        form = HistoricoCarenciaLetraCreditoForm(request.POST, initial={'letra_credito': lci_lca.id}, letra_credito=lci_lca, investidor=investidor)
         if form.is_valid():
             historico = form.save()
             messages.success(request, 'Histórico de carência para %s alterado com sucesso' % historico.letra_credito)
@@ -420,16 +424,20 @@ def inserir_historico_carencia(request, lci_lca_id):
         for erro in [erro for erro in form.non_field_errors()]:
             messages.error(request, erro)
     else:
-        form = HistoricoCarenciaLetraCreditoForm(investidor=investidor)
+        form = HistoricoCarenciaLetraCreditoForm(initial={'letra_credito': lci_lca.id}, letra_credito=lci_lca, investidor=investidor)
             
-    return TemplateResponse(request, 'lc/modificar_carencia_lc.html', {'form': form})
+    return TemplateResponse(request, 'lc/inserir_historico_carencia_lci_lca.html', {'form': form})
 
 @login_required
 def inserir_historico_porcentagem(request, lci_lca_id):
     investidor = request.user.investidor
+    lci_lca = get_object_or_404(LetraCredito, id=lci_lca_id)
+    
+    if lci_lca.investidor != investidor:
+        raise PermissionDenied
     
     if request.method == 'POST':
-        form = HistoricoPorcentagemLetraCreditoForm(request.POST, investidor=investidor)
+        form = HistoricoPorcentagemLetraCreditoForm(request.POST, initial={'letra_credito': lci_lca.id}, letra_credito=lci_lca, investidor=investidor)
         if form.is_valid():
             historico = form.save()
             messages.success(request, 'Histórico de porcentagem de rendimento para %s alterado com sucesso' % historico.letra_credito)
@@ -438,9 +446,9 @@ def inserir_historico_porcentagem(request, lci_lca_id):
         for erro in [erro for erro in form.non_field_errors()]:
             messages.error(request, erro)
     else:
-        form = HistoricoPorcentagemLetraCreditoForm(investidor=investidor)
+        form = HistoricoPorcentagemLetraCreditoForm(initial={'letra_credito': lci_lca.id}, letra_credito=lci_lca, investidor=investidor)
             
-    return TemplateResponse(request, 'lc/modificar_porcentagem_di_lc.html', {'form': form})
+    return TemplateResponse(request, 'lc/inserir_historico_porcentagem_lci_lca.html', {'form': form})
 
 @login_required
 def inserir_lc(request):

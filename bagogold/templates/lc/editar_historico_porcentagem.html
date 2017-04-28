@@ -12,7 +12,7 @@
 	<div class="portlet-title">
 		<div class="caption font-yellow-crusta">
 			<i class="icon-note font-yellow-crusta"></i>
-			<span class="caption-subject bold uppercase"> Editar histórico de porcentagem de CDB/RDB </span>
+			<span class="caption-subject bold uppercase"> Editar histórico de porcentagem de Letra de Crédito </span>
 		</div>
 	</div>
 	<div class="portlet-body form">
@@ -20,11 +20,11 @@
 		<form method="POST" class="horizontal-form">{% csrf_token %}
 			<div class="form-body">
 				<div class="row">
-					<div class="form-group col-md-6 {% if form_historico_porcentagem.porcentagem.errors %} has-error {% endif %}">
+					<div class="form-group col-md-6 {% if form_historico_porcentagem.porcentagem_di.errors %} has-error {% endif %}">
 						<label class="control-label col-md-4"> Porcentagem de rendimento: </label>
 						<div class="col-md-8">
-							<input id="id_porcentagem" type="text" value="{{form_historico_porcentagem.porcentagem.value}}" name="porcentagem" class="form-control">
-							{% if form_historico_porcentagem.porcentagem.errors %} <span class="help-block"> {{ form_historico_porcentagem.porcentagem.errors.as_text }} </span> {% endif %}
+							<input id="id_porcentagem_di" type="text" value="{{form_historico_porcentagem.porcentagem_di.value}}" name="porcentagem_di" class="form-control">
+							{% if form_historico_porcentagem.porcentagem_di.errors %} <span class="help-block"> {{ form_historico_porcentagem.porcentagem_di.errors.as_text }} </span> {% endif %}
 						</div>
 					</div>
 					<div class="form-group col-md-6 {% if form_historico_porcentagem.data.errors %} has-error {% endif %}">
@@ -48,13 +48,13 @@
 					</div>
 				</div>
 				<div class="row">
-					<div class="form-group col-md-6 {% if form_historico_porcentagem.cdb_rdb.errors %} has-error {% endif %}">
+					<div class="form-group col-md-6 {% if form_historico_porcentagem.letra_credito.errors %} has-error {% endif %}">
 						<label class="control-label col-md-4"> CDB/RDB: </label>
 						<div class="col-md-8">
-							<select class="selectpicker form-control" disabled id="id_cdb_rdb" name="cdb_rdb">
-								{% for key, value in form_historico_porcentagem.fields.cdb_rdb.widget.choices %}<option value="{{ key }}" {% if key == form_historico_porcentagem.cdb_rdb.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+							<select class="selectpicker form-control" disabled id="id_letra_credito" name="letra_credito">
+								{% for key, value in form_historico_porcentagem.fields.letra_credito.widget.choices %}<option value="{{ key }}" {% if key == form_historico_porcentagem.letra_credito.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
 							</select>
-							{% if form_historico_porcentagem.cdb_rdb.errors %} <span class="help-block"> {{ form_historico_porcentagem.cdb_rdb.errors.as_text }} </span> {% endif %}
+							{% if form_historico_porcentagem.letra_credito.errors %} <span class="help-block"> {{ form_historico_porcentagem.letra_credito.errors.as_text }} </span> {% endif %}
 						</div>
 					</div>
 				</div>
@@ -105,7 +105,7 @@
 {{ form_historico_porcentagem.media }}
 <script>
 $( document ).ready(function() {	
-	$("input[name='porcentagem']").TouchSpin({
+	$("input[name='porcentagem_di']").TouchSpin({
 		initval: 0.01,
 		min: 0.01,
 		max: 1000000000,
