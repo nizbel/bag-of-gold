@@ -3,6 +3,7 @@
 from bagogold.bagogold.forms.cdb_rdb import OperacaoCDB_RDBForm, \
     HistoricoPorcentagemCDB_RDBForm, CDB_RDBForm, HistoricoCarenciaCDB_RDBForm
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoCDB_RDBFormSet
+from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB, \
     HistoricoPorcentagemCDB_RDB, CDB_RDB, HistoricoCarenciaCDB_RDB, \
     OperacaoVendaCDB_RDB
@@ -22,10 +23,10 @@ from django.core.urlresolvers import reverse
 from django.db.models import Count
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
 import calendar
 import datetime
-from django.shortcuts import get_object_or_404
 
 @login_required
 def detalhar_cdb_rdb(request, cdb_rdb_id):
@@ -419,9 +420,9 @@ def inserir_cdb_rdb(request):
     investidor = request.user.investidor
     
     # Preparar formsets 
-    PorcentagemFormSet = inlineformset_factory(CDB_RDB, HistoricoPorcentagemCDB_RDB, fields=('porcentagem',),
+    PorcentagemFormSet = inlineformset_factory(CDB_RDB, HistoricoPorcentagemCDB_RDB, fields=('porcentagem',), form=LocalizedModelForm,
                                             extra=1, can_delete=False, max_num=1, validate_max=True)
-    CarenciaFormSet = inlineformset_factory(CDB_RDB, HistoricoCarenciaCDB_RDB, fields=('carencia',),
+    CarenciaFormSet = inlineformset_factory(CDB_RDB, HistoricoCarenciaCDB_RDB, fields=('carencia',), form=LocalizedModelForm,
                                             extra=1, can_delete=False, max_num=1, validate_max=True, labels = {'carencia': 'Período de carência (em dias)',})
     
     if request.method == 'POST':

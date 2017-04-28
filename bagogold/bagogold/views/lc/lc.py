@@ -4,6 +4,7 @@ from bagogold.bagogold.forms.divisoes import DivisaoOperacaoLCFormSet
 from bagogold.bagogold.forms.lc import OperacaoLetraCreditoForm, \
     HistoricoPorcentagemLetraCreditoForm, LetraCreditoForm, \
     HistoricoCarenciaLetraCreditoForm
+from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoLC, Divisao
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI, \
     HistoricoPorcentagemLetraCredito, LetraCredito, HistoricoCarenciaLetraCredito, \
@@ -455,14 +456,16 @@ def inserir_lc(request):
     investidor = request.user.investidor
     
     # Preparar formsets 
-    PorcentagemFormSet = inlineformset_factory(LetraCredito, HistoricoPorcentagemLetraCredito, fields=('porcentagem_di',),
+    PorcentagemFormSet = inlineformset_factory(LetraCredito, HistoricoPorcentagemLetraCredito, fields=('porcentagem_di',), form=LocalizedModelForm,
                                             extra=1, can_delete=False, max_num=1, validate_max=True)
-    CarenciaFormSet = inlineformset_factory(LetraCredito, HistoricoCarenciaLetraCredito, fields=('carencia',),
+    CarenciaFormSet = inlineformset_factory(LetraCredito, HistoricoCarenciaLetraCredito, fields=('carencia',), form=LocalizedModelForm,
                                             extra=1, can_delete=False, max_num=1, validate_max=True, labels = {'carencia': 'Período de carência (em dias)',})
     
     if request.method == 'POST':
         if request.POST.get("save"):
             form_lc = LetraCreditoForm(request.POST)
+            formset_porcentagem = PorcentagemFormSet(request.POST)
+            formset_carencia = CarenciaFormSet(request.POST)
             if form_lc.is_valid():
                 lc = form_lc.save(commit=False)
                 lc.investidor = investidor
@@ -484,9 +487,8 @@ def inserir_lc(request):
                                                                          'formset_carencia': formset_carencia})
                         return HttpResponseRedirect(reverse('lci_lca:listar_lci_lca'))
                     
-            for erros in form_lc.errors.values():
-                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
-                    messages.error(request, erro.message)
+            for erro in [erro for erro in form_lc.non_field_errors()]:
+                messages.error(request, erro.message)
             for erro in formset_porcentagem.non_form_errors():
                 messages.error(request, erro)
             for erro in formset_carencia.non_form_errors():
