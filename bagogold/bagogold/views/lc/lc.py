@@ -191,7 +191,35 @@ def editar_historico_porcentagem(request, historico_porcentagem_id):
 
 @login_required
 def editar_lci_lca(request, lci_lca_id):
-    pass
+    investidor = request.user.investidor
+    lci_lca = get_object_or_404(LetraCredito, id=lci_lca_id)
+    
+    if lci_lca.investidor != investidor:
+        raise PermissionDenied
+    
+    if request.method == 'POST':
+        if request.POST.get("save"):
+            form_lci_lca = LetraCreditoForm(request.POST, instance=lci_lca)
+            
+            if form_lci_lca.is_valid():
+                lci_lca.save()
+                messages.success(request, 'Letra de Crédito editada com sucesso')
+                return HttpResponseRedirect(reverse('lci_lca:detalhar_lci_lca', kwargs={'lci_lca_id': lci_lca.id}))
+                
+        # TODO verificar o que pode acontecer na exclusão
+        elif request.POST.get("delete"):
+            if OperacaoLetraCredito.objects.filter(letra_credito=lci_lca).exists():
+                messages.error(request, 'Não é possível excluir a Letra de Crédito pois existem operações cadastradas')
+                return HttpResponseRedirect(reverse('lci_lca:detalhar_lci_lca', kwargs={'lci_lca_id': lci_lca.id}))
+            else:
+                lci_lca.delete()
+                messages.success(request, 'Letra de Crédito excluída com sucesso')
+                return HttpResponseRedirect(reverse('lci_lca:listar_lci_lca'))
+ 
+    else:
+        form_lci_lca = LetraCreditoForm(instance=lci_lca)
+            
+    return TemplateResponse(request, 'lc/editar_lci_lca.html', {'form_lci_lca': form_lci_lca, 'lci_lca': lci_lca})  
     
 @login_required
 def editar_operacao_lc(request, id):
