@@ -52,7 +52,7 @@ def acompanhamento_mensal_fii(request):
     
     
 @login_required
-def aconselhamento_fii(request):
+def acompanhamento_fii(request):
     investidor = request.user.investidor
     fiis = FII.objects.all()
     
@@ -100,7 +100,7 @@ def aconselhamento_fii(request):
     # Ordenar lista de comparativos
     comparativos = reversed(sorted(comparativos, key=itemgetter(3)))
     
-    return TemplateResponse(request, 'fii/aconselhamento.html', {'comparativos': comparativos})
+    return TemplateResponse(request, 'fii/acompanhamento.html', {'comparativos': comparativos})
     
 # TODO remover login_required
 @login_required
