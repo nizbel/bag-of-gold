@@ -30,7 +30,7 @@ class OperacaoLetraCreditoForm(LocalizedModelForm):
                  'tipo_operacao': widgets.Select(choices=ESCOLHAS_TIPO_OPERACAO),}
         
     class Media:
-        js = ('js/bagogold/lc.js',)
+        js = ('js/bagogold/form_operacao_lci_lca.js',)
         
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')

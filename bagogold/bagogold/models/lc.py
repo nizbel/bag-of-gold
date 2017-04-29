@@ -49,7 +49,7 @@ class OperacaoLetraCredito (models.Model):
     quantidade = models.DecimalField(u'Quantidade investida/resgatada', max_digits=11, decimal_places=2)
     data = models.DateField(u'Data da operação')
     tipo_operacao = models.CharField(u'Tipo de operação', max_length=1)
-    letra_credito = models.ForeignKey('LetraCredito')
+    letra_credito = models.ForeignKey('LetraCredito', verbose_name='Letra de Crédito')
     investidor = models.ForeignKey('Investidor')
     
     def __unicode__(self):
