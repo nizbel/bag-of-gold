@@ -52,7 +52,8 @@ Adiciona uma nova operação em CDB/RDB
 						<label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_cdb_rdb.fields.data.label}}: </label>
 						<div class="col-md-8">
 							<div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" data-date-viewmode="years">
-								<input type="text" class="form-control" id="id_data" name="data" value="{{form_operacao_cdb_rdb.data.value|default:''}}">
+								<input type="text" class="form-control" id="id_data" name="data" 
+                                value="{% if form_operacao_cdb_rdb.data.value|date:'d/m/Y'|default:'' == '' %}{{form_operacao_cdb_rdb.data.value|default:''}}{% else %}{{form_operacao_cdb_rdb.data.value|date:'d/m/Y'}}{% endif %}">
 								<span class="input-group-btn">
 									<button class="btn default" type="button">
 										<i class="fa fa-calendar"></i>

@@ -41,7 +41,8 @@
 						<label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_acao.data.label }}: </label>
 						<div class="col-md-8">
 							<div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" data-date-viewmode="years">
-								<input type="text" class="form-control" value="{{form_operacao_acao.data.value|default:''}}" id="id_data" name="data">
+								<input type="text" class="form-control" id="id_data" name="data"
+                                value="{% if form_operacao_acao.data.value|date:'d/m/Y'|default:'' == '' %}{{form_operacao_acao.data.value|default:''}}{% else %}{{form_operacao_acao.data.value|date:'d/m/Y'}}{% endif %}">
 								<span class="input-group-btn">
 									<button class="btn default" type="button">
 										<i class="fa fa-calendar"></i>
