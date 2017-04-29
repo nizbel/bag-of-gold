@@ -43,7 +43,7 @@ def buscar_titulos_validos_na_data(request):
     return HttpResponse(json.dumps(lista_titulos_validos), content_type = "application/json") 
 
 @login_required
-def aconselhamento_td(request):
+def acompanhamento_td(request):
     # Objeto vazio para preenchimento
     class Object():
         pass
@@ -175,7 +175,7 @@ def aconselhamento_td(request):
     fiis = [fii for fii in fiis if fii.rendimento_prov > 0]
     fiis.sort(key=lambda x: x.rendimento_prov, reverse=True)
     
-    return TemplateResponse(request, 'td/aconselhamento.html', {'titulos': titulos, 'letras_credito': letras_credito, 'fiis': fiis})
+    return TemplateResponse(request, 'td/acompanhamento.html', {'titulos': titulos, 'letras_credito': letras_credito, 'fiis': fiis})
 
 @login_required
 def editar_operacao_td(request, operacao_id):
