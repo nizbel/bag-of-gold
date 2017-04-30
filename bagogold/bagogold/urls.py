@@ -77,7 +77,7 @@ divisoes_patterns = [
     ]
 
 fiis_patterns = [
-    url(r'^acompanhamento_mensal/$', views.fii.fii.acompanhamento_mensal_fii, name='acompanhamento_mensal_fii'),
+#     url(r'^acompanhamento_mensal/$', views.fii.fii.acompanhamento_mensal_fii, name='acompanhamento_mensal_fii'),
     url(r'^acompanhamento/$', views.fii.fii.acompanhamento_fii, name='acompanhamento_fii'),
     url(r'^calcular_resultado_corretagem/$', views.fii.fii.calcular_resultado_corretagem, name='calcular_resultado_corretagem'),
     url(r'^editar_operacao/(?P<operacao_id>\d+)/$', views.fii.fii.editar_operacao_fii, name='editar_operacao_fii'),
