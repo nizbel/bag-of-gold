@@ -53,7 +53,6 @@ def acompanhamento_mensal_fii(request):
     
 @login_required
 def acompanhamento_fii(request):
-    investidor = request.user.investidor
     fiis = FII.objects.all()
     
     comparativos = list()
