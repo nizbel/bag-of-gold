@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoAcaoFormSet
-from bagogold.bagogold.forms.operacao_acao import OperacaoAcaoForm
+from bagogold.bagogold.forms.operacao_acao import OperacaoAcaoForm, \
+    UsoProventosOperacaoAcaoForm
 from bagogold.bagogold.forms.operacao_compra_venda import \
     OperacaoCompraVendaForm
-from bagogold.bagogold.models.acoes import OperacaoAcao, OperacaoCompraVenda
+from bagogold.bagogold.models.acoes import OperacaoAcao, OperacaoCompraVenda, \
+    UsoProventosOperacaoAcao
 from bagogold.bagogold.models.divisoes import Divisao, \
     TransferenciaEntreDivisoes, DivisaoOperacaoAcao
 from bagogold.bagogold.utils.acoes import calcular_lucro_trade_ate_data, \
@@ -13,18 +15,19 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
+from django.db import transaction
 from django.db.models import Sum
 from django.forms.models import inlineformset_factory
 from django.http import HttpResponse, HttpResponseRedirect
 from django.http.response import Http404
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template.context import RequestContext
+from django.template.response import TemplateResponse
+from itertools import chain
 import calendar
 import datetime
-from itertools import chain
 import json
 import operator
-from django.template.response import TemplateResponse
 
 LISTA_MESES = [['Janeiro', 1],   ['Fevereiro', 2],
                ['Março', 3],     ['Abril', 4],
@@ -427,30 +430,67 @@ def inserir_operacao(request):
     
 @login_required
 def inserir_operacao_acao(request):
-    investidor = request.user.investidor# Preparar formset para divisoes
-    DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'),
+    investidor = request.user.investidor
+    
+    # Testa se investidor possui mais de uma divisão
+    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    
+    # Preparar formset para divisoes
+    DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'), can_delete=False,
                                             extra=1, formset=DivisaoOperacaoAcaoFormSet)
     
     if request.method == 'POST':
         form_operacao_acao = OperacaoAcaoForm(request.POST)
-        formset_divisao = DivisaoFormSet(request.POST, investidor=investidor)
+        form_uso_proventos = UsoProventosOperacaoAcaoForm(request.POST) if not varias_divisoes else None
+        formset_divisao = DivisaoFormSet(request.POST, investidor=investidor) if varias_divisoes else None
         if form_operacao_acao.is_valid():
             operacao_acao = form_operacao_acao.save(commit=False)
-            operacao_acao.destinacao = 'T'
             operacao_acao.investidor = investidor
-            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_acao, investidor=investidor)
-            if formset_divisao.is_valid():
-                operacao_acao.save()
-                formset_divisao.save()
-                messages.success(request, 'Operação inserida com sucesso')
-                return HttpResponseRedirect(reverse('acoes:historico_operacoes'))
-            for erro in formset_divisao.non_form_errors():
-                messages.error(request, erro)
+            operacao_acao.destinacao = 'T'
+            try:
+                with transaction.atomic():
+                    # Validar de acordo com a quantidade de divisões
+                    if varias_divisoes:
+                        formset_divisao = DivisaoFormSet(request.POST, instance=operacao_acao, investidor=investidor)
+                        if formset_divisao.is_valid():
+                            operacao_acao.save()
+                            formset_divisao.save()
+                            for form_divisao_operacao in [form for form in formset_divisao if form.cleaned_data]:
+                                divisao_operacao = form_divisao_operacao.save(commit=False)
+                                if form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] != None and form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] > 0:
+                                    # TODO remover operação de uso proventos
+                                    divisao_operacao.usoproventosoperacaoacao = UsoProventosOperacaoAcao(qtd_utilizada=form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'], operacao=operacao_acao)
+                                    divisao_operacao.usoproventosoperacaoacao.save()
+                                
+                            messages.success(request, 'Operação inserida com sucesso')
+                            return HttpResponseRedirect(reverse('acoes:historico_operacoes'))
+                        for erro in formset_divisao.non_form_errors():
+                            messages.error(request, erro)
+                        
+                    else:
+                        if form_uso_proventos.is_valid():
+                            operacao_acao.save()
+                            divisao_operacao = DivisaoOperacaoAcao(operacao=operacao_acao, quantidade=operacao_acao.quantidade, divisao=investidor.divisaoprincipal.divisao)
+                            divisao_operacao.save()
+                            uso_proventos = form_uso_proventos.save(commit=False)
+                            if uso_proventos.qtd_utilizada > 0:
+                                uso_proventos.operacao = operacao_acao
+                                uso_proventos.divisao_operacao = divisao_operacao
+                                uso_proventos.save()
+                            messages.success(request, 'Operação inserida com sucesso')
+                            return HttpResponseRedirect(reverse('acoes:historico_operacoes'))
+            except:
+                pass
+            
+        for erro in [erro for erro in form_operacao_acao.non_field_errors()]:
+            messages.error(request, erro)
     else:
         valores_iniciais = {}
         if investidor.tipo_corretagem == 'F':
             valores_iniciais['corretagem'] = investidor.corretagem_padrao
         form_operacao_acao = OperacaoAcaoForm(initial=valores_iniciais)
+        form_uso_proventos = UsoProventosOperacaoAcaoForm(initial={'qtd_utilizada': Decimal('0.00')})
         formset_divisao = DivisaoFormSet(investidor=investidor)
             
-    return TemplateResponse(request, 'acoes/trade/inserir_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'formset_divisao': formset_divisao})
+    return TemplateResponse(request, 'acoes/trade/inserir_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,
+                                                                       'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})
