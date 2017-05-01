@@ -416,7 +416,10 @@ def inserir_operacao(request):
             operacao_trade = form.save(commit=False)
             operacao_trade.investidor = investidor
             operacao_trade.save()
+            messages.success(request, 'Operação inserida com sucesso')
             return HttpResponseRedirect(reverse('acoes:historico_operacoes_cv'))
+        for erro in [erro for erro in form.non_field_errors()]:
+            messages.error(request, erro)
     else:
         form = OperacaoCompraVendaForm(investidor=investidor)
             
