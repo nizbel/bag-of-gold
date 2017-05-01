@@ -134,9 +134,9 @@ def editar_operacao_acao(request, operacao_id):
     else:
         form_operacao_acao = OperacaoAcaoForm(instance=operacao_acao)
         if not varias_divisoes:
-            try:
+            if UsoProventosOperacaoAcao.objects.filter(divisao_operacao__operacao=operacao_acao).exists():
                 form_uso_proventos = UsoProventosOperacaoAcaoForm(instance=UsoProventosOperacaoAcao.objects.get(divisao_operacao__operacao=operacao_acao))
-            except UsoProventosOperacaoAcao.DoesNotExist:
+            else:
                 form_uso_proventos = UsoProventosOperacaoAcaoForm()
         else:
             form_uso_proventos = UsoProventosOperacaoAcaoForm()
@@ -618,8 +618,9 @@ def inserir_operacao_acao(request):
         form_operacao_acao = OperacaoAcaoForm(initial=valores_iniciais)
         form_uso_proventos = UsoProventosOperacaoAcaoForm(initial={'qtd_utilizada': Decimal('0.00')})
         formset_divisao = DivisaoFormSet(investidor=investidor)
+        
     return TemplateResponse(request, 'acoes/buyandhold/inserir_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,
-                                                                       'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes })
+                                                                       'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})
     
 @login_required
 @user_passes_test(is_superuser)
