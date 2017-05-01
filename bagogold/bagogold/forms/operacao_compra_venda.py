@@ -26,7 +26,7 @@ class OperacaoCompraVendaForm(LocalizedModelForm):
         
         # lista de compras
         operacoes_compra = OperacaoAcao.objects.filter(investidor=self.investidor, tipo_operacao='C', destinacao='T')
-        self.fields['compra'].choices = []
+        self.fields['compra'].choices = [] if not self.instance.id else [[self.instance.compra.id, self.instance.compra]]
         for operacao in operacoes_compra:
             adicionar = True
             if operacao.compra.get_queryset():
@@ -37,7 +37,7 @@ class OperacaoCompraVendaForm(LocalizedModelForm):
         
         # lista de vendas
         operacoes_venda = OperacaoAcao.objects.filter(investidor=self.investidor, tipo_operacao='V', destinacao='T')
-        self.fields['venda'].choices = []
+        self.fields['venda'].choices = [] if not self.instance.id else [[self.instance.venda.id, self.instance.venda]]
         for operacao in operacoes_venda:
             adicionar = True
             if operacao.venda.get_queryset():

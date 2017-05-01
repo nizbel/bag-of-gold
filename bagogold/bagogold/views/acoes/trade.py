@@ -217,10 +217,10 @@ def acompanhamento_mensal(request):
     
     
 @login_required
-def editar_operacao(request, id):
+def editar_operacao(request, operacao_id):
     investidor = request.user.investidor
     
-    operacao = OperacaoCompraVenda.objects.get(pk=id)
+    operacao = get_object_or_404(OperacaoCompraVenda, pk=operacao_id)
     # Checar se é o investidor da operação
     if investidor != operacao.compra.investidor:
         raise PermissionDenied
@@ -230,8 +230,14 @@ def editar_operacao(request, id):
             form = OperacaoCompraVendaForm(request.POST, instance=operacao, investidor=investidor)
             if form.is_valid():
                 form.save()
+                messages.success(request, 'Operação de Compra/Venda editada com sucesso')
+                return HttpResponseRedirect(reverse('acoes:historico_operacoes_cv'))
+            
+            for erro in [erro for erro in form.non_field_errors()]:
+                messages.error(request, erro)
         elif request.POST.get("delete"):
             operacao.delete()
+            messages.error(request, 'Operação de Compra/Venda excluída com sucesso')
             return HttpResponseRedirect(reverse('acoes:historico_operacoes_cv'))
 
     else:
@@ -240,13 +246,13 @@ def editar_operacao(request, id):
     return TemplateResponse(request, 'acoes/trade/editar_operacao.html', {'form': form}) 
     
 @login_required
-def editar_operacao_acao(request, id):
+def editar_operacao_acao(request, operacao_id):
     investidor = request.user.investidor
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoAcaoFormSet)
     
-    operacao = get_object_or_404(OperacaoAcao, pk=id, destinacao='T')
+    operacao = get_object_or_404(OperacaoAcao, pk=operacao_id, destinacao='T')
     # Checar se é o investidor da operação
     if investidor != operacao.investidor:
         raise PermissionDenied

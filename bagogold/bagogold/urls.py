@@ -30,8 +30,8 @@ acoes_patterns = [
     url(r'^buyandhold/ver_taxas_custodia_acao/$', views.acoes.buyandhold.ver_taxas_custodia_acao, name='ver_taxas_custodia_acao'),
 
     url(r'^trading/acompanhamento_mensal/$', views.acoes.trade.acompanhamento_mensal, name='acompanhamento_mensal'),
-    url(r'^trading/editar_operacao/(?P<id>\d+)/$', views.acoes.trade.editar_operacao, name='editar_operacao_t'),
-    url(r'^trading/editar_operacao_acao/(?P<id>\d+)/$', views.acoes.trade.editar_operacao_acao, name='editar_operacao_acao_t'),
+    url(r'^trading/editar_operacao/(?P<operacao_id>\d+)/$', views.acoes.trade.editar_operacao, name='editar_operacao_t'),
+    url(r'^trading/editar_operacao_acao/(?P<operacao_id>\d+)/$', views.acoes.trade.editar_operacao_acao, name='editar_operacao_acao_t'),
     url(r'^trading/historico_operacoes/$', views.acoes.trade.historico_operacoes, name='historico_operacoes'),
     url(r'^trading/historico_operacoes_cv/$', views.acoes.trade.historico_operacoes_cv, name='historico_operacoes_cv'),
     url(r'^trading/inserir_operacao/$', views.acoes.trade.inserir_operacao, name='inserir_operacao_t'),
