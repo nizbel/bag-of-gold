@@ -251,48 +251,125 @@ def editar_operacao(request, operacao_id):
 @login_required
 def editar_operacao_acao(request, operacao_id):
     investidor = request.user.investidor
+    
+    operacao_acao = get_object_or_404(OperacaoAcao, pk=operacao_id, destinacao='T')
+    
+    # Verifica se a operação é do investidor, senão, jogar erro de permissão
+    if operacao_acao.investidor != investidor:
+        raise PermissionDenied
+    
+    # Valor da poupança de proventos na data apontada
+    poupanca_proventos = calcular_poupanca_prov_acao_ate_dia(investidor, operacao_acao.data)
+    
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'),
                                             extra=1, formset=DivisaoOperacaoAcaoFormSet)
     
-    operacao = get_object_or_404(OperacaoAcao, pk=operacao_id, destinacao='T')
-    # Checar se é o investidor da operação
-    if investidor != operacao.investidor:
-        raise PermissionDenied
+    # Testa se investidor possui mais de uma divisão
+    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
     
     # Busca as operações de compra/venda relativas a essa operação, se alguma envolver daytrade, marcar como daytrade
     # TODO preparar para muitas execuções em uma mesma operação
     operacao_day_trade = False
-    if operacao.compra or operacao.venda:
-        for operacao_compra_venda in list(chain(operacao.compra.get_queryset(), operacao.venda.get_queryset())):
+    if operacao_acao.compra or operacao_acao.venda:
+        for operacao_compra_venda in list(chain(operacao_acao.compra.get_queryset(), operacao_acao.venda.get_queryset())):
             if operacao_compra_venda.day_trade:
                 operacao_day_trade = True
-    
+
     if request.method == 'POST':
         if request.POST.get("save"):
-            form_operacao_acao = OperacaoAcaoForm(request.POST, instance=operacao)
-            formset_divisao = DivisaoFormSet(request.POST, instance=operacao, investidor=investidor)
+            form_operacao_acao = OperacaoAcaoForm(request.POST, instance=operacao_acao)
+            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_acao, investidor=investidor) if varias_divisoes else None
+            
+            if not varias_divisoes:
+                try:
+                    form_uso_proventos = UsoProventosOperacaoAcaoForm(request.POST, instance=UsoProventosOperacaoAcao.objects.get(divisao_operacao__operacao=operacao_acao))
+                except UsoProventosOperacaoAcao.DoesNotExist:
+                    form_uso_proventos = UsoProventosOperacaoAcaoForm(request.POST)
+            else:
+                form_uso_proventos = UsoProventosOperacaoAcaoForm()    
+                
             if form_operacao_acao.is_valid():
-                if formset_divisao.is_valid():
-                    operacao.save()
-                    formset_divisao.save()
-                    messages.success(request, 'Operação alterada com sucesso')
-                    return HttpResponseRedirect(reverse('acoes:historico_operacoes'))
+                try:
+                    with transaction.atomic():
+                        # Validar de acordo com a quantidade de divisões
+                        if varias_divisoes:
+                            if formset_divisao.is_valid():
+                                operacao_acao.save()
+                                formset_divisao.save()
+                                for form_divisao_operacao in [form for form in formset_divisao if form.cleaned_data]:
+                                    # Ignorar caso seja apagado
+                                    if 'DELETE' in form_divisao_operacao.cleaned_data and form_divisao_operacao.cleaned_data['DELETE']:
+                                        pass
+                                    else:
+                                        divisao_operacao = form_divisao_operacao.save(commit=False)
+                                        if hasattr(divisao_operacao, 'usoproventosoperacaoacao'):
+                                            if form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] == None or form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] == 0:
+                                                divisao_operacao.usoproventosoperacaoacao.delete()
+                                            else:
+                                                divisao_operacao.usoproventosoperacaoacao.qtd_utilizada = form_divisao_operacao.cleaned_data['qtd_proventos_utilizada']
+                                                divisao_operacao.usoproventosoperacaoacao.save()
+                                        else:
+                                            if form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] != None and form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] > 0:
+                                                # TODO remover operação de uso proventos
+                                                divisao_operacao.usoproventosoperacaoacao = UsoProventosOperacaoAcao(qtd_utilizada=form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'], operacao=operacao_acao)
+                                                divisao_operacao.usoproventosoperacaoacao.save()
+                                
+                                messages.success(request, 'Operação alterada com sucesso')
+                                return HttpResponseRedirect(reverse('acoes:historico_operacoes'))
+                            for erro in formset_divisao.non_form_errors():
+                                messages.error(request, erro)
+                                
+                        else:
+                            if form_uso_proventos.is_valid():
+                                operacao_acao.save()
+                                divisao_operacao = DivisaoOperacaoAcao.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_acao, quantidade=operacao_acao.quantidade)
+                                divisao_operacao.save()
+                                uso_proventos = form_uso_proventos.save(commit=False)
+        #                         print uso_proventos.qtd_utilizada 
+                                if uso_proventos.qtd_utilizada > 0:
+                                    uso_proventos.operacao = operacao_acao
+                                    uso_proventos.divisao_operacao = DivisaoOperacaoAcao.objects.get(operacao=operacao_acao)
+                                    uso_proventos.save()
+                                # Se uso proventos for 0 e existir uso proventos atualmente, apagá-lo
+                                elif uso_proventos.qtd_utilizada == 0 and UsoProventosOperacaoAcao.objects.filter(divisao_operacao__operacao=operacao_acao):
+                                    uso_proventos.delete()
+                                messages.success(request, 'Operação alterada com sucesso')
+                                return HttpResponseRedirect(reverse('acoes:historico_operacoes'))
+                except:
+                    pass
+            
+            for erro in [erro for erro in form_operacao_acao.non_field_errors()]:
+                messages.error(request, erro)
+
         elif request.POST.get("delete"):
-            divisao_acao = DivisaoOperacaoAcao.objects.filter(operacao=operacao)
-            for divisao in divisao_acao:
-                divisao.delete()
-            operacao.delete()
-            messages.success(request, 'Operação apagada com sucesso')
-            return HttpResponseRedirect(reverse('acoes:historico_operacoes'))
+            try:
+                with transaction.atomic():
+                    divisao_acao = DivisaoOperacaoAcao.objects.filter(operacao=operacao_acao)
+                    for divisao in divisao_acao:
+                        if hasattr(divisao, 'usoproventosoperacaoacao'):
+                            divisao.usoproventosoperacaoacao.delete()
+                        divisao.delete()
+                    operacao_acao.delete()
+                    messages.success(request, 'Operação apagada com sucesso')
+                    return HttpResponseRedirect(reverse('acoes:historico_bh'))
+            except:
+                messages.error('Houve um erro na exclusão da operação')
 
     else:
-        form_operacao_acao = OperacaoAcaoForm(instance=operacao)
-        formset_divisao = DivisaoFormSet(instance=operacao, investidor=investidor)
+        form_operacao_acao = OperacaoAcaoForm(instance=operacao_acao)
+        if not varias_divisoes:
+            if UsoProventosOperacaoAcao.objects.filter(divisao_operacao__operacao=operacao_acao).exists():
+                form_uso_proventos = UsoProventosOperacaoAcaoForm(instance=UsoProventosOperacaoAcao.objects.get(divisao_operacao__operacao=operacao_acao))
+            else:
+                form_uso_proventos = UsoProventosOperacaoAcaoForm()
+        else:
+            form_uso_proventos = UsoProventosOperacaoAcaoForm()
+        formset_divisao = DivisaoFormSet(instance=operacao_acao, investidor=investidor)
             
-    return TemplateResponse(request, 'acoes/trade/editar_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'formset_divisao': formset_divisao, 'operacao_day_trade': operacao_day_trade})   
-    
-    
+    return TemplateResponse(request, 'acoes/trade/editar_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos, 'operacao_day_trade': operacao_day_trade,
+                                                                       'formset_divisao': formset_divisao, 'poupanca_proventos': poupanca_proventos, 'varias_divisoes': varias_divisoes})
+            
 @login_required
 def historico_operacoes(request):
     investidor = request.user.investidor

@@ -113,6 +113,7 @@
 					</div>
 				</div>
 				{% else %}
+                <div class="row" id="forms">
 					<h2 class="font-yellow-crusta" align="center">
 						<strong>Divisões</strong> <button id="add-another" class="btn btn-icon-only green-steel" type="button"><i class="fa fa-plus"></i></button>
 					</h2>
@@ -162,6 +163,7 @@
                         <input id="id_divisaooperacaoacao_set-{{forloop.counter0}}-id" name="divisaooperacaoacao_set-{{forloop.counter0}}-id" value="{{form_divisao.instance.id}}" type="hidden">
                     {% endif %}
 					{% endfor %}
+                </div>
 				{% endif %}
 				<div class="form-actions">
 					<div class="row">
@@ -199,7 +201,6 @@
 {% block extra_footer %}
 <script src={% static "assets/global/plugins/fuelux/js/spinner.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/bootstrap-touchspin/bootstrap.touchspin.min.js" %} type="text/javascript"></script>
-<script src={% static "assets/pages/scripts/components-bootstrap-touchspin.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/jquery-validation/js/jquery.validate.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/jquery-validation/js/additional-methods.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/bootstrap-select/js/bootstrap-select.min.js" %} type="text/javascript"></script>
