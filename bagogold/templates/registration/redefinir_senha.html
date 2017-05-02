@@ -1,58 +1,41 @@
+{% extends "base_login.html" %}
 {% load staticfiles %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <link href="{% static "css/bootstrap.min.css" %}" type="text/css" rel="stylesheet">
-    <link href="{% static "css/font-awesome.min.css" %}" type="text/css" rel="stylesheet">
 
-    <link href="{% static "css/bootstrap-responsive.min.css" %}" rel="stylesheet">
-    <link id="base-style" href="{% static "css/style.css" %}" rel="stylesheet">
-    <link id="base-style-responsive" href="{% static "css/style-responsive.css" %}" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800&amp;subset=latin,cyrillic-ext,latin-ext" rel="stylesheet" type="text/css">
-    
-    <style type="text/css">
-        body { background: url({% static "img/bg-login.jpg" %}) !important; }
-    </style>
-    
-</head>
-
-<body>
-
-    <div class="container-fluid-full">
-        
-        <div class="row-fluid">
-            <div class="login-box">
-                <h2>Redefinir senha</h2>
-                {% if validlink %}
-                <form method="POST" class="form-horizontal">{% csrf_token %}
-                    <fieldset>
-                        {% for field in form %}
-                            {{ field.errors }}
-                            <span>{{ field.label }}</span>
-                            <div class="input-prepend">
-                                <span class="add-on"><i class="halflings-icon lock"></i></span>
-                                <input class="input-large span10" name="{{ field.name }}" id="{{ field.id_for_label }}" placeholder="{{ field.label }}" title="{{ field.help_text }}"
-                                    type="{% if 'password' in field.name %}password{% else %}text{% endif %}">
-                            </div>
-                            <div class="clearfix"></div>
+{% block content %}
+    <h3>Redefinir senha</h3>
+    {% if validlink %}
+        <form method="POST" class="form-horizontal">{% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                <button class="close" data-close="alert"></button>
+                {% for error in form.non_field_errors %}
+                <span>{{error}}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% for field in form %}
+                <div class="form-group">
+                    <label class="control-label visible-ie8 visible-ie9">{{field.label}}</label>
+                    <div class="input-icon">
+                        <i class="fa fa-lock"></i>
+                        <input class="form-control placeholder-no-fix" type="{% if 'password' in field.name %}password{% else %}text{% endif %}" 
+                        autocomplete="off" placeholder="{{ field.label }}" name="{{field.name}}" title="{{field.help_text}}" /> </div>
+                    {% if field.errors %}
+                        {% for error in field.errors %}
+                            <span class="font-white"><i class="fa fa-warning"></i> {{error}}</span>
                         {% endfor %}
-                        <div class="button-login">
-                            <input type="submit" class="btn btn-primary" value="Alterar senha" />
-                        </div>
-                    </fieldset>
-                </form>
-                {% else %}
-                    <h3>O link de redefinição de senha é inválido, é possível que já tenha sido usado. Por favor faça um novo pedido de redefinição de senha.</h3>
-                {% endif %}
-            </div><!--/span-->
-        </div><!--/row-->
-    </div>
-
-
-    <!-- Core Scripts - Include with every page -->
-    <script src="{% static "js/jquery-1.9.1.min.js" %}"></script>
-    <script src="{% static "js/bootstrap.min.js" %}"></script>
-
-</body>
-
-</html>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <div class="form-actions">
+                <button type="submit" class="btn yellow-crusta pull-right"> Alterar senha </button>
+            </div>
+        </form>
+    {% else %}
+        <h3>O link de redefinição de senha é inválido, é possível que já tenha sido usado. Por favor faça um novo pedido de 
+        <a class="font-yellow-crusta" href="{% url 'password_reset' %}" id="forget-password">redefinição de senha</a>.</h3>
+    {% endif %}
+    <!-- BEGIN COPYRIGHT -->
+    <div class="copyright" style="margin-top: 25px;"> {% now "Y" %} &copy; Bag of Gold </div>
+    <!-- END COPYRIGHT -->
+{% endblock %}
