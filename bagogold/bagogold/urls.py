@@ -98,6 +98,7 @@ fundo_investimento_patterns = [
     url(r'^listar_fundo_investimento/$', views.fundo_investimento.fundo_investimento.listar_fundo_investimento, name='listar_fundo_investimento'),
     url(r'^modificar_carencia_fundo_investimento/$', views.fundo_investimento.fundo_investimento.modificar_carencia_fundo_investimento, name='modificar_carencia_fundo_investimento'),
     url(r'^painel/$', views.fundo_investimento.fundo_investimento.painel, name='painel_fundo_investimento'),
+    url(r'^sobre/$', views.fundo_investimento.fundo_investimento.sobre, name='sobre_fundo_investimento'),
     ]
 
 gerador_proventos_patterns = [
