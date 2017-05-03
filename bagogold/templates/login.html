@@ -16,7 +16,7 @@
         {% endif %}
         <div class="form-group">
             <!--ie8, ie9 does not support html5 placeholder, so we just show field title for that-->
-            <label class="control-label visible-ie8 visible-ie9">Username</label>
+            <label class="control-label visible-ie8 visible-ie9">Usuário</label>
             <div class="input-icon">
                 <i class="fa fa-user"></i>
                 <input class="form-control placeholder-no-fix" type="text" placeholder="Usuário" name="username" {% if form.username.value %}value="{{form.username.value}}"{% endif %}/> </div>
@@ -27,7 +27,7 @@
             {% endif %}
         </div>
         <div class="form-group">
-            <label class="control-label visible-ie8 visible-ie9">Password</label>
+            <label class="control-label visible-ie8 visible-ie9">Senha</label>
             <div class="input-icon">
                 <i class="fa fa-lock"></i>
                 <input class="form-control placeholder-no-fix" type="password" autocomplete="off" placeholder="Senha" name="password" /> </div>
@@ -51,10 +51,12 @@
             <p> Então
                 <a class="font-yellow-crusta" href="{% url 'password_reset' %}" id="forget-password"> clique aqui </a> para trocá-la. </p>
         </div>
+        {% comment %}
         <div class="create-account">
             <h4>Não possui conta?</h4>
             <a href="{% url 'cadastro' %}" class="font-yellow-crusta"> Criar nova conta </a>
         </div>
+        {% endcomment %}
         <!-- BEGIN COPYRIGHT -->
         <div class="copyright" style="margin-top: 25px;"> {% now "Y" %} &copy; Bag of Gold </div>
         <!-- END COPYRIGHT -->
