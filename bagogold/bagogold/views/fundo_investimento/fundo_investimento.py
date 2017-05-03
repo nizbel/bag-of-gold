@@ -411,4 +411,4 @@ def painel(request):
 @login_required
 def sobre(request):
     
-    return TemplateResponse(request, 'fii/sobre.html', {})
+    return TemplateResponse(request, 'fundo_investimento/sobre.html', {})
