@@ -38,6 +38,7 @@
 				<td>R${{fii.valor_total|floatformat:"2"}} ({{fii.valor_total_percentual|floatformat:"2"}}%)</td>
 			</tr>
 		{% endfor %}	
+        </tbody>
 		<tfoot>
 			<tr>
 				<td><b>Total</b></td>
@@ -46,7 +47,6 @@
 				<td><b>R${{dados.total_valor|floatformat:"2"}}</b></td>
 			</tr>
 		</tfoot>
-		</tbody>
 		</table>
 	</div>
 </div>
