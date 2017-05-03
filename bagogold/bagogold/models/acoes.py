@@ -68,7 +68,7 @@ class Provento (models.Model):
                             ('J', "Juros sobre capital próprio"),)
     
     acao = models.ForeignKey('Acao', verbose_name='Ação')
-    valor_unitario = models.DecimalField(u'Valor unitário', max_digits=16, decimal_places=12)
+    valor_unitario = models.DecimalField(u'Valor unitário', max_digits=22, decimal_places=18)
     """
     A = proventos em ações, D = dividendos, J = juros sobre capital próprio
     """

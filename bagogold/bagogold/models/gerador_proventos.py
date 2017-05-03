@@ -204,7 +204,7 @@ class ProventoFIIDocumento (models.Model):
         
 class ProventoAcaoDescritoDocumentoBovespa (models.Model):
     acao = models.ForeignKey('Acao')
-    valor_unitario = models.DecimalField(u'Valor unitário', max_digits=16, decimal_places=12)
+    valor_unitario = models.DecimalField(u'Valor unitário', max_digits=22, decimal_places=18)
     """
     A = proventos em ações, D = dividendos, J = juros sobre capital próprio
     """
@@ -240,7 +240,7 @@ class AcaoProventoAcaoDescritoDocumentoBovespa (models.Model):
 
 class ProventoFIIDescritoDocumentoBovespa (models.Model):
     fii = models.ForeignKey('FII')
-    valor_unitario = models.DecimalField(u'Valor unitário', max_digits=13, decimal_places=9)
+    valor_unitario = models.DecimalField(u'Valor unitário', max_digits=22, decimal_places=18)
     """
     A = amortização, R = rendimentos
     """
