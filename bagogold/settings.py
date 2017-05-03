@@ -132,6 +132,8 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_HOST_USER = 'bagofgold@bagofgold.com.br'
 EMAIL_HOST_PASSWORD = '9jU3IU8hse'
 EMAIL_PORT = 587
+# TODO Remover quando estivermos prontos para funcionar
+REGISTRATION_OPEN = False
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
@@ -147,7 +149,7 @@ MEDIA_ROOT = PROJECT_ROOT + '/media/'
 
 # Configurar precisao de decimais
 from decimal import getcontext
-getcontext().prec = 15
+getcontext().prec = 18
 
 # Buscar configuracoes adicionais
 from conf.settings_local import *
