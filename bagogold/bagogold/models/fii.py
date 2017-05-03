@@ -30,7 +30,7 @@ class ProventoFII (models.Model):
                         ('A', "Amortização"),)
     
     fii = models.ForeignKey('FII')
-    valor_unitario = models.DecimalField(u'Valor unitário', max_digits=13, decimal_places=9)
+    valor_unitario = models.DecimalField(u'Valor unitário', max_digits=22, decimal_places=18)
     """
     A = amortização, R = rendimentos
     """
