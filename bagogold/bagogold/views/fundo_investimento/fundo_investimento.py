@@ -356,95 +356,48 @@ def painel(request):
     if not operacoes:
         return TemplateResponse(request, 'fundo_investimento/painel.html', {'operacoes': operacoes, 'dados': {}})
     
+    # Fundos do investidor
+    fundos = {}
+    
     # Prepara o campo valor atual
     for operacao in operacoes:
-        operacao.atual = operacao.quantidade
+        if operacao.fundo_investimento.nome not in fundos.keys():
+            fundos[operacao.fundo_investimento.nome] = operacao.fundo_investimento
         if operacao.tipo_operacao == 'C':
-            operacao.tipo = 'Compra'
-            operacao.taxa = operacao.porcentagem()
+            fundos[operacao.fundo_investimento.nome].quantidade += operacao.quantidade
         else:
-            operacao.tipo = 'Venda'
+            fundos[operacao.fundo_investimento.nome].quantidade -= operacao.quantidade
     
-    # Pegar data inicial
-    data_inicial = operacoes.order_by('data')[0].data
+    fundos = [fundo for fundo in fundos if fundo.quantidade > 0]
     
-    # Pegar data final
-    data_final = HistoricoTaxaDI.objects.filter().order_by('-data')[0].data
+    for fundo in fundos:
+        fundo.data_atual = datetime.date.today()
+        fundo.valor_cota_atual = fundo.valor_no_dia()
+        fundo.total_atual = fundo.valor_cota_atual * fundo.quantidade
+        fundo.imposto_renda = Decimal(0)
+        fundo.iof = Decimal(0)
     
-    data_iteracao = data_inicial
-    
-    total_atual = 0
-    
-    while data_iteracao <= data_final:
-        taxa_do_dia = HistoricoTaxaDI.objects.get(data=data_iteracao).taxa
-        
-        # Processar operações
-        for operacao in operacoes:     
-            if (operacao.data <= data_iteracao):     
-                # Verificar se se trata de compra ou venda
-                if operacao.tipo_operacao == 'C':
-                        if (operacao.data == data_iteracao):
-                            operacao.inicial = operacao.quantidade
-                        # Cafundo_investimentoular o valor atualizado para cada operacao
-                        operacao.atual = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa)
-                        # Arredondar na última iteração
-                        if (data_iteracao == data_final):
-                            str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
-                            operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-                            total_atual += operacao.atual
-                        
-                elif operacao.tipo_operacao == 'V':
-                    if (operacao.data == data_iteracao):
-                        operacao.inicial = operacao.quantidade
-                        # Remover quantidade da operação de compra
-                        operacao_compra_id = operacao.operacao_compra_relacionada().id
-                        for operacao_c in operacoes:
-                            if (operacao_c.id == operacao_compra_id):
-                                # Configurar taxa para a mesma quantidade da compra
-                                operacao.taxa = operacao_c.taxa
-                                operacao.atual = (operacao.quantidade/operacao_c.quantidade) * operacao_c.atual
-                                operacao_c.atual -= operacao.atual
-                                operacao_c.inicial -= operacao.inicial
-                                str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
-                                operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-                                break
-                
-        # Proximo dia útil
-        proximas_datas = HistoricoTaxaDI.objects.filter(data__gt=data_iteracao).order_by('data')
-        if len(proximas_datas) > 0:
-            data_iteracao = proximas_datas[0].data
-        else:
-            break
-    
-    # Remover operações que não estejam mais rendendo
-    operacoes = [operacao for operacao in operacoes if (operacao.atual > 0 and operacao.tipo_operacao == 'C')]
-    
+    total_atual = 0    
     total_ir = 0
     total_iof = 0
     total_ganho_prox_dia = 0
-    for operacao in operacoes:
-        # Calcular o ganho no dia seguinte, considerando taxa do dia anterior
-        operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa) - operacao.atual
-        str_auxiliar = str(operacao.ganho_prox_dia.quantize(Decimal('.0001')))
-        operacao.ganho_prox_dia = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-        total_ganho_prox_dia += operacao.ganho_prox_dia
-        
-        # Calcular impostos
-        qtd_dias = (datetime.date.today() - operacao.data).days
-#         print qtd_dias, calcular_iof_regressivo(qtd_dias)
-        # IOF
-        operacao.iof = Decimal(calcular_iof_regressivo(qtd_dias)) * (operacao.atual - operacao.inicial)
-        # IR
-        if qtd_dias <= 180:
-            operacao.imposto_renda =  Decimal(0.225) * (operacao.atual - operacao.inicial - operacao.iof)
-        elif qtd_dias <= 360:
-            operacao.imposto_renda =  Decimal(0.2) * (operacao.atual - operacao.inicial - operacao.iof)
-        elif qtd_dias <= 720:
-            operacao.imposto_renda =  Decimal(0.175) * (operacao.atual - operacao.inicial - operacao.iof)
-        else: 
-            operacao.imposto_renda =  Decimal(0.15) * (operacao.atual - operacao.inicial - operacao.iof)
-        total_ir += operacao.imposto_renda
-        total_iof += operacao.iof
+#     for operacao in operacoes:
+#         # Calcular impostos
+#         qtd_dias = (datetime.date.today() - operacao.data).days
+# #         print qtd_dias, calcular_iof_regressivo(qtd_dias)
+#         # IOF
+#         operacao.iof = Decimal(calcular_iof_regressivo(qtd_dias)) * (operacao.atual - operacao.inicial)
+#         # IR
+#         if qtd_dias <= 180:
+#             operacao.imposto_renda =  Decimal(0.225) * (operacao.atual - operacao.inicial - operacao.iof)
+#         elif qtd_dias <= 360:
+#             operacao.imposto_renda =  Decimal(0.2) * (operacao.atual - operacao.inicial - operacao.iof)
+#         elif qtd_dias <= 720:
+#             operacao.imposto_renda =  Decimal(0.175) * (operacao.atual - operacao.inicial - operacao.iof)
+#         else: 
+#             operacao.imposto_renda =  Decimal(0.15) * (operacao.atual - operacao.inicial - operacao.iof)
+#         total_ir += operacao.imposto_renda
+#         total_iof += operacao.iof
     
     # Popular dados
     dados = {}
@@ -453,4 +406,9 @@ def painel(request):
     dados['total_iof'] = total_iof
     dados['total_ganho_prox_dia'] = total_ganho_prox_dia
     
-    return TemplateResponse(request, 'fundo_investimento/painel.html', {'operacoes': operacoes, 'dados': dados})
+    return TemplateResponse(request, 'fundo_investimento/painel.html', {'fundos': fundos, 'dados': dados})
+
+@login_required
+def sobre(request):
+    
+    return TemplateResponse(request, 'fii/sobre.html', {})
