@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.decorators import em_construcao
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoFIIFormSet
 from bagogold.bagogold.forms.fii import OperacaoFIIForm, ProventoFIIForm, \
     UsoProventosOperacaoFIIForm, CalculoResultadoCorretagemForm
@@ -544,6 +545,7 @@ def painel(request):
 
     return TemplateResponse(request, 'fii/painel.html', {'fiis': fiis, 'dados': dados})
 
+@em_construcao('whatever')
 @login_required
 def sobre(request):
     if request.user.is_authenticated():
