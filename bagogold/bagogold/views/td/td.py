@@ -43,6 +43,8 @@ def buscar_titulos_validos_na_data(request):
     return HttpResponse(json.dumps(lista_titulos_validos), content_type = "application/json") 
 
 @login_required
+@adiciona_titulo_descricao('Acompanhamento de Tesouro Direto', ('Mostra o rendimento dos títulos do investidor',
+    'para comparar com potenciais ganhos em outros investimentos'))
 def acompanhamento_td(request):
     # Objeto vazio para preenchimento
     class Object():
@@ -178,6 +180,7 @@ def acompanhamento_td(request):
     return TemplateResponse(request, 'td/acompanhamento.html', {'titulos': titulos, 'letras_credito': letras_credito, 'fiis': fiis})
 
 @login_required
+@adiciona_titulo_descricao('Editar operação em Tesouro Direto', 'Editar valores de uma operação de compra/venda em Tesouro Direto')
 def editar_operacao_td(request, operacao_id):
     investidor = request.user.investidor
     
@@ -238,6 +241,7 @@ def editar_operacao_td(request, operacao_id):
 
     
 @login_required
+@adiciona_titulo_descricao('Histórico de Tesouro Direto', 'Histórico de operações de compra/venda em Tesouro Direto')
 def historico_td(request):
     investidor = request.user.investidor
     
@@ -382,6 +386,7 @@ def historico_td(request):
     
     
 @login_required
+@adiciona_titulo_descricao('Inserir operação em Tesouro Direto', 'Inserir registro de operação de compra/venda em Tesouro Direto')
 def inserir_operacao_td(request):
     investidor = request.user.investidor
     
@@ -430,6 +435,7 @@ def inserir_operacao_td(request):
 
 @login_required
 def painel(request):
+@adiciona_titulo_descricao('Painel de Tesouro Direto', 'Mostra a posição atual do investidor em Tesouro Direto')
     # Objeto vazio para preenchimento
     class Object():
         pass
@@ -559,6 +565,7 @@ def painel(request):
     return TemplateResponse(request, 'td/painel.html', {'titulos': titulos, 'titulos_vendidos': titulos_vendidos, 'dados': dados})
 
 @login_required
+@adiciona_titulo_descricao('Sobre Tesouro Direto', 'Detalha o que são títulos do Tesouro Direto')
 def sobre(request):
     data_atual = datetime.date.today()
     historico_ipca = HistoricoIPCA.objects.filter(ano__gte=(data_atual.year-3)).exclude(mes__lt=data_atual.month, ano=data_atual.year-3)
