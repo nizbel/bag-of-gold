@@ -545,7 +545,6 @@ def painel(request):
 
     return TemplateResponse(request, 'fii/painel.html', {'fiis': fiis, 'dados': dados})
 
-@em_construcao('whatever')
 @login_required
 def sobre(request):
     if request.user.is_authenticated():
