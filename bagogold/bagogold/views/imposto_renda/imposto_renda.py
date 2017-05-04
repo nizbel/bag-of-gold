@@ -19,6 +19,7 @@ import datetime
 
 # TODO melhorar isso
 @login_required
+@adiciona_titulo_descricao('Detalhamento do Imposto de Renda', 'Detalhamento de operações e bens do investidor no ano escolhido')
 def detalhar_imposto_renda(request, ano):
     ano = int(ano)
     investidor = request.user.investidor
@@ -330,6 +331,7 @@ def detalhar_imposto_renda(request, ano):
                                                                           'fundos_investimento': fundos_investimento, 'fiis': fiis, 'letras_credito': letras_credito,'dados': dados})
     
 @login_required
+@adiciona_titulo_descricao('Listar anos para declaração de IR', 'Traz os anos em que o investidor possui investimentos cadastrados')
 def listar_anos(request):
     class Object(object):
         pass
