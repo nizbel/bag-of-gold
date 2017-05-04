@@ -26,7 +26,6 @@ def adiciona_titulo_descricao(titulo, descricao):
             r = view(request, *args, **kwargs)
             r.context_data['pagina_titulo'] = titulo
             r.context_data['pagina_descricao'] = descricao
-            print r.context_data
             return r.render()
         return wrapper
     return decorator
