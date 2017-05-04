@@ -31,6 +31,8 @@ import datetime
 import json
 
 @login_required
+@adiciona_titulo_descricao('Detalhar Letra de Crédito', ('Detalhar Letra de Crédito, incluindo histórico de carência e ', 
+    'porcentagem de rendimento, além de dados da posição do investidor'))
 def detalhar_lci_lca(request, lci_lca_id):
     investidor = request.user.investidor
     
@@ -93,6 +95,7 @@ def detalhar_lci_lca(request, lci_lca_id):
                                                                        'historico_carencia': historico_carencia})
 
 @login_required
+@adiciona_titulo_descricao('Editar registro de carência', 'Alterar registro de porcentagem no histórico de uma Letra de Crédito')
 def editar_historico_carencia(request, historico_carencia_id):
     investidor = request.user.investidor
     historico_carencia = get_object_or_404(HistoricoCarenciaLetraCredito, id=historico_carencia_id)
@@ -142,6 +145,7 @@ def editar_historico_carencia(request, historico_carencia_id):
     return TemplateResponse(request, 'lc/editar_historico_carencia.html', {'form_historico_carencia': form_historico_carencia, 'inicial': inicial}) 
     
 @login_required
+@adiciona_titulo_descricao('Editar registro de porcentagem', 'Alterar um registro de porcentagem no histórico da Letra de Crédito')
 def editar_historico_porcentagem(request, historico_porcentagem_id):
     investidor = request.user.investidor
     historico_porcentagem = get_object_or_404(HistoricoPorcentagemLetraCredito, id=historico_porcentagem_id)
@@ -191,6 +195,7 @@ def editar_historico_porcentagem(request, historico_porcentagem_id):
     return TemplateResponse(request, 'lc/editar_historico_porcentagem.html', {'form_historico_porcentagem': form_historico_porcentagem, 'inicial': inicial}) 
 
 @login_required
+@adiciona_titulo_descricao('Editar Letra de Crédito', 'Alterar dados de uma Letra de Crédito')
 def editar_lci_lca(request, lci_lca_id):
     investidor = request.user.investidor
     lci_lca = get_object_or_404(LetraCredito, id=lci_lca_id)
@@ -223,6 +228,7 @@ def editar_lci_lca(request, lci_lca_id):
     return TemplateResponse(request, 'lc/editar_lci_lca.html', {'form_lci_lca': form_lci_lca, 'lci_lca': lci_lca})  
     
 @login_required
+@adiciona_titulo_descricao('Editar operação em Letras de Crédito', 'Alterar valores de uma operação de compra/venda em Letras de Crédito')
 def editar_operacao_lc(request, id):
     investidor = request.user.investidor
     
@@ -307,6 +313,7 @@ def editar_operacao_lc(request, id):
 
     
 @login_required
+@adiciona_titulo_descricao('Histórico de Letras de Crédito', 'Histórico de operações de compra/venda em Letras de Crédito do investidor')
 def historico(request):
     investidor = request.user.investidor
     
@@ -408,6 +415,8 @@ def historico(request):
                                                     'graf_gasto_total': graf_gasto_total, 'graf_patrimonio': graf_patrimonio})
     
 @login_required
+@adiciona_titulo_descricao('Inserir registro de carência', ('Inserir registro de alteração na carência ao histórico de ',
+    'uma Letra de Crédito'))
 def inserir_historico_carencia(request, lci_lca_id):
     investidor = request.user.investidor
     lci_lca = get_object_or_404(LetraCredito, id=lci_lca_id)
@@ -430,6 +439,8 @@ def inserir_historico_carencia(request, lci_lca_id):
     return TemplateResponse(request, 'lc/inserir_historico_carencia_lci_lca.html', {'form': form})
 
 @login_required
+@adiciona_titulo_descricao('Inserir registro de porcentagem de rendimento', ('Inserir registro de alteração de porcentagem ',
+    'de rendimento ao histsórico de uma Letra de Crédito'))
 def inserir_historico_porcentagem(request, lci_lca_id):
     investidor = request.user.investidor
     lci_lca = get_object_or_404(LetraCredito, id=lci_lca_id)
@@ -452,6 +463,7 @@ def inserir_historico_porcentagem(request, lci_lca_id):
     return TemplateResponse(request, 'lc/inserir_historico_porcentagem_lci_lca.html', {'form': form})
 
 @login_required
+@adiciona_titulo_descricao('Inserir Letra de Crédito', 'Inserir Letra de Crédito às letras cadastradas pelo investidor')
 def inserir_lc(request):
     investidor = request.user.investidor
     
@@ -502,6 +514,7 @@ def inserir_lc(request):
                                                               'formset_carencia': formset_carencia})
 
 @login_required
+@adiciona_titulo_descricao('Inserir operações em Letras de Crédito', 'Inserir registro de operação de compra/venda em Letras de Crédito ao histórico')
 def inserir_operacao_lc(request):
     investidor = request.user.investidor
     
@@ -593,6 +606,7 @@ def inserir_operacao_lc(request):
 
 @login_required
 def listar_lc(request):
+@adiciona_titulo_descricao('Lista de Letras de Crédito', 'Traz as Letras de Crédito cadastradas pelo investidor')
     lcs = LetraCredito.objects.filter(investidor=request.user.investidor)
     
     for lc in lcs:
@@ -613,6 +627,7 @@ def listar_lc(request):
     return TemplateResponse(request, 'lc/listar_lc.html', {'lcs': lcs})
 
 @login_required
+@adiciona_titulo_descricao('Painel de Letras de Crédito', 'Posição atual do investidor em Letras de Crédito')
 def painel(request):
     investidor = request.user.investidor
     
@@ -703,6 +718,7 @@ def painel(request):
     return TemplateResponse(request, 'lc/painel.html', {'operacoes': operacoes, 'dados': dados})
 
 @login_required
+@adiciona_titulo_descricao('Sobre Letras de Crédito', 'Detalha o que são Letras de Crédito')
 def sobre(request):
     if request.is_ajax():
         filtros_simulador = {'periodo': Decimal(request.GET.get('periodo')), 'percentual_indice': Decimal(request.GET.get('percentual_indice')), \
