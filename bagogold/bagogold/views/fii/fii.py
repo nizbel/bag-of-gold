@@ -54,7 +54,7 @@ def acompanhamento_mensal_fii(request):
     
     
 @login_required
-@adiciona_titulo_descricao('Acompanhamento de FII', ('Compara o rendimento dos FIIs do investidor para',
+@adiciona_titulo_descricao('Acompanhamento de FII', ('Mostra o rendimento dos FIIs do investidor para',
     'comparar com os potenciais ganhos em outros investimentos'))
 def acompanhamento_fii(request):
     fiis = FII.objects.all()
