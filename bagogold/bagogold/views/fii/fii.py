@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.decorators import em_construcao
+from bagogold.bagogold.decorators import em_construcao, \
+    adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoFIIFormSet
 from bagogold.bagogold.forms.fii import OperacaoFIIForm, ProventoFIIForm, \
     UsoProventosOperacaoFIIForm, CalculoResultadoCorretagemForm
@@ -393,6 +394,7 @@ def historico_fii(request):
     
     
 @login_required
+@adiciona_titulo_descricao('Inserir operação em FII', 'Inserir registro de operação de compra/venda no histórico do investidor')
 def inserir_operacao_fii(request):
     investidor = request.user.investidor
     
@@ -466,6 +468,7 @@ def inserir_provento_fii(request):
     return TemplateResponse(request, 'fii/inserir_provento_fii.html', {'form': form})
 
 @login_required
+@adiciona_titulo_descricao('Painel de FII', 'Posição atual do investidor em Fundos de Investimento Imobiliário')
 def painel(request):
     # Usado para criar objetos vazios
     class Object(object):
@@ -546,6 +549,7 @@ def painel(request):
     return TemplateResponse(request, 'fii/painel.html', {'fiis': fiis, 'dados': dados})
 
 @login_required
+@adiciona_titulo_descricao('Sobre FII', 'Detalha o que são Fundos de Investimento Imobiliário')
 def sobre(request):
     if request.user.is_authenticated():
         total_atual = sum(calcular_valor_fii_ate_dia(request.user.investidor).values())
