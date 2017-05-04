@@ -24,7 +24,8 @@ def login_on_activation(sender, user, request, **kwargs):
     login(request, user)
 
 
-@login_required    
+@login_required
+@adiciona_titulo_descricao('Minha conta', 'Dados da conta do investidor')
 def configuracoes_conta_investidor(request, id):
     investidor = request.user.investidor
     if int(id) != int(request.user.id):
