@@ -27,7 +27,9 @@ from django.template.context import RequestContext
 from django.template.response import TemplateResponse
 import calendar
 import datetime
+from bagogold.bagogold.decorators import em_construcao
 
+@em_construcao('Fundo de investimento')
 @login_required
 def adicionar_valor_cota_historico(request):
     investidor = request.user.investidor
@@ -42,6 +44,7 @@ def adicionar_valor_cota_historico(request):
         form_historico_valor_cota = HistoricoValorCotasForm(investidor=investidor)
     return TemplateResponse(request, 'fundo_investimento/adicionar_valor_cota_historico.html', {'form_historico_valor_cota': form_historico_valor_cota}) 
 
+@em_construcao('Fundo de investimento')
 @login_required
 def editar_operacao_fundo_investimento(request, id):
     investidor = request.user.investidor
@@ -104,7 +107,7 @@ def editar_operacao_fundo_investimento(request, id):
     return TemplateResponse(request, 'fundo_investimento/editar_operacao_fundo_investimento.html', {'form_operacao_fundo_investimento': form_operacao_fundo_investimento, 'formset_divisao': formset_divisao, \
                                                                                              'varias_divisoes': varias_divisoes})  
 
-    
+@em_construcao('Fundo de investimento')
 @login_required
 def historico(request):
     investidor = request.user.investidor
@@ -202,6 +205,7 @@ def historico(request):
                                                     'graf_gasto_total': graf_gasto_total, 'graf_patrimonio': graf_patrimonio})
     
 
+@em_construcao('Fundo de investimento')
 @login_required
 def inserir_fundo_investimento(request):
     investidor = request.user.investidor
@@ -243,6 +247,7 @@ def inserir_fundo_investimento(request):
     return TemplateResponse(request, 'fundo_investimento/inserir_fundo_investimento.html', {'form_fundo_investimento': form_fundo_investimento,
                                                               'formset_carencia': formset_carencia})
 
+@em_construcao('Fundo de investimento')
 @login_required
 def inserir_operacao_fundo_investimento(request):
     investidor = request.user.investidor
@@ -291,6 +296,7 @@ def inserir_operacao_fundo_investimento(request):
     return TemplateResponse(request, 'fundo_investimento/inserir_operacao_fundo_investimento.html', {'form_operacao_fundo_investimento': form_operacao_fundo_investimento, \
                                                                                               'formset_divisao_fundo_investimento': formset_divisao_fundo_investimento, 'varias_divisoes': varias_divisoes})
 
+@em_construcao('Fundo de investimento')
 @login_required
 def listar_fundo_investimento(request):
     investidor = request.user.investidor
@@ -319,6 +325,7 @@ def listar_fundo_investimento(request):
         
     return TemplateResponse(request, 'fundo_investimento/listar_fundo_investimento.html', {'fundos_investimento': fundos_investimento})
 
+@em_construcao('Fundo de investimento')
 @login_required
 def modificar_carencia_fundo_investimento(request):
     investidor = request.user.investidor
@@ -334,6 +341,7 @@ def modificar_carencia_fundo_investimento(request):
             
     return TemplateResponse(request, 'fundo_investimento/modificar_carencia_fundo_investimento.html', {'form': form})
 
+@em_construcao('Fundo de investimento')
 @login_required
 def modificar_porcentagem_fundo_investimento(request):
     if request.method == 'POST':
@@ -347,6 +355,7 @@ def modificar_porcentagem_fundo_investimento(request):
             
     return TemplateResponse(request, 'fundo_investimento/modificar_porcentagem_fundo_investimento.html', {'form': form})
 
+@em_construcao('Fundo de investimento')
 @login_required
 def painel(request):
     investidor = request.user.investidor
