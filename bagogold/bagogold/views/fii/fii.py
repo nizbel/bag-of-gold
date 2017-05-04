@@ -54,6 +54,8 @@ def acompanhamento_mensal_fii(request):
     
     
 @login_required
+@adiciona_titulo_descricao('Acompanhamento de FII', ('Compara o rendimento dos FIIs do investidor para',
+    'comparar com os potenciais ganhos em outros investimentos'))
 def acompanhamento_fii(request):
     fiis = FII.objects.all()
     
@@ -105,6 +107,8 @@ def acompanhamento_fii(request):
     
 # TODO remover login_required
 @login_required
+@adiciona_titulo_descricao('Cálculo de corretagem', ('Calcular quantidade de dinheiro que o investidor pode juntar para ',
+    'comprar novas cotasde forma a diluir mais eficientemente a corretagem'))
 def calcular_resultado_corretagem(request):
     # Preparar ranking
     ranking = list()
@@ -143,6 +147,7 @@ def calcular_resultado_corretagem(request):
     
     
 @login_required
+@adiciona_titulo_descricao('Editar operação em FII', 'Alterar valores de uma operação de compra/venda em Fundos de Investimento Imobiliário')
 def editar_operacao_fii(request, operacao_id):
     investidor = request.user.investidor
     
@@ -269,6 +274,7 @@ def editar_provento_fii(request, id):
     
     
 @login_required
+@adiciona_titulo_descricao('Histórico de FII', 'Histórico de operações de compra/venda e rendimentos/amortizações do investidor')
 def historico_fii(request):
     investidor = request.user.investidor
     operacoes = OperacaoFII.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data') 
