@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.decorators import em_construcao, \
-    adiciona_titulo_descricao
+from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoFIIFormSet
 from bagogold.bagogold.forms.fii import OperacaoFIIForm, ProventoFIIForm, \
     UsoProventosOperacaoFIIForm, CalculoResultadoCorretagemForm
@@ -13,16 +12,14 @@ from bagogold.bagogold.utils.investidores import is_superuser
 from decimal import Decimal, ROUND_FLOOR
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
-from django.shortcuts import render_to_response, get_object_or_404
-from django.template.context import RequestContext
+from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
 from itertools import chain
 from operator import attrgetter, itemgetter
-from yahoo_finance import Share
 import calendar
 import datetime
 import math

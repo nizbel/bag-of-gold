@@ -116,7 +116,7 @@ def calcular_qtd_um_titulo_ate_dia_por_divisao(investidor, dia, titulo_id):
     Parâmetros: Dia final
                 ID da divisão
                 ID do título
-    Retorno: Quantidade de títulos
+    Retorno: Quantidade de títulos {divisao_id: qtd}
     """
     qtd_titulos = {}
     operacoes_divisao = list(DivisaoOperacaoTD.objects.filter(operacao__titulo__id=titulo_id, operacao__data__lte=dia, divisao__investidor=investidor) \
