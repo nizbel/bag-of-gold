@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoAcaoFormSet
 from bagogold.bagogold.forms.operacao_acao import OperacaoAcaoForm, \
     UsoProventosOperacaoAcaoForm
@@ -40,10 +41,11 @@ def calcular_poupanca_proventos_na_data(request):
     return HttpResponse(json.dumps(poupanca_proventos), content_type = "application/json") 
 
 @login_required
-def editar_operacao_acao(request, id):
+@adiciona_titulo_descricao('Editar operação em Ações (Buy and Hold)', 'Altera valores de operação de compra/venda em Ações para Buy and Hold')
+def editar_operacao_acao(request, operacao_id):
     investidor = request.user.investidor
     
-    operacao_acao = get_object_or_404(OperacaoAcao, pk=id, destinacao='B')
+    operacao_acao = get_object_or_404(OperacaoAcao, pk=operacao_id, destinacao='B')
     
     # Verifica se a operação é do investidor, senão, jogar erro de permissão
     if operacao_acao.investidor != investidor:
@@ -98,6 +100,8 @@ def editar_operacao_acao(request, id):
                         
                         messages.success(request, 'Operação alterada com sucesso')
                         return HttpResponseRedirect(reverse('acoes:historico_bh'))
+                    for erro in formset_divisao.non_form_errors():
+                        messages.error(request, erro)
                         
                 else:
                     if form_uso_proventos.is_valid():
@@ -115,10 +119,8 @@ def editar_operacao_acao(request, id):
                             uso_proventos.delete()
                         messages.success(request, 'Operação alterada com sucesso')
                         return HttpResponseRedirect(reverse('acoes:historico_bh'))
-            for erros in form_operacao_acao.errors.values():
-                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
-                    messages.error(request, erro.message)
-            for erro in formset_divisao.non_form_errors():
+            
+            for erro in [erro for erro in form_operacao_acao.non_field_errors()]:
                 messages.error(request, erro)
 
         elif request.POST.get("delete"):
@@ -134,9 +136,9 @@ def editar_operacao_acao(request, id):
     else:
         form_operacao_acao = OperacaoAcaoForm(instance=operacao_acao)
         if not varias_divisoes:
-            try:
+            if UsoProventosOperacaoAcao.objects.filter(divisao_operacao__operacao=operacao_acao).exists():
                 form_uso_proventos = UsoProventosOperacaoAcaoForm(instance=UsoProventosOperacaoAcao.objects.get(divisao_operacao__operacao=operacao_acao))
-            except UsoProventosOperacaoAcao.DoesNotExist:
+            else:
                 form_uso_proventos = UsoProventosOperacaoAcaoForm()
         else:
             form_uso_proventos = UsoProventosOperacaoAcaoForm()
@@ -165,6 +167,7 @@ def editar_provento_acao(request, id):
     return TemplateResponse(request, 'acoes/buyandhold/editar_provento_acao.html', {'form': form})  
 
 @login_required
+@adiciona_titulo_descricao('Estatísticas da ação', 'Mostra estatísticas e valores históricos de uma ação')
 def estatisticas_acao(request, ticker=None):
     investidor = request.user.investidor
     if (ticker):
@@ -322,6 +325,7 @@ def estatisticas_acao(request, ticker=None):
                                'graf_historico_proventos': graf_historico_proventos, 'graf_historico': graf_historico})
 
 @login_required
+@adiciona_titulo_descricao('Histórico de Ações (Buy and Hold)', 'Histórico de operações de compra/venda em ações para Buy and Hold e proventos recebidos')
 def historico(request):
     # Usado para criar objetos vazios
     class Object(object):
@@ -556,6 +560,7 @@ def historico(request):
                                 'graf_dividendos_mensal': graf_dividendos_mensal, 'graf_jscp_mensal': graf_jscp_mensal, 'dados': dados})
     
 @login_required
+@adiciona_titulo_descricao('Inserir operação em Ações (Buy and Hold)', 'Insere um registro de operação de compra/venda em Ações para Buy and Hold')
 def inserir_operacao_acao(request):
     investidor = request.user.investidor
     
@@ -618,8 +623,9 @@ def inserir_operacao_acao(request):
         form_operacao_acao = OperacaoAcaoForm(initial=valores_iniciais)
         form_uso_proventos = UsoProventosOperacaoAcaoForm(initial={'qtd_utilizada': Decimal('0.00')})
         formset_divisao = DivisaoFormSet(investidor=investidor)
+        
     return TemplateResponse(request, 'acoes/buyandhold/inserir_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,
-                                                                       'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes })
+                                                                       'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})
     
 @login_required
 @user_passes_test(is_superuser)
@@ -635,6 +641,7 @@ def inserir_provento_acao(request):
     return TemplateResponse(request, 'acoes/buyandhold/inserir_provento_acao.html', {'form': form, })
     
 @login_required
+@adiciona_titulo_descricao('Inserir taxa de custódia para Ações', 'Insere um registro no histórico de valores de taxa de custódia para o investidor')
 def inserir_taxa_custodia_acao(request):
     investidor = request.user.investidor
     
@@ -651,6 +658,16 @@ def inserir_taxa_custodia_acao(request):
     return TemplateResponse(request, 'acoes/buyandhold/inserir_taxa_custodia_acao.html', {'form': form, })
     
 @login_required
+@adiciona_titulo_descricao('Listar taxas de custódia de ações', 'Lista o histórico de valores de taxas de custódia cadastrados pelo investidor')
+def listar_taxas_custodia_acao(request):
+    investidor = request.user.investidor
+    taxas_custodia = TaxaCustodiaAcao.objects.filter(investidor=investidor).order_by('ano_vigencia', 'mes_vigencia')
+    for taxa in taxas_custodia:
+        taxa.ano_vigencia = str(taxa.ano_vigencia).replace('.', '')
+    return TemplateResponse(request, 'acoes/buyandhold/ver_taxas_custodia_acao.html', {'taxas_custodia': taxas_custodia})
+
+@login_required
+@adiciona_titulo_descricao('Painel de Ações (Buy and Hold)', 'Posição atual do investidor em Ações para Buy and Hold')
 def painel(request):
     # Usado para criar objetos vazios
     class Object(object):
@@ -725,9 +742,18 @@ def painel(request):
     return TemplateResponse(request, 'acoes/buyandhold/painel.html', {'acoes': acoes, 'dados': dados})
     
 @login_required
-def ver_taxas_custodia_acao(request):
+def remover_taxa_custodia_acao(request, taxa_id):
     investidor = request.user.investidor
-    taxas_custodia = TaxaCustodiaAcao.objects.filter(investidor=investidor).order_by('ano_vigencia', 'mes_vigencia')
-    for taxa in taxas_custodia:
-        taxa.ano_vigencia = str(taxa.ano_vigencia).replace('.', '')
-    return TemplateResponse(request, 'acoes/buyandhold/ver_taxas_custodia_acao.html', {'taxas_custodia': taxas_custodia})
+    taxa = get_object_or_404(TaxaCustodiaAcao, pk=taxa_id)
+    
+    # Verifica se a taxa é do investidor, senão, jogar erro de permissão
+    if taxa.investidor != investidor:
+        raise PermissionDenied
+    
+    try:
+        taxa.delete()
+        messages.success(request, 'Taxa de custódia excluída com sucesso')
+    except Exception as e:
+        messages.error(request, e)
+    
+    return HttpResponseRedirect(reverse('acoes:ver_taxas_custodia_acao'))

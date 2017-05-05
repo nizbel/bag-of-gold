@@ -4,6 +4,9 @@ from django.db import models
 import datetime
 
 class CDB_RDB (models.Model):
+    CDB = 'C'
+    RDB = 'R'
+    
     nome = models.CharField(u'Nome', max_length=50)
     investidor = models.ForeignKey('Investidor')
     """
@@ -30,6 +33,13 @@ class CDB_RDB (models.Model):
             return HistoricoCarenciaCDB_RDB.objects.filter(data__isnull=False, cdb_rdb=self, data__lte=data).order_by('-data')[0].carencia
         except:
             return HistoricoCarenciaCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self).carencia
+        
+    def descricao_tipo(self):
+        if self.tipo == self.CDB:
+            return 'CDB'
+        elif self.tipo == self.RDB:
+            return 'RDB'
+        raise ValueError('Tipo indefinido')
     
     def porcentagem_atual(self):
         try:

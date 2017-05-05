@@ -1,384 +1,650 @@
 {% load staticfiles %}
 <!DOCTYPE html>
+<!--[if IE 8]> <html lang="en" class="ie8 no-js"> <![endif]-->
+<!--[if IE 9]> <html lang="en" class="ie9 no-js"> <![endif]-->
+<!--[if !IE]><!-->
 <html lang="en">
-<head>
-    <title>
-    {% block title %}
-    Bag of Gold
-    {% endblock %}
-    </title>
-{% block head %}
-    <!-- start: Meta -->
-    <meta charset="utf-8">
-    <meta name="description" content="Bootstrap Metro Dashboard">
-    <meta name="author" content="Dennis Ji">
-    <meta name="keyword" content="Metro, Metro UI, Dashboard, Bootstrap, Admin, Template, Theme, Responsive, Fluid, Retina">
-    <!-- end: Meta -->
-    
-    <!-- start: Mobile Specific -->
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- end: Mobile Specific -->
-    
-    <!-- start: CSS -->
-    <link id="bootstrap-style" href={% static "css/bootstrap.min.css" %} rel="stylesheet">
-    <link href={% static "css/bootstrap-responsive.min.css" %} rel="stylesheet">
-    <link id="base-style" href={% static "css/style.css" %} rel="stylesheet">
-    <link id="base-style-responsive" href={% static "css/style-responsive.css" %} rel="stylesheet">
-    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800&subset=latin,cyrillic-ext,latin-ext' rel='stylesheet' type='text/css'>
-    <!-- end: CSS -->
-    
+    <!--<![endif]-->
+    <!-- BEGIN HEAD -->
 
-    <!-- The HTML5 shim, for IE6-8 support of HTML5 elements -->
-    <!--[if lt IE 9]>
-        <script src="https://html5shim.googlecode.com/svn/trunk/html5.js"></script>
-        <link id="ie-style" href="css/ie.css" rel="stylesheet">
-    <![endif]-->
-    
-    <!--[if IE 9]>
-        <link id="ie9style" href="css/ie9.css" rel="stylesheet">
-    <![endif]-->
-        
-    <!-- start: Favicon -->
-    <link rel="shortcut icon" href={% static "img/favicon.ico" %}>
-    <!-- end: Favicon -->
-    
-    <!-- start: JavaScript-->
+    <head>
+        <title>
+		{% block title %}
+		Bag of Gold
+		{% endblock %}
+		</title>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta content="width=device-width, initial-scale=1" name="viewport" />
+        <meta content="" name="author" />
+        <!-- BEGIN GLOBAL MANDATORY STYLES -->
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700&subset=all" rel="stylesheet" type="text/css" />
+        <link href={% static "assets/global/plugins/font-awesome/css/font-awesome.min.css" %} rel="stylesheet" type="text/css" />
+        <link href={% static "assets/global/plugins/simple-line-icons/simple-line-icons.min.css" %} rel="stylesheet" type="text/css" />
+        <link href={% static "assets/global/plugins/bootstrap/css/bootstrap.min.css" %} rel="stylesheet" type="text/css" />
+        <link href={% static "assets/global/plugins/bootstrap-switch/css/bootstrap-switch.min.css" %} rel="stylesheet" type="text/css" />
+        <!-- END GLOBAL MANDATORY STYLES -->
+        <!-- BEGIN PAGE LEVEL PLUGINS -->
+		{% block extra_head %}
 
-    <script src={% static "js/jquery-1.9.1.min.js" %}></script>
-    <script src={% static "js/jquery-migrate-1.0.0.min.js" %}></script>
-    
-    <script src={% static "js/jquery-ui-1.10.0.custom.min.js" %}></script>
+		{% endblock %}
+        <!-- END PAGE LEVEL PLUGINS -->
+        <!-- BEGIN THEME GLOBAL STYLES -->
+        <link href={% static "assets/global/css/components-md.min.css" %} rel="stylesheet" id="style_components" type="text/css" />
+        <link href={% static "assets/global/css/plugins-md.min.css" %} rel="stylesheet" type="text/css" />
+        <!-- END THEME GLOBAL STYLES -->
+        <!-- BEGIN THEME LAYOUT STYLES -->
+        <link href={% static "assets/layouts/layout3/css/layout.min.css" %} rel="stylesheet" type="text/css" />
+        <link href={% static "assets/layouts/layout3/css/themes/default.min.css" %} rel="stylesheet" type="text/css" id="style_color" />
+        <link href={% static "assets/layouts/layout3/css/custom.min.css" %} rel="stylesheet" type="text/css" />
+        <!-- END THEME LAYOUT STYLES -->
+        <link rel="shortcut icon" href="{% static "img/favicon.ico" %}" /> </head>
+		
+		{% if ENV == 'PROD' %}
+		<!-- Google analytics -->
+		<script>
+		  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+		
+		  ga('create', 'UA-7792152-3', 'auto', {'siteSpeedSampleRate': 20});
+		  ga('send', 'pageview');
+		
+		</script>
+		{% endif%}
+    <!-- END HEAD -->
 
-    <script src={% static "js/jquery.ui.touch-punch.js" %}></script>
-
-    <script src={% static "js/modernizr.js" %}></script>
-
-    <script src={% static "js/bootstrap.min.js" %}></script>
-
-    <script src={% static "js/jquery.cookie.js" %}></script>
-
-    <script src={% static "js/fullcalendar.min.js" %}></script>
-
-    <script src={% static "js/jquery.dataTables.min.js" %}></script>
-
-    <script src={% static "js/excanvas.js" %}></script>
-    <script src={% static "js/jquery.flot.js" %}></script>
-    <script src={% static "js/jquery.flot.pie.js" %}></script>
-    <script src={% static "js/jquery.flot.stack.js" %}></script>
-    <script src={% static "js/jquery.flot.resize.min.js" %}></script>
-    <script src={% static "js/jquery.flot.orderBars.js" %}></script>
-    
-    <script src={% static "js/jquery.chosen.min.js" %}></script>
-
-    <script src={% static "js/jquery.uniform.min.js" %}></script>
-    
-    <script src={% static "js/jquery.cleditor.min.js" %}></script>
-
-    <script src={% static "js/jquery.elfinder.min.js" %}></script>
-
-    <script src={% static "js/jquery.raty.min.js" %}></script>
-
-    <script src={% static "js/jquery.iphone.toggle.js" %}></script>
-
-    <script src={% static "js/jquery.uploadify-3.1.min.js" %}></script>
-
-    <script src={% static "js/jquery.gritter.min.js" %}></script>
-
-    <script src={% static "js/jquery.imagesloaded.js" %}></script>
-
-    <script src={% static "js/jquery.masonry.min.js" %}></script>
-
-    <script src={% static "js/jquery.knob.modified.js" %}></script>
-
-    <script src={% static "js/jquery.sparkline.min.js" %}></script>
-
-    <script src={% static "js/counter.js" %}></script>
-
-    <script src={% static "js/retina.js" %}></script>
-
-    <script src={% static "js/custom.js" %}></script>
-    
-    {% if ENV == 'PROD' %}
-    <!-- Google analytics -->
-    <script>
-      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-      })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-    
-      ga('create', 'UA-7792152-3', 'auto');
-      ga('send', 'pageview');
-    
-    </script>
-    {% endif%}
-    <!-- end: JavaScript-->
-{% endblock %}    
-
-{% block extra_head %}
-
-{% endblock %}
-</head>
-
-<body>
-<div class="navbar">
-    <div class="navbar-inner">
-        <div class="container-fluid">
-            <a class="brand" href="#"><span>Bag of Gold</span></a>
-                            
-            <!-- start: Header Menu -->
-            <div class="nav-no-collapse header-nav">
-                <ul class="nav pull-right">
-                {% comment %}
-<!--                     <li class="dropdown hidden-phone"> -->
-<!--                         <a class="btn dropdown-toggle" data-toggle="dropdown" href="#"> -->
-<!--                             <i class="halflings-icon white warning-sign"></i> -->
-<!--                         </a> -->
-<!--                         <ul class="dropdown-menu notifications"> -->
-<!--                             <li class="dropdown-menu-title"> -->
-<!--                                 <span>11 pendências</span> -->
-<!--                                 <a href="#refresh"><i class="icon-repeat"></i></a> -->
-<!--                             </li>    -->
-<!--                             <li> -->
-<!--                                 <a href="#"> -->
-<!--                                     <span class="icon blue"><i class="icon-user"></i></span> -->
-<!--                                     <span class="message">New user registration</span> -->
-<!--                                     <span class="time">1 min</span>  -->
-<!--                                 </a> -->
-<!--                             </li> -->
-<!--                             <li> -->
-<!--                                 <a href="#"> -->
-<!--                                     <span class="icon green"><i class="icon-comment-alt"></i></span> -->
-<!--                                     <span class="message">New comment</span> -->
-<!--                                     <span class="time">7 min</span>  -->
-<!--                                 </a> -->
-<!--                             </li> -->
-<!--                             <li> -->
-<!--                                 <a href="#"> -->
-<!--                                     <span class="icon green"><i class="icon-comment-alt"></i></span> -->
-<!--                                     <span class="message">New comment</span> -->
-<!--                                     <span class="time">8 min</span>  -->
-<!--                                 </a> -->
-<!--                             </li> -->
-<!--                             <li> -->
-<!--                                 <a href="#"> -->
-<!--                                     <span class="icon green"><i class="icon-comment-alt"></i></span> -->
-<!--                                     <span class="message">New comment</span> -->
-<!--                                     <span class="time">16 min</span>  -->
-<!--                                 </a> -->
-<!--                             </li> -->
-<!--                             <li> -->
-<!--                                 <a href="#"> -->
-<!--                                     <span class="icon green"><i class="icon-comment-alt"></i></span> -->
-<!--                                     <span class="message">New comment</span> -->
-<!--                                     <span class="time">yesterday</span>  -->
-<!--                                 </a> -->
-<!--                             </li> -->
-<!--                             <li> -->
-<!--                                 <a href="#"> -->
-<!--                                     <span class="icon blue"><i class="icon-user"></i></span> -->
-<!--                                     <span class="message">New user registration</span> -->
-<!--                                     <span class="time">yesterday</span>  -->
-<!--                                 </a> -->
-<!--                             </li> -->
-<!--                             <li class="dropdown-menu-sub-footer"> -->
-<!--                                 <a>View all notifications</a> -->
-<!--                             </li>    -->
-<!--                         </ul> -->
-<!--                     </li> -->
-<!--                     <li> -->
-<!--                         <a class="btn" href="#"> -->
-<!--                             <i class="halflings-icon white wrench"></i> -->
-<!--                         </a> -->
-<!--                     </li> -->
-                    <!-- start: User Dropdown -->
-                    {% endcomment %}
-                    {% if user.is_authenticated %}
-                    <li class="dropdown">
-                        <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
-                            <i class="halflings-icon white user"></i> {{ request.user.username }}
-                            <span class="caret"></span>
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li class="dropdown-menu-title">
-                                <span>Minha conta</span>
-                            </li>
-                            <li><a href="{% url "configuracoes_conta_investidor" request.user.id %}"><i class="halflings-icon user"></i> Configurações</a></li>
-                            <li><a href="{% url "logout" %}"><i class="halflings-icon off"></i> Sair</a></li>
-                        </ul>
-                    </li>
-                    {% else %}
-                    <li>
-                        <a href="{% url "login" %}"><i class="halflings-icon off"></i> Acessar conta</a>
-                    </li>
-                    {% endif %}
-                        <a href="{% url "ver_nova_aparencia" request.path|slice:"1:-1" %}" class="btn btn-warning">Nova aparência</a>
-                    {% if request.user.id == 1 or request.user.id == 31 %}
-                        <a href="{% url "carregar_nova_aparencia" request.path|slice:"1:-1" %}" class="btn btn-warning">Carregar arquivos</a>
-                    {% endif %}
-                    <!-- end: User Dropdown -->
-                </ul>
-            </div>
-            <!-- end: Header Menu -->
-            
-        </div>
-    </div>
-</div>
-
-<div class="container-fluid-full">
-<div class="row-fluid">
-    <!-- start: Main Menu -->
-    <div id="sidebar-left" class="span2">
-        <div class="nav-collapse sidebar-nav">
-            <ul class="nav nav-tabs nav-stacked main-menu">
-                <li><a href="{% url "inicio" %}"><i class="icon-bar-chart"></i><span class="hidden-tablet"> Início</span></a></li>   
-                <li>
-                    <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> Ações (B & H)</span></a>
-                    <ul>
-                        <li><a class="submenu" href="{% url "acoes:historico_bh" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico</span></a></li>
-                        <li><a class="submenu" href="{% url "acoes:inserir_operacao_bh" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir operação</span></a></li>
-                        {% if request.user.is_superuser %}
-                        <li><a class="submenu" href="{% url "acoes:inserir_provento_bh" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir provento</span></a></li>
-                        {% endif %}
-                        <li><a class="submenu" href="{% url "acoes:inserir_taxa_custodia_acao" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Ins. taxa de custódia</span></a></li>
-                        <li><a class="submenu" href="{% url "acoes:painel_bh" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Painel</span></a></li>
-                        <li><a class="submenu" href="{% url "acoes:ver_taxas_custodia_acao" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Ver taxas de custódia</span></a></li>
-                    </ul>   
-                </li>
-                <li>
-                    <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> Ações (Trading)</span></a>
-                    <ul>
-                        <li><a class="submenu" href="{% url "acoes:acompanhamento_mensal" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Acomp. mensal</span></a></li>
-                        <li><a class="submenu" href="{% url "acoes:historico_operacoes" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico operações</span></a></li>
-                        <li><a class="submenu" href="{% url "acoes:historico_operacoes_cv" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico compras/vendas</span></a></li>
-                        <li><a class="submenu" href="{% url "acoes:inserir_operacao_acao_t" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir operação</span></a></li>
-                        <li><a class="submenu" href="{% url "acoes:inserir_operacao_t" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir compra/venda</span></a></li>
-                    </ul>   
-                </li>
-                <li>
-                    <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> CDB / RDB</span></a>
-                    <ul>
-                        <li><a class="submenu" href="{% url "cdb_rdb:historico_cdb_rdb" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico</span></a></li>
-                        <li><a class="submenu" href="{% url "cdb_rdb:inserir_operacao_cdb_rdb" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir operação</span></a></li>
-                        <li><a class="submenu" href="{% url "cdb_rdb:inserir_cdb_rdb" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir CDB/RDB</span></a></li>
-                        <li><a class="submenu" href="{% url "cdb_rdb:listar_cdb_rdb" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar CDB/RDB</span></a></li>
-                        <li><a class="submenu" href="{% url "cdb_rdb:painel_cdb_rdb" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Painel</span></a></li>
-                    </ul>  
-                </li>
-                <li>
-                    <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> FII</span></a>
-                    <ul>
-                        {% if request.user.is_superuser %}
-                        <li><a class="submenu" href="{% url "fii:acompanhamento_mensal_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Acomp. mensal</span></a></li>
-                        {% endif %}
-                        <li><a class="submenu" href="{% url "fii:aconselhamento_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Aconselhamento</span></a></li>
-                        <li><a class="submenu" href="{% url "fii:calcular_resultado_corretagem" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Cálculo de res. da corretagem</span></a></li>
-                       
-                        <li><a class="submenu" href="{% url "fii:historico_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico</span></a></li>
-                        <li><a class="submenu" href="{% url "fii:inserir_operacao_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir operação</span></a></li>
-                        {% if request.user.is_superuser %}
-                        <li><a class="submenu" href="{% url "fii:inserir_provento_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir provento</span></a></li>
-                        {% endif %}
-                        <li><a class="submenu" href="{% url "fii:painel_fii" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Painel</span></a></li>
-                    </ul>   
-                </li>
-                <li>
-                    <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> Fundo de Investimento</span></a>
-                    <ul>
-                        <li><a class="submenu" href="{% url "fundo_investimento:adicionar_valor_cota_historico" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Adicionar valor de cota</span></a></li>
-                        <li><a class="submenu" href="{% url "fundo_investimento:historico_fundo_investimento" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico</span></a></li>
-                        <li><a class="submenu" href="{% url "fundo_investimento:inserir_operacao_fundo_investimento" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir operação</span></a></li>
-                        <li><a class="submenu" href="{% url "fundo_investimento:inserir_fundo_investimento" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir Fundo de Inv.</span></a></li>
-                        <li><a class="submenu" href="{% url "fundo_investimento:listar_fundo_investimento" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar Fundos</span></a></li>
-                        <li><a class="submenu" href="{% url "fundo_investimento:modificar_carencia_fundo_investimento" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Modificar carência</span></a></li>
-                        <li><a class="submenu" href="{% url "fundo_investimento:painel_fundo_investimento" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Painel</span></a></li>
-                    </ul>  
-                </li>
-                <li>
-                    <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> LCI / LCA</span></a>
-                    <ul>
-                        <li><a class="submenu" href="{% url "lci_lca:historico_lci_lca" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico</span></a></li>
-                        <li><a class="submenu" href="{% url "lci_lca:inserir_lci_lca" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir Letra de Crédito</span></a></li>
-                        <li><a class="submenu" href="{% url "lci_lca:inserir_operacao_lci_lca" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir operação</span></a></li>
-                        <li><a class="submenu" href="{% url "lci_lca:listar_lci_lca" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar Letras de Crédito</span></a></li>
-                        <li><a class="submenu" href="{% url "lci_lca:modificar_carencia_lci_lca" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Modificar carência LC</span></a></li>
-                        <li><a class="submenu" href="{% url "lci_lca:modificar_porcentagem_di_lci_lca" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Modificar porcentagem DI</span></a></li>
-                        <li><a class="submenu" href="{% url "lci_lca:painel_lci_lca" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Painel</span></a></li>
-                    </ul>  
-                </li>
-                <li>
-                    <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> Tesouro Direto</span></a>
-                    <ul>
-                        <li><a class="submenu" href="{% url "td:aconselhamento_td" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Aconselhamento</span></a></li>
-                        <li><a class="submenu" href="{% url "td:historico_td" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Histórico</span></a></li>
-                        <li><a class="submenu" href="{% url "td:inserir_operacao_td" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir operação</span></a></li>
-                        <li><a class="submenu" href="{% url "td:painel_td" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Painel</span></a></li>
-                        
-                    </ul>  
-                </li>
-                <li>
-                    <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> Divisões</span></a>
-                    <ul>
-                        <li><a class="submenu" href="{% url "divisoes:inserir_divisao" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir divisão</span></a></li>
-                        <li><a class="submenu" href="{% url "divisoes:inserir_transferencia" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Inserir transferência</span></a></li>
-                        <li><a class="submenu" href="{% url "divisoes:listar_divisoes" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar divisões</span></a></li>
-                        <li><a class="submenu" href="{% url "divisoes:listar_transferencias" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar transferências</span></a></li>
-                    </ul>   
-                </li>
-                <li>
-                    <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> Imposto de Renda</span></a>
-                    <ul>
-                        <li><a class="submenu" href="{% url "imposto_renda:listar_anos_imposto_renda" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar anos</span></a></li>
-                    </ul>   
-                </li>
-                {% if perms.bagogold.pode_gerar_proventos %}
-                <li>
-                    <a class="dropmenu" href="#"><i class="icon-folder-close-alt"></i><span class="hidden-tablet"> Gerador de proventos</span></a>
-                    <ul>
-                        <li><a class="submenu" href="{% url "gerador_proventos:listar_documentos" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar documentos</span></a></li>
-                        <li><a class="submenu" href="{% url "gerador_proventos:listar_pendencias" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar pendências</span></a></li>
-                        <li><a class="submenu" href="{% url "gerador_proventos:listar_proventos" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar proventos</span></a></li>
-                        <li><a class="submenu" href="{% url "gerador_proventos:listar_usuarios" %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Listar usuários</span></a></li>
-                        <li><a class="submenu" href="{% url "gerador_proventos:manual_gerador" 'acao' %}"><i class="icon-file-alt"></i><span class="hidden-tablet"> Manual do gerador</span></a></li>
-                    </ul>   
-                </li>
-                {% endif %}
-            </ul>
-        </div>
-    </div>
-    <!-- end: Main Menu -->
-    <!-- start: Content -->
-    <div id="content">
-        
-        {% if messages %}
-        <div class="row-fluid">
-            <div class="box-content alerts span10">
-            {% for message in messages %}
-                <div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %}">
-                    <button type="button" class="close" data-dismiss="alert">×</button>
-                    {% if message.tags %}
-                        {% if message.tags == 'success' %}
-                            <i class="icon-ok"></i>
-                        {% elif message.tags == 'error' %}
-                            <i class=" icon-ban-circle"></i>
-                        {% endif %}
-                    {% endif %} {{ message }}
+    <body class="page-container-bg-solid page-md page-header-menu-fixed">
+        <div class="page-wrapper">
+            <div class="page-wrapper-row">
+                <div class="page-wrapper-top">
+                    <!-- BEGIN HEADER -->
+                    <div class="page-header">
+                        <!-- BEGIN HEADER TOP -->
+                        <div class="page-header-top">
+                            <div class="container-fluid">
+                                <!-- BEGIN LOGO -->
+                                <div class="page-logo">
+<!--                                 <div class="col-md-4 col-md-offset-4"> -->
+                                    <a href="index.html">
+<!--										<img src={% static "assets/global/img/bag-logo.png" %} class="" alt="logo" style="height:95%;"> -->
+                                        <img src={% static "assets/global/img/text-logo.png" %} class="" alt="logo" style="margin-top:20px; height:40px;">
+                                    </a>
+                                </div>
+                                <!-- END LOGO -->
+                                <!-- BEGIN RESPONSIVE MENU TOGGLER -->
+                                <a href="javascript:;" class="menu-toggler"></a>
+                                <!-- END RESPONSIVE MENU TOGGLER -->
+                                <!-- BEGIN TOP NAVIGATION MENU -->
+                                <div class="top-menu">
+<!--                                 <div class="col-md-4"> -->
+                                    <ul class="nav navbar-nav pull-right">
+										<!-- BEGIN NOTIFICATION DROPDOWN -->
+                                        <li class="dropdown dropdown-extended dropdown-notification dropdown-dark" id="header_notification_bar">
+                                            <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
+                                                <i class="icon-bell font-yellow-crusta"></i>
+                                                {% if num_pendencias > 0 %}<span class="badge bg-yellow-crusta"><strong>{{num_pendencias}}</strong></span>{% endif %}
+                                            </a>
+                                            <ul class="dropdown-menu">
+                                                {% if num_pendencias > 0 %}
+                                                <li class="external">
+                                                    <h3>Você tem
+                                                        <strong>{{num_pendencias}} pendência{% if num_pendencias > 1%}s{% endif %}</strong></h3>
+                                                    <a href="{% url "painel_pendencias" %}">ver todas</a>
+                                                </li>
+                                                <li>
+                                                    <ul class="dropdown-menu-list scroller" style="height: 250px;" data-handle-color="#637283">
+                                                    {% for pendencia in pendencias %}
+                                                        <li>
+                                                            <a href="javascript:;">
+                                                                <span class="time">{{pendencia.texto_data}}</span>
+                                                                <span class="details">
+                                                                    <i class="fa fa-exclamation"></i> {{pendencia.texto_descricao}} </span>
+                                                            </a>
+                                                        </li>
+                                                    {% endfor %}
+                                                    </ul>
+                                                </li>
+                                                {% else %}
+                                                <li class="external">
+                                                    <h3>Não há pendências</h3>
+                                                </li>
+                                                {% endif %}
+                                            </ul>
+                                        </li>
+                                        <!-- END NOTIFICATION DROPDOWN -->
+                                        <li class="droddown dropdown-separator">
+                                            <span class="separator"></span>
+                                        </li>
+                                        {% if user.is_authenticated %}
+                                        <!-- BEGIN USER LOGIN DROPDOWN -->
+										<li class="dropdown dropdown-user dropdown-dark">
+											<a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
+												<span class="username username-hide-mobile">{{ request.user.username }}</span>
+											</a>
+											<ul class="dropdown-menu dropdown-menu-default">
+												<li>
+													<a href="javascript:;">
+														<i class="icon-user"></i> Minha conta </a>
+												</li>
+												<li>
+													<a href="{% url "configuracoes_conta_investidor" request.user.id %}">
+														<i class="icon-settings"></i> Configurações </a>
+												</li>
+                                                <li class="divider"> </li>
+												<li>
+													<a href="{% url "logout" %}">
+														<i class="icon-key"></i> Sair </a>
+												</li>
+											</ul>
+										</li>
+                                        {% else %}
+                                        <li class="dropdown">
+                                            <a class="dropdown-toggle font-yellow-crusta" href="{% url "login" %}">Entrar</a>
+                                        </li>
+                                        {% endif %}
+										<!-- END USER LOGIN DROPDOWN -->
+										<!-- TESTE DE NOVA APARENCIA -->
+										{% if request.user.id == 1 or request.user.id == 31 %}
+											<a href="{% url "carregar_nova_aparencia" request.path|slice:"1:-1" %}" class="btn btn-warning">Carregar arquivos</a>
+										{% endif %}
+										<!-- END TESTE DE NOVA APARENCIA -->
+                                    </ul>
+                                </div>
+                                <!-- END TOP NAVIGATION MENU -->
+                            </div>
+                        </div>
+                        <!-- END HEADER TOP -->
+                        <!-- BEGIN HEADER MENU -->
+                        <div class="page-header-menu">
+                            <div class="container-fluid">
+								<!-- BEGIN MEGA MENU -->
+								<!-- DOC: Apply "hor-menu-light" class after the "hor-menu" class below to have a horizontal menu with white background -->
+								<!-- DOC: Remove data-hover="dropdown" and data-close-others="true" attributes below to disable the dropdown opening on mouse hover -->
+								<div class="hor-menu  ">
+									<ul class="nav navbar-nav">
+										<li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if request.resolver_match.url_name == 'inicio' %}active{% endif %}">
+											<a href="{% url "inicio" %}"> Início
+												<span class="arrow"></span>
+											</a>
+										</li>   
+										<li aria-haspopup="true" class="menu-dropdown mega-menu-dropdown {% if 'acoes' in request.resolver_match.namespace %}active{% endif %}">
+                                            <a href="javascript:;"> Ações
+                                                <span class="arrow"></span>
+                                            </a>
+                                            <ul class="dropdown-menu" style="min-width: ">
+                                                <li>
+                                                    <div class="mega-menu-content">
+                                                        <div class="row">
+                                                            <div class="col-lg-12">
+                                                                <ul class="col-md-4 mega-menu-submenu">
+                                                                    <li>
+                                                                        <h3>Geral</h3>
+                                                                    </li>
+                                                                    <li>
+                                                                        <a href="{% url "acoes:sobre_acoes" %}"> Sobre </a>
+                                                                    </li>
+                                                                </ul>
+                                                                <ul class="col-md-4 mega-menu-submenu">
+                                                                    <li>
+                                                                        <h3>B & H</h3>
+                                                                    </li>
+                                                                    <li>
+                                                                        <a href="{% url "acoes:historico_bh" %}"> Histórico </a>
+                                                                    </li>
+                                                                    <li>
+                                                                        <a href="{% url "acoes:inserir_operacao_bh" %}"> Inserir operação </a>
+                                                                    </li>
+																	{% if request.user.is_superuser %}
+                                                                    <li>
+                                                                        <a href="{% url "acoes:inserir_provento_bh" %}"> Inserir provento </a>
+                                                                    </li>
+																	{% endif %}
+                                                                    <li>
+                                                                        <a href="{% url "acoes:inserir_taxa_custodia_acao" %}"> Inserir taxa de custódia </a>
+                                                                    </li>
+                                                                    <li>
+                                                                        <a href="{% url "acoes:listar_taxas_custodia_acao" %}"> Listar taxas de custódia </a>
+                                                                    </li>
+                                                                    <li>
+                                                                        <a href="{% url "acoes:painel_bh" %}"> Painel </a>
+                                                                    </li>
+                                                                </ul>
+                                                                <ul class="col-md-4 mega-menu-submenu">
+                                                                    <li>
+                                                                        <h3>Trading</h3>
+                                                                    </li>
+                                                                    <li>
+                                                                        <a href="{% url "acoes:acompanhamento_mensal" %}"> Acompanhamento mensal </a>
+                                                                    </li>
+                                                                    <li>
+                                                                        <a href="{% url "acoes:historico_operacoes" %}"> Histórico operações </a>
+                                                                    </li>
+                                                                    <li>
+                                                                        <a href="{% url "acoes:historico_operacoes_cv" %}"> Histórico compras/vendas </a>
+                                                                    </li>
+                                                                    <li>
+                                                                        <a href="{% url "acoes:inserir_operacao_acao_t" %}"> Inserir operação </a>
+                                                                    </li>
+                                                                    <li>
+                                                                        <a href="{% url "acoes:inserir_operacao_t" %}"> Inserir compra/venda </a>
+                                                                    </li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                            </ul>
+                                        </li>
+										<li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'cdb_rdb' in request.resolver_match.namespace %}active{% endif %}">
+											<a href="javascript:;"> CDB / RDB
+												<span class="arrow"></span>
+											</a>
+											<ul class="dropdown-menu pull-left">
+												<li aria-haspopup="true">
+													<a href="{% url "cdb_rdb:historico_cdb_rdb" %}" class="nav-link  "> Histórico </a>
+												</li>
+                                                <li aria-haspopup="true">
+                                                    <a href="{% url "cdb_rdb:inserir_cdb_rdb" %}" class="nav-link  "> Inserir CDB/RDB </a>
+                                                </li>
+												<li aria-haspopup="true">
+													<a href="{% url "cdb_rdb:inserir_operacao_cdb_rdb" %}" class="nav-link  "> Inserir operação </a>
+												</li>
+												<li aria-haspopup="true">
+													<a href="{% url "cdb_rdb:listar_cdb_rdb" %}" class="nav-link  "> Listar CDB/RDB </a>
+												</li>
+												<li aria-haspopup="true">
+													<a href="{% url "cdb_rdb:painel_cdb_rdb" %}" class="nav-link  "> Painel </a>
+												</li>
+                                                <li aria-haspopup="true">
+                                                    <a href="{% url "cdb_rdb:sobre_cdb_rdb" %}" class="nav-link  "> Sobre </a>
+                                                </li>
+											</ul>
+										</li>
+                                        <li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'cri_cra' in request.resolver_match.namespace %}active{% endif %}">
+                                            <a href="javascript:;"> CRI / CRA
+                                                <span class="arrow"></span>
+                                            </a>
+                                            <ul class="dropdown-menu pull-left">
+                                                <li aria-haspopup="true">
+                                                    <a href="{% url "cri_cra:historico_cri_cra" %}" class="nav-link  "> Histórico </a>
+                                                </li>
+                                                <li aria-haspopup="true">
+                                                    <a href="{% url "cri_cra:inserir_cri_cra" %}" class="nav-link  "> Inserir CRI/CRA </a>
+                                                </li>
+                                                <li aria-haspopup="true">
+                                                    <a href="{% url "cri_cra:inserir_operacao_cri_cra" %}" class="nav-link  "> Inserir operação </a>
+                                                </li>
+                                                <li aria-haspopup="true">
+                                                    <a href="{% url "cri_cra:listar_cri_cra" %}" class="nav-link  "> Listar CRI/CRA </a>
+                                                </li>
+                                                <li aria-haspopup="true">
+                                                    <a href="{% url "cri_cra:painel_cri_cra" %}" class="nav-link  "> Painel </a>
+                                                </li>
+                                                <li aria-haspopup="true">
+                                                    <a href="{% url "cri_cra:sobre_cri_cra" %}" class="nav-link  "> Sobre </a>
+                                                </li>
+                                            </ul>
+                                        </li>
+                                        <li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'debentures' in request.resolver_match.namespace %}active{% endif %}">
+                                            <a href="javascript:;"> Debêntures
+                                                <span class="arrow"></span>
+                                            </a>
+                                            <ul class="dropdown-menu pull-left">
+                                                <li aria-haspopup="true">
+                                                    <a href="{% url "debentures:historico_debenture" %}" class="nav-link  "> Histórico </a>
+                                                </li>
+                                                <li aria-haspopup="true">
+                                                    <a href="{% url "debentures:inserir_operacao_debenture" %}" class="nav-link  "> Inserir operação </a>
+                                                </li>
+                                                <li aria-haspopup="true">
+                                                    <a href="{% url "debentures:listar_debentures" %}" class="nav-link  "> Listar Debêntures </a>
+                                                </li>
+                                                <li aria-haspopup="true">
+                                                    <a href="{% url "debentures:painel_debenture" %}" class="nav-link  "> Painel </a>
+                                                </li>
+                                                <li aria-haspopup="true">
+                                                    <a href="{% url "debentures:sobre_debenture" %}" class="nav-link  "> Sobre </a>
+                                                </li>
+                                            </ul>
+                                        </li>
+										<li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'fii' in request.resolver_match.namespace %}active{% endif %}">
+											<a href="javascript:;"> FII
+												<span class="arrow"></span>
+											</a>
+											<ul class="dropdown-menu pull-left">
+                                                {% comment %}
+												{% if request.user.is_superuser %}
+												<li aria-haspopup="true">
+													<a href="{% url "fii:acompanhamento_mensal_fii" %}" class="nav-link  "> Acompanhamento mensal </a>
+												</li>
+												{% endif %}
+                                                {% endcomment %}
+												<li aria-haspopup="true">
+													<a href="{% url "fii:acompanhamento_fii" %}" class="nav-link  "> Acompanhamento </a>
+												</li>
+												<li aria-haspopup="true">
+													<a href="{% url "fii:calcular_resultado_corretagem" %}" class="nav-link  "> Cálculo de res. da corretagem </a>
+												</li>
+												<li aria-haspopup="true">
+													<a href="{% url "fii:historico_fii" %}" class="nav-link  "> Histórico </a>
+												</li>
+												<li aria-haspopup="true">
+													<a href="{% url "fii:inserir_operacao_fii" %}" class="nav-link  "> Inserir operação </a>
+												</li>
+												{% if request.user.is_superuser %}
+												<li aria-haspopup="true">
+													<a href="{% url "fii:inserir_provento_fii" %}" class="nav-link  "> Inserir provento </a>
+												</li>
+												{% endif %}
+												<li aria-haspopup="true">
+													<a href="{% url "fii:painel_fii" %}" class="nav-link  "> Painel </a>
+												</li>
+                                                <li aria-haspopup="true">
+                                                    <a href="{% url "fii:sobre_fii" %}" class="nav-link  "> Sobre </a>
+                                                </li>
+											</ul>
+										</li>
+										<li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'fundo_investimento' in request.resolver_match.namespace %}active{% endif %}">
+											<a href="javascript:;"> Fundo de Investimento
+												<span class="arrow"></span>
+											</a>
+											<ul class="dropdown-menu pull-left">
+												<li aria-haspopup="true">
+													<a href="{% url "fundo_investimento:adicionar_valor_cota_historico" %}" class="nav-link  "> Adicionar valor de cota </a>
+												</li>
+												<li aria-haspopup="true">
+													<a href="{% url "fundo_investimento:historico_fundo_investimento" %}" class="nav-link  "> Histórico </a>
+												</li>
+												<li aria-haspopup="true">
+													<a href="{% url "fundo_investimento:inserir_operacao_fundo_investimento" %}" class="nav-link  "> Inserir operação </a>
+												</li>
+												<li aria-haspopup="true">
+													<a href="{% url "fundo_investimento:inserir_fundo_investimento" %}" class="nav-link  "> Inserir Fundo de Investimento </a>
+												</li>
+												<li aria-haspopup="true">
+													<a href="{% url "fundo_investimento:listar_fundo_investimento" %}" class="nav-link  "> Listar Fundos </a>
+												</li>
+												<li aria-haspopup="true">
+													<a href="{% url "fundo_investimento:modificar_carencia_fundo_investimento" %}" class="nav-link  "> Modificar carência </a>
+												</li>
+												<li aria-haspopup="true">
+													<a href="{% url "fundo_investimento:painel_fundo_investimento" %}" class="nav-link  "> Painel </a>
+												</li>
+                                                <li aria-haspopup="true">
+                                                    <a href="{% url "fundo_investimento:sobre_fundo_investimento" %}" class="nav-link  "> Sobre </a>
+                                                </li>
+											</ul>
+										</li>
+										<li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'lci_lca' in request.resolver_match.namespace %}active{% endif %}">
+											<a href="javascript:;"> LCI / LCA
+												<span class="arrow"></span>
+											</a>
+											<ul class="dropdown-menu pull-left">
+												<li aria-haspopup="true">
+													<a href="{% url "lci_lca:historico_lci_lca" %}" class="nav-link  "> Histórico </a>
+												</li>
+												<li aria-haspopup="true">
+													<a href="{% url "lci_lca:inserir_lci_lca" %}" class="nav-link  "> Inserir Letra de Crédito </a>
+												</li>
+                                                <li aria-haspopup="true">
+                                                    <a href="{% url "lci_lca:inserir_operacao_lci_lca" %}" class="nav-link  "> Inserir operação </a>
+                                                </li>
+												<li aria-haspopup="true">
+													<a href="{% url "lci_lca:listar_lci_lca" %}" class="nav-link  "> Listar Letras de Crédito </a>
+												</li>
+												<li aria-haspopup="true">
+													<a href="{% url "lci_lca:painel_lci_lca" %}" class="nav-link  "> Painel </a>
+												</li>
+                                                <li aria-haspopup="true">
+                                                    <a href="{% url "lci_lca:sobre_lci_lca" %}" class="nav-link  "> Sobre </a>
+                                                </li>
+											</ul>
+										</li>   
+										<li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'td' in request.resolver_match.namespace %}active{% endif %}">
+											<a href="javascript:;"> Tesouro Direto
+												<span class="arrow"></span>
+											</a>
+											<ul class="dropdown-menu pull-left">
+												<li aria-haspopup="true">
+													<a href="{% url "td:acompanhamento_td" %}" class="nav-link  "> Acompanhamento </a>
+												</li>
+												<li aria-haspopup="true">
+													<a href="{% url "td:historico_td" %}" class="nav-link  "> Histórico </a>
+												</li>
+												<li aria-haspopup="true">
+													<a href="{% url "td:inserir_operacao_td" %}" class="nav-link  "> Inserir operação </a>
+												</li>
+												<li aria-haspopup="true">
+													<a href="{% url "td:painel_td" %}" class="nav-link  "> Painel </a>
+												</li>
+                                                <li aria-haspopup="true">
+                                                    <a href="{% url "td:sobre_td" %}" class="nav-link  "> Sobre </a>
+                                                </li>
+											</ul>
+										</li>  
+										<li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'divisoes' in request.resolver_match.namespace %}active{% endif %}">
+											<a href="javascript:;"> Divisões
+												<span class="arrow"></span>
+											</a>
+											<ul class="dropdown-menu pull-left">
+												<li aria-haspopup="true">
+													<a href="{% url "divisoes:inserir_divisao" %}" class="nav-link  "> Inserir divisão </a>
+												</li>
+												<li aria-haspopup="true">
+													<a href="{% url "divisoes:inserir_transferencia" %}" class="nav-link  "> Inserir transferência </a>
+												</li>
+												<li aria-haspopup="true">
+													<a href="{% url "divisoes:listar_divisoes" %}" class="nav-link  "> Listar divisões </a>
+												</li>
+												<li aria-haspopup="true">
+													<a href="{% url "divisoes:listar_transferencias" %}" class="nav-link  "> Listar transferências </a>
+												</li>
+											</ul>
+										</li>    
+										<li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'imposto_renda' in request.resolver_match.namespace %}active{% endif %}">
+											<a href="javascript:;"> IR
+												<span class="arrow"></span>
+											</a>
+											<ul class="dropdown-menu pull-left">
+												<li aria-haspopup="true">
+													<a href="{% url "imposto_renda:listar_anos_imposto_renda" %}" class="nav-link  "> Listar anos </a>
+												</li>
+											</ul>
+										</li>
+										{% if perms.bagogold.pode_gerar_proventos %}
+                                        <li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'gerador_proventos' in request.resolver_match.namespace %}active{% endif %}">
+                                            <a href="javascript:;"> Gerador de Proventos
+                                                <span class="arrow"></span>
+                                            </a>
+                                            <ul class="dropdown-menu pull-left">
+                                                <li aria-haspopup="true">
+                                                    <a class="nav-link" href="{% url "gerador_proventos:listar_documentos" %}"> Listar documentos</span></a>
+                                                </li>
+                                                <li aria-haspopup="true">
+                                                    <a class="nav-link" href="{% url "gerador_proventos:listar_pendencias" %}"> Listar pendências</span></a>
+                                                </li>
+                                                <li aria-haspopup="true">
+                                                    <a class="nav-link" href="{% url "gerador_proventos:listar_proventos" %}"> Listar proventos</span></a>
+                                                </li>
+                                                <li aria-haspopup="true">
+                                                    <a class="nav-link" href="{% url "gerador_proventos:listar_usuarios" %}"> Listar usuários</span></a>
+                                                </li>
+                                                <li aria-haspopup="true">
+                                                    <a class="nav-link" href="{% url "gerador_proventos:manual_gerador" 'acao' %}"> Manual do gerador</span></a>
+                                                </li>
+                                            </ul>   
+                                        </li>
+                                        {% endif %}
+									</ul>
+								</div>
+								<!-- END MEGA MENU -->
+                            </div>
+                        </div>
+                        <!-- END HEADER MENU -->
+                    </div>
+                    <!-- END HEADER -->
                 </div>
-            {% endfor %}
+            </div>
+            <div class="page-wrapper-row full-height">
+                <div class="page-wrapper-middle">
+                    <!-- BEGIN CONTAINER -->
+                    <div class="page-container">
+                        <!-- BEGIN CONTENT -->
+                        <div class="page-content-wrapper">
+                            <!-- BEGIN CONTENT BODY -->
+                            {% if pagina_titulo %}
+                            <!-- BEGIN PAGE HEAD-->
+                            <div class="page-head" style="background: none;">
+                                <div class="container-fluid">
+                                    <!-- BEGIN PAGE TITLE -->
+                                    <div class="row">
+                                        <div class="col-md-12" style="padding-right: 0px;">
+                                            <div class="portlet light" style="padding: 0;">
+                                                <div class="container-fluid">
+                                                    <div class="page-title">
+                                                        <h1>{{pagina_titulo}}
+                                                            <br/>
+                                                            <small>{{pagina_descricao}}</small>
+                                                        </h1>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- END PAGE TITLE -->
+                                </div>
+                            </div>
+                            <!-- END PAGE HEAD-->
+                            {% endif %}
+                            <!-- BEGIN PAGE CONTENT BODY -->
+                            <div class="page-content">
+                                <div class="container-fluid">
+                                    <div class="row">
+                                        <div class="col-md-12" id="messages" style="padding-right: 0px;">
+    									{% if messages %}
+                                            {% for message in messages %}
+                                            <div class="custom-alerts alert {{message.tags}}">
+                                                <button type="button" class="close" data-dismiss="alert" aria-hidden="true"></button>
+                                                {% if message.tags %}
+                                                    {% if 'success' in message.tags %}
+                                                        <i class="fa-lg fa fa-check"></i>
+                                                    {% elif 'error' in message.tags %}
+                                                        <i class="fa-lg fa fa-warning"></i>
+                                                    {% endif %}
+                                                {% endif %} {{ message }}
+                                            </div>
+                                            {% endfor %}
+                                        {% endif %}
+                                        </div>
+                                    </div>
+                                    <!-- BEGIN PAGE CONTENT INNER -->
+                                    <div class="page-content-inner">
+                                        <div class="mt-content-body">
+											<div class="row">
+												<div class="col-md-11">
+												{% block content %}
+					
+												{% endblock %}
+												</div>
+												<div class="col-md-1" style="padding-left: 0px; padding-right: 0px;">
+													<div class="portlet light">
+														<div class="portlet-title">
+															<div class="caption font-yellow-crusta">Ads</div>
+														</div>
+														<div class="portlet-body">
+															Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ac dictum mi. Vivamus iaculis malesuada turpis quis ultricies. Suspendisse eget facilisis metus. Nullam sed ipsum eu massa viverra aliquet. Cras sed fringilla nulla. Suspendisse semper quis arcu ut imperdiet. Ut at euismod odio. Sed laoreet pharetra libero quis ultricies.
+														</div>
+													</div>
+												</div>
+											</div>
+                                        </div>
+                                    </div>
+                                    <!-- END PAGE CONTENT INNER -->
+                                </div>
+                            </div>
+                            <!-- END PAGE CONTENT BODY -->
+                            <!-- END CONTENT BODY -->
+                        </div>
+                        <!-- END CONTENT -->
+                        
+                    </div>
+                    <!-- END CONTAINER -->
+                </div>
+            </div>
+            <div class="page-wrapper-row">
+                <div class="page-wrapper-bottom">
+                    <!-- BEGIN FOOTER -->
+                    <!-- BEGIN PRE-FOOTER -->
+                    <div class="page-prefooter">
+                        <div class="container-fluid">
+                            <div class="row">
+                                <div class="col-md-3 col-sm-6 col-xs-12 footer-block">
+                                    <h2>Sobre</h2>
+                                    <p> Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam dolore. </p>
+                                </div>
+                                <div class="col-md-3 col-sm-6 col-xs-12 footer-block">
+                                    <h2>Contato</h2>
+                                    <address class="margin-bottom-100">
+                                        <br> Email:
+                                        <a href="mailto:info@metronic.com">suporte@bagofgold.com.br</a>
+                                    </address>
+                                </div>
+                                <div class="col-md-6 col-sm-12 col-xs-12 footer-block">
+                                    <h2>Aviso</h2>
+                                    <p> Este site serve apenas no intuito de auxiliar o investidor a acompanhar seus investimentos. As informações contidas podem estar desatualizadas.
+                                    De maneira alguma este site aconselha a um usuário onde investir seu dinheiro, cabe ao investidor se informar e/ou procurar ajuda profissional para tal.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- END PRE-FOOTER -->
+                    <!-- BEGIN INNER FOOTER -->
+                    <div class="page-footer">
+                        <div class="container-fluid"> {% now "Y" %} &copy; Bag of Gold 
+                        <span class="pull-right">Metronic Theme By
+                            <a target="_blank" href="http://keenthemes.com">Keenthemes</a>
+                        </span>
+                        </div>
+                    </div>
+                    <div class="scroll-to-top">
+                        <i class="icon-arrow-up"></i>
+                    </div>
+                    <!-- END INNER FOOTER -->
+                    <!-- END FOOTER -->
+                </div>
             </div>
         </div>
-        {% endif %}
+        
+        <!--[if lt IE 9]>
+<script src={% static "assets/global/plugins/respond.min.js" %}></script>
+<script src={% static "assets/global/plugins/excanvas.min.js" %}></script> 
+<script src={% static "assets/global/plugins/ie8.fix.min.js" %}></script> 
+<![endif]-->
+        <!-- BEGIN CORE PLUGINS -->
+        <script src={% static "assets/global/plugins/jquery.min.js" %} type="text/javascript"></script>
+        <script src={% static "assets/global/plugins/bootstrap/js/bootstrap.min.js" %} type="text/javascript"></script>
+        <script src={% static "assets/global/plugins/js.cookie.min.js" %} type="text/javascript"></script>
+        <script src={% static "assets/global/plugins/jquery-slimscroll/jquery.slimscroll.min.js" %} type="text/javascript"></script>
+        <script src={% static "assets/global/plugins/jquery.blockui.min.js" %} type="text/javascript"></script>
+        <script src={% static "assets/global/plugins/bootstrap-switch/js/bootstrap-switch.min.js" %} type="text/javascript"></script>
+        <!-- END CORE PLUGINS -->
+        <!-- BEGIN PAGE LEVEL PLUGINS -->
+		{% block extra_footer %}
+		
+		{% endblock %}
+        <!-- END PAGE LEVEL PLUGINS -->
+        <!-- BEGIN THEME GLOBAL SCRIPTS -->
+        <script src={% static "assets/global/scripts/app.min.js" %} type="text/javascript"></script>
+        <!-- END THEME GLOBAL SCRIPTS -->
+        <!-- BEGIN PAGE LEVEL SCRIPTS -->
+        <!-- END PAGE LEVEL SCRIPTS -->
+        <!-- BEGIN THEME LAYOUT SCRIPTS -->
+        <script src={% static "assets/layouts/layout3/scripts/layout.min.js" %} type="text/javascript"></script>
+        <script src={% static "assets/layouts/layout3/scripts/demo.min.js" %} type="text/javascript"></script>
+        <!-- END THEME LAYOUT SCRIPTS -->
+    </body>
 
-        <div class="row-fluid">
-            <div class="span10">
-            {% block content %}
-            
-            {% endblock %}
-            </div>
-            <div class="span2">
-            </div>
-        </div>
-    </div>
-</div>
-</div>
-</body>
 </html>

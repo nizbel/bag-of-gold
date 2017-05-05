@@ -1,4 +1,4 @@
-{% extends "teste/base.html" %}
+{% extends base.html %}
 {% load staticfiles %}
 
 {% block extra_head %}
@@ -73,7 +73,7 @@
 										<div id="graf_gasto" style="width:100%;height:50px"></div>
 									</div>
 									<div class="stat-number">
-										<div class="title"> Total gasto: </div>
+										<div class="title"> Total investido: </div>
 										<div class="number"> R${{ dados.total_gasto|floatformat:2 }} </div>
 									</div>
 								</div>
@@ -213,12 +213,12 @@
 						{% for operacao in operacoes %}
 						<tr>
 							<td><a href="{% url 'acoes:estatisticas_acao_bh' operacao.acao.ticker %}" data-original-title="Estatísticas ação"
-								data-rel="tooltip" >{{operacao.acao.ticker}}</a></td>
+								class="tooltips" data-placement="top">{{operacao.acao.ticker}}</a></td>
 							<td><a href={% if operacao.tipo != 'Compra' and operacao.tipo != 'Venda' %}
 								"{% url 'acoes:editar_provento_bh' operacao.id %}" data-original-title="Editar provento"
 							{% else %}
-								"{% url 'acoes:editar_operacao_bh' operacao.id %}" data-original-title="Editar operação"
-							{% endif %} data-rel="tooltip" >{{operacao.tipo}}</a></td>
+								"{% url 'acoes:editar_operacao_bh' operacao.id %}" data-original-title="Editar operação" 
+							{% endif %} class="tooltips" data-placement="top" >{{operacao.tipo}}</a></td>
 							<td>{{ operacao.data|date:"Y-m-d" }}</td>
 							<td>{{operacao.quantidade}}</td>
 							<td>R${{operacao.preco_unitario}}</td>
@@ -299,45 +299,6 @@ $( document ).ready(function() {
                                     {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%m-%y"},
                                     }  
         );
-    
-    $.plot($("#graf_diario"), [ {% for k, graf in graf_diario.iteritems %}
-                                {label: "{{ k }}", stack: true, lines: {show:true, fill:true}, data: {{ graf|safe }} }, 
-                                {% endfor %}
-                                  ],
-                                    {legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%H:%M"},
-                                    }  
-        );
-    
-    function getDataDiaria() {
-        $.ajax({
-            url : "{% url 'acoes:historico_bh' %}", // the endpoint
-            type : "GET", // http method
-
-            // handle a successful response
-            success : function(graf_diario) {
-            	var dataset = [];
-            	for (var key in graf_diario) {
-            		dataset.push({label: key, stack: true, lines: {show: true, fill: true}, data: graf_diario[key]});
-            	}
-            	$.plot($("#graf_diario"), dataset,
-                    {legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%H:%M"}, }  
-                );
-            },
-
-            // handle a non-successful response
-            error : function(xhr,errmsg,err) {
-                console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
-            }
-        });
-    }
-    
-    function update() {
-        getDataDiaria();
- 
-        setTimeout(update, 30000);
-    }
- 
-    update();
     
 function showTooltip(x, y, contents) {
         

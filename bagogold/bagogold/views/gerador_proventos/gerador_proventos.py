@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold import settings
+from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.gerador_proventos import \
     ProventoAcaoDescritoDocumentoBovespaForm, \
     AcaoProventoAcaoDescritoDocumentoBovespaForm, \
@@ -58,6 +59,7 @@ def baixar_documento_provento(request, id_documento):
 
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
+@adiciona_titulo_descricao('Detalhar documento da Bovespa', 'Detalha informações de documento de proventos da Bovespa')
 def detalhar_documento(request, id_documento):
     documento = DocumentoProventoBovespa.objects.get(id=id_documento)
     documento.nome = documento.documento.name.split('/')[-1]
@@ -91,6 +93,7 @@ def detalhar_documento(request, id_documento):
 
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
+@adiciona_titulo_descricao('Detalhar provento de uma Ação', 'Mostra valores e histórico de versionamento de um provento recebido por uma Ação')
 def detalhar_provento_acao(request, id_provento):
     provento = Provento.gerador_objects.get(id=id_provento)
     
@@ -123,6 +126,7 @@ def detalhar_provento_acao(request, id_provento):
 
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
+@adiciona_titulo_descricao('Detalhar provento de um FII', 'Mostra valores e histórico de versionamento de um provento recebido por um Fundo de Investimento Imobiliário')
 def detalhar_provento_fii(request, id_provento):
     provento = ProventoFII.gerador_objects.get(id=id_provento)
     
@@ -144,6 +148,7 @@ def detalhar_provento_fii(request, id_provento):
 
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
+@adiciona_titulo_descricao('Ler documento da Bovespa', 'Ler documento da Bovespa e determinar se descreve recebimento de proventos ou não')
 def ler_documento_provento(request, id_pendencia):
     try:
         pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
@@ -404,6 +409,7 @@ def ler_documento_provento(request, id_pendencia):
     
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
+@adiciona_titulo_descricao('Listar documentos da Bovespa', 'Listar documentos da Bovespa baixados pelo sistema')
 def listar_documentos(request):
     empresa_id = Empresa.objects.all().order_by('id').values_list('id', flat=True)[0]
     if request.method == 'POST':
@@ -429,6 +435,7 @@ def listar_documentos(request):
 
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
+@adiciona_titulo_descricao('Listar pendências', 'Listagem de pendências de leitura/validação em documentos da Bovespa')
 def listar_pendencias(request):
     # Usado para criar objetos vazios
     class Object(object):
@@ -485,6 +492,7 @@ def listar_pendencias(request):
 
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
+@adiciona_titulo_descricao('Listagem de proventos de Ações e FIIs', 'Listar proventos recebidos por Ações e FIIs cadastrados no sistema')
 def listar_proventos(request):
     proventos = list(Provento.gerador_objects.all())
     proventos.extend(list(ProventoFII.gerador_objects.all()))
@@ -501,6 +509,7 @@ def listar_proventos(request):
         
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
+@adiciona_titulo_descricao('Manual do gerador de proventos', 'Explicações sobre como ler e validar documentos da Bovespa')
 def manual_gerador(request, tipo_documento):
     if tipo_documento == 'acao':
         return TemplateResponse(request, 'gerador_proventos/manual_gerador.html')
@@ -574,6 +583,7 @@ def remover_responsabilidade_documento_provento(request):
 
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
+@adiciona_titulo_descricao('Validar documento da Bovespa', 'Validar leitura de documento da Bovespa para gerar ações ou apagar o documento')
 def validar_documento_provento(request, id_pendencia):
     investidor = request.user.investidor
     

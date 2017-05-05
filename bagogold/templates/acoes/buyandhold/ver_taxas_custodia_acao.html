@@ -1,4 +1,4 @@
-{{% extends "teste/base.html" %}
+{{% extends base.html %}
 {% load staticfiles %}
 
 {% block extra_head %}
@@ -20,6 +20,7 @@
 			<tr>
 				<th>Valor</th>
 				<th>Início Vigência</th>
+                <th></th>
 			</tr>
 		</thead>
 		<tbody>
@@ -27,6 +28,7 @@
 		<tr>
 			<td>R${{ taxa.valor_mensal }}</td>
 			<td>{{ taxa.ano_vigencia }}/{{ taxa.mes_vigencia }}</td>
+            <td><a href="{% url 'acoes:remover_taxas_custodia_acao' taxa.id %}" class="btn red-thunderbird">Excluir</a></td>
 		</tr>
 		{% endfor %}
 		</tbody>

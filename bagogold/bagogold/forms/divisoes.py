@@ -43,6 +43,7 @@ class DivisaoOperacaoAcaoFormSet(forms.models.BaseInlineFormSet):
         form.fields['qtd_proventos_utilizada'].label = 'Quantidade de proventos utilizada'
         form.fields['qtd_proventos_utilizada'].required = False
         form.fields['qtd_proventos_utilizada'].localize = True
+        form.fields['qtd_proventos_utilizada'].initial = Decimal('0')
         
         if 'divisao' in form.initial:
             divisao_operacao = DivisaoOperacaoAcao.objects.get(divisao=form.initial['divisao'], operacao=self.instance)
@@ -177,6 +178,7 @@ class DivisaoOperacaoFIIFormSet(forms.models.BaseInlineFormSet):
         form.fields['qtd_proventos_utilizada'].label = 'Quantidade de proventos utilizada'
         form.fields['qtd_proventos_utilizada'].required = False
         form.fields['qtd_proventos_utilizada'].localize = True
+        form.fields['qtd_proventos_utilizada'].initial = Decimal('0')
         
         if 'divisao' in form.initial:
             divisao_operacao = DivisaoOperacaoFII.objects.get(divisao=form.initial['divisao'], operacao=self.instance)
@@ -498,9 +500,10 @@ class DivisaoOperacaoTDFormSet(forms.models.BaseInlineFormSet):
                         
                         # Verificar em caso de venda
                         if self.instance.tipo_operacao == 'V':
+                            qtd_anterior = Decimal(form_divisao.data['quantidade'].replace(',', '.'))
                             titulos_disponiveis = calcular_qtd_titulos_ate_dia_por_divisao(self.instance.data, form_divisao.cleaned_data['divisao'].id)
                             qtd_disponivel_divisao = titulos_disponiveis[self.instance.titulo.id] if self.instance.titulo.id in titulos_disponiveis else 0 
-                            if qtd_disponivel_divisao < div_qtd:
+                            if qtd_disponivel_divisao + qtd_anterior < div_qtd:
                                 raise forms.ValidationError('Venda de quantidade acima da disponível para divisão %s, disponível: %s' % (form_divisao.cleaned_data['divisao'], qtd_disponivel_divisao))
                         
                     # Divisão será apagada

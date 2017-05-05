@@ -59,7 +59,6 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'bagogold.bagogold.middleware.teste_nova_aparencia.TesteNovaAparenciaMiddleWare',
     'bagogold.bagogold.middleware.ultimo_acesso.UltimoAcessoMiddleWare',
 )
 
@@ -149,7 +148,7 @@ MEDIA_ROOT = PROJECT_ROOT + '/media/'
 
 # Configurar precisao de decimais
 from decimal import getcontext
-getcontext().prec = 15
+getcontext().prec = 20
 
 # Buscar configuracoes adicionais
 from conf.settings_local import *

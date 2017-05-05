@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoForm, \
     TransferenciaEntreDivisoesForm
 from bagogold.bagogold.models.acoes import ValorDiarioAcao, HistoricoAcao, Acao
@@ -41,6 +42,8 @@ from django.template.response import TemplateResponse
 import datetime
 
 @login_required
+@adiciona_titulo_descricao('Gerar transferências', ('Insere transferências no histórico automaticamente', 
+    'considerando as operações que o usuário já inseriu'))
 def criar_transferencias(request):
     investidor = request.user.investidor
     
@@ -94,6 +97,7 @@ def criar_transferencias(request):
     return TemplateResponse(request, 'divisoes/criar_transferencias.html', {'transferencias': transferencias})
 
 @login_required
+@adiciona_titulo_descricao('Detalhar divisão', 'Detalha a composição de uma divisão')
 def detalhar_divisao(request, id):
     investidor = request.user.investidor
     
@@ -278,6 +282,7 @@ def detalhar_divisao(request, id):
     return TemplateResponse(request, 'divisoes/detalhar_divisao.html', {'divisao': divisao, 'composicao': composicao})
 
 @login_required
+@adiciona_titulo_descricao('Editar divisão', 'Alterar dados de uma divisão')
 def editar_divisao(request, id):
     investidor = request.user.investidor
     
@@ -314,6 +319,7 @@ def editar_divisao(request, id):
     return TemplateResponse(request, 'divisoes/editar_divisao.html', {'form': form, 'divisao': divisao})
     
 @login_required
+@adiciona_titulo_descricao('Editar transferência', 'Alterar valores de uma transferência no histórico')
 def editar_transferencia(request, id):
     investidor = request.user.investidor
     
@@ -348,6 +354,7 @@ def editar_transferencia(request, id):
     return TemplateResponse(request, 'divisoes/editar_transferencia.html', {'form': form})
     
 @login_required
+@adiciona_titulo_descricao('Inserir divisão', 'Inserir divisão para o investidor')
 def inserir_divisao(request):
     investidor = request.user.investidor
     
@@ -364,6 +371,7 @@ def inserir_divisao(request):
     return TemplateResponse(request, 'divisoes/inserir_divisao.html', {'form': form})
 
 @login_required
+@adiciona_titulo_descricao('Inserir transferência', 'Inserir registro de transferência do histórico do investidor')
 def inserir_transferencia(request):
     investidor = request.user.investidor
     
@@ -383,6 +391,7 @@ def inserir_transferencia(request):
     return TemplateResponse(request, 'divisoes/inserir_transferencia.html', {'form': form})
 
 @login_required
+@adiciona_titulo_descricao('Listar divisões', 'Valores atuais para totais investidos e saldos de cada divisão do investidor')
 def listar_divisoes(request):
     investidor = request.user.investidor
     
@@ -494,6 +503,7 @@ def listar_divisoes(request):
     return TemplateResponse(request, 'divisoes/listar_divisoes.html', {'divisoes': divisoes})
 
 @login_required
+@adiciona_titulo_descricao('Listar transferências', 'Histórico de transferências feitas para as divisões do investidor')
 def listar_transferencias(request):
     investidor = request.user.investidor
     

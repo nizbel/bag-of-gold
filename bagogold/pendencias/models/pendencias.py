@@ -97,8 +97,8 @@ class PendenciaDocumentoGeradorProventos (Pendencia):
     
     @staticmethod
     def verificar_pendencia(investidor):
-        if PendenciaDocumentoProvento.objects.filter().exists():
-            pendencia_vencimento_td, criada = PendenciaDocumentoGeradorProventos.objects.get_or_create(investidor=investidor)
+        if PendenciaDocumentoProvento.objects.filter().exists() and investidor.user.has_perm('bagogold.pode_gerar_proventos'):
+            pendencia_documento_provento, criada = PendenciaDocumentoGeradorProventos.objects.get_or_create(investidor=investidor)
         else:
             if PendenciaDocumentoGeradorProventos.objects.filter(investidor=investidor).exists():
                 PendenciaDocumentoGeradorProventos.objects.filter(investidor=investidor).delete()

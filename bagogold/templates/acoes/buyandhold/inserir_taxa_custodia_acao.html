@@ -1,22 +1,88 @@
-{% extends "base.html" %}
+{% extends base.html %}
+{% load staticfiles %}
 
 {% block extra_head %}
     {{ form.media }}
+<link href={% static "assets/global/plugins/bootstrap-select/css/bootstrap-select.min.css" %} rel="stylesheet" type="text/css" />
 {% endblock %}
 
 {% block content %}
-    <h1>Inserir taxa de custódia de ações</h1>
-   <div class="row-fluid">
-        <div class="box span12">
-            <div class="box-content">
-                <form method="POST" class="post-form form-horizontal">{% csrf_token %}
-                    {{ form.as_p }}
-                    <div class="form-actions">
-                        <button type="submit" class="btn">Salvar</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+
+<div class="portlet light">
+	<div class="portlet-title">
+		<div class="caption font-yellow-crusta">
+			<i class="icon-plus font-yellow-crusta"></i>
+			<span class="caption-subject bold uppercase"> Taxa de custódia de ações </span>
+		</div>
+	</div>
+	<div class="portlet-body form">
+		<!-- BEGIN FORM-->
+		<form method="POST" class="horizontal-form">{% csrf_token %}
+			<div class="form-body">
+				<div class="row">
+					<div class="form-group col-md-6 {% if form.valor_mensal.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4"> Valor mensal: </label>
+						<div class="col-md-8">
+							<input id="id_valor_mensal" type="text" value="0" name="valor_mensal" class="form-control">
+							{% if form.valor_mensal.errors %} <span class="help-block"> {{ form.valor_mensal.errors.as_text }} </span> {% endif %}
+						</div>
+					</div>
+					<div class="form-group col-md-6 {% if form.ano_vigencia.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4"> Ano de início de vigência: </label>
+						<div class="col-md-8">
+							<input id="id_ano_vigencia" type="text" value="0" name="ano_vigencia" class="form-control">
+							{% if form.ano_vigencia.errors %} <span class="help-block"> {{ form.ano_vigencia.errors.as_text }} </span> {% endif %}
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="form-group col-md-6 {% if form.mes_vigencia.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4"> Mês de início de vigência: </label>
+						<div class="col-md-8">
+							<select class="selectpicker form-control" id="id_mes_vigencia" name="mes_vigencia" data-hide-disabled="true">
+							{% for key, value in form.fields.mes_vigencia.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
+							</select>
+							{% if form.mes_vigencia.errors %} <span class="help-block"> {{ form.mes_vigencia.errors.as_text }} </span> {% endif %}
+						</div>
+					</div>
+				</div>
+				<div class="form-actions">
+					<div class="row">
+						<div class="col-md-2">
+							<button type="submit" class="btn green-steel">Salvar</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</form>
+		<!-- END FORM-->
+	</div>
+</div>
 {% endblock %}
 
+{% block extra_footer %}
+<script src={% static "assets/global/plugins/fuelux/js/spinner.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-touchspin/bootstrap.touchspin.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/pages/scripts/components-bootstrap-touchspin.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/jquery-validation/js/jquery.validate.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/jquery-validation/js/additional-methods.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-select/js/bootstrap-select.min.js" %} type="text/javascript"></script>
+<script>
+$(document).ready(function() {
+	$("input[name='valor_mensal']").TouchSpin({
+		min: 0,
+		max: 1000000000,
+		step: 0.01,
+		decimals: 2,
+		maxboostedstep: 100,
+		prefix: 'R$'
+	});
+	$("input[name='ano_vigencia']").TouchSpin({
+		min: 0,
+		max: 1000000000,
+		step: 1,
+		maxboostedstep: 100
+	});
+});
+</script>
+{% endblock %}

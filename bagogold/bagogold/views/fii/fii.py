@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoFIIFormSet
 from bagogold.bagogold.forms.fii import OperacaoFIIForm, ProventoFIIForm, \
     UsoProventosOperacaoFIIForm, CalculoResultadoCorretagemForm
@@ -11,16 +12,14 @@ from bagogold.bagogold.utils.investidores import is_superuser
 from decimal import Decimal, ROUND_FLOOR
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
-from django.shortcuts import render_to_response
-from django.template.context import RequestContext
+from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
 from itertools import chain
 from operator import attrgetter, itemgetter
-from yahoo_finance import Share
 import calendar
 import datetime
 import math
@@ -52,8 +51,9 @@ def acompanhamento_mensal_fii(request):
     
     
 @login_required
-def aconselhamento_fii(request):
-    investidor = request.user.investidor
+@adiciona_titulo_descricao('Acompanhamento de FII', ('Mostra o rendimento dos FIIs do investidor para',
+    'comparar com os potenciais ganhos em outros investimentos'))
+def acompanhamento_fii(request):
     fiis = FII.objects.all()
     
     comparativos = list()
@@ -100,10 +100,12 @@ def aconselhamento_fii(request):
     # Ordenar lista de comparativos
     comparativos = reversed(sorted(comparativos, key=itemgetter(3)))
     
-    return TemplateResponse(request, 'fii/aconselhamento.html', {'comparativos': comparativos})
+    return TemplateResponse(request, 'fii/acompanhamento.html', {'comparativos': comparativos})
     
 # TODO remover login_required
 @login_required
+@adiciona_titulo_descricao('Cálculo de corretagem', ('Calcular quantidade de dinheiro que o investidor pode juntar para ',
+    'comprar novas cotasde forma a diluir mais eficientemente a corretagem'))
 def calcular_resultado_corretagem(request):
     # Preparar ranking
     ranking = list()
@@ -142,10 +144,11 @@ def calcular_resultado_corretagem(request):
     
     
 @login_required
-def editar_operacao_fii(request, id):
+@adiciona_titulo_descricao('Editar operação em FII', 'Alterar valores de uma operação de compra/venda em Fundos de Investimento Imobiliário')
+def editar_operacao_fii(request, operacao_id):
     investidor = request.user.investidor
     
-    operacao_fii = OperacaoFII.objects.get(pk=id)
+    operacao_fii = get_object_or_404(OperacaoFII, pk=operacao_id)
     
     # Verificar se a operação é do investidor logado
     if operacao_fii.investidor != investidor:
@@ -158,10 +161,6 @@ def editar_operacao_fii(request, id):
     # Testa se investidor possui mais de uma divisão
     varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
     
-#     try:
-#         uso_proventos = UsoProventosOperacaoFII.objects.get(operacao=operacao_fii)
-#     except UsoProventosOperacaoFII.DoesNotExist:
-#         uso_proventos = None
     if request.method == 'POST':
         if request.POST.get("save"):
             form_operacao_fii = OperacaoFIIForm(request.POST, instance=operacao_fii)
@@ -175,11 +174,6 @@ def editar_operacao_fii(request, id):
             else:
                 form_uso_proventos = UsoProventosOperacaoFIIForm()    
                 
-#             if uso_proventos is not None:
-#                 form_uso_proventos = UsoProventosOperacaoFIIForm(request.POST, instance=uso_proventos)
-#             else:
-#                 form_uso_proventos = UsoProventosOperacaoFIIForm(request.POST)
-            
             if form_operacao_fii.is_valid():
                 # Validar de acordo com a quantidade de divisões
                 if varias_divisoes:
@@ -206,6 +200,8 @@ def editar_operacao_fii(request, id):
                         
                         messages.success(request, 'Operação alterada com sucesso')
                         return HttpResponseRedirect(reverse('fii:historico_fii'))
+                    for erro in formset_divisao.non_form_errors():
+                        messages.error(request, erro)
                     
                 else:    
                     if form_uso_proventos.is_valid():
@@ -224,10 +220,7 @@ def editar_operacao_fii(request, id):
                         messages.success(request, 'Operação alterada com sucesso')
                         return HttpResponseRedirect(reverse('fii:historico_fii'))
                         
-            for erros in form_operacao_fii.errors.values():
-                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
-                    messages.error(request, erro.message)
-            for erro in formset_divisao.non_form_errors():
+            for erro in [erro for erro in form_operacao_fii.non_field_errors()]:
                 messages.error(request, erro)
                 
         elif request.POST.get("delete"):
@@ -278,6 +271,7 @@ def editar_provento_fii(request, id):
     
     
 @login_required
+@adiciona_titulo_descricao('Histórico de FII', 'Histórico de operações de compra/venda e rendimentos/amortizações do investidor')
 def historico_fii(request):
     investidor = request.user.investidor
     operacoes = OperacaoFII.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data') 
@@ -403,6 +397,7 @@ def historico_fii(request):
     
     
 @login_required
+@adiciona_titulo_descricao('Inserir operação em FII', 'Inserir registro de operação de compra/venda no histórico do investidor')
 def inserir_operacao_fii(request):
     investidor = request.user.investidor
     
@@ -450,9 +445,9 @@ def inserir_operacao_fii(request):
                         uso_proventos.save()
                     messages.success(request, 'Operação inserida com sucesso')
                     return HttpResponseRedirect(reverse('fii:historico_fii'))
-        for erro in formset_divisao.non_form_errors():
-            messages.error(request, erro)
-            
+        for erro in [erro for erro in form_operacao_fii.non_field_errors()]:
+            messages.error(request, erro)    
+                    
     else:
         form_operacao_fii = OperacaoFIIForm()
         form_uso_proventos = UsoProventosOperacaoFIIForm(initial={'qtd_utilizada': Decimal('0.00')})
@@ -476,6 +471,7 @@ def inserir_provento_fii(request):
     return TemplateResponse(request, 'fii/inserir_provento_fii.html', {'form': form})
 
 @login_required
+@adiciona_titulo_descricao('Painel de FII', 'Posição atual do investidor em Fundos de Investimento Imobiliário')
 def painel(request):
     # Usado para criar objetos vazios
     class Object(object):
@@ -556,6 +552,7 @@ def painel(request):
     return TemplateResponse(request, 'fii/painel.html', {'fiis': fiis, 'dados': dados})
 
 @login_required
+@adiciona_titulo_descricao('Sobre FII', 'Detalha o que são Fundos de Investimento Imobiliário')
 def sobre(request):
     if request.user.is_authenticated():
         total_atual = sum(calcular_valor_fii_ate_dia(request.user.investidor).values())

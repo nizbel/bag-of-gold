@@ -4,19 +4,8 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.http.response import HttpResponseRedirect
 import subprocess32 as subprocess
-import sys
-import time
 from bagogold.bagogold.models.metronic_test import CarregamentoMetronic
 
-
-@login_required
-def ver_nova_aparencia(request, url):
-    if 'testando_aparencia' in request.session:
-        request.session['testando_aparencia'] = not request.session['testando_aparencia']
-    else:
-        request.session['testando_aparencia'] = True
-    return HttpResponseRedirect('/' + url + '/')
-    
 @login_required
 def carregar_nova_aparencia(request, url):
     # Apenas eu e Camila podemos acessar

@@ -1,8 +1,9 @@
-{% extends "teste/base.html" %}
+{% extends base.html %}
 {% load staticfiles %}
 
 {% block extra_head %}
 <link href={% static "assets/pages/css/error.min.css" %} rel="stylesheet" type="text/css" />
+<link href="{% static "assets/pages/css/coming-soon.min.css" %}" rel="stylesheet" type="text/css">
 {% endblock %}
 
 {% block content %}
