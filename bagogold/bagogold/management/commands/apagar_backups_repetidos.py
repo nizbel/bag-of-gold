@@ -54,16 +54,16 @@ class Command(BaseCommand):
         
         # Verificar quais são repetidos
         for backup in backups_ord:
-            print 'Verificando', backup
+#             print 'Verificando', backup
             backup_repetido = filetest.cmp('/%s/%s' % (dir_backups, ultimo_backup_temp), '/%s/%s' % (dir_backups, backup))
-            print 'É repetido?', backup_repetido
+#             print 'É repetido?', backup_repetido
             if backup_repetido:
                 backups_apagar.append(backup)
             else:
                 ultimo_backup_temp = backup
         
         # Apagar arquivos
-        print backups_apagar
+#         print backups_apagar
         for backup in backups_apagar:
             os.remove('/%s/%s' % (dir_backups, backup))
 
