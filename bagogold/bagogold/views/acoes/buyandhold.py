@@ -658,6 +658,15 @@ def inserir_taxa_custodia_acao(request):
     return TemplateResponse(request, 'acoes/buyandhold/inserir_taxa_custodia_acao.html', {'form': form, })
     
 @login_required
+@adiciona_titulo_descricao('Listar taxas de custódia de ações', 'Lista o histórico de valores de taxas de custódia cadastrados pelo investidor')
+def listar_taxas_custodia_acao(request):
+    investidor = request.user.investidor
+    taxas_custodia = TaxaCustodiaAcao.objects.filter(investidor=investidor).order_by('ano_vigencia', 'mes_vigencia')
+    for taxa in taxas_custodia:
+        taxa.ano_vigencia = str(taxa.ano_vigencia).replace('.', '')
+    return TemplateResponse(request, 'acoes/buyandhold/ver_taxas_custodia_acao.html', {'taxas_custodia': taxas_custodia})
+
+@login_required
 @adiciona_titulo_descricao('Painel de Ações (Buy and Hold)', 'Posição atual do investidor em Ações para Buy and Hold')
 def painel(request):
     # Usado para criar objetos vazios
@@ -748,12 +757,3 @@ def remover_taxa_custodia_acao(request, taxa_id):
         messages.error(request, e)
     
     return HttpResponseRedirect(reverse('acoes:ver_taxas_custodia_acao'))
-
-@login_required
-@adiciona_titulo_descricao('Listar taxas de custódia de ações', 'Lista o histórico de valores de taxas de custódia cadastrados pelo investidor')
-def ver_taxas_custodia_acao(request):
-    investidor = request.user.investidor
-    taxas_custodia = TaxaCustodiaAcao.objects.filter(investidor=investidor).order_by('ano_vigencia', 'mes_vigencia')
-    for taxa in taxas_custodia:
-        taxa.ano_vigencia = str(taxa.ano_vigencia).replace('.', '')
-    return TemplateResponse(request, 'acoes/buyandhold/ver_taxas_custodia_acao.html', {'taxas_custodia': taxas_custodia})
