@@ -286,7 +286,18 @@ def historico(request):
         
         graf_investido_total += [[str(calendar.timegm(operacao.data.timetuple()) * 1000), float(-total_investido)]]
         graf_patrimonio += [[str(calendar.timegm(operacao.data.timetuple()) * 1000), float(total_patrimonio)]]
-            
+    
+    # Adicionar data mais atual
+    data_atual = datetime.date.today()
+    if str(calendar.timegm(data_atual.timetuple()) * 1000) not in [data for data, _ in graf_patrimonio]:
+        total_patrimonio = 0
+        for cri_cra in qtd_certificados.keys():
+            if qtd_certificados[cri_cra] > 0:
+                total_patrimonio += qtd_certificados[cri_cra] * calcular_valor_um_cri_cra_na_data(operacao.cri_cra, data_atual)
+        
+        graf_investido_total += [[str(calendar.timegm(data_atual.timetuple()) * 1000), float(-total_investido)]]
+        graf_patrimonio += [[str(calendar.timegm(data_atual.timetuple()) * 1000), float(total_patrimonio)]]
+    
     dados = {}
     dados['total_investido'] = -total_investido
     dados['patrimonio'] = total_patrimonio
@@ -487,7 +498,7 @@ def painel(request):
             if cri_cra[cri_cra_id].tipo_indexacao == CRI_CRA.TIPO_INDEXACAO_DI:
                 cri_cra[cri_cra_id].valor_prox_remuneracao = calcular_valor_atualizado_com_taxas({Decimal(ultima_taxa_di.taxa): qtd_dias_uteis},
                                                                                                            cri_cra[cri_cra_id].total_atual, 
-                                                                                                           cri_cra[cri_cra_id].porcentagem) - cri_cra[cri_cra_id].total_atual
+                                                                                                           cri_cra[cri_cra_id].porcentagem) - cri_cra[cri_cra_id].total_investido
         else:
             cri_cra[cri_cra_id].data_prox_remuneracao = None
             cri_cra[cri_cra_id].valor_prox_remuneracao = Decimal(0)
