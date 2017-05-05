@@ -602,8 +602,8 @@ def inserir_operacao_lc(request):
     return TemplateResponse(request, 'lc/inserir_operacao_lc.html', {'form_operacao_lc': form_operacao_lc, 'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})
 
 @login_required
-def listar_lc(request):
 @adiciona_titulo_descricao('Lista de Letras de Crédito', 'Traz as Letras de Crédito cadastradas pelo investidor')
+def listar_lc(request):
     lcs = LetraCredito.objects.filter(investidor=request.user.investidor)
     
     for lc in lcs:
