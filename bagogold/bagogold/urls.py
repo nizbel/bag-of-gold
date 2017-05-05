@@ -25,9 +25,9 @@ acoes_patterns = [
     url(r'^buyandhold/inserir_operacao_acao/$', views.acoes.buyandhold.inserir_operacao_acao, name='inserir_operacao_bh'),
     url(r'^buyandhold/inserir_provento_acao/$', views.acoes.buyandhold.inserir_provento_acao, name='inserir_provento_bh'),
     url(r'^buyandhold/inserir_taxa_custodia_acao/$', views.acoes.buyandhold.inserir_taxa_custodia_acao, name='inserir_taxa_custodia_acao'),
+    url(r'^buyandhold/listar_taxas_custodia_acao/$', views.acoes.buyandhold.listar_taxas_custodia_acao, name='listar_taxas_custodia_acao'),
     url(r'^buyandhold/painel/$', views.acoes.buyandhold.painel, name='painel_bh'),
-    url(r'^buyandhold/remover_taxas_custodia_acao/(?P<taxa_id>\d+)/$', views.acoes.buyandhold.remover_taxas_custodia_acao, name='remover_taxas_custodia_acao'),
-    url(r'^buyandhold/ver_taxas_custodia_acao/$', views.acoes.buyandhold.ver_taxas_custodia_acao, name='ver_taxas_custodia_acao'),
+    url(r'^buyandhold/remover_taxa_custodia_acao/(?P<taxa_id>\d+)/$', views.acoes.buyandhold.remover_taxa_custodia_acao, name='remover_taxa_custodia_acao'),
 
     url(r'^trading/acompanhamento_mensal/$', views.acoes.trade.acompanhamento_mensal, name='acompanhamento_mensal'),
     url(r'^trading/editar_operacao/(?P<operacao_id>\d+)/$', views.acoes.trade.editar_operacao, name='editar_operacao_t'),
