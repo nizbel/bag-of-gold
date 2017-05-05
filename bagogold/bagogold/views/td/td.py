@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoTDFormSet
 from bagogold.bagogold.forms.td import OperacaoTituloForm
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD, Divisao
 from bagogold.bagogold.models.fii import FII
-from bagogold.bagogold.models.lc import LetraCredito, HistoricoTaxaDI, \
-    HistoricoPorcentagemLetraCredito
+from bagogold.bagogold.models.lc import LetraCredito, HistoricoTaxaDI
+from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
     ValorDiarioTitulo, Titulo, HistoricoIPCA
-from bagogold.bagogold.testTD import buscar_valores_diarios
 from bagogold.bagogold.utils.fii import \
     calcular_rendimento_proventos_fii_12_meses, \
     calcular_variacao_percentual_fii_por_periodo
@@ -25,13 +25,13 @@ from django.db.models.aggregates import Count
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
 from django.http.response import HttpResponse
+from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
 import calendar
 import copy
 import datetime
 import json
 import math
-from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
 
 @login_required
 def buscar_titulos_validos_na_data(request):
@@ -44,7 +44,9 @@ def buscar_titulos_validos_na_data(request):
     return HttpResponse(json.dumps(lista_titulos_validos), content_type = "application/json") 
 
 @login_required
-def aconselhamento_td(request):
+@adiciona_titulo_descricao('Acompanhamento de Tesouro Direto', ('Mostra o rendimento dos títulos do investidor',
+    'para comparar com potenciais ganhos em outros investimentos'))
+def acompanhamento_td(request):
     # Objeto vazio para preenchimento
     class Object():
         pass
@@ -160,7 +162,6 @@ def aconselhamento_td(request):
         # Definir taxas dos dias para o cálculo
         taxas_dos_dias = {}
         for taxa_quantidade in historico_di:
-            print taxa_quantidade
             taxas_dos_dias[taxa_quantidade['taxa']] = taxa_quantidade['qtd_dias']
 
         # Calcular
@@ -177,13 +178,14 @@ def aconselhamento_td(request):
     fiis = [fii for fii in fiis if fii.rendimento_prov > 0]
     fiis.sort(key=lambda x: x.rendimento_prov, reverse=True)
     
-    return TemplateResponse(request, 'td/aconselhamento.html', {'titulos': titulos, 'letras_credito': letras_credito, 'fiis': fiis})
+    return TemplateResponse(request, 'td/acompanhamento.html', {'titulos': titulos, 'letras_credito': letras_credito, 'fiis': fiis})
 
 @login_required
-def editar_operacao_td(request, id):
+@adiciona_titulo_descricao('Editar operação em Tesouro Direto', 'Editar valores de uma operação de compra/venda em Tesouro Direto')
+def editar_operacao_td(request, operacao_id):
     investidor = request.user.investidor
     
-    operacao_td = OperacaoTitulo.objects.get(pk=id)
+    operacao_td = get_object_or_404(OperacaoTitulo, id=operacao_id)
     # Verifica se a operação é do investidor, senão, jogar erro de permissão
     if operacao_td.investidor != investidor:
         raise PermissionDenied
@@ -217,9 +219,8 @@ def editar_operacao_td(request, id):
                     divisao_operacao.save()
                     messages.success(request, 'Operação editada com sucesso')
                     return HttpResponseRedirect(reverse('td:historico_td'))
-            for erros in form_operacao_td.errors.values():
-                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
-                    messages.error(request, erro.message)
+            for erro in [erro for erro in form_operacao_td.non_field_errors()]:
+                messages.error(request, erro)
                     
         elif request.POST.get("delete"):
             # Verifica se, em caso de compra, a quantidade de títulos do investidor não fica negativa
@@ -241,6 +242,7 @@ def editar_operacao_td(request, id):
 
     
 @login_required
+@adiciona_titulo_descricao('Histórico de Tesouro Direto', 'Histórico de operações de compra/venda em Tesouro Direto')
 def historico_td(request):
     investidor = request.user.investidor
     
@@ -385,6 +387,7 @@ def historico_td(request):
     
     
 @login_required
+@adiciona_titulo_descricao('Inserir operação em Tesouro Direto', 'Inserir registro de operação de compra/venda em Tesouro Direto')
 def inserir_operacao_td(request):
     investidor = request.user.investidor
     
@@ -421,9 +424,8 @@ def inserir_operacao_td(request):
                 messages.success(request, 'Operação inserida com sucesso')
                 return HttpResponseRedirect(reverse('td:historico_td'))
             
-        for erros in form_operacao_td.errors.values():
-            for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
-                messages.error(request, erro.message)
+        for erro in [erro for erro in form_operacao_td.non_field_errors()]:
+            messages.error(request, erro)
                     
     else:
         form_operacao_td = OperacaoTituloForm(investidor=investidor)
@@ -433,6 +435,7 @@ def inserir_operacao_td(request):
                                                               'varias_divisoes': varias_divisoes})
 
 @login_required
+@adiciona_titulo_descricao('Painel de Tesouro Direto', 'Mostra a posição atual do investidor em Tesouro Direto')
 def painel(request):
     # Objeto vazio para preenchimento
     class Object():
@@ -563,6 +566,7 @@ def painel(request):
     return TemplateResponse(request, 'td/painel.html', {'titulos': titulos, 'titulos_vendidos': titulos_vendidos, 'dados': dados})
 
 @login_required
+@adiciona_titulo_descricao('Sobre Tesouro Direto', 'Detalha o que são títulos do Tesouro Direto')
 def sobre(request):
     data_atual = datetime.date.today()
     historico_ipca = HistoricoIPCA.objects.filter(ano__gte=(data_atual.year-3)).exclude(mes__lt=data_atual.month, ano=data_atual.year-3)

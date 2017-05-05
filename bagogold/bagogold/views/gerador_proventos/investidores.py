@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.models.gerador_proventos import \
     InvestidorResponsavelPendencia, InvestidorLeituraDocumento, \
     InvestidorValidacaoDocumento, PendenciaDocumentoProvento, \
@@ -14,6 +15,7 @@ import datetime
 
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
+@adiciona_titulo_descricao('Detalhar pendências do usuário', 'Detalha informações sobre leituras, pendências, recusas e validações de um usuário do gerador de proventos')
 def detalhar_pendencias_usuario(request, id_usuario):
     usuario = User.objects.get(id=id_usuario)
     
@@ -49,6 +51,7 @@ def detalhar_pendencias_usuario(request, id_usuario):
 
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
+@adiciona_titulo_descricao('Listar usuários do gerador de proventos', 'Listagem de usuários com acesso ao gerador de proventos e dados sobre leituras/validações')
 def listar_usuarios(request):
     permissao = Permission.objects.get(codename='pode_gerar_proventos')  
     usuarios = User.objects.filter(Q(user_permissions=permissao) | Q(is_superuser=True))

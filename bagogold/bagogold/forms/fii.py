@@ -42,7 +42,7 @@ class OperacaoFIIForm(LocalizedModelForm):
         
     class Media:
         js = ('js/bagogold/calculo_emolumentos.js', 
-              'js/bagogold/fii.js',)
+              'js/bagogold/form_operacao_fii.js',)
         
     def clean(self):
         data = super(OperacaoFIIForm, self).clean()

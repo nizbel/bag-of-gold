@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.debenture import OperacaoDebentureForm
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoDebentureFormSet
 from bagogold.bagogold.models.debentures import OperacaoDebenture, Debenture, \
@@ -33,6 +34,7 @@ import json
 
 
 @login_required
+@adiciona_titulo_descricao('Detalhar Debênture', 'Detalha os valores de uma Debênture')
 def detalhar_debenture(request, debenture_id):
     try:
         debenture = Debenture.objects.get(id=debenture_id)
@@ -51,6 +53,7 @@ def detalhar_debenture(request, debenture_id):
     return TemplateResponse(request, 'debentures/detalhar_debenture.html', {'debenture': debenture})
 
 @login_required
+@adiciona_titulo_descricao('Editar operação em Debêntures', 'Alterar valores de uma operação de compra/venda em Debêntures')
 def editar_operacao_debenture(request, operacao_id):
     investidor = request.user.investidor
     
@@ -132,6 +135,7 @@ def editar_operacao_debenture(request, operacao_id):
 
     
 @login_required
+@adiciona_titulo_descricao('Histórico de Debêntures', 'Histórico de operações de compra/venda em Debêntures')
 def historico(request):
     investidor = request.user.investidor
     
@@ -231,6 +235,7 @@ def historico(request):
                                                                    'graf_patrimonio': graf_patrimonio, 'usuario_tem_operacoes': True})
     
 @login_required
+@adiciona_titulo_descricao('Inserir operação em Debênture', 'Inserir registro de operação de compra/venda de debêntures no histórico do investidor')
 def inserir_operacao_debenture(request):
     investidor = request.user.investidor
     
@@ -276,6 +281,7 @@ def inserir_operacao_debenture(request):
                                                                                     'varias_divisoes': varias_divisoes})
 
 @login_required
+@adiciona_titulo_descricao('Listar Debêntures', 'Listagem de debêntures com valores básicos de rendimento e vencimento')
 def listar_debentures(request):
     debentures = Debenture.objects.all()
     
@@ -300,6 +306,7 @@ def listar_debentures_validas_na_data(request):
     return HttpResponse(json.dumps({'resultado': True, 'debentures_validas': debentures_validas}), content_type = "application/json") 
 
 @login_required
+@adiciona_titulo_descricao('Painel de Debêntures', 'Posição atual do investidor em Debêntures')
 def painel(request):
     investidor = request.user.investidor
     
@@ -403,6 +410,7 @@ def painel(request):
     return TemplateResponse(request, 'debentures/painel.html', {'debentures': debentures, 'dados': dados})
 
 @login_required
+@adiciona_titulo_descricao('Sobre Debêntures', 'Detalha o que são Debêntures')
 def sobre(request):
     data_atual = datetime.date.today()
     historico_di = HistoricoTaxaDI.objects.filter(data__gte=data_atual.replace(year=data_atual.year-3))

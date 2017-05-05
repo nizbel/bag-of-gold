@@ -49,7 +49,7 @@ class OperacaoLetraCredito (models.Model):
     quantidade = models.DecimalField(u'Quantidade investida/resgatada', max_digits=11, decimal_places=2)
     data = models.DateField(u'Data da operação')
     tipo_operacao = models.CharField(u'Tipo de operação', max_length=1)
-    letra_credito = models.ForeignKey('LetraCredito')
+    letra_credito = models.ForeignKey('LetraCredito', verbose_name='Letra de Crédito')
     investidor = models.ForeignKey('Investidor')
     
     def __unicode__(self):
@@ -62,9 +62,9 @@ class OperacaoLetraCredito (models.Model):
         super(OperacaoLetraCredito, self).save(*args, **kw)
     
     def carencia(self):
-        try:
+        if HistoricoCarenciaLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito).order_by('-data').exists():
             return HistoricoCarenciaLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito).order_by('-data')[0].carencia
-        except:
+        else:
             return HistoricoCarenciaLetraCredito.objects.get(data__isnull=True, letra_credito=self.letra_credito).carencia
     
     def operacao_compra_relacionada(self):
@@ -75,9 +75,9 @@ class OperacaoLetraCredito (models.Model):
     
     def porcentagem_di(self):
         if self.tipo_operacao == 'C':
-            try:
+            if HistoricoPorcentagemLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito).order_by('-data').exists():
                 return HistoricoPorcentagemLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito).order_by('-data')[0].porcentagem_di
-            except:
+            else:
                 return HistoricoPorcentagemLetraCredito.objects.get(data__isnull=True, letra_credito=self.letra_credito).porcentagem_di
         elif self.tipo_operacao == 'V':
             return self.operacao_compra_relacionada().porcentagem_di()

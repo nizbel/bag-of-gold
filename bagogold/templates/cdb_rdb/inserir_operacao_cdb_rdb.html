@@ -1,11 +1,10 @@
-{% extends "teste/base.html" %}
+{% extends base.html %}
 {% load staticfiles %}
 {% load l10n %}
 
 {% block extra_head %}
 <link href={% static "assets/global/plugins/bootstrap-select/css/bootstrap-select.min.css" %} rel="stylesheet" type="text/css" />
 <link href={% static "assets/global/plugins/bootstrap-datepicker/css/bootstrap-datepicker3.min.css" %} rel="stylesheet" type="text/css" />
-<link href={% static "assets/global/plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css" %} rel="stylesheet" type="text/css" />
 {% endblock %}
 
 {% block page_title %}
@@ -22,7 +21,7 @@ Adiciona uma nova operação em CDB/RDB
 	<div class="portlet-title">
 		<div class="caption font-yellow-crusta">
 			<i class="icon-plus font-yellow-crusta"></i>
-			<span class="caption-subject bold uppercase"> Inserir operação </span>
+			<span class="caption-subject bold uppercase"> Inserir operação em CDB/RDB </span>
 		</div>
 	</div>
 	<div class="portlet-body form">
@@ -53,7 +52,8 @@ Adiciona uma nova operação em CDB/RDB
 						<label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_cdb_rdb.fields.data.label}}: </label>
 						<div class="col-md-8">
 							<div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" data-date-viewmode="years">
-								<input type="text" class="form-control" id="id_data" name="data" value="{{form_operacao_cdb_rdb.data.value|default:''}}">
+								<input type="text" class="form-control" id="id_data" name="data" 
+                                value="{% if form_operacao_cdb_rdb.data.value|date:'d/m/Y'|default:'' == '' %}{{form_operacao_cdb_rdb.data.value|default:''}}{% else %}{{form_operacao_cdb_rdb.data.value|date:'d/m/Y'}}{% endif %}">
 								<span class="input-group-btn">
 									<button class="btn default" type="button">
 										<i class="fa fa-calendar"></i>
@@ -138,14 +138,13 @@ Adiciona uma nova operação em CDB/RDB
 
 {% block extra_footer %}
 <script src={% static "assets/global/plugins/fuelux/js/spinner.min.js" %} type="text/javascript"></script>
-<script src={% static "assets/global/plugins/bootstrap-touchspin/bootstrap.touchspin.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-touchspin/bootstrap.touchspin.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/pages/scripts/components-bootstrap-touchspin.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/jquery-validation/js/jquery.validate.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/jquery-validation/js/additional-methods.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/bootstrap-select/js/bootstrap-select.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/moment.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/bootstrap-datepicker/js/bootstrap-datepicker.min.js" %} type="text/javascript"></script>
-<script src={% static "assets/global/plugins/bootstrap-datetimepicker/js/bootstrap-datetimepicker.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/bootstrap-datepicker/locales/bootstrap-datepicker.pt-BR.min.js" %} type="text/javascript"></script>
 {{ form_operacao_cdb_rdb.media }}
 {% endblock %}

@@ -1,19 +1,109 @@
-{% extends "base.html" %}
+{% extends base.html %}
+{% load staticfiles %}
 
-{% block content %}
-    <h1>Editar operação de compra e venda</h1>
-    <div class="row-fluid">
-        <div class="box span12">
-            <div class="box-content">
-                <form method="POST" class="post-form form-horizontal">{% csrf_token %}
-                    {{ form.as_p }}
-                    <div class="form-actions">
-                        <button type="submit" name="save" value="1" class="btn">Salvar</button>
-                        <button type="submit" name="delete" value="1" class="btn btn-danger">Excluir</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+{% block extra_head %}
+<link href={% static "assets/global/plugins/bootstrap-select/css/bootstrap-select.min.css" %} rel="stylesheet" type="text/css" />
 {% endblock %}
 
+{% block content %}
+
+<div class="portlet light">
+	<div class="portlet-title">
+		<div class="caption font-yellow-crusta">
+			<i class="icon-note font-yellow-crusta"></i>
+			<span class="caption-subject bold uppercase"> Editar operação de compra/venda </span>
+		</div>
+	</div>
+	<div class="portlet-body form">
+		<!-- BEGIN FORM-->
+		<form method="POST" class="horizontal-form">{% csrf_token %}
+			<div class="form-body">
+				<div class="row">
+					<div class="form-group col-md-6 {% if form.compra.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4" style="text-align: left;"> {{form.compra.label}}: </label>
+						<div class="col-md-8">
+							<select class="selectpicker form-control" id="id_compra" name="compra">
+								{% for key, value in form.fields.compra.widget.choices %}<option value="{{ key }}" {% if key == form.compra.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+							</select>
+							{% if form.compra.errors %} <span class="help-block"> {{ form.compra.errors.as_text }} </span> {% endif %}
+						</div>
+					</div>
+					<div class="form-group col-md-6 {% if form.venda.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4" style="text-align: left;"> {{form.venda.label}}: </label>
+						<div class="col-md-8">
+							<select class="selectpicker form-control" id="id_venda" name="venda">
+								{% for key, value in form.fields.venda.widget.choices %}<option value="{{ key }}" {% if key == form.venda.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+							</select>
+							{% if form.venda.errors %} <span class="help-block"> {{ form.venda.errors.as_text }} </span> {% endif %}
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="form-group col-md-6 {% if form.day_trade.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4" style="text-align: left;"> {{form.day_trade.label}} </label>
+						<div class="col-md-8">
+							<select class="selectpicker form-control" id="id_day_trade" name="day_trade">
+								{% for key, value in form.fields.day_trade.widget.choices %}<option value="{{ key }}" {% if key == form.day_trade.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+							</select>
+							{% if form.day_trade.errors %} <span class="help-block"> {{ form.day_trade.errors.as_text }} </span> {% endif %}
+						</div>
+					</div>
+					<div class="form-group col-md-6 {% if form.quantidade.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4"> {{form.quantidade.label}}: </label>
+						<div class="col-md-8">
+							<input id="id_quantidade" type="text" value="{{form.quantidade.value}}" name="quantidade" class="form-control">
+							{% if form.quantidade.errors %} <span class="help-block"> {{ form.quantidade.errors.as_text }} </span> {% endif %}
+						</div>
+					</div>
+				</div>
+				<div class="form-actions">
+					<div class="row">
+						<div class="col-md-offset col-md-3">
+							<button type="submit" name="save" value="1" class="btn green-steel">Salvar</button>
+                            <a data-toggle="modal" href="#exclusao" class="btn red-thunderbird">Excluir</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="exclusao" tabindex="-1" role="basic" aria-hidden="true" data-backdrop="static" data-keyboard="false"  style="display: none;">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                            <h4 class="modal-title">Confirmar exclusão de operação</h4>
+                        </div>
+                        <div class="modal-body">Confirma a exclusão da operação?</div>
+                        <div class="modal-footer">
+                            <a class="btn dark btn-outline" data-dismiss="modal">Cancelar</a>
+                            <button type="submit" name="delete" value="1" class="btn red-thunderbird">Confirmar</button>
+                        </div>
+                    </div>
+                    <!-- /.modal-content -->
+                </div>
+                <!-- /.modal-dialog -->
+            </div>
+		</form>
+		<!-- END FORM-->
+	</div>
+</div>
+{% endblock %}
+
+{% block extra_footer %}
+<script src={% static "assets/global/plugins/fuelux/js/spinner.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-touchspin/bootstrap.touchspin.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/jquery-validation/js/jquery.validate.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/jquery-validation/js/additional-methods.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-select/js/bootstrap-select.min.js" %} type="text/javascript"></script>
+<script>
+$(document).ready(function() {
+	$("input[name='quantidade']").TouchSpin({
+        initval: 1,
+        min: 1,
+		min: 0,
+		max: 1000000000,
+		step: 1,
+		maxboostedstep: 100
+	});
+});
+</script>
+{% endblock %}

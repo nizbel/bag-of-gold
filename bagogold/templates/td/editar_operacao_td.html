@@ -1,89 +1,257 @@
-{% extends "base.html" %}
+{% extends base.html %}
+{% load staticfiles %}
 
 {% block extra_head %}
     {{ form_operacao_td.media }}
+<link href={% static "assets/global/plugins/bootstrap-select/css/bootstrap-select.min.css" %} rel="stylesheet" type="text/css" />
+<link href={% static "assets/global/plugins/bootstrap-datepicker/css/bootstrap-datepicker3.min.css" %} rel="stylesheet" type="text/css" />
 {% endblock %}
 
 {% block content %}
-    <h1>Editar operação Tesouro Direto</h1>
-    <form method="POST" class="post-form form-horizontal">{% csrf_token %}
-        <div id="forms">
-            {{ form_operacao_td.as_p }}
-            {% if varias_divisoes %}
-                <h2>Divisões <button id="add-another" class="btn btn-primary" type="button">+</button></h2>
-                {{ formset_divisao.management_form }}
-                {% for form_divisao in formset_divisao %}
-                    <h3>Divisão {{ forloop.counter }}</h3>
-                    {{ form_divisao.as_p }}
-                {% endfor %}
-            {% endif %}
-        </div>
-        <div class="form-actions">
-            <button type="submit" name="save" value="1" class="btn">Salvar</button>
-            <button type="submit" name="delete" value="1" class="btn btn-danger">Excluir</button>
-        </div>
-    </form>
-    
-    <script type="text/javascript">
-    $( document ).ready(function() {
-        $( "#id_data" ).change(function() {
-            var dataEscolhida = $(this).val();
-            if (dataEscolhida == null || dataEscolhida == '') {
-                return;
-            }
-            var tipoOperacao = $('#id_tipo_operacao').val();
-            $.ajax({
-                url : "{% url 'td:buscar_titulos_validos_na_data' %}", // the endpoint
-                type : "GET", // http method
-                data: {dataEscolhida: dataEscolhida, tipoOperacao: tipoOperacao},
-                
-                // handle a successful response
-                success : function(lista_titulos_validos) {
-                    $("#id_titulo option").each(function() {
-                        if ($.inArray(parseInt(this.value), lista_titulos_validos) > -1) {
-                            $("#id_titulo option[value=" + this.value + "]").show();
-                        } else {
-                            $("#id_titulo option[value=" + this.value + "]").hide();
-                        }
-                    });
-                }, 
-                    
-                // handle a non-successful response
-                error : function(xhr,errmsg,err) {
-                    console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
-                }
-            });
-        });
-        
-        $( "#id_tipo_operacao" ).change(function() {
-            var dataEscolhida = $('#id_data').val();
-            if (dataEscolhida == null || dataEscolhida == '') {
-                return;
-            }
-            var tipoOperacao = $(this).val();
-            $.ajax({
-                url : "{% url 'td:buscar_titulos_validos_na_data' %}", // the endpoint
-                type : "GET", // http method
-                data: {dataEscolhida: dataEscolhida, tipoOperacao: tipoOperacao},
-                
-                // handle a successful response
-                success : function(lista_titulos_validos) {
-                    $("#id_titulo option").each(function() {
-                        if ($.inArray(parseInt(this.value), lista_titulos_validos) > -1) {
-                            $("#id_titulo option[value=" + this.value + "]").show();
-                        } else {
-                            $("#id_titulo option[value=" + this.value + "]").hide();
-                        }
-                    });
-                }, 
-                    
-                // handle a non-successful response
-                error : function(xhr,errmsg,err) {
-                    console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
-                }
-            });
-        });
-    });
-    </script>
+
+<div class="portlet light">
+	<div class="portlet-title">
+		<div class="caption font-yellow-crusta">
+			<i class="icon-note font-yellow-crusta"></i>
+			<span class="caption-subject bold uppercase"> Editar operação em Tesouro Direto </span>
+		</div>
+	</div>
+	<div class="portlet-body form">
+		<!-- BEGIN FORM-->
+		<form method="POST" class="horizontal-form">{% csrf_token %}
+			<div class="form-body">
+				<div class="row">
+					<div class="form-group col-md-6 {% if form_operacao_td.preco_unitario.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4" style="text-align: left;"> {{ form_operacao_td.preco_unitario.label }}: </label>
+						<div class="col-md-8">
+							<input id="id_preco_unitario" type="text" value="{{form_operacao_td.preco_unitario.value}}" name="preco_unitario" class="form-control">
+							{% if form_operacao_td.preco_unitario.errors %} <span class="help-block"> {{ form_operacao_td.preco_unitario.errors.as_text }} </span> {% endif %}
+						</div>
+					</div>
+					<div class="form-group col-md-6 {% if form_operacao_td.quantidade.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4"> {{ form_operacao_td.quantidade.label }}: </label>
+						<div class="col-md-8">
+							<input id="id_quantidade" type="text" value="{{form_operacao_td.quantidade.value}}" name="quantidade" class="form-control">
+							{% if form_operacao_td.quantidade.errors %} <span class="help-block"> {{ form_operacao_td.quantidade.errors.as_text }} </span> {% endif %}
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="form-group col-md-6 {% if form_operacao_td.data.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4" style="text-align: left;"> {{ form_operacao_td.data.label }}: </label>
+						<div class="col-md-8">
+							<div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" data-date-viewmode="years">
+								<input type="text" class="form-control" id="id_data" name="data" 
+                                 value="{% if form_operacao_td.data.value|date:'d/m/Y'|default:'' == '' %}{{form_operacao_td.data.value|default:''}}{% else %}{{form_operacao_td.data.value|date:'d/m/Y'}}{% endif %}">
+								<span class="input-group-btn">
+									<button class="btn default" type="button">
+										<i class="fa fa-calendar"></i>
+									</button>
+								</span>
+							</div>
+							{% if form_operacao_td.data.errors %} <span class="help-block"> {{ form_operacao_td.data.errors.as_text }} </span>
+							{% else %} <span class="help-block"> Selecione uma data </span>
+							{% endif %}
+						</div>
+					</div>
+					<div class="form-group col-md-6 {% if form_operacao_td.taxa_bvmf.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4"> {{form_operacao_td.taxa_bvmf.label}}: </label>
+						<div class="col-md-8">
+							<input id="id_taxa_bvmf" type="text" value="{{form_operacao_td.taxa_bvmf.value}}" name="taxa_bvmf" class="form-control">
+							{% if form_operacao_td.taxa_bvmf.errors %} <span class="help-block"> {{ form_operacao_td.taxa_bvmf.errors.as_text }} </span> {% endif %}
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="form-group col-md-6 {% if form_operacao_td.taxa_custodia.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4" style="text-align: left;"> {{ form_operacao_td.taxa_custodia.label }}: </label>
+						<div class="col-md-8">
+							<input id="id_taxa_custodia" type="text" value="{{form_operacao_td.taxa_custodia.value}}" name="taxa_custodia" class="form-control">
+							{% if form_operacao_td.taxa_custodia.errors %} <span class="help-block"> {{ form_operacao_td.taxa_custodia.errors.as_text }} </span> {% endif %}
+						</div>
+					</div>
+					<div class="form-group col-md-6 {% if form_operacao_td.tipo_operacao.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4" style="text-align: left;"> {{ form_operacao_td.tipo_operacao.label }}: </label>
+						<div class="col-md-8">
+							<select class="selectpicker form-control" id="id_tipo_operacao" name="tipo_operacao">
+								{% for key, value in form_operacao_td.fields.tipo_operacao.widget.choices %}<option value="{{ key }}" 
+                                {% if key == form_operacao_td.tipo_operacao.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+							</select>
+							{% if form_operacao_td.tipo_operacao.errors %} <span class="help-block"> {{ form_operacao_td.tipo_operacao.errors.as_text }} </span> {% endif %}
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="form-group col-md-6 {% if form_operacao_td.titulo.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4" style="text-align: left;"> Título: </label>
+						<div class="col-md-8">
+							<select class="selectpicker form-control" id="id_titulo" name="titulo">
+								{% for key, value in form_operacao_td.fields.titulo.widget.choices %}<option value="{{ key }}"
+                                {% if key == form_operacao_td.titulo.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+							</select>
+							{% if form_operacao_td.titulo.errors %} <span class="help-block"> {{ form_operacao_td.titulo.errors.as_text }} </span> {% endif %}
+						</div>
+					</div>
+					<div class="form-group col-md-6 {% if form_operacao_td.consolidada.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4" style="text-align: left;"> Consolidada? </label>
+						<div class="col-md-8">
+							<select class="selectpicker form-control" id="id_consolidada" name="consolidada">
+								{% for key, value in form_operacao_td.fields.consolidada.widget.choices %}<option value="{{ key }}" 
+                                {% if key == form_operacao_td.consolidada.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+							</select>
+							{% if form_operacao_td.consolidada.errors %} <span class="help-block"> {{ form_operacao_td.consolidada.errors.as_text }} </span> {% endif %}
+						</div>
+					</div>
+				</div>
+				{% if varias_divisoes %}
+                <div class="row" id="forms">
+                    <h2 class="font-yellow-crusta" align="center">
+                        <strong>Divisões</strong> <button id="add-another" class="btn btn-icon-only green-steel" type="button"><i class="fa fa-plus"></i></button>
+                    </h2>
+                    {{ formset_divisao.management_form }}
+                    {% for form_divisao in formset_divisao %}
+                    <div class="col-md-12"><h3 class="font-yellow-crusta" align="center"><strong>Divisão {{ forloop.counter }}</strong></h3><br/></div>
+                    <div class="col-md-11" id="divisao-{{forloop.counter0}}">
+                        <div class="row">
+                            <div class="form-group col-md-6 {% if form_divisao.divisao.errors %} has-error {% endif %}">
+                                <label class="control-label col-md-4" style="text-align: left;"> {{form_divisao.divisao.label}}: </label>
+                                <div class="col-md-8">
+                                    <select class="selectpicker form-control" id="id_divisaooperacaotd_set-{{forloop.counter0}}-divisao" name="divisaooperacaotd_set-{{forloop.counter0}}-divisao">
+                                        {% for key, value in form_divisao.fields.divisao.widget.choices %}<option value="{{ key }}"
+                                            {% if key == form_divisao.divisao.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                                    </select>
+                                    {% if form_divisao.divisao.errors %} <span class="help-block"> {{ form_divisao.divisao.errors.as_text }} </span> {% endif %}
+                                </div>
+                            </div>
+                            <div class="form-group col-md-6 {% if form_divisao.quantidade.errors %} has-error {% endif %}">
+                                <label class="control-label col-md-4"> {{form_divisao.quantidade.label}}: </label>
+                                <div class="col-md-8">
+                                    <input id="id_divisaooperacaotd_set-{{forloop.counter0}}-quantidade" type="text" value="{{form_divisao.quantidade.value}}" name="divisaooperacaotd_set-{{forloop.counter0}}-quantidade" class="form-control">
+                                    {% if form_divisao.quantidade.errors %} <span class="help-block"> {{ form_divisao.quantidade.errors.as_text }} </span> {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% if form_divisao.instance.id %}
+                        <div class="md-checkbox col-md-1">
+                            <input type="checkbox" value="1" id="id_divisaooperacaotd_set-{{forloop.counter0}}-DELETE" name="divisaooperacaotd_set-{{forloop.counter0}}-DELETE" class="md-check">
+                            <label for="id_divisaooperacaotd_set-{{forloop.counter0}}-DELETE">
+                                <span></span>
+                                <span class="check"></span>
+                                <span class="box"></span> Excluir </label>
+                        </div>
+                    {% endif %}
+                    {% if form_divisao.instance.id %}
+                        <input id="id_divisaooperacaotd_set-{{forloop.counter0}}-id" name="divisaooperacaotd_set-{{forloop.counter0}}-id" value="{{form_divisao.instance.id}}" type="hidden">
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+				<div class="form-actions">
+					<div class="row">
+						<div class="col-md-offset col-md-3">
+							<button type="submit" name="save" value="1" class="btn green-steel">Salvar</button>
+                            <a data-toggle="modal" href="#exclusao" class="btn red-thunderbird">Excluir</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="exclusao" tabindex="-1" role="basic" aria-hidden="true" data-backdrop="static" data-keyboard="false"  style="display: none;">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                            <h4 class="modal-title">Confirmar exclusão de operação</h4>
+                        </div>
+                        <div class="modal-body">Confirma a exclusão da operação?</div>
+                        <div class="modal-footer">
+                            <a class="btn dark btn-outline" data-dismiss="modal">Cancelar</a>
+                            <button type="submit" name="delete" value="1" class="btn red-thunderbird">Confirmar</button>
+                        </div>
+                    </div>
+                    <!-- /.modal-content -->
+                </div>
+                <!-- /.modal-dialog -->
+            </div>
+		</form>
+		<!-- END FORM-->
+	</div>
+</div>
+
 {% endblock %}
 
+{% block extra_footer %}
+<script src={% static "assets/global/plugins/fuelux/js/spinner.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-touchspin/bootstrap.touchspin.js" %} type="text/javascript"></script>
+<script src={% static "assets/pages/scripts/components-bootstrap-touchspin.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/jquery-validation/js/jquery.validate.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/jquery-validation/js/additional-methods.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-select/js/bootstrap-select.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/moment.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-datepicker/js/bootstrap-datepicker.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-datepicker/locales/bootstrap-datepicker.pt-BR.min.js" %} type="text/javascript"></script>
+{{ form_operacao_td.media }}
+<script>
+$(document).ready(function() {
+    $( "#id_data" ).change(function() {
+        var dataEscolhida = $(this).val();
+        if (dataEscolhida == null || dataEscolhida == '') {
+            return;
+        }
+        var tipoOperacao = $('#id_tipo_operacao').val();
+        $.ajax({
+            url : "{% url 'td:buscar_titulos_validos_na_data' %}", // the endpoint
+            type : "GET", // http method
+            data: {dataEscolhida: dataEscolhida, tipoOperacao: tipoOperacao},
+            
+            // handle a successful response
+            success : function(lista_titulos_validos) {
+                $("#id_titulo option").each(function() {
+                    if ($.inArray(parseInt(this.value), lista_titulos_validos) > -1) {
+                        $(this).removeAttr('disabled');
+                    } else {
+                        $(this).attr('disabled', 'disabled');
+                    }
+                });
+                $("#id_titulo").selectpicker('refresh');
+            }, 
+                
+            // handle a non-successful response
+            error : function(xhr,errmsg,err) {
+                console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+            }
+        });
+    });
+    
+    $( "#id_tipo_operacao" ).change(function() {
+        var dataEscolhida = $('#id_data').val();
+        if (dataEscolhida == null || dataEscolhida == '') {
+            return;
+        }
+        var tipoOperacao = $(this).val();
+        $.ajax({
+            url : "{% url 'td:buscar_titulos_validos_na_data' %}", // the endpoint
+            type : "GET", // http method
+            data: {dataEscolhida: dataEscolhida, tipoOperacao: tipoOperacao},
+            
+            // handle a successful response
+            success : function(lista_titulos_validos) {
+                $("#id_titulo option").each(function() {
+                    if ($.inArray(parseInt(this.value), lista_titulos_validos) > -1) {
+                        $(this).removeAttr('disabled');
+                    } else {
+                        $(this).attr('disabled', 'disabled');
+                    }
+                });
+                $("#id_titulo").selectpicker('refresh');
+            }, 
+                
+            // handle a non-successful response
+            error : function(xhr,errmsg,err) {
+                console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

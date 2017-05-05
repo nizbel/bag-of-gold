@@ -1,0 +1,122 @@
+{% extends base.html %}
+{% load staticfiles %}
+
+{% block extra_head %}
+<link href={% static "assets/global/plugins/bootstrap-select/css/bootstrap-select.min.css" %} rel="stylesheet" type="text/css" />
+<link href={% static "assets/global/plugins/bootstrap-datepicker/css/bootstrap-datepicker3.min.css" %} rel="stylesheet" type="text/css" />
+{% endblock %}
+
+{% block content %}
+
+<div class="portlet light">
+	<div class="portlet-title">
+		<div class="caption font-yellow-crusta">
+			<i class="icon-note font-yellow-crusta"></i>
+			<span class="caption-subject bold uppercase"> Editar histórico de porcentagem de Letra de Crédito </span>
+		</div>
+	</div>
+	<div class="portlet-body form">
+		<!-- BEGIN FORM-->
+		<form method="POST" class="horizontal-form">{% csrf_token %}
+			<div class="form-body">
+				<div class="row">
+					<div class="form-group col-md-6 {% if form_historico_porcentagem.porcentagem_di.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4"> Porcentagem de rendimento: </label>
+						<div class="col-md-8">
+							<input id="id_porcentagem_di" type="text" value="{{form_historico_porcentagem.porcentagem_di.value}}" name="porcentagem_di" class="form-control">
+							{% if form_historico_porcentagem.porcentagem_di.errors %} <span class="help-block"> {{ form_historico_porcentagem.porcentagem_di.errors.as_text }} </span> {% endif %}
+						</div>
+					</div>
+					<div class="form-group col-md-6 {% if form_historico_porcentagem.data.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4" style="text-align: left;"> Data da variação: </label>
+						<div class="col-md-8">
+							<div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" data-date-viewmode="years">
+								<input type="text" class="form-control" id="id_data" name="data" {% if inicial %}value="Porcentagem inicial" disabled="disabled" readonly
+                                {% else %} value="{% if form_historico_porcentagem.data.value|date:'d/m/Y'|default:'' == '' %}{{form_historico_porcentagem.data.value|default:''}}{% else %}{{form_historico_porcentagem.data.value|date:'d/m/Y'}}{% endif %}"{% endif %}>
+								<span class="input-group-btn">
+									<button class="btn default" {% if inicial %}disabled="disabled"{% endif %} type="button">
+										<i class="fa fa-calendar"></i>
+									</button>
+								</span>
+							</div>
+                            {% if not inicial %}
+                                {% if form_historico_porcentagem.data.errors %} <span class="help-block"> {{ form_historico_porcentagem.data.errors.as_text }} </span>
+                                {% else %} <span class="help-block"> Selecione uma data </span>
+                                {% endif %}
+                            {% endif %}
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="form-group col-md-6 {% if form_historico_porcentagem.letra_credito.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4"> CDB/RDB: </label>
+						<div class="col-md-8">
+							<select class="selectpicker form-control" disabled id="id_letra_credito" name="letra_credito">
+								{% for key, value in form_historico_porcentagem.fields.letra_credito.widget.choices %}<option value="{{ key }}" {% if key == form_historico_porcentagem.letra_credito.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+							</select>
+							{% if form_historico_porcentagem.letra_credito.errors %} <span class="help-block"> {{ form_historico_porcentagem.letra_credito.errors.as_text }} </span> {% endif %}
+						</div>
+					</div>
+				</div>
+				<div class="form-actions">
+					<div class="row">
+						<div class="col-md-offset col-md-3">
+							<button type="submit" name="save" value="1" class="btn green-steel">Salvar</button>
+                            {% if not inicial %}
+                                <a data-toggle="modal" href="#exclusao" class="btn red-thunderbird">Excluir</a>
+                            {% endif %}
+						</div>
+					</div>
+				</div>
+			</div>
+            <div class="modal fade" id="exclusao" tabindex="-1" role="basic" aria-hidden="true" data-backdrop="static" data-keyboard="false"  style="display: none;">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                            <h4 class="modal-title">Confirmar exclusão de histórico de porcentagem</h4>
+                        </div>
+                        <div class="modal-body">Confirma a exclusão do valor de porcentagem do dia {{ form_historico_porcentagem.data.value|date:'d/m/Y'}}?</div>
+                        <div class="modal-footer">
+                            <a class="btn dark btn-outline" data-dismiss="modal">Cancelar</a>
+                            <button type="submit" name="delete" value="1" class="btn red-thunderbird">Confirmar</button>
+                        </div>
+                    </div>
+                    <!-- /.modal-content -->
+                </div>
+                <!-- /.modal-dialog -->
+            </div>
+		</form>
+		<!-- END FORM-->
+	</div>
+</div>
+{% endblock %}
+    
+{% block extra_footer %}
+<script src={% static "assets/global/plugins/fuelux/js/spinner.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-touchspin/bootstrap.touchspin.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/pages/scripts/components-bootstrap-touchspin.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/jquery-validation/js/jquery.validate.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/jquery-validation/js/additional-methods.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-select/js/bootstrap-select.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/moment.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-datepicker/js/bootstrap-datepicker.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-datepicker/locales/bootstrap-datepicker.pt-BR.min.js" %} type="text/javascript"></script>
+{{ form_historico_porcentagem.media }}
+<script>
+$( document ).ready(function() {	
+	$("input[name='porcentagem_di']").TouchSpin({
+		initval: 0.01,
+		min: 0.01,
+		max: 1000000000,
+		step: 0.01,
+		decimals: 2,
+		maxboostedstep: 100,
+		postfix: '%'
+	});
+	$('.date-picker').datepicker({
+		language: 'pt-BR'
+	});
+});
+</script>
+{% endblock %}
