@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoAcaoFormSet
 from bagogold.bagogold.forms.operacao_acao import OperacaoAcaoForm, \
     UsoProventosOperacaoAcaoForm
@@ -38,6 +39,7 @@ LISTA_MESES = [['Janeiro', 1],   ['Fevereiro', 2],
                ]
 
 @login_required
+@adiciona_titulo_descricao('Acompanhamento mensal de Trading', 'Mostra acumulados mensais para operações em Ações para Trading')
 def acompanhamento_mensal(request):
     investidor = request.user.investidor
     
@@ -220,6 +222,7 @@ def acompanhamento_mensal(request):
     
     
 @login_required
+@adiciona_titulo_descricao('Editar operação de Trading em Ações', 'Altera dados de uma compra e venda de Ações')
 def editar_operacao(request, operacao_id):
     investidor = request.user.investidor
     
@@ -249,6 +252,7 @@ def editar_operacao(request, operacao_id):
     return TemplateResponse(request, 'acoes/trade/editar_operacao.html', {'form': form}) 
     
 @login_required
+@adiciona_titulo_descricao('Editar operação em Ações para Trading', 'Altera valores de uma operação de compra/venda de Ações para Trading')
 def editar_operacao_acao(request, operacao_id):
     investidor = request.user.investidor
     
@@ -371,6 +375,7 @@ def editar_operacao_acao(request, operacao_id):
                                                                        'formset_divisao': formset_divisao, 'poupanca_proventos': poupanca_proventos, 'varias_divisoes': varias_divisoes})
             
 @login_required
+@adiciona_titulo_descricao('Histórico de Ações (Trading)', 'Histórico de operações de compra/venda para Trading')
 def historico_operacoes(request):
     investidor = request.user.investidor
     
@@ -469,6 +474,7 @@ def historico_operacoes(request):
                                'graf_lucro_mensal': graf_lucro_mensal})
     
 @login_required
+@adiciona_titulo_descricao('Histórico de operações de Trading', 'Histórico de operações de compra e venda')
 def historico_operacoes_cv(request):
     investidor = request.user.investidor
     operacoes = OperacaoCompraVenda.objects.filter(compra__investidor=investidor).order_by('id')
@@ -488,6 +494,7 @@ def historico_operacoes_cv(request):
     return TemplateResponse(request, 'acoes/trade/historico_operacoes_cv.html', {'operacoes': operacoes})
     
 @login_required
+@adiciona_titulo_descricao('Inserir operação de Trading em Ações', 'Insere um registro de operação de Trading em Ações (compra e venda)')
 def inserir_operacao(request):
     investidor = request.user.investidor
     if request.method == 'POST':
@@ -506,6 +513,7 @@ def inserir_operacao(request):
     return TemplateResponse(request, 'acoes/trade/inserir_operacao.html', {'form': form})
     
 @login_required
+@adiciona_titulo_descricao('Inserir operação em Ações para Trading', 'Insere um registro de operação de compra/venda em Ações para Trading')
 def inserir_operacao_acao(request):
     investidor = request.user.investidor
     

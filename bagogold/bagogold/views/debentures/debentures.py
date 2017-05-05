@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.debenture import OperacaoDebentureForm
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoDebentureFormSet
 from bagogold.bagogold.models.debentures import OperacaoDebenture, Debenture, \
