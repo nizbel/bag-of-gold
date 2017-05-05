@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.td import Titulo
+from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.pendencias.models.pendencias import \
-    PendenciaVencimentoTesouroDireto, Pendencia,\
-    PendenciaDocumentoGeradorProventos
+    PendenciaVencimentoTesouroDireto, Pendencia, PendenciaDocumentoGeradorProventos
 from bagogold.pendencias.utils.investidor import buscar_pendencias_investidor, \
     verificar_pendencias_investidor
 from django.contrib.auth.decorators import login_required
 from django.template.response import TemplateResponse
 
 @login_required
+@adiciona_titulo_descricao('Painel de pendências', 'Painel de pendências do investidor')
 def painel_pendencias(request):
     investidor = request.user.investidor
     
