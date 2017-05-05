@@ -59,7 +59,6 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'bagogold.bagogold.middleware.teste_nova_aparencia.TesteNovaAparenciaMiddleWare',
     'bagogold.bagogold.middleware.ultimo_acesso.UltimoAcessoMiddleWare',
 )
 
