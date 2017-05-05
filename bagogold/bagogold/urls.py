@@ -156,7 +156,6 @@ urlpatterns = [
     url(r'^detalhamento_investimentos/$', views.home.detalhamento_investimentos, name='detalhamento_investimentos'),
     
     # Teste de aparência
-    url(r'^teste/ver/(?P<url>[\w/]+)/$', views.misc.ver_nova_aparencia, name='ver_nova_aparencia'),
     url(r'^teste/carregar/(?P<url>[\w/]+)/$', views.misc.carregar_nova_aparencia, name='carregar_nova_aparencia'),
     
     # Investidores
