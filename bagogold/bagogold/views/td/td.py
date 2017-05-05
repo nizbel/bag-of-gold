@@ -435,8 +435,8 @@ def inserir_operacao_td(request):
                                                               'varias_divisoes': varias_divisoes})
 
 @login_required
-def painel(request):
 @adiciona_titulo_descricao('Painel de Tesouro Direto', 'Mostra a posição atual do investidor em Tesouro Direto')
+def painel(request):
     # Objeto vazio para preenchimento
     class Object():
         pass
