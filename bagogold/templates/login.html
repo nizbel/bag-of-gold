@@ -66,7 +66,7 @@
 
 {% block extra_content %}
     <div>
-        <img src="{% static "assets/global/img/bag-logo.png" %}" alt="" style="width: 10%; height: 10%; margin-top:-25%; left: -1000px; position: relative; z-index: -1" id="moving-bag"/> 
+        <img src="{% static "assets/global/img/bag-logo.png" %}" alt="" style="min-width: 120px; width: 10%; height: auto; left: -1000px; position: fixed; z-index: -1" id="moving-bag"/> 
     </div>
 {% endblock %}
 
@@ -76,15 +76,20 @@ $(function() {
     var img = $("#moving-bag"),
         width = img.get(0).width,
         screenWidth = $(window).width(),
+        screenHeight = $(window).height(),
         duration = 2500;
+    img.css("top", screenHeight*0.4 - img.get(0).height/2);
+    console.log(img.css("top"), screenHeight*0.4, img.get(0).height/2);
 
     function animarBag1() {
-        img.css({"left": -width, "width": "10%", "height": "10%"}).animate({
+        screenWidth = $(window).width();
+        screenHeight = $(window).height();
+        img.css({"left": -width, "width": "10%"}).css("top", screenHeight*0.4 - img.get(0).height/2).animate({
             "left": screenWidth/2 - width
         }, duration, "linear", animarBag2);
     }
     function animarBag2() {
-        img.css({"width": "20%", "height": "20%"}).animate({
+        img.css("width", img.get(0).width*2).css("top", screenHeight*0.4 - img.get(0).height/2).animate({
             "left": screenWidth
         }, duration, "linear", animarBag1);
     }
