@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoAcaoFormSet
 from bagogold.bagogold.forms.operacao_acao import OperacaoAcaoForm, \
     UsoProventosOperacaoAcaoForm
@@ -40,6 +41,7 @@ def calcular_poupanca_proventos_na_data(request):
     return HttpResponse(json.dumps(poupanca_proventos), content_type = "application/json") 
 
 @login_required
+@adiciona_titulo_descricao('Editar operação em Ações (Buy and Hold)', 'Altera valores de operação de compra/venda em Ações para Buy and Hold')
 def editar_operacao_acao(request, operacao_id):
     investidor = request.user.investidor
     
@@ -165,6 +167,7 @@ def editar_provento_acao(request, id):
     return TemplateResponse(request, 'acoes/buyandhold/editar_provento_acao.html', {'form': form})  
 
 @login_required
+@adiciona_titulo_descricao('Estatísticas da ação', 'Mostra estatísticas e valores históricos de uma ação')
 def estatisticas_acao(request, ticker=None):
     investidor = request.user.investidor
     if (ticker):
@@ -322,6 +325,7 @@ def estatisticas_acao(request, ticker=None):
                                'graf_historico_proventos': graf_historico_proventos, 'graf_historico': graf_historico})
 
 @login_required
+@adiciona_titulo_descricao('Histórico de Ações (Buy and Hold)', 'Histórico de operações de compra/venda em ações para Buy and Hold e proventos recebidos')
 def historico(request):
     # Usado para criar objetos vazios
     class Object(object):
@@ -556,6 +560,7 @@ def historico(request):
                                 'graf_dividendos_mensal': graf_dividendos_mensal, 'graf_jscp_mensal': graf_jscp_mensal, 'dados': dados})
     
 @login_required
+@adiciona_titulo_descricao('Inserir operação em Ações (Buy and Hold)', 'Insere um registro de operação de compra/venda em Ações para Buy and Hold')
 def inserir_operacao_acao(request):
     investidor = request.user.investidor
     
@@ -636,6 +641,7 @@ def inserir_provento_acao(request):
     return TemplateResponse(request, 'acoes/buyandhold/inserir_provento_acao.html', {'form': form, })
     
 @login_required
+@adiciona_titulo_descricao('Inserir taxa de custódia para Ações', 'Insere um registro no histórico de valores de taxa de custódia para o investidor')
 def inserir_taxa_custodia_acao(request):
     investidor = request.user.investidor
     
@@ -652,6 +658,7 @@ def inserir_taxa_custodia_acao(request):
     return TemplateResponse(request, 'acoes/buyandhold/inserir_taxa_custodia_acao.html', {'form': form, })
     
 @login_required
+@adiciona_titulo_descricao('Painel de Ações (Buy and Hold)', 'Posição atual do investidor em Ações para Buy and Hold')
 def painel(request):
     # Usado para criar objetos vazios
     class Object(object):
@@ -726,7 +733,7 @@ def painel(request):
     return TemplateResponse(request, 'acoes/buyandhold/painel.html', {'acoes': acoes, 'dados': dados})
     
 @login_required
-def remover_taxas_custodia_acao(request, taxa_id):
+def remover_taxa_custodia_acao(request, taxa_id):
     investidor = request.user.investidor
     taxa = get_object_or_404(TaxaCustodiaAcao, pk=taxa_id)
     
@@ -743,6 +750,7 @@ def remover_taxas_custodia_acao(request, taxa_id):
     return HttpResponseRedirect(reverse('acoes:ver_taxas_custodia_acao'))
 
 @login_required
+@adiciona_titulo_descricao('Listar taxas de custódia de ações', 'Lista o histórico de valores de taxas de custódia cadastrados pelo investidor')
 def ver_taxas_custodia_acao(request):
     investidor = request.user.investidor
     taxas_custodia = TaxaCustodiaAcao.objects.filter(investidor=investidor).order_by('ano_vigencia', 'mes_vigencia')

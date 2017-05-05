@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoCRI_CRAFormSet
 from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoCRI_CRA
@@ -7,14 +8,14 @@ from bagogold.bagogold.models.lc import HistoricoTaxaDI
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
 from bagogold.bagogold.models.td import HistoricoIPCA
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas
-from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo,\
+from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo, \
     formatar_zeros_a_direita_apos_2_casas_decimais
 from bagogold.cri_cra.forms.cri_cra import CRI_CRAForm, \
     DataRemuneracaoCRI_CRAForm, DataRemuneracaoCRI_CRAFormSet, \
     DataAmortizacaoCRI_CRAFormSet, OperacaoCRI_CRAForm
 from bagogold.cri_cra.models.cri_cra import CRI_CRA, DataRemuneracaoCRI_CRA, \
     DataAmortizacaoCRI_CRA, OperacaoCRI_CRA
-from bagogold.cri_cra.utils.utils import qtd_cri_cra_ate_dia_para_certificado,\
+from bagogold.cri_cra.utils.utils import qtd_cri_cra_ate_dia_para_certificado, \
     calcular_valor_cri_cra_ate_dia
 from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
 from decimal import Decimal
@@ -30,6 +31,7 @@ import calendar
 import datetime
 
 @login_required
+@adiciona_titulo_descricao('Detalhar CRI/CRA', 'Detalha informações de rendimento e posição do investidor para um CRI/CRA')
 def detalhar_cri_cra(request, id_cri_cra):
     investidor = request.user.investidor
     
@@ -69,6 +71,7 @@ def detalhar_cri_cra(request, id_cri_cra):
                                                                        'datas_amortizacao': datas_amortizacao})
 
 @login_required
+@adiciona_titulo_descricao('Editar CRI/CRA', 'Altera dados de um CRI/CRA')
 def editar_cri_cra(request, id_cri_cra):
     investidor = request.user.investidor
     cri_cra = CRI_CRA.objects.get(pk=id_cri_cra)
@@ -160,6 +163,7 @@ def editar_cri_cra(request, id_cri_cra):
     
     
 @login_required
+@adiciona_titulo_descricao('Editar operação em CRI/CRA', 'Altera valores de uma operação de compra/venda em CRI/CRA')
 def editar_operacao_cri_cra(request, id_operacao):
     investidor = request.user.investidor
       
@@ -238,6 +242,7 @@ def editar_operacao_cri_cra(request, id_operacao):
 
     
 @login_required
+@adiciona_titulo_descricao('Histórico de CRI/CRA', 'Histórico de operações de compra/venda em CRI/CRA')
 def historico(request):
     investidor = request.user.investidor
     # Processa primeiro operações de venda (V), depois compra (C)
@@ -296,6 +301,7 @@ def historico(request):
     
 
 @login_required
+@adiciona_titulo_descricao('Inserir CRI/CRA', 'Insere um CRI/CRA na lista de Certificados de Recebimento do investidor')
 def inserir_cri_cra(request):
     investidor = request.user.investidor
     
@@ -355,6 +361,7 @@ def inserir_cri_cra(request):
                                                                       'formset_data_amortizacao': formset_data_amortizacao, 'amortizacao_integral_venc': amortizacao_integral_venc})
 
 @login_required
+@adiciona_titulo_descricao('Inserir operação em CRI/CRA', 'Insere uma operação de compra/venda em CRI/CRA')
 def inserir_operacao_cri_cra(request):
     investidor = request.user.investidor
      
@@ -406,6 +413,7 @@ def inserir_operacao_cri_cra(request):
                                                                          'varias_divisoes': varias_divisoes})
 
 @login_required
+@adiciona_titulo_descricao('Listar CRI/CRA', 'Lista de Certificados de Recebíveis cadastrados pelo investidor')
 def listar_cri_cra(request):
     investidor = request.user.investidor
     cri_cra = CRI_CRA.objects.filter(investidor=investidor)
@@ -420,6 +428,7 @@ def listar_cri_cra(request):
     return TemplateResponse(request, 'cri_cra/listar_cri_cra.html', {'cri_cra': cri_cra})
 
 @login_required
+@adiciona_titulo_descricao('Painel de CRI/CRA', 'Posição atual do investidor em CRI/CRA')
 def painel(request):
     investidor = request.user.investidor
     # Processa primeiro operações de venda (V), depois compra (C)
@@ -520,6 +529,7 @@ def painel(request):
     return TemplateResponse(request, 'cri_cra/painel.html', {'cri_cra': cri_cra, 'dados': dados})
 
 @login_required
+@adiciona_titulo_descricao('Sobre CRI/CRA', 'Detalha o que são Certificados de Recebíveis')
 def sobre(request):
     data_atual = datetime.date.today()
     historico_di = HistoricoTaxaDI.objects.filter(data__gte=data_atual.replace(year=data_atual.year-3))

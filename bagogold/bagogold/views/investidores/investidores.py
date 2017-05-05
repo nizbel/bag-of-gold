@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.investidor import DadosCadastraisForm
 from django.contrib import messages
 from django.contrib.auth import login, views

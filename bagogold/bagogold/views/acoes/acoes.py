@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.models.acoes import Acao, ValorDiarioAcao, HistoricoAcao
 from bagogold.bagogold.utils.acoes import quantidade_acoes_ate_dia, \
     calcular_poupanca_prov_acao_ate_dia
@@ -14,6 +15,7 @@ import datetime
 #     return TemplateResponse(request, 'acoes/listar_acoes.html', {'acoes': acoes})
 
 @login_required
+@adiciona_titulo_descricao('Sobre Ações', 'Detalha o que são Ações')
 def sobre(request):
     if request.user.is_authenticated():
         total_atual = 0
