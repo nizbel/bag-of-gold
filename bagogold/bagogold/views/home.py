@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, Provento, \
     ValorDiarioAcao
 from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB
@@ -40,6 +41,7 @@ import math
 
 # TODO remover login_required
 @login_required
+@adiciona_titulo_descricao('Painel inicial', 'Traz informações gerais sobre a posição atual em cada tipo de investimento')
 def inicio(request):
     # Usado para criar objetos vazios
     class Object(object):
@@ -206,6 +208,7 @@ def inicio(request):
                                                      'graf_rendimentos_mensal_cri_cra': graf_rendimentos_mensal_cri_cra})
 
 @login_required
+@adiciona_titulo_descricao('Histórico detalhado', 'Histórico detalhado das operações feitas pelo investidor')
 def detalhamento_investimentos(request):
     # Usado para criar objetos vazios
     class Object(object):
