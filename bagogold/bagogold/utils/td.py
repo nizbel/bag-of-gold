@@ -86,12 +86,10 @@ def quantidade_titulos_ate_dia_por_titulo(investidor, titulo_id, dia):
                 Dia final
     Retorno: Quantidade de títulos
     """
-    compras = OperacaoTitulo.objects.filter(investidor=investidor, titulo__id=titulo_id, data__lte=dia, tipo_operacao='C').exclude(data__isnull=True) \
-        .aggregate(total_compras=Sum('quantidade'))['total_compras'] or Decimal(0)
-    vendas = OperacaoTitulo.objects.filter(investidor=investidor, titulo__id=titulo_id, data__lte=dia, tipo_operacao='V').exclude(data__isnull=True) \
-        .aggregate(total_vendas=Sum('quantidade'))['total_vendas'] or Decimal(0)
-    
-    qtd_titulos = compras - vendas
+    qtd_titulos = OperacaoTitulo.objects.filter(investidor=investidor, data__lte=dia, titulo__id=titulo_id).exclude(data__isnull=True) \
+        .aggregate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
+                            When(tipo_operacao='V', then=F('quantidade')*-1),
+                            output_field=DecimalField())))['total'] or Decimal(0)
     
     return qtd_titulos
 
