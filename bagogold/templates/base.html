@@ -129,6 +129,12 @@
 													<a href="{% url "configuracoes_conta_investidor" request.user.id %}">
 														<i class="icon-settings"></i> Configurações </a>
 												</li>
+                                                {% if request.user.id == 1 or request.user.id == 31 %}
+                                                <li>
+                                                    <a href="{% url "carregar_nova_aparencia" request.path|slice:"1:-1" %}">
+                                                        <i class="fa fa-warning"></i> Carregar arquivos </a>
+                                                </li>
+                                                {% endif %}
                                                 <li class="divider"> </li>
 												<li>
 													<a href="{% url "logout" %}">
@@ -142,11 +148,6 @@
                                         </li>
                                         {% endif %}
 										<!-- END USER LOGIN DROPDOWN -->
-										<!-- TESTE DE NOVA APARENCIA -->
-										{% if request.user.id == 1 or request.user.id == 31 %}
-											<a href="{% url "carregar_nova_aparencia" request.path|slice:"1:-1" %}" class="btn btn-warning">Carregar arquivos</a>
-										{% endif %}
-										<!-- END TESTE DE NOVA APARENCIA -->
                                     </ul>
                                 </div>
                                 <!-- END TOP NAVIGATION MENU -->
