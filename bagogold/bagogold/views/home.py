@@ -52,7 +52,7 @@ def inicio(request):
     if request.user.is_authenticated():
         investidor = request.user.investidor
     else:
-        return TemplateResponse(request, 'inicio.html')
+        return TemplateResponse(request, 'inicio.html', {})
     # Guardar data atual
     data_atual = datetime.datetime.now()
     
@@ -65,7 +65,7 @@ def inicio(request):
         investimento.valor = valor
         investimento.descricao = chave
         if chave == 'Ações':
-            investimento.link = 'acoes:painel_bh'
+            investimento.link = 'acoes:bh:painel_bh'
         elif chave == 'CDB/RDB':
             investimento.link = 'cdb_rdb:painel_cdb_rdb'
         elif chave == 'CRI/CRA':

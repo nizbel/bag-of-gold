@@ -156,7 +156,7 @@ $(document).ready(function() {
     //for every field change
     $('#selectAno,#selectMes').change(function() {
         $.ajax({
-            url : "{% url 'acoes:acompanhamento_mensal' %}", // the endpoint
+            url : "{% url 'acoes:trading:acompanhamento_mensal' %}", // the endpoint
             type : "GET", // http method
             data : { ano : $('#selectAno').val(), mes: $('#selectMes').val() }, // data sent with the post request
 
