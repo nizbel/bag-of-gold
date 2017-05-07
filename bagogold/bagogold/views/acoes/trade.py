@@ -237,14 +237,14 @@ def editar_operacao(request, operacao_id):
             if form.is_valid():
                 form.save()
                 messages.success(request, 'Operação de Compra/Venda editada com sucesso')
-                return HttpResponseRedirect(reverse('acoes:historico_operacoes_cv'))
+                return HttpResponseRedirect(reverse('acoes:trading:historico_operacoes_cv'))
             
             for erro in [erro for erro in form.non_field_errors()]:
                 messages.error(request, erro)
         elif request.POST.get("delete"):
             operacao.delete()
             messages.error(request, 'Operação de Compra/Venda excluída com sucesso')
-            return HttpResponseRedirect(reverse('acoes:historico_operacoes_cv'))
+            return HttpResponseRedirect(reverse('acoes:trading:historico_operacoes_cv'))
 
     else:
         form = OperacaoCompraVendaForm(instance=operacao, investidor=investidor)
@@ -320,7 +320,7 @@ def editar_operacao_acao(request, operacao_id):
                                                 divisao_operacao.usoproventosoperacaoacao.save()
                                 
                                 messages.success(request, 'Operação alterada com sucesso')
-                                return HttpResponseRedirect(reverse('acoes:historico_operacoes'))
+                                return HttpResponseRedirect(reverse('acoes:trading:historico_operacoes'))
                             for erro in formset_divisao.non_form_errors():
                                 messages.error(request, erro)
                                 
@@ -339,7 +339,7 @@ def editar_operacao_acao(request, operacao_id):
                                 elif uso_proventos.qtd_utilizada == 0 and UsoProventosOperacaoAcao.objects.filter(divisao_operacao__operacao=operacao_acao):
                                     uso_proventos.delete()
                                 messages.success(request, 'Operação alterada com sucesso')
-                                return HttpResponseRedirect(reverse('acoes:historico_operacoes'))
+                                return HttpResponseRedirect(reverse('acoes:trading:historico_operacoes'))
                 except:
                     pass
             
@@ -356,7 +356,7 @@ def editar_operacao_acao(request, operacao_id):
                         divisao.delete()
                     operacao_acao.delete()
                     messages.success(request, 'Operação apagada com sucesso')
-                    return HttpResponseRedirect(reverse('acoes:historico_bh'))
+                    return HttpResponseRedirect(reverse('acoes:bh:historico_bh'))
             except:
                 messages.error('Houve um erro na exclusão da operação')
 
@@ -504,7 +504,7 @@ def inserir_operacao(request):
             operacao_trade.investidor = investidor
             operacao_trade.save()
             messages.success(request, 'Operação inserida com sucesso')
-            return HttpResponseRedirect(reverse('acoes:historico_operacoes_cv'))
+            return HttpResponseRedirect(reverse('acoes:trading:historico_operacoes_cv'))
         for erro in [erro for erro in form.non_field_errors()]:
             messages.error(request, erro)
     else:
@@ -548,7 +548,7 @@ def inserir_operacao_acao(request):
                                     divisao_operacao.usoproventosoperacaoacao.save()
                                 
                             messages.success(request, 'Operação inserida com sucesso')
-                            return HttpResponseRedirect(reverse('acoes:historico_operacoes'))
+                            return HttpResponseRedirect(reverse('acoes:trading:historico_operacoes'))
                         for erro in formset_divisao.non_form_errors():
                             messages.error(request, erro)
                         
@@ -563,7 +563,7 @@ def inserir_operacao_acao(request):
                                 uso_proventos.divisao_operacao = divisao_operacao
                                 uso_proventos.save()
                             messages.success(request, 'Operação inserida com sucesso')
-                            return HttpResponseRedirect(reverse('acoes:historico_operacoes'))
+                            return HttpResponseRedirect(reverse('acoes:trading:historico_operacoes'))
             except:
                 pass
             

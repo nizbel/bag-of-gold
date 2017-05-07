@@ -141,10 +141,10 @@
                         {% endif %}
                         <h4>Investimentos</h4>
                         <ul class="list-unstyled">
-                            <li><a href="{% url "acoes:inserir_operacao_bh" %}">Inserir operação (Buy and Hold)</a></li>
-                            <li><a href="{% url "acoes:inserir_operacao_t" %}">Inserir operação (Trading)</a></li>
-                            <li><a href="{% url "acoes:historico_bh" %}">Histórico de operações (Buy and Hold)</a></li>
-                            <li><a href="{% url "acoes:painel_bh" %}">Painel de Ações (Buy and Hold)</a></li>
+                            <li><a href="{% url "acoes:bh:inserir_operacao_bh" %}">Inserir operação (Buy and Hold)</a></li>
+                            <li><a href="{% url "acoes:trading:inserir_operacao_t" %}">Inserir operação (Trading)</a></li>
+                            <li><a href="{% url "acoes:bh:historico_bh" %}">Histórico de operações (Buy and Hold)</a></li>
+                            <li><a href="{% url "acoes:bh:painel_bh" %}">Painel de Ações (Buy and Hold)</a></li>
                         </ul>
                     </div>
                 </div>

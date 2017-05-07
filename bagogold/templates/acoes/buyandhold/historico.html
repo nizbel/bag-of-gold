@@ -212,12 +212,12 @@
 						<tbody>
 						{% for operacao in operacoes %}
 						<tr>
-							<td><a href="{% url 'acoes:estatisticas_acao_bh' operacao.acao.ticker %}" data-original-title="Estatísticas ação"
+							<td><a href="{% url 'acoes:bh:estatisticas_acao_bh' operacao.acao.ticker %}" data-original-title="Estatísticas ação"
 								class="tooltips" data-placement="top">{{operacao.acao.ticker}}</a></td>
 							<td><a href={% if operacao.tipo != 'Compra' and operacao.tipo != 'Venda' %}
-								"{% url 'acoes:editar_provento_bh' operacao.id %}" data-original-title="Editar provento"
+								"{% url 'acoes:bh:editar_provento_bh' operacao.id %}" data-original-title="Editar provento"
 							{% else %}
-								"{% url 'acoes:editar_operacao_bh' operacao.id %}" data-original-title="Editar operação" 
+								"{% url 'acoes:bh:editar_operacao_bh' operacao.id %}" data-original-title="Editar operação" 
 							{% endif %} class="tooltips" data-placement="top" >{{operacao.tipo}}</a></td>
 							<td>{{ operacao.data|date:"Y-m-d" }}</td>
 							<td>{{operacao.quantidade}}</td>
