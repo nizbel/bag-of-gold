@@ -60,7 +60,7 @@
 						<tbody>
 						{% for operacao in operacoes %}
 						<tr>
-							<td><a href="{% url 'acoes:editar_operacao_acao_t' operacao.id %}" data-rel="tooltip" data-original-title="Editar operação">{{operacao.acao.ticker}}</a></td>
+							<td><a href="{% url 'acoes:trading:editar_operacao_acao_t' operacao.id %}" data-rel="tooltip" data-original-title="Editar operação">{{operacao.acao.ticker}}</a></td>
 							<td>{{operacao.tipo_operacao}}</td>
 							<td>{{ operacao.data|date:"Y-m-d" }}</td>
 							<td>{{operacao.quantidade}}</td>

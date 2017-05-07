@@ -20,29 +20,39 @@ inicio_patterns = [
     url(r'^sobre/$', views.home.sobre, name='sobre'),
     ]
 
-acoes_patterns = [
+acoes_geral_patterns = [
     url(r'^sobre/$', views.acoes.acoes.sobre, name='sobre_acoes'),
 #     url(r'^listar_acoes/$', views.acoes.acoes.listar_acoes, name='listar_acoes'),
-    
-    url(r'^buyandhold/calcular_poupanca_proventos_na_data/$', views.acoes.buyandhold.calcular_poupanca_proventos_na_data, name='calcular_poupanca_proventos_na_data'),
-    url(r'^buyandhold/editar_operacao_acao/(?P<operacao_id>\d+)/$', views.acoes.buyandhold.editar_operacao_acao, name='editar_operacao_bh'),
-    url(r'^buyandhold/editar_provento_acao/(?P<id>\d+)/$', views.acoes.buyandhold.editar_provento_acao, name='editar_provento_bh'),
-    url(r'^buyandhold/estatisticas_acao/(?P<ticker>\w+)/$', views.acoes.buyandhold.estatisticas_acao, name='estatisticas_acao_bh'),
-    url(r'^buyandhold/historico/$', views.acoes.buyandhold.historico, name='historico_bh'),
-    url(r'^buyandhold/inserir_operacao_acao/$', views.acoes.buyandhold.inserir_operacao_acao, name='inserir_operacao_bh'),
-    url(r'^buyandhold/inserir_provento_acao/$', views.acoes.buyandhold.inserir_provento_acao, name='inserir_provento_bh'),
-    url(r'^buyandhold/inserir_taxa_custodia_acao/$', views.acoes.buyandhold.inserir_taxa_custodia_acao, name='inserir_taxa_custodia_acao'),
-    url(r'^buyandhold/listar_taxas_custodia_acao/$', views.acoes.buyandhold.listar_taxas_custodia_acao, name='listar_taxas_custodia_acao'),
-    url(r'^buyandhold/painel/$', views.acoes.buyandhold.painel, name='painel_bh'),
-    url(r'^buyandhold/remover_taxa_custodia_acao/(?P<taxa_id>\d+)/$', views.acoes.buyandhold.remover_taxa_custodia_acao, name='remover_taxa_custodia_acao'),
+    ]
 
-    url(r'^trading/acompanhamento_mensal/$', views.acoes.trade.acompanhamento_mensal, name='acompanhamento_mensal'),
-    url(r'^trading/editar_operacao/(?P<operacao_id>\d+)/$', views.acoes.trade.editar_operacao, name='editar_operacao_t'),
-    url(r'^trading/editar_operacao_acao/(?P<operacao_id>\d+)/$', views.acoes.trade.editar_operacao_acao, name='editar_operacao_acao_t'),
-    url(r'^trading/historico_operacoes/$', views.acoes.trade.historico_operacoes, name='historico_operacoes'),
-    url(r'^trading/historico_operacoes_cv/$', views.acoes.trade.historico_operacoes_cv, name='historico_operacoes_cv'),
-    url(r'^trading/inserir_operacao/$', views.acoes.trade.inserir_operacao, name='inserir_operacao_t'),
-    url(r'^trading/inserir_operacao_acao/$', views.acoes.trade.inserir_operacao_acao, name='inserir_operacao_acao_t'),
+acoes_bh_patterns = [
+    url(r'^calcular_poupanca_proventos_na_data/$', views.acoes.buyandhold.calcular_poupanca_proventos_na_data, name='calcular_poupanca_proventos_na_data'),
+    url(r'^editar_operacao_acao/(?P<operacao_id>\d+)/$', views.acoes.buyandhold.editar_operacao_acao, name='editar_operacao_bh'),
+    url(r'^editar_provento_acao/(?P<id>\d+)/$', views.acoes.buyandhold.editar_provento_acao, name='editar_provento_bh'),
+    url(r'^estatisticas_acao/(?P<ticker>\w+)/$', views.acoes.buyandhold.estatisticas_acao, name='estatisticas_acao_bh'),
+    url(r'^historico/$', views.acoes.buyandhold.historico, name='historico_bh'),
+    url(r'^inserir_operacao_acao/$', views.acoes.buyandhold.inserir_operacao_acao, name='inserir_operacao_bh'),
+    url(r'^inserir_provento_acao/$', views.acoes.buyandhold.inserir_provento_acao, name='inserir_provento_bh'),
+    url(r'^inserir_taxa_custodia_acao/$', views.acoes.buyandhold.inserir_taxa_custodia_acao, name='inserir_taxa_custodia_acao'),
+    url(r'^listar_taxas_custodia_acao/$', views.acoes.buyandhold.listar_taxas_custodia_acao, name='listar_taxas_custodia_acao'),
+    url(r'^painel/$', views.acoes.buyandhold.painel, name='painel_bh'),
+    url(r'^remover_taxa_custodia_acao/(?P<taxa_id>\d+)/$', views.acoes.buyandhold.remover_taxa_custodia_acao, name='remover_taxa_custodia_acao'),
+    ]
+
+acoes_trading_patterns = [
+    url(r'^acompanhamento_mensal/$', views.acoes.trade.acompanhamento_mensal, name='acompanhamento_mensal'),
+    url(r'^editar_operacao/(?P<operacao_id>\d+)/$', views.acoes.trade.editar_operacao, name='editar_operacao_t'),
+    url(r'^editar_operacao_acao/(?P<operacao_id>\d+)/$', views.acoes.trade.editar_operacao_acao, name='editar_operacao_acao_t'),
+    url(r'^historico_operacoes/$', views.acoes.trade.historico_operacoes, name='historico_operacoes'),
+    url(r'^historico_operacoes_cv/$', views.acoes.trade.historico_operacoes_cv, name='historico_operacoes_cv'),
+    url(r'^inserir_operacao/$', views.acoes.trade.inserir_operacao, name='inserir_operacao_t'),
+    url(r'^inserir_operacao_acao/$', views.acoes.trade.inserir_operacao_acao, name='inserir_operacao_acao_t'),
+                     ]
+
+acoes_patterns = [
+    url(r'^', include(acoes_geral_patterns, namespace='geral')),
+    url(r'^buyandhold/', include(acoes_bh_patterns, namespace='bh')),
+    url(r'^trading/', include(acoes_trading_patterns, namespace='trading')),
     ]
 
 cdb_rdb_patterns = [
