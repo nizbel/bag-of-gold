@@ -740,3 +740,6 @@ def detalhamento_investimentos(request):
     
     return TemplateResponse(request, 'detalhamento_investimentos.html', {'graf_patrimonio': graf_patrimonio, 'patrimonio_anual': patrimonio_anual,
                                             'estatisticas': estatisticas})
+
+def sobre(request):
+    return TemplateResponse(request, 'sobre.html', {})
