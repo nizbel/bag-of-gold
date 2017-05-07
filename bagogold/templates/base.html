@@ -161,11 +161,19 @@
 								<!-- DOC: Apply "hor-menu-light" class after the "hor-menu" class below to have a horizontal menu with white background -->
 								<!-- DOC: Remove data-hover="dropdown" and data-close-others="true" attributes below to disable the dropdown opening on mouse hover -->
 								<div class="hor-menu  ">
-									<ul class="nav navbar-nav">
-										<li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if request.resolver_match.url_name == 'inicio' %}active{% endif %}">
-											<a href="{% url "inicio" %}"> Início
+									<ul class="nav navbar-nav" style="z-index: 1000;">
+										<li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'inicio' in request.resolver_match.namespace %}active{% endif %}">
+											<a href="javascript:;"> Início
 												<span class="arrow"></span>
 											</a>
+                                            <ul class="dropdown-menu pull-left">
+                                                <li aria-haspopup="true">
+                                                    <a href="{% url "inicio:painel_geral" %}" class="nav-link  "> Painel Geral </a>
+                                                </li>
+                                                <li aria-haspopup="true">
+                                                    <a href="javascript:;" class="nav-link  "> Sobre </a>
+                                                </li>
+                                            </ul>
 										</li>   
 										<li aria-haspopup="true" class="menu-dropdown mega-menu-dropdown {% if 'acoes' in request.resolver_match.namespace %}active{% endif %}">
                                             <a href="javascript:;"> Ações
