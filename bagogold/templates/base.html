@@ -171,10 +171,28 @@
                                                     <a href="{% url "inicio:painel_geral" %}" class="nav-link  "> Painel Geral </a>
                                                 </li>
                                                 <li aria-haspopup="true">
-                                                    <a href="javascript:;" class="nav-link  "> Sobre </a>
+                                                    <a href="{% url "inicio:sobre" %}" class="nav-link  "> Sobre </a>
                                                 </li>
                                             </ul>
-										</li>   
+										</li>  
+                                        <li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown ">
+                                            <a href="javascript:;"> Ações
+                                                <span class="arrow"></span>
+                                            </a>
+                                            <ul class="dropdown-menu pull-left">
+                                                <li aria-haspopup="true" class="dropdown-submenu ">
+                                                    <a href="javascript:;" class="nav-link nav-toggle ">
+                                                         Geral
+                                                        <span class="arrow"></span>
+                                                    </a>
+                                                    <ul class="dropdown-menu">
+                                                        <li aria-haspopup="true" class=" ">
+                                                            <a href="{% url "acoes:sobre_acoes" %}" class="nav-link "> Sobre </a>
+                                                        </li>
+                                                    </ul>
+                                                </li>
+                                            </ul>
+                                        </li> 
 										<li aria-haspopup="true" class="menu-dropdown mega-menu-dropdown {% if 'acoes' in request.resolver_match.namespace %}active{% endif %}">
                                             <a href="javascript:;"> Ações
                                                 <span class="arrow"></span>
@@ -189,7 +207,7 @@
                                                                         <h3>Geral</h3>
                                                                     </li>
                                                                     <li>
-                                                                        <a href="{% url "acoes:sobre_acoes" %}"> Sobre </a>
+                                                                        <a href=""> Sobre </a>
                                                                     </li>
                                                                 </ul>
                                                                 <ul class="col-md-4 mega-menu-submenu">
