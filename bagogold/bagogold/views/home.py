@@ -31,7 +31,9 @@ from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
 from decimal import Decimal, ROUND_DOWN
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
-from django.db.models.expressions import F
+from django.db.models.aggregates import Sum
+from django.db.models.expressions import F, Case, When
+from django.db.models.fields import DecimalField
 from django.template.response import TemplateResponse
 from itertools import chain
 from operator import attrgetter
@@ -40,7 +42,7 @@ import datetime
 import math
 
 # TODO remover login_required
-@login_required
+# @login_required
 @adiciona_titulo_descricao('Painel inicial', 'Traz informações gerais sobre a posição atual em cada tipo de investimento')
 def inicio(request):
     # Usado para criar objetos vazios
@@ -56,7 +58,6 @@ def inicio(request):
     
     ultimas_operacoes = buscar_ultimas_operacoes(request.user.investidor, 5) 
 
-    inicio = datetime.datetime.now()
     investimentos_atuais = list()
     investimentos = buscar_totais_atuais_investimentos(request.user.investidor) 
     for chave, valor in investimentos.items():
@@ -132,6 +133,12 @@ def inicio(request):
     total_debentures_dia_anterior = float(sum(calcular_valor_debentures_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values()))
     total_cri_cra_dia_anterior = float(sum(calcular_valor_cri_cra_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values()))
     
+    operacoes_lci_lca_no_periodo = OperacaoLetraCredito.objects.filter(data__range=[data_atual - datetime.timedelta(qtd_ultimos_dias), data_atual], investidor=investidor)
+    operacoes_cdb_rdb_no_periodo = OperacaoCDB_RDB.objects.filter(data__range=[data_atual - datetime.timedelta(qtd_ultimos_dias), data_atual], investidor=investidor)
+    operacoes_td_no_periodo = OperacaoTitulo.objects.filter(data__range=[data_atual - datetime.timedelta(qtd_ultimos_dias), data_atual], investidor=investidor)
+    operacoes_debenture_no_periodo = OperacaoDebenture.objects.filter(data__range=[data_atual - datetime.timedelta(qtd_ultimos_dias), data_atual], investidor=investidor)
+    operacoes_cri_cra_no_periodo = OperacaoCRI_CRA.objects.filter(data__range=[data_atual - datetime.timedelta(qtd_ultimos_dias), data_atual], cri_cra__investidor=investidor)
+    
     for dia in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))]:
         dia = dia.date()
         diario_cdb_rdb[dia] = 0
@@ -145,46 +152,43 @@ def inicio(request):
             total_lc = float(sum(calcular_valor_lc_ate_dia(investidor, dia).values()))
 #                     print '(%s) %s - %s =' % (dia, total_lc, total_lc_dia_anterior), total_lc - total_lc_dia_anterior
             # Removendo operações do dia
-            diario_lc[dia] += total_lc - total_lc_dia_anterior - float(sum(OperacaoLetraCredito.objects.filter(data=dia, investidor=investidor, tipo_operacao='C').values_list('quantidade', flat=True))) + \
-                float(sum([calcular_valor_venda_lc(operacao_venda) for operacao_venda in OperacaoLetraCredito.objects.filter(data=dia, investidor=investidor, tipo_operacao='V')]))
+            diario_lc[dia] += total_lc - total_lc_dia_anterior - float(operacoes_lci_lca_no_periodo.filter(data=dia, tipo_operacao='C').aggregate(soma_compras=Sum('quantidade'))['soma_compras'] or Decimal(0)) + \
+                float(sum([calcular_valor_venda_lc(operacao_venda) for operacao_venda in operacoes_lci_lca_no_periodo.filter(data=dia, tipo_operacao='V')]))
             total_lc_dia_anterior = total_lc
             
             # CDB / RDB
             total_cdb_rdb = float(sum(calcular_valor_cdb_rdb_ate_dia(investidor, dia).values()))
 #                     print '(%s) %s - %s =' % (dia, total_cdb_rdb, total_cdb_rdb_dia_anterior), total_cdb_rdb - total_cdb_rdb_dia_anterior
             # Removendo operações do dia
-            diario_cdb_rdb[dia] += total_cdb_rdb - total_cdb_rdb_dia_anterior - float(sum(OperacaoCDB_RDB.objects.filter(data=dia, investidor=investidor, tipo_operacao='C').values_list('quantidade', flat=True))) + \
-                float(sum([calcular_valor_venda_cdb_rdb(operacao_venda) for operacao_venda in OperacaoCDB_RDB.objects.filter(data=dia, investidor=investidor, tipo_operacao='V')]))
+            diario_cdb_rdb[dia] += total_cdb_rdb - total_cdb_rdb_dia_anterior - float(operacoes_cdb_rdb_no_periodo.filter(data=dia, tipo_operacao='C').aggregate(soma_compras=Sum('quantidade'))['soma_compras'] or Decimal(0)) + \
+                float(sum([calcular_valor_venda_cdb_rdb(operacao_venda) for operacao_venda in operacoes_cdb_rdb_no_periodo.filter(data=dia, tipo_operacao='V')]))
             total_cdb_rdb_dia_anterior = total_cdb_rdb
             
             # Tesouro Direto
             total_td = float(sum(calcular_valor_td_ate_dia(investidor, dia).values()))
             # Removendo operações do dia
-            compras_do_dia = [(preco_unitario * quantidade) for (preco_unitario, quantidade) in \
-                               OperacaoTitulo.objects.filter(data=dia, investidor=investidor, tipo_operacao='C').values_list('preco_unitario', 'quantidade')]
-            vendas_do_dia = [(preco_unitario * quantidade) for (preco_unitario, quantidade) in \
-                               OperacaoTitulo.objects.filter(data=dia, investidor=investidor, tipo_operacao='V').values_list('preco_unitario', 'quantidade')]
-            diario_td[dia] += total_td - total_td_dia_anterior - float(sum(compras_do_dia)) + float(sum(vendas_do_dia))
+            operacoes_do_dia = operacoes_td_no_periodo.filter(data=dia).aggregate(total=Sum(Case(When(tipo_operacao='C', then=F('preco_unitario')*F('quantidade')),
+                            When(tipo_operacao='V', then=F('preco_unitario')*F('quantidade')*-1),
+                            output_field=DecimalField())))['total'] or Decimal(0)
+            diario_td[dia] += total_td - total_td_dia_anterior - float(operacoes_do_dia)
             total_td_dia_anterior = total_td
             
             # Debêntures
             total_debentures = float(sum(calcular_valor_debentures_ate_dia(investidor, dia).values()))
             # Removendo operações do dia
-            compras_do_dia = [(preco_unitario * quantidade + taxa) for (preco_unitario, quantidade, taxa) in \
-                              OperacaoDebenture.objects.filter(data=dia, investidor=investidor, tipo_operacao='C').values_list('preco_unitario', 'quantidade', 'taxa')]
-            vendas_do_dia = [(preco_unitario * quantidade - taxa) for (preco_unitario, quantidade, taxa) in \
-                              OperacaoDebenture.objects.filter(data=dia, investidor=investidor, tipo_operacao='V').values_list('preco_unitario', 'quantidade', 'taxa')]
-            diario_debentures[dia] += total_debentures - total_debentures_dia_anterior - float(sum(compras_do_dia)) + float(sum(vendas_do_dia))
+            operacoes_do_dia = operacoes_debenture_no_periodo.filter(data=dia).aggregate(total=Sum(Case(When(tipo_operacao='C', then=F('preco_unitario')*F('quantidade') + F('taxa')),
+                            When(tipo_operacao='V', then=F('preco_unitario')*F('quantidade')*-1 - F('taxa')),
+                            output_field=DecimalField())))['total'] or Decimal(0)
+            diario_debentures[dia] += total_debentures - total_debentures_dia_anterior - float(operacoes_do_dia)
             total_debentures_dia_anterior = total_debentures
             
             # CRI / CRA
             total_cri_cra = float(sum(calcular_valor_cri_cra_ate_dia(investidor, dia).values()))
             # Removendo operações do dia
-            compras_do_dia = [(preco_unitario * quantidade + taxa) for (preco_unitario, quantidade, taxa) in \
-                              OperacaoCRI_CRA.objects.filter(data=dia, cri_cra__investidor=investidor, tipo_operacao='C').values_list('preco_unitario', 'quantidade', 'taxa')]
-            vendas_do_dia = [(preco_unitario * quantidade - taxa) for (preco_unitario, quantidade, taxa) in \
-                              OperacaoCRI_CRA.objects.filter(data=dia, cri_cra__investidor=investidor, tipo_operacao='V').values_list('preco_unitario', 'quantidade', 'taxa')]
-            diario_cri_cra[dia] += total_cri_cra - total_cri_cra_dia_anterior - float(sum(compras_do_dia)) + float(sum(vendas_do_dia))
+            operacoes_do_dia = operacoes_cri_cra_no_periodo.filter(data=dia).aggregate(total=Sum(Case(When(tipo_operacao='C', then=F('preco_unitario')*F('quantidade') + F('taxa')),
+                            When(tipo_operacao='V', then=F('preco_unitario')*F('quantidade')*-1 - F('taxa')),
+                            output_field=DecimalField())))['total'] or Decimal(0)
+            diario_cri_cra[dia] += total_cri_cra - total_cri_cra_dia_anterior - float(operacoes_do_dia)
             total_cri_cra_dia_anterior = total_cri_cra
                 
     graf_rendimentos_mensal_cdb_rdb = [[str(calendar.timegm(data.replace(hour=3).timetuple()) * 1000), diario_cdb_rdb[data.date()] ] \
@@ -736,3 +740,7 @@ def detalhamento_investimentos(request):
     
     return TemplateResponse(request, 'detalhamento_investimentos.html', {'graf_patrimonio': graf_patrimonio, 'patrimonio_anual': patrimonio_anual,
                                             'estatisticas': estatisticas})
+
+@adiciona_titulo_descricao('Sobre o site', 'De onde e para quê')
+def sobre(request):
+    return TemplateResponse(request, 'sobre.html', {})

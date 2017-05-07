@@ -13,6 +13,13 @@ import views
 # Altera valor para constante de email duplicado no Django-registration
 validators.DUPLICATE_EMAIL = 'Já existe um usuário cadastrado com esse email'
 
+inicio_patterns = [
+    url(r'^$', RedirectView.as_view(url='/painel_geral/')),
+    url(r'^detalhamento_investimentos/$', views.home.detalhamento_investimentos, name='detalhamento_investimentos'),
+    url(r'^painel_geral/$', views.home.inicio, name='painel_geral'),
+    url(r'^sobre/$', views.home.sobre, name='sobre'),
+    ]
+
 acoes_patterns = [
     url(r'^sobre/$', views.acoes.acoes.sobre, name='sobre_acoes'),
 #     url(r'^listar_acoes/$', views.acoes.acoes.listar_acoes, name='listar_acoes'),
@@ -150,10 +157,9 @@ td_patterns = [
     ]
 
 urlpatterns = [
-    # Geral
-    url(r'^$', RedirectView.as_view(url='/inicio/')),
-    url(r'^inicio/$', views.home.inicio, name='inicio'),
-    url(r'^detalhamento_investimentos/$', views.home.detalhamento_investimentos, name='detalhamento_investimentos'),
+    # Páginas de início
+    
+    url(r'^', include(inicio_patterns, namespace='inicio')),
     
     # Teste de aparência
     url(r'^teste/carregar/(?P<url>[\w/]+)/$', views.misc.carregar_nova_aparencia, name='carregar_nova_aparencia'),
