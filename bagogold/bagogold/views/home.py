@@ -42,7 +42,7 @@ import datetime
 import math
 
 # TODO remover login_required
-# @login_required
+@login_required
 @adiciona_titulo_descricao('Painel inicial', 'Traz informações gerais sobre a posição atual em cada tipo de investimento')
 def inicio(request):
     # Usado para criar objetos vazios
