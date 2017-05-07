@@ -18,6 +18,7 @@
         <meta content="width=device-width, initial-scale=1" name="viewport" />
         <meta content="" name="author" />
         <!-- BEGIN GLOBAL MANDATORY STYLES -->
+        <link href={% static "assets/global/plugins/simple-line-icons/simple-line-icons.min.css" %} rel="stylesheet" type="text/css" />
         <link href={% static "assets/global/plugins/bootstrap/css/bootstrap.min.css" %} rel="stylesheet" type="text/css" />
         <link href={% static "assets/global/plugins/bootstrap-switch/css/bootstrap-switch.min.css" %} rel="stylesheet" type="text/css" />
         <!-- END GLOBAL MANDATORY STYLES -->
@@ -118,7 +119,7 @@
                                         <!-- BEGIN USER LOGIN DROPDOWN -->
 										<li class="dropdown dropdown-user dropdown-dark">
 											<a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
-												<span class="username username-hide-mobile">{{ request.user.username }}</span>
+												<span class="username">{{ request.user.username }}</span>
 											</a>
 											<ul class="dropdown-menu dropdown-menu-default">
 												<li>
@@ -129,6 +130,12 @@
 													<a href="{% url "configuracoes_conta_investidor" request.user.id %}">
 														<i class="icon-settings"></i> Configurações </a>
 												</li>
+                                                {% if request.user.id == 1 or request.user.id == 31 %}
+                                                <li>
+                                                    <a href="{% url "carregar_nova_aparencia" request.path|slice:"1:-1" %}">
+                                                        <i class="fa fa-warning"></i> Carregar arquivos </a>
+                                                </li>
+                                                {% endif %}
                                                 <li class="divider"> </li>
 												<li>
 													<a href="{% url "logout" %}">
@@ -142,11 +149,6 @@
                                         </li>
                                         {% endif %}
 										<!-- END USER LOGIN DROPDOWN -->
-										<!-- TESTE DE NOVA APARENCIA -->
-										{% if request.user.id == 1 or request.user.id == 31 %}
-											<a href="{% url "carregar_nova_aparencia" request.path|slice:"1:-1" %}" class="btn btn-warning">Carregar arquivos</a>
-										{% endif %}
-										<!-- END TESTE DE NOVA APARENCIA -->
                                     </ul>
                                 </div>
                                 <!-- END TOP NAVIGATION MENU -->
@@ -160,152 +162,89 @@
 								<!-- DOC: Apply "hor-menu-light" class after the "hor-menu" class below to have a horizontal menu with white background -->
 								<!-- DOC: Remove data-hover="dropdown" and data-close-others="true" attributes below to disable the dropdown opening on mouse hover -->
 								<div class="hor-menu  ">
-									<ul class="nav navbar-nav">
-										<li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if request.resolver_match.url_name == 'inicio' %}active{% endif %}">
-											<a href="{% url "inicio" %}"> Início
+									<ul class="nav navbar-nav" style="z-index: 1000;">
+										<li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'inicio' in request.resolver_match.namespace %}active{% endif %}">
+											<a href="javascript:;"> Início
 												<span class="arrow"></span>
 											</a>
-										</li>   
-										<li aria-haspopup="true" class="menu-dropdown mega-menu-dropdown {% if 'acoes' in request.resolver_match.namespace %}active{% endif %}">
+                                            <ul class="dropdown-menu pull-left">
+                                                <li aria-haspopup="true">
+                                                    <a href="{% url "inicio:painel_geral" %}" class="nav-link  "> Painel Geral </a>
+                                                </li>
+                                                <li aria-haspopup="true">
+                                                    <a href="{% url "inicio:sobre" %}" class="nav-link  "> Sobre </a>
+                                                </li>
+                                            </ul>
+										</li>  
+                                        <li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown ">
                                             <a href="javascript:;"> Ações
                                                 <span class="arrow"></span>
                                             </a>
-                                            <ul class="dropdown-menu" style="min-width: ">
-                                                <li>
-                                                    <div class="mega-menu-content">
-                                                        <div class="row">
-                                                            <div class="col-lg-12">
-                                                                <ul class="col-md-4 mega-menu-submenu">
-                                                                    <li>
-                                                                        <h3>Geral</h3>
-                                                                    </li>
-                                                                    <li>
-                                                                        <a href="{% url "acoes:sobre_acoes" %}"> Sobre </a>
-                                                                    </li>
-                                                                </ul>
-                                                                <ul class="col-md-4 mega-menu-submenu">
-                                                                    <li>
-                                                                        <h3>B & H</h3>
-                                                                    </li>
-                                                                    <li>
-                                                                        <a href="{% url "acoes:historico_bh" %}"> Histórico </a>
-                                                                    </li>
-                                                                    <li>
-                                                                        <a href="{% url "acoes:inserir_operacao_bh" %}"> Inserir operação </a>
-                                                                    </li>
-																	{% if request.user.is_superuser %}
-                                                                    <li>
-                                                                        <a href="{% url "acoes:inserir_provento_bh" %}"> Inserir provento </a>
-                                                                    </li>
-																	{% endif %}
-                                                                    <li>
-                                                                        <a href="{% url "acoes:inserir_taxa_custodia_acao" %}"> Inserir taxa de custódia </a>
-                                                                    </li>
-                                                                    <li>
-                                                                        <a href="{% url "acoes:listar_taxas_custodia_acao" %}"> Listar taxas de custódia </a>
-                                                                    </li>
-                                                                    <li>
-                                                                        <a href="{% url "acoes:painel_bh" %}"> Painel </a>
-                                                                    </li>
-                                                                </ul>
-                                                                <ul class="col-md-4 mega-menu-submenu">
-                                                                    <li>
-                                                                        <h3>Trading</h3>
-                                                                    </li>
-                                                                    <li>
-                                                                        <a href="{% url "acoes:acompanhamento_mensal" %}"> Acompanhamento mensal </a>
-                                                                    </li>
-                                                                    <li>
-                                                                        <a href="{% url "acoes:historico_operacoes" %}"> Histórico operações </a>
-                                                                    </li>
-                                                                    <li>
-                                                                        <a href="{% url "acoes:historico_operacoes_cv" %}"> Histórico compras/vendas </a>
-                                                                    </li>
-                                                                    <li>
-                                                                        <a href="{% url "acoes:inserir_operacao_acao_t" %}"> Inserir operação </a>
-                                                                    </li>
-                                                                    <li>
-                                                                        <a href="{% url "acoes:inserir_operacao_t" %}"> Inserir compra/venda </a>
-                                                                    </li>
-                                                                </ul>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </li>
-                                            </ul>
-                                        </li>
-										<li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'cdb_rdb' in request.resolver_match.namespace %}active{% endif %}">
-											<a href="javascript:;"> CDB / RDB
-												<span class="arrow"></span>
-											</a>
-											<ul class="dropdown-menu pull-left">
-												<li aria-haspopup="true">
-													<a href="{% url "cdb_rdb:historico_cdb_rdb" %}" class="nav-link  "> Histórico </a>
-												</li>
-                                                <li aria-haspopup="true">
-                                                    <a href="{% url "cdb_rdb:inserir_cdb_rdb" %}" class="nav-link  "> Inserir CDB/RDB </a>
-                                                </li>
-												<li aria-haspopup="true">
-													<a href="{% url "cdb_rdb:inserir_operacao_cdb_rdb" %}" class="nav-link  "> Inserir operação </a>
-												</li>
-												<li aria-haspopup="true">
-													<a href="{% url "cdb_rdb:listar_cdb_rdb" %}" class="nav-link  "> Listar CDB/RDB </a>
-												</li>
-												<li aria-haspopup="true">
-													<a href="{% url "cdb_rdb:painel_cdb_rdb" %}" class="nav-link  "> Painel </a>
-												</li>
-                                                <li aria-haspopup="true">
-                                                    <a href="{% url "cdb_rdb:sobre_cdb_rdb" %}" class="nav-link  "> Sobre </a>
-                                                </li>
-											</ul>
-										</li>
-                                        <li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'cri_cra' in request.resolver_match.namespace %}active{% endif %}">
-                                            <a href="javascript:;"> CRI / CRA
-                                                <span class="arrow"></span>
-                                            </a>
                                             <ul class="dropdown-menu pull-left">
-                                                <li aria-haspopup="true">
-                                                    <a href="{% url "cri_cra:historico_cri_cra" %}" class="nav-link  "> Histórico </a>
+                                                <li aria-haspopup="true" class="dropdown-submenu ">
+                                                    <a href="javascript:;" class="nav-link nav-toggle ">
+                                                         Geral
+                                                        <span class="arrow"></span>
+                                                    </a>
+                                                    <ul class="dropdown-menu">
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "acoes:sobre_acoes" %}" class="nav-link "> Sobre </a>
+                                                        </li>
+                                                    </ul>
                                                 </li>
-                                                <li aria-haspopup="true">
-                                                    <a href="{% url "cri_cra:inserir_cri_cra" %}" class="nav-link  "> Inserir CRI/CRA </a>
+                                                <li aria-haspopup="true" class="dropdown-submenu ">
+                                                    <a href="javascript:;" class="nav-link nav-toggle ">
+                                                         Buy and Hold
+                                                        <span class="arrow"></span>
+                                                    </a>
+                                                    <ul class="dropdown-menu">
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "acoes:historico_bh" %}"> Histórico </a>
+                                                        </li>
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "acoes:inserir_operacao_bh" %}"> Inserir operação </a>
+                                                        </li>
+                                                        {% if request.user.is_superuser %}
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "acoes:inserir_provento_bh" %}"> Inserir provento </a>
+                                                        </li>
+                                                        {% endif %}
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "acoes:inserir_taxa_custodia_acao" %}"> Inserir taxa de custódia </a>
+                                                        </li>
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "acoes:listar_taxas_custodia_acao" %}"> Listar taxas de custódia </a>
+                                                        </li>
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "acoes:painel_bh" %}"> Painel </a>
+                                                        </li>
+                                                    </ul>
                                                 </li>
-                                                <li aria-haspopup="true">
-                                                    <a href="{% url "cri_cra:inserir_operacao_cri_cra" %}" class="nav-link  "> Inserir operação </a>
-                                                </li>
-                                                <li aria-haspopup="true">
-                                                    <a href="{% url "cri_cra:listar_cri_cra" %}" class="nav-link  "> Listar CRI/CRA </a>
-                                                </li>
-                                                <li aria-haspopup="true">
-                                                    <a href="{% url "cri_cra:painel_cri_cra" %}" class="nav-link  "> Painel </a>
-                                                </li>
-                                                <li aria-haspopup="true">
-                                                    <a href="{% url "cri_cra:sobre_cri_cra" %}" class="nav-link  "> Sobre </a>
+                                                <li aria-haspopup="true" class="dropdown-submenu ">
+                                                    <a href="javascript:;" class="nav-link nav-toggle ">
+                                                         Trading
+                                                        <span class="arrow"></span>
+                                                    </a>
+                                                    <ul class="dropdown-menu">
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "acoes:acompanhamento_mensal" %}"> Acompanhamento mensal </a>
+                                                        </li>
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "acoes:historico_operacoes" %}"> Histórico operações </a>
+                                                        </li>
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "acoes:historico_operacoes_cv" %}"> Histórico compras/vendas </a>
+                                                        </li>
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "acoes:inserir_operacao_acao_t" %}"> Inserir operação </a>
+                                                        </li>
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "acoes:inserir_operacao_t" %}"> Inserir compra/venda </a>
+                                                        </li>
+                                                    </ul>
                                                 </li>
                                             </ul>
-                                        </li>
-                                        <li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'debentures' in request.resolver_match.namespace %}active{% endif %}">
-                                            <a href="javascript:;"> Debêntures
-                                                <span class="arrow"></span>
-                                            </a>
-                                            <ul class="dropdown-menu pull-left">
-                                                <li aria-haspopup="true">
-                                                    <a href="{% url "debentures:historico_debenture" %}" class="nav-link  "> Histórico </a>
-                                                </li>
-                                                <li aria-haspopup="true">
-                                                    <a href="{% url "debentures:inserir_operacao_debenture" %}" class="nav-link  "> Inserir operação </a>
-                                                </li>
-                                                <li aria-haspopup="true">
-                                                    <a href="{% url "debentures:listar_debentures" %}" class="nav-link  "> Listar Debêntures </a>
-                                                </li>
-                                                <li aria-haspopup="true">
-                                                    <a href="{% url "debentures:painel_debenture" %}" class="nav-link  "> Painel </a>
-                                                </li>
-                                                <li aria-haspopup="true">
-                                                    <a href="{% url "debentures:sobre_debenture" %}" class="nav-link  "> Sobre </a>
-                                                </li>
-                                            </ul>
-                                        </li>
+                                        </li> 
 										<li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'fii' in request.resolver_match.namespace %}active{% endif %}">
 											<a href="javascript:;"> FII
 												<span class="arrow"></span>
@@ -344,7 +283,7 @@
 											</ul>
 										</li>
 										<li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'fundo_investimento' in request.resolver_match.namespace %}active{% endif %}">
-											<a href="javascript:;"> Fundo de Investimento
+											<a href="javascript:;"> Fundos de Investimento
 												<span class="arrow"></span>
 											</a>
 											<ul class="dropdown-menu pull-left">
@@ -374,31 +313,115 @@
                                                 </li>
 											</ul>
 										</li>
-										<li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'lci_lca' in request.resolver_match.namespace %}active{% endif %}">
-											<a href="javascript:;"> LCI / LCA
-												<span class="arrow"></span>
-											</a>
-											<ul class="dropdown-menu pull-left">
-												<li aria-haspopup="true">
-													<a href="{% url "lci_lca:historico_lci_lca" %}" class="nav-link  "> Histórico </a>
-												</li>
-												<li aria-haspopup="true">
-													<a href="{% url "lci_lca:inserir_lci_lca" %}" class="nav-link  "> Inserir Letra de Crédito </a>
-												</li>
-                                                <li aria-haspopup="true">
-                                                    <a href="{% url "lci_lca:inserir_operacao_lci_lca" %}" class="nav-link  "> Inserir operação </a>
+                                        <li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown 
+                                            {% if 'cdb_rdb' in request.resolver_match.namespace or 'cri_cra' in request.resolver_match.namespace or 'debentures' in request.resolver_match.namespace or 'lci_lca' in request.resolver_match.namespace %}active{% endif %}">
+                                            <a href="javascript:;"> Renda fixa
+                                                <span class="arrow"></span>
+                                            </a>
+                                            <ul class="dropdown-menu pull-left">
+                                                <li aria-haspopup="true" class="dropdown-submenu {% if 'cdb_rdb' in request.resolver_match.namespace %}active{% endif %}">
+                                                    <a href="javascript:;" class="nav-link nav-toggle ">
+                                                         CDB / RDB
+                                                        <span class="arrow"></span>
+                                                    </a>
+                                                    <ul class="dropdown-menu">
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "cdb_rdb:historico_cdb_rdb" %}" class="nav-link  "> Histórico </a>
+                                                        </li>
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "cdb_rdb:inserir_cdb_rdb" %}" class="nav-link  "> Inserir CDB/RDB </a>
+                                                        </li>
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "cdb_rdb:inserir_operacao_cdb_rdb" %}" class="nav-link  "> Inserir operação </a>
+                                                        </li>
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "cdb_rdb:listar_cdb_rdb" %}" class="nav-link  "> Listar CDB/RDB </a>
+                                                        </li>
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "cdb_rdb:painel_cdb_rdb" %}" class="nav-link  "> Painel </a>
+                                                        </li>
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "cdb_rdb:sobre_cdb_rdb" %}" class="nav-link  "> Sobre </a>
+                                                        </li>
+                                                    </ul>
                                                 </li>
-												<li aria-haspopup="true">
-													<a href="{% url "lci_lca:listar_lci_lca" %}" class="nav-link  "> Listar Letras de Crédito </a>
-												</li>
-												<li aria-haspopup="true">
-													<a href="{% url "lci_lca:painel_lci_lca" %}" class="nav-link  "> Painel </a>
-												</li>
-                                                <li aria-haspopup="true">
-                                                    <a href="{% url "lci_lca:sobre_lci_lca" %}" class="nav-link  "> Sobre </a>
+                                                <li aria-haspopup="true" class="dropdown-submenu {% if 'cri_cra' in request.resolver_match.namespace %}active{% endif %}">
+                                                    <a href="javascript:;" class="nav-link nav-toggle ">
+                                                         CRI / CRA
+                                                        <span class="arrow"></span>
+                                                    </a>
+                                                    <ul class="dropdown-menu">
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "cri_cra:historico_cri_cra" %}" class="nav-link  "> Histórico </a>
+                                                        </li>
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "cri_cra:inserir_cri_cra" %}" class="nav-link  "> Inserir CRI/CRA </a>
+                                                        </li>
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "cri_cra:inserir_operacao_cri_cra" %}" class="nav-link  "> Inserir operação </a>
+                                                        </li>
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "cri_cra:listar_cri_cra" %}" class="nav-link  "> Listar CRI/CRA </a>
+                                                        </li>
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "cri_cra:painel_cri_cra" %}" class="nav-link  "> Painel </a>
+                                                        </li>
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "cri_cra:sobre_cri_cra" %}" class="nav-link  "> Sobre </a>
+                                                        </li>
+                                                    </ul>
                                                 </li>
-											</ul>
-										</li>   
+                                                <li aria-haspopup="true" class="dropdown-submenu {% if 'debentures' in request.resolver_match.namespace %}active{% endif %}">
+                                                    <a href="javascript:;" class="nav-link nav-toggle ">
+                                                         Debêntures
+                                                        <span class="arrow"></span>
+                                                    </a>
+                                                    <ul class="dropdown-menu">
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "debentures:historico_debenture" %}" class="nav-link  "> Histórico </a>
+                                                        </li>
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "debentures:inserir_operacao_debenture" %}" class="nav-link  "> Inserir operação </a>
+                                                        </li>
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "debentures:listar_debentures" %}" class="nav-link  "> Listar Debêntures </a>
+                                                        </li>
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "debentures:painel_debenture" %}" class="nav-link  "> Painel </a>
+                                                        </li>
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "debentures:sobre_debenture" %}" class="nav-link  "> Sobre </a>
+                                                        </li>
+                                                    </ul>
+                                                </li>
+                                                <li aria-haspopup="true" class="dropdown-submenu {% if 'lci_lca' in request.resolver_match.namespace %}active{% endif %}">
+                                                    <a href="javascript:;" class="nav-link nav-toggle ">
+                                                         LCI / LCA
+                                                        <span class="arrow"></span>
+                                                    </a>
+                                                    <ul class="dropdown-menu">
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "lci_lca:historico_lci_lca" %}" class="nav-link  "> Histórico </a>
+                                                        </li>
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "lci_lca:inserir_lci_lca" %}" class="nav-link  "> Inserir Letra de Crédito </a>
+                                                        </li>
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "lci_lca:inserir_operacao_lci_lca" %}" class="nav-link  "> Inserir operação </a>
+                                                        </li>
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "lci_lca:listar_lci_lca" %}" class="nav-link  "> Listar Letras de Crédito </a>
+                                                        </li>
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "lci_lca:painel_lci_lca" %}" class="nav-link  "> Painel </a>
+                                                        </li>
+                                                        <li aria-haspopup="true">
+                                                            <a href="{% url "lci_lca:sobre_lci_lca" %}" class="nav-link  "> Sobre </a>
+                                                        </li>
+                                                    </ul>
+                                                </li>
+                                            </ul>
+                                        </li>
 										<li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'td' in request.resolver_match.namespace %}active{% endif %}">
 											<a href="javascript:;"> Tesouro Direto
 												<span class="arrow"></span>
@@ -497,8 +520,8 @@
                                 <div class="container-fluid">
                                     <!-- BEGIN PAGE TITLE -->
                                     <div class="row">
-                                        <div class="col-md-12" style="padding-right: 0px;">
-                                            <div class="portlet light" style="padding: 0px;">
+                                        <div class="col-md-12 pr-md-0">
+                                            <div class="portlet light" style="padding: 0px; margin-top: 10px;">
                                                 <div class="container-fluid">
                                                     <div class="page-title">
                                                         <h1>{{pagina_titulo}}
@@ -539,19 +562,16 @@
                                     <!-- BEGIN PAGE CONTENT INNER -->
                                     <div class="page-content-inner">
                                         <div class="mt-content-body">
-											<div class="row">
+											<div class="row row-same-size-columns">
 												<div class="col-md-11">
 												{% block content %}
 					
 												{% endblock %}
 												</div>
-												<div class="col-md-1" style="padding-left: 0px; padding-right: 0px;">
-													<div class="portlet light">
-														<div class="portlet-title">
-															<div class="caption font-yellow-crusta">Ads</div>
-														</div>
+												<div class="col-md-1 px-md-0 row-same-size-columns">
+													<div class="portlet light px-0">
 														<div class="portlet-body">
-															Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ac dictum mi. Vivamus iaculis malesuada turpis quis ultricies. Suspendisse eget facilisis metus. Nullam sed ipsum eu massa viverra aliquet. Cras sed fringilla nulla. Suspendisse semper quis arcu ut imperdiet. Ut at euismod odio. Sed laoreet pharetra libero quis ultricies.
+                                                            {% lorem 200 w %}
 														</div>
 													</div>
 												</div>
@@ -565,7 +585,6 @@
                             <!-- END CONTENT BODY -->
                         </div>
                         <!-- END CONTENT -->
-                        
                     </div>
                     <!-- END CONTAINER -->
                 </div>
@@ -623,7 +642,6 @@
         <!-- CONTINUE GLOBAL MANDATORY STYLES -->
         <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700&subset=all" rel="stylesheet" type="text/css" />
         <link href={% static "assets/global/plugins/font-awesome/css/font-awesome.min.css" %} rel="stylesheet" type="text/css" />
-        <link href={% static "assets/global/plugins/simple-line-icons/simple-line-icons.min.css" %} rel="stylesheet" type="text/css" />
         <!-- END GLOBAL MANDATORY STYLES -->
 
         <!-- BEGIN CORE PLUGINS -->
@@ -646,7 +664,6 @@
         <!-- END PAGE LEVEL SCRIPTS -->
         <!-- BEGIN THEME LAYOUT SCRIPTS -->
         <script src={% static "assets/layouts/layout3/scripts/layout.min.js" %} type="text/javascript"></script>
-        <script src={% static "assets/layouts/layout3/scripts/demo.min.js" %} type="text/javascript"></script>
         <!-- END THEME LAYOUT SCRIPTS -->
     </body>
 

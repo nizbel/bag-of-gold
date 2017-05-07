@@ -6,7 +6,7 @@ from django.template.response import TemplateResponse
 def em_construcao(tag):
     def decorator(view_func):
         def wrapper(request, *args, **kwargs):
-            if settings.ENV == 'DEV':
+            if settings.ENV != 'DEV':
                 if FuncionalidadeConstrucao.objects.filter(tag=tag).exists():
                     funcionalidade = FuncionalidadeConstrucao.objects.get(tag=tag)
                     percentual = funcionalidade.percentual

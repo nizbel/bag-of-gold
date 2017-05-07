@@ -512,9 +512,9 @@ def listar_proventos(request):
 @adiciona_titulo_descricao('Manual do gerador de proventos', 'Explicações sobre como ler e validar documentos da Bovespa')
 def manual_gerador(request, tipo_documento):
     if tipo_documento == 'acao':
-        return TemplateResponse(request, 'gerador_proventos/manual_gerador.html')
+        return TemplateResponse(request, 'gerador_proventos/manual_gerador.html', {})
     elif tipo_documento == 'fii':
-        return TemplateResponse(request, 'gerador_proventos/listar_informacoes_geracao_provento_fii.html')
+        return TemplateResponse(request, 'gerador_proventos/listar_informacoes_geracao_provento_fii.html', {})
     else:
         raise Http404("Página inválida")
     
