@@ -741,5 +741,6 @@ def detalhamento_investimentos(request):
     return TemplateResponse(request, 'detalhamento_investimentos.html', {'graf_patrimonio': graf_patrimonio, 'patrimonio_anual': patrimonio_anual,
                                             'estatisticas': estatisticas})
 
+@adiciona_titulo_descricao('Sobre o site', 'De onde e para quê')
 def sobre(request):
     return TemplateResponse(request, 'sobre.html', {})
