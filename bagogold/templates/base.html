@@ -176,70 +176,70 @@
                                                 </li>
                                             </ul>
 										</li>  
-                                        <li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown ">
+                                        <li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'acoes' in request.resolver_match.namespace %}active{% endif %}">
                                             <a href="javascript:;"> Ações
                                                 <span class="arrow"></span>
                                             </a>
                                             <ul class="dropdown-menu pull-left">
-                                                <li aria-haspopup="true" class="dropdown-submenu ">
+                                                <li aria-haspopup="true" class="dropdown-submenu {% if 'acoes:geral' in request.resolver_match.namespace %}active{% endif %}">
                                                     <a href="javascript:;" class="nav-link nav-toggle ">
                                                          Geral
                                                         <span class="arrow"></span>
                                                     </a>
-                                                    <ul class="dropdown-menu">
+                                                    <ul class="dropdown-menu {% if request.resolver_match.url_name == 'sobre_acoes' %}active{% endif %}">
                                                         <li aria-haspopup="true">
-                                                            <a href="{% url "acoes:sobre_acoes" %}" class="nav-link "> Sobre </a>
+                                                            <a href="{% url "acoes:geral:sobre_acoes" %}" class="nav-link "> Sobre </a>
                                                         </li>
                                                     </ul>
                                                 </li>
-                                                <li aria-haspopup="true" class="dropdown-submenu ">
+                                                <li aria-haspopup="true" class="dropdown-submenu {% if 'acoes:bh' in request.resolver_match.namespace %}active{% endif %}">
                                                     <a href="javascript:;" class="nav-link nav-toggle ">
                                                          Buy and Hold
                                                         <span class="arrow"></span>
                                                     </a>
-                                                    <ul class="dropdown-menu">
+                                                    <ul class="dropdown-menu {% if request.resolver_match.url_name == 'historico_bh' %}active{% endif %}">
                                                         <li aria-haspopup="true">
-                                                            <a href="{% url "acoes:historico_bh" %}"> Histórico </a>
+                                                            <a href="{% url "acoes:bh:historico_bh" %}"> Histórico </a>
                                                         </li>
                                                         <li aria-haspopup="true">
-                                                            <a href="{% url "acoes:inserir_operacao_bh" %}"> Inserir operação </a>
+                                                            <a href="{% url "acoes:bh:inserir_operacao_bh" %}"> Inserir operação </a>
                                                         </li>
                                                         {% if request.user.is_superuser %}
                                                         <li aria-haspopup="true">
-                                                            <a href="{% url "acoes:inserir_provento_bh" %}"> Inserir provento </a>
+                                                            <a href="{% url "acoes:bh:inserir_provento_bh" %}"> Inserir provento </a>
                                                         </li>
                                                         {% endif %}
                                                         <li aria-haspopup="true">
-                                                            <a href="{% url "acoes:inserir_taxa_custodia_acao" %}"> Inserir taxa de custódia </a>
+                                                            <a href="{% url "acoes:bh:inserir_taxa_custodia_acao" %}"> Inserir taxa de custódia </a>
                                                         </li>
                                                         <li aria-haspopup="true">
-                                                            <a href="{% url "acoes:listar_taxas_custodia_acao" %}"> Listar taxas de custódia </a>
+                                                            <a href="{% url "acoes:bh:listar_taxas_custodia_acao" %}"> Listar taxas de custódia </a>
                                                         </li>
                                                         <li aria-haspopup="true">
-                                                            <a href="{% url "acoes:painel_bh" %}"> Painel </a>
+                                                            <a href="{% url "acoes:bh:painel_bh" %}"> Painel </a>
                                                         </li>
                                                     </ul>
                                                 </li>
-                                                <li aria-haspopup="true" class="dropdown-submenu ">
+                                                <li aria-haspopup="true" class="dropdown-submenu {% if 'acoes:trading' in request.resolver_match.namespace %}active{% endif %}">
                                                     <a href="javascript:;" class="nav-link nav-toggle ">
                                                          Trading
                                                         <span class="arrow"></span>
                                                     </a>
                                                     <ul class="dropdown-menu">
                                                         <li aria-haspopup="true">
-                                                            <a href="{% url "acoes:acompanhamento_mensal" %}"> Acompanhamento mensal </a>
+                                                            <a href="{% url "acoes:trading:acompanhamento_mensal" %}"> Acompanhamento mensal </a>
                                                         </li>
                                                         <li aria-haspopup="true">
-                                                            <a href="{% url "acoes:historico_operacoes" %}"> Histórico operações </a>
+                                                            <a href="{% url "acoes:trading:historico_operacoes" %}"> Histórico operações </a>
                                                         </li>
                                                         <li aria-haspopup="true">
-                                                            <a href="{% url "acoes:historico_operacoes_cv" %}"> Histórico compras/vendas </a>
+                                                            <a href="{% url "acoes:trading:historico_operacoes_cv" %}"> Histórico compras/vendas </a>
                                                         </li>
                                                         <li aria-haspopup="true">
-                                                            <a href="{% url "acoes:inserir_operacao_acao_t" %}"> Inserir operação </a>
+                                                            <a href="{% url "acoes:trading:inserir_operacao_acao_t" %}"> Inserir operação </a>
                                                         </li>
                                                         <li aria-haspopup="true">
-                                                            <a href="{% url "acoes:inserir_operacao_t" %}"> Inserir compra/venda </a>
+                                                            <a href="{% url "acoes:trading:inserir_operacao_t" %}"> Inserir compra/venda </a>
                                                         </li>
                                                     </ul>
                                                 </li>
@@ -609,8 +609,9 @@
                                 </div>
                                 <div class="col-md-6 col-sm-12 col-xs-12 footer-block">
                                     <h2>Aviso</h2>
-                                    <p> Este site serve apenas no intuito de auxiliar o investidor a acompanhar seus investimentos. As informações contidas podem estar desatualizadas.
-                                    De maneira alguma este site aconselha a um usuário onde investir seu dinheiro, cabe ao investidor se informar e/ou procurar ajuda profissional para tal.
+                                    <p> Este site tem o intuito exclusivo de auxiliar o investidor a acompanhar seus investimentos. As informações contidas podem estar desatualizadas. 
+                                    De maneira alguma este site aconselha um usuário sobre onde investir seu dinheiro. 
+                                    Cabe somente ao investidor o papel de se informar e/ou procurar ajuda profissional para isso.
                                     </p>
                                 </div>
                             </div>
