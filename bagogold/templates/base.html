@@ -78,6 +78,7 @@
                                 <div class="top-menu">
 <!--                                 <div class="col-md-4"> -->
                                     <ul class="nav navbar-nav pull-right">
+                                        {% if user.is_authenticated %}
                                         <!-- BEGIN NOTIFICATION DROPDOWN -->
                                         <li class="dropdown dropdown-extended dropdown-notification dropdown-dark" id="header_notification_bar">
                                             <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
@@ -115,7 +116,6 @@
                                         <li class="droddown dropdown-separator">
                                             <span class="separator"></span>
                                         </li>
-                                        {% if user.is_authenticated %}
                                         <!-- BEGIN USER LOGIN DROPDOWN -->
                                         <li class="dropdown dropdown-user dropdown-dark">
                                             <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
