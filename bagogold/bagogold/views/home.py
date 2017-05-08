@@ -573,7 +573,7 @@ def detalhamento_investimentos(request):
                                             'estatisticas': estatisticas})
 
 # TODO remover login_required
-@login_required
+# @login_required
 @adiciona_titulo_descricao('Painel inicial', 'Traz informações gerais sobre a posição atual em cada tipo de investimento')
 def painel_geral(request):
     # Usado para criar objetos vazios
@@ -583,7 +583,14 @@ def painel_geral(request):
     if request.user.is_authenticated():
         investidor = request.user.investidor
     else:
-        return TemplateResponse(request, 'inicio.html', {})
+        return TemplateResponse(request, 'painel_geral.html', {'ultimas_operacoes': list(), 'investimentos_atuais': {}, 'acumulado_mensal_atual': 0,
+                                                     'acumulado_mensal_anterior': 0, 'proventos_acoes_recebidos_hoje': list(),
+                                                     'proventos_fiis_recebidos_hoje': list(), 'proventos_acoes_a_receber': list(),
+                                                     'proventos_fiis_a_receber': list(), 'proventos_acoes_futuros': list(),
+                                                     'proventos_fiis_futuros': list(),'graf_rendimentos_mensal_lc': list(),
+                                                     'total_atual_investimentos': 0, 'graf_rendimentos_mensal_cdb_rdb': list(),
+                                                     'graf_rendimentos_mensal_td': list(), 'graf_rendimentos_mensal_debentures': list(),
+                                                     'graf_rendimentos_mensal_cri_cra': list()})
     # Guardar data atual
     data_atual = datetime.datetime.now()
     
