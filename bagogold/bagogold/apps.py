@@ -11,5 +11,6 @@ class BagofGoldConfig(AppConfig):
         output = check_output(['hg', 'log'])
         prod = re.findall(r'^branch:\s+prod', output, flags=re.MULTILINE)
         current_version = '1.0.%s' % (len(prod) - 143)
-        print 'Current Bag of Gold version: ' + current_version
+        if settings.ENV == 'DEV':
+            print 'Current Bag of Gold version: ' + current_version
         settings.CURRENT_VERSION = current_version
