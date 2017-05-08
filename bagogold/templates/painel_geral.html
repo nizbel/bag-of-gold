@@ -3,23 +3,23 @@
 
 {% block content %}
 
-{% if user.is_authenticated %}
-
 <div class="portlet light">
 	<div class="portlet-title">
 		<div class="caption font-yellow-crusta">
 			<i class="icon-user font-yellow-crusta"></i>
-            <span class="caption-subject bold uppercase"> Olá, {{request.user.investidor}}! </span>
+            <span class="caption-subject bold uppercase"> Olá, {{request.user.investidor|default:'visitante'}}! </span>
 		</div>
+        {% if request.user.investidor %}
 		<div class="actions">
 			<a href="{% url "inicio:detalhamento_investimentos" %}" class="btn btn-warning">Ver histórico detalhado</a>
 		</div>
+        {% endif %}
 	</div>
 	<div class="portlet-body">
 		<div class="row">
 			<div class="col-md-12">
 				<h2 class="font-yellow-crusta" align="center">
-				Total atual: <strong>R$<span data-counter="counterup" data-value="{{total_atual_investimentos}}">0</span></strong></h2>
+				Total atual: <strong>R$ <span data-counter="counterup" data-value="{{total_atual_investimentos}}">0</span></strong></h2>
 				<br/>	
 				<!-- BEGIN Portlet PORTLET-->
 				<div class="portlet box yellow-crusta">
@@ -43,6 +43,10 @@
 										</div>
 									</div>
 								</div>
+                                {% empty %}
+                                <div class="text-center">
+                                    <h4>Não há dados registrados</h4>
+                                </div>
 								{% endfor %}
 							</div>
 						</div>
@@ -318,13 +322,6 @@
 		</div>
 	</div>
 </div>
-
-
-							
-{% else %}
-{% endif %}
-
-
 {% endblock %}
 
 {% block extra_footer %}
