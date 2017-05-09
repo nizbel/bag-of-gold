@@ -754,7 +754,7 @@ def painel_geral(request):
                                                      'graf_rendimentos_mensal_cri_cra': graf_rendimentos_mensal_cri_cra})
 
 
-@adiciona_titulo_descricao('Sobre o site', 'De onde e para quê')
+@adiciona_titulo_descricao('Sobre o site', 'O que é? Para quê?')
 def sobre(request):
     form = ContatoForm()
     if request.method == 'POST':
