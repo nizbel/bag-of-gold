@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.forms.investidor import ExtendedAuthForm
+from bagogold.bagogold.forms.investidor import ExtendedAuthForm, \
+    ExtendedUserCreationForm
 from bagogold.bagogold.views.investidores.investidores import logout
 from django.conf.urls import include, url
 from django.contrib.auth.views import login, password_change, \
@@ -8,7 +9,6 @@ from django.contrib.auth.views import login, password_change, \
 from django.views.generic.base import RedirectView, TemplateView
 from registration import validators
 from registration.backends.hmac import views as registration_views
-from registration.forms import RegistrationFormUniqueEmail
 import views
 
 # Altera valor para constante de email duplicado no Django-registration
@@ -185,7 +185,7 @@ urlpatterns = [
     url(r'^redefinicao_senha/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$', password_reset_confirm, {'template_name': 'registration/redefinir_senha.html'}, name='password_reset_confirm'),
     url(r'^redefinicao_senha/completa/$', password_reset_complete, {'template_name': 'registration/senha_redefinida.html'}, name='password_reset_complete'),
     # Django-registration
-    url(r'^cadastro/$', registration_views.RegistrationView.as_view(form_class=RegistrationFormUniqueEmail), name='cadastro'),
+    url(r'^cadastro/$', registration_views.RegistrationView.as_view(form_class=ExtendedUserCreationForm), name='cadastro'),
     url(r'^ativacao/completa/$', TemplateView.as_view(template_name='registration/activation_complete.html'), name='registration_activation_complete'),
     # The activation key can make use of any character from the
     # URL-safe base64 alphabet, plus the colon as a separator.

@@ -5,11 +5,12 @@ from bagogold.bagogold.utils.investidores import user_blocked
 from django import forms
 from django.contrib import messages
 from django.contrib.auth import authenticate
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.utils import timezone
 from django.utils.translation import ugettext, ugettext_lazy as _
+from registration.forms import RegistrationFormUniqueEmail
 
 
 class DadosCadastraisForm(LocalizedModelForm):
@@ -34,12 +35,13 @@ class DadosCadastraisForm(LocalizedModelForm):
             raise forms.ValidationError('Este email já está em uso, por favor insira outro email')
         return email
 
-class ExtendedUserCreationForm(UserCreationForm):
+# Extende a classe de email único do django-registration
+class ExtendedUserCreationForm(RegistrationFormUniqueEmail):
     def clean_password1(self):
-        password = self.cleaned_data.get('password1')
-        if len(password) < 8:
+        password1 = self.cleaned_data.get('password1')
+        if len(password1) < 8:
             raise forms.ValidationError('A senha deve ter no mínimo 8 caracteres')
-        return super(ExtendedUserCreationForm, self).clean_password1()
+        return password1
 
 class ExtendedAuthForm(AuthenticationForm):
     error_messages = {
