@@ -5,6 +5,20 @@
     <!-- BEGIN LOGIN FORM -->
     <form class="login-form" action="{% url "django.contrib.auth.views.login" %}" method="post">
         {% csrf_token %}
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert {{message.tags}}">
+                <button type="button" class="close" data-dismiss="alert" aria-hidden="true"></button>
+                {% if message.tags %}
+                    {% if 'success' in message.tags %}
+                        <i class="fa-lg fa fa-check"></i>
+                    {% elif 'error' in message.tags %}
+                        <i class="fa-lg fa fa-warning"></i>
+                    {% endif %}
+                {% endif %} {{ message }}
+            </div>
+            {% endfor %}
+        {% endif %}
         <h3 class="form-title">Acesse sua conta</h3>
         {% if form.non_field_errors %}
         <div class="alert alert-danger">
@@ -37,6 +51,7 @@
                 {% endfor %}
             {% endif %}
         </div>
+        <input type="hidden" name="next" value="{{ next }}" />
         <div class="form-actions">
             {% comment %}
             <label class="rememberme mt-checkbox mt-checkbox-outline">
