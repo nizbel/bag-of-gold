@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.forms.investidor import ExtendedAuthForm
 from bagogold.bagogold.views.investidores.investidores import logout
 from django.conf.urls import include, url
 from django.contrib.auth.views import login, password_change, \
@@ -175,7 +176,7 @@ urlpatterns = [
     url(r'^teste/carregar/(?P<url>[\w/]+)/$', views.misc.carregar_nova_aparencia, name='carregar_nova_aparencia'),
     
     # Investidores
-    url(r'^login/$', login, {'template_name': 'login.html'}, name='login'),
+    url(r'^login/$', login, {'template_name': 'login.html', 'authentication_form': ExtendedAuthForm}, name='login'),
     url(r'^logout/$', logout, {'next_page': '/login'}, name='logout'),
     url(r'^minha_conta/alterar_senha/$', password_change, {'template_name': 'registration/alterar_senha.html'}, name='password_change'),
     url(r'^minha_conta/alterar_senha/sucesso/$', password_change_done, {'template_name': 'registration/senha_alterada.html'}, name='password_change_done'),
