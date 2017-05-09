@@ -514,6 +514,7 @@
                         <!-- BEGIN CONTENT -->
                         <div class="page-content-wrapper">
                             <!-- BEGIN CONTENT BODY -->
+                            {% comment %}
                             {% if pagina_titulo %}
                             <!-- BEGIN PAGE HEAD-->
                             <div class="page-head" style="background: none;">
@@ -538,6 +539,7 @@
                             </div>
                             <!-- END PAGE HEAD-->
                             {% endif %}
+                            {% endcomment %}
                             <!-- BEGIN PAGE CONTENT BODY -->
                             <div class="page-content">
                                 <div class="container-fluid">
@@ -564,9 +566,26 @@
                                         <div class="mt-content-body">
                                             <div class="row row-same-size-columns">
                                                 <div class="col-md-11">
-                                                {% block content %}
-                    
-                                                {% endblock %}
+                                                    {% if pagina_titulo %}
+                                                    <div class="portlet light">
+                                                        <div class="portlet-title">
+                                                            <div class="page-head">
+                                                                <div class="page-title">
+                                                                    <h1>
+                                                                        <span class="font-yellow-crusta bold uppercase"> {% block pagina_titulo_icone %}{% endblock %} {{pagina_titulo}}</span>
+                                                                        <small>{{pagina_descricao}}</small>
+                                                                    </h1>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="portlet-body">
+                                                    {% endif %}
+                                                            {% block content %}
+                                                            {% endblock %}
+                                                    {% if pagina_titulo %}
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
                                                 </div>
                                                 <div class="col-md-1 px-md-0 row-same-size-columns">
                                                     <div class="portlet light px-0">
