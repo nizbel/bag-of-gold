@@ -32,11 +32,15 @@ class DadosCadastraisForm(LocalizedModelForm):
         email = self.cleaned_data.get('email')
 
         if email and User.objects.filter(email=email).exclude(username=self.username):
-            raise forms.ValidationError('Este email já está em uso, por favor insira outro email')
+            raise forms.ValidationError('Este e-mail já está em uso, por favor insira outro email')
         return email
 
 # Extende a classe de email único do django-registration
 class ExtendedUserCreationForm(RegistrationFormUniqueEmail):
+    def __init__(self, *args, **kwargs):
+        super(ExtendedUserCreationForm, self).__init__(*args, **kwargs)
+        self.fields['email'].label = 'E-mail'
+    
     def clean_password1(self):
         password1 = self.cleaned_data.get('password1')
         if len(password1) < 8:
@@ -78,17 +82,17 @@ class ExtendedAuthForm(AuthenticationForm):
                                 LoginIncorreto.objects.create(user=User.objects.get(username=username), horario=horario)
                                 qtd_tentativas = LoginIncorreto.objects.filter(user__username=username).count()
                                 if qtd_tentativas >= 6:
-                                    raise forms.ValidationError(
-                                        self.error_messages['blocked'],
-                                        code='blocked',
-                                        )
                                     send_mail(
                                         'Conta bloqueada no Bag of Gold',
-                                        'Devido a quantidade de tentativas de login sem sucesso em um curto espaço de tempo, sua conta no Bag of Gold acaba de ser bloqueada.',
+                                        'Devido a quantidade de tentativas de login sem sucesso em um curto espaço de tempo, sua conta no Bag of Gold acaba de ser bloqueada pelo período de 10 minutos.',
                                         'do-not-reṕly@bagofgold.com.br',
                                         [User.objects.get(username=username).email],
                                         fail_silently=False,
                                     )
+                                    raise forms.ValidationError(
+                                        self.error_messages['blocked'],
+                                        code='blocked',
+                                        )
                                 elif qtd_tentativas > 2:
                                     self.mensagem_bloqueio = u' Você possui mais %s tentativa(s) de login antes da conta ser bloqueada por 10 minutos.' % (6 - qtd_tentativas)
                             else:

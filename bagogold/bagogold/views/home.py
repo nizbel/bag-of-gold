@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
+from bagogold.bagogold.forms.misc import ContatoForm
 from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, Provento, \
     ValorDiarioAcao
 from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB
@@ -29,11 +30,14 @@ from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA
 from bagogold.cri_cra.utils.utils import calcular_valor_cri_cra_ate_dia
 from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
 from decimal import Decimal, ROUND_DOWN
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.mail import send_mail
 from django.db.models import Count
 from django.db.models.aggregates import Sum
 from django.db.models.expressions import F, Case, When
 from django.db.models.fields import DecimalField
+from django.template import loader
 from django.template.response import TemplateResponse
 from itertools import chain
 from operator import attrgetter
@@ -752,4 +756,30 @@ def painel_geral(request):
 
 @adiciona_titulo_descricao('Sobre o site', 'De onde e para quê')
 def sobre(request):
-    return TemplateResponse(request, 'sobre.html', {})
+    form = ContatoForm()
+    if request.method == 'POST':
+        form = ContatoForm(data=request.POST)
+
+        if form.is_valid():
+            form_nome = request.POST.get(
+                'nome'
+            , '')
+            form_email = request.POST.get(
+                'email'
+            , '')
+            form_conteudo = request.POST.get('conteudo', '')
+            
+            texto = u'E-mail enviado por %s <%s>\n%s' % (form_nome, form_email, form_conteudo)
+            html_message = loader.render_to_string(
+                        'email_contato.html',
+                        {
+                            'nome': form_nome,
+                            'email': form_email,
+                            'conteudo':  form_conteudo,
+                        }
+                    )
+            send_mail('Contato de %s' % (form_nome), texto, form_email, ['suporte@bagofgold.com.br'], html_message=html_message)
+            messages.success(request, u'E-mail enviado com sucesso')
+            # Limpar form
+            form = ContatoForm()
+    return TemplateResponse(request, 'sobre.html', {'form_contato': form})
