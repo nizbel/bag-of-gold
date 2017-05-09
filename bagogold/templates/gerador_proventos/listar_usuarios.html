@@ -6,15 +6,12 @@
 <link href={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.css" %} rel="stylesheet" type="text/css" />
 {% endblock %}
 
+{% block pagina_titulo_icone %}
+<i class="icon-list font-yellow-crusta"></i>
+{% endblock %}
+
 {% block content %}
-<div class="portlet light">
-	<div class="portlet-title">
-		<div class="caption font-yellow-crusta">
-			<i class="icon-list font-yellow-crusta"></i>
-			<span class="caption-subject bold uppercase">Usuários</span>
-		</div>
-	</div>
-	<div class="portlet-body">
+<div class="portlet-body">
 		<table id="pendencias_por_usuario" class="table table-striped table-bordered table-hover table-header-fixed">
 		<thead>
 			<tr>
@@ -40,7 +37,6 @@
 		</tbody>
 		</table>
 	</div>
-</div>
 
 {% endblock %}
 

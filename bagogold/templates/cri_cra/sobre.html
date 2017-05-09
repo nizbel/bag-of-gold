@@ -1,16 +1,12 @@
 {% extends "base.html" %}
 {% load staticfiles %}
 
-{% block content %}
+{% block pagina_titulo_icone %}
+<i class="icon-pin font-yellow-crusta"></i>
+{% endblock %}
 
-<div class="portlet light">
-    <div class="portlet-title">
-        <div class="caption font-yellow-crusta">
-            <i class="icon-pin font-yellow-crusta"></i>
-            <span class="caption-subject bold uppercase">CRI/CRA</span>
-        </div>
-    </div>
-    <div class="portlet-body">
+{% block content %}
+<div class="portlet-body">
         <div class="row">
             <div class="{% if user.is_authenticated %}col-md-10{% else %}col-md-12{% endif %}">
                 <div class="row">
@@ -169,7 +165,6 @@
             </div>
         </div>
     </div>
-</div>
 
 {% endblock %}
 

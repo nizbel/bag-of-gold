@@ -1,16 +1,12 @@
 {% extends "base.html" %}
 {% load staticfiles %}
 
-{% block content %}
+{% block pagina_titulo_icone %}
+<i class="icon-note font-yellow-crusta"></i>
+{% endblock %}
 
-<div class="portlet light">
-	<div class="portlet-title">
-		<div class="caption font-yellow-crusta">
-			<i class="icon-note font-yellow-crusta"></i>
-			<span class="caption-subject bold uppercase"> Alterar senha </span>
-		</div>
-	</div>
-	<div class="portlet-body form">
+{% block content %}
+<div class="portlet-body form">
 		<div class="alert alert-warning">
             Por favor insira sua senha antiga, por segurança, e então entre com a nova senha duas vezes para que verifiquemos que foi digitada corretamente.
 		</div>
@@ -56,6 +52,5 @@
 		</form>
 		<!-- END FORM-->
 	</div>
-</div>
 
 {% endblock %}

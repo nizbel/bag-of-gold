@@ -7,16 +7,12 @@
 <link href={% static "assets/global/plugins/bootstrap-datepicker/css/bootstrap-datepicker3.min.css" %} rel="stylesheet" type="text/css" />
 {% endblock %}
 
-{% block content %}
+{% block pagina_titulo_icone %}
+<i class="icon-note font-yellow-crusta"></i>
+{% endblock %}
 
-<div class="portlet light">
-	<div class="portlet-title">
-		<div class="caption font-yellow-crusta">
-			<i class="icon-note font-yellow-crusta"></i>
-			<span class="caption-subject bold uppercase"> Editar operação em Tesouro Direto </span>
-		</div>
-	</div>
-	<div class="portlet-body form">
+{% block content %}
+<div class="portlet-body form">
 		<!-- BEGIN FORM-->
 		<form method="POST" class="horizontal-form">{% csrf_token %}
 			<div class="form-body">
@@ -176,7 +172,6 @@
 		</form>
 		<!-- END FORM-->
 	</div>
-</div>
 
 {% endblock %}
 

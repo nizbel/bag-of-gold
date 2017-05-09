@@ -6,16 +6,12 @@
 <link href={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.css" %} rel="stylesheet" type="text/css" />
 {% endblock %}
 
-{% block content %}
+{% block pagina_titulo_icone %}
+<i class="icon-hourglass font-yellow-crusta"></i>
+{% endblock %}
 
-<div class="portlet light">
-	<div class="portlet-title">
-		<div class="caption font-yellow-crusta">
-			<i class="icon-hourglass font-yellow-crusta"></i>
-			<span class="caption-subject bold uppercase">Histórico</span>
-		</div>
-	</div>
-	<div class="portlet-body">
+{% block content %}
+<div class="portlet-body">
 		<div class="row">
 			<div class="col-md-12">
 				<!-- BEGIN Portlet PORTLET-->
@@ -146,7 +142,7 @@
 			</div>
 		</div>
 	</div>
-</div>
+
 {% endblock %}
 
 {% block extra_footer %}

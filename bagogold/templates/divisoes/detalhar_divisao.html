@@ -6,15 +6,12 @@
 <link href={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.css" %} rel="stylesheet" type="text/css" />
 {% endblock %}
 
-{% block content %}
+{% block pagina_titulo_icone %}
+<i class="icon-diamond font-yellow-crusta"></i>
+{% endblock %}
 
-<div class="portlet light">
-	<div class="portlet-title">
-		<div class="caption font-yellow-crusta">
-			<i class="icon-diamond font-yellow-crusta"></i>
-			<span class="caption-subject bold uppercase"> {{divisao.nome}} </span>
-		</div>
-		<div class="actions">
+{% block content %}
+<div class="actions">
 			<a href="{% url 'divisoes:editar_divisao' divisao.id %}" class="btn btn-small btn-warning"> Editar divisão </a>
 		</div>
 	</div>
@@ -185,7 +182,6 @@
 			</div>
 		</div>
 	</div>
-</div>
 
 {% endblock %}
 

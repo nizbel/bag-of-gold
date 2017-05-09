@@ -1,16 +1,12 @@
 {% extends "base.html" %}
 {% load staticfiles %}
 
-{% block content %}
+{% block pagina_titulo_icone %}
+<i class="icon-user font-yellow-crusta"></i>
+{% endblock %}
 
-<div class="portlet light">
-	<div class="portlet-title">
-		<div class="caption font-yellow-crusta">
-			<i class="icon-user font-yellow-crusta"></i>
-            <span class="caption-subject bold uppercase"> Olá, {{request.user.investidor|default:'visitante'}}! </span>
-		</div>
-        {% if request.user.investidor %}
-		<div class="actions">
+{% block content %}
+<div class="actions">
 			<a href="{% url "inicio:detalhamento_investimentos" %}" class="btn btn-warning">Ver histórico detalhado</a>
 		</div>
         {% endif %}
@@ -321,7 +317,7 @@
 			</div>
 		</div>
 	</div>
-</div>
+
 {% endblock %}
 
 {% block extra_footer %}
