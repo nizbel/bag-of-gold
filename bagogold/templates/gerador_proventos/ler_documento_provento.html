@@ -423,10 +423,10 @@ $( document ).ready(function() {
                 min: 0,
                 max: 1000000000,
                 {% if pendencia.documento.tipo == 'A' %}
-                step: 0.000000000001,
+                step: 0.000000000000000001,
                 decimals: 12,
                 {% elif pendencia.documento.tipo == 'F' %}
-                step: 0.000000001,
+                step: 0.000000000000000001,
                 decimals: 9,
                 {% endif %}
                 maxboostedstep: 100,
@@ -441,10 +441,10 @@ $( document ).ready(function() {
                 min: 0,
                 max: 1000000000,
                 {% if pendencia.documento.tipo == 'A' %}
-                step: 0.000000000001,
+                step: 0.000000000000000001,
                 decimals: 12,
                 {% elif pendencia.documento.tipo == 'F' %}
-                step: 0.000000001,
+                step: 0.000000000000000001,
                 decimals: 9,
                 {% endif %}
                 maxboostedstep: 100,
