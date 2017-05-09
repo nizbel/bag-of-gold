@@ -397,7 +397,7 @@ def historico_fii(request):
     
     
 @login_required
-@adiciona_titulo_descricao('Inserir operação em FII', 'Inserir registro de operação de compra/venda no histórico do investidor')
+@adiciona_titulo_descricao('Inserir operação em FII', 'Inserir registro de operação de compra/venda em Fundos de Investimento Imobiliário')
 def inserir_operacao_fii(request):
     investidor = request.user.investidor
     
