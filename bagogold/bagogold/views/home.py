@@ -573,7 +573,7 @@ def detalhamento_investimentos(request):
                                             'estatisticas': estatisticas})
 
 # TODO remover login_required
-# @login_required
+@login_required
 @adiciona_titulo_descricao('Painel geral', 'Traz informações gerais sobre a posição atual em cada tipo de investimento')
 def painel_geral(request):
     # Usado para criar objetos vazios
