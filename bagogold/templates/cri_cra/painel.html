@@ -7,15 +7,12 @@
 <link href={% static "assets/global/plugins/bootstrap-datepicker/css/bootstrap-datepicker3.min.css" %} rel="stylesheet" type="text/css" />
 {% endblock %}
 
+{% block pagina_titulo_icone %}
+<i class="icon-pin font-yellow-crusta"></i>
+{% endblock %}
+
 {% block content %}
-<div class="portlet light">
-    <div class="portlet-title">
-        <div class="caption font-yellow-crusta">
-            <i class="icon-pin font-yellow-crusta"></i>
-            <span class="caption-subject bold uppercase">Painel</span>
-        </div>
-    </div>
-    <div class="portlet-body">
+<div class="portlet-body">
         <table id="ordens" class="table table-striped table-bordered table-hover table-header-fixed">
         <thead>
             <tr>
@@ -58,7 +55,6 @@
         </table>
         * Obs.: Valores estimados
     </div>
-</div>
 
 {% endblock %}
 

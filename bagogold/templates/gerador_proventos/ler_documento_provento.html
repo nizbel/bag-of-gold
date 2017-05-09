@@ -10,15 +10,12 @@
 <script src={% static "assets/global/plugins/pdfjs/build/pdf.worker.js" %}></script>
 {% endblock %}
 
+{% block pagina_titulo_icone %}
+<i class="icon-list font-yellow-crusta"></i>
+{% endblock %}
+
 {% block content %}
-<div class="portlet light">
-    <div class="portlet-title">
-        <div class="caption font-yellow-crusta">
-            <i class="icon-list font-yellow-crusta"></i>
-            <span class="caption-subject bold uppercase">Pendência de leitura de documento</span>
-        </div>
-    </div>
-    <div class="portlet-body">
+<div class="portlet-body">
         <div class="row">
             <div class="col-md-12">
                 <div class="portlet box yellow-crusta">
@@ -375,8 +372,7 @@
         </div>
         {% endif %}
     </div>
-</div>
-            
+
 {% endblock %}
 
 {% block extra_footer %}

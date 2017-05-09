@@ -6,15 +6,12 @@
 <link href={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.css" %} rel="stylesheet" type="text/css" />
 {% endblock %}
 
+{% block pagina_titulo_icone %}
+<i class="icon-pin font-yellow-crusta"></i>
+{% endblock %}
+
 {% block content %}
-<div class="portlet light">
-    <div class="portlet-title">
-        <div class="caption font-yellow-crusta">
-            <i class="icon-pin font-yellow-crusta"></i>
-            <span class="caption-subject bold uppercase">Painel</span>
-        </div>
-    </div>
-    <div class="portlet-body">
+<div class="portlet-body">
         <div class="alert alert-warning">
             <strong></strong> Última data/hora carregada para valor de papéis: <b>{{ dados.valor_diario_mais_recente }}</b>
         </div>
@@ -53,7 +50,7 @@
         </tfoot>
         </table>
     </div>
-</div>
+
 {% endblock %}
 
 {% block extra_footer %}
