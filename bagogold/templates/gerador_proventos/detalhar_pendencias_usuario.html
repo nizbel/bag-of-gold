@@ -215,7 +215,7 @@ $( document ).ready(function() {
                                             {color: "#FFBB44", label: "Recusou", bars: {show:true, align:"center", barWidth: 8 * 24 * 60 * 60 * 600, lineWidth: 1, stacked: false}, data: {{graf_leituras_que_recusou|safe}}},
                                             {color: "#550055", label: "Foi recusado", bars: {show:true, align:"center", barWidth: 8 * 24 * 60 * 60 * 600, lineWidth: 1, stacked: false}, data: {{graf_leituras_recusadas|safe}}},
                                             ],
-                                            {grid: {hoverable: true}, legend:{position:"nw"}, xaxis: {mode: "time",timeformat:"%m-%Y"},
+                                            {grid: {hoverable: true}, legend:{position:"nw"}, xaxis: {mode: "time",timeformat:"%m/%Y"},
     	}
     );
     
@@ -246,7 +246,7 @@ function showTooltip(x, y, contents) {
                     y = item.datapoint[1].toFixed(2);
                 
                 var date = new Date(parseInt(x));
-                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%m-%y") +"</br>" + item.series.label + ": " + parseInt(y));
+                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%m/%y") +"</br>" + item.series.label + ": " + parseInt(y));
             }
         }
         else {
