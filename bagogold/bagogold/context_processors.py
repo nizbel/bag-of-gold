@@ -6,6 +6,9 @@ from django.utils import timezone
 def env(context):
     return {'ENV': settings.ENV}
 
+def current_version(context):
+    return {'CURRENT_VERSION': settings.CURRENT_VERSION}
+
 def pendencias_investidor(context):
     if not context.user.is_anonymous():
         pendencias = buscar_pendencias_investidor(context.user.investidor)
@@ -18,12 +21,3 @@ def pendencias_investidor(context):
         num_pendencias = len(pendencias)
         return {'num_pendencias': num_pendencias, 'pendencias': pendencias}
     return {}
-
-def breadcrumbs(context):
-    breadcrumbs = list()
-    breadcrumbs.append(('Início', 'inicio'))
-    if context.resolver_match and context.resolver_match.namespace:
-        namespace = context.resolver_match.namespace
-        if 'cdb_rdb' in namespace:
-            breadcrumbs.append(('CDB/RDB', 'cdb_rdb:sobre_cdb_rdb'))
-    return {'breadcrumbs': breadcrumbs}

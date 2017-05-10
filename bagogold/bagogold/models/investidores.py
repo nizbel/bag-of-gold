@@ -31,3 +31,7 @@ def create_investidor(sender, instance, created, **kwargs):
         """
         divisao, criado = Divisao.objects.get_or_create(investidor=investidor, nome='Geral')
         DivisaoPrincipal.objects.get_or_create(investidor=investidor, divisao=divisao)
+        
+class LoginIncorreto (models.Model):
+    user = models.ForeignKey(User)
+    horario = models.DateTimeField(u'Horário')

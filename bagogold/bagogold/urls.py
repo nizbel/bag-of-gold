@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.forms.investidor import ExtendedAuthForm, \
+    ExtendedUserCreationForm, ExtendedPasswordChangeForm
 from bagogold.bagogold.views.investidores.investidores import logout
 from django.conf.urls import include, url
 from django.contrib.auth.views import login, password_change, \
@@ -7,7 +9,6 @@ from django.contrib.auth.views import login, password_change, \
 from django.views.generic.base import RedirectView, TemplateView
 from registration import validators
 from registration.backends.hmac import views as registration_views
-from registration.forms import RegistrationFormUniqueEmail
 import views
 
 # Altera valor para constante de email duplicado no Django-registration
@@ -16,7 +17,7 @@ validators.DUPLICATE_EMAIL = 'Já existe um usuário cadastrado com esse email'
 inicio_patterns = [
     url(r'^$', RedirectView.as_view(url='/painel_geral/')),
     url(r'^detalhamento_investimentos/$', views.home.detalhamento_investimentos, name='detalhamento_investimentos'),
-    url(r'^painel_geral/$', views.home.inicio, name='painel_geral'),
+    url(r'^painel_geral/$', views.home.painel_geral, name='painel_geral'),
     url(r'^sobre/$', views.home.sobre, name='sobre'),
     ]
 
@@ -175,25 +176,27 @@ urlpatterns = [
     url(r'^teste/carregar/(?P<url>[\w/]+)/$', views.misc.carregar_nova_aparencia, name='carregar_nova_aparencia'),
     
     # Investidores
-    url(r'^login/$', login, {'template_name': 'login.html'}, name='login'),
+    url(r'^login/$', login, {'template_name': 'login.html', 'authentication_form': ExtendedAuthForm}, name='login'),
     url(r'^logout/$', logout, {'next_page': '/login'}, name='logout'),
-    url(r'^minha_conta/alterar_senha/$', password_change, {'template_name': 'registration/alterar_senha.html'}, name='password_change'),
-    url(r'^minha_conta/alterar_senha/sucesso/$', password_change_done, {'template_name': 'registration/senha_alterada.html'}, name='password_change_done'),
+    url(r'^minha_conta/alterar_senha/$', password_change, {'template_name': 'registration/alterar_senha.html', 'password_change_form': ExtendedPasswordChangeForm,
+                                                           'extra_context': {'pagina_titulo': 'Alteração de senha', 'pagina_descricao': 'Criar uma nova senha para a conta informando a atual'}}, name='password_change'),
+    url(r'^minha_conta/alterar_senha/sucesso/$', password_change_done, {'extra_context': {'pagina_titulo': 'Alteração de senha', 'pagina_descricao': 'Criar uma nova senha para a conta informando a atual'}, 
+                                                                        'template_name': 'registration/senha_alterada.html'}, name='password_change_done'),
     url(r'^senha_esquecida/$', password_reset, {'template_name': 'registration/confirmar_redefinir_senha.html', 'email_template_name': 'registration/redefinir_senha_email.html', 'subject_template_name': 'registration/redefinir_senha_email_assunto.txt'}, name='password_reset'),
     url(r'^senha_esquecida/email_enviado/$', password_reset_done, {'template_name': 'registration/redefinir_senha_email_enviado.html'}, name='password_reset_done'),
     url(r'^redefinicao_senha/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$', password_reset_confirm, {'template_name': 'registration/redefinir_senha.html'}, name='password_reset_confirm'),
     url(r'^redefinicao_senha/completa/$', password_reset_complete, {'template_name': 'registration/senha_redefinida.html'}, name='password_reset_complete'),
     # Django-registration
-    url(r'^cadastro/$', registration_views.RegistrationView.as_view(form_class=RegistrationFormUniqueEmail), name='cadastro'),
+    url(r'^cadastro/$', registration_views.RegistrationView.as_view(form_class=ExtendedUserCreationForm), name='cadastro'),
     url(r'^ativacao/completa/$', TemplateView.as_view(template_name='registration/activation_complete.html'), name='registration_activation_complete'),
     # The activation key can make use of any character from the
     # URL-safe base64 alphabet, plus the colon as a separator.
     url(r'^ativacao/(?P<activation_key>[-:\w]+)/$', registration_views.ActivationView.as_view(), name='ativar_cadastro'),
     url(r'^cadastro/completo/$', TemplateView.as_view(template_name='registration/registration_complete.html'), name='registration_complete'),
     url(r'^cadastro/fechado/$', TemplateView.as_view(template_name='registration/registration_closed.html'), name='registration_closed'),
-    url(r'^minha_conta/(?P<id>\d+)/$', views.investidores.investidores.configuracoes_conta_investidor, name='configuracoes_conta_investidor'),
-    url(r'^minha_conta/editar_dados_cadastrais/(?P<id>\d+)/$', views.investidores.investidores.editar_dados_cadastrais, name='editar_dados_cadastrais'),
-    
+    url(r'^minha_conta/$', views.investidores.investidores.minha_conta, name='minha_conta'),
+#     url(r'^minha_conta/editar_dados_cadastrais/(?P<id>\d+)/$', views.investidores.investidores.editar_dados_cadastrais, name='editar_dados_cadastrais'),
+
     # Gerador de proventos
     url(r'^gerador_proventos/', include(gerador_proventos_patterns, namespace='gerador_proventos')),
     

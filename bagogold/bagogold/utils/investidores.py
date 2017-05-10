@@ -7,6 +7,7 @@ from bagogold.bagogold.models.fii import OperacaoFII, ValorDiarioFII, \
     HistoricoFII, FII, ProventoFII
 from bagogold.bagogold.models.fundo_investimento import \
     OperacaoFundoInvestimento, HistoricoValorCotas
+from bagogold.bagogold.models.investidores import LoginIncorreto
 from bagogold.bagogold.models.lc import OperacaoLetraCredito
 from bagogold.bagogold.models.td import OperacaoTitulo, ValorDiarioTitulo, \
     HistoricoTitulo
@@ -26,6 +27,7 @@ from bagogold.cri_cra.utils.utils import qtd_cri_cra_ate_dia
 from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
 from decimal import Decimal
 from django.core.exceptions import PermissionDenied
+from django.utils import timezone
 from itertools import chain
 from operator import attrgetter
 import datetime
@@ -236,3 +238,10 @@ def buscar_proventos_a_receber_data_ex_futura(investidor):
         provento.quantia_a_receber = provento.quantia_a_receber.quantize(Decimal('0.01'))
      
     return proventos_a_receber
+
+
+def user_blocked(user):
+    """ Testa se usuário está bloqueado """
+    # Verifica se última tentativa foi feita a no máximo 10 minutos
+    return (LoginIncorreto.objects.filter(user=user).count() >= 6 and 
+        (timezone.now() - LoginIncorreto.objects.filter(user=user).order_by('-horario')[0].horario).total_seconds() < 10 * 60)

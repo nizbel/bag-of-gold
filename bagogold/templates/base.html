@@ -78,6 +78,7 @@
                                 <div class="top-menu">
 <!--                                 <div class="col-md-4"> -->
                                     <ul class="nav navbar-nav pull-right">
+                                        {% if user.is_authenticated %}
                                         <!-- BEGIN NOTIFICATION DROPDOWN -->
                                         <li class="dropdown dropdown-extended dropdown-notification dropdown-dark" id="header_notification_bar">
                                             <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
@@ -115,7 +116,6 @@
                                         <li class="droddown dropdown-separator">
                                             <span class="separator"></span>
                                         </li>
-                                        {% if user.is_authenticated %}
                                         <!-- BEGIN USER LOGIN DROPDOWN -->
                                         <li class="dropdown dropdown-user dropdown-dark">
                                             <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
@@ -123,12 +123,8 @@
                                             </a>
                                             <ul class="dropdown-menu dropdown-menu-default">
                                                 <li>
-                                                    <a href="javascript:;">
+                                                    <a href="{% url "minha_conta" %}">
                                                         <i class="icon-user"></i> Minha conta </a>
-                                                </li>
-                                                <li>
-                                                    <a href="{% url "configuracoes_conta_investidor" request.user.id %}">
-                                                        <i class="icon-settings"></i> Configurações </a>
                                                 </li>
                                                 {% if request.user.id == 1 or request.user.id == 31 %}
                                                 <li>
@@ -201,17 +197,21 @@
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'historico_bh' %}active{% endif %}">
                                                             <a href="{% url "acoes:bh:historico_bh" %}"> Histórico </a>
                                                         </li>
+                                                        {% if request.user.is_authenticated %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_bh' %}active{% endif %}">
                                                             <a href="{% url "acoes:bh:inserir_operacao_bh" %}"> Inserir operação </a>
                                                         </li>
+                                                        {% endif %}
                                                         {% if request.user.is_superuser %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_provento_bh' %}active{% endif %}">
                                                             <a href="{% url "acoes:bh:inserir_provento_bh" %}"> Inserir provento </a>
                                                         </li>
                                                         {% endif %}
+                                                        {% if request.user.is_authenticated %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_taxa_custodia_acao' %}active{% endif %}">
                                                             <a href="{% url "acoes:bh:inserir_taxa_custodia_acao" %}"> Inserir taxa de custódia </a>
                                                         </li>
+                                                        {% endif %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_taxas_custodia_acao' %}active{% endif %}">
                                                             <a href="{% url "acoes:bh:listar_taxas_custodia_acao" %}"> Listar taxas de custódia </a>
                                                         </li>
@@ -235,12 +235,16 @@
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'historico_operacoes_cv' %}active{% endif %}">
                                                             <a href="{% url "acoes:trading:historico_operacoes_cv" %}"> Histórico compras/vendas </a>
                                                         </li>
+                                                        {% if request.user.is_authenticated %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_acao_t' %}active{% endif %}">
                                                             <a href="{% url "acoes:trading:inserir_operacao_acao_t" %}"> Inserir operação </a>
                                                         </li>
+                                                        {% endif %}
+                                                        {% if request.user.is_authenticated %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_t' %}active{% endif %}">
                                                             <a href="{% url "acoes:trading:inserir_operacao_t" %}"> Inserir compra/venda </a>
                                                         </li>
+                                                        {% endif %}
                                                     </ul>
                                                 </li>
                                             </ul>
@@ -266,9 +270,11 @@
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'historico_fii' %}active{% endif %}">
                                                     <a href="{% url "fii:historico_fii" %}" class="nav-link  "> Histórico </a>
                                                 </li>
+                                                {% if request.user.is_authenticated %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_fii' %}active{% endif %}">
                                                     <a href="{% url "fii:inserir_operacao_fii" %}" class="nav-link  "> Inserir operação </a>
                                                 </li>
+                                                {% endif %}
                                                 {% if request.user.is_superuser %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_provento_fii' %}active{% endif %}">
                                                     <a href="{% url "fii:inserir_provento_fii" %}" class="nav-link  "> Inserir provento </a>
@@ -283,28 +289,36 @@
                                             </ul>
                                         </li>
                                         <li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'fundo_investimento' in request.resolver_match.namespace %}active{% endif %}">
-                                            <a href="javascript:;"> Fundos de Investimento
+                                            <a href="javascript:;" class="em-construcao"> Fundos de Investimento
                                                 <span class="arrow"></span>
                                             </a>
                                             <ul class="dropdown-menu pull-left">
+                                                {% if request.user.is_authenticated %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'adicionar_valor_cota_historico' %}active{% endif %}">
                                                     <a href="{% url "fundo_investimento:adicionar_valor_cota_historico" %}" class="nav-link  "> Adicionar valor de cota </a>
                                                 </li>
+                                                {% endif %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'historico_fundo_investimento' %}active{% endif %}">
                                                     <a href="{% url "fundo_investimento:historico_fundo_investimento" %}" class="nav-link  "> Histórico </a>
                                                 </li>
+                                                {% if request.user.is_authenticated %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_fundo_investimento' %}active{% endif %}">
                                                     <a href="{% url "fundo_investimento:inserir_operacao_fundo_investimento" %}" class="nav-link  "> Inserir operação </a>
                                                 </li>
+                                                {% endif %}
+                                                {% if request.user.is_authenticated %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_fundo_investimento' %}active{% endif %}">
                                                     <a href="{% url "fundo_investimento:inserir_fundo_investimento" %}" class="nav-link  "> Inserir Fundo de Investimento </a>
                                                 </li>
+                                                {% endif %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_fundo_investimento' %}active{% endif %}">
                                                     <a href="{% url "fundo_investimento:listar_fundo_investimento" %}" class="nav-link  "> Listar Fundos </a>
                                                 </li>
+                                                {% if request.user.is_authenticated %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'modificar_carencia_fundo_investimento' %}active{% endif %}">
                                                     <a href="{% url "fundo_investimento:modificar_carencia_fundo_investimento" %}" class="nav-link  "> Modificar carência </a>
                                                 </li>
+                                                {% endif %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_fundo_investimento' %}active{% endif %}">
                                                     <a href="{% url "fundo_investimento:painel_fundo_investimento" %}" class="nav-link  "> Painel </a>
                                                 </li>
@@ -328,12 +342,16 @@
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'historico_cdb_rdb' %}active{% endif %}">
                                                             <a href="{% url "cdb_rdb:historico_cdb_rdb" %}" class="nav-link  "> Histórico </a>
                                                         </li>
+                                                        {% if request.user.is_authenticated %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_cdb_rdb' %}active{% endif %}">
                                                             <a href="{% url "cdb_rdb:inserir_cdb_rdb" %}" class="nav-link  "> Inserir CDB/RDB </a>
                                                         </li>
+                                                        {% endif %}
+                                                        {% if request.user.is_authenticated %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_cdb_rdb' %}active{% endif %}">
                                                             <a href="{% url "cdb_rdb:inserir_operacao_cdb_rdb" %}" class="nav-link  "> Inserir operação </a>
                                                         </li>
+                                                        {% endif %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_cdb_rdb' %}active{% endif %}">
                                                             <a href="{% url "cdb_rdb:listar_cdb_rdb" %}" class="nav-link  "> Listar CDB/RDB </a>
                                                         </li>
@@ -354,12 +372,16 @@
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'historico_cri_cra' %}active{% endif %}">
                                                             <a href="{% url "cri_cra:historico_cri_cra" %}" class="nav-link  "> Histórico </a>
                                                         </li>
+                                                        {% if request.user.is_authenticated %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_cri_cra' %}active{% endif %}">
                                                             <a href="{% url "cri_cra:inserir_cri_cra" %}" class="nav-link  "> Inserir CRI/CRA </a>
                                                         </li>
+                                                        {% endif %}
+                                                        {% if request.user.is_authenticated %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_cri_cra' %}active{% endif %}">
                                                             <a href="{% url "cri_cra:inserir_operacao_cri_cra" %}" class="nav-link  "> Inserir operação </a>
                                                         </li>
+                                                        {% endif %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_cri_cra' %}active{% endif %}">
                                                             <a href="{% url "cri_cra:listar_cri_cra" %}" class="nav-link  "> Listar CRI/CRA </a>
                                                         </li>
@@ -380,9 +402,11 @@
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'historico_debenture' %}active{% endif %}">
                                                             <a href="{% url "debentures:historico_debenture" %}" class="nav-link  "> Histórico </a>
                                                         </li>
+                                                        {% if request.user.is_authenticated %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_debenture' %}active{% endif %}">
                                                             <a href="{% url "debentures:inserir_operacao_debenture" %}" class="nav-link  "> Inserir operação </a>
                                                         </li>
+                                                        {% endif %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_debentures' %}active{% endif %}">
                                                             <a href="{% url "debentures:listar_debentures" %}" class="nav-link  "> Listar Debêntures </a>
                                                         </li>
@@ -403,12 +427,16 @@
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'historico_lci_lca' %}active{% endif %}">
                                                             <a href="{% url "lci_lca:historico_lci_lca" %}" class="nav-link  "> Histórico </a>
                                                         </li>
+                                                        {% if request.user.is_authenticated %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_lci_lca' %}active{% endif %}">
                                                             <a href="{% url "lci_lca:inserir_lci_lca" %}" class="nav-link  "> Inserir Letra de Crédito </a>
                                                         </li>
+                                                        {% endif %}
+                                                        {% if request.user.is_authenticated %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_lci_lca' %}active{% endif %}">
                                                             <a href="{% url "lci_lca:inserir_operacao_lci_lca" %}" class="nav-link  "> Inserir operação </a>
                                                         </li>
+                                                        {% endif %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_lci_lca' %}active{% endif %}">
                                                             <a href="{% url "lci_lca:listar_lci_lca" %}" class="nav-link  "> Listar Letras de Crédito </a>
                                                         </li>
@@ -433,9 +461,11 @@
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'historico_td' %}active{% endif %}">
                                                     <a href="{% url "td:historico_td" %}" class="nav-link  "> Histórico </a>
                                                 </li>
+                                                {% if request.user.is_authenticated %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_td' %}active{% endif %}">
                                                     <a href="{% url "td:inserir_operacao_td" %}" class="nav-link  "> Inserir operação </a>
                                                 </li>
+                                                {% endif %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_td' %}active{% endif %}">
                                                     <a href="{% url "td:painel_td" %}" class="nav-link  "> Painel </a>
                                                 </li>
@@ -449,12 +479,16 @@
                                                 <span class="arrow"></span>
                                             </a>
                                             <ul class="dropdown-menu pull-left">
+                                                {% if request.user.is_authenticated %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_divisao' %}active{% endif %}">
                                                     <a href="{% url "divisoes:inserir_divisao" %}" class="nav-link  "> Inserir divisão </a>
                                                 </li>
+                                                {% endif %}
+                                                {% if request.user.is_authenticated %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_transferencia' %}active{% endif %}">
                                                     <a href="{% url "divisoes:inserir_transferencia" %}" class="nav-link  "> Inserir transferência </a>
                                                 </li>
+                                                {% endif %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_divisoes' %}active{% endif %}">
                                                     <a href="{% url "divisoes:listar_divisoes" %}" class="nav-link  "> Listar divisões </a>
                                                 </li>
@@ -514,30 +548,6 @@
                         <!-- BEGIN CONTENT -->
                         <div class="page-content-wrapper">
                             <!-- BEGIN CONTENT BODY -->
-                            {% if pagina_titulo %}
-                            <!-- BEGIN PAGE HEAD-->
-                            <div class="page-head" style="background: none;">
-                                <div class="container-fluid">
-                                    <!-- BEGIN PAGE TITLE -->
-                                    <div class="row">
-                                        <div class="col-md-12 pr-md-0">
-                                            <div class="portlet light" style="padding: 0px; margin-top: 10px;">
-                                                <div class="container-fluid">
-                                                    <div class="page-title">
-                                                        <h1>{{pagina_titulo}}
-                                                            <br/>
-                                                            <small>{{pagina_descricao}}</small>
-                                                        </h1>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <!-- END PAGE TITLE -->
-                                </div>
-                            </div>
-                            <!-- END PAGE HEAD-->
-                            {% endif %}
                             <!-- BEGIN PAGE CONTENT BODY -->
                             <div class="page-content">
                                 <div class="container-fluid">
@@ -564,14 +574,29 @@
                                         <div class="mt-content-body">
                                             <div class="row row-same-size-columns">
                                                 <div class="col-md-11">
-                                                {% block content %}
-                    
-                                                {% endblock %}
+                                                    {% if pagina_titulo %}
+                                                    <div class="portlet light">
+                                                        <div class="portlet-title">
+                                                            <div class="page-head">
+                                                                <div class="page-title">
+                                                                    <h1>
+                                                                        <span class="font-yellow-crusta bold uppercase"> {% block pagina_titulo_icone %}{% endblock %} {{pagina_titulo}}</span>
+                                                                        <small>{{pagina_descricao}}</small>
+                                                                    </h1>
+                                                                </div>
+                                                            </div>
+                                                                {% block extra_titulo %}{% endblock %}
+                                                        </div>
+                                                    {% endif %}
+                                                            {% block content %}
+                                                            {% endblock %}
+                                                    {% if pagina_titulo %}
+                                                    </div>
+                                                    {% endif %}
                                                 </div>
                                                 <div class="col-md-1 px-md-0 row-same-size-columns">
-                                                    <div class="portlet light px-0">
+                                                    <div class="portlet light px-0" style="width: 100%">
                                                         <div class="portlet-body">
-                                                            {% lorem 40 w %}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -598,13 +623,13 @@
                             <div class="row">
                                 <div class="col-md-3 col-sm-6 col-xs-12 footer-block">
                                     <h2>Sobre</h2>
-                                    <p> O Bag of Gold (BOG) é uma ferramenta para acompanhar os seus investimentos. Nele, você consegue ter uma visão geral de todos os investimentos que você possui, independente de onde eles estão. </p>
+                                    <p> O <strong>Bag of Gold</strong> é uma ferramenta para acompanhar os seus investimentos. Nele, você consegue ter uma visão geral de todos os investimentos que você possui, independente de onde eles estão. </p>
                                 </div>
                                 <div class="col-md-3 col-sm-6 col-xs-12 footer-block">
                                     <h2>Contato</h2>
                                     <address class="margin-bottom-100">
-                                        <br> Email:
-                                        <a href="mailto:info@metronic.com">suporte@bagofgold.com.br</a>
+                                        <br> E-mail:
+                                        <a href="mailto:suporte@bagofgold.com.br">suporte@bagofgold.com.br</a>
                                     </address>
                                 </div>
                                 <div class="col-md-6 col-sm-12 col-xs-12 footer-block">
@@ -644,7 +669,6 @@
         <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700&subset=all" rel="stylesheet" type="text/css" />
         <link href={% static "assets/global/plugins/font-awesome/css/font-awesome.min.css" %} rel="stylesheet" type="text/css" />
         <!-- END GLOBAL MANDATORY STYLES -->
-
         <!-- BEGIN CORE PLUGINS -->
         <script src={% static "assets/global/plugins/jquery.min.js" %} type="text/javascript"></script>
         <script src={% static "assets/global/plugins/bootstrap/js/bootstrap.min.js" %} type="text/javascript"></script>
@@ -653,6 +677,11 @@
         <script src={% static "assets/global/plugins/jquery.blockui.min.js" %} type="text/javascript"></script>
         <script src={% static "assets/global/plugins/bootstrap-switch/js/bootstrap-switch.min.js" %} type="text/javascript"></script>
         <!-- END CORE PLUGINS -->
+        <script type="text/javascript">
+        $(document).ready(function() {
+            $('.em-construcao').attr('data-original-title', 'Em construção').attr('data-placement', 'top').addClass('tooltips').removeClass('em-construcao');
+        });
+        </script>
         <!-- BEGIN PAGE LEVEL PLUGINS -->
         {% block extra_footer %}
         

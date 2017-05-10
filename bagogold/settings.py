@@ -75,9 +75,9 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'bagogold.bagogold.context_processors.current_version',
                 'bagogold.bagogold.context_processors.env',
                 'bagogold.bagogold.context_processors.pendencias_investidor',
-                'bagogold.bagogold.context_processors.breadcrumbs',
             ],
         },
     },
@@ -97,7 +97,7 @@ DATABASES = {
     }
 }
 
-LOGIN_REDIRECT_URL = 'inicio'
+LOGIN_REDIRECT_URL = 'inicio:painel_geral'
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
@@ -131,8 +131,6 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_HOST_USER = 'bagofgold@bagofgold.com.br'
 EMAIL_HOST_PASSWORD = '9jU3IU8hse'
 EMAIL_PORT = 587
-# TODO Remover quando estivermos prontos para funcionar
-REGISTRATION_OPEN = False
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/

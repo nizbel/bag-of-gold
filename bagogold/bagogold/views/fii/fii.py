@@ -50,9 +50,8 @@ def acompanhamento_mensal_fii(request):
                                                                          'graf_lucro_mes': graf_lucro_mes})
     
     
-@login_required
-@adiciona_titulo_descricao('Acompanhamento de FII', ('Mostra o rendimento dos FIIs do investidor para',
-    'comparar com os potenciais ganhos em outros investimentos'))
+@adiciona_titulo_descricao('Acompanhamento de FII', 'Mostra o rendimento dos FIIs do investidor para '
+    'comparar com os potenciais ganhos em outros investimentos')
 def acompanhamento_fii(request):
     fiis = FII.objects.all()
     
@@ -102,10 +101,8 @@ def acompanhamento_fii(request):
     
     return TemplateResponse(request, 'fii/acompanhamento.html', {'comparativos': comparativos})
     
-# TODO remover login_required
-@login_required
-@adiciona_titulo_descricao('Cálculo de corretagem', ('Calcular quantidade de dinheiro que o investidor pode juntar para ',
-    'comprar novas cotasde forma a diluir mais eficientemente a corretagem'))
+@adiciona_titulo_descricao('Cálculo de corretagem', 'Calcular quantidade de dinheiro que o investidor pode juntar para '
+    'comprar novas cotasde forma a diluir mais eficientemente a corretagem')
 def calcular_resultado_corretagem(request):
     # Preparar ranking
     ranking = list()
@@ -270,10 +267,14 @@ def editar_provento_fii(request, id):
     return TemplateResponse(request, 'fii/editar_provento_fii.html', {'form': form})   
     
     
-@login_required
 @adiciona_titulo_descricao('Histórico de FII', 'Histórico de operações de compra/venda e rendimentos/amortizações do investidor')
 def historico_fii(request):
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        return TemplateResponse(request, 'fii/historico.html', {'dados': {}, 'lista_conjunta': list(), 'graf_poupanca_proventos': list(), 
+                                                     'graf_gasto_total': list(), 'graf_patrimonio': list()})
+        
     operacoes = OperacaoFII.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data') 
     
     # Se investidor não tiver feito operações
@@ -397,7 +398,7 @@ def historico_fii(request):
     
     
 @login_required
-@adiciona_titulo_descricao('Inserir operação em FII', 'Inserir registro de operação de compra/venda no histórico do investidor')
+@adiciona_titulo_descricao('Inserir operação em FII', 'Inserir registro de operação de compra/venda em Fundos de Investimento Imobiliário')
 def inserir_operacao_fii(request):
     investidor = request.user.investidor
     
@@ -470,14 +471,17 @@ def inserir_provento_fii(request):
             
     return TemplateResponse(request, 'fii/inserir_provento_fii.html', {'form': form})
 
-@login_required
 @adiciona_titulo_descricao('Painel de FII', 'Posição atual do investidor em Fundos de Investimento Imobiliário')
 def painel(request):
     # Usado para criar objetos vazios
     class Object(object):
         pass
     
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        return TemplateResponse(request, 'fii/painel.html', {'fiis': list(), 'dados': {}})
+        
     
     operacoes = OperacaoFII.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
     for operacao in operacoes:
@@ -551,7 +555,6 @@ def painel(request):
 
     return TemplateResponse(request, 'fii/painel.html', {'fiis': fiis, 'dados': dados})
 
-@login_required
 @adiciona_titulo_descricao('Sobre FII', 'Detalha o que são Fundos de Investimento Imobiliário')
 def sobre(request):
     if request.user.is_authenticated():

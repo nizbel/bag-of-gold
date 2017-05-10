@@ -30,8 +30,8 @@ import calendar
 import datetime
 
 @login_required
-@adiciona_titulo_descricao('Detalhar CDB/RDB', ('Detalhar CDB/RDB, incluindo histórico de carência e ', 
-                                                'porcentagem de rendimento, além de dados da posição do investidor'))
+@adiciona_titulo_descricao('Detalhar CDB/RDB', 'Detalhar CDB/RDB, incluindo histórico de carência e '
+                                                'porcentagem de rendimento, além de dados da posição do investidor')
 def detalhar_cdb_rdb(request, cdb_rdb_id):
     investidor = request.user.investidor
     
@@ -140,8 +140,8 @@ def editar_cdb_rdb(request, cdb_rdb_id):
     return TemplateResponse(request, 'cdb_rdb/editar_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'cdb_rdb': cdb_rdb})  
     
 @login_required
-@adiciona_titulo_descricao('Editar registro de carência de um CDB/RDB', ('Alterar um registro de carência no ',
-                                                                         'histórico do CDB/RDB'))
+@adiciona_titulo_descricao('Editar registro de carência de um CDB/RDB', 'Alterar um registro de carência no '
+                                                                        'histórico do CDB/RDB')
 def editar_historico_carencia(request, historico_carencia_id):
     investidor = request.user.investidor
     historico_carencia = get_object_or_404(HistoricoCarenciaCDB_RDB, id=historico_carencia_id)
@@ -191,8 +191,8 @@ def editar_historico_carencia(request, historico_carencia_id):
     return TemplateResponse(request, 'cdb_rdb/editar_historico_carencia.html', {'form_historico_carencia': form_historico_carencia, 'inicial': inicial}) 
     
 @login_required
-@adiciona_titulo_descricao('Editar registro de porcentagem de rendimento de um CDB/RDB', ('Alterar um registro de porcentagem de rendimento no ',
-                                                                                          'histórico do CDB/RDB'))
+@adiciona_titulo_descricao('Editar registro de porcentagem de rendimento de um CDB/RDB', 'Alterar um registro de porcentagem de rendimento no '
+                                                                                         'histórico do CDB/RDB')
 def editar_historico_porcentagem(request, historico_porcentagem_id):
     investidor = request.user.investidor
     historico_porcentagem = get_object_or_404(HistoricoPorcentagemCDB_RDB, id=historico_porcentagem_id)
@@ -326,10 +326,14 @@ def editar_operacao_cdb_rdb(request, operacao_id):
     return TemplateResponse(request, 'cdb_rdb/editar_operacao_cdb_rdb.html', {'form_operacao_cdb_rdb': form_operacao_cdb_rdb, 'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})  
 
     
-@login_required
 @adiciona_titulo_descricao('Histórico de CDB/RDB', 'Histórico de operações de compra/venda em CDB/RDB')
 def historico(request):
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        return TemplateResponse(request, 'cdb_rdb/historico.html', {'dados': {}, 'operacoes': list(), 
+                                                    'graf_gasto_total': list(), 'graf_patrimonio': list()})
+    
     # Processa primeiro operações de venda (V), depois compra (C)
     operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
     # Verifica se não há operações
@@ -477,8 +481,8 @@ def inserir_cdb_rdb(request):
                                                               'formset_carencia': formset_carencia})
 
 @login_required
-@adiciona_titulo_descricao('Inserir registro de carência para um CDB/RDB', ('Inserir registro de alteração de carência ao histórico de ',
-                                                                            'um CDB/RDB'))
+@adiciona_titulo_descricao('Inserir registro de carência para um CDB/RDB', 'Inserir registro de alteração de carência ao histórico de '
+                                                                           'um CDB/RDB')
 def inserir_historico_carencia_cdb_rdb(request, cdb_rdb_id):
     investidor = request.user.investidor
     cdb_rdb = get_object_or_404(CDB_RDB, id=cdb_rdb_id)
@@ -501,8 +505,8 @@ def inserir_historico_carencia_cdb_rdb(request, cdb_rdb_id):
     return TemplateResponse(request, 'cdb_rdb/inserir_historico_carencia_cdb_rdb.html', {'form': form})
 
 @login_required
-@adiciona_titulo_descricao('Inserir registro de porcentagem para um CDB/RDB', ('Inserir registro de alteração de porcentagem de rendimento ',
-                                                                               'ao histórico de um CDB/RDB'))
+@adiciona_titulo_descricao('Inserir registro de porcentagem para um CDB/RDB', 'Inserir registro de alteração de porcentagem de rendimento '
+                                                                              'ao histórico de um CDB/RDB')
 def inserir_historico_porcentagem_cdb_rdb(request, cdb_rdb_id):
     investidor = request.user.investidor
     cdb_rdb = get_object_or_404(CDB_RDB, id=cdb_rdb_id)
@@ -614,10 +618,13 @@ def inserir_operacao_cdb_rdb(request):
     return TemplateResponse(request, 'cdb_rdb/inserir_operacao_cdb_rdb.html', {'form_operacao_cdb_rdb': form_operacao_cdb_rdb, 'formset_divisao': formset_divisao_cdb_rdb,
                                                                         'varias_divisoes': varias_divisoes})
 
-@login_required
 @adiciona_titulo_descricao('Listar CDB/RDB', 'Lista de CDBs e RDBs cadastrados pelo investidor')
 def listar_cdb_rdb(request):
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        return TemplateResponse(request, 'cdb_rdb/listar_cdb_rdb.html', {'cdb_rdb': list()})
+    
     cdb_rdb = CDB_RDB.objects.filter(investidor=investidor)
     
     for investimento in cdb_rdb:
@@ -633,10 +640,13 @@ def listar_cdb_rdb(request):
         
     return TemplateResponse(request, 'cdb_rdb/listar_cdb_rdb.html', {'cdb_rdb': cdb_rdb})
 
-@login_required
 @adiciona_titulo_descricao('Painel de CDB/RDB', 'Posição atual do investidor em CDB/RDB')
 def painel(request):
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        return TemplateResponse(request, 'cdb_rdb/painel.html', {'operacoes': list(), 'dados': {}})
+        
     # Processa primeiro operações de venda (V), depois compra (C)
     operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
     if not operacoes:
@@ -768,7 +778,6 @@ def painel(request):
     
     return TemplateResponse(request, 'cdb_rdb/painel.html', {'operacoes': operacoes, 'dados': dados})
 
-@login_required
 @adiciona_titulo_descricao('Sobre CDB/RDB', 'Detalha o que são CDB e RDB')
 def sobre(request):
     data_atual = datetime.date.today()
