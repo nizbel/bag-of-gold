@@ -17,9 +17,8 @@ from bagogold.bagogold.utils.td import calcular_valor_acumulado_ipca
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
-from django.db.models import Count
 from django.db.models.query_utils import Q
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
@@ -33,7 +32,6 @@ import json
 
 
 
-@login_required
 @adiciona_titulo_descricao('Detalhar Debênture', 'Detalha os valores de uma Debênture')
 def detalhar_debenture(request, debenture_id):
     try:
@@ -134,16 +132,20 @@ def editar_operacao_debenture(request, operacao_id):
                                                                'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})   
 
     
-@login_required
 @adiciona_titulo_descricao('Histórico de Debêntures', 'Histórico de operações de compra/venda em Debêntures')
 def historico(request):
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        return TemplateResponse(request, 'debentures/historico.html', {'dados': {}, 'lista_conjunta': list(), 'graf_investido_total': list(), 
+                                                                   'graf_patrimonio': list()})
     
     operacoes = OperacaoDebenture.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data') 
     
     # Se investidor não tiver feito operações
     if not operacoes:
-        return TemplateResponse(request, 'debentures/historico.html', {'usuario_tem_operacoes': False})
+        return TemplateResponse(request, 'debentures/historico.html', {'dados': {}, 'lista_conjunta': list(), 'graf_investido_total': list(), 
+                                                                   'graf_patrimonio': list()})
     
     for operacao in operacoes:
         operacao.valor_unitario = operacao.preco_unitario
@@ -232,7 +234,7 @@ def historico(request):
     else:
         dados['lucro_percentual'] = 0
     return TemplateResponse(request, 'debentures/historico.html', {'dados': dados, 'lista_conjunta': lista_conjunta, 'graf_investido_total': graf_investido_total, 
-                                                                   'graf_patrimonio': graf_patrimonio, 'usuario_tem_operacoes': True})
+                                                                   'graf_patrimonio': graf_patrimonio})
     
 @login_required
 @adiciona_titulo_descricao('Inserir operação em Debênture', 'Inserir registro de operação de compra/venda de debêntures no histórico do investidor')
@@ -280,7 +282,6 @@ def inserir_operacao_debenture(request):
     return TemplateResponse(request, 'debentures/inserir_operacao_debenture.html', {'form_operacao_debenture': form_operacao_debenture, 'formset_divisao': formset_divisao, 
                                                                                     'varias_divisoes': varias_divisoes})
 
-@login_required
 @adiciona_titulo_descricao('Listar Debêntures', 'Listagem de debêntures com valores básicos de rendimento e vencimento')
 def listar_debentures(request):
     debentures = Debenture.objects.all()
@@ -305,10 +306,12 @@ def listar_debentures_validas_na_data(request):
     
     return HttpResponse(json.dumps({'resultado': True, 'debentures_validas': debentures_validas}), content_type = "application/json") 
 
-@login_required
 @adiciona_titulo_descricao('Painel de Debêntures', 'Posição atual do investidor em Debêntures')
 def painel(request):
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        return TemplateResponse(request, 'debentures/painel.html', {'debentures': list(), 'dados': {}})
     
     # Processa primeiro operações de venda (V), depois compra (C)
     operacoes = OperacaoDebenture.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data') 
@@ -409,7 +412,6 @@ def painel(request):
     
     return TemplateResponse(request, 'debentures/painel.html', {'debentures': debentures, 'dados': dados})
 
-@login_required
 @adiciona_titulo_descricao('Sobre Debêntures', 'Detalha o que são Debêntures')
 def sobre(request):
     data_atual = datetime.date.today()
