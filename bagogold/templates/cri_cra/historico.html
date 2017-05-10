@@ -4,7 +4,6 @@
 {% block extra_head %}
 <link href={% static "assets/global/plugins/datatables/datatables.min.css" %} rel="stylesheet" type="text/css" />
 <link href={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.css" %} rel="stylesheet" type="text/css" />
-<link href={% static "assets/global/plugins/bootstrap-datepicker/css/bootstrap-datepicker3.min.css" %} rel="stylesheet" type="text/css" />
 {% endblock %}
 
 {% block pagina_titulo_icone %}
@@ -13,121 +12,121 @@
 
 {% block content %}
 <div class="portlet-body">
-        <div class="row">
-            <div class="col-md-12">
-                <!-- BEGIN Portlet PORTLET-->
-                <div class="portlet box yellow-crusta">
-                    <div class="portlet-title">
-                        <div class="caption">
-                            <i class="fa fa-line-chart"></i>Gráfico</div>
-                        <div class="tools">
-                            <a href="javascript:;" class="collapse"></a>
-                        </div>
-                    </div>
-                    <div class="portlet-body">
-                        <div class="chart" id="graf_historico" style="width:100%;height:400px"></div>
+    <div class="row">
+        <div class="col-md-12">
+            <!-- BEGIN Portlet PORTLET-->
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-line-chart"></i>Gráfico</div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
                     </div>
                 </div>
-                <!-- END Portlet PORTLET-->
+                <div class="portlet-body">
+                    <div class="chart" id="graf_historico" style="width:100%;height:400px"></div>
+                </div>
             </div>
-            <div class="col-md-12">
-                <!-- BEGIN Portlet PORTLET-->
-                <div class="portlet box yellow-crusta">
-                    <div class="portlet-title">
-                        <div class="caption">
-                            <i class="fa fa-money"></i>Valores atuais</div>
-                        <div class="tools">
-                            <a href="javascript:;" class="collapse"></a>
-                        </div>
+            <!-- END Portlet PORTLET-->
+        </div>
+        <div class="col-md-12">
+            <!-- BEGIN Portlet PORTLET-->
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-money"></i>Valores atuais</div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
                     </div>
-                    <div class="portlet-body">
-                        <div class="row number-stats margin-bottom-30">
-                            <div class="col-md-3">
-                                <div class="stat-left" style="width:100%">
-                                    <div class="stat-chart" style="width:30%;">
-                                        <div id="graf_valor" style="width:100%;height:50px"></div>
-                                    </div>
-                                    <div class="stat-number">
-                                        <div class="title"> Patrimônio: </div>
-                                        <div class="number"> R${{ dados.patrimonio|floatformat:2 }} </div>
-                                    </div>
+                </div>
+                <div class="portlet-body">
+                    <div class="row number-stats margin-bottom-30">
+                        <div class="col-md-3">
+                            <div class="stat-left" style="width:100%">
+                                <div class="stat-chart" style="width:30%;">
+                                    <div id="graf_valor" style="width:100%;height:50px"></div>
+                                </div>
+                                <div class="stat-number">
+                                    <div class="title"> Patrimônio: </div>
+                                    <div class="number"> R${{ dados.patrimonio|default:'0'|floatformat:2 }} </div>
                                 </div>
                             </div>
-                            <div class="col-md-3">
-                                <div class="stat-left" style="width:100%">
-                                    <div class="stat-chart" style="width:30%;">
-                                        <div id="graf_investido" style="width:100%;height:50px"></div>
-                                    </div>
-                                    <div class="stat-number">
-                                        <div class="title"> Total investido: </div>
-                                        <div class="number"> R${{ dados.total_investido|floatformat:2 }} </div>
-                                    </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-left" style="width:100%">
+                                <div class="stat-chart" style="width:30%;">
+                                    <div id="graf_investido" style="width:100%;height:50px"></div>
+                                </div>
+                                <div class="stat-number">
+                                    <div class="title"> Total investido: </div>
+                                    <div class="number"> R${{ dados.total_investido|default:'0'|floatformat:2 }} </div>
                                 </div>
                             </div>
-                            <div class="col-md-3">
-                                <div class="stat-left" style="width:100%">
-                                    <div class="stat-chart" style="width:30%;">
-                                    </div>
-                                    <div class="stat-number">
-                                        <div class="title"> Lucro/Prejuízo: </div>
-                                        <div class="number"> R${{ dados.lucro|floatformat:2 }} ({{ dados.lucro_percentual|floatformat:2 }}%) </div>
-                                    </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-left" style="width:100%">
+                                <div class="stat-chart" style="width:30%;">
+                                </div>
+                                <div class="stat-number">
+                                    <div class="title"> Lucro/Prejuízo: </div>
+                                    <div class="number"> R${{ dados.lucro|default:'0'|floatformat:2 }} ({{ dados.lucro_percentual|default:'0'|floatformat:2 }}%) </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <!-- END Portlet PORTLET-->
-            </div>   
-            <div class="col-md-12">
-                <!-- BEGIN Portlet PORTLET-->
-                <div class="portlet box yellow-crusta">
-                    <div class="portlet-title">
-                        <div class="caption">
-                            <i class="fa fa-history"></i>Histórico</div>
-                        <div class="tools">
-                            <a href="javascript:;" class="collapse"></a>
-                        </div>
+            </div>
+            <!-- END Portlet PORTLET-->
+        </div>   
+        <div class="col-md-12">
+            <!-- BEGIN Portlet PORTLET-->
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-history"></i>Histórico</div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
                     </div>
-                    <div class="portlet-body">
-                        <table id="operacoes" class="table table-striped table-bordered table-hover table-header-fixed">
-                        <thead>
-                            <tr>
-                                <th>CRI/CRA</th>
-                                <th>Tipo</th>
-                                <th>Data</th>
-                                <th>Preço</th>
-                                <th>Qtde.</th>
-                                <th>Taxa</th>
-                                <th>Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        {% for item in operacoes %}
+                </div>
+                <div class="portlet-body">
+                    <table id="operacoes" class="table table-striped table-bordered table-hover table-header-fixed">
+                    <thead>
                         <tr>
-                            <td><a href="{% url 'cri_cra:detalhar_cri_cra' item.cri_cra.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar {{item.cri_cra.descricao_tipo}}">{{item.cri_cra.nome}}</a></td>
-                            <td><a href="{% url 'cri_cra:editar_operacao_cri_cra' item.id %}" class="tooltips" data-placement="top" data-original-title="Editar operação">{{ item.tipo }}</a></td>
-                            <td>{{ item.data|date:"d/m/Y" }}</td>
-                            <td>R$ {{item.preco_unitario}}</td>
-                            <td>{{item.quantidade}}</td>
-                            <td><span {% if item.taxa > 0 %}class="font-red-thunderbird"{% endif %}>R$ {{item.taxa}}</span></td>
-                            <td><span class="
-                                {% if item.total < 0 %}
-                                font-red-thunderbird
-                                {% else %}
-                                font-blue
-                                {% endif %}
-                                ">R$ {{item.total}}</span></td>
+                            <th>CRI/CRA</th>
+                            <th>Tipo</th>
+                            <th>Data</th>
+                            <th>Preço</th>
+                            <th>Qtde.</th>
+                            <th>Taxa</th>
+                            <th>Total</th>
                         </tr>
-                        {% endfor %}
-                        </tbody>
-                        </table>
-                    </div>
+                    </thead>
+                    <tbody>
+                    {% for item in operacoes %}
+                    <tr>
+                        <td><a href="{% url 'cri_cra:detalhar_cri_cra' item.cri_cra.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar {{item.cri_cra.descricao_tipo}}">{{item.cri_cra.nome}}</a></td>
+                        <td><a href="{% url 'cri_cra:editar_operacao_cri_cra' item.id %}" class="tooltips" data-placement="top" data-original-title="Editar operação">{{ item.tipo }}</a></td>
+                        <td>{{ item.data|date:"d/m/Y" }}</td>
+                        <td>R$ {{item.preco_unitario}}</td>
+                        <td>{{item.quantidade}}</td>
+                        <td><span {% if item.taxa > 0 %}class="font-red-thunderbird"{% endif %}>R$ {{item.taxa}}</span></td>
+                        <td><span class="
+                            {% if item.total < 0 %}
+                            font-red-thunderbird
+                            {% else %}
+                            font-blue
+                            {% endif %}
+                            ">R$ {{item.total}}</span></td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                    </table>
                 </div>
-                <!-- END Portlet PORTLET-->
             </div>
+            <!-- END Portlet PORTLET-->
         </div>
     </div>
+</div>
 
 {% endblock %}
 
@@ -159,7 +158,7 @@ $( document ).ready(function() {
     $.plot($("#graf_historico"), [{lines: {show:true}, label: "Valor títulos", data: {{ graf_patrimonio|safe }}},
                                 {lines: {show:true}, label: "Total investido", data: {{ graf_investido_total|safe }}}
                               ],
-                                {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%d-%m-%y"} }  
+                                {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%d/%m/%y"} }  
     );
     
     function showTooltip(x, y, contents) {
@@ -190,7 +189,7 @@ $( document ).ready(function() {
                     y = item.datapoint[1].toFixed(2);
                 
                 var date = new Date(parseInt(x));
-                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d-%m-%y") +"</br>" + item.series.label + ": R$" + y);
+                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%y") +"</br>" + item.series.label + ": R$" + y.replace('.', ','));
             }
         }
         else {
