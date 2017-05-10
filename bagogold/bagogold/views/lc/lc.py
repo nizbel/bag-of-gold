@@ -28,8 +28,8 @@ import calendar
 import datetime
 
 @login_required
-@adiciona_titulo_descricao('Detalhar Letra de Crédito', ('Detalhar Letra de Crédito, incluindo histórico de carência e ', 
-                                                         'porcentagem de rendimento, além de dados da posição do investidor'))
+@adiciona_titulo_descricao('Detalhar Letra de Crédito', 'Detalhar Letra de Crédito, incluindo histórico de carência e '
+                                                        'porcentagem de rendimento, além de dados da posição do investidor')
 def detalhar_lci_lca(request, lci_lca_id):
     investidor = request.user.investidor
     
@@ -412,8 +412,8 @@ def historico(request):
                                                     'graf_gasto_total': graf_gasto_total, 'graf_patrimonio': graf_patrimonio})
     
 @login_required
-@adiciona_titulo_descricao('Inserir registro de carência para uma Letra de Crédito', ('Inserir registro de alteração na carência ao histórico de ',
-                                                                                      'uma Letra de Crédito'))
+@adiciona_titulo_descricao('Inserir registro de carência para uma Letra de Crédito', 'Inserir registro de alteração na carência ao histórico de '
+                                                                                     'uma Letra de Crédito')
 def inserir_historico_carencia(request, lci_lca_id):
     investidor = request.user.investidor
     lci_lca = get_object_or_404(LetraCredito, id=lci_lca_id)
@@ -436,8 +436,8 @@ def inserir_historico_carencia(request, lci_lca_id):
     return TemplateResponse(request, 'lc/inserir_historico_carencia_lci_lca.html', {'form': form})
 
 @login_required
-@adiciona_titulo_descricao('Inserir registro de porcentagem de rendimento para uma Letra de Crédito', ('Inserir registro de alteração de porcentagem ',
-                                                                                                       'de rendimento ao histsórico de uma Letra de Crédito'))
+@adiciona_titulo_descricao('Inserir registro de porcentagem de rendimento para uma Letra de Crédito', 'Inserir registro de alteração de porcentagem '
+                                                                                                      'de rendimento ao histsórico de uma Letra de Crédito')
 def inserir_historico_porcentagem(request, lci_lca_id):
     investidor = request.user.investidor
     lci_lca = get_object_or_404(LetraCredito, id=lci_lca_id)

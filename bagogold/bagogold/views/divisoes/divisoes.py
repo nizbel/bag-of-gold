@@ -42,8 +42,8 @@ from django.template.response import TemplateResponse
 import datetime
 
 @login_required
-@adiciona_titulo_descricao('Gerar transferências', ('Insere transferências no histórico automaticamente', 
-    'considerando as operações que o usuário já inseriu'))
+@adiciona_titulo_descricao('Gerar transferências', 'Insere transferências no histórico automaticamente '
+    'considerando as operações que o usuário já inseriu')
 def criar_transferencias(request):
     investidor = request.user.investidor
     
