@@ -201,17 +201,21 @@
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'historico_bh' %}active{% endif %}">
                                                             <a href="{% url "acoes:bh:historico_bh" %}"> Histórico </a>
                                                         </li>
+                                                        {% if request.user.is_authenticated %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_bh' %}active{% endif %}">
                                                             <a href="{% url "acoes:bh:inserir_operacao_bh" %}"> Inserir operação </a>
                                                         </li>
+                                                        {% endif %}
                                                         {% if request.user.is_superuser %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_provento_bh' %}active{% endif %}">
                                                             <a href="{% url "acoes:bh:inserir_provento_bh" %}"> Inserir provento </a>
                                                         </li>
                                                         {% endif %}
+                                                        {% if request.user.is_authenticated %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_taxa_custodia_acao' %}active{% endif %}">
                                                             <a href="{% url "acoes:bh:inserir_taxa_custodia_acao" %}"> Inserir taxa de custódia </a>
                                                         </li>
+                                                        {% endif %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_taxas_custodia_acao' %}active{% endif %}">
                                                             <a href="{% url "acoes:bh:listar_taxas_custodia_acao" %}"> Listar taxas de custódia </a>
                                                         </li>
@@ -235,12 +239,16 @@
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'historico_operacoes_cv' %}active{% endif %}">
                                                             <a href="{% url "acoes:trading:historico_operacoes_cv" %}"> Histórico compras/vendas </a>
                                                         </li>
+                                                        {% if request.user.is_authenticated %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_acao_t' %}active{% endif %}">
                                                             <a href="{% url "acoes:trading:inserir_operacao_acao_t" %}"> Inserir operação </a>
                                                         </li>
+                                                        {% endif %}
+                                                        {% if request.user.is_authenticated %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_t' %}active{% endif %}">
                                                             <a href="{% url "acoes:trading:inserir_operacao_t" %}"> Inserir compra/venda </a>
                                                         </li>
+                                                        {% endif %}
                                                     </ul>
                                                 </li>
                                             </ul>
@@ -266,9 +274,11 @@
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'historico_fii' %}active{% endif %}">
                                                     <a href="{% url "fii:historico_fii" %}" class="nav-link  "> Histórico </a>
                                                 </li>
+                                                {% if request.user.is_authenticated %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_fii' %}active{% endif %}">
                                                     <a href="{% url "fii:inserir_operacao_fii" %}" class="nav-link  "> Inserir operação </a>
                                                 </li>
+                                                {% endif %}
                                                 {% if request.user.is_superuser %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_provento_fii' %}active{% endif %}">
                                                     <a href="{% url "fii:inserir_provento_fii" %}" class="nav-link  "> Inserir provento </a>
@@ -283,28 +293,36 @@
                                             </ul>
                                         </li>
                                         <li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'fundo_investimento' in request.resolver_match.namespace %}active{% endif %}">
-                                            <a href="javascript:;"> Fundos de Investimento
+                                            <a href="javascript:;" class="em-construcao"> Fundos de Investimento
                                                 <span class="arrow"></span>
                                             </a>
                                             <ul class="dropdown-menu pull-left">
+                                                {% if request.user.is_authenticated %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'adicionar_valor_cota_historico' %}active{% endif %}">
                                                     <a href="{% url "fundo_investimento:adicionar_valor_cota_historico" %}" class="nav-link  "> Adicionar valor de cota </a>
                                                 </li>
+                                                {% endif %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'historico_fundo_investimento' %}active{% endif %}">
                                                     <a href="{% url "fundo_investimento:historico_fundo_investimento" %}" class="nav-link  "> Histórico </a>
                                                 </li>
+                                                {% if request.user.is_authenticated %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_fundo_investimento' %}active{% endif %}">
                                                     <a href="{% url "fundo_investimento:inserir_operacao_fundo_investimento" %}" class="nav-link  "> Inserir operação </a>
                                                 </li>
+                                                {% endif %}
+                                                {% if request.user.is_authenticated %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_fundo_investimento' %}active{% endif %}">
                                                     <a href="{% url "fundo_investimento:inserir_fundo_investimento" %}" class="nav-link  "> Inserir Fundo de Investimento </a>
                                                 </li>
+                                                {% endif %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_fundo_investimento' %}active{% endif %}">
                                                     <a href="{% url "fundo_investimento:listar_fundo_investimento" %}" class="nav-link  "> Listar Fundos </a>
                                                 </li>
+                                                {% if request.user.is_authenticated %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'modificar_carencia_fundo_investimento' %}active{% endif %}">
                                                     <a href="{% url "fundo_investimento:modificar_carencia_fundo_investimento" %}" class="nav-link  "> Modificar carência </a>
                                                 </li>
+                                                {% endif %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_fundo_investimento' %}active{% endif %}">
                                                     <a href="{% url "fundo_investimento:painel_fundo_investimento" %}" class="nav-link  "> Painel </a>
                                                 </li>
@@ -577,6 +595,7 @@
                                                                     </h1>
                                                                 </div>
                                                             </div>
+                                                                {% block extra_titulo %}{% endblock %}
                                                         </div>
                                                     {% endif %}
                                                             {% block content %}
@@ -685,6 +704,12 @@
         <!-- BEGIN THEME LAYOUT SCRIPTS -->
         <script src={% static "assets/layouts/layout3/scripts/layout.min.js" %} type="text/javascript"></script>
         <!-- END THEME LAYOUT SCRIPTS -->
+        <script type="text/javascript">
+        $(document).ready(function() {
+//         	data-original-title="Em construção" class="tooltips" data-placement="top"
+        	$('.em-construcao').attr('data-original-title', 'Em construção').attr('data-placement', 'top').addClass('tooltips');
+        });
+        </script>
     </body>
 
 </html>
