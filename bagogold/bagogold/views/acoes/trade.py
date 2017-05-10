@@ -17,12 +17,9 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db import transaction
-from django.db.models import Sum
 from django.forms.models import inlineformset_factory
 from django.http import HttpResponse, HttpResponseRedirect
-from django.http.response import Http404
 from django.shortcuts import render_to_response, get_object_or_404
-from django.template.context import RequestContext
 from django.template.response import TemplateResponse
 from itertools import chain
 import calendar
@@ -38,14 +35,21 @@ LISTA_MESES = [['Janeiro', 1],   ['Fevereiro', 2],
                ['Novembro', 11], ['Dezembro', 12],
                ]
 
-@login_required
 @adiciona_titulo_descricao('Acompanhamento mensal de Trading', 'Mostra acumulados mensais para operações em Ações para Trading')
 def acompanhamento_mensal(request):
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        
+        return TemplateResponse(request, 'acoes/trade/acompanhamento_mensal.html', {'lista_anos': list(), 'lista_meses': list(), 'dados_mes': {}, 'graf_compras_mes': list(),
+                                                                                    'graf_vendas_mes': list(), 'graf_lucro_mes': list(), 'acoes_ranking': list()})
     
-    # TODO validar entradas
-    ano = int(request.GET.get('ano', datetime.date.today().year))
-    mes = int(request.GET.get('mes', datetime.date.today().month))
+    try:
+        ano = int(request.GET.get('ano', datetime.date.today().year))
+        mes = int(request.GET.get('mes', datetime.date.today().month))
+    except:
+        messages.error(request, 'Erro no mês/ano enviados')
+        return HttpResponseRedirect(reverse('acoes:trading:acompanhamento_mensal'))
     
     # Pegar primeiro ano que uma operação foi feita
     if OperacaoAcao.objects.filter(destinacao='T', investidor=investidor).exclude(data__isnull=True).order_by('data').exists():
@@ -374,15 +378,18 @@ def editar_operacao_acao(request, operacao_id):
     return TemplateResponse(request, 'acoes/trade/editar_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos, 'operacao_day_trade': operacao_day_trade,
                                                                        'formset_divisao': formset_divisao, 'poupanca_proventos': poupanca_proventos, 'varias_divisoes': varias_divisoes})
             
-@login_required
 @adiciona_titulo_descricao('Histórico de Ações (Trading)', 'Histórico de operações de compra/venda para Trading')
 def historico_operacoes(request):
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        return TemplateResponse(request, 'acoes/trade/historico_operacoes.html', {'operacoes': list(), 'meses_operacao': list(), 'graf_lucro_acumulado': list(),
+                               'graf_lucro_mensal': list()})
     
     operacoes = OperacaoAcao.objects.filter(destinacao='T', investidor=investidor).exclude(data__isnull=True).order_by('data')
     
     if not operacoes:
-        return TemplateResponse(request, 'acoes/trade/historico_operacoes.html', {'operacoes': operacoes, 'meses_operacao': list(), 'graf_lucro_acumulado': list(),
+        return TemplateResponse(request, 'acoes/trade/historico_operacoes.html', {'operacoes': list(), 'meses_operacao': list(), 'graf_lucro_acumulado': list(),
                                'graf_lucro_mensal': list()})
     
     # Dados para acompanhamento de vendas mensal e tributavel
@@ -473,10 +480,13 @@ def historico_operacoes(request):
     return TemplateResponse(request, 'acoes/trade/historico_operacoes.html', {'operacoes': operacoes, 'meses_operacao': meses_operacao, 'graf_lucro_acumulado': graf_lucro_acumulado,
                                'graf_lucro_mensal': graf_lucro_mensal})
     
-@login_required
 @adiciona_titulo_descricao('Histórico de operações de Trading', 'Histórico de operações de compra e venda')
 def historico_operacoes_cv(request):
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        return TemplateResponse(request, 'acoes/trade/historico_operacoes_cv.html', {'operacoes': list()})
+        
     operacoes = OperacaoCompraVenda.objects.filter(compra__investidor=investidor).order_by('id')
     
     # TODO adicionar calculos de lucro com DayTrade

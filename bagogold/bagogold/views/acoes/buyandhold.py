@@ -168,7 +168,9 @@ def editar_provento_acao(request, id):
 
 @adiciona_titulo_descricao('Estatísticas da ação', 'Mostra estatísticas e valores históricos de uma ação')
 def estatisticas_acao(request, ticker=None):
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+        
     if (ticker):
         acao = get_object_or_404(Acao, ticker=ticker)
     else:
@@ -179,6 +181,16 @@ def estatisticas_acao(request, ticker=None):
     if not historico:
         return TemplateResponse(request, 'acoes/buyandhold/estatisticas_acao.html', {'graf_preco_medio': list(), 'graf_preco_medio_valor_acao': list(),
                                'graf_historico_proventos': list(), 'graf_historico': list()})
+        
+    graf_historico = list()
+    # Preparar gráfico com os valores históricos da acao
+    for item in historico:
+        data_formatada = str(calendar.timegm(item.data.timetuple()) * 1000)
+        graf_historico += [[data_formatada, float(item.preco_unitario)]]
+    
+    if not request.user.is_authenticated():
+        return TemplateResponse(request, 'acoes/buyandhold/estatisticas_acao.html', {'graf_preco_medio': list(), 'graf_preco_medio_valor_acao': list(),
+                               'graf_historico_proventos': list(), 'graf_historico': graf_historico})
         
     operacoes = OperacaoAcao.objects.filter(destinacao='B', acao__ticker=ticker, investidor=investidor).exclude(data__isnull=True).order_by('data')
     # Pega os proventos em ações recebidos por outras ações
@@ -205,7 +217,6 @@ def estatisticas_acao(request, ticker=None):
     # Proventos devem vir antes
     lista_conjunta = sorted(chain(proventos, operacoes), key=attrgetter('data'))
     
-    graf_historico = list()
     graf_historico_proventos = list()
     graf_preco_medio = list()
     graf_preco_medio_valor_acao = list()
@@ -215,11 +226,6 @@ def estatisticas_acao(request, ticker=None):
     total_proventos = 0
     proventos_acumulado = 0
     qtd_acoes = 0
-    
-    # Preparar gráfico com os valores históricos da acao
-    for item in historico:
-        data_formatada = str(calendar.timegm(item.data.timetuple()) * 1000)
-        graf_historico += [[data_formatada, float(item.preco_unitario)]]
     
     for item in lista_conjunta:
 #         print item
