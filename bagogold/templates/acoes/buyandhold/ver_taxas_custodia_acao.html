@@ -25,7 +25,7 @@
 		<tr>
 			<td>R${{ taxa.valor_mensal }}</td>
 			<td>{{ taxa.ano_vigencia }}/{{ taxa.mes_vigencia }}</td>
-            <td><a href="{% url 'acoes:remover_taxas_custodia_acao' taxa.id %}" class="btn red-thunderbird">Excluir</a></td>
+            <td><a href="{% url 'acoes:bh:remover_taxa_custodia_acao' taxa.id %}" class="btn red-thunderbird">Excluir</a></td>
 		</tr>
 		{% endfor %}
 		</tbody>
