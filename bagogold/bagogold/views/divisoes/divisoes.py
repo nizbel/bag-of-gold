@@ -12,8 +12,8 @@ from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
 from bagogold.bagogold.models.fii import ValorDiarioFII, HistoricoFII, FII
 from bagogold.bagogold.models.fundo_investimento import HistoricoValorCotas, \
     OperacaoFundoInvestimento, FundoInvestimento
-from bagogold.bagogold.models.lc import HistoricoTaxaDI, \
-    HistoricoPorcentagemLetraCredito, LetraCredito
+from bagogold.bagogold.models.lc import HistoricoPorcentagemLetraCredito, \
+LetraCredito
 from bagogold.bagogold.models.td import ValorDiarioTitulo, HistoricoTitulo, \
     Titulo
 from bagogold.bagogold.utils.acoes import calcular_qtd_acoes_ate_dia_por_divisao
@@ -34,10 +34,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
 from django.db.models import Q
-from django.db.models.aggregates import Max
-from django.db.models.expressions import F
 from django.http import HttpResponseRedirect
-from django.http.response import HttpResponse
 from django.template.response import TemplateResponse
 import datetime
 
@@ -390,10 +387,12 @@ def inserir_transferencia(request):
             
     return TemplateResponse(request, 'divisoes/inserir_transferencia.html', {'form': form})
 
-@login_required
 @adiciona_titulo_descricao('Listar divisões', 'Valores atuais para totais investidos e saldos de cada divisão do investidor')
 def listar_divisoes(request):
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        return TemplateResponse(request, 'divisoes/listar_divisoes.html', {'divisoes': list()})
     
     divisoes = Divisao.objects.filter(investidor=investidor)
     
@@ -502,10 +501,12 @@ def listar_divisoes(request):
               
     return TemplateResponse(request, 'divisoes/listar_divisoes.html', {'divisoes': divisoes})
 
-@login_required
 @adiciona_titulo_descricao('Listar transferências', 'Histórico de transferências feitas para as divisões do investidor')
 def listar_transferencias(request):
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        return TemplateResponse(request, 'divisoes/listar_transferencias.html', {'transferencias': list()})
     
     transferencias = TransferenciaEntreDivisoes.objects.filter(Q(divisao_cedente__investidor=investidor) | Q(divisao_recebedora__investidor=investidor))
     
