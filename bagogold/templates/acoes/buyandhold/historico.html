@@ -284,14 +284,14 @@ $( document ).ready(function() {
     $.plot($("#graf_proventos_mes"), [ {color: "#33AA33", label: "Proventos", bars: {show:true, align:"center", barWidth: 8 * 24 * 60 * 60 * 600, lineWidth: 1, order: 1}, data: {{ graf_proventos_mes|safe }} }, 
                                        {color: "#8811AA", label: "Média 6 meses", bars: {show:true, align:"center", barWidth: 8 * 24 * 60 * 60 * 600, lineWidth: 1, order: 2}, data: {{ graf_media_proventos_6_meses|safe }} }, 
                                   ],
-                                    {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%m-%y"},
+                                    {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%m/%Y"},
                                     }  
         );
     
     $.plot($("#graf_uso_proventos_mes"), [ {color: "#33AA33", label: "Novo gasto", bars: {show:true, align:"center", barWidth: 8 * 24 * 60 * 60 * 600, lineWidth: 1, stacked: true}, data: {{ graf_gasto_op_sem_prov_mes|safe }} }, 
                                        {color: "#8811AA", label: "Uso de proventos", bars: {show:true, align:"center", barWidth: 8 * 24 * 60 * 60 * 600, lineWidth: 1, stacked: true}, data: {{ graf_uso_proventos_mes|safe }} }, 
                                   ],
-                                    {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%m-%y"},
+                                    {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%m/%Y"},
                                     }  
         );
     
@@ -323,7 +323,7 @@ function showTooltip(x, y, contents) {
                     y = item.datapoint[1].toFixed(2);
                 
                 var date = new Date(parseInt(x));
-                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d-%m-%y") +"</br>" + item.series.label + ": R$" + y);
+                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%y") +"</br>" + item.series.label + ": R$" + y.replace('.', ','));
             }
         }
         else {
@@ -345,7 +345,7 @@ function showTooltip(x, y, contents) {
                     y = item.datapoint[1].toFixed(2);
                 
                 var date = new Date(parseInt(x));
-                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%m-%y") +"</br>" + item.series.label + ": R$" + y);
+                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%m/%Y") +"</br>" + item.series.label + ": R$" + y.replace('.', ','));
             }
         }
         else {
@@ -367,7 +367,7 @@ function showTooltip(x, y, contents) {
                     y = item.datapoint[1].toFixed(2);
                 
                 var date = new Date(parseInt(x));
-                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%m-%y") +"</br>" + item.series.label + ": R$" + y);
+                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%m/%Y") +"</br>" + item.series.label + ": R$" + y.replace('.', ','));
             }
         }
         else {
