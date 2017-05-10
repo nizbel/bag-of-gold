@@ -27,28 +27,28 @@ def login_on_activation(sender, user, request, **kwargs):
 
 @login_required
 @adiciona_titulo_descricao('Minha conta', 'Dados da conta do investidor')
-def configuracoes_conta_investidor(request, id):
+def minha_conta(request, user_id):
     investidor = request.user.investidor
-    if int(id) != int(request.user.id):
+    if int(user_id) != int(request.user.id):
         raise PermissionDenied
     
-    return TemplateResponse(request, 'investidores/configuracoes_conta.html', {})
+    return TemplateResponse(request, 'investidores/minha_conta.html', {})
 
 
-@login_required
-def editar_dados_cadastrais(request, id):
-    if int(id) != int(request.user.id):
-        raise PermissionDenied
-    
-    if request.method == 'POST':
-        if request.POST.get("save"):
-            form_dados_cadastrais = DadosCadastraisForm(request.POST, instance=request.user, username=request.user.username)
-            if form_dados_cadastrais.is_valid():
-                form_dados_cadastrais.save()
-                messages.success(request, 'Dados cadastrais alterados com sucesso')
-                return HttpResponseRedirect(reverse('configuracoes_conta_investidor', kwargs={'id': id}))
-    
-    else:
-        form_dados_cadastrais = DadosCadastraisForm(instance=request.user, username=request.user.username)
-    
-    return TemplateResponse(request, 'investidores/editar_dados_cadastrais.html', {'form_dados_cadastrais': form_dados_cadastrais})
+# @login_required
+# def editar_dados_cadastrais(request, id):
+#     if int(id) != int(request.user.id):
+#         raise PermissionDenied
+#     
+#     if request.method == 'POST':
+#         if request.POST.get("save"):
+#             form_dados_cadastrais = DadosCadastraisForm(request.POST, instance=request.user, username=request.user.username)
+#             if form_dados_cadastrais.is_valid():
+#                 form_dados_cadastrais.save()
+#                 messages.success(request, 'Dados cadastrais alterados com sucesso')
+#                 return HttpResponseRedirect(reverse('configuracoes_conta_investidor', kwargs={'id': id}))
+#     
+#     else:
+#         form_dados_cadastrais = DadosCadastraisForm(instance=request.user, username=request.user.username)
+#     
+#     return TemplateResponse(request, 'investidores/editar_dados_cadastrais.html', {'form_dados_cadastrais': form_dados_cadastrais})

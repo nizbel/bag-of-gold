@@ -192,8 +192,8 @@ urlpatterns = [
     url(r'^ativacao/(?P<activation_key>[-:\w]+)/$', registration_views.ActivationView.as_view(), name='ativar_cadastro'),
     url(r'^cadastro/completo/$', TemplateView.as_view(template_name='registration/registration_complete.html'), name='registration_complete'),
     url(r'^cadastro/fechado/$', TemplateView.as_view(template_name='registration/registration_closed.html'), name='registration_closed'),
-    url(r'^minha_conta/(?P<id>\d+)/$', views.investidores.investidores.configuracoes_conta_investidor, name='configuracoes_conta_investidor'),
-    url(r'^minha_conta/editar_dados_cadastrais/(?P<id>\d+)/$', views.investidores.investidores.editar_dados_cadastrais, name='editar_dados_cadastrais'),
+    url(r'^minha_conta/(?P<user_id>\d+)/$', views.investidores.investidores.minha_conta, name='minha_conta'),
+#     url(r'^minha_conta/editar_dados_cadastrais/(?P<id>\d+)/$', views.investidores.investidores.editar_dados_cadastrais, name='editar_dados_cadastrais'),
     
     # Gerador de proventos
     url(r'^gerador_proventos/', include(gerador_proventos_patterns, namespace='gerador_proventos')),
