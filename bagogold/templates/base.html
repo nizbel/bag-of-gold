@@ -123,12 +123,8 @@
                                             </a>
                                             <ul class="dropdown-menu dropdown-menu-default">
                                                 <li>
-                                                    <a href="javascript:;">
+                                                    <a href="{% url "minha_conta" request.user.id %}">
                                                         <i class="icon-user"></i> Minha conta </a>
-                                                </li>
-                                                <li>
-                                                    <a href="{% url "configuracoes_conta_investidor" request.user.id %}">
-                                                        <i class="icon-settings"></i> Configurações </a>
                                                 </li>
                                                 {% if request.user.id == 1 or request.user.id == 31 %}
                                                 <li>
