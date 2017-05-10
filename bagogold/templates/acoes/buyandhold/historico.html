@@ -265,7 +265,7 @@ $( document ).ready(function() {
     $.plot($("#graf_patr_gasto"), [ {label: "Patrimônio", lines: {show:true}, data: {{ graf_patrimonio|safe }} }, 
                                 {label: "Total investido", lines: {show:true}, data: {{ graf_total_gasto|safe }} } 
                               ],
-                                {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%m-%y"},
+                                {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%m/%Y"},
                             	}  
     );
     
