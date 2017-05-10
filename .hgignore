@@ -4,7 +4,6 @@ syntax: regexp
 /ultimo_backup-*
 doc proventos/*
 backups/teste-*
-static/assets/*
 templates/teste/*
 syntax: glob
 .project
