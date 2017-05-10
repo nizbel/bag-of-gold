@@ -4,7 +4,6 @@
 {% block extra_head %}
 <link href={% static "assets/global/plugins/datatables/datatables.min.css" %} rel="stylesheet" type="text/css" />
 <link href={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.css" %} rel="stylesheet" type="text/css" />
-<link href={% static "assets/global/plugins/bootstrap-datepicker/css/bootstrap-datepicker3.min.css" %} rel="stylesheet" type="text/css" />
 {% endblock %}
 
 {% block pagina_titulo_icone %}
@@ -13,43 +12,45 @@
 
 {% block content %}
 <div class="portlet-body">
+    {% if request.user.is_authenticated %}
 		<div class="alert alert-warning">
 			<strong></strong> Data do valor para a taxa DI mais recente: <b>{{ dados.data_di_mais_recente }}</b>
 		</div>
-		<table id="ordens" class="table table-striped table-bordered table-hover table-header-fixed">
-		<thead>
-			<tr>
-				<th>Letra</th>
-				<th>Data</th>
-				<th>Taxa (% do DI)</th>
-				<th>Valor atual</th>
-				<th>Venda permitida?</th>
-				<th>Ganho no próx. dia*</th>
-			</tr>
-		</thead>
-		<tbody>
-		{% for item in operacoes %}
-			<tr>
-				<td>{{item.letra_credito.nome}}</td>
-				<td>{{ item.data|date:"Y-m-d" }}</td>
-				<td>{{ item.taxa }}%</td>
-				<td>R${{item.atual|floatformat:2}}</td>
-				<td>{{ item.venda_permitida|yesno:"Sim,Não,Indefinido" }}</td>
-				<td>R${{item.ganho_prox_dia }}</td>
-			</tr>
-		{% endfor %}
-		</tbody>
-		<tfoot>
-			<tr>
-				<th colspan="3">Total</th>
-				<th>R${{ dados.total_atual }}</th>
-				<th></th>
-				<th>R${{ dados.total_ganho_prox_dia }}</th>
-			</tr>
-		</tfoot>
-		</table>
-		* Obs.: Ganho considerando que seja repetida a taxa do dia anterior
-	</div>
+    {% endif %}
+	<table id="ordens" class="table table-striped table-bordered table-hover table-header-fixed">
+	<thead>
+		<tr>
+			<th>Letra</th>
+			<th>Data</th>
+			<th>Taxa (% do DI)</th>
+			<th>Valor atual</th>
+			<th>Venda permitida?</th>
+			<th>Ganho no próx. dia*</th>
+		</tr>
+	</thead>
+	<tbody>
+	{% for item in operacoes %}
+		<tr>
+			<td>{{item.letra_credito.nome}}</td>
+			<td>{{ item.data|date:"Y-m-d" }}</td>
+			<td>{{ item.taxa }}%</td>
+			<td>R${{item.atual|floatformat:2}}</td>
+			<td>{{ item.venda_permitida|yesno:"Sim,Não,Indefinido" }}</td>
+			<td>R${{item.ganho_prox_dia }}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	<tfoot>
+		<tr>
+			<th colspan="3">Total</th>
+			<th>R${{ dados.total_atual }}</th>
+			<th></th>
+			<th>R${{ dados.total_ganho_prox_dia }}</th>
+		</tr>
+	</tfoot>
+	</table>
+	* Obs.: Ganho considerando que seja repetida a taxa do dia anterior
+</div>
 
 {% endblock %}
 
