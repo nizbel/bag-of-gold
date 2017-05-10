@@ -5,7 +5,7 @@ from bagogold.bagogold.utils.investidores import user_blocked
 from django import forms
 from django.contrib import messages
 from django.contrib.auth import authenticate
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.utils import timezone
@@ -123,3 +123,10 @@ class ExtendedAuthForm(AuthenticationForm):
                 code='blocked',
             )
         LoginIncorreto.objects.filter(user=user).delete()
+
+class ExtendedPasswordChangeForm(PasswordChangeForm):
+    def clean_new_password1(self):
+        password1 = self.cleaned_data.get('new_password1')
+        if len(password1) < 8:
+            raise forms.ValidationError('A senha deve ter no mínimo 8 caracteres')
+        return password1

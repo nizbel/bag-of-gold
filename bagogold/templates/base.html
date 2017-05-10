@@ -123,7 +123,7 @@
                                             </a>
                                             <ul class="dropdown-menu dropdown-menu-default">
                                                 <li>
-                                                    <a href="{% url "minha_conta" request.user.id %}">
+                                                    <a href="{% url "minha_conta" %}">
                                                         <i class="icon-user"></i> Minha conta </a>
                                                 </li>
                                                 {% if request.user.id == 1 or request.user.id == 31 %}
@@ -548,32 +548,6 @@
                         <!-- BEGIN CONTENT -->
                         <div class="page-content-wrapper">
                             <!-- BEGIN CONTENT BODY -->
-                            {% comment %}
-                            {% if pagina_titulo %}
-                            <!-- BEGIN PAGE HEAD-->
-                            <div class="page-head" style="background: none;">
-                                <div class="container-fluid">
-                                    <!-- BEGIN PAGE TITLE -->
-                                    <div class="row">
-                                        <div class="col-md-12 pr-md-0">
-                                            <div class="portlet light" style="padding: 0px; margin-top: 10px;">
-                                                <div class="container-fluid">
-                                                    <div class="page-title">
-                                                        <h1>{{pagina_titulo}}
-                                                            <br/>
-                                                            <small>{{pagina_descricao}}</small>
-                                                        </h1>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <!-- END PAGE TITLE -->
-                                </div>
-                            </div>
-                            <!-- END PAGE HEAD-->
-                            {% endif %}
-                            {% endcomment %}
                             <!-- BEGIN PAGE CONTENT BODY -->
                             <div class="page-content">
                                 <div class="container-fluid">
