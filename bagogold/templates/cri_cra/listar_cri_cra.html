@@ -12,35 +12,33 @@
 
 {% block content %}
 <div class="portlet-body">
-				<table id="cri_cra" class="table table-striped table-bordered table-hover table-header-fixed">
-				<thead>
-					<tr>
-						<th>Nome</th>
-						<th>Código ISIN</th>
-                        <th>Data de emissão</th>
-						<th>Indexação</th>
-						<th>Juros adicional</th>
-						<th>Data de vencimento</th>
-                        <th>Próx. remuneração</th>
-					</tr>
-				</thead>
-				<tbody>
-				{% for item in cri_cra %}
-				<tr>
-					<td><a href="{% url 'cri_cra:detalhar_cri_cra' item.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar CRI/CRA">{{item.nome}}</a></td>
-					<td>{{item.codigo_isin}}</td>
-					<td>{{item.data_emissao}}</td>
-					<td>{{item.indexacao_completa}}</td>
-					<td>{{item.juros_adicional}}%</td>
-                    <td>{{item.data_vencimento}}</td>
-                    <td>{{item.proxima_data_remuneracao|default:'Não há'}}</td>
-				</tr>
-				{% endfor %}
-				</tbody>
-				</table>
-			</div>
-		</div>
-	</div>
+	<table id="cri_cra" class="table table-striped table-bordered table-hover table-header-fixed">
+	<thead>
+		<tr>
+			<th>Nome</th>
+			<th>Código ISIN</th>
+            <th>Data de emissão</th>
+			<th>Indexação</th>
+			<th>Juros adicional</th>
+			<th>Data de vencimento</th>
+            <th>Próx. remuneração</th>
+		</tr>
+	</thead>
+	<tbody>
+	{% for item in cri_cra %}
+	<tr>
+		<td><a href="{% url 'cri_cra:detalhar_cri_cra' item.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar CRI/CRA">{{item.nome}}</a></td>
+		<td>{{item.codigo_isin}}</td>
+		<td>{{item.data_emissao}}</td>
+		<td>{{item.indexacao_completa}}</td>
+		<td>{{item.juros_adicional}}%</td>
+        <td>{{item.data_vencimento}}</td>
+        <td>{{item.proxima_data_remuneracao|default:'Não há'}}</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+</div>
 
 {% endblock %}
 
