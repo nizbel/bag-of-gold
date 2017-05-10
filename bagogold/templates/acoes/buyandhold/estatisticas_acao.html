@@ -59,7 +59,7 @@ $( document ).ready(function() {
     $.plot($("#graf_historico"), [ {label: "Preço", stack: true, lines: {show:true}, data: {{ graf_historico|safe }} }, 
                                 {label: "Proventos acumulado", stack: true, lines: {show:true}, data: {{ graf_historico_proventos|safe }} } 
                               ],
-                                {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%m/%y"},
+                                {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%m/%Y"},
                                 }  
     );
     
@@ -99,7 +99,7 @@ function showTooltip(x, y, contents) {
                     y = item.datapoint[1].toFixed(2);
                 
                 var date = new Date(parseInt(x));
-                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%y") +"</br>" + item.series.label + ": R$" + y);
+                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%y") +"</br>" + item.series.label + ": R$" + y.replace('.', ','));
             }
         }
         else {
@@ -121,7 +121,7 @@ function showTooltip(x, y, contents) {
                     y = item.datapoint[1].toFixed(2);
                 
                 var date = new Date(parseInt(x));
-                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%y") +"</br>" + item.series.label + ": R$" + y);
+                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%y") +"</br>" + item.series.label + ": R$" + y.replace('.', ','));
             }
         }
         else {
@@ -143,7 +143,7 @@ function showTooltip(x, y, contents) {
                     y = item.datapoint[1].toFixed(2);
                 
                 var date = new Date(parseInt(x));
-                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%y") +"</br>" + item.series.label + ": R$" + y);
+                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%y") +"</br>" + item.series.label + ": R$" + y.replace('.', ','));
             }
         }
         else {
