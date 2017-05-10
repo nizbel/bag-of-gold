@@ -576,8 +576,6 @@ def detalhamento_investimentos(request):
     return TemplateResponse(request, 'detalhamento_investimentos.html', {'graf_patrimonio': graf_patrimonio, 'patrimonio_anual': patrimonio_anual,
                                             'estatisticas': estatisticas})
 
-# TODO remover login_required
-@login_required
 @adiciona_titulo_descricao('Painel geral', 'Traz informações gerais sobre a posição atual em cada tipo de investimento')
 def painel_geral(request):
     # Usado para criar objetos vazios

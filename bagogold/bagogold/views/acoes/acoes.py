@@ -14,7 +14,6 @@ import datetime
 #     
 #     return TemplateResponse(request, 'acoes/listar_acoes.html', {'acoes': acoes})
 
-@login_required
 @adiciona_titulo_descricao('Sobre Ações', 'Detalha o que são Ações')
 def sobre(request):
     if request.user.is_authenticated():
