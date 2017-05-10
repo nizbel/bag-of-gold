@@ -44,8 +44,8 @@ def buscar_titulos_validos_na_data(request):
     return HttpResponse(json.dumps(lista_titulos_validos), content_type = "application/json") 
 
 @login_required
-@adiciona_titulo_descricao('Acompanhamento de Tesouro Direto', ('Mostra o rendimento dos títulos do investidor',
-    'para comparar com potenciais ganhos em outros investimentos'))
+@adiciona_titulo_descricao('Acompanhamento de Tesouro Direto', 'Mostra o rendimento dos títulos do investidor '
+    'para comparar com potenciais ganhos em outros investimentos')
 def acompanhamento_td(request):
     # Objeto vazio para preenchimento
     class Object():
