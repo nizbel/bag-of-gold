@@ -338,7 +338,8 @@
                                             </ul>
                                         </li>
                                         <li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown 
-                                            {% if 'cdb_rdb' in request.resolver_match.namespace or 'cri_cra' in request.resolver_match.namespace or 'debentures' in request.resolver_match.namespace or 'lci_lca' in request.resolver_match.namespace %}active{% endif %}">
+                                            {% if 'cdb_rdb' in request.resolver_match.namespace or 'cri_cra' in request.resolver_match.namespace or 'debentures' in request.resolver_match.namespace %}active{% endif %}
+                                            {% if 'lci_lca' in request.resolver_match.namespace or 'td' in request.resolver_match.namespace %}active{% endif %}">
                                             <a href="javascript:;"> Renda fixa
                                                 <span class="arrow"></span>
                                             </a>
@@ -458,32 +459,33 @@
                                                         </li>
                                                     </ul>
                                                 </li>
+                                                <li aria-haspopup="true" class="dropdown-submenu {% if 'td' in request.resolver_match.namespace %}active{% endif %}">
+                                                    <a href="javascript:;" class="nav-link nav-toggle ">
+                                                         Tesouro Direto
+                                                        <span class="arrow"></span>
+                                                    </a>
+                                                    <ul class="dropdown-menu">
+                                                        <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'acompanhamento_td' %}active{% endif %}">
+                                                            <a href="{% url "td:acompanhamento_td" %}" class="nav-link  "> Acompanhamento </a>
+                                                        </li>
+                                                        <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'historico_td' %}active{% endif %}">
+                                                            <a href="{% url "td:historico_td" %}" class="nav-link  "> Histórico </a>
+                                                        </li>
+                                                        {% if request.user.is_authenticated %}
+                                                        <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_td' %}active{% endif %}">
+                                                            <a href="{% url "td:inserir_operacao_td" %}" class="nav-link  "> Inserir operação </a>
+                                                        </li>
+                                                        {% endif %}
+                                                        <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_td' %}active{% endif %}">
+                                                            <a href="{% url "td:painel_td" %}" class="nav-link  "> Painel </a>
+                                                        </li>
+                                                        <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'sobre_td' %}active{% endif %}">
+                                                            <a href="{% url "td:sobre_td" %}" class="nav-link  "> Sobre </a>
+                                                        </li>
+                                                    </ul>
+                                                </li>
                                             </ul>
                                         </li>
-                                        <li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'td' in request.resolver_match.namespace %}active{% endif %}">
-                                            <a href="javascript:;"> Tesouro Direto
-                                                <span class="arrow"></span>
-                                            </a>
-                                            <ul class="dropdown-menu pull-left">
-                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'acompanhamento_td' %}active{% endif %}">
-                                                    <a href="{% url "td:acompanhamento_td" %}" class="nav-link  "> Acompanhamento </a>
-                                                </li>
-                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'historico_td' %}active{% endif %}">
-                                                    <a href="{% url "td:historico_td" %}" class="nav-link  "> Histórico </a>
-                                                </li>
-                                                {% if request.user.is_authenticated %}
-                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_td' %}active{% endif %}">
-                                                    <a href="{% url "td:inserir_operacao_td" %}" class="nav-link  "> Inserir operação </a>
-                                                </li>
-                                                {% endif %}
-                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_td' %}active{% endif %}">
-                                                    <a href="{% url "td:painel_td" %}" class="nav-link  "> Painel </a>
-                                                </li>
-                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'sobre_td' %}active{% endif %}">
-                                                    <a href="{% url "td:sobre_td" %}" class="nav-link  "> Sobre </a>
-                                                </li>
-                                            </ul>
-                                        </li>  
                                         <li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'divisoes' in request.resolver_match.namespace %}active{% endif %}">
                                             <a href="javascript:;"> Divisões
                                                 <span class="arrow"></span>
