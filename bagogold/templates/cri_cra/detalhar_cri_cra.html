@@ -10,147 +10,151 @@
 <i class="icon-diamond font-yellow-crusta"></i>
 {% endblock %}
 
-{% block content %}
+{% block extra_titulo %}
+{% if request.user.is_authenticated %}
 <div class="actions">
-			<a href="{% url 'cri_cra:editar_cri_cra' cri_cra.id %}" class="btn btn-small btn-warning">Editar {{cri_cra.descricao_tipo}}</a>
+    <a href="{% url 'cri_cra:editar_cri_cra' cri_cra.id %}" class="btn btn-small btn-warning">Editar {{cri_cra.descricao_tipo}}</a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="portlet-body">
+	<div class="row">
+		<div class="col-md-12">
+			<!-- BEGIN Portlet PORTLET-->
+			<div class="portlet box yellow-crusta">
+				<div class="portlet-title">
+					<div class="caption">
+						<i class="fa fa-folder-open-o"></i>Dados do investimento</div>
+					<div class="tools">
+						<a href="javascript:;" class="collapse"></a>
+					</div>
+				</div>
+				<div class="portlet-body">
+					<div class="m-grid m-grid-responsive-xs">
+						<div class="m-grid-row">
+							<div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
+							<div class="m-grid-col m-grid-col-left">{{cri_cra.descricao_tipo}}</div>
+							<div class="m-grid-col m-grid-col-left"><strong>Indexação:</strong></div>
+							<div class="m-grid-col m-grid-col-left">{{cri_cra.indexacao_completa}}</div>
+							<div class="m-grid-col m-grid-col-left"><strong>Juros adicional:</strong></div>
+							<div class="m-grid-col m-grid-col-left">{{cri_cra.juros_adicional}}%</div>
+						</div>
+						<div class="m-grid-row">
+                            <div class="m-grid-col m-grid-col-left"><strong>Data de emissão:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{cri_cra.data_emissao|date:'d/m/Y'}}</div>
+                            <div class="m-grid-col m-grid-col-left"><strong>Valor de emissão:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">R$ {{cri_cra.valor_emissao}}</div>
+                            <div class="m-grid-col m-grid-col-left"><strong>Data de início do rendimento:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{cri_cra.data_inicio_rendimento|date:'d/m/Y'}}</div>
+                        </div>
+                        <div class="m-grid-row">
+                            <div class="m-grid-col m-grid-col-left"><strong>Data de vencimento:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{cri_cra.data_vencimento|date:'d/m/Y'}}</div>
+							<div class="m-grid-col m-grid-col-left"><strong>Total de operações:</strong></div>
+							<div class="m-grid-col m-grid-col-left">{{cri_cra.total_operacoes}}</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- END Portlet PORTLET-->
+		</div>
+		<div class="col-md-12">
+			<!-- BEGIN Portlet PORTLET-->
+			<div class="portlet box yellow-crusta">
+				<div class="portlet-title">
+					<div class="caption">
+						<i class="fa fa-folder-open-o"></i>Dados do valor investido</div>
+					<div class="tools">
+						<a href="javascript:;" class="collapse"></a>
+					</div>
+				</div>
+				<div class="portlet-body">
+					<div class="m-grid m-grid-responsive-xs">
+						<div class="m-grid-row">
+							<div class="m-grid-col m-grid-col-left"><strong>Total investido:</strong></div>
+							<div class="m-grid-col m-grid-col-left">R$ {{cri_cra.total_investido|floatformat:2}}</div>
+							<div class="m-grid-col m-grid-col-left"><strong>Valor atual:</strong></div>
+							<div class="m-grid-col m-grid-col-left">R$ {{cri_cra.valor_atual|floatformat:2}}</div>
+							<div class="m-grid-col m-grid-col-left"><strong>Lucro:</strong></div>
+							<div class="m-grid-col m-grid-col-left">R$ {{ cri_cra.lucro|floatformat:2 }} ({{ cdb_rdb.lucro_percentual|floatformat:2 }}%)</div>
+						</div>
+						<div class="m-grid-row">
+							<div class="m-grid-col m-grid-col-left"><strong>Dias para próx. retirada:</strong></div>
+							<div class="m-grid-col m-grid-col-left">{{ cri_cra.proxima_data_remuneracao|date:'d/m/Y'|default:'Não há' }}</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- END Portlet PORTLET-->
+		</div>
+		<div class="col-md-6">
+			<!-- BEGIN Portlet PORTLET-->
+			<div class="portlet box yellow-crusta">
+				<div class="portlet-title">
+					<div class="caption">
+						<i class="fa fa-money"></i>Datas de remuneração</div>
+					<div class="tools">
+						<a href="javascript:;" class="collapse"></a>
+					</div>
+				</div>
+				<div class="portlet-body">
+					<table id="historico_porcentagem" class="table table-striped table-bordered table-hover table-header-fixed">
+					<thead>
+						<tr>
+							<th>Data</th>
+							<th><a class="btn btn-sm green-steel">Adicionar</a></th>
+						</tr>
+					</thead>
+					<tbody>
+					{% for data in datas_remuneracao %}
+					<tr>
+						<td>{{data.data|date:"d/m/Y"}}</td>
+                        <td></td>
+					</tr>
+					{% endfor %}
+					</tbody>
+					</table>
+				</div>
+			</div>
+			<!-- END Portlet PORTLET-->
+		</div>
+		<div class="col-md-6">
+			<!-- BEGIN Portlet PORTLET-->
+			<div class="portlet box yellow-crusta">
+				<div class="portlet-title">
+					<div class="caption">
+						<i class="fa fa-calendar-check-o"></i>Datas de amortização</div>
+					<div class="tools">
+						<a href="javascript:;" class="collapse"></a>
+					</div>
+				</div>
+				<div class="portlet-body">
+					<table id="historico_carencia" class="table table-striped table-bordered table-hover table-header-fixed">
+					<thead>
+						<tr>
+							<th>Data</th>
+							<th>Amortização</th>
+							<th><a class="btn btn-sm green-steel">Adicionar</a></th>
+						</tr>
+					</thead>
+					<tbody>
+					{% for data in datas_amortizacao %}
+					<tr>
+						<td>{{data.data|date:"d/m/Y"}}</td>
+						<td>{{data.percentual}}%</td>
+                        <td></td>
+					</tr>
+					{% endfor %}
+					</tbody>
+					</table>
+				</div>
+			</div>
+			<!-- END Portlet PORTLET-->
 		</div>
 	</div>
-	<div class="portlet-body">
-		<div class="row">
-			<div class="col-md-12">
-				<!-- BEGIN Portlet PORTLET-->
-				<div class="portlet box yellow-crusta">
-					<div class="portlet-title">
-						<div class="caption">
-							<i class="fa fa-folder-open-o"></i>Dados do investimento</div>
-						<div class="tools">
-							<a href="javascript:;" class="collapse"></a>
-						</div>
-					</div>
-					<div class="portlet-body">
-						<div class="m-grid m-grid-responsive-xs">
-							<div class="m-grid-row">
-								<div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
-								<div class="m-grid-col m-grid-col-left">{{cri_cra.descricao_tipo}}</div>
-								<div class="m-grid-col m-grid-col-left"><strong>Indexação:</strong></div>
-								<div class="m-grid-col m-grid-col-left">{{cri_cra.indexacao_completa}}</div>
-								<div class="m-grid-col m-grid-col-left"><strong>Juros adicional:</strong></div>
-								<div class="m-grid-col m-grid-col-left">{{cri_cra.juros_adicional}}%</div>
-							</div>
-							<div class="m-grid-row">
-                                <div class="m-grid-col m-grid-col-left"><strong>Data de emissão:</strong></div>
-                                <div class="m-grid-col m-grid-col-left">{{cri_cra.data_emissao|date:'d/m/Y'}}</div>
-                                <div class="m-grid-col m-grid-col-left"><strong>Valor de emissão:</strong></div>
-                                <div class="m-grid-col m-grid-col-left">R$ {{cri_cra.valor_emissao}}</div>
-                                <div class="m-grid-col m-grid-col-left"><strong>Data de início do rendimento:</strong></div>
-                                <div class="m-grid-col m-grid-col-left">{{cri_cra.data_inicio_rendimento|date:'d/m/Y'}}</div>
-                            </div>
-                            <div class="m-grid-row">
-                                <div class="m-grid-col m-grid-col-left"><strong>Data de vencimento:</strong></div>
-                                <div class="m-grid-col m-grid-col-left">{{cri_cra.data_vencimento|date:'d/m/Y'}}</div>
-								<div class="m-grid-col m-grid-col-left"><strong>Total de operações:</strong></div>
-								<div class="m-grid-col m-grid-col-left">{{cri_cra.total_operacoes}}</div>
-							</div>
-						</div>
-					</div>
-				</div>
-				<!-- END Portlet PORTLET-->
-			</div>
-			<div class="col-md-12">
-				<!-- BEGIN Portlet PORTLET-->
-				<div class="portlet box yellow-crusta">
-					<div class="portlet-title">
-						<div class="caption">
-							<i class="fa fa-folder-open-o"></i>Dados do valor investido</div>
-						<div class="tools">
-							<a href="javascript:;" class="collapse"></a>
-						</div>
-					</div>
-					<div class="portlet-body">
-						<div class="m-grid m-grid-responsive-xs">
-							<div class="m-grid-row">
-								<div class="m-grid-col m-grid-col-left"><strong>Total investido:</strong></div>
-								<div class="m-grid-col m-grid-col-left">R$ {{cri_cra.total_investido|floatformat:2}}</div>
-								<div class="m-grid-col m-grid-col-left"><strong>Valor atual:</strong></div>
-								<div class="m-grid-col m-grid-col-left">R$ {{cri_cra.valor_atual|floatformat:2}}</div>
-								<div class="m-grid-col m-grid-col-left"><strong>Lucro:</strong></div>
-								<div class="m-grid-col m-grid-col-left">R$ {{ cri_cra.lucro|floatformat:2 }} ({{ cdb_rdb.lucro_percentual|floatformat:2 }}%)</div>
-							</div>
-							<div class="m-grid-row">
-								<div class="m-grid-col m-grid-col-left"><strong>Dias para próx. retirada:</strong></div>
-								<div class="m-grid-col m-grid-col-left">{{ cri_cra.proxima_data_remuneracao|date:'d/m/Y'|default:'Não há' }}</div>
-							</div>
-						</div>
-					</div>
-				</div>
-				<!-- END Portlet PORTLET-->
-			</div>
-			<div class="col-md-6">
-				<!-- BEGIN Portlet PORTLET-->
-				<div class="portlet box yellow-crusta">
-					<div class="portlet-title">
-						<div class="caption">
-							<i class="fa fa-money"></i>Datas de remuneração</div>
-						<div class="tools">
-							<a href="javascript:;" class="collapse"></a>
-						</div>
-					</div>
-					<div class="portlet-body">
-						<table id="historico_porcentagem" class="table table-striped table-bordered table-hover table-header-fixed">
-						<thead>
-							<tr>
-								<th>Data</th>
-								<th><a class="btn btn-sm green-steel">Adicionar</a></th>
-							</tr>
-						</thead>
-						<tbody>
-						{% for data in datas_remuneracao %}
-						<tr>
-							<td>{{data.data|date:"d/m/Y"}}</td>
-                            <td></td>
-						</tr>
-						{% endfor %}
-						</tbody>
-						</table>
-					</div>
-				</div>
-				<!-- END Portlet PORTLET-->
-			</div>
-			<div class="col-md-6">
-				<!-- BEGIN Portlet PORTLET-->
-				<div class="portlet box yellow-crusta">
-					<div class="portlet-title">
-						<div class="caption">
-							<i class="fa fa-calendar-check-o"></i>Datas de amortização</div>
-						<div class="tools">
-							<a href="javascript:;" class="collapse"></a>
-						</div>
-					</div>
-					<div class="portlet-body">
-						<table id="historico_carencia" class="table table-striped table-bordered table-hover table-header-fixed">
-						<thead>
-							<tr>
-								<th>Data</th>
-								<th>Amortização</th>
-								<th><a class="btn btn-sm green-steel">Adicionar</a></th>
-							</tr>
-						</thead>
-						<tbody>
-						{% for data in datas_amortizacao %}
-						<tr>
-							<td>{{data.data|date:"d/m/Y"}}</td>
-							<td>{{data.percentual}}%</td>
-                            <td></td>
-						</tr>
-						{% endfor %}
-						</tbody>
-						</table>
-					</div>
-				</div>
-				<!-- END Portlet PORTLET-->
-			</div>
-		</div>
-	</div>
+</div>
 
 {% endblock %}
 

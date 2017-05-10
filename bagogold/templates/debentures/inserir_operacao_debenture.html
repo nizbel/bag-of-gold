@@ -13,121 +13,119 @@
 
 {% block content %}
 <div class="portlet-body form">
-                <!-- BEGIN FORM-->
-                <form method="POST" class="horizontal-form">{% csrf_token %}
-                    <div class="form-body">
-                        <div class="row">
-                            <div class="form-group col-md-6 {% if form_operacao_debenture.preco_unitario.errors %} has-error {% endif %}">
-                                <label class="control-label col-md-4" style="text-align: left;"> Preço unitário: </label>
-                                <div class="col-md-8">
-                                    <input id="id_preco_unitario" type="text" name="preco_unitario" class="form-control" value="{{ form_operacao_debenture.preco_unitario.value }}">
-                                    {% if form_operacao_debenture.preco_unitario.errors %} <span class="help-block"> {{ form_operacao_debenture.preco_unitario.errors.as_text }} </span> {% endif %}
-                                </div>
-                            </div>
-                            <div class="form-group col-md-6 {% if form_operacao_debenture.quantidade.errors %} has-error {% endif %}">
-                                <label class="control-label col-md-4"> Quantidade: </label>
-                                <div class="col-md-8">
-                                    <input id="id_quantidade" type="text" name="quantidade" class="form-control" value="{{ form_operacao_debenture.quantidade.value }}">
-                                    {% if form_operacao_debenture.quantidade.errors %} <span class="help-block"> {{ form_operacao_debenture.quantidade.errors.as_text }} </span> {% endif %}
-                                </div>
-                            </div>
+    <!-- BEGIN FORM-->
+    <form method="POST" class="horizontal-form">{% csrf_token %}
+        <div class="form-body">
+            <div class="row">
+                <div class="form-group col-md-6 {% if form_operacao_debenture.preco_unitario.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4" style="text-align: left;"> Preço unitário: </label>
+                    <div class="col-md-8">
+                        <input id="id_preco_unitario" type="text" name="preco_unitario" class="form-control" value="{{ form_operacao_debenture.preco_unitario.value }}">
+                        {% if form_operacao_debenture.preco_unitario.errors %} <span class="help-block"> {{ form_operacao_debenture.preco_unitario.errors.as_text }} </span> {% endif %}
+                    </div>
+                </div>
+                <div class="form-group col-md-6 {% if form_operacao_debenture.quantidade.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4"> Quantidade: </label>
+                    <div class="col-md-8">
+                        <input id="id_quantidade" type="text" name="quantidade" class="form-control" value="{{ form_operacao_debenture.quantidade.value }}">
+                        {% if form_operacao_debenture.quantidade.errors %} <span class="help-block"> {{ form_operacao_debenture.quantidade.errors.as_text }} </span> {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group col-md-6 {% if form_operacao_debenture.data.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4" style="text-align: left;"> Data: </label>
+                    <div class="col-md-8">
+                        <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" data-date="{{form_operacao_debenture.data.value|default:''}}" data-date-viewmode="years">
+                            <input type="text" class="form-control" id="id_data" name="data" value="{{form_operacao_debenture.data.value|default:''}}">
+                            <span class="input-group-btn">
+                                <button class="btn default" type="button">
+                                    <i class="fa fa-calendar"></i>
+                                </button>
+                            </span>
                         </div>
-                        <div class="row">
-                            <div class="form-group col-md-6 {% if form_operacao_debenture.data.errors %} has-error {% endif %}">
-                                <label class="control-label col-md-4" style="text-align: left;"> Data: </label>
-                                <div class="col-md-8">
-                                    <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" data-date="{{form_operacao_debenture.data.value|default:''}}" data-date-viewmode="years">
-                                        <input type="text" class="form-control" id="id_data" name="data" value="{{form_operacao_debenture.data.value|default:''}}">
-                                        <span class="input-group-btn">
-                                            <button class="btn default" type="button">
-                                                <i class="fa fa-calendar"></i>
-                                            </button>
-                                        </span>
-                                    </div>
-                                    {% if form_operacao_debenture.data.errors %} <span class="help-block"> {{ form_operacao_debenture.debenture.errors.as_text }} </span> 
-                                    {% else %} <span class="help-block"> Selecione uma data </span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="form-group col-md-6 {% if form_operacao_debenture.debenture.errors %} has-error {% endif %}">
-                                <label class="control-label col-md-4" style="text-align: left;"> Debênture: </label>
-                                <div class="col-md-8">
-                                    {% localize off %}
-                                    <select class="selectpicker form-control" id="id_debenture" name="debenture">
-                                        {% for key, value in form_operacao_debenture.fields.debenture.widget.choices %}<option value="{{ key }}" 
-                                                {% if key == form_operacao_debenture.debenture.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
-                                    </select>
-                                    {% endlocalize %}
-                                    {% if form_operacao_debenture.debenture.errors %} <span class="help-block"> {{ form_operacao_debenture.debenture.errors.as_text }} </span> {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="form-group col-md-6 {% if form_operacao_debenture.tipo_operacao.errors %} has-error {% endif %}">
-                                <label class="control-label col-md-4" style="text-align: left;"> Tipo de operação: </label>
-                                <div class="col-md-8">
-                                    <select class="selectpicker form-control" id="id_tipo_operacao" name="tipo_operacao" value="{{ form_operacao_debenture.tipo_operacao.value }}">
-                                        {% for key, value in form_operacao_debenture.fields.tipo_operacao.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
-                                    </select>
-                                    {% if form_operacao_debenture.tipo_operacao.errors %} <span class="help-block"> {{ form_operacao_debenture.tipo_operacao.errors.as_text }} </span> {% endif %}
-                                </div>
-                            </div>
-                            <div class="form-group col-md-6 {% if form_operacao_debenture.taxa.errors %} has-error {% endif %}">
-                                <label class="control-label col-md-4"> Taxa: </label>
-                                <div class="col-md-8">
-                                    <input id="id_taxa" type="text" name="taxa" class="form-control" value="{{ form_operacao_debenture.taxa.value }}">
-                                    {% if form_operacao_debenture.taxa.errors %} <span class="help-block"> {{ form_operacao_debenture.taxa.errors.as_text }} </span> {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        {% if varias_divisoes %}
-                        <div class="row" id="forms">
-                            <h2 class="font-yellow-crusta" align="center">
-                                <strong>Divisões</strong> <button id="add-another" class="btn btn-icon-only green-steel" type="button"><i class="fa fa-plus"></i></button>
-                            </h2>
-                            {{ formset_divisao.management_form }}
-                            {% for form_divisao in formset_divisao %}
-                            <h3 class="font-yellow-crusta" align="center"><strong>Divisão {{ forloop.counter }}</strong></h3>
-                            <br/>
-                            <div class="col-md-12" id="divisao-{{forloop.counter0}}">
-                                <div class="row">
-                                    <div class="form-group col-md-6 {% if form_divisao.divisao.errors %} has-error {% endif %}">
-                                        <label class="control-label col-md-4" style="text-align: left;"> Divisão: </label>
-                                        <div class="col-md-8">
-                                            {% localize off %}
-                                            <select class="selectpicker form-control" id="id_divisaooperacaodebenture_set-{{forloop.counter0}}-divisao" name="divisaooperacaodebenture_set-{{forloop.counter0}}-divisao">
-                                                {% for key, value in form_divisao.fields.divisao.widget.choices %}<option value="{{ key }}" 
-                                                    {% if key == form_divisao.divisao.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
-                                            </select>
-                                            {% endlocalize %}
-                                            {% if form_divisao.divisao.errors %} <span class="help-block"> {{ form_divisao.divisao.errors.as_text }} </span> {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="form-group col-md-6 {% if form_divisao.quantidade.errors %} has-error {% endif %}">
-                                        <label class="control-label col-md-4"> Quantidade: </label>
-                                        <div class="col-md-8">
-                                            <input id="id_divisaooperacaodebenture_set-{{forloop.counter0}}-quantidade" type="text" value="{{form_divisao.quantidade.value}}" name="divisaooperacaodebenture_set-{{forloop.counter0}}-quantidade" class="form-control">
-                                            {% if form_divisao.quantidade.errors %} <span class="help-block"> {{ form_divisao.quantidade.errors.as_text }} </span> {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
+                        {% if form_operacao_debenture.data.errors %} <span class="help-block"> {{ form_operacao_debenture.debenture.errors.as_text }} </span> 
+                        {% else %} <span class="help-block"> Selecione uma data </span>
                         {% endif %}
-                        <div class="form-actions">
-                            <div class="row">
-                                <div class="col-md-offset col-md-3">
-                                    <button type="submit" name="save" value="1" class="btn green-steel">Salvar</button>
-                                </div>
+                    </div>
+                </div>
+                <div class="form-group col-md-6 {% if form_operacao_debenture.debenture.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4" style="text-align: left;"> Debênture: </label>
+                    <div class="col-md-8">
+                        {% localize off %}
+                        <select class="selectpicker form-control" id="id_debenture" name="debenture">
+                            {% for key, value in form_operacao_debenture.fields.debenture.widget.choices %}<option value="{{ key }}" 
+                                    {% if key == form_operacao_debenture.debenture.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                        </select>
+                        {% endlocalize %}
+                        {% if form_operacao_debenture.debenture.errors %} <span class="help-block"> {{ form_operacao_debenture.debenture.errors.as_text }} </span> {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group col-md-6 {% if form_operacao_debenture.tipo_operacao.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4" style="text-align: left;"> Tipo de operação: </label>
+                    <div class="col-md-8">
+                        <select class="selectpicker form-control" id="id_tipo_operacao" name="tipo_operacao" value="{{ form_operacao_debenture.tipo_operacao.value }}">
+                            {% for key, value in form_operacao_debenture.fields.tipo_operacao.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
+                        </select>
+                        {% if form_operacao_debenture.tipo_operacao.errors %} <span class="help-block"> {{ form_operacao_debenture.tipo_operacao.errors.as_text }} </span> {% endif %}
+                    </div>
+                </div>
+                <div class="form-group col-md-6 {% if form_operacao_debenture.taxa.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4"> Taxa: </label>
+                    <div class="col-md-8">
+                        <input id="id_taxa" type="text" name="taxa" class="form-control" value="{{ form_operacao_debenture.taxa.value }}">
+                        {% if form_operacao_debenture.taxa.errors %} <span class="help-block"> {{ form_operacao_debenture.taxa.errors.as_text }} </span> {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% if varias_divisoes %}
+            <div class="row" id="forms">
+                <h2 class="font-yellow-crusta" align="center">
+                    <strong>Divisões</strong> <button id="add-another" class="btn btn-icon-only green-steel" type="button"><i class="fa fa-plus"></i></button>
+                </h2>
+                {{ formset_divisao.management_form }}
+                {% for form_divisao in formset_divisao %}
+                <h3 class="font-yellow-crusta" align="center"><strong>Divisão {{ forloop.counter }}</strong></h3>
+                <br/>
+                <div class="col-md-12" id="divisao-{{forloop.counter0}}">
+                    <div class="row">
+                        <div class="form-group col-md-6 {% if form_divisao.divisao.errors %} has-error {% endif %}">
+                            <label class="control-label col-md-4" style="text-align: left;"> Divisão: </label>
+                            <div class="col-md-8">
+                                {% localize off %}
+                                <select class="selectpicker form-control" id="id_divisaooperacaodebenture_set-{{forloop.counter0}}-divisao" name="divisaooperacaodebenture_set-{{forloop.counter0}}-divisao">
+                                    {% for key, value in form_divisao.fields.divisao.widget.choices %}<option value="{{ key }}" 
+                                        {% if key == form_divisao.divisao.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                                </select>
+                                {% endlocalize %}
+                                {% if form_divisao.divisao.errors %} <span class="help-block"> {{ form_divisao.divisao.errors.as_text }} </span> {% endif %}
+                            </div>
+                        </div>
+                        <div class="form-group col-md-6 {% if form_divisao.quantidade.errors %} has-error {% endif %}">
+                            <label class="control-label col-md-4"> Quantidade: </label>
+                            <div class="col-md-8">
+                                <input id="id_divisaooperacaodebenture_set-{{forloop.counter0}}-quantidade" type="text" value="{{form_divisao.quantidade.value}}" name="divisaooperacaodebenture_set-{{forloop.counter0}}-quantidade" class="form-control">
+                                {% if form_divisao.quantidade.errors %} <span class="help-block"> {{ form_divisao.quantidade.errors.as_text }} </span> {% endif %}
                             </div>
                         </div>
                     </div>
-                </form>
-                <!-- END FORM-->
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            <div class="form-actions">
+                <div class="row">
+                    <div class="col-md-offset col-md-3">
+                        <button type="submit" name="save" value="1" class="btn green-steel">Salvar</button>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
+    </form>
+    <!-- END FORM-->
+</div>
 
 {% endblock %}
 

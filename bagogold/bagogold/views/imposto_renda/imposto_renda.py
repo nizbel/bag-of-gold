@@ -77,7 +77,6 @@ def detalhar_imposto_renda(request, ano):
             acoes[evento.acao.ticker].jscp = Decimal(0)
             acoes[evento.acao.ticker].dividendos = Decimal(0)
             acoes[evento.acao.ticker].credito_prox_ano = Decimal(0)
-            
         
         # Verificar se é operação
         if isinstance(evento, OperacaoAcao):  
@@ -242,6 +241,7 @@ def detalhar_imposto_renda(request, ano):
             fiis[evento.fii.ticker].quantidade = 0
             fiis[evento.fii.ticker].preco_medio = Decimal(0)
             fiis[evento.fii.ticker].rendimentos = Decimal(0)
+            fiis[evento.fii.ticker].credito_prox_ano = Decimal(0)
             
         if isinstance(evento, OperacaoFII):
             if evento.tipo_operacao == 'C':

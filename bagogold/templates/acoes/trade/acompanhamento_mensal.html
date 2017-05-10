@@ -62,27 +62,27 @@
 								</tr>
 								<tr>
 									<td> Total movimentado (compra): </td>
-									<td> <span id="qtd_compra">R$ {{ dados_mes.qtd_compra }}</span> </td>
+									<td> <span id="qtd_compra">R$ {{ dados_mes.qtd_compra|default:'0'|floatformat:2 }}</span> </td>
 									<td> Total movimentado (venda): </td>
-									<td> <span id="qtd_venda">R$ {{ dados_mes.qtd_venda }}</span> </td>
+									<td> <span id="qtd_venda">R$ {{ dados_mes.qtd_venda|default:'0'|floatformat:2 }}</span> </td>
 								</tr>
 								<tr>
 									<td> Lucro bruto: </td>
-									<td> <span id="lucro_bruto">R$ {{ dados_mes.lucro_bruto }}</span> </td>
+									<td> <span id="lucro_bruto">R$ {{ dados_mes.lucro_bruto|default:'0'|floatformat:2 }}</span> </td>
 									<td> IR devido: </td>
-									<td> <span id="ir_devido">R$ {{ dados_mes.ir_devido|floatformat:2 }}</span> </td>
+									<td> <span id="ir_devido">R$ {{ dados_mes.ir_devido|default:'0'|floatformat:2 }}</span> </td>
 								</tr>
 								<tr>
 									<td> Corretagem/Emolumentos: </td>
-									<td> <span id="corretagem">R$ {{ dados_mes.total_corretagem }}/R$ {{ dados_mes.total_emolumentos }}</span> </td>
+									<td> <span id="corretagem">R$ {{ dados_mes.total_corretagem|default:'0'|floatformat:2 }}/R$ {{ dados_mes.total_emolumentos|default:'0'|floatformat:2 }}</span> </td>
 									<td> Saldo para trades: </td>
-									<td> <span id="saldo_trades">R$ {{ dados_mes.saldo_trades }}</span> </td>
+									<td> <span id="saldo_trades">R$ {{ dados_mes.saldo_trades|default:'0'|floatformat:2 }}</span> </td>
 								</tr>
 								<tr>
 									<td> Ação mais lucrativa: </td>
-									<td> <span id="mais_lucrativa">{% if dados_mes.mais_lucrativa %}{{ dados_mes.mais_lucrativa.0 }} (R$ {{ dados_mes.mais_lucrativa.1 }}){% else %}Indisponível{% endif %}</span> </td>
+									<td> <span id="mais_lucrativa">{% if dados_mes.mais_lucrativa %}{{ dados_mes.mais_lucrativa.0 }} (R$ {{ dados_mes.mais_lucrativa.1|default:'0'|floatformat:2 }}){% else %}Indisponível{% endif %}</span> </td>
 									<td> Ação menos lucrativa: </td>
-									<td> <span id="menos_lucrativa">{% if dados_mes.menos_lucrativa %}{{ dados_mes.menos_lucrativa.0 }} (R$ {{ dados_mes.menos_lucrativa.1 }}){% else %}Indisponível{% endif %}</span> </td>
+									<td> <span id="menos_lucrativa">{% if dados_mes.menos_lucrativa %}{{ dados_mes.menos_lucrativa.0 }} (R$ {{ dados_mes.menos_lucrativa.1|default:'0'|floatformat:2 }}){% else %}Indisponível{% endif %}</span> </td>
 								</tr>
 							</tbody>
 						</table>

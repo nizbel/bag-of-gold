@@ -4,9 +4,7 @@
 {% block extra_head %}
     {{ form.media }}
 <link href={% static "assets/global/plugins/bootstrap-select/css/bootstrap-select.min.css" %} rel="stylesheet" type="text/css" />
-<link href={% static "assets/global/plugins/bootstrap-daterangepicker/daterangepicker.min.css" %} rel="stylesheet" type="text/css" />
 <link href={% static "assets/global/plugins/bootstrap-datepicker/css/bootstrap-datepicker3.min.css" %} rel="stylesheet" type="text/css" />
-<link href={% static "assets/global/plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css" %} rel="stylesheet" type="text/css" />
 {% endblock %}
 
 {% block pagina_titulo_icone %}
@@ -15,97 +13,112 @@
 
 {% block content %}
 <div class="portlet-body form">
-				<!-- BEGIN FORM-->
-				<form method="POST" class="horizontal-form">{% csrf_token %}
-					<div class="form-body">
-						<div class="row">
-							<div class="form-group col-md-6 {% if form.divisao_cedente.errors %} has-error {% endif %}">
-								<label class="control-label col-md-4" style="text-align: left;"> Divisão cedente: </label>
-								<div class="col-md-8">
-									<select class="selectpicker form-control" id="id_divisao_cedente" name="divisao_cedente">
-										{% for key, value in form.fields.divisao_cedente.choices %}<option value="{{ key }}" {% if key == form.divisao_cedente.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
-									</select>
-									{% if form.divisao_cedente.errors %} <span class="help-block"> {{ form.divisao_cedente.errors.as_text }} </span> {% endif %}
-								</div>
-							</div>
-							<div class="form-group col-md-6 {% if form.investimento_origem.errors %} has-error {% endif %}">
-								<label class="control-label col-md-4"> Investimento de origem: </label>
-								<div class="col-md-8">
-									<select class="selectpicker form-control" id="id_investimento_origem" name="investimento_origem" data-hide-disabled="true">
-										{% for key, value in form.fields.investimento_origem.widget.choices %}<option value="{{ key }}" {% if key == form.investimento_origem.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
-									</select>
-									{% if form.investimento_origem.errors %} <span class="help-block"> {{ form.investimento_origem.errors.as_text }} </span> {% endif %}
-								</div>
-							</div>
-						</div>
-						<div class="row">
-							<div class="form-group col-md-6 {% if form.divisao_recebedora.errors %} has-error {% endif %}">
-								<label class="control-label col-md-4" style="text-align: left;"> Divisão recebedora: </label>
-								<div class="col-md-8">
-									<select class="selectpicker form-control" id="id_divisao_recebedora" name="divisao_recebedora">
-										{% for key, value in form.fields.divisao_recebedora.choices %}<option value="{{ key }}" {% if key == form.divisao_recebedora.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
-									</select>
-									{% if form.divisao_recebedora.errors %} <span class="help-block"> {{ form.divisao_recebedora.errors.as_text }} </span> {% endif %}
-								</div>
-							</div>
-							<div class="form-group col-md-6 {% if form.investimento_destino.errors %} has-error {% endif %}">
-								<label class="control-label col-md-4"> Investimento de destino: </label>
-								<div class="col-md-8">
-									<select class="selectpicker form-control" id="id_investimento_destino" name="investimento_destino" data-hide-disabled="true">
-                                        {% for key, value in form.fields.investimento_destino.widget.choices %}<option value="{{ key }}" {% if key == form.investimento_destino.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
-									</select>
-									{% if form.investimento_destino.errors %} <span class="help-block"> {{ form.investimento_destino.errors.as_text }} </span> {% endif %}
-								</div>
-							</div>
-						</div>
-						<div class="row">
-							<div class="form-group col-md-6 {% if form.data.errors %} has-error {% endif %}">
-								<label class="control-label col-md-4" style="text-align: left;"> Data da transferência: </label>
-								<div class="col-md-8">
-									<div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_data" name="data" data-date="{{form.data.value|date:'d/m/Y'}}" data-date-viewmode="years">
-										<input type="text" class="form-control" value="{{form.data.value|date:'d/m/Y'}}" name="data">
-										<span class="input-group-btn">
-											<button class="btn default" type="button">
-												<i class="fa fa-calendar"></i>
-											</button>
-										</span>
-									</div>
-									{% if form.data.errors %} <span class="help-block"> {{ form.data.errors.as_text }} </span> 
-									{% else %} <span class="help-block"> Selecione uma data </span>
-									{% endif %}
-								</div>
-							</div>
-							<div class="form-group col-md-6 {% if form.quantidade.errors %} has-error {% endif %}">
-								<label class="control-label col-md-4"> Quantidade transferida: </label>
-								<div class="col-md-8">
-									<input id="id_quantidade" type="text" value="{{form.quantidade.value}}" name="quantidade" class="form-control">
-									{% if form.quantidade.errors %} <span class="help-block"> {{ form.quantidade.errors.as_text }} </span> {% endif %}
-								</div>
-							</div>
-						</div>
-						<div class="row">
-							<div class="form-group col-md-6 {% if form.descricao.errors %} has-error {% endif %}">
-								<label class="control-label col-md-4" style="text-align: left;"> Descrição :</label>
-								<div class="col-md-8">
-									<input type="text" class="form-control" maxlength="150" name="descricao" id="id_descricao" value="{{form.descricao.value|default:''}}">
-									{% if form.descricao.errors %} <span class="help-block"> {{ form.descricao.errors.as_text }} </span> {% endif %}
-								</div>
-							</div>
-						</div>
-						<div class="form-actions">
-							<div class="row">
-								<div class="col-md-offset col-md-3">
-									<button type="submit" name="save" value="1" class="btn green-steel">Salvar</button>
-									<button type="submit" name="delete" value="1" class="btn red-thunderbird">Excluir</button>
-								</div>
-							</div>
-						</div>
+	<!-- BEGIN FORM-->
+	<form method="POST" class="horizontal-form">{% csrf_token %}
+		<div class="form-body">
+			<div class="row">
+				<div class="form-group col-md-6 {% if form.divisao_cedente.errors %} has-error {% endif %}">
+					<label class="control-label col-md-4" style="text-align: left;"> Divisão cedente: </label>
+					<div class="col-md-8">
+						<select class="selectpicker form-control" id="id_divisao_cedente" name="divisao_cedente">
+							{% for key, value in form.fields.divisao_cedente.choices %}<option value="{{ key }}" {% if key == form.divisao_cedente.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+						</select>
+						{% if form.divisao_cedente.errors %} <span class="help-block"> {{ form.divisao_cedente.errors.as_text }} </span> {% endif %}
 					</div>
-				</form>
-				<!-- END FORM-->
+				</div>
+				<div class="form-group col-md-6 {% if form.investimento_origem.errors %} has-error {% endif %}">
+					<label class="control-label col-md-4"> Investimento de origem: </label>
+					<div class="col-md-8">
+						<select class="selectpicker form-control" id="id_investimento_origem" name="investimento_origem" data-hide-disabled="true">
+							{% for key, value in form.fields.investimento_origem.widget.choices %}<option value="{{ key }}" {% if key == form.investimento_origem.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+						</select>
+						{% if form.investimento_origem.errors %} <span class="help-block"> {{ form.investimento_origem.errors.as_text }} </span> {% endif %}
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="form-group col-md-6 {% if form.divisao_recebedora.errors %} has-error {% endif %}">
+					<label class="control-label col-md-4" style="text-align: left;"> Divisão recebedora: </label>
+					<div class="col-md-8">
+						<select class="selectpicker form-control" id="id_divisao_recebedora" name="divisao_recebedora">
+							{% for key, value in form.fields.divisao_recebedora.choices %}<option value="{{ key }}" {% if key == form.divisao_recebedora.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+						</select>
+						{% if form.divisao_recebedora.errors %} <span class="help-block"> {{ form.divisao_recebedora.errors.as_text }} </span> {% endif %}
+					</div>
+				</div>
+				<div class="form-group col-md-6 {% if form.investimento_destino.errors %} has-error {% endif %}">
+					<label class="control-label col-md-4"> Investimento de destino: </label>
+					<div class="col-md-8">
+						<select class="selectpicker form-control" id="id_investimento_destino" name="investimento_destino" data-hide-disabled="true">
+                            {% for key, value in form.fields.investimento_destino.widget.choices %}<option value="{{ key }}" {% if key == form.investimento_destino.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+						</select>
+						{% if form.investimento_destino.errors %} <span class="help-block"> {{ form.investimento_destino.errors.as_text }} </span> {% endif %}
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="form-group col-md-6 {% if form.data.errors %} has-error {% endif %}">
+					<label class="control-label col-md-4" style="text-align: left;"> Data da transferência: </label>
+					<div class="col-md-8">
+						<div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_data" name="data" data-date="{{form.data.value|date:'d/m/Y'}}" data-date-viewmode="years">
+							<input type="text" class="form-control" value="{{form.data.value|date:'d/m/Y'}}" name="data">
+							<span class="input-group-btn">
+								<button class="btn default" type="button">
+									<i class="fa fa-calendar"></i>
+								</button>
+							</span>
+						</div>
+						{% if form.data.errors %} <span class="help-block"> {{ form.data.errors.as_text }} </span> 
+						{% else %} <span class="help-block"> Selecione uma data </span>
+						{% endif %}
+					</div>
+				</div>
+				<div class="form-group col-md-6 {% if form.quantidade.errors %} has-error {% endif %}">
+					<label class="control-label col-md-4"> Quantidade transferida: </label>
+					<div class="col-md-8">
+						<input id="id_quantidade" type="text" value="{{form.quantidade.value}}" name="quantidade" class="form-control">
+						{% if form.quantidade.errors %} <span class="help-block"> {{ form.quantidade.errors.as_text }} </span> {% endif %}
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="form-group col-md-6 {% if form.descricao.errors %} has-error {% endif %}">
+					<label class="control-label col-md-4" style="text-align: left;"> Descrição :</label>
+					<div class="col-md-8">
+						<input type="text" class="form-control" maxlength="150" name="descricao" id="id_descricao" value="{{form.descricao.value|default:''}}">
+						{% if form.descricao.errors %} <span class="help-block"> {{ form.descricao.errors.as_text }} </span> {% endif %}
+					</div>
+				</div>
+			</div>
+			<div class="form-actions">
+				<div class="row">
+					<div class="col-md-offset col-md-3">
+						<button type="submit" name="save" value="1" class="btn green-steel">Salvar</button>
+                        <a data-toggle="modal" href="#exclusao" class="btn red-thunderbird">Excluir</a>
+					</div>
+				</div>
 			</div>
 		</div>
-	</div>
+        <div class="modal fade" id="exclusao" tabindex="-1" role="basic" aria-hidden="true" data-backdrop="static" data-keyboard="false"  style="display: none;">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                        <h4 class="modal-title">Confirmar exclusão de transferência</h4>
+                    </div>
+                    <div class="modal-body">Confirma a exclusão da transferência?</div>
+                    <div class="modal-footer">
+                        <a class="btn dark btn-outline" data-dismiss="modal">Cancelar</a>
+                        <button type="submit" name="delete" value="1" class="btn red-thunderbird">Confirmar</button>
+                    </div>
+                </div>
+                <!-- /.modal-content -->
+            </div>
+            <!-- /.modal-dialog -->
+        </div>
+	</form>
+	<!-- END FORM-->
+</div>
 
 {% endblock %}
 
