@@ -1,33 +1,76 @@
 {% extends "base.html" %}
 {% load staticfiles %}
 
-{% block content %}
+{% block pagina_titulo_icone %}
+<i class="icon-info font-yellow-crusta"></i>
+{% endblock %}
 
-<div class="portlet light">
-	<div class="portlet-title">
-		<div class="caption font-yellow-crusta">
-			<i class="icon-info font-yellow-crusta"></i>
-            <span class="caption-subject bold uppercase"> Sobre o site </span>
-		</div>
-	</div>
-	<div class="portlet-body">
-		<div class="row">
-			<div class="col-md-12">
-                <p>
-                O Bag of Gold (BOG) é uma ferramenta para acompanhar os seus investimentos. Nele, você consegue ter uma visão geral de todos os investimentos que você possui, independente de onde eles estão.
-                </p>
-                <p>
-                No seu banco ou em qualquer corretora, o BOG reúne em um único lugar todo o seu patrimônio. Com isso, você não precisa mais acessar site por site e gerenciar planilhas de excel – o BOG faz isso pra você.
-                </p>
-                <p>
-                Esta é a versão XX do BOG. O site está em constante aperfeiçoamento para proporcionar a você a melhor e mais simples experiência possível gerenciando o seu dinheiro.
-                </p>
-                <p>
-                Dúvidas ou sugestões? Entre em contato pelo e-mail <a href="mailto:info@metronic.com">suporte@bagofgold.com.br</a>
-                </p>
+{% block content %}
+<div class="portlet-body">
+    <div class="row">
+    	<div class="col-md-12">
+            <p>
+            O <strong>Bag of Gold</strong> é uma ferramenta para acompanhar os seus investimentos. Nele, você consegue ter uma visão geral de todos os investimentos que você possui, 
+            independente de onde eles estão. Após cadastrar suas operações (em ações, letras de crédito, CDB e outros), será possível acompanhar a evolução diária de suas aplicações.
+            </p>
+            <p>
+            Você não precisa acessar diversas contas de bancos e corretoras, ou gerenciar planilhas, para saber a situação atual de seus investimentos. 
+            </p>
+            
+            <p>
+            <strong>Importante: Todos os valores são aproximados e podem não bater com o valor exato de seus investimentos. A ferramenta objetiva um erro de no máximo um centavo para cada operação, devido a 
+            arredondamentos.</strong>
+            </p>
+        </div>
+        <div class="col-md-6">
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="icon-grid"></i>Versão atual</div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <p>
+                    Esta é a versão <strong>{{CURRENT_VERSION}}</strong> do <strong>Bag of Gold</strong>.
+                    </p>
+                    <p>
+                    O site está em constante aperfeiçoamento para proporcionar a você a melhor e mais simples experiência possível gerenciando o seu dinheiro.
+                    </p>
+                </div>
             </div>
         </div>
-	</div>
+        <div class="col-md-6">
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="icon-grid"></i>Contato</div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <p>
+                    Dúvidas ou sugestões? Entre em contato pelo e-mail <a href="mailto:info@metronic.com">suporte@bagofgold.com.br</a>.
+                    </p>
+                    <form action="{% url 'inicio:sobre' %}" method="post">{% csrf_token %}
+                        <div class="form-group">
+                            <input type="text" placeholder="Nome" value="{{form_contato.nome.value|default:''}}" name="nome" id="id_nome" class="form-control input-md"> </div>
+                            {% if form_contato.nome.errors %} <span class="help-block"> {{ form_contato.nome.errors.as_text }} </span> {% endif %}
+                        <div class="form-group">
+                            <input type="text" placeholder="E-mail" value="{{form_contato.email.value|default:''}}" name="email" id="id_email" class="form-control input-md"> </div>
+                            {% if form_contato.email.errors %} <span class="help-block"> {{ form_contato.email.errors.as_text }} </span> {% endif %}
+                        <div class="form-group">
+                            <textarea rows="8" placeholder="Conteúdo" name="conteudo" id="id_conteudo" class="form-control input-md">{{form_contato.conteudo.value|default:''}}</textarea>
+                            {% if form_contato.conteudo.errors %} <span class="help-block"> {{ form_contato.conteudo.errors.as_text }} </span> {% endif %}
+                        </div>
+                        <button type="submit" class="btn yellow-crusta">Enviar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 {% endblock %}

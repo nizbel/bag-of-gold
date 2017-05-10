@@ -15,10 +15,10 @@
         {% endif %}
         <div class="form-group">
             <!--ie8, ie9 does not support html5 placeholder, so we just show field title for that-->
-            <label class="control-label visible-ie8 visible-ie9">Email</label>
+            <label class="control-label visible-ie8 visible-ie9">E-mail</label>
             <div class="input-icon">
                 <i class="fa fa-envelope"></i>
-                <input class="form-control placeholder-no-fix" type="text" placeholder="Email" name="{{ form.email.name }}" id="{{ form.email.id_for_label }}" {% if form.email.value %}value="{{form.email.value}}"{% endif %} /> </div>
+                <input class="form-control placeholder-no-fix" type="text" placeholder="E-mail" name="{{ form.email.name }}" id="{{ form.email.id_for_label }}" {% if form.email.value %}value="{{form.email.value}}"{% endif %} /> </div>
             {% if form.email.errors %}
                 {% for error in form.email.errors %}
                     <span class="font-white"><i class="fa fa-warning"></i> {{error}}</span>

@@ -166,10 +166,11 @@ def editar_provento_acao(request, id):
             
     return TemplateResponse(request, 'acoes/buyandhold/editar_provento_acao.html', {'form': form})  
 
-@login_required
 @adiciona_titulo_descricao('Estatísticas da ação', 'Mostra estatísticas e valores históricos de uma ação')
 def estatisticas_acao(request, ticker=None):
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+        
     if (ticker):
         acao = get_object_or_404(Acao, ticker=ticker)
     else:
@@ -180,6 +181,16 @@ def estatisticas_acao(request, ticker=None):
     if not historico:
         return TemplateResponse(request, 'acoes/buyandhold/estatisticas_acao.html', {'graf_preco_medio': list(), 'graf_preco_medio_valor_acao': list(),
                                'graf_historico_proventos': list(), 'graf_historico': list()})
+        
+    graf_historico = list()
+    # Preparar gráfico com os valores históricos da acao
+    for item in historico:
+        data_formatada = str(calendar.timegm(item.data.timetuple()) * 1000)
+        graf_historico += [[data_formatada, float(item.preco_unitario)]]
+    
+    if not request.user.is_authenticated():
+        return TemplateResponse(request, 'acoes/buyandhold/estatisticas_acao.html', {'graf_preco_medio': list(), 'graf_preco_medio_valor_acao': list(),
+                               'graf_historico_proventos': list(), 'graf_historico': graf_historico})
         
     operacoes = OperacaoAcao.objects.filter(destinacao='B', acao__ticker=ticker, investidor=investidor).exclude(data__isnull=True).order_by('data')
     # Pega os proventos em ações recebidos por outras ações
@@ -206,7 +217,6 @@ def estatisticas_acao(request, ticker=None):
     # Proventos devem vir antes
     lista_conjunta = sorted(chain(proventos, operacoes), key=attrgetter('data'))
     
-    graf_historico = list()
     graf_historico_proventos = list()
     graf_preco_medio = list()
     graf_preco_medio_valor_acao = list()
@@ -216,11 +226,6 @@ def estatisticas_acao(request, ticker=None):
     total_proventos = 0
     proventos_acumulado = 0
     qtd_acoes = 0
-    
-    # Preparar gráfico com os valores históricos da acao
-    for item in historico:
-        data_formatada = str(calendar.timegm(item.data.timetuple()) * 1000)
-        graf_historico += [[data_formatada, float(item.preco_unitario)]]
     
     for item in lista_conjunta:
 #         print item
@@ -324,14 +329,19 @@ def estatisticas_acao(request, ticker=None):
     return TemplateResponse(request, 'acoes/buyandhold/estatisticas_acao.html', {'graf_preco_medio': graf_preco_medio, 'graf_preco_medio_valor_acao': graf_preco_medio_valor_acao,
                                'graf_historico_proventos': graf_historico_proventos, 'graf_historico': graf_historico})
 
-@login_required
 @adiciona_titulo_descricao('Histórico de Ações (Buy and Hold)', 'Histórico de operações de compra/venda em ações para Buy and Hold e proventos recebidos')
 def historico(request):
     # Usado para criar objetos vazios
     class Object(object):
         pass
     
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        return TemplateResponse(request, 'acoes/buyandhold/historico.html', {'operacoes': list(), 'graf_total_gasto': list(), 'graf_patrimonio': list(),
+                               'graf_proventos_mes': list(), 'graf_media_proventos_6_meses': list(), 'graf_poupanca_proventos': list(),
+                               'graf_gasto_op_sem_prov_mes': list(), 'graf_uso_proventos_mes': list(),
+                                'graf_dividendos_mensal': list(), 'graf_jscp_mensal': list(), 'dados': {}})
     
     operacoes = OperacaoAcao.objects.filter(destinacao='B', investidor=investidor).exclude(data__isnull=True).order_by('data')
     
@@ -657,23 +667,28 @@ def inserir_taxa_custodia_acao(request):
             
     return TemplateResponse(request, 'acoes/buyandhold/inserir_taxa_custodia_acao.html', {'form': form, })
     
-@login_required
 @adiciona_titulo_descricao('Listar taxas de custódia de ações', 'Lista o histórico de valores de taxas de custódia cadastrados pelo investidor')
 def listar_taxas_custodia_acao(request):
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        return TemplateResponse(request, 'acoes/buyandhold/ver_taxas_custodia_acao.html', {'taxas_custodia': list()})
+    
     taxas_custodia = TaxaCustodiaAcao.objects.filter(investidor=investidor).order_by('ano_vigencia', 'mes_vigencia')
     for taxa in taxas_custodia:
         taxa.ano_vigencia = str(taxa.ano_vigencia).replace('.', '')
     return TemplateResponse(request, 'acoes/buyandhold/ver_taxas_custodia_acao.html', {'taxas_custodia': taxas_custodia})
 
-@login_required
 @adiciona_titulo_descricao('Painel de Ações (Buy and Hold)', 'Posição atual do investidor em Ações para Buy and Hold')
 def painel(request):
     # Usado para criar objetos vazios
     class Object(object):
         pass
     
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        return TemplateResponse(request, 'acoes/buyandhold/painel.html', {'acoes': {}, 'dados': {}})
     
     acoes_investidor = buscar_acoes_investidor_na_data(investidor, destinacao='B')
     

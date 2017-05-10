@@ -6,47 +6,42 @@
 <link href={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.css" %} rel="stylesheet" type="text/css" />
 {% endblock %}
 
-{% block content %}
+{% block pagina_titulo_icone %}
+<i class="icon-share font-yellow-crusta"></i>
+{% endblock %}
 
-<div class="portlet light">
-	<div class="portlet-title">
-		<div class="caption font-yellow-crusta">
-			<i class="icon-share font-yellow-crusta"></i>
-			<span class="caption-subject bold uppercase">Transferências</span>
-		</div>
-	</div>
-	<div class="portlet-body">
-		<table id="ordens" class="table table-striped table-bordered table-hover table-header-fixed">
-		<thead>
-			<tr>
-				<th>Divisão cedente</th>
-				<th>Divisão recebedora</th>
-				<th>Data</th>
-				<th>Quantidade</th>
-				<th>Descrição</th>
-				<th></th>
-			</tr>
-		</thead>
-		<tbody>
-		{% for transferencia in transferencias %}
+{% block content %}
+<div class="portlet-body">
+	<table id="ordens" class="table table-striped table-bordered table-hover table-header-fixed">
+	<thead>
 		<tr>
-			<td>{% if transferencia.divisao_cedente %}{{transferencia.divisao_cedente}} ({{transferencia.investimento_origem}})
-				{% else %}Fonte externa
-				{% endif %}
-			</td>
-			<td>{% if transferencia.divisao_recebedora %}{{transferencia.divisao_recebedora}} ({{transferencia.investimento_destino}})
-				{% else %}Fonte externa
-				{% endif %}
-			</td>
-			<td>{{transferencia.data|date:"Y-m-d"}}</td>
-			<td>R${{transferencia.quantidade}}</td>
-			<td>{{transferencia.descricao|default:"Sem descrição"}}</td>
-			<td><a href="{% url "divisoes:editar_transferencia" transferencia.id %}" class="btn btn-sm btn-warning">Editar</a></td>
+			<th>Divisão cedente</th>
+			<th>Divisão recebedora</th>
+			<th>Data</th>
+			<th>Quantidade</th>
+			<th>Descrição</th>
+			<th></th>
 		</tr>
-		{% endfor %}
-		</tbody>
-		</table>
-	</div>
+	</thead>
+	<tbody>
+	{% for transferencia in transferencias %}
+	<tr>
+		<td>{% if transferencia.divisao_cedente %}{{transferencia.divisao_cedente}} ({{transferencia.investimento_origem}})
+			{% else %}Fonte externa
+			{% endif %}
+		</td>
+		<td>{% if transferencia.divisao_recebedora %}{{transferencia.divisao_recebedora}} ({{transferencia.investimento_destino}})
+			{% else %}Fonte externa
+			{% endif %}
+		</td>
+		<td>{{transferencia.data|date:"Y-m-d"}}</td>
+		<td>R${{transferencia.quantidade}}</td>
+		<td>{{transferencia.descricao|default:"Sem descrição"}}</td>
+		<td><a href="{% url "divisoes:editar_transferencia" transferencia.id %}" class="btn btn-sm btn-warning">Editar</a></td>
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
 </div>
 
 {% endblock %}

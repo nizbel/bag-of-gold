@@ -6,16 +6,12 @@
 <link href={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.css" %} rel="stylesheet" type="text/css" />
 {% endblock %}
 
-{% block content %}
+{% block pagina_titulo_icone %}
+<i class="icon-hourglass font-yellow-crusta"></i>
+{% endblock %}
 
-<div class="portlet light">
-	<div class="portlet-title">
-		<div class="caption font-yellow-crusta">
-			<i class="icon-hourglass font-yellow-crusta"></i>
-			<span class="caption-subject bold uppercase">Histórico</span>
-		</div>
-	</div>
-	<div class="portlet-body">
+{% block content %}
+<div class="portlet-body">
 		<div class="row">
 			<div class="col-md-12">
 				<!-- BEGIN Portlet PORTLET-->
@@ -52,7 +48,7 @@
 									</div>
 									<div class="stat-number">
 										<div class="title"> Patrimônio: </div>
-										<div class="number"> R${{ dados.patrimonio|floatformat:2 }} </div>
+										<div class="number"> R${{ dados.patrimonio|default:'0'|floatformat:2 }} </div>
 									</div>
 								</div>
 							</div>
@@ -63,7 +59,7 @@
 									</div>
 									<div class="stat-number">
 										<div class="title"> Total custódia: </div>
-										<div class="number"> R${{ dados.total_custodia|floatformat:2 }} </div>
+										<div class="number"> R${{ dados.total_custodia|default:'0'|floatformat:2 }} </div>
 									</div>
 								</div>
 							</div>
@@ -74,7 +70,7 @@
 									</div>
 									<div class="stat-number">
 										<div class="title"> Total investido: </div>
-										<div class="number"> R${{ dados.total_gasto|floatformat:2 }} </div>
+										<div class="number"> R${{ dados.total_gasto|default:'0'|floatformat:2 }} </div>
 									</div>
 								</div>
 							</div>
@@ -84,7 +80,7 @@
 									</div>
 									<div class="stat-number">
 										<div class="title"> Lucro/Prejuízo: </div>
-										<div class="number"> R${{ dados.lucro|floatformat:2 }} ({{ dados.lucro_percentual|floatformat:2 }}%) </div>
+										<div class="number"> R${{ dados.lucro|default:'0'|floatformat:2 }} ({{ dados.lucro_percentual|default:'0'|floatformat:2 }}%) </div>
 									</div>
 								</div>
 							</div>
@@ -128,7 +124,7 @@
 									</div>
 									<div class="stat-number">
 										<div class="title"> Poupança proventos: </div>
-										<div class="number"> R${{ dados.poupanca_proventos|floatformat:2 }} </div>
+										<div class="number"> R${{ dados.poupanca_proventos|default:'0'|floatformat:2 }} </div>
 									</div>
 								</div>
 							</div>
@@ -139,7 +135,7 @@
 									</div>
 									<div class="stat-number">
 										<div class="title"> Dividendos: </div>
-										<div class="number"> R${{ dados.dividendos_mensal|floatformat:2 }} </div>
+										<div class="number"> R${{ dados.dividendos_mensal|default:'0'|floatformat:2 }} </div>
 									</div>
 								</div>
 							</div>
@@ -150,7 +146,7 @@
 									</div>
 									<div class="stat-number">
 										<div class="title"> JSCP: </div>
-										<div class="number"> R${{ dados.jscp_mensal|floatformat:2 }} </div>
+										<div class="number"> R${{ dados.jscp_mensal|default:'0'|floatformat:2 }} </div>
 									</div>
 								</div>
 							</div>
@@ -160,7 +156,7 @@
 									</div>
 									<div class="stat-number">
 										<div class="title"> Total proventos: </div>
-										<div class="number"> R${{ dados.total_proventos|floatformat:2 }} </div>
+										<div class="number"> R${{ dados.total_proventos|default:'0'|floatformat:2 }} </div>
 									</div>
 								</div>
 							</div>
@@ -241,7 +237,6 @@
 			</div>
 		</div>
 	</div>
-</div>
 
 {% endblock %}
 
@@ -268,9 +263,9 @@ $( document ).ready(function() {
 	                              {grid: {show: false}}   
 	    );
     $.plot($("#graf_patr_gasto"), [ {label: "Patrimônio", lines: {show:true}, data: {{ graf_patrimonio|safe }} }, 
-                                {label: "Total gasto", lines: {show:true}, data: {{ graf_total_gasto|safe }} } 
+                                {label: "Total investido", lines: {show:true}, data: {{ graf_total_gasto|safe }} } 
                               ],
-                                {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%m-%y"},
+                                {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%m/%Y"},
                             	}  
     );
     
@@ -289,14 +284,14 @@ $( document ).ready(function() {
     $.plot($("#graf_proventos_mes"), [ {color: "#33AA33", label: "Proventos", bars: {show:true, align:"center", barWidth: 8 * 24 * 60 * 60 * 600, lineWidth: 1, order: 1}, data: {{ graf_proventos_mes|safe }} }, 
                                        {color: "#8811AA", label: "Média 6 meses", bars: {show:true, align:"center", barWidth: 8 * 24 * 60 * 60 * 600, lineWidth: 1, order: 2}, data: {{ graf_media_proventos_6_meses|safe }} }, 
                                   ],
-                                    {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%m-%y"},
+                                    {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%m/%Y"},
                                     }  
         );
     
     $.plot($("#graf_uso_proventos_mes"), [ {color: "#33AA33", label: "Novo gasto", bars: {show:true, align:"center", barWidth: 8 * 24 * 60 * 60 * 600, lineWidth: 1, stacked: true}, data: {{ graf_gasto_op_sem_prov_mes|safe }} }, 
                                        {color: "#8811AA", label: "Uso de proventos", bars: {show:true, align:"center", barWidth: 8 * 24 * 60 * 60 * 600, lineWidth: 1, stacked: true}, data: {{ graf_uso_proventos_mes|safe }} }, 
                                   ],
-                                    {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%m-%y"},
+                                    {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%m/%Y"},
                                     }  
         );
     
@@ -328,7 +323,7 @@ function showTooltip(x, y, contents) {
                     y = item.datapoint[1].toFixed(2);
                 
                 var date = new Date(parseInt(x));
-                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d-%m-%y") +"</br>" + item.series.label + ": R$" + y);
+                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%y") +"</br>" + item.series.label + ": R$" + y.replace('.', ','));
             }
         }
         else {
@@ -350,7 +345,7 @@ function showTooltip(x, y, contents) {
                     y = item.datapoint[1].toFixed(2);
                 
                 var date = new Date(parseInt(x));
-                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%m-%y") +"</br>" + item.series.label + ": R$" + y);
+                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%m/%Y") +"</br>" + item.series.label + ": R$" + y.replace('.', ','));
             }
         }
         else {
@@ -372,7 +367,7 @@ function showTooltip(x, y, contents) {
                     y = item.datapoint[1].toFixed(2);
                 
                 var date = new Date(parseInt(x));
-                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%m-%y") +"</br>" + item.series.label + ": R$" + y);
+                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%m/%Y") +"</br>" + item.series.label + ": R$" + y.replace('.', ','));
             }
         }
         else {

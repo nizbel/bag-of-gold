@@ -7,19 +7,12 @@
 <link href={% static "assets/global/plugins/bootstrap-datepicker/css/bootstrap-datepicker3.min.css" %} rel="stylesheet" type="text/css" />
 {% endblock %}
 
-{% block content %}
+{% block pagina_titulo_icone %}
+<i class="icon-pin font-yellow-crusta"></i>
+{% endblock %}
 
-<div class="portlet light">
-	<div class="portlet-title">
-		<div class="caption font-yellow-crusta">
-        {% comment %}
-        TROCAR ICONE DE PENDENCIAS 
-        {% endcomment %}
-			<i class="icon-pin font-yellow-crusta"></i>
-			<span class="caption-subject bold uppercase">Painel de pendências</span>
-		</div>
-	</div>
-	<div class="portlet-body">
+{% block content %}
+<div class="portlet-body">
         <div class="alert alert-warning">
             {% if qtd_pendencias == 0 %}
             <strong>Não há pendências</strong>
@@ -110,7 +103,6 @@
         </div>
         <!-- /.modal-dialog -->
     </div>
-</div>
 
 {% endblock %}
 

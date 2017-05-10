@@ -241,15 +241,20 @@ def editar_operacao_cri_cra(request, id_operacao):
     return TemplateResponse(request, 'cri_cra/editar_operacao_cri_cra.html', {'form_operacao_cri_cra': form_operacao_cri_cra, 'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})  
 
     
-@login_required
 @adiciona_titulo_descricao('Histórico de CRI/CRA', 'Histórico de operações de compra/venda em CRI/CRA')
 def historico(request):
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        return TemplateResponse(request, 'cri_cra/historico.html', {'dados': {}, 'operacoes': list(), 
+                                                    'graf_investido_total': list(), 'graf_patrimonio': list()})
+        
     # Processa primeiro operações de venda (V), depois compra (C)
     operacoes = OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor).exclude(data__isnull=True).order_by('data') 
     # Verifica se não há operações
     if not operacoes:
-        return TemplateResponse(request, 'cri_cra/historico.html', {'dados': {}})
+        return TemplateResponse(request, 'cri_cra/historico.html', {'dados': {}, 'operacoes': list(), 
+                                                    'graf_investido_total': list(), 'graf_patrimonio': list()})
      
     # Pegar data inicial
     historico_di = HistoricoTaxaDI.objects.filter(data__gte=operacoes[0].data)
@@ -423,10 +428,13 @@ def inserir_operacao_cri_cra(request):
     return TemplateResponse(request, 'cri_cra/inserir_operacao_cri_cra.html', {'form_operacao_cri_cra': form_operacao_cri_cra, 'formset_divisao': formset_divisao,
                                                                          'varias_divisoes': varias_divisoes})
 
-@login_required
 @adiciona_titulo_descricao('Listar CRI/CRA', 'Lista de Certificados de Recebíveis cadastrados pelo investidor')
 def listar_cri_cra(request):
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        return TemplateResponse(request, 'cri_cra/listar_cri_cra.html', {'cri_cra': list()})
+        
     cri_cra = CRI_CRA.objects.filter(investidor=investidor)
     
     data_atual = datetime.date.today()
@@ -438,10 +446,13 @@ def listar_cri_cra(request):
     
     return TemplateResponse(request, 'cri_cra/listar_cri_cra.html', {'cri_cra': cri_cra})
 
-@login_required
 @adiciona_titulo_descricao('Painel de CRI/CRA', 'Posição atual do investidor em CRI/CRA')
 def painel(request):
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        return TemplateResponse(request, 'cri_cra/painel.html', {'cri_cra': list(), 'dados': {}})
+                                                                         
     # Processa primeiro operações de venda (V), depois compra (C)
     operacoes = OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
     if not operacoes:
@@ -536,10 +547,9 @@ def painel(request):
     dados['total_investido'] = total_investido
     dados['total_valor_atual'] = total_valor_atual
     dados['total_rendimento_ate_vencimento'] = total_rendimento_ate_vencimento
-#     
+
     return TemplateResponse(request, 'cri_cra/painel.html', {'cri_cra': cri_cra, 'dados': dados})
 
-@login_required
 @adiciona_titulo_descricao('Sobre CRI/CRA', 'Detalha o que são Certificados de Recebíveis')
 def sobre(request):
     data_atual = datetime.date.today()
