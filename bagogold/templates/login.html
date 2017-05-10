@@ -53,12 +53,6 @@
         </div>
         <input type="hidden" name="next" value="{{ next }}" />
         <div class="form-actions">
-            {% comment %}
-            <label class="rememberme mt-checkbox mt-checkbox-outline">
-                <input type="checkbox" name="remember" value="1" /> Remember me
-                <span></span>
-            </label>
-            {% endcomment %}
             <button type="submit" class="btn yellow-crusta pull-right"> Login </button>
         </div>
         <div class="forget-password">
@@ -66,12 +60,10 @@
             <p> Então
                 <a class="font-yellow-crusta" href="{% url 'password_reset' %}" id="forget-password"> clique aqui </a> para trocá-la. </p>
         </div>
-        {% comment %}
         <div class="create-account">
             <h4>Não possui conta?</h4>
             <a href="{% url 'cadastro' %}" class="font-yellow-crusta"> Criar nova conta </a>
         </div>
-        {% endcomment %}
         <!-- BEGIN COPYRIGHT -->
         <div class="copyright" style="margin-top: 25px;"> {% now "Y" %} &copy; Bag of Gold </div>
         <!-- END COPYRIGHT -->
