@@ -48,7 +48,7 @@
 									</div>
 									<div class="stat-number">
 										<div class="title"> Patrimônio: </div>
-										<div class="number"> R${{ dados.patrimonio|floatformat:2 }} </div>
+										<div class="number"> R${{ dados.patrimonio|default:'0'|floatformat:2 }} </div>
 									</div>
 								</div>
 							</div>
@@ -59,7 +59,7 @@
 									</div>
 									<div class="stat-number">
 										<div class="title"> Total custódia: </div>
-										<div class="number"> R${{ dados.total_custodia|floatformat:2 }} </div>
+										<div class="number"> R${{ dados.total_custodia|default:'0'|floatformat:2 }} </div>
 									</div>
 								</div>
 							</div>
@@ -70,7 +70,7 @@
 									</div>
 									<div class="stat-number">
 										<div class="title"> Total investido: </div>
-										<div class="number"> R${{ dados.total_gasto|floatformat:2 }} </div>
+										<div class="number"> R${{ dados.total_gasto|default:'0'|floatformat:2 }} </div>
 									</div>
 								</div>
 							</div>
@@ -80,7 +80,7 @@
 									</div>
 									<div class="stat-number">
 										<div class="title"> Lucro/Prejuízo: </div>
-										<div class="number"> R${{ dados.lucro|floatformat:2 }} ({{ dados.lucro_percentual|floatformat:2 }}%) </div>
+										<div class="number"> R${{ dados.lucro|default:'0'|floatformat:2 }} ({{ dados.lucro_percentual|default:'0'|floatformat:2 }}%) </div>
 									</div>
 								</div>
 							</div>
@@ -124,7 +124,7 @@
 									</div>
 									<div class="stat-number">
 										<div class="title"> Poupança proventos: </div>
-										<div class="number"> R${{ dados.poupanca_proventos|floatformat:2 }} </div>
+										<div class="number"> R${{ dados.poupanca_proventos|default:'0'|floatformat:2 }} </div>
 									</div>
 								</div>
 							</div>
@@ -135,7 +135,7 @@
 									</div>
 									<div class="stat-number">
 										<div class="title"> Dividendos: </div>
-										<div class="number"> R${{ dados.dividendos_mensal|floatformat:2 }} </div>
+										<div class="number"> R${{ dados.dividendos_mensal|default:'0'|floatformat:2 }} </div>
 									</div>
 								</div>
 							</div>
@@ -146,7 +146,7 @@
 									</div>
 									<div class="stat-number">
 										<div class="title"> JSCP: </div>
-										<div class="number"> R${{ dados.jscp_mensal|floatformat:2 }} </div>
+										<div class="number"> R${{ dados.jscp_mensal|default:'0'|floatformat:2 }} </div>
 									</div>
 								</div>
 							</div>
@@ -156,7 +156,7 @@
 									</div>
 									<div class="stat-number">
 										<div class="title"> Total proventos: </div>
-										<div class="number"> R${{ dados.total_proventos|floatformat:2 }} </div>
+										<div class="number"> R${{ dados.total_proventos|default:'0'|floatformat:2 }} </div>
 									</div>
 								</div>
 							</div>
@@ -263,7 +263,7 @@ $( document ).ready(function() {
 	                              {grid: {show: false}}   
 	    );
     $.plot($("#graf_patr_gasto"), [ {label: "Patrimônio", lines: {show:true}, data: {{ graf_patrimonio|safe }} }, 
-                                {label: "Total gasto", lines: {show:true}, data: {{ graf_total_gasto|safe }} } 
+                                {label: "Total investido", lines: {show:true}, data: {{ graf_total_gasto|safe }} } 
                               ],
                                 {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%m-%y"},
                             	}  
