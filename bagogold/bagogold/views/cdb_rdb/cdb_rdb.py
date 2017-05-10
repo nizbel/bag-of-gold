@@ -326,10 +326,14 @@ def editar_operacao_cdb_rdb(request, operacao_id):
     return TemplateResponse(request, 'cdb_rdb/editar_operacao_cdb_rdb.html', {'form_operacao_cdb_rdb': form_operacao_cdb_rdb, 'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})  
 
     
-@login_required
 @adiciona_titulo_descricao('Histórico de CDB/RDB', 'Histórico de operações de compra/venda em CDB/RDB')
 def historico(request):
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        return TemplateResponse(request, 'cdb_rdb/historico.html', {'dados': {}, 'operacoes': list(), 
+                                                    'graf_gasto_total': list(), 'graf_patrimonio': list()})
+    
     # Processa primeiro operações de venda (V), depois compra (C)
     operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
     # Verifica se não há operações
@@ -614,10 +618,13 @@ def inserir_operacao_cdb_rdb(request):
     return TemplateResponse(request, 'cdb_rdb/inserir_operacao_cdb_rdb.html', {'form_operacao_cdb_rdb': form_operacao_cdb_rdb, 'formset_divisao': formset_divisao_cdb_rdb,
                                                                         'varias_divisoes': varias_divisoes})
 
-@login_required
 @adiciona_titulo_descricao('Listar CDB/RDB', 'Lista de CDBs e RDBs cadastrados pelo investidor')
 def listar_cdb_rdb(request):
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        return TemplateResponse(request, 'cdb_rdb/listar_cdb_rdb.html', {'cdb_rdb': list()})
+    
     cdb_rdb = CDB_RDB.objects.filter(investidor=investidor)
     
     for investimento in cdb_rdb:
@@ -633,10 +640,13 @@ def listar_cdb_rdb(request):
         
     return TemplateResponse(request, 'cdb_rdb/listar_cdb_rdb.html', {'cdb_rdb': cdb_rdb})
 
-@login_required
 @adiciona_titulo_descricao('Painel de CDB/RDB', 'Posição atual do investidor em CDB/RDB')
 def painel(request):
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        return TemplateResponse(request, 'cdb_rdb/painel.html', {'operacoes': list(), 'dados': {}})
+        
     # Processa primeiro operações de venda (V), depois compra (C)
     operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
     if not operacoes:
@@ -768,7 +778,6 @@ def painel(request):
     
     return TemplateResponse(request, 'cdb_rdb/painel.html', {'operacoes': operacoes, 'dados': dados})
 
-@login_required
 @adiciona_titulo_descricao('Sobre CDB/RDB', 'Detalha o que são CDB e RDB')
 def sobre(request):
     data_atual = datetime.date.today()
