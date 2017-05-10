@@ -3,7 +3,6 @@ from django.apps import AppConfig
 from django.conf import settings
 from subprocess import check_output
 import os
-import re
  
 class BagofGoldConfig(AppConfig):
     name = 'bagogold.bagogold'
@@ -16,7 +15,7 @@ class BagofGoldConfig(AppConfig):
         output = check_output(['hg', 'log', '-b', 'prod', '--template', '.'])
         if settings.ENV == 'PROD':
             os.chdir(origWD)
-        current_version = '1.0.%s' % (len(output) - 145)
+        current_version = '1.0.%s' % (len(output) - 147)
         if settings.ENV == 'DEV':
             print 'Current Bag of Gold version: ' + current_version
         settings.CURRENT_VERSION = current_version
