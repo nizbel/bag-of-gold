@@ -15,7 +15,7 @@ class BagofGoldConfig(AppConfig):
         output = check_output(['hg', 'log', '-b', 'prod', '--template', '.'])
         if settings.ENV == 'PROD':
             os.chdir(origWD)
-        current_version = '1.0.%s' % (len(output) - 147)
+        current_version = '1.0.%s' % (len(output) - 150)
         if settings.ENV == 'DEV':
             print 'Current Bag of Gold version: ' + current_version
         settings.CURRENT_VERSION = current_version

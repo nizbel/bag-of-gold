@@ -417,7 +417,6 @@ def painel(request):
     
     return TemplateResponse(request, 'fundo_investimento/painel.html', {'fundos': fundos, 'dados': dados})
 
-@login_required
 def sobre(request):
     
     return TemplateResponse(request, 'fundo_investimento/sobre.html', {})
