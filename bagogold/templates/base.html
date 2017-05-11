@@ -560,7 +560,7 @@
                             <div class="page-content">
                                 <div class="container-fluid">
                                     <div class="row">
-                                        <div class="col-md-12" id="messages" style="padding-right: 0px;">
+                                        <div class="col-md-12" id="messages">
                                         {% if messages %}
                                             {% for message in messages %}
                                             <div class="custom-alerts alert {{message.tags}}">
@@ -581,7 +581,7 @@
                                     <div class="page-content-inner">
                                         <div class="mt-content-body">
                                             <div class="row row-same-size-columns">
-                                                <div class="col-md-11">
+                                                <div class="col-md-12">
                                                     {% if pagina_titulo %}
                                                     <div class="portlet light">
                                                         <div class="portlet-title">
@@ -601,12 +601,6 @@
                                                     {% if pagina_titulo %}
                                                     </div>
                                                     {% endif %}
-                                                </div>
-                                                <div class="col-md-1 px-md-0 row-same-size-columns">
-                                                    <div class="portlet light px-0" style="width: 100%">
-                                                        <div class="portlet-body">
-                                                        </div>
-                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
