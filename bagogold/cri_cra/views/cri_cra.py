@@ -55,13 +55,19 @@ def detalhar_cri_cra(request, id_cri_cra):
     else:
         cri_cra.proxima_data_remuneracao = None
      
+    operacoes = OperacaoCRI_CRA.objects.filter(cri_cra=cri_cra).order_by('data').annotate(valor_operacao=F('preco_unitario')*F('quantidade'))
     # Preparar estatísticas zeradas
-    cri_cra.total_investido = Decimal(0)
-    cri_cra.valor_atual = Decimal(0)
-    cri_cra.lucro = Decimal(0)
-    cri_cra.lucro_percentual = Decimal(0)
+    cri_cra.total_investido = operacoes.filter(tipo_operacao='C') \
+        .aggregate(valor_total=Sum('valor_operacao'))['valor_total'] or Decimal(0)
+    cri_cra.valor_atual = calcular_valor_um_cri_cra_na_data(cri_cra)
+    cri_cra.total_atual = quantidade_cri_cra_na_data_para_certificado(cri_cra) * cri_cra.valor_atual
+    cri_cra.total_vendas = operacoes.filter(tipo_operacao='V') \
+        .aggregate(valor_total=Sum('valor_operacao'))['valor_total'] or Decimal(0)
+    cri_cra.total_taxas = operacoes.aggregate(total_taxas=Sum('taxa'))['total_taxas'] or Decimal(0)
+    cri_cra.lucro = cri_cra.total_atual + cri_cra.total_vendas - cri_cra.total_investido - cri_cra.total_taxas
+    cri_cra.lucro_percentual = Decimal(0) if cri_cra.total_investido == Decimal(0) else \
+        cri_cra.lucro / cri_cra.total_investido
      
-    operacoes = OperacaoCRI_CRA.objects.filter(cri_cra=cri_cra).order_by('data')
     # Contar total de operações já realizadas 
     cri_cra.total_operacoes = len(operacoes)
     
