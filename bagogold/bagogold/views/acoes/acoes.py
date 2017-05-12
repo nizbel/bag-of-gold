@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.decorators import adiciona_titulo_descricao
-from bagogold.bagogold.models.acoes import Acao, ValorDiarioAcao, HistoricoAcao
+from bagogold.bagogold.decorators import adiciona_titulo_descricao, \
+    em_construcao
+from bagogold.bagogold.models.acoes import Acao, ValorDiarioAcao, HistoricoAcao, \
+    Provento
+from bagogold.bagogold.models.gerador_proventos import \
+    InvestidorValidacaoDocumento
 from bagogold.bagogold.utils.acoes import quantidade_acoes_ate_dia, \
     calcular_poupanca_prov_acao_ate_dia
 from bagogold.bagogold.utils.investidores import buscar_acoes_investidor_na_data
 from django.contrib.auth.decorators import login_required
+from django.db.models.expressions import F
 from django.template.response import TemplateResponse
 import datetime
 
@@ -14,7 +19,8 @@ def listar_acoes(request):
     
     return TemplateResponse(request, 'acoes/listar_acoes.html', {'acoes': acoes})
 
-@adiciona_titulo_descricao('Lista de proventos', 'Lista os proventos de ações cadastrados')
+@em_construcao('')
+# @adiciona_titulo_descricao('Lista de proventos', 'Lista os proventos de ações cadastrados')
 def listar_proventos(request):
     proventos = Provento.objects.all()
     

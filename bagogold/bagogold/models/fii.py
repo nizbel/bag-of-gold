@@ -26,8 +26,10 @@ class ProventoFIIOficialManager(models.Manager):
         return super(ProventoFIIOficialManager, self).get_queryset().filter(oficial_bovespa=True)
 
 class ProventoFII (models.Model):
-    ESCOLHAS_TIPO_PROVENTO_FII=(('R', "Rendimento"),
-                        ('A', "Amortização"),)
+    TIPO_PROVENTO_AMORTIZACAO = 'A'
+    TIPO_PROVENTO_RENDIMENTO = 'R'
+    ESCOLHAS_TIPO_PROVENTO_FII=((TIPO_PROVENTO_RENDIMENTO, "Rendimento"),
+                        (TIPO_PROVENTO_AMORTIZACAO, "Amortização"),)
     
     fii = models.ForeignKey('FII')
     valor_unitario = models.DecimalField(u'Valor unitário', max_digits=22, decimal_places=18)
@@ -46,12 +48,10 @@ class ProventoFII (models.Model):
         return 'R$ %s de %s em %s com data EX %s' % (str(self.valor_unitario), self.fii.ticker, str(self.data_pagamento), str(self.data_ex))
     
     def descricao_tipo_provento(self):
-        if self.tipo_provento == 'A':
+        if self.tipo_provento == self.TIPO_PROVENTO_AMORTIZACAO:
             return u'Amortização'
-        elif self.tipo_provento == 'R':
+        elif self.tipo_provento == self.TIPO_PROVENTO_RENDIMENTO:
             return u'Rendimento'
-        else:
-            return u'Indefinido'
         
     objects = ProventoFIIOficialManager()
     gerador_objects = models.Manager()

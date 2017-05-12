@@ -183,13 +183,15 @@
                                                         <span class="arrow"></span>
                                                     </a>
                                                     <ul class="dropdown-menu">
-                                                        <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'geral:listar_acoes' %}active{% endif %}">
+                                                        <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_acoes' %}active{% endif %}">
                                                             <a href="{% url "acoes:geral:listar_acoes" %}" class="nav-link "> Listar ações </a>
                                                         </li>
-                                                        <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'geral:listar_proventos' %}active{% endif %}">
+                                                        {% comment %}
+                                                        <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_proventos' %}active{% endif %}">
                                                             <a href="{% url "acoes:geral:listar_proventos" %}" class="nav-link "> Listar proventos </a>
                                                         </li>
-                                                        <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'geral:sobre_acoes' %}active{% endif %}">
+                                                        {% endcomment %}
+                                                        <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'sobre_acoes' %}active{% endif %}">
                                                             <a href="{% url "acoes:geral:sobre_acoes" %}" class="nav-link "> Sobre </a>
                                                         </li>
                                                     </ul>
