@@ -4,6 +4,23 @@ import datetime
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao
  
 class Acao (models.Model):
+    TIPOS_ACAO_NUMERO = {3: u'ON',
+                  4: u'PN',
+                  5: u'PNA',
+                  6: u'PNB',
+                  7: u'PNC',
+                  8: u'PNC',
+                  11: u'UNT'
+    }
+    TIPOS_ACAO_DESCRICAO = {'ON': u'Ordinária',
+                  'PN': u'Preferencial',
+                  'PNA': u'Preferencial Classe A',
+                  'PNB': u'Preferencial Classe B',
+                  'PNC': u'Preferencial Classe C',
+                  'PND': u'Preferencial Classe D',
+                  'UNT': u'UNIT'
+    }
+    
     ticker = models.CharField(u'Ticker da ação', max_length=10)
     empresa = models.ForeignKey('Empresa') 
     """
@@ -27,37 +44,9 @@ class Acao (models.Model):
         return HistoricoAcao.objects.filter(acao__ticker=self.ticker, data__lte=dia).order_by('-data')[0].preco_unitario
     
     def descricao_tipo(self):
-        if self.tipo == 3:
-            return u'Ordinária'
-        elif self.tipo == 4:
-            return u'Preferencial'
-        elif self.tipo == 5:
-            return u'Preferencial Classe A'
-        elif self.tipo == 6:
-            return u'Preferencial Classe B'
-        elif self.tipo == 7:
-            return u'Preferencial Classe C'
-        elif self.tipo == 8:
-            return u'Preferencial Classe D'
-        elif self.tipo == 11:
-            return u'UNIT'
+        if self.tipo in self.TIPOS_ACAO_DESCRICAO.keys():
+            return self.TIPOS_ACAO_DESCRICAO[self.tipo]
         
-    def descricao_tipo_resumido(self):
-        if self.tipo == 3:
-            return u'ON'
-        elif self.tipo == 4:
-            return u'PN'
-        elif self.tipo == 5:
-            return u'PNA'
-        elif self.tipo == 6:
-            return u'PNB'
-        elif self.tipo == 7:
-            return u'PNC'
-        elif self.tipo == 8:
-            return u'PND'
-        elif self.tipo == 11:
-            return u'UNT'
-
 class ProventoOficialManager(models.Manager):
     def get_queryset(self):
         return super(ProventoOficialManager, self).get_queryset().filter(oficial_bovespa=True)

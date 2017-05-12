@@ -22,8 +22,9 @@ inicio_patterns = [
     ]
 
 acoes_geral_patterns = [
+    url(r'^listar_acoes/$', views.acoes.acoes.listar_acoes, name='listar_acoes'),
+    url(r'^listar_proventos/$', views.acoes.acoes.listar_proventos, name='listar_proventos'),
     url(r'^sobre/$', views.acoes.acoes.sobre, name='sobre_acoes'),
-#     url(r'^listar_acoes/$', views.acoes.acoes.listar_acoes, name='listar_acoes'),
     ]
 
 acoes_bh_patterns = [
