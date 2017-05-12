@@ -75,14 +75,24 @@
 						<div class="m-grid-row">
 							<div class="m-grid-col m-grid-col-left"><strong>Total investido:</strong></div>
 							<div class="m-grid-col m-grid-col-left">R$ {{cri_cra.total_investido|floatformat:2}}</div>
-							<div class="m-grid-col m-grid-col-left"><strong>Valor atual:</strong></div>
+							<div class="m-grid-col m-grid-col-left"><strong>Valor unit. atual:</strong></div>
 							<div class="m-grid-col m-grid-col-left">R$ {{cri_cra.valor_atual|floatformat:2}}</div>
+							<div class="m-grid-col m-grid-col-left"><strong>Total atual:</strong></div>
+							<div class="m-grid-col m-grid-col-left">R$ {{cri_cra.total_atual|floatformat:2}}</div>
+						</div>
+						<div class="m-grid-row">
+							<div class="m-grid-col m-grid-col-left"><strong>Total vendas:</strong></div>
+							<div class="m-grid-col m-grid-col-left">R$ {{cri_cra.total_vendas|floatformat:2}}</div>
+							<div class="m-grid-col m-grid-col-left"><strong>Total taxas:</strong></div>
+							<div class="m-grid-col m-grid-col-left">R$ {{cri_cra.total_taxas|floatformat:2}}</div>
 							<div class="m-grid-col m-grid-col-left"><strong>Lucro:</strong></div>
 							<div class="m-grid-col m-grid-col-left">R$ {{ cri_cra.lucro|floatformat:2 }} ({{ cdb_rdb.lucro_percentual|floatformat:2 }}%)</div>
 						</div>
 						<div class="m-grid-row">
-							<div class="m-grid-col m-grid-col-left"><strong>Dias para próx. retirada:</strong></div>
+							<div class="m-grid-col m-grid-col-left"><strong>Próx. remun./amort. em (dias):</strong></div>
 							<div class="m-grid-col m-grid-col-left">{{ cri_cra.proxima_data_remuneracao|date:'d/m/Y'|default:'Não há' }}</div>
+							<div class="m-grid-col m-grid-col-left"><strong>Valor Próx. remun./amort.:</strong></div>
+							<div class="m-grid-col m-grid-col-left">R$ {{ cri_cra.valor_proxima_remuneracao|floatformat:'2' }}
 						</div>
 					</div>
 				</div>
