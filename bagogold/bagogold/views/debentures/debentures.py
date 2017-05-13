@@ -43,10 +43,12 @@ def detalhar_debenture(request, debenture_id):
     debenture.valor_emissao = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(debenture.valor_emissao))
     if debenture.data_fim:
         debenture.valor_atual = Decimal('0.00') 
-    else:
+    elif HistoricoValorDebenture.objects.filter(debenture=debenture).exists():
         historico = HistoricoValorDebenture.objects.filter(debenture=debenture).order_by('-data')[0]
         debenture.valor_atual = historico.valor_nominal + historico.juros
         debenture.valor_atual = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(debenture.valor_atual))
+    else:
+        debenture.valor_atual = Decimal('0.00') 
     
     return TemplateResponse(request, 'debentures/detalhar_debenture.html', {'debenture': debenture})
 
