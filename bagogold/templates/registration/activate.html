@@ -2,14 +2,8 @@
 {% load staticfiles %}
 
 {% block content %} 
-    {% if validlink %}
-        <h3>Confirmação de cadastro</h3>
-        <form method="POST" class="form-horizontal">{% csrf_token %}
-            <div class="form-actions">
-                <button type="submit" class="btn yellow-crusta pull-right"> Confirmar </button>
-                <a href="{% url 'login' %}" class="btn red-thunderbird">Cancelar</a>
-            </div>
-        </form>
+    {% if user %}
+        <h3>Ativando {{user}}...</h3>
     {% else %}
         <h3>Código de confirmação inválido</h3>
     {% endif %}
