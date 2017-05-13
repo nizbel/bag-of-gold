@@ -16,7 +16,7 @@ from bagogold.cri_cra.forms.cri_cra import CRI_CRAForm, \
 from bagogold.cri_cra.models.cri_cra import CRI_CRA, DataRemuneracaoCRI_CRA, \
     DataAmortizacaoCRI_CRA, OperacaoCRI_CRA
 from bagogold.cri_cra.utils.utils import qtd_cri_cra_ate_dia_para_certificado, \
-    calcular_valor_cri_cra_ate_dia
+    calcular_valor_cri_cra_ate_dia, quantidade_cri_cra_na_data_para_certificado
 from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
 from decimal import Decimal
 from django.contrib import messages
@@ -24,8 +24,12 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db import transaction
+from django.db.models.aggregates import Sum
+from django.db.models.expressions import F, ExpressionWrapper
+from django.db.models.fields import DecimalField
 from django.forms.models import inlineformset_factory
 from django.http.response import HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
 import calendar
 import datetime
@@ -35,12 +39,15 @@ import datetime
 def detalhar_cri_cra(request, id_cri_cra):
     investidor = request.user.investidor
     
-    cri_cra = CRI_CRA.objects.get(id=id_cri_cra)
+    cri_cra = get_object_or_404(CRI_CRA, id=id_cri_cra)
     if cri_cra.investidor != investidor:
         raise PermissionDenied
     
     # Formatar valor de emissão
     cri_cra.valor_emissao = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(cri_cra.valor_emissao))
+    
+    # Buscar quantidade atual de certificados
+    cri_cra.quantidade_atual = quantidade_cri_cra_na_data_para_certificado(cri_cra)
     
     datas_remuneracao = DataRemuneracaoCRI_CRA.objects.filter(cri_cra=cri_cra)
     datas_amortizacao = DataAmortizacaoCRI_CRA.objects.filter(cri_cra=cri_cra)
@@ -49,20 +56,14 @@ def detalhar_cri_cra(request, id_cri_cra):
     else:
         datas_amortizacao = [DataAmortizacaoCRI_CRA(cri_cra=cri_cra, data=cri_cra.data_vencimento, percentual=Decimal(100))]
     
-    # Data pŕoxima remuneração
-    if DataRemuneracaoCRI_CRA.objects.filter(cri_cra=cri_cra, data__gt=datetime.date.today()).exists():
-        cri_cra.proxima_data_remuneracao = DataRemuneracaoCRI_CRA.objects.filter(cri_cra=cri_cra, data__gt=datetime.date.today()).order_by('data')[0].data
-    else:
-        cri_cra.proxima_data_remuneracao = None
-     
-    operacoes = OperacaoCRI_CRA.objects.filter(cri_cra=cri_cra).order_by('data').annotate(valor_operacao=F('preco_unitario')*F('quantidade'))
+    operacoes = OperacaoCRI_CRA.objects.filter(cri_cra=cri_cra, data__lte=datetime.date.today()).order_by('data').annotate(valor_operacao=ExpressionWrapper(F('preco_unitario')*F('quantidade'), output_field=DecimalField()))
     # Preparar estatísticas zeradas
     cri_cra.total_investido = operacoes.filter(tipo_operacao='C') \
-        .aggregate(valor_total=Sum('valor_operacao'))['valor_total'] or Decimal(0)
+        .aggregate(valor_total=Sum('valor_operacao', output_field=DecimalField()))['valor_total'] or Decimal(0)
     cri_cra.valor_atual = calcular_valor_um_cri_cra_na_data(cri_cra)
-    cri_cra.total_atual = quantidade_cri_cra_na_data_para_certificado(cri_cra) * cri_cra.valor_atual
+    cri_cra.total_atual = cri_cra.quantidade_atual * cri_cra.valor_atual
     cri_cra.total_vendas = operacoes.filter(tipo_operacao='V') \
-        .aggregate(valor_total=Sum('valor_operacao'))['valor_total'] or Decimal(0)
+        .aggregate(valor_total=Sum('valor_operacao', output_field=DecimalField()))['valor_total'] or Decimal(0)
     cri_cra.total_taxas = operacoes.aggregate(total_taxas=Sum('taxa'))['total_taxas'] or Decimal(0)
     cri_cra.lucro = cri_cra.total_atual + cri_cra.total_vendas - cri_cra.total_investido - cri_cra.total_taxas
     cri_cra.lucro_percentual = Decimal(0) if cri_cra.total_investido == Decimal(0) else \
@@ -71,7 +72,19 @@ def detalhar_cri_cra(request, id_cri_cra):
     # Contar total de operações já realizadas 
     cri_cra.total_operacoes = len(operacoes)
     
-    # TODO preencher estatísticas totais
+    # Data pŕoxima remuneração
+    if DataRemuneracaoCRI_CRA.objects.filter(cri_cra=cri_cra, data__gt=datetime.date.today()).exists():
+        cri_cra.proxima_data_remuneracao = DataRemuneracaoCRI_CRA.objects.filter(cri_cra=cri_cra, data__gt=datetime.date.today()).order_by('data')[0].data
+        
+        qtd_dias_uteis = qtd_dias_uteis_no_periodo(datetime.date.today(), cri_cra.proxima_data_remuneracao)
+        # TODO adicionar outros indexadores
+        if cri_cra.tipo_indexacao == CRI_CRA.TIPO_INDEXACAO_DI:
+            ultima_taxa_di = HistoricoTaxaDI.objects.all().order_by('-data')[0]
+            cri_cra.valor_proxima_remuneracao = calcular_valor_atualizado_com_taxas({Decimal(ultima_taxa_di.taxa): qtd_dias_uteis}, cri_cra.total_atual, 
+                                                                                 cri_cra.porcentagem) - cri_cra.quantidade_atual * cri_cra.valor_emissao
+    else:
+        cri_cra.proxima_data_remuneracao = None
+        cri_cra.valor_proxima_remuneracao = Decimal(0)
     
     return TemplateResponse(request, 'cri_cra/detalhar_cri_cra.html', {'cri_cra': cri_cra, 'datas_remuneracao': datas_remuneracao, 
                                                                        'datas_amortizacao': datas_amortizacao})
@@ -515,7 +528,7 @@ def painel(request):
             if cri_cra[cri_cra_id].tipo_indexacao == CRI_CRA.TIPO_INDEXACAO_DI:
                 cri_cra[cri_cra_id].valor_prox_remuneracao = calcular_valor_atualizado_com_taxas({Decimal(ultima_taxa_di.taxa): qtd_dias_uteis},
                                                                                                            cri_cra[cri_cra_id].total_atual, 
-                                                                                                           cri_cra[cri_cra_id].porcentagem) - cri_cra[cri_cra_id].total_investido
+                                                                                                           cri_cra[cri_cra_id].porcentagem) - cri_cra[cri_cra_id].quantidade * cri_cra[cri_cra_id].valor_emissao
         else:
             cri_cra[cri_cra_id].data_prox_remuneracao = None
             cri_cra[cri_cra_id].valor_prox_remuneracao = Decimal(0)
