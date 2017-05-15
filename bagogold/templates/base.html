@@ -9,14 +9,13 @@
 
     <head>
         <title>
-        {% block title %}
-        Bag of Gold
-        {% endblock %}
+        Bag of Gold{% if pagina_titulo %} - {{pagina_titulo}}{% endif %}
         </title>
         <meta charset="utf-8" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        {% if pagina_descricao %}<meta content="{{pagina_descricao}}" name="description" />{% endif %}
         <meta content="width=device-width, initial-scale=1" name="viewport" />
-        <meta content="" name="author" />
+        <meta content="Guilherme Henrique Gimenes de Deus" name="author" />
         <!-- BEGIN GLOBAL MANDATORY STYLES -->
         <link href={% static "assets/global/plugins/simple-line-icons/simple-line-icons.min.css" %} rel="stylesheet" type="text/css" />
         <link href={% static "assets/global/plugins/bootstrap/css/bootstrap.min.css" %} rel="stylesheet" type="text/css" />

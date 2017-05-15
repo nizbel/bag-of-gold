@@ -1,6 +1,10 @@
 {% extends "base_login.html" %}
 {% load staticfiles %}
 
+{% block extra_head %}
+    <meta content="Página com o formulário de cadastro no sistema" name="description" />
+{% endblock %}
+
 {% block content %}
     <form method="POST">{% csrf_token %}
         <h3 class="form-title">Cadastrar usuário</h3>

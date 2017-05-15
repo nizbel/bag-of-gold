@@ -1,6 +1,10 @@
 {% extends "base_login.html" %}
 {% load staticfiles %}
 
+{% block extra_head %}
+    <meta content="Redefinir senha da conta utilizando o e-mail" name="description" />
+{% endblock %}
+
 {% block content %}
     <form method="post">
         {% csrf_token %}
