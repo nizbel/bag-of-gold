@@ -1,6 +1,10 @@
 {% extends "base_login.html" %}
 {% load staticfiles %}
 
+{% block extra_head %}
+    <meta content="Ativa a conta pelo link enviado para o usuário" name="description" />
+{% endblock %}
+
 {% block content %} 
     {% if user %}
         <h3>Ativando {{user}}...</h3>

@@ -1,6 +1,10 @@
 {% extends "base_login.html" %}
 {% load staticfiles %}
 
+{% block extra_head %}
+    <meta content="Página de aviso de sucesso na alteração de senha" name="description" />
+{% endblock %}
+
 {% block content %}
     <h3>Senha alterada com sucesso</h3>
     <p>Sua senha foi alterada com sucesso, clique no botão abaixo para realizar o login.</p>

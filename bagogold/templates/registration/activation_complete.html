@@ -1,6 +1,10 @@
 {% extends "base_login.html" %}
 {% load staticfiles %}
 
+{% block extra_head %}
+    <meta content="Página de aviso para ativação da conta realizada" name="description" />
+{% endblock %}
+
 {% block content %}
     <h3>Ativação feita com sucesso</h3>
     <p>Clique no botão abaixo para acessar sua conta.</p>

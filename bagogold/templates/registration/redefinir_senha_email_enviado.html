@@ -1,9 +1,13 @@
 {% extends "base_login.html" %}
 {% load staticfiles %}
 
+{% block extra_head %}
+    <meta content="Informar envio de e-mail para redefinição de senha" name="description" />
+{% endblock %}
+
 {% block content %}
     <h3>Redefinição de senha</h3>
-    <p>Um email foi enviado com as instruções para redefinir sua senha, caso exista uma conta com o email informado.</p>
+    <p>Um e-mail foi enviado com as instruções para redefinir sua senha, caso exista uma conta com o email informado.</p>
     <p>Caso você não receba o email, confira se o email foi digitado corretamente, e cheque sua pasta de <strong>Spam</strong>.</p>
     <a href="{% url 'login' %}" class="btn red-thunderbird">Voltar</a>
     <!-- BEGIN COPYRIGHT -->

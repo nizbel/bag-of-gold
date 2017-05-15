@@ -1,6 +1,10 @@
 {% extends "base_login.html" %}
 {% load staticfiles %}
 
+{% block extra_head %}
+    <meta content="Página para redefinição de senha com o link enviado" name="description" />
+{% endblock %}
+
 {% block content %}
     <h3>Redefinir senha</h3>
     {% if validlink %}
