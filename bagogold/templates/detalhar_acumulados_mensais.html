@@ -20,8 +20,8 @@
 				</div>
 				<div class="portlet-body">
 					<div class="list-group">
-						{% for periodo, acumulado in periodos.items %}
-						<span class="list-group-item">{{periodo}}: R$ {{acumulado|floatformat:'2'}}</a>
+						{% for periodo, acumulado in periodos %}
+						<span class="list-group-item">{{periodo}}: R$ {{acumulado|floatformat:'2'}}</span>
 						{% endfor %}
 					</div>
 				</div>

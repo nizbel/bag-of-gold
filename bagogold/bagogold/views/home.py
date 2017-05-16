@@ -53,15 +53,15 @@ def detalhar_acumulados_mensais(request):
     data_atual = datetime.date.today()
 
     acumulados_mensais = list()
-    acumulados_mensais.append(sum(calcular_rendimentos_ate_data(investidor, data_atual)).values())
+    acumulados_mensais.append(sum(calcular_rendimentos_ate_data(investidor, data_atual).values()))
     
-    periodos = {}
+    periodos = list()
     for mes in range(12):
         # Buscar dados para o acumulado mensal
         ultimo_dia_mes_anterior = data_atual.replace(day=1) - datetime.timedelta(days=1)
         acumulados_mensais.append(sum(calcular_rendimentos_ate_data(investidor, ultimo_dia_mes_anterior).values()))
-        str_periodo = '%s a %s' % (ultimo_dia_mes_anterior.strftime('%m/%d/%Y'), data_atual.strftime('%m/%d/%Y'))
-        periodos[str_periodo] = acumulados_mensais[mes] - acumulados_mensais[mes+1]
+        str_periodo = '%s a %s' % (ultimo_dia_mes_anterior.strftime('%d/%m/%Y'), data_atual.strftime('%d/%m/%Y'))
+        periodos.append((str_periodo, acumulados_mensais[mes] - acumulados_mensais[mes+1]))
         # Coloca data_atual como último dia do mês anterior
         data_atual = ultimo_dia_mes_anterior
     return TemplateResponse(request, 'detalhar_acumulados_mensais.html', {'periodos': periodos})
