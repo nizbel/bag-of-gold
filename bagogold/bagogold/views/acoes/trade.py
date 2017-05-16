@@ -19,7 +19,7 @@ from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.forms.models import inlineformset_factory
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
 from itertools import chain
 import calendar
@@ -63,7 +63,7 @@ def acompanhamento_mensal(request):
     for ano_operacoes in reversed(range(primeira_operacao_ano, datetime.date.today().year+1)):
 #         print type(ano_operacoes)
         lista_anos += [str(ano_operacoes)]
-    print lista_anos
+#     print lista_anos
 
     if ano == datetime.date.today().year:
         ultimo_mes = datetime.date.today().month
