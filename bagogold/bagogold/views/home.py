@@ -654,7 +654,7 @@ def painel_geral(request):
     
     # Buscar dados para o acumulado mensal
     ultimo_dia_mes_anterior = data_atual.date().replace(day=1) - datetime.timedelta(days=1)
-    acumulado_mensal_atual = sum(calcular_rendimentos_ate_data(investidor, data_atual).values()) - sum(calcular_rendimentos_ate_data(investidor, ultimo_dia_mes_anterior).values())
+    acumulado_mensal_atual = sum(calcular_rendimentos_ate_data(investidor, data_atual.date()).values()) - sum(calcular_rendimentos_ate_data(investidor, ultimo_dia_mes_anterior).values())
                                                                                           
     ultimo_dia_mes_antes_do_anterior = ultimo_dia_mes_anterior.replace(day=1) - datetime.timedelta(days=1)         
     acumulado_mensal_anterior = sum(calcular_rendimentos_ate_data(investidor, ultimo_dia_mes_anterior).values()) - sum(calcular_rendimentos_ate_data(investidor, ultimo_dia_mes_antes_do_anterior).values())
