@@ -98,13 +98,13 @@ def buscar_valores_diarios_selic(data_inicial=datetime.date.today() - datetime.t
                 lista_datas_valores.append((data, fator_diario))
         return lista_datas_valores
      
-def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDFILT'):
+def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDEFILRT'):
     """
     Calcula os rendimentos de operações até a data especificada, para os tipos de investimento definidos
     Parâmetros: Investidor
                 Data final (inclusive)
                 Tipo de investimento (seguindo o padrão
-    B = Buy and Hold; C = CDB/RDB; D = Tesouro Direto; F = FII; I = Fundo de investimento; L = Letra de Crédito; T = Trading;
+    B = Buy and Hold; C = CDB/RDB; D = Tesouro Direto; E = Debêntures; F = FII; I = Fundo de investimento; L = Letra de Crédito; R = CRI/CRA; T = Trading;
     Retorno: Valores de rendimentos para cada tipo de investimento {Tipo: Valor}
     """
     from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB
@@ -112,6 +112,9 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDFILT'
     from bagogold.bagogold.utils.cdb_rdb import calcular_valor_cdb_rdb_ate_dia, calcular_valor_venda_cdb_rdb
     from bagogold.bagogold.utils.fii import calcular_poupanca_prov_fii_ate_dia
     from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia, calcular_valor_venda_lc
+    from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia
+    from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA
+    from bagogold.cri_cra.utils.utils import calcular_valor_cri_cra_ate_dia
     
     rendimentos = {}
     # Ações (Buy and Hold)
@@ -124,6 +127,12 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDFILT'
             - sum([operacao.quantidade for operacao in OperacaoCDB_RDB.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='C')]) \
             + sum([calcular_valor_venda_cdb_rdb(operacao) for operacao in OperacaoCDB_RDB.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='V')])
     
+    # Tesouro Direto
+    if 'D' in tipo_investimentos:
+        rendimentos['D'] = sum(calcular_valor_td_ate_dia(investidor, data).values()) \
+            - sum([(operacao.quantidade * operacao.preco_unitario) for operacao in OperacaoTitulo.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='C')]) \
+            + sum([(operacao.quantidade * operacao.preco_unitario) for operacao in OperacaoTitulo.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='V')])
+    
     # FII
     if 'F' in tipo_investimentos:
         rendimentos['F'] = calcular_poupanca_prov_fii_ate_dia(investidor, data) + sum(UsoProventosOperacaoFII.objects.filter(operacao__investidor=investidor, operacao__data__lte=data).values_list('qtd_utilizada', flat=True))
@@ -133,7 +142,13 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDFILT'
         rendimentos['L'] = sum(calcular_valor_lc_ate_dia(investidor, data).values()) \
             - sum([operacao.quantidade for operacao in OperacaoLetraCredito.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='C')]) \
             + sum([calcular_valor_venda_lc(operacao) for operacao in OperacaoLetraCredito.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='V')])
-            
+    
+    # CRI/CRA
+    if 'R' in tipo_investimentos:
+        rendimentos['R'] = sum(calcular_valor_cri_cra_ate_dia(investidor, data).values()) \
+            - sum([(operacao.quantidade * operacao.preco_unitario) for operacao in OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, data__lte=data, tipo_operacao='C')]) \
+            + sum([(operacao.quantidade * operacao.preco_unitario) for operacao in OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, data__lte=data, tipo_operacao='V')])
+    
     return rendimentos
 
 def trazer_primeiro_registro(queryset):
