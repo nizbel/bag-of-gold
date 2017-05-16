@@ -298,6 +298,11 @@
 								<strong>R$ <span data-counter="counterup" data-value="{{ acumulado_mensal_anterior|floatformat:'2' }}">0</span></strong>
 							</p>
 						</div>
+                        {% if request.user.is_authenticated %}
+                        <div class="col-md-12 text-center">
+                            <a href="{% url "inicio:detalhamento_investimentos" %}" class="btn btn-warning">Detalhar</a>
+                        </div>
+                        {% endif %}
 					</div>
 				</div>
 			</div>

@@ -13,11 +13,9 @@ from bagogold.bagogold.models.fundo_investimento import \
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
     ValorDiarioTitulo
-from bagogold.bagogold.utils.acoes import calcular_poupanca_prov_acao_ate_dia
 from bagogold.bagogold.utils.cdb_rdb import calcular_valor_cdb_rdb_ate_dia, \
     calcular_valor_venda_cdb_rdb
 from bagogold.bagogold.utils.debenture import calcular_valor_debentures_ate_dia
-from bagogold.bagogold.utils.fii import calcular_poupanca_prov_fii_ate_dia
 from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
     buscar_totais_atuais_investimentos, buscar_proventos_a_receber, \
     buscar_proventos_a_receber_data_ex_futura
@@ -46,6 +44,28 @@ import datetime
 import math
 
 
+@login_required
+@adiciona_titulo_descricao('Detalhamento de acumulados mensais', ('Detalha rendimentos recebidos por investimentos em renda fixa e ' \
+                           'proventos em dinheiro recebidos por ações e FIIs'))
+def detalhar_acumulados_mensais(request):
+    investidor = request.user.investidor
+    
+    data_atual = datetime.date.today()
+
+    acumulados_mensais = list()
+    acumulados_mensais.append(sum(calcular_rendimentos_ate_data(investidor, data_atual)).values())
+    
+    periodos = {}
+    for mes in range(12):
+        # Buscar dados para o acumulado mensal
+        ultimo_dia_mes_anterior = data_atual.replace(day=1) - datetime.timedelta(days=1)
+        acumulados_mensais.append(sum(calcular_rendimentos_ate_data(investidor, ultimo_dia_mes_anterior).values()))
+        str_periodo = '%s a %s' % (ultimo_dia_mes_anterior.strftime('%m/%d/%Y'), data_atual.strftime('%m/%d/%Y'))
+        periodos[str_periodo] = acumulados_mensais[mes] - acumulados_mensais[mes+1]
+        # Coloca data_atual como último dia do mês anterior
+        data_atual = ultimo_dia_mes_anterior
+    return TemplateResponse(request, 'detalhar_acumulados_mensais.html', {'periodos': periodos})
+    
 @login_required
 @adiciona_titulo_descricao('Histórico detalhado', 'Histórico detalhado das operações feitas pelo investidor')
 def detalhamento_investimentos(request):
