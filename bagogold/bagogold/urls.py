@@ -16,6 +16,7 @@ validators.DUPLICATE_EMAIL = 'Já existe um usuário cadastrado com esse email'
 
 inicio_patterns = [
     url(r'^$', RedirectView.as_view(url='/painel_geral/')),
+    url(r'^detalhar_acumulados_mensais/$', views.home.detalhar_acumulados_mensais, name='detalhar_acumulados_mensais'),
     url(r'^detalhamento_investimentos/$', views.home.detalhamento_investimentos, name='detalhamento_investimentos'),
     url(r'^painel_geral/$', views.home.painel_geral, name='painel_geral'),
     url(r'^sobre/$', views.home.sobre, name='sobre'),

@@ -47,7 +47,7 @@ def qtd_cri_cra_ate_dia(investidor, dia=datetime.date.today()):
         .values('cri_cra').annotate(qtd=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
                             When(tipo_operacao='V', then=F('quantidade')*-1),
                             output_field=DecimalField()))).values_list('cri_cra', 'qtd').exclude(qtd=0))
-        
+
     return qtd_cri_cra
 
 def qtd_cri_cra_ate_dia_para_certificado(cri_cra_id, dia=datetime.date.today()):
