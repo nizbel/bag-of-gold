@@ -7,6 +7,9 @@
 
 {% block content %}
 <div class="portlet-body">
+    <div class="alert alert-warning">
+        Os valores de proventos são considerados a partir da <strong>data EX</strong>
+    </div>
 	<div class="row">
 		<div class="col-md-4">
 			<!-- BEGIN Portlet PORTLET-->
@@ -19,9 +22,19 @@
 					</div>
 				</div>
 				<div class="portlet-body">
-					<div class="list-group">
-						{% for periodo, acumulado in periodos %}
-						<span class="list-group-item">{{periodo}}: R$ {{acumulado|floatformat:'2'}}</span>
+                    <div class="text-center">
+                        <h4>
+                            Taxa média dos últimos 12 meses
+                        </h4>
+                    </div>
+                    <div class="text-center font-yellow-crusta">
+                        <p class="lead">
+                            <strong>R$ <span data-counter="counterup" data-value="{{ taxas.taxa_media_12_meses }}">0</span>/segundo</strong>
+                        </p>
+                    </div>
+                    <div class="list-group">
+						{% for periodo, _, acumulado in acumulados_mensais %}
+						<span class="list-group-item">{{periodo}}: <strong>R$ {{acumulado|floatformat:'2'}}</strong></span>
 						{% endfor %}
 					</div>
 				</div>
