@@ -164,9 +164,11 @@ lci_lca_patterns = [
 td_patterns = [
     url(r'^acompanhamento/$', views.td.td.acompanhamento_td, name='acompanhamento_td'),
     url(r'^buscar_titulos_validos_na_data/$', views.td.td.buscar_titulos_validos_na_data, name='buscar_titulos_validos_na_data'),
+    url(r'^detalhar_titulo/(?P<titulo_id>\d+)/$', views.td.td.detalhar_titulo_td, name='detalhar_titulo_td'),
     url(r'^editar_operacao/(?P<operacao_id>\d+)/$', views.td.td.editar_operacao_td, name='editar_operacao_td'),
     url(r'^historico/$', views.td.td.historico_td, name='historico_td'),
     url(r'^inserir_operacao_td/$', views.td.td.inserir_operacao_td, name='inserir_operacao_td'),
+    url(r'^listar_titulos_td/$', views.td.td.listar_titulos_td, name='listar_titulos_td'),
     url(r'^painel/$', views.td.td.painel, name='painel_td'),
     url(r'^sobre/$', views.td.td.sobre, name='sobre_td'),
     ]
