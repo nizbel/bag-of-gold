@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from django.contrib import messages
-from django.contrib.auth import login, views
+from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.dispatch import receiver
 from django.template.response import TemplateResponse
 from registration.signals import user_activated
+from django.contrib.auth.views import LogoutView, LoginView
 
 def logout(request, *args, **kwargs):
     messages.success(request, 'Logout feito com sucesso')
-    return views.logout(request, *args, **kwargs)
+    return LogoutView.as_view(**kwargs)(request, *args, **kwargs)
 
 
 # Sinal para logar após ativação
