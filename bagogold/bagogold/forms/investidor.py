@@ -74,7 +74,7 @@ class ExtendedAuthForm(AuthenticationForm):
                             )
                     else:
                         horario = timezone.now()
-                        print 'login failed for: %s at %s' % (username, horario)
+#                         print 'login failed for: %s at %s' % (username, horario)
                         # Já foram feitos logins anteriores
                         if LoginIncorreto.objects.filter(user__username=username).exists():
                             ultima_tentativa = LoginIncorreto.objects.filter(user__username=username).order_by('-horario')[0]
