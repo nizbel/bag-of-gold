@@ -7,9 +7,9 @@
 
 {% block content %}
     <h3>Senha alterada com sucesso</h3>
-    <p>Sua senha foi alterada com sucesso, clique no botão abaixo para realizar o login.</p>
+    <p>Sua senha foi alterada com sucesso, clique no botão abaixo para realizar o acesso.</p>
     <div class="form-actions">
-        <a href="{% url 'login' %}" class="btn yellow-crusta pull-right">Página de login</a>
+        <a href="{% url 'inicio:painel_geral' %}" class="btn yellow-crusta pull-right">Acessar</a>
     </div>
     <!-- BEGIN COPYRIGHT -->
     <div class="copyright" style="margin-top: 25px;"> {% now "Y" %} &copy; Bag of Gold </div>
