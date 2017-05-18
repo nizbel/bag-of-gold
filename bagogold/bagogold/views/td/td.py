@@ -181,6 +181,22 @@ def acompanhamento_td(request):
     
     return TemplateResponse(request, 'td/acompanhamento.html', {'titulos': titulos, 'letras_credito': letras_credito, 'fiis': fiis})
 
+@adiciona_titulo_descricao('Detalhar título do Tesouro Direto', 'Informações sobre um título do Tesouro Direto')
+def detalhar_titulo_td(request, titulo_id):
+    titulo = get_object_or_404(Titulo, id=titulo_id)
+    
+    # TODO pegar valores e taxas atuais do título, se não estiver fechado
+    
+    dados = {'qtd_operacoes': 0, 'lucro': Decimal(0), 'qtd_atual': Decimal(0)}
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+        
+        dados['qtd_operacoes'] = OperacaoTitulo.objects.filter(titulo=titulo, investidor=investidor).count()
+        # TODO verificar chamada para posição atual do investidor
+        dados['qtd_atual'] = calcular_qtd_atual_por_titulo(investidor)
+
+return TemplateResponse(request, 'td/detalhar_titulo.html', {'titulo': titulo, 'dados': dados})
+
 @login_required
 @adiciona_titulo_descricao('Editar operação em Tesouro Direto', 'Editar valores de uma operação de compra/venda em Tesouro Direto')
 def editar_operacao_td(request, operacao_id):
@@ -436,6 +452,13 @@ def inserir_operacao_td(request):
             
     return TemplateResponse(request, 'td/inserir_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao,
                                                               'varias_divisoes': varias_divisoes})
+
+@adiciona_titulo_descricao('Listar títulos do Tesouro Direto', 'Lista títulos que já foram, ou são, negociados no Tesouro Direto')
+def listar_titulos_td(request):
+    # TODO preparar filtros
+    titulos = Titulo.objects.all()
+
+    return TemplateResponse(request, 'td/listar_titulos.html', {'titulos', titulos})
 
 @adiciona_titulo_descricao('Painel de Tesouro Direto', 'Mostra a posição atual do investidor em Tesouro Direto')
 def painel(request):
