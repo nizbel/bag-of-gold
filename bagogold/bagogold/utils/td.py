@@ -79,7 +79,7 @@ def quantidade_titulos_ate_dia(investidor, dia):
             
     return qtd_titulos
 
-def quantidade_titulos_ate_dia_por_titulo(investidor, titulo_id, dia):
+def quantidade_titulos_ate_dia_por_titulo(investidor, titulo_id, dia=datetime.date.today()):
     """ 
     Calcula a quantidade de títulos do investidor até dia determinado
     Parâmetros: ID do título
