@@ -21,7 +21,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
-from django.db.models.aggregates import Count
+from django.db.models.aggregates import Count, Sum
+from django.db.models.expressions import F
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
 from django.http.response import HttpResponse
@@ -203,15 +204,21 @@ def detalhar_titulo_td(request, titulo_id):
     data_final = datetime.date.today() if titulo.data_vencimento > datetime.date.today() else titulo.data_vencimento
     historico = HistoricoTitulo.objects.filter(titulo=titulo, data__gte=data_final.replace(year=data_final.year-1)).order_by('-data')
     
-    dados = {'qtd_operacoes': 0, 'lucro': Decimal(0), 'qtd_atual': Decimal(0)}
+    dados = {'total_operacoes': 0, 'qtd_titulos_atual': Decimal(0), 'total_atual': Decimal(0), 'total_lucro': Decimal(0), 'lucro_percentual': Decimal(0)}
     if request.user.is_authenticated():
         investidor = request.user.investidor
         
+        # TODO Considerar vendas parciais de titulos
         dados['total_operacoes'] = OperacaoTitulo.objects.filter(titulo=titulo, investidor=investidor).count()
-        dados['total_atual'] = quantidade_titulos_ate_dia_por_titulo(investidor, titulo_id)
-        dados['total_lucro'] = 0
-        dados['total_ir'] = 0
-        dados['total_iof'] = 0
+        if not titulo.titulo_vencido():
+            dados['qtd_titulos_atual'] = quantidade_titulos_ate_dia_por_titulo(investidor, titulo_id)
+            dados['total_atual'] = dados['qtd_titulos_atual'] * titulo.preco_venda
+            preco_medio = (OperacaoTitulo.objects.filter(titulo=titulo, investidor=investidor, tipo_operacao='C').annotate(valor_investido=F('quantidade') * F('preco_unitario')) \
+                .aggregate(total_investido=Sum('valor_investido'))['total_investido'] or Decimal(0)) / (OperacaoTitulo.objects.filter(titulo=titulo, investidor=investidor, tipo_operacao='C') \
+                .aggregate(total_titulos=Sum('quantidade'))['total_titulos'] or 1)
+            dados['total_lucro'] = dados['total_atual'] - dados['qtd_titulos_atual'] * preco_medio
+            dados['lucro_percentual'] = (titulo.preco_venda - preco_medio) / (preco_medio or 1) if dados['qtd_titulos_atual'] > 0 else 0
+            # TODO Adicionar IR e IOF
 
     return TemplateResponse(request, 'td/detalhar_titulo.html', {'titulo': titulo, 'dados': dados, 'historico': historico})
 
