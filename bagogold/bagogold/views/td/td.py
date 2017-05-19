@@ -195,7 +195,7 @@ def detalhar_titulo_td(request, titulo_id):
         # TODO verificar chamada para posição atual do investidor
         dados['qtd_atual'] = calcular_qtd_atual_por_titulo(investidor)
 
-return TemplateResponse(request, 'td/detalhar_titulo.html', {'titulo': titulo, 'dados': dados})
+    return TemplateResponse(request, 'td/detalhar_titulo.html', {'titulo': titulo, 'dados': dados})
 
 @login_required
 @adiciona_titulo_descricao('Editar operação em Tesouro Direto', 'Editar valores de uma operação de compra/venda em Tesouro Direto')
@@ -457,8 +457,23 @@ def inserir_operacao_td(request):
 def listar_titulos_td(request):
     # TODO preparar filtros
     titulos = Titulo.objects.all()
+    
+    for titulo in titulos:
+        if not titulo.titulo_vencido():
+            if ValorDiarioTitulo.objects.filter(titulo=titulo).exists():
+                valores = ValorDiarioTitulo.objects.filter(titulo=titulo).order_by('-data_hora')[0]
+                titulo.preco_compra = valores.preco_compra
+                titulo.taxa_compra = valores.taxa_compra
+                titulo.preco_venda = valores.preco_venda
+                titulo.taxa_venda = valores.taxa_venda
+            else:
+                ultimo_valor_historico = HistoricoTitulo.objects.filter(titulo=titulo).order_by('-data')[0]
+                titulo.preco_compra = ultimo_valor_historico.preco_compra
+                titulo.taxa_compra = ultimo_valor_historico.taxa_compra
+                titulo.preco_venda = ultimo_valor_historico.preco_venda
+                titulo.taxa_venda = ultimo_valor_historico.taxa_venda
 
-    return TemplateResponse(request, 'td/listar_titulos.html', {'titulos', titulos})
+    return TemplateResponse(request, 'td/listar_titulos.html', {'titulos': titulos})
 
 @adiciona_titulo_descricao('Painel de Tesouro Direto', 'Mostra a posição atual do investidor em Tesouro Direto')
 def painel(request):
