@@ -3,14 +3,12 @@ from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.investidores import LoginIncorreto
 from bagogold.bagogold.utils.investidores import user_blocked
 from django import forms
-from django.contrib import messages
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, \
     SetPasswordForm
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.utils import timezone
-from django.utils.translation import ugettext, ugettext_lazy as _
 from registration.forms import RegistrationFormUniqueEmail
 
 
