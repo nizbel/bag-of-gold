@@ -186,16 +186,34 @@ def detalhar_titulo_td(request, titulo_id):
     titulo = get_object_or_404(Titulo, id=titulo_id)
     
     # TODO pegar valores e taxas atuais do título, se não estiver fechado
+    if not titulo.titulo_vencido():
+        if ValorDiarioTitulo.objects.filter(titulo=titulo).exists():
+            valores = ValorDiarioTitulo.objects.filter(titulo=titulo).order_by('-data_hora')[0]
+            titulo.preco_compra = valores.preco_compra
+            titulo.taxa_compra = valores.taxa_compra
+            titulo.preco_venda = valores.preco_venda
+            titulo.taxa_venda = valores.taxa_venda
+        else:
+            ultimo_valor_historico = HistoricoTitulo.objects.filter(titulo=titulo).order_by('-data')[0]
+            titulo.preco_compra = ultimo_valor_historico.preco_compra
+            titulo.taxa_compra = ultimo_valor_historico.taxa_compra
+            titulo.preco_venda = ultimo_valor_historico.preco_venda
+            titulo.taxa_venda = ultimo_valor_historico.taxa_venda
+    
+    data_final = datetime.date.today() if titulo.data_vencimento > datetime.date.today() else titulo.data_vencimento
+    historico = HistoricoTitulo.objects.filter(titulo=titulo, data__gte=data_final.replace(year=data_final.year-1)).order_by('-data')
     
     dados = {'qtd_operacoes': 0, 'lucro': Decimal(0), 'qtd_atual': Decimal(0)}
     if request.user.is_authenticated():
         investidor = request.user.investidor
         
-        dados['qtd_operacoes'] = OperacaoTitulo.objects.filter(titulo=titulo, investidor=investidor).count()
-        # TODO verificar chamada para posição atual do investidor
-        dados['qtd_atual'] = calcular_qtd_atual_por_titulo(investidor)
+        dados['total_operacoes'] = OperacaoTitulo.objects.filter(titulo=titulo, investidor=investidor).count()
+        dados['total_atual'] = quantidade_titulos_ate_dia_por_titulo(investidor, titulo_id)
+        dados['total_lucro'] = 0
+        dados['total_ir'] = 0
+        dados['total_iof'] = 0
 
-    return TemplateResponse(request, 'td/detalhar_titulo.html', {'titulo': titulo, 'dados': dados})
+    return TemplateResponse(request, 'td/detalhar_titulo.html', {'titulo': titulo, 'dados': dados, 'historico': historico})
 
 @login_required
 @adiciona_titulo_descricao('Editar operação em Tesouro Direto', 'Editar valores de uma operação de compra/venda em Tesouro Direto')
