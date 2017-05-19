@@ -475,6 +475,9 @@
                                                             <a href="{% url "td:inserir_operacao_td" %}" class="nav-link  "> Inserir operação </a>
                                                         </li>
                                                         {% endif %}
+                                                        <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_titulos_td' %}active{% endif %}">
+                                                            <a href="{% url "td:listar_titulos_td" %}" class="nav-link  "> Listar títulos </a>
+                                                        </li>
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_td' %}active{% endif %}">
                                                             <a href="{% url "td:painel_td" %}" class="nav-link  "> Painel </a>
                                                         </li>

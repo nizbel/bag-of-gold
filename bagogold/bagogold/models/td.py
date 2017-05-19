@@ -26,6 +26,22 @@ class Titulo (models.Model):
     def __unicode__(self):
         return u'%s (%s)' % (self.nome(), self.tipo)
     
+    def indexador(self):
+        if self.tipo == 'LTN':
+            return u'Prefixado'
+        elif self.tipo == 'LFT':
+            return u'Selic'
+        elif self.tipo in ['NTN-B', 'NTNB']:
+            return u'IPCA'
+        elif self.tipo in ['NTN-B Principal', 'NTNBP']:
+            return u'IPCA'
+        elif self.tipo in ['NTN-F', 'NTNF']:
+            return u'Prefixado'
+        elif self.tipo in ['NTN-C','NTNC']:
+            return u'IGP-M'
+        else:
+            return u'Indefinido'
+    
     def titulo_vencido(self):
         if datetime.date.today() >= self.data_vencimento:
             return True
