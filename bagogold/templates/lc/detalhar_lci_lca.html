@@ -34,12 +34,12 @@
 				<div class="portlet-body">
 					<div class="m-grid m-grid-responsive-xs">
 						<div class="m-grid-row">
+                            <div class="m-grid-col m-grid-col-left"><strong>Nome:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{lci_lca.nome}} dia(s)</div>
 							<div class="m-grid-col m-grid-col-left"><strong>Rendimento atual:</strong></div>
 							<div class="m-grid-col m-grid-col-left">{{lci_lca.porcentagem_atual}}% {% if lci_lca.tipo_rendimento == 1 %}ao ano{% elif lci_lca.tipo_rendimento == 2 %}do DI{% endif %}</div>
 							<div class="m-grid-col m-grid-col-left"><strong>Carência atual:</strong></div>
 							<div class="m-grid-col m-grid-col-left">{{lci_lca.carencia_atual}} dia(s)</div>
-                            <div class="m-grid-col m-grid-col-left"><strong>Total de operações:</strong></div>
-                            <div class="m-grid-col m-grid-col-left">{{lci_lca.total_operacoes}}</div>
 						</div>
 					</div>
 				</div>
@@ -67,6 +67,8 @@
 							<div class="m-grid-col m-grid-col-left">R$ {{ lci_lca.lucro|floatformat:2 }} ({{ lci_lca.lucro_percentual|floatformat:2 }}%)</div>
 						</div>
 						<div class="m-grid-row">
+                            <div class="m-grid-col m-grid-col-left"><strong>Total de operações:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{lci_lca.total_operacoes}}</div>
 							<div class="m-grid-col m-grid-col-left"><strong>Dias para próx. retirada:</strong></div>
 							<div class="m-grid-col m-grid-col-left">{{ lci_lca.dias_proxima_retirada }} dia(s)</div>
 							<div class="m-grid-col m-grid-col-left"><strong>IOF:</strong></div>
