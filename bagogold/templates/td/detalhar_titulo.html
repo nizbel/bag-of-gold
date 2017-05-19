@@ -60,18 +60,20 @@
 						<div class="m-grid-row">
                             <div class="m-grid-col m-grid-col-left"><strong>Total de operações:</strong></div>
                             <div class="m-grid-col m-grid-col-left">{{dados.total_operacoes}}</div>
-							<div class="m-grid-col m-grid-col-left"><strong>Total investido:</strong></div>
-							<div class="m-grid-col m-grid-col-left">R$ {{lci_lca.total_investido|floatformat:2}}</div>
+							<div class="m-grid-col m-grid-col-left"><strong>Qtd. de títulos atual:</strong></div>
+							<div class="m-grid-col m-grid-col-left">{{dados.qtd_titulos_atual}}</div>
 							<div class="m-grid-col m-grid-col-left"><strong>Total atual:</strong></div>
-							<div class="m-grid-col m-grid-col-left">R$ {{ lci_lca.lucro|floatformat:2 }}</div>
+							<div class="m-grid-col m-grid-col-left">R$ {{ dados.total_atual|floatformat:2 }}</div>
 						</div>
 						<div class="m-grid-row">
                             <div class="m-grid-col m-grid-col-left"><strong>Lucro:</strong></div>
-                            <div class="m-grid-col m-grid-col-left">R$ {{ lci_lca.dias_proxima_retirada }} ({{ lci_lca.lucro_percentual|floatformat:2 }}%)</div>
+                            <div class="m-grid-col m-grid-col-left">R$ {{ dados.total_lucro|floatformat:2 }} ({{ dados.lucro_percentual|floatformat:2 }}%)</div>
+                            {% comment %}
 							<div class="m-grid-col m-grid-col-left"><strong>IR:</strong></div>
-							<div class="m-grid-col m-grid-col-left">R$ {{ lci_lca.dias_proxima_retirada }}</div>
+							<div class="m-grid-col m-grid-col-left">R$ {{ dados.total_ir|floatformat:2 }}</div>
 							<div class="m-grid-col m-grid-col-left"><strong>IOF:</strong></div>
-							<div class="m-grid-col m-grid-col-left">R$ {{lci_lca.total_iof|floatformat:2}}</div>
+							<div class="m-grid-col m-grid-col-left">R$ {{dados.total_iof|floatformat:2}}</div>
+                            {% endcomment %}
 						</div>
 					</div>
 				</div>
@@ -102,8 +104,8 @@
 					{% for item in historico %}
 					<tr>
 						<td>{{item.data|date:'d/m/Y'}}</td>
-						<td>R$ {{ titulo.preco_compra}} ({{titulo.taxa_compra}}%)</td>
-                        <td>R$ {{ titulo.preco_venda}} ({{titulo.taxa_venda}}%)</td>
+						<td>R$ {{ item.preco_compra}} ({{item.taxa_compra}}%)</td>
+                        <td>R$ {{ item.preco_venda}} ({{item.taxa_venda}}%)</td>
 					</tr>
 					{% endfor %}
 					</tbody>
