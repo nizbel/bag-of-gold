@@ -544,9 +544,9 @@ class TransferenciaEntreDivisoesForm(LocalizedModelForm):
         data = super(TransferenciaEntreDivisoesForm, self).clean()
         if data.get('divisao_cedente') == None and data.get('divisao_recebedora') == None:
             raise forms.ValidationError('Divisão cedente e recebedora não podem ser vazias')
-        if data.get('divisao_cedente') == None and data.get('investimento_origem') != '':
+        if data.get('divisao_cedente') == None and (data.get('investimento_origem') or '') != '':
             raise forms.ValidationError('Divisão cedente vazia não pode ter investimento definido')
-        if data.get('divisao_recebedora') == None and data.get('investimento_destino') != '':
+        if data.get('divisao_recebedora') == None and (data.get('investimento_destino') or '') != '':
             raise forms.ValidationError('Divisão recebedora vazia não pode ter investimento definido')
         if data.get('divisao_cedente') != None and data.get('divisao_cedente').investidor != self.investidor:
             raise forms.ValidationError('Divisão cedente não permitida para o investidor')
