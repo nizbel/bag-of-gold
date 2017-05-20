@@ -36,8 +36,9 @@
                 <div class="form-group col-md-6 {% if form_operacao_debenture.data.errors %} has-error {% endif %}">
                     <label class="control-label col-md-4" style="text-align: left;"> Data: </label>
                     <div class="col-md-8">
-                        <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" data-date="{{form_operacao_debenture.data.value|default:''}}" data-date-viewmode="years">
-                            <input type="text" class="form-control" id="id_data" name="data" value="{{form_operacao_debenture.data.value|default:''}}">
+                        <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" data-date-viewmode="years">
+                            <input type="text" class="form-control" id="id_data" name="data"
+                            value="{% if form_operacao_debenture.data.value|date:'d/m/Y'|default:'' == '' %}{{form_operacao_debenture.data.value|default:''}}{% else %}{{form_operacao_debenture.data.value|date:'d/m/Y'}}{% endif %}">
                             <span class="input-group-btn">
                                 <button class="btn default" type="button">
                                     <i class="fa fa-calendar"></i>
