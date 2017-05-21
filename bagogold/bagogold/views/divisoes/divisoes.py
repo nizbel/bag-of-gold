@@ -380,7 +380,7 @@ def inserir_transferencia(request):
             return HttpResponseRedirect(reverse('divisoes:listar_transferencias'))
         # Imprimir erors nas mensagens
         for erro in form.non_field_errors():
-            print erro
+#             print erro
             messages.error(request, erro)
     else:
         form = TransferenciaEntreDivisoesForm(investidor=investidor)
