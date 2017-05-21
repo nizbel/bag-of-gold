@@ -3,6 +3,13 @@ from django.db import models
 import datetime
  
 class Titulo (models.Model):
+    TIPO_OFICIAL_LETRA_TESOURO = 'LTN'
+    TIPO_OFICIAL_SELIC = 'LFT'
+    TIPO_OFICIAL_IPCA_COM_JUROS = 'NTN-B'
+    TIPO_OFICIAL_IPCA = 'NTN-B Principal'
+    TIPO_OFICIAL_PREFIXADO_COM_JUROS = 'NTN-F'
+    TIPO_OFICIAL_IGPM = 'NTN-C'
+    
     TIPO_LETRA_TESOURO = ['LTN']
     TIPO_SELIC = ['LFT']
     TIPO_IPCA_COM_JUROS = ['NTN-B', 'NTNB']
