@@ -3,28 +3,64 @@ from django.db import models
 import datetime
  
 class Titulo (models.Model):
+    TIPO_OFICIAL_LETRA_TESOURO = 'LTN'
+    TIPO_OFICIAL_SELIC = 'LFT'
+    TIPO_OFICIAL_IPCA_COM_JUROS = 'NTN-B'
+    TIPO_OFICIAL_IPCA = 'NTN-B Principal'
+    TIPO_OFICIAL_PREFIXADO_COM_JUROS = 'NTN-F'
+    TIPO_OFICIAL_IGPM = 'NTN-C'
+    
+    TIPO_LETRA_TESOURO = ['LTN']
+    TIPO_SELIC = ['LFT']
+    TIPO_IPCA_COM_JUROS = ['NTN-B', 'NTNB']
+    TIPO_IPCA = ['NTN-B Principal', 'NTNBP']
+    TIPO_PREFIXADO_COM_JUROS = ['NTN-F', 'NTNF']
+    TIPO_IGPM = ['NTN-C','NTNC']
+    
+    VINCULO_TIPOS_OFICIAL = {TIPO_OFICIAL_LETRA_TESOURO: TIPO_LETRA_TESOURO, TIPO_OFICIAL_SELIC: TIPO_SELIC, TIPO_OFICIAL_IPCA_COM_JUROS: TIPO_IPCA_COM_JUROS, 
+                             TIPO_OFICIAL_IPCA: TIPO_IPCA, TIPO_OFICIAL_PREFIXADO_COM_JUROS: TIPO_PREFIXADO_COM_JUROS, TIPO_OFICIAL_IGPM: TIPO_IGPM}
+    
     tipo = models.CharField(u'Tipo do título', max_length=20, unique_for_date='data_vencimento') 
     data_vencimento = models.DateField(u'Data de vencimento')
     data_inicio = models.DateField(u'Data de início')
     
     def nome(self):
-        if self.tipo == 'LTN':
+        if self.tipo in self.TIPO_LETRA_TESOURO:
             return u'Tesouro Prefixado %s' % (self.data_vencimento.year)
-        elif self.tipo == 'LFT':
+        elif self.tipo in self.TIPO_SELIC:
             return u'Tesouro Selic %s' % (self.data_vencimento.year)
-        elif self.tipo in ['NTN-B', 'NTNB']:
+        elif self.tipo in self.TIPO_IPCA_COM_JUROS:
             return u'Tesouro IPCA+ com Juros Semestrais %s' % (self.data_vencimento.year)
-        elif self.tipo in ['NTN-B Principal', 'NTNBP']:
+        elif self.tipo in self.TIPO_IPCA:
             return u'Tesouro IPCA+ %s' % (self.data_vencimento.year)
-        elif self.tipo in ['NTN-F', 'NTNF']:
+        elif self.tipo in self.TIPO_PREFIXADO_COM_JUROS:
             return u'Tesouro Prefixado com Juros Semestrais %s' % (self.data_vencimento.year)
-        elif self.tipo in ['NTN-C','NTNC']:
+        elif self.tipo in self.TIPO_IGPM:
             return u'Tesouro IGP-M com Juros Semestrais %s' % (self.data_vencimento.year)
         else:
             return u'Título não encontrado'
     
     def __unicode__(self):
         return u'%s (%s)' % (self.nome(), self.tipo)
+    
+    @staticmethod
+    def buscar_vinculo_oficial(tipo):
+        for tipo_oficial, possiveis_tipos in Titulo.VINCULO_TIPOS_OFICIAL.items():
+            if tipo in possiveis_tipos:
+                return tipo_oficial
+        raise ValueError('Tipo %s é inválido' % (tipo))
+    
+    def indexador(self):
+        if self.tipo in self.TIPO_LETRA_TESOURO + self.TIPO_PREFIXADO_COM_JUROS:
+            return u'Prefixado'
+        elif self.tipo in self.TIPO_SELIC:
+            return u'Selic'
+        elif self.tipo in self.TIPO_IPCA_COM_JUROS + self.TIPO_IPCA:
+            return u'IPCA'
+        elif self.tipo in self.TIPO_IGPM:
+            return u'IGP-M'
+        else:
+            return u'Indefinido'
     
     def titulo_vencido(self):
         if datetime.date.today() >= self.data_vencimento:
@@ -35,17 +71,17 @@ class Titulo (models.Model):
     def valor_vencimento(self, data=datetime.date.today()):
         from bagogold.bagogold.utils.td import calcular_valor_acumulado_ipca
         
-        if self.tipo == 'LTN':
+        if self.tipo in self.TIPO_LETRA_TESOURO:
             return 1000
-        elif self.tipo == 'LFT':
+        elif self.tipo in self.TIPO_SELIC:
             return 1000
-        elif self.tipo in ['NTN-B', 'NTNB']:
+        elif self.tipo in self.TIPO_IPCA_COM_JUROS:
             return (1 + calcular_valor_acumulado_ipca(datetime.date(2000, 7, 15), data_final=data)) * 1000
-        elif self.tipo in ['NTN-B Principal', 'NTNBP']:
+        elif self.tipo in self.TIPO_IPCA:
             return (1 + calcular_valor_acumulado_ipca(datetime.date(2000, 7, 15), data_final=data)) * 1000
-        elif self.tipo in ['NTN-F', 'NTNF']:
+        elif self.tipo in self.TIPO_PREFIXADO_COM_JUROS:
             return 1000
-        elif self.tipo == 'NTN-C':
+        elif self.tipo in self.TIPO_IGPM:
             return 1000
         else:
             return 0

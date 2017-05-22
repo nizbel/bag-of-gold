@@ -1,6 +1,10 @@
 {% extends "base_login.html" %}
 {% load staticfiles %}
 
+{% block extra_head %}
+    <meta content="Cadastro realizado e pendente de ativação" name="description" />
+{% endblock %}
+
 {% block content %}
     <h3>Cadastro realizado com sucesso</h3>
     <p>Você receberá um e-mail para ativar a sua conta em alguns instantes.</p>

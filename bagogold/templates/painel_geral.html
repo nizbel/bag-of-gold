@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load staticfiles %}
+{% load misc %}
 
 {% block pagina_titulo_icone %}
 <i class="icon-user font-yellow-crusta"></i>
@@ -285,7 +286,7 @@
 						</div>
 						<div class="col-md-12 text-center font-yellow-crusta">
 							<p class="lead">
-								<strong>R$ <span data-counter="counterup" data-value="{{ acumulado_mensal_atual }}">0</span></strong>
+								<strong>R$ {% if acumulado_mensal_atual < 0 %}-{% endif %}<span data-counter="counterup" data-value="{{ acumulado_mensal_atual|template_abs|floatformat:'2' }}">0</span></strong>
 							</p>
 						</div>
 						<div class="col-md-12 text-center">
@@ -295,16 +296,20 @@
 						</div>
 						<div class="col-md-12 text-center font-yellow-crusta">
 							<p class="lead">
-								<strong>R$ <span data-counter="counterup" data-value="{{ acumulado_mensal_anterior }}">0</span></strong>
+								<strong>R$ {% if acumulado_mensal_anterior < 0 %}-{% endif %}<span data-counter="counterup" data-value="{{ acumulado_mensal_anterior|template_abs|floatformat:'2' }}">0</span></strong>
 							</p>
 						</div>
+                        {% if request.user.is_authenticated %}
+                        <div class="col-md-12 text-center">
+                            <a href="{% url "inicio:detalhar_acumulados_mensais" %}" class="btn btn-warning">Mais</a>
+                        </div>
+                        {% endif %}
 					</div>
 				</div>
 			</div>
 			<!-- END Portlet PORTLET-->
 		</div>
 		<div class="col-md-12">
-			<!-- BEGIN BASIC CHART PORTLET-->
 			<div class="portlet box yellow-crusta">
 				<div class="portlet-title">
 					<div class="caption">

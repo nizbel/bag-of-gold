@@ -7,42 +7,34 @@
 {% endblock %}
 
 {% block pagina_titulo_icone %}
-<i class="icon-share font-yellow-crusta"></i>
+<i class="icon-diamond font-yellow-crusta"></i>
 {% endblock %}
 
 {% block content %}
 <div class="portlet-body">
-	<table id="ordens" class="table table-striped table-bordered table-hover table-header-fixed">
-	<thead>
+		<table id="titulos" class="table table-striped table-bordered table-hover table-header-fixed">
+		<thead>
+			<tr>
+				<th>Nome</th>
+				<th>Indexador</th>
+				<th>Data de vencimento</th>
+                <th>Preço/taxa de compra</th>
+                <th>Preço/taxa de venda</th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for titulo in titulos %}
 		<tr>
-			<th>Divisão cedente</th>
-			<th>Divisão recebedora</th>
-			<th>Data</th>
-			<th>Quantidade</th>
-			<th>Descrição</th>
-			<th></th>
+			<td><a href="{% url 'td:detalhar_titulo_td' titulo.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar título do Tesouro Direto">{{titulo.nome}}</a></td>
+			<td>{{titulo.indexador}}</td>
+			<td>{{titulo.data_vencimento|date:'d/m/Y'}}</td>
+            <td>{% if titulo.titulo_vencido %}Título vencido{% else %}R$ {{ titulo.preco_compra}} ({{titulo.taxa_compra}}%){% endif %}</td>
+            <td>{% if titulo.titulo_vencido %}Título vencido{% else %}R$ {{ titulo.preco_venda}} ({{titulo.taxa_venda}}%){% endif %}</td>
 		</tr>
-	</thead>
-	<tbody>
-	{% for transferencia in transferencias %}
-	<tr>
-		<td>{% if transferencia.divisao_cedente %}{{transferencia.divisao_cedente}} ({{transferencia.investimento_origem}})
-			{% else %}Fonte externa
-			{% endif %}
-		</td>
-		<td>{% if transferencia.divisao_recebedora %}{{transferencia.divisao_recebedora}} ({{transferencia.investimento_destino}})
-			{% else %}Fonte externa
-			{% endif %}
-		</td>
-		<td>{{transferencia.data|date:"d/m/Y"}}</td>
-		<td>R${{transferencia.quantidade}}</td>
-		<td>{{transferencia.descricao|default:"Sem descrição"}}</td>
-		<td><a href="{% url "divisoes:editar_transferencia" transferencia.id %}" class="btn btn-sm btn-warning">Editar</a></td>
-	</tr>
-	{% endfor %}
-	</tbody>
-	</table>
-</div>
+		{% endfor %}
+		</tbody>
+		</table>
+	</div>
 
 {% endblock %}
 
