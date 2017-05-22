@@ -17,6 +17,9 @@ class Titulo (models.Model):
     TIPO_PREFIXADO_COM_JUROS = ['NTN-F', 'NTNF']
     TIPO_IGPM = ['NTN-C','NTNC']
     
+    VINCULO_TIPOS_OFICIAL = {TIPO_OFICIAL_LETRA_TESOURO: TIPO_LETRA_TESOURO, TIPO_OFICIAL_SELIC: TIPO_SELIC, TIPO_OFICIAL_IPCA_COM_JUROS: TIPO_IPCA_COM_JUROS, 
+                             TIPO_OFICIAL_IPCA: TIPO_IPCA, TIPO_OFICIAL_PREFIXADO_COM_JUROS: TIPO_PREFIXADO_COM_JUROS, TIPO_OFICIAL_IGPM: TIPO_IGPM}
+    
     tipo = models.CharField(u'Tipo do título', max_length=20, unique_for_date='data_vencimento') 
     data_vencimento = models.DateField(u'Data de vencimento')
     data_inicio = models.DateField(u'Data de início')
@@ -39,6 +42,13 @@ class Titulo (models.Model):
     
     def __unicode__(self):
         return u'%s (%s)' % (self.nome(), self.tipo)
+    
+    @staticmethod
+    def buscar_vinculo_oficial(tipo):
+        for tipo_oficial, possiveis_tipos in Titulo.VINCULO_TIPOS_OFICIAL.items():
+            if tipo in possiveis_tipos:
+                return tipo_oficial
+        raise ValueError('Tipo %s é inválido' % (tipo))
     
     def indexador(self):
         if self.tipo in self.TIPO_LETRA_TESOURO + self.TIPO_PREFIXADO_COM_JUROS:

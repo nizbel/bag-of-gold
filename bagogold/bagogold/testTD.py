@@ -129,10 +129,10 @@ def baixar_historico_td_ano(ano):
                 data = time.strptime(key.split(' ')[len(key.split(' '))-1][0:4] + '20' + key.split(' ')[len(key.split(' '))-1][4:], "%d%m%Y")
                 data = time.strftime('%Y-%m-%d', data)
     #                 print(data)
-                try:
+                if Titulo.objects.get(tipo=tipo, data_vencimento=data).exists():
                     titulo = Titulo.objects.get(tipo=tipo, data_vencimento=data)
-                except Titulo.DoesNotExist:
-                    titulo = Titulo(tipo=tipo, data_vencimento=data, data_inicio=data)
+                else:
+                    titulo = Titulo(tipo=Titulo.buscar_vinculo_oficial(tipo), data_vencimento=data, data_inicio=data)
                     titulo.save()
                 for linha in range(2,len(titulo_vencimento)):
                     # Testar se a linha de data está vazia, passar ao proximo
