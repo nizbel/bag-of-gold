@@ -50,7 +50,7 @@ class Command(BaseCommand):
                                             historico_base.titulo = titulo
                                             historico_base.save()
                                             historico_alterado_count += 1
+                                    titulo_comparar.delete()
                                     print 'apagou', titulo_comparar, 'alterou operacoes:', operacao_count, 'alterou/deletou historicos', historico_alterado_count, historico_apagado_count
-                                    raise ValueError('deu erro aqui')
                             except Exception as e:
                                 print e
