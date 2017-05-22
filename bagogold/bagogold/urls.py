@@ -168,6 +168,7 @@ td_patterns = [
     url(r'^editar_operacao/(?P<operacao_id>\d+)/$', views.td.td.editar_operacao_td, name='editar_operacao_td'),
     url(r'^historico/$', views.td.td.historico_td, name='historico_td'),
     url(r'^inserir_operacao_td/$', views.td.td.inserir_operacao_td, name='inserir_operacao_td'),
+    url(r'^listar_historico_titulo/(?P<titulo_id>\d+)/$', views.td.td.listar_historico_titulo, name='listar_historico_titulo'),
     url(r'^listar_titulos_td/$', views.td.td.listar_titulos_td, name='listar_titulos_td'),
     url(r'^painel/$', views.td.td.painel, name='painel_td'),
     url(r'^sobre/$', views.td.td.sobre, name='sobre_td'),
