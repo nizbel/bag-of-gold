@@ -285,7 +285,7 @@
 						</div>
 						<div class="col-md-12 text-center font-yellow-crusta">
 							<p class="lead">
-								<strong>R$ <span data-counter="counterup" data-value="{{ acumulado_mensal_atual|floatformat:'2' }}">0</span></strong>
+								<strong>R$ {% if acumulado_mensal_atual < 0 %}-{% endif %}<span data-counter="counterup" data-value="{{ acumulado_mensal_atual|floatformat:'2'|slice:'1:' }}">0</span></strong>
 							</p>
 						</div>
 						<div class="col-md-12 text-center">
@@ -295,7 +295,7 @@
 						</div>
 						<div class="col-md-12 text-center font-yellow-crusta">
 							<p class="lead">
-								<strong>R$ <span data-counter="counterup" data-value="{{ acumulado_mensal_anterior|floatformat:'2' }}">0</span></strong>
+								<strong>R$ {% if acumulado_mensal_atual < 0 %}-{% endif %}<span data-counter="counterup" data-value="{{ acumulado_mensal_anterior|floatformat:'2'|slice:'1:' }}">0</span></strong>
 							</p>
 						</div>
                         {% if request.user.is_authenticated %}
