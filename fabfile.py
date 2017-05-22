@@ -87,13 +87,5 @@ def prod():
 #     
 #     sudo('/etc/init.d/supervisor start')
     
-# def metronic_test_update():
-#     run('~/bin/dropbox.py start')
-#     time.sleep(15)
-#     run('~/bin/dropbox.py stop')
-#     with cd(env.path):
-#         run('cp -ar ~/Dropbox/HTML\ Bag\ of\ Gold/Teste\ in\ Progress/pages/* bagogold/templates/teste')
-#         run('cp -ar ~/Dropbox/HTML\ Bag\ of\ Gold/Teste\ in\ Progress/assets bagogold/static/')
-#             
-#         # Collect static files
-#         run('source %s/bin/activate; python manage.py collectstatic --noinput' % (env.virtualenv_path))
+# TODO preparar verificação de update a fazer 
+# hg log -b prod --template '{rev}\n' -l 1
