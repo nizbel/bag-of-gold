@@ -27,6 +27,7 @@ from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
+from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 import calendar
 import datetime
@@ -203,6 +204,9 @@ def detalhar_titulo_td(request, titulo_id):
     
     data_final = datetime.date.today() if titulo.data_vencimento > datetime.date.today() else titulo.data_vencimento
     historico = HistoricoTitulo.objects.filter(titulo=titulo, data__gte=data_final.replace(year=data_final.year-1)).order_by('-data')
+    # Pegar datas inicial e final do historico
+    historico_data_inicial = historico[len(historico)-1].data
+    historico_data_final = historico[0].data
     
     dados = {'total_operacoes': 0, 'qtd_titulos_atual': Decimal(0), 'total_atual': Decimal(0), 'total_lucro': Decimal(0), 'lucro_percentual': Decimal(0)}
     if request.user.is_authenticated():
@@ -220,7 +224,8 @@ def detalhar_titulo_td(request, titulo_id):
             dados['lucro_percentual'] = (titulo.preco_venda - preco_medio) / (preco_medio or 1) if dados['qtd_titulos_atual'] > 0 else 0
             # TODO Adicionar IR e IOF
 
-    return TemplateResponse(request, 'td/detalhar_titulo.html', {'titulo': titulo, 'dados': dados, 'historico': historico})
+    return TemplateResponse(request, 'td/detalhar_titulo.html', {'titulo': titulo, 'dados': dados, 'historico': historico, 'historico_data_inicial': historico_data_inicial,
+                                                                 'historico_data_final': historico_data_final})
 
 @login_required
 @adiciona_titulo_descricao('Editar operação em Tesouro Direto', 'Editar valores de uma operação de compra/venda em Tesouro Direto')
@@ -477,6 +482,27 @@ def inserir_operacao_td(request):
             
     return TemplateResponse(request, 'td/inserir_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao,
                                                               'varias_divisoes': varias_divisoes})
+
+def listar_historico_titulo(request, titulo_id):
+    # Converte datas e realiza validação do formato
+    try:
+        data_inicial = datetime.datetime.strptime(request.GET['dataInicial'], '%d/%m/%Y')
+    except ValueError:
+        return HttpResponse(json.dumps({'sucesso': False, 'erro':'Data inicial inválida'}), content_type = "application/json")  
+    try:
+        data_final = datetime.datetime.strptime(request.GET['dataFinal'], '%d/%m/%Y')
+    except ValueError:
+        return HttpResponse(json.dumps({'sucesso': False, 'erro':'Data final inválida'}), content_type = "application/json")  
+    # Pega apenas a parte relacionada a data do datetime
+    data_inicial = data_inicial.date()
+    data_final = data_final.date()
+    if data_final < data_inicial:
+        return HttpResponse(json.dumps({'sucesso': False, 'erro':'Data final deve ser maior ou igual a data inicial'}), content_type = "application/json")  
+    if data_final > data_inicial.replace(year=data_inicial.year+1):
+        return HttpResponse(json.dumps({'sucesso': False, 'erro':'O período limite para a escolha é de 1 ano'}), content_type = "application/json")  
+    # Retorno OK
+    historico = HistoricoTitulo.objects.filter(data__range=[data_inicial, data_final], titulo__id=titulo_id)
+    return HttpResponse(json.dumps({'sucesso': True, 'dados': render_to_string('td/utils/listar_historico_titulo.html', {'historico': historico})}), content_type = "application/json")     
 
 @adiciona_titulo_descricao('Listar títulos do Tesouro Direto', 'Lista títulos que já foram, ou são, negociados no Tesouro Direto')
 def listar_titulos_td(request):
