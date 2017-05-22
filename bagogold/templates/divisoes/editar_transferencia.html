@@ -60,8 +60,8 @@
 				<div class="form-group col-md-6 {% if form.data.errors %} has-error {% endif %}">
 					<label class="control-label col-md-4" style="text-align: left;"> Data da transferência: </label>
 					<div class="col-md-8">
-						<div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_data" name="data" data-date="{{form.data.value|date:'d/m/Y'}}" data-date-viewmode="years">
-							<input type="text" class="form-control" value="{{form.data.value|date:'d/m/Y'}}" name="data">
+						<div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" data-date-viewmode="years">
+							<input type="text" class="form-control" value="{{form.data.value|date:'d/m/Y'}}" id="id_data" name="data">
 							<span class="input-group-btn">
 								<button class="btn default" type="button">
 									<i class="fa fa-calendar"></i>

@@ -21,11 +21,13 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
-from django.db.models.aggregates import Count
+from django.db.models.aggregates import Count, Sum
+from django.db.models.expressions import F
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
+from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 import calendar
 import datetime
@@ -180,6 +182,50 @@ def acompanhamento_td(request):
     fiis.sort(key=lambda x: x.rendimento_prov, reverse=True)
     
     return TemplateResponse(request, 'td/acompanhamento.html', {'titulos': titulos, 'letras_credito': letras_credito, 'fiis': fiis})
+
+@adiciona_titulo_descricao('Detalhar título do Tesouro Direto', 'Informações sobre um título do Tesouro Direto')
+def detalhar_titulo_td(request, titulo_id):
+    titulo = get_object_or_404(Titulo, id=titulo_id)
+    
+    # TODO pegar valores e taxas atuais do título, se não estiver fechado
+    if not titulo.titulo_vencido():
+        if ValorDiarioTitulo.objects.filter(titulo=titulo).exists():
+            valores = ValorDiarioTitulo.objects.filter(titulo=titulo).order_by('-data_hora')[0]
+            titulo.preco_compra = valores.preco_compra
+            titulo.taxa_compra = valores.taxa_compra
+            titulo.preco_venda = valores.preco_venda
+            titulo.taxa_venda = valores.taxa_venda
+        else:
+            ultimo_valor_historico = HistoricoTitulo.objects.filter(titulo=titulo).order_by('-data')[0]
+            titulo.preco_compra = ultimo_valor_historico.preco_compra
+            titulo.taxa_compra = ultimo_valor_historico.taxa_compra
+            titulo.preco_venda = ultimo_valor_historico.preco_venda
+            titulo.taxa_venda = ultimo_valor_historico.taxa_venda
+    
+    data_final = datetime.date.today() if titulo.data_vencimento > datetime.date.today() else titulo.data_vencimento
+    historico = HistoricoTitulo.objects.filter(titulo=titulo, data__gte=data_final.replace(year=data_final.year-1)).order_by('-data')
+    # Pegar datas inicial e final do historico
+    historico_data_inicial = historico[len(historico)-1].data
+    historico_data_final = historico[0].data
+    
+    dados = {'total_operacoes': 0, 'qtd_titulos_atual': Decimal(0), 'total_atual': Decimal(0), 'total_lucro': Decimal(0), 'lucro_percentual': Decimal(0)}
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+        
+        # TODO Considerar vendas parciais de titulos
+        dados['total_operacoes'] = OperacaoTitulo.objects.filter(titulo=titulo, investidor=investidor).count()
+        if not titulo.titulo_vencido():
+            dados['qtd_titulos_atual'] = quantidade_titulos_ate_dia_por_titulo(investidor, titulo_id)
+            dados['total_atual'] = dados['qtd_titulos_atual'] * titulo.preco_venda
+            preco_medio = (OperacaoTitulo.objects.filter(titulo=titulo, investidor=investidor, tipo_operacao='C').annotate(valor_investido=F('quantidade') * F('preco_unitario')) \
+                .aggregate(total_investido=Sum('valor_investido'))['total_investido'] or Decimal(0)) / (OperacaoTitulo.objects.filter(titulo=titulo, investidor=investidor, tipo_operacao='C') \
+                .aggregate(total_titulos=Sum('quantidade'))['total_titulos'] or 1)
+            dados['total_lucro'] = dados['total_atual'] - dados['qtd_titulos_atual'] * preco_medio
+            dados['lucro_percentual'] = (titulo.preco_venda - preco_medio) / (preco_medio or 1) if dados['qtd_titulos_atual'] > 0 else 0
+            # TODO Adicionar IR e IOF
+
+    return TemplateResponse(request, 'td/detalhar_titulo.html', {'titulo': titulo, 'dados': dados, 'historico': historico, 'historico_data_inicial': historico_data_inicial,
+                                                                 'historico_data_final': historico_data_final})
 
 @login_required
 @adiciona_titulo_descricao('Editar operação em Tesouro Direto', 'Editar valores de uma operação de compra/venda em Tesouro Direto')
@@ -436,6 +482,49 @@ def inserir_operacao_td(request):
             
     return TemplateResponse(request, 'td/inserir_operacao_td.html', {'form_operacao_td': form_operacao_td, 'formset_divisao': formset_divisao,
                                                               'varias_divisoes': varias_divisoes})
+
+def listar_historico_titulo(request, titulo_id):
+    # Converte datas e realiza validação do formato
+    try:
+        data_inicial = datetime.datetime.strptime(request.GET['dataInicial'], '%d/%m/%Y')
+    except ValueError:
+        return HttpResponse(json.dumps({'sucesso': False, 'erro':'Data inicial inválida'}), content_type = "application/json")  
+    try:
+        data_final = datetime.datetime.strptime(request.GET['dataFinal'], '%d/%m/%Y')
+    except ValueError:
+        return HttpResponse(json.dumps({'sucesso': False, 'erro':'Data final inválida'}), content_type = "application/json")  
+    # Pega apenas a parte relacionada a data do datetime
+    data_inicial = data_inicial.date()
+    data_final = data_final.date()
+    if data_final < data_inicial:
+        return HttpResponse(json.dumps({'sucesso': False, 'erro':'Data final deve ser maior ou igual a data inicial'}), content_type = "application/json")  
+    if data_final > data_inicial.replace(year=data_inicial.year+1):
+        return HttpResponse(json.dumps({'sucesso': False, 'erro':'O período limite para a escolha é de 1 ano'}), content_type = "application/json")  
+    # Retorno OK
+    historico = HistoricoTitulo.objects.filter(data__range=[data_inicial, data_final], titulo__id=titulo_id)
+    return HttpResponse(json.dumps({'sucesso': True, 'dados': render_to_string('td/utils/listar_historico_titulo.html', {'historico': historico})}), content_type = "application/json")     
+
+@adiciona_titulo_descricao('Listar títulos do Tesouro Direto', 'Lista títulos que já foram, ou são, negociados no Tesouro Direto')
+def listar_titulos_td(request):
+    # TODO preparar filtros
+    titulos = Titulo.objects.all()
+    
+    for titulo in titulos:
+        if not titulo.titulo_vencido():
+            if ValorDiarioTitulo.objects.filter(titulo=titulo).exists():
+                valores = ValorDiarioTitulo.objects.filter(titulo=titulo).order_by('-data_hora')[0]
+                titulo.preco_compra = valores.preco_compra
+                titulo.taxa_compra = valores.taxa_compra
+                titulo.preco_venda = valores.preco_venda
+                titulo.taxa_venda = valores.taxa_venda
+            else:
+                ultimo_valor_historico = HistoricoTitulo.objects.filter(titulo=titulo).order_by('-data')[0]
+                titulo.preco_compra = ultimo_valor_historico.preco_compra
+                titulo.taxa_compra = ultimo_valor_historico.taxa_compra
+                titulo.preco_venda = ultimo_valor_historico.preco_venda
+                titulo.taxa_venda = ultimo_valor_historico.taxa_venda
+
+    return TemplateResponse(request, 'td/listar_titulos.html', {'titulos': titulos})
 
 @adiciona_titulo_descricao('Painel de Tesouro Direto', 'Mostra a posição atual do investidor em Tesouro Direto')
 def painel(request):

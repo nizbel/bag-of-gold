@@ -3,7 +3,7 @@
 
 {% block content %}
     <!-- BEGIN LOGIN FORM -->
-    <form class="login-form" action="{% url "django.contrib.auth.views.login" %}" method="post">
+    <form class="login-form" action="{% url "login" %}" method="post">
         {% csrf_token %}
         {% if messages %}
             {% for message in messages %}

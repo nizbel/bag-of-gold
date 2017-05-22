@@ -13,11 +13,9 @@ from bagogold.bagogold.models.fundo_investimento import \
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
     ValorDiarioTitulo
-from bagogold.bagogold.utils.acoes import calcular_poupanca_prov_acao_ate_dia
 from bagogold.bagogold.utils.cdb_rdb import calcular_valor_cdb_rdb_ate_dia, \
     calcular_valor_venda_cdb_rdb
 from bagogold.bagogold.utils.debenture import calcular_valor_debentures_ate_dia
-from bagogold.bagogold.utils.fii import calcular_poupanca_prov_fii_ate_dia
 from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
     buscar_totais_atuais_investimentos, buscar_proventos_a_receber, \
     buscar_proventos_a_receber_data_ex_futura
@@ -46,6 +44,66 @@ import datetime
 import math
 
 
+@login_required
+@adiciona_titulo_descricao('Detalhamento de acumulados mensais', ('Detalha rendimentos recebidos por investimentos em renda fixa e ' \
+                           'proventos em dinheiro recebidos por ações e FIIs'))
+def detalhar_acumulados_mensais(request):
+    investidor = request.user.investidor
+    
+    data_atual = datetime.date.today()
+
+    acumulados_mensais = list()
+    acumulados_mensais.append([data_atual, calcular_rendimentos_ate_data(investidor, data_atual)])
+    
+    graf_acumulados = list()
+    
+    for mes in range(12):
+        # Buscar dados para o acumulado mensal
+        ultimo_dia_mes_anterior = data_atual.replace(day=1) - datetime.timedelta(days=1)
+        acumulados_mensais.append([ultimo_dia_mes_anterior, calcular_rendimentos_ate_data(investidor, ultimo_dia_mes_anterior)])
+        # Adiciona o total mensal
+        acumulados_mensais[mes].append(sum(acumulados_mensais[mes][1].values()) - sum(acumulados_mensais[mes+1][1].values()))
+        # Gerar valor acumulado para cada investimento
+        for investimento in acumulados_mensais[mes][1].keys():
+            acumulados_mensais[mes][1][investimento] = acumulados_mensais[mes][1][investimento] - acumulados_mensais[mes+1][1][investimento]
+        # Trocar data pela string de período
+        acumulados_mensais[mes][0] = '%s a %s' % (data_atual.replace(day=1).strftime('%d/%m/%Y'), data_atual.strftime('%d/%m/%Y'))
+        
+        # Adiciona total mensal ao gráfico
+        graf_acumulados.append([str(calendar.timegm(data_atual.timetuple()) * 1000), float(acumulados_mensais[mes][2])])
+        
+        # Coloca data_atual como último dia do mês anterior
+        data_atual = ultimo_dia_mes_anterior
+    
+    # Remover último elemento de acumulados mensais
+    acumulados_mensais = acumulados_mensais[:-1]
+    
+    # Alterar a ordem do gráfico
+    graf_acumulados.reverse()
+    
+    taxas = {}
+    taxas['taxa_media_12_meses'] = sum([acumulado for _, _, acumulado in acumulados_mensais]) / (datetime.date.today() - data_atual).days / 24 / 3600
+    
+    indice_primeiro_numero_valido = int(('%e' % taxas['taxa_media_12_meses']).partition('-')[2])
+    if str(taxas['taxa_media_12_meses']).index('.') + indice_primeiro_numero_valido + 2 <= len(str(taxas['taxa_media_12_meses'])):
+        taxas['taxa_media_12_meses'] = taxas['taxa_media_12_meses'].quantize(Decimal('0.' + '1'.zfill((indice_primeiro_numero_valido)+2)))
+
+#     velocidades = list()
+#     for mes in range(10):
+#         velocidades.append(acumulados_mensais[mes+1][2] - acumulados_mensais[mes+2][2])
+#     velocidade_media = Decimal(sum(velocidades) / len(velocidades)).quantize(Decimal('0.01'))
+#     print velocidades, velocidade_media
+#     
+#     aceleracoes = list()
+#     for mes in range(9):
+#         aceleracoes.append(velocidades[mes] - velocidades[mes+1])
+#     aceleracao_media = Decimal(sum(aceleracoes) / len(aceleracoes)).quantize(Decimal('0.01'))
+#     print aceleracoes, aceleracao_media
+#         
+#     print '%s + %s*mes + (%s*mes^2)/2' % (acumulados_mensais[11][2], acumulados_mensais[10][2] - acumulados_mensais[11][2], aceleracao_media)
+    
+    return TemplateResponse(request, 'detalhar_acumulados_mensais.html', {'acumulados_mensais': acumulados_mensais, 'graf_acumulados': graf_acumulados, 'taxas': taxas})
+    
 @login_required
 @adiciona_titulo_descricao('Histórico detalhado', 'Histórico detalhado das operações feitas pelo investidor')
 def detalhamento_investimentos(request):
@@ -654,7 +712,7 @@ def painel_geral(request):
     
     # Buscar dados para o acumulado mensal
     ultimo_dia_mes_anterior = data_atual.date().replace(day=1) - datetime.timedelta(days=1)
-    acumulado_mensal_atual = sum(calcular_rendimentos_ate_data(investidor, data_atual).values()) - sum(calcular_rendimentos_ate_data(investidor, ultimo_dia_mes_anterior).values())
+    acumulado_mensal_atual = sum(calcular_rendimentos_ate_data(investidor, data_atual.date()).values()) - sum(calcular_rendimentos_ate_data(investidor, ultimo_dia_mes_anterior).values())
                                                                                           
     ultimo_dia_mes_antes_do_anterior = ultimo_dia_mes_anterior.replace(day=1) - datetime.timedelta(days=1)         
     acumulado_mensal_anterior = sum(calcular_rendimentos_ate_data(investidor, ultimo_dia_mes_anterior).values()) - sum(calcular_rendimentos_ate_data(investidor, ultimo_dia_mes_antes_do_anterior).values())

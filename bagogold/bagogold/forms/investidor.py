@@ -3,13 +3,12 @@ from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.investidores import LoginIncorreto
 from bagogold.bagogold.utils.investidores import user_blocked
 from django import forms
-from django.contrib import messages
 from django.contrib.auth import authenticate
-from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, \
+    SetPasswordForm
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.utils import timezone
-from django.utils.translation import ugettext, ugettext_lazy as _
 from registration.forms import RegistrationFormUniqueEmail
 
 
@@ -73,7 +72,7 @@ class ExtendedAuthForm(AuthenticationForm):
                             )
                     else:
                         horario = timezone.now()
-                        print 'login failed for: %s at %s' % (username, horario)
+#                         print 'login failed for: %s at %s' % (username, horario)
                         # Já foram feitos logins anteriores
                         if LoginIncorreto.objects.filter(user__username=username).exists():
                             ultima_tentativa = LoginIncorreto.objects.filter(user__username=username).order_by('-horario')[0]
@@ -125,6 +124,13 @@ class ExtendedAuthForm(AuthenticationForm):
         LoginIncorreto.objects.filter(user=user).delete()
 
 class ExtendedPasswordChangeForm(PasswordChangeForm):
+    def clean_new_password1(self):
+        password1 = self.cleaned_data.get('new_password1')
+        if len(password1) < 8:
+            raise forms.ValidationError('A senha deve ter no mínimo 8 caracteres')
+        return password1
+    
+class ExtendedSetPasswordForm(SetPasswordForm):
     def clean_new_password1(self):
         password1 = self.cleaned_data.get('new_password1')
         if len(password1) < 8:
