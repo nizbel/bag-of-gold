@@ -486,11 +486,11 @@ def inserir_operacao_td(request):
 def listar_historico_titulo(request, titulo_id):
     # Converte datas e realiza validação do formato
     try:
-        data_inicial = datetime.datetime.strptime(request.GET['dataInicial'], '%d/%m/%Y')
+        data_inicial = datetime.datetime.strptime(request.GET.get('dataInicial', ''), '%d/%m/%Y')
     except ValueError:
         return HttpResponse(json.dumps({'sucesso': False, 'erro':'Data inicial inválida'}), content_type = "application/json")  
     try:
-        data_final = datetime.datetime.strptime(request.GET['dataFinal'], '%d/%m/%Y')
+        data_final = datetime.datetime.strptime(request.GET.get('dataFinal', ''), '%d/%m/%Y')
     except ValueError:
         return HttpResponse(json.dumps({'sucesso': False, 'erro':'Data final inválida'}), content_type = "application/json")  
     # Pega apenas a parte relacionada a data do datetime
