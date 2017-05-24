@@ -8,7 +8,6 @@ class BagofGoldConfig(AppConfig):
     name = 'bagogold.bagogold'
     verbose_name = "Bag of Gold"
     def ready(self):
-        # TODO adicionar -b para pegar branch especifico
         if settings.ENV == 'PROD':
             origWD = os.getcwd()
             os.chdir(settings.PROD_HOME)
