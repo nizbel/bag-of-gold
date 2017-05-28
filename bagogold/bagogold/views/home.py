@@ -50,17 +50,17 @@ import math
 def detalhar_acumulados_mensais(request):
     investidor = request.user.investidor
     
-    data_atual = datetime.date.today()
+    data_atual = datetime.datetime.now()
 
     acumulados_mensais = list()
-    acumulados_mensais.append([data_atual, calcular_rendimentos_ate_data(investidor, data_atual)])
+    acumulados_mensais.append([data_atual.date(), calcular_rendimentos_ate_data(investidor, data_atual.date())])
     
     graf_acumulados = list()
     
     for mes in range(12):
         # Buscar dados para o acumulado mensal
         ultimo_dia_mes_anterior = data_atual.replace(day=1) - datetime.timedelta(days=1)
-        acumulados_mensais.append([ultimo_dia_mes_anterior, calcular_rendimentos_ate_data(investidor, ultimo_dia_mes_anterior)])
+        acumulados_mensais.append([ultimo_dia_mes_anterior.date(), calcular_rendimentos_ate_data(investidor, ultimo_dia_mes_anterior.date())])
         # Adiciona o total mensal
         acumulados_mensais[mes].append(sum(acumulados_mensais[mes][1].values()) - sum(acumulados_mensais[mes+1][1].values()))
         # Gerar valor acumulado para cada investimento
@@ -70,7 +70,7 @@ def detalhar_acumulados_mensais(request):
         acumulados_mensais[mes][0] = '%s a %s' % (data_atual.replace(day=1).strftime('%d/%m/%Y'), data_atual.strftime('%d/%m/%Y'))
         
         # Adiciona total mensal ao gráfico
-        graf_acumulados.append([str(calendar.timegm(data_atual.timetuple()) * 1000), float(acumulados_mensais[mes][2])])
+        graf_acumulados.append([str(calendar.timegm(data_atual.replace(hour=12).timetuple()) * 1000), float(acumulados_mensais[mes][2])])
         
         # Coloca data_atual como último dia do mês anterior
         data_atual = ultimo_dia_mes_anterior
@@ -82,7 +82,7 @@ def detalhar_acumulados_mensais(request):
     graf_acumulados.reverse()
     
     taxas = {}
-    taxas['taxa_media_12_meses'] = sum([acumulado for _, _, acumulado in acumulados_mensais]) / (datetime.date.today() - data_atual).days / 24 / 3600
+    taxas['taxa_media_12_meses'] = sum([acumulado for _, _, acumulado in acumulados_mensais]) / (datetime.date.today() - data_atual.date()).days / 24 / 3600
     
     indice_primeiro_numero_valido = int(('%e' % taxas['taxa_media_12_meses']).partition('-')[2])
     if str(taxas['taxa_media_12_meses']).index('.') + indice_primeiro_numero_valido + 2 <= len(str(taxas['taxa_media_12_meses'])):
