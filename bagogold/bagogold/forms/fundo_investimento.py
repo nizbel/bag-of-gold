@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.fundo_investimento import FundoInvestimento, \
     OperacaoFundoInvestimento, HistoricoCarenciaFundoInvestimento, \
     HistoricoValorCotas
@@ -14,13 +15,13 @@ ESCOLHAS_TIPO_PRAZO=(('L', 'Longo prazo'),
 ESCOLHAS_TIPO_OPERACAO=(('C', "Compra"),
                         ('V', "Venda"))
 
-class FundoInvestimentoForm(forms.ModelForm):
+class FundoInvestimentoForm(LocalizedModelForm):
     class Meta:
         model = FundoInvestimento
         fields = ('nome', 'tipo_prazo', 'descricao', 'taxa_adm')
         widgets={'tipo_prazo': widgets.Select(choices=ESCOLHAS_TIPO_PRAZO),}
 
-class OperacaoFundoInvestimentoForm(forms.ModelForm):
+class OperacaoFundoInvestimentoForm(LocalizedModelForm):
     
     class Meta:
         model = OperacaoFundoInvestimento
@@ -53,7 +54,7 @@ class OperacaoFundoInvestimentoForm(forms.ModelForm):
             if calcular_qtd_cotas_ate_dia_por_fundo(self.investidor, dados.get('fundo_investimento').id, data) < dados.get('quantidade'):
                 raise forms.ValidationError('Não é possível vender a quantidade informada para o fundo %s' % (dados.get('fundo_investimento')))
         
-class HistoricoValorCotasForm(forms.ModelForm):
+class HistoricoValorCotasForm(LocalizedModelForm):
     
     class Meta:
         model = HistoricoValorCotas
@@ -77,7 +78,7 @@ class HistoricoValorCotasForm(forms.ModelForm):
         return data
             
         
-class HistoricoCarenciaFundoInvestimentoForm(forms.ModelForm):
+class HistoricoCarenciaFundoInvestimentoForm(LocalizedModelForm):
     
     class Meta:
         model = HistoricoCarenciaFundoInvestimento
@@ -86,3 +87,32 @@ class HistoricoCarenciaFundoInvestimentoForm(forms.ModelForm):
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),}
         labels = {'carencia': 'Período de carência (em dias)',}
+        
+    def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
+        try:
+            self.inicial = kwargs.pop('inicial')
+        except:
+            self.inicial = False
+        try:
+            self.fundo_investimento = kwargs.pop('fundo_investimento')
+        except:
+            self.fundo_investimento = None
+        # first call parent's constructor
+        super(HistoricoCarenciaFundoInvestimentoForm, self).__init__(*args, **kwargs)
+        self.fields['fundo_investimento'].queryset = FundoInvestimento.objects.filter(investidor=self.investidor)
+        if self.fundo_investimento:
+            self.fields['fundo_investimento'].disabled = True
+        if self.inicial:
+            self.fields['data'].disabled = True
+        
+        def clean_fundo_investimento(self):
+            if self.cleaned_data['fundo_investimento'].investidor != self.investidor:
+                raise forms.ValidationError('Fundo de investimento inválido')
+            return self.cleaned_data['fundo_investimento']
+        
+        def clean_carencia(self):
+            carencia = self.cleaned_data['carencia']
+            if carencia <= 0:
+                raise forms.ValidationError('Carência deve ser de pelo menos 1 dia')
+            return carencia

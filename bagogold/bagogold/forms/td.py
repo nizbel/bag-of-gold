@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.td import OperacaoTitulo
 from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia_por_titulo
 from django import forms
@@ -15,7 +16,7 @@ ESCOLHAS_TIPO_OPERACAO=(('C', "Compra"),
                         ('V', "Venda"))
             
     
-class OperacaoTituloForm(forms.ModelForm):
+class OperacaoTituloForm(LocalizedModelForm):
     
     class Meta:
         model = OperacaoTitulo
@@ -27,7 +28,7 @@ class OperacaoTituloForm(forms.ModelForm):
                  'consolidada': widgets.Select(choices=ESCOLHAS_CONSOLIDADO),}
 
     class Media:
-        js = ('js/bagogold/td.js',)
+        js = ('js/bagogold/form_operacao_td.js',)
 
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
@@ -41,6 +42,10 @@ class OperacaoTituloForm(forms.ModelForm):
         if dados.get('titulo') is None:
             return
         data = dados.get('data')
+        
+        if data is None:
+            return
+        
         data_vencimento = dados.get('titulo').data_vencimento
 #         print '%s %s %s' % (data_ex, data_pagamento, data_ex < data_pagamento)
         if (data > data_vencimento):
@@ -52,5 +57,5 @@ class OperacaoTituloForm(forms.ModelForm):
                 if quantidade_titulos_ate_dia_por_titulo(self.investidor, self.instance.titulo.id, datetime.date.today()) - self.instance.quantidade < 0:
                     raise forms.ValidationError('Não é possível alterar tipo de operação pois a quantidade atual para o título %s seria negativa' % (self.instance.titulo))
             # Verifica se é possível vender o título apontado
-            if quantidade_titulos_ate_dia_por_titulo(self.investidor, dados.get('titulo').id, data) < dados.get('quantidade'):
+            if quantidade_titulos_ate_dia_por_titulo(self.investidor, dados.get('titulo').id, data) + self.instance.quantidade < dados.get('quantidade'):
                 raise forms.ValidationError('Não é possível vender a quantidade informada para o título %s' % (dados.get('titulo')))

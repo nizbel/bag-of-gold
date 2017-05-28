@@ -1,12 +1,5 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII,\
-    DivisaoOperacaoFundoInvestimento
-from bagogold.bagogold.models.fii import OperacaoFII, ProventoFII, \
-    ValorDiarioFII, HistoricoFII
-from decimal import Decimal
-from itertools import chain
-from operator import attrgetter
-import datetime
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoFundoInvestimento
 from bagogold.bagogold.models.fundo_investimento import OperacaoFundoInvestimento
 
 def calcular_qtd_cotas_ate_dia(investidor, dia):

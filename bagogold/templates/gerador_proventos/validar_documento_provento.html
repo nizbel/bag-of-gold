@@ -1,0 +1,416 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block extra_head %}
+<!-- PDF.js -->
+<script src={% static "assets/global/plugins/pdfjs/build/pdf.js" %}></script>
+<script src={% static "assets/global/plugins/pdfjs/build/pdf.worker.js" %}></script>
+{% endblock %}
+
+{% block pagina_titulo_icone %}
+<i class="icon-list font-yellow-crusta"></i>
+{% endblock %}
+
+{% block content %}
+<div class="portlet-body">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="portlet box yellow-crusta">
+                    <div class="portlet-title">
+                        <div class="caption">
+                        {% comment %}
+                        Buscar um ícone melhor para esse portlet header
+                        {% endcomment %}
+                            <i class="fa fa-line-chart"></i>Dados do documento
+                        </div>
+                        <div class="tools">
+                            <a href="javascript:;" class="collapse"></a>
+                        </div>
+                    </div>
+                    <div class="portlet-body">
+                        <div class="m-grid m-grid-responsive-xs">
+                            <div class="m-grid-row">
+                                <div class="m-grid-col m-grid-col-left"><strong>Empresa:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{pendencia.documento.empresa}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Protocolo:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{pendencia.documento.protocolo}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Data Referência:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{pendencia.documento.data_referencia|date:"d/m/Y"}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Responsável:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">
+                                    {% if pendencia.responsavel %}
+                                        {{ pendencia.responsavel }}
+                                    {% else %}
+                                        <form method="POST">{% csrf_token %}
+                                            <button name="reservar" value="1" type="submit" class="btn btn-success btn-xs">Reservar</button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="m-grid-row">
+                                <div class="m-grid-col m-grid-col-left"><strong>Responsável pela leitura:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{pendencia.documento.investidorleituradocumento}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Decisão:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{pendencia.decisao}}</div>
+                            </div>
+                        </div>
+                        <a href="{% url 'gerador_proventos:baixar_documento_provento' pendencia.documento.id %}" class="btn btn-warning">Download</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="portlet box yellow-crusta">
+                    <div class="portlet-title">
+                        <div class="caption">
+                            <i class="icon-magnifier"></i>Visualização prévia (Apenas 1ª página)
+                        </div>
+                        <div class="tools">
+                            <a href="javascript:;" class="collapse"></a>
+                        </div>
+                    </div>
+                    <div class="portlet-body">
+                        <div class="row">
+                            <div class="col-md-12 text-center">
+                                <canvas id="canvas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% if pendencia.responsavel.id == request.user.investidor.id %}
+        <div class="row">
+            <div class="col-md-12">
+                <div class="portlet box yellow-crusta">
+                    <div class="portlet-title">
+                        <div class="caption">
+                        {% comment %}
+                        Buscar um ícone melhor para esse portlet header
+                        {% endcomment %}
+                            <i class="fa fa-line-chart"></i>Formulário do documento
+                        </div>
+                    </div>
+                    <div class="portlet-body form">
+                        <div class="row">
+                            <form method="POST" class="col-md-12 horizontal-form" id="form_validacao">{% csrf_token %}
+                                <div class="form-body" style="margin: 0px 20px;">
+                                    <div class="row">
+                                        {% for descricao_provento in descricoes_proventos %}
+                                        <div class="col-md-6">
+                                            <div class="portlet box yellow-crusta">
+                                                <div class="portlet-title">
+                                                    <div class="caption">
+                                                        <i class="fa fa-money"></i>Provento {{forloop.counter}} (Identificador: {{descricao_provento.id}})
+                                                    </div>
+                                                </div>
+                                                <div class="portlet-body">
+                                                {% if pendencia.documento.tipo == 'A' %}
+                                                    <div class="m-grid m-grid-responsive-xs">
+                                                        <div class="m-grid-row">
+                                                            <div class="m-grid-col m-grid-col-left"><strong>Ação:</strong></div>
+                                                            <div class="m-grid-col m-grid-col-left">{{descricao_provento.acao}}</div>
+                                                            <div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
+                                                            <div class="m-grid-col m-grid-col-left">{{descricao_provento.descricao_tipo_provento}}</div>
+                                                            <div class="m-grid-col m-grid-col-left"><strong>Valor unit.:</strong></div>
+                                                            {% if descricao_provento.tipo_provento != 'A' %}
+                                                                <div class="m-grid-col m-grid-col-left">R$ {{descricao_provento.valor_unitario}}</div>
+                                                            {% else %}
+                                                                <div class="m-grid-col m-grid-col-left">{{descricao_provento.valor_unitario}}%</div>
+                                                            {% endif %}
+                                                        </div>
+                                                        <div class="m-grid-row">
+                                                            <div class="m-grid-col m-grid-col-left"><strong>Data EX:</strong></div>
+                                                            <div class="m-grid-col m-grid-col-left">{{descricao_provento.data_ex|date:'d/m/Y'}}</div>
+                                                            <div class="m-grid-col m-grid-col-left"><strong>Pagamento:</strong></div>
+                                                            <div class="m-grid-col m-grid-col-left">{{descricao_provento.data_pagamento|date:'d/m/Y'}}</div>
+                                                        </div>
+                                                        {% if descricao_provento.tipo_provento == 'A' %}
+                                                            {% for acao_descricao_provento in descricao_provento.acoes_recebidas %}
+                                                            <div class="m-grid-row">
+                                                                <div class="m-grid-col m-grid-col-left"><strong>Ação recebida:</strong></div>
+                                                                <div class="m-grid-col m-grid-col-left">{{acao_descricao_provento.acao_recebida}}</div>
+                                                                <div class="m-grid-col m-grid-col-left"><strong>Valor de frações:</strong></div>
+                                                                <div class="m-grid-col m-grid-col-left">
+                                                                {% if acao_descricao_provento.valor_calculo_frac %}
+                                                                R$ {{acao_descricao_provento.valor_calculo_frac}}
+                                                                {% else %}
+                                                                N/A
+                                                                {% endif %}
+                                                                </div>
+                                                                <div class="m-grid-col m-grid-col-left"><strong>Pagamento de frações:</strong></div>
+                                                                <div class="m-grid-col m-grid-col-left">{{acao_descricao_provento.data_pagamento_frac|date:'d/m/Y'|default:'N/A'}}</div>
+                                                            </div>
+                                                            {% endfor%}
+                                                        {% endif %}
+                                                    </div>
+                                                    {% if descricao_provento.proventos_proximos %}
+                                                    <div class="m-grid m-grid-responsive-xs">
+                                                        <div class="m-grid-row">
+                                                            <div class="m-grid-col">
+                                                                <div class="md-checkbox">
+                                                                    <input type="checkbox" value="{{descricao_provento.id}}" id="checkbox_alteracao_{{descricao_provento.id}}" name="{{descricao_provento.id}}"  class="md-check">
+                                                                    <label for="checkbox_alteracao_{{descricao_provento.id}}">
+                                                                        <span></span>
+                                                                        <span class="check"></span>
+                                                                        <span class="box"></span> Relacionado a: </label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
+                                                    <hr>
+                                                    <div class="row">
+                                                        {% for provento_proximo in descricao_provento.proventos_proximos %}
+                                                        <div class="col-md-12">
+                                                            <div class="m-grid m-grid-responsive-xs">
+                                                                <div class="m-grid-row">
+                                                                    <div class="m-grid-col m-grid-col-left"><strong>Ação:</strong></div>
+                                                                    <div class="m-grid-col m-grid-col-left">{{provento_proximo.acao}}</div>
+                                                                    <div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
+                                                                    <div class="m-grid-col m-grid-col-left">{{provento_proximo.descricao_tipo_provento}}</div>
+                                                                    <div class="m-grid-col m-grid-col-left"><strong>Valor unit.:</strong></div>
+                                                                    {% if provento_proximo.tipo_provento != 'A' %}
+                                                                        <div class="m-grid-col m-grid-col-left">R$ {{provento_proximo.valor_unitario}}</div>
+                                                                    {% else %}
+                                                                        <div class="m-grid-col m-grid-col-left">{{provento_proximo.valor_unitario}}%</div>
+                                                                    {% endif %}
+                                                                </div>
+                                                                <div class="m-grid-row">
+                                                                    <div class="m-grid-col m-grid-col-left"><strong>Data EX:</strong></div>
+                                                                    <div class="m-grid-col m-grid-col-left">{{provento_proximo.data_ex|date:'d/m/Y'}}</div>
+                                                                    <div class="m-grid-col m-grid-col-left"><strong>Pagamento:</strong></div>
+                                                                    <div class="m-grid-col m-grid-col-left">{{provento_proximo.data_pagamento|date:'d/m/Y'}}</div>
+                                                                </div>
+                                                                {% if provento_proximo.tipo_provento == 'A' %}
+                                                                    {% for acao_descricao_provento in provento_proximo.acoes_recebidas %}
+                                                                    <div class="m-grid-row">
+                                                                        <div class="m-grid-col m-grid-col-left"><strong>Ação recebida:</strong></div>
+                                                                        <div class="m-grid-col m-grid-col-left">{{acao_descricao_provento.acao_recebida}}</div>
+                                                                        <div class="m-grid-col m-grid-col-left"><strong>Valor de frações:</strong></div>
+                                                                        <div class="m-grid-col m-grid-col-left">
+                                                                        {% if acao_descricao_provento.valor_calculo_frac %}
+                                                                        R$ {{acao_descricao_provento.valor_calculo_frac}}
+                                                                        {% else %}
+                                                                        N/A
+                                                                        {% endif %}
+                                                                        </div>
+                                                                        <div class="m-grid-col m-grid-col-left"><strong>Pagamento de frações:</strong></div>
+                                                                        <div class="m-grid-col m-grid-col-left">{{acao_descricao_provento.data_pagamento_frac|date:'d/m/Y'|default:'N/A'}}</div>
+                                                                    </div>
+                                                                    {% endfor %}
+                                                                {% endif %}
+                                                            </div>
+                                                            <div class="md-radio">
+                                                                <input type="radio" id="descricao_{{descricao_provento.id}}_{{provento_proximo.id}}" name="descricao_{{descricao_provento.id}}" 
+                                                                    value="{{provento_proximo.id}}" disabled="disabled" class="md-radiobtn">
+                                                                <label for="descricao_{{descricao_provento.id}}_{{provento_proximo.id}}">
+                                                                    <span></span>
+                                                                    <span class="check"></span>
+                                                                    <span class="box"></span> Este provento </label>
+                                                            </div>
+                                                            {% if forloop.counter < descricao_provento.proventos_proximos|length %}
+                                                            <hr>
+                                                            {% endif %}
+                                                        </div>
+                                                        {% empty %}
+                                                        <div class="col-md-12"><strong>Não há proventos próximos</strong></div>
+                                                        {% endfor %}
+                                                    </div>
+                                                {% elif pendencia.documento.tipo == 'F' %}
+                                                    <div class="m-grid m-grid-responsive-xs">
+                                                        <div class="m-grid-row">
+                                                            <div class="m-grid-col m-grid-col-left"><strong>FII:</strong></div>
+                                                            <div class="m-grid-col m-grid-col-left">{{descricao_provento.fii}}</div>
+                                                            <div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
+                                                            <div class="m-grid-col m-grid-col-left">{{descricao_provento.descricao_tipo_provento}}</div>
+                                                            <div class="m-grid-col m-grid-col-left"><strong>Valor unit.:</strong></div>
+                                                            <div class="m-grid-col m-grid-col-left">R$ {{descricao_provento.valor_unitario}}</div>
+                                                        </div>
+                                                        <div class="m-grid-row">
+                                                            <div class="m-grid-col m-grid-col-left"><strong>Data EX:</strong></div>
+                                                            <div class="m-grid-col m-grid-col-left">{{descricao_provento.data_ex|date:'d/m/Y'}}</div>
+                                                            <div class="m-grid-col m-grid-col-left"><strong>Pagamento:</strong></div>
+                                                            <div class="m-grid-col m-grid-col-left">{{descricao_provento.data_pagamento|date:'d/m/Y'}}</div>
+                                                        </div>
+                                                    </div>
+                                                    {% if descricao_provento.proventos_proximos %}
+                                                    <div class="m-grid m-grid-responsive-xs">
+                                                        <div class="m-grid-row">
+                                                            <div class="m-grid-col">
+                                                                <div class="md-checkbox">
+                                                                    <input type="checkbox" value="{{descricao_provento.id}}" id="checkbox_alteracao_{{descricao_provento.id}}" name="{{descricao_provento.id}}"  class="md-check">
+                                                                    <label for="checkbox_alteracao_{{descricao_provento.id}}">
+                                                                        <span></span>
+                                                                        <span class="check"></span>
+                                                                        <span class="box"></span> Relacionado a: </label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
+                                                    <hr>
+                                                    <div class="row">
+                                                        {% for provento_proximo in descricao_provento.proventos_proximos %}
+                                                        <div class="col-md-12">
+                                                            <div class="m-grid m-grid-responsive-xs">
+                                                                <div class="m-grid-row">
+                                                                    <div class="m-grid-col m-grid-col-left"><strong>FII:</strong></div>
+                                                                    <div class="m-grid-col m-grid-col-left">{{provento_proximo.fii}}</div>
+                                                                    <div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
+                                                                    <div class="m-grid-col m-grid-col-left">{{provento_proximo.descricao_tipo_provento}}</div>
+                                                                    <div class="m-grid-col m-grid-col-left"><strong>Valor unit.:</strong></div>
+                                                                    <div class="m-grid-col m-grid-col-left">R$ {{provento_proximo.valor_unitario}}</div>
+                                                                </div>
+                                                                <div class="m-grid-row">
+                                                                    <div class="m-grid-col m-grid-col-left"><strong>Data EX:</strong></div>
+                                                                    <div class="m-grid-col m-grid-col-left">{{provento_proximo.data_ex|date:'d/m/Y'}}</div>
+                                                                    <div class="m-grid-col m-grid-col-left"><strong>Pagamento:</strong></div>
+                                                                    <div class="m-grid-col m-grid-col-left">{{provento_proximo.data_pagamento|date:'d/m/Y'}}</div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="md-radio">
+                                                                <input type="radio" id="descricao_{{descricao_provento.id}}_{{provento_proximo.id}}" name="descricao_{{descricao_provento.id}}" 
+                                                                    value="{{provento_proximo.id}}" disabled="disabled" class="md-radiobtn">
+                                                                <label for="descricao_{{descricao_provento.id}}_{{provento_proximo.id}}">
+                                                                    <span></span>
+                                                                    <span class="check"></span>
+                                                                    <span class="box"></span> Este provento </label>
+                                                            </div>
+                                                            {% if forloop.counter < descricao_provento.proventos_proximos|length %}
+                                                            <hr>
+                                                            {% endif %}
+                                                        </div>
+                                                        {% empty %}
+                                                        <div class="col-md-12"><strong>Não há proventos próximos</strong></div>
+                                                        {% endfor %}
+                                                    </div>
+                                                {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="row" id="motivo_recusa">
+                                        <label class="control-label col-md-2" style="text-align: left;"> Motivo da recusa: </label>
+                                        <div class="col-md-10">
+                                            <textarea id="texto_motivo_recusa" maxlength="500" name="motivo_recusa" class="col-md-12"></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="form-actions">
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <button type="submit" name="validar" value="1" class="btn green-steel" id="btn_confirma_validar">Confirma validação</button>
+                                                <button type="submit" name="recusar" value="0" class="btn btn-danger" id="btn_confirma_recusar">Confirma recusa</button>
+                                                <button type="button" class="btn btn-warning" id="btn_cancelar">Cancelar</button>
+                                                <button type="button" class="btn green-steel" id="btn_validar">Validar</button>
+                                                <button type="button" class="btn btn-danger" id="btn_recusar">Recusar</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+{% endblock %}
+{% block extra_footer %}
+<script src={% static "assets/global/plugins/bootstrap-maxlength/bootstrap-maxlength.min.js" %} type="text/javascript"></script>
+
+<script>
+$( document ).ready(function() {
+	$('input[id*=checkbox_alteracao]').click(function() {
+		if ($(this).is(':checked')) {
+    		$('input[name*=descricao_' + $(this).val() + ']').each(function() {
+                $(this).removeAttr("disabled");
+    		});
+		} else {
+			$('input[name*=descricao_' + $(this).val() + ']').each(function() {
+                $(this).attr('disabled', 'disabled');
+                $(this).prop('checked', false);
+            });
+		}
+	});
+	
+	// Iniciar botões
+    $('#btn_confirma_validar').hide();
+    $('#btn_confirma_recusar').hide();
+    $('#btn_cancelar').hide();
+    $('#motivo_recusa').hide();
+	
+	
+	$('#btn_validar').click(function() {
+		$('#btn_confirma_validar').show();
+        $('#btn_cancelar').show();
+        $('#btn_recusar').hide();
+        $(this).hide();
+	});
+	$('#btn_recusar').click(function() {
+        $('#btn_confirma_recusar').show();
+        $('#btn_cancelar').show();
+        $('#btn_validar').hide();
+        $(this).hide();
+        
+        $('#motivo_recusa').show();
+    });
+	$('#btn_cancelar').click(function() {
+        $('#btn_confirma_validar').hide();
+        $('#btn_confirma_recusar').hide();
+        $('#btn_validar').show();
+        $('#btn_recusar').show();
+        $(this).hide();
+        
+        $('#motivo_recusa').hide();
+    });
+	
+    $("#texto_motivo_recusa").maxlength({alwaysShow: true});
+	
+	$('#form_validacao').submit(function() {
+		var botao_clicado = $("button[type=submit]:focus").attr('name');
+	    if (botao_clicado == 'recusar') {
+    		if ($('#texto_motivo_recusa').val().length < 10) {
+    			App.alert({ container: 'messages', // alerts parent container
+    			            place: 'append', // append or prepent in container 
+    			            type: 'danger', // alert's type 
+    			            message: 'Texto de motivo deve ter mais de 10 caracteres', // alert's message 
+                            close: true, // make alert closable 
+                            reset: false, // close all previouse alerts first 
+                            focus: true, // auto scroll to the alert after shown 
+                            closeInSeconds: 60, // auto close after defined seconds 
+                            icon: 'fa fa-warning' // put icon class before the message 
+                        });
+//     			alert('Texto de motivo deve ter mais de 10 caracteres');
+    			return false;
+    		}
+	    }
+	});
+	
+	PDFJS.getDocument('{% url "gerador_proventos:baixar_documento_provento" pendencia.documento.id %}').then(function(pdf) {
+	      // you can now use *pdf* here
+	      pdf.getPage(1).then(function(page) {
+	          // you can now use *page* here
+	          var scale = 1.75;
+	          var viewport = page.getViewport(scale);
+
+	          var canvas = document.getElementById('canvas');
+	          var context = canvas.getContext('2d');
+	          canvas.height = viewport.height;
+	          canvas.width = viewport.width;
+
+	          var renderContext = {
+	            canvasContext: context,
+	            viewport: viewport
+	          };
+	          page.render(renderContext);
+	       });
+	    });
+});
+</script>
+    
+{% endblock %}

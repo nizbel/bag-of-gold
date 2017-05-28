@@ -1,13 +1,17 @@
 # -*- coding: utf-8 -*-
 
+from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.cdb_rdb import OperacaoCDB_RDBForm, \
     HistoricoPorcentagemCDB_RDBForm, CDB_RDBForm, HistoricoCarenciaCDB_RDBForm
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoCDB_RDBFormSet
+from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB, \
     HistoricoPorcentagemCDB_RDB, CDB_RDB, HistoricoCarenciaCDB_RDB, \
     OperacaoVendaCDB_RDB
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoCDB_RDB, Divisao
 from bagogold.bagogold.models.lc import HistoricoTaxaDI
+from bagogold.bagogold.models.td import HistoricoIPCA
+from bagogold.bagogold.utils.cdb_rdb import calcular_valor_cdb_rdb_ate_dia
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa, \
     calcular_valor_atualizado_com_taxas
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo, \
@@ -20,19 +24,18 @@ from django.core.urlresolvers import reverse
 from django.db.models import Count
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
-from django.shortcuts import render_to_response
-from django.template.context import RequestContext
+from django.shortcuts import get_object_or_404
+from django.template.response import TemplateResponse
 import calendar
 import datetime
 
-TIPO_CDB = '1'
-TIPO_RDB = '2'
-
 @login_required
-def detalhar_cdb_rdb(request, id):
+@adiciona_titulo_descricao('Detalhar CDB/RDB', 'Detalhar CDB/RDB, incluindo histórico de carência e '
+                                                'porcentagem de rendimento, além de dados da posição do investidor')
+def detalhar_cdb_rdb(request, cdb_rdb_id):
     investidor = request.user.investidor
     
-    cdb_rdb = CDB_RDB.objects.get(id=id)
+    cdb_rdb = get_object_or_404(CDB_RDB, id=cdb_rdb_id)
     if cdb_rdb.investidor != investidor:
         raise PermissionDenied
     
@@ -40,10 +43,7 @@ def detalhar_cdb_rdb(request, id):
     historico_carencia = HistoricoCarenciaCDB_RDB.objects.filter(cdb_rdb=cdb_rdb)
     
     # Inserir dados do investimento
-    if cdb_rdb.tipo == 'R':
-        cdb_rdb.tipo = 'RDB'
-    elif cdb_rdb.tipo == 'C':
-        cdb_rdb.tipo = 'CDB'
+    cdb_rdb.tipo = cdb_rdb.descricao_tipo()
     cdb_rdb.carencia_atual = cdb_rdb.carencia_atual()
     cdb_rdb.porcentagem_atual = cdb_rdb.porcentagem_atual()
     
@@ -103,14 +103,14 @@ def detalhar_cdb_rdb(request, id):
         cdb_rdb.dias_proxima_retirada = 0
     
     
-    return render_to_response('cdb_rdb/detalhar_cdb_rdb.html', {'cdb_rdb': cdb_rdb, 'historico_porcentagem': historico_porcentagem,
-                                                                       'historico_carencia': historico_carencia},
-                              context_instance=RequestContext(request))
+    return TemplateResponse(request, 'cdb_rdb/detalhar_cdb_rdb.html', {'cdb_rdb': cdb_rdb, 'historico_porcentagem': historico_porcentagem,
+                                                                       'historico_carencia': historico_carencia})
 
 @login_required
-def editar_cdb_rdb(request, id):
+@adiciona_titulo_descricao('Editar CDB/RDB', 'Editar os dados de um CDB/RDB')
+def editar_cdb_rdb(request, cdb_rdb_id):
     investidor = request.user.investidor
-    cdb_rdb = CDB_RDB.objects.get(pk=id)
+    cdb_rdb = get_object_or_404(CDB_RDB, id=cdb_rdb_id)
     
     if cdb_rdb.investidor != investidor:
         raise PermissionDenied
@@ -122,24 +122,29 @@ def editar_cdb_rdb(request, id):
             if form_cdb_rdb.is_valid():
                 cdb_rdb.save()
                 messages.success(request, 'CDB/RDB editado com sucesso')
-                return HttpResponseRedirect(reverse('detalhar_cdb_rdb', kwargs={'id': cdb_rdb.id}))
+                return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': cdb_rdb.id}))
                 
         # TODO verificar o que pode acontecer na exclusão
         elif request.POST.get("delete"):
-            cdb_rdb.delete()
-            messages.success(request, 'CDB/RDB excluído com sucesso')
-            return HttpResponseRedirect(reverse('listar_cdb_rdb'))
+            if OperacaoCDB_RDB.objects.filter(investimento=cdb_rdb).exists():
+                messages.error(request, 'Não é possível excluir o %s pois existem operações cadastradas' % (cdb_rdb.descricao_tipo()))
+                return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': cdb_rdb.id}))
+            else:
+                cdb_rdb.delete()
+                messages.success(request, 'CDB/RDB excluído com sucesso')
+                return HttpResponseRedirect(reverse('cdb_rdb:listar_cdb_rdb'))
  
     else:
         form_cdb_rdb = CDB_RDBForm(instance=cdb_rdb)
             
-    return render_to_response('cdb_rdb/editar_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb},
-                              context_instance=RequestContext(request))  
+    return TemplateResponse(request, 'cdb_rdb/editar_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'cdb_rdb': cdb_rdb})  
     
 @login_required
-def editar_historico_carencia(request, id):
+@adiciona_titulo_descricao('Editar registro de carência de um CDB/RDB', 'Alterar um registro de carência no '
+                                                                        'histórico do CDB/RDB')
+def editar_historico_carencia(request, historico_carencia_id):
     investidor = request.user.investidor
-    historico_carencia = HistoricoCarenciaCDB_RDB.objects.get(pk=id)
+    historico_carencia = get_object_or_404(HistoricoCarenciaCDB_RDB, id=historico_carencia_id)
     
     if historico_carencia.cdb_rdb.investidor != investidor:
         raise PermissionDenied
@@ -147,37 +152,50 @@ def editar_historico_carencia(request, id):
     if request.method == 'POST':
         if request.POST.get("save"):
             if historico_carencia.data is None:
-                form_historico_carencia = HistoricoCarenciaCDB_RDBForm(request.POST, instance=historico_carencia, cdb_rdb=historico_carencia.cdb_rdb, inicial=True)
+                inicial = True
+                form_historico_carencia = HistoricoCarenciaCDB_RDBForm(request.POST, instance=historico_carencia, cdb_rdb=historico_carencia.cdb_rdb, \
+                                                                       investidor=investidor, inicial=inicial)
             else:
-                form_historico_carencia = HistoricoCarenciaCDB_RDBForm(request.POST, instance=historico_carencia, cdb_rdb=historico_carencia.cdb_rdb)
+                inicial = False
+                form_historico_carencia = HistoricoCarenciaCDB_RDBForm(request.POST, instance=historico_carencia, cdb_rdb=historico_carencia.cdb_rdb, \
+                                                                       investidor=investidor)
             if form_historico_carencia.is_valid():
                 historico_carencia.save()
                 messages.success(request, 'Histórico de carência editado com sucesso')
-                return HttpResponseRedirect(reverse('detalhar_cdb_rdb', kwargs={'id': historico_carencia.cdb_rdb.id}))
+                return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': historico_carencia.cdb_rdb.id}))
+            
+            for erro in [erro for erro in form_historico_carencia.non_field_errors()]:
+                messages.error(request, erro)
                 
         elif request.POST.get("delete"):
             if historico_carencia.data is None:
                 messages.error(request, 'Valor inicial de carência não pode ser excluído')
-                return HttpResponseRedirect(reverse('detalhar_cdb_rdb', kwargs={'id': historico_carencia.cdb_rdb.id}))
+                return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': historico_carencia.cdb_rdb.id}))
             # Pegar investimento para o redirecionamento no caso de exclusão
+            inicial = False
             cdb_rdb = historico_carencia.cdb_rdb
             historico_carencia.delete()
             messages.success(request, 'Histórico de carência excluído com sucesso')
-            return HttpResponseRedirect(reverse('detalhar_cdb_rdb', kwargs={'id': cdb_rdb.id}))
+            return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': cdb_rdb.id}))
  
     else:
         if historico_carencia.data is None:
-            form_historico_carencia = HistoricoCarenciaCDB_RDBForm(instance=historico_carencia, cdb_rdb=historico_carencia.cdb_rdb, inicial=True)
+            inicial = True
+            form_historico_carencia = HistoricoCarenciaCDB_RDBForm(instance=historico_carencia, cdb_rdb=historico_carencia.cdb_rdb, \
+                                                                   investidor=investidor, inicial=inicial)
         else: 
-            form_historico_carencia = HistoricoCarenciaCDB_RDBForm(instance=historico_carencia, cdb_rdb=historico_carencia.cdb_rdb)
+            inicial = False
+            form_historico_carencia = HistoricoCarenciaCDB_RDBForm(instance=historico_carencia, cdb_rdb=historico_carencia.cdb_rdb, \
+                                                                   investidor=investidor)
             
-    return render_to_response('cdb_rdb/editar_historico_carencia.html', {'form_historico_carencia': form_historico_carencia},
-                              context_instance=RequestContext(request)) 
+    return TemplateResponse(request, 'cdb_rdb/editar_historico_carencia.html', {'form_historico_carencia': form_historico_carencia, 'inicial': inicial}) 
     
 @login_required
-def editar_historico_porcentagem(request, id):
+@adiciona_titulo_descricao('Editar registro de porcentagem de rendimento de um CDB/RDB', 'Alterar um registro de porcentagem de rendimento no '
+                                                                                         'histórico do CDB/RDB')
+def editar_historico_porcentagem(request, historico_porcentagem_id):
     investidor = request.user.investidor
-    historico_porcentagem = HistoricoPorcentagemCDB_RDB.objects.get(pk=id)
+    historico_porcentagem = get_object_or_404(HistoricoPorcentagemCDB_RDB, id=historico_porcentagem_id)
     
     if historico_porcentagem.cdb_rdb.investidor != investidor:
         raise PermissionDenied
@@ -185,38 +203,50 @@ def editar_historico_porcentagem(request, id):
     if request.method == 'POST':
         if request.POST.get("save"):
             if historico_porcentagem.data is None:
-                form_historico_porcentagem = HistoricoPorcentagemCDB_RDBForm(request.POST, instance=historico_porcentagem, cdb_rdb=historico_porcentagem.cdb_rdb, inicial=True)
+                inicial = True
+                form_historico_porcentagem = HistoricoPorcentagemCDB_RDBForm(request.POST, instance=historico_porcentagem, cdb_rdb=historico_porcentagem.cdb_rdb, \
+                                                                             investidor=investidor, inicial=inicial)
             else:
-                form_historico_porcentagem = HistoricoPorcentagemCDB_RDBForm(request.POST, instance=historico_porcentagem, cdb_rdb=historico_porcentagem.cdb_rdb)
+                inicial = False
+                form_historico_porcentagem = HistoricoPorcentagemCDB_RDBForm(request.POST, instance=historico_porcentagem, cdb_rdb=historico_porcentagem.cdb_rdb, \
+                                                                             investidor=investidor)
             if form_historico_porcentagem.is_valid():
                 historico_porcentagem.save(force_update=True)
                 messages.success(request, 'Histórico de porcentagem editado com sucesso')
-                return HttpResponseRedirect(reverse('detalhar_cdb_rdb', kwargs={'id': historico_porcentagem.cdb_rdb.id}))
+                return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': historico_porcentagem.cdb_rdb.id}))
+                
+            for erro in [erro for erro in form_historico_porcentagem.non_field_errors()]:
+                messages.error(request, erro)
                 
         elif request.POST.get("delete"):
             if historico_porcentagem.data is None:
                 messages.error(request, 'Valor inicial de porcentagem não pode ser excluído')
-                return HttpResponseRedirect(reverse('detalhar_cdb_rdb', kwargs={'id': historico_porcentagem.cdb_rdb.id}))
+                return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': historico_porcentagem.cdb_rdb.id}))
             # Pegar investimento para o redirecionamento no caso de exclusão
+            inicial = False
             cdb_rdb = historico_porcentagem.cdb_rdb
             historico_porcentagem.delete()
             messages.success(request, 'Histórico de porcentagem excluído com sucesso')
-            return HttpResponseRedirect(reverse('detalhar_cdb_rdb', kwargs={'id': cdb_rdb.id}))
+            return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': cdb_rdb.id}))
  
     else:
         if historico_porcentagem.data is None:
-            form_historico_porcentagem = HistoricoPorcentagemCDB_RDBForm(instance=historico_porcentagem, cdb_rdb=historico_porcentagem.cdb_rdb, inicial=True)
+            inicial = True
+            form_historico_porcentagem = HistoricoPorcentagemCDB_RDBForm(instance=historico_porcentagem, cdb_rdb=historico_porcentagem.cdb_rdb, \
+                                                                         investidor=investidor, inicial=inicial)
         else: 
-            form_historico_porcentagem = HistoricoPorcentagemCDB_RDBForm(instance=historico_porcentagem, cdb_rdb=historico_porcentagem.cdb_rdb)
+            inicial = False
+            form_historico_porcentagem = HistoricoPorcentagemCDB_RDBForm(instance=historico_porcentagem, cdb_rdb=historico_porcentagem.cdb_rdb, \
+                                                                         investidor=investidor)
             
-    return render_to_response('cdb_rdb/editar_historico_porcentagem.html', {'form_historico_porcentagem': form_historico_porcentagem},
-                              context_instance=RequestContext(request)) 
+    return TemplateResponse(request, 'cdb_rdb/editar_historico_porcentagem.html', {'form_historico_porcentagem': form_historico_porcentagem, 'inicial': inicial}) 
     
 @login_required
-def editar_operacao_cdb_rdb(request, id):
+@adiciona_titulo_descricao('Editar operação em CDB/RDB', 'Alterar valores de uma operação de compra/venda em CDB/RDB')
+def editar_operacao_cdb_rdb(request, operacao_id):
     investidor = request.user.investidor
     
-    operacao_cdb_rdb = OperacaoCDB_RDB.objects.get(pk=id)
+    operacao_cdb_rdb = get_object_or_404(OperacaoCDB_RDB, id=operacao_id)
     if operacao_cdb_rdb.investidor != investidor:
         raise PermissionDenied
     
@@ -249,7 +279,7 @@ def editar_operacao_cdb_rdb(request, id):
                                     operacao_venda_cdb_rdb.save()
                         formset_divisao.save()
                         messages.success(request, 'Operação editada com sucesso')
-                        return HttpResponseRedirect(reverse('historico_cdb_rdb'))
+                        return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
                     for erro in formset_divisao.non_form_errors():
                         messages.error(request, erro)
                         
@@ -268,10 +298,10 @@ def editar_operacao_cdb_rdb(request, id):
                     divisao_operacao.quantidade = operacao_cdb_rdb.quantidade
                     divisao_operacao.save()
                     messages.success(request, 'Operação editada com sucesso')
-                    return HttpResponseRedirect(reverse('historico_cdb_rdb'))
-            for erros in form_operacao_cdb_rdb.errors.values():
-                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
-                    messages.error(request, erro.message)
+                    return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
+                
+            for erro in [erro for erro in form_operacao_cdb_rdb.non_field_errors()]:
+                messages.error(request, erro)
 #                         print '%s %s'  % (divisao_cdb_rdb.quantidade, divisao_cdb_rdb.divisao)
                 
         elif request.POST.get("delete"):
@@ -284,7 +314,7 @@ def editar_operacao_cdb_rdb(request, id):
                     OperacaoVendaCDB_RDB.objects.get(operacao_venda=operacao_cdb_rdb).delete()
                 operacao_cdb_rdb.delete()
                 messages.success(request, 'Operação excluída com sucesso')
-                return HttpResponseRedirect(reverse('historico_cdb_rdb'))
+                return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
             else:
                 messages.error(request, 'Não é possível excluir operação de compra que já tenha vendas registradas')
  
@@ -293,20 +323,22 @@ def editar_operacao_cdb_rdb(request, id):
                                                     investidor=investidor)
         formset_divisao = DivisaoFormSet(instance=operacao_cdb_rdb, investidor=investidor)
             
-    return render_to_response('cdb_rdb/editar_operacao_cdb_rdb.html', {'form_operacao_cdb_rdb': form_operacao_cdb_rdb, 'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes},
-                              context_instance=RequestContext(request))  
+    return TemplateResponse(request, 'cdb_rdb/editar_operacao_cdb_rdb.html', {'form_operacao_cdb_rdb': form_operacao_cdb_rdb, 'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})  
 
     
-@login_required
+@adiciona_titulo_descricao('Histórico de CDB/RDB', 'Histórico de operações de compra/venda em CDB/RDB')
 def historico(request):
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        return TemplateResponse(request, 'cdb_rdb/historico.html', {'dados': {}, 'operacoes': list(), 
+                                                    'graf_gasto_total': list(), 'graf_patrimonio': list()})
+    
     # Processa primeiro operações de venda (V), depois compra (C)
     operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
     # Verifica se não há operações
     if not operacoes:
-        return render_to_response('cdb_rdb/historico.html', {'dados': {}, 'operacoes': list(), 
-                                                    'graf_gasto_total': list(), 'graf_patrimonio': list()},
-                               context_instance=RequestContext(request))
+        return TemplateResponse(request, 'cdb_rdb/historico.html', {'dados': {}})
     
     # Prepara o campo valor atual
     for operacao in operacoes:
@@ -393,19 +425,19 @@ def historico(request):
     dados['lucro'] = total_patrimonio - total_gasto
     dados['lucro_percentual'] = (total_patrimonio - total_gasto) / total_gasto * 100
     
-    return render_to_response('cdb_rdb/historico.html', {'dados': dados, 'operacoes': operacoes, 
-                                                    'graf_gasto_total': graf_gasto_total, 'graf_patrimonio': graf_patrimonio},
-                               context_instance=RequestContext(request))
+    return TemplateResponse(request, 'cdb_rdb/historico.html', {'dados': dados, 'operacoes': operacoes, 
+                                                    'graf_gasto_total': graf_gasto_total, 'graf_patrimonio': graf_patrimonio})
     
 
 @login_required
+@adiciona_titulo_descricao('Inserir CDB/RDB', 'Inserir um novo CDB/RDB nas opções do investidor')
 def inserir_cdb_rdb(request):
     investidor = request.user.investidor
     
     # Preparar formsets 
-    PorcentagemFormSet = inlineformset_factory(CDB_RDB, HistoricoPorcentagemCDB_RDB, fields=('porcentagem',),
+    PorcentagemFormSet = inlineformset_factory(CDB_RDB, HistoricoPorcentagemCDB_RDB, fields=('porcentagem',), form=LocalizedModelForm,
                                             extra=1, can_delete=False, max_num=1, validate_max=True)
-    CarenciaFormSet = inlineformset_factory(CDB_RDB, HistoricoCarenciaCDB_RDB, fields=('carencia',),
+    CarenciaFormSet = inlineformset_factory(CDB_RDB, HistoricoCarenciaCDB_RDB, fields=('carencia',), form=LocalizedModelForm,
                                             extra=1, can_delete=False, max_num=1, validate_max=True, labels = {'carencia': 'Período de carência (em dias)',})
     
     if request.method == 'POST':
@@ -429,14 +461,13 @@ def inserir_cdb_rdb(request):
                     # Capturar erros oriundos da hora de salvar os objetos
                     except Exception as erro:
                         messages.error(request, erro.message)
-                        return render_to_response('cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'formset_porcentagem': formset_porcentagem,
-                                                          'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
+                        return TemplateResponse(request, 'cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'formset_porcentagem': formset_porcentagem,
+                                                          'formset_carencia': formset_carencia})
                         
-                    return HttpResponseRedirect(reverse('listar_cdb_rdb'))
+                    return HttpResponseRedirect(reverse('cdb_rdb:listar_cdb_rdb'))
                 
-        for erros in form_cdb_rdb.errors.values():
-            for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
-                messages.error(request, erro.message)
+        for erro in [erro for erro in form_cdb_rdb.non_field_errors()]:
+            messages.error(request, erro)
         for erro in formset_porcentagem.non_form_errors():
             messages.error(request, erro)
         for erro in formset_carencia.non_form_errors():
@@ -446,10 +477,59 @@ def inserir_cdb_rdb(request):
         form_cdb_rdb = CDB_RDBForm()
         formset_porcentagem = PorcentagemFormSet()
         formset_carencia = CarenciaFormSet()
-    return render_to_response('cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'formset_porcentagem': formset_porcentagem,
-                                                              'formset_carencia': formset_carencia}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'formset_porcentagem': formset_porcentagem,
+                                                              'formset_carencia': formset_carencia})
 
 @login_required
+@adiciona_titulo_descricao('Inserir registro de carência para um CDB/RDB', 'Inserir registro de alteração de carência ao histórico de '
+                                                                           'um CDB/RDB')
+def inserir_historico_carencia_cdb_rdb(request, cdb_rdb_id):
+    investidor = request.user.investidor
+    cdb_rdb = get_object_or_404(CDB_RDB, id=cdb_rdb_id)
+    
+    if cdb_rdb.investidor != investidor:
+        raise PermissionDenied
+    
+    if request.method == 'POST':
+        form = HistoricoCarenciaCDB_RDBForm(request.POST, initial={'cdb_rdb': cdb_rdb.id}, cdb_rdb=cdb_rdb, investidor=investidor)
+        if form.is_valid():
+            historico = form.save()
+            messages.success(request, 'Histórico de carência para %s alterado com sucesso' % historico.cdb_rdb)
+            return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': cdb_rdb.id}))
+        
+        for erro in [erro for erro in form.non_field_errors()]:
+            messages.error(request, erro)
+    else:
+        form = HistoricoCarenciaCDB_RDBForm(initial={'cdb_rdb': cdb_rdb.id}, cdb_rdb=cdb_rdb, investidor=investidor)
+            
+    return TemplateResponse(request, 'cdb_rdb/inserir_historico_carencia_cdb_rdb.html', {'form': form})
+
+@login_required
+@adiciona_titulo_descricao('Inserir registro de porcentagem para um CDB/RDB', 'Inserir registro de alteração de porcentagem de rendimento '
+                                                                              'ao histórico de um CDB/RDB')
+def inserir_historico_porcentagem_cdb_rdb(request, cdb_rdb_id):
+    investidor = request.user.investidor
+    cdb_rdb = get_object_or_404(CDB_RDB, id=cdb_rdb_id)
+    
+    if cdb_rdb.investidor != investidor:
+        raise PermissionDenied
+    
+    if request.method == 'POST':
+        form = HistoricoPorcentagemCDB_RDBForm(request.POST, initial={'cdb_rdb': cdb_rdb.id}, cdb_rdb=cdb_rdb, investidor=investidor)
+        if form.is_valid():
+            historico = form.save()
+            messages.success(request, 'Histórico de porcentagem de rendimento para %s alterado com sucesso' % historico.cdb_rdb)
+            return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': cdb_rdb.id}))
+        
+        for erro in [erro for erro in form.non_field_errors()]:
+            messages.error(request, erro)
+    else:
+        form = HistoricoPorcentagemCDB_RDBForm(initial={'cdb_rdb': cdb_rdb.id}, cdb_rdb=cdb_rdb, investidor=investidor)
+            
+    return TemplateResponse(request, 'cdb_rdb/inserir_historico_porcentagem_cdb_rdb.html', {'form': form})
+
+@login_required
+@adiciona_titulo_descricao('Inserir operação em CDB/RDB', 'Inserir registro de operação de compra/venda em CDB/RDB')
 def inserir_operacao_cdb_rdb(request):
     investidor = request.user.investidor
     
@@ -485,7 +565,7 @@ def inserir_operacao_cdb_rdb(request):
                     operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
                     operacao_venda_cdb_rdb.save()
                     messages.success(request, 'Operação inserida com sucesso')
-                    return HttpResponseRedirect(reverse('historico_cdb_rdb'))
+                    return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
                 # Vendas parciais
                 else:
                     # Verificar se varias divisões
@@ -496,9 +576,9 @@ def inserir_operacao_cdb_rdb(request):
                             operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
                             operacao_venda_cdb_rdb.save()
                             messages.success(request, 'Operação inserida com sucesso')
-                            return HttpResponseRedirect(reverse('historico_cdb_rdb'))
+                            return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
                         for erro in formset_divisao_cdb_rdb.non_form_errors():
-                                messages.error(request, erro)
+                            messages.error(request, erro)
                                 
                     else:
                         operacao_cdb_rdb.save()
@@ -507,7 +587,7 @@ def inserir_operacao_cdb_rdb(request):
                         operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
                         operacao_venda_cdb_rdb.save()
                         messages.success(request, 'Operação inserida com sucesso')
-                        return HttpResponseRedirect(reverse('historico_cdb_rdb'))
+                        return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
             
             # Compra
             else:
@@ -517,33 +597,34 @@ def inserir_operacao_cdb_rdb(request):
                         operacao_cdb_rdb.save()
                         formset_divisao_cdb_rdb.save()
                         messages.success(request, 'Operação inserida com sucesso')
-                        return HttpResponseRedirect(reverse('historico_cdb_rdb'))
+                        return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
                     for erro in formset_divisao_cdb_rdb.non_form_errors():
-                                messages.error(request, erro)
+                        messages.error(request, erro)
                                 
                 else:
-                        operacao_cdb_rdb.save()
-                        divisao_operacao = DivisaoOperacaoCDB_RDB(operacao=operacao_cdb_rdb, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_cdb_rdb.quantidade)
-                        divisao_operacao.save()
-                        messages.success(request, 'Operação inserida com sucesso')
-                        return HttpResponseRedirect(reverse('historico_cdb_rdb'))
+                    operacao_cdb_rdb.save()
+                    divisao_operacao = DivisaoOperacaoCDB_RDB(operacao=operacao_cdb_rdb, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_cdb_rdb.quantidade)
+                    divisao_operacao.save()
+                    messages.success(request, 'Operação inserida com sucesso')
+                    return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
                     
-        for erros in form_operacao_cdb_rdb.errors.values():
-            for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
-                messages.error(request, erro.message)
-        for erro in formset_divisao_cdb_rdb.non_form_errors():
+        for erro in [erro for erro in form_operacao_cdb_rdb.non_field_errors()]:
             messages.error(request, erro)
 #                         print '%s %s'  % (divisao_cdb_rdb.quantidade, divisao_cdb_rdb.divisao)
                 
     else:
         form_operacao_cdb_rdb = OperacaoCDB_RDBForm(investidor=investidor)
         formset_divisao_cdb_rdb = DivisaoCDB_RDBFormSet(investidor=investidor)
-    return render_to_response('cdb_rdb/inserir_operacao_cdb_rdb.html', {'form_operacao_cdb_rdb': form_operacao_cdb_rdb, 'formset_divisao_cdb_rdb': formset_divisao_cdb_rdb,
-                                                                        'varias_divisoes': varias_divisoes}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'cdb_rdb/inserir_operacao_cdb_rdb.html', {'form_operacao_cdb_rdb': form_operacao_cdb_rdb, 'formset_divisao': formset_divisao_cdb_rdb,
+                                                                        'varias_divisoes': varias_divisoes})
 
-@login_required
+@adiciona_titulo_descricao('Listar CDB/RDB', 'Lista de CDBs e RDBs cadastrados pelo investidor')
 def listar_cdb_rdb(request):
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        return TemplateResponse(request, 'cdb_rdb/listar_cdb_rdb.html', {'cdb_rdb': list()})
+    
     cdb_rdb = CDB_RDB.objects.filter(investidor=investidor)
     
     for investimento in cdb_rdb:
@@ -553,54 +634,19 @@ def listar_cdb_rdb(request):
         investimento.rendimento_atual = investimento.porcentagem_atual()
         
         if investimento.tipo_rendimento == 1:
-            investimento.str_tipo_rendimento = 'Pré-fixado'
+            investimento.str_tipo_rendimento = 'Prefixado'
         elif investimento.tipo_rendimento == 2:
             investimento.str_tipo_rendimento = 'Pós-fixado'
         
-    return render_to_response('cdb_rdb/listar_cdb_rdb.html', {'cdb_rdb': cdb_rdb},
-                              context_instance=RequestContext(request))
+    return TemplateResponse(request, 'cdb_rdb/listar_cdb_rdb.html', {'cdb_rdb': cdb_rdb})
 
-@login_required
-def modificar_carencia_cdb_rdb(request, id):
-    investidor = request.user.investidor
-    cdb_rdb = CDB_RDB.objects.get(id=id)
-    
-    if cdb_rdb.investidor != investidor:
-        raise PermissionDenied
-    
-    if request.method == 'POST':
-        form = HistoricoCarenciaCDB_RDBForm(request.POST, initial={'cdb_rdb': cdb_rdb.id}, cdb_rdb=cdb_rdb)
-        if form.is_valid():
-            historico = form.save()
-            messages.success(request, 'Histórico de carência para %s alterado com sucesso' % historico.cdb_rdb)
-            return HttpResponseRedirect(reverse('detalhar_cdb_rdb', kwargs={'id': cdb_rdb.id}))
-    else:
-        form = HistoricoCarenciaCDB_RDBForm(initial={'cdb_rdb': cdb_rdb.id}, cdb_rdb=cdb_rdb)
-            
-    return render_to_response('cdb_rdb/modificar_carencia_cdb_rdb.html', {'form': form}, context_instance=RequestContext(request))
-
-@login_required
-def modificar_porcentagem_cdb_rdb(request, id):
-    investidor = request.user.investidor
-    cdb_rdb = CDB_RDB.objects.get(id=id)
-    
-    if cdb_rdb.investidor != investidor:
-        raise PermissionDenied
-    
-    if request.method == 'POST':
-        form = HistoricoPorcentagemCDB_RDBForm(request.POST, initial={'cdb_rdb': cdb_rdb.id}, cdb_rdb=cdb_rdb)
-        if form.is_valid():
-            historico = form.save()
-            messages.success(request, 'Histórico de porcentagem de rendimento para %s alterado com sucesso' % historico.cdb_rdb)
-            return HttpResponseRedirect(reverse('detalhar_cdb_rdb', kwargs={'id': cdb_rdb.id}))
-    else:
-        form = HistoricoPorcentagemCDB_RDBForm(initial={'cdb_rdb': cdb_rdb.id}, cdb_rdb=cdb_rdb)
-            
-    return render_to_response('cdb_rdb/modificar_porcentagem_cdb_rdb.html', {'form': form}, context_instance=RequestContext(request))
-
-@login_required
+@adiciona_titulo_descricao('Painel de CDB/RDB', 'Posição atual do investidor em CDB/RDB')
 def painel(request):
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        return TemplateResponse(request, 'cdb_rdb/painel.html', {'operacoes': list(), 'dados': {}})
+        
     # Processa primeiro operações de venda (V), depois compra (C)
     operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
     if not operacoes:
@@ -609,8 +655,7 @@ def painel(request):
         dados['total_ir'] = Decimal(0)
         dados['total_iof'] = Decimal(0)
         dados['total_ganho_prox_dia'] = Decimal(0)
-        return render_to_response('cdb_rdb/painel.html', {'operacoes': {}, 'dados': dados},
-                               context_instance=RequestContext(request))
+        return TemplateResponse(request, 'cdb_rdb/painel.html', {'operacoes': {}})
     
     # Prepara o campo valor atual
     for operacao in operacoes:
@@ -635,15 +680,16 @@ def painel(request):
         
         # Processar operações
         for operacao in operacoes:     
-            if (operacao.data <= data_iteracao):     
+            if (operacao.data <= data_iteracao) and (data_iteracao <= operacao.data_vencimento()):     
                 # Verificar se se trata de compra ou venda
                 if operacao.tipo_operacao == 'C':
+                    if (data_iteracao < operacao.data_vencimento()):
                         # Calcular o valor atualizado para cada operacao
                         operacao.atual = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa)
-                        # Arredondar na última iteração
-                        if (data_iteracao == data_final):
-                            str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
-                            operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+                    # Arredondar na última iteração
+                    if (data_iteracao == data_final) or (data_iteracao == operacao.data_vencimento()):
+                        str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
+                        operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
                         
                 elif operacao.tipo_operacao == 'V':
                     if (operacao.data == data_iteracao):
@@ -678,10 +724,13 @@ def painel(request):
     total_vencimento = 0
     for operacao in operacoes:
         # Calcular o ganho no dia seguinte, considerando taxa do dia anterior
-        operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa) - operacao.atual
-        str_auxiliar = str(operacao.ganho_prox_dia.quantize(Decimal('.0001')))
-        operacao.ganho_prox_dia = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-        total_ganho_prox_dia += operacao.ganho_prox_dia
+        if data_final < operacao.data_vencimento():
+            operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa) - operacao.atual
+            str_auxiliar = str(operacao.ganho_prox_dia.quantize(Decimal('.0001')))
+            operacao.ganho_prox_dia = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+            total_ganho_prox_dia += operacao.ganho_prox_dia
+        else:
+            operacao.ganho_prox_dia = Decimal(0)
         
         # Calcular impostos
         qtd_dias = (datetime.date.today() - operacao.data).days
@@ -702,11 +751,15 @@ def painel(request):
         operacao.valor_liquido = operacao.atual - operacao.imposto_renda - operacao.iof
         
         # Estimativa para o valor do investimento na data de vencimento
-        qtd_dias_uteis_ate_vencimento = qtd_dias_uteis_no_periodo(data_final + datetime.timedelta(days=1), operacao.data_vencimento())
-        operacao.valor_vencimento = calcular_valor_atualizado_com_taxas({HistoricoTaxaDI.objects.get(data=data_final).taxa: qtd_dias_uteis_ate_vencimento},
-                                             operacao.atual, operacao.taxa)
-        str_auxiliar = str(operacao.valor_vencimento.quantize(Decimal('.0001')))
-        operacao.valor_vencimento = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+        if data_final < operacao.data_vencimento():
+            qtd_dias_uteis_ate_vencimento = qtd_dias_uteis_no_periodo(data_final + datetime.timedelta(days=1), operacao.data_vencimento())
+            operacao.valor_vencimento = calcular_valor_atualizado_com_taxas({HistoricoTaxaDI.objects.get(data=data_final).taxa: qtd_dias_uteis_ate_vencimento},
+                                                 operacao.atual, operacao.taxa)
+            str_auxiliar = str(operacao.valor_vencimento.quantize(Decimal('.0001')))
+            operacao.valor_vencimento = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+        else:
+            operacao.valor_vencimento = operacao.atual
+            print operacao.data_vencimento()
         
         total_atual += operacao.atual
         total_ir += operacao.imposto_renda
@@ -723,5 +776,21 @@ def painel(request):
     dados['total_ganho_prox_dia'] = total_ganho_prox_dia
     dados['total_vencimento'] = total_vencimento
     
-    return render_to_response('cdb_rdb/painel.html', {'operacoes': operacoes, 'dados': dados},
-                               context_instance=RequestContext(request))
+    return TemplateResponse(request, 'cdb_rdb/painel.html', {'operacoes': operacoes, 'dados': dados})
+
+@adiciona_titulo_descricao('Sobre CDB/RDB', 'Detalha o que são CDB e RDB')
+def sobre(request):
+    data_atual = datetime.date.today()
+    historico_di = HistoricoTaxaDI.objects.filter(data__gte=data_atual.replace(year=data_atual.year-3))
+    graf_historico_di = [[str(calendar.timegm(valor_historico.data.timetuple()) * 1000), float(valor_historico.taxa)] for valor_historico in historico_di]
+    
+    historico_ipca = HistoricoIPCA.objects.filter(ano__gte=(data_atual.year-3)).exclude(mes__lt=data_atual.month, ano=data_atual.year-3)
+    graf_historico_ipca = [[str(calendar.timegm(valor_historico.data().timetuple()) * 1000), float(valor_historico.valor)] for valor_historico in historico_ipca]
+    
+    if request.user.is_authenticated():
+        total_atual = sum(calcular_valor_cdb_rdb_ate_dia(request.user.investidor).values())
+    else:
+        total_atual = 0
+    
+    return TemplateResponse(request, 'cdb_rdb/sobre.html', {'graf_historico_di': graf_historico_di, 'graf_historico_ipca': graf_historico_ipca,
+                                                            'total_atual': total_atual})

@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 
-
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -47,6 +46,8 @@ INSTALLED_APPS = (
     
     #Bag-O-Gold
     'bagogold.bagogold',
+    'bagogold.pendencias',
+    'bagogold.cri_cra',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -58,6 +59,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'bagogold.bagogold.middleware.ultimo_acesso.UltimoAcessoMiddleWare',
 )
 
 ROOT_URLCONF = 'bagogold.urls'
@@ -73,7 +75,9 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'bagogold.bagogold.context_processors.current_version',
                 'bagogold.bagogold.context_processors.env',
+                'bagogold.bagogold.context_processors.pendencias_investidor',
             ],
         },
     },
@@ -93,7 +97,7 @@ DATABASES = {
     }
 }
 
-LOGIN_REDIRECT_URL = 'home'
+LOGIN_REDIRECT_URL = 'inicio:painel_geral'
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
@@ -101,6 +105,8 @@ LOGIN_REDIRECT_URL = 'home'
 from django.contrib.messages import constants as messages
 MESSAGE_TAGS = {
     messages.INFO: 'alert',
+    messages.SUCCESS: 'success bg-green-steel bg-font-green-steel',
+    messages.ERROR: 'error bg-red-thunderbird bg-font-red-thunderbird',
 }
 
 LANGUAGE_CODE = 'pt-br'
@@ -125,8 +131,6 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_HOST_USER = 'bagofgold@bagofgold.com.br'
 EMAIL_HOST_PASSWORD = '9jU3IU8hse'
 EMAIL_PORT = 587
-# TODO Remover quando estivermos prontos para funcionar
-REGISTRATION_OPEN = False
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
@@ -137,6 +141,12 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR + '/bagogold', "static"),
     '/var/www/static/',
 ]
+
+MEDIA_ROOT = PROJECT_ROOT + '/media/'
+
+# Configurar precisao de decimais
+from decimal import getcontext
+getcontext().prec = 20
 
 # Buscar configuracoes adicionais
 from conf.settings_local import *

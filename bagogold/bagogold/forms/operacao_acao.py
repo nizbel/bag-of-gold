@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.acoes import OperacaoAcao, \
     UsoProventosOperacaoAcao
 from decimal import Decimal
@@ -14,7 +15,7 @@ ESCOLHAS_CONSOLIDADO=(
 ESCOLHAS_TIPO_OPERACAO=(('C', "Compra"),
                         ('V', "Venda"))
 
-class OperacaoAcaoForm(forms.ModelForm):
+class OperacaoAcaoForm(LocalizedModelForm):
 
 
     class Meta:
@@ -28,15 +29,20 @@ class OperacaoAcaoForm(forms.ModelForm):
         
     class Media:
         js = ('js/bagogold/calculo_emolumentos.js', 
-              'js/bagogold/acoes.js',)
+              'js/bagogold/form_operacao_acao.js',)
     
     def clean_preco_unitario(self):
         preco_unitario = Decimal(self.cleaned_data['preco_unitario'])
-        if preco_unitario <= Decimal(0):
-            raise forms.ValidationError('Preço unitário deve ser maior que 0')
+        if preco_unitario < Decimal(0):
+            raise forms.ValidationError('Preço unitário deve ser maior ou igual a 0')
         return preco_unitario
     
-class UsoProventosOperacaoAcaoForm(forms.ModelForm):
+    def clean(self):
+        data = super(OperacaoAcaoForm, self).clean()
+        if data.get('consolidada') and data.get('data') is None:
+            raise forms.ValidationError('Data é obrigatória para operações consolidadas')
+    
+class UsoProventosOperacaoAcaoForm(LocalizedModelForm):
     class Meta:
         model = UsoProventosOperacaoAcao
         fields = ('qtd_utilizada', )
@@ -56,5 +62,3 @@ class UsoProventosOperacaoAcaoForm(forms.ModelForm):
             data['qtd_utilizada'] = qtd_utilizada
         else:
             data['qtd_utilizada'] = 0
-
-        return data

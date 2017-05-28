@@ -1,26 +1,40 @@
 {% extends "base.html" %}
+{% load staticfiles %}
+
+{% block extra_head %}
+<link href={% static "assets/global/plugins/datatables/datatables.min.css" %} rel="stylesheet" type="text/css" />
+<link href={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.css" %} rel="stylesheet" type="text/css" />
+{% endblock %}
+
+{% block pagina_titulo_icone %}
+<i class="icon-calendar font-yellow-crusta"></i>
+{% endblock %}
 
 {% block content %}
-<div class="row-fluid">
-    <h1>Listar anos</h1>
-</div>
-<div class="row-fluid">
-    <table id="historico_porcentagem" class="table table-striped table-bordered bootstrap-datatable datatable">
-        <thead>
-            <tr>
-                <th>Ano</th>
-                <th>Valor a pagar</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for imposto_renda in impostos_renda %}
-        <tr>
-            <td><a href="{% url "detalhar_imposto_renda" imposto_renda.ano %}">{{ imposto_renda.ano }}</a></td>
-            <td>R$ {{ imposto_renda.valor_a_pagar|default:"0,00" }}</td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-</div>
+<div class="portlet-body">
+		<table id="historico_porcentagem" class="table table-striped table-bordered table-hover table-header-fixed">
+		<thead>
+			<tr>
+				<th>Ano</th>
+				<th>Valor a pagar</th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for imposto_renda in impostos_renda %}
+		<tr>
+			<td><a href="{% url "imposto_renda:detalhar_imposto_renda" imposto_renda.ano %}">{{ imposto_renda.ano }}</a></td>
+			<td>R$ {{ imposto_renda.valor_a_pagar|default:"0,00" }}</td>
+		</tr>
+		{% endfor %}
+		</tbody>
+		</table>
+	</div>
 
+{% endblock %}
+
+{% block extra_footer %}
+<script src={% static "assets/global/scripts/datatable.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/datatables/datatables.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.js" %} type="text/javascript"></script>
+<script src={% static "assets/pages/scripts/table-datatables-fixedheader.min.js" %} type="text/javascript"></script>
 {% endblock %}
