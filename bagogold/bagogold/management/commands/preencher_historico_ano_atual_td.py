@@ -31,4 +31,4 @@ class Command(BaseCommand):
             if settings.ENV == 'DEV':
                 print traceback.format_exc()
             elif settings.ENV == 'PROD':
-                mail_admins('Erro em Preencher histórico para TD no ano atual', traceback.format_exc())
+                mail_admins(u'Erro em Preencher histórico para TD no ano atual', traceback.format_exc())
