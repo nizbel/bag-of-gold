@@ -6,7 +6,6 @@ from django.contrib.auth.models import User
 import csv
 import datetime
 import re
-import xlrd
 
 
 def testcsv():

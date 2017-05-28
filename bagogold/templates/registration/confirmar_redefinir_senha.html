@@ -1,0 +1,40 @@
+{% extends "base_login.html" %}
+{% load staticfiles %}
+
+{% block extra_head %}
+    <meta content="Redefinir senha da conta utilizando o e-mail" name="description" />
+{% endblock %}
+
+{% block content %}
+    <form method="post">
+        {% csrf_token %}
+        <h3 class="form-title">Redefinir senha</h3>
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            <button class="close" data-close="alert"></button>
+            {% for error in form.non_field_errors %}
+            <span>{{error}}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <div class="form-group">
+            <!--ie8, ie9 does not support html5 placeholder, so we just show field title for that-->
+            <label class="control-label visible-ie8 visible-ie9">E-mail</label>
+            <div class="input-icon">
+                <i class="fa fa-envelope"></i>
+                <input class="form-control placeholder-no-fix" type="text" placeholder="E-mail" name="{{ form.email.name }}" id="{{ form.email.id_for_label }}" {% if form.email.value %}value="{{form.email.value}}"{% endif %} /> </div>
+            {% if form.email.errors %}
+                {% for error in form.email.errors %}
+                    <span class="font-white"><i class="fa fa-warning"></i> {{error}}</span>
+                {% endfor %}
+            {% endif %}
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn yellow-crusta pull-right"> Redefinir </button>
+            <a href="{% url 'login' %}" class="btn red-thunderbird">Voltar</a>
+        </div>
+        <!-- BEGIN COPYRIGHT -->
+        <div class="copyright" style="margin-top: 25px;"> {% now "Y" %} &copy; Bag of Gold </div>
+        <!-- END COPYRIGHT -->
+    </form>
+{% endblock %}

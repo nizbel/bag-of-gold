@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block pagina_titulo_icone %}
+<i class="icon-note font-yellow-crusta"></i>
+{% endblock %}
+
+{% block content %}
+<div class="portlet-body form">
+    <div class="alert alert-warning">
+        Senha alterada com sucesso.
+    </div>
+    <a class="btn yellow-crusta" href="{% url "minha_conta" %}">Voltar</a>
+</div>
+
+{% endblock %}

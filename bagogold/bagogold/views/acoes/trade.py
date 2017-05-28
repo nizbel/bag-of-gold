@@ -1,19 +1,27 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.forms.operacao_acao import OperacaoAcaoForm
+from bagogold.bagogold.decorators import adiciona_titulo_descricao
+from bagogold.bagogold.forms.divisoes import DivisaoOperacaoAcaoFormSet
+from bagogold.bagogold.forms.operacao_acao import OperacaoAcaoForm, \
+    UsoProventosOperacaoAcaoForm
 from bagogold.bagogold.forms.operacao_compra_venda import \
     OperacaoCompraVendaForm
-from bagogold.bagogold.models.acoes import OperacaoAcao, OperacaoCompraVenda
+from bagogold.bagogold.models.acoes import OperacaoAcao, OperacaoCompraVenda, \
+    UsoProventosOperacaoAcao
 from bagogold.bagogold.models.divisoes import Divisao, \
-    TransferenciaEntreDivisoes
+    TransferenciaEntreDivisoes, DivisaoOperacaoAcao
 from bagogold.bagogold.utils.acoes import calcular_lucro_trade_ate_data, \
-    calcular_poupanca_proventos_ate_dia
+    calcular_poupanca_prov_acao_ate_dia
 from decimal import Decimal
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
-from django.db.models import Sum
+from django.db import transaction
+from django.forms.models import inlineformset_factory
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render_to_response
-from django.template.context import RequestContext
+from django.shortcuts import get_object_or_404
+from django.template.response import TemplateResponse
+from itertools import chain
 import calendar
 import datetime
 import json
@@ -27,47 +35,57 @@ LISTA_MESES = [['Janeiro', 1],   ['Fevereiro', 2],
                ['Novembro', 11], ['Dezembro', 12],
                ]
 
-@login_required
+@adiciona_titulo_descricao('Acompanhamento mensal de Trading', 'Mostra acumulados mensais para operações em Ações para Trading')
 def acompanhamento_mensal(request):
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        
+        return TemplateResponse(request, 'acoes/trade/acompanhamento_mensal.html', {'lista_anos': list(), 'lista_meses': list(), 'dados_mes': {}, 'graf_compras_mes': list(),
+                                                                                    'graf_vendas_mes': list(), 'graf_lucro_mes': list(), 'acoes_ranking': list()})
     
-    if request.method == 'POST':
-        ano = int(request.POST.get('select_ano', datetime.date.today().year).replace('.', ''))
-        # Valor padrão para mês
-        mes = datetime.date.today().month
-        for possivel_mes in range(1,13):
-            if str(possivel_mes) in request.POST:
-                mes = possivel_mes
-    else: 
-        ano = datetime.date.today().year
-        mes = datetime.date.today().month
+    try:
+        ano = int(request.GET.get('ano', datetime.date.today().year))
+        mes = int(request.GET.get('mes', datetime.date.today().month))
+    except:
+        messages.error(request, 'Erro no mês/ano enviados')
+        return HttpResponseRedirect(reverse('acoes:trading:acompanhamento_mensal'))
     
     # Pegar primeiro ano que uma operação foi feita
-    try:
+    if OperacaoAcao.objects.filter(destinacao='T', investidor=investidor).exclude(data__isnull=True).order_by('data').exists():
         primeira_operacao = OperacaoAcao.objects.filter(destinacao='T', investidor=investidor).exclude(data__isnull=True).order_by('data')[0]
         primeira_operacao_ano = primeira_operacao.data.year
-    except:
+    else:
         primeira_operacao_ano = datetime.date.today().year
     
     # Preparar lista de anos
     lista_anos = list()
     for ano_operacoes in reversed(range(primeira_operacao_ano, datetime.date.today().year+1)):
-        print type(ano_operacoes)
+#         print type(ano_operacoes)
         lista_anos += [str(ano_operacoes)]
-    
-    # Preparar lista de meses
-    lista_meses = list()
+#     print lista_anos
+
     if ano == datetime.date.today().year:
-        lista_meses = LISTA_MESES[0:datetime.date.today().month]
+        ultimo_mes = datetime.date.today().month
     else:
-        lista_meses = LISTA_MESES
+        ultimo_mes = 12
+    lista_meses = LISTA_MESES
     
-    # Alterar lista de meses
-    if request.method == 'POST' and request.is_ajax():
-        return HttpResponse(json.dumps(lista_meses), content_type = "application/json")
+#     # Alterar lista de meses
+#     if request.is_ajax():
+#         return HttpResponse(json.dumps(lista_meses), content_type = "application/json")
         
     operacoes = OperacaoAcao.objects.exclude(data__isnull=True).filter(destinacao='T', investidor=investidor, data__year=ano, data__month=mes).order_by('data')
     
+#     if not operacoes:
+#         if request.is_ajax():
+#             return HttpResponse(json.dumps({'lista_anos': lista_anos, 'lista_meses': lista_meses,
+#                                              'dados_mes': {'ultimo_mes': ultimo_mes, 'ano': str(ano).replace('.', ''), 'mes': mes}}), content_type = "application/json")
+#         else:
+#             return TemplateResponse(request, 'acoes/trade/acompanhamento_mensal.html', {'lista_anos': lista_anos, 'lista_meses': lista_meses, 
+#                                                                                         'dados_mes': {'ultimo_mes': ultimo_mes, 'ano': str(ano).replace('.', ''), 'mes': mes},
+#                                                                                         'graf_compras_mes': {}, 'graf_vendas_mes': {}, 'graf_lucro_mes': {}})
+        
     graf_compras_mes = list()
     graf_vendas_mes = list()
     graf_lucro_mes = list()
@@ -79,7 +97,7 @@ def acompanhamento_mensal(request):
     for divisao in Divisao.objects.filter():
         saldo_inicial_mes += divisao.saldo_acoes_trade(data=datetime.date(ano, mes, 1) - datetime.timedelta(days=1))
     
-    dados_mes = {'ano': ano, 'mes': mes, 'qtd_compra': 0, 'qtd_venda': 0, 'qtd_op_compra': 0, 'saldo_trades': saldo_inicial_mes,
+    dados_mes = {'ultimo_mes': ultimo_mes, 'ano': str(ano).replace('.', ''), 'mes': mes, 'qtd_compra': 0, 'qtd_venda': 0, 'qtd_op_compra': 0, 'saldo_trades': saldo_inicial_mes,
                  'qtd_op_venda': 0, 'lucro_bruto': 0, 'total_corretagem' : 0, 'total_emolumentos': 0}
     acoes_lucro = {}
     
@@ -148,7 +166,7 @@ def acompanhamento_mensal(request):
     
     # Adicionar pagamentos de proventos
     # TODO Rever a essa forma de calculo
-    dados_mes['saldo_trades'] += calcular_poupanca_proventos_ate_dia(investidor, datetime.date(ano, mes, calendar.monthrange(ano,mes)[1]), destinacao='T')
+    dados_mes['saldo_trades'] += calcular_poupanca_prov_acao_ate_dia(investidor, datetime.date(ano, mes, calendar.monthrange(ano,mes)[1]), destinacao='T')
     
     # Preparar IR
     if (dados_mes['qtd_venda'] > 20000 and dados_mes['lucro_bruto'] > 0):
@@ -190,58 +208,189 @@ def acompanhamento_mensal(request):
         graf_lucro_mes += [[ultimo_dia, float(dados_mes['lucro_bruto'])]]
     
     # TODO adicionar primeiro e ultimo dia ao lucro do mes
-    
-    return render_to_response('acoes/trade/acompanhamento_mensal.html', 
-                              {'lista_anos': lista_anos, 'lista_meses': lista_meses, 'dados_mes': dados_mes, 'graf_compras_mes': graf_compras_mes,
-                               'graf_vendas_mes': graf_vendas_mes, 'graf_lucro_mes': graf_lucro_mes, 'acoes_ranking': acoes_lucro_ordenado},
-                               context_instance=RequestContext(request))
-    
-    
-@login_required
-def editar_operacao(request, id):
-    operacao = OperacaoCompraVenda.objects.get(pk=id)
-    if request.method == 'POST':
-        if request.POST.get("save"):
-            form = OperacaoCompraVendaForm(request.POST, instance=operacao)
-            if form.is_valid():
-                form.save()
-        elif request.POST.get("delete"):
-            operacao.delete()
-            return HttpResponseRedirect(reverse('historico_operacoes_cv'))
-
+    if request.is_ajax():
+        lista_temp = [(ticker, '{0:,}'.format(Decimal(valor).quantize(Decimal('0.01'))).replace(',', '.')[::-1].replace('.', ',', 1)[::-1]) for ticker, valor in acoes_lucro_ordenado]
+        acoes_lucro_ordenado = lista_temp
+        for chave in dados_mes.keys():
+            if isinstance(dados_mes[chave], Decimal):
+                # Formata números com separador de mil, trocando , por . e depois inverte a string para trocar o último . por ,
+                dados_mes[chave] = '{0:,}'.format(dados_mes[chave].quantize(Decimal('0.01'))).replace(',', '.')[::-1].replace('.', ',', 1)[::-1]
+            if isinstance(dados_mes[chave], float):
+                # Formata números com separador de mil, trocando , por . e depois inverte a string para trocar o último . por ,
+                dados_mes[chave] = '{0:,}'.format(Decimal(dados_mes[chave]).quantize(Decimal('0.01'))).replace(',', '.')[::-1].replace('.', ',', 1)[::-1]
+        return HttpResponse(json.dumps({'lista_anos': lista_anos, 'lista_meses': lista_meses, 'dados_mes': dados_mes, 'graf_compras_mes': graf_compras_mes,
+                                        'graf_vendas_mes': graf_vendas_mes, 'graf_lucro_mes': graf_lucro_mes, 'acoes_ranking': acoes_lucro_ordenado}), content_type = "application/json")
     else:
-        form = OperacaoCompraVendaForm(instance=operacao)
-        
-    return render_to_response('acoes/trade/editar_operacao_acao.html', {'form': form}, context_instance=RequestContext(request)) 
-    
-@login_required
-def editar_operacao_acao(request, id):
-    operacao = OperacaoAcao.objects.get(pk=id)
-    if request.method == 'POST':
-        if request.POST.get("save"):
-            form = OperacaoAcaoForm(request.POST, instance=operacao)
-            if form.is_valid():
-                form.save()
-        elif request.POST.get("delete"):
-            operacao.delete()
-            return HttpResponseRedirect(reverse('historico_operacoes'))
-
-    else:
-        form = OperacaoAcaoForm(instance=operacao)
-            
-    return render_to_response('acoes/trade/editar_operacao_acao.html', {'form': form}, context_instance=RequestContext(request))   
+        return TemplateResponse(request, 'acoes/trade/acompanhamento_mensal.html', {'lista_anos': lista_anos, 'lista_meses': lista_meses, 'dados_mes': dados_mes, 'graf_compras_mes': graf_compras_mes,
+                                                                                    'graf_vendas_mes': graf_vendas_mes, 'graf_lucro_mes': graf_lucro_mes, 'acoes_ranking': acoes_lucro_ordenado})
     
     
 @login_required
-def historico_operacoes(request):
+@adiciona_titulo_descricao('Editar operação de Trading em Ações', 'Altera dados de uma compra e venda de Ações')
+def editar_operacao(request, operacao_id):
     investidor = request.user.investidor
+    
+    operacao = get_object_or_404(OperacaoCompraVenda, pk=operacao_id)
+    # Checar se é o investidor da operação
+    if investidor != operacao.compra.investidor:
+        raise PermissionDenied
+    
+    if request.method == 'POST':
+        if request.POST.get("save"):
+            form = OperacaoCompraVendaForm(request.POST, instance=operacao, investidor=investidor)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Operação de Compra/Venda editada com sucesso')
+                return HttpResponseRedirect(reverse('acoes:trading:historico_operacoes_cv'))
+            
+            for erro in [erro for erro in form.non_field_errors()]:
+                messages.error(request, erro)
+        elif request.POST.get("delete"):
+            operacao.delete()
+            messages.error(request, 'Operação de Compra/Venda excluída com sucesso')
+            return HttpResponseRedirect(reverse('acoes:trading:historico_operacoes_cv'))
+
+    else:
+        form = OperacaoCompraVendaForm(instance=operacao, investidor=investidor)
+        
+    return TemplateResponse(request, 'acoes/trade/editar_operacao.html', {'form': form}) 
+    
+@login_required
+@adiciona_titulo_descricao('Editar operação em Ações para Trading', 'Altera valores de uma operação de compra/venda de Ações para Trading')
+def editar_operacao_acao(request, operacao_id):
+    investidor = request.user.investidor
+    
+    operacao_acao = get_object_or_404(OperacaoAcao, pk=operacao_id, destinacao='T')
+    
+    # Verifica se a operação é do investidor, senão, jogar erro de permissão
+    if operacao_acao.investidor != investidor:
+        raise PermissionDenied
+    
+    # Valor da poupança de proventos na data apontada
+    poupanca_proventos = calcular_poupanca_prov_acao_ate_dia(investidor, operacao_acao.data)
+    
+    # Preparar formset para divisoes
+    DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'),
+                                            extra=1, formset=DivisaoOperacaoAcaoFormSet)
+    
+    # Testa se investidor possui mais de uma divisão
+    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    
+    # Busca as operações de compra/venda relativas a essa operação, se alguma envolver daytrade, marcar como daytrade
+    # TODO preparar para muitas execuções em uma mesma operação
+    operacao_day_trade = False
+    if operacao_acao.compra or operacao_acao.venda:
+        for operacao_compra_venda in list(chain(operacao_acao.compra.get_queryset(), operacao_acao.venda.get_queryset())):
+            if operacao_compra_venda.day_trade:
+                operacao_day_trade = True
+
+    if request.method == 'POST':
+        if request.POST.get("save"):
+            form_operacao_acao = OperacaoAcaoForm(request.POST, instance=operacao_acao)
+            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_acao, investidor=investidor) if varias_divisoes else None
+            
+            if not varias_divisoes:
+                try:
+                    form_uso_proventos = UsoProventosOperacaoAcaoForm(request.POST, instance=UsoProventosOperacaoAcao.objects.get(divisao_operacao__operacao=operacao_acao))
+                except UsoProventosOperacaoAcao.DoesNotExist:
+                    form_uso_proventos = UsoProventosOperacaoAcaoForm(request.POST)
+            else:
+                form_uso_proventos = UsoProventosOperacaoAcaoForm()    
+                
+            if form_operacao_acao.is_valid():
+                try:
+                    with transaction.atomic():
+                        # Validar de acordo com a quantidade de divisões
+                        if varias_divisoes:
+                            if formset_divisao.is_valid():
+                                operacao_acao.save()
+                                formset_divisao.save()
+                                for form_divisao_operacao in [form for form in formset_divisao if form.cleaned_data]:
+                                    # Ignorar caso seja apagado
+                                    if 'DELETE' in form_divisao_operacao.cleaned_data and form_divisao_operacao.cleaned_data['DELETE']:
+                                        pass
+                                    else:
+                                        divisao_operacao = form_divisao_operacao.save(commit=False)
+                                        if hasattr(divisao_operacao, 'usoproventosoperacaoacao'):
+                                            if form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] == None or form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] == 0:
+                                                divisao_operacao.usoproventosoperacaoacao.delete()
+                                            else:
+                                                divisao_operacao.usoproventosoperacaoacao.qtd_utilizada = form_divisao_operacao.cleaned_data['qtd_proventos_utilizada']
+                                                divisao_operacao.usoproventosoperacaoacao.save()
+                                        else:
+                                            if form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] != None and form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] > 0:
+                                                # TODO remover operação de uso proventos
+                                                divisao_operacao.usoproventosoperacaoacao = UsoProventosOperacaoAcao(qtd_utilizada=form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'], operacao=operacao_acao)
+                                                divisao_operacao.usoproventosoperacaoacao.save()
+                                
+                                messages.success(request, 'Operação alterada com sucesso')
+                                return HttpResponseRedirect(reverse('acoes:trading:historico_operacoes'))
+                            for erro in formset_divisao.non_form_errors():
+                                messages.error(request, erro)
+                                
+                        else:
+                            if form_uso_proventos.is_valid():
+                                operacao_acao.save()
+                                divisao_operacao = DivisaoOperacaoAcao.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_acao, quantidade=operacao_acao.quantidade)
+                                divisao_operacao.save()
+                                uso_proventos = form_uso_proventos.save(commit=False)
+        #                         print uso_proventos.qtd_utilizada 
+                                if uso_proventos.qtd_utilizada > 0:
+                                    uso_proventos.operacao = operacao_acao
+                                    uso_proventos.divisao_operacao = DivisaoOperacaoAcao.objects.get(operacao=operacao_acao)
+                                    uso_proventos.save()
+                                # Se uso proventos for 0 e existir uso proventos atualmente, apagá-lo
+                                elif uso_proventos.qtd_utilizada == 0 and UsoProventosOperacaoAcao.objects.filter(divisao_operacao__operacao=operacao_acao):
+                                    uso_proventos.delete()
+                                messages.success(request, 'Operação alterada com sucesso')
+                                return HttpResponseRedirect(reverse('acoes:trading:historico_operacoes'))
+                except:
+                    pass
+            
+            for erro in [erro for erro in form_operacao_acao.non_field_errors()]:
+                messages.error(request, erro)
+
+        elif request.POST.get("delete"):
+            try:
+                with transaction.atomic():
+                    divisao_acao = DivisaoOperacaoAcao.objects.filter(operacao=operacao_acao)
+                    for divisao in divisao_acao:
+                        if hasattr(divisao, 'usoproventosoperacaoacao'):
+                            divisao.usoproventosoperacaoacao.delete()
+                        divisao.delete()
+                    operacao_acao.delete()
+                    messages.success(request, 'Operação apagada com sucesso')
+                    return HttpResponseRedirect(reverse('acoes:bh:historico_bh'))
+            except:
+                messages.error('Houve um erro na exclusão da operação')
+
+    else:
+        form_operacao_acao = OperacaoAcaoForm(instance=operacao_acao)
+        if not varias_divisoes:
+            if UsoProventosOperacaoAcao.objects.filter(divisao_operacao__operacao=operacao_acao).exists():
+                form_uso_proventos = UsoProventosOperacaoAcaoForm(instance=UsoProventosOperacaoAcao.objects.get(divisao_operacao__operacao=operacao_acao))
+            else:
+                form_uso_proventos = UsoProventosOperacaoAcaoForm()
+        else:
+            form_uso_proventos = UsoProventosOperacaoAcaoForm()
+        formset_divisao = DivisaoFormSet(instance=operacao_acao, investidor=investidor)
+            
+    return TemplateResponse(request, 'acoes/trade/editar_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos, 'operacao_day_trade': operacao_day_trade,
+                                                                       'formset_divisao': formset_divisao, 'poupanca_proventos': poupanca_proventos, 'varias_divisoes': varias_divisoes})
+            
+@adiciona_titulo_descricao('Histórico de Ações (Trading)', 'Histórico de operações de compra/venda para Trading')
+def historico_operacoes(request):
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        return TemplateResponse(request, 'acoes/trade/historico_operacoes.html', {'operacoes': list(), 'meses_operacao': list(), 'graf_lucro_acumulado': list(),
+                               'graf_lucro_mensal': list()})
     
     operacoes = OperacaoAcao.objects.filter(destinacao='T', investidor=investidor).exclude(data__isnull=True).order_by('data')
     
     if not operacoes:
-        return render_to_response('acoes/trade/historico_operacoes.html', 
-                              {'operacoes': operacoes, 'meses_operacao': list(), 'graf_lucro_acumulado': list(),
-                               'graf_lucro_mensal': list()}, context_instance=RequestContext(request))
+        return TemplateResponse(request, 'acoes/trade/historico_operacoes.html', {'operacoes': list(), 'meses_operacao': list(), 'graf_lucro_acumulado': list(),
+                               'graf_lucro_mensal': list()})
     
     # Dados para acompanhamento de vendas mensal e tributavel
     ano = operacoes[0].data.year
@@ -328,47 +477,115 @@ def historico_operacoes(request):
             graf_lucro_mensal += [[str(calendar.timegm(datetime.date(ano, mes, 1).timetuple()) * 1000), float(lucro_mensal)]]
             
                 
-    return render_to_response('acoes/trade/historico_operacoes.html', 
-                              {'operacoes': operacoes, 'meses_operacao': meses_operacao, 'graf_lucro_acumulado': graf_lucro_acumulado,
-                               'graf_lucro_mensal': graf_lucro_mensal}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'acoes/trade/historico_operacoes.html', {'operacoes': operacoes, 'meses_operacao': meses_operacao, 'graf_lucro_acumulado': graf_lucro_acumulado,
+                               'graf_lucro_mensal': graf_lucro_mensal})
     
-@login_required
+@adiciona_titulo_descricao('Histórico de operações de Trading', 'Histórico de operações de compra e venda')
 def historico_operacoes_cv(request):
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        return TemplateResponse(request, 'acoes/trade/historico_operacoes_cv.html', {'operacoes': list()})
+        
     operacoes = OperacaoCompraVenda.objects.filter(compra__investidor=investidor).order_by('id')
     
     # TODO adicionar calculos de lucro com DayTrade
     for operacao in operacoes:
-        operacao.lucro = operacao.venda.preco_unitario * operacao.venda.quantidade - operacao.venda.corretagem - operacao.venda.emolumentos 
-        operacao.lucro -= (operacao.compra.preco_unitario * operacao.compra.quantidade + operacao.compra.corretagem + operacao.compra.emolumentos)
+        operacao.total_compra = (Decimal(operacao.quantidade) / operacao.compra.quantidade) * (operacao.compra.preco_unitario * operacao.compra.quantidade + \
+                                                                                      operacao.compra.corretagem + operacao.compra.emolumentos)
+        operacao.lucro = (Decimal(operacao.quantidade) / operacao.venda.quantidade) * (operacao.venda.preco_unitario * operacao.venda.quantidade - \
+                                                                               operacao.venda.corretagem - operacao.venda.emolumentos )
+        operacao.lucro -= operacao.total_compra
+        # Arredondar
+        operacao.lucro = operacao.lucro.quantize(Decimal('0.01'))
+        
+        operacao.lucro_percentual = operacao.lucro / operacao.total_compra * 100
             
-    return render_to_response('acoes/trade/historico_operacoes_cv.html', {'operacoes': operacoes}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'acoes/trade/historico_operacoes_cv.html', {'operacoes': operacoes})
     
 @login_required
+@adiciona_titulo_descricao('Inserir operação de Trading em Ações', 'Insere um registro de operação de Trading em Ações (compra e venda)')
 def inserir_operacao(request):
     investidor = request.user.investidor
     if request.method == 'POST':
-        form = OperacaoCompraVendaForm(request.POST)
+        form = OperacaoCompraVendaForm(request.POST, investidor=investidor)
         if form.is_valid():
             operacao_trade = form.save(commit=False)
             operacao_trade.investidor = investidor
             operacao_trade.save()
-            return HttpResponseRedirect(reverse('historico_operacoes_cv'))
+            messages.success(request, 'Operação inserida com sucesso')
+            return HttpResponseRedirect(reverse('acoes:trading:historico_operacoes_cv'))
+        for erro in [erro for erro in form.non_field_errors()]:
+            messages.error(request, erro)
     else:
         form = OperacaoCompraVendaForm(investidor=investidor)
             
-    return render_to_response('acoes/trade/inserir_operacao.html', {'form': form}, context_instance=RequestContext(request))
+    return TemplateResponse(request, 'acoes/trade/inserir_operacao.html', {'form': form})
     
 @login_required
+@adiciona_titulo_descricao('Inserir operação em Ações para Trading', 'Insere um registro de operação de compra/venda em Ações para Trading')
 def inserir_operacao_acao(request):
+    investidor = request.user.investidor
+    
+    # Testa se investidor possui mais de uma divisão
+    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    
+    # Preparar formset para divisoes
+    DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'), can_delete=False,
+                                            extra=1, formset=DivisaoOperacaoAcaoFormSet)
+    
     if request.method == 'POST':
-        form = OperacaoAcaoForm(request.POST)
-        if form.is_valid():
-            operacao_acao = form.save(commit=False)
+        form_operacao_acao = OperacaoAcaoForm(request.POST)
+        form_uso_proventos = UsoProventosOperacaoAcaoForm(request.POST) if not varias_divisoes else None
+        formset_divisao = DivisaoFormSet(request.POST, investidor=investidor) if varias_divisoes else None
+        if form_operacao_acao.is_valid():
+            operacao_acao = form_operacao_acao.save(commit=False)
+            operacao_acao.investidor = investidor
             operacao_acao.destinacao = 'T'
-            operacao_acao.save()
-            return HttpResponseRedirect(reverse('historico_operacoes'))
-    else:
-        form = OperacaoAcaoForm()
+            try:
+                with transaction.atomic():
+                    # Validar de acordo com a quantidade de divisões
+                    if varias_divisoes:
+                        formset_divisao = DivisaoFormSet(request.POST, instance=operacao_acao, investidor=investidor)
+                        if formset_divisao.is_valid():
+                            operacao_acao.save()
+                            formset_divisao.save()
+                            for form_divisao_operacao in [form for form in formset_divisao if form.cleaned_data]:
+                                divisao_operacao = form_divisao_operacao.save(commit=False)
+                                if form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] != None and form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] > 0:
+                                    # TODO remover operação de uso proventos
+                                    divisao_operacao.usoproventosoperacaoacao = UsoProventosOperacaoAcao(qtd_utilizada=form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'], operacao=operacao_acao)
+                                    divisao_operacao.usoproventosoperacaoacao.save()
+                                
+                            messages.success(request, 'Operação inserida com sucesso')
+                            return HttpResponseRedirect(reverse('acoes:trading:historico_operacoes'))
+                        for erro in formset_divisao.non_form_errors():
+                            messages.error(request, erro)
+                        
+                    else:
+                        if form_uso_proventos.is_valid():
+                            operacao_acao.save()
+                            divisao_operacao = DivisaoOperacaoAcao(operacao=operacao_acao, quantidade=operacao_acao.quantidade, divisao=investidor.divisaoprincipal.divisao)
+                            divisao_operacao.save()
+                            uso_proventos = form_uso_proventos.save(commit=False)
+                            if uso_proventos.qtd_utilizada > 0:
+                                uso_proventos.operacao = operacao_acao
+                                uso_proventos.divisao_operacao = divisao_operacao
+                                uso_proventos.save()
+                            messages.success(request, 'Operação inserida com sucesso')
+                            return HttpResponseRedirect(reverse('acoes:trading:historico_operacoes'))
+            except:
+                pass
             
-    return render_to_response('acoes/trade/inserir_operacao_acao.html', {'form': form}, context_instance=RequestContext(request))
+        for erro in [erro for erro in form_operacao_acao.non_field_errors()]:
+            messages.error(request, erro)
+    else:
+        valores_iniciais = {}
+        if investidor.tipo_corretagem == 'F':
+            valores_iniciais['corretagem'] = investidor.corretagem_padrao
+        form_operacao_acao = OperacaoAcaoForm(initial=valores_iniciais)
+        form_uso_proventos = UsoProventosOperacaoAcaoForm(initial={'qtd_utilizada': Decimal('0.00')})
+        formset_divisao = DivisaoFormSet(investidor=investidor)
+            
+    return TemplateResponse(request, 'acoes/trade/inserir_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,
+                                                                       'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})

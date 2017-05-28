@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block pagina_titulo_icone %}
+<i class="icon-note font-yellow-crusta"></i>
+{% endblock %}
+
+{% block content %}
+<div class="portlet-body form">
+	<div class="alert alert-warning">
+        Por favor insira sua senha antiga, por segurança, e então entre com a nova senha duas vezes para que verifiquemos que foi digitada corretamente.
+	</div>
+	<!-- BEGIN FORM-->
+	<form method="POST" class="horizontal-form">{% csrf_token %}
+		<div class="form-body">
+			<div class="row">
+				<div class="form-group col-md-6 {% if form.old_password.errors %} has-error {% endif %}">
+					<label class="control-label col-md-4" style="text-align: left;"> Senha antiga: </label>
+					<div class="col-md-8">
+						<input type="password" class="form-control" name="old_password" id="id_old_password">
+						{% if form.old_password.errors %} <span class="help-block"> {{ form.old_password.errors.as_text }} </span> {% endif %}
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="form-group col-md-6 {% if form.new_password1.errors %} has-error {% endif %}">
+					<label class="control-label col-md-4" style="text-align: left;"> Nova senha: </label>
+					<div class="col-md-8">
+						<input type="password" class="form-control" name="new_password1" id="id_new_password1">
+						{% if form.new_password1.errors %} <span class="help-block"> {{ form.new_password1.errors.as_text }} </span> {% endif %}
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="form-group col-md-6 {% if form.new_password2.errors %} has-error {% endif %}">
+					<label class="control-label col-md-4" style="text-align: left;"> Confirmação da nova senha: </label>
+					<div class="col-md-8">
+						<input type="password" class="form-control" name="new_password2" id="id_new_password1">
+						{% if form.new_password2.errors %} <span class="help-block"> {{ form.new_password2.errors.as_text }} </span> {% endif %}
+					</div>
+				</div>
+			</div>
+			<div class="form-actions">
+				<div class="row">
+					<div class="col-md-offset col-md-3">
+						<button type="submit" name="save" value="1" class="btn yellow-crusta"> Alterar senha </button>
+                        <a class="btn red-thunderbird" href="{% url "minha_conta" %}">Cancelar</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+	<!-- END FORM-->
+</div>
+
+{% endblock %}
+
+{% block extra_footer %}
+<script src={% static "assets/global/plugins/jquery-validation/js/jquery.validate.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/jquery-validation/js/additional-methods.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/moment.min.js" %} type="text/javascript"></script>
+{% endblock %}

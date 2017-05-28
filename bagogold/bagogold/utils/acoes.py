@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao, \
-    OperacaoAcao, AcaoProvento, Acao, Provento
+    OperacaoAcao, AcaoProvento, Provento
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.bagogold.models.fii import OperacaoFII
-from decimal import Decimal, ROUND_DOWN, ROUND_HALF_DOWN, ROUND_UP
+from decimal import Decimal
 from django.db.models import Sum, Case, When, IntegerField, F
 from itertools import chain
-from operator import attrgetter, itemgetter
+from operator import attrgetter
 from urllib2 import Request, urlopen, HTTPError, URLError
 import calendar
 import datetime
@@ -16,14 +15,16 @@ import re
 
 def calcular_operacoes_sem_proventos_por_mes(investidor, operacoes):
     """ 
-    Calcula a quantidade de ações compradas sem usar proventos por mes
+    Calcula a quantidade investida em compras de ações sem usar proventos por mes
     Parâmetros: Investidor, Queryset de operações ordenadas por data
     Retorno: Lista de tuplas (data, quantidade)
     """
     lista_ids_operacoes = list()
     usos_proventos = UsoProventosOperacaoAcao.objects.filter()
     for uso_proventos in usos_proventos:
-        lista_ids_operacoes.append(uso_proventos.operacao.id)
+        lista_ids_operacoes.append(uso_proventos.divisao_operacao.operacao.id)
+    # Remover elementos repetidos
+    lista_ids_operacoes = list(set(lista_ids_operacoes))
     
     anos_meses = list()
     for operacao in operacoes:
@@ -41,7 +42,7 @@ def calcular_operacoes_sem_proventos_por_mes(investidor, operacoes):
                 total_mes += (operacao.quantidade * operacao.preco_unitario + \
                 operacao.emolumentos + operacao.corretagem)
             else:
-                qtd_usada = usos_proventos.get(operacao__id=operacao.id).qtd_utilizada
+                qtd_usada = operacao.qtd_proventos_utilizada()
 #                 print 'Com uso de proventos: %s' % (qtd_usada)
                 total_mes += (operacao.quantidade * operacao.preco_unitario + \
                 operacao.emolumentos + operacao.corretagem) - qtd_usada
@@ -60,6 +61,8 @@ def calcular_uso_proventos_por_mes(investidor):
     usos_proventos = UsoProventosOperacaoAcao.objects.filter()
     for uso_proventos in usos_proventos:
         lista_ids_operacoes.append(uso_proventos.operacao.id)
+    # Remover elementos repetidos
+    lista_ids_operacoes = list(set(lista_ids_operacoes))
     
     # Guarda as operações que tiveram uso de proventos
     operacoes = OperacaoAcao.objects.filter(id__in=lista_ids_operacoes)
@@ -75,7 +78,7 @@ def calcular_uso_proventos_por_mes(investidor):
         operacoes_mes = operacoes.filter(data__month=mes, data__year=ano)
         total_mes = 0
         for operacao in operacoes_mes:                      
-            total_mes += usos_proventos.get(operacao__id=operacao.id).qtd_utilizada
+            total_mes += operacao.qtd_proventos_utilizada()
         data_formatada = str(calendar.timegm(datetime.date(ano, mes, 15).timetuple()) * 1000)
         graf_uso_proventos_mes += [[data_formatada, float(total_mes)]]
         
@@ -246,12 +249,13 @@ def quantidade_acoes_ate_dia(investidor, ticker, dia, considerar_trade=False):
     Parâmetros: Investidor
                 Ticker da ação
                 Dia final
+                Levar trades em consideração
     Retorno: Quantidade de ações
     """
     if considerar_trade:
-        operacoes = OperacaoAcao.objects.filter(acao__ticker=ticker, data__lte=dia).exclude(data__isnull=True).order_by('data')
+        operacoes = OperacaoAcao.objects.filter(investidor=investidor, acao__ticker=ticker, data__lte=dia).exclude(data__isnull=True).order_by('data')
     else:
-        operacoes = OperacaoAcao.objects.filter(destinacao='B', acao__ticker=ticker, data__lte=dia).exclude(data__isnull=True).order_by('data')
+        operacoes = OperacaoAcao.objects.filter(investidor=investidor, destinacao='B', acao__ticker=ticker, data__lte=dia).exclude(data__isnull=True).order_by('data')
     # Pega os proventos em ações recebidos por outras ações
     proventos_em_acoes = AcaoProvento.objects.filter(acao_recebida__ticker=ticker, provento__data_ex__lte=dia).exclude(provento__data_ex__isnull=True).order_by('provento__data_ex')
     for provento in proventos_em_acoes:
@@ -274,11 +278,11 @@ def quantidade_acoes_ate_dia(investidor, ticker, dia, considerar_trade=False):
             if item.provento.acao.ticker == ticker:
                 qtd_acoes += int(item.provento.valor_unitario * qtd_acoes / 100)
             else:
-                qtd_acoes += int(item.provento.valor_unitario * quantidade_acoes_ate_dia(investidor, item.provento.acao.ticker, item.data) / 100)
+                qtd_acoes += int(item.provento.valor_unitario * quantidade_acoes_ate_dia(investidor, item.provento.acao.ticker, item.data, considerar_trade) / 100)
     
     return qtd_acoes
 
-def calcular_qtd_acoes_ate_dia_por_divisao(dia, divisao_id):
+def calcular_qtd_acoes_ate_dia_por_divisao(dia, divisao_id, destinacao='B'):
     """ 
     Calcula a quantidade de ações até dia determinado por divisão
     Parâmetros: Dia final
@@ -288,7 +292,7 @@ def calcular_qtd_acoes_ate_dia_por_divisao(dia, divisao_id):
     operacoes_divisao_id = DivisaoOperacaoAcao.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).values('operacao__id')
     if len(operacoes_divisao_id) == 0:
         return {}
-    operacoes = OperacaoAcao.objects.filter(destinacao='B', id__in=operacoes_divisao_id).exclude(data__isnull=True).order_by('data')
+    operacoes = OperacaoAcao.objects.filter(destinacao=destinacao, id__in=operacoes_divisao_id).exclude(data__isnull=True).order_by('data')
     # Pega os proventos em ações recebidos por outras ações
     proventos_em_acoes = AcaoProvento.objects.filter(provento__acao__in=operacoes.values_list('acao', flat=True), provento__data_ex__lte=dia).exclude(provento__data_ex__isnull=True).order_by('provento__data_ex')
     for provento in proventos_em_acoes:
@@ -329,9 +333,9 @@ def calcular_qtd_acoes_ate_dia_por_divisao(dia, divisao_id):
     
     return qtd_acoes
 
-def calcular_poupanca_proventos_ate_dia(investidor, dia, destinacao='B'):
+def calcular_poupanca_prov_acao_ate_dia(investidor, dia, destinacao='B'):
     """
-    Calcula a quantidade de proventos provisionada até dia determinado
+    Calcula a quantidade de proventos provisionada até dia determinado para ações
     Parâmetros: Investidor
 				Dia da posição de proventos
 				Destinação ('B' ou 'T')
@@ -346,10 +350,10 @@ def calcular_poupanca_proventos_ate_dia(investidor, dia, destinacao='B'):
     for provento in proventos:
         provento.data = provento.data_ex
      
-    lista_conjunta = sorted(chain(operacoes, proventos),
+    lista_conjunta = sorted(chain(proventos, operacoes),
                             key=attrgetter('data'))
     
-    total_proventos = 0
+    total_proventos = Decimal(0)
     
     # Guarda as ações correntes para o calculo do patrimonio
     acoes = {}
@@ -391,9 +395,9 @@ def calcular_poupanca_proventos_ate_dia(investidor, dia, destinacao='B'):
     
     return total_proventos.quantize(Decimal('0.01'))
 
-def calcular_poupanca_proventos_ate_dia_por_divisao(dia, divisao, destinacao='B'):
+def calcular_poupanca_prov_acao_ate_dia_por_divisao(dia, divisao, destinacao='B'):
     """
-    Calcula a quantidade de proventos provisionada até dia determinado para uma divisão
+    Calcula a quantidade de proventos provisionada até dia determinado para uma divisão para ações
     Parâmetros: Dia da posição de proventos, divisão escolhida, destinação ('B' ou 'T')
     Retorno: Quantidade provisionada no dia
     """
@@ -450,227 +454,28 @@ def calcular_poupanca_proventos_ate_dia_por_divisao(dia, divisao, destinacao='B'
     
     return total_proventos.quantize(Decimal('0.01'))
 
-# TODO melhorar isso
-def calcular_preco_medio_ir(ano):
-    class Object(object):
-        pass
-    operacoes_ano = OperacaoAcao.objects.filter(data__lte='%s-12-31' % (ano), destinacao='B').order_by('data')
-    proventos_ano = Provento.objects.exclude(data_ex__isnull=True).filter(data_ex__range=[operacoes_ano[0].data, '%s-12-31' % (ano)]).order_by('data_ex')
-    for provento in proventos_ano:
-        provento.data = provento.data_ex
-    
-    lista_eventos = sorted(chain(operacoes_ano, proventos_ano), key=attrgetter('data'))
-    
-    acoes = {}
-    for evento in lista_eventos:
-        if evento.acao.ticker not in acoes:
-            acoes[evento.acao.ticker] = Object()
-            acoes[evento.acao.ticker].quantidade = 0
-            acoes[evento.acao.ticker].preco_medio = Decimal(0)
-            acoes[evento.acao.ticker].jscp = Decimal(0)
-            acoes[evento.acao.ticker].dividendos = Decimal(0)
-            acoes[evento.acao.ticker].credito_prox_ano = Decimal(0)
-            
-        
-        # Verificar se é operação
-        if isinstance(evento, OperacaoAcao):  
-            if evento.tipo_operacao == 'C':
-                acoes[evento.acao.ticker].quantidade += evento.quantidade
-                acoes[evento.acao.ticker].preco_medio += (evento.quantidade * evento.preco_unitario + \
-                    evento.emolumentos + evento.corretagem)
-                
-            elif evento.tipo_operacao == 'V':
-                acoes[evento.acao.ticker].quantidade -= evento.quantidade
-                acoes[evento.acao.ticker].preco_medio -= (evento.quantidade * evento.preco_unitario - \
-                    evento.emolumentos - evento.corretagem)
-        
-        # Verificar se é provento
-        elif isinstance(evento, Provento):  
-            if evento.tipo_provento in ['D', 'J']:
-                if evento.data_pagamento >= datetime.date(ano,1,1):
-                    total_recebido = acoes[evento.acao.ticker].quantidade * evento.valor_unitario
-                    print evento.acao.ticker, acoes[evento.acao.ticker].quantidade, evento.valor_unitario, total_recebido, 'pagos em', evento.data_pagamento
-                    if evento.data_pagamento <= datetime.date(ano,12,31):
-                        if evento.tipo_provento == 'J':
-                            total_recebido = total_recebido * Decimal(0.85)
-                            acoes[evento.acao.ticker].jscp += total_recebido
-                        else:
-                            acoes[evento.acao.ticker].dividendos += total_recebido
-                    else:
-                        acoes[evento.acao.ticker].credito_prox_ano += total_recebido
-                    
-                
-            elif evento.tipo_provento == 'A':
-                provento_acao = evento.acaoprovento_set.all()[0]
-                if provento_acao.acao_recebida.ticker not in acoes:
-                    acoes[provento_acao.acao_recebida.ticker] = Object()
-                    acoes[provento_acao.acao_recebida.ticker].quantidade = 0
-                    acoes[provento_acao.acao_recebida.ticker].preco_medio = Decimal(0)
-                    acoes[provento_acao.acao_recebida.ticker].jscp = Decimal(0)
-                    acoes[provento_acao.acao_recebida.ticker].dividendos = Decimal(0)
-                    acoes[provento_acao.acao_recebida.ticker].credito_prox_ano = Decimal(0)
-                acoes_recebidas = int((acoes[evento.acao.ticker].quantidade * evento.valor_unitario ) / 100 )
-                valor_unitario_acoes_recebidas = Decimal(0)
-                acoes[provento_acao.acao_recebida.ticker].preco_medio += (acoes_recebidas * valor_unitario_acoes_recebidas)
-                acoes[provento_acao.acao_recebida.ticker].quantidade += acoes_recebidas
-#                 if provento_acao.valor_calculo_frac > 0:
-#                     if provento_acao.data_pagamento_frac <= datetime.date.today():
-#                                 print u'recebido fracionado %s, %s ações de %s a %s' % (total_recebido, acoes[evento.acao.ticker], evento.acao.ticker, evento.valor_unitario)
-#                         total_gasto += (((acoes[evento.acao.ticker] * evento.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
-#                         total_proventos += (((acoes[evento.acao.ticker] * evento.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
 
-    for acao in sorted(acoes.keys()):
-        if acoes[acao].quantidade > 0:
-            print acao, '->', acoes[acao].quantidade, 'a', (acoes[acao].preco_medio/Decimal(acoes[acao].quantidade)), 'Div.:', acoes[acao].dividendos, 'JSCP:', acoes[acao].jscp, 'Ano seguinte:', \
-                acoes[acao].credito_prox_ano
-            print acao, '->', acoes[acao].quantidade, 'a', Decimal(format(acoes[acao].preco_medio/Decimal(acoes[acao].quantidade), '.2f')), 'Div.:', Decimal(format(acoes[acao].dividendos, '.2f')), \
-                                                                   'JSCP:', Decimal(format(acoes[acao].jscp, '.2f')), 'Ano seguinte:', acoes[acao].credito_prox_ano
-            
-    fiis = {}
-    for operacao in OperacaoFII.objects.filter(data__lte='%s-12-31' % (ano)).order_by('data'):
-        if operacao.fii.ticker not in fiis:
-            fiis[operacao.fii.ticker] = Object()
-            fiis[operacao.fii.ticker].quantidade = 0
-            fiis[operacao.fii.ticker].preco_medio = Decimal(0)
-            
-        if operacao.tipo_operacao == 'C':
-            fiis[operacao.fii.ticker].quantidade += operacao.quantidade
-            fiis[operacao.fii.ticker].preco_medio += (operacao.quantidade * operacao.preco_unitario + \
-                operacao.emolumentos + operacao.corretagem)
-            
-        elif operacao.tipo_operacao == 'V':
-            fiis[operacao.fii.ticker].quantidade -= operacao.quantidade
-            fiis[operacao.fii.ticker].preco_medio -= (operacao.quantidade * operacao.preco_unitario - \
-                operacao.emolumentos - operacao.corretagem)
-    
-    for fii in fiis.keys():
-        if fiis[fii].quantidade > 0:
-            print fii, '->', fiis[fii].quantidade, 'a', (fiis[fii].preco_medio/Decimal(fiis[fii].quantidade))
+def verificar_tipo_acao(ticker):
+    categoria = int(re.search('\d+', ticker).group(0))
+    if categoria == 3:
+        return u'ON'
+    elif categoria == 4:
+        return u'PN'
+    elif categoria == 5:
+        return u'PNA'
+    elif categoria == 6:
+        return u'PNB'
+    elif categoria == 7:
+        return u'PNC'
+    elif categoria == 8:
+        return u'PND'
+    elif categoria == 11:
+        return u'UNT'
+    raise ValueError('Tipo de ação inválido')
 
-def buscar_proventos_acao(codigo_cvm, ticker, num_tentativas):
-    """
-    Busca proventos de ações no site da Bovespa
-    """
-    # Busca os dados dos proventos em 2 URLs da bovespa
-    # Proventos em dinheiro
-    prov_dinheiro_url = 'http://bvmf.bmfbovespa.com.br/cias-listadas/empresas-listadas/ResumoEventosCorporativos.aspx?codigoCvm=%s&tab=3.0&idioma=pt-br' % (codigo_cvm)
-    # Usar mechanize para simular clique do usuario no javascript
-    br = mechanize.Browser()
-    br.addheaders = [('User-agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1')]
-    response = br.open(prov_dinheiro_url)
-    
-    html = response.read()
-
-    br.select_form(nr=0)
-    br.set_all_readonly(False)
-    mnext = re.search("""<a.*?href=\"javascript:__doPostBack\('(.*?)','(.*?)'\)\".*?id=\"ctl00_contentPlaceHolderConteudo_MenuEmpresasListadas1_tabMenuEmpresa_tabEventosCorporativos_tabProventosDinheiro\".*?>\*?Proventos em dinheiro""", html, re.IGNORECASE)
-    if not mnext:
-        print 'not found'
-        return
-    br["__EVENTTARGET"] = mnext.group(1)
-    br["__EVENTARGUMENT"] = mnext.group(2)
-    br.find_control("ctl00$botaoNavegacaoVoltar").disabled = True
-    response = br.submit()
-    html = response.read()
-    if 'Sistema indisponivel' in html:
-        if num_tentativas == 3:
-            raise URLError('Sistema indisponível')
-            return
-        return buscar_proventos_acao(codigo_cvm, ticker, num_tentativas+1)
-    
-    inicio = html.find('<tbody>')
-#         print 'inicio', inicio
-    fim = html.find('</tbody>', inicio)
-    string_importante = (html[inicio:fim])
-    proventos_dinheiro_texto = re.findall('<tr.*?>(.*?)<\/tr>', string_importante, flags=re.DOTALL)
-    proventos_dinheiro = list()
-    for texto_provento in proventos_dinheiro_texto:
-        provento = re.findall('<td.*?>(.*?)<\/td>', texto_provento)
-        if provento:
-            provento[5] = datetime.datetime.strptime(provento[5],'%d/%m/%Y').date() + datetime.timedelta(days=1)
-            while provento[5].weekday() > 4:
-                provento[5] += datetime.timedelta(days=1)
-            proventos_dinheiro.append(provento)
-    proventos_dinheiro = sorted(proventos_dinheiro, key=itemgetter(5))
-#     for provento_dinheiro in proventos_dinheiro:
-#         print provento_dinheiro
-        
-    # Busca todos os proventos
-    prov_url = 'http://bvmf.bmfbovespa.com.br/cias-listadas/empresas-listadas/ResumoEventosCorporativos.aspx?codigoCvm=%s&tab=3.0&idioma=pt-br' % (codigo_cvm)
-    req = Request(prov_url)
-    try:
-        response = urlopen(req)
-    except HTTPError as e:
-        print 'The server couldn\'t fulfill the request.'
-        print 'Error code: ', e.code
-    except URLError as e:
-        print 'We failed to reach a server.'
-        print 'Reason: ', e.reason
-    else:
-        data = response.read()
-        if 'Sistema indisponivel' in data:
-            if num_tentativas == 3:
-                raise URLError('Sistema indisponível')
-                return
-            return buscar_proventos_acao(codigo_cvm, ticker, num_tentativas+1)
-        inicio = data.find('<div id="divDividendo">')
-#         print 'inicio', inicio
-        fim = data.find('<div id="divSubscricao">', inicio)
-        string_importante = (data[inicio:fim])
-        proventos = re.findall('<tr.*?>(.*?)<\/tr>', string_importante, flags=re.DOTALL)
-        contador = 1
-        total = 0
-        for provento in proventos:
-            texto_provento = re.findall('<td.*?>(.*?)<\/td>', provento)
-            texto_provento += re.findall('<span.*?>(.*?)<\/span>', provento)
-            if texto_provento:
-#                 print texto_provento
-                # Criar provento
-                data_ex = datetime.datetime.strptime(texto_provento[2],'%d/%m/%Y').date() + datetime.timedelta(days=1)
-                # Incrementa data até que não seja fim de semana
-                while data_ex.weekday() > 4:
-                    data_ex += datetime.timedelta(days=1)
-                    
-                # Preparar data pagamento (pode ser vazia)
-                try:
-                    data_pagamento = datetime.datetime.strptime(texto_provento[6],'%d/%m/%Y').date()
-                except:
-                    data_pagamento = None
-                provento = Provento(acao=Acao.objects.get(ticker=ticker), valor_unitario=Decimal(texto_provento[3].replace(',', '.')), tipo_provento=texto_provento[0][0], \
-                                    data_pagamento=data_pagamento, observacao=texto_provento[7], data_ex=data_ex)
-                
-#                 print provento
-                for provento_dinheiro in proventos_dinheiro:
-                    if provento_dinheiro[5] == data_ex:
-#                             print provento_dinheiro
-                        valor = Decimal(quantidade_acoes_ate_dia(ticker, datetime.datetime.strptime(texto_provento[2],'%d/%m/%Y').date(), True))
-                        if valor > 0:
-                            if (provento_dinheiro[4][0] == 'R'):
-                                valor *= Decimal(provento_dinheiro[2].replace(',', '.')) * Decimal(0.775)
-                                print valor, valor.quantize(Decimal('0.01'), rounding=ROUND_HALF_DOWN)
-                                total += valor.quantize(Decimal('0.01'), rounding=ROUND_HALF_DOWN)
-                            elif (provento_dinheiro[4][0] == 'J'):
-                                valor *= Decimal(provento_dinheiro[2].replace(',', '.')) * Decimal(0.85)
-                                texto_valor = str(valor)
-#                                 print len(texto_valor[texto_valor.find('.')+1:]), texto_valor[texto_valor.find('.')+1:], texto_valor[texto_valor.find('.')+1:][1]
-                                if len(texto_valor[texto_valor.find('.')+1:]) > 2 and int(texto_valor[texto_valor.find('.')+1:][1]) % 2 != 0:
-                                    print valor, valor.quantize(Decimal('0.01'), rounding=ROUND_HALF_DOWN)
-                                    total += valor.quantize(Decimal('0.01'), rounding=ROUND_HALF_DOWN)
-                                else:
-                                    print valor, valor.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
-                                    total += valor.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
-                            else:
-                                valor *= Decimal(provento_dinheiro[2].replace(',', '.'))
-                                print valor, valor.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
-                                total += valor.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
-                            # Remover elemento da lista (evitar duplicidade)
-                            proventos_dinheiro = [x for x in proventos_dinheiro if x[5] != data_ex]
-                contador += 1
-    print ticker, total
-                    
 def preencher_codigos_cvm():
     """
-    Preenche códigos bvmf para as ações a partir das urls na listagem de empresas
+    Preenche códigos bvmf para as empresas a partir das urls na listagem de empresas
     """
     acao_url = 'http://bvmf.bmfbovespa.com.br/cias-listadas/empresas-listadas/BuscaEmpresaListada.aspx?idioma=pt-br'
     req = Request(acao_url)
@@ -720,3 +525,29 @@ def preencher_codigos_cvm():
                     empresa.codigo_cvm = codigo
                     empresa.save()
 #                     print 'Salvou empresa', empresa
+
+def buscar_ticker_acoes(empresa_url, tentativa):
+    """
+    Busca tickers não cadastrados para empresas
+    """
+    req = Request(empresa_url)
+    try:
+        response = urlopen(req)
+    except HTTPError as e:
+        print 'The server couldn\'t fulfill the request.'
+        print 'Error code: ', e.code
+    except URLError as e:
+        print 'We failed to reach a server.'
+        print 'Reason: ', e.reason
+    else:
+        data = response.read()
+        if 'Sistema indisponivel' in data:
+            if tentativa < 3:
+                return buscar_ticker_acoes(empresa_url, tentativa+1)
+            else:
+                return
+        tickers = re.findall("var\s+?symbols\s*?=\s*?'([\w|]+)'", data, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
+        if len(tickers) > 0:
+            return tickers[0].split('|')
+        else:
+            return ''

@@ -1,3 +1,3 @@
+import acoes
 import buyandhold
-import home
 import trade

@@ -1,0 +1,17 @@
+{% extends "base_login.html" %}
+{% load staticfiles %}
+
+{% block extra_head %}
+    <meta content="Cadastro realizado e pendente de ativação" name="description" />
+{% endblock %}
+
+{% block content %}
+    <h3>Cadastro realizado com sucesso</h3>
+    <p>Você receberá um e-mail para ativar a sua conta em alguns instantes.</p>
+    <div class="form-actions">
+        <a href="{% url 'login' %}" class="btn yellow-crusta pull-right">Página de login</a>
+    </div>
+    <!-- BEGIN COPYRIGHT -->
+    <div class="copyright" style="margin-top: 25px;"> {% now "Y" %} &copy; Bag of Gold </div>
+    <!-- END COPYRIGHT -->
+{% endblock %}

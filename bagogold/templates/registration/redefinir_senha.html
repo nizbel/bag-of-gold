@@ -1,0 +1,45 @@
+{% extends "base_login.html" %}
+{% load staticfiles %}
+
+{% block extra_head %}
+    <meta content="Página para redefinição de senha com o link enviado" name="description" />
+{% endblock %}
+
+{% block content %}
+    <h3>Redefinir senha</h3>
+    {% if validlink %}
+        <form method="POST" class="form-horizontal">{% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                <button class="close" data-close="alert"></button>
+                {% for error in form.non_field_errors %}
+                <span>{{error}}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% for field in form %}
+                <div class="form-group">
+                    <label class="control-label visible-ie8 visible-ie9">{{field.label}}</label>
+                    <div class="input-icon">
+                        <i class="fa fa-lock"></i>
+                        <input class="form-control placeholder-no-fix" type="{% if 'password' in field.name %}password{% else %}text{% endif %}" 
+                        autocomplete="off" placeholder="{{ field.label }}" name="{{field.name}}" title="{{field.help_text}}" /> </div>
+                    {% if field.errors %}
+                        {% for error in field.errors %}
+                            <span class="font-white"><i class="fa fa-warning"></i> {{error}}</span>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <div class="form-actions">
+                <button type="submit" class="btn yellow-crusta pull-right"> Alterar senha </button>
+            </div>
+        </form>
+    {% else %}
+        <h3>O link de redefinição de senha é inválido, é possível que já tenha sido usado. Por favor faça um novo pedido de 
+        <a class="font-yellow-crusta" href="{% url 'password_reset' %}" id="forget-password">redefinição de senha</a>.</h3>
+    {% endif %}
+    <!-- BEGIN COPYRIGHT -->
+    <div class="copyright" style="margin-top: 25px;"> {% now "Y" %} &copy; Bag of Gold </div>
+    <!-- END COPYRIGHT -->
+{% endblock %}

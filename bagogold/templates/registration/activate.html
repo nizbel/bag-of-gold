@@ -1,0 +1,17 @@
+{% extends "base_login.html" %}
+{% load staticfiles %}
+
+{% block extra_head %}
+    <meta content="Ativa a conta pelo link enviado para o usuário" name="description" />
+{% endblock %}
+
+{% block content %} 
+    {% if user %}
+        <h3>Ativando {{user}}...</h3>
+    {% else %}
+        <h3>Código de confirmação inválido</h3>
+    {% endif %}
+    <!-- BEGIN COPYRIGHT -->
+    <div class="copyright" style="margin-top: 25px;"> {% now "Y" %} &copy; Bag of Gold </div>
+    <!-- END COPYRIGHT -->
+{% endblock %}

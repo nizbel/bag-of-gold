@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block extra_head %}
+<link href={% static "assets/global/plugins/datatables/datatables.min.css" %} rel="stylesheet" type="text/css" />
+<link href={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.css" %} rel="stylesheet" type="text/css" />
+<link href={% static "assets/global/plugins/bootstrap-datepicker/css/bootstrap-datepicker3.min.css" %} rel="stylesheet" type="text/css" />
+{% endblock %}
+
+{% block pagina_titulo_icone %}
+<i class="icon-diamond font-yellow-crusta"></i>
+{% endblock %}
+
+{% block content %}
+<div class="portlet-body">
+        <div class="row">
+            <div class="col-md-12">
+                <!-- BEGIN Portlet PORTLET-->
+                <div class="portlet box yellow-crusta">
+                    <div class="portlet-title">
+                        <div class="caption">
+                            <i class="fa fa-folder-open-o"></i>Dados do investimento</div>
+                        <div class="tools">
+                            <a href="javascript:;" class="collapse"></a>
+                        </div>
+                    </div>
+                    <div class="portlet-body">
+                        <div class="m-grid m-grid-responsive-xs">
+                            <div class="m-grid-row">
+                                <div class="m-grid-col m-grid-col-left"><strong>Data de emissão:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{debenture.data_emissao}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Data de vencimento:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{debenture.data_vencimento}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Finalizado:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{debenture.data_fim|default:'Não'}}</div>
+                            </div>
+                            <div class="m-grid-row">
+                                <div class="m-grid-col m-grid-col-left"><strong>VNU de emissão:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">R$ {{debenture.valor_emissao}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Valor atual:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">R$ {{debenture.valor_atual}}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- END Portlet PORTLET-->
+            </div>
+            <div class="col-md-4">
+                <!-- BEGIN Portlet PORTLET-->
+                <div class="portlet box yellow-crusta">
+                    <div class="portlet-title">
+                        <div class="caption">
+                            <i class="fa fa-folder-open-o"></i>Juros</div>
+                        <div class="tools">
+                            <a href="javascript:;" class="collapse"></a>
+                        </div>
+                    </div>
+                    <div class="portlet-body">
+                        <div class="m-grid m-grid-responsive-xs">
+                        </div>
+                    </div>
+                </div>
+                <!-- END Portlet PORTLET-->
+            </div>
+            <div class="col-md-4">
+                <!-- BEGIN Portlet PORTLET-->
+                <div class="portlet box yellow-crusta">
+                    <div class="portlet-title">
+                        <div class="caption">
+                            <i class="fa fa-folder-open-o"></i>Amortização</div>
+                        <div class="tools">
+                            <a href="javascript:;" class="collapse"></a>
+                        </div>
+                    </div>
+                    <div class="portlet-body">
+                        <div class="m-grid m-grid-responsive-xs">
+                        </div>
+                    </div>
+                </div>
+                <!-- END Portlet PORTLET-->
+            </div>
+            <div class="col-md-4">
+                <!-- BEGIN Portlet PORTLET-->
+                <div class="portlet box yellow-crusta">
+                    <div class="portlet-title">
+                        <div class="caption">
+                            <i class="fa fa-folder-open-o"></i>Prêmio</div>
+                        <div class="tools">
+                            <a href="javascript:;" class="collapse"></a>
+                        </div>
+                    </div>
+                    <div class="portlet-body">
+                        <div class="m-grid m-grid-responsive-xs">
+                        </div>
+                    </div>
+                </div>
+                <!-- END Portlet PORTLET-->
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block extra_footer %}
+<script src={% static "assets/global/scripts/datatable.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/datatables/datatables.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.js" %} type="text/javascript"></script>
+<script src={% static "assets/pages/scripts/table-datatables-fixedheader.min.js" %} type="text/javascript"></script>
+{% endblock %}
