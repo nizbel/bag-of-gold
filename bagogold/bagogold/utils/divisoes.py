@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import OperacaoAcao
+from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD, \
     DivisaoPrincipal, DivisaoOperacaoLC, DivisaoOperacaoFII, DivisaoOperacaoAcao, \
-    Divisao
+    Divisao, DivisaoOperacaoFundoInvestimento, DivisaoOperacaoCDB_RDB
 from bagogold.bagogold.models.fii import OperacaoFII
+from bagogold.bagogold.models.fundo_investimento import \
+    OperacaoFundoInvestimento
 from bagogold.bagogold.models.lc import OperacaoLetraCredito
 from bagogold.bagogold.models.td import OperacaoTitulo
 from django.apps import apps
@@ -17,22 +20,32 @@ def preencher_operacoes_div_principal(operacao):
     if isinstance(operacao, OperacaoAcao):
         modelo_operacao_div = apps.get_model('bagogold', 'DivisaoOperacaoAcao')
         divisoes_operacao = DivisaoOperacaoAcao.objects.filter(operacao=operacao)
-        div_principal = DivisaoPrincipal.objects.get().divisao 
+        div_principal = DivisaoPrincipal.objects.get(investidor=operacao.investidor).divisao 
+    # CDB/RDB
+    elif isinstance(operacao, OperacaoCDB_RDB):
+        modelo_operacao_div = apps.get_model('bagogold', 'DivisaoOperacaoCDB_RDB')
+        divisoes_operacao = DivisaoOperacaoCDB_RDB.objects.filter(operacao=operacao)
+        div_principal = DivisaoPrincipal.objects.get(investidor=operacao.investidor).divisao
+    # Fundo de Investimento
+    elif isinstance(operacao, OperacaoFundoInvestimento):
+        modelo_operacao_div = apps.get_model('bagogold', 'DivisaoOperacaoFundoInvestimento')
+        divisoes_operacao = DivisaoOperacaoFundoInvestimento.objects.filter(operacao=operacao)
+        div_principal = DivisaoPrincipal.objects.get(investidor=operacao.investidor).divisao
     # FII
     elif isinstance(operacao, OperacaoFII):
         modelo_operacao_div = apps.get_model('bagogold', 'DivisaoOperacaoFII')
         divisoes_operacao = DivisaoOperacaoFII.objects.filter(operacao=operacao)
-        div_principal = DivisaoPrincipal.objects.get().divisao
+        div_principal = DivisaoPrincipal.objects.get(investidor=operacao.investidor).divisao
     # LC
     elif isinstance(operacao, OperacaoLetraCredito):
         modelo_operacao_div = apps.get_model('bagogold', 'DivisaoOperacaoLC')
         divisoes_operacao = DivisaoOperacaoLC.objects.filter(operacao=operacao)
-        div_principal = DivisaoPrincipal.objects.get().divisao
+        div_principal = DivisaoPrincipal.objects.get(investidor=operacao.investidor).divisao
     # TD
     else:
         modelo_operacao_div = apps.get_model('bagogold', 'DivisaoOperacaoTD')
         divisoes_operacao = DivisaoOperacaoTD.objects.filter(operacao=operacao)
-        div_principal = DivisaoPrincipal.objects.get().divisao
+        div_principal = DivisaoPrincipal.objects.get(investidor=operacao.investidor).divisao
         
     # Guarda a quantidade alocada para todas as divisões
     qtd_divisoes = 0
@@ -77,6 +90,17 @@ def verificar_operacoes_nao_alocadas(investidor):
             operacao.quantidade_nao_alocada = operacao.quantidade - quantidade_alocada
             operacoes_nao_alocadas.append(operacao)
     
+    # CDB/RDB
+    for operacao in OperacaoCDB_RDB.objects.filter(investidor=investidor):
+        divisoes_operacao = DivisaoOperacaoCDB_RDB.objects.filter(operacao=operacao)
+        quantidade_alocada = 0
+        for divisao in divisoes_operacao:
+            quantidade_alocada += divisao.quantidade
+        if quantidade_alocada < operacao.quantidade:
+            operacao.tipo = 'CDB/RDB'
+            operacao.quantidade_nao_alocada = operacao.quantidade - quantidade_alocada
+            operacoes_nao_alocadas.append(operacao)
+    
     # FII
     for operacao in OperacaoFII.objects.filter(investidor=investidor):
         divisoes_operacao = DivisaoOperacaoFII.objects.filter(operacao=operacao)
@@ -85,6 +109,17 @@ def verificar_operacoes_nao_alocadas(investidor):
             quantidade_alocada += divisao.quantidade
         if quantidade_alocada < operacao.quantidade:
             operacao.tipo = 'FII'
+            operacao.quantidade_nao_alocada = operacao.quantidade - quantidade_alocada
+            operacoes_nao_alocadas.append(operacao)
+            
+    # Fundo de investimento
+    for operacao in OperacaoFundoInvestimento.objects.filter(investidor=investidor):
+        divisoes_operacao = DivisaoOperacaoFundoInvestimento.objects.filter(operacao=operacao)
+        quantidade_alocada = 0
+        for divisao in divisoes_operacao:
+            quantidade_alocada += divisao.quantidade
+        if quantidade_alocada < operacao.quantidade:
+            operacao.tipo = 'Fundo Inv.'
             operacao.quantidade_nao_alocada = operacao.quantidade - quantidade_alocada
             operacoes_nao_alocadas.append(operacao)
     
@@ -115,6 +150,7 @@ def verificar_operacoes_nao_alocadas(investidor):
         pass
     return operacoes_nao_alocadas
 
+# TODO repensar isso
 def calcular_saldo_geral_acoes_bh():
     saldo_geral = 0
     for divisao in Divisao.objects.all():

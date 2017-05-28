@@ -17,6 +17,14 @@ class FundoInvestimento (models.Model):
     def __unicode__(self):
         return self.nome
     
+    def valor_no_dia(self, dia=datetime.date.today()):
+        historico_fundo = HistoricoValorCotas.objects.filter(fundo_investimento=self).order_by('-data')
+        ultima_operacao_fundo = OperacaoFundoInvestimento.objects.filter(fundo_investimento=self).order_by('-data')[0]
+        if historico_fundo and historico_fundo[0].data > ultima_operacao_fundo.data:
+            return historico_fundo[0].valor_cota
+        else:
+            return ultima_operacao_fundo.valor_cota()
+    
     def carencia_atual(self):
         try:
             return HistoricoCarenciaFundoInvestimento.objects.filter(data__isnull=False, fundo_investimento=self).order_by('-data')[0].carencia
@@ -30,7 +38,7 @@ class FundoInvestimento (models.Model):
             return HistoricoValorMinimoInvestimentoFundoInvestimento.objects.get(data__isnull=True, cdb_rdb=self).valor_minimo
     
 class OperacaoFundoInvestimento (models.Model):
-    quantidade_cotas = models.DecimalField(u'Quantidade de cotas', max_digits=11, decimal_places=2)
+    quantidade = models.DecimalField(u'Quantidade de cotas', max_digits=11, decimal_places=2)
     valor = models.DecimalField(u'Valor da operação', max_digits=11, decimal_places=2)
     data = models.DateField(u'Data da operação')
     tipo_operacao = models.CharField(u'Tipo de operação', max_length=1)
@@ -38,7 +46,7 @@ class OperacaoFundoInvestimento (models.Model):
     investidor = models.ForeignKey('Investidor')
     
     def __unicode__(self):
-        return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.investimento, self.data)
+        return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.fundo_investimento, self.data)
     
     def carencia(self):
         try:
@@ -61,7 +69,7 @@ class OperacaoFundoInvestimento (models.Model):
             return False
         
     def valor_cota(self):
-        return self.valor/self.quantidade_cotas
+        return self.valor/self.quantidade if self.quantidade > 0 else 0
 
 class HistoricoValorCotas (models.Model):
     fundo_investimento = models.ForeignKey('FundoInvestimento')

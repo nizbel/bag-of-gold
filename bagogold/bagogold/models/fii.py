@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII
 from django.db import models
 import datetime
  
 class FII (models.Model):
     ticker = models.CharField(u'Ticker do FII', max_length=10, unique=True) 
+    empresa = models.ForeignKey('Empresa', blank=True, null=True) 
     
     class Meta:
         ordering = ['ticker']
@@ -18,17 +20,42 @@ class FII (models.Model):
             except:
                 pass
         return HistoricoFII.objects.filter(fii__ticker=self.ticker, data__lte=dia).order_by('-data')[0].preco_unitario
-    
+
+class ProventoFIIOficialManager(models.Manager):
+    def get_queryset(self):
+        return super(ProventoFIIOficialManager, self).get_queryset().filter(oficial_bovespa=True)
+
 class ProventoFII (models.Model):
+    TIPO_PROVENTO_AMORTIZACAO = 'A'
+    TIPO_PROVENTO_RENDIMENTO = 'R'
+    ESCOLHAS_TIPO_PROVENTO_FII=((TIPO_PROVENTO_RENDIMENTO, "Rendimento"),
+                        (TIPO_PROVENTO_AMORTIZACAO, "Amortização"),)
+    
     fii = models.ForeignKey('FII')
-    valor_unitario = models.DecimalField(u'Valor unitário', max_digits=13, decimal_places=9)
+    valor_unitario = models.DecimalField(u'Valor unitário', max_digits=22, decimal_places=18)
+    """
+    A = amortização, R = rendimentos
+    """
+    tipo_provento = models.CharField(u'Tipo de provento', max_length=1)
     data_ex = models.DateField(u'Data EX')
     data_pagamento = models.DateField(u'Data do pagamento')
-    url_documento = models.CharField(u'URL do documento', blank=True, null=True, max_length=200)
+    oficial_bovespa = models.BooleanField(u'Oficial Bovespa?', default=False)
     
     class Meta:
-        unique_together=(('data_ex', 'data_pagamento', 'fii',))
+        unique_together=('data_ex', 'data_pagamento', 'fii', 'valor_unitario', 'oficial_bovespa')
+        
+    def __unicode__(self):
+        return 'R$ %s de %s em %s com data EX %s' % (str(self.valor_unitario), self.fii.ticker, str(self.data_pagamento), str(self.data_ex))
     
+    def descricao_tipo_provento(self):
+        if self.tipo_provento == self.TIPO_PROVENTO_AMORTIZACAO:
+            return u'Amortização'
+        elif self.tipo_provento == self.TIPO_PROVENTO_RENDIMENTO:
+            return u'Rendimento'
+        
+    objects = ProventoFIIOficialManager()
+    gerador_objects = models.Manager()
+        
 class OperacaoFII (models.Model):
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)  
     quantidade = models.IntegerField(u'Quantidade') 
@@ -43,16 +70,32 @@ class OperacaoFII (models.Model):
     def __unicode__(self):
         return '(' + self.tipo_operacao + ') ' + str(self.quantidade) + ' ' + self.fii.ticker + ' a R$' + str(self.preco_unitario)
     
+    def qtd_proventos_utilizada(self):
+        qtd_total = 0
+        for divisao in DivisaoOperacaoFII.objects.filter(operacao=self):
+            if hasattr(divisao, 'usoproventosoperacaofii'):
+                qtd_total += divisao.usoproventosoperacaofii.qtd_utilizada
+        return qtd_total
+        
+    def utilizou_proventos(self):
+        return self.qtd_proventos_utilizada() > 0
+    
 class UsoProventosOperacaoFII (models.Model):
     operacao = models.ForeignKey('OperacaoFII')
     qtd_utilizada = models.DecimalField(u'Quantidade de proventos utilizada', max_digits=11, decimal_places=2, blank=True)
+    divisao_operacao = models.OneToOneField('DivisaoOperacaoFII')
 
+    def __unicode__(self):
+        return 'R$ ' + str(self.qtd_utilizada) + ' em ' + self.divisao_operacao.divisao.nome + ' para ' + unicode(self.divisao_operacao.operacao)
     
 class HistoricoFII (models.Model):
     fii = models.ForeignKey('FII', unique_for_date='data')
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)
     data = models.DateField(u'Data de referência')
     oficial_bovespa = models.BooleanField(u'Oficial Bovespa?', default=False)
+    
+    class Meta:
+        unique_together = ('fii', 'data')
         
 class ValorDiarioFII (models.Model):
     fii = models.ForeignKey('FII')

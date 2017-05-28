@@ -14,4 +14,3 @@ class Command(BaseCommand):
             # Salva apenas valores que não estejam zerados na venda
             if valor_diario.preco_venda > 0:
                 valor_diario.save()
-

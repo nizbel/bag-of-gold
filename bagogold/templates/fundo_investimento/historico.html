@@ -44,7 +44,7 @@
         <tbody>
         {% for item in operacoes %}
         <tr>
-            <td><a href="#">{{item.fundo_investimento.nome}}</a></td>
+            <td><a href="{% url 'fundo_investimento:editar_operacao_fundo_investimento' item.id %}">{{item.fundo_investimento.nome}}</a></td>
             <td>{{ item.tipo }}</td>
             <td>{{ item.data|date:"Y-m-d" }}</td>
             <td>{{item.quantidade_cotas}}</td>

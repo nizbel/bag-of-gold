@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Editar dados cadastrais</h1>
+    <form method="POST" class="post-form form-horizontal">{% csrf_token %}
+        <div id="forms">
+            {{ form_dados_cadastrais.as_p }}
+        </div>
+        <div class="form-actions">
+            <button type="submit" name="save" value="1" class="btn">Salvar</button>
+            <a href="{% url "minha_conta" %}" class="btn btn-danger">Cancelar</a>
+        </div>
+    </form>
+        
+{% endblock %}
+
+{% block extra_head %}
+    {{ form_dados_cadastrais.media }}
+{% endblock %}

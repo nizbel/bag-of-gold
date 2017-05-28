@@ -3,52 +3,138 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII
 from bagogold.bagogold.models.fii import OperacaoFII, ProventoFII, \
     ValorDiarioFII, HistoricoFII
 from decimal import Decimal
+from django.db.models.aggregates import Sum
+from django.db.models.expressions import F, Case, When
+from django.db.models.fields import DecimalField
+from itertools import chain
+from operator import attrgetter
 import datetime
 
+def calcular_poupanca_prov_fii_ate_dia(investidor, dia=datetime.date.today()):
+    """
+    Calcula a quantidade de proventos provisionada até dia determinado para FII
+    Parâmetros: Investidor
+                Dia da posição de proventos
+    Retorno: Quantidade provisionada no dia
+    """
+    operacoes = OperacaoFII.objects.filter(investidor=investidor,data__lte=dia).order_by('data')
+    
+    # Remover valores repetidos
+    fiis = list(set(operacoes.values_list('fii', flat=True)))
 
-def calcular_qtd_fiis_ate_dia(dia):
+    proventos = ProventoFII.objects.filter(data_ex__lte=dia, fii__in=fiis).order_by('data_ex')
+    for provento in proventos:
+        provento.data = provento.data_ex
+     
+    lista_conjunta = sorted(chain(proventos, operacoes),
+                            key=attrgetter('data'))
+    
+    total_proventos = Decimal(0)
+    
+    # Guarda as cotas correntes para o calculo do patrimonio
+    fiis = {}
+    # Calculos de patrimonio e gasto total
+    for item_lista in lista_conjunta:      
+        if item_lista.fii.ticker not in fiis.keys():
+            fiis[item_lista.fii.ticker] = 0
+            
+        # Verifica se é uma compra/venda
+        if isinstance(item_lista, OperacaoFII):   
+            # Verificar se se trata de compra ou venda
+            if item_lista.tipo_operacao == 'C':
+                if item_lista.utilizou_proventos():
+                    total_proventos -= item_lista.qtd_proventos_utilizada()
+                fiis[item_lista.fii.ticker] += item_lista.quantidade
+                
+            elif item_lista.tipo_operacao == 'V':
+                fiis[item_lista.fii.ticker] -= item_lista.quantidade
+        
+        # Verifica se é recebimento de proventos
+        elif isinstance(item_lista, ProventoFII):
+            if item_lista.data_pagamento <= datetime.date.today() and fiis[item_lista.fii.ticker] > 0:
+                total_recebido = fiis[item_lista.fii.ticker] * item_lista.valor_unitario
+                total_proventos += total_recebido
+                    
+    return total_proventos.quantize(Decimal('0.01'))
+
+def calcular_poupanca_prov_fii_ate_dia_por_divisao(dia, divisao):
+    """
+    Calcula a quantidade de proventos provisionada até dia determinado para uma divisão para FII
+    Parâmetros: Dia da posição de proventos
+                Divisão escolhida
+    Retorno: Quantidade provisionada no dia
+    """
+    operacoes_divisao = DivisaoOperacaoFII.objects.filter(divisao=divisao, operacao__data__lte=dia).values_list('operacao__id', flat=True)
+    
+    operacoes = OperacaoFII.objects.filter(id__in=operacoes_divisao).order_by('data')
+
+    proventos = ProventoFII.objects.filter(data_ex__lte=dia).order_by('data_ex')
+    for provento in proventos:
+        provento.data = provento.data_ex
+     
+    lista_conjunta = sorted(chain(operacoes, proventos),
+                            key=attrgetter('data'))
+    
+    total_proventos = Decimal(0)
+    
+    # Guarda as ações correntes para o calculo do patrimonio
+    fiis = {}
+    # Calculos de patrimonio e gasto total
+    for item_lista in lista_conjunta:      
+        if item_lista.fii.ticker not in fiis.keys():
+            fiis[item_lista.fii.ticker] = 0
+            
+        # Verifica se é uma compra/venda
+        if isinstance(item_lista, OperacaoFII):   
+            # Verificar se se trata de compra ou venda
+            if item_lista.tipo_operacao == 'C':
+                if item_lista.utilizou_proventos():
+                    total_proventos -= item_lista.qtd_proventos_utilizada()
+                fiis[item_lista.fii.ticker] += item_lista.quantidade
+                
+            elif item_lista.tipo_operacao == 'V':
+                fiis[item_lista.fii.ticker] -= item_lista.quantidade
+        
+        # Verifica se é recebimento de proventos
+        elif isinstance(item_lista, ProventoFII):
+            if item_lista.data_pagamento <= datetime.date.today() and fiis[item_lista.fii.ticker] > 0:
+                total_recebido = fiis[item_lista.fii.ticker] * item_lista.valor_unitario
+                total_proventos += total_recebido
+                    
+    return total_proventos.quantize(Decimal('0.01'))
+
+def calcular_qtd_fiis_ate_dia(investidor, dia):
     """ 
     Calcula a quantidade de FIIs até dia determinado
-    Parâmetros: Dia final
+    Parâmetros: Investidor
+                Dia final
     Retorno: Quantidade de FIIs {ticker: qtd}
     """
-    
-    operacoes = OperacaoFII.objects.filter(data__lte=dia).exclude(data__isnull=True).order_by('data')
-    
-    qtd_fii = {}
-    
-    for operacao in operacoes:
-        if operacao.fii.ticker not in qtd_fii:
-            qtd_fii[operacao.fii.ticker] = 0
-            
-        # Verificar se se trata de compra ou venda
-        if operacao.tipo_operacao == 'C':
-            qtd_fii[operacao.fii.ticker] += operacao.quantidade
-            
-        elif operacao.tipo_operacao == 'V':
-            qtd_fii[operacao.fii.ticker] -= operacao.quantidade
-        
+    qtd_fii = dict(OperacaoFII.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True).annotate(ticker=F('fii__ticker')).values('ticker') \
+        .annotate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
+                            When(tipo_operacao='V', then=F('quantidade')*-1),
+                            output_field=DecimalField()))).values_list('ticker', 'total').exclude(total=0))
+
     return qtd_fii
 
-def calcular_qtd_fiis_ate_dia_por_ticker(dia, ticker):
+def calcular_qtd_fiis_ate_dia_por_ticker(investidor, dia, ticker):
     """ 
     Calcula a quantidade de FIIs até dia determinado para um ticker determinado
-    Parâmetros: Ticker do FII
+    Parâmetros: Investidor
+                Ticker do FII
                 Dia final
     Retorno: Quantidade de FIIs para o ticker determinado
     """
-    
-    operacoes = OperacaoFII.objects.filter(fii__ticker=ticker, data__lte=dia).exclude(data__isnull=True).order_by('data')
+    operacoes = OperacaoFII.objects.filter(fii__ticker=ticker, data__lte=dia, investidor=investidor).exclude(data__isnull=True).order_by('data')
     qtd_fii = 0
     
     for item in operacoes:
-        if isinstance(item, OperacaoFII): 
-            # Verificar se se trata de compra ou venda
-            if item.tipo_operacao == 'C':
-                qtd_fii += item.quantidade
-                
-            elif item.tipo_operacao == 'V':
-                qtd_fii -= item.quantidade
+        # Verificar se se trata de compra ou venda
+        if item.tipo_operacao == 'C':
+            qtd_fii += item.quantidade
+            
+        elif item.tipo_operacao == 'V':
+            qtd_fii -= item.quantidade
         
     return qtd_fii
 
@@ -59,31 +145,11 @@ def calcular_qtd_fiis_ate_dia_por_divisao(dia, divisao_id):
                 Dia final
     Retorno: Quantidade de FIIs {ticker: qtd}
     """
-    operacoes_divisao_id = DivisaoOperacaoFII.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).values('operacao__id')
-    if len(operacoes_divisao_id) == 0:
-        return {}
-    operacoes = OperacaoFII.objects.filter(id__in=operacoes_divisao_id).exclude(data__isnull=True).order_by('data')
+    qtd_fii = dict(DivisaoOperacaoFII.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).annotate(ticker=F('operacao__fii__ticker')) \
+        .values('ticker').annotate(qtd=Sum(Case(When(operacao__tipo_operacao='C', then=F('quantidade')),
+                            When(operacao__tipo_operacao='V', then=F('quantidade')*-1),
+                            output_field=DecimalField()))).values_list('ticker', 'qtd').exclude(qtd=0))
     
-    qtd_fii = {}
-    
-    for operacao in operacoes:
-        # Preparar a quantidade da operação pela quantidade que foi destinada a essa divisão
-        operacao.quantidade = DivisaoOperacaoFII.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade
-        
-        if operacao.fii.ticker not in qtd_fii:
-            qtd_fii[operacao.fii.ticker] = 0
-            
-        # Verificar se se trata de compra ou venda
-        if operacao.tipo_operacao == 'C':
-            qtd_fii[operacao.fii.ticker] += operacao.quantidade
-            
-        elif operacao.tipo_operacao == 'V':
-            qtd_fii[operacao.fii.ticker] -= operacao.quantidade
-        
-    for key, item in qtd_fii.items():
-        if qtd_fii[key] == 0:
-            del qtd_fii[key]
-            
     return qtd_fii
 
 def calcular_rendimento_proventos_fii_12_meses(fii):
@@ -139,3 +205,21 @@ def calcular_variacao_percentual_fii_por_periodo(fii, periodo_inicio, periodo_fi
         return 0
     
     return (valor_final - valor_inicial) / valor_final * 100
+
+def calcular_valor_fii_ate_dia(investidor, dia=datetime.date.today()):
+    """ 
+    Calcula o valor das cotas do investidor até dia determinado
+    Parâmetros: Investidor
+                Dia final
+    Retorno: Valor das cotas {ticker: valor_da_data}
+    """
+    
+    qtd_fii = calcular_qtd_fiis_ate_dia(investidor, dia)
+    
+    for ticker in qtd_fii.keys():
+        if ValorDiarioFII.objects.filter(fii__ticker=ticker, data_hora__day=dia.day, data_hora__month=dia.month).exists():
+            qtd_fii[ticker] = ValorDiarioFII.objects.filter(fii__ticker=ticker, data_hora__day=dia.day, data_hora__month=dia.month).order_by('-data_hora')[0].preco_unitario * qtd_fii[ticker]
+        else:
+            qtd_fii[ticker] = HistoricoFII.objects.filter(fii__ticker=ticker, data__lte=dia).order_by('-data')[0].preco_unitario * qtd_fii[ticker]
+        
+    return qtd_fii

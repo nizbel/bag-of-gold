@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block extra_head %}
+<link href={% static "assets/global/plugins/bootstrap-select/css/bootstrap-select.min.css" %} rel="stylesheet" type="text/css" />
+<link href={% static "assets/global/plugins/bootstrap-datepicker/css/bootstrap-datepicker3.min.css" %} rel="stylesheet" type="text/css" />
+{% endblock %}
+
+{% block pagina_titulo_icone %}
+<i class="icon-plus font-yellow-crusta"></i>
+{% endblock %}
+
+{% block content %}
+<div class="portlet-body form">
+        <!-- BEGIN FORM-->
+        <form method="POST" class="horizontal-form">{% csrf_token %}
+            <div class="form-body">
+                <div class="row">
+                    <div class="form-group col-md-6 {% if form_cri_cra.nome.errors %} has-error {% endif %}">
+                        <label class="control-label col-md-4" style="text-align: left;">{{form_cri_cra.nome.label}}:</label>
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" maxlength="50" name="nome" id="id_nome" value="{{form_cri_cra.nome.value|default:''}}">
+                            {% if form_cri_cra.nome.errors %} <span class="help-block"> {{ form_cri_cra.nome.errors.as_text }} </span> {% endif %}
+                        </div>
+                    </div>
+                    <div class="form-group col-md-6 {% if form_cri_cra.codigo_isin.errors %} has-error {% endif %}">
+                        <label class="control-label col-md-4" style="text-align: left;">{{form_cri_cra.codigo_isin.label}}:</label>
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" maxlength="20" name="codigo_isin" id="id_codigo_isin" value="{{form_cri_cra.codigo_isin.value|default:''}}">
+                            {% if form_cri_cra.codigo_isin.errors %} <span class="help-block"> {{ form_cri_cra.codigo_isin.errors.as_text }} </span> {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-md-6 {% if form_cri_cra.tipo.errors %} has-error {% endif %}">
+                        <label class="control-label col-md-4" style="text-align: left;">{{form_cri_cra.tipo.label}}:</label>
+                        <div class="col-md-8">
+                            <select class="selectpicker form-control" id="id_tipo" name="tipo">
+                                {% for key, value in form_cri_cra.fields.tipo.widget.choices %}<option value="{{ key }}"
+                                {% if key == form_cri_cra.tipo.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                            </select>
+                            {% if form_cri_cra.tipo.errors %} <span class="help-block"> {{ form_cri_cra.tipo.errors.as_text }} </span> {% endif %}
+                        </div>
+                    </div>
+                    <div class="form-group col-md-6 {% if form_cri_cra.tipo_indexacao.errors %} has-error {% endif %}">
+                        <label class="control-label col-md-4" style="text-align: left;">{{form_cri_cra.tipo_indexacao.label}}:</label>
+                        <div class="col-md-8">
+                            <select class="selectpicker form-control" id="id_tipo_indexacao" name="tipo_indexacao">
+                                {% for key, value in form_cri_cra.fields.tipo_indexacao.widget.choices %}<option value="{{ key }}"
+                                {% if key|stringformat:'s' == form_cri_cra.tipo_indexacao.value|stringformat:'s' %}selected="selected{{form_cri_cra.tipo_indexacao.value}}"{% endif %}>{{ value }}</option>{% endfor %}
+                            </select>
+                            {% if form_cri_cra.tipo_indexacao.errors %} <span class="help-block"> {{ form_cri_cra.tipo_indexacao.errors.as_text }} </span> {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-md-6 {% if form_cri_cra.porcentagem.errors %} has-error {% endif %}">
+                        <label class="control-label col-md-4" style="text-align: left;">{{form_cri_cra.porcentagem.label}}:</label>
+                        <div class="col-md-8">
+                            <input id="id_porcentagem" type="text" value="{{form_cri_cra.porcentagem.value}}" name="porcentagem" class="form-control">
+                            {% if form_cri_cra.porcentagem.errors %} <span class="help-block"> {{ form_cri_cra.porcentagem.errors.as_text }} </span> {% endif %}
+                        </div>
+                    </div>
+                    <div class="form-group col-md-6 {% if form_cri_cra.juros_adicional.errors %} has-error {% endif %}">
+                        <label class="control-label col-md-4" style="text-align: left;">{{form_cri_cra.juros_adicional.label}}:</label>
+                        <div class="col-md-8">
+                            <input id="id_juros_adicional" type="text" value="{{form_cri_cra.juros_adicional.value}}" name="juros_adicional" class="form-control">
+                            {% if form_cri_cra.juros_adicional.errors %} <span class="help-block"> {{ form_cri_cra.juros_adicional.errors.as_text }} </span> {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-md-6 {% if form_cri_cra.data_emissao.errors %} has-error {% endif %}">
+                        <label class="control-label col-md-4" style="text-align: left;">{{form_cri_cra.data_emissao.label}}:</label>
+                        <div class="col-md-8">
+                            <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_data_emissao" name="data_emissao" 
+                            data-date-viewmode="years">
+                                <input type="text" class="form-control" name="data_emissao" 
+                                value="{% if form_cri_cra.data_emissao.value|date:'d/m/Y'|default:'' == '' %}{{form_cri_cra.data_emissao.value|default:''}}{% else %}{{form_cri_cra.data_emissao.value|date:'d/m/Y'}}{% endif %}">
+                                <span class="input-group-btn">
+                                    <button class="btn default" type="button">
+                                        <i class="fa fa-calendar"></i>
+                                    </button>
+                                </span>
+                            </div>
+                            {% if form_cri_cra.data_emissao.errors %} <span class="help-block"> {{ form_cri_cra.data_emissao.errors.as_text }} </span> 
+                            {% else %} <span class="help-block"> Selecione uma data </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="form-group col-md-6 {% if form_cri_cra.valor_emissao.errors %} has-error {% endif %}">
+                        <label class="control-label col-md-4" style="text-align: left;">{{form_cri_cra.valor_emissao.label}}:</label>
+                        <div class="col-md-8">
+                            <input id="id_valor_emissao" type="text" value="{{form_cri_cra.valor_emissao.value}}" name="valor_emissao" class="form-control">
+                            {% if form_cri_cra.valor_emissao.errors %} <span class="help-block"> {{ form_cri_cra.valor_emissao.errors.as_text }} </span> {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-md-6 {% if form_cri_cra.data_inicio_rendimento.errors %} has-error {% endif %}">
+                        <label class="control-label col-md-4" style="text-align: left;">{{form_cri_cra.data_inicio_rendimento.label}}:</label>
+                        <div class="col-md-8">
+                            <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_data_inicio_rendimento" name="data_inicio_rendimento" 
+                            data-date-viewmode="years">
+                                <input type="text" class="form-control" name="data_inicio_rendimento" 
+                                value="{% if form_cri_cra.data_inicio_rendimento.value|date:'d/m/Y'|default:'' == '' %}{{form_cri_cra.data_inicio_rendimento.value|default:''}}{% else %}{{form_cri_cra.data_inicio_rendimento.value|date:'d/m/Y'}}{% endif %}">
+                                <span class="input-group-btn">
+                                    <button class="btn default" type="button">
+                                        <i class="fa fa-calendar"></i>
+                                    </button>
+                                </span>
+                            </div>
+                            {% if form_cri_cra.data_inicio_rendimento.errors %} <span class="help-block"> {{ form_cri_cra.data_inicio_rendimento.errors.as_text }} </span> 
+                            {% else %} <span class="help-block"> Selecione uma data </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="form-group col-md-6 {% if form_cri_cra.data_vencimento.errors %} has-error {% endif %}">
+                        <label class="control-label col-md-4" style="text-align: left;">{{form_cri_cra.data_vencimento.label}}:</label>
+                        <div class="col-md-8">
+                            <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_data_vencimento" name="data_vencimento" 
+                            data-date-viewmode="years">
+                                <input type="text" class="form-control" name="data_vencimento" 
+                                value="{% if form_cri_cra.data_vencimento.value|date:'d/m/Y'|default:'' == '' %}{{form_cri_cra.data_vencimento.value|default:''}}{% else %}{{form_cri_cra.data_vencimento.value|date:'d/m/Y'}}{% endif %}">
+                                <span class="input-group-btn">
+                                    <button class="btn default" type="button">
+                                        <i class="fa fa-calendar"></i>
+                                    </button>
+                                </span>
+                            </div>
+                            {% if form_cri_cra.data_vencimento.errors %} <span class="help-block"> {{ form_cri_cra.data_vencimento.errors.as_text }} </span> 
+                            {% else %} <span class="help-block"> Selecione uma data </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="portlet box yellow-crusta">
+                            <div class="portlet-title">
+                                <div class="caption">
+                                    <i class="fa fa-calendar-plus-o"></i>Datas de remuneração
+                                </div>
+                                <div class="tools">
+                                    <a href="javascript:;" class="collapse"></a>
+                                </div>
+                            </div>
+                            <div class="portlet-body">
+                                <div class="row">
+                                    <div id="remuneracoes" class="col-md-12">
+                                        {{ formset_data_remuneracao.management_form }}
+                                        {% for form_data_remuneracao in formset_data_remuneracao %}
+                                            <div id="remuneracao-{{forloop.counter0}}" class="form-group col-md-9 {% if form_data_remuneracao.data.errors %} has-error {% endif %}">
+                                                <label id="label_data_remuneracao_set-{{forloop.counter0}}" class="control-label col-md-4" style="text-align: left;">Data {{forloop.counter}}:</label>
+                                                <div class="col-md-8">
+                                                    <div class="input-group input-small date date-picker" data-date-format="dd/mm/yyyy" id="id_dataremuneracaocri_cra_set-{{forloop.counter0}}-data" name="dataremuneracaocri_cra_set-{{forloop.counter0}}-data" 
+                                                    data-date-viewmode="years">
+                                                        <input type="text" class="form-control" name="dataremuneracaocri_cra_set-{{forloop.counter0}}-data" 
+                                                        value="{% if form_data_remuneracao.data.value|date:'d/m/Y'|default:'' == '' %}{{form_data_remuneracao.data.value|default:''}}{% else %}{{form_data_remuneracao.data.value|date:'d/m/Y'}}{% endif %}">
+                                                        <span class="input-group-btn">
+                                                            <button class="btn default" type="button">
+                                                                <i class="fa fa-calendar"></i>
+                                                            </button>
+                                                        </span>
+                                                    </div>
+                                                    {% if form_data_remuneracao.data.errors %} <span class="help-block"> {{ form_data_remuneracao.data.errors.as_text }} </span> 
+                                                    {% else %} <span class="help-block"> Selecione uma data </span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            {% if form_data_remuneracao.instance.id %}
+                                            <div class="md-checkbox col-md-3">
+                                                <input type="checkbox" value="1" id="id_dataremuneracaocri_cra_set-{{forloop.counter0}}-DELETE" name="dataremuneracaocri_cra_set-{{forloop.counter0}}-DELETE"  class="md-check">
+                                                <label for="id_dataremuneracaocri_cra_set-{{forloop.counter0}}-DELETE">
+                                                    <span></span>
+                                                    <span class="check"></span>
+                                                    <span class="box"></span> Excluir </label>
+                                            </div>
+                                            {% endif %}
+                                            {% if form_data_remuneracao.instance.id %}
+                                                <input id="id_dataremuneracaocri_cra_set-{{forloop.counter0}}-id" name="dataremuneracaocri_cra_set-{{forloop.counter0}}-id" value="{{form_data_remuneracao.instance.id}}" type="hidden">
+                                                <input id="id_dataremuneracaocri_cra_set-{{forloop.counter0}}-cri_cra" name="dataremuneracaocri_cra_set-{{forloop.counter0}}-cri_cra" value="{{form_data_remuneracao.cri_cra.id}}" type="hidden">
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                    <div class="col-md-12 text-center">
+                                        <input type="button" value="Adicionar data" class="btn btn-warning" id="add_data_remuneracao">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="portlet box yellow-crusta">
+                            <div class="portlet-title">
+                                <div class="caption">
+                                    <i class="fa fa-calendar-plus-o"></i>Datas de amortização
+                                </div>
+                                <div class="tools">
+                                    <a href="javascript:;" class="collapse"></a>
+                                </div>
+                            </div>
+                            <div class="portlet-body">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="md-checkbox">
+                                            <input type="checkbox" value="1" id="checkbox_amortizacao_integral_venc" name="amortizacao_integral_venc"  class="md-check">
+                                            <label for="checkbox_amortizacao_integral_venc">
+                                                <span></span>
+                                                <span class="check"></span>
+                                                <span class="box"></span> Amortização integral no vencimento? </label>
+                                        </div>
+                                        {{ formset_data_amortizacao.management_form }}
+                                        <div id="amortizacoes" class="col-md-12">
+                                        {% for form_data_amortizacao in formset_data_amortizacao %}
+                                            <div id="amortizacao-{{forloop.counter0}}" class="col-md-9">
+                                                <div class="form-group col-md-5 {% if form_data_amortizacao.data.errors %} has-error {% endif %}">
+                                                    <label id="label_data_amortizacao_set-{{forloop.counter0}}" class="control-label col-md-4" style="text-align: left;">Data {{forloop.counter}}:</label>
+                                                    <div class="col-md-8">
+                                                        <div class="input-group input-small date date-picker" data-date-format="dd/mm/yyyy" id="id_dataamortizacaocri_cra_set-{{forloop.counter0}}-data" name="dataamortizacaocri_cra_set-{{forloop.counter0}}-data" 
+                                                        data-date-viewmode="years">
+                                                            <input type="text" class="form-control" name="dataamortizacaocri_cra_set-{{forloop.counter0}}-data" 
+                                                            value="{% if form_data_amortizacao.data.value|date:'d/m/Y'|default:'' == '' %}{{form_data_amortizacao.data.value|default:''}}{% else %}{{form_data_amortizacao.data.value|date:'d/m/Y'}}{% endif %}">
+                                                            <span class="input-group-btn">
+                                                                <button class="btn default" type="button">
+                                                                    <i class="fa fa-calendar"></i>
+                                                                </button>
+                                                            </span>
+                                                        </div>
+                                                        {% if form_data_amortizacao.data.errors %} <span class="help-block"> {{ form_data_amortizacao.data.errors.as_text }} </span> 
+                                                        {% else %} <span class="help-block"> Selecione uma data </span>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-md-7 {% if form_data_amortizacao.percentual.errors %} has-error {% endif %}">
+                                                    <label class="control-label col-md-4" style="text-align: left;">Percentual:</label>
+                                                    <div class="col-md-8">
+                                                        <input id="id_dataamortizacaocri_cra_set-{{forloop.counter0}}-percentual" type="text" value="{{form_data_amortizacao.percentual.value}}" name="dataamortizacaocri_cra_set-{{forloop.counter0}}-percentual" class="form-control">
+                                                        {% if form_data_amortizacao.percentual.errors %} <span class="help-block"> {{ form_data_amortizacao.percentual.errors.as_text }} </span> {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {% if form_data_amortizacao.instance.id %}
+                                                <div class="md-checkbox col-md-2">
+                                                    <input type="checkbox" value="1" id="id_dataamortizacaocri_cra_set-{{forloop.counter0}}-DELETE" name="dataamortizacaocri_cra_set-{{forloop.counter0}}-DELETE"  class="md-check">
+                                                    <label for="id_dataamortizacaocri_cra_set-{{forloop.counter0}}-DELETE">
+                                                        <span></span>
+                                                        <span class="check"></span>
+                                                        <span class="box"></span> Excluir </label>
+                                                </div>
+                                            {% endif %}
+                                            {% if form_data_amortizacao.instance.id %}
+                                                <input id="id_dataamortizacaocri_cra_set-{{forloop.counter0}}-id" name="dataamortizacaocri_cra_set-{{forloop.counter0}}-id" value="{{form_data_amortizacao.instance.id}}" type="hidden">
+                                                <input id="id_dataamortizacaocri_cra_set-{{forloop.counter0}}-cri_cra" name="dataamortizacaocri_cra_set-{{forloop.counter0}}-cri_cra" value="{{form_data_amortizacao.cri_cra.id}}" type="hidden">
+                                            {% endif %}
+                                        {% endfor %}
+                                        </div>
+                                        <div class="col-md-12 text-center">
+                                            <input type="button" value="Adicionar data" class="btn btn-warning" id="add_data_amortizacao">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <div class="row">
+                        <div class="col-md-offset col-md-3">
+                            <button type="submit" name="save" value="1" class="btn green-steel">Salvar</button>
+                            <button type="submit" name="delete" value="1" class="btn red-thunderbird">Excluir</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <!-- END FORM-->
+    </div>
+
+{% endblock %}
+
+{% block extra_footer %}
+<script src={% static "assets/global/plugins/bootstrap-maxlength/bootstrap-maxlength.min.js" %} type="text/javascript"></script>
+
+<script src={% static "assets/global/plugins/fuelux/js/spinner.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-touchspin/bootstrap.touchspin.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/jquery-validation/js/jquery.validate.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/jquery-validation/js/additional-methods.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-select/js/bootstrap-select.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-datepicker/js/bootstrap-datepicker.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-datepicker/locales/bootstrap-datepicker.pt-BR.min.js" %} type="text/javascript"></script>
+
+{{form_cri_cra.media}}
+<script>
+$(document).ready(function() {
+    $("input[name='nome']").maxlength();
+    $("input[name='codigo_isin']").maxlength();
+    $('.date-picker').datepicker({
+        language: 'pt-BR'
+    });
+    $("#id_porcentagem").TouchSpin({
+        initval: 0,
+        min: 0,
+        max: 100,
+        step: 0.001,
+        decimals: 3,
+        maxboostedstep: 100,
+        postfix: '%'
+    });
+    $("#id_juros_adicional").TouchSpin({
+        initval: 0,
+        min: 0,
+        max: 100,
+        step: 0.001,
+        decimals: 3,
+        maxboostedstep: 100,
+        postfix: '%'
+    });
+    $("#id_valor_emissao").TouchSpin({
+        initval: 0,
+        min: 0,
+        max: 1000000,
+        step: 0.00000001,
+        decimals: 8,
+        maxboostedstep: 100,
+        prefix: 'R$'
+    });
+    $("input[name$='-percentual'").TouchSpin({
+        initval: 0,
+        min: 0,
+        max: 100,
+        step: 0.0001,
+        decimals: 4,
+        maxboostedstep: 100,
+        postfix: '%'
+    });
+    
+    {% if amortizacao_integral_venc %}
+    $('#checkbox_amortizacao_integral_venc').attr('checked', 'checked');
+    $('#amortizacoes').find('input[name^=dataamortizacaocri_cra]').each(function() {
+        $(this).attr('disabled', 'disabled');
+    });
+    {% endif %}
+    
+    $('#checkbox_amortizacao_integral_venc').click(function() {
+        if ($(this).is(':checked')) {
+            $('#amortizacoes').find('input[name^=dataamortizacaocri_cra]').each(function() {
+                $(this).attr('disabled', 'disabled');
+            });
+        } else {
+            $('#amortizacoes').find('input[name^=dataamortizacaocri_cra]').each(function() {
+                $(this).removeAttr("disabled");
+            });
+        }
+    });
+});
+</script>               
+{% endblock %}

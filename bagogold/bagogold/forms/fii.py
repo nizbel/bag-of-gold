@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.fii import FII, OperacaoFII, ProventoFII, \
+from bagogold.bagogold.forms.utils import LocalizedModelForm
+from bagogold.bagogold.models.fii import OperacaoFII, ProventoFII, \
     UsoProventosOperacaoFII
 from decimal import Decimal
 from django import forms
@@ -14,28 +15,21 @@ ESCOLHAS_CONSOLIDADO=(
 ESCOLHAS_TIPO_OPERACAO=(('C', "Compra"),
                         ('V', "Venda"))
 
-class FIIForm(forms.ModelForm):
-
-
-    class Meta:
-        model = FII
-        fields = ('ticker', )
-        
-        
-class ProventoFIIForm(forms.ModelForm):
+class ProventoFIIForm(LocalizedModelForm):
 
 
     class Meta:
         model = ProventoFII
-        fields = ('valor_unitario', 'data_ex', 'data_pagamento', 'fii', )
+        fields = ('valor_unitario', 'tipo_provento', 'data_ex', 'data_pagamento', 'fii', )
         widgets={'data_ex': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),
                  'data_pagamento': widgets.DateInput(attrs={'class':'datepicker', 
-                                            'placeholder':'Selecione uma data'}),}
+                                            'placeholder':'Selecione uma data'}),
+                 'tipo_provento': widgets.Select(choices=ProventoFII.ESCOLHAS_TIPO_PROVENTO_FII),}
         
     
     
-class OperacaoFIIForm(forms.ModelForm):
+class OperacaoFIIForm(LocalizedModelForm):
     
     class Meta:
         model = OperacaoFII
@@ -47,8 +41,8 @@ class OperacaoFIIForm(forms.ModelForm):
                  'consolidada': widgets.Select(choices=ESCOLHAS_CONSOLIDADO),}
         
     class Media:
-        js = ('js/bagogold/acoes.js', 
-              'js/bagogold/fii.js',)
+        js = ('js/bagogold/calculo_emolumentos.js', 
+              'js/bagogold/form_operacao_fii.js',)
         
     def clean(self):
         data = super(OperacaoFIIForm, self).clean()
@@ -59,13 +53,17 @@ class OperacaoFIIForm(forms.ModelForm):
         return data
     
     
-class UsoProventosOperacaoFIIForm(forms.ModelForm):
+class UsoProventosOperacaoFIIForm(LocalizedModelForm):
 
 
     class Meta:
         model = UsoProventosOperacaoFII
         fields = ('qtd_utilizada', )
-            
+    
+    def __init__(self, *args, **kwargs):
+        super(UsoProventosOperacaoFIIForm, self).__init__(*args, **kwargs)
+        self.fields['qtd_utilizada'].required = False
+        
     def clean(self):
         data = super(UsoProventosOperacaoFIIForm, self).clean()
         if data.get('qtd_utilizada') is not None:
@@ -75,5 +73,27 @@ class UsoProventosOperacaoFIIForm(forms.ModelForm):
             qtd_utilizada = qtd_utilizada.replace(",", ".")
             qtd_utilizada = Decimal(qtd_utilizada)
             data['qtd_utilizada'] = qtd_utilizada
+        else:
+            data['qtd_utilizada'] = 0
 
         return data
+    
+class CalculoResultadoCorretagemForm(forms.Form):
+    def __new__(cls, *args, **kwargs):
+        new_class = super(CalculoResultadoCorretagemForm, cls).__new__(cls, *args, **kwargs)
+        for field in new_class.base_fields.values():
+            if isinstance(field, forms.DecimalField):
+                field.localize = True
+                field.widget.is_localized = True
+        return new_class
+#     NUM_MESES = 500
+#     PRECO_COTA = 97
+#     CORRETAGEM = 9.8
+#     RENDIMENTO = 0.78
+#     QTD_COTAS = 4
+    num_meses = forms.IntegerField(label='Quantidade de meses', min_value=1, max_value=1000)
+    preco_cota = forms.DecimalField(label='Preço da cota', max_digits=11, decimal_places=2, min_value=0)
+    corretagem = forms.DecimalField(label='Corretagem (em R$)', max_digits=9, decimal_places=2, min_value=0)
+    rendimento = forms.DecimalField(label='Rendimento (em R$)', max_digits=9, decimal_places=2, min_value=0)
+    quantidade_cotas = forms.IntegerField(label='Quantidade inicial de cotas', min_value=0, max_value=1000)
+    
