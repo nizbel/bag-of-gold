@@ -13,13 +13,10 @@ class Investidor (models.Model):
     """
     tipo_corretagem = models.CharField(u'Tipo de corretagem', max_length=1, default='F')
     auto_atualizar_saldo = models.BooleanField(u'Atualizar saldo automaticamente?', default=False)
+    data_ultimo_acesso = models.DateField(u'Último dia de acesso a uma página', blank=True, null=True)
     
     def __unicode__(self):
-        nome_completo = self.user.first_name + ' ' + self.user.last_name
-        if nome_completo.strip() != '':
-            return nome_completo
-        else:
-            return self.user.username
+        return self.user.username
     
     
 @receiver(post_save, sender=User, dispatch_uid="usuario_criado")
@@ -34,3 +31,7 @@ def create_investidor(sender, instance, created, **kwargs):
         """
         divisao, criado = Divisao.objects.get_or_create(investidor=investidor, nome='Geral')
         DivisaoPrincipal.objects.get_or_create(investidor=investidor, divisao=divisao)
+        
+class LoginIncorreto (models.Model):
+    user = models.ForeignKey(User)
+    horario = models.DateTimeField(u'Horário')

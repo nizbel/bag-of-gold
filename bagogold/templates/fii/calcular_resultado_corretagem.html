@@ -1,45 +1,151 @@
 {% extends "base.html" %}
+{% load staticfiles %}
+
+{% block pagina_titulo_icone %}
+<i class="icon-calculator font-yellow-crusta"></i>
+{% endblock %}
 
 {% block content %}
+<div class="portlet-body form">
+		<div class="alert alert-warning">
+            Este cálculo serve para se ter uma aproximação do resultado caso o investidor espere juntar dinheiro para comprar mais de uma cota antes de investir em mais FIIs.
+			<br/>
+			<strong>Os valores de preço e rendimento da cota são considerados constantes por todo o cálculo.</strong>
+		</div>
+		<!-- BEGIN FORM-->
+		<form method="POST" class="horizontal-form">{% csrf_token %}
+			<div class="form-body">
+				<div class="row">
+					<div class="form-group col-md-6 {% if form_calcular.num_meses.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4"> Quantidade de meses: </label>
+						<div class="col-md-8">
+							<input id="id_num_meses" type="text" value="{{form_calcular.num_meses.value}}" name="num_meses" class="form-control">
+							{% if form_calcular.num_meses.errors %} <span class="help-block"> {{ form_calcular.num_meses.errors.as_text }} </span> {% endif %}
+						</div>
+					</div>
+					<div class="form-group col-md-6 {% if form_calcular.preco_cota.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4">Preço da cota:</label>
+						<div class="col-md-8">
+							<input id="id_preco_cota" type="text" value="{{form_calcular.preco_cota.value}}" name="preco_cota" class="form-control">
+							{% if form_calcular.preco_cota.errors %} <span class="help-block"> {{ form_calcular.preco_cota.errors.as_text }} </span> {% endif %}
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="form-group col-md-6 {% if form_calcular.corretagem.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4">Corretagem:</label>
+						<div class="col-md-8">
+							<input id="id_corretagem" type="text" value="{{form_calcular.corretagem.value}}" name="corretagem" class="form-control">
+							{% if form_calcular.corretagem.errors %} <span class="help-block"> {{ form_calcular.corretagem.errors.as_text }} </span> {% endif %}
+						</div>
+					</div>
+					<div class="form-group col-md-6 {% if form_calcular.rendimento.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4">Rendimento:</label>
+						<div class="col-md-8">
+							<input id="id_rendimento" type="text" value="{{form_calcular.rendimento.value}}" name="rendimento" class="form-control">
+							{% if form_calcular.rendimento.errors %} <span class="help-block"> {{ form_calcular.rendimento.errors.as_text }} </span> {% endif %}
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="form-group col-md-6 {% if form_calcular.quantidade_cotas.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4"> Quantidade inicial de cotas: </label>
+						<div class="col-md-8">
+							<input id="id_quantidade_cotas" type="text" value="{{form_calcular.quantidade_cotas.value}}" name="quantidade_cotas" class="form-control">
+							{% if form_calcular.quantidade_cotas.errors %} <span class="help-block"> {{ form_calcular.quantidade_cotas.errors.as_text }} </span> {% endif %}
+						</div>
+					</div>
+				</div>
+				<div class="form-actions">
+					<div class="row">
+						<div class="col-md-offset col-md-3">
+							<button type="submit" class="btn purple-plum">Calcular</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</form>
+		<!-- END FORM-->
+		<div class="row">
+			<div class="col-md-4">
+				<!-- BEGIN Portlet PORTLET-->
+				<div class="portlet box yellow-crusta">
+					<div class="portlet-title">
+						<div class="caption">
+							<i class="fa fa-check-square-o"></i>Resultados</div>
+						<div class="tools">
+							<a href="javascript:;" class="collapse"></a>
+						</div>
+					</div>
+					<div class="portlet-body">
+						<div class="table-scrollable table-scrollable-borderless">
+							<table class="table table-hover table-light">
+								<tbody>
+								{% for posicao in ranking %}
+									<tr>
+										<td>Juntando {{posicao.0}} cota(s):</td>
+										<td><strong>R$ {{posicao.1}}</strong></td>
+									</tr>
+								{% empty %}
+									<tr>
+										<td><strong>Ainda não há resultados</strong></td>
+									</tr>
+								{% endfor %}
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+				<!-- END Portlet PORTLET-->
+			</div>
+		</div>
+	</div>
 
-<div class="row-fluid">
-    <div class="box-content">
-        <h3>Este cálculo serve para se ter uma aproximação do resultado caso o investidor espere juntar dinheiro para comprar mais de uma cota antes de investir em mais FIIs.</h3>
-        <h3>Os valores de preço e rendimento da cota são considerados constantes por todo o cálculo.</h3>
-        <form method="POST" class="post-form form-horizontal">{% csrf_token %}
-        <div id="forms">
-            {{ form_calcular.as_p }}
-        </div>
-        <div class="form-actions">
-            <button type="submit" class="btn">Calcular</button>
-        </div>
-    </form>
-    </div>
+{% endblock %}
 
-    <div class="box-content">
-        <div class="box black span5" ontablet="span5" ondesktop="span5">
-        <div class="box-header">
-            <span>Resultados</span>
-        </div>
-        <div class="box-content">
-            <ul class="dashboard-list metro">
-                {% for posicao in ranking %}
-                <li>
-                    <a href="#">
-                        <span>Juntando {{posicao.0}} cota(s): R$ {{posicao.1}}</span>                                 
-                    </a>
-                </li>
-                {% empty %}
-                <li>
-                    <a href="#">
-                        <span>Ainda não há resultados</span>                                 
-                    </a>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-    </div>
-    </div>
-</div>
-
+{% block extra_footer %}
+<script src={% static "assets/global/plugins/fuelux/js/spinner.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-touchspin/bootstrap.touchspin.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/jquery-validation/js/jquery.validate.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/jquery-validation/js/additional-methods.min.js" %} type="text/javascript"></script>
+<script>
+$( document ).ready(function() {	
+	$("input[name='num_meses']").TouchSpin({
+		min: 1,
+		max: 1000,
+		step: 1,
+		maxboostedstep: 100
+	});
+	$("input[name='preco_cota']").TouchSpin({
+		min: 0.01,
+		max: 1000000000,
+		step: 0.01,
+		decimals: 2,
+		maxboostedstep: 100,
+		prefix: 'R$'
+	});
+	$("input[name='corretagem']").TouchSpin({
+		min: 0.01,
+		max: 1000000000,
+		step: 0.01,
+		decimals: 2,
+		maxboostedstep: 100,
+		prefix: 'R$'
+	});
+	$("input[name='rendimento']").TouchSpin({
+		min: 0.01,
+		max: 1000000000,
+		step: 0.01,
+		decimals: 2,
+		maxboostedstep: 100,
+		prefix: 'R$'
+	});
+	$("input[name='quantidade_cotas']").TouchSpin({
+		min: 0,
+		max: 1000,
+		step: 1,
+		maxboostedstep: 100
+	});
+});
+</script>
 {% endblock %}

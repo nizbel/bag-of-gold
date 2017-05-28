@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.cdb_rdb import CDB_RDB, OperacaoCDB_RDB, \
     HistoricoPorcentagemCDB_RDB, HistoricoCarenciaCDB_RDB, OperacaoVendaCDB_RDB
 from django import forms
@@ -9,20 +10,20 @@ import datetime
 ESCOLHAS_CDB_RDB=(('C', 'CDB'), 
                   ('R', 'RDB'))
 
-ESCOLHAS_TIPO_RENDIMENTO=((1, 'Pré-fixado'), 
+ESCOLHAS_TIPO_RENDIMENTO=((1, 'Prefixado'), 
                             (2, 'Pós-fixado'))
 
 ESCOLHAS_TIPO_OPERACAO=(('C', "Compra"),
                         ('V', "Venda"))
 
-class CDB_RDBForm(forms.ModelForm):
+class CDB_RDBForm(LocalizedModelForm):
     class Meta:
         model = CDB_RDB
         fields = ('nome', 'tipo', 'tipo_rendimento')
         widgets={'tipo': widgets.Select(choices=ESCOLHAS_CDB_RDB),
                  'tipo_rendimento': widgets.Select(choices=ESCOLHAS_TIPO_RENDIMENTO),}
 
-class OperacaoCDB_RDBForm(forms.ModelForm):
+class OperacaoCDB_RDBForm(LocalizedModelForm):
     # Campo verificado apenas no caso de venda de operação de cdb/rdb
     operacao_compra = forms.ModelChoiceField(label='Operação de compra', queryset=OperacaoCDB_RDB.objects.filter(tipo_operacao='C'), required=False)
     
@@ -35,7 +36,7 @@ class OperacaoCDB_RDBForm(forms.ModelForm):
                  'tipo_operacao': widgets.Select(choices=ESCOLHAS_TIPO_OPERACAO),}
         
     class Media:
-        js = ('js/bagogold/cdb_rdb.js',)
+        js = ('js/bagogold/form_operacao_cdb_rdb.js',)
         
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
@@ -95,7 +96,7 @@ class OperacaoCDB_RDBForm(forms.ModelForm):
             if OperacaoVendaCDB_RDB.objects.filter(operacao_compra=self.instance):
                 raise forms.ValidationError('Não é possível alterar tipo de operação pois já há vendas registradas para essa compra')
 
-class HistoricoPorcentagemCDB_RDBForm(forms.ModelForm):
+class HistoricoPorcentagemCDB_RDBForm(LocalizedModelForm):
     
     class Meta:
         model = HistoricoPorcentagemCDB_RDB
@@ -120,9 +121,21 @@ class HistoricoPorcentagemCDB_RDBForm(forms.ModelForm):
             self.fields['data'].disabled = True
     
     def clean_cdb_rdb(self):
-        if self.cleaned_data['cdb_rdb'].investidor != self.investidor:
+        cdb_rdb = self.cleaned_data['cdb_rdb']
+        if cdb_rdb.investidor != self.investidor:
             raise forms.ValidationError('CDB/RDB inválido')
-        return self.cleaned_data['cdb_rdb']
+        if hasattr(self.instance, 'cdb_rdb') and cdb_rdb != self.instance.cdb_rdb:
+            raise forms.ValidationError('CDB/RDB não deve ser alterado')
+        return cdb_rdb
+        
+    def clean_data(self):
+        data = self.cleaned_data['data']
+        # Verifica se o registro é da data incial, e se foi feita alteração
+        if self.inicial and data:
+            raise forms.ValidationError('Data inicial não pode ser alterada')
+        elif not self.inicial and not data:
+            raise forms.ValidationError('Data é obrigatória')
+        return data
     
     def clean_porcentagem(self):
         porcentagem = self.cleaned_data['porcentagem']
@@ -133,21 +146,18 @@ class HistoricoPorcentagemCDB_RDBForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super(HistoricoPorcentagemCDB_RDBForm, self).clean()
         # Testar se já existe algum histórico para o investimento na data
-        try:
-            historico = HistoricoPorcentagemCDB_RDB.objects.get(cdb_rdb=cleaned_data.get('cdb_rdb'), data=cleaned_data.get('data'))
+        if not self.inicial and cleaned_data.get('data') and HistoricoPorcentagemCDB_RDB.objects.filter(cdb_rdb=cleaned_data.get('cdb_rdb'), data=cleaned_data.get('data')).exists():
             raise forms.ValidationError('Já existe uma alteração de porcentagem para essa data')
-        except HistoricoPorcentagemCDB_RDB.DoesNotExist:
-            pass
         return cleaned_data
         
-class HistoricoCarenciaCDB_RDBForm(forms.ModelForm):
+class HistoricoCarenciaCDB_RDBForm(LocalizedModelForm):
     
     class Meta:
         model = HistoricoCarenciaCDB_RDB
         fields = ('carencia', 'data', 'cdb_rdb')
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),}
-        labels = {'carencia': 'Período de carência (em dias)',}
+        labels = {'carencia': 'Período de carência',}
         
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
@@ -165,23 +175,32 @@ class HistoricoCarenciaCDB_RDBForm(forms.ModelForm):
         if self.inicial:
             self.fields['data'].disabled = True
     
-    def clean_cdb_rdb(self):
-        if self.cleaned_data['cdb_rdb'].investidor != self.investidor:
-            raise forms.ValidationError('CDB/RDB inválido')
-        return self.cleaned_data['cdb_rdb']
-    
     def clean_carencia(self):
         carencia = self.cleaned_data['carencia']
         if carencia <= 0:
             raise forms.ValidationError('Carência deve ser de pelo menos 1 dia')
         return carencia
     
+    def clean_cdb_rdb(self):
+        cdb_rdb = self.cleaned_data['cdb_rdb']
+        if cdb_rdb.investidor != self.investidor:
+            raise forms.ValidationError('CDB/RDB inválido')
+        if hasattr(self.instance, 'cdb_rdb') and cdb_rdb != self.instance.cdb_rdb:
+            raise forms.ValidationError('CDB/RDB não deve ser alterado')
+        return cdb_rdb
+    
+    def clean_data(self):
+        data = self.cleaned_data['data']
+        # Verifica se o registro é da data incial, e se foi feita alteração
+        if self.inicial and data:
+            raise forms.ValidationError('Data inicial não pode ser alterada')
+        elif not self.inicial and not data:
+            raise forms.ValidationError('Data é obrigatória')
+        return data
+    
     def clean(self):
         cleaned_data = super(HistoricoCarenciaCDB_RDBForm, self).clean()
         # Testar se já existe algum histórico para o investimento na data
-        try:
-            historico = HistoricoCarenciaCDB_RDB.objects.get(cdb_rdb=cleaned_data.get('cdb_rdb'), data=cleaned_data.get('data'))
+        if not self.inicial and cleaned_data.get('data') and HistoricoCarenciaCDB_RDB.objects.filter(cdb_rdb=cleaned_data.get('cdb_rdb'), data=cleaned_data.get('data')).exists():
             raise forms.ValidationError('Já existe uma alteração de carência para essa data')
-        except HistoricoCarenciaCDB_RDB.DoesNotExist:
-            pass
         return cleaned_data

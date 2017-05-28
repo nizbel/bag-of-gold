@@ -1,25 +1,144 @@
 {% extends "base.html" %}
+{% load staticfiles %}
+{% load l10n %}
 
 {% block extra_head %}
-    {{ form_operacao_cdb_rdb.media }}
+<link href={% static "assets/global/plugins/bootstrap-select/css/bootstrap-select.min.css" %} rel="stylesheet" type="text/css" />
+<link href={% static "assets/global/plugins/bootstrap-datepicker/css/bootstrap-datepicker3.min.css" %} rel="stylesheet" type="text/css" />
+{% endblock %}
+
+{% block page_title %}
+Inserir operação em CDB/RDB
+{% endblock %}
+
+{% block page_description %}
+Adiciona uma nova operação em CDB/RDB
+{% endblock %}
+
+{% block pagina_titulo_icone %}
+<i class="icon-plus font-yellow-crusta"></i>
 {% endblock %}
 
 {% block content %}
-    <h1>Inserir operação em CDB/RDB</h1>
-    <form method="POST" class="post-form form-horizontal">{% csrf_token %}
-        <div id="forms">
-            {{ form_operacao_cdb_rdb.as_p }}
-            {% if varias_divisoes %}
-                <h2>Divisões <button id="add-another" class="btn btn-primary" type="button">+</button></h2>
-                {{ formset_divisao_cdb_rdb.management_form }}
-                {% for form_divisao in formset_divisao_cdb_rdb %}
-                    <h3>Divisão {{ forloop.counter }}</h3>
-                    {{ form_divisao.as_p }}
-                {% endfor %}
-            {% endif %}
-        </div>
-        <div class="form-actions">
-            <button type="submit" name="save" value="1" class="btn">Salvar</button>
-        </div>
-    </form>
+<div class="portlet-body form">
+		<!-- BEGIN FORM-->
+		<form method="POST" class="horizontal-form">{% csrf_token %}
+			<div class="form-body">
+				<div class="row">
+					<div class="form-group col-md-6 {% if form_operacao_cdb_rdb.tipo_operacao.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_cdb_rdb.fields.tipo_operacao.label}}: </label>
+						<div class="col-md-8">
+							<select class="selectpicker form-control" id="id_tipo_operacao" name="tipo_operacao">
+								{% for key, value in form_operacao_cdb_rdb.fields.tipo_operacao.widget.choices %}<option value="{{ key }}"
+                                {% if key == form_operacao_cdb_rdb.tipo_operacao.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+							</select>
+							{% if form_operacao_cdb_rdb.tipo_operacao.errors %} <span class="help-block"> {{ form_operacao_cdb_rdb.tipo_operacao.errors.as_text }} </span> {% endif %}
+						</div>
+					</div>
+					<div class="form-group col-md-6 {% if form_operacao_cdb_rdb.quantidade.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4"  style="text-align: left;"> {{form_operacao_cdb_rdb.quantidade.label}}: </label>
+						<div class="col-md-8">
+							<input id="id_quantidade" type="text" name="quantidade" class="form-control" value="{{form_operacao_cdb_rdb.quantidade.value}}">
+							{% if form_operacao_cdb_rdb.quantidade.errors %} <span class="help-block"> {{ form_operacao_cdb_rdb.quantidade.errors.as_text }} </span> {% endif %}
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="form-group col-md-6 {% if form_operacao_cdb_rdb.data.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_cdb_rdb.fields.data.label}}: </label>
+						<div class="col-md-8">
+							<div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" data-date-viewmode="years">
+								<input type="text" class="form-control" id="id_data" name="data" 
+                                value="{% if form_operacao_cdb_rdb.data.value|date:'d/m/Y'|default:'' == '' %}{{form_operacao_cdb_rdb.data.value|default:''}}{% else %}{{form_operacao_cdb_rdb.data.value|date:'d/m/Y'}}{% endif %}">
+								<span class="input-group-btn">
+									<button class="btn default" type="button">
+										<i class="fa fa-calendar"></i>
+									</button>
+								</span>
+							</div>
+                            {% if form_operacao_cdb_rdb.data.errors %} <span class="help-block"> {{ form_operacao_cdb_rdb.data.errors.as_text }} </span> 
+                            {% else %} <span class="help-block"> Selecione uma data </span>
+                            {% endif %}
+						</div>
+					</div>
+					<div class="form-group col-md-6 {% if form_operacao_cdb_rdb.investimento.errors %} has-error {% endif %}" id="grupo_investimento">
+						<label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_cdb_rdb.fields.investimento.label}}: </label>
+						<div class="col-md-8">
+							<select class="selectpicker form-control" id="id_investimento" name="investimento">
+								{% for key, value in form_operacao_cdb_rdb.fields.investimento.widget.choices %}<option value="{{ key }}"
+                                {% if key == form_operacao_cdb_rdb.investimento.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+							</select>
+							{% if form_operacao_cdb_rdb.investimento.errors %} <span class="help-block"> {{ form_operacao_cdb_rdb.investimento.errors.as_text }} </span> {% endif %}
+						</div>
+					</div>
+                    <div class="form-group col-md-6 {% if form_operacao_cdb_rdb.operacao_compra.errors %} has-error {% endif %}" id="grupo_operacao_compra">
+                        <label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_cdb_rdb.fields.operacao_compra.label}}: </label>
+                        <div class="col-md-8">
+                            <select class="selectpicker form-control" id="id_operacao_compra" name="operacao_compra">
+                                {% for key, value in form_operacao_cdb_rdb.fields.operacao_compra.widget.choices %}<option value="{{ key }}"
+                                {% if key == form_operacao_cdb_rdb.operacao_compra.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                            </select>
+                            {% if form_operacao_cdb_rdb.operacao_compra.errors %} <span class="help-block"> {{ form_operacao_cdb_rdb.operacao_compra.errors.as_text }} </span> {% endif %}
+                        </div>
+                    </div>
+				</div>
+				{% if varias_divisoes %}
+                <div class="row" id="forms">
+                    <h2 class="font-yellow-crusta" align="center">
+                        <strong>Divisões</strong> <button id="add-another" class="btn btn-icon-only green-steel" type="button"><i class="fa fa-plus"></i></button>
+                    </h2>
+                    {{ formset_divisao.management_form }}
+                    {% for form_divisao in formset_divisao %}
+                    <h3 class="font-yellow-crusta" align="center"><strong>Divisão {{ forloop.counter }}</strong></h3>
+                    <br/>
+                    <div class="col-md-12" id="divisao-{{forloop.counter0}}">
+                        <div class="row">
+                            <div class="form-group col-md-6 {% if form_divisao.divisao.errors %} has-error {% endif %}">
+                                <label class="control-label col-md-4" style="text-align: left;"> {{form_divisao.divisao.label}}: </label>
+                                <div class="col-md-8">
+                                    {% localize off %}
+                                    <select class="selectpicker form-control" id="id_divisaooperacaocdb_rdb_set-{{forloop.counter0}}-divisao" name="divisaooperacaocdb_rdb_set-{{forloop.counter0}}-divisao">
+                                        {% for key, value in form_divisao.fields.divisao.widget.choices %}<option value="{{ key }}" 
+                                            {% if key == form_divisao.divisao.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                                    </select>
+                                    {% endlocalize %}
+                                    {% if form_divisao.divisao.errors %} <span class="help-block"> {{ form_divisao.divisao.errors.as_text }} </span> {% endif %}
+                                </div>
+                            </div>
+                            <div class="form-group col-md-6 {% if form_divisao.quantidade.errors %} has-error {% endif %}">
+                                <label class="control-label col-md-4"> {{form_divisao.quantidade.label}}: </label>
+                                <div class="col-md-8">
+                                    <input id="id_divisaooperacaocdb_rdb_set-{{forloop.counter0}}-quantidade" type="text" value="{{form_divisao.quantidade.value}}" name="divisaooperacaocdb_rdb_set-{{forloop.counter0}}-quantidade" class="form-control">
+                                    {% if form_divisao.quantidade.errors %} <span class="help-block"> {{ form_divisao.quantidade.errors.as_text }} </span> {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+				<div class="form-actions">
+					<div class="row">
+						<div class="col-md-offset col-md-3">
+							<button type="submit" name="save" value="1" class="btn green-steel">Salvar</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</form>
+		<!-- END FORM-->
+	</div>
+
+{% endblock %}
+
+{% block extra_footer %}
+<script src={% static "assets/global/plugins/fuelux/js/spinner.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-touchspin/bootstrap.touchspin.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/jquery-validation/js/jquery.validate.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/jquery-validation/js/additional-methods.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-select/js/bootstrap-select.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/moment.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-datepicker/js/bootstrap-datepicker.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-datepicker/locales/bootstrap-datepicker.pt-BR.min.js" %} type="text/javascript"></script>
+{{ form_operacao_cdb_rdb.media }}
 {% endblock %}

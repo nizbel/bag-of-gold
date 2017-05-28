@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.acoes import OperacaoCompraVenda, OperacaoAcao
 from django import forms
 from django.db.models import Sum
@@ -10,7 +11,7 @@ ESCOLHAS_DAYTRADE=(
         (True, 'Sim'),
         )
 
-class OperacaoCompraVendaForm(forms.ModelForm):
+class OperacaoCompraVendaForm(LocalizedModelForm):
 
     class Meta:
         model = OperacaoCompraVenda
@@ -25,7 +26,7 @@ class OperacaoCompraVendaForm(forms.ModelForm):
         
         # lista de compras
         operacoes_compra = OperacaoAcao.objects.filter(investidor=self.investidor, tipo_operacao='C', destinacao='T')
-        self.fields['compra'].choices = []
+        self.fields['compra'].choices = [] if not self.instance.id else [[self.instance.compra.id, self.instance.compra]]
         for operacao in operacoes_compra:
             adicionar = True
             if operacao.compra.get_queryset():
@@ -36,7 +37,7 @@ class OperacaoCompraVendaForm(forms.ModelForm):
         
         # lista de vendas
         operacoes_venda = OperacaoAcao.objects.filter(investidor=self.investidor, tipo_operacao='V', destinacao='T')
-        self.fields['venda'].choices = []
+        self.fields['venda'].choices = [] if not self.instance.id else [[self.instance.venda.id, self.instance.venda]]
         for operacao in operacoes_venda:
             adicionar = True
             if operacao.venda.get_queryset():

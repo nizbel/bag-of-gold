@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, \
-    HistoricoPorcentagemLetraCredito, LetraCredito, HistoricoCarenciaLetraCredito,\
+    HistoricoPorcentagemLetraCredito, LetraCredito, HistoricoCarenciaLetraCredito, \
     OperacaoVendaLetraCredito
 from django import forms
 from django.forms import widgets
@@ -10,13 +11,13 @@ import datetime
 ESCOLHAS_TIPO_OPERACAO=(('C', "Compra"),
                         ('V', "Venda"))
 
-class LetraCreditoForm(forms.ModelForm):
+class LetraCreditoForm(LocalizedModelForm):
     
     class Meta:
         model = LetraCredito
         fields = ('nome',)
 
-class OperacaoLetraCreditoForm(forms.ModelForm):
+class OperacaoLetraCreditoForm(LocalizedModelForm):
     # Campo verificado apenas no caso de venda de operação de lc
     operacao_compra = forms.ModelChoiceField(label='Operação de compra',queryset=OperacaoLetraCredito.objects.filter(tipo_operacao='C'), required=False)
     
@@ -29,7 +30,7 @@ class OperacaoLetraCreditoForm(forms.ModelForm):
                  'tipo_operacao': widgets.Select(choices=ESCOLHAS_TIPO_OPERACAO),}
         
     class Media:
-        js = ('js/bagogold/lc.js',)
+        js = ('js/bagogold/form_operacao_lci_lca.js',)
         
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
@@ -89,7 +90,7 @@ class OperacaoLetraCreditoForm(forms.ModelForm):
             if OperacaoVendaLetraCredito.objects.filter(operacao_compra=self.instance):
                 raise forms.ValidationError('Não é possível alterar tipo de operação pois já há vendas registradas para essa compra')
             
-class HistoricoPorcentagemLetraCreditoForm(forms.ModelForm):
+class HistoricoPorcentagemLetraCreditoForm(LocalizedModelForm):
     
     class Meta:
         model = HistoricoPorcentagemLetraCredito
@@ -116,29 +117,38 @@ class HistoricoPorcentagemLetraCreditoForm(forms.ModelForm):
             self.fields['letra_credito'].disabled = True
         if self.inicial:
             self.fields['data'].disabled = True
+    
+    def clean_data(self):
+        data = self.cleaned_data['data']
+        # Verifica se o registro é da data incial, e se foi feita alteração
+        if self.inicial and data:
+            raise forms.ValidationError('Data inicial não pode ser alterada')
+        elif not self.inicial and not data:
+            raise forms.ValidationError('Data é obrigatória')
+        return data
         
-        def clean_letra_credito(self):
-            if self.cleaned_data['letra_credito'].investidor != self.investidor:
-                raise forms.ValidationError('Letra de Crédito inválida')
-            return self.cleaned_data['letra_credito']
+    def clean_letra_credito(self):
+        letra_credito = self.cleaned_data['letra_credito']
+        if letra_credito.investidor != self.investidor:
+            raise forms.ValidationError('Letra de Crédito inválida')
+        if hasattr(self.instance, 'letra_credito') and letra_credito != self.instance.letra_credito:
+            raise forms.ValidationError('Letra de Crédito não deve ser alterada')
+        return letra_credito
+    
+    def clean_porcentagem_di(self):
+        porcentagem_di = self.cleaned_data['porcentagem_di']
+        if porcentagem_di <= 0:
+            raise forms.ValidationError('Porcentagem deve ser maior que zero')
+        return porcentagem_di
+    
+    def clean(self):
+        cleaned_data = super(HistoricoPorcentagemLetraCreditoForm, self).clean()
+        # Testar se já existe algum histórico para o investimento na data
+        if not self.inicial and cleaned_data.get('data') and HistoricoPorcentagemLetraCredito.objects.filter(letra_credito=cleaned_data.get('letra_credito'), data=cleaned_data.get('data')).exists():
+            raise forms.ValidationError('Já existe uma alteração de porcentagem para essa data')
+        return cleaned_data
         
-        def clean_porcentagem_di(self):
-            porcentagem_di = self.cleaned_data['porcentagem_di']
-            if porcentagem_di <= 0:
-                raise forms.ValidationError('Porcentagem deve ser maior que zero')
-            return porcentagem_di
-        
-        def clean(self):
-            cleaned_data = super(HistoricoPorcentagemLetraCreditoForm, self).clean()
-            # Testar se já existe algum histórico para o investimento na data
-            try:
-                historico = HistoricoPorcentagemLetraCredito.objects.get(letra_credito=cleaned_data.get('letra_credito'), data=cleaned_data.get('data'))
-                raise forms.ValidationError('Já existe uma alteração de porcentagem para essa data')
-            except HistoricoCarenciaLetraCredito.DoesNotExist:
-                pass
-            return cleaned_data
-        
-class HistoricoCarenciaLetraCreditoForm(forms.ModelForm):
+class HistoricoCarenciaLetraCreditoForm(LocalizedModelForm):
     
     class Meta:
         model = HistoricoCarenciaLetraCredito
@@ -146,7 +156,7 @@ class HistoricoCarenciaLetraCreditoForm(forms.ModelForm):
                   'letra_credito')
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),}
-        labels = {'carencia': 'Período de carência (em dias)',}
+        labels = {'carencia': 'Período de carência',}
     
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
@@ -165,24 +175,33 @@ class HistoricoCarenciaLetraCreditoForm(forms.ModelForm):
             self.fields['letra_credito'].disabled = True
         if self.inicial:
             self.fields['data'].disabled = True
+    
+    def clean_carencia(self):
+        carencia = self.cleaned_data['carencia']
+        if carencia <= 0:
+            raise forms.ValidationError('Carência deve ser de pelo menos 1 dia')
+        return carencia
+    
+    def clean_data(self):
+        data = self.cleaned_data['data']
+        # Verifica se o registro é da data incial, e se foi feita alteração
+        if self.inicial and data:
+            raise forms.ValidationError('Data inicial não pode ser alterada')
+        elif not self.inicial and not data:
+            raise forms.ValidationError('Data é obrigatória')
+        return data
         
-        def clean_letra_credito(self):
-            if self.cleaned_data['letra_credito'].investidor != self.investidor:
-                raise forms.ValidationError('Letra de Crédito inválida')
-            return self.cleaned_data['letra_credito']
-        
-        def clean_carencia(self):
-            carencia = self.cleaned_data['carencia']
-            if carencia <= 0:
-                raise forms.ValidationError('Carência deve ser de pelo menos 1 dia')
-            return carencia
-        
-        def clean(self):
-            cleaned_data = super(HistoricoCarenciaLetraCreditoForm, self).clean()
-            # Testar se já existe algum histórico para o investimento na data
-            try:
-                historico = HistoricoCarenciaLetraCredito.objects.get(letra_credito=cleaned_data.get('letra_credito'), data=cleaned_data.get('data'))
-                raise forms.ValidationError('Já existe uma alteração de carência para essa data')
-            except HistoricoCarenciaLetraCredito.DoesNotExist:
-                pass
-            return cleaned_data
+    def clean_letra_credito(self):
+        letra_credito = self.cleaned_data['letra_credito']
+        if letra_credito.investidor != self.investidor:
+            raise forms.ValidationError('Letra de Crédito inválida')
+        if hasattr(self.instance, 'letra_credito') and letra_credito != self.instance.letra_credito:
+            raise forms.ValidationError('Letra de Crédito não deve ser alterada')
+        return letra_credito
+    
+    def clean(self):
+        cleaned_data = super(HistoricoCarenciaLetraCreditoForm, self).clean()
+        # Testar se já existe algum histórico para o investimento na data
+        if not self.inicial and cleaned_data.get('data') and HistoricoCarenciaLetraCredito.objects.filter(letra_credito=cleaned_data.get('letra_credito'), data=cleaned_data.get('data')).exists():
+            raise forms.ValidationError('Já existe uma alteração de carência para essa data')
+        return cleaned_data

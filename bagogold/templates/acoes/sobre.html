@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block pagina_titulo_icone %}
+<i class="icon-pin font-yellow-crusta"></i>
+{% endblock %}
+
+{% block content %}
+<div class="portlet-body">
+        <div class="row">
+            <div class="{% if user.is_authenticated %}col-md-10{% else %}col-md-12{% endif %}">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h3>Significado das siglas</h3>
+                        <ul class="list-unstyled">
+                            <li><strong>IPO</strong>: Initial Public Offer</li>
+                            <li><strong>ON</strong>: Ordinária</li>
+                            <li><strong>PN</strong>: Preferencial</li>
+                            <li><strong>JSCP</strong>, ou <strong>JCP</strong>: Juros sobre capital próprio</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h3>O que são?</h3>
+                        <p>
+                        Ações são títulos de participações societárias em empresas. O investidor pode adquiri-las nas aberturas de capital (IPO) de empresas ou no mercado secundário, com ações sendo 
+                        negociadas na bolsa de valores. Existem várias estratégias de investimento no mercado de ações. No Bag of Gold separamos operações com ações em dois grupos: ações para <i>Buy and Hold</i> 
+                        (ações compradas por prazo indeterminado de empresas nas quais o investidor identifica valor e quer ser sócio) e ações para <i>Trading</i> (o investidor vê uma oportunidade de ganho 
+                        realizando compras e vendas).
+                        </p>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="mt-element-step">
+                            <div class="row step-line">
+                                <div class="mt-step-desc text-center">
+                                    <h3>Como funciona</h3>
+                                </div>
+                                <div class="col-md-3 mt-step-col first ">
+                                    <div class="mt-step-number bg-white"><i class="icon-user font-yellow-crusta"></i></div>
+                                    <div class="mt-step-title uppercase">Empresa</div>
+                                    <div class="mt-step-content">Emite ações para se capitalizar</div>
+                                </div>
+                                <div class="col-md-3 mt-step-col">
+                                    <div class="mt-step-number bg-white"><i class="fa fa-bank font-yellow-crusta"></i></div>
+                                    <div class="mt-step-title uppercase">Investidor</div>
+                                    <div class="mt-step-content">Adquire participação societária ao comprar ações</div>
+                                </div>
+                                <div class="col-md-3 mt-step-col">
+                                    <div class="mt-step-number bg-white"><i class="fa fa-money font-yellow-crusta"></i></div>
+                                    <div class="mt-step-title uppercase">Ação</div>
+                                    <div class="mt-step-content">Preços oscilam no mercado, dividendos e juros são pagos ao investidor periodicamente</div>
+                                </div>
+                                <div class="col-md-3 mt-step-col last">
+                                    <div class="mt-step-number bg-white"><i class="fa fa-money font-yellow-crusta"></i></div>
+                                    <div class="mt-step-title uppercase">Investidor</div>
+                                    <div class="mt-step-content">Quando desejar, o investidor vende sua participação pelo preço de mercado corrente</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h3>Garantia</h3>
+                        <p>
+                        Não há. 
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h3>Tipos</h3>
+                        <p>
+                        A categoria das ações é determinada pelo quinto dígito do <strong>ticker</strong> (código de negociação da ação), que é composto por uma identificação de 4 dígitos da empresa, 
+                        mais o dígito da categoria. Por exemplo: <strong>PETR3</strong>, é o ticker das ações ordinárias da Petrobras.
+                        </p>
+                        <p>
+                        As categorias são:
+                        </p>
+                        <ul class="list-unstyled">
+                            <li><strong>ON</strong>: ações ordinárias, representadas pelo ticker com um <strong>3</strong>. Exemplo: <strong>BBAS3</strong></li>
+                            <li><strong>PN</strong>: ações preferenciais, representadas pelo ticker com um <strong>4</strong>. Exemplo: <strong>PETR4</strong></li>
+                            <li><strong>PNA</strong>: ações preferenciais classe A, representadas pelo ticker com um <strong>5</strong>. Exemplo: <strong>VALE5</strong></li>
+                            <li><strong>PNB</strong>: ações preferenciais classe B, representadas pelo ticker com um <strong>6</strong>. Exemplo: <strong>ELET6</strong></li>
+                            <li><strong>PNC</strong>: ações preferenciais classe C, representadas pelo ticker com um <strong>7</strong>. Exemplo: <strong>CELP7</strong></li>
+                            <li><strong>PND</strong>: ações preferenciais classe D, representadas pelo ticker com um <strong>8</strong>. Exemplo: <strong>AMRI8</strong></li>
+                            <li><strong>UNIT</strong>: grupos de ações ordinárias e preferenciais, representadas pelo ticker um <strong>11</strong>. Exemplo: <strong>TAEE11</strong></li>
+                        </ul>
+                        <p>
+                        A diferenciação entre as diversas classes de ações preferenciais varia para cada empresa, ocorrendo geralmente pela quantidade de dividendos e juros recebidos
+                        por ação.
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h3>Liquidez</h3>
+                        <p>
+                        Podem ser negociadas em dias úteis no horário de pregão da Bovespa. A liquidação das operações acontecem no terceiro dia útil após a operação.
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h3>Imposto de Renda</h3>
+                        <p>
+                        Day trade: <strong>20%</strong> sobre o lucro auferido, podendo abater prejuízos de trades dos meses anteriores.
+                        </p>
+                        <p>
+                        Compra/Venda em datas diferentes: <strong>15%</strong> sobre o lucro auferido, podendo abater prejuízos em operações (<strong>que não sejam day trades</strong>) dos meses anteriores.
+                        </p>
+                        <p>
+                        Dividendos: <strong>isentos</strong>.
+                        </p>
+                        <p>
+                        JSCP: <strong>15%</strong>, retido na fonte.
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h3>Para mais informações:</h3>
+                        <ul class="list-unstyled">
+                            <li><a href="http://www.bmfbovespa.com.br/pt_br/produtos/listados-a-vista-e-derivativos/renda-variavel/acoes.htm">BM&F Bovespa - Ações</a></li>
+                            <li><a href="https://www.bastter.com/Mercado/acao/default.aspx">Bastter</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% if user.is_authenticated %}
+            <div class="col-md-2">
+                <div class="portlet box yellow-crusta">
+                    <div class="portlet-title">
+                        <div class="caption">
+                            <i class="icon-user"></i>Investidor</div>
+                        <div class="tools">
+                            <a href="javascript:;" class="collapse"></a>
+                        </div>
+                    </div>
+                    <div class="portlet-body">
+                        {% if total_atual > 0 %}
+                        <h4>Total atual</h4>
+                        <div class="col-md-12 text-center font-yellow-crusta">
+                            <p class="lead">
+                                <strong>R$ <span data-counter="counterup" data-value="{{ total_atual }}">0</span></strong>
+                            </p>
+                        </div>
+                        {% endif %}
+                        <h4>Investimentos</h4>
+                        <ul class="list-unstyled">
+                            <li><a href="{% url "acoes:bh:inserir_operacao_bh" %}">Inserir operação (Buy and Hold)</a></li>
+                            <li><a href="{% url "acoes:trading:inserir_operacao_t" %}">Inserir operação (Trading)</a></li>
+                            <li><a href="{% url "acoes:bh:historico_bh" %}">Histórico de operações (Buy and Hold)</a></li>
+                            <li><a href="{% url "acoes:bh:painel_bh" %}">Painel de Ações (Buy and Hold)</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block extra_footer %}
+<script src={% static "assets/global/plugins/counterup/jquery.waypoints.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/counterup/jquery.counterup.min.js" %} type="text/javascript"></script>
+{% endblock %}

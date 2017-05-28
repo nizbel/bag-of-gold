@@ -1,17 +1,11 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.acoes import Provento
 from django import forms
 from django.forms import widgets
 
 
-
-ESCOLHAS_TIPO_PROVENTO=(('A', "Ações"),
-                        ('D', "Dividendos"),
-                        ('J', "Juros sobre capital próprio"),)
-
-class ProventoAcaoForm(forms.ModelForm):
-
-
+class ProventoAcaoForm(LocalizedModelForm):
     class Meta:
         model = Provento
         fields = ('valor_unitario', 'data_ex', 'data_pagamento', 'tipo_provento',
@@ -20,11 +14,8 @@ class ProventoAcaoForm(forms.ModelForm):
                                             'placeholder':'Selecione uma data'}),
                  'data_pagamento': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),
-                 'tipo_provento': widgets.Select(choices=ESCOLHAS_TIPO_PROVENTO),}
+                 'tipo_provento': widgets.Select(choices=Provento.ESCOLHAS_TIPO_PROVENTO_ACAO),}
         
-    class Media:
-        js = ('js/bagogold/acoes.js',)
-    
     def clean(self):
         dados = super(ProventoAcaoForm, self).clean()
         data_ex = dados.get('data_ex')

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load l10n %}
+{% load staticfiles %}
+
+{% block extra_head %}
+{% endblock %}
+
+{% block content %}
+<div class="portlet light">
+    <div class="row">
+        <div class="col-md-12 text-center">
+            <h1 class="font-yellow-crusta"> {{texto_construcao|safe}} </h1>
+            <div class="progress progress-striped active" style="background: rgba(68, 77, 88, 1); height: 30px;">
+                <div class="progress-bar" role="progressbar" aria-valuenow="{{percentual}}" aria-valuemin="0" aria-valuemax="100" style="width: {{percentual}}%; background-color: #f3c200;">
+                    <span class="sr-only"> {{percentual}}% Completo </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

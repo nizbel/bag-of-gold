@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block extra_head %}
+<link href={% static "assets/global/plugins/bootstrap-select/css/bootstrap-select.min.css" %} rel="stylesheet" type="text/css" />
+<link href={% static "assets/global/plugins/bootstrap-datepicker/css/bootstrap-datepicker3.min.css" %} rel="stylesheet" type="text/css" />
+{% endblock %}
+
+{% block pagina_titulo_icone %}
+<i class="icon-plus font-yellow-crusta"></i>
+{% endblock %}
+
+{% block content %}
+<div class="portlet-body form">
+		<!-- BEGIN FORM-->
+		<form method="POST" class="horizontal-form">{% csrf_token %}
+			<div class="form-body">
+				<div class="row">
+					<div class="form-group col-md-6 {% if form.porcentagem_di.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4"> Porcentagem de rendimento: </label>
+						<div class="col-md-8">
+							<input id="id_porcentagem_di" type="text" value="{{form.porcentagem_di.value}}" name="porcentagem_di" class="form-control">
+							{% if form.porcentagem_di.errors %} <span class="help-block"> {{ form.porcentagem_di.errors.as_text }} </span> {% endif %}
+						</div>
+					</div>
+					<div class="form-group col-md-6 {% if form.data.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4" style="text-align: left;"> Data da variação: </label>
+						<div class="col-md-8">
+							<div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" data-date-viewmode="years">
+                                <input type="text" class="form-control" id="id_data" name="data" 
+                                value="{% if form.data.value|date:'d/m/Y'|default:'' == '' %}{{form.data.value|default:''}}{% else %}{{form.data.value|date:'d/m/Y'}}{% endif %}">
+                                <span class="input-group-btn">
+                                    <button class="btn default" type="button">
+                                        <i class="fa fa-calendar"></i>
+                                    </button>
+                                </span>
+                            </div>
+							{% if form.data.errors %} <span class="help-block"> {{ form.data.errors.as_text }} </span> 
+                            {% else %} <span class="help-block"> Selecione uma data </span>
+                            {% endif %}
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="form-group col-md-6 {% if form.letra_credito.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4"> Letra de Crédito: </label>
+						<div class="col-md-8">
+							<select class="selectpicker form-control" disabled id="id_letra_credito" name="letra_credito">
+							{% for key, value in form.fields.letra_credito.widget.choices %}<option value="{{ key }}" {% if key == form.letra_credito.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+							</select>
+							{% if form.letra_credito.errors %} <span class="help-block"> {{ form.letra_credito.errors.as_text }} </span> {% endif %}
+						</div>
+					</div>
+				</div>
+				<div class="form-actions">
+					<div class="row">
+						<div class="col-md-offset col-md-3">
+							<button type="submit" name="save" value="1" class="btn green-steel">Salvar</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</form>
+		<!-- END FORM-->
+	</div>
+
+{% endblock %}
+    
+{% block extra_footer %}
+<script src={% static "assets/global/plugins/fuelux/js/spinner.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-touchspin/bootstrap.touchspin.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/jquery-validation/js/jquery.validate.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/jquery-validation/js/additional-methods.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-select/js/bootstrap-select.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/moment.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-datepicker/js/bootstrap-datepicker.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-datepicker/locales/bootstrap-datepicker.pt-BR.min.js" %} type="text/javascript"></script>
+{{ form_lci_lca.media }}
+<script>
+$( document ).ready(function() {	
+	$("input[name='porcentagem_di']").TouchSpin({
+		initval: 0.01,
+		min: 0.01,
+		max: 1000000000,
+		step: 0.01,
+		decimals: 2,
+		maxboostedstep: 100,
+		postfix: '%'
+	});
+	$('.date-picker').datepicker({
+		language: 'pt-BR'
+	});
+});
+</script>
+{% endblock %}
