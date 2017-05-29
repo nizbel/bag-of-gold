@@ -426,9 +426,10 @@ def listar_documentos(request):
     for documento in documentos:
         if documento.tipo == 'A':
             documento.ha_proventos_vinculados = documento.proventoacaodocumento_set.count() > 0
-            
-        # Preparar descrição de tipos
-        documento.tipo = 'Ação' if documento.tipo == 'A' else 'FII'
+            documento.tipo = 'Ação'
+        else:
+            documento.ha_proventos_vinculados = documento.proventofiidocumento_set.count() > 0
+            documento.tipo = 'FII'
             
     return TemplateResponse(request, 'gerador_proventos/listar_documentos.html', {'documentos': documentos, 'empresas': empresas, 'empresa_atual': empresa_atual})
 
