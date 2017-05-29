@@ -43,7 +43,7 @@
                             {% url 'gerador_proventos:ler_documento_provento' pendencia.id %}
                         {% endif %}
                             ">{{pendencia.tipo_pendencia}}</a></td>
-                        <td>{{pendencia.data_criacao|date:d/m/Y}}</td>
+                        <td>{{pendencia.data_criacao|date:'d/m/Y'}}</td>
                         <td><a href="{% url 'gerador_proventos:detalhar_documento' pendencia.documento.id %}">{{pendencia.documento}}</a></td>
                         <td>{{pendencia.tipo_documento}}</td>
                         <td>
