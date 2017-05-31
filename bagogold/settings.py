@@ -48,6 +48,7 @@ INSTALLED_APPS = (
     'bagogold.bagogold',
     'bagogold.pendencias',
     'bagogold.cri_cra',
+    'bagogold.fundo_investimento',
 )
 
 MIDDLEWARE_CLASSES = (
