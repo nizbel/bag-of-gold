@@ -121,4 +121,16 @@ class HistoricoValorCotas (models.Model):
             if self.valor_cota <= 0:
                 raise forms.ValidationError('Valor da cota deve ser superior a zero')
             super(HistoricoValorCotas, self).save(*args, **kw)
+    
+# Guarda documentos de cadastro da CVM lidos        
+class DocumentoCadastro (models.Model):
+    data_referencia = models.DateField(u'Data de referência')
+    data_pedido_cvm = models.DateField(u'Data de pedido à CVM')
+    leitura_realizada = models.BooleanField(u'Leitura realizada', default=False)
+    
+    class Meta:
+        unique_together=('data_referencia',)
 
+class LinkDocumentoCadastro (models.Model):
+    url = models.URLField(u'URL do documento de cadastro')
+    documento = models.OneToOneField('DocumentoCadastro')
