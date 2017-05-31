@@ -11,7 +11,7 @@ class FundoInvestimento (models.Model):
     PRAZO_CURTO = 'C'
     PRAZO_LONGO = 'L'
     TIPOS_PRAZO = [(PRAZO_CURTO, 'Curto'),
-                   (PRAZO_LONGO, 'Longo')
+                   (PRAZO_LONGO, 'Longo'),
                    ]
     
     SITUACAO_FUNCIONAMENTO_NORMAL = 1
@@ -19,7 +19,28 @@ class FundoInvestimento (models.Model):
     TIPOS_SITUACAO = [(SITUACAO_FUNCIONAMENTO_NORMAL, SITUACAO_FUNCIONAMENTO_NORMAL_DESCRICAO),
                       ]
     
-    TIPOS_CLASSE = []
+    CLASSE_FUNDO_ACOES = 1
+    CLASSE_FUNDO_ACOES_DESCRICAO = u'Fundo de Ações'
+    CLASSE_FUNDO_RENDA_FIXA = 2
+    CLASSE_FUNDO_RENDA_FIXA_DESCRICAO = u'Fundo de Renda Fixa'
+    CLASSE_FUNDO_MULTIMERCADO = 3
+    CLASSE_FUNDO_MULTIMERCADO_DESCRICAO = u'Fundo Multimercado'
+    CLASSE_FUNDO_REFERENCIADO = 4
+    CLASSE_FUNDO_REFERENCIADO_DESCRICAO = u'Fundo Referenciado'
+    CLASSE_FUNDO_DIVIDA_EXTERNA = 5
+    CLASSE_FUNDO_DIVIDA_EXTERNA_DESCRICAO = u'Fundo da Dívida Externa'
+    CLASSE_FUNDO_CAMBIAL = 6
+    CLASSE_FUNDO_CAMBIAL_DESCRICAO = u'Fundo Cambial'
+    CLASSE_FUNDO_CURTO_PRAZO = 7
+    CLASSE_FUNDO_CURTO_PRAZO_DESCRICAO = u'Fundo de Curto Prazo'
+    TIPOS_CLASSE = [(CLASSE_FUNDO_ACOES, CLASSE_FUNDO_ACOES_DESCRICAO),
+                    (CLASSE_FUNDO_RENDA_FIXA, CLASSE_FUNDO_RENDA_FIXA_DESCRICAO),
+                    (CLASSE_FUNDO_MULTIMERCADO, CLASSE_FUNDO_MULTIMERCADO_DESCRICAO),
+                    (CLASSE_FUNDO_REFERENCIADO, CLASSE_FUNDO_REFERENCIADO_DESCRICAO),
+                    (CLASSE_FUNDO_DIVIDA_EXTERNA, CLASSE_FUNDO_DIVIDA_EXTERNA_DESCRICAO),
+                    (CLASSE_FUNDO_CAMBIAL, CLASSE_FUNDO_CAMBIAL_DESCRICAO),
+                    (CLASSE_FUNDO_CURTO_PRAZO, CLASSE_FUNDO_CURTO_PRAZO_DESCRICAO),
+                    ]
     
     nome = models.CharField(u'Nome', max_length=100)
     cnpj = models.CharField(u'CNPJ', max_length=20)
@@ -33,6 +54,8 @@ class FundoInvestimento (models.Model):
     classe = models.PositiveSmallIntegerField(u'Classe', choices=TIPOS_CLASSE)
     exclusivo_qualificados = models.BooleanField(u'Exclusivo para investidores qualificados?')
     
+    class Meta:
+        unique_together=('cnpj',)
     
     def __unicode__(self):
         return self.nome
@@ -51,7 +74,7 @@ class OperacaoFundoInvestimento (models.Model):
     data = models.DateField(u'Data da operação')
     tipo_operacao = models.CharField(u'Tipo de operação', max_length=1)
     fundo_investimento = models.ForeignKey('FundoInvestimento')
-    investidor = models.ForeignKey('Investidor')
+    investidor = models.ForeignKey('bagogold.Investidor', related_name='fundo_investimento')
     
     def __unicode__(self):
         return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.fundo_investimento, self.data)

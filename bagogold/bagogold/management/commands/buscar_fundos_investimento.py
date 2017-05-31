@@ -20,24 +20,34 @@ class Command(BaseCommand):
         
         # Busca de competencias
         try:
-#             respostaCompetencias = client.service.solicAutorizDownloadCadastro(ultimo_dia_util(), 'Teste', _soapheaders=[headerSessao])
+#             respostaCompetencias = client.service.solicAutorizDownloadCadastro(ultimo_dia_util() - datetime.timedelta(days=1000), 'Teste', _soapheaders=[headerSessao])
 #             print respostaCompetencias
 #             url = respostaCompetencias['body']['solicAutorizDownloadCadastroResult']
-            url = 'http://cvmweb.cvm.gov.br/swb/sistemas/scw/DownloadArqs/LeDownloadArqs.aspx?VL_GUID=db4de580-e312-4428-81c9-bc9b4ca3d2da&PK_SESSAO=963284648&PK_ARQ_INFORM_DLOAD=196451'
+            url = 'http://cvmweb.cvm.gov.br/swb/sistemas/scw/DownloadArqs/LeDownloadArqs.aspx?VL_GUID=bbb5ba32-06c0-4e33-b182-f6fb2f3e2b36&PK_SESSAO=963302186&PK_ARQ_INFORM_DLOAD=196451'
+#             url_antiga = 'http://cvmweb.cvm.gov.br/swb/sistemas/scw/DownloadArqs/LeDownloadArqs.aspx?VL_GUID=95f00a14-1167-4b4b-8824-b690f4acd43f&PK_SESSAO=963302550&PK_ARQ_INFORM_DLOAD=189882'
             download = urlopen(url)
             arquivo_zipado = StringIO(download.read())
             unzipped = zipfile.ZipFile(arquivo_zipado)
-            print unzipped.namelist()
+#             print unzipped.namelist()
             for libitem in unzipped.namelist():
                 filecontent = file(libitem,'wb').write(unzipped.read(libitem))
                 arquivo_cadastro = file(libitem, 'r')
-                print arquivo_cadastro
                 tree = etree.parse(arquivo_cadastro)
                 # Listas para verificar opções de classe e situação
-                lista_classe = list()
-                lista_situacao = list()
+#                 lista_classe = list()
+#                 lista_situacao = list()
                 for element in tree.getroot().iter('CADASTRO'):
-                    print [(elemento, elemento.text) for elemento in element.iter()]
+                    for elemento in element.iter():
+#                     print [(elemento, elemento.text) for elemento in element.iter()]
+#                         if elemento.tag == 'SITUACAO':
+#                             if elemento.text not in lista_situacao:
+#                                 lista_situacao.append(elemento.text)
+#                         if elemento.tag == 'CLASSE':
+#                             if elemento.text not in lista_classe:
+#                                 lista_classe.append(elemento.text)
+#                 print lista_classe
+#                 print lista_situacao
+                
         except Exception as e:
             print 'Erro:', unicode(e)
 
