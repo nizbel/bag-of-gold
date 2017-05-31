@@ -9,6 +9,7 @@ from django.db import transaction
 from lxml import etree
 from urllib2 import urlopen
 import datetime
+import os
 import traceback
 import zeep
 import zipfile
@@ -17,7 +18,6 @@ class Command(BaseCommand):
     help = 'Buscar fundos de investimento na CVM'
 
     def handle(self, *args, **options):
-        print FundoInvestimento.objects.all().count(), Administrador.objects.all().count()
         FundoInvestimento.objects.all().delete()
         Administrador.objects.all().delete()
         try:
@@ -56,10 +56,16 @@ class Command(BaseCommand):
                                                                tipo_prazo=(FundoInvestimento.PRAZO_LONGO if campos['TRATAMENTO_TRIBUTARIO'].upper() == 'SIM' else FundoInvestimento.PRAZO_CURTO),
                                                                classe=FundoInvestimento.buscar_tipo_classe(campos['CLASSE']), exclusivo_qualificados=(campos['INVESTIDORES_QUALIFICADOS'].upper() == 'SIM'))
                                 novo_fundo.save()
+                            else:
+                                # TODO Verificar se houve alteração no fundo
+                                pass
+                            
                             
                             print novo_fundo                                                                  
                 except:
                     raise
+                os.remove(libitem)
+            # TODO verificar fundos que existem porém não foram listados, ou seja, estão terminados
         except:
             if settings.ENV == 'DEV':
                 print campos
