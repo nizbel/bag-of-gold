@@ -21,10 +21,14 @@ class FundoInvestimento (models.Model):
                    ]
     
     SITUACAO_FUNCIONAMENTO_NORMAL = 1
-    SITUACAO_FUNCIONAMENTO_NORMAL_DESCRICAO = 'Em funcionamento normal'
+    SITUACAO_FUNCIONAMENTO_NORMAL_DESCRICAO = u'Em funcionamento normal'
     SITUACAO_PRE_OPERACIONAL = 2
-    SITUACAO_PRE_OPERACIONAL_DESCRICAO = 'Fase pré-operacional'
+    SITUACAO_PRE_OPERACIONAL_DESCRICAO = u'Fase pré-operacional'
+    SITUACAO_TERMINADO = 3
+    SITUACAO_TERMINADO_DESCRICAO = u'Terminado'
     TIPOS_SITUACAO = [(SITUACAO_FUNCIONAMENTO_NORMAL, SITUACAO_FUNCIONAMENTO_NORMAL_DESCRICAO),
+                      (SITUACAO_PRE_OPERACIONAL, SITUACAO_PRE_OPERACIONAL_DESCRICAO),
+                      (SITUACAO_TERMINADO, SITUACAO_TERMINADO_DESCRICAO),
                       ]
     
     CLASSE_FUNDO_ACOES = 1
@@ -86,6 +90,7 @@ class FundoInvestimento (models.Model):
     @staticmethod
     def buscar_tipo_situacao(descricao_situacao):
         for tipo in FundoInvestimento.TIPOS_SITUACAO:
+#             print descricao_situacao.lower(), tipo[1].lower(), [i for i in xrange(len(descricao_situacao.lower())) if descricao_situacao.lower()[i] != tipo[1].lower()[i]]
             if descricao_situacao.lower() == tipo[1].lower():
                 return tipo[0]
         raise ValueError(u'Situação não encontrada')
