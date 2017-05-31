@@ -6,6 +6,12 @@ import datetime
 class Administrador (models.Model):
     nome = models.CharField(u'Nome', max_length=100)
     cnpj = models.CharField(u'CNPJ', max_length=20)
+    
+    class Meta:
+        unique_together=('cnpj',)
+        
+    def __unicode__(self):
+        return self.nome
 
 class FundoInvestimento (models.Model):
     PRAZO_CURTO = 'C'
@@ -16,6 +22,8 @@ class FundoInvestimento (models.Model):
     
     SITUACAO_FUNCIONAMENTO_NORMAL = 1
     SITUACAO_FUNCIONAMENTO_NORMAL_DESCRICAO = 'Em funcionamento normal'
+    SITUACAO_PRE_OPERACIONAL = 2
+    SITUACAO_PRE_OPERACIONAL_DESCRICAO = 'Fase pré-operacional'
     TIPOS_SITUACAO = [(SITUACAO_FUNCIONAMENTO_NORMAL, SITUACAO_FUNCIONAMENTO_NORMAL_DESCRICAO),
                       ]
     
@@ -45,7 +53,7 @@ class FundoInvestimento (models.Model):
     nome = models.CharField(u'Nome', max_length=100)
     cnpj = models.CharField(u'CNPJ', max_length=20)
     administrador = models.ForeignKey('Administrador')
-    data_inicio = models.DateField('Data de início')
+    data_constituicao = models.DateField('Data de constituição')
     situacao = models.PositiveSmallIntegerField(u'Situação', choices=TIPOS_SITUACAO)
     """
     L = longo prazo, C = curto prazo; para fins de IR
@@ -67,6 +75,20 @@ class FundoInvestimento (models.Model):
             return historico_fundo[0].valor_cota
         else:
             return ultima_operacao_fundo.valor_cota()
+        
+    @staticmethod
+    def buscar_tipo_classe(descricao_classe):
+        for tipo in FundoInvestimento.TIPOS_CLASSE:
+            if descricao_classe.lower() == tipo[1].lower():
+                return tipo[0]
+        raise ValueError(u'Classe não encontrada')
+    
+    @staticmethod
+    def buscar_tipo_situacao(descricao_situacao):
+        for tipo in FundoInvestimento.TIPOS_SITUACAO:
+            if descricao_situacao.lower() == tipo[1].lower():
+                return tipo[0]
+        raise ValueError(u'Situação não encontrada')
     
 class OperacaoFundoInvestimento (models.Model):
     quantidade = models.DecimalField(u'Quantidade de cotas', max_digits=11, decimal_places=2)
