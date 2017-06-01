@@ -31,6 +31,8 @@ class FundoInvestimento (models.Model):
                       (SITUACAO_TERMINADO, SITUACAO_TERMINADO_DESCRICAO),
                       ]
     
+    CLASSE_FUNDO_INDEFINIDA = 0
+    CLASSE_FUNDO_INDEFINIDA_DESCRICAO = u'Indefinida'
     CLASSE_FUNDO_ACOES = 1
     CLASSE_FUNDO_ACOES_DESCRICAO = u'Fundo de Ações'
     CLASSE_FUNDO_RENDA_FIXA = 2
@@ -65,6 +67,10 @@ class FundoInvestimento (models.Model):
     tipo_prazo = models.CharField(u'Tipo de prazo', max_length=1, choices=TIPOS_PRAZO)
     classe = models.PositiveSmallIntegerField(u'Classe', choices=TIPOS_CLASSE)
     exclusivo_qualificados = models.BooleanField(u'Exclusivo para investidores qualificados?')
+    """
+    Última data de documento de cadastro que conteve registro do fundo
+    """
+    ultimo_registro = models.DateField(u'Último registro')
     
     class Meta:
         unique_together=('cnpj',)
@@ -80,20 +86,36 @@ class FundoInvestimento (models.Model):
         else:
             return ultima_operacao_fundo.valor_cota()
         
+    def descricao_classe(self):
+        for codigo, descricao in FundoInvestimento.TIPOS_CLASSE:
+            if codigo == self.classe:
+                return descricao 
+            
+    def descricao_situacao(self):
+        for codigo, descricao in FundoInvestimento.TIPOS_SITUACAO:
+            if codigo == self.situacao:
+                return descricao 
+        
     @staticmethod
     def buscar_tipo_classe(descricao_classe):
+        # Se nulo, retornar classe indefinida
+        if descricao_classe == None:
+            return FundoInvestimento.CLASSE_FUNDO_INDEFINIDA
         for tipo in FundoInvestimento.TIPOS_CLASSE:
-            if descricao_classe.lower() == tipo[1].lower():
+            if descricao_classe.strip().lower() == tipo[1].strip().lower():
                 return tipo[0]
-        raise ValueError(u'Classe não encontrada')
+        raise ValueError(u'Classe não encontrada: %s' % (descricao_classe))
     
     @staticmethod
     def buscar_tipo_situacao(descricao_situacao):
+        # Se nulo, retornar situação de funcionamento normal
+        if descricao_situacao == None:
+            return FundoInvestimento.SITUACAO_FUNCIONAMENTO_NORMAL
         for tipo in FundoInvestimento.TIPOS_SITUACAO:
 #             print descricao_situacao.lower(), tipo[1].lower(), [i for i in xrange(len(descricao_situacao.lower())) if descricao_situacao.lower()[i] != tipo[1].lower()[i]]
-            if descricao_situacao.lower() == tipo[1].lower():
+            if descricao_situacao.strip().lower() == tipo[1].strip().lower():
                 return tipo[0]
-        raise ValueError(u'Situação não encontrada')
+        raise ValueError(u'Situação não encontrada: %s' % (descricao_situacao))
     
 class OperacaoFundoInvestimento (models.Model):
     quantidade = models.DecimalField(u'Quantidade de cotas', max_digits=11, decimal_places=2)
@@ -134,3 +156,4 @@ class DocumentoCadastro (models.Model):
 class LinkDocumentoCadastro (models.Model):
     url = models.URLField(u'URL do documento de cadastro')
     documento = models.OneToOneField('DocumentoCadastro')
+    
