@@ -24,13 +24,11 @@ class Command(BaseCommand):
         parser.add_argument('--aleatorio', action='store_true')
 
     def handle(self, *args, **options):        
-        FundoInvestimento.objects.all().delete()
-        Administrador.objects.all().delete()
-        DocumentoCadastro.objects.all().delete()
-        LinkDocumentoCadastro.objects.all().delete()
+#         FundoInvestimento.objects.all().delete()
+#         Administrador.objects.all().delete()
+#         DocumentoCadastro.objects.all().delete()
+#         LinkDocumentoCadastro.objects.all().delete()
 
-        # Guardar nome de arquivo para apagar caso seja necessário
-        nome_arquivo = None
         try:
             wsdl = 'http://sistemas.cvm.gov.br/webservices/Sistemas/SCW/CDocs/WsDownloadInfs.asmx?WSDL'
             client = zeep.Client(wsdl=wsdl)
@@ -41,7 +39,8 @@ class Command(BaseCommand):
             dias_uteis = list()
             if not options['aleatorio']:
                 # Buscar último dia útil
-                dias_uteis.append(ultimo_dia_util())
+#                 dias_uteis.append(ultimo_dia_util())
+                dias_uteis.append(datetime.date(2008,8,20))
             else:
                 # Buscar dias úteis que não tenham sido inseridos previamente
                 for _ in range(5):
@@ -76,24 +75,29 @@ class Command(BaseCommand):
                             mail_admins(u'Erro em Buscar fundos investimento', u'%s aconteceu para dia %s' % (erro_wsdl, dia_util.strftime('%d/%m/%Y')))
                         continue
                 else:
-                    print 'Buscou URL'
                     url = LinkDocumentoCadastro.objects.get(documento__data_referencia=dia_util).url
 #                 url = 'http://cvmweb.cvm.gov.br/swb/sistemas/scw/DownloadArqs/LeDownloadArqs.aspx?VL_GUID=8fc00daf-4fc8-4d83-bc4c-3e45cc79576c&PK_SESSAO=963322175&PK_ARQ_INFORM_DLOAD=196451'
-                download = urlopen(url)
-                arquivo_zipado = StringIO(download.read())
-                unzipped = zipfile.ZipFile(arquivo_zipado)
-#                 print unzipped.namelist()
+                # Tenta extrair arquivo, se não conseguir, continua com o próximo
+                try:
+                    download = urlopen(url)
+                    arquivo_zipado = StringIO(download.read())
+                    unzipped = zipfile.ZipFile(arquivo_zipado)
+                except:
+                    if settings.ENV == 'DEV':
+                        print traceback.format_exc()
+                    elif settings.ENV == 'PROD':
+                        mail_admins(u'Erro em Buscar fundos investimento na data %s' % (dia_util.strftime('%d/%m/%Y')), traceback.format_exc())
+                    continue
                 for libitem in unzipped.namelist():
-                    # Guardar nome de arquivo
-                    nome_arquivo = libitem
-                    file(libitem,'wb').write(unzipped.read(libitem))
-                    arquivo_cadastro = file(libitem, 'r')
-                    tree = etree.parse(arquivo_cadastro)
-                    if not options['aleatorio']:
-                        fundos = list()
-                    # Definir campos para traceback
-                    campos = None
                     try:
+                        # Ler arquivo
+                        file(libitem,'wb').write(unzipped.read(libitem))
+                        arquivo_cadastro = file(libitem, 'r')
+                        tree = etree.parse(arquivo_cadastro)
+                        if not options['aleatorio']:
+                            fundos = list()
+                        # Definir campos para traceback
+                        campos = None
                         with transaction.atomic():
                             # Lê o arquivo procurando nós CADASTRO (1 para cada fundo)
                             for element in tree.getroot().iter('CADASTRO'):
@@ -134,10 +138,17 @@ class Command(BaseCommand):
 #                                 print novo_fundo             
                             documento = DocumentoCadastro.objects.get(data_referencia=dia_util)  
                             documento.leitura_realizada = True
-                            documento.save()                                             
+                            documento.save()             
+                        os.remove(libitem)                                
                     except:
-                        raise
-                    os.remove(libitem)
+                        # Apagar arquivo caso haja erro, enviar mensagem para email
+                        os.remove(libitem)
+                        if settings.ENV == 'DEV':
+                            if campos:
+                                print campos
+                            print traceback.format_exc()
+                        elif settings.ENV == 'PROD':
+                            mail_admins(u'Erro em Buscar fundos investimento na data %s' % (dia_util.strftime('%d/%m/%Y')), traceback.format_exc())
                 # Verificar fundos que existem porém não foram listados, ou seja, estão terminados
                 if not options['aleatorio']:
                     # Verificar fundos não encontrados no cadastro para terminar
@@ -146,12 +157,7 @@ class Command(BaseCommand):
                             fundo.situacao = FundoInvestimento.SITUACAO_TERMINADO
                             fundo.save()
         except:
-            # Testa se nome arquivo foi guardado para remover arquivo
-            if nome_arquivo:
-                os.remove(nome_arquivo)
             if settings.ENV == 'DEV':
-                if campos:
-                    print campos
                 print traceback.format_exc()
             elif settings.ENV == 'PROD':
                 mail_admins(u'Erro em Buscar fundos investimento', traceback.format_exc())
