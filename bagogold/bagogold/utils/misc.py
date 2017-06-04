@@ -265,3 +265,29 @@ def formatar_zeros_a_direita_apos_2_casas_decimais(valor):
     
     return str_valor_formatado
     
+def ultimo_dia_util():
+    dia = datetime.date.today() - datetime.timedelta(days=1)
+    while dia.weekday() > 4 or verificar_feriado_bovespa(dia):
+        dia = dia - datetime.timedelta(days=1)
+    return dia
+
+def buscar_data_aleatoria(data_inicial, data_final):
+    """Get a time at a proportion of a range of two formatted times.
+
+    start and end should be strings specifying times formated in the
+    given format (strftime-style), giving an interval [start, end].
+    prop specifies how a proportion of the interval to be taken after
+    start.  The returned time will be in the specified format.
+    """
+    stime = time.mktime(data_inicial.timetuple())
+    etime = time.mktime(data_final.timetuple())
+
+    ptime = stime + random.random() * (etime - stime)
+
+    return datetime.date.fromtimestamp(ptime)
+
+def buscar_dia_util_aleatorio(data_inicial, data_final):
+    data_aleatoria = buscar_data_aleatoria(data_inicial, data_final)
+    while data_aleatoria.weekday() > 4 or verificar_feriado_bovespa(data_aleatoria):
+        data_aleatoria = buscar_data_aleatoria(data_inicial, data_final)
+    return data_aleatoria
