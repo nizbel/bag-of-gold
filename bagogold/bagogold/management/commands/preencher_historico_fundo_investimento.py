@@ -12,41 +12,12 @@ from threading import Thread
 from urllib2 import urlopen
 import StringIO
 import datetime
+import os
 import re
 import time
 import traceback
 import zeep
 import zipfile
-
-threads_rodando = {'Principal': 1}
-historico_adicionar = list()
-
-class SalvarHistoricoThread(Thread):
-    def run(self):
-        try:
-            while len(historico_adicionar) > 0 or 'Principal' in threads_rodando.keys():
-#                 inicio = datetime.datetime.now()
-                try:
-                    with transaction.atomic():
-#                         if 'Principal' in threads_rodando.keys():
-#                             while len(historico_adicionar) > 0:
-#                                 historico = historico_adicionar.pop()
-#                                 historico.save()
-#                         else:
-#                             for historico in historico_adicionar:
-#                                 historico.save()
-#                             del historico_adicionar[:]
-                        HistoricoValorCotas.objects.bulk_create(historico_adicionar)
-                        del historico_adicionar[:]
-                except:
-                    print 'erro no insert atomico'
-                 
-#                 print 'Tempo:', datetime.datetime.now() - inicio
-                 
-        except Exception as e:
-                template = "An exception of type {0} occured. Arguments:\n{1!r}"
-                message = template.format(type(e).__name__, e.args)
-                print message
 
 class Command(BaseCommand):
     help = 'Preencher historico de fundos de investimento'
@@ -56,7 +27,7 @@ class Command(BaseCommand):
         parser.add_argument('--arquivo', action='store_true')
         
     def handle(self, *args, **options):
-        HistoricoValorCotas.objects.all().delete()
+#         HistoricoValorCotas.objects.all().delete()
         inicio_geral = datetime.datetime.now()
         try:
             wsdl = 'http://sistemas.cvm.gov.br/webservices/Sistemas/SCW/CDocs/WsDownloadInfs.asmx?WSDL'
@@ -88,7 +59,7 @@ class Command(BaseCommand):
                 # TODO apagar codigo de teste
                 unzipped = zipfile.ZipFile(file('20170527000000dfea0fc03d0e46978ec6cd53a11e2c5b.zip', 'r'))
                 for libitem in unzipped.namelist()[:60]:
-                    print libitem
+#                     print libitem
                     inicio = datetime.datetime.now()
                     erros = 0
                     try:
@@ -115,19 +86,20 @@ class Command(BaseCommand):
                                 continue
                         with transaction.atomic():
                             HistoricoValorCotas.objects.bulk_create(historicos)
+                        
+                        os.remove(libitem)                                
                     except:
-                        print 'erro geral'
+                        # Apagar arquivo caso haja erro, enviar mensagem para email
+                        os.remove(libitem)
+                        if settings.ENV == 'DEV':
+                            print traceback.format_exc()
+                        elif settings.ENV == 'PROD':
+                            mail_admins(u'Erro em Preencher histórico de fundos de investimento. Arquivo %s' % (libitem), traceback.format_exc())
                         continue
                     print 'Tempo:', datetime.datetime.now() - inicio, 'Erros:', erros
         except:
             raise
-        while 'Principal' in threads_rodando.keys():
-            del threads_rodando['Principal']
 
-        # Criar thread para salvar os valores de histórico
-#         thread_salvar_historico = SalvarHistoricoThread()
-#         thread_salvar_historico.start()
-#         thread_salvar_historico.join()
         print datetime.datetime.now() - inicio_geral
 
 def formatar_cnpj(string):
