@@ -433,48 +433,44 @@ $( document ).ready(function() {
 		}
 	});
 	
-	// Inicializar proventos em ações
+	{% if pendencia.documento.tipo == 'A' %}
+	// Inicializar proventos de ações
 	$("select[name*=tipo_provento]").each( function() {
         var id_provento = $(this).attr('id').match(/\d+/)[0];
+        $('#id_provento-' + id_provento + '-valor_unitario').TouchSpin({
+            min: 0.000000000000000001,
+            max: 10000,
+            step: 0.000000000000000001,
+            decimals: 18,
+            maxboostedstep: 100,
+            prefix: 'R$',
+            postfix: '%'
+        });
         if ($(this).val() == 'A') {
             $('#provento_em_acao-' + id_provento).show();
-            $('#id_provento-' + id_provento + '-valor_unitario').TouchSpin({
-                initval: 0,
-                min: 0,
-                max: 1000000000,
-                {% if pendencia.documento.tipo == 'A' %}
-                step: 0.000000000000000001,
-                decimals: 12,
-                {% elif pendencia.documento.tipo == 'F' %}
-                step: 0.000000000000000001,
-                decimals: 9,
-                {% endif %}
-                maxboostedstep: 100,
-                prefix: 'R$',
-                postfix: '%'
-            });
             $('#id_provento-' + id_provento + '-valor_unitario').parent().find('.bootstrap-touchspin-prefix').hide();
         } else {
             $('#provento_em_acao-' + id_provento).hide();
-            $('#id_provento-' + id_provento + '-valor_unitario').TouchSpin({
-                initval: 0,
-                min: 0,
-                max: 1000000000,
-                {% if pendencia.documento.tipo == 'A' %}
-                step: 0.000000000000000001,
-                decimals: 12,
-                {% elif pendencia.documento.tipo == 'F' %}
-                step: 0.000000000000000001,
-                decimals: 9,
-                {% endif %}
-                maxboostedstep: 100,
-                prefix: 'R$',
-                postfix: '%'
-            });
             $('#id_provento-' + id_provento + '-valor_unitario').parent().find('.bootstrap-touchspin-postfix').hide();
         }
     });
+	{% else %}
+	// Inicializar proventos de fiis
+    $("select[name*=tipo_provento]").each( function() {
+        var id_provento = $(this).attr('id').match(/\d+/)[0];
+        $('#provento_em_acao-' + id_provento).show();
+        $('#id_provento-' + id_provento + '-valor_unitario').TouchSpin({
+            min: 0.000000000000000001,
+            max: 10000,
+            step: 0.000000000000000001,
+            decimals: 18,
+            maxboostedstep: 100,
+            prefix: 'R$'
+        });
+    });
+	{% endif %}
 	
+	{% if pendencia.documento.tipo == 'A' %}
 	$("select[name*=tipo_provento]").change( function() {
         var id_provento = $(this).attr('id').match(/\d+/)[0];
 		if ($(this).val() == 'A') {
@@ -489,6 +485,7 @@ $( document ).ready(function() {
             $('#id_provento-' + id_provento + '-valor_unitario').parent().find('.bootstrap-touchspin-postfix').hide();
 		}
 	});
+	{% endif %}
 	
 	{% if 'pdf' in pendencia.documento.extensao_documento %}
 	PDFJS.getDocument('{% url "gerador_proventos:baixar_documento_provento" pendencia.documento.id %}').then(function(pdf) {
@@ -521,7 +518,6 @@ $( document ).ready(function() {
 	   });
 	  pdfAtual = pdf;
 	});
-	
 	{% endif %}
 });
 {% if 'pdf' in pendencia.documento.extensao_documento %}
