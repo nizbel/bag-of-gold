@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from bagogold.bagogold.decorators import em_construcao
+from bagogold.bagogold.decorators import em_construcao, \
+	adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import \
 	DivisaoOperacaoFundoInvestimentoFormSet
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFundoInvestimento, \
@@ -238,35 +239,31 @@ def inserir_operacao_fundo_investimento(request):
 
 @em_construcao('Fundo de investimento')
 @login_required
+@adiciona_titulo_descricao('Listar fundos de investimento cadastrados', 'Lista os fundos cadastrados no sistema e suas principais características')
 def listar_fundos(request):
-    investidor = request.user.investidor
-    fundos_investimento = FundoInvestimento.objects.filter(investidor=investidor)
+    fundos_investimento = FundoInvestimento.objects.all()[:5]
     
     for fundo in fundos_investimento:
-        # Preparar o valor mais atual para carência
-        fundo.carencia_atual = fundo.carencia_atual()
         # Preparar o valor mais atual de rendimento
-        try:
+        if HistoricoValorCotas.objects.filter(fundo_investimento=fundo).exists():
             historico_mais_recente = HistoricoValorCotas.objects.filter(fundo_investimento=fundo).order_by('-data')[0]
             fundo.data_valor_cota = historico_mais_recente.data
             fundo.valor_cota = historico_mais_recente.valor_cota
-        except:
-            pass
-        
-        # Limitar descrição
-        if len(fundo.descricao) > 30:
-            fundo.descricao = fundo.descricao[0:30] + '...'
+        else:
+            fundo.data_valor_cota = None
+            fundo.valor_cota = None
         
         # Prazo
         if fundo.tipo_prazo == 'C':
             fundo.tipo_prazo = 'Curto'
         elif fundo.tipo_prazo == 'L':
             fundo.tipo_prazo = 'Longo'
-        
+           
     return TemplateResponse(request, 'fundo_investimento/listar_fundo_investimento.html', {'fundos_investimento': fundos_investimento})
 
 @em_construcao('Fundo de investimento')
 @login_required
+@adiciona_titulo_descricao('Painel de Fundos de Investimento', 'Posição atual do investidor em Fundos de Investimento')
 def painel(request):
     investidor = request.user.investidor
     # Processa primeiro operações de venda (V), depois compra (C)
@@ -327,5 +324,6 @@ def painel(request):
     
     return TemplateResponse(request, 'fundo_investimento/painel.html', {'fundos': fundos, 'dados': dados})
 
+@adiciona_titulo_descricao('Sobre Fundos de Investimento', 'Detalha o que são Fundos de Investimento')
 def sobre(request):
     return TemplateResponse(request, 'fundo_investimento/sobre.html', {})
