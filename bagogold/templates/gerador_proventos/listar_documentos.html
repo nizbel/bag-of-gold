@@ -14,67 +14,67 @@
 
 {% block content %}
 <div class="portlet-body">
-        <div class="row">
-            <div class="col-md-10">
-                <table id="documentos" class="table table-striped table-bordered table-hover table-header-fixed">
-                <thead>
-                    <tr>
-                        <th>Nome</th>
-                        <th>Tipo</th>
-                        <th>Protocolo</th>
-                        <th>Data de referência</th>
-                        <th>Empresa</th>
-                        <th>Pendente?</th>
-                        <th>Possui proventos vinculados?</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for documento in documentos %}
+    <div class="row">
+        <div class="col-md-10">
+            <table id="documentos" class="table table-striped table-bordered table-hover table-header-fixed">
+            <thead>
                 <tr>
-                    <td><a href="{% url "gerador_proventos:detalhar_documento" documento.id %}">{{documento}}</a></td>
-                    <td>{{documento.tipo}}</td>
-                    <td>{{documento.protocolo}}</td>
-                    <td>{{documento.data_referencia|date:'d/m/Y'}}</td>
-                    <td>{{documento.empresa}}</td>
-                    <td>{{documento.pendente|yesno:"Sim,Não,Indefinido"}}</td>
-                    <td>{{documento.ha_proventos_vinculados|yesno:"Sim,Não,Indefinido"}}</td>
+                    <th>Nome</th>
+                    <th>Tipo</th>
+                    <th>Protocolo</th>
+                    <th>Data de referência</th>
+                    <th>Empresa</th>
+                    <th>Pendente?</th>
+                    <th>Possui proventos vinculados?</th>
                 </tr>
-                {% endfor %}
-                </tbody>
-                </table>
-            </div>
-            <div class="col-md-2">
-                <div class="portlet box yellow-crusta">
-                    <div class="portlet-title">
-                        <div class="caption">
-                            <span class="glyphicon glyphicon-filter"></span>Filtros
-                        </div>
-                        <div class="tools">
-                            <a href="javascript:;" class="collapse"></a>
-                        </div>
+            </thead>
+            <tbody>
+            {% for documento in documentos %}
+            <tr>
+                <td><a href="{% url "gerador_proventos:detalhar_documento" documento.id %}">{{documento}}</a></td>
+                <td>{{documento.tipo}}</td>
+                <td>{{documento.protocolo}}</td>
+                <td>{{documento.data_referencia|date:'d/m/Y'}}</td>
+                <td>{{documento.empresa}}</td>
+                <td>{{documento.pendente|yesno:"Sim,Não,Indefinido"}}</td>
+                <td>{{documento.ha_proventos_vinculados|yesno:"Sim,Não,Indefinido"}}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+            </table>
+        </div>
+        <div class="col-md-2">
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <span class="glyphicon glyphicon-filter"></span>Filtros
                     </div>
-                    <div class="portlet-body">
-                        <div class="row">
-                            <span class="col-md-12">Empresa atual:</span>
-                            <span class="col-md-12"><strong>{{ empresa_atual }} ({{ empresa_atual.ticker_empresa }})</strong></span>
-                        </div>
-                        <div class="row">
-                            <form method="POST" class="col-md-12 horizontal-form">{% csrf_token %}
-                                <label for="empresa">Procurar por ticker:
-                                    <select id="empresa" name="busca_empresa" style="width: 100%">
-                                        {% for empresa in empresas %}
-                                            <option value="{{empresa.id|floatformat:'f'}}">{{empresa.nome}} ({{empresa.ticker_empresa}})</option>
-                                        {% endfor %}
-                                    </select>
-                                </label>
-                                <button type="submit" class="btn green-steel">Filtrar</i></button>
-                            </form>
-                        </div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <div class="row">
+                        <span class="col-md-12">Empresa atual:</span>
+                        <span class="col-md-12"><strong>{{ empresa_atual }} ({{ empresa_atual.ticker_empresa }})</strong></span>
+                    </div>
+                    <div class="row">
+                        <form method="POST" class="col-md-12 horizontal-form">{% csrf_token %}
+                            <label for="empresa">Procurar por ticker:
+                                <select id="empresa" name="busca_empresa" style="width: 100%">
+                                    {% for empresa in empresas %}
+                                        <option value="{{empresa.id|floatformat:'f'}}">{{empresa.nome}} ({{empresa.ticker_empresa}})</option>
+                                    {% endfor %}
+                                </select>
+                            </label>
+                            <button type="submit" class="btn green-steel">Filtrar</i></button>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
 {% endblock %}
 
