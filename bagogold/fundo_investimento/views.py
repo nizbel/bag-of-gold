@@ -1,31 +1,77 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 from bagogold.bagogold.decorators import em_construcao, \
-	adiciona_titulo_descricao
+    adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import \
-	DivisaoOperacaoFundoInvestimentoFormSet
+    DivisaoOperacaoFundoInvestimentoFormSet
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFundoInvestimento, \
-	Divisao
+    Divisao
 from bagogold.fundo_investimento.forms import OperacaoFundoInvestimentoForm
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
-	HistoricoValorCotas, FundoInvestimento
+    HistoricoValorCotas, FundoInvestimento
 from bagogold.fundo_investimento.utils import \
-	calcular_qtd_cotas_ate_dia_por_fundo
+    calcular_qtd_cotas_ate_dia_por_fundo
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
 from django.forms.models import inlineformset_factory
-from django.http.response import HttpResponseRedirect
+from django.http.response import HttpResponseRedirect, HttpResponse
+from django.shortcuts import get_object_or_404
+from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 import calendar
 import datetime
+import json
+from bagogold.bagogold.utils.misc import formatar_zeros_a_direita_apos_2_casas_decimais
 
 @em_construcao('Fundo de investimento')
 @login_required
-def detalhar_fundo(request, fundo_id):
-	pass
+@adiciona_titulo_descricao('Detalhar fundo de investimento', 'Traz características do fundo, posição do investidor e histórico de cotações')
+def detalhar_fundo(request, id_fundo):
+    fundo = get_object_or_404(FundoInvestimento, id=id_fundo)
+    
+    # Preparar o valor mais atual de rendimento
+    if HistoricoValorCotas.objects.filter(fundo_investimento=fundo).exists():
+        historico_mais_recente = HistoricoValorCotas.objects.filter(fundo_investimento=fundo).order_by('-data')[0]
+        fundo.data_valor_cota = historico_mais_recente.data
+        fundo.valor_cota = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(historico_mais_recente.valor_cota))
+    else:
+        fundo.data_valor_cota = None
+        fundo.valor_cota = None
+        
+    # Prazo
+    if fundo.tipo_prazo == 'C':
+        fundo.tipo_prazo = 'Curto'
+    elif fundo.tipo_prazo == 'L':
+        fundo.tipo_prazo = 'Longo'
+        
+    data_final = datetime.date.today()
+    historico = HistoricoValorCotas.objects.filter(fundo_investimento=fundo, data__gte=data_final.replace(year=data_final.year-1)).order_by('-data')
+    for registro in historico:
+        registro.valor_cota = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(registro.valor_cota))
+    # Pegar datas inicial e final do historico
+    historico_data_inicial = historico[len(historico)-1].data
+    historico_data_final = historico[0].data
+    
+    dados = {'total_operacoes': 0, 'qtd_cotas_atual': Decimal(0), 'total_atual': Decimal(0), 'total_lucro': Decimal(0), 'lucro_percentual': Decimal(0)}
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+        
+        # TODO Considerar vendas parciais de titulos
+        dados['total_operacoes'] = OperacaoFundoInvestimento.objects.filter(fundo_investimento=fundo, investidor=investidor).count()
+        dados['qtd_cotas_atual'] = calcular_qtd_cotas_ate_dia_por_fundo(investidor, id_fundo)
+        dados['total_atual'] = dados['qtd_cotas_atual'] * fundo.valor_cota if fundo.valor_cota else Decimal(0)
+#         preco_medio = (OperacaoFundoInvestimento.objects.filter(fundo_investimento=fundo, investidor=investidor, tipo_operacao='C').annotate(valor_investido=F('quantidade') * F('preco_unitario')) \
+#             .aggregate(total_investido=Sum('valor_investido'))['total_investido'] or Decimal(0)) / (OperacaoTitulo.objects.filter(titulo=titulo, investidor=investidor, tipo_operacao='C') \
+#             .aggregate(total_titulos=Sum('quantidade'))['total_titulos'] or 1)
+        preco_medio = Decimal(1)
+        dados['total_lucro'] = dados['total_atual'] - dados['qtd_cotas_atual'] * preco_medio
+        dados['lucro_percentual'] = (fundo.valor_cota - preco_medio) / (preco_medio or 1) if dados['qtd_cotas_atual'] > 0 else 0    
+    
+    return TemplateResponse(request, 'fundo_investimento/detalhar_fundo_investimento.html', {'fundo': fundo, 'dados': dados, 'historico': historico, 'historico_data_inicial': historico_data_inicial,
+                                                                 'historico_data_final': historico_data_final})
 
 @em_construcao('Fundo de investimento')
 @login_required
@@ -284,15 +330,6 @@ def listar_fundos(request):
     fundos_investimento = FundoInvestimento.objects.filter(situacao__in=filtro_situacao, classe__in=filtro_classe, exclusivo_qualificados__in=filtro_iq, nome__icontains=filtro_nome)
     
     for fundo in fundos_investimento:
-#         # Preparar o valor mais atual de rendimento
-#         if HistoricoValorCotas.objects.filter(fundo_investimento=fundo).exists():
-#             historico_mais_recente = HistoricoValorCotas.objects.filter(fundo_investimento=fundo).order_by('-data')[0]
-#             fundo.data_valor_cota = historico_mais_recente.data
-#             fundo.valor_cota = historico_mais_recente.valor_cota
-#         else:
-#             fundo.data_valor_cota = None
-#             fundo.valor_cota = None
-        
         # Prazo
         if fundo.tipo_prazo == 'C':
             fundo.tipo_prazo = 'Curto'
@@ -300,6 +337,29 @@ def listar_fundos(request):
             fundo.tipo_prazo = 'Longo'
 
     return TemplateResponse(request, 'fundo_investimento/listar_fundo_investimento.html', {'fundos_investimento': fundos_investimento, 'filtro': filtro})
+
+def listar_historico_fundo_investimento(request, id_fundo):
+    # Converte datas e realiza validação do formato
+    try:
+        data_inicial = datetime.datetime.strptime(request.GET.get('dataInicial', ''), '%d/%m/%Y')
+    except ValueError:
+        return HttpResponse(json.dumps({'sucesso': False, 'erro':'Data inicial inválida'}), content_type = "application/json")  
+    try:
+        data_final = datetime.datetime.strptime(request.GET.get('dataFinal', ''), '%d/%m/%Y')
+    except ValueError:
+        return HttpResponse(json.dumps({'sucesso': False, 'erro':'Data final inválida'}), content_type = "application/json")  
+    # Pega apenas a parte relacionada a data do datetime
+    data_inicial = data_inicial.date()
+    data_final = data_final.date()
+    if data_final < data_inicial:
+        return HttpResponse(json.dumps({'sucesso': False, 'erro':'Data final deve ser maior ou igual a data inicial'}), content_type = "application/json")  
+    if data_final > data_inicial.replace(year=data_inicial.year+1):
+        return HttpResponse(json.dumps({'sucesso': False, 'erro':'O período limite para a escolha é de 1 ano'}), content_type = "application/json")  
+    # Retorno OK
+    historico = HistoricoValorCotas.objects.filter(data__range=[data_inicial, data_final], fundo_investimento__id=id_fundo)
+    for registro in historico:
+        registro.valor_cota = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(registro.valor_cota))
+    return HttpResponse(json.dumps({'sucesso': True, 'dados': render_to_string('fundo_investimento/utils/listar_historico_fundo_investimento.html', {'historico': historico})}), content_type = "application/json")   
 
 @em_construcao('Fundo de investimento')
 @login_required
