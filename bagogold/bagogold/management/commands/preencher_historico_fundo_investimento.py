@@ -27,7 +27,7 @@ class Command(BaseCommand):
         parser.add_argument('--arquivo', action='store_true')
         
     def handle(self, *args, **options):
-#         HistoricoValorCotas.objects.all().delete()
+        HistoricoValorCotas.objects.all().delete()
         inicio_geral = datetime.datetime.now()
         try:
             wsdl = 'http://sistemas.cvm.gov.br/webservices/Sistemas/SCW/CDocs/WsDownloadInfs.asmx?WSDL'
@@ -58,7 +58,7 @@ class Command(BaseCommand):
 #                 data_pesquisa = ultimo_dia_util()
                 # TODO apagar codigo de teste
                 unzipped = zipfile.ZipFile(file('20170527000000dfea0fc03d0e46978ec6cd53a11e2c5b.zip', 'r'))
-                for libitem in unzipped.namelist()[:60]:
+                for libitem in unzipped.namelist()[:20]:
 #                     print libitem
                     inicio = datetime.datetime.now()
                     erros = 0

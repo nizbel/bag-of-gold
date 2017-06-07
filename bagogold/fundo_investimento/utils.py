@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFundoInvestimento
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
+import datetime
 
-def calcular_qtd_cotas_ate_dia(investidor, dia):
+def calcular_qtd_cotas_ate_dia(investidor, dia=datetime.date.today()):
     """ 
     Calcula a quantidade de cotas até dia determinado
     Parâmetros: Investidor
@@ -26,7 +27,7 @@ def calcular_qtd_cotas_ate_dia(investidor, dia):
         
     return qtd_cotas
 
-def calcular_qtd_cotas_ate_dia_por_fundo(investidor, fundo_id, dia,):
+def calcular_qtd_cotas_ate_dia_por_fundo(investidor, fundo_id, dia=datetime.date.today()):
     """ 
     Calcula a quantidade de cotas até dia determinado para um fundo determinado
     Parâmetros: Investidor
