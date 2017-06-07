@@ -241,25 +241,65 @@ def inserir_operacao_fundo_investimento(request):
 @login_required
 @adiciona_titulo_descricao('Listar fundos de investimento cadastrados', 'Lista os fundos cadastrados no sistema e suas principais características')
 def listar_fundos(request):
-    fundos_investimento = FundoInvestimento.objects.all()[:5]
+    filtro = {}
+    filtro['situacoes'] = FundoInvestimento.TIPOS_SITUACAO + [(0, u'Não terminados')]
+    filtro['classes'] = [(-1, 'Todas')] + FundoInvestimento.TIPOS_CLASSE
+    filtro['opcoes_iq'] = [(1, u'Não exclusivos'), (0, u'Exclusivos'), (-1, 'Todos')]
+
+    # Montar filtro
+    if request.POST:
+        # Situação
+        filtro['situacao'] = int(request.POST.get('situacao', 0))
+        if filtro['situacao'] == 0:
+            filtro_situacao = [codigo for codigo, _ in FundoInvestimento.TIPOS_SITUACAO if codigo != FundoInvestimento.SITUACAO_TERMINADO]
+        else:
+            filtro_situacao = [filtro['situacao']]
+
+        # Classe
+        filtro['classe'] = int(request.POST.get('classe', -1))
+        if filtro['classe'] == -1:
+            filtro_classe = [codigo for codigo, _ in FundoInvestimento.TIPOS_CLASSE]
+        else:
+            filtro_classe = [filtro['classe']]
+
+        # Apenas investidores qualificados
+        filtro['iq'] = int(request.POST.get('iq', -1))
+        if filtro['iq'] == -1:
+            filtro_iq = [True, False]
+        else:
+            filtro_iq = [True] if filtro['iq'] == 0 else [False]
+
+        # Nome
+        filtro['nome'] = request.POST.get('nome', '')
+        if len(filtro['nome']) > 100:
+            filtro_nome = filtro['nome'][:100]
+        else:
+            filtro_nome = filtro['nome']
+    else:
+        filtro_situacao = [FundoInvestimento.SITUACAO_FUNCIONAMENTO_NORMAL]
+        filtro_classe = [codigo for codigo, _ in FundoInvestimento.TIPOS_CLASSE]
+        filtro['iq'] = 1
+        filtro_iq = [False]
+        filtro_nome = ''
+    fundos_investimento = FundoInvestimento.objects.filter(situacao__in=filtro_situacao, classe__in=filtro_classe, exclusivo_qualificados__in=filtro_iq, nome__icontains=filtro_nome)
     
     for fundo in fundos_investimento:
-        # Preparar o valor mais atual de rendimento
-        if HistoricoValorCotas.objects.filter(fundo_investimento=fundo).exists():
-            historico_mais_recente = HistoricoValorCotas.objects.filter(fundo_investimento=fundo).order_by('-data')[0]
-            fundo.data_valor_cota = historico_mais_recente.data
-            fundo.valor_cota = historico_mais_recente.valor_cota
-        else:
-            fundo.data_valor_cota = None
-            fundo.valor_cota = None
+#         # Preparar o valor mais atual de rendimento
+#         if HistoricoValorCotas.objects.filter(fundo_investimento=fundo).exists():
+#             historico_mais_recente = HistoricoValorCotas.objects.filter(fundo_investimento=fundo).order_by('-data')[0]
+#             fundo.data_valor_cota = historico_mais_recente.data
+#             fundo.valor_cota = historico_mais_recente.valor_cota
+#         else:
+#             fundo.data_valor_cota = None
+#             fundo.valor_cota = None
         
         # Prazo
         if fundo.tipo_prazo == 'C':
             fundo.tipo_prazo = 'Curto'
         elif fundo.tipo_prazo == 'L':
             fundo.tipo_prazo = 'Longo'
-           
-    return TemplateResponse(request, 'fundo_investimento/listar_fundo_investimento.html', {'fundos_investimento': fundos_investimento})
+
+    return TemplateResponse(request, 'fundo_investimento/listar_fundo_investimento.html', {'fundos_investimento': fundos_investimento, 'filtro': filtro})
 
 @em_construcao('Fundo de investimento')
 @login_required
