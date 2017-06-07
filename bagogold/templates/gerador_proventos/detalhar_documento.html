@@ -87,9 +87,9 @@
                                     <div class="m-grid-col m-grid-col-left">{{provento.descricao_tipo_provento}}</div>
                                     <div class="m-grid-col m-grid-col-left"><strong>Valor unit.:</strong></div>
                                     {% if provento.tipo_provento != 'A' %}
-                                        <div class="m-grid-col m-grid-col-left">R$ {{provento.valor_unitario}}</div>
+                                        <div class="m-grid-col m-grid-col-left" style="word-break: break-all;">R$ {{provento.valor_unitario}}</div>
                                     {% else %}
-                                        <div class="m-grid-col m-grid-col-left">{{provento.valor_unitario}}%</div>
+                                        <div class="m-grid-col m-grid-col-left" style="word-break: break-all;">{{provento.valor_unitario}}%</div>
                                     {% endif %}
                                     <div class="m-grid-col m-grid-col-left"><strong>Versão</strong></div>
                                     <div class="m-grid-col m-grid-col-left">{{provento.versao}}</div>
@@ -111,15 +111,15 @@
                                         <div class="m-grid-col m-grid-col-left"><strong>Ação recebida:</strong></div>
                                         <div class="m-grid-col m-grid-col-left">{{acao_descricao_provento.acao_recebida}}</div>
                                         <div class="m-grid-col m-grid-col-left"><strong>Valor de frações:</strong></div>
-                                        <div class="m-grid-col m-grid-col-left">
+                                        <div class="m-grid-col m-grid-col-left" style="word-break: break-all;">
                                         {% if acao_descricao_provento.valor_calculo_frac %}
                                         R$ {{acao_descricao_provento.valor_calculo_frac}}
                                         {% else %}
-                                        N/A
+                                        Não há
                                         {% endif %}
                                         </div>
                                         <div class="m-grid-col m-grid-col-left"><strong>Pagamento de frações:</strong></div>
-                                        <div class="m-grid-col m-grid-col-left">{{acao_descricao_provento.data_pagamento_frac|date:'d/m/Y'|default:'N/A'}}</div>
+                                        <div class="m-grid-col m-grid-col-left">{{acao_descricao_provento.data_pagamento_frac|date:'d/m/Y'|default:'Não há'}}</div>
                                     </div>
                                     {% endfor %}
                                 {% endif %}
@@ -132,7 +132,7 @@
                                     <div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
                                     <div class="m-grid-col m-grid-col-left">{{provento.descricao_tipo_provento}}</div>
                                     <div class="m-grid-col m-grid-col-left"><strong>Valor unit.:</strong></div>
-                                    <div class="m-grid-col m-grid-col-left">R$ {{provento.valor_unitario}}</div>
+                                    <div class="m-grid-col m-grid-col-left" style="word-break: break-all;">R$ {{provento.valor_unitario}}</div>
                                     <div class="m-grid-col m-grid-col-left"><strong>Versão</strong></div>
                                     <div class="m-grid-col m-grid-col-left">{{provento.versao}}</div>
                                 </div>
