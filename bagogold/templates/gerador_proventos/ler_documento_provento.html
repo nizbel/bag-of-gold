@@ -412,7 +412,7 @@ $( document ).ready(function() {
 	$("input[name*='valor_calculo_frac']").TouchSpin({
 		initval: 0,
         min: 0,
-        max: 1000000000,
+        max: 10000,
         step: 0.0000000001,
         decimals: 10,
         maxboostedstep: 100,
@@ -438,10 +438,10 @@ $( document ).ready(function() {
 	$("select[name*=tipo_provento]").each( function() {
         var id_provento = $(this).attr('id').match(/\d+/)[0];
         $('#id_provento-' + id_provento + '-valor_unitario').TouchSpin({
-            min: 0.000000000000000001,
+            min: 0.0000000000000001,
             max: 10000,
-            step: 0.000000000000000001,
-            decimals: 18,
+            step: 0.0000000000000001,
+            decimals: 16,
             maxboostedstep: 100,
             prefix: 'R$',
             postfix: '%'
@@ -460,10 +460,10 @@ $( document ).ready(function() {
         var id_provento = $(this).attr('id').match(/\d+/)[0];
         $('#provento_em_acao-' + id_provento).show();
         $('#id_provento-' + id_provento + '-valor_unitario').TouchSpin({
-            min: 0.000000000000000001,
+            min: 0.0000000000000001,
             max: 10000,
-            step: 0.000000000000000001,
-            decimals: 18,
+            step: 0.0000000000000001,
+            decimals: 16,
             maxboostedstep: 100,
             prefix: 'R$'
         });
