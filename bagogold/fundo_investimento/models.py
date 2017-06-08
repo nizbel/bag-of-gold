@@ -140,13 +140,8 @@ class HistoricoValorCotas (models.Model):
     data = models.DateField(u'Data')
     valor_cota = models.DecimalField(u'Valor da cota', max_digits=24, decimal_places=15)
 
-    def save(self, *args, **kw):
-        try:
-            historico = HistoricoValorCotas.objects.get(fundo_investimento=self.fundo_investimento, data=self.data)
-        except HistoricoValorCotas.DoesNotExist:
-            if self.valor_cota <= 0:
-                raise forms.ValidationError('Valor da cota deve ser superior a zero')
-            super(HistoricoValorCotas, self).save(*args, **kw)
+    class Meta:
+        unique_together=('fundo_investimento', 'data')
     
 # Guarda documentos de cadastro da CVM lidos        
 class DocumentoCadastro (models.Model):
