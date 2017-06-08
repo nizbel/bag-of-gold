@@ -146,7 +146,7 @@ MEDIA_ROOT = PROJECT_ROOT + '/media/'
 
 # Configurar precisao de decimais
 from decimal import getcontext
-getcontext().prec = 20
+getcontext().prec = 18
 
 # Buscar configuracoes adicionais
 from conf.settings_local import *
