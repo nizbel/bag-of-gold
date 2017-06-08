@@ -30,10 +30,10 @@ class Command(BaseCommand):
         HistoricoValorCotas.objects.all().delete()
         inicio_geral = datetime.datetime.now()
         try:
-            wsdl = 'http://sistemas.cvm.gov.br/webservices/Sistemas/SCW/CDocs/WsDownloadInfs.asmx?WSDL'
-            client = zeep.Client(wsdl=wsdl)
-            resposta = client.service.Login(2377, '16335')
-            headerSessao = resposta['header']
+#             wsdl = 'http://sistemas.cvm.gov.br/webservices/Sistemas/SCW/CDocs/WsDownloadInfs.asmx?WSDL'
+#             client = zeep.Client(wsdl=wsdl)
+#             resposta = client.service.Login(2377, '16335')
+#             headerSessao = resposta['header']
 #             print headerSessao
 
             dias_uteis = list()
@@ -58,7 +58,7 @@ class Command(BaseCommand):
 #                 data_pesquisa = ultimo_dia_util()
                 # TODO apagar codigo de teste
                 unzipped = zipfile.ZipFile(file('20170527000000dfea0fc03d0e46978ec6cd53a11e2c5b.zip', 'r'))
-                for libitem in unzipped.namelist()[:20]:
+                for libitem in unzipped.namelist()[:2]:
 #                     print libitem
                     inicio = datetime.datetime.now()
                     erros = 0
@@ -73,17 +73,35 @@ class Command(BaseCommand):
                         for element in tree.getroot().iter('INFORME_DIARIO'):
                             try:
                                 campos = {key: value for (key, value) in [(elemento.tag, elemento.text) for elemento in element.iter()]}
-                                # Verificar se fundo existe
-                                if FundoInvestimento.objects.filter(cnpj=formatar_cnpj(campos['CNPJ_FDO'])).exists():
-                                    fundo = FundoInvestimento.objects.get(cnpj=formatar_cnpj(campos['CNPJ_FDO']))
-                                    if not HistoricoValorCotas.objects.filter(data=campos['DT_COMPTC'].strip(), fundo_investimento=fundo).exists():
-                                        valor_cota = Decimal(re.sub('[^\d,]', '', campos['VL_QUOTA']).replace(',', '.'))
-                                        if valor_cota > 0:
+                                valor_cota = Decimal(campos['VL_QUOTA'].strip().replace(',', '.'))
+                                # Verificar se valor da cota é maior que 0
+                                if valor_cota > 0:
+                                    # Verificar se fundo existe
+                                    if FundoInvestimento.objects.filter(cnpj=formatar_cnpj(campos['CNPJ_FDO'])).exists():
+                                        fundo = FundoInvestimento.objects.get(cnpj=formatar_cnpj(campos['CNPJ_FDO']))
+                                        if not HistoricoValorCotas.objects.filter(data=campos['DT_COMPTC'].strip(), fundo_investimento=fundo).exists():
                                             historico_fundo = HistoricoValorCotas(data=campos['DT_COMPTC'].strip(), fundo_investimento=fundo, valor_cota=valor_cota)
                                             historicos.append(historico_fundo)
                             except:
                                 erros += 1
                                 continue
+
+#                         historicos = list()
+#                         texto_arquivo = re.sub('<INFORME_DIARIO>.*?<VL_QUOTA>[\s0,]*?</VL_QUOTA>.*?</INFORME_DIARIO>', '', unzipped.read(libitem))
+#                         for informe_diario in re.findall('<INFORME_DIARIO>.*?</INFORME_DIARIO>', texto_arquivo, re.DOTALL):
+#                             print 'fundo', formatar_cnpj(informe_diario.split('<CNPJ_FDO>')[1].split('</CNPJ_FDO>')[0])
+#                             print 'valor', Decimal(re.sub('[^\d,]', '', informe_diario.split('<VL_QUOTA>')[1].split('</VL_QUOTA>')[0]).replace(',', '.'))
+#                             print 'data', informe_diario.split('<DT_COMPTC>')[1].split('</DT_COMPTC>')[0]
+#                             cnpj_fundo = formatar_cnpj(informe_diario.split('<CNPJ_FDO>')[1].split('</CNPJ_FDO>')[0].strip())
+#                             if FundoInvestimento.objects.filter(cnpj=cnpj_fundo).exists():
+#                                 fundo = FundoInvestimento.objects.get(cnpj=cnpj_fundo)
+#                                 data = informe_diario.split('<DT_COMPTC>')[1].split('</DT_COMPTC>')[0].strip()
+#                                 if not HistoricoValorCotas.objects.filter(data=data, fundo_investimento=fundo).exists():
+#                                 valor_cota = Decimal(re.sub('[^\d,]', '', informe_diario.split('<VL_QUOTA>')[1].split('</VL_QUOTA>')[0]).replace(',', '.'))
+#                                     historico_fundo = HistoricoValorCotas(data=data, fundo_investimento=fundo, valor_cota=valor_cota)
+#                                     historicos.append(historico_fundo)
+                                    
+                                    
                         with transaction.atomic():
                             HistoricoValorCotas.objects.bulk_create(historicos)
                         
