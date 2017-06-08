@@ -244,7 +244,7 @@
                                                     <div class="col-md-8">
                                                         <select class="selectpicker form-control" id="id_provento-{{forloop.counter0}}-acao" name="provento-{{forloop.counter0}}-acao">
                                                             {% for key, value in form_provento.fields.acao.choices %}<option value="{{ key|cut:'.' }}" 
-                                                                {% if key == form_provento.acao.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                                                                {% if key == form_provento.acao.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
                                                         </select>
                                                         {% if form_provento.acao.errors %} <span class="help-block"> {{ form_provento.acao.errors.as_text }} </span> {% endif %}
                                                     </div>
@@ -362,7 +362,7 @@
                                                     <div class="col-md-8">
                                                         <select class="selectpicker form-control" id="id_provento-{{forloop.counter0}}-fii" name="provento-{{forloop.counter0}}-fii">
                                                             {% for key, value in form_provento.fields.fii.choices %}<option value="{{ key|cut:'.' }}" 
-                                                                {% if key == form_provento.fii.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                                                                {% if key == form_provento.fii.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
                                                         </select>
                                                         {% if form_provento.fii.errors %} <span class="help-block"> {{ form_provento.fii.errors.as_text }} </span> {% endif %}
                                                     </div>
