@@ -488,7 +488,7 @@ def listar_pendencias(request):
         pendencia.tipo_pendencia = 'Leitura' if pendencia.tipo == 'L' else 'Validação'
         pendencia.responsavel = pendencia.responsavel()
         
-    return TemplateResponse(request, 'gerador_proventos/listar_pendencias.html', {'pendencias': pendencias, 'qtd_pendencias_reservadas': qtd_pendencias_reservadas,'filtros': filtros})
+    return TemplateResponse(request, 'gerador_proventos/listar_pendencias.html', {'pendencias_doc_bovespa': pendencias, 'qtd_pendencias_reservadas': qtd_pendencias_reservadas,'filtros': filtros})
 
 
 @login_required
