@@ -656,16 +656,17 @@ def validar_documento_provento(request, id_pendencia):
                             if validacao_completa:
         #                         print 'Validação completa'
                                 try:
-                                    # Salva versões alteradas para os provento_documentos
-                                    for descricao, provento in proventos_relacionados.items():
-                                        versionar_descricoes_relacionadas_acoes(descricao, provento)
-                                    # Altera proventos para serem oficiais
-                                    for provento_id in ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True):
-                                        provento = Provento.gerador_objects.get(id=provento_id)
-                                        if not provento.oficial_bovespa:
-                                            provento.oficial_bovespa = True
-                                            provento.save()
-                                    pendencia_finalizada = True
+                                    with transaction.atomic():
+                                        # Salva versões alteradas para os provento_documentos
+                                        for descricao, provento in proventos_relacionados.items():
+                                            versionar_descricoes_relacionadas_acoes(descricao, provento)
+                                        # Altera proventos para serem oficiais
+                                        for provento_id in ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True):
+                                            provento = Provento.gerador_objects.get(id=provento_id)
+                                            if not provento.oficial_bovespa:
+                                                provento.oficial_bovespa = True
+                                                provento.save()
+                                        pendencia_finalizada = True
                                 except:
                                     messages.error(request, 'Houve erro no relacionamento de proventos')
                                     raise ValueError('Não foi possível validar provento')
@@ -700,16 +701,17 @@ def validar_documento_provento(request, id_pendencia):
                             if validacao_completa:
         #                         print 'Validação completa'
                                 try:
-                                    # Salva versões alteradas para os provento_documentos
-                                    for descricao, provento in proventos_relacionados.items():
-                                        versionar_descricoes_relacionadas_fiis(descricao, provento)
-                                    # Altera proventos para serem oficiais
-                                    for provento_id in ProventoFIIDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True):
-                                        provento = ProventoFII.gerador_objects.get(id=provento_id)
-                                        if not provento.oficial_bovespa:
-                                            provento.oficial_bovespa = True
-                                            provento.save()
-                                    pendencia_finalizada = True
+                                    with transaction.atomic():
+                                        # Salva versões alteradas para os provento_documentos
+                                        for descricao, provento in proventos_relacionados.items():
+                                            versionar_descricoes_relacionadas_fiis(descricao, provento)
+                                        # Altera proventos para serem oficiais
+                                        for provento_id in ProventoFIIDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True):
+                                            provento = ProventoFII.gerador_objects.get(id=provento_id)
+                                            if not provento.oficial_bovespa:
+                                                provento.oficial_bovespa = True
+                                                provento.save()
+                                        pendencia_finalizada = True
                                 except:
                                     messages.error(request, 'Houve erro no relacionamento de proventos')
                                     raise ValueError('Não foi possível validar provento')
