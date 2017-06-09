@@ -249,6 +249,9 @@ class GeradorProventosTestCase(TestCase):
         self.assertEqual(provento_convertido.data_pagamento, provento.data_pagamento)
         self.assertEqual(provento_convertido.tipo_provento, provento.tipo_provento)
         self.assertEqual(provento_convertido.valor_unitario, provento.valor_unitario)
+        
+    def test_criacao_descricao_igual_provento_oficial(self):
+        """Testa criação de descrição que seja igual a provento oficial que já tenha descrição"""
     
     def test_versionamento_automatico_versao_nao_final_acoes(self):
         """Testa criação automática de versão a partir de um documento de provento de ações, sendo uma versão que não é a final"""
@@ -565,4 +568,6 @@ class LeitorProventosEstruturadosTestCase(TestCase):
         self.assertEqual(ProventoFII.objects.filter(id=provento_fii_documento.provento.id).count(), 1)
         self.assertEqual(ProventoFIIDescritoDocumentoBovespa.objects.filter(id=provento_fii_documento.descricao_provento.id).count(), 1)
         self.assertFalse(documento.pendente())
+        
+
         
