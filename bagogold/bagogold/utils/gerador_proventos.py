@@ -375,9 +375,9 @@ def criar_descricoes_provento_fiis(descricoes_proventos, documento):
                 provento = converter_descricao_provento_para_provento_fiis(descricao_provento)
                 # Busca proventos já existentes, ou cria se não existirem
                 if ProventoFII.gerador_objects.filter(valor_unitario=provento.valor_unitario, fii=provento.fii, data_ex=provento.data_ex, data_pagamento=provento.data_pagamento, \
-                                                      tipo_provento=provento.tipo_provento).exists():
+                                                      tipo_provento=provento.tipo_provento, oficial_bovespa=False).exists():
                     provento = ProventoFII.gerador_objects.get(valor_unitario=provento.valor_unitario, fii=provento.fii, data_ex=provento.data_ex, data_pagamento=provento.data_pagamento, \
-                                                   tipo_provento=provento.tipo_provento)
+                                                   tipo_provento=provento.tipo_provento, oficial_bovespa=False)
                 else:
                     provento.save()
                 # Relaciona a descrição ao provento encontrado/criado
