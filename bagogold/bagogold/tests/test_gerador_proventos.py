@@ -15,7 +15,7 @@ from bagogold.bagogold.utils.gerador_proventos import \
     converter_descricao_provento_para_provento_acoes, copiar_proventos_acoes, \
     converter_descricao_provento_para_provento_fiis, \
     versionar_descricoes_relacionadas_acoes, versionar_descricoes_relacionadas_fiis, \
-    ler_provento_estruturado_fii
+    ler_provento_estruturado_fii, criar_descricoes_provento_acoes
 from cStringIO import StringIO
 from decimal import Decimal
 from django.contrib.auth.models import User
@@ -252,21 +252,49 @@ class GeradorProventosTestCase(TestCase):
         
     def test_criacao_descricao_igual_provento_oficial(self):
         """Testa criação de descrição que seja igual a provento oficial que já tenha descrição"""
+        acao_bbas = Acao.objects.get(ticker='BBAS3')
+        # Caso real, 1 documento validado com 1 provento, outro com 2 sendo um apenas menção ao do primeiro documento
+        # Documento 1, provento 1
+        descricao_provento_1 = ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao_bbas, data_ex=datetime.date(2007, 3, 22), data_pagamento=datetime.date(2007, 5, 29),
+                                           tipo_provento='J', valor_unitario=Decimal('0.389026'))
+        provento_1 = Provento.objects.create(acao=acao_bbas, data_ex=datetime.date(2007, 3, 22), data_pagamento=datetime.date(2007, 5, 29),
+                                           tipo_provento='J', valor_unitario=Decimal('0.389026'), oficial_bovespa=True)
+        documento_1 = DocumentoProventoBovespa.objects.create(empresa=Empresa.objects.get(codigo_cvm='1023'), protocolo='113962', tipo='A', \
+                                                            url='http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=199999', \
+                                                            data_referencia=datetime.datetime.strptime('03/03/2016', '%d/%m/%Y'))
+        documento_provento_1 = ProventoAcaoDocumento.objects.create(provento=provento_1, documento=documento_1, versao=1, descricao_provento=descricao_provento_1)
+        
+        # Documento 2, provento 2
+        descricao_provento_2 = ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao_bbas, data_ex=datetime.date(2007, 5, 16), data_pagamento=datetime.date(2007, 5, 29),
+                                           tipo_provento='D', valor_unitario=Decimal('0.293761'))
+#         provento_2 = Provento.objects.create(acao=acao_bbas, data_ex=datetime.date(2007, 5, 16), data_pagamento=datetime.date(2007, 5, 29),
+#                                            tipo_provento='D', valor_unitario=Decimal('0.293761'), oficial_bovespa=True)
+        documento_2 = DocumentoProventoBovespa.objects.create(empresa=Empresa.objects.get(codigo_cvm='1023'), protocolo='122170', tipo='A', \
+                                                            url='http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=199999', \
+                                                            data_referencia=datetime.datetime.strptime('04/03/2016', '%d/%m/%Y'))
+#         documento_provento_2 = ProventoAcaoDocumento.objects.create(provento=provento_2, documento=documento_2, versao=1, descricao_provento=descricao_provento_2)
+        
+        # Documento 2, provento 1
+        descricao_provento_3 = ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao_bbas, data_ex=datetime.date(2007, 3, 22), data_pagamento=datetime.date(2007, 5, 29),
+                                           tipo_provento='J', valor_unitario=Decimal('0.389026'))
+        
+        criar_descricoes_provento_acoes([descricao_provento_2, descricao_provento_3], [], documento_2)
     
     def test_versionamento_automatico_versao_nao_final_acoes(self):
         """Testa criação automática de versão a partir de um documento de provento de ações, sendo uma versão que não é a final"""
-        descricao_provento_1 = ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 1, 12), data_pagamento=datetime.date(2016, 12, 20),
+        acao_bbas = Acao.objects.get(ticker='BBAS3')
+        descricao_provento_1 = ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao_bbas, data_ex=datetime.date(2016, 1, 12), data_pagamento=datetime.date(2016, 12, 20),
                                            tipo_provento='D', valor_unitario=Decimal(10))
-        provento_1 = Provento.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 1, 14), data_pagamento=datetime.date(2016, 12, 20),
+        provento_1 = Provento.objects.create(acao=acao_bbas, data_ex=datetime.date(2016, 1, 14), data_pagamento=datetime.date(2016, 12, 20),
                                            tipo_provento='D', valor_unitario=Decimal(10), oficial_bovespa=True)
         documento_1 = DocumentoProventoBovespa.objects.create(empresa=Empresa.objects.get(codigo_cvm='1023'), protocolo='199999', tipo='A', \
                                                             url='http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=199999', \
                                                             data_referencia=datetime.datetime.strptime('03/03/2016', '%d/%m/%Y'))
         documento_provento_1 = ProventoAcaoDocumento.objects.create(provento=provento_1, documento=documento_1, versao=1, descricao_provento=descricao_provento_1)
         
-        descricao_provento_2 = ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 1, 13), data_pagamento=datetime.date(2016, 12, 20),
+        descricao_provento_2 = ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao_bbas, data_ex=datetime.date(2016, 1, 13), data_pagamento=datetime.date(2016, 12, 20),
                                            tipo_provento='D', valor_unitario=Decimal(10))
-        provento_2 = Provento.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 1, 13), data_pagamento=datetime.date(2016, 12, 20),
+        provento_2 = Provento.objects.create(acao=acao_bbas, data_ex=datetime.date(2016, 1, 13), data_pagamento=datetime.date(2016, 12, 20),
                                            tipo_provento='D', valor_unitario=Decimal(10))
         id_provento_2 = provento_2.id
         documento_2 = DocumentoProventoBovespa.objects.create(empresa=Empresa.objects.get(codigo_cvm='1023'), protocolo='299999', tipo='A', \
@@ -274,7 +302,7 @@ class GeradorProventosTestCase(TestCase):
                                                             data_referencia=datetime.datetime.strptime('03/03/2016', '%d/%m/%Y'))
         documento_provento_2 = ProventoAcaoDocumento.objects.create(provento=provento_2, documento=documento_2, versao=1, descricao_provento=descricao_provento_2)
         
-        descricao_provento_3 = ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 1, 14), data_pagamento=datetime.date(2016, 12, 20),
+        descricao_provento_3 = ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao_bbas, data_ex=datetime.date(2016, 1, 14), data_pagamento=datetime.date(2016, 12, 20),
                                            tipo_provento='D', valor_unitario=Decimal(10))
         documento_3 = DocumentoProventoBovespa.objects.create(empresa=Empresa.objects.get(codigo_cvm='1023'), protocolo='399999', tipo='A', \
                                                             url='http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=399999', \
