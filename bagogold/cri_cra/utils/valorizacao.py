@@ -26,7 +26,7 @@ def calcular_valor_um_cri_cra_na_data(certificado, data=datetime.date.today()):
     if DataRemuneracaoCRI_CRA.objects.filter(cri_cra=certificado, data__lte=data).exists():
         data_inicial = DataRemuneracaoCRI_CRA.objects.filter(cri_cra=certificado, data__lte=data).order_by('-data')[0].data
     else:
-        data_inicial = certificado.data_emissao
+        data_inicial = certificado.data_inicio_rendimento + datetime.timedelta(days=1)
     
     # TODO incluir amortizações
     valor_inicial = certificado.valor_emissao

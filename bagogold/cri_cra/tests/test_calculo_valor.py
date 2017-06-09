@@ -19,7 +19,7 @@ class AtualizarCRI_CRAPorDITestCase(TestCase):
         
         CRI_CRA.objects.create(nome="CRI Cyrela teste", investidor=user.investidor, codigo_isin='BRCYRELA', tipo='I', tipo_indexacao=1,
                                porcentagem=Decimal(98), data_emissao=datetime.date(2016, 9, 30), valor_emissao=Decimal(1000), 
-                               data_vencimento=datetime.date(2018, 12, 5))
+                               data_vencimento=datetime.date(2018, 12, 5), data_inicio_rendimento=datetime.date(2016, 10, 27))
         
         data_di = datetime.date(2016, 9, 30)
         while data_di < datetime.date(2017, 3, 14):
