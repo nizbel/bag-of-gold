@@ -320,53 +320,46 @@ def criar_descricoes_provento_acoes(descricoes_proventos, acoes_descricoes_prove
                 Lista de ações recebidas em proventos
                 Documento que traz os proventos
     """
-    objetos_salvos = list()
     try:
-        for descricao_provento in descricoes_proventos:
-            descricao_provento.save()
-            objetos_salvos.append(descricao_provento)
-            descricoes_acao_provento = [acao_descricao_provento for acao_descricao_provento in acoes_descricoes_proventos if acao_descricao_provento.provento.id == descricao_provento.id]
-            for descricao_acao_provento in descricoes_acao_provento:
-                descricao_acao_provento.provento = descricao_provento
-                descricao_acao_provento.save()
-                objetos_salvos.append(descricao_acao_provento)
-            # Converte para proventos reais, porém não validados
-            provento, acoes_provento = converter_descricao_provento_para_provento_acoes(descricao_provento)
-            # Busca proventos já existentes, ou cria se não existirem
-            try:
-                provento = Provento.gerador_objects.get(valor_unitario=provento.valor_unitario, acao=provento.acao, data_ex=provento.data_ex, data_pagamento=provento.data_pagamento, \
-                                               tipo_provento=provento.tipo_provento)
-                
-                # Caso seja um provento de ações, verifica se as ações recebidas batem
-                if provento.tipo_provento == 'A':
-                    if len(provento.acaoprovento_set) != len(descricoes_acao_provento):
-                        raise ValueError('Há um provento não oficial cadastrado com dados incompatíveis')
-                    for acao_provento in provento.acaoprovento_set:
-                        provento_corresponde = False
-                        for descricao_acao_provento in descricoes_acao_provento:
-                            if descricao_acao_provento.acao_recebida == acao_provento.acao_recebida \
-                            and descricao_acao_provento.data_pagamento_frac == acao_provento.data_pagamento_frac \
-                            and descricao_acao_provento.valor_calculo_frac == acao_provento.valor_calculo_frac:
-                                provento_corresponde = True
-                                break
-                        if not provento_corresponde:
+        with transaction.atomic():
+            for descricao_provento in descricoes_proventos:
+                descricao_provento.save()
+                descricoes_acao_provento = [acao_descricao_provento for acao_descricao_provento in acoes_descricoes_proventos if acao_descricao_provento.provento.id == descricao_provento.id]
+                for descricao_acao_provento in descricoes_acao_provento:
+                    descricao_acao_provento.provento = descricao_provento
+                    descricao_acao_provento.save()
+                # Converte para proventos reais, porém não validados
+                provento, acoes_provento = converter_descricao_provento_para_provento_acoes(descricao_provento)
+                # Busca proventos já existentes, ou cria se não existirem
+                if Provento.gerador_objects.filter(valor_unitario=provento.valor_unitario, acao=provento.acao, data_ex=provento.data_ex, data_pagamento=provento.data_pagamento, \
+                                                   tipo_provento=provento.tipo_provento, oficial_bovespa=False).exists():
+                    provento = Provento.gerador_objects.get(valor_unitario=provento.valor_unitario, acao=provento.acao, data_ex=provento.data_ex, data_pagamento=provento.data_pagamento, \
+                                                   tipo_provento=provento.tipo_provento, oficial_bovespa=False)
+                    
+                    # Caso seja um provento de ações, verifica se as ações recebidas batem
+                    if provento.tipo_provento == 'A':
+                        if len(provento.acaoprovento_set) != len(descricoes_acao_provento):
                             raise ValueError('Há um provento não oficial cadastrado com dados incompatíveis')
-                            
-            except Provento.DoesNotExist:
-                provento.save()
-                objetos_salvos.append(provento)
-                for acao_provento in acoes_provento:
-                    acao_provento.provento = provento
-                    acao_provento.save()
-                    objetos_salvos.append(acao_provento)
-            # Relaciona a descrição ao provento encontrado/criado
-            provento_documento = ProventoAcaoDocumento.objects.create(provento=provento, documento=documento, descricao_provento=descricao_provento, versao=1)
-            objetos_salvos.append(provento_documento)
-    except Exception as e:
-        # Apaga objetos em caso de erro
-        for objeto in objetos_salvos:
-            objeto.delete()
-        raise e
+                        for acao_provento in provento.acaoprovento_set:
+                            provento_corresponde = False
+                            for descricao_acao_provento in descricoes_acao_provento:
+                                if descricao_acao_provento.acao_recebida == acao_provento.acao_recebida \
+                                and descricao_acao_provento.data_pagamento_frac == acao_provento.data_pagamento_frac \
+                                and descricao_acao_provento.valor_calculo_frac == acao_provento.valor_calculo_frac:
+                                    provento_corresponde = True
+                                    break
+                            if not provento_corresponde:
+                                raise ValueError('Há um provento não oficial cadastrado com dados incompatíveis')
+                                
+                else:
+                    provento.save()
+                    for acao_provento in acoes_provento:
+                        acao_provento.provento = provento
+                        acao_provento.save()
+                # Relaciona a descrição ao provento encontrado/criado
+                provento_documento = ProventoAcaoDocumento.objects.create(provento=provento, documento=documento, descricao_provento=descricao_provento, versao=1)
+    except:
+        raise
     
 def criar_descricoes_provento_fiis(descricoes_proventos, documento):
     """
@@ -389,8 +382,8 @@ def criar_descricoes_provento_fiis(descricoes_proventos, documento):
                     provento.save()
                 # Relaciona a descrição ao provento encontrado/criado
                 provento_documento = ProventoFIIDocumento.objects.create(provento=provento, documento=documento, descricao_provento=descricao_provento, versao=1)
-    except Exception as e:
-        raise e
+    except:
+        raise
     
 def buscar_proventos_proximos_acao(descricao_provento):
     """
