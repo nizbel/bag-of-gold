@@ -516,6 +516,28 @@
             return value;
         }
       }
+      
+      function scientificToDecimal(num) {
+	    //if the number is in scientific notation remove it
+	    if(/\d+\.?\d*e[\+\-]*\d+/i.test(num)) {
+	      var zero = '0',
+	          parts = String(num).toLowerCase().split('e'), //split into coeff and exponent
+	          e = parts.pop(),//store the exponential part
+	          l = Math.abs(e), //get the number of zeros
+	          sign = e/l,
+	          coeff_array = parts[0].split('.');
+	      if(sign === -1) {
+	          num = zero + '.' + new Array(l).join(zero) + coeff_array.join('');
+	      }
+	      else {
+	          var dec = coeff_array[1];
+	          if(dec) l = l - dec.length;
+	          num = coeff_array.join('') + new Array(l+1).join(zero);
+	      }
+	    }
+	    
+	    return num;
+      };
 
       function _checkValue() {
         var val, parsedval, returnval;
@@ -529,7 +551,11 @@
         if (settings.decimals > 0 && val === '.') {
           return;
         }
-
+        
+        // Corta valores para o caso de usar 'none'
+        if (settings.forcestepdivisibility == 'none' && val.indexOf(',') > -1 && val.length - val.indexOf(',') > settings.decimals+1) {
+        	val = val.substring(0, val.indexOf(',') + settings.decimals+1);
+        }
 		// Alteração para receber valores com separadores padrão pt-BR
 		val = val.replace(/\./g, '').replace(/,/g, '.');
 		
@@ -553,14 +579,23 @@
           returnval = settings.max;
         }
 
-        returnval = _forcestepdivisibility(returnval);
-
-        if (Number(val).toString() !== returnval.toString()) {
-		  // originalinput.val(returnval);
-		  // Alterar returnval para usar , como separador decimal e . como separador de milhar
+        if (settings.forcestepdivisibility != 'none') {
+          returnval = _forcestepdivisibility(returnval);
+          if (Number(val).toString() !== returnval.toString()) {
+    		// originalinput.val(returnval);
+    		// Alterar returnval para usar , como separador decimal e . como separador de milhar
+            originalinput.val(returnval.toString().replace('.', ',').replace(/\B(?=(\d{3})+(?!\d),)/g, '.'));
+            originalinput.trigger('change');
+          }
+        }
+        else {
+    	  returnval = scientificToDecimal(returnval);
+  		  // Alterar returnval para usar , como separador decimal e . como separador de milhar
           originalinput.val(returnval.toString().replace('.', ',').replace(/\B(?=(\d{3})+(?!\d),)/g, '.'));
           originalinput.trigger('change');
         }
+
+        
       }
 
       function _getBoostedStep() {
