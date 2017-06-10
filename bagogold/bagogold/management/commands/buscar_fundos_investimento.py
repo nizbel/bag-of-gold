@@ -25,11 +25,6 @@ class Command(BaseCommand):
         parser.add_argument('--aleatorio', action='store_true')
 
     def handle(self, *args, **options):        
-#         FundoInvestimento.objects.all().delete()
-#         Administrador.objects.all().delete()
-#         DocumentoCadastro.objects.all().delete()
-#         LinkDocumentoCadastro.objects.all().delete()
-
         try:
             wsdl = 'http://sistemas.cvm.gov.br/webservices/Sistemas/SCW/CDocs/WsDownloadInfs.asmx?WSDL'
             client = zeep.Client(wsdl=wsdl)
@@ -45,23 +40,23 @@ class Command(BaseCommand):
                 # Buscar dias úteis que não tenham sido inseridos previamente
                 for _ in range(5):
                     dia_util = buscar_dia_util_aleatorio(datetime.date(2002, 1 ,1), ultimo_dia_util())
-                    while DocumentoCadastro.objects.filter(data_referencia=dia_util).exists():
+                    while DocumentoCadastro.objects.filter(data_referencia=dia_util, leitura_realizada=True).exists():
                         dia_util = buscar_dia_util_aleatorio(datetime.date(2002, 1 ,1), ultimo_dia_util())
                     dias_uteis.append(dia_util)
                 
                 
             # Busca de competencias
             for dia_util in dias_uteis:
-                print 'Dia', dia_util
                 # Testa se já não foi criado o link para o documento (apenas para não aleatório pois o aleatório evita datas já cadastradas)
                 if not DocumentoCadastro.objects.filter(data_referencia=dia_util).exists():
                     try:
-                        respostaCompetencias = client.service.solicAutorizDownloadCadastro(dia_util, 'Teste', _soapheaders=[headerSessao])
-                        # Criar documento
-                        novo_documento = DocumentoCadastro.objects.create(data_referencia=dia_util, data_pedido_cvm=datetime.date.today())
-                        url = respostaCompetencias['body']['solicAutorizDownloadCadastroResult']
-                        # Criar link
-                        LinkDocumentoCadastro.objects.create(url=url, documento=novo_documento)
+                        with transaction.atomic():
+                            respostaCompetencias = client.service.solicAutorizDownloadCadastro(dia_util, 'Teste', _soapheaders=[headerSessao])
+                            # Criar documento
+                            novo_documento = DocumentoCadastro.objects.create(data_referencia=dia_util, data_pedido_cvm=datetime.date.today())
+                            url = respostaCompetencias['body']['solicAutorizDownloadCadastroResult']
+                            # Criar link
+                            LinkDocumentoCadastro.objects.create(url=url, documento=novo_documento)
                     except zeep.exceptions.Fault as erro_wsdl:
                         # Verifica se não encontrou arquivo para os parâmetros
                         if u'Arquivo para download não encontrado para os parâmetros especificados' in erro_wsdl:
@@ -72,10 +67,43 @@ class Command(BaseCommand):
                                     dia_util = buscar_dia_util_aleatorio(datetime.date(2002, 1 ,1), ultimo_dia_util())
                                 dias_uteis.append(dia_util)
                         else:
-                            mail_admins(u'Erro em Buscar fundos investimento', u'%s aconteceu para dia %s' % (erro_wsdl, dia_util.strftime('%d/%m/%Y')))
+                            if settings.ENV == 'DEV':
+                                print traceback.format_exc()
+                            elif settings.ENV == 'PROD':
+                                mail_admins(u'Erro em Buscar fundos investimento', u'%s aconteceu para dia %s' % (erro_wsdl, dia_util.strftime('%d/%m/%Y')))
                         continue
                 else:
-                    url = LinkDocumentoCadastro.objects.get(documento__data_referencia=dia_util).url
+                    documento_cadastro = DocumentoCadastro.objects.get(data_referencia=dia_util)
+                    if not documento_cadastro.leitura_realizada:
+                        # Se não for do mesmo dia, gerar novo
+                        if (datetime.date.today() - documento_cadastro.data_pedido_cvm).days > 0:
+                            try:
+                                respostaCompetencias = client.service.solicAutorizDownloadCadastro(dia_util, 'Teste', _soapheaders=[headerSessao])
+                                url = respostaCompetencias['body']['solicAutorizDownloadCadastroResult']
+                                # Atualizar link
+                                link = LinkDocumentoCadastro.objects.get(documento=novo_documento)
+                                link.url = url
+                                link.save()
+                            except zeep.exceptions.Fault as erro_wsdl:
+                                # Verifica se não encontrou arquivo para os parâmetros
+                                if u'Arquivo para download não encontrado para os parâmetros especificados' in erro_wsdl:
+                                    # Nesse caso, verificar se é a busca aleatoria para adicionar mais uma data para dias_uteis 
+                                    if options['aleatorio']:
+                                        dia_util = buscar_dia_util_aleatorio(datetime.date(2002, 1 ,1), ultimo_dia_util())
+                                        while DocumentoCadastro.objects.filter(data_referencia=dia_util).exists():
+                                            dia_util = buscar_dia_util_aleatorio(datetime.date(2002, 1 ,1), ultimo_dia_util())
+                                        dias_uteis.append(dia_util)
+                                else:
+                                    if settings.ENV == 'DEV':
+                                        print traceback.format_exc()
+                                    elif settings.ENV == 'PROD':
+                                        mail_admins(u'Erro em Buscar fundos investimento', u'%s aconteceu para dia %s' % (erro_wsdl, dia_util.strftime('%d/%m/%Y')))
+                                continue
+                        else:
+                            # Mesmo dia, pegar link cadastrado
+                            url = LinkDocumentoCadastro.objects.get(documento__data_referencia=dia_util).url
+                    else:
+                        url = LinkDocumentoCadastro.objects.get(documento__data_referencia=dia_util).url
 #                 url = 'http://cvmweb.cvm.gov.br/swb/sistemas/scw/DownloadArqs/LeDownloadArqs.aspx?VL_GUID=8fc00daf-4fc8-4d83-bc4c-3e45cc79576c&PK_SESSAO=963322175&PK_ARQ_INFORM_DLOAD=196451'
                 # Tenta extrair arquivo, se não conseguir, continua com o próximo
                 try:
@@ -144,15 +172,13 @@ class Command(BaseCommand):
                         # Apagar arquivo caso haja erro, enviar mensagem para email
                         os.remove(libitem)
                         if settings.ENV == 'DEV':
-                            if campos:
-                                print campos
                             print traceback.format_exc()
                         elif settings.ENV == 'PROD':
                             mail_admins(u'Erro em Buscar fundos investimento na data %s' % (dia_util.strftime('%d/%m/%Y')), traceback.format_exc())
                 # Verificar fundos que existem porém não foram listados, ou seja, estão terminados
                 if not options['aleatorio']:
                     # Verificar fundos não encontrados no cadastro para terminar
-                    for fundo in FundoInvestimento.objects.filter(situacao__in=[FundoInvestimento.SITUACAO_FUNCIONAMENTO_NORMAL, FundoInvestimento.SITUACAO_PRE_OPERACIONAL]):
+                    for fundo in FundoInvestimento.objects.all().exclude(situacao=FundoInvestimento.SITUACAO_TERMINADO):
                         if fundo.cnpj not in fundos:
                             fundo.situacao = FundoInvestimento.SITUACAO_TERMINADO
                             fundo.save()
