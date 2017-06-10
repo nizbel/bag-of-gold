@@ -29,8 +29,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if options['anual'] and options['arquivo']:
             print 'Use apenas uma das opções, --anual ou --arquivo'
-#         HistoricoValorCotas.objects.all().delete()
-        inicio_geral = datetime.datetime.now()
         try:
             wsdl = 'http://sistemas.cvm.gov.br/webservices/Sistemas/SCW/CDocs/WsDownloadInfs.asmx?WSDL'
             client = zeep.Client(wsdl=wsdl)
@@ -80,8 +78,6 @@ class Command(BaseCommand):
         except:
             raise
 
-        print datetime.datetime.now() - inicio_geral
-
 def ver_arquivos_pasta():
     for arquivo in [os.path.join(settings.CAMINHO_FUNDO_INVESTIMENTO_HISTORICO, arquivo) for arquivo in os.listdir(settings.CAMINHO_FUNDO_INVESTIMENTO_HISTORICO) if os.path.isfile(os.path.join(settings.CAMINHO_FUNDO_INVESTIMENTO_HISTORICO, arquivo))]:
         # Verifica se é zipado
@@ -103,7 +99,6 @@ def ver_arquivos_pasta():
             ler_arquivo(arquivo)
     
 def ler_arquivo(libitem, apagar_caso_erro=True):
-    inicio = datetime.datetime.now()
     erros = 0
     try:
         # Ler arquivo
@@ -138,7 +133,6 @@ def ler_arquivo(libitem, apagar_caso_erro=True):
             print traceback.format_exc()
         elif settings.ENV == 'PROD':
             mail_admins(u'Erro em Preencher histórico de fundos de investimento. Arquivo %s' % (libitem), traceback.format_exc())
-    print 'Tempo:', datetime.datetime.now() - inicio, 'Erros:', erros
     return erros
 
 def formatar_cnpj(string):
