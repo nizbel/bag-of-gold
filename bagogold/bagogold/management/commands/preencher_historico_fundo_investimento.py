@@ -27,13 +27,13 @@ class Command(BaseCommand):
         parser.add_argument('--arquivo', action='store_true')
         
     def handle(self, *args, **options):
-        HistoricoValorCotas.objects.all().delete()
+#         HistoricoValorCotas.objects.all().delete()
         inicio_geral = datetime.datetime.now()
         try:
-#             wsdl = 'http://sistemas.cvm.gov.br/webservices/Sistemas/SCW/CDocs/WsDownloadInfs.asmx?WSDL'
-#             client = zeep.Client(wsdl=wsdl)
-#             resposta = client.service.Login(2377, '16335')
-#             headerSessao = resposta['header']
+            wsdl = 'http://sistemas.cvm.gov.br/webservices/Sistemas/SCW/CDocs/WsDownloadInfs.asmx?WSDL'
+            client = zeep.Client(wsdl=wsdl)
+            resposta = client.service.Login(2377, '16335')
+            headerSessao = resposta['header']
 #             print headerSessao
 
             dias_uteis = list()
@@ -58,13 +58,13 @@ class Command(BaseCommand):
 #                 data_pesquisa = ultimo_dia_util()
                 # TODO apagar codigo de teste
                 unzipped = zipfile.ZipFile(file('20170527000000dfea0fc03d0e46978ec6cd53a11e2c5b.zip', 'r'))
-                for libitem in unzipped.namelist()[:2]:
+                for libitem in unzipped.namelist()[:100]:
 #                     print libitem
                     inicio = datetime.datetime.now()
                     erros = 0
                     try:
                         # Ler arquivo
-                        file(libitem,'wb').write(unzipped.read(libitem))
+                        file(libitem,'wb').write(re.sub('<INFORME_DIARIO>(?:(?!</INFORME_DIARIO>).)*<VL_QUOTA>[\s0,]*?</VL_QUOTA>.*?</INFORME_DIARIO>', '', unzipped.read(libitem), flags=re.DOTALL))
                         arquivo_cadastro = file(libitem, 'r')
                         tree = etree.parse(arquivo_cadastro)
                         # Guarda a quantidade a adicionar
@@ -73,15 +73,15 @@ class Command(BaseCommand):
                         for element in tree.getroot().iter('INFORME_DIARIO'):
                             try:
                                 campos = {key: value for (key, value) in [(elemento.tag, elemento.text) for elemento in element.iter()]}
-                                valor_cota = Decimal(campos['VL_QUOTA'].strip().replace(',', '.'))
                                 # Verificar se valor da cota é maior que 0
-                                if valor_cota > 0:
-                                    # Verificar se fundo existe
-                                    if FundoInvestimento.objects.filter(cnpj=formatar_cnpj(campos['CNPJ_FDO'])).exists():
-                                        fundo = FundoInvestimento.objects.get(cnpj=formatar_cnpj(campos['CNPJ_FDO']))
-                                        if not HistoricoValorCotas.objects.filter(data=campos['DT_COMPTC'].strip(), fundo_investimento=fundo).exists():
-                                            historico_fundo = HistoricoValorCotas(data=campos['DT_COMPTC'].strip(), fundo_investimento=fundo, valor_cota=valor_cota)
-                                            historicos.append(historico_fundo)
+#                                 if valor_cota > 0:
+                                # Verificar se fundo existe
+                                if FundoInvestimento.objects.filter(cnpj=formatar_cnpj(campos['CNPJ_FDO'])).exists():
+                                    fundo = FundoInvestimento.objects.get(cnpj=formatar_cnpj(campos['CNPJ_FDO']))
+                                    if not HistoricoValorCotas.objects.filter(data=campos['DT_COMPTC'].strip(), fundo_investimento=fundo).exists():
+                                        valor_cota = Decimal(campos['VL_QUOTA'].strip().replace(',', '.'))
+                                        historico_fundo = HistoricoValorCotas(data=campos['DT_COMPTC'].strip(), fundo_investimento=fundo, valor_cota=valor_cota)
+                                        historicos.append(historico_fundo)
                             except:
                                 erros += 1
                                 continue
