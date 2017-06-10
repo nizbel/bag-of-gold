@@ -123,9 +123,10 @@ class Command(BaseCommand):
                     continue
                 for libitem in unzipped.namelist():
                     try:
+                        nome_arquivo = settings.CAMINHO_FUNDO_INVESTIMENTO_CADASTRO + libitem
                         # Ler arquivo
-                        file(libitem,'wb').write(unzipped.read(libitem))
-                        arquivo_cadastro = file(libitem, 'r')
+                        file(nome_arquivo,'wb').write(unzipped.read(libitem))
+                        arquivo_cadastro = file(nome_arquivo, 'r')
                         tree = etree.parse(arquivo_cadastro)
                         if not options['aleatorio']:
                             fundos = list()
@@ -172,10 +173,10 @@ class Command(BaseCommand):
                             documento = DocumentoCadastro.objects.get(data_referencia=dia_util)  
                             documento.leitura_realizada = True
                             documento.save()             
-                        os.remove(libitem)                                
+                        os.remove(nome_arquivo)                                
                     except:
                         # Apagar arquivo caso haja erro, enviar mensagem para email
-                        os.remove(libitem)
+                        os.remove(nome_arquivo)
                         if settings.ENV == 'DEV':
                             print traceback.format_exc()
                         elif settings.ENV == 'PROD':
