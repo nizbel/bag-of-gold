@@ -89,7 +89,7 @@
             <tbody>
             {% for item in fundos_investimento %}
             <tr>
-                <td><a href="{% url "fundo_investimento:detalhar_fundo" item.id %} class="tooltips" data-placement="bottom" data-original-title="Detalhar fundo">{{item.nome}}</a></td>
+                <td><a href="{% url "fundo_investimento:detalhar_fundo" item.id %}" class="tooltips" data-placement="bottom" data-original-title="Detalhar fundo">{{item.nome}}</a></td>
                 <td>{{item.data_constituicao|date:'d/m/Y'}}</td>
                 <td>{{item.descricao_classe}}</td>
                 <td>{{item.tipo_prazo}}</td>

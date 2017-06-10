@@ -32,19 +32,17 @@
                             <div class="m-grid-col m-grid-col-left"><strong>Data de constituição:</strong></div>
                             <div class="m-grid-col m-grid-col-left">{{fundo.data_constituicao|date:'d/m/Y'}}</div>
                             <div class="m-grid-col m-grid-col-left"><strong>Classe:</strong></div>
-                            <div class="m-grid-col m-grid-col-left">{{fundo.classe_descricao}}</div>
+                            <div class="m-grid-col m-grid-col-left">{{fundo.descricao_classe}}</div>
                         </div>
                         <div class="m-grid-row">
                             <div class="m-grid-col m-grid-col-left"><strong>Prazo:</strong></div>
                             <div class="m-grid-col m-grid-col-left">{{fundo.tipo_prazo}}</div>
                             <div class="m-grid-col m-grid-col-left"><strong>Exclusivo para Investidores Qualificados:</strong></div>
                             <div class="m-grid-col m-grid-col-left">{{fundo.exclusivo_qualificados|yesno:'Sim,Não,Não'}}</div>
-                            <div class="m-grid-col m-grid-col-left"><strong>Classe:</strong></div>
-                            <div class="m-grid-col m-grid-col-left">{{fundo.classe_descricao}}</div>
+                            <div class="m-grid-col m-grid-col-left"><strong>Situação:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{fundo.descricao_situacao}}</div>
                         </div>
                         <div class="m-grid-row">
-                            <div class="m-grid-col m-grid-col-left"><strong>Situação:</strong></div>
-                            <div class="m-grid-col m-grid-col-left">{{fundo.situacao_descricao}}</div>
                             <div class="m-grid-col m-grid-col-left"><strong>Valor da últ. cotação:</strong></div>
                             <div class="m-grid-col m-grid-col-left">R$ {{fundo.valor_cota|default:'0,00'}}</div>
                             <div class="m-grid-col m-grid-col-left"><strong>Data da últ. cotação:</strong></div>
