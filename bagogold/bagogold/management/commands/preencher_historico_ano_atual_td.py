@@ -27,7 +27,7 @@ class Command(BaseCommand):
                 if titulo.data_vencimento == titulo.data_inicio:
                     titulo.data_inicio = HistoricoTitulo.objects.filter(titulo=titulo).order_by('data')[0].data
                     titulo.save()
-        except Exception as e:
+        except:
             if settings.ENV == 'DEV':
                 print traceback.format_exc()
             elif settings.ENV == 'PROD':

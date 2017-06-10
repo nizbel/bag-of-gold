@@ -111,18 +111,6 @@ fiis_patterns = [
     url(r'^sobre/$', views.fii.fii.sobre, name='sobre_fii'),
     ]
 
-fundo_investimento_patterns = [
-    url(r'^adicionar_valor_cota_historico/$', views.fundo_investimento.fundo_investimento.adicionar_valor_cota_historico, name='adicionar_valor_cota_historico'),
-    url(r'^editar_operacao/(?P<id>\d+)/$', views.fundo_investimento.fundo_investimento.editar_operacao_fundo_investimento, name='editar_operacao_fundo_investimento'),
-    url(r'^historico/$', views.fundo_investimento.fundo_investimento.historico, name='historico_fundo_investimento'),
-    url(r'^inserir_fundo_investimento/$', views.fundo_investimento.fundo_investimento.inserir_fundo_investimento, name='inserir_fundo_investimento'),
-    url(r'^inserir_operacao_fundo_investimento/$', views.fundo_investimento.fundo_investimento.inserir_operacao_fundo_investimento, name='inserir_operacao_fundo_investimento'),
-    url(r'^listar_fundo_investimento/$', views.fundo_investimento.fundo_investimento.listar_fundo_investimento, name='listar_fundo_investimento'),
-    url(r'^modificar_carencia_fundo_investimento/$', views.fundo_investimento.fundo_investimento.modificar_carencia_fundo_investimento, name='modificar_carencia_fundo_investimento'),
-    url(r'^painel/$', views.fundo_investimento.fundo_investimento.painel, name='painel_fundo_investimento'),
-    url(r'^sobre/$', views.fundo_investimento.fundo_investimento.sobre, name='sobre_fundo_investimento'),
-    ]
-
 gerador_proventos_patterns = [
     url(r'^baixar_documento_provento/(?P<id_documento>\d+)/$', views.gerador_proventos.gerador_proventos.baixar_documento_provento, name='baixar_documento_provento'),
     url(r'^detalhar_documento/(?P<id_documento>\d+)/$', views.gerador_proventos.gerador_proventos.detalhar_documento, name='detalhar_documento'),
@@ -232,9 +220,6 @@ urlpatterns = [
     # Debêntures
     url(r'^debentures/', include(debentures_patterns, namespace='debentures')),
     
-    # Fundo de investimento
-    url(r'^fundo_investimento/', include(fundo_investimento_patterns, namespace='fundo_investimento')),
-
     # Imposto de renda
     url(r'^imposto_renda/', include(imposto_renda_patterns, namespace='imposto_renda')),
 ]
