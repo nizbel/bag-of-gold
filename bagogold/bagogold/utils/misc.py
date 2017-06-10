@@ -271,6 +271,16 @@ def ultimo_dia_util():
         dia = dia - datetime.timedelta(days=1)
     return dia
 
+def verifica_se_dia_util(data):
+    """
+    Verifica se data passa é dia útil
+    Parâmetros: Data
+    Retorno:    Se é ou não dia útil
+    """
+    if data.weekday() > 4 or verificar_feriado_bovespa(data):
+        return False
+    return True
+
 def buscar_data_aleatoria(data_inicial, data_final):
     """Get a time at a proportion of a range of two formatted times.
 

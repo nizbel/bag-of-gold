@@ -2,7 +2,7 @@
 from StringIO import StringIO
 from bagogold import settings
 from bagogold.bagogold.utils.misc import verificar_feriado_bovespa, \
-    ultimo_dia_util, buscar_dia_util_aleatorio
+    ultimo_dia_util, buscar_dia_util_aleatorio, verifica_se_dia_util
 from bagogold.fundo_investimento.models import FundoInvestimento, Administrador, \
     DocumentoCadastro, LinkDocumentoCadastro
 from django.core.mail import mail_admins
@@ -65,6 +65,11 @@ class Command(BaseCommand):
                                 dia_util = buscar_dia_util_aleatorio(datetime.date(2002, 1 ,1), ultimo_dia_util())
                                 while DocumentoCadastro.objects.filter(data_referencia=dia_util).exists():
                                     dia_util = buscar_dia_util_aleatorio(datetime.date(2002, 1 ,1), ultimo_dia_util())
+                                dias_uteis.append(dia_util)
+                            # Se busca do último dia útil, procurar ultimo dia util antes do dia apontado que não tenha documentos lidos
+                            else:
+                                while DocumentoCadastro.objects.filter(data_referencia=dia_util, leitura_realizada=True).exists() or not verifica_se_dia_util(dia_util):
+                                    dia_util -= datetime.timedelta(days=1)
                                 dias_uteis.append(dia_util)
                         else:
                             if settings.ENV == 'DEV':
