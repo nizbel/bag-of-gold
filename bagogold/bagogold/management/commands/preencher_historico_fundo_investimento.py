@@ -9,7 +9,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from lxml import etree
 from threading import Thread
-from urllib2 import urlopen
+from urllib2 import urlopen, Request, HTTPError, URLError
 import StringIO
 import datetime
 import os
@@ -99,18 +99,20 @@ class Command(BaseCommand):
         print datetime.datetime.now() - inicio_geral
 
 def ver_arquivos_pasta():
-    onlyfiles = 
-    for arquivo in [arquivo for arquivo in listdir(settings.CAMINHO_FUNDO_INVESTIMENTO_HISTORICO) if isfile(join(settings.CAMINHO_FUNDO_INVESTIMENTO_HISTORICO, arquivo))]:
+    for arquivo in [os.path.join(settings.CAMINHO_FUNDO_INVESTIMENTO_HISTORICO, arquivo) for arquivo in os.listdir(settings.CAMINHO_FUNDO_INVESTIMENTO_HISTORICO) if os.path.isfile(os.path.join(settings.CAMINHO_FUNDO_INVESTIMENTO_HISTORICO, arquivo))]:
+        print arquivo
         # Verifica se é zipado
         if zipfile.is_zipfile(arquivo):
+            print 'zipado'
             # Abrir e ler
             unzipped = zipfile.ZipFile(arquivo)
-            for libitem in unzipped.namelist():
+            for libitem in unzipped.namelist()[:2]:
                 nome_arquivo = settings.CAMINHO_FUNDO_INVESTIMENTO_HISTORICO + libitem
                 # Escrever arquivo no disco para leitura
-                file(nome_arquivo,'wb').write(unzipped.read(libitem))
+                file(nome_arquivo,'wb').write(re.sub('<INFORME_DIARIO>(?:(?!</INFORME_DIARIO>).)*<VL_QUOTA>[\s0,]*?</VL_QUOTA>.*?</INFORME_DIARIO>', '', unzipped.read(libitem), flags=re.DOTALL))
                 ler_arquivo(nome_arquivo)
         else:
+            print 'nao zipado'
             ler_arquivo(arquivo)
     
 def ler_arquivo(libitem):
@@ -119,9 +121,9 @@ def ler_arquivo(libitem):
     erros = 0
     try:
         # Ler arquivo
-        file(libitem,'wb').write(re.sub('<INFORME_DIARIO>(?:(?!</INFORME_DIARIO>).)*<VL_QUOTA>[\s0,]*?</VL_QUOTA>.*?</INFORME_DIARIO>', '', unzipped.read(libitem), flags=re.DOTALL))
-        arquivo_cadastro = file(libitem, 'r')
-        tree = etree.parse(arquivo_cadastro)
+#         file(libitem,'wb').write(re.sub('<INFORME_DIARIO>(?:(?!</INFORME_DIARIO>).)*<VL_QUOTA>[\s0,]*?</VL_QUOTA>.*?</INFORME_DIARIO>', '', arquivo, flags=re.DOTALL))
+        arquivo = file(libitem, 'r')
+        tree = etree.parse(arquivo)
         # Guarda a quantidade a adicionar
         historicos = list()
         # Lê o arquivo procurando nós CADASTRO (1 para cada fundo)
@@ -137,7 +139,6 @@ def ler_arquivo(libitem):
                         historicos.append(historico_fundo)
             except:
                 erros += 1
-                continue
 
         with transaction.atomic():
             HistoricoValorCotas.objects.bulk_create(historicos)
@@ -150,7 +151,6 @@ def ler_arquivo(libitem):
             print traceback.format_exc()
         elif settings.ENV == 'PROD':
             mail_admins(u'Erro em Preencher histórico de fundos de investimento. Arquivo %s' % (libitem), traceback.format_exc())
-        continue
     print 'Tempo:', datetime.datetime.now() - inicio, 'Erros:', erros
 
 def formatar_cnpj(string):
