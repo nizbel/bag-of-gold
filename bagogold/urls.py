@@ -15,6 +15,8 @@ urlpatterns = [
     url(r'', include('bagogold.bagogold.urls')),
     # App CRI/CRA
     url(r'^cri_cra/', include('bagogold.cri_cra.urls', namespace='cri_cra')),
+    # App Fundos de investimento
+    url(r'^fundo_investimento/', include('bagogold.fundo_investimento.urls', namespace='fundo_investimento')),
     # App pendencias
     url(r'', include('bagogold.pendencias.urls')),
 ]
