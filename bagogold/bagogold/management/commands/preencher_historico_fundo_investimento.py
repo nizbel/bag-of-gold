@@ -63,18 +63,15 @@ class Command(BaseCommand):
             else:
                 # Buscar último dia útil
                 try:
-#                     resposta_ultimo_dia_util = client.service.solicAutorizDownloadArqEntrega(209, 'Teste', _soapheaders=[headerSessao])
+                    resposta_ultimo_dia_util = client.service.solicAutorizDownloadArqEntrega(209, 'Teste', _soapheaders=[headerSessao])
 #                     print resposta_ultimo_dia_util
-#                      download = urlopen(resposta_ultimo_dia_util['body']['solicAutorizDownloadArqAnualResult'])
-#                      arquivo_zipado = StringIO(download.read())
-                    download = urlopen('http://cvmweb.cvm.gov.br/swb/sistemas/scw/DownloadArqs/LeDownloadArqs.aspx?VL_GUID=9e7fa561-8d59-4f76-a4da-7a56399f81c7&PK_SESSAO=976453770&PK_ARQ_INFORM_DLOAD=196526')
+                    download = urlopen(resposta_ultimo_dia_util['body']['solicAutorizDownloadArqAnualResult'])
                     if 'filename=' in download.info()['Content-Disposition']:
                         nome_arquivo = re.findall('.*?filename\W*?([\d\w\.]+).*?', download.info()['Content-Disposition'])[0]
                     else:
                         nome_arquivo = datetime.date.today().strftime('ultimodia-%d-%m-%Y.zip')
                     file(settings.CAMINHO_FUNDO_INVESTIMENTO_HISTORICO + nome_arquivo,'wb').write(download.read())
                     ver_arquivos_pasta()
-#                     http://cvmweb.cvm.gov.br/swb/sistemas/scw/DownloadArqs/LeDownloadArqs.aspx?VL_GUID=9e7fa561-8d59-4f76-a4da-7a56399f81c7&PK_SESSAO=976453770&PK_ARQ_INFORM_DLOAD=196526
                 except:
                     if settings.ENV == 'DEV':
                         print traceback.format_exc()
