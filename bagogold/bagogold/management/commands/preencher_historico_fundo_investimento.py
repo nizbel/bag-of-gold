@@ -10,7 +10,7 @@ from django.db import transaction
 from lxml import etree
 from threading import Thread
 from urllib2 import urlopen, Request, HTTPError, URLError
-import StringIO
+from StringIO import StringIO
 import datetime
 import os
 import re
@@ -45,54 +45,41 @@ class Command(BaseCommand):
                     respostaCompetencias = client.service.solicAutorizDownloadArqAnual(209, 'Teste', _soapheaders=[headerSessao])
 #                     print respostaCompetencias
                     download = urlopen(respostaCompetencias['body']['solicAutorizDownloadArqAnualResult'])
-                    arquivo_zipado = StringIO(download.read())
-                    
-                    # TESTE BUSCAR NOME ARQUIVO
-                    req = Request(respostaCompetencias['body']['solicAutorizDownloadArqAnualResult'])
-                    try:
-                        response = urlopen(req, timeout=30)
-                    except HTTPError as e:
-                        print 'The server couldn\'t fulfill the request.'
-                        print 'Error code: ', e.code
-                        return 
-                    except URLError as e:
-                        print 'We failed to reach a server.'
-                        print 'Reason: ', e.reason
-                        return 
-                    # Buscar informações da extensão
-                    extensao = ''
-                    meta = response.info()
-                #     print meta
-                    # Busca extensão pelo content disposition, depois pelo content-type se não encontrar
-                    if meta.getheaders("Content-Disposition"):
-                        content_disposition = meta.getheaders("Content-Disposition")[0]
-                        if 'filename=' in content_disposition:
-                            inicio = content_disposition.find('filename=')
-                            fim = content_disposition.find(';', inicio) if content_disposition.find(';', inicio) != -1 else len(content_disposition)
-                            if '.' in content_disposition[inicio:fim]:
-                                extensao = content_disposition[inicio:fim].split('.')[-1].replace('"', '')
-                    if extensao == '':
-                        if meta.getheaders("Content-Type"):
-                            content_type = meta.getheaders("Content-Type")[0]
-                            if '/' in content_type:
-                                extensao = content_type.split('/')[1]
-                    resposta = response.read()
-                #     print resposta
-                    arquivo_rendimentos = StringIO(resposta)
-                    return (arquivo_rendimentos, extensao)
-                # FIM TESTE
-                        
-                except zeep.exceptions.Fault as erro_wsdl:
-                    print unicode(erro_wsdl)
+                    if 'filename=' in download.info()['Content-Disposition']:
+                        nome_arquivo = re.findall('.*?filename\W*?([\d\w\.]+).*?', download.info()['Content-Disposition'])[0]
+                    else:
+                        nome_arquivo = datetime.date.today().strftime('anual%d-%m-%Y.zip')
+                    file(settings.CAMINHO_FUNDO_INVESTIMENTO_HISTORICO + nome_arquivo,'wb').write(download.read())
+                except:
+                    if settings.ENV == 'DEV':
+                        print traceback.format_exc()
+                    elif settings.ENV == 'PROD':
+                        mail_admins(u'Erro em Buscar historico anual de fundo de investimento', traceback.format_exc())
+                
             elif options['arquivo']:
                 # Ler da pasta específica para fundos de investimento
                 ver_arquivos_pasta()
+                
             else:
                 # Buscar último dia útil
                 try:
-                    resposta_ultimo_dia_util = cliente.service.solicAutorizDownloadArqEntrega(209, 'Teste', _soapheaders=[headerSessao])
-                except zeep.exceptions.Fault as erro_wsdl:
-                    print unicode(erro_wsdl)
+#                     resposta_ultimo_dia_util = client.service.solicAutorizDownloadArqEntrega(209, 'Teste', _soapheaders=[headerSessao])
+#                     print resposta_ultimo_dia_util
+#                      download = urlopen(resposta_ultimo_dia_util['body']['solicAutorizDownloadArqAnualResult'])
+#                      arquivo_zipado = StringIO(download.read())
+                    download = urlopen('http://cvmweb.cvm.gov.br/swb/sistemas/scw/DownloadArqs/LeDownloadArqs.aspx?VL_GUID=9e7fa561-8d59-4f76-a4da-7a56399f81c7&PK_SESSAO=976453770&PK_ARQ_INFORM_DLOAD=196526')
+                    if 'filename=' in download.info()['Content-Disposition']:
+                        nome_arquivo = re.findall('.*?filename\W*?([\d\w\.]+).*?', download.info()['Content-Disposition'])[0]
+                    else:
+                        nome_arquivo = datetime.date.today().strftime('ultimodia-%d-%m-%Y.zip')
+                    file(settings.CAMINHO_FUNDO_INVESTIMENTO_HISTORICO + nome_arquivo,'wb').write(download.read())
+                    ver_arquivos_pasta()
+#                     http://cvmweb.cvm.gov.br/swb/sistemas/scw/DownloadArqs/LeDownloadArqs.aspx?VL_GUID=9e7fa561-8d59-4f76-a4da-7a56399f81c7&PK_SESSAO=976453770&PK_ARQ_INFORM_DLOAD=196526
+                except:
+                    if settings.ENV == 'DEV':
+                        print traceback.format_exc()
+                    elif settings.ENV == 'PROD':
+                        mail_admins(u'Erro em Buscar historico anual de fundo de investimento', traceback.format_exc())
         except:
             raise
 
@@ -100,28 +87,29 @@ class Command(BaseCommand):
 
 def ver_arquivos_pasta():
     for arquivo in [os.path.join(settings.CAMINHO_FUNDO_INVESTIMENTO_HISTORICO, arquivo) for arquivo in os.listdir(settings.CAMINHO_FUNDO_INVESTIMENTO_HISTORICO) if os.path.isfile(os.path.join(settings.CAMINHO_FUNDO_INVESTIMENTO_HISTORICO, arquivo))]:
-        print arquivo
         # Verifica se é zipado
         if zipfile.is_zipfile(arquivo):
-            print 'zipado'
             # Abrir e ler
             unzipped = zipfile.ZipFile(arquivo)
-            for libitem in unzipped.namelist()[:2]:
+            # Guardar quantidade de erros
+            qtd_erros = 0
+            for libitem in unzipped.namelist():
                 nome_arquivo = settings.CAMINHO_FUNDO_INVESTIMENTO_HISTORICO + libitem
                 # Escrever arquivo no disco para leitura
                 file(nome_arquivo,'wb').write(re.sub('<INFORME_DIARIO>(?:(?!</INFORME_DIARIO>).)*<VL_QUOTA>[\s0,]*?</VL_QUOTA>.*?</INFORME_DIARIO>', '', unzipped.read(libitem), flags=re.DOTALL))
-                ler_arquivo(nome_arquivo)
+                qtd_erros += ler_arquivo(nome_arquivo)
+            # Se quantidade de erros maior que 0, não apagar arquivo
+            if qtd_erros == 0:
+                os.remove(arquivo)
+                    
         else:
-            print 'nao zipado'
             ler_arquivo(arquivo)
     
-def ler_arquivo(libitem):
-#     print libitem
+def ler_arquivo(libitem, apagar_caso_erro=True):
     inicio = datetime.datetime.now()
     erros = 0
     try:
         # Ler arquivo
-#         file(libitem,'wb').write(re.sub('<INFORME_DIARIO>(?:(?!</INFORME_DIARIO>).)*<VL_QUOTA>[\s0,]*?</VL_QUOTA>.*?</INFORME_DIARIO>', '', arquivo, flags=re.DOTALL))
         arquivo = file(libitem, 'r')
         tree = etree.parse(arquivo)
         # Guarda a quantidade a adicionar
@@ -145,21 +133,19 @@ def ler_arquivo(libitem):
         
         os.remove(libitem)                                
     except:
+        erros += 1
         # Apagar arquivo caso haja erro, enviar mensagem para email
-        os.remove(libitem)
+        if apagar_caso_erro:
+            os.remove(libitem)
         if settings.ENV == 'DEV':
             print traceback.format_exc()
         elif settings.ENV == 'PROD':
             mail_admins(u'Erro em Preencher histórico de fundos de investimento. Arquivo %s' % (libitem), traceback.format_exc())
     print 'Tempo:', datetime.datetime.now() - inicio, 'Erros:', erros
+    return erros
 
 def formatar_cnpj(string):
     string = re.sub('\D', '', string)
     while len(string) < 14:
         string = '0' + string
     return string[0:2] + '.' + string[2:5] + '.' + string[5:8] + '/' + string[8:12] + '-' + string[12:14]
-# def buscar_arquivo_zipado_cvm():
-# 
-# def extrair_arquivo(arquivo_zipado):
-# 
-# def ler_arquivo_diario(arquivo):
