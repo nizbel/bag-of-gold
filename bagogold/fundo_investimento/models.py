@@ -123,7 +123,7 @@ class FundoInvestimento (models.Model):
     
 class OperacaoFundoInvestimento (models.Model):
     quantidade = models.DecimalField(u'Quantidade de cotas', max_digits=11, decimal_places=2)
-    valor = models.DecimalField(u'Valor da operação', max_digits=11, decimal_places=2)
+    valor = models.DecimalField(u'Valor total da operação', max_digits=11, decimal_places=2)
     data = models.DateField(u'Data da operação')
     tipo_operacao = models.CharField(u'Tipo de operação', max_length=1)
     fundo_investimento = models.ForeignKey('FundoInvestimento')
