@@ -13,8 +13,8 @@ class Command(BaseCommand):
         try:
             with transaction.atomic():
                 for operacao in OperacaoFundoInvestimento.objects.all():
-                    nova_operacao = NovaOperacaoFundo(data=operacao.data, tipo_operacao=operacao.tipo_operacao, valor=operacao.valor, quantidade=operacao.quantidade,
+                    nova_operacao = NovaOperacaoFundo(data=operacao.data, tipo_operacao=operacao.tipo_operacao, valor=operacao.valor, quantidade=operacao.quantidade, id=operacao.id,
                                                       investidor=operacao.investidor, fundo_investimento=FundoInvestimento.objects.get(nome='CLARITAS INSTITUCIONAL FUNDO DE INVESTIMENTO MULTIMERCADO'))
-                    print nova_operacao
+                    nova_operacao.save()
         except:
-            pass
+            raise
