@@ -4,10 +4,13 @@ from bagogold.bagogold.models.fii import UsoProventosOperacaoFII
 from bagogold.bagogold.models.lc import OperacaoLetraCredito
 from bagogold.bagogold.models.td import HistoricoIPCA, OperacaoTitulo
 from decimal import Decimal
+from difflib import SequenceMatcher
 from urllib2 import Request, urlopen, URLError, HTTPError
 import datetime
 import math
+import random
 import re
+import time
 
 
 def calcular_iof_regressivo(dias):
@@ -301,3 +304,6 @@ def buscar_dia_util_aleatorio(data_inicial, data_final):
     while data_aleatoria.weekday() > 4 or verificar_feriado_bovespa(data_aleatoria):
         data_aleatoria = buscar_data_aleatoria(data_inicial, data_final)
     return data_aleatoria
+
+def similar(a, b):
+    return SequenceMatcher(None, a, b).ratio()

@@ -339,7 +339,7 @@ class DivisaoOperacaoDebenture (models.Model):
     
 class DivisaoOperacaoFundoInvestimento (models.Model):
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
-    operacao = models.ForeignKey('OperacaoFundoInvestimento')
+    operacao = models.ForeignKey('fundo_investimento.OperacaoFundoInvestimento')
     """
     Guarda a quantidade de cotas que pertence a divisão
     """
