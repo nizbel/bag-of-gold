@@ -130,7 +130,7 @@ class OperacaoFundoInvestimento (models.Model):
     investidor = models.ForeignKey('bagogold.Investidor', related_name='fundo_investimento')
     
     def __unicode__(self):
-        return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.fundo_investimento, self.data)
+        return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.valor, self.fundo_investimento, self.data.strftime('%d/%m/%Y'))
     
     def valor_cota(self):
         return self.valor/self.quantidade if self.quantidade > 0 else 0
