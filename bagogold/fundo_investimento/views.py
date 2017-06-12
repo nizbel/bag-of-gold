@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+from bagogold import settings
 from bagogold.bagogold.decorators import em_construcao, \
     adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import \
     DivisaoOperacaoFundoInvestimentoFormSet
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFundoInvestimento, \
     Divisao
+from bagogold.bagogold.utils.misc import \
+    formatar_zeros_a_direita_apos_2_casas_decimais
 from bagogold.fundo_investimento.forms import OperacaoFundoInvestimentoForm
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
     HistoricoValorCotas, FundoInvestimento
@@ -15,7 +18,10 @@ from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.mail import mail_admins
+from django.core.paginator import Paginator
 from django.core.urlresolvers import reverse
+from django.db import transaction
 from django.forms.models import inlineformset_factory
 from django.http.response import HttpResponseRedirect, HttpResponse
 from django.shortcuts import get_object_or_404
@@ -24,7 +30,8 @@ from django.template.response import TemplateResponse
 import calendar
 import datetime
 import json
-from bagogold.bagogold.utils.misc import formatar_zeros_a_direita_apos_2_casas_decimais
+import re
+import traceback
 
 @em_construcao('Fundo de investimento')
 @login_required
@@ -236,6 +243,7 @@ def historico(request):
 
 @em_construcao('Fundo de investimento')
 @login_required
+@adiciona_titulo_descricao('Inserir operação em fundo de investimento', 'Inserir registro de operação de compra/venda em fundo de investimento')
 def inserir_operacao_fundo_investimento(request):
     investidor = request.user.investidor
     
@@ -248,7 +256,7 @@ def inserir_operacao_fundo_investimento(request):
     
     if request.method == 'POST':
         form_operacao_fundo_investimento = OperacaoFundoInvestimentoForm(request.POST, investidor=investidor)
-        formset_divisao_fundo_investimento = DivisaoFundoInvestimentoFormSet(request.POST, investidor=investidor) if varias_divisoes else None
+        formset_divisao = DivisaoFundoInvestimentoFormSet(request.POST, investidor=investidor) if varias_divisoes else None
         
         # Validar Fundo de Investimento
         if form_operacao_fundo_investimento.is_valid():
@@ -257,20 +265,36 @@ def inserir_operacao_fundo_investimento(request):
             
             # Testar se várias divisões
             if varias_divisoes:
-                formset_divisao_fundo_investimento = DivisaoFundoInvestimentoFormSet(request.POST, instance=operacao_fundo_investimento, investidor=investidor)
-                if formset_divisao_fundo_investimento.is_valid():
-                    operacao_fundo_investimento.save()
-                    formset_divisao_fundo_investimento.save()
-                    messages.success(request, 'Operação inserida com sucesso')
-                    return HttpResponseRedirect(reverse('fundo_investimento:historico_fundo_investimento'))
-                for erro in formset_divisao_fundo_investimento.non_form_errors():
+                formset_divisao = DivisaoFundoInvestimentoFormSet(request.POST, instance=operacao_fundo_investimento, investidor=investidor)
+                if formset_divisao.is_valid():
+                    try:
+                        with transaction.atomic():
+                            operacao_fundo_investimento.save()
+                            formset_divisao.save()
+                            messages.success(request, 'Operação inserida com sucesso')
+                            return HttpResponseRedirect(reverse('fundo_investimento:historico_fundo_investimento'))
+                    except:
+                        messages.error(request, 'Houve um erro ao inserir a operação')
+                        if settings.ENV == 'DEV':
+                            raise
+                        elif settings.ENV == 'PROD':
+                            mail_admins(u'Erro ao gerar operação em fundo de investimento com várias divisões', traceback.format_exc())
+                for erro in formset_divisao.non_form_errors():
                     messages.error(request, erro)
             else:
-                operacao_fundo_investimento.save()
-                divisao_operacao = DivisaoOperacaoFundoInvestimento(operacao=operacao_fundo_investimento, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_fundo_investimento.quantidade)
-                divisao_operacao.save()
-                messages.success(request, 'Operação inserida com sucesso')
-                return HttpResponseRedirect(reverse('fundo_investimento:historico_fundo_investimento'))
+                try:
+                    with transaction.atomic():
+                        operacao_fundo_investimento.save()
+                        divisao_operacao = DivisaoOperacaoFundoInvestimento(operacao=operacao_fundo_investimento, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_fundo_investimento.quantidade)
+                        divisao_operacao.save()
+                        messages.success(request, 'Operação inserida com sucesso')
+                        return HttpResponseRedirect(reverse('fundo_investimento:historico_fundo_investimento'))
+                except:
+                    messages.error(request, 'Houve um erro ao inserir a operação')
+                    if settings.ENV == 'DEV':
+                        raise
+                    elif settings.ENV == 'PROD':
+                        mail_admins(u'Erro ao gerar operação em fundo de investimento com uma divisão', traceback.format_exc())
             
         for erros in form_operacao_fundo_investimento.errors.values():
             for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
@@ -279,9 +303,9 @@ def inserir_operacao_fundo_investimento(request):
                 
     else:
         form_operacao_fundo_investimento = OperacaoFundoInvestimentoForm(investidor=investidor)
-        formset_divisao_fundo_investimento = DivisaoFundoInvestimentoFormSet(investidor=investidor)
+        formset_divisao = DivisaoFundoInvestimentoFormSet(investidor=investidor)
     return TemplateResponse(request, 'fundo_investimento/inserir_operacao_fundo_investimento.html', {'form_operacao_fundo_investimento': form_operacao_fundo_investimento, \
-                                                                                              'formset_divisao_fundo_investimento': formset_divisao_fundo_investimento, 'varias_divisoes': varias_divisoes})
+                                                                                              'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})
 
 @em_construcao('Fundo de investimento')
 @login_required
@@ -337,6 +361,25 @@ def listar_fundos(request):
             fundo.tipo_prazo = 'Longo'
 
     return TemplateResponse(request, 'fundo_investimento/listar_fundo_investimento.html', {'fundos_investimento': fundos_investimento, 'filtro': filtro})
+
+def listar_fundos_por_nome(request):
+    nome_fundo = request.GET.get('nome_fundo', '')
+    # Remover caracteres estranhos da string
+    nome_fundo = re.sub('[^\w\d\.-]', '', nome_fundo)
+    if len(nome_fundo) == 0:
+        return HttpResponse(json.dumps({'sucesso': False, 'erro':'Nome do fundo deve contar pelo menos um caractere'}), content_type = "application/json")  
+    # Verificar pagina para paginação
+    try:
+        pagina = int(request.GET.get('pagina', 1))
+    except:
+        pagina = 1
+    
+    # Buscar fundos
+    fundos = [{'id': fundo['id'], 'text': fundo['nome']} for fundo in FundoInvestimento.objects.filter(nome__icontains=nome_fundo).values('id', 'nome').order_by('nome')]
+    # Paginar fundos
+    paginador_fundos = Paginator(fundos, 30)
+    
+    return HttpResponse(json.dumps({'sucesso': True, 'dados': paginador_fundos.page(pagina).object_list, 'total_count': paginador_fundos.count}), content_type = "application/json")   
 
 def listar_historico_fundo_investimento(request, id_fundo):
     # Converte datas e realiza validação do formato

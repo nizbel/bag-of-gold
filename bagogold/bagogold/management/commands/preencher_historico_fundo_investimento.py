@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from bagogold import settings
-from bagogold.bagogold.utils.misc import ultimo_dia_util
 from bagogold.fundo_investimento.models import FundoInvestimento, \
     HistoricoValorCotas
 from decimal import Decimal
@@ -8,13 +7,10 @@ from django.core.mail import mail_admins
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from lxml import etree
-from threading import Thread
-from urllib2 import urlopen, Request, HTTPError, URLError
-from StringIO import StringIO
+from urllib2 import urlopen
 import datetime
 import os
 import re
-import time
 import traceback
 import zeep
 import zipfile
