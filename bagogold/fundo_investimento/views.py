@@ -378,6 +378,8 @@ def listar_fundos_por_nome(request):
     fundos = [{'id': fundo['id'], 'text': fundo['nome']} for fundo in FundoInvestimento.objects.filter(nome__icontains=nome_fundo).values('id', 'nome').order_by('nome')]
     # Paginar fundos
     paginador_fundos = Paginator(fundos, 30)
+    if pagina > paginador_fundos.num_pages:
+        pagina = paginador_fundos.num_pages
     
     return HttpResponse(json.dumps({'sucesso': True, 'dados': paginador_fundos.page(pagina).object_list, 'total_count': paginador_fundos.count}), content_type = "application/json")   
 
