@@ -82,15 +82,15 @@ def listar_usuarios(request):
     estatisticas['total_ref_30_dias'] = DocumentoProventoBovespa.objects.filter(data_referencia__gte=(datetime.date.today()-datetime.timedelta(days=30))).count()
     
     # Validados
-    estatisticas['total_validado'] = InvestidorValidacaoDocumento.objects.all().count()
+    estatisticas['total_validado'] = estatisticas['total_documentos'] - PendenciaDocumentoProvento.objects.all().count()
     estatisticas['percentual_validado'] = 100 * Decimal(estatisticas['total_validado']) / estatisticas['total_documentos']
     estatisticas['percentual_validado_progress'] = str(estatisticas['percentual_validado']).replace(',', '.')
     estatisticas['percentual_validado_progress'] = estatisticas['percentual_validado_progress'][: min(len(estatisticas['percentual_validado_progress']),
                                                                                                       estatisticas['percentual_validado_progress'].find('.') + 4)]
     estatisticas['total_validado_usuario'] = InvestidorValidacaoDocumento.objects.filter(investidor__isnull=False).count()
-    estatisticas['percentual_validado_usuario'] = Decimal(estatisticas['total_validado_usuario']) / estatisticas['total_validado']
+    estatisticas['percentual_validado_usuario'] = 100 * Decimal(estatisticas['total_validado_usuario']) / estatisticas['total_validado']
     estatisticas['total_validado_sistema'] = estatisticas['total_validado'] - estatisticas['total_validado_usuario']
-    estatisticas['percentual_validado_sistema'] = Decimal(estatisticas['total_validado_sistema']) / estatisticas['total_validado']
+    estatisticas['percentual_validado_sistema'] = 100 * Decimal(estatisticas['total_validado_sistema']) / estatisticas['total_validado']
     
     # Apenas lidos
     estatisticas['total_a_validar'] = PendenciaDocumentoProvento.objects.filter(tipo='V').count()
