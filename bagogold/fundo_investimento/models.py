@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from decimal import Decimal
+from django.core.validators import MinValueValidator
 from django.db import models
 import datetime
 
@@ -121,8 +123,8 @@ class FundoInvestimento (models.Model):
         raise ValueError(u'Situação não encontrada: %s' % (descricao_situacao))
     
 class OperacaoFundoInvestimento (models.Model):
-    quantidade = models.DecimalField(u'Quantidade de cotas', max_digits=11, decimal_places=2)
-    valor = models.DecimalField(u'Valor total da operação', max_digits=11, decimal_places=2)
+    quantidade = models.DecimalField(u'Quantidade de cotas', max_digits=21, decimal_places=12)
+    valor = models.DecimalField(u'Valor total da operação', max_digits=11, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
     data = models.DateField(u'Data da operação')
     tipo_operacao = models.CharField(u'Tipo de operação', max_length=1)
     fundo_investimento = models.ForeignKey('FundoInvestimento')

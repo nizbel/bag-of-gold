@@ -77,16 +77,3 @@ $(document).ready(function() {
 	$("input[name='quantidade']").prop("disabled", true);
 	$("input[name='valor_cota']").prop("disabled", true);
 });
-
-$('#id_fundo_investimento').change(function() {
-	if ($(this).val() != null && $('#id_data').val() != null) {
-		alert('válido');
-	}
-});
-
-
-$('#id_data').change(function() {
-	if ($(this).val() != null && $(this).val() != '' && $('#id_fundo_investimento').val() != null && $('#id_fundo_investimento').val() != '') {
-		alert($('#id_fundo_investimento').val());
-	}
-});
