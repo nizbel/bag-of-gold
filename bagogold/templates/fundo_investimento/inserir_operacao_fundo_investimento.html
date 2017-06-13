@@ -179,6 +179,77 @@ $(document).ready(function() {
           escapeMarkup: function (markup) { return markup; }, // let our custom formatter work
           minimumInputLength: 3
     });
+    
+
+    $('#id_fundo_investimento').change(function() {
+        if ($(this).val() != null && $('#id_data').val() != '' && $('#id_data').val() != null && $('#id_data').val() != '') {
+        	$.ajax({
+                url: "{% url 'fundo_investimento:verificar_historico_fundo_na_data' %}",
+                type : "GET", // http method
+                data : {fundo: $(this).val(), data: $('#id_data').val()},
+
+                // handle a successful response
+                success : function(retorno) {
+                    console.log(retorno);
+                    if (retorno.sucesso) {
+                    	if (parseFloat(retorno.valor) > 0) {
+                            $('#id_valor_cota').prop('disabled');
+                            $('#id_quantidade').prop('disabled');
+                            $('#id_valor_cota').val(retorno.valor.replace('.', ','));
+                    		if (parseFloat($('#id_valor').val()) > 0) {
+                    			$('#id_quantidade').val(parseFloat($('#id_valor').val() / parseFloat(retorno.valor)));
+                    		}
+                    	} else {
+                		    $('#id_valor_cota').removeAttr('disabled');
+                            $('#id_quantidade').removeAttr('disabled');
+                    	}
+                    } else {
+                    	console.log(erro);
+                    }
+                },
+
+                // handle a non-successful response
+                error : function(xhr,errmsg,err) {
+                    console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+                }
+           });
+        }
+    });
+
+
+    $('#id_data').change(function() {
+        if ($(this).val() != null && $(this).val() != '' && $('#id_fundo_investimento').val() != null && $('#id_fundo_investimento').val() != '') {
+        	$.ajax({
+                url: "{% url 'fundo_investimento:verificar_historico_fundo_na_data' %}",
+                type : "GET", // http method
+                data : {fundo: $(this).val(), data: $('#id_data').val()},
+
+                // handle a successful response
+                success : function(retorno) {
+                    console.log(retorno);
+                    if (retorno.sucesso) {
+                        if (parseFloat(retorno.valor) > 0) {
+                               $('#id_valor_cota').val(retorno.valor);
+                        } else {
+                               $('#id_valor_cota').removeAttr('disabled');
+                               $('#id_quantidade').removeAttr('disabled');
+                        }
+                    } else {
+                        console.log(erro);
+                    }
+                },
+
+                // handle a non-successful response
+                error : function(xhr,errmsg,err) {
+                    console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+                }
+           });
+        }
+    });
+    
+    $('#id_quantidade').change(function() {
+    	
+    });
 });
 </script>
 {% endblock %}

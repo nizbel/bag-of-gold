@@ -12,4 +12,5 @@ urlpatterns = [
     url(r'^listar_historico_fundo_investimento/(?P<id_fundo>\d+)/$', views.listar_historico_fundo_investimento, name='listar_historico_fundo_investimento'),
     url(r'^painel/$', views.painel, name='painel_fundo_investimento'),
     url(r'^sobre/$', views.sobre, name='sobre_fundo_investimento'),
+    url(r'^verificar_historico_fundo_na_data/$', views.verificar_historico_fundo_na_data, name='verificar_historico_fundo_na_data'),
     ]

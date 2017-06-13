@@ -365,7 +365,7 @@ def listar_fundos(request):
 def listar_fundos_por_nome(request):
     nome_fundo = request.GET.get('nome_fundo', '')
     # Remover caracteres estranhos da string
-    nome_fundo = re.sub('[^\w\d\.-]', '', nome_fundo)
+    nome_fundo = re.sub('[^\w\d\. -]', '', nome_fundo)
     if len(nome_fundo) == 0:
         return HttpResponse(json.dumps({'sucesso': False, 'erro':'Nome do fundo deve contar pelo menos um caractere'}), content_type = "application/json")  
     # Verificar pagina para paginação
@@ -472,3 +472,25 @@ def painel(request):
 @adiciona_titulo_descricao('Sobre Fundos de Investimento', 'Detalha o que são Fundos de Investimento')
 def sobre(request):
     return TemplateResponse(request, 'fundo_investimento/sobre.html', {})
+
+def verificar_historico_fundo_na_data(request):
+    try:
+        # Tenta pegar o id do fundo como inteiro
+        id_fundo = request.GET['fundo']
+    except:
+        return HttpResponse(json.dumps({'sucesso': False, 'erro':'Valor inválido para fundo de investimento'}), content_type = "application/json")  
+    try:
+        # Tenta pegar data no formato dd/mm/YYYY
+        print request.GET['data']
+        data = datetime.datetime.strptime(request.GET['data'], '%d/%m/%Y')
+    except Exception as e:
+        print e
+        return HttpResponse(json.dumps({'sucesso': False, 'erro':'Data inválida'}), content_type = "application/json")  
+    
+    # Buscar histórico
+    if HistoricoValorCotas.objects.filter(fundo_investimento__id=id_fundo, data=data).exists():
+        historico_valor = str(formatar_zeros_a_direita_apos_2_casas_decimais(HistoricoValorCotas.objects.get(fundo_investimento__id=id_fundo, data=data).valor_cota))
+    else:
+        historico_valor = '0.00'
+    
+    return HttpResponse(json.dumps({'sucesso': True, 'valor': historico_valor}), content_type = "application/json")   
