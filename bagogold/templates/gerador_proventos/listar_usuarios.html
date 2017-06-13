@@ -78,6 +78,8 @@
                                     <div class="m-grid-col m-grid-col-left">{{estatisticas.total_ref_30_dias}}</div>
                                 </div>
                                 <div class="m-grid-row">
+                                    <div class="m-grid-col m-grid-col-left"><strong>Taxa de validações:</strong></div>
+                                    <div class="m-grid-col m-grid-col-left">{{estatisticas.taxa_validacao_diaria|floatformat:'3'}}/dia</div>
                                     <div class="m-grid-col m-grid-col-left"><strong>Validações de usuários:</strong></div>
                                     <div class="m-grid-col m-grid-col-left">{{estatisticas.total_validado_usuario}} ({{estatisticas.percentual_validado_usuario|floatformat:'2'}}%)</div>
                                     <div class="m-grid-col m-grid-col-left"><strong>Validações do sistema:</strong></div>
