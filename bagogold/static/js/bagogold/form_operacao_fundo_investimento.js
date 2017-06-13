@@ -41,7 +41,7 @@ $(document).ready(function() {
     });
     
     $("input[name='valor']").TouchSpin({
-		min: 0,
+		min: 0.01,
 		max: 1000000000,
 		step: 0.01,
 		decimals: 2,
@@ -51,7 +51,8 @@ $(document).ready(function() {
 	$("input[name='quantidade']").TouchSpin({
 		min: 0,
 		max: 1000000000,
-		step: 1,
+		step: 0.000000000001,
+		decimals: 12,
 		maxboostedstep: 100,
 		postfix: 'cotas'
 	});
@@ -60,7 +61,6 @@ $(document).ready(function() {
 		max: 1000000000,
 		step: 0.000000000001,
 		decimals: 12,
-		step: 1,
 		maxboostedstep: 100,
 		prefix: 'R$'
 	});
@@ -76,4 +76,18 @@ $(document).ready(function() {
 	});
 	$("input[name='quantidade']").prop("disabled", true);
 	$("input[name='valor_cota']").prop("disabled", true);
+    
+    $('#id_valor').change(function() {
+    	if ($('#id_valor_cota').is(':disabled') && $('#id_quantidade').is(':disabled')) {
+    		$('#id_quantidade').val((parseFloat($(this).val().replace('.', '').replace(',', '.')) / parseFloat($('#id_valor_cota').val().replace('.', '').replace(',', '.'))).toString().replace('.', ','));
+    	}
+    });
+    
+    $('#id_quantidade').change(function() {
+    	$('#id_valor_cota').val((parseFloat($('#id_valor').val().replace('.', '').replace(',', '.')) / parseFloat($(this).val().replace('.', '').replace(',', '.'))).toString().replace('.', ','));
+    });
+    
+    $('#id_valor_cota').change(function() {
+        $('#id_quantidade').val((parseFloat($('#id_valor').val().replace('.', '').replace(',', '.')) / parseFloat($(this).val().replace('.', '').replace(',', '.'))).toString().replace('.', ','));
+    });
 });

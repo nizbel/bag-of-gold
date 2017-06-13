@@ -190,18 +190,17 @@ $(document).ready(function() {
 
                 // handle a successful response
                 success : function(retorno) {
-                    console.log(retorno);
                     if (retorno.sucesso) {
                     	if (parseFloat(retorno.valor) > 0) {
-                            $('#id_valor_cota').prop('disabled');
-                            $('#id_quantidade').prop('disabled');
+                            $('#id_valor_cota').prop('disabled', true);
+                            $('#id_quantidade').prop('disabled', true);
                             $('#id_valor_cota').val(retorno.valor.replace('.', ','));
                     		if (parseFloat($('#id_valor').val()) > 0) {
                     			$('#id_quantidade').val(parseFloat($('#id_valor').val() / parseFloat(retorno.valor)));
                     		}
                     	} else {
-                		    $('#id_valor_cota').removeAttr('disabled');
-                            $('#id_quantidade').removeAttr('disabled');
+                		    $('#id_valor_cota').prop('disabled', false);
+                            $('#id_quantidade').prop('disabled', false);
                     	}
                     } else {
                     	console.log(erro);
@@ -222,17 +221,22 @@ $(document).ready(function() {
         	$.ajax({
                 url: "{% url 'fundo_investimento:verificar_historico_fundo_na_data' %}",
                 type : "GET", // http method
-                data : {fundo: $(this).val(), data: $('#id_data').val()},
+                data : {data: $(this).val(), fundo: $('#id_fundo_investimento').val()},
 
                 // handle a successful response
                 success : function(retorno) {
-                    console.log(retorno);
                     if (retorno.sucesso) {
                         if (parseFloat(retorno.valor) > 0) {
-                               $('#id_valor_cota').val(retorno.valor);
+                            $('#id_valor_cota').prop('disabled', true);
+                            $('#id_quantidade').prop('disabled', true);
+                            $('#id_valor_cota').val(retorno.valor.replace('.', ','));
+                            var valor_total = parseFloat($('#id_valor').val().replace('.', '').replace(',', '.'));
+                            if (valor_total > 0) {
+                                $('#id_quantidade').val((valor_total / parseFloat(retorno.valor)).toString().replace('.', ','));
+                            }
                         } else {
-                               $('#id_valor_cota').removeAttr('disabled');
-                               $('#id_quantidade').removeAttr('disabled');
+                            $('#id_valor_cota').removeAttr('disabled');
+                            $('#id_quantidade').removeAttr('disabled');
                         }
                     } else {
                         console.log(erro);
@@ -245,10 +249,6 @@ $(document).ready(function() {
                 }
            });
         }
-    });
-    
-    $('#id_quantidade').change(function() {
-    	
     });
 });
 </script>

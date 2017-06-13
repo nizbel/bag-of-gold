@@ -481,7 +481,6 @@ def verificar_historico_fundo_na_data(request):
         return HttpResponse(json.dumps({'sucesso': False, 'erro':'Valor inválido para fundo de investimento'}), content_type = "application/json")  
     try:
         # Tenta pegar data no formato dd/mm/YYYY
-        print request.GET['data']
         data = datetime.datetime.strptime(request.GET['data'], '%d/%m/%Y')
     except Exception as e:
         print e
