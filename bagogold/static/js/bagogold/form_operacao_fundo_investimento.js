@@ -72,14 +72,11 @@ $(document).ready(function() {
 		maxboostedstep: 100,
 		prefix: 'R$'
 	});
-	$('.date-picker').datepicker({
-		language: 'pt-BR'
-	});
 	$("input[name='quantidade']").prop("disabled", true);
 	$("input[name='valor_cota']").prop("disabled", true);
     
     $('#id_valor').change(function() {
-    	if ($('#id_valor_cota').is(':disabled') && $('#id_quantidade').is(':disabled')) {
+    	if ($('#id_valor_cota').is(':disabled') && $('#id_quantidade').is(':disabled') && parseFloat($('#id_valor_cota').val().replace('.', '').replace(',', '.')) > 0) {
     		$('#id_quantidade').val((parseFloat($(this).val().replace('.', '').replace(',', '.')) / parseFloat($('#id_valor_cota').val().replace('.', '').replace(',', '.'))).toString().replace('.', ','));
     	}
     });
