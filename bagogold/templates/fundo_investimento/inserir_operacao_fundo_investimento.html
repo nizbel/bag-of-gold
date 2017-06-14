@@ -182,74 +182,51 @@ $(document).ready(function() {
     
 
     $('#id_fundo_investimento').change(function() {
-        if ($(this).val() != null && $('#id_data').val() != '' && $('#id_data').val() != null && $('#id_data').val() != '') {
-        	$.ajax({
-                url: "{% url 'fundo_investimento:verificar_historico_fundo_na_data' %}",
-                type : "GET", // http method
-                data : {fundo: $(this).val(), data: $('#id_data').val()},
-
-                // handle a successful response
-                success : function(retorno) {
-                    if (retorno.sucesso) {
-                    	if (parseFloat(retorno.valor) > 0) {
-                            $('#id_valor_cota').prop('disabled', true);
-                            $('#id_quantidade').prop('disabled', true);
-                            $('#id_valor_cota').val(retorno.valor.replace('.', ','));
-                    		if (parseFloat($('#id_valor').val()) > 0) {
-                    			$('#id_quantidade').val(parseFloat($('#id_valor').val() / parseFloat(retorno.valor)));
-                    		}
-                    	} else {
-                		    $('#id_valor_cota').prop('disabled', false);
-                            $('#id_quantidade').prop('disabled', false);
-                    	}
-                    } else {
-                    	console.log(erro);
-                    }
-                },
-
-                // handle a non-successful response
-                error : function(xhr,errmsg,err) {
-                    console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
-                }
-           });
-        }
+        buscarValorCotaHistorico();
     });
+    
+    $('.date-picker').datepicker({
+        language: 'pt-BR'
+    }).on('changeDate', function(e) {
+        buscarValorCotaHistorico();
+    });
+    
+});
 
+function buscarValorCotaHistorico() {
+	console.log('buscou');
+    if ($('#id_data').val() != null && $('#id_data').val() != '' && $('#id_fundo_investimento').val() != null && $('#id_fundo_investimento').val() != '') {
+        $.ajax({
+            url: "{% url 'fundo_investimento:verificar_historico_fundo_na_data' %}",
+            type : "GET", // http method
+            data : {data: $('#id_data').val(), fundo: $('#id_fundo_investimento').val()},
 
-    $('#id_data').change(function() {
-        if ($(this).val() != null && $(this).val() != '' && $('#id_fundo_investimento').val() != null && $('#id_fundo_investimento').val() != '') {
-        	$.ajax({
-                url: "{% url 'fundo_investimento:verificar_historico_fundo_na_data' %}",
-                type : "GET", // http method
-                data : {data: $(this).val(), fundo: $('#id_fundo_investimento').val()},
-
-                // handle a successful response
-                success : function(retorno) {
-                    if (retorno.sucesso) {
-                        if (parseFloat(retorno.valor) > 0) {
-                            $('#id_valor_cota').prop('disabled', true);
-                            $('#id_quantidade').prop('disabled', true);
-                            $('#id_valor_cota').val(retorno.valor.replace('.', ','));
-                            var valor_total = parseFloat($('#id_valor').val().replace('.', '').replace(',', '.'));
-                            if (valor_total > 0) {
-                                $('#id_quantidade').val((valor_total / parseFloat(retorno.valor)).toString().replace('.', ','));
-                            }
-                        } else {
-                            $('#id_valor_cota').removeAttr('disabled');
-                            $('#id_quantidade').removeAttr('disabled');
+            // handle a successful response
+            success : function(retorno) {
+                if (retorno.sucesso) {
+                    if (parseFloat(retorno.valor) > 0) {
+                        $('#id_valor_cota').prop('disabled', true);
+                        $('#id_quantidade').prop('disabled', true);
+                        $('#id_valor_cota').val(retorno.valor.replace('.', ','));
+                        var valor_total = parseFloat($('#id_valor').val().replace('.', '').replace(',', '.'));
+                        if (valor_total > 0) {
+                            $('#id_quantidade').val((valor_total / parseFloat(retorno.valor)).toString().replace('.', ','));
                         }
                     } else {
-                        console.log(erro);
+                        $('#id_valor_cota').removeAttr('disabled');
+                        $('#id_quantidade').removeAttr('disabled');
                     }
-                },
-
-                // handle a non-successful response
-                error : function(xhr,errmsg,err) {
-                    console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+                } else {
+                    console.log(retorno.erro);
                 }
-           });
-        }
-    });
-});
+            },
+
+            // handle a non-successful response
+            error : function(xhr,errmsg,err) {
+                console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+            }
+       });
+    }
+}
 </script>
 {% endblock %}
