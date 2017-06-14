@@ -453,9 +453,9 @@ class DivisaoOperacaoFundoInvestimentoFormSet(forms.models.BaseInlineFormSet):
                     elif form_divisao.cleaned_data['DELETE']:
                         divisao_a_excluir = True
                 
-        if self.instance.quantidade < qtd_total_div:
+        if self.instance.valor < qtd_total_div:
             raise forms.ValidationError('Quantidade total alocada para as divisões é maior que quantidade da operação')
-        elif self.instance.quantidade > qtd_total_div:
+        elif self.instance.valor > qtd_total_div:
             if divisao_a_excluir:
                 raise forms.ValidationError('Quantidade total alocada para as divisões é menor que quantidade da operação. Repasse a quantidade da divisão excluída para a(s) remanescente(s)')
             raise forms.ValidationError('Quantidade total alocada para as divisões é menor que quantidade da operação')

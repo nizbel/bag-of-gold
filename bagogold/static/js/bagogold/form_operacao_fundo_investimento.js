@@ -67,9 +67,10 @@ $(document).ready(function() {
 	$("input[name$='-quantidade']").TouchSpin({
 		min: 0,
 		max: 1000000000,
-		step: 1,
+		step: 0.01,
+		decimals: 2,
 		maxboostedstep: 100,
-		postfix: 'cotas'
+		prefix: 'R$'
 	});
 	$('.date-picker').datepicker({
 		language: 'pt-BR'
