@@ -341,7 +341,7 @@ class DivisaoOperacaoFundoInvestimento (models.Model):
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
     operacao = models.ForeignKey('fundo_investimento.OperacaoFundoInvestimento')
     """
-    Guarda a quantidade de cotas que pertence a divisão
+    Guarda a quantidade do valor da operação que pertence a divisão
     """
     quantidade = models.DecimalField('Quantidade',  max_digits=11, decimal_places=2)
     
