@@ -119,7 +119,7 @@ class OperacaoCDB_RDB (models.Model):
     def qtd_disponivel_venda_na_data(self, data):
         vendas = OperacaoVendaCDB_RDB.objects.filter(operacao_compra=self).values_list('operacao_venda__id', flat=True)
         qtd_vendida = 0
-        for venda in OperacaoVendaCDB_RDB.objects.filter(id__in=vendas, data__lt=data):
+        for venda in OperacaoCDB_RDB.objects.filter(id__in=vendas, data__lt=data):
             qtd_vendida += venda.quantidade
         return self.quantidade - qtd_vendida
     
