@@ -8,7 +8,7 @@ from bagogold.bagogold.forms.divisoes import \
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFundoInvestimento, \
     Divisao
 from bagogold.bagogold.utils.misc import \
-    formatar_zeros_a_direita_apos_2_casas_decimais
+    formatar_zeros_a_direita_apos_2_casas_decimais, calcular_iof_regressivo
 from bagogold.fundo_investimento.forms import OperacaoFundoInvestimentoForm
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
     HistoricoValorCotas, FundoInvestimento
@@ -421,50 +421,64 @@ def painel(request):
     
     # Prepara o campo valor atual
     for operacao in operacoes:
-        if operacao.fundo_investimento.nome not in fundos.keys():
-            fundos[operacao.fundo_investimento.nome] = operacao.fundo_investimento
+        if operacao.fundo_investimento not in fundos.keys():
+            fundos[operacao.fundo_investimento] = operacao.fundo_investimento
+            fundos[operacao.fundo_investimento].quantidade = 0
         if operacao.tipo_operacao == 'C':
-            fundos[operacao.fundo_investimento.nome].quantidade += operacao.quantidade
+            fundos[operacao.fundo_investimento].quantidade += operacao.quantidade
         else:
-            fundos[operacao.fundo_investimento.nome].quantidade -= operacao.quantidade
+            fundos[operacao.fundo_investimento].quantidade -= operacao.quantidade
     
-    fundos = [fundo for fundo in fundos if fundo.quantidade > 0]
+    fundos = [fundo for fundo in fundos.values() if fundo.quantidade > 0]
     
-    for fundo in fundos:
-        fundo.data_atual = datetime.date.today()
-        fundo.valor_cota_atual = fundo.valor_no_dia()
-        fundo.total_atual = fundo.valor_cota_atual * fundo.quantidade
-        fundo.imposto_renda = Decimal(0)
-        fundo.iof = Decimal(0)
-    
+    # Totais da tabela do painel
     total_atual = 0    
     total_ir = 0
     total_iof = 0
-    total_ganho_prox_dia = 0
-#     for operacao in operacoes:
-#         # Calcular impostos
-#         qtd_dias = (datetime.date.today() - operacao.data).days
-# #         print qtd_dias, calcular_iof_regressivo(qtd_dias)
-#         # IOF
-#         operacao.iof = Decimal(calcular_iof_regressivo(qtd_dias)) * (operacao.atual - operacao.inicial)
-#         # IR
-#         if qtd_dias <= 180:
-#             operacao.imposto_renda =  Decimal(0.225) * (operacao.atual - operacao.inicial - operacao.iof)
-#         elif qtd_dias <= 360:
-#             operacao.imposto_renda =  Decimal(0.2) * (operacao.atual - operacao.inicial - operacao.iof)
-#         elif qtd_dias <= 720:
-#             operacao.imposto_renda =  Decimal(0.175) * (operacao.atual - operacao.inicial - operacao.iof)
-#         else: 
-#             operacao.imposto_renda =  Decimal(0.15) * (operacao.atual - operacao.inicial - operacao.iof)
-#         total_ir += operacao.imposto_renda
-#         total_iof += operacao.iof
+    
+    for fundo in fundos:
+        fundo.data_atual = max(HistoricoValorCotas.objects.filter(fundo_investimento=fundo).order_by('-data')[0].data, OperacaoFundoInvestimento.objects.filter(investidor=investidor, fundo_investimento=fundo) \
+                               .order_by('-data')[0].data)
+        fundo.valor_cota_atual = fundo.valor_no_dia(investidor, fundo.data_atual)
+        fundo.total_atual = fundo.valor_cota_atual * fundo.quantidade
+        fundo.iof = Decimal(0)
+        fundo.imposto_renda = Decimal(0)        
+#         fundo.preco_medio = sum([operacao.valor for operacao in operacoes.filter(fundo_investimento=fundo)]) \
+#             / sum([operacao.quantidade for operacao in operacoes.filter(fundo_investimento=fundo)])
+        # Verificar IOF e IR nas operações 
+        for operacao in operacoes.filter(fundo_investimento=fundo):
+            valorizacao = fundo.valor_cota_atual - operacao.valor_cota()
+            if valorizacao > 0:
+                qtd_dias = (datetime.date.today() - operacao.data).days
+        #         print qtd_dias, calcular_iof_regressivo(qtd_dias)
+                # IOF
+                operacao.iof = Decimal(calcular_iof_regressivo(qtd_dias)) * operacao.valor * valorizacao
+                fundo.iof += operacao.iof
+                # IR
+                if qtd_dias <= 180:
+                    fundo.imposto_renda += Decimal(0.225) * (operacao.valor * valorizacao - operacao.iof)
+                elif qtd_dias <= 360:
+                    fundo.imposto_renda += Decimal(0.2) * (operacao.valor * valorizacao - operacao.iof)
+                elif qtd_dias <= 720:
+                    fundo.imposto_renda += Decimal(0.175) * (operacao.valor * valorizacao - operacao.iof)
+                else: 
+                    fundo.imposto_renda += Decimal(0.15) * (operacao.valor * valorizacao - operacao.iof)
+            else:
+                # IR
+                fundo.imposto_renda += valorizacao
+        
+        # Zerar valor negativo
+        fundo.imposto_renda = max(Decimal(0), fundo.imposto_renda)
+                
+        total_atual += fundo.total_atual    
+        total_ir += fundo.imposto_renda
+        total_iof += fundo.iof
     
     # Popular dados
     dados = {}
     dados['total_atual'] = total_atual
     dados['total_ir'] = total_ir
     dados['total_iof'] = total_iof
-    dados['total_ganho_prox_dia'] = total_ganho_prox_dia
     
     return TemplateResponse(request, 'fundo_investimento/painel.html', {'fundos': fundos, 'dados': dados})
 

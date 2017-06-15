@@ -83,13 +83,17 @@ class FundoInvestimento (models.Model):
     def __unicode__(self):
         return self.nome
     
-    def valor_no_dia(self, dia=datetime.date.today()):
-        historico_fundo = HistoricoValorCotas.objects.filter(fundo_investimento=self).order_by('-data')
-        ultima_operacao_fundo = OperacaoFundoInvestimento.objects.filter(fundo_investimento=self).order_by('-data')[0]
-        if historico_fundo and historico_fundo[0].data > ultima_operacao_fundo.data:
-            return historico_fundo[0].valor_cota
-        else:
-            return ultima_operacao_fundo.valor_cota()
+    def valor_no_dia(self, investidor, dia=datetime.date.today()):
+        if HistoricoValorCotas.objects.filter(fundo_investimento=self, data__lte=dia).exists():
+            historico_fundo = HistoricoValorCotas.objects.filter(fundo_investimento=self).order_by('-data')[0]
+            if investidor and OperacaoFundoInvestimento.objects.filter(fundo_investimento=self, investidor=investidor, data__range=[historico_fundo.data + datetime.timedelta(days=1), dia]).exists():
+                return OperacaoFundoInvestimento.objects.filter(fundo_investimento=self, investidor=investidor, 
+                                                                data__range=[historico_fundo.data + datetime.timedelta(days=1), dia]).order_by('-data')[0].valor_cota()
+            else:
+                return historico_fundo.valor_cota
+        if investidor and OperacaoFundoInvestimento.objects.filter(fundo_investimento=self, investidor=investidor, data__lte=dia).exists():
+            return OperacaoFundoInvestimento.objects.filter(fundo_investimento=self, investidor=investidor, data__lte=dia).order_by('-data')[0].valor_cota()
+        raise ValueError('Valor de cota não encontrado para a data informada')
         
     def descricao_classe(self):
         for codigo, descricao in FundoInvestimento.TIPOS_CLASSE:
