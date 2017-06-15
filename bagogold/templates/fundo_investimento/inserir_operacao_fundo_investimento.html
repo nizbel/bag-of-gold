@@ -194,7 +194,6 @@ $(document).ready(function() {
 });
 
 function buscarValorCotaHistorico() {
-	console.log('buscou');
     if ($('#id_data').val() != null && $('#id_data').val() != '' && $('#id_fundo_investimento').val() != null && $('#id_fundo_investimento').val() != '') {
         $.ajax({
             url: "{% url 'fundo_investimento:verificar_historico_fundo_na_data' %}",
@@ -206,7 +205,7 @@ function buscarValorCotaHistorico() {
                 if (retorno.sucesso) {
                     if (parseFloat(retorno.valor) > 0) {
                         $('#id_valor_cota').prop('disabled', true);
-                        $('#id_quantidade').prop('disabled', true);
+//                         $('#id_quantidade').prop('disabled', true);
                         $('#id_valor_cota').val(retorno.valor.replace('.', ','));
                         var valor_total = parseFloat($('#id_valor').val().replace('.', '').replace(',', '.'));
                         if (valor_total > 0) {
@@ -214,7 +213,7 @@ function buscarValorCotaHistorico() {
                         }
                     } else {
                         $('#id_valor_cota').removeAttr('disabled');
-                        $('#id_quantidade').removeAttr('disabled');
+//                         $('#id_quantidade').removeAttr('disabled');
                     }
                 } else {
                     console.log(retorno.erro);
