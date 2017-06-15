@@ -134,7 +134,7 @@ class OperacaoFundoInvestimento (models.Model):
         return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.valor, self.fundo_investimento, self.data.strftime('%d/%m/%Y'))
     
     def valor_cota(self):
-        return self.valor/self.quantidade if self.quantidade > 0 else 0
+        return (self.valor/self.quantidade).quantize(Decimal('0.000000000001')) if self.quantidade > 0 else 0
 
 class HistoricoValorCotas (models.Model):
     fundo_investimento = models.ForeignKey('FundoInvestimento')
