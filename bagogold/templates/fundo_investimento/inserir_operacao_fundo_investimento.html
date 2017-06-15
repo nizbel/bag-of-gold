@@ -16,7 +16,7 @@
 {% block content %}
 <div class="portlet-body form">
     <!-- BEGIN FORM-->
-    <form method="POST" class="horizontal-form">{% csrf_token %}
+    <form id="form_inserir_fundo_investimento" method="POST" class="horizontal-form">{% csrf_token %}
         <div class="form-body">
             
             <div class="row">
@@ -191,6 +191,9 @@ $(document).ready(function() {
         buscarValorCotaHistorico();
     });
     
+    $( "#form_inserir_fundo_investimento" ).submit(function( event ) {
+        $('#id_quantidade').removeAttr('disabled');
+    });
 });
 
 function buscarValorCotaHistorico() {
@@ -205,15 +208,15 @@ function buscarValorCotaHistorico() {
                 if (retorno.sucesso) {
                     if (parseFloat(retorno.valor) > 0) {
                         $('#id_valor_cota').prop('disabled', true);
-//                         $('#id_quantidade').prop('disabled', true);
+                        $('#id_quantidade').prop('disabled', true);
                         $('#id_valor_cota').val(retorno.valor.replace('.', ','));
                         var valor_total = parseFloat($('#id_valor').val().replace('.', '').replace(',', '.'));
                         if (valor_total > 0) {
-                            $('#id_quantidade').val((valor_total / parseFloat(retorno.valor)).toString().replace('.', ','));
+                            $('#id_quantidade').val((valor_total / parseFloat(retorno.valor)).toFixed(12).toString().replace('.', ','));
                         }
                     } else {
                         $('#id_valor_cota').removeAttr('disabled');
-//                         $('#id_quantidade').removeAttr('disabled');
+                        $('#id_quantidade').removeAttr('disabled');
                     }
                 } else {
                     console.log(retorno.erro);

@@ -72,29 +72,28 @@ $(document).ready(function() {
 		maxboostedstep: 100,
 		prefix: 'R$'
 	});
-//	$("input[name='quantidade']").prop("disabled", true);
+	$("input[name='quantidade']").prop("disabled", true);
 	$("input[name='valor_cota']").prop("disabled", true);
     
     $('#id_valor').change(function() {
     	if ($('#id_valor_cota').is(':disabled') && parseFloat($('#id_valor_cota').val().replace('.', '').replace(',', '.')) > 0) {
-    		$('#id_quantidade').val((parseFloat($(this).val().replace('.', '').replace(',', '.')) / parseFloat($('#id_valor_cota').val().replace('.', '').replace(',', '.'))).toString().replace('.', ','));
+    		$('#id_quantidade').val((parseFloat($(this).val().replace('.', '').replace(',', '.')) / parseFloat($('#id_valor_cota').val().replace('.', '').replace(',', '.'))).toFixed(12).toString().replace('.', ','));
     	}
     });
     
     $('#id_quantidade').change(function() {
-    	console.log
     	if (parseFloat($('#id_valor').val().replace('.', '').replace(',', '.')) > 0 && parseFloat($('#id_valor_cota').val().replace('.', '').replace(',', '.')) > 0) {
 	    	if (!$('#id_valor_cota').is(':disabled')) {
-	    		$('#id_valor_cota').val((parseFloat($('#id_valor').val().replace('.', '').replace(',', '.')) / parseFloat($(this).val().replace('.', '').replace(',', '.'))).toString().replace('.', ','));
+	    		$('#id_valor_cota').val((parseFloat($('#id_valor').val().replace('.', '').replace(',', '.')) / parseFloat($(this).val().replace('.', '').replace(',', '.'))).toFixed(12).toString().replace('.', ','));
 	    	} else {
-	    		$('#id_quantidade').val((parseFloat($('#id_valor').val().replace('.', '').replace(',', '.')) / parseFloat($('#id_valor_cota').val().replace('.', '').replace(',', '.'))).toString().replace('.', ','));
+	    		$('#id_quantidade').val((parseFloat($('#id_valor').val().replace('.', '').replace(',', '.')) / parseFloat($('#id_valor_cota').val().replace('.', '').replace(',', '.'))).toFixed(12).toString().replace('.', ','));
 	    	}
     	}
     });
     
     $('#id_valor_cota').change(function() {
-    	if (parseFloat($(this).val().replace('.', '').replace(',', '.')) > 0 {
-    		$('#id_quantidade').val((parseFloat($('#id_valor').val().replace('.', '').replace(',', '.')) / parseFloat($(this).val().replace('.', '').replace(',', '.'))).toString().replace('.', ','));
+    	if (parseFloat($(this).val().replace('.', '').replace(',', '.')) > 0) {
+    		$('#id_quantidade').val((parseFloat($('#id_valor').val().replace('.', '').replace(',', '.')) / parseFloat($(this).val().replace('.', '').replace(',', '.'))).toFixed(12).toString().replace('.', ','));
     	}
     });
 });
