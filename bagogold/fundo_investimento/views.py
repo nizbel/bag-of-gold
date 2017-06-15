@@ -160,14 +160,14 @@ def historico(request):
             operacao.tipo = 'Venda'
             
     
-    total_gasto = 0
+    total_investido = 0
     total_patrimonio = 0
     # Guarda quantidade de cotas
     fundos_investimento = {}
     
     # Gráfico de acompanhamento de gastos vs patrimonio
     # Adicionar primeira data com valor 0
-    graf_gasto_total = list()
+    graf_investido_total = list()
     graf_patrimonio = list()
 
     for operacao in operacoes:   
@@ -176,69 +176,68 @@ def historico(request):
         if operacao.fundo_investimento not in fundos_investimento.keys():
             fundos_investimento[operacao.fundo_investimento] = operacao.fundo_investimento
             fundos_investimento[operacao.fundo_investimento].qtd_cotas = 0
-            fundos_investimento[operacao.fundo_investimento].valor_cotas = 0
         # Verificar se se trata de compra ou venda
         if operacao.tipo_operacao == 'C':
-            operacao.valor_cota = operacao.valor / operacao.quantidade
-            total_gasto += operacao.valor
+            total_investido += operacao.valor
             fundos_investimento[operacao.fundo_investimento].qtd_cotas += operacao.quantidade
-            fundos_investimento[operacao.fundo_investimento].valor_cotas = (operacao.valor / operacao.quantidade)
                 
         elif operacao.tipo_operacao == 'V':
-            total_gasto -= operacao.valor
+            total_investido -= operacao.valor
             fundos_investimento[operacao.fundo_investimento].qtd_cotas -= operacao.quantidade
-            fundos_investimento[operacao.fundo_investimento].valor_cotas = (operacao.valor / operacao.quantidade)
         
         for fundo in fundos_investimento:
-            total_patrimonio += (fundo.valor_cotas * fundo.qtd_cotas)
+            if HistoricoValorCotas.objects.filter(fundo_investimento=fundo, data=operacao.data).exists():
+                total_patrimonio += (fundo.qtd_cotas * HistoricoValorCotas.objects.get(fundo_investimento=fundo, data=operacao.data).valor_cota)
+            else:
+                total_patrimonio += ((operacao.valor / operacao.quantidade) * fundo.qtd_cotas)
             
         # Formatar data para inserir nos gráficos
         data_formatada = str(calendar.timegm(operacao.data.timetuple()) * 1000)    
         # Verifica se altera ultima posicao do grafico ou adiciona novo registro
-        if len(graf_gasto_total) > 0 and graf_gasto_total[-1][0] == data_formatada:
-            graf_gasto_total[len(graf_gasto_total)-1][1] = float(total_gasto)
+        if len(graf_investido_total) > 0 and graf_investido_total[-1][0] == data_formatada:
+            graf_investido_total[len(graf_investido_total)-1][1] = float(total_investido)
         else:
-            graf_gasto_total += [[data_formatada, float(total_gasto)]]
+            graf_investido_total += [[data_formatada, float(total_investido)]]
         
         # Verifica se altera ultima posicao do grafico ou adiciona novo registro
         if len(graf_patrimonio) > 0 and graf_patrimonio[-1][0] == data_formatada:
             graf_patrimonio[len(graf_patrimonio)-1][1] = float(total_patrimonio)
         else:
             graf_patrimonio += [[data_formatada, float(total_patrimonio)]]
-        
-    # Adicionar data atual
-    # Formatar data para inserir nos gráficos
-    data_formatada = str(calendar.timegm(datetime.date.today().timetuple()) * 1000)    
-    # Verifica se altera ultima posicao do grafico ou adiciona novo registro
-    if len(graf_gasto_total) > 0 and graf_gasto_total[-1][0] == data_formatada:
-        graf_gasto_total[len(graf_gasto_total)-1][1] = float(total_gasto)
-    else:
-        graf_gasto_total += [[data_formatada, float(total_gasto)]]
-     
-    total_patrimonio = 0  
-    # Calcular patrimônio atual
-    for fundo in fundos_investimento:
-        fundo.data_ultima_operacao = operacoes.filter(fundo_investimento=fundo).order_by('-data')[0].data
-        historico_cotas = HistoricoValorCotas.objects.filter(fundo_investimento=fundo, data__gt=fundo.data_ultima_operacao).order_by('-data')
-        if historico_cotas:
-            total_patrimonio += (fundo.qtd_cotas * historico_cotas[0].valor_cota)
-        else:
-            total_patrimonio += (fundo.valor_cotas * fundo.qtd_cotas)
     
-    # Verifica se altera ultima posicao do grafico ou adiciona novo registro
-    if len(graf_patrimonio) > 0 and graf_patrimonio[-1][0] == data_formatada:
-        graf_patrimonio[len(graf_patrimonio)-1][1] = float(total_patrimonio)
-    else:
-        graf_patrimonio += [[data_formatada, float(total_patrimonio)]]
+    # Adicionar data atual, caso não tenha sido adicionada ainda
+    if not operacoes.filter(data=datetime.date.today()).exists():
+        # Formatar data para inserir nos gráficos
+        data_formatada = str(calendar.timegm(datetime.date.today().timetuple()) * 1000)    
+        # Verifica se altera ultima posicao do grafico ou adiciona novo registro
+        if len(graf_investido_total) > 0 and graf_investido_total[-1][0] == data_formatada:
+            graf_investido_total[len(graf_investido_total)-1][1] = float(total_investido)
+        else:
+            graf_investido_total += [[data_formatada, float(total_investido)]]
+     
+        total_patrimonio = 0  
+        # Calcular patrimônio atual
+        for fundo in fundos_investimento:
+            fundo.data_ultima_operacao = operacoes.filter(fundo_investimento=fundo).order_by('-data')[0].data
+            if HistoricoValorCotas.objects.filter(fundo_investimento=fundo, data__gte=fundo.data_ultima_operacao).exists():
+                total_patrimonio += (fundo.qtd_cotas * HistoricoValorCotas.objects.filter(fundo_investimento=fundo, data__gt=fundo.data_ultima_operacao).order_by('-data')[0].valor_cota)
+            else:
+                total_patrimonio += (operacoes.filter(fundo_investimento=fundo).order_by('-data')[0].valor_cota() * fundo.qtd_cotas)
+        
+        # Verifica se altera ultima posicao do grafico ou adiciona novo registro
+        if len(graf_patrimonio) > 0 and graf_patrimonio[-1][0] == data_formatada:
+            graf_patrimonio[len(graf_patrimonio)-1][1] = float(total_patrimonio)
+        else:
+            graf_patrimonio += [[data_formatada, float(total_patrimonio)]]
     
     dados = {}
-    dados['total_gasto'] = total_gasto
+    dados['total_investido'] = total_investido
     dados['patrimonio'] = total_patrimonio
-    dados['lucro'] = total_patrimonio - total_gasto
-    dados['lucro_percentual'] = (total_patrimonio - total_gasto) / total_gasto * 100
+    dados['lucro'] = total_patrimonio - total_investido
+    dados['lucro_percentual'] = (total_patrimonio - total_investido) / total_investido * 100
     
     return TemplateResponse(request, 'fundo_investimento/historico.html', {'dados': dados, 'operacoes': operacoes, 
-                                                    'graf_gasto_total': graf_gasto_total, 'graf_patrimonio': graf_patrimonio})
+                                                    'graf_investido_total': graf_investido_total, 'graf_patrimonio': graf_patrimonio})
     
 
 @em_construcao('Fundo de investimento')
