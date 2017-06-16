@@ -24,6 +24,9 @@
                     <label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_fundo_investimento.fundo_investimento.label}}: </label>
                     <div class="col-md-8">
                         <select id="id_fundo_investimento" name="fundo_investimento" style="width: 100%;">
+                            {% if form_operacao_fundo_investimento.fundo_investimento.value %}
+                            <option value="{{ form_operacao_fundo_investimento.fundo_investimento.value }}">{{ fundo_selecionado }}</option>
+                            {% endif %}
                             {% comment %}{% for key, value in form_operacao_fundo_investimento.fields.fundo_investimento.widget.choices %}<option value="{{ key }}"
                             {% if key == form_operacao_fundo_investimento.fundo_investimento.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}{% endcomment %}
                         </select>
