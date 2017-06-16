@@ -145,6 +145,13 @@ STATICFILES_DIRS = [
 
 MEDIA_ROOT = PROJECT_ROOT + '/media/'
 
+# Caminho para doc proventos
+
+# Caminho para arquivos de fundos de investimento
+CAMINHO_FUNDO_INVESTIMENTO = MEDIA_ROOT + 'fundo investimento/'
+CAMINHO_FUNDO_INVESTIMENTO_CADASTRO = CAMINHO_FUNDO_INVESTIMENTO + 'cadastro/' 
+CAMINHO_FUNDO_INVESTIMENTO_HISTORICO = CAMINHO_FUNDO_INVESTIMENTO + 'historico/' 
+
 # Configurar precisao de decimais
 from decimal import getcontext
 getcontext().prec = 18

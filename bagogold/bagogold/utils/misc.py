@@ -7,7 +7,9 @@ from decimal import Decimal
 from urllib2 import Request, urlopen, URLError, HTTPError
 import datetime
 import math
+import random
 import re
+import time
 
 
 def calcular_iof_regressivo(dias):
