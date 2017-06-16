@@ -1,0 +1,1 @@
+from fundo_investimento import *

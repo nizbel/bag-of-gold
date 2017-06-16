@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from django import forms
+from decimal import Decimal
+from django.core.validators import MinValueValidator
 from django.db import models
 import datetime
 
@@ -82,13 +83,17 @@ class FundoInvestimento (models.Model):
     def __unicode__(self):
         return self.nome
     
-    def valor_no_dia(self, dia=datetime.date.today()):
-        historico_fundo = HistoricoValorCotas.objects.filter(fundo_investimento=self).order_by('-data')
-        ultima_operacao_fundo = OperacaoFundoInvestimento.objects.filter(fundo_investimento=self).order_by('-data')[0]
-        if historico_fundo and historico_fundo[0].data > ultima_operacao_fundo.data:
-            return historico_fundo[0].valor_cota
-        else:
-            return ultima_operacao_fundo.valor_cota()
+    def valor_no_dia(self, investidor, dia=datetime.date.today()):
+        if HistoricoValorCotas.objects.filter(fundo_investimento=self, data__lte=dia).exists():
+            historico_fundo = HistoricoValorCotas.objects.filter(fundo_investimento=self).order_by('-data')[0]
+            if investidor and OperacaoFundoInvestimento.objects.filter(fundo_investimento=self, investidor=investidor, data__range=[historico_fundo.data + datetime.timedelta(days=1), dia]).exists():
+                return OperacaoFundoInvestimento.objects.filter(fundo_investimento=self, investidor=investidor, 
+                                                                data__range=[historico_fundo.data + datetime.timedelta(days=1), dia]).order_by('-data')[0].valor_cota()
+            else:
+                return historico_fundo.valor_cota
+        if investidor and OperacaoFundoInvestimento.objects.filter(fundo_investimento=self, investidor=investidor, data__lte=dia).exists():
+            return OperacaoFundoInvestimento.objects.filter(fundo_investimento=self, investidor=investidor, data__lte=dia).order_by('-data')[0].valor_cota()
+        raise ValueError('Valor de cota não encontrado para a data informada')
         
     def descricao_classe(self):
         for codigo, descricao in FundoInvestimento.TIPOS_CLASSE:
@@ -122,18 +127,18 @@ class FundoInvestimento (models.Model):
         raise ValueError(u'Situação não encontrada: %s' % (descricao_situacao))
     
 class OperacaoFundoInvestimento (models.Model):
-    quantidade = models.DecimalField(u'Quantidade de cotas', max_digits=11, decimal_places=2)
-    valor = models.DecimalField(u'Valor da operação', max_digits=11, decimal_places=2)
+    quantidade = models.DecimalField(u'Quantidade de cotas', max_digits=21, decimal_places=12)
+    valor = models.DecimalField(u'Valor total da operação', max_digits=11, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
     data = models.DateField(u'Data da operação')
     tipo_operacao = models.CharField(u'Tipo de operação', max_length=1)
     fundo_investimento = models.ForeignKey('FundoInvestimento')
     investidor = models.ForeignKey('bagogold.Investidor', related_name='fundo_investimento')
     
     def __unicode__(self):
-        return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.fundo_investimento, self.data)
+        return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.valor, self.fundo_investimento, self.data.strftime('%d/%m/%Y'))
     
     def valor_cota(self):
-        return self.valor/self.quantidade if self.quantidade > 0 else 0
+        return (self.valor/self.quantidade).quantize(Decimal('0.000000000001')) if self.quantidade > 0 else 0
 
 class HistoricoValorCotas (models.Model):
     fundo_investimento = models.ForeignKey('FundoInvestimento')
