@@ -303,8 +303,13 @@ def inserir_operacao_fundo_investimento(request):
     else:
         form_operacao_fundo_investimento = OperacaoFundoInvestimentoForm(investidor=investidor)
         formset_divisao = DivisaoFundoInvestimentoFormSet(investidor=investidor)
+    
+    if request.POST.get('fundo_investimento', -1) != -1:
+        fundo_selecionado = FundoInvestimento.objects.get(id=request.POST['fundo_investimento'])
+    else:
+        fundo_selecionado = ''
     return TemplateResponse(request, 'fundo_investimento/inserir_operacao_fundo_investimento.html', {'form_operacao_fundo_investimento': form_operacao_fundo_investimento, \
-                                                                                              'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})
+                                                                                              'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes, 'fundo_selecionado': fundo_selecionado})
 
 @em_construcao('Fundo de investimento')
 @login_required
