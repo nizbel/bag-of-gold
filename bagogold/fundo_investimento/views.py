@@ -82,10 +82,11 @@ def detalhar_fundo(request, id_fundo):
 
 @em_construcao('Fundo de investimento')
 @login_required
-def editar_operacao_fundo_investimento(request, id):
+@adiciona_titulo_descricao('Editar operação em Fundo de Investimento', 'Alterar valores de uma operação de compra/venda em Fundo de Investimento')
+def editar_operacao_fundo_investimento(request, id_operacao):
     investidor = request.user.investidor
     
-    operacao_fundo_investimento = OperacaoFundoInvestimento.objects.get(pk=id)
+    operacao_fundo_investimento = OperacaoFundoInvestimento.objects.get(pk=id_operacao)
     # Verifica se a operação é do investidor, senão, jogar erro de permissão
     if operacao_fundo_investimento.investidor != investidor:
         raise PermissionDenied
@@ -139,9 +140,14 @@ def editar_operacao_fundo_investimento(request, id):
     else:
         form_operacao_fundo_investimento = OperacaoFundoInvestimentoForm(instance=operacao_fundo_investimento, investidor=investidor)
         formset_divisao = DivisaoFormSet(instance=operacao_fundo_investimento, investidor=investidor)
-            
+    
+    # Preparar nome de fundo selecionado
+    if request.POST.get('fundo_investimento', -1) != -1:
+        fundo_selecionado = FundoInvestimento.objects.get(id=request.POST['fundo_investimento'])
+    else:
+        fundo_selecionado = operacao_fundo_investimento.fundo_investimento.nome
     return TemplateResponse(request, 'fundo_investimento/editar_operacao_fundo_investimento.html', {'form_operacao_fundo_investimento': form_operacao_fundo_investimento, 'formset_divisao': formset_divisao, \
-                                                                                             'varias_divisoes': varias_divisoes})  
+                                                                                             'varias_divisoes': varias_divisoes, 'fundo_selecionado': fundo_selecionado})  
 
 @em_construcao('Fundo de investimento')
 @login_required

@@ -18,7 +18,6 @@
     <!-- BEGIN FORM-->
     <form id="form_inserir_fundo_investimento" method="POST" class="horizontal-form">{% csrf_token %}
         <div class="form-body">
-            
             <div class="row">
                 <div class="form-group col-md-6 {% if form_operacao_fundo_investimento.fundo_investimento.errors %} has-error {% endif %}">
                     <label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_fundo_investimento.fundo_investimento.label}}: </label>
