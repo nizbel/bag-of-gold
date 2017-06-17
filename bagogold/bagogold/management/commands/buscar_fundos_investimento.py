@@ -176,7 +176,10 @@ class Command(BaseCommand):
                         os.remove(nome_arquivo)                                
                     except:
                         # Apagar arquivo caso haja erro, enviar mensagem para email
-                        os.remove(nome_arquivo)
+                        try:
+                            os.remove(nome_arquivo)
+                        except OSError:
+                            pass
                         if settings.ENV == 'DEV':
                             print traceback.format_exc()
                         elif settings.ENV == 'PROD':
