@@ -154,6 +154,9 @@ class DocumentoCadastro (models.Model):
     data_pedido_cvm = models.DateField(u'Data de pedido à CVM')
     leitura_realizada = models.BooleanField(u'Leitura realizada', default=False)
     
+    def __unicode__(self):
+        return 'Documento de cadastro de %s' % (self.data_referencia.strftime('%d/%m/%Y'))
+        
     class Meta:
         unique_together=('data_referencia',)
 
