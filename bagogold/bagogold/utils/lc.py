@@ -10,7 +10,7 @@ import datetime
 
 def calcular_valor_atualizado_com_taxa_di(taxa_do_dia, valor_atual, operacao_taxa):
     """
-    Calcula o valor atualizado de uma operação em LC, a partir da taxa DI do dia
+    Calcula o valor atualizado de uma operação vinculada ao DI, a partir da taxa DI do dia
     Parâmetros: Taxa DI do dia
                 Valor atual da operação
                 Taxa da operação
@@ -18,9 +18,18 @@ def calcular_valor_atualizado_com_taxa_di(taxa_do_dia, valor_atual, operacao_tax
     """
     return ((pow((Decimal(1) + taxa_do_dia/100), Decimal(1)/Decimal(252)) - Decimal(1)) * operacao_taxa/100 + Decimal(1)) * valor_atual
 
+def calcular_valor_atualizado_com_taxa_prefixado(valor_atual, operacao_taxa):
+    """
+    Calcula o valor atualizado de uma operação em LC, a partir da taxa DI do dia
+    Parâmetros: Valor atual da operação
+                Taxa da operação
+    Retorno: Valor atualizado com a taxa de um dia prefixado
+    """
+    return pow((Decimal(1) + operacao_taxa/100), Decimal(1)/Decimal(252)) * valor_atual
+
 def calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor_atual, operacao_taxa):
     """
-    Calcula o valor atualizado de uma operação em LC, a partir das taxa DI dos dias
+    Calcula o valor atualizado de uma operação vinculada ao DI, a partir das taxa DI dos dias
     Parâmetros: Taxas DI dos dias {taxa(Decimal): quantidade_de_dias}
                 Valor atual da operação
                 Taxa da operação

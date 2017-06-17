@@ -13,7 +13,8 @@ from bagogold.bagogold.models.lc import HistoricoTaxaDI
 from bagogold.bagogold.models.td import HistoricoIPCA
 from bagogold.bagogold.utils.cdb_rdb import calcular_valor_cdb_rdb_ate_dia
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa_di, \
-    calcular_valor_atualizado_com_taxas_di
+    calcular_valor_atualizado_com_taxas_di,\
+    calcular_valor_atualizado_com_taxa_prefixado
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo, \
     qtd_dias_uteis_no_periodo
 from decimal import Decimal
@@ -378,17 +379,21 @@ def historico(request):
             if (operacao.data <= data_iteracao):     
                 # Verificar se se trata de compra ou venda
                 if operacao.tipo_operacao == 'C':
-                        if (operacao.data == data_iteracao):
-                            operacao.total = operacao.quantidade
-                            total_gasto += operacao.total
-                        if taxa_do_dia > 0:
-                            # Calcular o valor atualizado para cada operacao
-                            operacao.atual = calcular_valor_atualizado_com_taxa_di(taxa_do_dia, operacao.atual, operacao.taxa)
-                        # Arredondar na última iteração
-                        if (data_iteracao == data_final):
-                            str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
-                            operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-                        total_patrimonio += operacao.atual
+                    if (operacao.data == data_iteracao):
+                        operacao.total = operacao.quantidade
+                        total_gasto += operacao.total
+                    # Calcular o valor atualizado para cada operacao
+                    if operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_DI and taxa_do_dia > 0:
+                        # DI
+                        operacao.atual = calcular_valor_atualizado_com_taxa_di(taxa_do_dia, operacao.atual, operacao.taxa)
+                    elif operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
+                        # Prefixado
+                        operacao.atual = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa)
+                    # Arredondar na última iteração
+                    if (data_iteracao == data_final):
+                        str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
+                        operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+                    total_patrimonio += operacao.atual
                         
                 elif operacao.tipo_operacao == 'V':
                     if (operacao.data == data_iteracao):

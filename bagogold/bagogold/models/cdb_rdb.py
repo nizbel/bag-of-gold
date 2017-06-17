@@ -7,6 +7,10 @@ class CDB_RDB (models.Model):
     CDB = 'C'
     RDB = 'R'
     
+    CDB_RDB_PREFIXADO = 1
+    CDB_RDB_DI = 2
+    CDB_RDB_IPCA = 3
+    
     nome = models.CharField(u'Nome', max_length=50)
     investidor = models.ForeignKey('Investidor')
     """
@@ -14,7 +18,7 @@ class CDB_RDB (models.Model):
     """
     tipo = models.CharField(u'Tipo', max_length=1)
     """
-    Tipo de rendimento, 1 = Prefixado, 2 = Pós-fixado
+    Tipo de rendimento, 1 = Prefixado, 2 = Pós-fixado, 3 = IPCA
     """    
     tipo_rendimento = models.PositiveSmallIntegerField(u'Tipo de rendimento')
     
