@@ -10,9 +10,9 @@ from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI, \
     HistoricoPorcentagemLetraCredito, LetraCredito, HistoricoCarenciaLetraCredito, \
     OperacaoVendaLetraCredito
 from bagogold.bagogold.models.td import HistoricoIPCA
-from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa, \
+from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa_di, \
     calcular_valor_lc_ate_dia, simulador_lci_lca, \
-    calcular_valor_atualizado_com_taxas
+    calcular_valor_atualizado_com_taxas_di
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo
 from decimal import Decimal
 from django.contrib import messages
@@ -67,7 +67,7 @@ def detalhar_lci_lca(request, lci_lca_id):
             taxas_dos_dias = {}
             for taxa in taxas:
                 taxas_dos_dias[taxa['taxa']] = taxa['qtd_dias']
-            operacao.atual = calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao.qtd_disponivel_venda(), operacao.porcentagem_di())
+            operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.qtd_disponivel_venda(), operacao.porcentagem_di())
             lci_lca.saldo_atual += operacao.atual
             
             # Calcular impostos
@@ -370,7 +370,7 @@ def historico(request):
                             total_gasto += operacao.total
                         if taxa_do_dia > 0:
                             # Calcular o valor atualizado para cada operacao
-                            operacao.atual = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa)
+                            operacao.atual = calcular_valor_atualizado_com_taxa_di(taxa_do_dia, operacao.atual, operacao.taxa)
                         # Arredondar na última iteração
                         if (data_iteracao == data_final):
                             str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
@@ -673,7 +673,7 @@ def painel(request):
                         if (operacao.data == data_iteracao):
                             operacao.total = operacao.quantidade
                         # Calcular o valor atualizado para cada operacao
-                        operacao.atual = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa)
+                        operacao.atual = calcular_valor_atualizado_com_taxa_di(taxa_do_dia, operacao.atual, operacao.taxa)
                         # Arredondar na última iteração
                         if (data_iteracao == data_final):
                             str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
@@ -708,7 +708,7 @@ def painel(request):
     total_ganho_prox_dia = 0
     for operacao in operacoes:
         # Calcular o ganho no dia seguinte, considerando taxa do dia anterior
-        operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa) - operacao.atual
+        operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa_di(taxa_do_dia, operacao.atual, operacao.taxa) - operacao.atual
         str_auxiliar = str(operacao.ganho_prox_dia.quantize(Decimal('.0001')))
         operacao.ganho_prox_dia = Decimal(str_auxiliar[:len(str_auxiliar)-2])
         total_ganho_prox_dia += operacao.ganho_prox_dia

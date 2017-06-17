@@ -7,7 +7,7 @@ from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoCRI_CRA
 from bagogold.bagogold.models.lc import HistoricoTaxaDI
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
 from bagogold.bagogold.models.td import HistoricoIPCA
-from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas
+from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di
 from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo, \
     formatar_zeros_a_direita_apos_2_casas_decimais
 from bagogold.cri_cra.forms.cri_cra import CRI_CRAForm, \
@@ -80,7 +80,7 @@ def detalhar_cri_cra(request, id_cri_cra):
         # TODO adicionar outros indexadores
         if cri_cra.tipo_indexacao == CRI_CRA.TIPO_INDEXACAO_DI:
             ultima_taxa_di = HistoricoTaxaDI.objects.all().order_by('-data')[0]
-            cri_cra.valor_proxima_remuneracao = calcular_valor_atualizado_com_taxas({Decimal(ultima_taxa_di.taxa): qtd_dias_uteis}, cri_cra.total_atual, 
+            cri_cra.valor_proxima_remuneracao = calcular_valor_atualizado_com_taxas_di({Decimal(ultima_taxa_di.taxa): qtd_dias_uteis}, cri_cra.total_atual, 
                                                                                  cri_cra.porcentagem) - cri_cra.quantidade_atual * cri_cra.valor_emissao
     else:
         cri_cra.proxima_data_remuneracao = None
@@ -526,7 +526,7 @@ def painel(request):
             qtd_dias_uteis = qtd_dias_uteis_no_periodo(datetime.date.today(), cri_cra[cri_cra_id].data_prox_remuneracao)
             # TODO adicionar outros indexadores
             if cri_cra[cri_cra_id].tipo_indexacao == CRI_CRA.TIPO_INDEXACAO_DI:
-                cri_cra[cri_cra_id].valor_prox_remuneracao = calcular_valor_atualizado_com_taxas({Decimal(ultima_taxa_di.taxa): qtd_dias_uteis},
+                cri_cra[cri_cra_id].valor_prox_remuneracao = calcular_valor_atualizado_com_taxas_di({Decimal(ultima_taxa_di.taxa): qtd_dias_uteis},
                                                                                                            cri_cra[cri_cra_id].total_atual, 
                                                                                                            cri_cra[cri_cra_id].porcentagem) - cri_cra[cri_cra_id].quantidade * cri_cra[cri_cra_id].valor_emissao
         else:
@@ -547,7 +547,7 @@ def painel(request):
             taxa_diaria_ipca_mais_juros = pow(1 + taxa_mensal_ipca_mais_juros, Decimal(1)/30) - 1
             cri_cra[cri_cra_id].valor_rendimento_ate_vencimento = cri_cra[cri_cra_id].total_investido * pow(1 + taxa_diaria_ipca_mais_juros, qtd_dias_uteis_ate_vencimento)
         elif cri_cra[cri_cra_id].tipo_indexacao == CRI_CRA.TIPO_INDEXACAO_DI:
-            cri_cra[cri_cra_id].valor_rendimento_ate_vencimento = calcular_valor_atualizado_com_taxas({Decimal(ultima_taxa_di.taxa): qtd_dias_uteis_ate_vencimento},
+            cri_cra[cri_cra_id].valor_rendimento_ate_vencimento = calcular_valor_atualizado_com_taxas_di({Decimal(ultima_taxa_di.taxa): qtd_dias_uteis_ate_vencimento},
                                                                                                            cri_cra[cri_cra_id].total_atual, 
                                                                                                            cri_cra[cri_cra_id].porcentagem)
         elif cri_cra[cri_cra_id].tipo_indexacao == CRI_CRA.TIPO_INDEXACAO_SELIC:

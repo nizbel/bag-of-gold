@@ -4,7 +4,7 @@ from bagogold.cri_cra.models.cri_cra import CRI_CRA, DataRemuneracaoCRI_CRA
 from django.db.models.aggregates import Count
 from decimal import Decimal
 import datetime
-from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas
+from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di
 
 def calcular_valor_um_cri_cra_na_data(certificado, data=datetime.date.today()):
     """
@@ -51,7 +51,7 @@ def calcular_valor_cri_cra_di(valor_inicial, percentual_di, data_inicial, data_f
     for taxa in taxas:
         taxa_qtd_dias[Decimal(taxa['taxa'])] = taxa['qtd_dias']
     if (juros_adicional == 0):
-        valor_atualizado = calcular_valor_atualizado_com_taxas(taxa_qtd_dias, valor_inicial, percentual_di)
+        valor_atualizado = calcular_valor_atualizado_com_taxas_di(taxa_qtd_dias, valor_inicial, percentual_di)
     else:
         # TODO adicionar juro adicional
         pass

@@ -2,7 +2,7 @@
 from bagogold.bagogold.models.investidores import Investidor
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, LetraCredito, \
     HistoricoTaxaDI
-from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa, \
+from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa_di, \
     calcular_valor_lc_ate_dia
 from bagogold.cri_cra.models.cri_cra import CRI_CRA
 from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data

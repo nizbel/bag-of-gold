@@ -12,8 +12,8 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoCDB_RDB, Divisao
 from bagogold.bagogold.models.lc import HistoricoTaxaDI
 from bagogold.bagogold.models.td import HistoricoIPCA
 from bagogold.bagogold.utils.cdb_rdb import calcular_valor_cdb_rdb_ate_dia
-from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa, \
-    calcular_valor_atualizado_com_taxas
+from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa_di, \
+    calcular_valor_atualizado_com_taxas_di
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo, \
     qtd_dias_uteis_no_periodo
 from decimal import Decimal
@@ -71,7 +71,7 @@ def detalhar_cdb_rdb(request, cdb_rdb_id):
             taxas_dos_dias = {}
             for taxa in taxas:
                 taxas_dos_dias[taxa['taxa']] = taxa['qtd_dias']
-            operacao.atual = calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao.qtd_disponivel_venda(), operacao.porcentagem())
+            operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.qtd_disponivel_venda(), operacao.porcentagem())
             cdb_rdb.saldo_atual += operacao.atual
             
             # Calcular impostos
@@ -383,7 +383,7 @@ def historico(request):
                             total_gasto += operacao.total
                         if taxa_do_dia > 0:
                             # Calcular o valor atualizado para cada operacao
-                            operacao.atual = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa)
+                            operacao.atual = calcular_valor_atualizado_com_taxa_di(taxa_do_dia, operacao.atual, operacao.taxa)
                         # Arredondar na última iteração
                         if (data_iteracao == data_final):
                             str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
@@ -685,7 +685,7 @@ def painel(request):
                 if operacao.tipo_operacao == 'C':
                     if (data_iteracao < operacao.data_vencimento()):
                         # Calcular o valor atualizado para cada operacao
-                        operacao.atual = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa)
+                        operacao.atual = calcular_valor_atualizado_com_taxa_di(taxa_do_dia, operacao.atual, operacao.taxa)
                     # Arredondar na última iteração
                     if (data_iteracao == data_final) or (data_iteracao == operacao.data_vencimento()):
                         str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
@@ -725,7 +725,7 @@ def painel(request):
     for operacao in operacoes:
         # Calcular o ganho no dia seguinte, considerando taxa do dia anterior
         if data_final < operacao.data_vencimento():
-            operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa(taxa_do_dia, operacao.atual, operacao.taxa) - operacao.atual
+            operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa_di(taxa_do_dia, operacao.atual, operacao.taxa) - operacao.atual
             str_auxiliar = str(operacao.ganho_prox_dia.quantize(Decimal('.0001')))
             operacao.ganho_prox_dia = Decimal(str_auxiliar[:len(str_auxiliar)-2])
             total_ganho_prox_dia += operacao.ganho_prox_dia
@@ -753,7 +753,7 @@ def painel(request):
         # Estimativa para o valor do investimento na data de vencimento
         if data_final < operacao.data_vencimento():
             qtd_dias_uteis_ate_vencimento = qtd_dias_uteis_no_periodo(data_final + datetime.timedelta(days=1), operacao.data_vencimento())
-            operacao.valor_vencimento = calcular_valor_atualizado_com_taxas({HistoricoTaxaDI.objects.get(data=data_final).taxa: qtd_dias_uteis_ate_vencimento},
+            operacao.valor_vencimento = calcular_valor_atualizado_com_taxas_di({HistoricoTaxaDI.objects.get(data=data_final).taxa: qtd_dias_uteis_ate_vencimento},
                                                  operacao.atual, operacao.taxa)
             str_auxiliar = str(operacao.valor_vencimento.quantize(Decimal('.0001')))
             operacao.valor_vencimento = Decimal(str_auxiliar[:len(str_auxiliar)-2])

@@ -11,7 +11,7 @@ from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
 from bagogold.bagogold.utils.fii import \
     calcular_rendimento_proventos_fii_12_meses, \
     calcular_variacao_percentual_fii_por_periodo
-from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas
+from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di
 from bagogold.bagogold.utils.td import calcular_imposto_venda_td, \
     buscar_data_valor_mais_recente, quantidade_titulos_ate_dia, \
     quantidade_titulos_ate_dia_por_titulo, calcular_valor_td_ate_dia
@@ -158,7 +158,7 @@ def acompanhamento_td(request):
     for lc in letras_credito:
         # Calcular rendimento atual
         lc.taxa_atual = lc.porcentagem_di_atual()
-        lc.rendimento_atual = calcular_valor_atualizado_com_taxas({HistoricoTaxaDI.objects.filter(data__isnull=False).order_by('-data')[0].taxa: 252}, Decimal(100),
+        lc.rendimento_atual = calcular_valor_atualizado_com_taxas_di({HistoricoTaxaDI.objects.filter(data__isnull=False).order_by('-data')[0].taxa: 252}, Decimal(100),
                                                                   lc.taxa_atual).quantize(Decimal('.01'), ROUND_DOWN) - 100
         # Calcular rendimento real dos últimos 12 meses
         lc.rendimento_12_meses = 1000
@@ -168,7 +168,7 @@ def acompanhamento_td(request):
             taxas_dos_dias[taxa_quantidade['taxa']] = taxa_quantidade['qtd_dias']
 
         # Calcular
-        lc.rendimento_12_meses = calcular_valor_atualizado_com_taxas(taxas_dos_dias, lc.rendimento_12_meses, lc.taxa_atual).quantize(Decimal('.01'), ROUND_DOWN)
+        lc.rendimento_12_meses = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, lc.rendimento_12_meses, lc.taxa_atual).quantize(Decimal('.01'), ROUND_DOWN)
         lc.rendimento_12_meses = (lc.rendimento_12_meses - 1000) / 10
     letras_credito.sort(key=lambda x: x.rendimento_atual, reverse=True)
         

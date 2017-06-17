@@ -10,7 +10,7 @@ from bagogold.bagogold.models.lc import HistoricoTaxaDI
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
 from bagogold.bagogold.models.td import HistoricoIPCA
 from bagogold.bagogold.utils.debenture import calcular_valor_debentures_ate_dia
-from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas
+from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di
 from bagogold.bagogold.utils.misc import \
     formatar_zeros_a_direita_apos_2_casas_decimais, qtd_dias_uteis_no_periodo
 from bagogold.bagogold.utils.td import calcular_valor_acumulado_ipca
@@ -389,7 +389,7 @@ def painel(request):
             taxa_diaria_ipca_mais_juros = pow(1 + taxa_mensal_ipca_mais_juros, Decimal(1)/30) - 1
             debentures[debenture_id].valor_rendimento_ate_vencimento = debentures[debenture_id].total * pow(1 + taxa_diaria_ipca_mais_juros, qtd_dias_uteis_ate_vencimento)
         elif debentures[debenture_id].indice == Debenture.DI:
-            debentures[debenture_id].valor_rendimento_ate_vencimento = calcular_valor_atualizado_com_taxas({Decimal(ultima_taxa_di.taxa): qtd_dias_uteis_ate_vencimento},
+            debentures[debenture_id].valor_rendimento_ate_vencimento = calcular_valor_atualizado_com_taxas_di({Decimal(ultima_taxa_di.taxa): qtd_dias_uteis_ate_vencimento},
                                                                                                            debentures[debenture_id].total, 
                                                                                                            debentures[debenture_id].porcentagem + debentures[debenture_id].taxa_juros_atual())
         elif debentures[debenture_id].indice == Debenture.SELIC:

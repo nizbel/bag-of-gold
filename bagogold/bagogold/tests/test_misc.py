@@ -9,7 +9,7 @@ from bagogold.bagogold.models.fii import ProventoFII, FII, OperacaoFII, \
 from bagogold.bagogold.models.lc import LetraCredito, \
     HistoricoPorcentagemLetraCredito, OperacaoLetraCredito, HistoricoTaxaDI
 from bagogold.bagogold.models.td import Titulo, OperacaoTitulo
-from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas
+from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo, \
     verificar_feriado_bovespa, qtd_dias_uteis_no_periodo, \
     calcular_domingo_pascoa_no_ano, buscar_valores_diarios_selic, \
@@ -188,7 +188,7 @@ class RendimentosTestCase(TestCase):
             taxas_dos_dias[taxa_quantidade['taxa']] = taxa_quantidade['qtd_dias']
         
         # Calcular
-        valor_esperado = calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao_cdb_rdb.quantidade, operacao_cdb_rdb.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN) \
+        valor_esperado = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao_cdb_rdb.quantidade, operacao_cdb_rdb.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN) \
             - operacao_cdb_rdb.quantidade
         self.assertEqual(valor_esperado, rendimentos['C'])
         
