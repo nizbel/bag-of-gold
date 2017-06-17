@@ -33,7 +33,7 @@ class TesouroDiretoTestCase(TestCase):
                                                preco_compra=Decimal(720 + dias*2.5), preco_venda=Decimal(710 + dias*2.5))
         
     def test_qtd_titulos_ate_dia_por_titulo(self):
-        "Testa quantidade de títulos até dia"
+        """Testa quantidade de títulos até dia"""
         investidor = User.objects.get(username='tester').investidor
         
         for titulo in Titulo.objects.all():
@@ -44,7 +44,7 @@ class TesouroDiretoTestCase(TestCase):
             self.assertEqual(quantidade_titulos_ate_dia_por_titulo(investidor, titulo.id, datetime.date(2016, 3, 5)), compras - vendas)
             
     def test_valor_titulos_ate_dia_por_titulo(self):
-        "Testa valor de títulos até dia"
+        """Testa valor de títulos até dia"""
         investidor = User.objects.get(username='tester').investidor
         qtd_titulos = quantidade_titulos_ate_dia(investidor, datetime.date(2016, 9, 14))
         qtd_titulos.update((titulo_id, Decimal(qtd*715)) for titulo_id, qtd in qtd_titulos.items())
