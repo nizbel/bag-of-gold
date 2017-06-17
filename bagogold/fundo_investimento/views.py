@@ -13,7 +13,8 @@ from bagogold.fundo_investimento.forms import OperacaoFundoInvestimentoForm
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
     HistoricoValorCotas, FundoInvestimento
 from bagogold.fundo_investimento.utils import \
-    calcular_qtd_cotas_ate_dia_por_fundo
+    calcular_qtd_cotas_ate_dia_por_fundo, calcular_qtd_cotas_ate_dia,\
+    calcular_valor_fundos_investimento_ate_dia
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -495,7 +496,12 @@ def painel(request):
 
 @adiciona_titulo_descricao('Sobre Fundos de Investimento', 'Detalha o que são Fundos de Investimento')
 def sobre(request):
-    return TemplateResponse(request, 'fundo_investimento/sobre.html', {})
+    # Calcular total atual do investidor
+    if request.user.is_authenticated():
+        total_atual = sum(calcular_valor_fundos_investimento_ate_dia(request.user.investidor).values())
+    else:
+        total_atual = 0
+    return TemplateResponse(request, 'fundo_investimento/sobre.html', {'total_atual': total_atual})
 
 def verificar_historico_fundo_na_data(request):
     try:
