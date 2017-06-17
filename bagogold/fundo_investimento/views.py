@@ -34,8 +34,6 @@ import json
 import re
 import traceback
 
-@em_construcao('Fundo de investimento')
-@login_required
 @adiciona_titulo_descricao('Detalhar fundo de investimento', 'Traz características do fundo, posição do investidor e histórico de cotações')
 def detalhar_fundo(request, id_fundo):
     fundo = get_object_or_404(FundoInvestimento, id=id_fundo)
@@ -81,7 +79,6 @@ def detalhar_fundo(request, id_fundo):
     return TemplateResponse(request, 'fundo_investimento/detalhar_fundo_investimento.html', {'fundo': fundo, 'dados': dados, 'historico': historico, 'historico_data_inicial': historico_data_inicial,
                                                                  'historico_data_final': historico_data_final})
 
-@em_construcao('Fundo de investimento')
 @login_required
 @adiciona_titulo_descricao('Editar operação em Fundo de Investimento', 'Alterar valores de uma operação de compra/venda em Fundo de Investimento')
 def editar_operacao_fundo_investimento(request, id_operacao):
@@ -150,8 +147,7 @@ def editar_operacao_fundo_investimento(request, id_operacao):
     return TemplateResponse(request, 'fundo_investimento/editar_operacao_fundo_investimento.html', {'form_operacao_fundo_investimento': form_operacao_fundo_investimento, 'formset_divisao': formset_divisao, \
                                                                                              'varias_divisoes': varias_divisoes, 'fundo_selecionado': fundo_selecionado})  
 
-@em_construcao('Fundo de investimento')
-@login_required
+@adiciona_titulo_descricao('Histórico de Fundos de Investimento', 'Histórico de operações de compra/venda em Fundos de Investimento')
 def historico(request):
     investidor = request.user.investidor
     # Processa primeiro operações de venda (V), depois compra (C)
@@ -247,7 +243,6 @@ def historico(request):
                                                     'graf_investido_total': graf_investido_total, 'graf_patrimonio': graf_patrimonio})
     
 
-@em_construcao('Fundo de investimento')
 @login_required
 @adiciona_titulo_descricao('Inserir operação em fundo de investimento', 'Inserir registro de operação de compra/venda em fundo de investimento')
 def inserir_operacao_fundo_investimento(request):
@@ -318,8 +313,6 @@ def inserir_operacao_fundo_investimento(request):
     return TemplateResponse(request, 'fundo_investimento/inserir_operacao_fundo_investimento.html', {'form_operacao_fundo_investimento': form_operacao_fundo_investimento, \
                                                                                               'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes, 'fundo_selecionado': fundo_selecionado})
 
-@em_construcao('Fundo de investimento')
-@login_required
 @adiciona_titulo_descricao('Listar fundos de investimento cadastrados', 'Lista os fundos cadastrados no sistema e suas principais características')
 def listar_fundos(request):
     filtro = {}
@@ -417,7 +410,6 @@ def listar_historico_fundo_investimento(request, id_fundo):
         registro.valor_cota = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(registro.valor_cota))
     return HttpResponse(json.dumps({'sucesso': True, 'dados': render_to_string('fundo_investimento/utils/listar_historico_fundo_investimento.html', {'historico': historico})}), content_type = "application/json")   
 
-@em_construcao('Fundo de investimento')
 @login_required
 @adiciona_titulo_descricao('Painel de Fundos de Investimento', 'Posição atual do investidor em Fundos de Investimento')
 def painel(request):
