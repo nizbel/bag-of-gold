@@ -8,7 +8,7 @@ from django.db.models import Q
 from django.db.models.aggregates import Sum, Count
 import datetime
 
-def calcular_valor_atualizado_com_taxa(taxa_do_dia, valor_atual, operacao_taxa):
+def calcular_valor_atualizado_com_taxa_di(taxa_do_dia, valor_atual, operacao_taxa):
     """
     Calcula o valor atualizado de uma operação em LC, a partir da taxa DI do dia
     Parâmetros: Taxa DI do dia
@@ -18,7 +18,7 @@ def calcular_valor_atualizado_com_taxa(taxa_do_dia, valor_atual, operacao_taxa):
     """
     return ((pow((Decimal(1) + taxa_do_dia/100), Decimal(1)/Decimal(252)) - Decimal(1)) * operacao_taxa/100 + Decimal(1)) * valor_atual
 
-def calcular_valor_atualizado_com_taxas(taxas_dos_dias, valor_atual, operacao_taxa):
+def calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor_atual, operacao_taxa):
     """
     Calcula o valor atualizado de uma operação em LC, a partir das taxa DI dos dias
     Parâmetros: Taxas DI dos dias {taxa(Decimal): quantidade_de_dias}
@@ -39,7 +39,7 @@ def calcular_valor_venda_lc(operacao_venda):
         taxas_dos_dias[taxa_quantidade['taxa']] = taxa_quantidade['qtd_dias']
     
     # Calcular
-    return calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao_venda.quantidade, operacao_venda.porcentagem_di()).quantize(Decimal('.01'), ROUND_DOWN)
+    return calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao_venda.quantidade, operacao_venda.porcentagem_di()).quantize(Decimal('.01'), ROUND_DOWN)
 
 def calcular_valor_lc_ate_dia(investidor, dia=datetime.date.today()):
     """ 
@@ -78,7 +78,7 @@ def calcular_valor_lc_ate_dia(investidor, dia=datetime.date.today()):
             taxas_dos_dias[taxa_quantidade['taxa']] = taxa_quantidade['qtd_dias']
         
         # Calcular
-        letras_credito[operacao.letra_credito.id] += calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao.quantidade, operacao.porcentagem_di()).quantize(Decimal('.01'), ROUND_DOWN)
+        letras_credito[operacao.letra_credito.id] += calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, operacao.porcentagem_di()).quantize(Decimal('.01'), ROUND_DOWN)
     
     return letras_credito
 
@@ -128,7 +128,7 @@ def calcular_valor_lc_ate_dia_por_divisao(dia, divisao_id):
     
     for operacao in operacoes:
         taxas_dos_dias = dict(historico.filter(data__range=[operacao.data, dia]).values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
-        operacao.atual = calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao.atual, operacao.taxa)
+        operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.atual, operacao.taxa)
         # Arredondar valores
         str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
         operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
@@ -155,6 +155,6 @@ def simulador_lci_lca(filtros):
         for _ in range(filtros['periodo']):
             qtd_dias_uteis = qtd_dias_uteis_no_periodo(data_atual, data_atual + datetime.timedelta(days=30))
             data_atual = data_atual + datetime.timedelta(days=30)
-            qtd_atual = calcular_valor_atualizado_com_taxas({Decimal('14.13'): qtd_dias_uteis}, qtd_atual, filtros['percentual_indice'])
+            qtd_atual = calcular_valor_atualizado_com_taxas_di({Decimal('14.13'): qtd_dias_uteis}, qtd_atual, filtros['percentual_indice'])
             resultado.append((data_atual, qtd_atual))
     return resultado

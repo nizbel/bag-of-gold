@@ -4,8 +4,8 @@ from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB, \
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
     DivisaoOperacaoCDB_RDB
 from bagogold.bagogold.models.lc import HistoricoTaxaDI
-from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa, \
-    calcular_valor_atualizado_com_taxas
+from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa_di, \
+    calcular_valor_atualizado_com_taxas_di
 from decimal import Decimal, ROUND_DOWN
 from django.db.models import Q
 from django.db.models.aggregates import Sum, Count
@@ -19,7 +19,7 @@ def calcular_valor_venda_cdb_rdb(operacao_venda):
         taxas_dos_dias[taxa_quantidade['taxa']] = taxa_quantidade['qtd_dias']
     
     # Calcular
-    return calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao_venda.quantidade, operacao_venda.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
+    return calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao_venda.quantidade, operacao_venda.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
 
 def calcular_valor_cdb_rdb_ate_dia(investidor, dia=datetime.date.today()):
     """ 
@@ -59,7 +59,7 @@ def calcular_valor_cdb_rdb_ate_dia(investidor, dia=datetime.date.today()):
             taxas_dos_dias[taxa_quantidade['taxa']] = taxa_quantidade['qtd_dias']
         
         # Calcular
-        cdb_rdb[operacao.investimento.id] += calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao.quantidade, operacao.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
+        cdb_rdb[operacao.investimento.id] += calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, operacao.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
     
     return cdb_rdb
 
@@ -106,7 +106,7 @@ def calcular_valor_cdb_rdb_ate_dia_por_divisao(dia, divisao_id):
     
     for operacao in operacoes:
         taxas_dos_dias = dict(historico.filter(data__range=[operacao.data, dia]).values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
-        operacao.atual = calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao.atual, operacao.porcentagem())
+        operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.atual, operacao.porcentagem())
         # Arredondar valores
         str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
         operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])

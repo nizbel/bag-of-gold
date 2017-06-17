@@ -17,7 +17,7 @@ from bagogold.bagogold.utils.debenture import calcular_valor_debentures_ate_dia
 from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
     buscar_totais_atuais_investimentos, buscar_proventos_a_receber, \
     buscar_proventos_a_receber_data_ex_futura
-from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas, \
+from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di, \
     calcular_valor_lc_ate_dia, calcular_valor_venda_lc
 from bagogold.bagogold.utils.misc import calcular_rendimentos_ate_data, \
     verificar_feriado_bovespa
@@ -508,7 +508,7 @@ def detalhamento_investimentos(request):
                     taxas_dos_dias[taxa['taxa']] = taxa['qtd_dias']
                 for operacao_id, operacao in letras_credito.items():
                     if operacao.data < item.data:
-                        operacao.quantidade = calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao.quantidade, OperacaoLetraCredito.objects.get(id=operacao_id).porcentagem_di())
+                        operacao.quantidade = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, OperacaoLetraCredito.objects.get(id=operacao_id).porcentagem_di())
                 # Guardar ultima data de calculo
                 ultima_data_calculada_lc = item.data
             for letra_credito in letras_credito.values():
@@ -531,7 +531,7 @@ def detalhamento_investimentos(request):
                     taxas_dos_dias[taxa['taxa']] = taxa['qtd_dias']
                 for operacao_id, operacao in cdb_rdb.items():
                     if operacao.data < item.data:
-                        operacao.quantidade = calcular_valor_atualizado_com_taxas(taxas_dos_dias, operacao.quantidade, OperacaoCDB_RDB.objects.get(id=operacao_id).porcentagem())
+                        operacao.quantidade = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, OperacaoCDB_RDB.objects.get(id=operacao_id).porcentagem())
                 # Guardar ultima data de calculo
                 ultima_data_calculada_cdb_rdb = item.data
             for investimento in cdb_rdb.values():

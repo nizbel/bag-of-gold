@@ -2,7 +2,7 @@
 from bagogold.bagogold.models.investidores import Investidor
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, LetraCredito, \
     HistoricoPorcentagemLetraCredito, HistoricoTaxaDI
-from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa, \
+from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa_di, \
     calcular_valor_lc_ate_dia
 from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
 from decimal import Decimal, ROUND_DOWN

@@ -2,7 +2,7 @@
 from bagogold.bagogold.models.investidores import Investidor
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, LetraCredito, \
     HistoricoPorcentagemLetraCredito, HistoricoTaxaDI
-from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa, \
+from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa_di, \
     calcular_valor_lc_ate_dia
 from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
 from decimal import Decimal, ROUND_DOWN
@@ -24,7 +24,7 @@ class AtualizarLCPorDITestCase(TestCase):
         # 2506,30 em 1 de Junho (6 dias após, todos com taxa DI 14,13%)
         operacao = OperacaoLetraCredito.objects.get(quantidade=(Decimal(2500)))
         for i in range(0,6):
-            operacao.quantidade = calcular_valor_atualizado_com_taxa(Decimal(14.13), operacao.quantidade, Decimal(80))
+            operacao.quantidade = calcular_valor_atualizado_com_taxa_di(Decimal(14.13), operacao.quantidade, Decimal(80))
         operacao.quantidade = operacao.quantidade.quantize(Decimal('0.01'))
 #         str_auxiliar = str(operacao.quantidade.quantize(Decimal('.0001')))
 #         operacao.quantidade = Decimal(str_auxiliar[:len(str_auxiliar)-2])
