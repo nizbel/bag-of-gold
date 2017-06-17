@@ -25,6 +25,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if options['anual'] and options['arquivo']:
             print 'Use apenas uma das opções, --anual ou --arquivo'
+            return
         try:
             wsdl = 'http://sistemas.cvm.gov.br/webservices/Sistemas/SCW/CDocs/WsDownloadInfs.asmx?WSDL'
             client = zeep.Client(wsdl=wsdl)
@@ -59,7 +60,7 @@ class Command(BaseCommand):
                 try:
                     resposta_ultimo_dia_util = client.service.solicAutorizDownloadArqEntrega(209, 'Teste', _soapheaders=[headerSessao])
 #                     print resposta_ultimo_dia_util
-                    download = urlopen(resposta_ultimo_dia_util['body']['solicAutorizDownloadArqAnualResult'])
+                    download = urlopen(resposta_ultimo_dia_util['body']['solicAutorizDownloadArqEntregaResult'])
                     if 'filename=' in download.info()['Content-Disposition']:
                         nome_arquivo = re.findall('.*?filename\W*?([\d\w\.]+).*?', download.info()['Content-Disposition'])[0]
                     else:
@@ -70,7 +71,7 @@ class Command(BaseCommand):
                     if settings.ENV == 'DEV':
                         print traceback.format_exc()
                     elif settings.ENV == 'PROD':
-                        mail_admins(u'Erro em Buscar historico anual de fundo de investimento', traceback.format_exc())
+                        mail_admins(u'Erro em Buscar historico ultimo dia util de fundo de investimento', traceback.format_exc())
         except:
             raise
 
