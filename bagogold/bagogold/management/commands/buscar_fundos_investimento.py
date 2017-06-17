@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from StringIO import StringIO
 from bagogold import settings
-from bagogold.bagogold.utils.misc import verificar_feriado_bovespa, \
-    ultimo_dia_util, buscar_dia_util_aleatorio, verifica_se_dia_util
+from bagogold.bagogold.utils.misc import ultimo_dia_util, \
+    buscar_dia_util_aleatorio, verifica_se_dia_util
 from bagogold.fundo_investimento.models import FundoInvestimento, Administrador, \
     DocumentoCadastro, LinkDocumentoCadastro
 from django.core.mail import mail_admins
