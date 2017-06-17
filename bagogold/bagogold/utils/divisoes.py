@@ -5,10 +5,9 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD, \
     DivisaoPrincipal, DivisaoOperacaoLC, DivisaoOperacaoFII, DivisaoOperacaoAcao, \
     Divisao, DivisaoOperacaoFundoInvestimento, DivisaoOperacaoCDB_RDB
 from bagogold.bagogold.models.fii import OperacaoFII
-from bagogold.bagogold.models.fundo_investimento import \
-    OperacaoFundoInvestimento
 from bagogold.bagogold.models.lc import OperacaoLetraCredito
 from bagogold.bagogold.models.td import OperacaoTitulo
+from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
 from django.apps import apps
 
 def preencher_operacoes_div_principal(operacao):

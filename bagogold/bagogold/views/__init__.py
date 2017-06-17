@@ -7,7 +7,6 @@ import td
 import fii
 import gerador_proventos
 import investidores
-import fundo_investimento
 import home
 
 import misc

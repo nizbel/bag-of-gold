@@ -10,10 +10,8 @@ from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
     TransferenciaEntreDivisoes, DivisaoOperacaoFundoInvestimento, \
     DivisaoOperacaoCDB_RDB
 from bagogold.bagogold.models.fii import ValorDiarioFII, HistoricoFII, FII
-from bagogold.bagogold.models.fundo_investimento import HistoricoValorCotas, \
-    OperacaoFundoInvestimento, FundoInvestimento
 from bagogold.bagogold.models.lc import HistoricoPorcentagemLetraCredito, \
-LetraCredito
+    LetraCredito
 from bagogold.bagogold.models.td import ValorDiarioTitulo, HistoricoTitulo, \
     Titulo
 from bagogold.bagogold.utils.acoes import calcular_qtd_acoes_ate_dia_por_divisao
@@ -22,13 +20,14 @@ from bagogold.bagogold.utils.cdb_rdb import \
 from bagogold.bagogold.utils.debenture import \
     calcular_valor_debentures_ate_dia_por_divisao
 from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia_por_divisao
-from bagogold.bagogold.utils.fundo_investimento import \
-    calcular_qtd_cotas_ate_dia_por_divisao
 from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia_por_divisao
 from bagogold.bagogold.utils.td import calcular_qtd_titulos_ate_dia_por_divisao
 from bagogold.cri_cra.utils.utils import \
     calcular_valor_cri_cra_ate_dia_para_divisao
-from decimal import Decimal
+from bagogold.fundo_investimento.models import FundoInvestimento, \
+    HistoricoValorCotas, OperacaoFundoInvestimento
+from bagogold.fundo_investimento.utils import \
+    calcular_qtd_cotas_ate_dia_por_divisao
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError

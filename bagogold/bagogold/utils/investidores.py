@@ -5,33 +5,30 @@ from bagogold.bagogold.models.debentures import HistoricoValorDebenture, \
     OperacaoDebenture
 from bagogold.bagogold.models.fii import OperacaoFII, ValorDiarioFII, \
     HistoricoFII, FII, ProventoFII
-from bagogold.bagogold.models.fundo_investimento import \
-    OperacaoFundoInvestimento, HistoricoValorCotas
 from bagogold.bagogold.models.investidores import LoginIncorreto
 from bagogold.bagogold.models.lc import OperacaoLetraCredito
 from bagogold.bagogold.models.td import OperacaoTitulo, ValorDiarioTitulo, \
     HistoricoTitulo
 from bagogold.bagogold.utils.acoes import quantidade_acoes_ate_dia, \
     calcular_poupanca_prov_acao_ate_dia
-from bagogold.bagogold.utils.cdb_rdb import \
-    calcular_valor_cdb_rdb_ate_dia_por_divisao, calcular_valor_cdb_rdb_ate_dia
+from bagogold.bagogold.utils.cdb_rdb import calcular_valor_cdb_rdb_ate_dia
 from bagogold.bagogold.utils.debenture import calcular_qtd_debentures_ate_dia
 from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia_por_ticker, \
     calcular_qtd_fiis_ate_dia, calcular_poupanca_prov_fii_ate_dia
-from bagogold.bagogold.utils.fundo_investimento import \
-    calcular_qtd_cotas_ate_dia
 from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia
 from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia
 from bagogold.cri_cra.models.cri_cra import CRI_CRA, OperacaoCRI_CRA
 from bagogold.cri_cra.utils.utils import qtd_cri_cra_ate_dia
 from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
+from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
+from bagogold.fundo_investimento.utils import \
+    calcular_valor_fundos_investimento_ate_dia
 from decimal import Decimal
 from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 from itertools import chain
 from operator import attrgetter
 import datetime
-from bagogold.fundo_investimento.utils import calcular_valor_fundos_investimento_ate_dia
 
 
 def is_superuser(user):
@@ -130,7 +127,9 @@ def buscar_totais_atuais_investimentos(investidor):
     totais_atuais['FII'] += calcular_poupanca_prov_fii_ate_dia(investidor, data_atual)
         
     # Fundos de investimento
-    totais_atuais['Fundos de Inv.'] = sum(calcular_valor_fundos_investimento_ate_dia(investidor, data_atual))
+    fundo_investimento_valores = calcular_valor_fundos_investimento_ate_dia(investidor, data_atual)
+    for valor in fundo_investimento_valores.values():
+        totais_atuais['Fundos de Inv.'] += valor
             
     # Letras de crédito
     letras_credito = calcular_valor_lc_ate_dia(investidor, data_atual)
