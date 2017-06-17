@@ -4,11 +4,11 @@ from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
     TransferenciaEntreDivisoes, DivisaoOperacaoAcao, DivisaoOperacaoFII, \
     DivisaoOperacaoCDB_RDB, DivisaoOperacaoTD
 from bagogold.bagogold.models.lc import OperacaoVendaLetraCredito
-from bagogold.bagogold.utils.fundo_investimento import \
-    calcular_qtd_cotas_ate_dia_por_divisao
 from bagogold.bagogold.utils.td import calcular_qtd_titulos_ate_dia_por_divisao
 from bagogold.cri_cra.utils.utils import \
     qtd_cri_cra_ate_dia_para_divisao_para_certificado
+from bagogold.fundo_investimento.utils import \
+    calcular_qtd_cotas_ate_dia_por_divisao
 from decimal import Decimal
 from django import forms
 from django.forms import widgets
