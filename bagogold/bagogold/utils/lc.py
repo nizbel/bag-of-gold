@@ -18,14 +18,15 @@ def calcular_valor_atualizado_com_taxa_di(taxa_do_dia, valor_atual, operacao_tax
     """
     return ((pow((Decimal(1) + taxa_do_dia/100), Decimal(1)/Decimal(252)) - Decimal(1)) * operacao_taxa/100 + Decimal(1)) * valor_atual
 
-def calcular_valor_atualizado_com_taxa_prefixado(valor_atual, operacao_taxa):
+def calcular_valor_atualizado_com_taxa_prefixado(valor_atual, operacao_taxa, qtd_dias=1):
     """
-    Calcula o valor atualizado de uma operação em LC, a partir da taxa DI do dia
+    Calcula o valor atualizado de uma operação em renda fixa prefixada, a partir da quantidade de dias do período
     Parâmetros: Valor atual da operação
                 Taxa da operação
+                Quantidade de dias
     Retorno: Valor atualizado com a taxa de um dia prefixado
     """
-    return pow((Decimal(1) + operacao_taxa/100), Decimal(1)/Decimal(252)) * valor_atual
+    return pow((Decimal(1) + operacao_taxa/100), Decimal(qtd_dias)/Decimal(252)) * valor_atual
 
 def calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor_atual, operacao_taxa):
     """
