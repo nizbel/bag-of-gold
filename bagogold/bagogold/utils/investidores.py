@@ -130,9 +130,7 @@ def buscar_totais_atuais_investimentos(investidor):
     totais_atuais['FII'] += calcular_poupanca_prov_fii_ate_dia(investidor, data_atual)
         
     # Fundos de investimento
-    fundos_valor = calcular_valor_fundos_investimento_ate_dia(investidor, data_atual)
-    for valor in fundos_valor.values():
-        totais_atuais['Fundos de Inv.'] += valor
+    totais_atuais['Fundos de Inv.'] = sum(calcular_valor_fundos_investimento_ate_dia(investidor, data_atual))
             
     # Letras de crédito
     letras_credito = calcular_valor_lc_ate_dia(investidor, data_atual)
