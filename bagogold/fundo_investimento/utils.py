@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFundoInvestimento
-from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
+from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
+    HistoricoValorCotas
+from django.db.models.aggregates import Sum
+from django.db.models.expressions import F, Case, When
+from django.db.models.fields import DecimalField
 import datetime
 
 def calcular_qtd_cotas_ate_dia(investidor, dia=datetime.date.today()):
@@ -8,23 +12,13 @@ def calcular_qtd_cotas_ate_dia(investidor, dia=datetime.date.today()):
     Calcula a quantidade de cotas até dia determinado
     Parâmetros: Investidor
                 Dia final
-    Retorno: Quantidade de cotas por fundo {fundo: qtd}
+    Retorno: Quantidade de cotas por fundo {fundo_id: qtd}
     """
-    operacoes = OperacaoFundoInvestimento.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True).order_by('data')
+    qtd_cotas = dict(OperacaoFundoInvestimento.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True).values('fundo_investimento') \
+        .annotate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
+                            When(tipo_operacao='V', then=F('quantidade')*-1),
+                            output_field=DecimalField()))).values_list('fundo_investimento', 'total').exclude(total=0))
     
-    qtd_cotas = {}
-    
-    for operacao in operacoes:
-        if operacao.fundo_investimento.id not in qtd_cotas:
-            qtd_cotas[operacao.fundo_investimento.id] = 0
-            
-        # Verificar se se trata de compra ou venda
-        if operacao.tipo_operacao == 'C':
-            qtd_cotas[operacao.fundo_investimento.id] += operacao.quantidade
-            
-        elif operacao.tipo_operacao == 'V':
-            qtd_cotas[operacao.fundo_investimento.id] -= operacao.quantidade
-        
     return qtd_cotas
 
 def calcular_qtd_cotas_ate_dia_por_fundo(investidor, fundo_id, dia=datetime.date.today()):
@@ -36,16 +30,10 @@ def calcular_qtd_cotas_ate_dia_por_fundo(investidor, fundo_id, dia=datetime.date
     Retorno: Quantidade de cotas para o fundo determinado
     """
     
-    operacoes = OperacaoFundoInvestimento.objects.filter(investidor=investidor, fundo_investimento__id=fundo_id, data__lte=dia).exclude(data__isnull=True).order_by('data')
-    qtd_cotas = 0
-    
-    for item in operacoes:
-        # Verificar se se trata de compra ou venda
-        if item.tipo_operacao == 'C':
-            qtd_cotas += item.quantidade
-            
-        elif item.tipo_operacao == 'V':
-            qtd_cotas -= item.quantidade
+    qtd_cotas = OperacaoFundoInvestimento.objects.filter(investidor=investidor, fundo_investimento__id=fundo_id, data__lte=dia).exclude(data__isnull=True) \
+        .aggregate(qtd_cotas=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
+                            When(tipo_operacao='V', then=F('quantidade')*-1),
+                            output_field=DecimalField())))['qtd_cotas'] or 0
         
     return qtd_cotas
 
@@ -83,3 +71,24 @@ def calcular_qtd_cotas_ate_dia_por_divisao(dia, divisao_id):
             
     return qtd_cotas
 
+def calcular_valor_fundos_investimento_ate_dia(investidor, dia=datetime.date.today()):
+    """ 
+    Calcula a o valor das cotas do investidor até dia determinado
+    Parâmetros: Investidor
+                Dia final
+    Retorno: Valor por fundo {fundo_id: valor (em reais)}
+    """
+    fundos = calcular_qtd_cotas_ate_dia(investidor, dia)
+    valor_fundos = {}
+    for fundo_id in fundos.keys():
+        if HistoricoValorCotas.objects.filter(fundo_investimento__id=fundo_id, data__lte=dia).exists():
+            historico_fundo = HistoricoValorCotas.objects.filter(fundo_investimento__id=fundo_id).order_by('-data')[0]
+            if investidor and OperacaoFundoInvestimento.objects.filter(fundo_investimento__id=fundo_id, investidor=investidor, data__range=[historico_fundo.data + datetime.timedelta(days=1), dia]).exists():
+                valor_cota = OperacaoFundoInvestimento.objects.filter(fundo_investimento__id=fundo_id, investidor=investidor, 
+                                                                data__range=[historico_fundo.data + datetime.timedelta(days=1), dia]).order_by('-data')[0].valor_cota()
+            else:
+                valor_cota = historico_fundo.valor_cota
+        else:
+            valor_cota = OperacaoFundoInvestimento.objects.filter(fundo_investimento__id=fundo_id, investidor=investidor, data__lte=dia).order_by('-data')[0].valor_cota()
+        valor_fundos[fundo_id] = valor_cota * fundos[fundo_id]
+    return valor_fundos
