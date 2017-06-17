@@ -31,6 +31,7 @@ from django.utils import timezone
 from itertools import chain
 from operator import attrgetter
 import datetime
+from bagogold.fundo_investimento.utils import calcular_valor_fundos_investimento_ate_dia
 
 
 def is_superuser(user):
@@ -129,15 +130,9 @@ def buscar_totais_atuais_investimentos(investidor):
     totais_atuais['FII'] += calcular_poupanca_prov_fii_ate_dia(investidor, data_atual)
         
     # Fundos de investimento
-    fundos_investimento = calcular_qtd_cotas_ate_dia(investidor, data_atual)
-    for fundo_id in fundos_investimento.keys():
-        historico_fundo = HistoricoValorCotas.objects.filter(fundo_investimento__id=fundo_id).order_by('-data')
-        ultima_operacao_fundo = OperacaoFundoInvestimento.objects.filter(fundo_investimento__id=fundo_id).order_by('-data')[0]
-        if historico_fundo and historico_fundo[0].data > ultima_operacao_fundo.data:
-            valor_cota = historico_fundo[0].valor_cota
-        else:
-            valor_cota = ultima_operacao_fundo.valor_cota()
-        totais_atuais['Fundos de Inv.'] += (fundos_investimento[fundo_id] * valor_cota)
+    fundos_valor = calcular_valor_fundos_investimento_ate_dia(investidor, data_atual)
+    for valor in fundos_valor.values():
+        totais_atuais['Fundos de Inv.'] += valor
             
     # Letras de crédito
     letras_credito = calcular_valor_lc_ate_dia(investidor, data_atual)
