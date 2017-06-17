@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB, \
-    HistoricoPorcentagemCDB_RDB, OperacaoVendaCDB_RDB
+    HistoricoPorcentagemCDB_RDB, OperacaoVendaCDB_RDB, CDB_RDB
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
     DivisaoOperacaoCDB_RDB
 from bagogold.bagogold.models.lc import HistoricoTaxaDI
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa_di, \
-    calcular_valor_atualizado_com_taxas_di
+    calcular_valor_atualizado_com_taxas_di, \
+    calcular_valor_atualizado_com_taxa_prefixado
+from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo
 from decimal import Decimal, ROUND_DOWN
 from django.db.models import Q
 from django.db.models.aggregates import Sum, Count
@@ -52,14 +54,19 @@ def calcular_valor_cdb_rdb_ate_dia(investidor, dia=datetime.date.today()):
         if operacao.investimento.id not in cdb_rdb.keys():
             cdb_rdb[operacao.investimento.id] = 0
         
-        # Definir período do histórico relevante para a operação
-        historico_utilizado = historico.filter(data__range=[operacao.data, dia]).values('taxa').annotate(qtd_dias=Count('taxa'))
-        taxas_dos_dias = {}
-        for taxa_quantidade in historico_utilizado:
-            taxas_dos_dias[taxa_quantidade['taxa']] = taxa_quantidade['qtd_dias']
-        
-        # Calcular
-        cdb_rdb[operacao.investimento.id] += calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, operacao.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
+        if operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
+            # DI
+            # Definir período do histórico relevante para a operação
+            historico_utilizado = historico.filter(data__range=[operacao.data, dia]).values('taxa').annotate(qtd_dias=Count('taxa'))
+            taxas_dos_dias = {}
+            for taxa_quantidade in historico_utilizado:
+                taxas_dos_dias[taxa_quantidade['taxa']] = taxa_quantidade['qtd_dias']
+            
+            # Calcular
+            cdb_rdb[operacao.investimento.id] += calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, operacao.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
+        elif operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
+            # Prefixado
+            cdb_rdb[operacao.investimento.id] += calcular_valor_atualizado_com_taxa_prefixado(operacao.quantidade, operacao.taxa, qtd_dias_uteis_no_periodo(operacao.data, datetime.date.today()))
     
     return cdb_rdb
 

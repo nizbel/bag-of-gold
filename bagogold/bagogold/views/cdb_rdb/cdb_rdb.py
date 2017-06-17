@@ -690,7 +690,12 @@ def painel(request):
                 if operacao.tipo_operacao == 'C':
                     if (data_iteracao < operacao.data_vencimento()):
                         # Calcular o valor atualizado para cada operacao
-                        operacao.atual = calcular_valor_atualizado_com_taxa_di(taxa_do_dia, operacao.atual, operacao.taxa)
+                        if operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_DI and taxa_do_dia > 0:
+                            # DI
+                            operacao.atual = calcular_valor_atualizado_com_taxa_di(taxa_do_dia, operacao.atual, operacao.taxa)
+                        elif operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
+                            # Prefixado
+                            operacao.atual = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa)
                     # Arredondar na última iteração
                     if (data_iteracao == data_final) or (data_iteracao == operacao.data_vencimento()):
                         str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
