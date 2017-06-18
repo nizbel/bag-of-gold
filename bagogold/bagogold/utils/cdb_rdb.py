@@ -14,14 +14,20 @@ from django.db.models.aggregates import Sum, Count
 import datetime
 
 def calcular_valor_venda_cdb_rdb(operacao_venda):
-    # Definir período do histórico relevante para a operação
-    historico_utilizado = HistoricoTaxaDI.objects.filter(data__range=[operacao_venda.operacao_compra_relacionada().data, operacao_venda.data - datetime.timedelta(days=1)]).values('taxa').annotate(qtd_dias=Count('taxa'))
-    taxas_dos_dias = {}
-    for taxa_quantidade in historico_utilizado:
-        taxas_dos_dias[taxa_quantidade['taxa']] = taxa_quantidade['qtd_dias']
+    if operacao_venda.operacao_compra_relacionada().investimento.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
+        # Definir período do histórico relevante para a operação
+        historico_utilizado = HistoricoTaxaDI.objects.filter(data__range=[operacao_venda.operacao_compra_relacionada().data, operacao_venda.data - datetime.timedelta(days=1)]).values('taxa').annotate(qtd_dias=Count('taxa'))
+        taxas_dos_dias = {}
+        for taxa_quantidade in historico_utilizado:
+            taxas_dos_dias[taxa_quantidade['taxa']] = taxa_quantidade['qtd_dias']
+        
+        # Calcular
+        return calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao_venda.quantidade, operacao_venda.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
+    elif operacao_venda.operacao_compra_relacionada().investimento.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
+        # Prefixado
+        return calcular_valor_atualizado_com_taxa_prefixado(operacao_venda.quantidade, operacao_venda.porcentagem(), qtd_dias_uteis_no_periodo(operacao_venda.operacao_compra_relacionada().data, 
+                                                                                                                                               operacao_venda.data - datetime.timedelta(days=1)))
     
-    # Calcular
-    return calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao_venda.quantidade, operacao_venda.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
 
 def calcular_valor_cdb_rdb_ate_dia(investidor, dia=datetime.date.today()):
     """ 
@@ -112,12 +118,18 @@ def calcular_valor_cdb_rdb_ate_dia_por_divisao(dia, divisao_id):
     historico = HistoricoTaxaDI.objects.filter(data__range=[data_inicial, dia])
     
     for operacao in operacoes:
-        taxas_dos_dias = dict(historico.filter(data__range=[operacao.data, dia]).values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
-        operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.atual, operacao.porcentagem())
+        if operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
+            # DI
+            taxas_dos_dias = dict(historico.filter(data__range=[operacao.data, dia]).values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
+            operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.atual, operacao.porcentagem())
+        elif operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
+            # Prefixado
+            operacao.atual = calcular_valor_atualizado_com_taxa_prefixado(operacao.quantidade, operacao.taxa, qtd_dias_uteis_no_periodo(operacao.data, datetime.date.today()))
+            
         # Arredondar valores
         str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
         operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-            
+        
     # Preencher os valores nas letras de crédito
     for cdb_rdb_id in cdb_rdb.keys():
         cdb_rdb[cdb_rdb_id] += sum([operacao.atual for operacao in operacoes if operacao.investimento.id == cdb_rdb_id])
