@@ -2,6 +2,8 @@
 from decimal import Decimal
 from django.core.validators import MinValueValidator
 from django.db import models
+import datetime
+from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
 
 class CRI_CRA (models.Model):
     TIPO_CRI = 'I'
@@ -80,6 +82,10 @@ class DataRemuneracaoCRI_CRA (models.Model):
         
     def __unicode__(self):
         return u'Remuneração na data %s' % (self.data.strftime('%d/%m/%Y'))
+    
+    # Retorna a quantidade de remuneração recebida na data
+    def qtd_remuneracao(self):
+        return calcular_valor_um_cri_cra_na_data(self.cri_cra, self.data - datetime.timedelta(days=1)) - self.cri_cra.valor_emissao 
     
 class DataAmortizacaoCRI_CRA (models.Model):
     data = models.DateField(u'Data de amortização')
