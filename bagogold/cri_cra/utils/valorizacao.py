@@ -4,7 +4,8 @@ from bagogold.cri_cra.models.cri_cra import CRI_CRA, DataRemuneracaoCRI_CRA
 from django.db.models.aggregates import Count
 from decimal import Decimal
 import datetime
-from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di
+from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di,\
+    calcular_valor_atualizado_com_taxa_prefixado
 
 def calcular_valor_um_cri_cra_na_data(certificado, data=datetime.date.today()):
     """
@@ -31,10 +32,11 @@ def calcular_valor_um_cri_cra_na_data(certificado, data=datetime.date.today()):
     # TODO incluir amortizações
     valor_inicial = certificado.valor_emissao
     
+    # TODO incluir outros cálculos
     if certificado.tipo_indexacao == CRI_CRA.TIPO_INDEXACAO_DI:
         return calcular_valor_cri_cra_di(valor_inicial, certificado.porcentagem, data_inicial, data, certificado.juros_adicional)
     elif certificado.tipo_indexacao == CRI_CRA.TIPO_INDEXACAO_PREFIXADO:
-        pass
+        return calcular_valor_cri_cra_prefixado(valor_inicial, certificado.porcentagem, data_inicial, data)
         
 def calcular_valor_cri_cra_di(valor_inicial, percentual_di, data_inicial, data_final, juros_adicional):
     """
@@ -57,3 +59,14 @@ def calcular_valor_cri_cra_di(valor_inicial, percentual_di, data_inicial, data_f
         pass
     
     return valor_atualizado.quantize(Decimal('0.01'))
+
+def calcular_valor_cri_cra_prefixado(valor_inicial, percentual, data_inicial, data_final):
+    """
+    Calcula o valor de um certificado atualizada por taxa prefixada
+    Parâmetros: Valor inicial a ser atualizado
+                Taxa prefixada
+                Data de início da atualização
+                Data de fim da atualização
+    Retorno:    Valor atualizado
+    """
+    return calcular_valor_atualizado_com_taxa_prefixado(valor_inicial, percentual, (data_final - data_inicial).days)

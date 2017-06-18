@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoCRI_CRA
-from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA, CRI_CRA
+from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA, CRI_CRA,\
+    DataRemuneracaoCRI_CRA
 from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
 from django.db.models.aggregates import Sum
 from django.db.models.expressions import F, Case, When
@@ -94,7 +95,7 @@ def calcular_valor_cri_cra_ate_dia(investidor, dia=datetime.date.today()):
 
 def calcular_valor_cri_cra_ate_dia_para_divisao(divisao_id, dia=datetime.date.today()):
     """ 
-    Calcula o valor dos certificados do investidor até dia determinado
+    Calcula o valor dos certificados do investidor até dia determinado por divisão
     Parâmetros: Investidor
                 Dia final
     Retorno: Valor dos certificados {cri_cra_id: valor_da_data}
@@ -105,3 +106,16 @@ def calcular_valor_cri_cra_ate_dia_para_divisao(divisao_id, dia=datetime.date.to
         qtd_cri_cra[cri_cra.id] = calcular_valor_um_cri_cra_na_data(cri_cra, dia) * qtd_cri_cra[cri_cra.id]
 
     return qtd_cri_cra
+
+def calcular_rendimentos_cri_cra_ate_data(cri_cra, data=datetime.date.today()):
+    """
+    Calcula a quantidade de rendimentos recebida até data
+    Parâmetros: CRI/CRA
+                Dia final
+    Retorno: Valor total dos rendimentos recebidos
+    """
+    datas_rendimento = DataRemuneracaoCRI_CRA.objects.filter(cri_cra=cri_cra, data__lte=data)
+    # Retorna a soma das quantidades de certificados nas datas pelo valor recebido nas datas
+    return sum([(quantidade_cri_cra_na_data_para_certificado(cri_cra, data_rendimento.data - datetime.timedelta(days=1)) * data_rendimento.qtd_remuneracao()) \
+                 for data_rendimento in datas_rendimento])
+        
