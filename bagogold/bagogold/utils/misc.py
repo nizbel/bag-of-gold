@@ -116,7 +116,7 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDEFILR
     from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia, calcular_valor_venda_lc
     from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia
     from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA
-    from bagogold.cri_cra.utils.utils import calcular_valor_cri_cra_ate_dia
+    from bagogold.cri_cra.utils.utils import calcular_valor_cri_cra_ate_dia, calcular_rendimentos_cri_cra_ate_data
     
     rendimentos = {}
     # Ações (Buy and Hold)
@@ -147,7 +147,7 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDEFILR
     
     # CRI/CRA
     if 'R' in tipo_investimentos:
-        rendimentos['R'] = sum(calcular_valor_cri_cra_ate_dia(investidor, data).values()) \
+        rendimentos['R'] = sum(calcular_valor_cri_cra_ate_dia(investidor, data).values()) + calcular_rendimentos_cri_cra_ate_data(investidor, data) \
             - sum([(operacao.quantidade * operacao.preco_unitario) for operacao in OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, data__lte=data, tipo_operacao='C')]) \
             + sum([(operacao.quantidade * operacao.preco_unitario) for operacao in OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, data__lte=data, tipo_operacao='V')])
     
