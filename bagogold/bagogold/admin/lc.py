@@ -18,5 +18,9 @@ admin.site.register(HistoricoPorcentagemLetraCredito)
 admin.site.register(HistoricoCarenciaLetraCredito)
             
 admin.site.register(HistoricoValorMinimoInvestimento)
+
+class HistoricoTaxaDIAdmin(admin.ModelAdmin):
+    list_display = ('data', 'taxa')
+    search_fields = ['data']
     
-admin.site.register(HistoricoTaxaDI)
+admin.site.register(HistoricoTaxaDI, HistoricoTaxaDIAdmin)
