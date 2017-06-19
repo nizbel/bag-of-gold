@@ -80,6 +80,31 @@ def buscar_ultimas_operacoes(investidor, quantidade_operacoes):
     
     return ultimas_operacoes
 
+def buscar_operacoes_no_mes(investidor, mes, ano):
+    from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB
+    """
+    Busca as operações feitas pelo investidor, ordenadas por data crescente, no mês e ano especificados
+    Parâmetros: Investidor
+                Mês
+                Ano
+    Retorno: Lista com as operações ordenadas por data
+    """
+    # Juntar todas as operações em uma lista
+    operacoes_fii = OperacaoFII.objects.filter(investidor=investidor, data__month=mes, data__year=ano).order_by('data')
+    operacoes_td = OperacaoTitulo.objects.filter(investidor=investidor, data__month=mes, data__year=ano).order_by('data')
+    operacoes_acoes = OperacaoAcao.objects.filter(investidor=investidor, data__month=mes, data__year=ano).order_by('data')
+    operacoes_lc = OperacaoLetraCredito.objects.filter(investidor=investidor, data__month=mes, data__year=ano).order_by('data')  
+    operacoes_cdb_rdb = OperacaoCDB_RDB.objects.filter(investidor=investidor, data__month=mes, data__year=ano).order_by('data')  
+    operacoes_cri_cra = OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, data__month=mes, data__year=ano).order_by('data')  
+    operacoes_debentures = OperacaoDebenture.objects.filter(investidor=investidor, data__month=mes, data__year=ano).order_by('data')  
+    operacoes_fundo_investimento = OperacaoFundoInvestimento.objects.filter(investidor=investidor, data__month=mes, data__year=ano).order_by('data')
+    
+    lista_operacoes = sorted(chain(operacoes_fii, operacoes_td, operacoes_acoes, operacoes_lc, operacoes_cdb_rdb, 
+                                   operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento),
+                            key=attrgetter('data'))
+    
+    return lista_operacoes
+
 def buscar_totais_atuais_investimentos(investidor):
     totais_atuais = {'Ações': Decimal(0), 'CDB/RDB': Decimal(0), 'CRI/CRA': Decimal(0), 'Debêntures': Decimal(0), 'FII': Decimal(0), 'Fundos de Inv.': Decimal(0), 
                      'Letras de Crédito': Decimal(0), 'Tesouro Direto': Decimal(0), }
