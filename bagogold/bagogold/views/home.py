@@ -16,15 +16,18 @@ from bagogold.bagogold.utils.cdb_rdb import calcular_valor_cdb_rdb_ate_dia, \
 from bagogold.bagogold.utils.debenture import calcular_valor_debentures_ate_dia
 from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
     buscar_totais_atuais_investimentos, buscar_proventos_a_receber, \
-    buscar_proventos_a_receber_data_ex_futura
+    buscar_proventos_a_receber_data_ex_futura, buscar_operacoes_no_mes
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di, \
     calcular_valor_lc_ate_dia, calcular_valor_venda_lc
 from bagogold.bagogold.utils.misc import calcular_rendimentos_ate_data, \
     verificar_feriado_bovespa
 from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia
 from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA
-from bagogold.cri_cra.utils.utils import calcular_valor_cri_cra_ate_dia
+from bagogold.cri_cra.utils.utils import calcular_valor_cri_cra_ate_dia,\
+    calcular_rendimentos_cri_cra_ate_data
 from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
+from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
+    HistoricoValorCotas
 from decimal import Decimal, ROUND_DOWN
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -41,6 +44,15 @@ import calendar
 import datetime
 import math
 
+
+@login_required
+@adiciona_titulo_descricao('Calendário de acompanhamento', 'Detalha as operações e recebimentos do investidor mensalmente')
+def calendario(request):
+    investidor = request.user.investidor
+    
+    operacoes = buscar_operacoes_no_mes(investidor, datetime.date.today().month, datetime.date.today().year)
+    
+    return TemplateResponse(request, 'calendario.html', {'operacoes': operacoes})
 
 @login_required
 @adiciona_titulo_descricao('Detalhamento de acumulados mensais', ('Detalha rendimentos recebidos por investimentos em renda fixa e ' \
@@ -779,7 +791,7 @@ def painel_geral(request):
             total_debentures_dia_anterior = total_debentures
             
             # CRI / CRA
-            total_cri_cra = float(sum(calcular_valor_cri_cra_ate_dia(investidor, dia).values()))
+            total_cri_cra = float(sum(calcular_valor_cri_cra_ate_dia(investidor, dia).values())) + float(calcular_rendimentos_cri_cra_ate_data(investidor, dia))
             # Removendo operações do dia
             operacoes_do_dia = operacoes_cri_cra_no_periodo.filter(data=dia).aggregate(total=Sum(Case(When(tipo_operacao='C', then=F('preco_unitario')*F('quantidade') + F('taxa')),
                             When(tipo_operacao='V', then=F('preco_unitario')*F('quantidade')*-1 - F('taxa')),
