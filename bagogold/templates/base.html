@@ -165,6 +165,9 @@
                                                 <span class="arrow"></span>
                                             </a>
                                             <ul class="dropdown-menu pull-left">
+                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'calendario' %}active{% endif %}">
+                                                    <a href="{% url "inicio:calendario" %}" class="nav-link  "> Calendário </a>
+                                                </li>
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_geral' %}active{% endif %}">
                                                     <a href="{% url "inicio:painel_geral" %}" class="nav-link  "> Painel Geral </a>
                                                 </li>
