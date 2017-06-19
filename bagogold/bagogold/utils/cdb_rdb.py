@@ -72,7 +72,7 @@ def calcular_valor_cdb_rdb_ate_dia(investidor, dia=datetime.date.today()):
             cdb_rdb[operacao.investimento.id] += calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, operacao.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
         elif operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
             # Prefixado
-            cdb_rdb[operacao.investimento.id] += calcular_valor_atualizado_com_taxa_prefixado(operacao.quantidade, operacao.taxa, qtd_dias_uteis_no_periodo(operacao.data, datetime.date.today()))
+            cdb_rdb[operacao.investimento.id] += calcular_valor_atualizado_com_taxa_prefixado(operacao.quantidade, operacao.taxa, qtd_dias_uteis_no_periodo(operacao.data, datetime.date.today())).quantize(Decimal('.01'), ROUND_DOWN)
     
     return cdb_rdb
 

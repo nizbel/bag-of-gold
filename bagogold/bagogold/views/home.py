@@ -545,7 +545,7 @@ def detalhamento_investimentos(request):
 #             inicio_cri_cra = datetime.datetime.now()
             patrimonio_cri_cra = 0
             for certificado in cri_cra.keys():
-                patrimonio_cri_cra += cri_cra[certificado] * calcular_valor_um_cri_cra_na_data(certificado, item.data)
+                patrimonio_cri_cra += (cri_cra[certificado] * calcular_valor_um_cri_cra_na_data(certificado, item.data)).quantize(Decimal('.01'))
             patrimonio['CRI/CRA'] = patrimonio_cri_cra
             patrimonio['patrimonio_total'] += patrimonio['CRI/CRA'] 
 #             fim_cri_cra = datetime.datetime.now()

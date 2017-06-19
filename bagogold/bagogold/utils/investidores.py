@@ -107,7 +107,7 @@ def buscar_totais_atuais_investimentos(investidor):
     # CRI / CRA
     cri_cra = qtd_cri_cra_ate_dia(investidor, data_atual)
     for cri_cra_id in cri_cra.keys():
-        valor_atual = calcular_valor_um_cri_cra_na_data(CRI_CRA.objects.get(id=cri_cra_id, investidor=investidor))
+        valor_atual = calcular_valor_um_cri_cra_na_data(CRI_CRA.objects.get(id=cri_cra_id, investidor=investidor)).quantize(Decimal('.01'))
         totais_atuais['CRI/CRA'] += (cri_cra[cri_cra_id] * valor_atual)
         
     # Debêntures

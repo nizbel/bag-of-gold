@@ -60,7 +60,7 @@ def detalhar_cri_cra(request, id_cri_cra):
     # Preparar estatísticas zeradas
     cri_cra.total_investido = operacoes.filter(tipo_operacao='C') \
         .aggregate(valor_total=Sum('valor_operacao', output_field=DecimalField()))['valor_total'] or Decimal(0)
-    cri_cra.valor_atual = calcular_valor_um_cri_cra_na_data(cri_cra)
+    cri_cra.valor_atual = calcular_valor_um_cri_cra_na_data(cri_cra).quantize(Decimal('.01'), ROUND_DOWN)
     cri_cra.total_atual = cri_cra.quantidade_atual * cri_cra.valor_atual
     cri_cra.total_vendas = operacoes.filter(tipo_operacao='V') \
         .aggregate(valor_total=Sum('valor_operacao', output_field=DecimalField()))['valor_total'] or Decimal(0)
@@ -306,7 +306,7 @@ def historico(request):
         
         for cri_cra in qtd_certificados.keys():
             if qtd_certificados[cri_cra] > 0:
-                total_patrimonio += qtd_certificados[cri_cra] * calcular_valor_um_cri_cra_na_data(operacao.cri_cra, operacao.data)
+                total_patrimonio += (qtd_certificados[cri_cra] * calcular_valor_um_cri_cra_na_data(operacao.cri_cra, operacao.data)).quantize(Decimal('.01'))
         
         graf_investido_total += [[str(calendar.timegm(operacao.data.timetuple()) * 1000), float(-total_investido)]]
         graf_patrimonio += [[str(calendar.timegm(operacao.data.timetuple()) * 1000), float(total_patrimonio)]]
@@ -317,7 +317,7 @@ def historico(request):
         total_patrimonio = 0
         for cri_cra in qtd_certificados.keys():
             if qtd_certificados[cri_cra] > 0:
-                total_patrimonio += qtd_certificados[cri_cra] * calcular_valor_um_cri_cra_na_data(operacao.cri_cra, data_atual)
+                total_patrimonio += qtd_certificados[cri_cra] * calcular_valor_um_cri_cra_na_data(operacao.cri_cra, data_atual).quantize(Decimal('.01'))
         
         graf_investido_total += [[str(calendar.timegm(data_atual.timetuple()) * 1000), float(-total_investido)]]
         graf_patrimonio += [[str(calendar.timegm(data_atual.timetuple()) * 1000), float(total_patrimonio)]]
@@ -517,7 +517,7 @@ def painel(request):
         total_investido += cri_cra[cri_cra_id].total_investido
         
         cri_cra[cri_cra_id].valor_atual = calcular_valor_um_cri_cra_na_data(cri_cra[cri_cra_id])
-        cri_cra[cri_cra_id].total_atual = cri_cra[cri_cra_id].valor_atual * cri_cra[cri_cra_id].quantidade
+        cri_cra[cri_cra_id].total_atual = (cri_cra[cri_cra_id].valor_atual * cri_cra[cri_cra_id].quantidade).quantize(Decimal('.01'))
         total_valor_atual += cri_cra[cri_cra_id].total_atual
         
         # Próxima remuneração

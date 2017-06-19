@@ -4,25 +4,27 @@ from bagogold.bagogold.models.lc import OperacaoLetraCredito, LetraCredito, \
     HistoricoTaxaDI
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa_di, \
     calcular_valor_lc_ate_dia
-from bagogold.cri_cra.models.cri_cra import CRI_CRA
+from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
+from bagogold.cri_cra.models.cri_cra import CRI_CRA, OperacaoCRI_CRA,\
+    DataRemuneracaoCRI_CRA
+from bagogold.cri_cra.utils.utils import calcular_rendimentos_cri_cra_ate_data
 from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
-from decimal import Decimal, ROUND_DOWN
+from decimal import Decimal
 from django.contrib.auth.models import User
 from django.test import TestCase
 import datetime
-from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
 
 class AtualizarCRI_CRAPorDITestCase(TestCase):
     
     def setUp(self):
         user = User.objects.create(username='tester')
         
-        CRI_CRA.objects.create(nome="CRI Cyrela teste", investidor=user.investidor, codigo_isin='BRCYRELA', tipo='I', tipo_indexacao=1,
+        cri = CRI_CRA.objects.create(nome="CRI Cyrela teste", investidor=user.investidor, codigo_isin='BRCYRELA', tipo='I', tipo_indexacao=1,
                                porcentagem=Decimal(98), data_emissao=datetime.date(2016, 9, 30), valor_emissao=Decimal(1000), 
                                data_vencimento=datetime.date(2018, 12, 5), data_inicio_rendimento=datetime.date(2016, 10, 27))
         
         data_di = datetime.date(2016, 9, 30)
-        while data_di < datetime.date(2017, 3, 14):
+        while data_di <= datetime.date(2017, 6, 14):
             if data_di.weekday() < 5 and not verificar_feriado_bovespa(data_di):
                 if data_di < datetime.date(2016, 10, 20):
                     valor = Decimal('14.13')
@@ -32,23 +34,39 @@ class AtualizarCRI_CRAPorDITestCase(TestCase):
                     valor = Decimal('13.63')
                 elif data_di < datetime.date(2017, 2, 23):
                     valor = Decimal('12.88')
-                else:
+                elif data_di < datetime.date(2017, 4, 13):
                     valor = Decimal('12.13')
+                elif data_di < datetime.date(2017, 6, 1):
+                    valor = Decimal('11.13')
+                else:
+                    valor = Decimal('10.14')
                 HistoricoTaxaDI.objects.create(data=data_di, taxa=valor)
             data_di = data_di + datetime.timedelta(days=1)
+            
+        # Data de remuneração
+        DataRemuneracaoCRI_CRA.objects.create(cri_cra=cri, data=datetime.date(2017, 6, 5))
+            
+        # Operação de teste com 8 certificados
+        OperacaoCRI_CRA.objects.create(cri_cra=cri, preco_unitario=Decimal(1000), quantidade=8, taxa=0, data=datetime.date(2016, 11, 10), tipo_operacao='C')
         
 
     def test_calculo_valor_atualizado_taxa_di(self):
         """Testar de acordo com os valores pegos no extrato, 98% CDI começando em 30 de Setembro"""
         # 20/12/2016    1.018,77
-        # 14/03/2017    1.047,21    
         # 22/11/2016    1.008,63
         # 01/12/2016    1.012,21
+        # 03/01/2017    1.023,85
         
-        self.assertAlmostEqual(calcular_valor_um_cri_cra_na_data(CRI_CRA.objects.get(codigo_isin='BRCYRELA'), datetime.date(2016, 12, 20)), Decimal('1018.77'), delta=Decimal('0.01'))
-#         self.assertAlmostEqual(calcular_valor_um_cri_cra_na_data(CRI_CRA.objects.get(codigo_isin='BRCYRELA'), datetime.date(2017, 3, 14)), Decimal('1047.21'), delta=Decimal('0.01'))
-        self.assertAlmostEqual(calcular_valor_um_cri_cra_na_data(CRI_CRA.objects.get(codigo_isin='BRCYRELA'), datetime.date(2016, 11, 22)), Decimal('1008.63'), delta=Decimal('0.01'))
-        self.assertAlmostEqual(calcular_valor_um_cri_cra_na_data(CRI_CRA.objects.get(codigo_isin='BRCYRELA'), datetime.date(2016, 12, 1)), Decimal('1012.21'), delta=Decimal('0.01'))
+        cri = CRI_CRA.objects.get(codigo_isin='BRCYRELA')
+        self.assertAlmostEqual(calcular_valor_um_cri_cra_na_data(cri, datetime.date(2016, 12, 20)).quantize(Decimal('.01')), Decimal('1018.77'), delta=Decimal('0.01'))
+        self.assertAlmostEqual(calcular_valor_um_cri_cra_na_data(cri, datetime.date(2017, 6, 14)).quantize(Decimal('.01')), Decimal('1003.01'), delta=Decimal('0.01'))
+        self.assertAlmostEqual(calcular_valor_um_cri_cra_na_data(cri, datetime.date(2016, 11, 22)).quantize(Decimal('.01')), Decimal('1008.63'), delta=Decimal('0.01'))
+        self.assertAlmostEqual(calcular_valor_um_cri_cra_na_data(cri, datetime.date(2016, 12, 1)).quantize(Decimal('.01')), Decimal('1012.21'), delta=Decimal('0.01'))
+        self.assertAlmostEqual(calcular_valor_um_cri_cra_na_data(cri, datetime.date(2017, 1, 3)).quantize(Decimal('.01')), Decimal('1023.85'), delta=Decimal('0.01'))
+        
+    def test_calculo_rendimentos_taxa_di(self):
+        """Testar quantidade de rendimentos recebidos em 5 de Junho, R$ 579,03 para 8 CRIs"""
+        self.assertAlmostEqual(calcular_rendimentos_cri_cra_ate_data(CRI_CRA.objects.get(codigo_isin='BRCYRELA'), datetime.date(2017, 6, 5)), Decimal('579.03'), delta=Decimal('0.01'))
 
 
 # "2016-09-30";14.13
