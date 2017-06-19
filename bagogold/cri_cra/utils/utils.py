@@ -107,15 +107,25 @@ def calcular_valor_cri_cra_ate_dia_para_divisao(divisao_id, dia=datetime.date.to
 
     return qtd_cri_cra
 
-def calcular_rendimentos_cri_cra_ate_data(cri_cra, data=datetime.date.today()):
+def calcular_rendimentos_cri_cra_ate_data_para_cri_cra(cri_cra, data=datetime.date.today()):
     """
-    Calcula a quantidade de rendimentos recebida até data
+    Calcula a quantidade de rendimentos recebida até data para um Certificado
     Parâmetros: CRI/CRA
                 Dia final
-    Retorno: Valor total dos rendimentos recebidos
+    Retorno: Valor total dos rendimentos recebidos do certificado
     """
     datas_rendimento = DataRemuneracaoCRI_CRA.objects.filter(cri_cra=cri_cra, data__lte=data)
     # Retorna a soma das quantidades de certificados nas datas pelo valor recebido nas datas
     return sum([(quantidade_cri_cra_na_data_para_certificado(cri_cra, data_rendimento.data - datetime.timedelta(days=1)) * data_rendimento.qtd_remuneracao()) \
                  for data_rendimento in datas_rendimento])
         
+def calcular_rendimentos_cri_cra_ate_data(investidor, data=datetime.date.today()):
+    """
+    Calcula a quantidade de rendimentos recebida até data
+    Parâmetros: Investidor
+                Dia final
+    Retorno: Valor total dos rendimentos recebidos para todos os certificados
+    """
+    datas_rendimento = DataRemuneracaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, data__lte=data)
+    return sum([(quantidade_cri_cra_na_data_para_certificado(data_rendimento.cri_cra, data_rendimento.data - datetime.timedelta(days=1)) * data_rendimento.qtd_remuneracao()) \
+                 for data_rendimento in datas_rendimento])
