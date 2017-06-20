@@ -188,7 +188,7 @@ class OperacaoDebenture (models.Model):
     tipo_operacao = models.CharField(u'Tipo de operação', max_length=1)
     
     def __unicode__(self):
-        return '(%s) R$%s da debênture %s em %s' % (self.tipo_operacao, (self.quantidade*self.preco_unitario), self.debenture, self.data)
+        return u'(%s) R$ %s da debênture %s em %s' % (self.tipo_operacao, (self.quantidade*self.preco_unitario), self.debenture, self.data)
     
 class HistoricoValorDebenture (models.Model):
     debenture = models.ForeignKey('Debenture')

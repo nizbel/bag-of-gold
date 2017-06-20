@@ -72,6 +72,9 @@ class OperacaoCRI_CRA (models.Model):
     tipo_operacao = models.CharField(u'Tipo de operação', max_length=1)
     taxa = models.DecimalField(u'Taxa', max_digits=11, decimal_places=2)
     
+    def __unicode__(self):
+        return u'(%s) %s certificado(s) de %s a R$ %s' % (self.tipo_operacao, self.quantidade, self.cri_cra.nome, self.preco_unitario)
+    
 class DataRemuneracaoCRI_CRA (models.Model):
     data = models.DateField(u'Data de remuneração')
     cri_cra = models.ForeignKey('CRI_CRA')
