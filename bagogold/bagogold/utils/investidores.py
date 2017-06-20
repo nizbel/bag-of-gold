@@ -80,24 +80,24 @@ def buscar_ultimas_operacoes(investidor, quantidade_operacoes):
     
     return ultimas_operacoes
 
-def buscar_operacoes_no_mes(investidor, mes, ano):
+def buscar_operacoes_no_periodo(investidor, data_inicial, data_final):
     from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB
     """
-    Busca as operações feitas pelo investidor, ordenadas por data crescente, no mês e ano especificados
+    Busca as operações feitas pelo investidor, ordenadas por data crescente, no período especificado
     Parâmetros: Investidor
-                Mês
-                Ano
+                Data inicial
+                Data final
     Retorno: Lista com as operações ordenadas por data
     """
     # Juntar todas as operações em uma lista
-    operacoes_fii = OperacaoFII.objects.filter(investidor=investidor, data__month=mes, data__year=ano).order_by('data')
-    operacoes_td = OperacaoTitulo.objects.filter(investidor=investidor, data__month=mes, data__year=ano).order_by('data')
-    operacoes_acoes = OperacaoAcao.objects.filter(investidor=investidor, data__month=mes, data__year=ano).order_by('data')
-    operacoes_lc = OperacaoLetraCredito.objects.filter(investidor=investidor, data__month=mes, data__year=ano).order_by('data')  
-    operacoes_cdb_rdb = OperacaoCDB_RDB.objects.filter(investidor=investidor, data__month=mes, data__year=ano).order_by('data')  
-    operacoes_cri_cra = OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, data__month=mes, data__year=ano).order_by('data')  
-    operacoes_debentures = OperacaoDebenture.objects.filter(investidor=investidor, data__month=mes, data__year=ano).order_by('data')  
-    operacoes_fundo_investimento = OperacaoFundoInvestimento.objects.filter(investidor=investidor, data__month=mes, data__year=ano).order_by('data')
+    operacoes_fii = OperacaoFII.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')
+    operacoes_td = OperacaoTitulo.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')
+    operacoes_acoes = OperacaoAcao.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')
+    operacoes_lc = OperacaoLetraCredito.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')  
+    operacoes_cdb_rdb = OperacaoCDB_RDB.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')  
+    operacoes_cri_cra = OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')  
+    operacoes_debentures = OperacaoDebenture.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')  
+    operacoes_fundo_investimento = OperacaoFundoInvestimento.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')
     
     lista_operacoes = sorted(chain(operacoes_fii, operacoes_td, operacoes_acoes, operacoes_lc, operacoes_cdb_rdb, 
                                    operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento),
