@@ -44,7 +44,7 @@ class CRI_CRA (models.Model):
         unique_together=('investidor', 'codigo_isin')
     
     def __unicode__(self):
-        return '%s, emitida em %s a R$ %s, com vencimento em %s' % (self.codigo_isin, str(self.data_emissao), self.valor_emissao, str(self.data_vencimento))
+        return u'%s, emitida em %s a R$ %s, com vencimento em %s' % (self.codigo_isin, str(self.data_emissao), self.valor_emissao, str(self.data_vencimento))
     
     def descricao_tipo(self):
         for escolha in self.ESCOLHAS_TIPO_CRI_CRA:

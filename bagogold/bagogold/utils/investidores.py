@@ -37,6 +37,13 @@ def is_superuser(user):
     raise PermissionDenied
 
 def buscar_acoes_investidor_na_data(investidor, data=datetime.date.today(), destinacao=''):
+    """
+    Busca as ações que o investidor possui na da especificada
+    Parâmetros: Investidor
+                Data da posição
+                DestinaçãO (Buy and Hold, Trading ou ambos)
+    Retorno: Lista com as ações que o investidor possui posição
+    """
     if destinacao not in ['', 'B', 'T']:
         raise ValueError
     # Buscar proventos em ações
