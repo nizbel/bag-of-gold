@@ -22,7 +22,8 @@ from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di, \
 from bagogold.bagogold.utils.misc import calcular_rendimentos_ate_data, \
     verificar_feriado_bovespa
 from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia
-from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA
+from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA,\
+    DataRemuneracaoCRI_CRA, DataAmortizacaoCRI_CRA, CRI_CRA
 from bagogold.cri_cra.utils.utils import calcular_valor_cri_cra_ate_dia, \
     calcular_rendimentos_cri_cra_ate_data
 from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
@@ -64,30 +65,57 @@ def calendario(request):
             raise
         
         # Buscar eventos
+        # Operações do investidor
         operacoes = buscar_operacoes_no_periodo(investidor, data_inicial, data_final)
         calendario = [{'title': unicode(operacao), 'start': operacao.data.strftime('%Y-%m-%d')} for operacao in operacoes]
         
-        proventos_acoes = Provento.objects.filter(data_ex__range=[data_inicial, data_final], tipo_provento__in=['D', 'J'])
+        # Proventos de ações
+        # Busca ações que o investidor já tenha negociado
+        lista_acoes_negociadas = OperacaoAcao.objects.filter(investidor=investidor).order_by('acao').values_list('acao', flat=True).distinct()
+        proventos_acoes = Provento.objects.filter(data_ex__range=[data_inicial, data_final], tipo_provento__in=['D', 'J'], acao__in=lista_acoes_negociadas)
         calendario.extend([{'title': u'Data EX para %s de %s, R$ %s por ação' % (provento.descricao_tipo_provento(), provento.acao.ticker, provento.valor_unitario), 
                             'start': provento.data_ex.strftime('%Y-%m-%d')} for provento in proventos_acoes])
         
-        proventos_acoes = Provento.objects.filter(data_pagamento__range=[data_inicial, data_final], tipo_provento__in=['D', 'J'])
+        
+        proventos_acoes = Provento.objects.filter(data_pagamento__range=[data_inicial, data_final], tipo_provento__in=['D', 'J'], acao__in=lista_acoes_negociadas)
         calendario.extend([{'title': u'Data de pagamento para %s de %s, R$ %s por ação' % (provento.descricao_tipo_provento(), provento.acao.ticker, provento.valor_unitario), 
                             'start': provento.data_pagamento.strftime('%Y-%m-%d')} for provento in proventos_acoes])
         
-        proventos_fiis = ProventoFII.objects.filter(data_ex__range=[data_inicial, data_final])
+        # Proventos de FIIs
+        # Busca fiis que o investidor já tenha negociado
+        lista_fiis_negociadas = OperacaoFII.objects.filter(investidor=investidor).order_by('fii').values_list('fii', flat=True).distinct()
+        proventos_fiis = ProventoFII.objects.filter(data_ex__range=[data_inicial, data_final], fii__in=lista_fiis_negociadas)
         calendario.extend([{'title': u'Data EX para %s de %s, R$ %s por cota' % (provento.descricao_tipo_provento(), provento.fii.ticker, provento.valor_unitario), 
                             'start': provento.data_ex.strftime('%Y-%m-%d')} for provento in proventos_fiis])
         
-        proventos_fiis = ProventoFII.objects.filter(data_pagamento__range=[data_inicial, data_final])
+        proventos_fiis = ProventoFII.objects.filter(data_pagamento__range=[data_inicial, data_final], fii__in=lista_fiis_negociadas)
         calendario.extend([{'title': u'Data de pagamento para %s de %s, R$ %s por cota' % (provento.descricao_tipo_provento(), provento.fii.ticker, provento.valor_unitario), 
                             'start': provento.data_pagamento.strftime('%Y-%m-%d')} for provento in proventos_fiis])
         
+        # Vencimento de CDB/RDB
         vencimento_cdb_rdb = OperacaoCDB_RDB.objects.filter(investidor=investidor, data__lt=data_final)
         # Buscar apenas operações que vencem no período especificado
         vencimento_cdb_rdb = [operacao for operacao in vencimento_cdb_rdb if operacao.data_vencimento() >= data_inicial and operacao.data_vencimento() <= data_final]
         calendario.extend([{'title': u'Vencimento de operação de R$ %s em %s, feita em %s' % (operacao.quantidade, operacao.investimento.nome, operacao.data.strftime('%d/%m/%Y')), 
                             'start': operacao.data_vencimento().strftime('%Y-%m-%d')} for operacao in vencimento_cdb_rdb])
+        
+        # Vencimento de LCI/LCA
+        carencia_lci_lca = OperacaoLetraCredito.objects.filter(investidor=investidor, data__lt=data_final)
+        # Buscar apenas operações com fim da carência no período especificado
+        carencia_lci_lca = [operacao for operacao in carencia_lci_lca if operacao.data_carencia() >= data_inicial and operacao.data_carencia() <= data_final]
+        calendario.extend([{'title': u'Carência de operação de R$ %s em %s, feita em %s' % (operacao.quantidade, operacao.letra_credito.nome, operacao.data.strftime('%d/%m/%Y')), 
+                            'start': operacao.data_carencia().strftime('%Y-%m-%d')} for operacao in carencia_lci_lca])
+        
+        # Vencimento, amortizações e remunerações de CRI/CRA
+        remuneracoes_cri_cra = DataRemuneracaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, data__range=[data_inicial, data_final])
+        calendario.extend([{'title': u'Pagamento de remuneração de R$ %s para %s' % (data_remuneracao.qtd_remuneracao(), data_remuneracao.cri_cra.nome), 
+                            'start': data_remuneracao.data.strftime('%Y-%m-%d')} for data_remuneracao in remuneracoes_cri_cra])
+        amortizacoes_cri_cra = DataAmortizacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, data__range=[data_inicial, data_final])
+        calendario.extend([{'title': u'Pagamento de amortização para %s' % (data_amortizacao.cri_cra.nome), 
+                            'start': data_amortizacao.data.strftime('%Y-%m-%d')} for data_amortizacao in amortizacoes_cri_cra])
+        vencimentos_cri_cra = CRI_CRA.objects.filter(investidor=investidor, data_vencimento__range=[data_inicial, data_final])
+        calendario.extend([{'title': u'Vencimento de %s' % (cri_cra.nome), 
+                            'start': cri_cra.data_vencimento.strftime('%Y-%m-%d')} for cri_cra in vencimentos_cri_cra])
         
         return HttpResponse(json.dumps(calendario), content_type = "application/json")   
     
