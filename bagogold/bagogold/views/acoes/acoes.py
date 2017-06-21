@@ -20,12 +20,17 @@ def listar_acoes(request):
     return TemplateResponse(request, 'acoes/listar_acoes.html', {'acoes': acoes})
 
 @em_construcao('')
-# @adiciona_titulo_descricao('Lista de proventos', 'Lista os proventos de ações cadastrados')
+@adiciona_titulo_descricao('Lista de proventos', 'Lista os proventos de ações cadastrados')
 def listar_proventos(request):
     proventos = Provento.objects.all()
     
+    # Montar filtros
+    filtros = {}
+    
+    # Buscar últimas atualizações
     ultimas_atualizacoes = InvestidorValidacaoDocumento.objects.filter(documento__tipo='A').order_by('-data_validacao')[:5] \
-        .values('documento').annotate(provento=F('documento__proventoacaodocumento__provento'))
+        .annotate(provento=F('documento__proventoacaodocumento__provento')).values_list('provento', flat=True)
+    ultimas_atualizacoes = Provento.objects.filter(id__in=ultimas_atualizacoes)
     
     return TemplateResponse(request, 'acoes/listar_proventos.html', {'proventos': proventos, 'ultimas_atualizacoes': ultimas_atualizacoes})
 
