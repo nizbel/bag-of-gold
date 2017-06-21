@@ -29,7 +29,7 @@ def calcular_valor_um_cri_cra_na_data(certificado, data=datetime.date.today()):
     
     # Buscar data inicial, considerando a última data de remuneração antes da data enviada
     if DataRemuneracaoCRI_CRA.objects.filter(cri_cra=certificado, data__lte=data).exists():
-        data_inicial = DataRemuneracaoCRI_CRA.objects.filter(cri_cra=certificado, data__lt=data).order_by('-data')[0].data
+        data_inicial = DataRemuneracaoCRI_CRA.objects.filter(cri_cra=certificado, data__lte=data).order_by('-data')[0].data
     else:
         data_inicial = certificado.data_inicio_rendimento 
     
