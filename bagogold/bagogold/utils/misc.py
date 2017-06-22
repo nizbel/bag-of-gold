@@ -27,7 +27,7 @@ def calcular_imposto_renda_longo_prazo(lucro, qtd_dias):
         return Decimal(0.15) * (lucro)
     
 def calcular_iof_e_ir_longo_prazo(lucro_bruto, qtd_dias):
-    iof = lucro_bruto * calcular_iof_regressivo(qtd_dias)/100
+    iof = lucro_bruto * calcular_iof_regressivo(qtd_dias)
     imposto_renda = calcular_imposto_renda_longo_prazo(lucro_bruto - iof, qtd_dias)
     return iof, imposto_renda
 
