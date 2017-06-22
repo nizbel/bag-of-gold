@@ -16,7 +16,7 @@ from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa_di, \
     calcular_valor_atualizado_com_taxas_di,\
     calcular_valor_atualizado_com_taxa_prefixado
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo, \
-    qtd_dias_uteis_no_periodo
+    qtd_dias_uteis_no_periodo, calcular_iof_e_ir_longo_prazo
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -407,6 +407,7 @@ def historico(request):
                                 operacao.taxa = operacao_c.taxa
                                 operacao.atual = (operacao.quantidade/operacao_c.quantidade) * operacao_c.atual
                                 operacao_c.atual -= operacao.atual
+                                operacao.atual -= sum(calcular_iof_e_ir_longo_prazo(operacao.atual - operacao.quantidade, (operacao.data - operacao_c.data).days))
                                 str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
                                 operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
                                 break
@@ -703,7 +704,7 @@ def painel(request):
                         
                 elif operacao.tipo_operacao == 'V':
                     if (operacao.data == data_iteracao):
-                        operacao.inicial = operacao.quantidade
+#                         operacao.inicial = operacao.quantidade
                         # Remover quantidade da operação de compra
                         operacao_compra_id = operacao.operacao_compra_relacionada().id
                         for operacao_c in operacoes:
@@ -713,6 +714,7 @@ def painel(request):
                                 operacao.atual = (operacao.quantidade/operacao_c.quantidade) * operacao_c.atual
                                 operacao_c.atual -= operacao.atual
                                 operacao_c.inicial -= operacao.inicial
+                                operacao.atual -= sum(calcular_iof_e_ir_longo_prazo(operacao.atual - operacao.inicial, (operacao.data - operacao_c.data).days))
                                 str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
                                 operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
                                 break

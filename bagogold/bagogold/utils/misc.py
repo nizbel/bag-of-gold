@@ -3,6 +3,7 @@ from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao
 from bagogold.bagogold.models.fii import UsoProventosOperacaoFII
 from bagogold.bagogold.models.lc import OperacaoLetraCredito
 from bagogold.bagogold.models.td import HistoricoIPCA, OperacaoTitulo
+from bagogold.fundo_investimento.utils import calcular_valor_fundos_investimento_ate_dia
 from decimal import Decimal
 from urllib2 import Request, urlopen, URLError, HTTPError
 import datetime
@@ -14,6 +15,21 @@ import time
 
 def calcular_iof_regressivo(dias):
     return Decimal(max((100 - (dias * 3 + math.ceil((float(dias)/3)))), 0)/100)
+
+def calcular_imposto_renda_longo_prazo(lucro, qtd_dias):
+    if qtd_dias <= 180:
+        return Decimal(0.225) * (lucro)
+    elif qtd_dias <= 360:
+        return Decimal(0.2) * (lucro)
+    elif qtd_dias <= 720:
+        return Decimal(0.175) * (lucro)
+    else: 
+        return Decimal(0.15) * (lucro)
+    
+def calcular_iof_e_ir_longo_prazo(lucro_bruto, qtd_dias):
+    iof = lucro_bruto * calcular_iof_regressivo(qtd_dias)
+    imposto_renda = calcular_imposto_renda_longo_prazo(lucro_bruto - iof, qtd_dias)
+    return iof, imposto_renda
 
 def buscar_historico_ipca():
     td_url = 'http://www.portalbrasil.net/ipca.htm'
@@ -138,7 +154,11 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDEFILR
     # FII
     if 'F' in tipo_investimentos:
         rendimentos['F'] = calcular_poupanca_prov_fii_ate_dia(investidor, data) + sum(UsoProventosOperacaoFII.objects.filter(operacao__investidor=investidor, operacao__data__lte=data).values_list('qtd_utilizada', flat=True))
-        
+    
+    # Fundos de Investimento
+    if 'I' in tipo_investimentos:
+        rendimentos['I'] = sum(calcular_valor_fundos_investimento_ate_dia(investidor, data).values())
+    
     # Letras de Crédito
     if 'L' in tipo_investimentos:
         rendimentos['L'] = sum(calcular_valor_lc_ate_dia(investidor, data).values()) \

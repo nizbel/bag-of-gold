@@ -66,6 +66,9 @@ class OperacaoLetraCredito (models.Model):
             return HistoricoCarenciaLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito).order_by('-data')[0].carencia
         else:
             return HistoricoCarenciaLetraCredito.objects.get(data__isnull=True, letra_credito=self.letra_credito).carencia
+        
+    def data_carencia(self):
+        return self.data + datetime.timedelta(days=self.carencia())
     
     def operacao_compra_relacionada(self):
         if self.tipo_operacao == 'V':
