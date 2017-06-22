@@ -120,10 +120,6 @@ def calendario(request):
         
         # Vencimento de Tesouro Direto
         vencimento_td = Titulo.objects.filter(operacaotitulo__investidor=investidor, data_vencimento__range=[data_inicial, data_final]).distinct()
-        print vencimento_td
-        # Pegar apenas datas que o investidor tenha posição
-#         vencimento_td = [Titulo.objects.get(id=id_titulo) for id_titulo in vencimento_td if quantidade_titulos_ate_dia_por_titulo(investidor, operacao.titulo.id, 
-#                                                                                                                                 operacao.titulo.data_vencimento - datetime.timedelta(days=1))]
         calendario.extend([{'title': u'Vencimento de %s' % (titulo.nome()), 
                             'start': titulo.data_vencimento.strftime('%Y-%m-%d')} for titulo in vencimento_td])
         
