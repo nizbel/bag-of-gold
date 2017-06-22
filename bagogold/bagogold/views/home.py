@@ -10,7 +10,7 @@ from bagogold.bagogold.models.fii import OperacaoFII, HistoricoFII, ProventoFII,
     ValorDiarioFII
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
-    ValorDiarioTitulo
+    ValorDiarioTitulo, Titulo
 from bagogold.bagogold.utils.cdb_rdb import calcular_valor_cdb_rdb_ate_dia, \
     calcular_valor_venda_cdb_rdb
 from bagogold.bagogold.utils.debenture import calcular_valor_debentures_ate_dia
@@ -21,8 +21,9 @@ from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di, \
     calcular_valor_lc_ate_dia, calcular_valor_venda_lc
 from bagogold.bagogold.utils.misc import calcular_rendimentos_ate_data, \
     verificar_feriado_bovespa
-from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia
-from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA,\
+from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia, \
+    quantidade_titulos_ate_dia_por_titulo
+from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA, \
     DataRemuneracaoCRI_CRA, DataAmortizacaoCRI_CRA, CRI_CRA
 from bagogold.cri_cra.utils.utils import calcular_valor_cri_cra_ate_dia, \
     calcular_rendimentos_cri_cra_ate_data
@@ -116,6 +117,15 @@ def calendario(request):
         vencimentos_cri_cra = CRI_CRA.objects.filter(investidor=investidor, data_vencimento__range=[data_inicial, data_final])
         calendario.extend([{'title': u'Vencimento de %s' % (cri_cra.nome), 
                             'start': cri_cra.data_vencimento.strftime('%Y-%m-%d')} for cri_cra in vencimentos_cri_cra])
+        
+        # Vencimento de Tesouro Direto
+        vencimento_td = Titulo.objects.filter(operacaotitulo__investidor=investidor, data_vencimento__range=[data_inicial, data_final]).distinct()
+        print vencimento_td
+        # Pegar apenas datas que o investidor tenha posição
+#         vencimento_td = [Titulo.objects.get(id=id_titulo) for id_titulo in vencimento_td if quantidade_titulos_ate_dia_por_titulo(investidor, operacao.titulo.id, 
+#                                                                                                                                 operacao.titulo.data_vencimento - datetime.timedelta(days=1))]
+        calendario.extend([{'title': u'Vencimento de %s' % (titulo.nome()), 
+                            'start': titulo.data_vencimento.strftime('%Y-%m-%d')} for titulo in vencimento_td])
         
         return HttpResponse(json.dumps(calendario), content_type = "application/json")   
     
