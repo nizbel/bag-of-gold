@@ -13,7 +13,7 @@
 {% block content %}
 <div class="portlet-body">
     <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-5">
             <div class="portlet box yellow-crusta">
                 <div class="portlet-title">
                     <div class="caption">
@@ -30,17 +30,17 @@
                                 <th>Ação</th>
                                 <th>Tipo</th>
                                 <th>Data EX</th>
-                                <th>Data de pagamento</th>
+                                <th>Data de pgto.</th>
                                 <th>Valor</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for provento in ultimas_atualizacoes %}
                             <tr>
-                                <td><a href="#" class="tooltips" data-placement="top" data-original-title="Estatísticas da ação">{{provento.acao.ticker}}</a></td>
+                                <td>{{provento.acao.ticker}}</td>
                                 <td>{{provento.descricao_tipo_provento}}</td>
-                                <td>{{provento.data_ex}}</td>
-                                <td>{{provento.data_pagamento}}</td>
+                                <td>{{provento.data_ex|date:'d/m/Y'}}</td>
+                                <td>{{provento.data_pagamento|date:'d/m/Y'}}</td>
                                 <td>R$ {{provento.valor_unitario}}</td>
                             </tr>
                             {% endfor %}
@@ -50,7 +50,7 @@
             </div>
         </div>  
         {% if request.user.is_authenticated %}
-        <div class="col-md-6">
+        <div class="col-md-7">
             <div class="portlet box yellow-crusta">
                 <div class="portlet-title">
                     <div class="caption">
@@ -67,18 +67,20 @@
                                 <th>Ação</th>
                                 <th>Tipo</th>
                                 <th>Data EX</th>
-                                <th>Data de pagamento</th>
+                                <th>Data de pgto.</th>
                                 <th>Valor</th>
+                                <th>Total</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for provento in proximos_proventos %}
                             <tr>
-                                <td><a href="#" class="tooltips" data-placement="top" data-original-title="Estatísticas da ação">{{provento.acao.ticker}}</a></td>
+                                <td>{{provento.acao.ticker}}</td>
                                 <td>{{provento.descricao_tipo_provento}}</td>
-                                <td>{{provento.data_ex}}</td>
-                                <td>{{provento.data_pagamento}}</td>
+                                <td>{{provento.data_ex|date:'d/m/Y'}}</td>
+                                <td>{{provento.data_pagamento|date:'d/m/Y'}}</td>
                                 <td>R$ {{provento.valor_unitario}}</td>
+                                <td>R$ {{provento.quantia_a_receber}}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -101,10 +103,10 @@
                 <tbody>
                     {% for provento in proventos %}
                     <tr>
-                        <td><a href="#" class="tooltips" data-placement="top" data-original-title="Estatísticas da ação">{{provento.acao.ticker}}</a></td>
+                        <td>{{provento.acao.ticker}}</td>
                         <td>{{provento.descricao_tipo_provento}}</td>
-                        <td>{{provento.data_ex}}</td>
-                        <td>{{provento.data_pagamento}}</td>
+                        <td>{{provento.data_ex|date:'d/m/Y'}}</td>
+                        <td>{{provento.data_pagamento|date:'d/m/Y'}}</td>
                         <td>R$ {{provento.valor_unitario}}</td>
                     </tr>
                     {% endfor %}

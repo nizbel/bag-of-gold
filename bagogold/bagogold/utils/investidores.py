@@ -183,39 +183,43 @@ def buscar_totais_atuais_investimentos(investidor):
     
     return totais_atuais
 
-def buscar_proventos_a_receber(investidor):
+def buscar_proventos_a_receber(investidor, fonte_provento=''):
     """
     Retorna proventos que o investidor irá receber futuramente, já passada a data EX
     Parâmetros: Investidor
+                Fonte do provento ('F' = FII, 'A' = Ações, '' = Ambos)
     Retorno:    Lista de proventos
     """
     proventos_a_receber = list()
     
-    acoes_investidor = buscar_acoes_investidor_na_data(investidor)
-    
-    data_atual = datetime.date.today()
-    
-    for acao in Acao.objects.filter(id__in=acoes_investidor):
-        proventos_a_pagar = Provento.objects.filter(acao=acao, data_ex__lte=data_atual, data_pagamento__gte=data_atual, tipo_provento__in=['D', 'J'])
-        for provento in proventos_a_pagar:
-            qtd_acoes = quantidade_acoes_ate_dia(investidor, acao.ticker, provento.data_ex - datetime.timedelta(days=1), considerar_trade=True) 
-            if qtd_acoes > 0:
-                provento.quantia_a_receber = (qtd_acoes * provento.valor_unitario) if provento.tipo_provento == 'D' else (qtd_acoes * provento.valor_unitario * Decimal(0.85))
-                proventos_a_receber.append(provento)
+    # Buscar proventos em ações
+    if fonte_provento != 'F':
+        acoes_investidor = buscar_acoes_investidor_na_data(investidor)
+        
+        data_atual = datetime.date.today()
+        
+        for acao in Acao.objects.filter(id__in=acoes_investidor):
+            proventos_a_pagar = Provento.objects.filter(acao=acao, data_ex__lte=data_atual, data_pagamento__gte=data_atual, tipo_provento__in=['D', 'J'])
+            for provento in proventos_a_pagar:
+                qtd_acoes = quantidade_acoes_ate_dia(investidor, acao.ticker, provento.data_ex - datetime.timedelta(days=1), considerar_trade=True) 
+                if qtd_acoes > 0:
+                    provento.quantia_a_receber = (qtd_acoes * provento.valor_unitario) if provento.tipo_provento == 'D' else (qtd_acoes * provento.valor_unitario * Decimal(0.85))
+                    proventos_a_receber.append(provento)
           
-    # Buscar proventos em FIIs          
-    fiis_investidor = OperacaoFII.objects.filter(investidor=investidor, data__lte=datetime.date.today()).values_list('fii', flat=True)
-    
-    # Remover FIIs repetidos
-    fiis_investidor = list(set(fiis_investidor))
-    
-    for fii in FII.objects.filter(id__in=fiis_investidor):
-        proventos_a_pagar = ProventoFII.objects.filter(fii=fii, data_ex__lte=data_atual, data_pagamento__gte=data_atual)
-        for provento in proventos_a_pagar:
-            qtd_fiis = calcular_qtd_fiis_ate_dia_por_ticker(investidor, provento.data_ex - datetime.timedelta(days=1), fii.ticker)
-            if qtd_fiis > 0:
-                provento.quantia_a_receber = (qtd_fiis * provento.valor_unitario)
-                proventos_a_receber.append(provento)
+    if fonte_provento != 'A':
+        # Buscar proventos em FIIs          
+        fiis_investidor = OperacaoFII.objects.filter(investidor=investidor, data__lte=datetime.date.today()).values_list('fii', flat=True)
+        
+        # Remover FIIs repetidos
+        fiis_investidor = list(set(fiis_investidor))
+        
+        for fii in FII.objects.filter(id__in=fiis_investidor):
+            proventos_a_pagar = ProventoFII.objects.filter(fii=fii, data_ex__lte=data_atual, data_pagamento__gte=data_atual)
+            for provento in proventos_a_pagar:
+                qtd_fiis = calcular_qtd_fiis_ate_dia_por_ticker(investidor, provento.data_ex - datetime.timedelta(days=1), fii.ticker)
+                if qtd_fiis > 0:
+                    provento.quantia_a_receber = (qtd_fiis * provento.valor_unitario)
+                    proventos_a_receber.append(provento)
     
     # Arredondar valores
     for provento in proventos_a_receber:
