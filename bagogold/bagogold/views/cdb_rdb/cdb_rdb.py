@@ -16,7 +16,7 @@ from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa_di, \
     calcular_valor_atualizado_com_taxas_di,\
     calcular_valor_atualizado_com_taxa_prefixado
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo, \
-    qtd_dias_uteis_no_periodo
+    qtd_dias_uteis_no_periodo, calcular_iof_e_ir_longo_prazo
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -715,6 +715,7 @@ def painel(request):
                                 operacao_c.inicial -= operacao.inicial
                                 str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
                                 operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+                                operacao.atual -= calcular_iof_e_ir_longo_prazo(operacao.atual, (operacao.data - operacao_c.data).days)
                                 break
                 
         # Proximo dia útil
