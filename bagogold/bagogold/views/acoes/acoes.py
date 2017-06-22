@@ -7,7 +7,8 @@ from bagogold.bagogold.models.gerador_proventos import \
     InvestidorValidacaoDocumento
 from bagogold.bagogold.utils.acoes import quantidade_acoes_ate_dia, \
     calcular_poupanca_prov_acao_ate_dia
-from bagogold.bagogold.utils.investidores import buscar_acoes_investidor_na_data
+from bagogold.bagogold.utils.investidores import buscar_acoes_investidor_na_data, \
+    buscar_proventos_a_receber
 from django.contrib.auth.decorators import login_required
 from django.db.models.expressions import F
 from django.template.response import TemplateResponse
@@ -20,14 +21,24 @@ def listar_acoes(request):
     return TemplateResponse(request, 'acoes/listar_acoes.html', {'acoes': acoes})
 
 @em_construcao('')
-# @adiciona_titulo_descricao('Lista de proventos', 'Lista os proventos de ações cadastrados')
+@adiciona_titulo_descricao('Lista de proventos', 'Lista os proventos de ações cadastrados')
 def listar_proventos(request):
     proventos = Provento.objects.all()
     
-    ultimas_atualizacoes = InvestidorValidacaoDocumento.objects.filter(documento__tipo='A').order_by('-data_validacao')[:5] \
-        .values('documento').annotate(provento=F('documento__proventoacaodocumento__provento'))
+    # Montar filtros
+    filtros = {}
     
-    return TemplateResponse(request, 'acoes/listar_proventos.html', {'proventos': proventos, 'ultimas_atualizacoes': ultimas_atualizacoes})
+    # Buscar últimas atualizações
+    ultimas_atualizacoes = InvestidorValidacaoDocumento.objects.filter(documento__tipo='A').order_by('-data_validacao')[:5] \
+        .annotate(provento=F('documento__proventoacaodocumento__provento')).values_list('provento', flat=True)
+    ultimas_atualizacoes = Provento.objects.filter(id__in=ultimas_atualizacoes)
+    
+    if request.user.is_authenticated():
+        proximos_proventos = buscar_proventos_a_receber(request.user.investidor, 'A')
+    else:
+        proximos_proventos = list()
+    
+    return TemplateResponse(request, 'acoes/listar_proventos.html', {'proventos': proventos, 'ultimas_atualizacoes': ultimas_atualizacoes, 'proximos_proventos': proximos_proventos})
 
 @adiciona_titulo_descricao('Sobre Ações', 'Detalha o que são Ações')
 def sobre(request):

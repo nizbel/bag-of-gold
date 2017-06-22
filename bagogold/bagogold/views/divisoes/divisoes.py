@@ -489,14 +489,15 @@ def listar_divisoes(request):
         # Calcular saldo da divisão
         divisao.saldo_bh = divisao.saldo_acoes_bh()
         divisao.saldo_cdb_rdb = divisao.saldo_cdb_rdb()
-        divisao.saldo_cdb_rdb = divisao.saldo_cri_cra()
-        divisao.saldo_cdb_rdb = divisao.saldo_debentures()
+        divisao.saldo_cri_cra = divisao.saldo_cri_cra()
+        divisao.saldo_debentures = divisao.saldo_debentures()
         divisao.saldo_fii = divisao.saldo_fii()
         divisao.saldo_fundo_investimento = divisao.saldo_fundo_investimento()
         divisao.saldo_lc = divisao.saldo_lc()
         divisao.saldo_td = divisao.saldo_td()
         divisao.saldo_trade = divisao.saldo_acoes_trade()
-        divisao.saldo = divisao.saldo_bh + divisao.saldo_cdb_rdb + divisao.saldo_lc + divisao.saldo_fii + divisao.saldo_trade + divisao.saldo_td
+        divisao.saldo = divisao.saldo_bh + divisao.saldo_cdb_rdb + divisao.saldo_cri_cra + divisao.saldo_debentures + divisao.saldo_fii \
+            + divisao.saldo_fundo_investimento + divisao.saldo_lc + divisao.saldo_td + divisao.saldo_trade
               
     return TemplateResponse(request, 'divisoes/listar_divisoes.html', {'divisoes': divisoes})
 

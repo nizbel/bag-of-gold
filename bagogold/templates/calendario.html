@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block extra_head %}
+<link href={% static "assets/global/plugins/fullcalendar/fullcalendar.min.css" %} rel="stylesheet" type="text/css" />
+{% endblock %}
+
+{% block pagina_titulo_icone %}
+<i class="icon-calendar font-yellow-crusta"></i>
+{% endblock %}
+
+{% block content %}
+<div class="portlet-body">
+    <div class="row">
+        {% comment %}
+        <div class="col-md-3 col-sm-12">
+            <!-- BEGIN DRAGGABLE EVENTS PORTLET-->
+            <h3 class="event-form-title margin-bottom-20">Draggable Events</h3>
+            <div id="external-events">
+                <form class="inline-form">
+                    <input type="text" value="" class="form-control" placeholder="Event Title..." id="event_title" />
+                    <br/>
+                    <a href="javascript:;" id="event_add" class="btn green"> Add Event </a>
+                </form>
+                <hr/>
+                <div id="event_box" class="margin-bottom-10"></div>
+                <label class="mt-checkbox mt-checkbox-single mt-checkbox-outline" for="drop-remove"> remove after drop
+                    <input type="checkbox" class="group-checkable" id="drop-remove" />
+                    <span></span>
+                </label>
+                <hr class="visible-xs" /> </div>
+            <!-- END DRAGGABLE EVENTS PORTLET-->
+        </div>
+        {% endcomment %}
+        <div class="col-md-12">
+            <div id="calendar" class="has-toolbar"> </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_footer %}
+<script src={% static "assets/global/plugins/moment.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/fullcalendar/fullcalendar.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/fullcalendar/lang/pt-br.js" %} type="text/javascript"></script>
+<!-- <script src={% static "assets/apps/scripts/calendar.min.js" %} type="text/javascript"></script> -->
+<script src={% static "assets/global/plugins/jquery-ui/jquery-ui.min.js" %} type="text/javascript"></script>
+<script>
+$( document ).ready(function() {
+	var h = {};
+
+    if (App.isRTL()) {
+        if ($('#calendar').parents(".portlet").width() <= 720) {
+            $('#calendar').addClass("mobile");
+            h = {
+                right: 'title, prev, next',
+                center: '',
+                left: 'basicDay, basicWeek, month, today'
+            };
+        } else {
+            $('#calendar').removeClass("mobile");
+            h = {
+                right: 'title',
+                center: '',
+                left: 'basicDay, basicWeek, month, today, prev,next'
+            };
+        }
+    } else {
+        if ($('#calendar').parents(".portlet").width() <= 720) {
+            $('#calendar').addClass("mobile");
+            h = {
+                left: 'title, prev, next',
+                center: '',
+                right: 'today,month,basicWeek,basicDay'
+            };
+        } else {
+            $('#calendar').removeClass("mobile");
+            h = {
+                left: 'title',
+                center: '',
+                right: 'prev,next,today,month,basicWeek,basicDay'
+            };
+        }
+    }
+	
+    $('#calendar').fullCalendar('destroy'); // destroy the calendar
+    $('#calendar').fullCalendar({ //re-initialize the calendar
+    	header: h,
+    	locale: 'pt-BR',
+        defaultView: 'month', // change default view with available options from http://arshaw.com/fullcalendar/docs/views/Available_Views/ 
+        allDayDefault: true,
+        selectable: true,
+        events: {
+                	 url: '{% url "inicio:calendario" %}',
+                     type: 'GET',
+                     error: function() {
+                         alert('Erro buscando a data selecionada!');
+                     },
+                     backgroundColor: '#f3c200',
+                     textColor: '#000'
+                 },
+         eventRender: function(event, element) {
+             element.find('.fc-content').css('white-space', 'normal');
+         }
+    });
+});
+</script>
+{% endblock %}
