@@ -21,8 +21,7 @@ from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di, \
     calcular_valor_lc_ate_dia, calcular_valor_venda_lc
 from bagogold.bagogold.utils.misc import calcular_rendimentos_ate_data, \
     verificar_feriado_bovespa
-from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia, \
-    quantidade_titulos_ate_dia_por_titulo
+from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia
 from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA, \
     DataRemuneracaoCRI_CRA, DataAmortizacaoCRI_CRA, CRI_CRA
 from bagogold.cri_cra.utils.utils import calcular_valor_cri_cra_ate_dia, \
