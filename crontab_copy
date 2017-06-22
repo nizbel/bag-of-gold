@@ -18,7 +18,7 @@
 # Fundos de investimento
 40 23 * * * /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py buscar_fundos_investimento --aleatorio
 50 23 * * * /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py buscar_fundos_investimento
-50 23 * * * /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py preencher_historico_fundo_investimento
+55 23 * * * /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py preencher_historico_fundo_investimento
 0 4 1 * * /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py preencher_historico_fundo_investimento --anual
 # Apenas Prod
 #* * * * * /home/bagofgold/.virtualenvs/bagogold/bin/python /home/bagofgold/bagogold/manage.py rodar_dropbox
