@@ -13,7 +13,7 @@
 {% block content %}
 <div class="portlet-body">
     <div class="row">
-        <div class="col-md-5">
+        <div class="col-md-6">
             <div class="portlet box yellow-crusta">
                 <div class="portlet-title">
                     <div class="caption">
@@ -32,6 +32,7 @@
                                 <th>Data EX</th>
                                 <th>Data de pgto.</th>
                                 <th>Valor</th>
+                                <th>Inserido em</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -42,6 +43,7 @@
                                 <td>{{provento.data_ex|date:'d/m/Y'}}</td>
                                 <td>{{provento.data_pagamento|date:'d/m/Y'}}</td>
                                 <td>R$ {{provento.valor_unitario}}</td>
+                                <td>{{provento.data_insercao|date:'d/m/Y'}}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -50,7 +52,7 @@
             </div>
         </div>  
         {% if request.user.is_authenticated %}
-        <div class="col-md-7">
+        <div class="col-md-6">
             <div class="portlet box yellow-crusta">
                 <div class="portlet-title">
                     <div class="caption">
