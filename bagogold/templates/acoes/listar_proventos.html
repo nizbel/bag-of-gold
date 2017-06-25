@@ -105,7 +105,7 @@
                 <tbody>
                     {% for provento in proventos %}
                     <tr>
-                        <td>{{provento.acao.ticker}}</td>
+                        <td><a href="{% url 'acoes:geral:detalhar_provento' provento.id %}">{{provento.acao.ticker}}</a></td>
                         <td>{{provento.descricao_tipo_provento}}</td>
                         <td>{{provento.data_ex|date:'d/m/Y'}}</td>
                         <td>{{provento.data_pagamento|date:'d/m/Y'}}</td>
