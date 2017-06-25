@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 from bagogold import settings
-from bagogold.bagogold.decorators import em_construcao, \
-    adiciona_titulo_descricao
+from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import \
     DivisaoOperacaoFundoInvestimentoFormSet
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFundoInvestimento, \
@@ -13,7 +12,7 @@ from bagogold.fundo_investimento.forms import OperacaoFundoInvestimentoForm
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
     HistoricoValorCotas, FundoInvestimento
 from bagogold.fundo_investimento.utils import \
-    calcular_qtd_cotas_ate_dia_por_fundo, calcular_qtd_cotas_ate_dia,\
+    calcular_qtd_cotas_ate_dia_por_fundo, \
     calcular_valor_fundos_investimento_ate_dia
 from decimal import Decimal
 from django.contrib import messages
@@ -149,7 +148,10 @@ def editar_operacao_fundo_investimento(request, id_operacao):
 
 @adiciona_titulo_descricao('Histórico de Fundos de Investimento', 'Histórico de operações de compra/venda em Fundos de Investimento')
 def historico(request):
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        return TemplateResponse(request, 'fundo_investimento/historico.html', {'dados': {}})
     # Processa primeiro operações de venda (V), depois compra (C)
     operacoes = OperacaoFundoInvestimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data') 
     # Se investidor não tiver operações, retornar vazio
