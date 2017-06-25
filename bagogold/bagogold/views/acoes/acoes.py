@@ -20,7 +20,6 @@ def listar_acoes(request):
     
     return TemplateResponse(request, 'acoes/listar_acoes.html', {'acoes': acoes})
 
-@em_construcao('')
 @adiciona_titulo_descricao('Lista de proventos', 'Lista os proventos de ações cadastrados')
 def listar_proventos(request):
     proventos = Provento.objects.all()
@@ -29,9 +28,12 @@ def listar_proventos(request):
     filtros = {}
     
     # Buscar últimas atualizações
-    ultimas_atualizacoes = InvestidorValidacaoDocumento.objects.filter(documento__tipo='A').order_by('-data_validacao')[:5] \
-        .annotate(provento=F('documento__proventoacaodocumento__provento')).values_list('provento', flat=True)
-    ultimas_atualizacoes = Provento.objects.filter(id__in=ultimas_atualizacoes)
+    ultimas_validacoes = InvestidorValidacaoDocumento.objects.filter(documento__tipo='A').order_by('-data_validacao')[:5] \
+        .annotate(provento=F('documento__proventoacaodocumento__provento')).values('provento', 'data_validacao')
+    print ultimas_validacoes
+    ultimas_atualizacoes = Provento.objects.filter(id__in=[validacao['provento'] for validacao in ultimas_validacoes])
+    for atualizacao in ultimas_atualizacoes:
+        atualizacao.data_insercao = next(validacao['data_validacao'] for validacao in ultimas_validacoes if validacao['provento'] == atualizacao.id)
     
     if request.user.is_authenticated():
         proximos_proventos = buscar_proventos_a_receber(request.user.investidor, 'A')
