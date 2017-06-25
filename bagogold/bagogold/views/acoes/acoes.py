@@ -4,7 +4,8 @@ from bagogold.bagogold.decorators import adiciona_titulo_descricao, \
 from bagogold.bagogold.models.acoes import Acao, ValorDiarioAcao, HistoricoAcao, \
     Provento
 from bagogold.bagogold.models.gerador_proventos import \
-    InvestidorValidacaoDocumento
+    InvestidorValidacaoDocumento, DocumentoProventoBovespa,\
+    ProventoAcaoDocumento
 from bagogold.bagogold.utils.acoes import quantidade_acoes_ate_dia, \
     calcular_poupanca_prov_acao_ate_dia
 from bagogold.bagogold.utils.investidores import buscar_acoes_investidor_na_data, \
@@ -13,6 +14,14 @@ from django.contrib.auth.decorators import login_required
 from django.db.models.expressions import F
 from django.template.response import TemplateResponse
 import datetime
+
+@adiciona_titulo_descricao('Detalhar provento', 'Detalhamento de proventos em ações')
+def detalhar_provento(request, provento_id):
+    provento = Provento.objects.get(id=provento_id)
+    
+    documentos = ProventoAcaoDocumento.objects.filter(provento=provento)
+    
+    return TemplateResponse(request, 'acoes/detalhar_provento.html', {'provento': provento, 'documentos': documentos})
 
 @adiciona_titulo_descricao('Lista de ações', 'Lista as ações da Bovespa')
 def listar_acoes(request):
@@ -28,7 +37,7 @@ def listar_proventos(request):
     filtros = {}
     
     # Buscar últimas atualizações
-    ultimas_validacoes = InvestidorValidacaoDocumento.objects.filter(documento__tipo='A').order_by('-data_validacao')[:5] \
+    ultimas_validacoes = InvestidorValidacaoDocumento.objects.filter(documento__tipo='A').order_by('-data_validacao')[:10] \
         .annotate(provento=F('documento__proventoacaodocumento__provento')).values('provento', 'data_validacao')
     print ultimas_validacoes
     ultimas_atualizacoes = Provento.objects.filter(id__in=[validacao['provento'] for validacao in ultimas_validacoes])
