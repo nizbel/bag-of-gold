@@ -106,6 +106,15 @@ class AcaoProvento (models.Model):
     def __unicode__(self):
         return u'Ações de %s, com frações de R$%s a receber em %s' % (self.acao_recebida.ticker, self.valor_calculo_frac, self.data_pagamento_frac)
     
+class AtualizacaoSelicProvento (models.Model):
+    """
+    Define o total de rendimento recebido por atualizar o provento pela Selic
+    """
+    valor_rendimento = models.DecimalField(u'Valor do rendimento', max_digits=19, decimal_places=15, blank=True, null=True)
+    data_inicio = models.DateField(u'Data de ínicio')
+    data_fim = models.DateField(u'Data de fim')
+    provento = models.OneToOneField('Provento')
+    
 class OperacaoAcao (models.Model):
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)  
     quantidade = models.IntegerField(u'Quantidade') 
