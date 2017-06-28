@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
-from django.db import models
-import datetime
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao
+from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
+from django.db import models
+from django.db.models.aggregates import Count
+import datetime
  
 class Acao (models.Model):
     TIPOS_ACAO_NUMERO = {3: u'ON',
@@ -90,6 +92,12 @@ class Provento (models.Model):
         else:
             return u'Indefinido'
     
+    @property
+    def valor_final(self):
+        if hasattr(self, 'atualizacaoselicprovento'):
+            return self.valor_unitario + self.atualizacaoselicprovento.rendimento()
+        return self.valor_unitario
+    
     objects = ProventoOficialManager()
     gerador_objects = models.Manager()
 
@@ -114,6 +122,23 @@ class AtualizacaoSelicProvento (models.Model):
     data_inicio = models.DateField(u'Data de ínicio')
     data_fim = models.DateField(u'Data de fim')
     provento = models.OneToOneField('Provento')
+    
+    def __unicode__(self):
+        if self.valor_rendimento:
+            return u'Atualização pela Selic de R$ %s' % (self.valor_rendimento)
+        return u'Atualização pela Selic de %s a %s' % (self.data_inicio.strftime('%d/%m/%Y'), self.data_fim.strftime('%d/%m/%Y'))
+    
+    def rendimento(self):
+        if self.valor_rendimento:
+            return self.valor_rendimento
+        
+        # Se não possui valor de rendimento definido, buscar valor pelo histórico da selic atual
+        from bagogold.bagogold.utils.taxas_indexacao import calcular_valor_atualizado_com_taxas_selic
+        historico_selic = HistoricoTaxaSelic.objects.filter(data__range=[self.data_inicio, self.data_fim]).values('taxa_diaria').annotate(qtd_dias=Count('taxa_diaria'))
+        taxas_dos_dias = {}
+        for taxa_quantidade in historico_selic:
+            taxas_dos_dias[taxa_quantidade['taxa_diaria']] = taxa_quantidade['qtd_dias']
+        return calcular_valor_atualizado_com_taxas_selic(taxas_dos_dias, self.provento.valor_unitario) - self.provento.valor_unitario
     
 class OperacaoAcao (models.Model):
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)  

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.acoes import Acao, Provento
+from bagogold.bagogold.models.acoes import Acao, Provento,\
+    AtualizacaoSelicProvento
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
 from bagogold.bagogold.utils.acoes import verificar_tipo_acao
@@ -50,22 +51,28 @@ class CalcularAtualizacaoProventoSelicTestCase(TestCase):
         """Verifica se os valores alcançados são iguais aos pegos na bovespa"""
         # Provento 1 deve ser próximo a 0,00319717853
         provento = Provento.objects.get(valor_unitario__gt=Decimal('0.1'))
-        historico_selic = HistoricoTaxaSelic.objects.filter(data__range=[datetime.date(2016, 6, 30), datetime.date(2016, 8, 30)]).values('taxa_diaria').annotate(qtd_dias=Count('taxa_diaria'))
+        atualizacao = AtualizacaoSelicProvento(provento=provento)
+        atualizacao.data_inicio = datetime.date(2016, 6, 30)
+        atualizacao.data_fim = datetime.date(2016, 8, 30)
+        historico_selic = HistoricoTaxaSelic.objects.filter(data__range=[atualizacao.data_inicio, atualizacao.data_fim]).values('taxa_diaria').annotate(qtd_dias=Count('taxa_diaria'))
         taxas_dos_dias = {}
         for taxa_quantidade in historico_selic:
             taxas_dos_dias[taxa_quantidade['taxa_diaria']] = taxa_quantidade['qtd_dias']
-            
-        valor_final = calcular_valor_atualizado_com_taxas_selic(taxas_dos_dias, provento.valor_unitario)
         
-        self.assertAlmostEqual(valor_final - provento.valor_unitario, Decimal('0.00319717853'), delta=Decimal('0.00000000001'))
+        atualizacao.valor_rendimento = calcular_valor_atualizado_com_taxas_selic(taxas_dos_dias, provento.valor_unitario) - atualizacao.provento.valor_unitario
+        
+        self.assertAlmostEqual(atualizacao.valor_rendimento, Decimal('0.00319717853'), delta=Decimal('0.00000000001'))
         
         # Provento 2 deve ser próximo a 0,00059183169
         provento = Provento.objects.get(valor_unitario__lt=Decimal('0.1'))
-        historico_selic = HistoricoTaxaSelic.objects.filter(data__range=[datetime.date(2016, 12, 30), datetime.date(2017, 3, 9)]).values('taxa_diaria').annotate(qtd_dias=Count('taxa_diaria'))
+        atualizacao = AtualizacaoSelicProvento(provento=provento)
+        atualizacao.data_inicio = datetime.date(2016, 12, 30)
+        atualizacao.data_fim = datetime.date(2017, 3, 9)
+        historico_selic = HistoricoTaxaSelic.objects.filter(data__range=[atualizacao.data_inicio, atualizacao.data_fim]).values('taxa_diaria').annotate(qtd_dias=Count('taxa_diaria'))
         taxas_dos_dias = {}
         for taxa_quantidade in historico_selic:
             taxas_dos_dias[taxa_quantidade['taxa_diaria']] = taxa_quantidade['qtd_dias']
         
-        valor_final = calcular_valor_atualizado_com_taxas_selic(taxas_dos_dias, provento.valor_unitario)
+        atualizacao.valor_rendimento = calcular_valor_atualizado_com_taxas_selic(taxas_dos_dias, provento.valor_unitario) - atualizacao.provento.valor_unitario
         
-        self.assertAlmostEqual(valor_final - provento.valor_unitario, Decimal('0.00059183169'), delta=Decimal('0.00000000001'))
+        self.assertAlmostEqual(atualizacao.valor_rendimento, Decimal('0.00059183169'), delta=Decimal('0.00000000001'))

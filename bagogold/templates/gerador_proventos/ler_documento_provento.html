@@ -263,7 +263,7 @@
                                                             {% if form_acao_provento.acao_recebida.errors %} <span class="help-block"> {{ form_acao_provento.acao_recebida.errors.as_text }} </span> {% endif %}
                                                         </div>
                                                     </div>
-                                                    <div class="form-group col-md-4 {% if form.data_pagamento_frac.errors %} has-error {% endif %}">
+                                                    <div class="form-group col-md-4 {% if form_acao_provento.data_pagamento_frac.errors %} has-error {% endif %}">
                                                         <label class="control-label col-md-4" style="text-align: left;"> Data de pagamento de frações: </label>
                                                         <div class="col-md-8">
                                                             <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_acao_provento-{{forloop.counter0}}-data_pagamento_frac" name="acao_provento-{{forloop.counter0}}-data_pagamento_frac" 
@@ -286,6 +286,58 @@
                                                         <div class="col-md-8">
                                                             <input id="id_acao_provento-{{forloop.counter0}}-valor_calculo_frac" type="text" value="{{form_acao_provento.valor_calculo_frac.value}}" name="acao_provento-{{forloop.counter0}}-valor_calculo_frac" class="form-control">
                                                             {% if form_acao_provento.valor_calculo_frac.errors %} <span class="help-block"> {{ form_acao_provento.valor_calculo_frac.errors.as_text }} </span> {% endif %}
+                                                        </div>
+                                                    </div>
+                                                {% endif %}
+                                            {% endfor %}
+                                            </div>
+                                            <div id="atualizacao-selic-{{forloop.counter0}}" class="row">
+                                            {% for form_acao_provento in formset_acao_provento.forms %}
+                                                {% if forloop.counter == forloop.parentloop.counter %}
+                                                    <div class="form-group col-md-4">
+                                                        <div class="md-checkbox col-md-12">
+                                                            <input type="checkbox" value="1" id="checkbox_atualizado_selic" name="atualizado_selic" 
+                                                            class="md-check">
+                                                            <label for="checkbox_atualizado_selic">
+                                                                <span></span>
+                                                                <span class="check"></span>
+                                                                <span class="box"></span> Atualizado pela Selic?</label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group col-md-4 {% if form_atualizacao_selic.data_inicio.errors %} has-error {% endif %}">
+                                                        <label class="control-label col-md-4" style="text-align: left;"> Data de início: </label>
+                                                        <div class="col-md-8">
+                                                            <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_acao_provento-{{forloop.counter0}}-data_pagamento_frac" name="acao_provento-{{forloop.counter0}}-data_pagamento_frac" 
+                                                            data-date-viewmode="years">
+                                                                <input type="text" class="form-control" name="acao_provento-{{forloop.counter0}}-data_pagamento_frac" 
+                                                                value="{% if form_acao_provento.data_pagamento_frac.value|date:'d/m/Y'|default:'' == '' %}{{form_acao_provento.data_pagamento_frac.value|default:''}}{% else %}{{form_acao_provento.data_pagamento_frac.value|date:'d/m/Y'}}{% endif %}">
+                                                                <span class="input-group-btn">
+                                                                    <button class="btn default" type="button">
+                                                                        <i class="fa fa-calendar"></i>
+                                                                    </button>
+                                                                </span>
+                                                            </div>
+                                                            {% if form_acao_provento.data_pagamento_frac.errors %} <span class="help-block"> {{ form_acao_provento.data_pagamento_frac.errors.as_text }} </span> 
+                                                            {% else %} <span class="help-block"> Selecione uma data </span>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group col-md-4 {% if form_atualizacao_selic.data_fim.errors %} has-error {% endif %}">
+                                                        <label class="control-label col-md-4" style="text-align: left;"> Data de fim: </label>
+                                                        <div class="col-md-8">
+                                                            <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_acao_provento-{{forloop.counter0}}-data_pagamento_frac" name="acao_provento-{{forloop.counter0}}-data_pagamento_frac" 
+                                                            data-date-viewmode="years">
+                                                                <input type="text" class="form-control" name="acao_provento-{{forloop.counter0}}-data_pagamento_frac" 
+                                                                value="{% if form_acao_provento.data_pagamento_frac.value|date:'d/m/Y'|default:'' == '' %}{{form_acao_provento.data_pagamento_frac.value|default:''}}{% else %}{{form_acao_provento.data_pagamento_frac.value|date:'d/m/Y'}}{% endif %}">
+                                                                <span class="input-group-btn">
+                                                                    <button class="btn default" type="button">
+                                                                        <i class="fa fa-calendar"></i>
+                                                                    </button>
+                                                                </span>
+                                                            </div>
+                                                            {% if form_acao_provento.data_pagamento_frac.errors %} <span class="help-block"> {{ form_acao_provento.data_pagamento_frac.errors.as_text }} </span> 
+                                                            {% else %} <span class="help-block"> Selecione uma data </span>
+                                                            {% endif %}
                                                         </div>
                                                     </div>
                                                 {% endif %}
