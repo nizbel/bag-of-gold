@@ -177,6 +177,7 @@
                                         {% if pendencia.documento.tipo == 'A' %}
                                             {{ formset_provento.management_form }}
                                             {{ formset_acao_provento.management_form }}
+                                            {{ formset_acao_selic.management_form }}
                                             {% for form_provento in formset_provento.forms %}
                                             <div class="col-md-12">
                                                 <h2 class="font-yellow-crusta" align="center">
@@ -291,51 +292,53 @@
                                                 {% endif %}
                                             {% endfor %}
                                             </div>
-                                            <div id="atualizacao-selic-{{forloop.counter0}}" class="row">
-                                            {% for form_acao_provento in formset_acao_provento.forms %}
+                                            <div class="row">
+                                            {% for form_acao_selic in formset_acao_selic.forms %}
                                                 {% if forloop.counter == forloop.parentloop.counter %}
                                                     <div class="form-group col-md-4">
-                                                        <div class="md-checkbox col-md-12">
-                                                            <input type="checkbox" value="1" id="checkbox_atualizado_selic" name="atualizado_selic" 
-                                                            class="md-check">
-                                                            <label for="checkbox_atualizado_selic">
-                                                                <span></span>
-                                                                <span class="check"></span>
-                                                                <span class="box"></span> Atualizado pela Selic?</label>
+                                                        <div class="col-md-12">
+                                                            <div class="md-checkbox">
+                                                                <input type="checkbox" value="1" id="checkbox_selic-{{forloop.counter0}}" name="selic-{{forloop.counter0}}" 
+                                                                class="md-check">
+                                                                <label for="checkbox_selic-{{forloop.counter0}}">
+                                                                    <span></span>
+                                                                    <span class="check"></span>
+                                                                    <span class="box"></span> Atualizado pela Selic?</label>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                    <div class="form-group col-md-4 {% if form_atualizacao_selic.data_inicio.errors %} has-error {% endif %}">
-                                                        <label class="control-label col-md-4" style="text-align: left;"> Data de início: </label>
+                                                    <div class="form-group col-md-4 {% if form_acao_selic.data_inicio.errors %} has-error {% endif %}" name="acao_selic-{{forloop.counter0}}">
+                                                        <label class="control-label col-md-4" style="text-align: left;"> Início da atualização: </label>
                                                         <div class="col-md-8">
-                                                            <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_acao_provento-{{forloop.counter0}}-data_pagamento_frac" name="acao_provento-{{forloop.counter0}}-data_pagamento_frac" 
+                                                            <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_acao_selic-{{forloop.counter0}}-data_inicio" name="acao_selic-{{forloop.counter0}}-data_inicio" 
                                                             data-date-viewmode="years">
-                                                                <input type="text" class="form-control" name="acao_provento-{{forloop.counter0}}-data_pagamento_frac" 
-                                                                value="{% if form_acao_provento.data_pagamento_frac.value|date:'d/m/Y'|default:'' == '' %}{{form_acao_provento.data_pagamento_frac.value|default:''}}{% else %}{{form_acao_provento.data_pagamento_frac.value|date:'d/m/Y'}}{% endif %}">
+                                                                <input type="text" class="form-control" name="acao_selic-{{forloop.counter0}}-data_inicio" 
+                                                                value="{% if form_acao_selic.data_inicio.value|date:'d/m/Y'|default:'' == '' %}{{form_acao_selic.data_inicio.value|default:''}}{% else %}{{form_acao_selic.data_inicio.value|date:'d/m/Y'}}{% endif %}">
                                                                 <span class="input-group-btn">
                                                                     <button class="btn default" type="button">
                                                                         <i class="fa fa-calendar"></i>
                                                                     </button>
                                                                 </span>
                                                             </div>
-                                                            {% if form_acao_provento.data_pagamento_frac.errors %} <span class="help-block"> {{ form_acao_provento.data_pagamento_frac.errors.as_text }} </span> 
+                                                            {% if form_acao_selic.data_inicio.errors %} <span class="help-block"> {{ form_acao_selic.data_inicio.errors.as_text }} </span> 
                                                             {% else %} <span class="help-block"> Selecione uma data </span>
                                                             {% endif %}
                                                         </div>
                                                     </div>
-                                                    <div class="form-group col-md-4 {% if form_atualizacao_selic.data_fim.errors %} has-error {% endif %}">
-                                                        <label class="control-label col-md-4" style="text-align: left;"> Data de fim: </label>
+                                                    <div class="form-group col-md-4 {% if form_acao_selic.data_fim.errors %} has-error {% endif %}" name="acao_selic-{{forloop.counter0}}">
+                                                        <label class="control-label col-md-4" style="text-align: left;"> Fim da atualização: </label>
                                                         <div class="col-md-8">
-                                                            <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_acao_provento-{{forloop.counter0}}-data_pagamento_frac" name="acao_provento-{{forloop.counter0}}-data_pagamento_frac" 
+                                                            <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_acao_selic-{{forloop.counter0}}-data_fim" name="acao_selic-{{forloop.counter0}}-data_fim" 
                                                             data-date-viewmode="years">
-                                                                <input type="text" class="form-control" name="acao_provento-{{forloop.counter0}}-data_pagamento_frac" 
-                                                                value="{% if form_acao_provento.data_pagamento_frac.value|date:'d/m/Y'|default:'' == '' %}{{form_acao_provento.data_pagamento_frac.value|default:''}}{% else %}{{form_acao_provento.data_pagamento_frac.value|date:'d/m/Y'}}{% endif %}">
+                                                                <input type="text" class="form-control" name="acao_selic-{{forloop.counter0}}-data_fim" 
+                                                                value="{% if form_acao_selic.data_fim.value|date:'d/m/Y'|default:'' == '' %}{{form_acao_selic.data_fim.value|default:''}}{% else %}{{form_acao_selic.data_fim.value|date:'d/m/Y'}}{% endif %}">
                                                                 <span class="input-group-btn">
                                                                     <button class="btn default" type="button">
                                                                         <i class="fa fa-calendar"></i>
                                                                     </button>
                                                                 </span>
                                                             </div>
-                                                            {% if form_acao_provento.data_pagamento_frac.errors %} <span class="help-block"> {{ form_acao_provento.data_pagamento_frac.errors.as_text }} </span> 
+                                                            {% if form_acao_selic.data_fim.errors %} <span class="help-block"> {{ form_acao_selic.data_fim.errors.as_text }} </span> 
                                                             {% else %} <span class="help-block"> Selecione uma data </span>
                                                             {% endif %}
                                                         </div>
@@ -546,6 +549,22 @@ $( document ).ready(function() {
 		}
 	});
 	{% endif %}
+	
+	$("div[name^=checkbox_selic]").change( function() {
+        var id_provento = $(this).attr('id').match(/\d+/)[0];
+        alert(id_provento);
+		if ($(this).is(':checked')) {
+			$('div[name=acao_selic-' + id_provento + ']').show();
+		} else {
+            $('div[name=acao_selic-' + id_provento + ']').hide();
+		}
+    });
+	$("div[name^=checkbox_selic]").each(function() {
+        var id_provento = $(this).attr('id').match(/\d+/)[0];
+	    if (!$(this).is(':checked')) {
+	        $('div[name=acao_selic-' + id_provento + ']').hide();
+	    }
+	})
 	
 	{% if 'pdf' in pendencia.documento.extensao_documento %}
 	PDFJS.getDocument('{% url "gerador_proventos:baixar_documento_provento" pendencia.documento.id %}').then(function(pdf) {

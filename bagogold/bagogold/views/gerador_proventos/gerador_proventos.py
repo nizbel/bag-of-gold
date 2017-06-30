@@ -4,7 +4,7 @@ from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.gerador_proventos import \
     ProventoAcaoDescritoDocumentoBovespaForm, \
     AcaoProventoAcaoDescritoDocumentoBovespaForm, \
-    ProventoFIIDescritoDocumentoBovespaForm
+    ProventoFIIDescritoDocumentoBovespaForm, SelicProventoAcaoDescritoDocBovespaForm
 from bagogold.bagogold.models.acoes import Acao, Provento, AcaoProvento
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.fii import ProventoFII, FII
@@ -168,6 +168,7 @@ def ler_documento_provento(request, id_pendencia):
         form_extra = 0 if ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).exists() else 1
         ProventoFormset = formset_factory(ProventoAcaoDescritoDocumentoBovespaForm, extra=form_extra)
         AcaoProventoFormset = formset_factory(AcaoProventoAcaoDescritoDocumentoBovespaForm, extra=form_extra)
+        SelicProventoAcaoDescritoDocBovespaFormset = formset_factory(SelicProventoAcaoDescritoDocBovespaForm, extra=form_extra)
     # PAra FIIs
     elif pendencia.documento.tipo == 'F':
         form_extra = 0 if ProventoFIIDocumento.objects.filter(documento=pendencia.documento).exists() else 1
@@ -195,6 +196,7 @@ def ler_documento_provento(request, id_pendencia):
             if pendencia.documento.tipo == 'A':
                 formset_provento = ProventoFormset(prefix='provento')
                 formset_acao_provento = AcaoProventoFormset(prefix='acao_provento')
+                formset_acao_selic = SelicProventoAcaoDescritoDocBovespaFormset(prefix='acao_selic')
             elif pendencia.documento.tipo == 'F':
                 formset_provento = ProventoFormset(prefix='provento')
                 formset_acao_provento = {}
@@ -211,6 +213,7 @@ def ler_documento_provento(request, id_pendencia):
                         qtd_proventos_extra = 0
                     ProventoFormset = formset_factory(ProventoAcaoDescritoDocumentoBovespaForm, extra=qtd_proventos_extra)
                     AcaoProventoFormset = formset_factory(AcaoProventoAcaoDescritoDocumentoBovespaForm, extra=qtd_proventos_extra)
+                    SelicProventoAcaoDescritoDocBovespaFormset = formset_factory(SelicProventoAcaoDescritoDocBovespaForm, extra=form_extra)
     
                     # Proventos
                     proventos_iniciais = list()
@@ -226,6 +229,15 @@ def ler_documento_provento(request, id_pendencia):
                         else:
                             acoes_provento_iniciais.append({})
                     formset_acao_provento = AcaoProventoFormset(prefix='acao_provento', initial=acoes_provento_iniciais)
+                    
+                    # Atualizações de proventos pela Selic
+                    acoes_selic_iniciais = list()
+                    for provento in proventos_iniciais:
+                        if SelicProventoAcaoDescritoDocBovespa.objects.filter(provento__id=provento['id']).exists():
+                            acoes_selic_iniciais.append(model_to_dict(SelicProventoAcaoDescritoDocBovespa.objects.get(provento__id=provento['id'])))
+                        else:
+                            acoes_selic_iniciais.append({})
+                    formset_acao_selic = SelicProventoAcaoDescritoDocBovespaFormset(prefix='acao_selic', initial=acoes_selic_iniciais)
                 # FII
                 elif pendencia.documento.tipo == 'F':
                     # Testa se quantidade de proventos engloba todos os proventos já cadastrados
@@ -251,6 +263,7 @@ def ler_documento_provento(request, id_pendencia):
                 if pendencia.documento.tipo == 'A':
                     formset_provento = ProventoFormset(request.POST, prefix='provento')
                     formset_acao_provento = AcaoProventoFormset(request.POST, prefix='acao_provento')
+                    formset_acao_selic = SelicProventoAcaoDescritoDocBovespaFormset(prefix='acao_selic')
                     
                     # Apaga descrições que já existam para poder rodar validações, serão posteriormente readicionadas caso haja algum erro
                     info_proventos_a_apagar = list(ProventoAcaoDocumento.objects.filter(documento=pendencia.documento)) \
@@ -384,6 +397,14 @@ def ler_documento_provento(request, id_pendencia):
                     acoes_provento_iniciais.append({})
             formset_acao_provento = AcaoProventoFormset(prefix='acao_provento', initial=acoes_provento_iniciais)
     
+            # Atualizações de proventos pela Selic
+            acoes_selic_iniciais = list()
+            for provento in proventos_iniciais:
+                if SelicProventoAcaoDescritoDocBovespa.objects.filter(provento__id=provento['id']).exists():
+                    acoes_selic_iniciais.append(model_to_dict(SelicProventoAcaoDescritoDocBovespa.objects.get(provento__id=provento['id'])))
+                else:
+                    acoes_selic_iniciais.append({})
+            formset_acao_selic = SelicProventoAcaoDescritoDocBovespaFormset(prefix='acao_selic', initial=acoes_selic_iniciais)
         
         elif pendencia.documento.tipo == 'F':
             # Proventos de FII
@@ -405,7 +426,7 @@ def ler_documento_provento(request, id_pendencia):
     recusa = pendencia.documento.ultima_recusa()
     
     return TemplateResponse(request, 'gerador_proventos/ler_documento_provento.html', {'pendencia': pendencia, 'formset_provento': formset_provento, 'formset_acao_provento': formset_acao_provento, \
-                                                                                       'recusa': recusa})
+                                                                                       'formset_acao_selic': formset_acao_selic, 'recusa': recusa})
     
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
