@@ -57,8 +57,12 @@ def detalhar_fundo(request, id_fundo):
     for registro in historico:
         registro.valor_cota = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(registro.valor_cota))
     # Pegar datas inicial e final do historico
-    historico_data_inicial = historico[len(historico)-1].data
-    historico_data_final = historico[0].data
+    if len(historico):
+        historico_data_inicial = historico[len(historico)-1].data
+        historico_data_final = historico[0].data
+    else:
+        historico_data_inicial = datetime.date.today()
+        historico_data_final = datetime.date.today()
     
     dados = {'total_operacoes': 0, 'qtd_cotas_atual': Decimal(0), 'total_atual': Decimal(0), 'total_lucro': Decimal(0), 'lucro_percentual': Decimal(0)}
     if request.user.is_authenticated():

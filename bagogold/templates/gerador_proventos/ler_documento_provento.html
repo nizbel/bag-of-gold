@@ -550,16 +550,15 @@ $( document ).ready(function() {
 	});
 	{% endif %}
 	
-	$("div[name^=checkbox_selic]").change( function() {
+	$(":checkbox[name^=selic]").change( function() {
         var id_provento = $(this).attr('id').match(/\d+/)[0];
-        alert(id_provento);
 		if ($(this).is(':checked')) {
 			$('div[name=acao_selic-' + id_provento + ']').show();
 		} else {
             $('div[name=acao_selic-' + id_provento + ']').hide();
 		}
     });
-	$("div[name^=checkbox_selic]").each(function() {
+	$(":checkbox[name^=selic]").each(function() {
         var id_provento = $(this).attr('id').match(/\d+/)[0];
 	    if (!$(this).is(':checked')) {
 	        $('div[name=acao_selic-' + id_provento + ']').hide();
