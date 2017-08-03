@@ -143,7 +143,7 @@ class OperacaoFundoInvestimento (models.Model):
 class HistoricoValorCotas (models.Model):
     fundo_investimento = models.ForeignKey('FundoInvestimento')
     data = models.DateField(u'Data')
-    valor_cota = models.DecimalField(u'Valor da cota', max_digits=24, decimal_places=15)
+    valor_cota = models.DecimalField(u'Valor da cota', max_digits=31, decimal_places=15)
 
     class Meta:
         unique_together=('fundo_investimento', 'data')
