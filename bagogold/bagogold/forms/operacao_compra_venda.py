@@ -30,7 +30,7 @@ class OperacaoCompraVendaForm(LocalizedModelForm):
         for operacao in operacoes_compra:
             adicionar = True
             if operacao.compra.get_queryset():
-                if operacao.compra.get_queryset().aggregate(total_venda=Sum('venda__quantidade'))['total_venda'] == operacao.quantidade:
+                if operacao.compra.get_queryset().aggregate(total_venda=Sum('quantidade'))['total_venda'] == operacao.quantidade:
                     adicionar = False
             if adicionar:
                 self.fields['compra'].choices += [[operacao.id, operacao]]
@@ -41,7 +41,7 @@ class OperacaoCompraVendaForm(LocalizedModelForm):
         for operacao in operacoes_venda:
             adicionar = True
             if operacao.venda.get_queryset():
-                if operacao.venda.get_queryset().aggregate(total_compra=Sum('venda__quantidade'))['total_compra'] == operacao.quantidade:
+                if operacao.venda.get_queryset().aggregate(total_compra=Sum('quantidade'))['total_compra'] == operacao.quantidade:
                     adicionar = False
             if adicionar:
                 self.fields['venda'].choices += [[operacao.id, operacao]]
@@ -59,9 +59,9 @@ class OperacaoCompraVendaForm(LocalizedModelForm):
             raise forms.ValidationError('Operações de day trade devem ser feitas no mesmo dia')
         elif compra.data == venda.data and not day_trade:
             raise forms.ValidationError('Operações feitas no mesmo dia configuram day trade')
-        elif quantidade > compra.quantidade:
+        elif quantidade > compra.quantidade - compra.compra.get_queryset().aggregate(total_venda=Sum('quantidade'))['total_venda']:
             raise forms.ValidationError('Quantidade negociada entre compra/venda maior que a quantidade da compra')
-        elif quantidade > compra.venda:
+        elif quantidade > venda.quantidade - venda.venda.get_queryset().aggregate(total_compra=Sum('quantidade'))['total_compra']:
             raise forms.ValidationError('Quantidade negociada entre compra/venda maior que a quantidade da venda')
 
         #always return the cleaned data
