@@ -93,9 +93,9 @@ def ler_serie_historica_anual_bovespa(nome_arquivo):
                         acoes_lista = acoes.values_list('ticker', flat=True)
             
 
-def buscar_historico(ticker):
+def buscar_historico(ticker, data_final=datetime.date.today()):
     # Busca historico dos ultimos 180 dias
-    data_180_dias_atras = datetime.date.today() - datetime.timedelta(days=180)
+    data_180_dias_atras = data_final - datetime.timedelta(days=180)
     try:
         historico = list()
         url_yahoo_csv = 'http://ichart.finance.yahoo.com/table.csv?s=%s.SA&a=%s&b=%s&c=%s&d=%s&e=%s&f=%s&g=d&ignore=.csv' % \
