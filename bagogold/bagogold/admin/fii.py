@@ -26,8 +26,8 @@ admin.site.register(OperacaoFII)
 admin.site.register(UsoProventosOperacaoFII)
 
 class HistoricoFIIAdmin(admin.ModelAdmin):
-    search_fields = ['fii_ticker', 'data']
-    lista_display = ('fii', 'preco_unitario', 'data')
+    search_fields = ['fii__ticker']
+    list_display = ('fii', 'preco_unitario', 'data')
     
 admin.site.register(HistoricoFII, HistoricoFIIAdmin)
         
