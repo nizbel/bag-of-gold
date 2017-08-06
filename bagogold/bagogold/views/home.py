@@ -475,22 +475,14 @@ def detalhamento_investimentos(request):
             # Acoes (B&H)
 #             inicio_acoes_bh = datetime.datetime.now()
             patrimonio['Ações (Buy and Hold)'] = 0
-            periodo_1_ano = item.data - datetime.timedelta(days=365)
             for acao, quantidade in acoes_bh.items():
                 if quantidade > 0:
-                    # Verifica se valor foi preenchido com valor mais atual (válido apenas para data atual)
-                    preenchido = False
-                    if item.data == datetime.date.today():
-                        try:
-                            valor_diario_mais_recente = ValorDiarioAcao.objects.filter(acao__ticker=acao).order_by('-data_hora')
-                            if valor_diario_mais_recente and valor_diario_mais_recente[0].data_hora.date() == datetime.date.today():
-                                valor_acao = valor_diario_mais_recente[0].preco_unitario
-                                preenchido = True
-                        except:
-                            preenchido = False
-                    if (not preenchido):
+                    # Pegar valor do dia caso seja data atual
+                    if item.data == datetime.date.today() and ValorDiarioAcao.objects.filter(acao__ticker=acao, data=item.data).exists():
+                        valor_acao = ValorDiarioAcao.objects.filter(acao__ticker=acao).order_by('-data_hora')[0].preco_unitario
+                    else:
                         # Pegar último dia util com negociação da ação para calculo do patrimonio
-                        valor_acao = HistoricoAcao.objects.filter(acao__ticker=acao, data__range=[periodo_1_ano, item.data]).order_by('-data')[0].preco_unitario
+                        valor_acao = HistoricoAcao.objects.filter(acao__ticker=acao, data__lte=item.data).order_by('-data')[0].preco_unitario
                     patrimonio['Ações (Buy and Hold)'] += (valor_acao * quantidade)
             patrimonio['patrimonio_total'] += patrimonio['Ações (Buy and Hold)'] 
 #             fim_acoes_bh = datetime.datetime.now()
@@ -506,22 +498,14 @@ def detalhamento_investimentos(request):
             # Acoes (Trading)
 #             inicio_acoes_t = datetime.datetime.now()
             patrimonio['Ações (Trading)'] = 0
-            periodo_1_ano = item.data - datetime.timedelta(days=365)
             for acao, quantidade in acoes_t.items():
                 if quantidade > 0:
-                    # Verifica se valor foi preenchido com valor mais atual (válido apenas para data atual)
-                    preenchido = False
-                    if item.data == datetime.date.today():
-                        try:
-                            valor_diario_mais_recente = ValorDiarioAcao.objects.filter(acao__ticker=acao).order_by('-data_hora')
-                            if valor_diario_mais_recente and valor_diario_mais_recente[0].data_hora.date() == datetime.date.today():
-                                valor_acao = valor_diario_mais_recente[0].preco_unitario
-                                preenchido = True
-                        except:
-                            preenchido = False
-                    if (not preenchido):
+                    # Pegar valor do dia caso seja data atual
+                    if item.data == datetime.date.today() and ValorDiarioAcao.objects.filter(acao__ticker=acao, data=item.data).exists():
+                        valor_acao = ValorDiarioAcao.objects.filter(acao__ticker=acao).order_by('-data_hora')[0].preco_unitario
+                    else:
                         # Pegar último dia util com negociação da ação para calculo do patrimonio
-                        valor_acao = HistoricoAcao.objects.filter(acao__ticker=acao, data__range=[periodo_1_ano, item.data]).order_by('-data')[0].preco_unitario
+                        valor_acao = HistoricoAcao.objects.filter(acao__ticker=acao, data__lte=item.data).order_by('-data')[0].preco_unitario
                     patrimonio['Ações (Trading)'] += (valor_acao * quantidade)
             patrimonio['patrimonio_total'] += patrimonio['Ações (Trading)'] 
 #             fim_acoes_t = datetime.datetime.now()
@@ -552,21 +536,13 @@ def detalhamento_investimentos(request):
             # FII
 #             inicio_fii = datetime.datetime.now()
             patrimonio['FII'] = 0
-            periodo_1_ano = item.data - datetime.timedelta(days=365)
             for papel, quantidade in fii.items():
-                # Verifica se valor foi preenchido com valor mais atual (válido apenas para data atual)
-                preenchido = False
-                if item.data == datetime.date.today():
-                    try:
-                        valor_diario_mais_recente = ValorDiarioFII.objects.filter(fii__ticker=papel).order_by('-data_hora')
-                        if valor_diario_mais_recente and valor_diario_mais_recente[0].data_hora.date() == datetime.date.today():
-                            valor_fii = valor_diario_mais_recente[0].preco_unitario
-                            preenchido = True
-                    except:
-                        preenchido = False
-                if (not preenchido):
+                # Pegar valor do dia caso seja data atual
+                if item.data == datetime.date.today() and ValorDiarioFII.objects.filter(fii__ticker=papel, data=item.data).exists():
+                    valor_fii = ValorDiarioFII.objects.filter(fii__ticker=papel).order_by('-data_hora')[0].preco_unitario
+                else:
                     # Pegar último dia util com negociação da ação para calculo do patrimonio
-                    valor_fii = HistoricoFII.objects.filter(fii__ticker=papel, data__range=[periodo_1_ano, item.data]).order_by('-data')[0].preco_unitario
+                    valor_fii = HistoricoFII.objects.filter(fii__ticker=papel, data__lte=item.data).order_by('-data')[0].preco_unitario
                 patrimonio['FII'] += (quantidade * valor_fii)
             patrimonio['patrimonio_total'] += patrimonio['FII']  
 #             fim_fii = datetime.datetime.now()

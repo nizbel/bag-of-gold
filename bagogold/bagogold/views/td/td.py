@@ -116,9 +116,9 @@ def acompanhamento_td(request):
         # Carregar data de vencimento do título
         data_vencimento = Titulo.objects.get(id=titulo).data_vencimento
         for operacao in titulos[titulo]:
-            try:
+            if ValorDiarioTitulo.objects.filter(titulo__id=titulo, data_hora__date=datetime.date.today()).exists():
                 operacao.valor_atual = ValorDiarioTitulo.objects.filter(titulo__id=titulo, data_hora__date=datetime.date.today()).order_by('-data_hora')[0].preco_venda
-            except:
+            else:
                 operacao.valor_atual = HistoricoTitulo.objects.filter(titulo__id=titulo).order_by('-data')[0].preco_venda
             operacao.variacao = operacao.valor_atual - operacao.preco_unitario
             operacao.variacao_percentual = operacao.variacao / operacao.preco_unitario * 100
