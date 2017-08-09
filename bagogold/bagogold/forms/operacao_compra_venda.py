@@ -59,9 +59,9 @@ class OperacaoCompraVendaForm(LocalizedModelForm):
             raise forms.ValidationError('Operações de day trade devem ser feitas no mesmo dia')
         elif compra.data == venda.data and not day_trade:
             raise forms.ValidationError('Operações feitas no mesmo dia configuram day trade')
-        elif quantidade > compra.quantidade - compra.compra.get_queryset().aggregate(total_venda=Sum('quantidade'))['total_venda']:
+        elif quantidade > compra.quantidade - (compra.compra.get_queryset().aggregate(total_venda=Sum('quantidade'))['total_venda'] or 0):
             raise forms.ValidationError('Quantidade negociada entre compra/venda maior que a quantidade da compra')
-        elif quantidade > venda.quantidade - venda.venda.get_queryset().aggregate(total_compra=Sum('quantidade'))['total_compra']:
+        elif quantidade > venda.quantidade - (venda.venda.get_queryset().aggregate(total_compra=Sum('quantidade'))['total_compra'] or 0):
             raise forms.ValidationError('Quantidade negociada entre compra/venda maior que a quantidade da venda')
 
         #always return the cleaned data
