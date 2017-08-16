@@ -5,14 +5,15 @@ from bagogold.bagogold.forms.gerador_proventos import \
     ProventoAcaoDescritoDocumentoBovespaForm, \
     AcaoProventoAcaoDescritoDocumentoBovespaForm, \
     ProventoFIIDescritoDocumentoBovespaForm, SelicProventoAcaoDescritoDocBovespaForm
-from bagogold.bagogold.models.acoes import Acao, Provento, AcaoProvento
+from bagogold.bagogold.models.acoes import Acao, Provento, AcaoProvento, \
+    AtualizacaoSelicProvento
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.fii import ProventoFII, FII
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
     PendenciaDocumentoProvento, ProventoAcaoDescritoDocumentoBovespa, \
     ProventoAcaoDocumento, InvestidorResponsavelPendencia, \
     AcaoProventoAcaoDescritoDocumentoBovespa, ProventoFIIDocumento, \
-    ProventoFIIDescritoDocumentoBovespa
+    ProventoFIIDescritoDocumentoBovespa, SelicProventoAcaoDescritoDocBovespa
 from bagogold.bagogold.utils.gerador_proventos import \
     alocar_pendencia_para_investidor, desalocar_pendencia_de_investidor, \
     salvar_investidor_responsavel_por_leitura, criar_descricoes_provento_acoes, \
@@ -169,7 +170,7 @@ def ler_documento_provento(request, id_pendencia):
         ProventoFormset = formset_factory(ProventoAcaoDescritoDocumentoBovespaForm, extra=form_extra)
         AcaoProventoFormset = formset_factory(AcaoProventoAcaoDescritoDocumentoBovespaForm, extra=form_extra)
         SelicProventoAcaoDescritoDocBovespaFormset = formset_factory(SelicProventoAcaoDescritoDocBovespaForm, extra=form_extra)
-    # PAra FIIs
+    # Para FIIs
     elif pendencia.documento.tipo == 'F':
         form_extra = 0 if ProventoFIIDocumento.objects.filter(documento=pendencia.documento).exists() else 1
         ProventoFormset = formset_factory(ProventoFIIDescritoDocumentoBovespaForm, extra=form_extra)
@@ -213,7 +214,7 @@ def ler_documento_provento(request, id_pendencia):
                         qtd_proventos_extra = 0
                     ProventoFormset = formset_factory(ProventoAcaoDescritoDocumentoBovespaForm, extra=qtd_proventos_extra)
                     AcaoProventoFormset = formset_factory(AcaoProventoAcaoDescritoDocumentoBovespaForm, extra=qtd_proventos_extra)
-                    SelicProventoAcaoDescritoDocBovespaFormset = formset_factory(SelicProventoAcaoDescritoDocBovespaForm, extra=form_extra)
+                    SelicProventoAcaoDescritoDocBovespaFormset = formset_factory(SelicProventoAcaoDescritoDocBovespaForm, extra=qtd_proventos_extra)
     
                     # Proventos
                     proventos_iniciais = list()
@@ -268,8 +269,10 @@ def ler_documento_provento(request, id_pendencia):
                     # Apaga descrições que já existam para poder rodar validações, serão posteriormente readicionadas caso haja algum erro
                     info_proventos_a_apagar = list(ProventoAcaoDocumento.objects.filter(documento=pendencia.documento)) \
                         + list(AcaoProvento.objects.filter(provento__id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True))) \
+                        + list(AtualizacaoSelicProvento.objects.filter(provento__id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True))) \
                         + list(Provento.gerador_objects.filter(id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True))) \
                         + list(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento__id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True))) \
+                        + list(SelicProventoAcaoDescritoDocBovespa.objects.filter(provento__id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True))) \
                         + list(ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)))
     #                 print info_proventos_a_apagar
     #                 print list(reversed(info_proventos_a_apagar))

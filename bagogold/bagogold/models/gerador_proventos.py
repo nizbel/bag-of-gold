@@ -242,9 +242,9 @@ class SelicProventoAcaoDescritoDocBovespa (models.Model):
     """
     Define o total de rendimento recebido por atualizar o provento pela Selic
     """
-    data_inicio = models.DateField(u'Data de ínicio')
+    data_inicio = models.DateField(u'Data de início')
     data_fim = models.DateField(u'Data de fim')
-    provento = models.OneToOneField('Provento')
+    provento = models.OneToOneField('ProventoAcaoDescritoDocumentoBovespa')
     
     def __unicode__(self):
         return u'Atualização pela Selic de %s a %s' % (self.data_inicio.strftime('%d/%m/%Y'), self.data_fim.strftime('%d/%m/%Y'))
