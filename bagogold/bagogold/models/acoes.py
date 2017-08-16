@@ -119,7 +119,7 @@ class AtualizacaoSelicProvento (models.Model):
     Define o total de rendimento recebido por atualizar o provento pela Selic
     """
     valor_rendimento = models.DecimalField(u'Valor do rendimento', max_digits=19, decimal_places=15, blank=True, null=True)
-    data_inicio = models.DateField(u'Data de ínicio')
+    data_inicio = models.DateField(u'Data de início')
     data_fim = models.DateField(u'Data de fim')
     provento = models.OneToOneField('Provento')
     
