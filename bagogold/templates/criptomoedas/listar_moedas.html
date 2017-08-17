@@ -17,14 +17,12 @@
 		<tr>
 			<th>Moeda</th>
             <th>Horário</th>
-            <th>Valor atual</th>
 		</tr>
 	</thead>
 	<tbody>
 	{% for moeda in moedas %}
 	<tr>
-		<td>{{moeda.nome}} ({{moeda.ticker}})</td>
-        <td>{{moeda.valor_horario|date:'d/m/Y H:i:s'}}</td>
+		<td>{{moeda.nome}} (<strong>{{moeda.ticker}}</strong>)</td>
 		<td>R$ {{moeda.valor_atual}}</td>
 	</tr>
 	{% endfor %}
