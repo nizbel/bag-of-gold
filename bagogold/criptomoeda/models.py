@@ -24,9 +24,22 @@ class OperacaoCriptomoeda (models.Model):
     def __unicode__(self):
         return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.valor, self.criptomoeda, self.data.strftime('%d/%m/%Y'))
     
-    def valor_cota(self):
-        return (self.valor/self.quantidade).quantize(Decimal('0.000000000001')) if self.quantidade > 0 else 0
-
+    def em_real(self):
+        return not hasattr(self, 'operacaocriptomoedamoeda')
+    
+    def moeda(self):
+        if hasattr(self, 'operacaocriptomoedamoeda'):
+            return self.operacaocriptomoedamoeda.criptomoeda
+        return 'BRL'
+    
+class OperacaoCriptomoedaMoeda (models.Model):
+    """
+    Guarda a moeda utilizada para adquirir ou vender uma criptomoeda, caso a operação não possua uma moeda vinculada,
+    o padrão é o Real
+    """
+    operacao = models.OneToOneField('OperacaoCriptomoeda')
+    criptomoeda = models.ForeignKey('Criptomoeda')
+    
 class HistoricoValorCriptomoeda (models.Model):
     criptomoeda = models.ForeignKey('Criptomoeda')
     data = models.DateField(u'Data')
