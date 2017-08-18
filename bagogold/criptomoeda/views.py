@@ -90,8 +90,40 @@ def inserir_operacao_criptomoeda(request):
                                                                                               'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})
 
 
+@adiciona_titulo_descricao('Histórico de Criptomoedas', 'Histórico de operações de compra/venda em Criptomoedas')
 def historico(request):
-    pass
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        return TemplateResponse(request, 'criptomoedas/historico.html', {'dados': {}, 'operacoes': list(), 
+                                                    'graf_investido_total': list(), 'graf_patrimonio': list()})
+    # Processa primeiro operações de venda (V), depois compra (C)
+    operacoes = OperacaoCriptomoeda.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data') 
+    # Se investidor não tiver operações, retornar vazio
+    if not operacoes:
+        return TemplateResponse(request, 'criptomoedas/historico.html', {'dados': {}, 'operacoes': list(), 
+                                                    'graf_investido_total': list(), 'graf_patrimonio': list()})
+    
+    # Gráficos
+    graf_patrimonio = list()
+    graf_investido_total = list()
+    
+    for operacao in operacoes:
+        if operacao.tipo_operacao == 'C':
+            operacao.tipo = 'Compra'
+        else:
+            operacao.tipo = 'Venda'
+        operacao.valor_total = operacao.quantidade * operacao.valor
+        operacao.moeda = 'R$' if operacao.em_real() else operacao.moeda().ticker
+    
+    dados = {}
+#     dados['total_investido'] = total_investido
+#     dados['patrimonio'] = total_patrimonio
+#     dados['lucro'] = total_patrimonio - total_investido
+#     dados['lucro_percentual'] = (total_patrimonio - total_investido) / total_investido * 100
+    
+    return TemplateResponse(request, 'criptomoedas/historico.html', {'dados': dados, 'operacoes': operacoes, 
+                                                    'graf_investido_total': graf_investido_total, 'graf_patrimonio': graf_patrimonio})
 
 @adiciona_titulo_descricao('Listar criptomoedas cadastrados', 'Lista as criptomoedas no sistema')
 def listar_criptomoedas(request):

@@ -35,6 +35,5 @@ class OperacaoCriptomoedaForm(LocalizedModelForm):
     def clean(self):
         data = super(OperacaoCriptomoedaForm, self).clean()
         # Testa se a moeda utilizada para operação e a moeda adquirida/vendida na operação são diferentes
-        print data.get('criptomoeda').id, data.get('moeda_utilizada'), data.get('criptomoeda').id == int(data.get('moeda_utilizada')), data.get('moeda_utilizada').isdigit()
         if data.get('moeda_utilizada').isdigit() and data.get('criptomoeda').id == int(data.get('moeda_utilizada')):
             raise forms.ValidationError('A moeda utilizada deve ser diferente da moeda comprada/vendida')

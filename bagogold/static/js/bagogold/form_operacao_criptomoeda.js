@@ -30,6 +30,7 @@ $(document).ready(function() {
         row.find('.bootstrap-select').replaceWith(function() { return $('select', this); });
         row.find('select').selectpicker('refresh');
         row.find('.bootstrap-touchspin').find('*').not('input').remove();
+    	var escolhida = $('#id_criptomoeda option:selected').text().split(' ')[0];
         row.find("input[name$='-quantidade']").TouchSpin({
        	 	initval: 0,
     		min: 0,
@@ -37,7 +38,7 @@ $(document).ready(function() {
     		step: 0.000000000000001,
     		decimals: 15,
     		maxboostedstep: 100,
-    		postfix: 'criptomoedas'
+    		postfix: escolhida
         });
     });
     

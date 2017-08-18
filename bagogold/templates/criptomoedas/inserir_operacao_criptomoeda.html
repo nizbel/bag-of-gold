@@ -24,7 +24,7 @@
                     <div class="col-md-8">
                         <select class="selectpicker form-control" id="id_criptomoeda" name="criptomoeda">
                             {% for key, value in form_operacao_criptomoeda.fields.criptomoeda.widget.choices %}<option value="{{ key }}"
-                            {% if key == form_operacao_criptomoeda.criptomoeda.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                            {% if key == form_operacao_criptomoeda.criptomoeda.value|add:"0" %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
                         </select>
                         {% if form_operacao_criptomoeda.criptomoeda.errors %} <span class="help-block"> {{ form_operacao_criptomoeda.criptomoeda.errors.as_text }} </span> {% endif %}
                     </div>
@@ -34,7 +34,7 @@
                     <div class="col-md-8">
                         <select class="selectpicker form-control" id="id_moeda_utilizada" name="moeda_utilizada">
                             {% for key, value in form_operacao_criptomoeda.fields.moeda_utilizada.widget.choices %}<option value="{{ key }}"
-                            {% if key == form_operacao_criptomoeda.moeda_utilizada.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                            {% if key == form_operacao_criptomoeda.moeda_utilizada.value|add:"0" %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
                         </select>
                         {% if form_operacao_criptomoeda.moeda_utilizada.errors %} <span class="help-block"> {{ form_operacao_criptomoeda.moeda_utilizada.errors.as_text }} </span> {% endif %}
                     </div>
