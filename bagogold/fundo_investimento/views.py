@@ -297,9 +297,8 @@ def inserir_operacao_fundo_investimento(request):
                     elif settings.ENV == 'PROD':
                         mail_admins(u'Erro ao gerar operação em fundo de investimento com uma divisão', traceback.format_exc())
             
-        for erros in form_operacao_fundo_investimento.errors.values():
-            for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
-                messages.error(request, erro.message)
+        for erro in [erro for erro in form_operacao_fundo_investimento.non_field_errors()]:
+            messages.error(request, erro)
 #                         print '%s %s'  % (divisao_fundo_investimento.quantidade, divisao_fundo_investimento.divisao)
                 
     else:

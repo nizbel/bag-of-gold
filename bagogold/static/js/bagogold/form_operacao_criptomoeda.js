@@ -49,25 +49,56 @@ $(document).ready(function() {
 		maxboostedstep: 100,
 		prefix: 'R$'
 	});
-	$("input[name='quantidade']").TouchSpin({
-		min: 0.000000000000001,
+    
+    $("input[name='taxa']").TouchSpin({
+		min: 0.000000000001,
 		max: 1000000000,
-		step: 0.000000000000001,
-		decimals: 15,
+		step: 0.000000000001,
+		decimals: 12,
 		maxboostedstep: 100,
-		postfix: 'criptomoedas'
+		prefix: 'R$'
+	});
+    
+    // Pegar criptomoeda escolhida atualmente
+	var escolhida = $('#id_criptomoeda option:selected').text().split(' ')[0];
+	$("input[name='quantidade']").TouchSpin({
+		min: 0.000000000001,
+		max: 1000000000,
+		step: 0.000000000001,
+		decimals: 12,
+		maxboostedstep: 100,
+		postfix: escolhida
 	});
 	$("input[name$='-quantidade']").TouchSpin({
 		min: 0,
 		max: 1000000000,
-		step: 0.000000000000001,
-		decimals: 15,
+		step: 0.000000000001,
+		decimals: 12,
 		maxboostedstep: 100,
-		postfix: 'criptomoedas'
+		postfix: escolhida
 	});
 	
-
     $('#id_moeda_utilizada').change(function() {
-    	$("input[name='valor']").trigger("touchspin.updatesettings", {postfix: 'BTC'});
+    	if ($(this).val() == '') {
+	    	$('#id_valor').parent().find('.bootstrap-touchspin-prefix').show();
+	    	$('#id_valor').parent().find('.bootstrap-touchspin-postfix').hide();
+	    	$('#id_taxa').parent().find('.bootstrap-touchspin-prefix').show();
+	    	$('#id_taxa').parent().find('.bootstrap-touchspin-postfix').hide();
+    	}
+    	else {
+        	var escolhida = $('#id_moeda_utilizada option:selected').text().split(' ')[0];
+        	$('#id_valor').parent().find('.bootstrap-touchspin-prefix').hide();
+	    	$('#id_valor').parent().find('.bootstrap-touchspin-postfix').text(escolhida);
+	    	$('#id_valor').parent().find('.bootstrap-touchspin-postfix').show();
+        	$('#id_taxa').parent().find('.bootstrap-touchspin-prefix').hide();
+	    	$('#id_taxa').parent().find('.bootstrap-touchspin-postfix').text(escolhida);
+	    	$('#id_taxa').parent().find('.bootstrap-touchspin-postfix').show();
+    	}
+    });
+    
+    $('#id_criptomoeda').change(function() {
+    	var escolhida = $('#id_criptomoeda option:selected').text().split(' ')[0];
+    	$("input[name='quantidade']").parent().find('.bootstrap-touchspin-postfix').text(escolhida);
+    	$("input[name$='-quantidade']").parent().find('.bootstrap-touchspin-postfix').text(escolhida);
     });
 });
