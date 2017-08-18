@@ -149,12 +149,17 @@ def editar_operacao_fundo_investimento(request, id_operacao):
 
 @adiciona_titulo_descricao('Histórico de Fundos de Investimento', 'Histórico de operações de compra/venda em Fundos de Investimento')
 def historico(request):
-    investidor = request.user.investidor
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+    else:
+        return TemplateResponse(request, 'cdb_rdb/historico.html', {'dados': {}, 'operacoes': list(), 
+                                                    'graf_investido_total': list(), 'graf_patrimonio': list()})
     # Processa primeiro operações de venda (V), depois compra (C)
     operacoes = OperacaoFundoInvestimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data') 
     # Se investidor não tiver operações, retornar vazio
     if not operacoes:
-        return TemplateResponse(request, 'fundo_investimento/historico.html', {'dados': {}})
+        return TemplateResponse(request, 'fundo_investimento/historico.html', {'dados': {}, 'operacoes': list(), 
+                                                    'graf_investido_total': list(), 'graf_patrimonio': list()})
     # Prepara o campo valor atual
     for operacao in operacoes:
         if operacao.tipo_operacao == 'C':
