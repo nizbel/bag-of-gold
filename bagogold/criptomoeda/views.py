@@ -47,7 +47,7 @@ def inserir_operacao_criptomoeda(request):
             
             # Testar se várias divisões
             if varias_divisoes:
-                formset_divisao = DivisaoFundoInvestimentoFormSet(request.POST, instance=operacao_criptomoeda, investidor=investidor)
+                formset_divisao = DivisaoCriptomoedaFormSet(request.POST, instance=operacao_criptomoeda, investidor=investidor)
                 if formset_divisao.is_valid():
                     try:
                         with transaction.atomic():
@@ -78,9 +78,8 @@ def inserir_operacao_criptomoeda(request):
                     elif settings.ENV == 'PROD':
                         mail_admins(u'Erro ao gerar operação em criptomoeda com uma divisão', traceback.format_exc())
             
-        for erros in form_operacao_criptomoeda.errors.values():
-            for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
-                messages.error(request, erro.message)
+        for erro in [erro for erro in form_operacao_criptomoeda.non_field_errors()]:
+            messages.error(request, erro)
 #                         print '%s %s'  % (divisao_fundo_investimento.quantidade, divisao_fundo_investimento.divisao)
                 
     else:
