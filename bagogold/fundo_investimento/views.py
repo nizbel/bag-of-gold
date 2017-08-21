@@ -118,9 +118,9 @@ def editar_operacao_fundo_investimento(request, id_operacao):
                     divisao_operacao.save()
                     messages.success(request, 'Operação editada com sucesso')
                     return HttpResponseRedirect(reverse('fundo_investimento:historico_fundo_investimento'))
-            for erros in form_operacao_fundo_investimento.errors.values():
-                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
-                    messages.error(request, erro.message)
+            
+            for erro in [erro for erro in form_operacao_fundo_investimento.non_field_errors()]:
+                messages.error(request, erro)
 #                         print '%s %s'  % (divisao_fundo_investimento.quantidade, divisao_fundo_investimento.divisao)
                 
         elif request.POST.get("delete"):

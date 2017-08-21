@@ -10,7 +10,7 @@ from bagogold.criptomoeda.models import Criptomoeda, OperacaoCriptomoeda, \
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, PermissionDenied
 from django.core.mail import mail_admins
 from django.core.urlresolvers import reverse
 from django.db import transaction
@@ -22,8 +22,72 @@ import json
 import traceback
 
 @login_required
-def editar_operacao_criptomoeda(request):
-    pass
+@adiciona_titulo_descricao('Editar operação em Criptomoeda', 'Alterar valores de uma operação de compra/venda em Criptomoeda')
+def editar_operacao_criptomoeda(request, id_operacao):
+    investidor = request.user.investidor
+    
+    operacao_criptomoeda = OperacaoCriptomoeda.objects.get(pk=id_operacao)
+    # Verifica se a operação é do investidor, senão, jogar erro de permissão
+    if operacao_criptomoeda.investidor != investidor:
+        raise PermissionDenied
+    
+    # Preparar formset para divisoes
+    DivisaoFormSet = inlineformset_factory(OperacaoCriptomoeda, DivisaoOperacaoCriptomoeda, fields=('divisao', 'quantidade'),
+                                            extra=1, formset=DivisaoOperacaoCriptomoedaFormSet)
+    
+    # Testa se investidor possui mais de uma divisão
+    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    
+    if request.method == 'POST':
+        if request.POST.get("save"):
+            form_operacao_criptomoeda = OperacaoCriptomoedaForm(request.POST, instance=operacao_criptomoeda, investidor=investidor)
+            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_criptomoeda, investidor=investidor) if varias_divisoes else None
+            
+            if form_operacao_criptomoeda.is_valid():
+                if varias_divisoes:
+                    if formset_divisao.is_valid():
+                        operacao_criptomoeda.save()
+                        formset_divisao.save()
+                        messages.success(request, 'Operação editada com sucesso')
+                        return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
+                    for erro in formset_divisao.non_form_errors():
+                        messages.error(request, erro)
+                        
+                else:
+                    operacao_criptomoeda.save()
+                    divisao_operacao = DivisaoOperacaoCriptomoeda.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_criptomoeda)
+                    divisao_operacao.quantidade = operacao_criptomoeda.quantidade
+                    divisao_operacao.save()
+                    messages.success(request, 'Operação editada com sucesso')
+                    return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
+                
+            for erro in [erro for erro in form_operacao_criptomoeda.non_field_errors()]:
+                messages.error(request, erro)
+#                         print '%s %s'  % (divisao_criptomoeda.quantidade, divisao_criptomoeda.divisao)
+                
+        elif request.POST.get("delete"):
+            # Verifica se, em caso de compra, a quantidade de cotas do investidor não fica negativa
+            if operacao_criptomoeda.tipo_operacao == 'C' and calcular_qtd_cotas_ate_dia_por_fundo(investidor, operacao_criptomoeda.criptomoeda.id, datetime.date.today()) - operacao_criptomoeda.quantidade < 0:
+                messages.error(request, 'Operação de compra não pode ser apagada pois quantidade atual para o fundo %s seria negativa' % (operacao_criptomoeda.criptomoeda))
+            else:
+                divisao_criptomoeda = DivisaoOperacaoCriptomoeda.objects.filter(operacao=operacao_criptomoeda)
+                for divisao in divisao_criptomoeda:
+                    divisao.delete()
+                operacao_criptomoeda.delete()
+                messages.success(request, 'Operação apagada com sucesso')
+                return HttpResponseRedirect(reverse('td:historico_td'))
+ 
+    else:
+        form_operacao_criptomoeda = OperacaoCriptomoedaForm(instance=operacao_criptomoeda, investidor=investidor)
+        formset_divisao = DivisaoFormSet(instance=operacao_criptomoeda, investidor=investidor)
+    
+    # Preparar nome de fundo selecionado
+    if request.POST.get('criptomoeda', -1) != -1:
+        fundo_selecionado = Criptomoeda.objects.get(id=request.POST['criptomoeda'])
+    else:
+        fundo_selecionado = operacao_criptomoeda.criptomoeda.nome
+    return TemplateResponse(request, 'criptomoeda/editar_operacao_criptomoeda.html', {'form_operacao_criptomoeda': form_operacao_criptomoeda, 'formset_divisao': formset_divisao, \
+                                                                                             'varias_divisoes': varias_divisoes, 'fundo_selecionado': fundo_selecionado})  
 
 @adiciona_titulo_descricao('Histórico de Criptomoedas', 'Histórico de operações de compra/venda em Criptomoedas')
 def historico(request):
