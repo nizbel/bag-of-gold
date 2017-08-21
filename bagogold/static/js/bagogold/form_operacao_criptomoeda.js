@@ -42,26 +42,57 @@ $(document).ready(function() {
         });
     });
     
-    $("input[name='valor']").TouchSpin({
-		min: 0.000000000001,
-		max: 1000000000,
-		step: 0.000000000001,
-		decimals: 12,
-		maxboostedstep: 100,
-		prefix: 'R$'
-	});
-    
-    $("input[name='taxa']").TouchSpin({
-		min: 0.000000000001,
-		max: 1000000000,
-		step: 0.000000000001,
-		decimals: 12,
-		maxboostedstep: 100,
-		prefix: 'R$'
-	});
+    // Pegar moeda utilizada escolhida atualmente
+    if ($('#id_moeda_utilizada').val() == '') {
+	    $("input[name='valor']").TouchSpin({
+			min: 0.000000000001,
+			max: 1000000000,
+			step: 0.000000000001,
+			decimals: 12,
+			maxboostedstep: 100,
+			prefix: 'R$'
+		});
+	
+	    $("input[name='taxa_moeda_utilizada']").TouchSpin({
+			min: 0.000000000001,
+			max: 1000000000,
+			step: 0.000000000001,
+			decimals: 12,
+			maxboostedstep: 100,
+			prefix: 'R$'
+		});
+    } else {
+        var utilizada_escolhida = $('#id_moeda_utilizada option:selected').text().split(' ')[0];
+        $("input[name='valor']").TouchSpin({
+			min: 0.000000000001,
+			max: 1000000000,
+			step: 0.000000000001,
+			decimals: 12,
+			maxboostedstep: 100,
+			postfix: utilizada_escolhida
+		});
+	
+	    $("input[name='taxa_moeda_utilizada']").TouchSpin({
+			min: 0.000000000001,
+			max: 1000000000,
+			step: 0.000000000001,
+			decimals: 12,
+			maxboostedstep: 100,
+			postfix: utilizada_escolhida
+		});
+    }
     
     // Pegar criptomoeda escolhida atualmente
-	var escolhida = $('#id_criptomoeda option:selected').text().split(' ')[0];
+    var escolhida = $('#id_criptomoeda option:selected').text().split(' ')[0];
+    $("input[name='taxa_moeda']").TouchSpin({
+		min: 0.000000000001,
+		max: 1000000000,
+		step: 0.000000000001,
+		decimals: 12,
+		maxboostedstep: 100,
+		postfix: escolhida
+	});
+    
 	$("input[name='quantidade']").TouchSpin({
 		min: 0.000000000001,
 		max: 1000000000,
@@ -83,17 +114,17 @@ $(document).ready(function() {
     	if ($(this).val() == '') {
 	    	$('#id_valor').parent().find('.bootstrap-touchspin-prefix').show();
 	    	$('#id_valor').parent().find('.bootstrap-touchspin-postfix').hide();
-	    	$('#id_taxa').parent().find('.bootstrap-touchspin-prefix').show();
-	    	$('#id_taxa').parent().find('.bootstrap-touchspin-postfix').hide();
+	    	$('#id_taxa_moeda_utilizada').parent().find('.bootstrap-touchspin-prefix').show();
+	    	$('#id_taxa_moeda_utilizada').parent().find('.bootstrap-touchspin-postfix').hide();
     	}
     	else {
         	var escolhida = $('#id_moeda_utilizada option:selected').text().split(' ')[0];
         	$('#id_valor').parent().find('.bootstrap-touchspin-prefix').hide();
 	    	$('#id_valor').parent().find('.bootstrap-touchspin-postfix').text(escolhida);
 	    	$('#id_valor').parent().find('.bootstrap-touchspin-postfix').show();
-        	$('#id_taxa').parent().find('.bootstrap-touchspin-prefix').hide();
-	    	$('#id_taxa').parent().find('.bootstrap-touchspin-postfix').text(escolhida);
-	    	$('#id_taxa').parent().find('.bootstrap-touchspin-postfix').show();
+        	$('#id_taxa_moeda_utilizada').parent().find('.bootstrap-touchspin-prefix').hide();
+	    	$('#id_taxa_moeda_utilizada').parent().find('.bootstrap-touchspin-postfix').text(escolhida);
+	    	$('#id_taxa_moeda_utilizada').parent().find('.bootstrap-touchspin-postfix').show();
     	}
     });
     
@@ -101,5 +132,6 @@ $(document).ready(function() {
     	var escolhida = $('#id_criptomoeda option:selected').text().split(' ')[0];
     	$("input[name='quantidade']").parent().find('.bootstrap-touchspin-postfix').text(escolhida);
     	$("input[name$='-quantidade']").parent().find('.bootstrap-touchspin-postfix').text(escolhida);
+    	$("input[name='taxa_moeda']").parent().find('.bootstrap-touchspin-postfix').text(escolhida);
     });
 });
