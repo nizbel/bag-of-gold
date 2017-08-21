@@ -97,6 +97,7 @@
                             <th>Data</th>
                             <th>Qtde. moedas</th>
                             <th>Valor unitário</th>
+                            <th>Taxa</th>
                             <th>Total</th>
                         </tr>
                     </thead>
@@ -108,6 +109,7 @@
                             <td>{{ item.data|date:"d/m/Y" }}</td>
                             <td>{{item.quantidade}}</td>
                             <td>{% if item.em_real%}R$ {{item.valor}}{% else %}{{item.valor}} {{item.moeda}}{% endif %}</td>
+                            <td>{% if item.em_real%}R$ {{item.taxa}}{% else %}{{item.taxa}} {{item.moeda}}{% endif %}</td>
                             <td>{% if item.em_real%}R$ {{item.valor_total}}{% else %}{{item.valor_total}} {{item.moeda}}{% endif %}</td>
                         </tr>
                     {% endfor %}
