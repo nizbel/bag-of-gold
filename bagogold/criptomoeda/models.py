@@ -16,7 +16,6 @@ class Criptomoeda (models.Model):
 class OperacaoCriptomoeda (models.Model):
     quantidade = models.DecimalField(u'Quantidade', max_digits=21, decimal_places=12, validators=[MinValueValidator(Decimal('0.000000000001'))])
     valor = models.DecimalField(u'Valor unitário', max_digits=21, decimal_places=12, validators=[MinValueValidator(Decimal('0.000000000001'))])
-    taxa = models.DecimalField(u'Taxa da operação', max_digits=21, decimal_places=12)
     data = models.DateField(u'Data da operação')
     tipo_operacao = models.CharField(u'Tipo de operação', max_length=1)
     criptomoeda = models.ForeignKey('Criptomoeda')
@@ -32,7 +31,16 @@ class OperacaoCriptomoeda (models.Model):
         if hasattr(self, 'operacaocriptomoedamoeda'):
             return self.operacaocriptomoedamoeda.criptomoeda
         return 'BRL'
+
+class OperacaoCriptomoedaTaxa (models.Model):
+    valor = models.DecimalField(u'Taxa da operação', max_digits=21, decimal_places=12)
+    operacao = models.ForeignKey('OperacaoCriptomoeda')
+    moeda = models.ForeignKey('Criptomoeda', null=True)
     
+    def __unicode__(self):
+        valor = 'R$ %s' % self.valor if self.moeda == None else '%s %s' % (self.valor, self.moeda.ticker)
+        return 'Taxa de %s' % (valor)
+
 class OperacaoCriptomoedaMoeda (models.Model):
     """
     Guarda a moeda utilizada para adquirir ou vender uma criptomoeda, caso a operação não possua uma moeda vinculada,
