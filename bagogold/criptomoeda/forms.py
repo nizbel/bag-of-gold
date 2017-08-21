@@ -38,6 +38,14 @@ class OperacaoCriptomoedaForm(LocalizedModelForm):
 
     def clean(self):
         data = super(OperacaoCriptomoedaForm, self).clean()
+        # Taxas não podem ser maiores do que os valores movimentados na operação
+        if data.get('taxa_moeda') >= data.get('quantidade'):
+            raise forms.ValidationError('A taxa na moeda comprada/vendida deve ser menor que a quantidade comprada/vendida')
+        if data.get('taxa_moeda_utilizada') >= data.get('quantidade') * data.get('valor'):
+            raise forms.ValidationError('A taxa na moeda utilizada para a operação deve ser inferior ao valor total da operação')
+        if (data.get('taxa_moeda') * 100 / data.get('quantidade')) + (data.get('taxa_moeda_utilizada') * 100 / (data.get('quantidade') * data.get('valor'))) >= 100:
+            raise forms.ValidationError('Total das taxas não pode ser superior ao valor total movimentado na operação')
+        
         # Testa se a moeda utilizada para operação e a moeda adquirida/vendida na operação são diferentes
         if data.get('moeda_utilizada').isdigit() and data.get('criptomoeda').id == int(data.get('moeda_utilizada')):
             raise forms.ValidationError('A moeda utilizada deve ser diferente da moeda comprada/vendida')
