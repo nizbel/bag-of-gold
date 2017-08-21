@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load staticfiles %}
+{% load misc %}
 
 {% block extra_head %}
 <link href={% static "assets/global/plugins/datatables/datatables.min.css" %} rel="stylesheet" type="text/css" />
@@ -107,10 +108,10 @@
                             <td><span class="tooltips" data-placement="top" data-original-title="{{item.criptomoeda.ticker}}">{{item.criptomoeda}}</span></td>
                             <td><a class="tooltips" data-placement="top" data-original-title="Editar {{item.tipo}}" href="{% url 'criptomoeda:editar_operacao_criptomoeda' item.id %}">{{item.tipo}}</a></td>
                             <td>{{ item.data|date:"d/m/Y" }}</td>
-                            <td>{{item.quantidade}}</td>
-                            <td>{% if item.em_real%}R$ {{item.valor}}{% else %}{{item.valor}} {{item.moeda}}{% endif %}</td>
-                            <td>{% if item.em_real%}R$ {{item.taxa}}{% else %}{{item.taxa}} {{item.moeda}}{% endif %}</td>
-                            <td>{% if item.em_real%}R$ {{item.valor_total}}{% else %}{{item.valor_total}} {{item.moeda}}{% endif %}</td>
+                            <td>{{item.quantidade|casas_decimais}} {{item.criptomoeda.ticker}}</td>
+                            <td>{% if item.em_real%}R$ {{item.valor|casas_decimais}}{% else %}{{item.valor|casas_decimais}} {{item.moeda}}{% endif %}</td>
+                            <td>{% if item.em_real%}R$ {{item.taxa|casas_decimais}}{% else %}{{item.taxa|casas_decimais}} {{item.moeda}}{% endif %}</td>
+                            <td>{% if item.em_real%}R$ {{item.valor_total|casas_decimais}}{% else %}{{item.valor_total|casas_decimais}} {{item.moeda}}{% endif %}</td>
                         </tr>
                     {% endfor %}
                     </tbody>
