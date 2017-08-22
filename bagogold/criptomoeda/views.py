@@ -154,6 +154,10 @@ def inserir_operacao_criptomoeda(request):
                     try:
                         with transaction.atomic():
                             operacao_criptomoeda.save()
+                            if form_operacao_criptomoeda.cleaned_data['taxa_moeda'] > 0:
+                                OperacaoCriptomoedaTaxa.objects.create(operacao=operacao_criptomoeda, criptomoeda=operacao_criptomoeda.moeda, valor=form_operacao_criptomoeda.cleaned_data['taxa_moeda'])
+                            if form_operacao_criptomoeda.cleaned_data['taxa_moeda_utilizada'] > 0:
+                                OperacaoCriptomoedaTaxa.objects.create(operacao=operacao_criptomoeda, criptomoeda=moeda_utilizada, valor=form_operacao_criptomoeda.cleaned_data['taxa_moeda'])
                             if moeda_utilizada:
                                 OperacaoCriptomoedaMoeda.objects.create(operacao=operacao_criptomoeda, criptomoeda=moeda_utilizada)
                             formset_divisao.save()
