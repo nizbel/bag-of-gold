@@ -6,7 +6,9 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoCriptomoeda, \
     Divisao
 from bagogold.criptomoeda.forms import OperacaoCriptomoedaForm
 from bagogold.criptomoeda.models import Criptomoeda, OperacaoCriptomoeda, \
-    OperacaoCriptomoedaMoeda
+    OperacaoCriptomoedaMoeda, OperacaoCriptomoedaTaxa
+from bagogold.fundo_investimento.utils import \
+    calcular_qtd_cotas_ate_dia_por_fundo
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -18,6 +20,7 @@ from django.forms.models import inlineformset_factory
 from django.http.response import HttpResponseRedirect
 from django.template.response import TemplateResponse
 from urllib2 import urlopen
+import datetime
 import json
 import traceback
 
@@ -42,11 +45,20 @@ def editar_operacao_criptomoeda(request, id_operacao):
         if request.POST.get("save"):
             form_operacao_criptomoeda = OperacaoCriptomoedaForm(request.POST, instance=operacao_criptomoeda, investidor=investidor)
             formset_divisao = DivisaoFormSet(request.POST, instance=operacao_criptomoeda, investidor=investidor) if varias_divisoes else None
-            
+            moeda_utilizada = Criptomoeda.objects.get(id=int(form_operacao_criptomoeda.cleaned_data['moeda_utilizada'])) \
+                if form_operacao_criptomoeda.cleaned_data['moeda_utilizada'] != '' else None
+                
             if form_operacao_criptomoeda.is_valid():
                 if varias_divisoes:
                     if formset_divisao.is_valid():
                         operacao_criptomoeda.save()
+                        if form_operacao_criptomoeda.cleaned_data['taxa_moeda'] > 0:
+                            OperacaoCriptomoedaTaxa.objects.create(operacao=operacao_criptomoeda, moeda=operacao_criptomoeda.criptomoeda, valor=form_operacao_criptomoeda.cleaned_data['taxa_moeda'])
+                        if form_operacao_criptomoeda.cleaned_data['taxa_moeda_utilizada'] > 0:
+                            OperacaoCriptomoedaTaxa.objects.create(operacao=operacao_criptomoeda, moeda=moeda_utilizada, valor=form_operacao_criptomoeda.cleaned_data['taxa_moeda_utilizada'])
+                        if moeda_utilizada:
+                            OperacaoCriptomoedaMoeda.objects.create(operacao=operacao_criptomoeda, criptomoeda=moeda_utilizada)
+                        divisao_operacao = DivisaoOperacaoCriptomoeda(operacao=operacao_criptomoeda, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_criptomoeda.quantidade)
                         formset_divisao.save()
                         messages.success(request, 'Operação editada com sucesso')
                         return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
@@ -78,16 +90,19 @@ def editar_operacao_criptomoeda(request, id_operacao):
                 return HttpResponseRedirect(reverse('td:historico_td'))
  
     else:
-        form_operacao_criptomoeda = OperacaoCriptomoedaForm(instance=operacao_criptomoeda, investidor=investidor)
+        operacao_criptomoeda.taxas = operacao_criptomoeda.operacaocriptomoedataxa_set.all()
+        taxa_moeda = sum([taxa.valor for taxa in operacao_criptomoeda.taxas if taxa.moeda == operacao_criptomoeda.criptomoeda])
+        taxa_moeda_utilizada = sum([taxa.valor for taxa in operacao_criptomoeda.taxas if taxa.moeda_utilizada() == operacao_criptomoeda.moeda_utilizada()])
+        form_operacao_criptomoeda = OperacaoCriptomoedaForm(instance=operacao_criptomoeda, investidor=investidor, initial={'taxa_moeda': taxa_moeda, 'taxa_moeda_utilizada': taxa_moeda_utilizada})
         formset_divisao = DivisaoFormSet(instance=operacao_criptomoeda, investidor=investidor)
-    
+        
     # Preparar nome de fundo selecionado
-    if request.POST.get('criptomoeda', -1) != -1:
-        fundo_selecionado = Criptomoeda.objects.get(id=request.POST['criptomoeda'])
-    else:
-        fundo_selecionado = operacao_criptomoeda.criptomoeda.nome
-    return TemplateResponse(request, 'criptomoeda/editar_operacao_criptomoeda.html', {'form_operacao_criptomoeda': form_operacao_criptomoeda, 'formset_divisao': formset_divisao, \
-                                                                                             'varias_divisoes': varias_divisoes, 'fundo_selecionado': fundo_selecionado})  
+#     if request.POST.get('criptomoeda', -1) != -1:
+#         fundo_selecionado = Criptomoeda.objects.get(id=request.POST['criptomoeda'])
+#     else:
+#         fundo_selecionado = operacao_criptomoeda.criptomoeda.nome
+    return TemplateResponse(request, 'criptomoedas/editar_operacao_criptomoeda.html', {'form_operacao_criptomoeda': form_operacao_criptomoeda, 'formset_divisao': formset_divisao, \
+                                                                                             'varias_divisoes': varias_divisoes})  
 
 @adiciona_titulo_descricao('Histórico de Criptomoedas', 'Histórico de operações de compra/venda em Criptomoedas')
 def historico(request):
@@ -112,8 +127,9 @@ def historico(request):
             operacao.tipo = 'Compra'
         else:
             operacao.tipo = 'Venda'
-        operacao.valor_total = operacao.quantidade * operacao.valor + operacao.taxa
-        operacao.moeda = 'R$' if operacao.em_real() else operacao.moeda().ticker
+        operacao.taxas = operacao.operacaocriptomoedataxa_set.all()
+        operacao.valor_total = (operacao.quantidade + sum([taxa.valor for taxa in operacao.taxas if taxa.moeda == operacao.criptomoeda])) * operacao.valor \
+            + sum([taxa.valor for taxa in operacao.taxas if taxa.moeda_utilizada() == operacao.moeda_utilizada()])
     
     dados = {}
 #     dados['total_investido'] = total_investido
@@ -155,9 +171,9 @@ def inserir_operacao_criptomoeda(request):
                         with transaction.atomic():
                             operacao_criptomoeda.save()
                             if form_operacao_criptomoeda.cleaned_data['taxa_moeda'] > 0:
-                                OperacaoCriptomoedaTaxa.objects.create(operacao=operacao_criptomoeda, criptomoeda=operacao_criptomoeda.moeda, valor=form_operacao_criptomoeda.cleaned_data['taxa_moeda'])
+                                OperacaoCriptomoedaTaxa.objects.create(operacao=operacao_criptomoeda, moeda=operacao_criptomoeda.criptomoeda, valor=form_operacao_criptomoeda.cleaned_data['taxa_moeda'])
                             if form_operacao_criptomoeda.cleaned_data['taxa_moeda_utilizada'] > 0:
-                                OperacaoCriptomoedaTaxa.objects.create(operacao=operacao_criptomoeda, criptomoeda=moeda_utilizada, valor=form_operacao_criptomoeda.cleaned_data['taxa_moeda'])
+                                OperacaoCriptomoedaTaxa.objects.create(operacao=operacao_criptomoeda, moeda=moeda_utilizada, valor=form_operacao_criptomoeda.cleaned_data['taxa_moeda_utilizada'])
                             if moeda_utilizada:
                                 OperacaoCriptomoedaMoeda.objects.create(operacao=operacao_criptomoeda, criptomoeda=moeda_utilizada)
                             formset_divisao.save()
@@ -175,6 +191,10 @@ def inserir_operacao_criptomoeda(request):
                 try:
                     with transaction.atomic():
                         operacao_criptomoeda.save()
+                        if form_operacao_criptomoeda.cleaned_data['taxa_moeda'] > 0:
+                            OperacaoCriptomoedaTaxa.objects.create(operacao=operacao_criptomoeda, moeda=operacao_criptomoeda.criptomoeda, valor=form_operacao_criptomoeda.cleaned_data['taxa_moeda'])
+                        if form_operacao_criptomoeda.cleaned_data['taxa_moeda_utilizada'] > 0:
+                            OperacaoCriptomoedaTaxa.objects.create(operacao=operacao_criptomoeda, moeda=moeda_utilizada, valor=form_operacao_criptomoeda.cleaned_data['taxa_moeda_utilizada'])
                         if moeda_utilizada:
                             OperacaoCriptomoedaMoeda.objects.create(operacao=operacao_criptomoeda, criptomoeda=moeda_utilizada)
                         divisao_operacao = DivisaoOperacaoCriptomoeda(operacao=operacao_criptomoeda, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_criptomoeda.quantidade)

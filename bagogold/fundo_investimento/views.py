@@ -13,7 +13,7 @@ from bagogold.fundo_investimento.forms import OperacaoFundoInvestimentoForm
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
     HistoricoValorCotas, FundoInvestimento
 from bagogold.fundo_investimento.utils import \
-    calcular_qtd_cotas_ate_dia_por_fundo, calcular_qtd_cotas_ate_dia,\
+    calcular_qtd_cotas_ate_dia_por_fundo, calcular_qtd_cotas_ate_dia, \
     calcular_valor_fundos_investimento_ate_dia
 from decimal import Decimal
 from django.contrib import messages

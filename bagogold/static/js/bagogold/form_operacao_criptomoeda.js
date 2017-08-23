@@ -54,7 +54,7 @@ $(document).ready(function() {
 		});
 	
 	    $("input[name='taxa_moeda_utilizada']").TouchSpin({
-			min: 0.000000000001,
+			min: 0,
 			max: 1000000000,
 			step: 0.000000000001,
 			decimals: 12,
@@ -73,7 +73,7 @@ $(document).ready(function() {
 		});
 	
 	    $("input[name='taxa_moeda_utilizada']").TouchSpin({
-			min: 0.000000000001,
+			min: 0,
 			max: 1000000000,
 			step: 0.000000000001,
 			decimals: 12,
@@ -85,7 +85,7 @@ $(document).ready(function() {
     // Pegar criptomoeda escolhida atualmente
     var escolhida = $('#id_criptomoeda option:selected').text().split(' ')[0];
     $("input[name='taxa_moeda']").TouchSpin({
-		min: 0.000000000001,
+		min: 0,
 		max: 1000000000,
 		step: 0.000000000001,
 		decimals: 12,
