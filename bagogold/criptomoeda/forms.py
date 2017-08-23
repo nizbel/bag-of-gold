@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.forms.utils import LocalizedModelForm
-from bagogold.criptomoeda.models import OperacaoCriptomoeda, Criptomoeda
+from bagogold.criptomoeda.models import OperacaoCriptomoeda, Criptomoeda,\
+    TransferenciaCriptomoeda
 from bagogold.criptomoeda.utils import \
     calcular_qtd_moedas_ate_dia_por_criptomoeda
 from django import forms
@@ -51,5 +52,28 @@ class OperacaoCriptomoedaForm(LocalizedModelForm):
             raise forms.ValidationError('A moeda utilizada deve ser diferente da moeda comprada/vendida')
         
         # Verifica se é possível vender a criptomoeda apontada
-            if calcular_qtd_moedas_ate_dia_por_criptomoeda(self.investidor, data.get('criptomoeda').id, data) < data.get('quantidade'):
-                raise forms.ValidationError('Não é possível vender a quantidade informada para %s' % (data.get('criptomoeda')))
+        if data.get('tipo_operacao') == 'V' and calcular_qtd_moedas_ate_dia_por_criptomoeda(self.investidor, data.get('criptomoeda').id, data.get('data')) < data.get('quantidade'):
+            raise forms.ValidationError('Não é possível vender a quantidade informada para %s' % (data.get('criptomoeda')))
+            
+class TransferenciaCriptomoedaForm(LocalizedModelForm):
+    class Meta:
+        model = TransferenciaCriptomoeda
+        fields = ('criptomoeda', 'data', 'quantidade', 'origem', 'destino', 'taxa',)
+        widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
+                                            'placeholder':'Selecione uma data'}),}
+        
+    def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
+        # first call parent's constructor
+        super(OperacaoCriptomoedaForm, self).__init__(*args, **kwargs)
+        
+    def clean(self):
+        data = super(TransferenciaCriptomoedaForm, self).clean()
+        if data.get('origem') == data.get('destino'):
+            raise forms.ValidationError('Origem deve ser diferente de destino')
+        
+        if data.get('taxa') > data.get('quantidade'):
+            raise forms.ValidationError('Taxa não pode ser maior que a quantidade transferida')
+        
+        if data.get('quantidade') > calcular_qtd_moedas_ate_dia_por_criptomoeda(self.investidor, data.get('criptomoeda').id, data.get('data')):
+            raise forms.ValidationError('Não é possível transferir quantidade informada. Quantidade em %s: %s %s' % (data.get('data').strftime('%d/%m/%Y'), data.get('quantidade'), data.get('criptomoeda').ticker))
