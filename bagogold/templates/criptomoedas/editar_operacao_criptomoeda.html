@@ -19,67 +19,85 @@
     <form id="form_inserir_fundo_investimento" method="POST" class="horizontal-form">{% csrf_token %}
         <div class="form-body">
             <div class="row">
-                <div class="form-group col-md-6 {% if form_operacao_fundo_investimento.fundo_investimento.errors %} has-error {% endif %}">
-                    <label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_fundo_investimento.fundo_investimento.label}}: </label>
+                <div class="form-group col-md-6 {% if form_operacao_criptomoeda.criptomoeda.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_criptomoeda.criptomoeda.label}}: </label>
                     <div class="col-md-8">
-                        <select id="id_fundo_investimento" name="fundo_investimento" style="width: 100%;">
-                            {% if form_operacao_fundo_investimento.fundo_investimento.value %}
-                            <option value="{{ form_operacao_fundo_investimento.fundo_investimento.value|stringformat:'d' }}">{{ fundo_selecionado }}</option>
-                            {% endif %}
-                            {% comment %}{% for key, value in form_operacao_fundo_investimento.fields.fundo_investimento.widget.choices %}<option value="{{ key }}"
-                            {% if key == form_operacao_fundo_investimento.fundo_investimento.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}{% endcomment %}
+                        <select class="selectpicker form-control" id="id_criptomoeda" name="criptomoeda">
+                            {% for key, value in form_operacao_criptomoeda.fields.criptomoeda.widget.choices %}<option value="{{ key }}"
+                            {% if key == form_operacao_criptomoeda.criptomoeda.value|add:"0" %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
                         </select>
-                        {% if form_operacao_fundo_investimento.fundo_investimento.errors %} <span class="help-block"> {{ form_operacao_fundo_investimento.fundo_investimento.errors.as_text }} </span> {% endif %}
+                        {% if form_operacao_criptomoeda.criptomoeda.errors %} <span class="help-block"> {{ form_operacao_criptomoeda.criptomoeda.errors.as_text }} </span> {% endif %}
                     </div>
                 </div>
-                <div class="form-group col-md-6 {% if form_operacao_fundo_investimento.data.errors %} has-error {% endif %}">
-                    <label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_fundo_investimento.data.label}}: </label>
+                <div class="form-group col-md-6 {% if form_operacao_criptomoeda.moeda_utilizada.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_criptomoeda.moeda_utilizada.label}}: </label>
+                    <div class="col-md-8">
+                        <select class="selectpicker form-control" id="id_moeda_utilizada" name="moeda_utilizada">
+                            {% for key, value in form_operacao_criptomoeda.fields.moeda_utilizada.widget.choices %}<option value="{{ key }}"
+                            {% if key == form_operacao_criptomoeda.moeda_utilizada.value|add:"0" %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                        </select>
+                        {% if form_operacao_criptomoeda.moeda_utilizada.errors %} <span class="help-block"> {{ form_operacao_criptomoeda.moeda_utilizada.errors.as_text }} </span> {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group col-md-6 {% if form_operacao_criptomoeda.quantidade.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4"> {{form_operacao_criptomoeda.quantidade.label}}: </label>
+                    <div class="col-md-8">
+                        <input id="id_quantidade" type="text" value="{{form_operacao_criptomoeda.quantidade.value}}" name="quantidade" class="form-control">
+                        {% if form_operacao_criptomoeda.quantidade.errors %} <span class="help-block"> {{ form_operacao_criptomoeda.quantidade.errors.as_text }} </span> {% endif %}
+                    </div>
+                </div>
+                <div class="form-group col-md-6 {% if form_operacao_criptomoeda.valor.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_criptomoeda.valor.label}}: </label>
+                    <div class="col-md-8">
+                        <input id="id_valor" type="text" value="{{form_operacao_criptomoeda.valor.value}}" name="valor" class="form-control">
+                        {% if form_operacao_criptomoeda.valor.errors %} <span class="help-block"> {{ form_operacao_criptomoeda.valor.errors.as_text }} </span> {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group col-md-6 {% if form_operacao_criptomoeda.data.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_criptomoeda.data.label}}: </label>
                     <div class="col-md-8">
                         <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" data-date-viewmode="years">
-                            <input type="text" class="form-control" id="id_data" name="data" value="{% if form_operacao_fundo_investimento.data.value|date:'d/m/Y'|default:'' == '' %}{{form_operacao_fundo_investimento.data.value|default:''}}{% else %}{{form_operacao_fundo_investimento.data.value|date:'d/m/Y'}}{% endif %}">
+                            <input type="text" class="form-control" id="id_data" name="data" 
+                            value="{% if form_operacao_criptomoeda.data.value|date:'d/m/Y'|default:'' == '' %}{{form_operacao_criptomoeda.data.value|default:''}}{% else %}{{form_operacao_criptomoeda.data.value|date:'d/m/Y'}}{% endif %}">
                             <span class="input-group-btn">
                                 <button class="btn default" type="button">
                                     <i class="fa fa-calendar"></i>
                                 </button>
                             </span>
                         </div>
-                        {% if form_operacao_fundo_investimento.data.errors %} <span class="help-block"> {{ form_operacao_fundo_investimento.data.errors.as_text }} </span> 
+                        {% if form_operacao_criptomoeda.data.errors %} <span class="help-block"> {{ form_operacao_criptomoeda.data.errors.as_text }} </span> 
                         {% else %} <span class="help-block"> Selecione uma data </span>
                         {% endif %}
                     </div>
                 </div>
-            </div>
-            <div class="row">
-                <div class="form-group col-md-6 {% if form_operacao_fundo_investimento.valor.errors %} has-error {% endif %}">
-                    <label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_fundo_investimento.valor.label}}: </label>
-                    <div class="col-md-8">
-                        <input id="id_valor" type="text" value="{{form_operacao_fundo_investimento.valor.value}}" name="valor" class="form-control">
-                        {% if form_operacao_fundo_investimento.valor.errors %} <span class="help-block"> {{ form_operacao_fundo_investimento.valor.errors.as_text }} </span> {% endif %}
-                    </div>
-                </div>
-                <div class="form-group col-md-6 {% if form_operacao_fundo_investimento.quantidade.errors %} has-error {% endif %}">
-                    <label class="control-label col-md-4"> {{form_operacao_fundo_investimento.quantidade.label}}: </label>
-                    <div class="col-md-8">
-                        <input id="id_quantidade" type="text" value="{{form_operacao_fundo_investimento.quantidade.value}}" name="quantidade" class="form-control">
-                        {% if form_operacao_fundo_investimento.quantidade.errors %} <span class="help-block"> {{ form_operacao_fundo_investimento.quantidade.errors.as_text }} </span> {% endif %}
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="form-group col-md-6">
-                    <label class="control-label col-md-4"> Valor da cota: </label>
-                    <div class="col-md-8">
-                        <input id="id_valor_cota" type="text" value="0" name="valor_cota" class="form-control">
-                    </div>
-                </div>
-                <div class="form-group col-md-6 {% if form_operacao_fundo_investimento.tipo_operacao.errors %} has-error {% endif %}">
-                    <label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_fundo_investimento.tipo_operacao.label}}: </label>
+                <div class="form-group col-md-6 {% if form_operacao_criptomoeda.tipo_operacao.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_criptomoeda.tipo_operacao.label}}: </label>
                     <div class="col-md-8">
                         <select class="selectpicker form-control" id="id_tipo_operacao" name="tipo_operacao">
-                            {% for key, value in form_operacao_fundo_investimento.fields.tipo_operacao.widget.choices %}<option value="{{ key }}"
-                            {% if key == form_operacao_fundo_investimento.tipo_operacao.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                            {% for key, value in form_operacao_criptomoeda.fields.tipo_operacao.widget.choices %}<option value="{{ key }}"
+                            {% if key == form_operacao_criptomoeda.tipo_operacao.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
                         </select>
-                        {% if form_operacao_fundo_investimento.tipo_operacao.errors %} <span class="help-block"> {{ form_operacao_fundo_investimento.tipo_operacao.errors.as_text }} </span> {% endif %}
+                        {% if form_operacao_criptomoeda.tipo_operacao.errors %} <span class="help-block"> {{ form_operacao_criptomoeda.tipo_operacao.errors.as_text }} </span> {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group col-md-6 {% if form_operacao_criptomoeda.taxa_moeda.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_criptomoeda.taxa_moeda.label}}: </label>
+                    <div class="col-md-8">
+                        <input id="id_taxa_moeda" type="text" value="{{form_operacao_criptomoeda.taxa_moeda.value}}" name="taxa_moeda" class="form-control">
+                        {% if form_operacao_criptomoeda.taxa_moeda.errors %} <span class="help-block"> {{ form_operacao_criptomoeda.taxa_moeda.errors.as_text }} </span> {% endif %}
+                    </div>
+                </div>
+                <div class="form-group col-md-6 {% if form_operacao_criptomoeda.taxa_moeda_utilizada.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_criptomoeda.taxa_moeda_utilizada.label}}: </label>
+                    <div class="col-md-8">
+                        <input id="id_taxa_moeda_utilizada" type="text" value="{{form_operacao_criptomoeda.taxa_moeda_utilizada.value}}" name="taxa_moeda_utilizada" class="form-control">
+                        {% if form_operacao_criptomoeda.taxa_moeda_utilizada.errors %} <span class="help-block"> {{ form_operacao_criptomoeda.taxa_moeda_utilizada.errors.as_text }} </span> {% endif %}
                     </div>
                 </div>
             </div>
@@ -172,94 +190,12 @@
 <script src={% static "assets/global/plugins/bootstrap-datepicker/locales/bootstrap-datepicker.pt-BR.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/select2/js/select2.full.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/select2/js/i18n/pt-BR.js" %} type="text/javascript"></script>
-{{ form_operacao_fundo_investimento.media }}
+{{ form_operacao_criptomoeda.media }}
 <script>
 $(document).ready(function() {
-    $('#id_fundo_investimento').select2({
-        language: 'pt-BR',
-        placeholder: 'Selecione um fundo',
-        ajax: {
-            url: "{% url 'fundo_investimento:listar_fundos_por_nome' %}",
-            type : "GET",
-            delay: 250,
-            data: function (params) {
-              return {
-                nome_fundo: params.term, // search term
-                pagina: params.page
-              };
-            },
-            processResults: function (data, params) {
-              // parse the results into the format expected by Select2
-              // since we are using custom formatting functions we do not need to
-              // alter the remote JSON data, except to indicate that infinite
-              // scrolling can be used
-              params.page = params.page || 1;
-              if (data.sucesso) {
-                  return {
-                    results: data.dados,
-                 pagination: {
-                   more: (params.page * 30) < data.total_count
-                 }
-                  };
-              } else {
-                  return {};
-              }
-            },
-            cache: true
-          },
-          escapeMarkup: function (markup) { return markup; }, // let our custom formatter work
-          minimumInputLength: 3
-    });
-    
-
-    $('#id_fundo_investimento').change(function() {
-        buscarValorCotaHistorico();
-    });
-    
     $('.date-picker').datepicker({
         language: 'pt-BR'
-    }).on('changeDate', function(e) {
-        buscarValorCotaHistorico();
-    });
-    
-    $( "#form_inserir_fundo_investimento" ).submit(function( event ) {
-        $('#id_quantidade').removeAttr('disabled');
     });
 });
-
-function buscarValorCotaHistorico() {
-    if ($('#id_data').val() != null && $('#id_data').val() != '' && $('#id_fundo_investimento').val() != null && $('#id_fundo_investimento').val() != '') {
-        $.ajax({
-            url: "{% url 'fundo_investimento:verificar_historico_fundo_na_data' %}",
-            type : "GET", // http method
-            data : {data: $('#id_data').val(), fundo: $('#id_fundo_investimento').val()},
-
-            // handle a successful response
-            success : function(retorno) {
-                if (retorno.sucesso) {
-                    if (parseFloat(retorno.valor) > 0) {
-                        $('#id_valor_cota').prop('disabled', true);
-                        $('#id_quantidade').prop('disabled', true);
-                        $('#id_valor_cota').val(retorno.valor.replace('.', ','));
-                        var valor_total = parseFloat($('#id_valor').val().replace('.', '').replace(',', '.'));
-                        if (valor_total > 0) {
-                            $('#id_quantidade').val((valor_total / parseFloat(retorno.valor)).toFixed(12).toString().replace('.', ','));
-                        }
-                    } else {
-                        $('#id_valor_cota').removeAttr('disabled');
-                        $('#id_quantidade').removeAttr('disabled');
-                    }
-                } else {
-                    console.log(retorno.erro);
-                }
-            },
-
-            // handle a non-successful response
-            error : function(xhr,errmsg,err) {
-                console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
-            }
-       });
-    }
-}
 </script>
 {% endblock %}

@@ -27,19 +27,27 @@ class OperacaoCriptomoeda (models.Model):
     def em_real(self):
         return not hasattr(self, 'operacaocriptomoedamoeda')
     
-    def moeda(self):
+    def moeda_utilizada(self):
         if hasattr(self, 'operacaocriptomoedamoeda'):
             return self.operacaocriptomoedamoeda.criptomoeda
         return 'BRL'
 
 class OperacaoCriptomoedaTaxa (models.Model):
-    valor = models.DecimalField(u'Taxa da operação', max_digits=21, decimal_places=12)
+    valor = models.DecimalField(u'Taxa da operação', max_digits=21, decimal_places=12, validators=[MinValueValidator(Decimal('0.000000000001'))])
     operacao = models.ForeignKey('OperacaoCriptomoeda')
     moeda = models.ForeignKey('Criptomoeda', null=True)
     
     def __unicode__(self):
         valor = 'R$ %s' % self.valor if self.moeda == None else '%s %s' % (self.valor, self.moeda.ticker)
         return 'Taxa de %s' % (valor)
+    
+    def em_real(self):
+        return self.moeda is None
+    
+    def moeda_utilizada(self):
+        if self.moeda is not None:
+            return self.moeda.ticker
+        return 'BRL'
 
 class OperacaoCriptomoedaMoeda (models.Model):
     """

@@ -98,7 +98,7 @@
                             <th>Data</th>
                             <th>Qtde. moedas</th>
                             <th>Valor unitário</th>
-                            <th>Taxa</th>
+                            <th>Taxas</th>
                             <th>Total</th>
                         </tr>
                     </thead>
@@ -109,9 +109,16 @@
                             <td><a class="tooltips" data-placement="top" data-original-title="Editar {{item.tipo}}" href="{% url 'criptomoeda:editar_operacao_criptomoeda' item.id %}">{{item.tipo}}</a></td>
                             <td>{{ item.data|date:"d/m/Y" }}</td>
                             <td>{{item.quantidade|casas_decimais}} {{item.criptomoeda.ticker}}</td>
-                            <td>{% if item.em_real%}R$ {{item.valor|casas_decimais}}{% else %}{{item.valor|casas_decimais}} {{item.moeda}}{% endif %}</td>
-                            <td>{% if item.em_real%}R$ {{item.taxa|casas_decimais}}{% else %}{{item.taxa|casas_decimais}} {{item.moeda}}{% endif %}</td>
-                            <td>{% if item.em_real%}R$ {{item.valor_total|casas_decimais}}{% else %}{{item.valor_total|casas_decimais}} {{item.moeda}}{% endif %}</td>
+                            <td>{% if item.em_real%}R$ {{item.valor|casas_decimais}}{% else %}{{item.valor|casas_decimais}} {{item.moeda_utilizada}}{% endif %}</td>
+                            <td style="color: red;">
+                            {% for taxa in item.taxas %}
+                                {% if forloop.counter > 1 %}
+                                </br>
+                                {% endif %}
+                                {% if taxa.em_real%}R$ {{taxa.valor|casas_decimais}}{% else %}{{taxa.valor|casas_decimais}} {{taxa.moeda_utilizada}}{% endif %}
+                            {% endfor %}
+                            </td>
+                            <td>{% if item.em_real%}R$ {{item.valor_total|casas_decimais}}{% else %}{{item.valor_total|casas_decimais}} {{item.moeda_utilizada}}{% endif %}</td>
                         </tr>
                     {% endfor %}
                     </tbody>
