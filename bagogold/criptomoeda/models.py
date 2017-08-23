@@ -31,11 +31,26 @@ class OperacaoCriptomoeda (models.Model):
         if hasattr(self, 'operacaocriptomoedamoeda'):
             return self.operacaocriptomoedamoeda.criptomoeda
         return 'BRL'
-
+    
+    def taxa_moeda(self):
+        if self.operacaocriptomoedataxa_set.filter(moeda=self.criptomoeda).exists():
+            return self.operacaocriptomoedataxa_set.get(moeda=self.criptomoeda)
+        return None
+    
+    def taxa_moeda_utilizada(self):
+        if self.em_real() and self.operacaocriptomoedataxa_set.filter(moeda__isnull=True).exists():
+            return self.operacaocriptomoedataxa_set.get(moeda__isnull=True)
+        elif (not self.em_real()) and self.operacaocriptomoedataxa_set.filter(moeda=self.moeda_utilizada()).exists():
+            return self.operacaocriptomoedataxa_set.get(moeda=self.moeda_utilizada())
+        return None
+    
 class OperacaoCriptomoedaTaxa (models.Model):
     valor = models.DecimalField(u'Taxa da operação', max_digits=21, decimal_places=12, validators=[MinValueValidator(Decimal('0.000000000001'))])
     operacao = models.ForeignKey('OperacaoCriptomoeda')
     moeda = models.ForeignKey('Criptomoeda', null=True)
+    
+    class Meta:
+        unique_together=('operacao', 'moeda')
     
     def __unicode__(self):
         valor = 'R$ %s' % self.valor if self.moeda == None else '%s %s' % (self.valor, self.moeda.ticker)
@@ -60,7 +75,18 @@ class OperacaoCriptomoedaMoeda (models.Model):
 class HistoricoValorCriptomoeda (models.Model):
     criptomoeda = models.ForeignKey('Criptomoeda')
     data = models.DateField(u'Data')
-    valor = models.DecimalField(u'Valor', max_digits=24, decimal_places=15)
+    valor = models.DecimalField(u'Valor', max_digits=21, decimal_places=12)
 
     class Meta:
         unique_together=('criptomoeda', 'data')
+        
+class TransferenciaCriptomoeda (models.Model):
+    criptomoeda = models.ForeignKey('Criptomoeda')
+    data = models.DateField(u'Data')
+    quantidade = models.DecimalField(u'Quantidade transferida', max_digits=21, decimal_places=12, validators=[MinValueValidator(Decimal('0.000000000001'))])
+    origem = models.CharField(u'Local de origem', max_length=50)
+    destino = models.CharField(u'Local de destino', max_length=50)
+    taxa = models.DecimalField(u'Taxa da transferência', max_digits=21, decimal_places=12, validators=[MinValueValidator(Decimal('0.000000000001'))])
+
+    def __unicode__(self):
+        return u'Transferência de %s %s entre %s e %s' % (self.valor, self.criptomoeda.ticker, self.origem, self.destino)

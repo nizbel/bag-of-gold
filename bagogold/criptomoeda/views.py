@@ -45,33 +45,87 @@ def editar_operacao_criptomoeda(request, id_operacao):
         if request.POST.get("save"):
             form_operacao_criptomoeda = OperacaoCriptomoedaForm(request.POST, instance=operacao_criptomoeda, investidor=investidor)
             formset_divisao = DivisaoFormSet(request.POST, instance=operacao_criptomoeda, investidor=investidor) if varias_divisoes else None
-            moeda_utilizada = Criptomoeda.objects.get(id=int(form_operacao_criptomoeda.cleaned_data['moeda_utilizada'])) \
-                if form_operacao_criptomoeda.cleaned_data['moeda_utilizada'] != '' else None
                 
             if form_operacao_criptomoeda.is_valid():
+                moeda_utilizada = Criptomoeda.objects.get(id=int(form_operacao_criptomoeda.cleaned_data['moeda_utilizada'])) \
+                    if form_operacao_criptomoeda.cleaned_data['moeda_utilizada'] != '' else None
                 if varias_divisoes:
                     if formset_divisao.is_valid():
-                        operacao_criptomoeda.save()
-                        if form_operacao_criptomoeda.cleaned_data['taxa_moeda'] > 0:
-                            OperacaoCriptomoedaTaxa.objects.create(operacao=operacao_criptomoeda, moeda=operacao_criptomoeda.criptomoeda, valor=form_operacao_criptomoeda.cleaned_data['taxa_moeda'])
-                        if form_operacao_criptomoeda.cleaned_data['taxa_moeda_utilizada'] > 0:
-                            OperacaoCriptomoedaTaxa.objects.create(operacao=operacao_criptomoeda, moeda=moeda_utilizada, valor=form_operacao_criptomoeda.cleaned_data['taxa_moeda_utilizada'])
-                        if moeda_utilizada:
-                            OperacaoCriptomoedaMoeda.objects.create(operacao=operacao_criptomoeda, criptomoeda=moeda_utilizada)
-                        divisao_operacao = DivisaoOperacaoCriptomoeda(operacao=operacao_criptomoeda, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_criptomoeda.quantidade)
-                        formset_divisao.save()
-                        messages.success(request, 'Operação editada com sucesso')
-                        return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
+                        try:
+                            with transaction.atomic():
+                                operacao_criptomoeda.save()
+                                # Caso o valor para a taxa da moeda comprada/vendida seja maior que 0, criar ou editar taxa
+                                if form_operacao_criptomoeda.cleaned_data['taxa_moeda'] > 0:
+                                    OperacaoCriptomoedaTaxa.objects.update_or_create(operacao=operacao_criptomoeda, moeda=operacao_criptomoeda.criptomoeda, 
+                                                                                     defaults={'valor': form_operacao_criptomoeda.cleaned_data['taxa_moeda']})
+                                # Caso contrário, apagar taxa para a moeda, caso exista
+                                elif OperacaoCriptomoedaTaxa.objects.filter(operacao=operacao_criptomoeda, moeda=operacao_criptomoeda.criptomoeda).exists():
+                                    OperacaoCriptomoedaTaxa.objects.get(operacao=operacao_criptomoeda, moeda=operacao_criptomoeda.criptomoeda).delete()
+                                # Caso o valor para a taxa da moeda utilizada para operação seja maior que 0, criar ou editar taxa
+                                if form_operacao_criptomoeda.cleaned_data['taxa_moeda_utilizada'] > 0:
+                                    OperacaoCriptomoedaTaxa.objects.update_or_create(operacao=operacao_criptomoeda, moeda=moeda_utilizada, 
+                                                                                     defaults={'valor': form_operacao_criptomoeda.cleaned_data['taxa_moeda_utilizada']})
+                                # Caso contrário, apagar taxa para a moeda, caso exista
+                                elif OperacaoCriptomoedaTaxa.objects.filter(operacao=operacao_criptomoeda, moeda=moeda_utilizada).exists():
+                                    OperacaoCriptomoedaTaxa.objects.get(operacao=operacao_criptomoeda, moeda=moeda_utilizada).delete()
+                                
+                                # Caso a moeda utilizada não seja o real, criar ou editar registro de moeda utilizada
+                                if moeda_utilizada:
+                                    OperacaoCriptomoedaMoeda.objects.update_or_create(operacao=operacao_criptomoeda, defaults={'criptomoeda': moeda_utilizada})
+                                # Caso moeda utilizada seja o real, verificar se existe registro de moeda utilizada para apagar
+                                elif OperacaoCriptomoedaMoeda.objects.filter(operacao=operacao_criptomoeda).exists():
+                                    OperacaoCriptomoedaMoeda.objects.get(operacao=operacao_criptomoeda).delete()
+                                    
+                                divisao_operacao = DivisaoOperacaoCriptomoeda(operacao=operacao_criptomoeda, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_criptomoeda.quantidade)
+                                formset_divisao.save()
+                                messages.success(request, 'Operação editada com sucesso')
+                                return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
+                        except:
+                            messages.error(request, 'Houve um erro ao editar a operação')
+                            if settings.ENV == 'DEV':
+                                raise
+                            elif settings.ENV == 'PROD':
+                                mail_admins(u'Erro ao editar operação em criptomoeda com várias divisões', traceback.format_exc())
                     for erro in formset_divisao.non_form_errors():
                         messages.error(request, erro)
                         
                 else:
-                    operacao_criptomoeda.save()
-                    divisao_operacao = DivisaoOperacaoCriptomoeda.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_criptomoeda)
-                    divisao_operacao.quantidade = operacao_criptomoeda.quantidade
-                    divisao_operacao.save()
-                    messages.success(request, 'Operação editada com sucesso')
-                    return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
+                    try:
+                        with transaction.atomic():
+                            operacao_criptomoeda.save()
+                            # Caso o valor para a taxa da moeda comprada/vendida seja maior que 0, criar ou editar taxa
+                            if form_operacao_criptomoeda.cleaned_data['taxa_moeda'] > 0:
+                                OperacaoCriptomoedaTaxa.objects.update_or_create(operacao=operacao_criptomoeda, moeda=operacao_criptomoeda.criptomoeda, 
+                                                                                 defaults={'valor': form_operacao_criptomoeda.cleaned_data['taxa_moeda']})
+                            # Caso contrário, apagar taxa para a moeda, caso exista
+                            elif OperacaoCriptomoedaTaxa.objects.filter(operacao=operacao_criptomoeda, moeda=operacao_criptomoeda.criptomoeda).exists():
+                                OperacaoCriptomoedaTaxa.objects.get(operacao=operacao_criptomoeda, moeda=operacao_criptomoeda.criptomoeda).delete()
+                            # Caso o valor para a taxa da moeda utilizada para operação seja maior que 0, criar ou editar taxa
+                            if form_operacao_criptomoeda.cleaned_data['taxa_moeda_utilizada'] > 0:
+                                OperacaoCriptomoedaTaxa.objects.update_or_create(operacao=operacao_criptomoeda, moeda=moeda_utilizada, 
+                                                                                 defaults={'valor': form_operacao_criptomoeda.cleaned_data['taxa_moeda_utilizada']})
+                            # Caso contrário, apagar taxa para a moeda, caso exista
+                            elif OperacaoCriptomoedaTaxa.objects.filter(operacao=operacao_criptomoeda, moeda=moeda_utilizada).exists():
+                                OperacaoCriptomoedaTaxa.objects.get(operacao=operacao_criptomoeda, moeda=moeda_utilizada).delete()
+                            
+                            # Caso a moeda utilizada não seja o real, criar ou editar registro de moeda utilizada
+                            if moeda_utilizada:
+                                OperacaoCriptomoedaMoeda.objects.update_or_create(operacao=operacao_criptomoeda, defaults={'criptomoeda': moeda_utilizada})
+                            # Caso moeda utilizada seja o real, verificar se existe registro de moeda utilizada para apagar
+                            elif OperacaoCriptomoedaMoeda.objects.filter(operacao=operacao_criptomoeda).exists():
+                                OperacaoCriptomoedaMoeda.objects.get(operacao=operacao_criptomoeda).delete()
+                                
+                            divisao_operacao = DivisaoOperacaoCriptomoeda.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_criptomoeda)
+                            divisao_operacao.quantidade = operacao_criptomoeda.quantidade
+                            divisao_operacao.save()
+                            messages.success(request, 'Operação editada com sucesso')
+                            return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
+                    except:
+                        messages.error(request, 'Houve um erro ao editar a operação')
+                        if settings.ENV == 'DEV':
+                            raise
+                        elif settings.ENV == 'PROD':
+                            mail_admins(u'Erro ao editar operação em criptomoeda com uma divisão', traceback.format_exc())
                 
             for erro in [erro for erro in form_operacao_criptomoeda.non_field_errors()]:
                 messages.error(request, erro)
@@ -130,6 +184,9 @@ def historico(request):
         operacao.taxas = operacao.operacaocriptomoedataxa_set.all()
         operacao.valor_total = (operacao.quantidade + sum([taxa.valor for taxa in operacao.taxas if taxa.moeda == operacao.criptomoeda])) * operacao.valor \
             + sum([taxa.valor for taxa in operacao.taxas if taxa.moeda_utilizada() == operacao.moeda_utilizada()])
+        # Limitar valores totais em reais para 2 casas decimais
+        if operacao.em_real():
+            operacao.valor_total = operacao.valor_total.quantize(Decimal('0.01'))
     
     dados = {}
 #     dados['total_investido'] = total_investido
