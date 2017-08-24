@@ -12,8 +12,8 @@ ESCOLHAS_TIPO_OPERACAO=(('C', "Compra"),
 
 class OperacaoCriptomoedaForm(LocalizedModelForm):
     moeda_utilizada = forms.ChoiceField(required=False)
-    taxa_moeda = forms.DecimalField(min_value=0,  max_digits=21, decimal_places=12)
-    taxa_moeda_utilizada = forms.DecimalField(min_value=0,  max_digits=21, decimal_places=12)
+    taxa = forms.DecimalField(min_value=0,  max_digits=21, decimal_places=12)
+    taxa_moeda = forms.ChoiceField(required=False)
     
     class Meta:
         model = OperacaoCriptomoeda
@@ -21,7 +21,7 @@ class OperacaoCriptomoedaForm(LocalizedModelForm):
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),
                  'tipo_operacao': widgets.Select(choices=ESCOLHAS_TIPO_OPERACAO),}
-        labels = {'criptomoeda': 'Criptomoeda',}
+        labels = {'criptomoeda': 'Criptomoeda'}
     
     class Media:
         js = ('js/bagogold/form_operacao_criptomoeda.js',)
@@ -36,16 +36,17 @@ class OperacaoCriptomoedaForm(LocalizedModelForm):
             escolhas_moeda += ((criptomoeda.id, '%s (%s)' % (criptomoeda.ticker, criptomoeda.nome)),)
         self.fields['moeda_utilizada'].choices = escolhas_moeda
         self.fields['criptomoeda'].choices = escolhas_moeda[1:]
+        self.fields['taxa_moeda'].choices = escolhas_moeda
+        self.fields['taxa_moeda'].label = 'Moeda da taxa'
 
     def clean(self):
         data = super(OperacaoCriptomoedaForm, self).clean()
         # Taxas não podem ser maiores do que os valores movimentados na operação
-        if data.get('taxa_moeda') >= data.get('quantidade'):
+        if data.get('taxa') >= data.get('quantidade'):
             raise forms.ValidationError('A taxa na moeda comprada/vendida deve ser menor que a quantidade comprada/vendida')
-        if data.get('taxa_moeda_utilizada') >= data.get('quantidade') * data.get('valor'):
-            raise forms.ValidationError('A taxa na moeda utilizada para a operação deve ser inferior ao valor total da operação')
-        if (data.get('taxa_moeda') * 100 / data.get('quantidade')) + (data.get('taxa_moeda_utilizada') * 100 / (data.get('quantidade') * data.get('valor'))) >= 100:
-            raise forms.ValidationError('Total das taxas não pode ser superior ao valor total movimentado na operação')
+        # A taxa deve ser em alguma das moedas envolvidas na operação
+        if data.get('taxa_moeda') not in [str(data.get('criptomoeda').id), data.get('moeda_utilizada')]:
+            raise forms.ValidationError('A taxa deve ser em alguma das moedas envolvidas na operação')
         
         # Testa se a moeda utilizada para operação e a moeda adquirida/vendida na operação são diferentes
         if data.get('moeda_utilizada').isdigit() and data.get('criptomoeda').id == int(data.get('moeda_utilizada')):
@@ -58,14 +59,21 @@ class OperacaoCriptomoedaForm(LocalizedModelForm):
 class TransferenciaCriptomoedaForm(LocalizedModelForm):
     class Meta:
         model = TransferenciaCriptomoeda
-        fields = ('criptomoeda', 'data', 'quantidade', 'origem', 'destino', 'taxa',)
+        fields = ('moeda', 'data', 'quantidade', 'origem', 'destino', 'taxa',)
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),}
+        
+    class Media:
+        js = ('js/bagogold/form_transferencia_criptomoeda.js',)
         
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
         # first call parent's constructor
-        super(OperacaoCriptomoedaForm, self).__init__(*args, **kwargs)
+        super(TransferenciaCriptomoedaForm, self).__init__(*args, **kwargs)
+        escolhas_moeda = (('', 'R$ (Reais)'),)
+        for criptomoeda in Criptomoeda.objects.all():
+            escolhas_moeda += ((criptomoeda.id, '%s (%s)' % (criptomoeda.ticker, criptomoeda.nome)),)
+        self.fields['moeda'].choices = escolhas_moeda
         
     def clean(self):
         data = super(TransferenciaCriptomoedaForm, self).clean()
@@ -75,5 +83,6 @@ class TransferenciaCriptomoedaForm(LocalizedModelForm):
         if data.get('taxa') > data.get('quantidade'):
             raise forms.ValidationError('Taxa não pode ser maior que a quantidade transferida')
         
-        if data.get('quantidade') > calcular_qtd_moedas_ate_dia_por_criptomoeda(self.investidor, data.get('criptomoeda').id, data.get('data')):
+        # Testar se o campo criptomoeda foi preenchido, se não, transferência de reais
+        if data.get('criptomoeda') and data.get('quantidade') > calcular_qtd_moedas_ate_dia_por_criptomoeda(self.investidor, data.get('criptomoeda').id, data.get('data')):
             raise forms.ValidationError('Não é possível transferir quantidade informada. Quantidade em %s: %s %s' % (data.get('data').strftime('%d/%m/%Y'), data.get('quantidade'), data.get('criptomoeda').ticker))

@@ -317,6 +317,26 @@ class DivisaoOperacaoCriptomoeda (models.Model):
     def percentual_divisao(self):
         return self.quantidade / self.operacao.quantidade
     
+class DivisaoTransferenciaCriptomoeda (models.Model):
+    divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
+    transferencia = models.ForeignKey('criptomoeda.TransferenciaCriptomoeda')
+    """
+    Guarda a quantidade da transferência que pertence a divisão
+    """
+    quantidade = models.DecimalField('Quantidade',  max_digits=21, decimal_places=12)
+    
+    class Meta:
+        unique_together=('divisao', 'transferencia')
+    
+    def __unicode__(self):
+        return self.divisao.nome + ': ' + str(self.quantidade) + ' de ' + unicode(self.transferencia)
+    
+    """
+    Calcula o percentual da operação que foi para a divisão
+    """
+    def percentual_divisao(self):
+        return self.quantidade / self.operacao.quantidade
+    
 class DivisaoOperacaoCRI_CRA (models.Model):
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
     operacao = models.ForeignKey('cri_cra.OperacaoCRI_CRA')
