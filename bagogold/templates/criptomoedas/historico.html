@@ -90,7 +90,7 @@
                     </div>
                 </div>
                 <div class="portlet-body">
-                    <table id="operacoes" class="table table-striped table-bordered table-hover table-header-fixed">
+                    <table id="movimentacoes" class="table table-striped table-bordered table-hover table-header-fixed">
                     <thead>
                         <tr>
                             <th>Moeda</th>
@@ -98,27 +98,32 @@
                             <th>Data</th>
                             <th>Qtde. moedas</th>
                             <th>Valor unitário</th>
-                            <th>Taxas</th>
+                            <th>Taxa</th>
                             <th>Total</th>
                         </tr>
                     </thead>
                     <tbody>
-                    {% for item in operacoes %}
+                    {% for item in movimentacoes %}
                         <tr>
-                            <td><span class="tooltips" data-placement="top" data-original-title="{{item.criptomoeda.ticker}}">{{item.criptomoeda}}</span></td>
-                            <td><a class="tooltips" data-placement="top" data-original-title="Editar {{item.tipo}}" href="{% url 'criptomoeda:editar_operacao_criptomoeda' item.id %}">{{item.tipo}}</a></td>
+                            <td><span class="tooltips" data-placement="top" data-original-title="{{item.criptomoeda.ticker|default:'R$'}}">{{item.criptomoeda|default:'Reais'}}</span></td>
+                            <td><a class="tooltips" data-placement="top" data-original-title="Editar {{item.tipo}}" href="
+                                {% if item.tipo == 'Transferência' %}
+                                {% url 'criptomoeda:editar_transferencia_criptomoeda' item.id %}
+                                {% else %}
+                                {% url 'criptomoeda:editar_operacao_criptomoeda' item.id %}
+                                {% endif %}
+                                ">{{item.tipo}}</a></td>
                             <td>{{ item.data|date:"d/m/Y" }}</td>
-                            <td>{{item.quantidade|casas_decimais}} {{item.criptomoeda.ticker}}</td>
+                            <td>{% if item.tipo != 'Transferência' %}{{item.quantidade|casas_decimais}} {{item.criptomoeda.ticker}}{% else %}Não disponível{% endif %}</td>
                             <td>{% if item.em_real%}R$ {{item.valor|casas_decimais}}{% else %}{{item.valor|casas_decimais}} {{item.moeda_utilizada}}{% endif %}</td>
                             <td style="color: red;">
-                            {% for taxa in item.taxas %}
-                                {% if forloop.counter > 1 %}
-                                </br>
+                                {% if item.taxa %}
+                                    {% if not item.taxa.moeda %}R$ {{item.taxa.valor|casas_decimais}}{% else %}{{item.taxa.valor|casas_decimais}} {{item.taxa.moeda.ticker}}{% endif %}
+                                {% else %}
+                                    Não há
                                 {% endif %}
-                                {% if taxa.em_real%}R$ {{taxa.valor|casas_decimais}}{% else %}{{taxa.valor|casas_decimais}} {{taxa.moeda_utilizada}}{% endif %}
-                            {% endfor %}
                             </td>
-                            <td>{% if item.em_real%}R$ {{item.valor_total|casas_decimais}}{% else %}{{item.valor_total|casas_decimais}} {{item.moeda_utilizada}}{% endif %}</td>
+                            <td>{% if item.em_real %}R$ {{item.valor_total|casas_decimais}}{% else %}{{item.valor_total|casas_decimais}} {{item.moeda_utilizada}}{% endif %}</td>
                         </tr>
                     {% endfor %}
                     </tbody>

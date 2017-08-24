@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 from bagogold import settings
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
-from bagogold.bagogold.forms.divisoes import DivisaoOperacaoCriptomoedaFormSet
+from bagogold.bagogold.forms.divisoes import DivisaoOperacaoCriptomoedaFormSet, \
+    DivisaoTransferenciaCriptomoedaFormSet
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoCriptomoeda, \
-    Divisao
-from bagogold.criptomoeda.forms import OperacaoCriptomoedaForm
+    Divisao, DivisaoTransferenciaCriptomoeda
+from bagogold.criptomoeda.forms import OperacaoCriptomoedaForm, \
+    TransferenciaCriptomoedaForm
 from bagogold.criptomoeda.models import Criptomoeda, OperacaoCriptomoeda, \
-    OperacaoCriptomoedaMoeda, OperacaoCriptomoedaTaxa
+    OperacaoCriptomoedaMoeda, OperacaoCriptomoedaTaxa, TransferenciaCriptomoeda
 from bagogold.fundo_investimento.utils import \
     calcular_qtd_cotas_ate_dia_por_fundo
 from decimal import Decimal
@@ -20,12 +22,14 @@ from django.forms.models import inlineformset_factory
 from django.http.response import HttpResponseRedirect
 from django.template.response import TemplateResponse
 from urllib2 import urlopen
+from itertools import chain
+from operator import attrgetter
 import datetime
 import json
 import traceback
 
 @login_required
-@adiciona_titulo_descricao('Editar operação em Criptomoeda', 'Alterar valores de uma operação de compra/venda em Criptomoeda')
+@adiciona_titulo_descricao('Editar operação em criptomoeda', 'Alterar valores de uma operação de compra/venda em criptomoeda')
 def editar_operacao_criptomoeda(request, id_operacao):
     investidor = request.user.investidor
     
@@ -55,19 +59,14 @@ def editar_operacao_criptomoeda(request, id_operacao):
                             with transaction.atomic():
                                 operacao_criptomoeda.save()
                                 # Caso o valor para a taxa da moeda comprada/vendida seja maior que 0, criar ou editar taxa
-                                if form_operacao_criptomoeda.cleaned_data['taxa_moeda'] > 0:
-                                    OperacaoCriptomoedaTaxa.objects.update_or_create(operacao=operacao_criptomoeda, moeda=operacao_criptomoeda.criptomoeda, 
-                                                                                     defaults={'valor': form_operacao_criptomoeda.cleaned_data['taxa_moeda']})
+                                if form_operacao_criptomoeda.cleaned_data['taxa'] > 0:
+                                    taxa_moeda = Criptomoeda.objects.get(id=int(form_operacao_criptomoeda.cleaned_data['taxa_moeda'])) \
+                                        if form_operacao_criptomoeda.cleaned_data['taxa_moeda'] != '' else None
+                                    OperacaoCriptomoedaTaxa.objects.update_or_create(operacao=operacao_criptomoeda, defaults={'moeda': taxa_moeda,
+                                                                                                                              'valor': form_operacao_criptomoeda.cleaned_data['taxa']})
                                 # Caso contrário, apagar taxa para a moeda, caso exista
-                                elif OperacaoCriptomoedaTaxa.objects.filter(operacao=operacao_criptomoeda, moeda=operacao_criptomoeda.criptomoeda).exists():
-                                    OperacaoCriptomoedaTaxa.objects.get(operacao=operacao_criptomoeda, moeda=operacao_criptomoeda.criptomoeda).delete()
-                                # Caso o valor para a taxa da moeda utilizada para operação seja maior que 0, criar ou editar taxa
-                                if form_operacao_criptomoeda.cleaned_data['taxa_moeda_utilizada'] > 0:
-                                    OperacaoCriptomoedaTaxa.objects.update_or_create(operacao=operacao_criptomoeda, moeda=moeda_utilizada, 
-                                                                                     defaults={'valor': form_operacao_criptomoeda.cleaned_data['taxa_moeda_utilizada']})
-                                # Caso contrário, apagar taxa para a moeda, caso exista
-                                elif OperacaoCriptomoedaTaxa.objects.filter(operacao=operacao_criptomoeda, moeda=moeda_utilizada).exists():
-                                    OperacaoCriptomoedaTaxa.objects.get(operacao=operacao_criptomoeda, moeda=moeda_utilizada).delete()
+                                elif OperacaoCriptomoedaTaxa.objects.filter(operacao=operacao_criptomoeda).exists():
+                                    OperacaoCriptomoedaTaxa.objects.get(operacao=operacao_criptomoeda).delete()
                                 
                                 # Caso a moeda utilizada não seja o real, criar ou editar registro de moeda utilizada
                                 if moeda_utilizada:
@@ -94,20 +93,15 @@ def editar_operacao_criptomoeda(request, id_operacao):
                         with transaction.atomic():
                             operacao_criptomoeda.save()
                             # Caso o valor para a taxa da moeda comprada/vendida seja maior que 0, criar ou editar taxa
-                            if form_operacao_criptomoeda.cleaned_data['taxa_moeda'] > 0:
-                                OperacaoCriptomoedaTaxa.objects.update_or_create(operacao=operacao_criptomoeda, moeda=operacao_criptomoeda.criptomoeda, 
-                                                                                 defaults={'valor': form_operacao_criptomoeda.cleaned_data['taxa_moeda']})
+                            if form_operacao_criptomoeda.cleaned_data['taxa'] > 0:
+                                taxa_moeda = Criptomoeda.objects.get(id=int(form_operacao_criptomoeda.cleaned_data['taxa_moeda'])) \
+                                    if form_operacao_criptomoeda.cleaned_data['taxa_moeda'] != '' else None
+                                OperacaoCriptomoedaTaxa.objects.update_or_create(operacao=operacao_criptomoeda, defaults={'moeda': taxa_moeda,
+                                                                                                                          'valor': form_operacao_criptomoeda.cleaned_data['taxa']})
                             # Caso contrário, apagar taxa para a moeda, caso exista
-                            elif OperacaoCriptomoedaTaxa.objects.filter(operacao=operacao_criptomoeda, moeda=operacao_criptomoeda.criptomoeda).exists():
-                                OperacaoCriptomoedaTaxa.objects.get(operacao=operacao_criptomoeda, moeda=operacao_criptomoeda.criptomoeda).delete()
-                            # Caso o valor para a taxa da moeda utilizada para operação seja maior que 0, criar ou editar taxa
-                            if form_operacao_criptomoeda.cleaned_data['taxa_moeda_utilizada'] > 0:
-                                OperacaoCriptomoedaTaxa.objects.update_or_create(operacao=operacao_criptomoeda, moeda=moeda_utilizada, 
-                                                                                 defaults={'valor': form_operacao_criptomoeda.cleaned_data['taxa_moeda_utilizada']})
-                            # Caso contrário, apagar taxa para a moeda, caso exista
-                            elif OperacaoCriptomoedaTaxa.objects.filter(operacao=operacao_criptomoeda, moeda=moeda_utilizada).exists():
-                                OperacaoCriptomoedaTaxa.objects.get(operacao=operacao_criptomoeda, moeda=moeda_utilizada).delete()
-                            
+                            elif OperacaoCriptomoedaTaxa.objects.filter(operacao=operacao_criptomoeda).exists():
+                                OperacaoCriptomoedaTaxa.objects.get(operacao=operacao_criptomoeda).delete()
+                                
                             # Caso a moeda utilizada não seja o real, criar ou editar registro de moeda utilizada
                             if moeda_utilizada:
                                 OperacaoCriptomoedaMoeda.objects.update_or_create(operacao=operacao_criptomoeda, defaults={'criptomoeda': moeda_utilizada})
@@ -144,10 +138,14 @@ def editar_operacao_criptomoeda(request, id_operacao):
                 return HttpResponseRedirect(reverse('td:historico_td'))
  
     else:
-        operacao_criptomoeda.taxas = operacao_criptomoeda.operacaocriptomoedataxa_set.all()
-        taxa_moeda = sum([taxa.valor for taxa in operacao_criptomoeda.taxas if taxa.moeda == operacao_criptomoeda.criptomoeda])
-        taxa_moeda_utilizada = sum([taxa.valor for taxa in operacao_criptomoeda.taxas if taxa.moeda_utilizada() == operacao_criptomoeda.moeda_utilizada()])
-        form_operacao_criptomoeda = OperacaoCriptomoedaForm(instance=operacao_criptomoeda, investidor=investidor, initial={'taxa_moeda': taxa_moeda, 'taxa_moeda_utilizada': taxa_moeda_utilizada})
+        if OperacaoCriptomoedaTaxa.objects.filter(operacao=operacao_criptomoeda).exists():
+            taxa = OperacaoCriptomoedaTaxa.objects.get(operacao=operacao_criptomoeda)
+            taxa_valor = taxa.valor
+            taxa_moeda = taxa.moeda
+        else:
+            taxa_valor = 0
+            taxa_moeda = None
+        form_operacao_criptomoeda = OperacaoCriptomoedaForm(instance=operacao_criptomoeda, investidor=investidor, initial={'taxa': taxa_valor, 'taxa_moeda': taxa_moeda})
         formset_divisao = DivisaoFormSet(instance=operacao_criptomoeda, investidor=investidor)
         
     # Preparar nome de fundo selecionado
@@ -158,15 +156,31 @@ def editar_operacao_criptomoeda(request, id_operacao):
     return TemplateResponse(request, 'criptomoedas/editar_operacao_criptomoeda.html', {'form_operacao_criptomoeda': form_operacao_criptomoeda, 'formset_divisao': formset_divisao, \
                                                                                              'varias_divisoes': varias_divisoes})  
 
+@login_required
+@adiciona_titulo_descricao('Editar transferência para criptomoedas', 'Alterar valores de uma transferência para criptomoedas')
+def editar_transferencia(request, id_transferencia):
+    investidor = request.user.investidor
+    
+
 @adiciona_titulo_descricao('Histórico de Criptomoedas', 'Histórico de operações de compra/venda em Criptomoedas')
 def historico(request):
+    # Usado para criar objetos vazios
+    class Object(object):
+        pass
+    
     if request.user.is_authenticated():
         investidor = request.user.investidor
     else:
         return TemplateResponse(request, 'criptomoedas/historico.html', {'dados': {}, 'operacoes': list(), 
                                                     'graf_investido_total': list(), 'graf_patrimonio': list()})
+    
+    # Transferências do investidor
+    transferencias = TransferenciaCriptomoeda.objects.filter(investidor=investidor).order_by('data')
     # Processa primeiro operações de venda (V), depois compra (C)
-    operacoes = OperacaoCriptomoeda.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data') 
+    operacoes = OperacaoCriptomoeda.objects.filter(investidor=investidor).order_by('data', '-tipo_operacao') 
+    
+    # Juntar transferências e operações em uma lista
+    lista_movimentacoes = sorted(chain(transferencias, operacoes), key=attrgetter('data'))
     # Se investidor não tiver operações, retornar vazio
     if not operacoes:
         return TemplateResponse(request, 'criptomoedas/historico.html', {'dados': {}, 'operacoes': list(), 
@@ -176,25 +190,74 @@ def historico(request):
     graf_patrimonio = list()
     graf_investido_total = list()
     
-    for operacao in operacoes:
-        if operacao.tipo_operacao == 'C':
-            operacao.tipo = 'Compra'
-        else:
-            operacao.tipo = 'Venda'
-        operacao.taxas = operacao.operacaocriptomoedataxa_set.all()
-        operacao.valor_total = (operacao.quantidade + sum([taxa.valor for taxa in operacao.taxas if taxa.moeda == operacao.criptomoeda])) * operacao.valor \
-            + sum([taxa.valor for taxa in operacao.taxas if taxa.moeda_utilizada() == operacao.moeda_utilizada()])
+    moedas = {}
+    total_investido = 0
+    
+    for movimentacao in lista_movimentacoes:
+        if isinstance(movimentacao, OperacaoCriptomoeda):
+            if movimentacao.criptomoeda.ticker not in moedas.keys():
+                moedas[movimentacao.criptomoeda.ticker] = 0
+                
+            if movimentacao.tipo_operacao == 'C':
+                movimentacao.tipo = 'Compra'
+                moedas[movimentacao.criptomoeda.ticker] += movimentacao.quantidade
+            else:
+                movimentacao.tipo = 'Venda'
+                moedas[movimentacao.criptomoeda.ticker] -= movimentacao.quantidade
+            movimentacao.taxa = movimentacao.operacaocriptomoedataxa if hasattr(movimentacao, 'operacaocriptomoedataxa') else None
+            if movimentacao.taxa:
+                if movimentacao.taxa.moeda == movimentacao.criptomoeda:
+                    movimentacao.valor_total = (movimentacao.quantidade + movimentacao.taxa.valor) * movimentacao.valor
+                elif movimentacao.taxa.moeda_utilizada() == movimentacao.moeda_utilizada():
+                    movimentacao.valor_total = movimentacao.quantidade * movimentacao.valor + movimentacao.taxa.valor
+                else:
+                    raise ValueError('Moeda utilizada na taxa é inválida')
+            else:
+                movimentacao.valor_total = movimentacao.quantidade * movimentacao.valor
+        
+        elif isinstance(movimentacao, TransferenciaCriptomoeda):
+            if movimentacao.moeda and movimentacao.moeda.ticker not in moedas.keys():
+                moedas[movimentacao.moeda.ticker] = 0
+                
+            movimentacao.tipo = u'Transferência'
+            if movimentacao.moeda:
+                moedas[movimentacao.moeda.ticker] -= movimentacao.taxa
+            movimentacao.valor_total = movimentacao.quantidade
+            movimentacao.valor = movimentacao.quantidade - movimentacao.taxa
+            # Usar quantidade para guardar valor da taxa
+            movimentacao.quantidade = movimentacao.taxa
+            
+            # Preparar taxa
+            movimentacao.taxa = Object()
+            movimentacao.taxa.moeda = movimentacao.moeda
+            movimentacao.taxa.valor = movimentacao.quantidade
+            
+            movimentacao.criptomoeda = movimentacao.moeda
+            
         # Limitar valores totais em reais para 2 casas decimais
-        if operacao.em_real():
-            operacao.valor_total = operacao.valor_total.quantize(Decimal('0.01'))
+        if movimentacao.em_real():
+            movimentacao.valor_total = movimentacao.valor_total.quantize(Decimal('0.01'))
     
     dados = {}
-#     dados['total_investido'] = total_investido
-#     dados['patrimonio'] = total_patrimonio
+    dados['total_investido'] = total_investido
+    # Carrega o valor de um dólar em reais, mais atual
+    url_dolar = 'http://api.fixer.io/latest?base=USD&symbols=BRL'
+    resultado = urlopen(url_dolar)
+    data = json.load(resultado) 
+    dolar_para_real = Decimal(data['rates']['BRL'])
+    
+    dados['patrimonio'] = 0
+    for ticker, qtd in moedas.items():
+        if qtd == 0:
+            continue
+        url = 'https://api.cryptonator.com/api/ticker/%s-usd' % (ticker)
+        resultado = urlopen(url)
+        data = json.load(resultado) 
+        dados['patrimonio'] += qtd * dolar_para_real * Decimal(data['ticker']['price'])
 #     dados['lucro'] = total_patrimonio - total_investido
 #     dados['lucro_percentual'] = (total_patrimonio - total_investido) / total_investido * 100
     
-    return TemplateResponse(request, 'criptomoedas/historico.html', {'dados': dados, 'operacoes': operacoes, 
+    return TemplateResponse(request, 'criptomoedas/historico.html', {'dados': dados, 'movimentacoes': lista_movimentacoes, 
                                                     'graf_investido_total': graf_investido_total, 'graf_patrimonio': graf_patrimonio})
 
 @login_required
@@ -227,10 +290,10 @@ def inserir_operacao_criptomoeda(request):
                     try:
                         with transaction.atomic():
                             operacao_criptomoeda.save()
-                            if form_operacao_criptomoeda.cleaned_data['taxa_moeda'] > 0:
-                                OperacaoCriptomoedaTaxa.objects.create(operacao=operacao_criptomoeda, moeda=operacao_criptomoeda.criptomoeda, valor=form_operacao_criptomoeda.cleaned_data['taxa_moeda'])
-                            if form_operacao_criptomoeda.cleaned_data['taxa_moeda_utilizada'] > 0:
-                                OperacaoCriptomoedaTaxa.objects.create(operacao=operacao_criptomoeda, moeda=moeda_utilizada, valor=form_operacao_criptomoeda.cleaned_data['taxa_moeda_utilizada'])
+                            if form_operacao_criptomoeda.cleaned_data['taxa'] > 0:
+                                taxa_moeda = Criptomoeda.objects.get(id=int(form_operacao_criptomoeda.cleaned_data['taxa_moeda'])) \
+                                    if form_operacao_criptomoeda.cleaned_data['taxa_moeda'] != '' else None
+                                OperacaoCriptomoedaTaxa.objects.create(operacao=operacao_criptomoeda, moeda=taxa_moeda, valor=form_operacao_criptomoeda.cleaned_data['taxa'])
                             if moeda_utilizada:
                                 OperacaoCriptomoedaMoeda.objects.create(operacao=operacao_criptomoeda, criptomoeda=moeda_utilizada)
                             formset_divisao.save()
@@ -248,10 +311,10 @@ def inserir_operacao_criptomoeda(request):
                 try:
                     with transaction.atomic():
                         operacao_criptomoeda.save()
-                        if form_operacao_criptomoeda.cleaned_data['taxa_moeda'] > 0:
-                            OperacaoCriptomoedaTaxa.objects.create(operacao=operacao_criptomoeda, moeda=operacao_criptomoeda.criptomoeda, valor=form_operacao_criptomoeda.cleaned_data['taxa_moeda'])
-                        if form_operacao_criptomoeda.cleaned_data['taxa_moeda_utilizada'] > 0:
-                            OperacaoCriptomoedaTaxa.objects.create(operacao=operacao_criptomoeda, moeda=moeda_utilizada, valor=form_operacao_criptomoeda.cleaned_data['taxa_moeda_utilizada'])
+                        if form_operacao_criptomoeda.cleaned_data['taxa'] > 0:
+                                taxa_moeda = Criptomoeda.objects.get(id=int(form_operacao_criptomoeda.cleaned_data['taxa_moeda'])) \
+                                    if form_operacao_criptomoeda.cleaned_data['taxa_moeda'] != '' else None
+                                OperacaoCriptomoedaTaxa.objects.create(operacao=operacao_criptomoeda, moeda=taxa_moeda, valor=form_operacao_criptomoeda.cleaned_data['taxa'])
                         if moeda_utilizada:
                             OperacaoCriptomoedaMoeda.objects.create(operacao=operacao_criptomoeda, criptomoeda=moeda_utilizada)
                         divisao_operacao = DivisaoOperacaoCriptomoeda(operacao=operacao_criptomoeda, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_criptomoeda.quantidade)
@@ -276,6 +339,70 @@ def inserir_operacao_criptomoeda(request):
     return TemplateResponse(request, 'criptomoedas/inserir_operacao_criptomoeda.html', {'form_operacao_criptomoeda': form_operacao_criptomoeda, \
                                                                                               'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})
 
+@login_required
+@adiciona_titulo_descricao('Inserir transferência para criptomoedas', 'Inserir registro de transferência para criptomoedas')
+def inserir_transferencia(request):
+    investidor = request.user.investidor
+    
+    # Preparar formset para divisoes
+    DivisaoCriptomoedaFormSet = inlineformset_factory(TransferenciaCriptomoeda, DivisaoTransferenciaCriptomoeda, fields=('divisao', 'quantidade'), can_delete=False,
+                                            extra=1, formset=DivisaoTransferenciaCriptomoedaFormSet)
+    
+    # Testa se investidor possui mais de uma divisão
+    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    
+    if request.method == 'POST':
+        form_transferencia_criptomoeda = TransferenciaCriptomoedaForm(request.POST, investidor=investidor)
+        formset_divisao = DivisaoCriptomoedaFormSet(request.POST, investidor=investidor) if varias_divisoes else None
+        
+        # Validar Fundo de Investimento
+        if form_transferencia_criptomoeda.is_valid():
+            transferencia_criptomoeda = form_transferencia_criptomoeda.save(commit=False)
+            transferencia_criptomoeda.investidor = investidor
+                
+            # Testar se várias divisões
+            if varias_divisoes:
+                formset_divisao = DivisaoCriptomoedaFormSet(request.POST, instance=transferencia_criptomoeda, investidor=investidor)
+                if formset_divisao.is_valid():
+                    try:
+                        with transaction.atomic():
+                            transferencia_criptomoeda.save()
+                            formset_divisao.save()
+                            messages.success(request, 'Transferência inserida com sucesso')
+                            return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
+                    except:
+                        messages.error(request, 'Houve um erro ao inserir a transferência')
+                        if settings.ENV == 'DEV':
+                            raise
+                        elif settings.ENV == 'PROD':
+                            mail_admins(u'Erro ao gerar transferência para criptomoedas com várias divisões', traceback.format_exc())
+                for erro in formset_divisao.non_form_errors():
+                    messages.error(request, erro)
+            else:
+                try:
+                    with transaction.atomic():
+                        transferencia_criptomoeda.save()
+                        divisao_operacao = DivisaoOperacaoCriptomoeda(transferencia=transferencia_criptomoeda, divisao=investidor.divisaoprincipal.divisao, quantidade=transferencia_criptomoeda.quantidade)
+                        divisao_operacao.save()
+                        messages.success(request, 'Transferência inserida com sucesso')
+                        return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
+                except:
+                    messages.error(request, 'Houve um erro ao inserir a transferência')
+                    if settings.ENV == 'DEV':
+                        raise
+                    elif settings.ENV == 'PROD':
+                        mail_admins(u'Erro ao gerar transferência para criptomoedas com uma divisão', traceback.format_exc())
+            
+        for erro in [erro for erro in form_transferencia_criptomoeda.non_field_errors()]:
+            messages.error(request, erro)
+#                         print '%s %s'  % (divisao_fundo_investimento.quantidade, divisao_fundo_investimento.divisao)
+                
+    else:
+        form_transferencia_criptomoeda = TransferenciaCriptomoedaForm(investidor=investidor)
+        formset_divisao = DivisaoCriptomoedaFormSet(investidor=investidor)
+    
+    return TemplateResponse(request, 'criptomoedas/inserir_transferencia.html', {'form_transferencia_criptomoeda': form_transferencia_criptomoeda, \
+                                                                                              'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})
 
 @adiciona_titulo_descricao('Listar criptomoedas cadastrados', 'Lista as criptomoedas no sistema')
 def listar_criptomoedas(request):
@@ -291,9 +418,34 @@ def listar_criptomoedas(request):
         url = 'https://api.cryptonator.com/api/ticker/%s-usd' % (moeda.ticker)
         resultado = urlopen(url)
         data = json.load(resultado) 
-        moeda.valor_atual = dolar_para_real * Decimal(data['ticker']['price'])
+        if data['success']:
+            moeda.valor_atual_dolar = Decimal(data['ticker']['price'])
+            moeda.valor_atual = dolar_para_real * moeda.valor_atual_dolar
+            if moeda.ticker == 'BTC':
+                btc_para_dolar = moeda.valor_atual_dolar
+    
+    # Buscar valores POLONIEX
+    url = 'https://poloniex.com/public?command=returnTicker'
+    resultado = urlopen(url)
+    data_polo = json.load(resultado) 
+    
+    for moeda in moedas:
+        if moeda.ticker != 'BTC':
+            if 'BTC_%s' % (moeda.ticker) in data_polo.keys():
+                moeda.valor_atual_polo = Decimal(data_polo['BTC_%s' % (moeda.ticker)]['last'])
+                moeda.valor_atual_polo_dolar = moeda.valor_atual_polo * btc_para_dolar
+        
     
     return TemplateResponse(request, 'criptomoedas/listar_moedas.html', {'moedas': moedas})
+
+
+@login_required
+@adiciona_titulo_descricao('Listar criptomoedas cadastrados', 'Lista as criptomoedas no sistema')
+def listar_transferencias(request):
+    investidor = request.user.investidor
+    transferencias = TransferenciaCriptomoeda.objects.filter(investidor=investidor)
+    
+    return TemplateResponse(request, 'criptomoedas/listar_transferencias.html', {'transferencias': transferencias})
 
 def painel(request):
     pass

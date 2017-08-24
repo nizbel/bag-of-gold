@@ -489,9 +489,19 @@
                                                     <a href="{% url "criptomoeda:inserir_operacao_criptomoeda" %}" class="nav-link  "> Inserir operação </a>
                                                 </li>
                                                 {% endif %}
+                                                {% if request.user.is_authenticated %}
+                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_transferencia_criptomoeda' %}active{% endif %}">
+                                                    <a href="{% url "criptomoeda:inserir_transferencia_criptomoeda" %}" class="nav-link  "> Inserir transferência </a>
+                                                </li>
+                                                {% endif %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_criptomoeda' %}active{% endif %}">
                                                     <a href="{% url "criptomoeda:listar_criptomoedas" %}" class="nav-link  "> Listar Moedas </a>
                                                 </li>
+                                                {% if request.user.is_authenticated %}
+                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_transferencias_criptomoeda' %}active{% endif %}">
+                                                    <a href="{% url "criptomoeda:listar_transferencias_criptomoeda" %}" class="nav-link  "> Listar transferências </a>
+                                                </li>
+                                                {% endif %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_criptomoeda' %}active{% endif %}">
                                                     <a href="{% url "criptomoeda:painel_criptomoeda" %}" class="nav-link  "> Painel </a>
                                                 </li>
