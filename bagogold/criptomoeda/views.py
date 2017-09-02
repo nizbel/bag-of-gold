@@ -5,6 +5,7 @@ from bagogold.bagogold.forms.divisoes import DivisaoOperacaoCriptomoedaFormSet, 
     DivisaoTransferenciaCriptomoedaFormSet
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoCriptomoeda, \
     Divisao, DivisaoTransferenciaCriptomoeda
+from bagogold.bagogold.utils.misc import converter_date_para_utc
 from bagogold.criptomoeda.forms import OperacaoCriptomoedaForm, \
     TransferenciaCriptomoedaForm
 from bagogold.criptomoeda.models import Criptomoeda, OperacaoCriptomoeda, \
@@ -14,16 +15,17 @@ from bagogold.fundo_investimento.utils import \
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ValidationError, PermissionDenied
+from django.core.exceptions import PermissionDenied
 from django.core.mail import mail_admins
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.forms.models import inlineformset_factory
 from django.http.response import HttpResponseRedirect
 from django.template.response import TemplateResponse
-from urllib2 import urlopen
 from itertools import chain
 from operator import attrgetter
+from urllib2 import urlopen
+import calendar
 import datetime
 import json
 import traceback
@@ -75,7 +77,6 @@ def editar_operacao_criptomoeda(request, id_operacao):
                                 elif OperacaoCriptomoedaMoeda.objects.filter(operacao=operacao_criptomoeda).exists():
                                     OperacaoCriptomoedaMoeda.objects.get(operacao=operacao_criptomoeda).delete()
                                     
-                                divisao_operacao = DivisaoOperacaoCriptomoeda(operacao=operacao_criptomoeda, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_criptomoeda.quantidade)
                                 formset_divisao.save()
                                 messages.success(request, 'Operação editada com sucesso')
                                 return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
@@ -141,11 +142,16 @@ def editar_operacao_criptomoeda(request, id_operacao):
         if OperacaoCriptomoedaTaxa.objects.filter(operacao=operacao_criptomoeda).exists():
             taxa = OperacaoCriptomoedaTaxa.objects.get(operacao=operacao_criptomoeda)
             taxa_valor = taxa.valor
-            taxa_moeda = taxa.moeda
+            taxa_moeda = taxa.moeda.id
         else:
             taxa_valor = 0
             taxa_moeda = None
-        form_operacao_criptomoeda = OperacaoCriptomoedaForm(instance=operacao_criptomoeda, investidor=investidor, initial={'taxa': taxa_valor, 'taxa_moeda': taxa_moeda})
+        if OperacaoCriptomoedaMoeda.objects.filter(operacao=operacao_criptomoeda).exists():
+            moeda = OperacaoCriptomoedaMoeda.objects.get(operacao=operacao_criptomoeda)
+            moeda_utilizada = moeda.criptomoeda.id
+        else:
+            moeda_utilizada = None
+        form_operacao_criptomoeda = OperacaoCriptomoedaForm(instance=operacao_criptomoeda, investidor=investidor, initial={'taxa': taxa_valor, 'taxa_moeda': taxa_moeda, 'moeda_utilizada': moeda_utilizada})
         formset_divisao = DivisaoFormSet(instance=operacao_criptomoeda, investidor=investidor)
         
     # Preparar nome de fundo selecionado
@@ -161,6 +167,80 @@ def editar_operacao_criptomoeda(request, id_operacao):
 def editar_transferencia(request, id_transferencia):
     investidor = request.user.investidor
     
+    transferencia_criptomoeda = TransferenciaCriptomoeda.objects.get(pk=id_transferencia)
+    # Verifica se a operação é do investidor, senão, jogar erro de permissão
+    if transferencia_criptomoeda.investidor != investidor:
+        raise PermissionDenied
+    
+    # Preparar formset para divisoes
+    DivisaoFormSet = inlineformset_factory(TransferenciaCriptomoeda, DivisaoTransferenciaCriptomoeda, fields=('divisao', 'quantidade'),
+                                            extra=1, formset=DivisaoTransferenciaCriptomoedaFormSet)
+    
+    # Testa se investidor possui mais de uma divisão
+    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    
+    if request.method == 'POST':
+        if request.POST.get("save"):
+            form_transferencia_criptomoeda = TransferenciaCriptomoedaForm(request.POST, instance=transferencia_criptomoeda, investidor=investidor)
+            formset_divisao = DivisaoFormSet(request.POST, instance=transferencia_criptomoeda, investidor=investidor) if varias_divisoes else None
+                
+            if form_transferencia_criptomoeda.is_valid():
+                if varias_divisoes:
+                    if formset_divisao.is_valid():
+                        try:
+                            with transaction.atomic():
+                                transferencia_criptomoeda.save()
+                                formset_divisao.save()
+                                messages.success(request, 'Transferência editada com sucesso')
+                                return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
+                        except:
+                            messages.error(request, 'Houve um erro ao editar a transferência')
+                            if settings.ENV == 'DEV':
+                                raise
+                            elif settings.ENV == 'PROD':
+                                mail_admins(u'Erro ao editar transferência para criptomoeda com várias divisões', traceback.format_exc())
+                    for erro in formset_divisao.non_form_errors():
+                        messages.error(request, erro)
+                        
+                else:
+                    try:
+                        with transaction.atomic():
+                            transferencia_criptomoeda.save()
+                            divisao_operacao = DivisaoOperacaoCriptomoeda.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=transferencia_criptomoeda)
+                            divisao_operacao.quantidade = transferencia_criptomoeda.quantidade
+                            divisao_operacao.save()
+                            messages.success(request, 'Transferência editada com sucesso')
+                            return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
+                    except:
+                        messages.error(request, 'Houve um erro ao editar a transferência')
+                        if settings.ENV == 'DEV':
+                            raise
+                        elif settings.ENV == 'PROD':
+                            mail_admins(u'Erro ao editar transferência para criptomoeda com uma divisão', traceback.format_exc())
+                
+            for erro in [erro for erro in form_transferencia_criptomoeda.non_field_errors()]:
+                messages.error(request, erro)
+#                         print '%s %s'  % (divisao_criptomoeda.quantidade, divisao_criptomoeda.divisao)
+                
+        elif request.POST.get("delete"):
+            # Verifica se, em caso de compra, a quantidade de cotas do investidor não fica negativa
+            if transferencia_criptomoeda.tipo_operacao == 'C' and calcular_qtd_cotas_ate_dia_por_fundo(investidor, transferencia_criptomoeda.criptomoeda.id, datetime.date.today()) - transferencia_criptomoeda.quantidade < 0:
+                messages.error(request, 'Operação de compra não pode ser apagada pois quantidade atual para o fundo %s seria negativa' % (transferencia_criptomoeda.criptomoeda))
+            else:
+                divisao_criptomoeda = DivisaoOperacaoCriptomoeda.objects.filter(operacao=transferencia_criptomoeda)
+                for divisao in divisao_criptomoeda:
+                    divisao.delete()
+                transferencia_criptomoeda.delete()
+                messages.success(request, 'Operação apagada com sucesso')
+                return HttpResponseRedirect(reverse('td:historico_td'))
+ 
+    else:
+        form_transferencia_criptomoeda = TransferenciaCriptomoedaForm(instance=transferencia_criptomoeda, investidor=investidor)
+        formset_divisao = DivisaoFormSet(instance=transferencia_criptomoeda, investidor=investidor)
+        
+    return TemplateResponse(request, 'criptomoedas/editar_transferencia.html', {'form_transferencia_criptomoeda': form_transferencia_criptomoeda, 'formset_divisao': formset_divisao, \
+                                                                                             'varias_divisoes': varias_divisoes})  
+    
 
 @adiciona_titulo_descricao('Histórico de Criptomoedas', 'Histórico de operações de compra/venda em Criptomoedas')
 def historico(request):
@@ -171,57 +251,96 @@ def historico(request):
     if request.user.is_authenticated():
         investidor = request.user.investidor
     else:
-        return TemplateResponse(request, 'criptomoedas/historico.html', {'dados': {}, 'operacoes': list(), 
+        return TemplateResponse(request, 'criptomoedas/historico.html', {'dados': {}, 'movimentacoes': list(), 
                                                     'graf_investido_total': list(), 'graf_patrimonio': list()})
     
     # Transferências do investidor
-    transferencias = TransferenciaCriptomoeda.objects.filter(investidor=investidor).order_by('data')
+    transferencias = TransferenciaCriptomoeda.objects.filter(investidor=investidor, data__lte=datetime.date.today()).order_by('data')
     # Processa primeiro operações de venda (V), depois compra (C)
-    operacoes = OperacaoCriptomoeda.objects.filter(investidor=investidor).order_by('data', '-tipo_operacao') 
+    operacoes = OperacaoCriptomoeda.objects.filter(investidor=investidor, data__lte=datetime.date.today()).order_by('data', '-tipo_operacao') 
     
     # Juntar transferências e operações em uma lista
     lista_movimentacoes = sorted(chain(transferencias, operacoes), key=attrgetter('data'))
     # Se investidor não tiver operações, retornar vazio
-    if not operacoes:
-        return TemplateResponse(request, 'criptomoedas/historico.html', {'dados': {}, 'operacoes': list(), 
+    if not lista_movimentacoes:
+        return TemplateResponse(request, 'criptomoedas/historico.html', {'dados': {}, 'movimentacoes': list(), 
                                                     'graf_investido_total': list(), 'graf_patrimonio': list()})
     
     # Gráficos
     graf_patrimonio = list()
     graf_investido_total = list()
     
-    moedas = {}
+    # Totais
     total_investido = 0
+    
+    moedas = {}
     
     for movimentacao in lista_movimentacoes:
         if isinstance(movimentacao, OperacaoCriptomoeda):
             if movimentacao.criptomoeda.ticker not in moedas.keys():
-                moedas[movimentacao.criptomoeda.ticker] = 0
+                moedas[movimentacao.criptomoeda.ticker] = Object()
+                moedas[movimentacao.criptomoeda.ticker].preco_medio = 0
+                moedas[movimentacao.criptomoeda.ticker].qtd = 0
                 
+            # Verifica se há taxa cadastrada
+            movimentacao.taxa = movimentacao.operacaocriptomoedataxa if hasattr(movimentacao, 'operacaocriptomoedataxa') else None
+            
             if movimentacao.tipo_operacao == 'C':
                 movimentacao.tipo = 'Compra'
-                moedas[movimentacao.criptomoeda.ticker] += movimentacao.quantidade
+                if movimentacao.taxa:
+                    if movimentacao.taxa.moeda == movimentacao.criptomoeda:
+                        movimentacao.valor_total = (movimentacao.quantidade + movimentacao.taxa.valor) * movimentacao.valor
+                    elif movimentacao.taxa.moeda_utilizada() == movimentacao.moeda_utilizada():
+                        movimentacao.valor_total = movimentacao.quantidade * movimentacao.valor + movimentacao.taxa.valor
+                    else:
+                        raise ValueError('Moeda utilizada na taxa é inválida')
+                else:
+                    movimentacao.valor_total = movimentacao.quantidade * movimentacao.valor
+                # Movimentações em real contam como dinheiro investido
+                if movimentacao.em_real():
+                    moedas[movimentacao.criptomoeda.ticker].preco_medio = (moedas[movimentacao.criptomoeda.ticker].preco_medio * moedas[movimentacao.criptomoeda.ticker].qtd \
+                                                                           + movimentacao.valor_total) / (movimentacao.quantidade + moedas[movimentacao.criptomoeda.ticker].qtd)
+                else:
+                    moedas[movimentacao.operacaocriptomoedamoeda.criptomoeda.ticker].qtd -= movimentacao.valor_total
+                    moedas[movimentacao.criptomoeda.ticker].preco_medio = (moedas[movimentacao.criptomoeda.ticker].preco_medio * moedas[movimentacao.criptomoeda.ticker].qtd \
+                                                                           + (movimentacao.valor_total * moedas[movimentacao.operacaocriptomoedamoeda.criptomoeda.ticker].preco_medio)) \
+                                                                              / (movimentacao.quantidade + moedas[movimentacao.criptomoeda.ticker].qtd)
+                
+                moedas[movimentacao.criptomoeda.ticker].qtd += movimentacao.quantidade
             else:
                 movimentacao.tipo = 'Venda'
-                moedas[movimentacao.criptomoeda.ticker] -= movimentacao.quantidade
-            movimentacao.taxa = movimentacao.operacaocriptomoedataxa if hasattr(movimentacao, 'operacaocriptomoedataxa') else None
-            if movimentacao.taxa:
-                if movimentacao.taxa.moeda == movimentacao.criptomoeda:
-                    movimentacao.valor_total = (movimentacao.quantidade + movimentacao.taxa.valor) * movimentacao.valor
-                elif movimentacao.taxa.moeda_utilizada() == movimentacao.moeda_utilizada():
-                    movimentacao.valor_total = movimentacao.quantidade * movimentacao.valor + movimentacao.taxa.valor
+                # Taxa entra como negativa na conta do valor total da operação
+                if movimentacao.taxa:
+                    if movimentacao.taxa.moeda == movimentacao.criptomoeda:
+                        movimentacao.valor_total = (movimentacao.quantidade - movimentacao.taxa.valor) * movimentacao.valor
+                    elif movimentacao.taxa.moeda_utilizada() == movimentacao.moeda_utilizada():
+                        movimentacao.valor_total = movimentacao.quantidade * movimentacao.valor - movimentacao.taxa.valor
+                    else:
+                        raise ValueError('Moeda utilizada na taxa é inválida')
                 else:
-                    raise ValueError('Moeda utilizada na taxa é inválida')
-            else:
-                movimentacao.valor_total = movimentacao.quantidade * movimentacao.valor
+                    movimentacao.valor_total = movimentacao.quantidade * movimentacao.valor
+                
+                # Alterar quantidade de moeda utilizada na operação
+                if not movimentacao.em_real():
+                    moedas[movimentacao.operacaocriptomoedamoeda.criptomoeda.ticker].preco_medio = (moedas[movimentacao.criptomoeda.ticker].preco_medio * movimentacao.quantidade \
+                                                                           + (moedas[movimentacao.operacaocriptomoedamoeda.criptomoeda.ticker].preco_medio \
+                                                                              * moedas[movimentacao.operacaocriptomoedamoeda.criptomoeda.ticker].qtd)) \
+                                                                              / (movimentacao.valor_total + moedas[movimentacao.operacaocriptomoedamoeda.criptomoeda.ticker].qtd)
+                    moedas[movimentacao.operacaocriptomoedamoeda.criptomoeda.ticker].qtd += movimentacao.valor_total
+                    
+                moedas[movimentacao.criptomoeda.ticker].qtd -= movimentacao.quantidade
         
         elif isinstance(movimentacao, TransferenciaCriptomoeda):
             if movimentacao.moeda and movimentacao.moeda.ticker not in moedas.keys():
-                moedas[movimentacao.moeda.ticker] = 0
+                moedas[movimentacao.moeda.ticker] = Object()
+                moedas[movimentacao.moeda.ticker].preco_medio = 0
+                moedas[movimentacao.moeda.ticker].qtd = 0
                 
             movimentacao.tipo = u'Transferência'
             if movimentacao.moeda:
-                moedas[movimentacao.moeda.ticker] -= movimentacao.taxa
+                moedas[movimentacao.moeda.ticker].preco_medio = moedas[movimentacao.moeda.ticker].preco_medio * moedas[movimentacao.moeda.ticker].qtd \
+                    / (moedas[movimentacao.moeda.ticker].qtd - movimentacao.taxa)
+                moedas[movimentacao.moeda.ticker].qtd -= movimentacao.taxa
             movimentacao.valor_total = movimentacao.quantidade
             movimentacao.valor = movimentacao.quantidade - movimentacao.taxa
             # Usar quantidade para guardar valor da taxa
@@ -237,9 +356,34 @@ def historico(request):
         # Limitar valores totais em reais para 2 casas decimais
         if movimentacao.em_real():
             movimentacao.valor_total = movimentacao.valor_total.quantize(Decimal('0.01'))
+            
+        total_investido = sum([(moeda.preco_medio * moeda.qtd) for moeda in moedas.values() if moeda.qtd > 0])
+        
+        data_formatada = str(calendar.timegm(converter_date_para_utc(movimentacao.data).timetuple()) * 1000)
+        # Adicionar no gráfico
+        if graf_investido_total and data_formatada == graf_investido_total[-1][0]:
+            graf_investido_total[-1][1] = float(total_investido)
+        else:
+            graf_investido_total += [[data_formatada, float(total_investido)]]
+        
+        data_formatada_utc = calendar.timegm(movimentacao.data.timetuple()) * 1000
+        patrimonio = {moeda: float(dados_moeda.qtd) for moeda, dados_moeda in moedas.items()}
+        if graf_patrimonio and data_formatada_utc == graf_patrimonio[-1][1]:
+            graf_patrimonio[-1][2] = patrimonio
+        else:
+            graf_patrimonio += [[data_formatada, data_formatada_utc, patrimonio]]
+            
+    # Adicionar data atual formatada
+    data_formatada = str(calendar.timegm(converter_date_para_utc(datetime.date.today()).timetuple()) * 1000)
+    # Se não existe a data em um gráfico, nenhum gráfico tem a data
+    if not (graf_investido_total and data_formatada == graf_investido_total[-1][0]):
+        graf_investido_total += [[data_formatada, float(total_investido)]]
+        graf_patrimonio += [[data_formatada, data_formatada_utc, patrimonio]]
+    
+    print ['%s: %s' % (ticker, moeda.qtd) for ticker, moeda in moedas.items()]
     
     dados = {}
-    dados['total_investido'] = total_investido
+    dados['total_investido'] = sum([(moeda.preco_medio * moeda.qtd) for moeda in moedas.values() if moeda.qtd > 0])
     # Carrega o valor de um dólar em reais, mais atual
     url_dolar = 'http://api.fixer.io/latest?base=USD&symbols=BRL'
     resultado = urlopen(url_dolar)
@@ -247,18 +391,18 @@ def historico(request):
     dolar_para_real = Decimal(data['rates']['BRL'])
     
     dados['patrimonio'] = 0
-    for ticker, qtd in moedas.items():
-        if qtd == 0:
+    for ticker, moeda in moedas.items():
+        if moeda.qtd == 0:
             continue
         url = 'https://api.cryptonator.com/api/ticker/%s-usd' % (ticker)
         resultado = urlopen(url)
         data = json.load(resultado) 
-        dados['patrimonio'] += qtd * dolar_para_real * Decimal(data['ticker']['price'])
-#     dados['lucro'] = total_patrimonio - total_investido
-#     dados['lucro_percentual'] = (total_patrimonio - total_investido) / total_investido * 100
+        dados['patrimonio'] += moeda.qtd * dolar_para_real * Decimal(data['ticker']['price'])
+    dados['lucro'] = dados['patrimonio'] - dados['total_investido']
+    dados['lucro_percentual'] = dados['lucro'] / (dados['total_investido'] or 1) * 100
     
     return TemplateResponse(request, 'criptomoedas/historico.html', {'dados': dados, 'movimentacoes': lista_movimentacoes, 
-                                                    'graf_investido_total': graf_investido_total, 'graf_patrimonio': graf_patrimonio})
+                                                    'graf_investido_total': graf_investido_total, 'graf_patrimonio': json.dumps(graf_patrimonio)})
 
 @login_required
 @adiciona_titulo_descricao('Inserir operação em criptomoedas', 'Inserir registro de operação de compra/venda em criptomoeda')
@@ -276,7 +420,7 @@ def inserir_operacao_criptomoeda(request):
         form_operacao_criptomoeda = OperacaoCriptomoedaForm(request.POST, investidor=investidor)
         formset_divisao = DivisaoCriptomoedaFormSet(request.POST, investidor=investidor) if varias_divisoes else None
         
-        # Validar Fundo de Investimento
+        # Validar operação
         if form_operacao_criptomoeda.is_valid():
             operacao_criptomoeda = form_operacao_criptomoeda.save(commit=False)
             operacao_criptomoeda.investidor = investidor
