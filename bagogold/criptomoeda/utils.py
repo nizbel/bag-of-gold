@@ -22,7 +22,7 @@ def calcular_qtd_moedas_ate_dia(investidor, dia=datetime.date.today()):
 
 def calcular_qtd_moedas_ate_dia_por_criptomoeda(investidor, moeda_id, dia=datetime.date.today()):
     """ 
-    Calcula a quantidade de moedas até dia determinado para uma criptomoeda determinada
+    Calcula a quantidade de moedas até dia determinado para uma criptomoeda
     Parâmetros: Investidor
                 ID da Criptomoeda
                 Dia final
@@ -37,7 +37,7 @@ def calcular_qtd_moedas_ate_dia_por_criptomoeda(investidor, moeda_id, dia=dateti
 
 def calcular_qtd_moedas_ate_dia_por_divisao(dia, divisao_id):
     """ 
-    Calcula a quantidade de moedas até dia determinado
+    Calcula a quantidade de moedas até dia determinado para uma divisão
     Parâmetros: Dia final
                 Id da divisão
     Retorno: Quantidade de moedas {moeda: qtd}
@@ -69,24 +69,3 @@ def calcular_qtd_moedas_ate_dia_por_divisao(dia, divisao_id):
             
     return qtd_moedas
 
-#                                                                 data__range=[historico_fundo.data + datetime.timedelta(days=1), dia]).order_by('-data')[0].valor_cota()
-#                 Dia final
-#                 valor_cota = OperacaoCriptomoeda.objects.filter(fundo_investimento__id=fundo_id, investidor=investidor, 
-#                 valor_cota = historico_fundo.valor_cota
-#             else:
-#             historico_fundo = HistoricoValorCotas.objects.filter(fundo_investimento__id=fundo_id).order_by('-data')[0]
-#             if investidor and OperacaoCriptomoeda.objects.filter(fundo_investimento__id=fundo_id, investidor=investidor, data__range=[historico_fundo.data + datetime.timedelta(days=1), dia]).exists():
-#             valor_cota = OperacaoCriptomoeda.objects.filter(fundo_investimento__id=fundo_id, investidor=investidor, data__lte=dia).order_by('-data')[0].valor_cota()
-#         else:
-#         if HistoricoValorCotas.objects.filter(fundo_investimento__id=fundo_id, data__lte=dia).exists():
-#         valor_fundos[fundo_id] = valor_cota * fundos[fundo_id]
-#     """
-#     """ 
-#     Calcula a o valor das moedas do investidor até dia determinado
-#     Parâmetros: Investidor
-#     Retorno: Valor por fundo {fundo_id: valor (em reais)}
-#     for fundo_id in fundos.keys():
-#     fundos = calcular_qtd_moedas_ate_dia(investidor, dia)
-#     return valor_fundos
-#     valor_fundos = {}
-# def calcular_valor_fundos_investimento_ate_dia(investidor, dia=datetime.date.today()):

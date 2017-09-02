@@ -5,7 +5,8 @@ from bagogold.bagogold.forms.divisoes import DivisaoOperacaoCriptomoedaFormSet, 
     DivisaoTransferenciaCriptomoedaFormSet
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoCriptomoeda, \
     Divisao, DivisaoTransferenciaCriptomoeda
-from bagogold.bagogold.utils.misc import converter_date_para_utc
+from bagogold.bagogold.utils.misc import converter_date_para_utc,\
+    formatar_lista_para_string_create
 from bagogold.criptomoeda.forms import OperacaoCriptomoedaForm, \
     TransferenciaCriptomoedaForm
 from bagogold.criptomoeda.models import Criptomoeda, OperacaoCriptomoeda, \
@@ -256,6 +257,7 @@ def historico(request):
     
     # Transferências do investidor
     transferencias = TransferenciaCriptomoeda.objects.filter(investidor=investidor, data__lte=datetime.date.today()).order_by('data')
+        
     # Processa primeiro operações de venda (V), depois compra (C)
     operacoes = OperacaoCriptomoeda.objects.filter(investidor=investidor, data__lte=datetime.date.today()).order_by('data', '-tipo_operacao') 
     
@@ -380,7 +382,7 @@ def historico(request):
         graf_investido_total += [[data_formatada, float(total_investido)]]
         graf_patrimonio += [[data_formatada, data_formatada_utc, patrimonio]]
     
-    print ['%s: %s' % (ticker, moeda.qtd) for ticker, moeda in moedas.items()]
+#     print ['%s: %s' % (ticker, moeda.qtd) for ticker, moeda in moedas.items()]
     
     dados = {}
     dados['total_investido'] = sum([(moeda.preco_medio * moeda.qtd) for moeda in moedas.values() if moeda.qtd > 0])
