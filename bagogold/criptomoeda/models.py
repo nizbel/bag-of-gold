@@ -29,7 +29,7 @@ class OperacaoCriptomoeda (models.Model):
     
     def moeda_utilizada(self):
         if hasattr(self, 'operacaocriptomoedamoeda'):
-            return self.operacaocriptomoedamoeda.criptomoeda
+            return self.operacaocriptomoedamoeda.criptomoeda.ticker
         return 'BRL'
     
 class OperacaoCriptomoedaTaxa (models.Model):
@@ -65,6 +65,11 @@ class HistoricoValorCriptomoeda (models.Model):
     class Meta:
         unique_together=('criptomoeda', 'data')
         
+class ValorDiarioCriptomoeda (models.Model):
+    criptomoeda = models.ForeignKey('Criptomoeda')
+    data_hora = models.DateTimeField(u'Horário')
+    valor = models.DecimalField(u'Valor em dólares', max_digits=21, decimal_places=12)
+        
 class TransferenciaCriptomoeda (models.Model):
     moeda = models.ForeignKey('Criptomoeda', blank=True, null=True)
     data = models.DateField(u'Data')
@@ -84,3 +89,9 @@ class TransferenciaCriptomoeda (models.Model):
         if self.moeda is not None:
             return self.moeda.ticker
         return 'BRL'
+    
+class TelegramInvestidor (models.Model):
+    chat_id = models.IntegerField(u'ID do Telegram')
+    
+class Bot (models.Model):
+    ultima_msg_lida = models.IntegerField(u'ID da última mensagem lida')

@@ -3,7 +3,8 @@ from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao
 from bagogold.bagogold.models.fii import UsoProventosOperacaoFII
 from bagogold.bagogold.models.lc import OperacaoLetraCredito
 from bagogold.bagogold.models.td import HistoricoIPCA, OperacaoTitulo
-from bagogold.fundo_investimento.utils import calcular_valor_fundos_investimento_ate_dia
+from bagogold.fundo_investimento.utils import \
+    calcular_valor_fundos_investimento_ate_dia
 from decimal import Decimal
 from urllib2 import Request, urlopen, URLError, HTTPError
 import datetime
@@ -323,3 +324,9 @@ def buscar_dia_util_aleatorio(data_inicial, data_final):
     while data_aleatoria.weekday() > 4 or verificar_feriado_bovespa(data_aleatoria):
         data_aleatoria = buscar_data_aleatoria(data_inicial, data_final)
     return data_aleatoria
+
+def converter_date_para_utc(data):
+    if isinstance(data, datetime.date):
+        return datetime.datetime.combine(data, datetime.time(3))
+    else:
+        raise ValueError('Objeto deve ser do tipo date')
