@@ -17,7 +17,7 @@ class OperacaoCriptomoedaForm(LocalizedModelForm):
     
     class Meta:
         model = OperacaoCriptomoeda
-        fields = ('tipo_operacao', 'quantidade', 'valor', 'data', 'criptomoeda',)
+        fields = ('tipo_operacao', 'quantidade', 'preco_unitario', 'data', 'criptomoeda',)
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),
                  'tipo_operacao': widgets.Select(choices=ESCOLHAS_TIPO_OPERACAO),}

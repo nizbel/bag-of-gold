@@ -291,21 +291,21 @@ def historico(request):
                 movimentacao.tipo = 'Compra'
                 if movimentacao.taxa:
                     if movimentacao.taxa.moeda == movimentacao.criptomoeda:
-                        movimentacao.valor_total = (movimentacao.quantidade + movimentacao.taxa.valor) * movimentacao.valor
+                        movimentacao.preco_total = (movimentacao.quantidade + movimentacao.taxa.valor) * movimentacao.preco_unitario
                     elif movimentacao.taxa.moeda_utilizada() == movimentacao.moeda_utilizada():
-                        movimentacao.valor_total = movimentacao.quantidade * movimentacao.valor + movimentacao.taxa.valor
+                        movimentacao.preco_total = movimentacao.quantidade * movimentacao.preco_unitario + movimentacao.taxa.valor
                     else:
                         raise ValueError('Moeda utilizada na taxa é inválida')
                 else:
-                    movimentacao.valor_total = movimentacao.quantidade * movimentacao.valor
+                    movimentacao.preco_total = movimentacao.quantidade * movimentacao.preco_unitario
                 # Movimentações em real contam como dinheiro investido
                 if movimentacao.em_real():
                     moedas[movimentacao.criptomoeda.ticker].preco_medio = (moedas[movimentacao.criptomoeda.ticker].preco_medio * moedas[movimentacao.criptomoeda.ticker].qtd \
-                                                                           + movimentacao.valor_total) / (movimentacao.quantidade + moedas[movimentacao.criptomoeda.ticker].qtd)
+                                                                           + movimentacao.preco_total) / (movimentacao.quantidade + moedas[movimentacao.criptomoeda.ticker].qtd)
                 else:
-                    moedas[movimentacao.operacaocriptomoedamoeda.criptomoeda.ticker].qtd -= movimentacao.valor_total
+                    moedas[movimentacao.operacaocriptomoedamoeda.criptomoeda.ticker].qtd -= movimentacao.preco_total
                     moedas[movimentacao.criptomoeda.ticker].preco_medio = (moedas[movimentacao.criptomoeda.ticker].preco_medio * moedas[movimentacao.criptomoeda.ticker].qtd \
-                                                                           + (movimentacao.valor_total * moedas[movimentacao.operacaocriptomoedamoeda.criptomoeda.ticker].preco_medio)) \
+                                                                           + (movimentacao.preco_total * moedas[movimentacao.operacaocriptomoedamoeda.criptomoeda.ticker].preco_medio)) \
                                                                               / (movimentacao.quantidade + moedas[movimentacao.criptomoeda.ticker].qtd)
                 
                 moedas[movimentacao.criptomoeda.ticker].qtd += movimentacao.quantidade
@@ -314,21 +314,21 @@ def historico(request):
                 # Taxa entra como negativa na conta do valor total da operação
                 if movimentacao.taxa:
                     if movimentacao.taxa.moeda == movimentacao.criptomoeda:
-                        movimentacao.valor_total = (movimentacao.quantidade - movimentacao.taxa.valor) * movimentacao.valor
+                        movimentacao.preco_total = (movimentacao.quantidade - movimentacao.taxa.valor) * movimentacao.preco_unitario
                     elif movimentacao.taxa.moeda_utilizada() == movimentacao.moeda_utilizada():
-                        movimentacao.valor_total = movimentacao.quantidade * movimentacao.valor - movimentacao.taxa.valor
+                        movimentacao.preco_total = movimentacao.quantidade * movimentacao.preco_unitario - movimentacao.taxa.valor
                     else:
                         raise ValueError('Moeda utilizada na taxa é inválida')
                 else:
-                    movimentacao.valor_total = movimentacao.quantidade * movimentacao.valor
+                    movimentacao.preco_total = movimentacao.quantidade * movimentacao.preco_unitario
                 
                 # Alterar quantidade de moeda utilizada na operação
                 if not movimentacao.em_real():
                     moedas[movimentacao.operacaocriptomoedamoeda.criptomoeda.ticker].preco_medio = (moedas[movimentacao.criptomoeda.ticker].preco_medio * movimentacao.quantidade \
                                                                            + (moedas[movimentacao.operacaocriptomoedamoeda.criptomoeda.ticker].preco_medio \
                                                                               * moedas[movimentacao.operacaocriptomoedamoeda.criptomoeda.ticker].qtd)) \
-                                                                              / (movimentacao.valor_total + moedas[movimentacao.operacaocriptomoedamoeda.criptomoeda.ticker].qtd)
-                    moedas[movimentacao.operacaocriptomoedamoeda.criptomoeda.ticker].qtd += movimentacao.valor_total
+                                                                              / (movimentacao.preco_total + moedas[movimentacao.operacaocriptomoedamoeda.criptomoeda.ticker].qtd)
+                    moedas[movimentacao.operacaocriptomoedamoeda.criptomoeda.ticker].qtd += movimentacao.preco_total
                     
                 moedas[movimentacao.criptomoeda.ticker].qtd -= movimentacao.quantidade
         
@@ -343,8 +343,8 @@ def historico(request):
                 moedas[movimentacao.moeda.ticker].preco_medio = moedas[movimentacao.moeda.ticker].preco_medio * moedas[movimentacao.moeda.ticker].qtd \
                     / (moedas[movimentacao.moeda.ticker].qtd - movimentacao.taxa)
                 moedas[movimentacao.moeda.ticker].qtd -= movimentacao.taxa
-            movimentacao.valor_total = movimentacao.quantidade
-            movimentacao.valor = movimentacao.quantidade - movimentacao.taxa
+            movimentacao.preco_total = movimentacao.quantidade
+            movimentacao.preco_unitario = movimentacao.quantidade - movimentacao.taxa
             # Usar quantidade para guardar valor da taxa
             movimentacao.quantidade = movimentacao.taxa
             
@@ -357,7 +357,7 @@ def historico(request):
             
         # Limitar valores totais em reais para 2 casas decimais
         if movimentacao.em_real():
-            movimentacao.valor_total = movimentacao.valor_total.quantize(Decimal('0.01'))
+            movimentacao.preco_total = movimentacao.preco_total.quantize(Decimal('0.01'))
             
         total_investido = sum([(moeda.preco_medio * moeda.qtd) for moeda in moedas.values() if moeda.qtd > 0])
         
@@ -368,6 +368,7 @@ def historico(request):
         else:
             graf_investido_total += [[data_formatada, float(total_investido)]]
         
+        # Gráfico de patrimônio é passado como totais de cada moeda para cálculo de histórico a partir de queries para a API do CryptoCompare
         data_formatada_utc = calendar.timegm(movimentacao.data.timetuple()) * 1000
         patrimonio = {moeda: float(dados_moeda.qtd) for moeda, dados_moeda in moedas.items()}
         if graf_patrimonio and data_formatada_utc == graf_patrimonio[-1][1]:
@@ -382,7 +383,7 @@ def historico(request):
         graf_investido_total += [[data_formatada, float(total_investido)]]
         graf_patrimonio += [[data_formatada, data_formatada_utc, patrimonio]]
     
-#     print ['%s: %s' % (ticker, moeda.qtd) for ticker, moeda in moedas.items()]
+    print ['%s: %s' % (ticker, moeda.qtd) for ticker, moeda in moedas.items()]
     
     dados = {}
     dados['total_investido'] = sum([(moeda.preco_medio * moeda.qtd) for moeda in moedas.values() if moeda.qtd > 0])

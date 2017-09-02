@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from bagogold.criptomoeda.models import TransferenciaCriptomoeda, Criptomoeda, \
     OperacaoCriptomoeda, OperacaoCriptomoedaMoeda, OperacaoCriptomoedaTaxa
-from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia
+from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia, \
+    calcular_qtd_moedas_ate_dia_por_criptomoeda
 from decimal import Decimal
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -29,19 +30,17 @@ class QuantidadesCriptomoedaTestCase(TestCase):
         transferencia_3 = TransferenciaCriptomoeda.objects.create(moeda=bitcoin, data=datetime.date(2017, 6, 9), quantidade=Decimal('0.19'), investidor=user.investidor, 
                                                                   origem='Mercado Bitcoin', destino='Poloniex', taxa=Decimal('0.0006102'))
         
-        
-        
-        compra_1 = OperacaoCriptomoeda.objects.create(quantidade=Decimal('0.48784399'), valor=Decimal('9968.99994'), data=datetime.date(2017, 6, 6), tipo_operacao='C', criptomoeda=bitcoin, investidor=user.investidor)
-        compra_2 = OperacaoCriptomoeda.objects.create(quantidade=Decimal('2.04838866'), valor=Decimal('0.0110499'), data=datetime.date(2017, 6, 7), tipo_operacao='C', criptomoeda=factom, investidor=user.investidor)
-        compra_3 = OperacaoCriptomoeda.objects.create(quantidade=Decimal('15.40786135'), valor=Decimal('0.01104999'), data=datetime.date(2017, 6, 7), tipo_operacao='C', criptomoeda=factom, investidor=user.investidor)
-        compra_4 = OperacaoCriptomoeda.objects.create(quantidade=Decimal('0.61136046'), valor=Decimal('0.01080999'), data=datetime.date(2017, 6, 7), tipo_operacao='C', criptomoeda=factom, investidor=user.investidor)
-        compra_5 = OperacaoCriptomoeda.objects.create(quantidade=Decimal('0.81185596'), valor=Decimal('0.0098302'), data=datetime.date(2017, 6, 9), tipo_operacao='V', criptomoeda=factom, investidor=user.investidor)
-        compra_6 = OperacaoCriptomoeda.objects.create(quantidade=Decimal('7.68814404'), valor=Decimal('0.0098302'), data=datetime.date(2017, 6, 9), tipo_operacao='V', criptomoeda=factom, investidor=user.investidor)
-        compra_7 = OperacaoCriptomoeda.objects.create(quantidade=Decimal('0.11'), valor=Decimal('0.0967'), data=datetime.date(2017, 6, 9), tipo_operacao='C', criptomoeda=ethereum, investidor=user.investidor)
-        compra_8 = OperacaoCriptomoeda.objects.create(quantidade=Decimal('0.33757127'), valor=Decimal('0.0967'), data=datetime.date(2017, 6, 9), tipo_operacao='C', criptomoeda=ethereum, investidor=user.investidor)
-        compra_9 = OperacaoCriptomoeda.objects.create(quantidade=Decimal('0.41513183'), valor=Decimal('0.0967'), data=datetime.date(2017, 6, 9), tipo_operacao='C', criptomoeda=ethereum, investidor=user.investidor)
-        compra_10 = OperacaoCriptomoeda.objects.create(quantidade=Decimal('75.00'), valor=Decimal('0.00117999'), data=datetime.date(2017, 6, 9), tipo_operacao='C', criptomoeda=lisk, investidor=user.investidor)
-        compra_11 = OperacaoCriptomoeda.objects.create(quantidade=Decimal('9.5100467'), valor=Decimal('0.00117998'), data=datetime.date(2017, 6, 9), tipo_operacao='C', criptomoeda=lisk, investidor=user.investidor)
+        compra_1 = OperacaoCriptomoeda.objects.create(quantidade=Decimal('0.48784399'), preco_unitario=Decimal('9968.99994'), data=datetime.date(2017, 6, 6), tipo_operacao='C', criptomoeda=bitcoin, investidor=user.investidor)
+        compra_2 = OperacaoCriptomoeda.objects.create(quantidade=Decimal('2.04838866'), preco_unitario=Decimal('0.0110499'), data=datetime.date(2017, 6, 7), tipo_operacao='C', criptomoeda=factom, investidor=user.investidor)
+        compra_3 = OperacaoCriptomoeda.objects.create(quantidade=Decimal('15.40786135'), preco_unitario=Decimal('0.01104999'), data=datetime.date(2017, 6, 7), tipo_operacao='C', criptomoeda=factom, investidor=user.investidor)
+        compra_4 = OperacaoCriptomoeda.objects.create(quantidade=Decimal('0.61136046'), preco_unitario=Decimal('0.01080999'), data=datetime.date(2017, 6, 7), tipo_operacao='C', criptomoeda=factom, investidor=user.investidor)
+        compra_5 = OperacaoCriptomoeda.objects.create(quantidade=Decimal('0.81185596'), preco_unitario=Decimal('0.0098302'), data=datetime.date(2017, 6, 9), tipo_operacao='V', criptomoeda=factom, investidor=user.investidor)
+        compra_6 = OperacaoCriptomoeda.objects.create(quantidade=Decimal('7.68814404'), preco_unitario=Decimal('0.0098302'), data=datetime.date(2017, 6, 9), tipo_operacao='V', criptomoeda=factom, investidor=user.investidor)
+        compra_7 = OperacaoCriptomoeda.objects.create(quantidade=Decimal('0.109725'), preco_unitario=Decimal('0.0967'), data=datetime.date(2017, 6, 9), tipo_operacao='C', criptomoeda=ethereum, investidor=user.investidor)
+        compra_8 = OperacaoCriptomoeda.objects.create(quantidade=Decimal('0.33706492'), preco_unitario=Decimal('0.0967'), data=datetime.date(2017, 6, 9), tipo_operacao='C', criptomoeda=ethereum, investidor=user.investidor)
+        compra_9 = OperacaoCriptomoeda.objects.create(quantidade=Decimal('0.41450914'), preco_unitario=Decimal('0.0967'), data=datetime.date(2017, 6, 9), tipo_operacao='C', criptomoeda=ethereum, investidor=user.investidor)
+        compra_10 = OperacaoCriptomoeda.objects.create(quantidade=Decimal('74.8125'), preco_unitario=Decimal('0.00117999'), data=datetime.date(2017, 6, 9), tipo_operacao='C', criptomoeda=lisk, investidor=user.investidor)
+        compra_11 = OperacaoCriptomoeda.objects.create(quantidade=Decimal('9.48627159'), preco_unitario=Decimal('0.00117998'), data=datetime.date(2017, 6, 9), tipo_operacao='C', criptomoeda=lisk, investidor=user.investidor)
         
         # Moedas utilizas nas operações
         OperacaoCriptomoedaMoeda.objects.create(operacao=compra_2, criptomoeda=bitcoin)
@@ -63,15 +62,16 @@ class QuantidadesCriptomoedaTestCase(TestCase):
         OperacaoCriptomoedaTaxa.objects.create(valor=Decimal('0.00001995'), operacao=compra_5, moeda=bitcoin)
         OperacaoCriptomoedaTaxa.objects.create(valor=Decimal('0.00011336'), operacao=compra_6, moeda=bitcoin)
         OperacaoCriptomoedaTaxa.objects.create(valor=Decimal('0.000275'), operacao=compra_7, moeda=ethereum)
-        OperacaoCriptomoedaTaxa.objects.create(valor=Decimal('0.000506357'), operacao=compra_8, moeda=ethereum)
-        OperacaoCriptomoedaTaxa.objects.create(valor=Decimal('0.000622698'), operacao=compra_9, moeda=ethereum)
+        OperacaoCriptomoedaTaxa.objects.create(valor=Decimal('0.00050635'), operacao=compra_8, moeda=ethereum)
+        OperacaoCriptomoedaTaxa.objects.create(valor=Decimal('0.00062269'), operacao=compra_9, moeda=ethereum)
         OperacaoCriptomoedaTaxa.objects.create(valor=Decimal('0.1875'), operacao=compra_10, moeda=lisk)
-        OperacaoCriptomoedaTaxa.objects.create(valor=Decimal('0.023775117'), operacao=compra_11, moeda=lisk)
+        OperacaoCriptomoedaTaxa.objects.create(valor=Decimal('0.02377511'), operacao=compra_11, moeda=lisk)
         
 
     def test_qtd_moedas_ate_dia(self):
         # Posição no dia 10/06/2017
-        # [u'ETH: 0.862703100000', u'FCT: 9.567610470000', u'LSK: 84.510046700000', u'BTC: 0.186517598234185500000000']
+        # POLO: eth - 0.86129905, lsk - 84.29877158, fct - 9.56761046
+        # [u'ETH: 0.861299060000', u'FCT: 9.567610470000', u'LSK: 84.298771590000', u'BTC: 0.186902671181483300000000']
         """Testa quantidade de moedas até dia"""
         investidor = User.objects.get(username='tester').investidor
         qtd_moedas = calcular_qtd_moedas_ate_dia(investidor, datetime.date(2017, 6, 14))
@@ -81,15 +81,32 @@ class QuantidadesCriptomoedaTestCase(TestCase):
         lisk = Criptomoeda.objects.get(nome='Lisk', ticker='LSK').id
         factom = Criptomoeda.objects.get(nome='Factom', ticker='FCT').id
         
-        self.assertDictEqual(qtd_moedas, {ethereum: Decimal('0.862703100000'), factom: Decimal('9.567610470000'), lisk: Decimal('84.510046700000'), bitcoin: Decimal('0.186517598234185500000000')})
+        situacao_no_dia = {ethereum: Decimal('0.861299060000'), factom: Decimal('9.567610470000'), lisk: Decimal('84.298771590000'), 
+                           bitcoin: Decimal('0.186902671181483300000000')}
         
-#     def test_qtd_cotas_ate_dia_por_fundo(self):
-#         """Testa quantidade de cotas até dia por fundo"""
-#         investidor = User.objects.get(username='tester').investidor
-#         qtd_cotas = calcular_qtd_cotas_ate_dia_por_fundo(investidor, FundoInvestimento.objects.get(cnpj='00.000.000/0000-01').id, datetime.date(2017, 6, 14))
-#         self.assertEqual(qtd_cotas, Decimal('4291.07590514'))
-#         qtd_cotas = calcular_qtd_cotas_ate_dia_por_fundo(investidor, FundoInvestimento.objects.get(cnpj='00.000.000/0000-02').id, datetime.date(2017, 6, 14))
-#         self.assertEqual(qtd_cotas, Decimal('179.6544'))
+        for id_criptomoeda in qtd_moedas.keys():
+            self.assertAlmostEqual(qtd_moedas[id_criptomoeda], situacao_no_dia[id_criptomoeda], delta=Decimal('0.00000001'))
+        
+    def test_qtd_cotas_ate_dia_por_fundo(self):
+        # Posição no dia 10/06/2017
+        # [u'ETH: 0.861299060000', u'FCT: 9.567610470000', u'LSK: 84.298771590000', u'BTC: 0.186902671181483300000000']
+        """Testa quantidade de moedas até dia para uma criptomoeda"""
+        investidor = User.objects.get(username='tester').investidor
+        
+        qtd_bitcoin = calcular_qtd_moedas_ate_dia_por_criptomoeda(investidor, Criptomoeda.objects.get(nome='Bitcoin', ticker='BTC').id, datetime.date(2017, 6, 14))
+        self.assertAlmostEqual(qtd_bitcoin, Decimal('0.186902671181483300000000'), delta=Decimal('0.00000001'))
+        
+        qtd_ethereum = calcular_qtd_moedas_ate_dia_por_criptomoeda(investidor, Criptomoeda.objects.get(nome='Ethereum', ticker='ETH').id, datetime.date(2017, 6, 14))
+        self.assertAlmostEqual(qtd_ethereum, Decimal('0.861299060000'), delta=Decimal('0.00000001'))
+
+        qtd_lisk = calcular_qtd_moedas_ate_dia_por_criptomoeda(investidor, Criptomoeda.objects.get(nome='Lisk', ticker='LSK').id, datetime.date(2017, 6, 14))
+        self.assertAlmostEqual(qtd_lisk, Decimal('84.298771590000'), delta=Decimal('0.00000001'))
+        
+        qtd_factom = calcular_qtd_moedas_ate_dia_por_criptomoeda(investidor, Criptomoeda.objects.get(nome='Factom', ticker='FCT').id, datetime.date(2017, 6, 14))
+        self.assertAlmostEqual(qtd_factom, Decimal('9.567610470000'), delta=Decimal('0.00000001'))
+
+
+
 #         
 #     def test_valor_cotas_ate_dia(self):
 #         """Testa valor das cotas até dia"""

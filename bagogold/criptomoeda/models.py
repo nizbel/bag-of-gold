@@ -15,7 +15,7 @@ class Criptomoeda (models.Model):
     
 class OperacaoCriptomoeda (models.Model):
     quantidade = models.DecimalField(u'Quantidade', max_digits=21, decimal_places=12, validators=[MinValueValidator(Decimal('0.000000000001'))])
-    valor = models.DecimalField(u'Valor unitário', max_digits=21, decimal_places=12, validators=[MinValueValidator(Decimal('0.000000000001'))])
+    preco_unitario = models.DecimalField(u'Preço unitário', max_digits=21, decimal_places=12, validators=[MinValueValidator(Decimal('0.000000000001'))])
     data = models.DateField(u'Data da operação')
     tipo_operacao = models.CharField(u'Tipo de operação', max_length=1)
     criptomoeda = models.ForeignKey('Criptomoeda')
