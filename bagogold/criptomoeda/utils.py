@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoCriptomoeda
-from bagogold.criptomoeda.models import OperacaoCriptomoeda
+from bagogold.criptomoeda.models import OperacaoCriptomoeda, \
+    TransferenciaCriptomoeda
 from django.db.models.aggregates import Sum
 from django.db.models.expressions import F, Case, When
 from django.db.models.fields import DecimalField
@@ -13,10 +14,44 @@ def calcular_qtd_moedas_ate_dia(investidor, dia=datetime.date.today()):
                 Dia final
     Retorno: Quantidade de moedas por fundo {moeda_id: qtd}
     """
-    qtd_moedas = dict(OperacaoCriptomoeda.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True).values('criptomoeda') \
+    # Pega primeiro moedas operadas
+    qtd_moedas1 = dict(OperacaoCriptomoeda.objects.filter(investidor=investidor, data__lte=dia).values('criptomoeda') \
         .annotate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
                             When(tipo_operacao='V', then=F('quantidade')*-1),
                             output_field=DecimalField()))).values_list('criptomoeda', 'total').exclude(total=0))
+    
+    # Moedas utilizadas, sem taxas
+    qtd_moedas2 = dict(OperacaoCriptomoeda.objects.filter(investidor=investidor, data__lte=dia, operacaocriptomoedamoeda__isnull=False,
+                                                          operacaocriptomoedataxa__isnull=True) \
+                       .annotate(moeda_utilizada=F('operacaocriptomoedamoeda__criptomoeda')).values('moeda_utilizada') \
+        .annotate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade') * F('preco_unitario') *-1),
+                            When(tipo_operacao='V', then=F('quantidade') * F('preco_unitario')),
+                            output_field=DecimalField()))).values_list('moeda_utilizada', 'total').exclude(total=0))
+    
+    # Moedas utilizadas, com taxas
+    qtd_moedas3 = dict(OperacaoCriptomoeda.objects.filter(investidor=investidor, data__lte=dia, operacaocriptomoedamoeda__isnull=False,
+                                                          operacaocriptomoedataxa__isnull=False) \
+                       .annotate(moeda_utilizada=F('operacaocriptomoedamoeda__criptomoeda')).values('moeda_utilizada') \
+        .annotate(total=Sum(Case(When(tipo_operacao='C', \
+                  # Para compras, verificar se taxa está na moeda comprada ou na utilizada
+                  then=Case(When(operacaocriptomoedataxa__moeda=F('criptomoeda'), 
+                                 then=(F('quantidade') + F('operacaocriptomoedataxa__valor')) * F('preco_unitario') *-1),
+                            When(operacaocriptomoedataxa__moeda=F('operacaocriptomoedamoeda__criptomoeda'), 
+                                 then=F('quantidade') * F('preco_unitario') *-1 - F('operacaocriptomoedataxa__valor')))),
+                                 When(tipo_operacao='V', \
+                  # Para vendas, verificar se a taxa está na moeda vendida ou na utilizada
+                  then=Case(When(operacaocriptomoedataxa__moeda=F('criptomoeda'), 
+                                 then=(F('quantidade') - F('operacaocriptomoedataxa__valor')) * F('preco_unitario')),
+                            When(operacaocriptomoedataxa__moeda=F('operacaocriptomoedamoeda__criptomoeda'), 
+                                 then=F('quantidade') * F('preco_unitario') - F('operacaocriptomoedataxa__valor')))),
+                        output_field=DecimalField()))).values_list('moeda_utilizada', 'total').exclude(total=0))
+    
+    # Transferências, remover taxas
+    qtd_moedas4 = dict(TransferenciaCriptomoeda.objects.filter(investidor=investidor, data__lte=dia, moeda__isnull=False).values('moeda') \
+        .annotate(total=Sum(F('taxa')*-1)).values_list('moeda', 'total').exclude(total=0))
+    
+    qtd_moedas = { k: qtd_moedas1.get(k, 0) + qtd_moedas2.get(k, 0) + qtd_moedas3.get(k, 0) + qtd_moedas4.get(k, 0) \
+                   for k in set(qtd_moedas1) | set(qtd_moedas2) | set(qtd_moedas3) | set(qtd_moedas4) }
     
     return qtd_moedas
 
@@ -28,10 +63,39 @@ def calcular_qtd_moedas_ate_dia_por_criptomoeda(investidor, moeda_id, dia=dateti
                 Dia final
     Retorno: Quantidade de moedas para a criptomoeda determinada
     """
-    qtd_moedas = OperacaoCriptomoeda.objects.filter(investidor=investidor, criptomoeda__id=moeda_id, data__lte=dia).exclude(data__isnull=True) \
-        .aggregate(qtd_moedas=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
+    # Pega primeiro moedas operadas
+    qtd_moedas = OperacaoCriptomoeda.objects.filter(investidor=investidor, data__lte=dia, criptomoeda__id=moeda_id) \
+        .aggregate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
                             When(tipo_operacao='V', then=F('quantidade')*-1),
-                            output_field=DecimalField())))['qtd_moedas'] or 0
+                            output_field=DecimalField())))['total'] or 0
+    
+    # Moedas utilizadas, sem taxas
+    qtd_moedas += OperacaoCriptomoeda.objects.filter(investidor=investidor, data__lte=dia, operacaocriptomoedamoeda__criptomoeda__id=moeda_id,
+                                                          operacaocriptomoedataxa__isnull=True) \
+        .aggregate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade') * F('preco_unitario') *-1),
+                            When(tipo_operacao='V', then=F('quantidade') * F('preco_unitario')),
+                            output_field=DecimalField())))['total'] or 0
+    
+    # Moedas utilizadas, com taxas
+    qtd_moedas += OperacaoCriptomoeda.objects.filter(investidor=investidor, data__lte=dia, operacaocriptomoedamoeda__criptomoeda__id=moeda_id,
+                                                          operacaocriptomoedataxa__isnull=False) \
+        .aggregate(total=Sum(Case(When(tipo_operacao='C', \
+                  # Para compras, verificar se taxa está na moeda comprada ou na utilizada
+                  then=Case(When(operacaocriptomoedataxa__moeda=F('criptomoeda'), 
+                                 then=(F('quantidade') + F('operacaocriptomoedataxa__valor')) * F('preco_unitario') *-1),
+                            When(operacaocriptomoedataxa__moeda=F('operacaocriptomoedamoeda__criptomoeda'), 
+                                 then=F('quantidade') * F('preco_unitario') *-1 - F('operacaocriptomoedataxa__valor')))),
+                                 When(tipo_operacao='V', \
+                  # Para vendas, verificar se a taxa está na moeda vendida ou na utilizada
+                  then=Case(When(operacaocriptomoedataxa__moeda=F('criptomoeda'), 
+                                 then=(F('quantidade') - F('operacaocriptomoedataxa__valor')) * F('preco_unitario')),
+                            When(operacaocriptomoedataxa__moeda=F('operacaocriptomoedamoeda__criptomoeda'), 
+                                 then=F('quantidade') * F('preco_unitario') - F('operacaocriptomoedataxa__valor')))),
+                        output_field=DecimalField())))['total'] or 0
+    
+    # Transferências, remover taxas
+    qtd_moedas += TransferenciaCriptomoeda.objects.filter(investidor=investidor, data__lte=dia, moeda__id=moeda_id) \
+        .aggregate(total=Sum(F('taxa')*-1))['total'] or 0
         
     return qtd_moedas
 
@@ -69,3 +133,8 @@ def calcular_qtd_moedas_ate_dia_por_divisao(dia, divisao_id):
             
     return qtd_moedas
 
+def calcular_valor_criptomoeda_atual(criptomoeda):
+    pass
+
+def calcular_valor_criptomoedas_atual(lista_criptomoedas):
+    pass
