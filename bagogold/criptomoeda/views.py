@@ -383,7 +383,7 @@ def historico(request):
         graf_investido_total += [[data_formatada, float(total_investido)]]
         graf_patrimonio += [[data_formatada, data_formatada_utc, patrimonio]]
     
-    print ['%s: %s' % (ticker, moeda.qtd) for ticker, moeda in moedas.items()]
+#     print ['%s: %s' % (ticker, moeda.qtd) for ticker, moeda in moedas.items()]
     
     dados = {}
     dados['total_investido'] = sum([(moeda.preco_medio * moeda.qtd) for moeda in moedas.values() if moeda.qtd > 0])
