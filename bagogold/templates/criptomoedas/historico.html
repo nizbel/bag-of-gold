@@ -261,19 +261,19 @@ function calcular_patrimonio_em_reais(patrimonio) {
     		}
     	}
     }
+    
     // Buscar patrimônio da data atual
     var xhr = new XMLHttpRequest();
-    xhr.open("GET", "https://min-api.cryptocompare.com/data/pricemultifull?fsyms=" + tickers.join() + "&tsyms=BRL", false);
+    xhr.open("GET", "https://min-api.cryptocompare.com/data/pricemulti?fsyms=" + tickers.join() + "&tsyms=BRL", false);
     xhr.send();
     
     var response = JSON.parse(xhr.responseText);
-    console.log(response);
     loop_ticker: for (var key_data in patrimonio[patrimonio.length-1][2]) {
-    	for (var ticker_atual in response.RAW) {
+    	for (var ticker_atual in response) {
             // Verifica cada ticker nas datas para passar valor para patrimonio calculado
             if (key_data == ticker_atual) {
-                patrimonio[patrimonio.length-1][3] += patrimonio[patrimonio.length-1][2][key_data] * response.RAW[ticker_atual].BRL.PRICE;
-                console.log(patrimonio[patrimonio.length-1][2][key_data], response.RAW[ticker_atual].BRL.PRICE);
+                patrimonio[patrimonio.length-1][3] += patrimonio[patrimonio.length-1][2][key_data] * response[ticker_atual].BRL;
+//                 console.log(patrimonio[patrimonio.length-1][2][key_data], response[ticker_atual].BRL);
                 continue loop_ticker;
             }
     	}
