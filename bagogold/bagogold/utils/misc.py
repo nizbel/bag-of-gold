@@ -330,3 +330,7 @@ def converter_date_para_utc(data):
         return datetime.datetime.combine(data, datetime.time(3))
     else:
         raise ValueError('Objeto deve ser do tipo date')
+    
+def formatar_lista_para_string_create(lista):
+    for objeto in lista:
+        print '%s.objects.create(' % (objeto.__class__.__name__) + ', '.join(['%s=%s' % (field.name, getattr(objeto, field.name)) for field in objeto._meta.fields if field.name != 'id']) + ')'
