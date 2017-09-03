@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.acoes import Provento, AcaoProvento
+from bagogold.bagogold.models.acoes import Provento, AcaoProvento,\
+    AtualizacaoSelicProvento
 from bagogold.bagogold.models.fii import ProventoFII, FII
 from bagogold.bagogold.models.gerador_proventos import \
     InvestidorResponsavelPendencia, InvestidorLeituraDocumento, \
@@ -176,6 +177,11 @@ def converter_descricao_provento_para_provento_acoes(descricao_provento):
                         valor_unitario=descricao_provento.valor_unitario)
         novo_provento.full_clean()
         
+        # Criar atualização pela Selic caso exista
+        if hasattr(descricao_provento, 'selicproventoacaodescritodocbovespa'):
+            novo_provento.atualizacaoselicprovento = AtualizacaoSelicProvento(data_inicio=descricao_provento.selicproventoacaodescritodocbovespa.data_inicio,
+                                                                              data_fim=descricao_provento.selicproventoacaodescritodocbovespa.data_fim, provento=novo_provento)
+        
         return (novo_provento, list())
     # Para dividendo em ações, copiar também a descrição de recebimento de ações
     else:
@@ -313,21 +319,35 @@ def copiar_proventos_fiis(provento, provento_a_copiar):
     provento.save()
     
 
-def criar_descricoes_provento_acoes(descricoes_proventos, acoes_descricoes_proventos, documento):
+def criar_descricoes_provento_acoes(descricoes_proventos, acoes_descricoes_proventos, selic_descricoes_proventos, documento):
     """
     Cria descrições para proventos de ações a partir de um documento
     Parâmetros: Lista de proventos
                 Lista de ações recebidas em proventos
+                Lista de atualizações pela Selic para proventos
                 Documento que traz os proventos
     """
     try:
         with transaction.atomic():
             for descricao_provento in descricoes_proventos:
                 descricao_provento.save()
+                
+                # Proventos em ações
                 descricoes_acao_provento = [acao_descricao_provento for acao_descricao_provento in acoes_descricoes_proventos if acao_descricao_provento.provento.id == descricao_provento.id]
                 for descricao_acao_provento in descricoes_acao_provento:
                     descricao_acao_provento.provento = descricao_provento
                     descricao_acao_provento.save()
+                
+                # Proventos atualizados pela Selic
+                descricoes_selic_provento = [selic_descricao_provento for selic_descricao_provento in selic_descricoes_proventos if selic_descricao_provento.provento.id == descricao_provento.id]
+                for descricao_selic_provento in descricoes_selic_provento:
+                    descricao_selic_provento.provento = descricao_provento
+                    descricao_selic_provento.save()
+                    
+                # Se provento possuir as 2 listas, jogar erro
+                if descricoes_acao_provento and descricoes_selic_provento:
+                    raise ValueError(u'Proventos em ações não podem ser atualizados pela Selic')
+                
                 # Converte para proventos reais, porém não validados
                 provento, acoes_provento = converter_descricao_provento_para_provento_acoes(descricao_provento)
                 # Busca proventos já existentes, ou cria se não existirem
@@ -339,7 +359,7 @@ def criar_descricoes_provento_acoes(descricoes_proventos, acoes_descricoes_prove
                     # Caso seja um provento de ações, verifica se as ações recebidas batem
                     if provento.tipo_provento == 'A':
                         if len(provento.acaoprovento_set) != len(descricoes_acao_provento):
-                            raise ValueError('Há um provento não oficial cadastrado com dados incompatíveis')
+                            raise ValueError('Há um provento não oficial cadastrado com dados de ações incompatíveis')
                         for acao_provento in provento.acaoprovento_set:
                             provento_corresponde = False
                             for descricao_acao_provento in descricoes_acao_provento:
@@ -349,13 +369,27 @@ def criar_descricoes_provento_acoes(descricoes_proventos, acoes_descricoes_prove
                                     provento_corresponde = True
                                     break
                             if not provento_corresponde:
-                                raise ValueError('Há um provento não oficial cadastrado com dados incompatíveis')
+                                raise ValueError('Há um provento não oficial cadastrado com dados de ações incompatíveis')
+                    # Caso contrário, verifica se atualização pela Selic condiz com que há cadastrado
+                    else:
+                        if hasattr(provento, 'atualizacaoselicprovento') and hasattr(descricao_provento, 'selicproventoacaodescritodocbovespa'):
+                            if provento.atualizacaoselicprovento.data_inicio != descricao_provento.selicproventoacaodescritodocbovespa.data_inicio:
+                                raise ValueError('Há um provento não oficial cadastrado com dados de atualização pela Selic incompatíveis')
+                            if provento.atualizacaoselicprovento.data_fim != descricao_provento.selicproventoacaodescritodocbovespa.data_fim:
+                                raise ValueError('Há um provento não oficial cadastrado com dados de atualização pela Selic incompatíveis')
                                 
                 else:
                     provento.save()
+                    # Criar ações recebidas
                     for acao_provento in acoes_provento:
                         acao_provento.provento = provento
                         acao_provento.save()
+                    # Criar atualização pela Selic
+                    if hasattr(provento, 'atualizacaoselicprovento'):
+                        atualizacao = provento.atualizacaoselicprovento
+                        atualizacao.provento = provento
+                        atualizacao.save()
+                        
                 # Relaciona a descrição ao provento encontrado/criado
                 provento_documento = ProventoAcaoDocumento.objects.create(provento=provento, documento=documento, descricao_provento=descricao_provento, versao=1)
     except:
