@@ -286,30 +286,42 @@ def ler_documento_provento(request, id_pendencia):
                         # Verifica se dados inseridos são todos válidos
                         forms_validos = True
                         indice_provento = 0
-                        # Guarda os proventos e ações de proventos criadas para salvar caso todos os formulários sejam válidos
+                        # Guarda os proventos, ações de proventos e atualizações pela Selic criadas 
+                        # para salvar caso todos os formulários sejam válidos
                         proventos_validos = list()
                         acoes_proventos_validos = list()
+                        acoes_selic_validos = list()
                         for form_provento in formset_provento:
                             provento = form_provento.save(commit=False)
     #                         print provento
                             proventos_validos.append(provento)
                             form_acao_provento = formset_acao_provento[indice_provento]
+                            form_acao_selic = formset_acao_selic[indice_provento]
                             # Verificar a ação do provento em ações
                             if provento.tipo_provento == 'A':
-                                acao_provento = form_acao_provento.save(commit=False) if form_acao_provento.is_valid() and form_acao_provento.has_changed() else None
+                                acao_provento = form_acao_provento.save(commit=False) if form_acao_provento.is_valid() \
+                                    and form_acao_provento.has_changed() else None
                                 if acao_provento == None:
                                     forms_validos = False
                                 else:
                                     acao_provento.provento = provento
     #                                 print acao_provento
                                     acoes_proventos_validos.append(acao_provento)
+                            
+                            # Se provento não é em ações, pode ser atualizado pela Selic
+                            else:
+                                acao_selic = form_acao_selic.save(commit=False) if form_acao_selic.is_valid() \
+                                    and form_acao_selic.has_changed() else None
+                                if acao_selic != None:
+                                    acao_selic.provento = provento
+                                    acoes_selic_validos.append(acao_selic)
                             indice_provento += 1
                         if forms_validos:
                             try:
                                 # Colocar investidor como responsável pela leitura do documento
                                 salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao='C')
                                 # Salvar descrições de proventos
-                                criar_descricoes_provento_acoes(proventos_validos, acoes_proventos_validos, pendencia.documento)
+                                criar_descricoes_provento_acoes(proventos_validos, acoes_proventos_validos, acoes_selic_validos, pendencia.documento)
                                 messages.success(request, 'Descrições de proventos criadas com sucesso')
                                 return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
                             except Exception as e:
