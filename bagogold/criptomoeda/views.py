@@ -29,7 +29,8 @@ import calendar
 import datetime
 import json
 import traceback
-from bagogold.criptomoeda.utils import buscar_valor_criptomoedas_atual
+from bagogold.criptomoeda.utils import buscar_valor_criptomoedas_atual,\
+    calcular_qtd_moedas_ate_dia
 
 @login_required
 @adiciona_titulo_descricao('Editar operação em criptomoeda', 'Alterar valores de uma operação de compra/venda em criptomoeda')
@@ -581,8 +582,17 @@ def listar_transferencias(request):
     
     return TemplateResponse(request, 'criptomoedas/listar_transferencias.html', {'transferencias': transferencias})
 
+@login_required
+@adiciona_titulo_descricao('Painel de Criptomoedas', 'Posição atual do investidor em Criptomoedas')
 def painel(request):
-    pass
+    investidor = request.user.investidor
+    qtd_moedas = calcular_qtd_moedas_ate_dia(investidor)
+    
+    moedas = Criptomoeda.objects.filter(id__in=qtd_moedas.keys())
+    for moeda in moedas:
+        moeda.qtd_atual = qtd_moedas[moeda.id]
+    
+    return TemplateResponse(request, 'criptomoedas/painel.html', {'moedas': moedas})
 
 def sobre(request):
     pass
