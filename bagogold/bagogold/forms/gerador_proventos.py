@@ -46,10 +46,6 @@ class SelicProventoAcaoDescritoDocBovespaForm(LocalizedModelForm):
             if data.get('data_inicio') > data.get('data_fim'):
                 raise forms.ValidationError('Data de início da atualização pela Selic deve ser anterior à data final')
             
-        print 'tipo de provento', self.instance.provento.tipo_provento
-        if self.instance.provento.tipo_provento == 'A':
-            raise forms.ValidationError('Proventos em ações não podem ser atualizados pela Selic')
-
 class ProventoFIIDescritoDocumentoBovespaForm(LocalizedModelForm):
     class Meta:
         model = ProventoFIIDescritoDocumentoBovespa

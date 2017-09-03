@@ -264,7 +264,7 @@ def ler_documento_provento(request, id_pendencia):
                 if pendencia.documento.tipo == 'A':
                     formset_provento = ProventoFormset(request.POST, prefix='provento')
                     formset_acao_provento = AcaoProventoFormset(request.POST, prefix='acao_provento')
-                    formset_acao_selic = SelicProventoAcaoDescritoDocBovespaFormset(prefix='acao_selic')
+                    formset_acao_selic = SelicProventoAcaoDescritoDocBovespaFormset(request.POST, prefix='acao_selic')
                     
                     # Apaga descrições que já existam para poder rodar validações, serão posteriormente readicionadas caso haja algum erro
                     info_proventos_a_apagar = list(ProventoAcaoDocumento.objects.filter(documento=pendencia.documento)) \
@@ -312,10 +312,12 @@ def ler_documento_provento(request, id_pendencia):
                             else:
                                 acao_selic = form_acao_selic.save(commit=False) if form_acao_selic.is_valid() \
                                     and form_acao_selic.has_changed() else None
+                                print acao_selic
                                 if acao_selic != None:
                                     acao_selic.provento = provento
                                     acoes_selic_validos.append(acao_selic)
                             indice_provento += 1
+                            
                         if forms_validos:
                             try:
                                 # Colocar investidor como responsável pela leitura do documento
@@ -428,6 +430,7 @@ def ler_documento_provento(request, id_pendencia):
                 proventos_iniciais.append(model_to_dict(provento_fii_documento.descricao_provento))
             formset_provento = ProventoFormset(prefix='provento', initial=proventos_iniciais)
             formset_acao_provento = {}
+            formset_acao_selic = {}
             
     # Preparar opções de busca, tanto para POST quanto para GET
     if pendencia.documento.tipo == 'A':
