@@ -175,7 +175,7 @@ def buscar_valor_criptomoedas_atual(lista_tickers):
     url = 'https://min-api.cryptocompare.com/data/pricemulti?fsyms=%s&tsyms=BRL' % (','.join(lista_tickers))
     resultado = urlopen(url)
     dados = json.load(resultado) 
-    return {ticker: Decimal(dados[ticker.upper()]['BRL']) for ticker in lista_tickers if ticker.upper() in dados.keys()}
+    return {ticker: Decimal(str(dados[ticker.upper()]['BRL'])) for ticker in lista_tickers if ticker.upper() in dados.keys()}
 
 def buscar_historico_criptomoeda(criptomoeda_ticker):
     """ 

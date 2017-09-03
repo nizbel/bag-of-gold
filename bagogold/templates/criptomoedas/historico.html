@@ -156,8 +156,8 @@
 $.fn.dataTable.moment( 'DD/MM/YYYY' );
 $( document ).ready(function() {
 	var graf_patrimonio = {{ graf_patrimonio|safe }};
-    console.log(graf_patrimonio);
 	graf_patrimonio = calcular_patrimonio_em_reais(graf_patrimonio);
+	
     $.plot($("#graf_valor"), [ {color: "#7D8C9D", lines: {show:true}, data: graf_patrimonio  } 
     ],
       {grid: {show: false}}  
@@ -263,21 +263,22 @@ function calcular_patrimonio_em_reais(patrimonio) {
     }
     
     // Buscar patrimônio da data atual
-    var xhr = new XMLHttpRequest();
-    xhr.open("GET", "https://min-api.cryptocompare.com/data/pricemulti?fsyms=" + tickers.join() + "&tsyms=BRL", false);
-    xhr.send();
+//     var xhr = new XMLHttpRequest();
+//     xhr.open("GET", "https://min-api.cryptocompare.com/data/pricemulti?fsyms=" + tickers.join() + "&tsyms=BRL", false);
+//     xhr.send();
     
-    var response = JSON.parse(xhr.responseText);
-    loop_ticker: for (var key_data in patrimonio[patrimonio.length-1][2]) {
-    	for (var ticker_atual in response) {
-            // Verifica cada ticker nas datas para passar valor para patrimonio calculado
-            if (key_data == ticker_atual) {
-                patrimonio[patrimonio.length-1][3] += patrimonio[patrimonio.length-1][2][key_data] * response[ticker_atual].BRL;
-//                 console.log(patrimonio[patrimonio.length-1][2][key_data], response[ticker_atual].BRL);
-                continue loop_ticker;
-            }
-    	}
-    }
+//     var response = JSON.parse(xhr.responseText);
+//     loop_ticker: for (var key_data in patrimonio[patrimonio.length-1][2]) {
+//     	for (var ticker_atual in response) {
+//             // Verifica cada ticker nas datas para passar valor para patrimonio calculado
+//             if (key_data == ticker_atual) {
+//                 patrimonio[patrimonio.length-1][3] += patrimonio[patrimonio.length-1][2][key_data] * response[ticker_atual].BRL;
+// //                 console.log(patrimonio[patrimonio.length-1][2][key_data], response[ticker_atual].BRL);
+//                 continue loop_ticker;
+//             }
+//     	}
+//     }
+    patrimonio[patrimonio.length-1][3] = parseFloat("{{dados.patrimonio|default:'0'|floatformat:'2'}}".replace('.', '').replace(',', '.'));
 	
     for (var i = 0; i < patrimonio.length; i++) {
     	patrimonio[i] = [String(patrimonio[i][0]), patrimonio[i][3]];

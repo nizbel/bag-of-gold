@@ -5,8 +5,7 @@ from bagogold.bagogold.forms.divisoes import DivisaoOperacaoCriptomoedaFormSet, 
     DivisaoTransferenciaCriptomoedaFormSet
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoCriptomoeda, \
     Divisao, DivisaoTransferenciaCriptomoeda
-from bagogold.bagogold.utils.misc import converter_date_para_utc,\
-    formatar_lista_para_string_create
+from bagogold.bagogold.utils.misc import converter_date_para_utc
 from bagogold.criptomoeda.forms import OperacaoCriptomoedaForm, \
     TransferenciaCriptomoedaForm
 from bagogold.criptomoeda.models import Criptomoeda, OperacaoCriptomoeda, \
@@ -30,6 +29,7 @@ import calendar
 import datetime
 import json
 import traceback
+from bagogold.criptomoeda.utils import buscar_valor_criptomoedas_atual
 
 @login_required
 @adiciona_titulo_descricao('Editar operação em criptomoeda', 'Alterar valores de uma operação de compra/venda em criptomoeda')
@@ -387,20 +387,7 @@ def historico(request):
     
     dados = {}
     dados['total_investido'] = sum([(moeda.preco_medio * moeda.qtd) for moeda in moedas.values() if moeda.qtd > 0])
-    # Carrega o valor de um dólar em reais, mais atual
-    url_dolar = 'http://api.fixer.io/latest?base=USD&symbols=BRL'
-    resultado = urlopen(url_dolar)
-    data = json.load(resultado) 
-    dolar_para_real = Decimal(data['rates']['BRL'])
-    
-    dados['patrimonio'] = 0
-    for ticker, moeda in moedas.items():
-        if moeda.qtd == 0:
-            continue
-        url = 'https://api.cryptonator.com/api/ticker/%s-usd' % (ticker)
-        resultado = urlopen(url)
-        data = json.load(resultado) 
-        dados['patrimonio'] += moeda.qtd * dolar_para_real * Decimal(data['ticker']['price'])
+    dados['patrimonio'] = sum([moedas[ticker].qtd * valor for ticker, valor in buscar_valor_criptomoedas_atual(moedas.keys()).items()])
     dados['lucro'] = dados['patrimonio'] - dados['total_investido']
     dados['lucro_percentual'] = dados['lucro'] / (dados['total_investido'] or 1) * 100
     
