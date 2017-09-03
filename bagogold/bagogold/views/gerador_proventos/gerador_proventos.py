@@ -783,6 +783,7 @@ def validar_documento_provento(request, id_pendencia):
             except Exception as erro:
                 messages.error(request, unicode(erro))
         
+    # Mostrar decisão de criar proventos
     if pendencia.documento.investidorleituradocumento.decisao == 'C':
         if pendencia.documento.tipo == 'A':
             proventos_documento = ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)
@@ -828,6 +829,8 @@ def validar_documento_provento(request, id_pendencia):
                             
             # Descrição da decisão do responsável pela leitura
             pendencia.decisao = 'Criar %s provento(s)' % (ProventoFIIDocumento.objects.filter(documento=pendencia.documento).count())
+            
+    # Mostrar decisão de excluir documentos
     elif pendencia.documento.investidorleituradocumento.decisao == 'E':
         descricoes_proventos = {}
         
