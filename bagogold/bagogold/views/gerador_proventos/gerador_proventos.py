@@ -312,7 +312,6 @@ def ler_documento_provento(request, id_pendencia):
                             else:
                                 acao_selic = form_acao_selic.save(commit=False) if form_acao_selic.is_valid() \
                                     and form_acao_selic.has_changed() else None
-                                print acao_selic
                                 if acao_selic != None:
                                     acao_selic.provento = provento
                                     acoes_selic_validos.append(acao_selic)
