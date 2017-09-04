@@ -750,6 +750,8 @@ def painel_geral(request):
             investimento.link = 'cdb_rdb:painel_cdb_rdb'
         elif chave == 'CRI/CRA':
             investimento.link = 'cri_cra:painel_cri_cra'
+        elif chave == 'Criptomoedas':
+            investimento.link = 'criptomoeda:painel_criptomoeda'
         elif chave == 'Debêntures':
             investimento.link = 'debentures:painel_debenture'
         elif chave == 'FII':
