@@ -230,14 +230,14 @@
                                                                     {% endfor %}
                                                                 {% endif %}
                                                             </div>
-                                                            {% if provento_proximo.selicproventoacaodescritodocbovespa %}
+                                                            {% if provento_proximo.atualizacaoselicprovento %}
                                                             <div class="m-grid m-grid-responsive-xs">
                                                                 <div class="m-grid-row">
                                                                     <div class="m-grid-col m-grid-col-left m-grid-col-md-4"><strong>Período de atualização pela Selic</strong></div>
                                                                     <div class="m-grid-col m-grid-col-left m-grid-col-md-2"><strong>Início:</strong></div>
-                                                                    <div class="m-grid-col m-grid-col-left m-grid-col-md-2">{{provento_proximo.selicproventoacaodescritodocbovespa.data_inicio|date:'d/m/Y'}}</div>
+                                                                    <div class="m-grid-col m-grid-col-left m-grid-col-md-2">{{provento_proximo.atualizacaoselicprovento.data_inicio|date:'d/m/Y'}}</div>
                                                                     <div class="m-grid-col m-grid-col-left m-grid-col-md-2"><strong>Fim:</strong></div>
-                                                                    <div class="m-grid-col m-grid-col-left m-grid-col-md-2">{{provento_proximo.selicproventoacaodescritodocbovespa.data_fim|date:'d/m/Y'}}</div>
+                                                                    <div class="m-grid-col m-grid-col-left m-grid-col-md-2">{{provento_proximo.atualizacaoselicprovento.data_fim|date:'d/m/Y'}}</div>
                                                                 </div>
                                                             </div>
                                                             {% endif %}
