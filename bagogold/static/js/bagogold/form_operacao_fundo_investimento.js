@@ -31,12 +31,12 @@ $(document).ready(function() {
         row.find('select').selectpicker('refresh');
         row.find('.bootstrap-touchspin').find('*').not('input').remove();
         row.find("input[name$='-quantidade']").TouchSpin({
-       	 	initval: 0,
-            min: 0,
-            max: 1000000000,
-            step: 1,
-            maxboostedstep: 100,
-        	postfix: 'cotas'
+    		min: 0,
+    		max: 1000000000,
+    		step: 0.01,
+    		decimals: 2,
+    		maxboostedstep: 100,
+    		prefix: 'R$'
         });
     });
     
