@@ -167,7 +167,7 @@ def detalhar_divisao(request, id):
     # Pegar fundos de investimento contidos na divisão
     qtd_fundos_dia = calcular_qtd_cotas_ate_dia_por_divisao(datetime.date.today(), divisao.id)
     for fundo_id in qtd_fundos_dia.keys():
-        fundo_valor = FundoInvestimento.objects.get(id=fundo_id).valor_no_dia(datetime.date.today())
+        fundo_valor = FundoInvestimento.objects.get(id=fundo_id).valor_no_dia(investidor, datetime.date.today())
         composicao['fundo-investimento'].patrimonio += qtd_fundos_dia[fundo_id] * fundo_valor
         composicao['fundo-investimento'].composicao[fundo_id] = Object()
         composicao['fundo-investimento'].composicao[fundo_id].nome = FundoInvestimento.objects.get(id=fundo_id).nome
