@@ -68,14 +68,12 @@
 					<table id="composicaoValor" class="table table-striped table-bordered table-hover table-header-fixed">
 					<thead>
 						<tr>
-							<th rowspan="2">Divisão</th>
-							<th colspan="9">Composição</th>
-						</tr>
-						<tr>
+							<th>Divisão</th>
                             <th>B & H</th>
                             <th>Trading</th>
                             <th>CDB/RDB</th>
                             <th>CRI/CRA</th>
+                            <th>Cripto.</th>
                             <th>Debêntures</th>
                             <th>Letra de Créd.</th>
                             <th>FII</th>
@@ -86,7 +84,7 @@
 					<tbody>
 					{% for divisao in divisoes %}
 					<tr>
-						<td><a href="{% url 'divisoes:detalhar_divisao' divisao.id %}">{{divisao.nome}}</a></td>
+                        <td><a href="{% url 'divisoes:detalhar_divisao' divisao.id %}" class="tooltips" data-placement="top" data-original-title="{{divisao.nome}}">{{divisao.nome|truncatechars:25}}</a></td>
 						<td><span class="
 							{% if divisao.valor_atual_bh < 0 %}
 							font-red-thunderbird
@@ -115,6 +113,13 @@
                             font-blue
                             {% endif %}
                             ">R${{divisao.valor_atual_cri_cra|floatformat:"2"}}</span></td>
+                        <td><span class="
+                            {% if divisao.valor_atual_criptomoeda < 0 %}
+                            font-red-thunderbird
+                            {% else %}
+                            font-blue
+                            {% endif %}
+                            ">R${{divisao.valor_atual_criptomoeda|floatformat:"2"}}</span></td>
                         <td><span class="
                             {% if divisao.valor_atual_debentures < 0 %}
                             font-red-thunderbird
@@ -172,14 +177,12 @@
 					<table id="composicaoSaldo" class="table table-striped table-bordered table-hover table-header-fixed">
 					<thead>
 						<tr>
-							<th rowspan="2">Divisão</th>
-							<th colspan="9">Composição</th>
-						</tr>
-						<tr>
+							<th>Divisão</th>
 							<th>B & H</th>
 							<th>Trading</th>
 							<th>CDB/RDB</th>
                             <th>CRI/CRA</th>
+                            <th>Cripto.</th>
                             <th>Debêntures</th>
 							<th>Letra de Créd.</th>
 							<th>FII</th>
@@ -190,7 +193,7 @@
 					<tbody>
 					{% for divisao in divisoes %}
 					<tr>
-						<td><a href="{% url 'divisoes:detalhar_divisao' divisao.id %}">{{divisao.nome}}</a></td>
+						<td><a href="{% url 'divisoes:detalhar_divisao' divisao.id %}" class="tooltips" data-placement="top" data-original-title="{{divisao.nome}}">{{divisao.nome|truncatechars:25}}</a></td>
 						<td><span class="
 							{% if divisao.saldo_bh < 0 %}
 							font-red-thunderbird
@@ -219,6 +222,13 @@
                             font-blue
                             {% endif %}
                             ">R${{divisao.saldo_cri_cra|floatformat:"2"}}</span></td>
+                        <td><span class="
+                            {% if divisao.saldo_criptomoeda < 0 %}
+                            font-red-thunderbird
+                            {% else %}
+                            font-blue
+                            {% endif %}
+                            ">R${{divisao.saldo_criptomoeda|floatformat:"2"}}</span></td>
                         <td><span class="
                             {% if divisao.saldo_debentures < 0 %}
                             font-red-thunderbird

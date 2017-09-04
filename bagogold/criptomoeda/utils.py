@@ -108,7 +108,7 @@ def calcular_qtd_moedas_ate_dia_por_divisao(divisao_id, dia=datetime.date.today(
     Calcula a quantidade de moedas até dia determinado para uma divisão
     Parâmetros: Id da divisão
                 Dia final
-    Retorno: Quantidade de moedas {moeda: qtd}
+    Retorno: Quantidade de moedas {moeda_id: qtd}
     """
     # Pega primeiro moedas operadas
     qtd_moedas1 = dict(DivisaoOperacaoCriptomoeda.objects.filter(divisao__id=divisao_id, operacao__data__lte=dia) \
