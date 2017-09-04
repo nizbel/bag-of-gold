@@ -12,6 +12,7 @@ import math
 import random
 import re
 import time
+from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
 
 
 def calcular_iof_regressivo(dias):
@@ -158,7 +159,9 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDEFILR
     
     # Fundos de Investimento
     if 'I' in tipo_investimentos:
-        rendimentos['I'] = sum(calcular_valor_fundos_investimento_ate_dia(investidor, data).values())
+        rendimentos['I'] = sum(calcular_valor_fundos_investimento_ate_dia(investidor, data).values()) \
+            - sum([operacao.valor for operacao in OperacaoFundoInvestimento.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='C')]) \
+            + sum([operacao.valor for operacao in OperacaoFundoInvestimento.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='V')])
     
     # Letras de Crédito
     if 'L' in tipo_investimentos:
