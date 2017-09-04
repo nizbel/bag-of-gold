@@ -238,6 +238,8 @@ def versionar_descricoes_relacionadas_acoes(descricao, provento_relacionado):
     # Apagar provento anterior
     for acao_provento_anterior in AcaoProvento.objects.filter(provento__id=provento_anterior.id):
         acao_provento_anterior.delete()
+    if hasattr(provento_anterior, 'atualizacaoselicprovento'):
+        provento_anterior.atualizacaoselicprovento.delete()
     provento_anterior.delete()
         
 def versionar_descricoes_relacionadas_fiis(descricao, provento_relacionado):
@@ -274,13 +276,6 @@ def copiar_proventos_acoes(provento, provento_a_copiar):
                 Provento a ser copiado
     """
     with transaction.atomic():
-        provento.acao = provento_a_copiar.acao
-        provento.valor_unitario = provento_a_copiar.valor_unitario
-        provento.tipo_provento = provento_a_copiar.tipo_provento
-        provento.data_ex = provento_a_copiar.data_ex
-        provento.data_pagamento = provento_a_copiar.data_pagamento
-        provento.observacao = provento_a_copiar.observacao
-        provento.save()
         # Se provento a copiar for do tipo provento em ações, copiar ações recebidas
         if provento_a_copiar.tipo_provento == 'A':
             acoes_provento = AcaoProvento.objects.filter(provento__id=provento.id)
@@ -300,10 +295,35 @@ def copiar_proventos_acoes(provento, provento_a_copiar):
                     nova_acao_provento.save()
                 # Passar à próxima ação recebida
                 indice_acao_provento += 1
-        # Se provento a copiar não for do tipo provento em ações, mas o provento a receber a cópia for, apagar ações recebidas
-        elif provento.tipo_provento == 'A':
+            
+            # Caso provento a receber dados seja atualizado pela Selic, apagar atualização
+            if hasattr(provento, 'atualizacaoselicprovento'):
+                provento.atualizacaoselicprovento.delete()
+            
+        # Se provento a copiar possuir atualização pela Selic, passar para provento a receber dados
+        elif hasattr(provento_a_copiar, 'atualizacaoselicprovento'):
+            AtualizacaoSelicProvento.objects.create(provento=provento, data_inicio=provento_a_copiar.atualizacaoselicprovento.data_inicio,
+                                                    data_fim=provento_a_copiar.atualizacaoselicprovento.data_fim)
+            
+            # Caso provento a receber dados possua ações a receber, apagá-las
             for acao_provento in AcaoProvento.objects.filter(provento__id=provento.id):
                 acao_provento.delete()
+            
+        else:
+            # Se provento a copiar não for do tipo provento em ações, mas o provento a receber a cópia for, apagar ações recebidas
+            if provento.tipo_provento == 'A':
+                for acao_provento in AcaoProvento.objects.filter(provento__id=provento.id):
+                    acao_provento.delete()
+            elif hasattr(provento, 'atualizacaoselicprovento'):
+                provento.atualizacaoselicprovento.delete()
+                
+        provento.acao = provento_a_copiar.acao
+        provento.valor_unitario = provento_a_copiar.valor_unitario
+        provento.tipo_provento = provento_a_copiar.tipo_provento
+        provento.data_ex = provento_a_copiar.data_ex
+        provento.data_pagamento = provento_a_copiar.data_pagamento
+        provento.observacao = provento_a_copiar.observacao
+        provento.save()
         
 def copiar_proventos_fiis(provento, provento_a_copiar):
     """
