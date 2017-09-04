@@ -93,13 +93,13 @@ def ler_serie_historica_anual_bovespa(nome_arquivo):
                         acoes_lista = acoes.values_list('ticker', flat=True)
             
 
-def buscar_historico(ticker):
+def buscar_historico(ticker, data_final=datetime.date.today()):
     # Busca historico dos ultimos 180 dias
-    data_180_dias_atras = datetime.date.today() - datetime.timedelta(days=180)
+    data_180_dias_atras = data_final - datetime.timedelta(days=180)
     try:
         historico = list()
         url_yahoo_csv = 'http://ichart.finance.yahoo.com/table.csv?s=%s.SA&a=%s&b=%s&c=%s&d=%s&e=%s&f=%s&g=d&ignore=.csv' % \
-                               (ticker, int(data_180_dias_atras.month)-1, data_180_dias_atras.day, data_180_dias_atras.year, int(datetime.date.today().month)-1, datetime.date.today().day, datetime.date.today().year)
+                               (ticker, int(data_180_dias_atras.month)-1, data_180_dias_atras.day, data_180_dias_atras.year, int(data_final.month)-1, data_final.day, data_final.year)
         response_csv = urlopen(url_yahoo_csv)
         csv = response_csv.read()
         book = pyexcel.get_book(file_type="csv", file_content=csv)
@@ -123,7 +123,7 @@ def buscar_historico(ticker):
         while tentativas < 3 and not sucesso:
             try:
                 papel = Share('%s.SA' % (ticker))
-                historico = papel.get_historical(data_180_dias_atras.strftime('%Y-%m-%d'), datetime.date.today().strftime('%Y-%m-%d'))
+                historico = papel.get_historical(data_180_dias_atras.strftime('%Y-%m-%d'), data_final.strftime('%Y-%m-%d'))
                 
                 # Verificar erro pois no código do yahoo-finance ele só verifica se não for lista
                 if 'ERROR' in str(historico).upper() or 'NOT FOUND' in str(historico).upper():
@@ -143,7 +143,7 @@ def buscar_historico(ticker):
             try:
                 # terceira opção, buscar no site da exame
                 url_exame_csv = 'http://financas.exame.abril.com.br/coletor/export/stocks/%s/interday.csv?start_date=%s-%s-%s&end_date=%s-%s-%s' % \
-                                   (ticker, data_180_dias_atras.year, int(data_180_dias_atras.month), data_180_dias_atras.day, datetime.date.today().year, int(datetime.date.today().month), datetime.date.today().day)
+                                   (ticker, data_180_dias_atras.year, int(data_180_dias_atras.month), data_180_dias_atras.day, data_final.year, int(data_final.month), data_final.day)
                 response_csv = urlopen(url_exame_csv)
                 csv = response_csv.read()
                 book = pyexcel.get_book(file_type="csv", file_content=csv)
