@@ -302,8 +302,12 @@ def copiar_proventos_acoes(provento, provento_a_copiar):
             
         # Se provento a copiar possuir atualização pela Selic, passar para provento a receber dados
         elif hasattr(provento_a_copiar, 'atualizacaoselicprovento'):
-            AtualizacaoSelicProvento.objects.create(provento=provento, data_inicio=provento_a_copiar.atualizacaoselicprovento.data_inicio,
-                                                    data_fim=provento_a_copiar.atualizacaoselicprovento.data_fim)
+            if hasattr(provento, 'atualizacaoselicprovento'):
+                provento.atualizacaoselicprovento.data_inicio = provento_a_copiar.atualizacaoselicprovento.data_inicio
+                provento.atualizacaoselicprovento.data_fim = provento_a_copiar.atualizacaoselicprovento.data_fim
+            else:
+                AtualizacaoSelicProvento.objects.create(provento=provento, data_inicio=provento_a_copiar.atualizacaoselicprovento.data_inicio,
+                                                        data_fim=provento_a_copiar.atualizacaoselicprovento.data_fim)
             
             # Caso provento a receber dados possua ações a receber, apagá-las
             for acao_provento in AcaoProvento.objects.filter(provento__id=provento.id):

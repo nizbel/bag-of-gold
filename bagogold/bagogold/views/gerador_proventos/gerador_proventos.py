@@ -29,6 +29,7 @@ from bagogold.bagogold.utils.misc import \
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
+from django.core.mail import mail_admins
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.forms.formsets import formset_factory
@@ -37,6 +38,7 @@ from django.http.response import HttpResponseRedirect, HttpResponse, Http404
 from django.template.response import TemplateResponse
 import json
 import os
+import traceback
 
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
@@ -706,6 +708,8 @@ def validar_documento_provento(request, id_pendencia):
                                                 provento.save()
                                         pendencia_finalizada = True
                                 except:
+                                    if settings.ENV == 'PROD':
+                                        mail_admins(u'Erro em Buscar fundos investimento', traceback.format_exc())
                                     messages.error(request, 'Houve erro no relacionamento de proventos')
                                     raise ValueError('Não foi possível validar provento')
                             # Qualquer erro que deixe a validação incompleta faz necessário desfazer investidor responsável pela validação

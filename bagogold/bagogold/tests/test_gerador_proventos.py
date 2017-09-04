@@ -545,6 +545,26 @@ class GeradorProventosTestCase(TestCase):
         self.assertEqual(provento_1.atualizacaoselicprovento.data_inicio, atualizacao_selic.data_inicio)
         self.assertEqual(provento_1.atualizacaoselicprovento.data_fim, atualizacao_selic.data_fim)
         
+    def test_copiar_provento_atualizado_pela_selic_sobre_atualizado(self):
+        """Testa cópia de um provento de JSCP atualizado pela Selic sobre um outro provento atualizado"""
+        provento_1 = Provento.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 12, 12), data_pagamento=datetime.date(2016, 12, 20),
+                                           tipo_provento='D', valor_unitario=Decimal(9))
+        id_provento_1 = provento_1.id
+        atualizacao_selic_1 = AtualizacaoSelicProvento.objects.create(provento=provento_1, data_inicio=datetime.date(2016, 11, 1), data_fim=provento_1.data_pagamento)
+        
+        provento_2 = Provento.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 12, 13), data_pagamento=datetime.date(2016, 12, 23),
+                                           tipo_provento='D', valor_unitario=Decimal(10), oficial_bovespa=True)
+        id_provento_2 = provento_2.id
+        atualizacao_selic_2 = AtualizacaoSelicProvento.objects.create(provento=provento_2, data_inicio=datetime.date(2016, 11, 5), data_fim=provento_2.data_pagamento)
+        
+        copiar_proventos_acoes(provento_1, provento_2)
+        
+        # Testar se provento 1 agora possui atualizacao pela Selic
+        self.assertTrue(AtualizacaoSelicProvento.objects.filter(provento=provento_1).exists())
+        self.assertEqual(provento_1.atualizacaoselicprovento.data_inicio, atualizacao_selic_2.data_inicio)
+        self.assertEqual(provento_1.atualizacaoselicprovento.data_fim, atualizacao_selic_2.data_fim)
+        
+        
     def test_copiar_proventos_apagando_atualizacao_pela_selic(self):
         """Testa copiar um provento sem atualização sobre um que possua atualização pela Selic"""
         provento_1 = Provento.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 12, 12), data_pagamento=datetime.date(2016, 12, 20),
