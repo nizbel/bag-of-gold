@@ -117,6 +117,41 @@ class Divisao (models.Model):
             
         return saldo
     
+    def saldo_criptomoeda(self, data=datetime.date.today()):
+        """
+        Calcula o saldo de operações em Criptomoedas de uma divisão (dinheiro livre)
+        """
+        # Pegar operações que não tenham criptomoeda como moeda utilizada, apenas reais
+        # Operações sem taxa
+        saldo = DivisaoOperacaoCriptomoeda.objects.filter(divisao=self, operacao__data__lte=data, operacao__operacaocriptomoedamoeda__isnull=True,
+                                                          operacao__operacaocriptomoedataxa__isnull=True) \
+        .annotate(total=Case(When(operacao__tipo_operacao='C', then=-1 * (F('quantidade') * F('operacao__preco_unitario'))),
+                            When(operacao__tipo_operacao='V', then=F('quantidade') * F('operacao__preco_unitario')),
+                            output_field=DecimalField())).aggregate(soma_total=Sum('total'))['soma_total'] or Decimal(0)
+                            
+        # Operações com taxa
+        saldo += DivisaoOperacaoCriptomoeda.objects.filter(divisao=self, operacao__data__lte=data, operacao__operacaocriptomoedamoeda__isnull=True,
+                                                          operacao__operacaocriptomoedataxa__isnull=False) \
+        .annotate(total=Case(When(operacao__tipo_operacao='C', \
+                                  # Para compras, verificar se taxa está na moeda comprada ou na utilizada
+                  then=Case(When(operacao__operacaocriptomoedataxa__moeda=F('operacao__criptomoeda'),
+                                 then=(F('quantidade') + F('operacao__operacaocriptomoedataxa__valor') * (F('quantidade') / F('operacao__quantidade'))) * F('operacao__preco_unitario') *-1),
+                            When(operacao__operacaocriptomoedataxa__moeda=F('operacao__operacaocriptomoedamoeda__criptomoeda'), 
+                                then=F('quantidade') * F('operacao__preco_unitario') *-1 - F('operacao__operacaocriptomoedataxa__valor')* (F('quantidade') / F('operacao__quantidade'))))),
+                             When(operacao__tipo_operacao='V', \
+                                  # Para vendas, verificar se taxa está na moeda comprada ou na utilizada
+                  then=Case(When(operacao__operacaocriptomoedataxa__moeda=F('operacao__criptomoeda'),
+                                 then=(F('quantidade') - F('operacao__operacaocriptomoedataxa__valor') * (F('quantidade') / F('operacao__quantidade'))) * F('operacao__preco_unitario')),
+                            When(operacao__operacaocriptomoedataxa__moeda=F('operacao__operacaocriptomoedamoeda__criptomoeda'), 
+                                then=F('quantidade') * F('operacao__preco_unitario') - F('operacao__operacaocriptomoedataxa__valor') * (F('quantidade') / F('operacao__quantidade'))))),
+                            output_field=DecimalField())).aggregate(soma_total=Sum('total'))['soma_total'] or Decimal(0)
+                            
+        # Transferências
+        saldo += -(TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_CRIPTOMOEDA, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
+            + (TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_CRIPTOMOEDA, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
+            
+        return saldo
+    
     def saldo_debentures(self, data=datetime.date.today()):
         """
         Calcula o saldo de operações de Debêntures de uma divisão (dinheiro livre)
@@ -465,6 +500,7 @@ class TransferenciaEntreDivisoes(models.Model):
     TIPO_INVESTIMENTO_FII = 'F'
     TIPO_INVESTIMENTO_FUNDO_INV = 'I'
     TIPO_INVESTIMENTO_LCI_LCA = 'L'
+    TIPO_INVESTIMENTO_CRIPTOMOEDA = 'M'
     TIPO_INVESTIMENTO_CRI_CRA = 'R'
     TIPO_INVESTIMENTO_TRADING = 'T'
     
@@ -476,6 +512,7 @@ class TransferenciaEntreDivisoes(models.Model):
                                   (TIPO_INVESTIMENTO_FII, 'Fundo de Inv. Imobiliário'), 
                                   (TIPO_INVESTIMENTO_FUNDO_INV, 'Fundo de Investimento'),
                                   (TIPO_INVESTIMENTO_LCI_LCA, 'Letras de Crédito'), 
+                                  (TIPO_INVESTIMENTO_CRIPTOMOEDA, 'Criptomoeda'),
                                   (TIPO_INVESTIMENTO_CRI_CRA, 'CRI/CRA'), 
                                   (TIPO_INVESTIMENTO_TRADING, 'Trading'))
     
@@ -525,6 +562,8 @@ class TransferenciaEntreDivisoes(models.Model):
             return 'Fundo de inv.'
         elif self.investimento_origem == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_LCI_LCA:
             return 'Letra de Crédito'
+        elif self.investimento_origem == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_CRIPTOMOEDA:
+            return 'Criptomoeda'
         elif self.investimento_origem == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_CRI_CRA:
             return 'CRI/CRA'
         elif self.investimento_origem == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_TRADING:
@@ -547,6 +586,8 @@ class TransferenciaEntreDivisoes(models.Model):
             return 'Fundo de inv.'
         elif self.investimento_destino == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_LCI_LCA:
             return 'Letra de Crédito'
+        elif self.investimento_destino == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_CRIPTOMOEDA:
+            return 'Criptomoeda'
         elif self.investimento_destino == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_CRI_CRA:
             return 'CRI/CRA'
         elif self.investimento_destino == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_TRADING:
