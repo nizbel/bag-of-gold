@@ -710,6 +710,7 @@ def validar_documento_provento(request, id_pendencia):
                                     raise ValueError('Não foi possível validar provento')
                             # Qualquer erro que deixe a validação incompleta faz necessário desfazer investidor responsável pela validação
                             else:
+                                # Jogar erro para dar rollback na transação
                                 raise ValueError('Não foi possível validar provento')
                             
                         # FII
@@ -755,6 +756,7 @@ def validar_documento_provento(request, id_pendencia):
                                     raise ValueError('Não foi possível validar provento')
                             # Qualquer erro que deixe a validação incompleta faz necessário desfazer investidor responsável pela validação
                             else:
+                                # Jogar erro para dar rollback na transação
                                 raise ValueError('Não foi possível validar provento')
                                     
                     elif pendencia.documento.investidorleituradocumento.decisao == 'E':
