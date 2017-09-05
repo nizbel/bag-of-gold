@@ -20,7 +20,7 @@ from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia
 from bagogold.cri_cra.models.cri_cra import CRI_CRA, OperacaoCRI_CRA
 from bagogold.cri_cra.utils.utils import qtd_cri_cra_ate_dia
 from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
-from bagogold.criptomoeda.models import Criptomoeda
+from bagogold.criptomoeda.models import Criptomoeda, OperacaoCriptomoeda
 from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia, \
     buscar_valor_criptomoedas_atual
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
@@ -106,11 +106,12 @@ def buscar_operacoes_no_periodo(investidor, data_inicial, data_final):
     operacoes_lc = OperacaoLetraCredito.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')  
     operacoes_cdb_rdb = OperacaoCDB_RDB.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')  
     operacoes_cri_cra = OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')  
+    operacoes_criptomoeda = OperacaoCriptomoeda.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')
     operacoes_debentures = OperacaoDebenture.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')  
     operacoes_fundo_investimento = OperacaoFundoInvestimento.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')
     
     lista_operacoes = sorted(chain(operacoes_fii, operacoes_td, operacoes_acoes, operacoes_lc, operacoes_cdb_rdb, 
-                                   operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento),
+                                   operacoes_cri_cra, operacoes_criptomoeda, operacoes_debentures, operacoes_fundo_investimento),
                             key=attrgetter('data'))
     
     return lista_operacoes
