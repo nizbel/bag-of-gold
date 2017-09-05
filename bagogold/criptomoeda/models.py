@@ -22,7 +22,7 @@ class OperacaoCriptomoeda (models.Model):
     investidor = models.ForeignKey('bagogold.Investidor', related_name='criptomoeda')
     
     def __unicode__(self):
-        return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.valor, self.criptomoeda, self.data.strftime('%d/%m/%Y'))
+        return '(%s) %s de %s em %s' % (self.tipo_operacao, self.quantidade, self.criptomoeda, self.data.strftime('%d/%m/%Y'))
     
     def em_real(self):
         return not hasattr(self, 'operacaocriptomoedamoeda')
