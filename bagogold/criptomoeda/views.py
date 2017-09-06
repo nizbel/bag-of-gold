@@ -370,7 +370,7 @@ def historico(request):
             graf_investido_total += [[data_formatada, float(total_investido)]]
         
         # Gráfico de patrimônio é passado como totais de cada moeda para cálculo de histórico a partir de queries para a API do CryptoCompare
-        data_formatada_utc = calendar.timegm(movimentacao.data.timetuple()) * 1000
+        data_formatada_utc = calendar.timegm(movimentacao.data.timetuple())
         patrimonio = {moeda: float(dados_moeda.qtd) for moeda, dados_moeda in moedas.items()}
         if graf_patrimonio and data_formatada_utc == graf_patrimonio[-1][1]:
             graf_patrimonio[-1][2] = patrimonio
