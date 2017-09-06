@@ -232,34 +232,90 @@ function calcular_patrimonio_em_reais(patrimonio) {
 	    	}
 	    }
 	}
-    
+
+	var teste = [];
+	
+	var requests = [];
+	
     // Busca valores historicos para preencher no patrimonio calculado
 	for (var i = 0; i < tickers.length; i++) {
-    	var xhr = new XMLHttpRequest();
-    	xhr.open("GET", "https://min-api.cryptocompare.com/data/histoday?fsym=" + tickers[i] + "&tsym=BRL&allData=true", false);
-    	xhr.send();
+//     	var xhr = new XMLHttpRequest();
+//     	xhr.open("GET", "https://min-api.cryptocompare.com/data/histoday?fsym=" + tickers[i] + "&tsym=BRL&allData=true", false);
+//     	xhr.send();
         
-    	var response = JSON.parse(xhr.responseText);
-    	if (response.Type == 100) {
-    	    // Guarda o índice da última data encontrada
-    		var ultima_data = 0;
-    	    // Desconsiderar data atual de patrimônio
-    		loop_data_pat: for (var data = 0; data < patrimonio.length-1; data++) {
-    			for (var key_data in patrimonio[data][2]) {
-	        		// Verifica cada ticker nas datas para passar valor para patrimonio calculado
-	        		if (key_data == tickers[i]) {
-	        			// Data possui ticker, pesquisar no response a data para pegar valor de fechamento
-	        			for (var info_hist = ultima_data; info_hist < response.Data.length; info_hist++) {
-	        				if (response.Data[info_hist].time == patrimonio[data][1]) {
-	                            patrimonio[data][3] += patrimonio[data][2][key_data] * response.Data[info_hist].close;
-	                            ultima_data = info_hist;
-	                            continue loop_data_pat;
-	        				}
-	        			}
-	        		}
-	        	}
-    		}
-    	}
+//     	var response = JSON.parse(xhr.responseText);
+//     	if (response.Type == 100) {
+//     	    // Guarda o índice da última data encontrada
+//     		var ultima_data = 0;
+//     	    // Desconsiderar data atual de patrimônio
+//     		loop_data_pat: for (var data = 0; data < patrimonio.length-1; data++) {
+//     			for (var key_data in patrimonio[data][2]) {
+// 	        		// Verifica cada ticker nas datas para passar valor para patrimonio calculado
+// 	        		if (key_data == tickers[i]) {
+// 	        			// Data possui ticker, pesquisar no response a data para pegar valor de fechamento
+// 	        			for (var info_hist = ultima_data; info_hist < response.Data.length; info_hist++) {
+// 	        				if (response.Data[info_hist].time == patrimonio[data][1]) {
+// 	                            patrimonio[data][3] += patrimonio[data][2][key_data] * response.Data[info_hist].close;
+// 	                            ultima_data = info_hist;
+// 	                            continue loop_data_pat;
+// 	        				}
+// 	        			}
+// 	        		}
+// 	        	}
+//     		}
+//     	}
+    	
+    	var ticker_atual = tickers[i];
+    	
+    	
+    	$.when(
+		    $.ajax('http://example1.com'),
+		    $.ajax('http://example2.com')
+		)
+		.then(function(response1, response2) {
+		    console.log(response1);
+		    console.log(response2);
+		})
+		.fail(function(err) {
+		    console.log('Something went wrong', err);
+		});
+    	
+
+    	requests.push($.get('https://min-api.cryptocompare.com/data/histoday?fsym=" + ticker_atual + "&tsym=BRL&allData=true'));
+    	
+    	$.ajax({
+            url : "https://min-api.cryptocompare.com/data/histoday?fsym=" + ticker_atual + "&tsym=BRL&allData=true",
+            type : "GET", // http method
+
+            // handle a successful response
+            success : function(response) {
+            	console.log(response);
+            	// Guarda o índice da última data encontrada
+                var ultima_data = 0;
+                // Desconsiderar data atual de patrimônio
+                loop_data_pat: for (var data = 0; data < patrimonio.length-1; data++) {
+                    for (var key_data in patrimonio[data][2]) {
+                        // Verifica cada ticker nas datas para passar valor para patrimonio calculado
+                        if (key_data == ticker_atual) {
+                            // Data possui ticker, pesquisar no response a data para pegar valor de fechamento
+                            for (var info_hist = ultima_data; info_hist < response.Data.length; info_hist++) {
+                                if (response.Data[info_hist].time == patrimonio[data][1]) {
+                                    patrimonio[data][3] += patrimonio[data][2][key_data] * response.Data[info_hist].close;
+                                    ultima_data = info_hist;
+                                    continue loop_data_pat;
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+
+            // handle a non-successful response
+            error : function(xhr,errmsg,err) {
+                console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+            }
+        });
+    	
     }
     
     // Buscar patrimônio da data atual
@@ -278,6 +334,7 @@ function calcular_patrimonio_em_reais(patrimonio) {
 //             }
 //     	}
 //     }
+    // Padronizar formato de patrimônio atual
     patrimonio[patrimonio.length-1][3] = parseFloat("{{dados.patrimonio|default:'0'|floatformat:'2'}}".replace('.', '').replace(',', '.'));
 	
     for (var i = 0; i < patrimonio.length; i++) {
