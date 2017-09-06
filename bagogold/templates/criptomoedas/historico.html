@@ -250,7 +250,7 @@ function calcular_patrimonio_em_reais(patrimonio) {
 	        		if (key_data == tickers[i]) {
 	        			// Data possui ticker, pesquisar no response a data para pegar valor de fechamento
 	        			for (var info_hist = ultima_data; info_hist < response.Data.length; info_hist++) {
-	        				if (response.Data[info_hist].time == patrimonio[data][1] / 1000) {
+	        				if (response.Data[info_hist].time == patrimonio[data][1]) {
 	                            patrimonio[data][3] += patrimonio[data][2][key_data] * response.Data[info_hist].close;
 	                            ultima_data = info_hist;
 	                            continue loop_data_pat;

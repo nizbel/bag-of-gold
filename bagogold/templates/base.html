@@ -505,9 +505,11 @@
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_criptomoeda' %}active{% endif %}">
                                                     <a href="{% url "criptomoeda:painel_criptomoeda" %}" class="nav-link  "> Painel </a>
                                                 </li>
+                                                {% comment %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'sobre_criptomoeda' %}active{% endif %}">
                                                     <a href="{% url "criptomoeda:sobre_criptomoeda" %}" class="nav-link  "> Sobre </a>
                                                 </li>
+                                                {% endcomment %}
                                             </ul>
                                         </li>
                                         <li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'divisoes' in request.resolver_match.namespace %}active{% endif %}">
