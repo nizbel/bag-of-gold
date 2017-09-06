@@ -155,74 +155,90 @@
 <script type="text/javascript">
 $.fn.dataTable.moment( 'DD/MM/YYYY' );
 $( document ).ready(function() {
-	var graf_patrimonio = {{ graf_patrimonio|safe }};
-	graf_patrimonio = calcular_patrimonio_em_reais(graf_patrimonio);
-	
-    $.plot($("#graf_valor"), [ {color: "#7D8C9D", lines: {show:true}, data: graf_patrimonio  } 
-    ],
-      {grid: {show: false}}  
-    );
-    
     $.plot($("#graf_gasto"), [ {color: "#7D8C9D", lines: {show:true}, data: {{ graf_investido_total|safe }} } 
     ],
       {grid: {show: false}}  
     );
     
-    $.plot($("#graf_historico"), [{stack: true, lines: {show:true}, label: "Valor das moedas", data: graf_patrimonio},
-                                {lines: {show:true}, label: "Total investido", data: {{ graf_investido_total|safe }}}
-                              ],
-                                {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%d/%m/%y"} }  
-    );
-    
-    function showTooltip(x, y, contents) {
+	var graf_patrimonio = {{ graf_patrimonio|safe }};
+// 	graf_patrimonio = calcular_patrimonio_em_reais(graf_patrimonio);
+	
+	$.when(calcular_patrimonio_em_reais(graf_patrimonio, 1, 2)).then(function(retorno){
+        // Padronizar formato de patrimônio atual
+        retorno.patrimonio[retorno.patrimonio.length-1][3] = parseFloat("{{dados.patrimonio|default:'0'|floatformat:'2'}}".replace('.', '').replace(',', '.'));
         
-        $('<div id="tooltip">' + contents + '</div>').css( {
-            position: 'absolute',
-            display: 'none',
-            top: y + 5,
-            left: x + 5,
-            border: '1px solid #fdd',
-            padding: '2px',
-            'background-color': '#fee',
-            opacity: 0.80
-        }).appendTo("body").fadeIn(200);
-    }
-
-    var previousPoint = null;
-    $("#graf_historico").bind("plothover", function (event, pos, item) {
-        $("#x").text(pos.x.toFixed(2));
-        $("#y").text(pos.y.toFixed(2));
-
-        if (item) {
-            if (previousPoint != item.datapoint) {
-                previousPoint = item.datapoint;
-                
-                $("#tooltip").remove();
-                var x = item.datapoint[0].toFixed(2),
-                    y = item.datapoint[1].toFixed(2);
-                
-                var date = new Date(parseInt(x));
-                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%y") +"</br>" + item.series.label + ": R$" + y.replace('.', ','));
+        for (var i = 0; i < retorno.patrimonio.length; i++) {
+        	retorno.patrimonio[i] = [String(retorno.patrimonio[i][0]), retorno.patrimonio[i][3]];
+        }
+        
+		graf_patrimonio = retorno.patrimonio;
+	
+        $.plot($("#graf_valor"), [ {color: "#7D8C9D", lines: {show:true}, data: graf_patrimonio  } 
+        ],
+          {grid: {show: false}}  
+        );
+        
+        
+        $.plot($("#graf_historico"), [{stack: true, lines: {show:true}, label: "Valor das moedas", data: graf_patrimonio},
+                                    {lines: {show:true}, label: "Total investido", data: {{ graf_investido_total|safe }}}
+                                  ],
+                                    {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%d/%m/%y"} }  
+        );
+        
+        function showTooltip(x, y, contents) {
+            
+            $('<div id="tooltip">' + contents + '</div>').css( {
+                position: 'absolute',
+                display: 'none',
+                top: y + 5,
+                left: x + 5,
+                border: '1px solid #fdd',
+                padding: '2px',
+                'background-color': '#fee',
+                opacity: 0.80
+            }).appendTo("body").fadeIn(200);
+        }
+    
+        var previousPoint = null;
+        $("#graf_historico").bind("plothover", function (event, pos, item) {
+            $("#x").text(pos.x.toFixed(2));
+            $("#y").text(pos.y.toFixed(2));
+    
+            if (item) {
+                if (previousPoint != item.datapoint) {
+                    previousPoint = item.datapoint;
+                    
+                    $("#tooltip").remove();
+                    var x = item.datapoint[0].toFixed(2),
+                        y = item.datapoint[1].toFixed(2);
+                    
+                    var date = new Date(parseInt(x));
+                    showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%y") +"</br>" + item.series.label + ": R$" + y.replace('.', ','));
+                }
             }
-        }
-        else {
-            $("#tooltip").remove();
-            clicksYet = false;
-            previousPoint = null;            
-        }
+            else {
+                $("#tooltip").remove();
+                clicksYet = false;
+                previousPoint = null;            
+            }
+        });
     });
 
 });
 
-function calcular_patrimonio_em_reais(patrimonio) {
+// Apontar qual coluna será usada para buscar o tempo no cryptocompare e qual coluna possui valores
+function calcular_patrimonio_em_reais(patrimonio, colTempoCalc, colValores) {
+	var def = $.Deferred();
 	var tickers = [];
     
+	var colValorSomado = patrimonio[0].length;
+	
     // Busca os tickers
 	for (var data = 0; data < patrimonio.length; data++) {
 		// Prepara o patrimonio calculado
 		patrimonio[data].push(parseFloat(0));
-	    loop_ticker: for (var key_data in patrimonio[data][2]) {
-	    	if (patrimonio[data][2].hasOwnProperty(key_data)) {
+	    loop_ticker: for (var key_data in patrimonio[data][colValores]) {
+	    	if (patrimonio[data][colValores].hasOwnProperty(key_data)) {
 	    		for (var i = 0; i < tickers.length; i++) {
     	    		if (tickers[i] == key_data) {
     	    			continue loop_ticker;
@@ -232,75 +248,33 @@ function calcular_patrimonio_em_reais(patrimonio) {
 	    	}
 	    }
 	}
-
-	var teste = [];
 	
 	var requests = [];
 	
     // Busca valores historicos para preencher no patrimonio calculado
 	for (var i = 0; i < tickers.length; i++) {
-//     	var xhr = new XMLHttpRequest();
-//     	xhr.open("GET", "https://min-api.cryptocompare.com/data/histoday?fsym=" + tickers[i] + "&tsym=BRL&allData=true", false);
-//     	xhr.send();
-        
-//     	var response = JSON.parse(xhr.responseText);
-//     	if (response.Type == 100) {
-//     	    // Guarda o índice da última data encontrada
-//     		var ultima_data = 0;
-//     	    // Desconsiderar data atual de patrimônio
-//     		loop_data_pat: for (var data = 0; data < patrimonio.length-1; data++) {
-//     			for (var key_data in patrimonio[data][2]) {
-// 	        		// Verifica cada ticker nas datas para passar valor para patrimonio calculado
-// 	        		if (key_data == tickers[i]) {
-// 	        			// Data possui ticker, pesquisar no response a data para pegar valor de fechamento
-// 	        			for (var info_hist = ultima_data; info_hist < response.Data.length; info_hist++) {
-// 	        				if (response.Data[info_hist].time == patrimonio[data][1]) {
-// 	                            patrimonio[data][3] += patrimonio[data][2][key_data] * response.Data[info_hist].close;
-// 	                            ultima_data = info_hist;
-// 	                            continue loop_data_pat;
-// 	        				}
-// 	        			}
-// 	        		}
-// 	        	}
-//     		}
-//     	}
-    	
     	var ticker_atual = tickers[i];
     	
-    	
-    	$.when(
-		    $.ajax('http://example1.com'),
-		    $.ajax('http://example2.com')
-		)
-		.then(function(response1, response2) {
-		    console.log(response1);
-		    console.log(response2);
-		})
-		.fail(function(err) {
-		    console.log('Something went wrong', err);
-		});
-    	
-
-    	requests.push($.get('https://min-api.cryptocompare.com/data/histoday?fsym=" + ticker_atual + "&tsym=BRL&allData=true'));
-    	
-    	$.ajax({
-            url : "https://min-api.cryptocompare.com/data/histoday?fsym=" + ticker_atual + "&tsym=BRL&allData=true",
-            type : "GET", // http method
-
-            // handle a successful response
-            success : function(response) {
-            	console.log(response);
-            	// Guarda o índice da última data encontrada
+    	requests.push($.get('https://min-api.cryptocompare.com/data/histoday?fsym=' + ticker_atual + '&tsym=BRL&allData=true'));
+    }
+    
+	$.when.apply(null,requests).then(function(){
+	    // in javascript arguments  exposed by default and can be treated like array
+	    $.each(arguments, function(index, responseData){
+            var status = responseData[1], response = responseData[0];
+            if(status === 'success'){
+            	var ticker_atual = tickers[index];
+                // Guarda o índice da última data encontrada
                 var ultima_data = 0;
                 // Desconsiderar data atual de patrimônio
                 loop_data_pat: for (var data = 0; data < patrimonio.length-1; data++) {
-                    for (var key_data in patrimonio[data][2]) {
+                    for (var key_data in patrimonio[data][colValores]) {
                         // Verifica cada ticker nas datas para passar valor para patrimonio calculado
                         if (key_data == ticker_atual) {
                             // Data possui ticker, pesquisar no response a data para pegar valor de fechamento
                             for (var info_hist = ultima_data; info_hist < response.Data.length; info_hist++) {
-                                if (response.Data[info_hist].time == patrimonio[data][1]) {
-                                    patrimonio[data][3] += patrimonio[data][2][key_data] * response.Data[info_hist].close;
+                                if (response.Data[info_hist].time == patrimonio[data][colTempoCalc]) {
+                                    patrimonio[data][colValorSomado] += patrimonio[data][colValores][key_data] * response.Data[info_hist].close;
                                     ultima_data = info_hist;
                                     continue loop_data_pat;
                                 }
@@ -308,40 +282,12 @@ function calcular_patrimonio_em_reais(patrimonio) {
                         }
                     }
                 }
-            },
-
-            // handle a non-successful response
-            error : function(xhr,errmsg,err) {
-                console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
-            }
-        });
-    	
-    }
-    
-    // Buscar patrimônio da data atual
-//     var xhr = new XMLHttpRequest();
-//     xhr.open("GET", "https://min-api.cryptocompare.com/data/pricemulti?fsyms=" + tickers.join() + "&tsyms=BRL", false);
-//     xhr.send();
-    
-//     var response = JSON.parse(xhr.responseText);
-//     loop_ticker: for (var key_data in patrimonio[patrimonio.length-1][2]) {
-//     	for (var ticker_atual in response) {
-//             // Verifica cada ticker nas datas para passar valor para patrimonio calculado
-//             if (key_data == ticker_atual) {
-//                 patrimonio[patrimonio.length-1][3] += patrimonio[patrimonio.length-1][2][key_data] * response[ticker_atual].BRL;
-// //                 console.log(patrimonio[patrimonio.length-1][2][key_data], response[ticker_atual].BRL);
-//                 continue loop_ticker;
-//             }
-//     	}
-//     }
-    // Padronizar formato de patrimônio atual
-    patrimonio[patrimonio.length-1][3] = parseFloat("{{dados.patrimonio|default:'0'|floatformat:'2'}}".replace('.', '').replace(',', '.'));
-	
-    for (var i = 0; i < patrimonio.length; i++) {
-    	patrimonio[i] = [String(patrimonio[i][0]), patrimonio[i][3]];
-    }
-    
-	return patrimonio;
+            }          
+	    });
+	    
+	    def.resolve({patrimonio: patrimonio});
+	});
+    return def.promise();
 }
 </script>
 {% endblock %}
