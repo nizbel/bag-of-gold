@@ -382,7 +382,7 @@ def historico(request):
     # Se não existe a data em um gráfico, nenhum gráfico tem a data
     if not (graf_investido_total and data_formatada == graf_investido_total[-1][0]):
         graf_investido_total += [[data_formatada, float(total_investido)]]
-        graf_patrimonio += [[data_formatada, data_formatada_utc, patrimonio]]
+        graf_patrimonio += [[data_formatada, None, patrimonio]]
     
 #     print ['%s: %s' % (ticker, moeda.qtd) for ticker, moeda in moedas.items()]
     
