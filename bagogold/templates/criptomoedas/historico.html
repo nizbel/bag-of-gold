@@ -114,8 +114,12 @@
                                 {% endif %}
                                 ">{{item.tipo}}</a></td>
                             <td>{{ item.data|date:"d/m/Y" }}</td>
-                            <td>{% if item.tipo != 'Transferência' %}{{item.quantidade|casas_decimais}} {{item.criptomoeda.ticker}}{% else %}Não disponível{% endif %}</td>
-                            <td>{% if item.em_real%}R$ {{item.preco_unitario|casas_decimais}}{% else %}{{item.preco_unitario|casas_decimais}} {{item.moeda_utilizada}}{% endif %}</td>
+                            <td>{% if item.tipo == 'Transferência' %}{% if item.em_real%}R$ {{item.quantidade|casas_decimais}}{% else %}{{item.quantidade|casas_decimais}} {{item.moeda_utilizada}}{% endif %}
+                                {% else %}{{ item.quantidade|casas_decimais }} {{ item.criptomoeda.ticker }}{% endif %}</td>
+                            <td>{% if item.tipo != 'Transferência' %}
+                                    {% if item.em_real%}R$ {{item.preco_unitario|casas_decimais}}
+                                    {% else %}{{item.quantidade|casas_decimais}} {{item.moeda_utilizada}}{% endif %}
+                                {% else %}Não disponível{% endif %}</td>
                             <td style="color: red;">
                                 {% if item.taxa %}
                                     {% if not item.taxa.moeda %}R$ {{item.taxa.valor|casas_decimais}}{% else %}{{item.taxa.valor|casas_decimais}} {{item.taxa.moeda.ticker}}{% endif %}
@@ -162,7 +166,6 @@ $( document ).ready(function() {
     );
     
 	var graf_patrimonio = {{ graf_patrimonio|safe }};
-// 	graf_patrimonio = calcular_patrimonio_em_reais(graf_patrimonio);
 	
 	$.when(calcular_patrimonio_em_reais(graf_patrimonio, 1, 2, graf_patrimonio.length-1)).then(function(retorno){
         // Padronizar formato de patrimônio atual
