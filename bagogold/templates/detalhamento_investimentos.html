@@ -198,56 +198,76 @@
 <script src={% static "assets/global/plugins/flot/jquery.flot.resize.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.stack.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.time.min.js" %} type="text/javascript"></script>
+<script src={% static "js/bagogold/calculo_historico_cripto.js" %} type="text/javascript"></script>
 <script>
 $( document ).ready(function() {
-    $.plot($("#graf_patrimonio"), [ {lines: {show:true}, label: "Patrimônio", data: {{ graf_patrimonio|safe }} } 
-                              ],
-                                {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%d/%m/%y"} }  
-    );
+	var graf_patrimonio = {{ graf_patrimonio|safe }}
+    var graf_patrimonio_cripto = {{ graf_patrimonio_cripto|safe }};
     
-function showTooltip(x, y, contents) {
-        
-        $('<div id="tooltip">' + contents + '</div>').css( {
-            position: 'absolute',
-            display: 'none',
-            top: y + 5,
-            left: x + 5,
-            border: '1px solid #fdd',
-            padding: '2px',
-            'background-color': '#fee',
-            opacity: 0.80
-        }).appendTo("body").fadeIn(200);
-    }
+    $.when(calcular_patrimonio_em_reais(graf_patrimonio_cripto, 1, 2, null)).then(function(retorno){
 
-    var previousPoint = null;
-    $("#graf_patrimonio").bind("plothover", function (event, pos, item) {
-        $("#x").text(pos.x.toFixed(2));
-        $("#y").text(pos.y.toFixed(2));
-
-        if (item) {
-            if (previousPoint != item.datapoint) {
-                previousPoint = item.datapoint;
-                
-                $("#tooltip").remove();
-                var x = item.datapoint[0].toFixed(2),
-                    y = item.datapoint[1].toFixed(2);
-                
-                var date = new Date(parseInt(x));
-                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%y") +"</br>" + item.series.label + ": R$" + y);
+        // Busca patrimonio pela ultima data, pela ordem crescente
+        var indice_data_patrimonio = 0;
+        for (var i = 0; i < retorno.patrimonio.length; i++) {
+            retorno.patrimonio[i] = [String(retorno.patrimonio[i][0]), retorno.patrimonio[i][3]];
+            for (var j = indice_data_patrimonio; j < graf_patrimonio.length; j++) {
+            	if (graf_patrimonio[j][0] == retorno.patrimonio[i[0]]) {
+            		graf_patrimonio[j][1] += retorno.patrimonio[i][3];
+            		indice_data_patrimonio = j + 1;
+            		break;
+            	}
             }
         }
-        else {
-            $("#tooltip").remove();
-            clicksYet = false;
-            previousPoint = null;            
+        
+        $.plot($("#graf_patrimonio"), [ {lines: {show:true}, label: "Patrimônio", data: graf_patrimonio } 
+                                  ],
+                                    {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%d/%m/%y"} }  
+        );
+        
+        function showTooltip(x, y, contents) {
+            
+            $('<div id="tooltip">' + contents + '</div>').css( {
+                position: 'absolute',
+                display: 'none',
+                top: y + 5,
+                left: x + 5,
+                border: '1px solid #fdd',
+                padding: '2px',
+                'background-color': '#fee',
+                opacity: 0.80
+            }).appendTo("body").fadeIn(200);
         }
+    
+        var previousPoint = null;
+        $("#graf_patrimonio").bind("plothover", function (event, pos, item) {
+            $("#x").text(pos.x.toFixed(2));
+            $("#y").text(pos.y.toFixed(2));
+    
+            if (item) {
+                if (previousPoint != item.datapoint) {
+                    previousPoint = item.datapoint;
+                    
+                    $("#tooltip").remove();
+                    var x = item.datapoint[0].toFixed(2),
+                        y = item.datapoint[1].toFixed(2);
+                    
+                    var date = new Date(parseInt(x));
+                    showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%y") +"</br>" + item.series.label + ": R$" + y);
+                }
+            }
+            else {
+                $("#tooltip").remove();
+                clicksYet = false;
+                previousPoint = null;            
+            }
+        });
+        
     });
 
 });
 
 
 function labelFormatter(label, series) {
-	console.log(series);
     return "<div style='font-size:10pt; text-align:center; padding:2px; color:" + series.color + ";'>" + label + "<br/>" + 
     (Math.round(series.percent * 100) / 100) + "%</div>";
 }

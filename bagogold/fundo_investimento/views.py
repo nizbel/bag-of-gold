@@ -121,9 +121,9 @@ def editar_operacao_fundo_investimento(request, id_operacao):
                     divisao_operacao.save()
                     messages.success(request, 'Operação editada com sucesso')
                     return HttpResponseRedirect(reverse('fundo_investimento:historico_fundo_investimento'))
-            for erros in form_operacao_fundo_investimento.errors.values():
-                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
-                    messages.error(request, erro.message)
+            
+            for erro in [erro for erro in form_operacao_fundo_investimento.non_field_errors()]:
+                messages.error(request, erro)
 #                         print '%s %s'  % (divisao_fundo_investimento.quantidade, divisao_fundo_investimento.divisao)
                 
         elif request.POST.get("delete"):
@@ -155,12 +155,12 @@ def historico(request):
     if request.user.is_authenticated():
         investidor = request.user.investidor
     else:
-        return TemplateResponse(request, 'fundo_investimento/historico.html', {'dados': {}})
+        return TemplateResponse(request, 'fundo_investimento/historico.html', {'dados': {}, 'graf_investido_total': list(), 'graf_patrimonio': list()})
     # Processa primeiro operações de venda (V), depois compra (C)
     operacoes = OperacaoFundoInvestimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data') 
     # Se investidor não tiver operações, retornar vazio
     if not operacoes:
-        return TemplateResponse(request, 'fundo_investimento/historico.html', {'dados': {}})
+        return TemplateResponse(request, 'fundo_investimento/historico.html', {'dados': {}, 'graf_investido_total': list(), 'graf_patrimonio': list()})
     # Prepara o campo valor atual
     for operacao in operacoes:
         if operacao.tipo_operacao == 'C':
@@ -303,9 +303,8 @@ def inserir_operacao_fundo_investimento(request):
                     elif settings.ENV == 'PROD':
                         mail_admins(u'Erro ao gerar operação em fundo de investimento com uma divisão', traceback.format_exc())
             
-        for erros in form_operacao_fundo_investimento.errors.values():
-            for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
-                messages.error(request, erro.message)
+        for erro in [erro for erro in form_operacao_fundo_investimento.non_field_errors()]:
+            messages.error(request, erro)
 #                         print '%s %s'  % (divisao_fundo_investimento.quantidade, divisao_fundo_investimento.divisao)
                 
     else:

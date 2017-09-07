@@ -43,6 +43,6 @@ class OperacaoFundoInvestimentoForm(LocalizedModelForm):
                 # Verificar se já há vendas registradas para essa compra, se sim, lançar erro
                 if calcular_qtd_cotas_ate_dia_por_fundo(self.investidor, self.instance.fundo_investimento.id, datetime.date.today()) - self.instance.quantidade < 0:
                     raise forms.ValidationError('Não é possível alterar tipo de operação pois a quantidade atual para o fundo %s seria negativa' % (self.instance.fundo_investimento))
-            # Verifica se é possível vender o título apontado
+            # Verifica se é possível vender o fundo apontado
             if calcular_qtd_cotas_ate_dia_por_fundo(self.investidor, dados.get('fundo_investimento').id, data) < dados.get('quantidade'):
                 raise forms.ValidationError('Não é possível vender a quantidade informada para o fundo %s' % (dados.get('fundo_investimento')))

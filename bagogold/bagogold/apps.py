@@ -11,6 +11,8 @@ class BagofGoldConfig(AppConfig):
         if settings.ENV == 'PROD':
             origWD = os.getcwd()
             os.chdir(settings.PROD_HOME)
+        else:
+            os.chdir('/home/nizbel/bagogold')
         output = check_output(['hg', 'log', '-b', 'prod', '--template', '.'])
         if settings.ENV == 'PROD':
             os.chdir(origWD)
