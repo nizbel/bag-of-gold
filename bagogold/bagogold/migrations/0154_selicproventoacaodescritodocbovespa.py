@@ -9,6 +9,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
+        ('criptomoeda', '0006_auto_20170823_0335'),
         ('bagogold', '0153_atualizacaoselicprovento'),
     ]
 
@@ -21,5 +22,18 @@ class Migration(migrations.Migration):
                 ('data_fim', models.DateField(verbose_name='Data de fim')),
                 ('provento', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to='bagogold.Provento')),
             ],
+        ),
+        migrations.CreateModel(
+            name='DivisaoTransferenciaCriptomoeda',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('quantidade', models.DecimalField(decimal_places=12, max_digits=21, verbose_name=b'Quantidade')),
+                ('divisao', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='bagogold.Divisao', verbose_name='Divis\xe3o')),
+                ('transferencia', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='criptomoeda.TransferenciaCriptomoeda')),
+            ],
+        ),
+        migrations.AlterUniqueTogether(
+            name='divisaotransferenciacriptomoeda',
+            unique_together=set([('divisao', 'transferencia')]),
         ),
     ]
