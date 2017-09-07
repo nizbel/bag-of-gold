@@ -1,6 +1,11 @@
 // Apontar qual coluna será usada para buscar o tempo no cryptocompare e qual coluna possui valores
 function calcular_patrimonio_em_reais(patrimonio, colTempoCalc, colValores, preencherAteIndice) {
 	var def = $.Deferred();
+	
+	if (patrimonio.length == 0) {
+		def.resolve({patrimonio: []});
+		return def.promise();
+	}
 	var tickers = [];
     
 	var colValorSomado = patrimonio[0].length;
