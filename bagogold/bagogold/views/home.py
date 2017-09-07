@@ -27,6 +27,9 @@ from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA, \
 from bagogold.cri_cra.utils.utils import calcular_valor_cri_cra_ate_dia, \
     calcular_rendimentos_cri_cra_ate_data
 from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
+from bagogold.criptomoeda.models import OperacaoCriptomoeda, \
+    TransferenciaCriptomoeda
+from bagogold.criptomoeda.utils import buscar_valor_criptomoedas_atual
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
     HistoricoValorCotas
 from decimal import Decimal, ROUND_DOWN
@@ -232,16 +235,23 @@ def detalhamento_investimentos(request):
     # Adicionar operações de Fundo de Investimento do investidor
     operacoes_fundo_investimento = OperacaoFundoInvestimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
     
+    # Adicionar operações em Criptomoedas do investidor
+    operacoes_criptomoedas = OperacaoCriptomoeda.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
+    
+    # Adicionar transferências em Criptomoedas do investidor
+    transferencias_criptomoedas = TransferenciaCriptomoeda.objects.filter(investidor=investidor, taxa__gt=Decimal(0), moeda__isnull=False).exclude(data__isnull=True).order_by('data')
+    
     # Juntar todas as operações
     lista_operacoes = sorted(chain(proventos_fii, operacoes_fii, operacoes_td, proventos_bh,  operacoes_bh, operacoes_t, operacoes_lc, operacoes_cdb_rdb, 
-                                   operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento),
+                                   operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento, operacoes_criptomoedas, transferencias_criptomoedas),
                             key=attrgetter('data'))
 
 	# Se não houver operações, retornar vazio
     if not lista_operacoes:
         data_anterior = str(calendar.timegm((datetime.date.today() - datetime.timedelta(days=365)).timetuple()) * 1000)
         data_atual = str(calendar.timegm(datetime.date.today().timetuple()) * 1000)
-        return TemplateResponse(request, 'detalhamento_investimentos.html', {'graf_patrimonio': [[data_anterior, float(0)], [data_atual, float(0)]], 'patrimonio_anual': list(), 'estatisticas': list()})
+        return TemplateResponse(request, 'detalhamento_investimentos.html', {'graf_patrimonio': [[data_anterior, float(0)], [data_atual, float(0)]], 'patrimonio_anual': list(),
+                                                                             'estatisticas': list(), 'graf_patrimonio_cripto': list()})
     
     # Pegar ano da primeira operacao feita
     ano_corrente = lista_operacoes[0].data.year
@@ -319,12 +329,15 @@ def detalhamento_investimentos(request):
     cri_cra = {}
     fundos_investimento = {}
     debentures = {}
+    criptomoedas = {}
     total_proventos_fii = 0
     total_proventos_bh = 0
     
     patrimonio = {}
     patrimonio_anual = list()
     graf_patrimonio = list()
+    # Utilizado para auxiliar o browser a buscar valores históricos de criptomoedas
+    graf_patrimonio_cripto = list()
     estatisticas = list()
     
     ############# TESTE
@@ -339,6 +352,7 @@ def detalhamento_investimentos(request):
 #     total_cri_cra = datetime.timedelta(hours=0)
 #     total_debentures = datetime.timedelta(hours=0)
 #     total_fundo_investimento = datetime.timedelta(hours=0)
+#     total_criptomoeda = datetime.timedelta(hours=0)
     ############# TESTE
     
     for index, item in enumerate(lista_conjunta):    
@@ -463,6 +477,50 @@ def detalhamento_investimentos(request):
                 
             elif item.tipo_operacao == 'V':
                 fundos_investimento[item.fundo_investimento] -= item.quantidade
+                
+        elif isinstance(item, OperacaoCriptomoeda):
+            if item.criptomoeda.ticker not in criptomoedas.keys():
+                criptomoedas[item.criptomoeda.ticker] = 0
+            if hasattr(item, 'operacaocriptomoedamoeda') and item.operacaocriptomoedamoeda.criptomoeda.ticker not in criptomoedas.keys():
+                criptomoedas[item.operacaocriptomoedamoeda.criptomoeda.ticker]
+            if item.tipo_operacao == 'C':
+                criptomoedas[item.criptomoeda.ticker] += item.quantidade
+                # Alterar quantidade da criptomoeda utilizada na operação
+                if hasattr(item, 'operacaocriptomoedamoeda'):
+                    # Verifica a existência de taxas
+                    if hasattr(item, 'operacaocriptomoedataxa'):
+                        if item.operacaocriptomoedataxa.moeda == item.criptomoeda:
+                            item.preco_total = (item.quantidade + item.operacaocriptomoedataxa.valor) * item.preco_unitario
+                        elif item.operacaocriptomoedataxa.moeda_utilizada() == item.moeda_utilizada():
+                            item.preco_total = item.quantidade * item.preco_unitario + item.operacaocriptomoedataxa.valor
+                        else:
+                            raise ValueError('Moeda utilizada na taxa é inválida')
+                    else:
+                        item.preco_total = item.quantidade * item.preco_unitario
+                    criptomoedas[item.operacaocriptomoedamoeda.criptomoeda.ticker] -= item.preco_total
+            
+            elif item.tipo_operacao == 'V':
+                criptomoedas[item.criptomoeda.ticker] -= item.quantidade
+                # Alterar quantidade da criptomoeda utilizada na operação
+                if hasattr(item, 'operacaocriptomoedamoeda'):
+                    # Verifica a existência de taxas
+                    if hasattr(item, 'operacaocriptomoedataxa'):
+                        # Taxas são inclusas na quantidade vendida
+                        if item.operacaocriptomoedataxa.moeda == item.criptomoeda:
+                            item.preco_total = (item.quantidade - item.operacaocriptomoedataxa.valor) * item.preco_unitario
+                        elif item.operacaocriptomoedataxa.moeda_utilizada() == item.moeda_utilizada():
+                            item.preco_total = item.quantidade * item.preco_unitario - item.operacaocriptomoedataxa.valor
+                        else:
+                            raise ValueError('Moeda utilizada na taxa é inválida')
+                    else:
+                        item.preco_total = item.quantidade * item.preco_unitario
+                    criptomoedas[item.operacaocriptomoedamoeda.criptomoeda.ticker] += item.preco_total
+                    
+        elif isinstance(item, TransferenciaCriptomoeda):
+            if item.moeda.ticker not in criptomoedas.keys():
+                criptomoedas[item.moeda.ticker] = 0
+            criptomoedas[item.moeda.ticker] -= item.taxa
+            
 
         # Se não cair em nenhum dos anteriores: item vazio
         
@@ -475,7 +533,7 @@ def detalhamento_investimentos(request):
             # Acoes (B&H)
 #             inicio_acoes_bh = datetime.datetime.now()
             patrimonio['Ações (Buy and Hold)'] = 0
-            periodo_1_ano = item.data - datetime.timedelta(days=365)
+            periodo_1_ano = item.data - datetime.timedelta(days=3650)
             for acao, quantidade in acoes_bh.items():
                 if quantidade > 0:
                     # Verifica se valor foi preenchido com valor mais atual (válido apenas para data atual)
@@ -661,6 +719,15 @@ def detalhamento_investimentos(request):
 #             fim_fundo_investimento = datetime.datetime.now()
 #             total_fundo_investimento += fim_fundo_investimento - inicio_fundo_investimento
             
+            # Criptomoedas
+#             inicio_criptomoedas = datetime.datetime.now()
+            patrimonio_criptomoedas = 0
+            # Verifica se é a data atual
+            if item.data == datetime.date.today():
+                # Calcular pela função de valores atuais do CryptoCompare
+                patrimonio_criptomoedas = sum([criptomoedas[ticker] * valor for ticker, valor in buscar_valor_criptomoedas_atual(criptomoedas.keys()).items()])
+            patrimonio['Criptomoedas'] = patrimonio_criptomoedas
+            patrimonio['patrimonio_total'] += patrimonio['Criptomoedas']
             
 #             print 'Ações (B&H)          ', total_acoes_bh
 #             print 'Ações (Trading)      ', total_acoes_t
@@ -673,6 +740,7 @@ def detalhamento_investimentos(request):
 #             print 'CRI/CRA              ', total_cri_cra
 #             print 'Debêntures           ', total_debentures
 #             print 'Fundo Inv.           ', total_fundo_investimento
+#             print 'Cripto.              ', total_criptomoeda
             
             # Preparar estatísticas
             for data_estatistica in datas_estatisticas:
@@ -689,6 +757,12 @@ def detalhamento_investimentos(request):
                 graf_patrimonio[len(graf_patrimonio)-1][1] = float(patrimonio['patrimonio_total'])
             else:
                 graf_patrimonio += [[data_formatada, float(patrimonio['patrimonio_total'])]]
+            
+            if criptomoedas and item.data != datetime.date.today():        
+                # Jogar valores para o cálculo de histórico no browser do usuário
+                data_formatada_utc = calendar.timegm(item.data.timetuple())
+                moedas = {ticker: float(qtd) for ticker, qtd in criptomoedas.items()}
+                graf_patrimonio_cripto += [[data_formatada, data_formatada_utc, moedas]]
             
     # Adicionar ultimo valor ao dicionario de patrimonio anual
     if len(patrimonio_anual) > 0:
@@ -712,9 +786,10 @@ def detalhamento_investimentos(request):
 #     print 'CRI/CRA:          ', total_cri_cra
 #     print 'Debêntures:       ', total_debentures
 #     print 'Fundo Inv.:       ', total_fundo_investimento
+#     print 'Cripto.           ', total_criptomoeda
     
     return TemplateResponse(request, 'detalhamento_investimentos.html', {'graf_patrimonio': graf_patrimonio, 'patrimonio_anual': patrimonio_anual,
-                                            'estatisticas': estatisticas})
+                                            'estatisticas': estatisticas, 'graf_patrimonio_cripto': list()})
 
 @adiciona_titulo_descricao('Painel geral', 'Traz informações gerais sobre a posição atual em cada tipo de investimento')
 def painel_geral(request):
