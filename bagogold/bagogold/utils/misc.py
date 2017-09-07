@@ -13,6 +13,7 @@ import random
 import re
 import time
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
+from django.utils import timezone
 
 
 def calcular_iof_regressivo(dias):
@@ -330,7 +331,12 @@ def buscar_dia_util_aleatorio(data_inicial, data_final):
 
 def converter_date_para_utc(data):
     if isinstance(data, datetime.date):
-        return datetime.datetime.combine(data, datetime.time(3))
+        # Verificar offset atual
+        dt = datetime.datetime.now()
+        offset_seconds = timezone.get_current_timezone().utcoffset(dt).total_seconds()
+        
+        date_utc = datetime.datetime(year=data.year, month=data.month, day=data.day) - datetime.timedelta(seconds=offset_seconds)
+        return date_utc 
     else:
         raise ValueError('Objeto deve ser do tipo date')
     
