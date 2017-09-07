@@ -476,6 +476,42 @@
                                                 </li>
                                             </ul>
                                         </li>
+                                        <li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'criptomoeda' in request.resolver_match.namespace %}active{% endif %}">
+                                            <a href="javascript:;"> Criptomoedas
+                                                <span class="arrow"></span>
+                                            </a>
+                                            <ul class="dropdown-menu pull-left">
+                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'historico_criptomoeda' %}active{% endif %}">
+                                                    <a href="{% url "criptomoeda:historico_criptomoeda" %}" class="nav-link  "> Histórico </a>
+                                                </li>
+                                                {% if request.user.is_authenticated %}
+                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_criptomoeda' %}active{% endif %}">
+                                                    <a href="{% url "criptomoeda:inserir_operacao_criptomoeda" %}" class="nav-link  "> Inserir operação </a>
+                                                </li>
+                                                {% endif %}
+                                                {% if request.user.is_authenticated %}
+                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_transferencia_criptomoeda' %}active{% endif %}">
+                                                    <a href="{% url "criptomoeda:inserir_transferencia_criptomoeda" %}" class="nav-link  "> Inserir transferência </a>
+                                                </li>
+                                                {% endif %}
+                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_criptomoeda' %}active{% endif %}">
+                                                    <a href="{% url "criptomoeda:listar_criptomoedas" %}" class="nav-link  "> Listar Moedas </a>
+                                                </li>
+                                                {% if request.user.is_authenticated %}
+                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_transferencias_criptomoeda' %}active{% endif %}">
+                                                    <a href="{% url "criptomoeda:listar_transferencias_criptomoeda" %}" class="nav-link  "> Listar transferências </a>
+                                                </li>
+                                                {% endif %}
+                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_criptomoeda' %}active{% endif %}">
+                                                    <a href="{% url "criptomoeda:painel_criptomoeda" %}" class="nav-link  "> Painel </a>
+                                                </li>
+                                                {% comment %}
+                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'sobre_criptomoeda' %}active{% endif %}">
+                                                    <a href="{% url "criptomoeda:sobre_criptomoeda" %}" class="nav-link  "> Sobre </a>
+                                                </li>
+                                                {% endcomment %}
+                                            </ul>
+                                        </li>
                                         <li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'divisoes' in request.resolver_match.namespace %}active{% endif %}">
                                             <a href="javascript:;"> Divisões
                                                 <span class="arrow"></span>
