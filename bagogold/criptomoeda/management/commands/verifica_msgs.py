@@ -28,7 +28,7 @@ class Command(BaseCommand):
         
         fim = inicio
         
-        while (fim - inicio) < datetime.timedelta(seconds=40):
+        while (fim - inicio) < datetime.timedelta(seconds=1):
             inicio_msg = datetime.datetime.now()
 #         while True:
             updates = bot.get_updates(offset=bot_principal.ultima_msg_lida).wait()
@@ -64,7 +64,7 @@ class Command(BaseCommand):
                                                                  sum(valor_atual.values())), parse_mode='Markdown')
             
             tempo_decorrido = datetime.datetime.now() - inicio_msg
-            if tempo_decorrido.seconds < 20:
-                time.sleep(20 - tempo_decorrido.seconds)
+            if tempo_decorrido.seconds < 10:
+                time.sleep(10 - tempo_decorrido.seconds)
             fim = datetime.datetime.now()
         
