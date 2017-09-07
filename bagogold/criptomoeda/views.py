@@ -291,6 +291,7 @@ def historico(request):
             if movimentacao.tipo_operacao == 'C':
                 movimentacao.tipo = 'Compra'
                 if movimentacao.taxa:
+                    # Taxas externas à quantidade comprada
                     if movimentacao.taxa.moeda == movimentacao.criptomoeda:
                         movimentacao.preco_total = (movimentacao.quantidade + movimentacao.taxa.valor) * movimentacao.preco_unitario
                     elif movimentacao.taxa.moeda_utilizada() == movimentacao.moeda_utilizada():
@@ -314,6 +315,7 @@ def historico(request):
                 movimentacao.tipo = 'Venda'
                 # Taxa entra como negativa na conta do valor total da operação
                 if movimentacao.taxa:
+                    # Taxas são inclusas na quantidade vendida
                     if movimentacao.taxa.moeda == movimentacao.criptomoeda:
                         movimentacao.preco_total = (movimentacao.quantidade - movimentacao.taxa.valor) * movimentacao.preco_unitario
                     elif movimentacao.taxa.moeda_utilizada() == movimentacao.moeda_utilizada():
@@ -345,14 +347,14 @@ def historico(request):
                     / (moedas[movimentacao.moeda.ticker].qtd - movimentacao.taxa)
                 moedas[movimentacao.moeda.ticker].qtd -= movimentacao.taxa
             movimentacao.preco_total = movimentacao.quantidade
-            movimentacao.preco_unitario = movimentacao.quantidade - movimentacao.taxa
+            movimentacao.quantidade = movimentacao.quantidade - movimentacao.taxa
             # Usar quantidade para guardar valor da taxa
-            movimentacao.quantidade = movimentacao.taxa
+            movimentacao.preco_unitario = movimentacao.taxa
             
             # Preparar taxa
             movimentacao.taxa = Object()
             movimentacao.taxa.moeda = movimentacao.moeda
-            movimentacao.taxa.valor = movimentacao.quantidade
+            movimentacao.taxa.valor = movimentacao.preco_unitario
             
             movimentacao.criptomoeda = movimentacao.moeda
             
