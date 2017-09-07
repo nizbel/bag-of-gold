@@ -20,7 +20,7 @@ from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di, \
     calcular_valor_lc_ate_dia, calcular_valor_venda_lc
 from bagogold.bagogold.utils.misc import calcular_rendimentos_ate_data, \
-    verificar_feriado_bovespa
+    verificar_feriado_bovespa, formatar_zeros_a_direita_apos_2_casas_decimais
 from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia
 from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA, \
     DataRemuneracaoCRI_CRA, DataAmortizacaoCRI_CRA, CRI_CRA
@@ -124,6 +124,11 @@ def calendario(request):
         vencimento_td = Titulo.objects.filter(operacaotitulo__investidor=investidor, data_vencimento__range=[data_inicial, data_final]).distinct()
         calendario.extend([{'title': u'Vencimento de %s' % (titulo.nome()), 
                             'start': titulo.data_vencimento.strftime('%Y-%m-%d')} for titulo in vencimento_td])
+        
+        # Transferências em Criptomoedas
+        transferencias_cripto = TransferenciaCriptomoeda.objects.filter(data__range=[data_inicial, data_final])
+        calendario.extend([{'title': u'Transferência relacionada a Criptomoedas, %s %s' % (formatar_zeros_a_direita_apos_2_casas_decimais(transferencia.quantidade), transferencia.moeda_utilizada()),
+                            'start': transferencia.data.strftime('%Y-%m-%d')} for transferencia in transferencias_cripto])
         
         return HttpResponse(json.dumps(calendario), content_type = "application/json")   
     
