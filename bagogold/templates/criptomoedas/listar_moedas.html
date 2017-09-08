@@ -17,7 +17,6 @@
 		<tr>
 			<th>Moeda</th>
             <th>Valor</th>
-            <th>Preço no Poloniex</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -25,7 +24,6 @@
 	<tr>
 		<td>{{moeda.nome}} (<strong>{{moeda.ticker}}</strong>)</td>
 		<td>{% if moeda.valor_atual%}<strong>R$ {{moeda.valor_atual|floatformat:'8'}}</strong> (USD {{moeda.valor_atual_dolar}}){% else %}Indisponível{% endif %}</td>
-        <td><strong>USD {{moeda.valor_atual_polo_dolar}}</strong> ({{moeda.valor_atual_polo}} BTC)</td>
 	</tr>
 	{% endfor %}
 	</tbody>
