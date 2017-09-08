@@ -3,7 +3,7 @@
 
 {% block content %}
     <!-- BEGIN LOGIN FORM -->
-    <form class="login-form" action="{% url "login" %}" method="post">
+    <form class="login-form" action="{% if next %}{% url "login" %}?next={{next}}{% else %}{% url "login" %}{% endif %}" method="post">
         {% csrf_token %}
         {% if messages %}
             {% for message in messages %}

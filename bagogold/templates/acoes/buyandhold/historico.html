@@ -288,7 +288,7 @@ $( document ).ready(function() {
                                     }  
         );
     
-    $.plot($("#graf_uso_proventos_mes"), [ {color: "#33AA33", label: "Novo gasto", bars: {show:true, align:"center", barWidth: 8 * 24 * 60 * 60 * 600, lineWidth: 1, stacked: true}, data: {{ graf_gasto_op_sem_prov_mes|safe }} }, 
+    $.plot($("#graf_uso_proventos_mes"), [ {color: "#33AA33", label: "Novo dinheiro", bars: {show:true, align:"center", barWidth: 8 * 24 * 60 * 60 * 600, lineWidth: 1, stacked: true}, data: {{ graf_gasto_op_sem_prov_mes|safe }} }, 
                                        {color: "#8811AA", label: "Uso de proventos", bars: {show:true, align:"center", barWidth: 8 * 24 * 60 * 60 * 600, lineWidth: 1, stacked: true}, data: {{ graf_uso_proventos_mes|safe }} }, 
                                   ],
                                     {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%m/%Y"},

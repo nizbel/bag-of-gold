@@ -20,6 +20,9 @@ from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia
 from bagogold.cri_cra.models.cri_cra import CRI_CRA, OperacaoCRI_CRA
 from bagogold.cri_cra.utils.utils import qtd_cri_cra_ate_dia
 from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
+from bagogold.criptomoeda.models import Criptomoeda, OperacaoCriptomoeda
+from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia, \
+    buscar_valor_criptomoedas_atual
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
 from bagogold.fundo_investimento.utils import \
     calcular_valor_fundos_investimento_ate_dia
@@ -37,6 +40,13 @@ def is_superuser(user):
     raise PermissionDenied
 
 def buscar_acoes_investidor_na_data(investidor, data=datetime.date.today(), destinacao=''):
+    """
+    Busca as ações que o investidor possui na da especificada
+    Parâmetros: Investidor
+                Data da posição
+                DestinaçãO (Buy and Hold, Trading ou ambos)
+    Retorno: Lista com as ações que o investidor possui posição
+    """
     if destinacao not in ['', 'B', 'T']:
         raise ValueError
     # Buscar proventos em ações
@@ -80,9 +90,35 @@ def buscar_ultimas_operacoes(investidor, quantidade_operacoes):
     
     return ultimas_operacoes
 
+def buscar_operacoes_no_periodo(investidor, data_inicial, data_final):
+    from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB
+    """
+    Busca as operações feitas pelo investidor, ordenadas por data crescente, no período especificado
+    Parâmetros: Investidor
+                Data inicial
+                Data final
+    Retorno: Lista com as operações ordenadas por data
+    """
+    # Juntar todas as operações em uma lista
+    operacoes_fii = OperacaoFII.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')
+    operacoes_td = OperacaoTitulo.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')
+    operacoes_acoes = OperacaoAcao.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')
+    operacoes_lc = OperacaoLetraCredito.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')  
+    operacoes_cdb_rdb = OperacaoCDB_RDB.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')  
+    operacoes_cri_cra = OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')  
+    operacoes_criptomoeda = OperacaoCriptomoeda.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')
+    operacoes_debentures = OperacaoDebenture.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')  
+    operacoes_fundo_investimento = OperacaoFundoInvestimento.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')
+    
+    lista_operacoes = sorted(chain(operacoes_fii, operacoes_td, operacoes_acoes, operacoes_lc, operacoes_cdb_rdb, 
+                                   operacoes_cri_cra, operacoes_criptomoeda, operacoes_debentures, operacoes_fundo_investimento),
+                            key=attrgetter('data'))
+    
+    return lista_operacoes
+
 def buscar_totais_atuais_investimentos(investidor):
-    totais_atuais = {'Ações': Decimal(0), 'CDB/RDB': Decimal(0), 'CRI/CRA': Decimal(0), 'Debêntures': Decimal(0), 'FII': Decimal(0), 'Fundos de Inv.': Decimal(0), 
-                     'Letras de Crédito': Decimal(0), 'Tesouro Direto': Decimal(0), }
+    totais_atuais = {'Ações': Decimal(0), 'CDB/RDB': Decimal(0), 'CRI/CRA': Decimal(0), 'Criptomoedas': Decimal(0), 'Debêntures': Decimal(0), 
+                     'FII': Decimal(0), 'Fundos de Inv.': Decimal(0), 'Letras de Crédito': Decimal(0), 'Tesouro Direto': Decimal(0), }
     
     data_atual = datetime.date.today()
     
@@ -110,6 +146,14 @@ def buscar_totais_atuais_investimentos(investidor):
         valor_atual = calcular_valor_um_cri_cra_na_data(CRI_CRA.objects.get(id=cri_cra_id, investidor=investidor)).quantize(Decimal('.01'))
         totais_atuais['CRI/CRA'] += (cri_cra[cri_cra_id] * valor_atual)
         
+    # Criptomoedas
+    qtd_criptomoedas = calcular_qtd_moedas_ate_dia(investidor, data_atual)
+    moedas = Criptomoeda.objects.filter(id__in=qtd_criptomoedas.keys())
+    # Buscar valor das criptomoedas em posse do investidor
+    valores_criptomoedas = buscar_valor_criptomoedas_atual([moeda.ticker for moeda in moedas])
+    for moeda in moedas:
+        totais_atuais['Criptomoedas'] += qtd_criptomoedas[moeda.id] * valores_criptomoedas[moeda.ticker]
+    
     # Debêntures
     debentures = calcular_qtd_debentures_ate_dia(investidor, data_atual)
     for debenture_id in debentures.keys():
@@ -151,39 +195,43 @@ def buscar_totais_atuais_investimentos(investidor):
     
     return totais_atuais
 
-def buscar_proventos_a_receber(investidor):
+def buscar_proventos_a_receber(investidor, fonte_provento=''):
     """
     Retorna proventos que o investidor irá receber futuramente, já passada a data EX
     Parâmetros: Investidor
+                Fonte do provento ('F' = FII, 'A' = Ações, '' = Ambos)
     Retorno:    Lista de proventos
     """
     proventos_a_receber = list()
     
-    acoes_investidor = buscar_acoes_investidor_na_data(investidor)
-    
-    data_atual = datetime.date.today()
-    
-    for acao in Acao.objects.filter(id__in=acoes_investidor):
-        proventos_a_pagar = Provento.objects.filter(acao=acao, data_ex__lte=data_atual, data_pagamento__gte=data_atual, tipo_provento__in=['D', 'J'])
-        for provento in proventos_a_pagar:
-            qtd_acoes = quantidade_acoes_ate_dia(investidor, acao.ticker, provento.data_ex - datetime.timedelta(days=1), considerar_trade=True) 
-            if qtd_acoes > 0:
-                provento.quantia_a_receber = (qtd_acoes * provento.valor_unitario) if provento.tipo_provento == 'D' else (qtd_acoes * provento.valor_unitario * Decimal(0.85))
-                proventos_a_receber.append(provento)
+    # Buscar proventos em ações
+    if fonte_provento != 'F':
+        acoes_investidor = buscar_acoes_investidor_na_data(investidor)
+        
+        data_atual = datetime.date.today()
+        
+        for acao in Acao.objects.filter(id__in=acoes_investidor):
+            proventos_a_pagar = Provento.objects.filter(acao=acao, data_ex__lte=data_atual, data_pagamento__gte=data_atual, tipo_provento__in=['D', 'J'])
+            for provento in proventos_a_pagar:
+                qtd_acoes = quantidade_acoes_ate_dia(investidor, acao.ticker, provento.data_ex - datetime.timedelta(days=1), considerar_trade=True) 
+                if qtd_acoes > 0:
+                    provento.quantia_a_receber = (qtd_acoes * provento.valor_unitario) if provento.tipo_provento == 'D' else (qtd_acoes * provento.valor_unitario * Decimal(0.85))
+                    proventos_a_receber.append(provento)
           
-    # Buscar proventos em FIIs          
-    fiis_investidor = OperacaoFII.objects.filter(investidor=investidor, data__lte=datetime.date.today()).values_list('fii', flat=True)
-    
-    # Remover FIIs repetidos
-    fiis_investidor = list(set(fiis_investidor))
-    
-    for fii in FII.objects.filter(id__in=fiis_investidor):
-        proventos_a_pagar = ProventoFII.objects.filter(fii=fii, data_ex__lte=data_atual, data_pagamento__gte=data_atual)
-        for provento in proventos_a_pagar:
-            qtd_fiis = calcular_qtd_fiis_ate_dia_por_ticker(investidor, provento.data_ex - datetime.timedelta(days=1), fii.ticker)
-            if qtd_fiis > 0:
-                provento.quantia_a_receber = (qtd_fiis * provento.valor_unitario)
-                proventos_a_receber.append(provento)
+    if fonte_provento != 'A':
+        # Buscar proventos em FIIs          
+        fiis_investidor = OperacaoFII.objects.filter(investidor=investidor, data__lte=datetime.date.today()).values_list('fii', flat=True)
+        
+        # Remover FIIs repetidos
+        fiis_investidor = list(set(fiis_investidor))
+        
+        for fii in FII.objects.filter(id__in=fiis_investidor):
+            proventos_a_pagar = ProventoFII.objects.filter(fii=fii, data_ex__lte=data_atual, data_pagamento__gte=data_atual)
+            for provento in proventos_a_pagar:
+                qtd_fiis = calcular_qtd_fiis_ate_dia_por_ticker(investidor, provento.data_ex - datetime.timedelta(days=1), fii.ticker)
+                if qtd_fiis > 0:
+                    provento.quantia_a_receber = (qtd_fiis * provento.valor_unitario)
+                    proventos_a_receber.append(provento)
     
     # Arredondar valores
     for provento in proventos_a_receber:

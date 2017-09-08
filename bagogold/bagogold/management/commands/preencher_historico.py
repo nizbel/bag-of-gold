@@ -74,11 +74,11 @@ class Command(BaseCommand):
         qtd_por_thread = int(len(fiis)/qtd_threads)+1
         contador = 0
         threads = []
-#         while contador <= len(fiis):
-#             t = PreencheHistoricoFIIThread(fiis[contador : min(contador+qtd_por_thread,len(fiis))])
-#             threads.append(t)
-#             t.start()
-#             contador += qtd_por_thread
-#         for t in threads:
-#             t.join()
+        while contador <= len(fiis):
+            t = PreencheHistoricoFIIThread(fiis[contador : min(contador+qtd_por_thread,len(fiis))])
+            threads.append(t)
+            t.start()
+            contador += qtd_por_thread
+        for t in threads:
+            t.join()
 
