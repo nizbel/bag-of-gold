@@ -18,6 +18,7 @@ validators.DUPLICATE_EMAIL = 'Já existe um usuário cadastrado com esse email'
 
 inicio_patterns = [
     url(r'^$', RedirectView.as_view(url='/painel_geral/')),
+    url(r'^calendario/$', views.home.calendario, name='calendario'),
     url(r'^detalhar_acumulados_mensais/$', views.home.detalhar_acumulados_mensais, name='detalhar_acumulados_mensais'),
     url(r'^detalhamento_investimentos/$', views.home.detalhamento_investimentos, name='detalhamento_investimentos'),
     url(r'^painel_geral/$', views.home.painel_geral, name='painel_geral'),
@@ -25,6 +26,7 @@ inicio_patterns = [
     ]
 
 acoes_geral_patterns = [
+    url(r'^detalhar_provento/(?P<provento_id>\d+)/$', views.acoes.acoes.detalhar_provento, name='detalhar_provento'),
     url(r'^listar_acoes/$', views.acoes.acoes.listar_acoes, name='listar_acoes'),
     url(r'^listar_proventos/$', views.acoes.acoes.listar_proventos, name='listar_proventos'),
     url(r'^sobre/$', views.acoes.acoes.sobre, name='sobre_acoes'),

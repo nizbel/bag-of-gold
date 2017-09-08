@@ -30,8 +30,12 @@ admin.site.register(OperacaoAcao)
 admin.site.register(UsoProventosOperacaoAcao)
 
 admin.site.register(OperacaoCompraVenda)
+
+class HistoricoAcaoAdmin(admin.ModelAdmin):
+    search_fields = ['acao__ticker', 'data']
+    list_display = ('acao', 'preco_unitario', 'data')
     
-admin.site.register(HistoricoAcao)
+admin.site.register(HistoricoAcao, HistoricoAcaoAdmin)
     
 admin.site.register(ValorDiarioAcao)
     

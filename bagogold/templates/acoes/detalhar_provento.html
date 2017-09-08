@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block pagina_titulo_icone %}
+<i class="fa fa-folder-open-o font-yellow-crusta"></i>
+{% endblock %}
+
+{% block content %}
+<div class="portlet-body">
+    <div class="row">
+        <div class="col-md-9">
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-folder-open-o"></i>Dados do provento
+                    </div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <div class="m-grid m-grid-responsive-xs">
+                        <div class="m-grid-row">
+                            <div class="m-grid-col m-grid-col-left"><strong>Ação:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{provento.acao}}</div>
+                            <div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{provento.descricao_tipo_provento}}</div>
+                            <div class="m-grid-col m-grid-col-left"><strong>Valor unit.:</strong></div>
+                            {% if provento.tipo_provento != 'A' %}
+                                <div class="m-grid-col m-grid-col-left">R$ {{provento.valor_unitario}}</div>
+                            {% else %}
+                                <div class="m-grid-col m-grid-col-left">{{provento.valor_unitario}}%</div>
+                            {% endif %}
+                        </div>
+                        <div class="m-grid-row">
+                            <div class="m-grid-col m-grid-col-left"><strong>Data EX:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{provento.data_ex|date:'d/m/Y'}}</div>
+                            <div class="m-grid-col m-grid-col-left"><strong>Pagamento:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{provento.data_pagamento|date:'d/m/Y'}}</div>
+                            <div class="m-grid-col m-grid-col-left"><strong>Validado:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{provento.oficial_bovespa|yesno:"Sim,Não,Não"}}</div>
+                        </div>
+                        {% if provento.tipo_provento == 'A' %}
+                            {% for acao_descricao_provento in provento.acoes_recebidas %}
+                            <div class="m-grid-row">
+                                <div class="m-grid-col m-grid-col-left"><strong>Ação recebida:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{acao_descricao_provento.acao_recebida}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Valor de frações:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">
+                                {% if acao_descricao_provento.valor_calculo_frac %}
+                                R$ {{acao_descricao_provento.valor_calculo_frac}}
+                                {% else %}
+                                Não há
+                                {% endif %}
+                                </div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Pagamento de frações:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{acao_descricao_provento.data_pagamento_frac|date:'d/m/Y'|default:'Não há'}}</div>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-folder-open-o"></i>Documentos
+                    </div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    {% for documento in documentos %}
+                    <div class="m-grid m-grid-responsive-xs">
+                        <div class="m-grid-row">
+                            <div class="m-grid-col m-grid-col-left"><strong>Protocolo:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{documento.documento.protocolo}}</div>
+                        </div>
+                        <div class="m-grid-row">
+                            <div class="m-grid-col m-grid-col-left"><strong>Data de referência:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{documento.documento.data_referencia|date:'d/m/Y'}}</div>
+                        </div>
+                        <div class="m-grid-row">
+                            <a href="{% url 'gerador_proventos:baixar_documento_provento' documento.documento.id %}" class="btn btn-warning btn-xs">Download</a>
+                        </div>
+                    </div>
+                    {% if forloop.counter < documentos|length %}
+                    <hr>
+                    {% endif %}
+                    {% empty %}
+                    <p align="center">
+                        <strong>Não há documentos cadastrados</strong>
+                    </p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

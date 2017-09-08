@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% load l10n %}
+
+{% block extra_head %}
+<link href={% static "assets/global/plugins/bootstrap-select/css/bootstrap-select.min.css" %} rel="stylesheet" type="text/css" />
+<link href={% static "assets/global/plugins/bootstrap-datepicker/css/bootstrap-datepicker3.min.css" %} rel="stylesheet" type="text/css" />
+<link href={% static "assets/global/plugins/select2/css/select2.min.css" %} rel="stylesheet" type="text/css">
+<link href={% static "assets/global/plugins/select2/css/select2-bootstrap.min.css" %} rel="stylesheet" type="text/css">
+{% endblock %}
+
+{% block pagina_titulo_icone %}
+<i class="icon-note font-yellow-crusta"></i>
+{% endblock %}
+
+{% block content %}
+<div class="portlet-body form">
+    <!-- BEGIN FORM-->
+    <form id="form_editar_criptomoeda" method="POST" class="horizontal-form">{% csrf_token %}
+        <div class="form-body">
+            <div class="row">
+                <div class="form-group col-md-6 {% if form_operacao_criptomoeda.criptomoeda.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_criptomoeda.criptomoeda.label}}: </label>
+                    <div class="col-md-8">
+                        <select class="selectpicker form-control" id="id_criptomoeda" name="criptomoeda">
+                            {% for key, value in form_operacao_criptomoeda.fields.criptomoeda.widget.choices %}<option value="{{ key }}"
+                            {% if key == form_operacao_criptomoeda.criptomoeda.value|add:"0" %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                        </select>
+                        {% if form_operacao_criptomoeda.criptomoeda.errors %} <span class="help-block"> {{ form_operacao_criptomoeda.criptomoeda.errors.as_text }} </span> {% endif %}
+                    </div>
+                </div>
+                <div class="form-group col-md-6 {% if form_operacao_criptomoeda.moeda_utilizada.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_criptomoeda.moeda_utilizada.label}}: </label>
+                    <div class="col-md-8">
+                        <select class="selectpicker form-control" id="id_moeda_utilizada" name="moeda_utilizada">
+                            {% for key, value in form_operacao_criptomoeda.fields.moeda_utilizada.widget.choices %}<option value="{{ key }}"
+                            {% if key == form_operacao_criptomoeda.moeda_utilizada.value|add:"0" %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                        </select>
+                        {% if form_operacao_criptomoeda.moeda_utilizada.errors %} <span class="help-block"> {{ form_operacao_criptomoeda.moeda_utilizada.errors.as_text }} </span> {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group col-md-6 {% if form_operacao_criptomoeda.quantidade.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4"> {{form_operacao_criptomoeda.quantidade.label}}: </label>
+                    <div class="col-md-8">
+                        <input id="id_quantidade" type="text" value="{{form_operacao_criptomoeda.quantidade.value}}" name="quantidade" class="form-control">
+                        {% if form_operacao_criptomoeda.quantidade.errors %} <span class="help-block"> {{ form_operacao_criptomoeda.quantidade.errors.as_text }} </span> {% endif %}
+                    </div>
+                </div>
+                <div class="form-group col-md-6 {% if form_operacao_criptomoeda.preco_unitario.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_criptomoeda.preco_unitario.label}}: </label>
+                    <div class="col-md-8">
+                        <input id="id_valor" type="text" value="{{form_operacao_criptomoeda.preco_unitario.value}}" name="valor" class="form-control">
+                        {% if form_operacao_criptomoeda.preco_unitario.errors %} <span class="help-block"> {{ form_operacao_criptomoeda.preco_unitario.errors.as_text }} </span> {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group col-md-6 {% if form_operacao_criptomoeda.data.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_criptomoeda.data.label}}: </label>
+                    <div class="col-md-8">
+                        <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" data-date-viewmode="years">
+                            <input type="text" class="form-control" id="id_data" name="data" 
+                            value="{% if form_operacao_criptomoeda.data.value|date:'d/m/Y'|default:'' == '' %}{{form_operacao_criptomoeda.data.value|default:''}}{% else %}{{form_operacao_criptomoeda.data.value|date:'d/m/Y'}}{% endif %}">
+                            <span class="input-group-btn">
+                                <button class="btn default" type="button">
+                                    <i class="fa fa-calendar"></i>
+                                </button>
+                            </span>
+                        </div>
+                        {% if form_operacao_criptomoeda.data.errors %} <span class="help-block"> {{ form_operacao_criptomoeda.data.errors.as_text }} </span> 
+                        {% else %} <span class="help-block"> Selecione uma data </span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="form-group col-md-6 {% if form_operacao_criptomoeda.tipo_operacao.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_criptomoeda.tipo_operacao.label}}: </label>
+                    <div class="col-md-8">
+                        <select class="selectpicker form-control" id="id_tipo_operacao" name="tipo_operacao">
+                            {% for key, value in form_operacao_criptomoeda.fields.tipo_operacao.widget.choices %}<option value="{{ key }}"
+                            {% if key == form_operacao_criptomoeda.tipo_operacao.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                        </select>
+                        {% if form_operacao_criptomoeda.tipo_operacao.errors %} <span class="help-block"> {{ form_operacao_criptomoeda.tipo_operacao.errors.as_text }} </span> {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group col-md-6 {% if form_operacao_criptomoeda.taxa.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_criptomoeda.taxa.label}}: </label>
+                    <div class="col-md-8">
+                        <input id="id_taxa" type="text" value="{{form_operacao_criptomoeda.taxa.value}}" name="taxa" class="form-control">
+                        {% if form_operacao_criptomoeda.taxa.errors %} <span class="help-block"> {{ form_operacao_criptomoeda.taxa.errors.as_text }} </span> {% endif %}
+                    </div>
+                </div>
+                <div class="form-group col-md-6 {% if form_operacao_criptomoeda.taxa_moeda.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_criptomoeda.taxa_moeda.label}}: </label>
+                    <div class="col-md-8">
+                        <select class="selectpicker form-control" id="id_taxa_moeda" name="taxa_moeda" data-hide-disabled="true">
+                            {% for key, value in form_operacao_criptomoeda.fields.taxa_moeda.widget.choices %}<option value="{{ key }}"
+                            {% if key == form_operacao_criptomoeda.taxa_moeda.value|add:"0" %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                        </select>
+                        {% if form_operacao_criptomoeda.taxa_moeda.errors %} <span class="help-block"> {{ form_operacao_criptomoeda.taxa_moeda.errors.as_text }} </span> {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% if varias_divisoes %}
+            <div class="row" id="forms">
+                <h2 class="font-yellow-crusta" align="center">
+                    <strong>Divisões</strong> <button id="add-another" class="btn btn-icon-only green-steel" type="button"><i class="fa fa-plus"></i></button>
+                </h2>
+                {{ formset_divisao.management_form }}
+                {% for form_divisao in formset_divisao %}
+                <div class="col-md-12"><h3 class="font-yellow-crusta" align="center"><strong>Divisão {{ forloop.counter }}</strong></h3><br/></div>
+                <div class="col-md-11" id="divisao-{{forloop.counter0}}">
+                    <div class="row">
+                        <div class="form-group col-md-6 {% if form_divisao.divisao.errors %} has-error {% endif %}">
+                            <label class="control-label col-md-4" style="text-align: left;"> {{form_divisao.divisao.label}}: </label>
+                            <div class="col-md-8">
+                                {% localize off %}
+                                <select class="selectpicker form-control" id="id_divisaooperacaocriptomoeda_set-{{forloop.counter0}}-divisao" name="divisaooperacaocriptomoeda_set-{{forloop.counter0}}-divisao">
+                                    {% for key, value in form_divisao.fields.divisao.widget.choices %}<option value="{{ key }}"
+                                    {% if key == form_divisao.divisao.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                                </select>
+                                {% endlocalize %}
+                                {% if form_divisao.divisao.errors %} <span class="help-block"> {{ form_divisao.divisao.errors.as_text }} </span> {% endif %}
+                            </div>
+                        </div>
+                        <div class="form-group col-md-6 {% if form_divisao.quantidade.errors %} has-error {% endif %}">
+                            <label class="control-label col-md-4"> {{form_divisao.quantidade.label}}: </label>
+                            <div class="col-md-8">
+                                <input id="id_divisaooperacaocriptomoeda_set-{{forloop.counter0}}-quantidade" type="text" value="{{form_divisao.quantidade.value}}" name="divisaooperacaocriptomoeda_set-{{forloop.counter0}}-quantidade" class="form-control">
+                                {% if form_divisao.quantidade.errors %} <span class="help-block"> {{ form_divisao.quantidade.errors.as_text }} </span> {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% if form_divisao.instance.id %}
+                    <div class="md-checkbox col-md-1">
+                        <input type="checkbox" value="1" id="id_divisaooperacaocriptomoeda_set-{{forloop.counter0}}-DELETE" name="divisaooperacaocriptomoeda_set-{{forloop.counter0}}-DELETE" class="md-check">
+                        <label for="id_divisaooperacaocriptomoeda_set-{{forloop.counter0}}-DELETE">
+                            <span></span>
+                            <span class="check"></span>
+                            <span class="box"></span> Excluir </label>
+                    </div>
+                {% endif %}
+                {% if form_divisao.instance.id %}
+                    <input id="id_divisaooperacaocriptomoeda_set-{{forloop.counter0}}-id" name="divisaooperacaocriptomoeda_set-{{forloop.counter0}}-id" value="{{form_divisao.instance.id}}" type="hidden">
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
+            <div class="form-actions">
+                <div class="row">
+                    <div class="col-md-offset col-md-3">
+                        <button type="submit" name="save" value="1" class="btn green-steel">Salvar</button>
+                        <a data-toggle="modal" href="#exclusao" class="btn red-thunderbird">Excluir</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="exclusao" tabindex="-1" role="basic" aria-hidden="true" data-backdrop="static" data-keyboard="false"  style="display: none;">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                        <h4 class="modal-title">Confirmar exclusão de operação</h4>
+                    </div>
+                    <div class="modal-body">Confirma a exclusão da operação?</div>
+                    <div class="modal-footer">
+                        <a class="btn dark btn-outline" data-dismiss="modal">Cancelar</a>
+                        <button type="submit" name="delete" value="1" class="btn red-thunderbird">Confirmar</button>
+                    </div>
+                </div>
+                <!-- /.modal-content -->
+            </div>
+            <!-- /.modal-dialog -->
+        </div>
+    </form>
+    <!-- END FORM-->
+</div>
+
+{% endblock %}
+
+{% block extra_footer %}
+<script src={% static "assets/global/plugins/fuelux/js/spinner.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-touchspin/bootstrap.touchspin.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/jquery-validation/js/jquery.validate.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/jquery-validation/js/additional-methods.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-select/js/bootstrap-select.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/moment.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-datepicker/js/bootstrap-datepicker.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-datepicker/locales/bootstrap-datepicker.pt-BR.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/select2/js/select2.full.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/select2/js/i18n/pt-BR.js" %} type="text/javascript"></script>
+{{ form_operacao_criptomoeda.media }}
+{% endblock %}
