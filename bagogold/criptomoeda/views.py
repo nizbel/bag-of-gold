@@ -561,18 +561,6 @@ def listar_criptomoedas(request):
             if moeda.ticker == 'BTC':
                 btc_para_dolar = moeda.valor_atual_dolar
     
-    # Buscar valores POLONIEX
-    url = 'https://poloniex.com/public?command=returnTicker'
-    resultado = urlopen(url)
-    data_polo = json.load(resultado) 
-    
-    for moeda in moedas:
-        if moeda.ticker != 'BTC':
-            if 'BTC_%s' % (moeda.ticker) in data_polo.keys():
-                moeda.valor_atual_polo = Decimal(data_polo['BTC_%s' % (moeda.ticker)]['last'])
-                moeda.valor_atual_polo_dolar = moeda.valor_atual_polo * btc_para_dolar
-        
-    
     return TemplateResponse(request, 'criptomoedas/listar_moedas.html', {'moedas': moedas})
 
 
