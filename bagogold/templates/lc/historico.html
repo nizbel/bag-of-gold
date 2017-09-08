@@ -106,7 +106,7 @@
 							<td><a href="{% url 'lci_lca:editar_operacao_lci_lca' item.id %}" data-original-title="Editar operação"
                                 class="tooltips" data-placement="top">{{item.letra_credito.nome}}</a></td>
 							<td>{{ item.tipo }}</td>
-							<td>{{ item.data|date:"Y-m-d" }}</td>
+							<td>{{ item.data|date:"d/m/Y" }}</td>
 							<td>R$ {{item.quantidade}}</td>
 							<td>{{ item.taxa }}%</td>
 							<td>R$ {{item.atual|floatformat:2}}</td>
@@ -128,6 +128,8 @@
 <script src={% static "assets/global/plugins/datatables/datatables.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.js" %} type="text/javascript"></script>
 <script src={% static "assets/pages/scripts/table-datatables-fixedheader.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/moment.min.js" %} type="text/javascript"></script>
+<script src="https://cdn.datatables.net/plug-ins/1.10.15/sorting/datetime-moment.js" type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.axislabels.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.categories.min.js" %} type="text/javascript"></script>
@@ -137,6 +139,7 @@
 <script src={% static "assets/global/plugins/flot/jquery.flot.stack.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.time.min.js" %} type="text/javascript"></script>
 <script>
+$.fn.dataTable.moment( 'DD/MM/YYYY' );
 $( document ).ready(function() {    
     $.plot($("#graf_valor"), [ {color: "#7D8C9D", lines: {show:true}, data: {{ graf_patrimonio|safe }} } 
     ],

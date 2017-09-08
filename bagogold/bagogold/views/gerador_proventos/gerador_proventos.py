@@ -4,15 +4,16 @@ from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.gerador_proventos import \
     ProventoAcaoDescritoDocumentoBovespaForm, \
     AcaoProventoAcaoDescritoDocumentoBovespaForm, \
-    ProventoFIIDescritoDocumentoBovespaForm
-from bagogold.bagogold.models.acoes import Acao, Provento, AcaoProvento
+    ProventoFIIDescritoDocumentoBovespaForm, SelicProventoAcaoDescritoDocBovespaForm
+from bagogold.bagogold.models.acoes import Acao, Provento, AcaoProvento, \
+    AtualizacaoSelicProvento
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.fii import ProventoFII, FII
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
     PendenciaDocumentoProvento, ProventoAcaoDescritoDocumentoBovespa, \
     ProventoAcaoDocumento, InvestidorResponsavelPendencia, \
     AcaoProventoAcaoDescritoDocumentoBovespa, ProventoFIIDocumento, \
-    ProventoFIIDescritoDocumentoBovespa
+    ProventoFIIDescritoDocumentoBovespa, SelicProventoAcaoDescritoDocBovespa
 from bagogold.bagogold.utils.gerador_proventos import \
     alocar_pendencia_para_investidor, desalocar_pendencia_de_investidor, \
     salvar_investidor_responsavel_por_leitura, criar_descricoes_provento_acoes, \
@@ -28,6 +29,7 @@ from bagogold.bagogold.utils.misc import \
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
+from django.core.mail import mail_admins
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.forms.formsets import formset_factory
@@ -36,6 +38,7 @@ from django.http.response import HttpResponseRedirect, HttpResponse, Http404
 from django.template.response import TemplateResponse
 import json
 import os
+import traceback
 
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
@@ -168,7 +171,8 @@ def ler_documento_provento(request, id_pendencia):
         form_extra = 0 if ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).exists() else 1
         ProventoFormset = formset_factory(ProventoAcaoDescritoDocumentoBovespaForm, extra=form_extra)
         AcaoProventoFormset = formset_factory(AcaoProventoAcaoDescritoDocumentoBovespaForm, extra=form_extra)
-    # PAra FIIs
+        SelicProventoAcaoDescritoDocBovespaFormset = formset_factory(SelicProventoAcaoDescritoDocBovespaForm, extra=form_extra)
+    # Para FIIs
     elif pendencia.documento.tipo == 'F':
         form_extra = 0 if ProventoFIIDocumento.objects.filter(documento=pendencia.documento).exists() else 1
         ProventoFormset = formset_factory(ProventoFIIDescritoDocumentoBovespaForm, extra=form_extra)
@@ -195,6 +199,7 @@ def ler_documento_provento(request, id_pendencia):
             if pendencia.documento.tipo == 'A':
                 formset_provento = ProventoFormset(prefix='provento')
                 formset_acao_provento = AcaoProventoFormset(prefix='acao_provento')
+                formset_acao_selic = SelicProventoAcaoDescritoDocBovespaFormset(prefix='acao_selic')
             elif pendencia.documento.tipo == 'F':
                 formset_provento = ProventoFormset(prefix='provento')
                 formset_acao_provento = {}
@@ -211,6 +216,7 @@ def ler_documento_provento(request, id_pendencia):
                         qtd_proventos_extra = 0
                     ProventoFormset = formset_factory(ProventoAcaoDescritoDocumentoBovespaForm, extra=qtd_proventos_extra)
                     AcaoProventoFormset = formset_factory(AcaoProventoAcaoDescritoDocumentoBovespaForm, extra=qtd_proventos_extra)
+                    SelicProventoAcaoDescritoDocBovespaFormset = formset_factory(SelicProventoAcaoDescritoDocBovespaForm, extra=qtd_proventos_extra)
     
                     # Proventos
                     proventos_iniciais = list()
@@ -226,6 +232,15 @@ def ler_documento_provento(request, id_pendencia):
                         else:
                             acoes_provento_iniciais.append({})
                     formset_acao_provento = AcaoProventoFormset(prefix='acao_provento', initial=acoes_provento_iniciais)
+                    
+                    # Atualizações de proventos pela Selic
+                    acoes_selic_iniciais = list()
+                    for provento in proventos_iniciais:
+                        if SelicProventoAcaoDescritoDocBovespa.objects.filter(provento__id=provento['id']).exists():
+                            acoes_selic_iniciais.append(model_to_dict(SelicProventoAcaoDescritoDocBovespa.objects.get(provento__id=provento['id'])))
+                        else:
+                            acoes_selic_iniciais.append({})
+                    formset_acao_selic = SelicProventoAcaoDescritoDocBovespaFormset(prefix='acao_selic', initial=acoes_selic_iniciais)
                 # FII
                 elif pendencia.documento.tipo == 'F':
                     # Testa se quantidade de proventos engloba todos os proventos já cadastrados
@@ -251,12 +266,15 @@ def ler_documento_provento(request, id_pendencia):
                 if pendencia.documento.tipo == 'A':
                     formset_provento = ProventoFormset(request.POST, prefix='provento')
                     formset_acao_provento = AcaoProventoFormset(request.POST, prefix='acao_provento')
+                    formset_acao_selic = SelicProventoAcaoDescritoDocBovespaFormset(request.POST, prefix='acao_selic')
                     
                     # Apaga descrições que já existam para poder rodar validações, serão posteriormente readicionadas caso haja algum erro
                     info_proventos_a_apagar = list(ProventoAcaoDocumento.objects.filter(documento=pendencia.documento)) \
                         + list(AcaoProvento.objects.filter(provento__id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True))) \
+                        + list(AtualizacaoSelicProvento.objects.filter(provento__id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True))) \
                         + list(Provento.gerador_objects.filter(id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True))) \
                         + list(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento__id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True))) \
+                        + list(SelicProventoAcaoDescritoDocBovespa.objects.filter(provento__id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True))) \
                         + list(ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)))
     #                 print info_proventos_a_apagar
     #                 print list(reversed(info_proventos_a_apagar))
@@ -270,30 +288,43 @@ def ler_documento_provento(request, id_pendencia):
                         # Verifica se dados inseridos são todos válidos
                         forms_validos = True
                         indice_provento = 0
-                        # Guarda os proventos e ações de proventos criadas para salvar caso todos os formulários sejam válidos
+                        # Guarda os proventos, ações de proventos e atualizações pela Selic criadas 
+                        # para salvar caso todos os formulários sejam válidos
                         proventos_validos = list()
                         acoes_proventos_validos = list()
+                        acoes_selic_validos = list()
                         for form_provento in formset_provento:
                             provento = form_provento.save(commit=False)
     #                         print provento
                             proventos_validos.append(provento)
                             form_acao_provento = formset_acao_provento[indice_provento]
+                            form_acao_selic = formset_acao_selic[indice_provento]
                             # Verificar a ação do provento em ações
                             if provento.tipo_provento == 'A':
-                                acao_provento = form_acao_provento.save(commit=False) if form_acao_provento.is_valid() and form_acao_provento.has_changed() else None
+                                acao_provento = form_acao_provento.save(commit=False) if form_acao_provento.is_valid() \
+                                    and form_acao_provento.has_changed() else None
                                 if acao_provento == None:
                                     forms_validos = False
                                 else:
                                     acao_provento.provento = provento
     #                                 print acao_provento
                                     acoes_proventos_validos.append(acao_provento)
+                            
+                            # Se provento não é em ações, pode ser atualizado pela Selic
+                            else:
+                                acao_selic = form_acao_selic.save(commit=False) if form_acao_selic.is_valid() \
+                                    and form_acao_selic.has_changed() else None
+                                if acao_selic != None:
+                                    acao_selic.provento = provento
+                                    acoes_selic_validos.append(acao_selic)
                             indice_provento += 1
+                            
                         if forms_validos:
                             try:
                                 # Colocar investidor como responsável pela leitura do documento
                                 salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao='C')
                                 # Salvar descrições de proventos
-                                criar_descricoes_provento_acoes(proventos_validos, acoes_proventos_validos, pendencia.documento)
+                                criar_descricoes_provento_acoes(proventos_validos, acoes_proventos_validos, acoes_selic_validos, pendencia.documento)
                                 messages.success(request, 'Descrições de proventos criadas com sucesso')
                                 return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
                             except Exception as e:
@@ -384,6 +415,14 @@ def ler_documento_provento(request, id_pendencia):
                     acoes_provento_iniciais.append({})
             formset_acao_provento = AcaoProventoFormset(prefix='acao_provento', initial=acoes_provento_iniciais)
     
+            # Atualizações de proventos pela Selic
+            acoes_selic_iniciais = list()
+            for provento in proventos_iniciais:
+                if SelicProventoAcaoDescritoDocBovespa.objects.filter(provento__id=provento['id']).exists():
+                    acoes_selic_iniciais.append(model_to_dict(SelicProventoAcaoDescritoDocBovespa.objects.get(provento__id=provento['id'])))
+                else:
+                    acoes_selic_iniciais.append({})
+            formset_acao_selic = SelicProventoAcaoDescritoDocBovespaFormset(prefix='acao_selic', initial=acoes_selic_iniciais)
         
         elif pendencia.documento.tipo == 'F':
             # Proventos de FII
@@ -392,6 +431,7 @@ def ler_documento_provento(request, id_pendencia):
                 proventos_iniciais.append(model_to_dict(provento_fii_documento.descricao_provento))
             formset_provento = ProventoFormset(prefix='provento', initial=proventos_iniciais)
             formset_acao_provento = {}
+            formset_acao_selic = {}
             
     # Preparar opções de busca, tanto para POST quanto para GET
     if pendencia.documento.tipo == 'A':
@@ -405,7 +445,7 @@ def ler_documento_provento(request, id_pendencia):
     recusa = pendencia.documento.ultima_recusa()
     
     return TemplateResponse(request, 'gerador_proventos/ler_documento_provento.html', {'pendencia': pendencia, 'formset_provento': formset_provento, 'formset_acao_provento': formset_acao_provento, \
-                                                                                       'recusa': recusa})
+                                                                                       'formset_acao_selic': formset_acao_selic, 'recusa': recusa})
     
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
@@ -668,10 +708,13 @@ def validar_documento_provento(request, id_pendencia):
                                                 provento.save()
                                         pendencia_finalizada = True
                                 except:
+                                    if settings.ENV == 'PROD':
+                                        mail_admins(u'Erro em Buscar fundos investimento', traceback.format_exc())
                                     messages.error(request, 'Houve erro no relacionamento de proventos')
                                     raise ValueError('Não foi possível validar provento')
                             # Qualquer erro que deixe a validação incompleta faz necessário desfazer investidor responsável pela validação
                             else:
+                                # Jogar erro para dar rollback na transação
                                 raise ValueError('Não foi possível validar provento')
                             
                         # FII
@@ -717,6 +760,7 @@ def validar_documento_provento(request, id_pendencia):
                                     raise ValueError('Não foi possível validar provento')
                             # Qualquer erro que deixe a validação incompleta faz necessário desfazer investidor responsável pela validação
                             else:
+                                # Jogar erro para dar rollback na transação
                                 raise ValueError('Não foi possível validar provento')
                                     
                     elif pendencia.documento.investidorleituradocumento.decisao == 'E':
@@ -745,6 +789,7 @@ def validar_documento_provento(request, id_pendencia):
             except Exception as erro:
                 messages.error(request, unicode(erro))
         
+    # Mostrar decisão de criar proventos
     if pendencia.documento.investidorleituradocumento.decisao == 'C':
         if pendencia.documento.tipo == 'A':
             proventos_documento = ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)
@@ -790,6 +835,8 @@ def validar_documento_provento(request, id_pendencia):
                             
             # Descrição da decisão do responsável pela leitura
             pendencia.decisao = 'Criar %s provento(s)' % (ProventoFIIDocumento.objects.filter(documento=pendencia.documento).count())
+            
+    # Mostrar decisão de excluir documentos
     elif pendencia.documento.investidorleituradocumento.decisao == 'E':
         descricoes_proventos = {}
         

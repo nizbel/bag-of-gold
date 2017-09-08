@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.acoes import Provento, AcaoProvento
+from bagogold.bagogold.models.acoes import Provento, AcaoProvento,\
+    AtualizacaoSelicProvento
 from bagogold.bagogold.models.fii import ProventoFII, FII
 from bagogold.bagogold.models.gerador_proventos import \
     InvestidorResponsavelPendencia, InvestidorLeituraDocumento, \
@@ -176,6 +177,11 @@ def converter_descricao_provento_para_provento_acoes(descricao_provento):
                         valor_unitario=descricao_provento.valor_unitario)
         novo_provento.full_clean()
         
+        # Criar atualização pela Selic caso exista
+        if hasattr(descricao_provento, 'selicproventoacaodescritodocbovespa'):
+            novo_provento.atualizacaoselicprovento = AtualizacaoSelicProvento(data_inicio=descricao_provento.selicproventoacaodescritodocbovespa.data_inicio,
+                                                                              data_fim=descricao_provento.selicproventoacaodescritodocbovespa.data_fim, provento=novo_provento)
+        
         return (novo_provento, list())
     # Para dividendo em ações, copiar também a descrição de recebimento de ações
     else:
@@ -232,6 +238,8 @@ def versionar_descricoes_relacionadas_acoes(descricao, provento_relacionado):
     # Apagar provento anterior
     for acao_provento_anterior in AcaoProvento.objects.filter(provento__id=provento_anterior.id):
         acao_provento_anterior.delete()
+    if hasattr(provento_anterior, 'atualizacaoselicprovento'):
+        provento_anterior.atualizacaoselicprovento.delete()
     provento_anterior.delete()
         
 def versionar_descricoes_relacionadas_fiis(descricao, provento_relacionado):
@@ -268,13 +276,6 @@ def copiar_proventos_acoes(provento, provento_a_copiar):
                 Provento a ser copiado
     """
     with transaction.atomic():
-        provento.acao = provento_a_copiar.acao
-        provento.valor_unitario = provento_a_copiar.valor_unitario
-        provento.tipo_provento = provento_a_copiar.tipo_provento
-        provento.data_ex = provento_a_copiar.data_ex
-        provento.data_pagamento = provento_a_copiar.data_pagamento
-        provento.observacao = provento_a_copiar.observacao
-        provento.save()
         # Se provento a copiar for do tipo provento em ações, copiar ações recebidas
         if provento_a_copiar.tipo_provento == 'A':
             acoes_provento = AcaoProvento.objects.filter(provento__id=provento.id)
@@ -294,10 +295,39 @@ def copiar_proventos_acoes(provento, provento_a_copiar):
                     nova_acao_provento.save()
                 # Passar à próxima ação recebida
                 indice_acao_provento += 1
-        # Se provento a copiar não for do tipo provento em ações, mas o provento a receber a cópia for, apagar ações recebidas
-        elif provento.tipo_provento == 'A':
+            
+            # Caso provento a receber dados seja atualizado pela Selic, apagar atualização
+            if hasattr(provento, 'atualizacaoselicprovento'):
+                provento.atualizacaoselicprovento.delete()
+            
+        # Se provento a copiar possuir atualização pela Selic, passar para provento a receber dados
+        elif hasattr(provento_a_copiar, 'atualizacaoselicprovento'):
+            if hasattr(provento, 'atualizacaoselicprovento'):
+                provento.atualizacaoselicprovento.data_inicio = provento_a_copiar.atualizacaoselicprovento.data_inicio
+                provento.atualizacaoselicprovento.data_fim = provento_a_copiar.atualizacaoselicprovento.data_fim
+            else:
+                AtualizacaoSelicProvento.objects.create(provento=provento, data_inicio=provento_a_copiar.atualizacaoselicprovento.data_inicio,
+                                                        data_fim=provento_a_copiar.atualizacaoselicprovento.data_fim)
+            
+            # Caso provento a receber dados possua ações a receber, apagá-las
             for acao_provento in AcaoProvento.objects.filter(provento__id=provento.id):
                 acao_provento.delete()
+            
+        else:
+            # Se provento a copiar não for do tipo provento em ações, mas o provento a receber a cópia for, apagar ações recebidas
+            if provento.tipo_provento == 'A':
+                for acao_provento in AcaoProvento.objects.filter(provento__id=provento.id):
+                    acao_provento.delete()
+            elif hasattr(provento, 'atualizacaoselicprovento'):
+                provento.atualizacaoselicprovento.delete()
+                
+        provento.acao = provento_a_copiar.acao
+        provento.valor_unitario = provento_a_copiar.valor_unitario
+        provento.tipo_provento = provento_a_copiar.tipo_provento
+        provento.data_ex = provento_a_copiar.data_ex
+        provento.data_pagamento = provento_a_copiar.data_pagamento
+        provento.observacao = provento_a_copiar.observacao
+        provento.save()
         
 def copiar_proventos_fiis(provento, provento_a_copiar):
     """
@@ -313,21 +343,35 @@ def copiar_proventos_fiis(provento, provento_a_copiar):
     provento.save()
     
 
-def criar_descricoes_provento_acoes(descricoes_proventos, acoes_descricoes_proventos, documento):
+def criar_descricoes_provento_acoes(descricoes_proventos, acoes_descricoes_proventos, selic_descricoes_proventos, documento):
     """
     Cria descrições para proventos de ações a partir de um documento
     Parâmetros: Lista de proventos
                 Lista de ações recebidas em proventos
+                Lista de atualizações pela Selic para proventos
                 Documento que traz os proventos
     """
     try:
         with transaction.atomic():
             for descricao_provento in descricoes_proventos:
                 descricao_provento.save()
+                
+                # Proventos em ações
                 descricoes_acao_provento = [acao_descricao_provento for acao_descricao_provento in acoes_descricoes_proventos if acao_descricao_provento.provento.id == descricao_provento.id]
                 for descricao_acao_provento in descricoes_acao_provento:
                     descricao_acao_provento.provento = descricao_provento
                     descricao_acao_provento.save()
+                
+                # Proventos atualizados pela Selic
+                descricoes_selic_provento = [selic_descricao_provento for selic_descricao_provento in selic_descricoes_proventos if selic_descricao_provento.provento.id == descricao_provento.id]
+                for descricao_selic_provento in descricoes_selic_provento:
+                    descricao_selic_provento.provento = descricao_provento
+                    descricao_selic_provento.save()
+                    
+                # Se provento possuir as 2 listas, jogar erro
+                if descricoes_acao_provento and descricoes_selic_provento:
+                    raise ValueError(u'Proventos em ações não podem ser atualizados pela Selic')
+                
                 # Converte para proventos reais, porém não validados
                 provento, acoes_provento = converter_descricao_provento_para_provento_acoes(descricao_provento)
                 # Busca proventos já existentes, ou cria se não existirem
@@ -339,7 +383,7 @@ def criar_descricoes_provento_acoes(descricoes_proventos, acoes_descricoes_prove
                     # Caso seja um provento de ações, verifica se as ações recebidas batem
                     if provento.tipo_provento == 'A':
                         if len(provento.acaoprovento_set) != len(descricoes_acao_provento):
-                            raise ValueError('Há um provento não oficial cadastrado com dados incompatíveis')
+                            raise ValueError('Há um provento não oficial cadastrado com dados de ações incompatíveis')
                         for acao_provento in provento.acaoprovento_set:
                             provento_corresponde = False
                             for descricao_acao_provento in descricoes_acao_provento:
@@ -349,13 +393,27 @@ def criar_descricoes_provento_acoes(descricoes_proventos, acoes_descricoes_prove
                                     provento_corresponde = True
                                     break
                             if not provento_corresponde:
-                                raise ValueError('Há um provento não oficial cadastrado com dados incompatíveis')
+                                raise ValueError('Há um provento não oficial cadastrado com dados de ações incompatíveis')
+                    # Caso contrário, verifica se atualização pela Selic condiz com que há cadastrado
+                    else:
+                        if hasattr(provento, 'atualizacaoselicprovento') and hasattr(descricao_provento, 'selicproventoacaodescritodocbovespa'):
+                            if provento.atualizacaoselicprovento.data_inicio != descricao_provento.selicproventoacaodescritodocbovespa.data_inicio:
+                                raise ValueError('Há um provento não oficial cadastrado com dados de atualização pela Selic incompatíveis')
+                            if provento.atualizacaoselicprovento.data_fim != descricao_provento.selicproventoacaodescritodocbovespa.data_fim:
+                                raise ValueError('Há um provento não oficial cadastrado com dados de atualização pela Selic incompatíveis')
                                 
                 else:
                     provento.save()
+                    # Criar ações recebidas
                     for acao_provento in acoes_provento:
                         acao_provento.provento = provento
                         acao_provento.save()
+                    # Criar atualização pela Selic
+                    if hasattr(provento, 'atualizacaoselicprovento'):
+                        atualizacao = provento.atualizacaoselicprovento
+                        atualizacao.provento = provento
+                        atualizacao.save()
+                        
                 # Relaciona a descrição ao provento encontrado/criado
                 provento_documento = ProventoAcaoDocumento.objects.create(provento=provento, documento=documento, descricao_provento=descricao_provento, versao=1)
     except:

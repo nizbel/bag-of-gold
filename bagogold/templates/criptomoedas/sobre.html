@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block pagina_titulo_icone %}
+<i class="icon-pin font-yellow-crusta"></i>
+{% endblock %}
+
+{% block content %}
+<div class="portlet-body">
+        <div class="row">
+            <div class="{% if user.is_authenticated %}col-md-10{% else %}col-md-12{% endif %}">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h3>O que são?</h3>
+                        <p>
+                        Fundos de Investimento são investimentos coletivos dos quais o investidor adquire cotas. A soma das cotas é o patrimônio do fundo, que é aplicado por um gestor ou
+                        administrador no mercado financeiro e de capitais. Por investir com um capital elevado, um fundo tem acesso a opções geralmente muito caras para o investidor comum. Cada
+                        fundo possui um regulamento, que determina seu funcionamento, em que o dinheiro será investido e as taxas que serão cobradas.
+                        </p>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="mt-element-step">
+                            <div class="row step-line">
+                                <div class="mt-step-desc text-center">
+                                    <h3>Como funciona</h3>
+                                </div>
+                                <div class="col-md-3 mt-step-col first ">
+                                    <div class="mt-step-number bg-white"><i class="icon-user font-yellow-crusta"></i></div>
+                                    <div class="mt-step-title uppercase">Administrador</div>
+                                    <div class="mt-step-content">Cria o fundo</div>
+                                </div>
+                                <div class="col-md-3 mt-step-col">
+                                    <div class="mt-step-number bg-white"><i class="fa fa-bank font-yellow-crusta"></i></div>
+                                    <div class="mt-step-title uppercase">Investidor</div>
+                                    <div class="mt-step-content">Adquire cotas</div>
+                                </div>
+                                <div class="col-md-3 mt-step-col">
+                                    <div class="mt-step-number bg-white"><i class="fa fa-money font-yellow-crusta"></i></div>
+                                    <div class="mt-step-title uppercase">Administrador ou Gestor</div>
+                                    <div class="mt-step-content">Aplica o capital do fundo</div>
+                                </div>
+                                <div class="col-md-3 mt-step-col last">
+                                    <div class="mt-step-number bg-white"><i class="fa fa-money font-yellow-crusta"></i></div>
+                                    <div class="mt-step-title uppercase">Retorno</div>
+                                    <div class="mt-step-content">Investidor recebe o valor de suas cotas ao resgatá-las ou ao término do funcionamento</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h3>Garantia</h3>
+                        <p>
+                        Não há.
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h3>Tipos</h3>
+                        <p>
+                        Os fundos podem ser classificados de acordo com o prazo médio dos ativos em sua composição, o tipo de ativos que compõem sua carteira e a data de resgate das cotas.
+                        </p>
+                        <ul class="list-unstyled">
+                            <li><strong>Classificação por prazo médio de ativos</strong>:</li>
+                            <li>Fundo de curto prazo: <strong>até 365 dias</strong></li>
+                            <li>Fundo de longo prazo: <strong>acima de 365 dias</strong></li>
+                        </ul>
+                        <ul class="list-unstyled">
+                            <li><strong>Classificação por tipo de ativos</strong>:</li>
+                            <li><strong>Fundo cambial</strong>: <strong>80%</strong> do patrimônio deve estar investido em ativos relacionados, direta ou indiretamente, a variação cambial de alguma moeda.</li>
+                            <li><strong>Fundo de ações</strong>: <strong>67%</strong> do patrimônio do fundo deve ser investido em ações.</li>
+                            <li><strong>Fundo de curto prazo</strong>: investimentos <strong>exclusivamente</strong> em títulos de curto prazo e baixo risco.</li>
+                            <li><strong>Fundo de investimento em cotas de Fundos de Investimento</strong>: <strong>95%</strong>, no mínimo, deve ser investido em cotas de fundos de investimento de uma mesma classe,
+                            exceto no caso do fundo ser também classificado como <strong>multimercado</strong>.
+                            <li><strong>Fundo de renda fixa</strong>: no mínimo <strong>80%</strong> dos ativos devem ser de renda fixa.</li>
+                            <li><strong>Fundo multimercado</strong>: não possui concentração em nenhum ativo específico.</li>
+                            <li><strong>Fundo referenciado</strong>: <strong>95%</strong> dos ativos da carteira devem acompanhar o índice de referência definido para o fundo. <strong>80%</strong> devem ser
+                            títulos públicos ou renda fixa de baixo risco.</li>
+                        </ul>
+                        <ul class="list-unstyled">
+                            <li><strong>Classificação por data de resgate</strong>:</li>
+                            <li><strong>Fundo de condomínio aberto</strong>: investidor pode resgatar cotas a qualquer tempo.</li>
+                            <li><strong>Fundo de condomínio fechado</strong>: o resgate das cotas se dá ao término do fundo.</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h3>Liquidez</h3>
+                        <p>
+                        Fundos abertos: o investidor pode resgatar suas cotas em qualquer dia.
+                        </p>
+                        <p>
+                        Fundos fechados: o investidor apenas recebe o dinheiro das cotas ao térmido do fundo.
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h3>Imposto de Renda</h3>
+                        <p>
+                        <strong>Fundos de ações</strong>: <strong>15%</strong> sobre o lucro auferido.
+                        </p>
+                        <ul class="list-unstyled">
+                            <li><strong>Fundos de curto prazo</strong>:</li>
+                            <li>Até 180 dias: <strong>22,5% </strong></li>
+                            <li>Após 180 dias: <strong>20% </strong></li>
+                        </ul>
+                        <ul class="list-unstyled">
+                            <li><strong>Fundos de longo prazo</strong>:</li>
+                            <li>Até 180 dias: <strong>22,5% </strong></li>
+                            <li>Entre 181 e 360 dias: <strong>20% </strong></li>
+                            <li>Entre 361 e 720 dias: <strong>17,5% </strong></li>
+                            <li>Após 720 dias: <strong>15% </strong></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h3>Para mais informações:</h3>
+                        <ul class="list-unstyled">
+                            <li><a href="https://www.xpi.com.br/investimentos/fundos-de-investimento/">XP Investimentos</a></li>
+                            <li><a href="https://verios.com.br/blog/fundos-de-investimento-o-que-sao-e-como-funcionam/">Verios</a></li>
+                            <li><a href="http://www.portaldoinvestidor.gov.br/portaldoinvestidor/export/sites/portaldoinvestidor/publicacao/Cadernos/CVM-Caderno-3.pdf">Caderno CVM</a>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% if user.is_authenticated %}
+            <div class="col-md-2">
+                <div class="portlet box yellow-crusta">
+                    <div class="portlet-title">
+                        <div class="caption">
+                            <i class="icon-user"></i>Investidor</div>
+                        <div class="tools">
+                            <a href="javascript:;" class="collapse"></a>
+                        </div>
+                    </div>
+                    <div class="portlet-body">
+                        {% if total_atual > 0 %}
+                        <h4>Total atual</h4>
+                        <div class="col-md-12 text-center font-yellow-crusta">
+                            <p class="lead">
+                                <strong>R$ <span data-counter="counterup" data-value="{{ total_atual|floatformat:2 }}">0</span></strong>
+                            </p>
+                        </div>
+                        {% endif %}
+                        <h4>Investimentos</h4>
+                        <ul class="list-unstyled">
+                            <li><a href="{% url "fundo_investimento:inserir_operacao_fundo_investimento" %}">Inserir operação</a></li>
+                            <li><a href="{% url "fundo_investimento:historico_fundo_investimento" %}">Histórico de operações</a></li>
+                            <li><a href="{% url "fundo_investimento:painel_fundo_investimento" %}">Painel de Fundos de Inv.</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block extra_footer %}
+<script src={% static "assets/global/plugins/counterup/jquery.waypoints.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/counterup/jquery.counterup.min.js" %} type="text/javascript"></script>
+{% endblock %}

@@ -238,6 +238,17 @@ class AcaoProventoAcaoDescritoDocumentoBovespa (models.Model):
     def __unicode__(self):
         return u'Ações de %s, com frações de R$%s a receber em %s' % (self.acao_recebida.ticker, self.valor_calculo_frac, self.data_pagamento_frac)
 
+class SelicProventoAcaoDescritoDocBovespa (models.Model):
+    """
+    Define o total de rendimento recebido por atualizar o provento pela Selic
+    """
+    data_inicio = models.DateField(u'Data de início')
+    data_fim = models.DateField(u'Data de fim')
+    provento = models.OneToOneField('ProventoAcaoDescritoDocumentoBovespa')
+    
+    def __unicode__(self):
+        return u'Atualização pela Selic de %s a %s' % (self.data_inicio.strftime('%d/%m/%Y'), self.data_fim.strftime('%d/%m/%Y'))
+
 class ProventoFIIDescritoDocumentoBovespa (models.Model):
     fii = models.ForeignKey('FII')
     valor_unitario = models.DecimalField(u'Valor unitário', max_digits=20, decimal_places=16)

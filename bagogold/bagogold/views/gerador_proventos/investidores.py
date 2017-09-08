@@ -122,7 +122,5 @@ def listar_usuarios(request):
         estatisticas['previsao_tempo_validacao_completa'] += ', %s horas' % (horas_validacao_completa) if len(estatisticas['previsao_tempo_validacao_completa']) > 0 else \
             '%s horas' % (horas_validacao_completa)
     
-    print estatisticas
-    
     return TemplateResponse(request, 'gerador_proventos/listar_usuarios.html', {'usuarios': usuarios, 'estatisticas': estatisticas})
 

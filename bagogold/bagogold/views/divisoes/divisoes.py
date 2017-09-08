@@ -24,6 +24,9 @@ from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia_por_divisao
 from bagogold.bagogold.utils.td import calcular_qtd_titulos_ate_dia_por_divisao
 from bagogold.cri_cra.utils.utils import \
     calcular_valor_cri_cra_ate_dia_para_divisao
+from bagogold.criptomoeda.models import Criptomoeda
+from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia_por_divisao, \
+    buscar_valor_criptomoedas_atual
 from bagogold.fundo_investimento.models import FundoInvestimento, \
     HistoricoValorCotas, OperacaoFundoInvestimento
 from bagogold.fundo_investimento.utils import \
@@ -167,7 +170,7 @@ def detalhar_divisao(request, id):
     # Pegar fundos de investimento contidos na divisão
     qtd_fundos_dia = calcular_qtd_cotas_ate_dia_por_divisao(datetime.date.today(), divisao.id)
     for fundo_id in qtd_fundos_dia.keys():
-        fundo_valor = FundoInvestimento.objects.get(id=fundo_id).valor_no_dia(datetime.date.today())
+        fundo_valor = FundoInvestimento.objects.get(id=fundo_id).valor_no_dia(investidor, datetime.date.today())
         composicao['fundo-investimento'].patrimonio += qtd_fundos_dia[fundo_id] * fundo_valor
         composicao['fundo-investimento'].composicao[fundo_id] = Object()
         composicao['fundo-investimento'].composicao[fundo_id].nome = FundoInvestimento.objects.get(id=fundo_id).nome
@@ -401,6 +404,7 @@ def listar_divisoes(request):
         divisao.valor_atual_trade = 0
         divisao.valor_atual_cdb_rdb = 0
         divisao.valor_atual_cri_cra = 0
+        divisao.valor_atual_criptomoeda = 0
         divisao.valor_atual_debentures = 0
         divisao.valor_atual_fii = 0
         divisao.valor_atual_fundo_investimento = 0
@@ -437,6 +441,13 @@ def listar_divisoes(request):
         cri_cra_divisao = calcular_valor_cri_cra_ate_dia_para_divisao(divisao.id, data_atual)
         divisao.valor_atual_cri_cra += sum(cri_cra_divisao.values())
         divisao.valor_atual += divisao.valor_atual_cri_cra
+        
+        # Criptomoedas
+        criptomoedas_divisao = calcular_qtd_moedas_ate_dia_por_divisao(divisao.id, data_atual)
+        moedas = Criptomoeda.objects.filter(id__in=criptomoedas_divisao.keys())
+        valores_criptomoedas = buscar_valor_criptomoedas_atual([moeda.ticker for moeda in moedas])
+        divisao.valor_atual_criptomoeda += sum([(criptomoedas_divisao[moeda.id] * valores_criptomoedas[moeda.ticker]) for moeda in moedas])
+        divisao.valor_atual += divisao.valor_atual_criptomoeda
         
         # Debêntures
         debentures_divisao = calcular_valor_debentures_ate_dia_por_divisao(divisao.id, data_atual)
@@ -490,14 +501,16 @@ def listar_divisoes(request):
         divisao.saldo_bh = divisao.saldo_acoes_bh()
         divisao.saldo_cdb_rdb = divisao.saldo_cdb_rdb()
         divisao.saldo_cri_cra = divisao.saldo_cri_cra()
+        divisao.saldo_criptomoeda = divisao.saldo_criptomoeda()
         divisao.saldo_debentures = divisao.saldo_debentures()
         divisao.saldo_fii = divisao.saldo_fii()
         divisao.saldo_fundo_investimento = divisao.saldo_fundo_investimento()
         divisao.saldo_lc = divisao.saldo_lc()
         divisao.saldo_td = divisao.saldo_td()
         divisao.saldo_trade = divisao.saldo_acoes_trade()
-        divisao.saldo = divisao.saldo_bh + divisao.saldo_cdb_rdb + divisao.saldo_cri_cra + divisao.saldo_debentures + divisao.saldo_fii \
-            + divisao.saldo_fundo_investimento + divisao.saldo_lc + divisao.saldo_td + divisao.saldo_trade
+        divisao.saldo = divisao.saldo_bh + divisao.saldo_cdb_rdb + divisao.saldo_cri_cra + divisao.saldo_criptomoeda \
+            + divisao.saldo_debentures + divisao.saldo_fii + divisao.saldo_fundo_investimento + divisao.saldo_lc \
+            + divisao.saldo_td + divisao.saldo_trade
               
     return TemplateResponse(request, 'divisoes/listar_divisoes.html', {'divisoes': divisoes})
 
