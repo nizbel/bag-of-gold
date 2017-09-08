@@ -541,7 +541,7 @@ def detalhamento_investimentos(request):
             for acao, quantidade in acoes_bh.items():
                 if quantidade > 0:
                     # Pegar valor do dia caso seja data atual
-                    if item.data == datetime.date.today() and ValorDiarioAcao.objects.filter(acao__ticker=acao, data=item.data).exists():
+                    if item.data == datetime.date.today() and ValorDiarioAcao.objects.filter(acao__ticker=acao, data_hora__date=item.data).exists():
                         valor_acao = ValorDiarioAcao.objects.filter(acao__ticker=acao).order_by('-data_hora')[0].preco_unitario
                     else:
                         # Pegar último dia util com negociação da ação para calculo do patrimonio
@@ -564,7 +564,7 @@ def detalhamento_investimentos(request):
             for acao, quantidade in acoes_t.items():
                 if quantidade > 0:
                     # Pegar valor do dia caso seja data atual
-                    if item.data == datetime.date.today() and ValorDiarioAcao.objects.filter(acao__ticker=acao, data=item.data).exists():
+                    if item.data == datetime.date.today() and ValorDiarioAcao.objects.filter(acao__ticker=acao, data_hora__date=item.data).exists():
                         valor_acao = ValorDiarioAcao.objects.filter(acao__ticker=acao).order_by('-data_hora')[0].preco_unitario
                     else:
                         # Pegar último dia util com negociação da ação para calculo do patrimonio
@@ -601,7 +601,7 @@ def detalhamento_investimentos(request):
             patrimonio['FII'] = 0
             for papel, quantidade in fii.items():
                 # Pegar valor do dia caso seja data atual
-                if item.data == datetime.date.today() and ValorDiarioFII.objects.filter(fii__ticker=papel, data=item.data).exists():
+                if item.data == datetime.date.today() and ValorDiarioFII.objects.filter(fii__ticker=papel, data_hora__date=item.data).exists():
                     valor_fii = ValorDiarioFII.objects.filter(fii__ticker=papel).order_by('-data_hora')[0].preco_unitario
                 else:
                     # Pegar último dia util com negociação da ação para calculo do patrimonio
