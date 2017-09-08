@@ -162,6 +162,17 @@
                                                             {% endfor%}
                                                         {% endif %}
                                                     </div>
+                                                    {% if descricao_provento.selicproventoacaodescritodocbovespa %}
+                                                    <div class="m-grid m-grid-responsive-xs">
+                                                        <div class="m-grid-row">
+                                                            <div class="m-grid-col m-grid-col-left m-grid-col-md-4"><strong>Período de atualização pela Selic</strong></div>
+                                                            <div class="m-grid-col m-grid-col-left m-grid-col-md-2"><strong>Início:</strong></div>
+                                                            <div class="m-grid-col m-grid-col-left m-grid-col-md-2">{{descricao_provento.selicproventoacaodescritodocbovespa.data_inicio|date:'d/m/Y'}}</div>
+                                                            <div class="m-grid-col m-grid-col-left m-grid-col-md-2"><strong>Fim:</strong></div>
+                                                            <div class="m-grid-col m-grid-col-left m-grid-col-md-2">{{descricao_provento.selicproventoacaodescritodocbovespa.data_fim|date:'d/m/Y'}}</div>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
                                                     {% if descricao_provento.proventos_proximos %}
                                                     <div class="m-grid m-grid-responsive-xs">
                                                         <div class="m-grid-row">
@@ -219,6 +230,17 @@
                                                                     {% endfor %}
                                                                 {% endif %}
                                                             </div>
+                                                            {% if provento_proximo.atualizacaoselicprovento %}
+                                                            <div class="m-grid m-grid-responsive-xs">
+                                                                <div class="m-grid-row">
+                                                                    <div class="m-grid-col m-grid-col-left m-grid-col-md-4"><strong>Período de atualização pela Selic</strong></div>
+                                                                    <div class="m-grid-col m-grid-col-left m-grid-col-md-2"><strong>Início:</strong></div>
+                                                                    <div class="m-grid-col m-grid-col-left m-grid-col-md-2">{{provento_proximo.atualizacaoselicprovento.data_inicio|date:'d/m/Y'}}</div>
+                                                                    <div class="m-grid-col m-grid-col-left m-grid-col-md-2"><strong>Fim:</strong></div>
+                                                                    <div class="m-grid-col m-grid-col-left m-grid-col-md-2">{{provento_proximo.atualizacaoselicprovento.data_fim|date:'d/m/Y'}}</div>
+                                                                </div>
+                                                            </div>
+                                                            {% endif %}
                                                             <div class="md-radio">
                                                                 <input type="radio" id="descricao_{{descricao_provento.id}}_{{provento_proximo.id}}" name="descricao_{{descricao_provento.id}}" 
                                                                     value="{{provento_proximo.id}}" disabled="disabled" class="md-radiobtn">

@@ -3,7 +3,8 @@ from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao
 from bagogold.bagogold.models.fii import UsoProventosOperacaoFII
 from bagogold.bagogold.models.lc import OperacaoLetraCredito
 from bagogold.bagogold.models.td import HistoricoIPCA, OperacaoTitulo
-from bagogold.fundo_investimento.utils import calcular_valor_fundos_investimento_ate_dia
+from bagogold.fundo_investimento.utils import \
+    calcular_valor_fundos_investimento_ate_dia
 from decimal import Decimal
 from urllib2 import Request, urlopen, URLError, HTTPError
 import datetime
@@ -11,6 +12,8 @@ import math
 import random
 import re
 import time
+from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
+from django.utils import timezone
 
 
 def calcular_iof_regressivo(dias):
@@ -157,7 +160,9 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDEFILR
     
     # Fundos de Investimento
     if 'I' in tipo_investimentos:
-        rendimentos['I'] = sum(calcular_valor_fundos_investimento_ate_dia(investidor, data).values())
+        rendimentos['I'] = sum(calcular_valor_fundos_investimento_ate_dia(investidor, data).values()) \
+            - sum([operacao.valor for operacao in OperacaoFundoInvestimento.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='C')]) \
+            + sum([operacao.valor for operacao in OperacaoFundoInvestimento.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='V')])
     
     # Letras de Crédito
     if 'L' in tipo_investimentos:
@@ -270,7 +275,7 @@ def formatar_zeros_a_direita_apos_2_casas_decimais(valor):
     """
     if valor == 0:
         return '0.00'
-    str_valor_formatado = str(valor)
+    str_valor_formatado = '{0:f}'.format(valor)
     if '.' in str_valor_formatado:
         # Formatar número com casas decimais
         parte_inteira = str_valor_formatado.split('.')[0]
@@ -323,3 +328,18 @@ def buscar_dia_util_aleatorio(data_inicial, data_final):
     while data_aleatoria.weekday() > 4 or verificar_feriado_bovespa(data_aleatoria):
         data_aleatoria = buscar_data_aleatoria(data_inicial, data_final)
     return data_aleatoria
+
+def converter_date_para_utc(data):
+    if isinstance(data, datetime.date):
+        # Verificar offset atual
+        dt = datetime.datetime.now()
+        offset_seconds = timezone.get_current_timezone().utcoffset(dt).total_seconds()
+        
+        date_utc = datetime.datetime(year=data.year, month=data.month, day=data.day) - datetime.timedelta(seconds=offset_seconds)
+        return date_utc 
+    else:
+        raise ValueError('Objeto deve ser do tipo date')
+    
+def formatar_lista_para_string_create(lista):
+    for objeto in lista:
+        print '%s.objects.create(' % (objeto.__class__.__name__) + ', '.join(['%s=%s' % (field.name, getattr(objeto, field.name)) for field in objeto._meta.fields if field.name != 'id']) + ')'

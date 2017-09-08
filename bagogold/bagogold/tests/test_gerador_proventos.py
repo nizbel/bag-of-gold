@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 from bagogold import settings
-from bagogold.bagogold.models.acoes import Acao, Provento, AcaoProvento
+from bagogold.bagogold.models.acoes import Acao, Provento, AcaoProvento, \
+    AtualizacaoSelicProvento
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.fii import FII, ProventoFII
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
     PendenciaDocumentoProvento, InvestidorLeituraDocumento, \
     InvestidorResponsavelPendencia, ProventoAcaoDescritoDocumentoBovespa, \
     AcaoProventoAcaoDescritoDocumentoBovespa, ProventoAcaoDocumento, \
-    ProventoFIIDescritoDocumentoBovespa, ProventoFIIDocumento
+    ProventoFIIDescritoDocumentoBovespa, ProventoFIIDocumento, \
+    SelicProventoAcaoDescritoDocBovespa
 from bagogold.bagogold.testFII import baixar_demonstrativo_rendimentos
 from bagogold.bagogold.utils.gerador_proventos import \
     alocar_pendencia_para_investidor, salvar_investidor_responsavel_por_leitura, \
@@ -175,6 +177,28 @@ class GeradorProventosTestCase(TestCase):
         """Testa erro caso um provento seja gerado novamente"""
         pass
     
+    def test_converter_descricao_jscp_atualizado_selic_acoes_para_provento(self):
+        """Testa criação de provento de JSCP atualizado pela Selic a partir de descrição de provento em documento"""
+        # Criar descrição de provento em JSCP
+        descricao_provento = ProventoAcaoDescritoDocumentoBovespa(acao=Acao.objects.get(ticker='BBAS3'), \
+                                                                  data_ex=datetime.date(2016, 11, 12), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='J', valor_unitario=Decimal(8))
+        descricao_provento.selicproventoacaodescritodocbovespa = SelicProventoAcaoDescritoDocBovespa(data_inicio=datetime.date(2016, 10, 1), data_fim=datetime.date(2016, 11, 20), provento=descricao_provento)
+        provento_convertido = converter_descricao_provento_para_provento_acoes(descricao_provento)[0]
+        provento = Provento(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 11, 12), data_pagamento=datetime.date(2016, 11, 20),
+                                           tipo_provento='J', valor_unitario=Decimal(8))
+        # Verificar valores
+        self.assertEqual(provento_convertido.acao, provento.acao)
+        self.assertEqual(provento_convertido.data_ex, provento.data_ex)
+        self.assertEqual(provento_convertido.data_pagamento, provento.data_pagamento)
+        self.assertEqual(provento_convertido.tipo_provento, provento.tipo_provento)
+        self.assertEqual(provento_convertido.valor_unitario, provento.valor_unitario)
+        
+        # Verificar atualização Selic
+        self.assertTrue(hasattr(provento_convertido, 'atualizacaoselicprovento'))
+        self.assertEqual(provento_convertido.atualizacaoselicprovento.data_inicio, descricao_provento.selicproventoacaodescritodocbovespa.data_inicio)
+        self.assertEqual(provento_convertido.atualizacaoselicprovento.data_fim, descricao_provento.selicproventoacaodescritodocbovespa.data_fim)
+        self.assertEqual(provento_convertido.atualizacaoselicprovento.provento, provento_convertido)
+    
     def test_converter_descricao_dividendos_acoes_para_provento(self):
         """Testa criação de provento de dividendos a partir de descrição de provento em documento"""
         # Criar descrição de provento em dividendos
@@ -189,7 +213,7 @@ class GeradorProventosTestCase(TestCase):
         self.assertEqual(provento_convertido.valor_unitario, provento.valor_unitario)
         
     
-    def test_converter_descricao_jscp_acoes_para_provento_real(self):
+    def test_converter_descricao_jscp_acoes_para_provento(self):
         """Testa criação de provento de JSCP a partir de descrição de provento em documento"""
         # Criar descrição de provento em JSCP
         provento_convertido = converter_descricao_provento_para_provento_acoes(ProventoAcaoDescritoDocumentoBovespa(acao=Acao.objects.get(ticker='BBAS3'), \
@@ -250,6 +274,23 @@ class GeradorProventosTestCase(TestCase):
         self.assertEqual(provento_convertido.tipo_provento, provento.tipo_provento)
         self.assertEqual(provento_convertido.valor_unitario, provento.valor_unitario)
         
+    def test_criacao_descricao_provento_acoes_atualizado_selic(self):
+        """Testa criação de descrição de JSCP atualizado pela Selic"""
+        descricao = ProventoAcaoDescritoDocumentoBovespa(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2007, 3, 22), data_pagamento=datetime.date(2007, 5, 29),
+                                           tipo_provento='J', valor_unitario=Decimal('0.389026'))
+        atualizacao = SelicProventoAcaoDescritoDocBovespa(provento=descricao, data_inicio=datetime.date(2007, 2, 1), data_fim=datetime.date(2007, 5, 29))
+        
+        documento = DocumentoProventoBovespa.objects.create(empresa=Empresa.objects.get(codigo_cvm='1023'), protocolo='113962', tipo='A', \
+                                                            url='http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=199999', \
+                                                            data_referencia=datetime.datetime.strptime('03/03/2016', '%d/%m/%Y'))
+        
+        criar_descricoes_provento_acoes([descricao], [], [atualizacao], documento)
+        
+        self.assertTrue(ProventoAcaoDocumento.objects.filter(documento=documento, versao=1, descricao_provento=descricao).exists())
+        provento_documento = ProventoAcaoDocumento.objects.get(documento=documento, versao=1, descricao_provento=descricao)
+        self.assertTrue(AtualizacaoSelicProvento.objects.filter(provento=provento_documento.provento,
+                                                                data_inicio=datetime.date(2007, 2, 1), data_fim=datetime.date(2007, 5, 29)))
+        
     def test_criacao_descricao_igual_provento_oficial(self):
         """Testa criação de descrição que seja igual a provento oficial que já tenha descrição"""
         acao_bbas = Acao.objects.get(ticker='BBAS3')
@@ -278,7 +319,10 @@ class GeradorProventosTestCase(TestCase):
         descricao_provento_3 = ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=acao_bbas, data_ex=datetime.date(2007, 3, 22), data_pagamento=datetime.date(2007, 5, 29),
                                            tipo_provento='J', valor_unitario=Decimal('0.389026'))
         
-        criar_descricoes_provento_acoes([descricao_provento_2, descricao_provento_3], [], documento_2)
+        criar_descricoes_provento_acoes([descricao_provento_2, descricao_provento_3], [], [], documento_2)
+        
+        # Testar criação de novo provento não oficial com base na descrição 3
+        self.assertTrue(ProventoAcaoDocumento.objects.filter(descricao_provento=descricao_provento_3, versao=1, documento=documento_2).exists())
     
     def test_versionamento_automatico_versao_nao_final_acoes(self):
         """Testa criação automática de versão a partir de um documento de provento de ações, sendo uma versão que não é a final"""
@@ -484,19 +528,78 @@ class GeradorProventosTestCase(TestCase):
         self.assertFalse(resultado)
         self.assertEqual(mensagem, u'A pendência não estava alocada para o investidor')
         
+    def test_copiar_proventos_atualizados_pela_selic(self):
+        """Testa cópia de um provento de JSCP atualizado pela Selic"""
+        provento_1 = Provento.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 12, 12), data_pagamento=datetime.date(2016, 12, 20),
+                                           tipo_provento='D', valor_unitario=Decimal(9))
+        id_provento_1 = provento_1.id
+        provento_2 = Provento.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 12, 13), data_pagamento=datetime.date(2016, 12, 23),
+                                           tipo_provento='D', valor_unitario=Decimal(10), oficial_bovespa=True)
+        id_provento_2 = provento_2.id
+        atualizacao_selic = AtualizacaoSelicProvento.objects.create(provento=provento_2, data_inicio=datetime.date(2016, 11, 1), data_fim=provento_2.data_pagamento)
+        
+        copiar_proventos_acoes(provento_1, provento_2)
+        
+        # Testar se provento 1 agora possui atualizacao pela Selic
+        self.assertTrue(AtualizacaoSelicProvento.objects.filter(provento=provento_1).exists())
+        self.assertEqual(provento_1.atualizacaoselicprovento.data_inicio, atualizacao_selic.data_inicio)
+        self.assertEqual(provento_1.atualizacaoselicprovento.data_fim, atualizacao_selic.data_fim)
+        
+    def test_copiar_provento_atualizado_pela_selic_sobre_atualizado(self):
+        """Testa cópia de um provento de JSCP atualizado pela Selic sobre um outro provento atualizado"""
+        provento_1 = Provento.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 12, 12), data_pagamento=datetime.date(2016, 12, 20),
+                                           tipo_provento='D', valor_unitario=Decimal(9))
+        id_provento_1 = provento_1.id
+        atualizacao_selic_1 = AtualizacaoSelicProvento.objects.create(provento=provento_1, data_inicio=datetime.date(2016, 11, 1), data_fim=provento_1.data_pagamento)
+        
+        provento_2 = Provento.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 12, 13), data_pagamento=datetime.date(2016, 12, 23),
+                                           tipo_provento='D', valor_unitario=Decimal(10), oficial_bovespa=True)
+        id_provento_2 = provento_2.id
+        atualizacao_selic_2 = AtualizacaoSelicProvento.objects.create(provento=provento_2, data_inicio=datetime.date(2016, 11, 5), data_fim=provento_2.data_pagamento)
+        
+        copiar_proventos_acoes(provento_1, provento_2)
+        
+        # Testar se provento 1 agora possui atualizacao pela Selic
+        self.assertTrue(AtualizacaoSelicProvento.objects.filter(provento=provento_1).exists())
+        self.assertEqual(provento_1.atualizacaoselicprovento.data_inicio, atualizacao_selic_2.data_inicio)
+        self.assertEqual(provento_1.atualizacaoselicprovento.data_fim, atualizacao_selic_2.data_fim)
+        
+        
+    def test_copiar_proventos_apagando_atualizacao_pela_selic(self):
+        """Testa copiar um provento sem atualização sobre um que possua atualização pela Selic"""
+        provento_1 = Provento.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 12, 12), data_pagamento=datetime.date(2016, 12, 20),
+                                           tipo_provento='D', valor_unitario=Decimal(9))
+        id_provento_1 = provento_1.id
+        atualizacao_selic = AtualizacaoSelicProvento.objects.create(provento=provento_1, data_inicio=datetime.date(2016, 11, 1), data_fim=provento_1.data_pagamento)
+        provento_2 = Provento.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 12, 13), data_pagamento=datetime.date(2016, 12, 23),
+                                           tipo_provento='D', valor_unitario=Decimal(10), oficial_bovespa=True)
+        id_provento_2 = provento_2.id
+        
+        copiar_proventos_acoes(provento_1, provento_2)
+        
+        # Testar se provento 1 agora possui atualizacao pela Selic
+        self.assertFalse(AtualizacaoSelicProvento.objects.filter(provento=provento_1).exists())
+        
+        # Testar se provento 1 tem agora os dados do provento 2
+        self.assertEqual(Provento.gerador_objects.get(id=id_provento_1).data_ex, provento_2.data_ex)
+        self.assertEqual(Provento.gerador_objects.get(id=id_provento_1).data_pagamento, provento_2.data_pagamento)
+        self.assertEqual(Provento.gerador_objects.get(id=id_provento_1).valor_unitario, provento_2.valor_unitario)
+        
     def test_copiar_proventos_de_dividendos_acoes(self):
         """Testa cópia de um provento de ações, do tipo dividendos"""
         provento_1 = Provento.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 12, 12), data_pagamento=datetime.date(2016, 12, 20),
-                                           tipo_provento='D', valor_unitario=Decimal(10))
+                                           tipo_provento='D', valor_unitario=Decimal(9))
         id_provento_1 = provento_1.id
-        provento_2 = Provento.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 12, 13), data_pagamento=datetime.date(2016, 12, 20),
+        provento_2 = Provento.objects.create(acao=Acao.objects.get(ticker='BBAS3'), data_ex=datetime.date(2016, 12, 13), data_pagamento=datetime.date(2016, 12, 23),
                                            tipo_provento='D', valor_unitario=Decimal(10), oficial_bovespa=True)
         id_provento_2 = provento_2.id
         
         copiar_proventos_acoes(provento_1, provento_2)
         
         # Testar se provento 1 tem agora os dados do provento 2
-        self.assertEqual(Provento.gerador_objects.get(id=id_provento_1).data_ex, datetime.date(2016, 12, 13))
+        self.assertEqual(Provento.gerador_objects.get(id=id_provento_1).data_ex, provento_2.data_ex)
+        self.assertEqual(Provento.gerador_objects.get(id=id_provento_1).data_pagamento, provento_2.data_pagamento)
+        self.assertEqual(Provento.gerador_objects.get(id=id_provento_1).valor_unitario, provento_2.valor_unitario)
             
     def test_copiar_proventos_relacionados_a_documentos(self):
         """Testa a cópia de um provento que tenha um documento relacionado"""
