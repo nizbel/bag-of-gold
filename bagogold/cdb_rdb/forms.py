@@ -104,6 +104,7 @@ class HistoricoPorcentagemCDB_RDBForm(LocalizedModelForm):
         fields = ('porcentagem', 'data', 'cdb_rdb')
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),}
+        labels={'cdb_rdb': 'CDB/RDB'}
         
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
@@ -158,7 +159,8 @@ class HistoricoCarenciaCDB_RDBForm(LocalizedModelForm):
         fields = ('carencia', 'data', 'cdb_rdb')
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),}
-        labels = {'carencia': 'Período de carência',}
+        labels = {'carencia': 'Período de carência',
+                  'cdb_rdb': 'CDB/RDB'}
         
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')

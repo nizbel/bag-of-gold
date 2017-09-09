@@ -17,14 +17,14 @@
 		<div class="form-body">
 			<div class="row">
 				<div class="form-group col-md-6 {% if form_historico_carencia.carencia.errors %} has-error {% endif %}">
-					<label class="control-label col-md-4"> Período de carência: </label>
+					<label class="control-label col-md-4"> {{form_historico_carencia.carencia.label}}: </label>
 					<div class="col-md-8">
 						<input id="id_carencia" type="text" value="{{form_historico_carencia.carencia.value}}" name="carencia" class="form-control">
 						{% if form_historico_carencia.carencia.errors %} <span class="help-block"> {{ form_historico_carencia.carencia.errors.as_text }} </span> {% endif %}
 					</div>
 				</div>
 				<div class="form-group col-md-6 {% if form_historico_carencia.data.errors %} has-error {% endif %}">
-					<label class="control-label col-md-4" style="text-align: left;"> Data da variação: </label>
+					<label class="control-label col-md-4" style="text-align: left;"> {{form_historico_carencia.data.label}}: </label>
 					<div class="col-md-8">
 						<div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" data-date-viewmode="years">
 							<input type="text" class="form-control" id="id_data" name="data" {% if inicial %}value="Carência inicial" disabled="disabled" readonly
@@ -45,7 +45,7 @@
 			</div>
 			<div class="row">
 				<div class="form-group col-md-6 {% if form_historico_carencia.cdb_rdb.errors %} has-error {% endif %}">
-					<label class="control-label col-md-4"> CDB/RDB: </label>
+					<label class="control-label col-md-4"> {{form_historico_carencia.cdb_rdb.label}}: </label>
 					<div class="col-md-8">
 						<select class="selectpicker form-control" disabled id="id_cdb_rdb" name="cdb_rdb">
 							{% for key, value in form_historico_carencia.fields.cdb_rdb.widget.choices %}<option value="{{ key }}" {% if key == form_historico_carencia.cdb_rdb.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
