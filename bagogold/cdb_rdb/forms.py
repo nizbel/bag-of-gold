@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.cdb_rdb.models import CDB_RDB, OperacaoCDB_RDB, \
-    HistoricoPorcentagemCDB_RDB, HistoricoCarenciaCDB_RDB, OperacaoVendaCDB_RDB
+    HistoricoPorcentagemCDB_RDB, HistoricoCarenciaCDB_RDB, OperacaoVendaCDB_RDB, \
+    HistoricoVencimentoCDB_RDB
 from django import forms
 from django.forms import widgets
 import datetime
@@ -203,4 +204,60 @@ class HistoricoCarenciaCDB_RDBForm(LocalizedModelForm):
         # Testar se já existe algum histórico para o investimento na data
         if not self.inicial and cleaned_data.get('data') and HistoricoCarenciaCDB_RDB.objects.filter(cdb_rdb=cleaned_data.get('cdb_rdb'), data=cleaned_data.get('data')).exists():
             raise forms.ValidationError('Já existe uma alteração de carência para essa data')
+        return cleaned_data
+    
+class HistoricoVencimentoCDB_RDBForm(LocalizedModelForm):
+    
+    class Meta:
+        model = HistoricoVencimentoCDB_RDB
+        fields = ('vencimento', 'data', 'cdb_rdb')
+        widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
+                                            'placeholder':'Selecione uma data'}),}
+        labels = {'vencimento': 'Período de vencimento',
+                  'cdb_rdb': 'CDB/RDB'}
+        
+    def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
+        try:
+            self.inicial = kwargs.pop('inicial')
+        except:
+            self.inicial = False
+        try:
+            self.cdb_rdb = kwargs.pop('cdb_rdb')
+        except:
+            self.cdb_rdb = None
+        super(HistoricoVencimentoCDB_RDBForm, self).__init__(*args, **kwargs)
+        if self.cdb_rdb:
+            self.fields['cdb_rdb'].disabled = True
+        if self.inicial:
+            self.fields['data'].disabled = True
+    
+    def clean_vencimento(self):
+        vencimento = self.cleaned_data['vencimento']
+        if vencimento <= 0:
+            raise forms.ValidationError('Período de vencimento deve ser de pelo menos 1 dia')
+        return vencimento
+    
+    def clean_cdb_rdb(self):
+        cdb_rdb = self.cleaned_data['cdb_rdb']
+        if cdb_rdb.investidor != self.investidor:
+            raise forms.ValidationError('CDB/RDB inválido')
+        if hasattr(self.instance, 'cdb_rdb') and cdb_rdb != self.instance.cdb_rdb:
+            raise forms.ValidationError('CDB/RDB não deve ser alterado')
+        return cdb_rdb
+    
+    def clean_data(self):
+        data = self.cleaned_data['data']
+        # Verifica se o registro é da data incial, e se foi feita alteração
+        if self.inicial and data:
+            raise forms.ValidationError('Data inicial não pode ser alterada')
+        elif not self.inicial and not data:
+            raise forms.ValidationError('Data é obrigatória')
+        return data
+    
+    def clean(self):
+        cleaned_data = super(HistoricoVencimentoCDB_RDBForm, self).clean()
+        # Testar se já existe algum histórico para o investimento na data
+        if not self.inicial and cleaned_data.get('data') and HistoricoVencimentoCDB_RDB.objects.filter(cdb_rdb=cleaned_data.get('cdb_rdb'), data=cleaned_data.get('data')).exists():
+            raise forms.ValidationError('Já existe uma alteração de vencimento para essa data')
         return cleaned_data
