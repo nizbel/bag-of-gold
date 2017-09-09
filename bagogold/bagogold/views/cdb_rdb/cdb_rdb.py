@@ -771,7 +771,6 @@ def painel(request):
             operacao.valor_vencimento = Decimal(str_auxiliar[:len(str_auxiliar)-2])
         else:
             operacao.valor_vencimento = operacao.atual
-            print operacao.data_vencimento()
         
         total_atual += operacao.atual
         total_ir += operacao.imposto_renda
