@@ -23,13 +23,13 @@
 		<tr>
 			<th>CDB/RDB</th>
 			<th>Data</th>
-			<th>Taxa (% do DI)</th>
+			<th>Taxa</th>
 			<th>Valor atual</th>
-			<th>Venda permitida?</th>
+			<th><span class="tooltips" data-original-title="Já passou do período de carência?" data-placement="top">Vendível?</span></th>
 			<th>IR</th>
 			<th>IOF</th>
 			<th>Valor líquido</th>
-			<th>Ganho no próx. dia*</th>
+			<th><span class="tooltips" data-original-title="Ganho no próximo dia" data-placement="top">Próx. dia*</span></th>
 			<th>Valor no vencimento*</th>
 		</tr>
 	</thead>
@@ -38,7 +38,7 @@
 		<tr>
 			<td>{{item.investimento.nome}}</td>
 			<td>{{ item.data|date:"d/m/Y" }}</td>
-			<td>{{ item.taxa }}%</td>
+			<td>{{ item.taxa }}%{% if item.investimento.eh_prefixado%} ao ano{% else %} do {{item.investimento.indice}}{% endif %}</td>
 			<td>R${{item.atual|floatformat:2}}</td>
 			<td>{{ item.venda_permitida|yesno:"Sim,Não,Indefinido" }}</td>
 			<td>R${{ item.imposto_renda|floatformat:2 }}</td>
