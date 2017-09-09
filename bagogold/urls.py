@@ -13,6 +13,8 @@ urlpatterns = [
     
     # App bagogold
     url(r'', include('bagogold.bagogold.urls')),
+    # App CDB/RDB
+    url(r'^cdb_rdb/', include('bagogold.cdb_rdb.urls', namespace='cdb_rdb')),
     # App CRI/CRA
     url(r'^cri_cra/', include('bagogold.cri_cra.urls', namespace='cri_cra')),
     # App Criptomoedas
