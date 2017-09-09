@@ -12,7 +12,7 @@ class CDB_RDB (models.Model):
     CDB_RDB_IPCA = 3
     
     nome = models.CharField(u'Nome', max_length=50)
-    investidor = models.ForeignKey('Investidor')
+    investidor = models.ForeignKey('bagogold.Investidor', related_name='cdb_rdb_novo')
     """
     Tipo de investimento, C = CDB, R = RDB
     """
@@ -74,7 +74,7 @@ class OperacaoCDB_RDB (models.Model):
     data = models.DateField(u'Data da operação')
     tipo_operacao = models.CharField(u'Tipo de operação', max_length=1)
     investimento = models.ForeignKey('CDB_RDB')
-    investidor = models.ForeignKey('Investidor')
+    investidor = models.ForeignKey('bagogold.Investidor', related_name='op_cdb_rdb_novo')
     
     def __unicode__(self):
         return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.investimento, self.data)
@@ -161,6 +161,13 @@ class HistoricoCarenciaCDB_RDB (models.Model):
     data = models.DateField(u'Data da variação', blank=True, null=True)
     cdb_rdb = models.ForeignKey('CDB_RDB')
     
+class HistoricoVencimentoCDB_RDB (models.Model):
+    """
+    O período de vencimento é medido em dias
+    """
+    vencimento = models.IntegerField(u'Período de vencimento')
+    data = models.DateField(u'Data da variação', blank=True, null=True)
+    cdb_rdb = models.ForeignKey('CDB_RDB')
             
 class HistoricoValorMinimoInvestimentoCDB_RDB (models.Model):
     valor_minimo = models.DecimalField(u'Valor mínimo para investimento', max_digits=9, decimal_places=2)

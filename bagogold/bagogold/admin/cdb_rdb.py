@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from bagogold.cdb_rdb.models import CDB_RDB, OperacaoCDB_RDB, \
+from bagogold.bagogold.models.cdb_rdb import CDB_RDB, OperacaoCDB_RDB, \
     OperacaoVendaCDB_RDB, HistoricoPorcentagemCDB_RDB, HistoricoCarenciaCDB_RDB, \
     HistoricoValorMinimoInvestimentoCDB_RDB
 from django.contrib import admin
