@@ -16,11 +16,11 @@
     <form method="POST" class="horizontal-form">{% csrf_token %}
         <div class="form-body">
             <div class="row">
-                <div class="form-group col-md-6 {% if form.carencia.errors %} has-error {% endif %}">
-                    <label class="control-label col-md-4"> {{form.carencia.label}}: </label>
+                <div class="form-group col-md-6 {% if form.vencimento.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4"> {{form.vencimento.label}}: </label>
                     <div class="col-md-8">
-                        <input id="id_carencia" type="text" value="{{form.carencia.value}}" name="carencia" class="form-control">
-                        {% if form.carencia.errors %} <span class="help-block"> {{ form.carencia.errors.as_text }} </span> {% endif %}
+                        <input id="id_vencimento" type="text" value="{{form.vencimento.value}}" name="vencimento" class="form-control">
+                        {% if form.vencimento.errors %} <span class="help-block"> {{ form.vencimento.errors.as_text }} </span> {% endif %}
                     </div>
                 </div>
                 <div class="form-group col-md-6 {% if form.data.errors %} has-error {% endif %}">
@@ -78,7 +78,7 @@
 {{ form.media }}
 <script>
 $( document ).ready(function() {    
-    $("input[name='carencia']").TouchSpin({
+    $("input[name='vencimento']").TouchSpin({
     	initval: 1,
         min: 1,
         max: 1000000000,
