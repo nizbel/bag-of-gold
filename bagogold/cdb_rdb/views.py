@@ -1,22 +1,23 @@
 # -*- coding: utf-8 -*-
 
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
-from bagogold.cdb_rdb.forms import OperacaoCDB_RDBForm, \
-    HistoricoPorcentagemCDB_RDBForm, CDB_RDBForm, HistoricoCarenciaCDB_RDBForm
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoCDB_RDBFormSet
 from bagogold.bagogold.forms.utils import LocalizedModelForm
-from bagogold.cdb_rdb.models import OperacaoCDB_RDB, \
-    HistoricoPorcentagemCDB_RDB, CDB_RDB, HistoricoCarenciaCDB_RDB, \
-    OperacaoVendaCDB_RDB
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoCDB_RDB, Divisao
 from bagogold.bagogold.models.lc import HistoricoTaxaDI
 from bagogold.bagogold.models.td import HistoricoIPCA
-from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa_di, \
-    calcular_valor_atualizado_com_taxas_di,\
+    calcular_valor_atualizado_com_taxas_di, \
     calcular_valor_atualizado_com_taxa_prefixado
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo, \
     qtd_dias_uteis_no_periodo, calcular_iof_e_ir_longo_prazo
+from bagogold.cdb_rdb.forms import OperacaoCDB_RDBForm, \
+    HistoricoPorcentagemCDB_RDBForm, CDB_RDBForm, HistoricoCarenciaCDB_RDBForm, \
+    HistoricoVencimentoCDB_RDBForm
+from bagogold.cdb_rdb.models import OperacaoCDB_RDB, HistoricoPorcentagemCDB_RDB, \
+    CDB_RDB, HistoricoCarenciaCDB_RDB, OperacaoVendaCDB_RDB, \
+    HistoricoVencimentoCDB_RDB
+from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -42,6 +43,7 @@ def detalhar_cdb_rdb(request, cdb_rdb_id):
     
     historico_porcentagem = HistoricoPorcentagemCDB_RDB.objects.filter(cdb_rdb=cdb_rdb)
     historico_carencia = HistoricoCarenciaCDB_RDB.objects.filter(cdb_rdb=cdb_rdb)
+    historico_vencimento = HistoricoVencimentoCDB_RDB.objects.filter(cdb_rdb=cdb_rdb)
     
     # Inserir dados do investimento
     cdb_rdb.tipo = cdb_rdb.descricao_tipo()
@@ -98,14 +100,14 @@ def detalhar_cdb_rdb(request, cdb_rdb_id):
         cdb_rdb.lucro = cdb_rdb.saldo_atual - cdb_rdb.total_investido
         cdb_rdb.lucro_percentual = cdb_rdb.lucro / cdb_rdb.total_investido * 100
     try: 
-        cdb_rdb.dias_proxima_retirada = (min(operacao.data + datetime.timedelta(days=operacao.carencia()) for operacao in operacoes if \
-                                             (operacao.data + datetime.timedelta(days=operacao.carencia())) > datetime.date.today()) - datetime.date.today()).days
+        cdb_rdb.dias_prox_vencimento = (min(operacao.data + datetime.timedelta(days=operacao.vencimento()) for operacao in operacoes if \
+                                             (operacao.data + datetime.timedelta(days=operacao.vencimento())) > datetime.date.today()) - datetime.date.today()).days
     except ValueError:
-        cdb_rdb.dias_proxima_retirada = 0
+        cdb_rdb.dias_prox_vencimento = 0
     
     
     return TemplateResponse(request, 'cdb_rdb/detalhar_cdb_rdb.html', {'cdb_rdb': cdb_rdb, 'historico_porcentagem': historico_porcentagem,
-                                                                       'historico_carencia': historico_carencia})
+                                                                       'historico_carencia': historico_carencia, 'historico_vencimento': historico_vencimento})
 
 @login_required
 @adiciona_titulo_descricao('Editar CDB/RDB', 'Editar os dados de um CDB/RDB')
@@ -242,6 +244,57 @@ def editar_historico_porcentagem(request, historico_porcentagem_id):
             
     return TemplateResponse(request, 'cdb_rdb/editar_historico_porcentagem.html', {'form_historico_porcentagem': form_historico_porcentagem, 'inicial': inicial}) 
     
+@login_required
+@adiciona_titulo_descricao('Editar registro de vencimento de um CDB/RDB', 'Alterar um registro de vencimento no '
+                                                                        'histórico do CDB/RDB')
+def editar_historico_vencimento(request, historico_vencimento_id):
+    investidor = request.user.investidor
+    historico_vencimento = get_object_or_404(HistoricoVencimentoCDB_RDB, id=historico_vencimento_id)
+    
+    if historico_vencimento.cdb_rdb.investidor != investidor:
+        raise PermissionDenied
+    
+    if request.method == 'POST':
+        if request.POST.get("save"):
+            if historico_vencimento.data is None:
+                inicial = True
+                form_historico_carencia = HistoricoVencimentoCDB_RDBForm(request.POST, instance=historico_vencimento, cdb_rdb=historico_vencimento.cdb_rdb, \
+                                                                       investidor=investidor, inicial=inicial)
+            else:
+                inicial = False
+                form_historico_carencia = HistoricoVencimentoCDB_RDBForm(request.POST, instance=historico_vencimento, cdb_rdb=historico_vencimento.cdb_rdb, \
+                                                                       investidor=investidor)
+            if form_historico_carencia.is_valid():
+                historico_vencimento.save()
+                messages.success(request, 'Histórico de carência editado com sucesso')
+                return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': historico_vencimento.cdb_rdb.id}))
+            
+            for erro in [erro for erro in form_historico_carencia.non_field_errors()]:
+                messages.error(request, erro)
+                
+        elif request.POST.get("delete"):
+            if historico_vencimento.data is None:
+                messages.error(request, 'Valor inicial de carência não pode ser excluído')
+                return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': historico_vencimento.cdb_rdb.id}))
+            # Pegar investimento para o redirecionamento no caso de exclusão
+            inicial = False
+            cdb_rdb = historico_vencimento.cdb_rdb
+            historico_vencimento.delete()
+            messages.success(request, 'Histórico de carência excluído com sucesso')
+            return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': cdb_rdb.id}))
+ 
+    else:
+        if historico_vencimento.data is None:
+            inicial = True
+            form_historico_vencimento = HistoricoVencimentoCDB_RDBForm(instance=historico_vencimento, cdb_rdb=historico_vencimento.cdb_rdb, \
+                                                                   investidor=investidor, inicial=inicial)
+        else: 
+            inicial = False
+            form_historico_vencimento = HistoricoVencimentoCDB_RDBForm(instance=historico_vencimento, cdb_rdb=historico_vencimento.cdb_rdb, \
+                                                                   investidor=investidor)
+            
+    return TemplateResponse(request, 'cdb_rdb/editar_historico_vencimento.html', {'form_historico_vencimento': form_historico_vencimento, 'inicial': inicial})     
+
 @login_required
 @adiciona_titulo_descricao('Editar operação em CDB/RDB', 'Alterar valores de uma operação de compra/venda em CDB/RDB')
 def editar_operacao_cdb_rdb(request, operacao_id):
@@ -533,6 +586,30 @@ def inserir_historico_porcentagem_cdb_rdb(request, cdb_rdb_id):
         form = HistoricoPorcentagemCDB_RDBForm(initial={'cdb_rdb': cdb_rdb.id}, cdb_rdb=cdb_rdb, investidor=investidor)
             
     return TemplateResponse(request, 'cdb_rdb/inserir_historico_porcentagem_cdb_rdb.html', {'form': form})
+
+@login_required
+@adiciona_titulo_descricao('Inserir registro de vencimento para um CDB/RDB', 'Inserir registro de alteração de vencimento ao histórico de '
+                                                                           'um CDB/RDB')
+def inserir_historico_vencimento_cdb_rdb(request, cdb_rdb_id):
+    investidor = request.user.investidor
+    cdb_rdb = get_object_or_404(CDB_RDB, id=cdb_rdb_id)
+    
+    if cdb_rdb.investidor != investidor:
+        raise PermissionDenied
+    
+    if request.method == 'POST':
+        form = HistoricoVencimentoCDB_RDBForm(request.POST, initial={'cdb_rdb': cdb_rdb.id}, cdb_rdb=cdb_rdb, investidor=investidor)
+        if form.is_valid():
+            historico = form.save()
+            messages.success(request, 'Histórico de período de vencimento para %s alterado com sucesso' % historico.cdb_rdb)
+            return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': cdb_rdb.id}))
+        
+        for erro in [erro for erro in form.non_field_errors()]:
+            messages.error(request, erro)
+    else:
+        form = HistoricoVencimentoCDB_RDBForm(initial={'cdb_rdb': cdb_rdb.id}, cdb_rdb=cdb_rdb, investidor=investidor)
+            
+    return TemplateResponse(request, 'cdb_rdb/inserir_historico_vencimento_cdb_rdb.html', {'form': form})
 
 @login_required
 @adiciona_titulo_descricao('Inserir operação em CDB/RDB', 'Inserir registro de operação de compra/venda em CDB/RDB')

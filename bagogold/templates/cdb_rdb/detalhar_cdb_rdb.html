@@ -71,8 +71,12 @@
 							<div class="m-grid-col m-grid-col-left">R$ {{ cdb_rdb.lucro|floatformat:2 }} ({{ cdb_rdb.lucro_percentual|floatformat:2 }}%)</div>
 						</div>
 						<div class="m-grid-row">
-							<div class="m-grid-col m-grid-col-left"><strong>Dias para próx. retirada:</strong></div>
-							<div class="m-grid-col m-grid-col-left">{{ cdb_rdb.dias_proxima_retirada }} dia(s)</div>
+							<div class="m-grid-col m-grid-col-left">
+                                <span class="tooltips" data-placement="top" data-original-title="Dias para próximo vencimento">
+                                    <strong>Dias para próx. venc.:</strong>
+                                </span>
+                            </div>
+							<div class="m-grid-col m-grid-col-left">{{ cdb_rdb.dias_prox_vencimento }} dia(s)</div>
 							<div class="m-grid-col m-grid-col-left"><strong>IR:</strong></div>
 							<div class="m-grid-col m-grid-col-left">R$ {{cdb_rdb.total_ir|floatformat:2}}</div>
 							<div class="m-grid-col m-grid-col-left"><strong>IOF:</strong></div>
@@ -83,7 +87,7 @@
 			</div>
 			<!-- END Portlet PORTLET-->
 		</div>
-		<div class="col-md-6">
+		<div class="col-md-4">
 			<!-- BEGIN Portlet PORTLET-->
 			<div class="portlet box yellow-crusta">
 				<div class="portlet-title">
@@ -116,7 +120,7 @@
 			</div>
 			<!-- END Portlet PORTLET-->
 		</div>
-		<div class="col-md-6">
+		<div class="col-md-4">
 			<!-- BEGIN Portlet PORTLET-->
 			<div class="portlet box yellow-crusta">
 				<div class="portlet-title">
@@ -149,6 +153,39 @@
 			</div>
 			<!-- END Portlet PORTLET-->
 		</div>
+        <div class="col-md-4">
+            <!-- BEGIN Portlet PORTLET-->
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-calendar-check-o"></i>Vencimento</div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <table id="historico_vencimento" class="table table-striped table-bordered table-hover table-header-fixed">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Vencimento (dias)</th>
+                            <th><a href="{% url 'cdb_rdb:inserir_historico_vencimento_cdb_rdb' cdb_rdb.id %}" class="btn btn-sm green-steel">Inserir</a></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in historico_vencimento %}
+                    <tr>
+                        <td>{{item.data|default:"Inicial"}}</td>
+                        <td>{{item.vencimento}} dia(s)</td>
+                        <td><a href="{% url 'cdb_rdb:editar_historico_vencimento' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- END Portlet PORTLET-->
+        </div>
 	</div>
 </div>
 
