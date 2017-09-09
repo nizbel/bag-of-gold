@@ -732,11 +732,11 @@ def painel(request):
         investidor = request.user.investidor
     else:
         return TemplateResponse(request, 'cdb_rdb/painel.html', {'operacoes': list(), 'dados': {}})
-        
+         
     # Processa primeiro operações de venda (V), depois compra (C)
 #     operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
 #     print operacoes, len(operacoes)
-    
+     
     operacoes = buscar_operacoes_vigentes_ate_data(investidor).order_by('data') 
     if not operacoes:
         dados = {}
@@ -745,10 +745,10 @@ def painel(request):
         dados['total_iof'] = Decimal(0)
         dados['total_ganho_prox_dia'] = Decimal(0)
         return TemplateResponse(request, 'cdb_rdb/painel.html', {'operacoes': {}, 'dados': dados})
-    
+     
     # Pegar data final, nivelar todas as operações para essa data
     data_final = HistoricoTaxaDI.objects.filter().order_by('-data')[0].data
-    
+     
     # Prepara o campo valor atual
     for operacao in operacoes:
         operacao.quantidade = operacao.qtd_disponivel_venda
@@ -764,24 +764,24 @@ def painel(request):
             operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.atual, operacao.taxa)
         elif operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
             # Prefixado
-            # Calcular quantidade dias para valorização
-            qtd_dias = qtd_dias_uteis_no_periodo(operacao.data, data_final_valorizacao)
+            # Calcular quantidade dias para valorização, adicionar 1 pois a função exclui a data final
+            qtd_dias = qtd_dias_uteis_no_periodo(operacao.data, data_final_valorizacao) + 1
             operacao.atual = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa, qtd_dias)
         # Arredondar valores
         str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
         operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-                        
+                         
     # Remover operações que não estejam mais rendendo
     operacoes = [operacao for operacao in operacoes if (operacao.atual > 0 and operacao.tipo_operacao == 'C')]
-    
+     
     total_atual = 0
     total_ir = 0
     total_iof = 0
     total_ganho_prox_dia = 0
     total_vencimento = 0
-    
+     
     ultima_taxa_di = HistoricoTaxaDI.objects.filter().order_by('-data')[0].taxa
-    
+     
     for operacao in operacoes:
         # Calcular o ganho no dia seguinte
         if data_final < operacao.data_vencimento():
@@ -797,7 +797,7 @@ def painel(request):
             total_ganho_prox_dia += operacao.ganho_prox_dia
         else:
             operacao.ganho_prox_dia = Decimal('0.00')
-        
+         
         # Calcular impostos
         qtd_dias = (datetime.date.today() - operacao.data).days
 #         print qtd_dias, calcular_iof_regressivo(qtd_dias)
@@ -812,10 +812,10 @@ def painel(request):
             operacao.imposto_renda =  Decimal(0.175) * (operacao.atual - operacao.inicial - operacao.iof)
         else: 
             operacao.imposto_renda =  Decimal(0.15) * (operacao.atual - operacao.inicial - operacao.iof)
-        
+         
         # Valor líquido
         operacao.valor_liquido = operacao.atual - operacao.imposto_renda - operacao.iof
-        
+         
         # Estimativa para o valor do investimento na data de vencimento
         if data_final < operacao.data_vencimento():
             qtd_dias_uteis_ate_vencimento = qtd_dias_uteis_no_periodo(data_final + datetime.timedelta(days=1), operacao.data_vencimento())
@@ -830,12 +830,12 @@ def painel(request):
             operacao.valor_vencimento = Decimal(str_auxiliar[:len(str_auxiliar)-2])
         else:
             operacao.valor_vencimento = operacao.atual
-        
+         
         total_atual += operacao.atual
         total_ir += operacao.imposto_renda
         total_iof += operacao.iof
         total_vencimento += operacao.valor_vencimento
-    
+     
     # Popular dados
     dados = {}
     dados['data_di_mais_recente'] = data_final
@@ -845,7 +845,7 @@ def painel(request):
     dados['total_liquido'] = total_atual - total_ir - total_iof
     dados['total_ganho_prox_dia'] = total_ganho_prox_dia
     dados['total_vencimento'] = total_vencimento
-    
+     
     return TemplateResponse(request, 'cdb_rdb/painel.html', {'operacoes': operacoes, 'dados': dados})
 
 @adiciona_titulo_descricao('Sobre CDB/RDB', 'Detalha o que são CDB e RDB')
