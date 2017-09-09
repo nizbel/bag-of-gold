@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.forms.utils import LocalizedModelForm
-from bagogold.bagogold.models.cdb_rdb import CDB_RDB, OperacaoCDB_RDB, \
+from bagogold.cdb_rdb.models import CDB_RDB, OperacaoCDB_RDB, \
     HistoricoPorcentagemCDB_RDB, HistoricoCarenciaCDB_RDB, OperacaoVendaCDB_RDB
 from django import forms
 from django.forms import widgets
