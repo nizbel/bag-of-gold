@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
-from bagogold.cdb_rdb.models import OperacaoCDB_RDB, \
-    HistoricoPorcentagemCDB_RDB, OperacaoVendaCDB_RDB, CDB_RDB
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoCDB_RDB
 from bagogold.bagogold.models.lc import HistoricoTaxaDI
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di, \
     calcular_valor_atualizado_com_taxa_prefixado
 from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo
+from bagogold.cdb_rdb.models import OperacaoCDB_RDB, HistoricoPorcentagemCDB_RDB, \
+    OperacaoVendaCDB_RDB, CDB_RDB
 from decimal import Decimal, ROUND_DOWN
 from django.db.models import Q
 from django.db.models.aggregates import Sum, Count
+from django.db.models.expressions import F
+from django.db.models.functions import Coalesce
 import datetime
 
 def calcular_valor_venda_cdb_rdb(operacao_venda):
@@ -133,3 +135,16 @@ def calcular_valor_cdb_rdb_ate_dia_por_divisao(dia, divisao_id):
         cdb_rdb[cdb_rdb_id] += sum([operacao.atual for operacao in operacoes if operacao.investimento.id == cdb_rdb_id])
         
     return cdb_rdb
+
+def buscar_operacoes_vigentes_ate_data(investidor, data=datetime.date.today()):
+    """
+    Calcula o valor das operações em CDB/RDB vigentes até data especificada
+    Parâmetros: Investidor
+                Data
+    Retorno: Lista de operações vigentes, adicionando os campos qtd_disponivel_venda e qtd_vendida
+    """
+    operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor, tipo_operacao='C').exclude(data__isnull=True) \
+        .annotate(qtd_vendida=Coalesce(Sum('operacao_compra__operacao_venda__quantidade'), 0)).exclude(quantidade=F('qtd_vendida')) \
+        .annotate(qtd_disponivel_venda=(F('quantidade') - F('qtd_vendida')))
+
+    return operacoes
