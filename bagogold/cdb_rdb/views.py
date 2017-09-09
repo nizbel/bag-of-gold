@@ -17,13 +17,16 @@ from bagogold.cdb_rdb.forms import OperacaoCDB_RDBForm, \
 from bagogold.cdb_rdb.models import OperacaoCDB_RDB, HistoricoPorcentagemCDB_RDB, \
     CDB_RDB, HistoricoCarenciaCDB_RDB, OperacaoVendaCDB_RDB, \
     HistoricoVencimentoCDB_RDB
-from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia
+from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia,\
+    buscar_operacoes_vigentes_ate_data
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
 from django.db.models import Count
+from django.db.models.aggregates import Sum
+from django.db.models.expressions import F
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -731,78 +734,43 @@ def painel(request):
         return TemplateResponse(request, 'cdb_rdb/painel.html', {'operacoes': list(), 'dados': {}})
         
     # Processa primeiro operações de venda (V), depois compra (C)
-    operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
+#     operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
+#     print operacoes, len(operacoes)
+    
+    operacoes = buscar_operacoes_vigentes_ate_data(investidor).order_by('data') 
     if not operacoes:
         dados = {}
         dados['total_atual'] = Decimal(0)
         dados['total_ir'] = Decimal(0)
         dados['total_iof'] = Decimal(0)
         dados['total_ganho_prox_dia'] = Decimal(0)
-        return TemplateResponse(request, 'cdb_rdb/painel.html', {'operacoes': {}})
+        return TemplateResponse(request, 'cdb_rdb/painel.html', {'operacoes': {}, 'dados': dados})
+    
+    # Pegar data final, nivelar todas as operações para essa data
+    data_final = HistoricoTaxaDI.objects.filter().order_by('-data')[0].data
     
     # Prepara o campo valor atual
     for operacao in operacoes:
+        operacao.quantidade = operacao.qtd_disponivel_venda
         operacao.atual = operacao.quantidade
         operacao.inicial = operacao.quantidade
-        if operacao.tipo_operacao == 'C':
-            operacao.tipo = 'Compra'
-            operacao.taxa = operacao.porcentagem()
-        else:
-            operacao.tipo = 'Venda'
-    
-    # Pegar data inicial
-    data_inicial = operacoes.order_by('data')[0].data
-    
-    # Pegar data final
-    data_final = HistoricoTaxaDI.objects.filter().order_by('-data')[0].data
-    
-    data_iteracao = data_inicial
-    
-    while data_iteracao <= data_final:
-        taxa_do_dia = HistoricoTaxaDI.objects.get(data=data_iteracao).taxa
-        
-        # Processar operações
-        for operacao in operacoes:     
-            if (operacao.data <= data_iteracao) and (data_iteracao <= operacao.data_vencimento()):     
-                # Verificar se se trata de compra ou venda
-                if operacao.tipo_operacao == 'C':
-                    if (data_iteracao < operacao.data_vencimento()):
-                        # Calcular o valor atualizado para cada operacao
-                        if operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_DI and taxa_do_dia > 0:
-                            # DI
-                            operacao.atual = calcular_valor_atualizado_com_taxa_di(taxa_do_dia, operacao.atual, operacao.taxa)
-                        elif operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
-                            # Prefixado
-                            operacao.atual = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa)
-                    # Arredondar na última iteração
-                    if (data_iteracao == data_final) or (data_iteracao == operacao.data_vencimento()):
-                        str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
-                        operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+        operacao.taxa = operacao.porcentagem()
+        data_final_valorizacao = min(data_final, operacao.data_vencimento() - datetime.timedelta(days=1))
+        # Calcular o valor atualizado
+        if operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
+            # DI
+            historico = HistoricoTaxaDI.objects.filter(data__range=[operacao.data, data_final_valorizacao])
+            taxas_dos_dias = dict(historico.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
+            operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.atual, operacao.taxa)
+        elif operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
+            # Prefixado
+            # Calcular quantidade dias para valorização
+            qtd_dias = qtd_dias_uteis_no_periodo(operacao.data, data_final_valorizacao)
+            operacao.atual = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa, qtd_dias)
+        # Arredondar valores
+        str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
+        operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
                         
-                elif operacao.tipo_operacao == 'V':
-                    if (operacao.data == data_iteracao):
-#                         operacao.inicial = operacao.quantidade
-                        # Remover quantidade da operação de compra
-                        operacao_compra_id = operacao.operacao_compra_relacionada().id
-                        for operacao_c in operacoes:
-                            if (operacao_c.id == operacao_compra_id):
-                                # Configurar taxa para a mesma quantidade da compra
-                                operacao.taxa = operacao_c.taxa
-                                operacao.atual = (operacao.quantidade/operacao_c.quantidade) * operacao_c.atual
-                                operacao_c.atual -= operacao.atual
-                                operacao_c.inicial -= operacao.inicial
-                                operacao.atual -= sum(calcular_iof_e_ir_longo_prazo(operacao.atual - operacao.inicial, (operacao.data - operacao_c.data).days))
-                                str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
-                                operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-                                break
-                
-        # Proximo dia útil
-        proximas_datas = HistoricoTaxaDI.objects.filter(data__gt=data_iteracao).order_by('data')
-        if len(proximas_datas) > 0:
-            data_iteracao = proximas_datas[0].data
-        else:
-            break
-    
     # Remover operações que não estejam mais rendendo
     operacoes = [operacao for operacao in operacoes if (operacao.atual > 0 and operacao.tipo_operacao == 'C')]
     
@@ -811,6 +779,9 @@ def painel(request):
     total_iof = 0
     total_ganho_prox_dia = 0
     total_vencimento = 0
+    
+    ultima_taxa_di = HistoricoTaxaDI.objects.filter().order_by('-data')[0].taxa
+    
     for operacao in operacoes:
         # Calcular o ganho no dia seguinte
         if data_final < operacao.data_vencimento():
@@ -819,7 +790,7 @@ def painel(request):
                 operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa) - operacao.atual
             elif operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
                 # Considerar rendimento do dia anterior
-                operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa_di(taxa_do_dia, operacao.atual, operacao.taxa) - operacao.atual
+                operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa_di(ultima_taxa_di, operacao.atual, operacao.taxa) - operacao.atual
             # Formatar
             str_auxiliar = str(operacao.ganho_prox_dia.quantize(Decimal('.0001')))
             operacao.ganho_prox_dia = Decimal(str_auxiliar[:len(str_auxiliar)-2])
