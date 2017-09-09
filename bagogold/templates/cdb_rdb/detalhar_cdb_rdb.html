@@ -37,7 +37,7 @@
 							<div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
 							<div class="m-grid-col m-grid-col-left">{{cdb_rdb.tipo}}</div>
 							<div class="m-grid-col m-grid-col-left"><strong>Rendimento atual:</strong></div>
-							<div class="m-grid-col m-grid-col-left">{{cdb_rdb.porcentagem_atual}}% {% if cdb_rdb.tipo_rendimento == 1 %}ao ano{% elif cdb_rdb.tipo_rendimento == 2 %}do DI{% endif %}</div>
+							<div class="m-grid-col m-grid-col-left">{{cdb_rdb.porcentagem_atual}}% {% if cdb_rdb.eh_prefixado %}ao ano{% else %}do {{cdb_rdb.indice}}{% endif %}</div>
 							<div class="m-grid-col m-grid-col-left"><strong>Carência atual:</strong></div>
 							<div class="m-grid-col m-grid-col-left">{{cdb_rdb.carencia_atual}} dia(s)</div>
 						</div>
