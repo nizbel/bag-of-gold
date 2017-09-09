@@ -200,9 +200,9 @@ class Divisao (models.Model):
         for operacao_divisao in DivisaoOperacaoFundoInvestimento.objects.filter(divisao=self, operacao__data__lte=data):
             operacao = operacao_divisao.operacao
             if operacao.tipo_operacao == 'C':
-                saldo -= (operacao_divisao.quantidade * operacao.valor_cota())
+                saldo -= operacao_divisao.quantidade 
             elif operacao.tipo_operacao == 'V':
-                saldo += (operacao_divisao.quantidade * operacao.valor_cota())
+                saldo += operacao_divisao.quantidade
                 
         # Transferências
         saldo += -(TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_FUNDO_INV, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
