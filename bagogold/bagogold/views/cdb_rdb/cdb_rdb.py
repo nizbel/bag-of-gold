@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
-from bagogold.bagogold.forms.cdb_rdb import OperacaoCDB_RDBForm, \
+from bagogold.cdb_rdb.forms import OperacaoCDB_RDBForm, \
     HistoricoPorcentagemCDB_RDBForm, CDB_RDBForm, HistoricoCarenciaCDB_RDBForm
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoCDB_RDBFormSet
 from bagogold.bagogold.forms.utils import LocalizedModelForm
-from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB, \
+from bagogold.cdb_rdb.models import OperacaoCDB_RDB, \
     HistoricoPorcentagemCDB_RDB, CDB_RDB, HistoricoCarenciaCDB_RDB, \
     OperacaoVendaCDB_RDB
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoCDB_RDB, Divisao
 from bagogold.bagogold.models.lc import HistoricoTaxaDI
 from bagogold.bagogold.models.td import HistoricoIPCA
-from bagogold.bagogold.utils.cdb_rdb import calcular_valor_cdb_rdb_ate_dia
+from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa_di, \
     calcular_valor_atualizado_com_taxas_di,\
     calcular_valor_atualizado_com_taxa_prefixado

@@ -128,9 +128,9 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDEFILR
     B = Buy and Hold; C = CDB/RDB; D = Tesouro Direto; E = Debêntures; F = FII; I = Fundo de investimento; L = Letra de Crédito; R = CRI/CRA; T = Trading;
     Retorno: Valores de rendimentos para cada tipo de investimento {Tipo: Valor}
     """
-    from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB
+    from bagogold.cdb_rdb.models import OperacaoCDB_RDB
     from bagogold.bagogold.utils.acoes import calcular_poupanca_prov_acao_ate_dia
-    from bagogold.bagogold.utils.cdb_rdb import calcular_valor_cdb_rdb_ate_dia, calcular_valor_venda_cdb_rdb
+    from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, calcular_valor_venda_cdb_rdb
     from bagogold.bagogold.utils.fii import calcular_poupanca_prov_fii_ate_dia
     from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia, calcular_valor_venda_lc
     from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia

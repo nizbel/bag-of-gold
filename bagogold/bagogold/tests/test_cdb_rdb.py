@@ -10,9 +10,9 @@ from decimal import Decimal, ROUND_DOWN
 from django.contrib.auth.models import User
 from django.test import TestCase
 import datetime
-from bagogold.bagogold.models.cdb_rdb import CDB_RDB,\
+from bagogold.cdb_rdb.models import CDB_RDB,\
     HistoricoPorcentagemCDB_RDB, OperacaoCDB_RDB
-from bagogold.bagogold.utils.cdb_rdb import calcular_valor_cdb_rdb_ate_dia
+from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia
 
 class ValorCDB_RDBAteDiaTestCase(TestCase):
     

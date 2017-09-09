@@ -3,7 +3,7 @@ from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoForm, \
     TransferenciaEntreDivisoesForm
 from bagogold.bagogold.models.acoes import ValorDiarioAcao, HistoricoAcao, Acao
-from bagogold.bagogold.models.cdb_rdb import CDB_RDB, \
+from bagogold.cdb_rdb.models import CDB_RDB, \
     HistoricoPorcentagemCDB_RDB
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
     DivisaoOperacaoFII, DivisaoOperacaoTD, DivisaoOperacaoAcao, \
@@ -15,7 +15,7 @@ from bagogold.bagogold.models.lc import HistoricoPorcentagemLetraCredito, \
 from bagogold.bagogold.models.td import ValorDiarioTitulo, HistoricoTitulo, \
     Titulo
 from bagogold.bagogold.utils.acoes import calcular_qtd_acoes_ate_dia_por_divisao
-from bagogold.bagogold.utils.cdb_rdb import \
+from bagogold.cdb_rdb.utils import \
     calcular_valor_cdb_rdb_ate_dia_por_divisao
 from bagogold.bagogold.utils.debenture import \
     calcular_valor_debentures_ate_dia_por_divisao

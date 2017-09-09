@@ -3,7 +3,7 @@ from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.misc import ContatoForm
 from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, Provento, \
     ValorDiarioAcao
-from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB
+from bagogold.cdb_rdb.models import OperacaoCDB_RDB
 from bagogold.bagogold.models.debentures import OperacaoDebenture, \
     HistoricoValorDebenture
 from bagogold.bagogold.models.fii import OperacaoFII, HistoricoFII, ProventoFII, \
@@ -11,7 +11,7 @@ from bagogold.bagogold.models.fii import OperacaoFII, HistoricoFII, ProventoFII,
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
     ValorDiarioTitulo, Titulo
-from bagogold.bagogold.utils.cdb_rdb import calcular_valor_cdb_rdb_ate_dia, \
+from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, \
     calcular_valor_venda_cdb_rdb
 from bagogold.bagogold.utils.debenture import calcular_valor_debentures_ate_dia
 from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \

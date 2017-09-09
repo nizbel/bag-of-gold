@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB, \
+from bagogold.cdb_rdb.models import OperacaoCDB_RDB, \
     HistoricoPorcentagemCDB_RDB, OperacaoVendaCDB_RDB, CDB_RDB
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
     DivisaoOperacaoCDB_RDB

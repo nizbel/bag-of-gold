@@ -11,7 +11,7 @@ from bagogold.bagogold.models.td import OperacaoTitulo, ValorDiarioTitulo, \
     HistoricoTitulo
 from bagogold.bagogold.utils.acoes import quantidade_acoes_ate_dia, \
     calcular_poupanca_prov_acao_ate_dia
-from bagogold.bagogold.utils.cdb_rdb import calcular_valor_cdb_rdb_ate_dia
+from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia
 from bagogold.bagogold.utils.debenture import calcular_qtd_debentures_ate_dia
 from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia_por_ticker, \
     calcular_qtd_fiis_ate_dia, calcular_poupanca_prov_fii_ate_dia
@@ -65,7 +65,7 @@ def buscar_acoes_investidor_na_data(investidor, data=datetime.date.today(), dest
     return acoes_investidor
 
 def buscar_ultimas_operacoes(investidor, quantidade_operacoes):
-    from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB
+    from bagogold.cdb_rdb.models import OperacaoCDB_RDB
     """
     Busca as últimas operações feitas pelo investidor, ordenadas por data decrescente
     Parâmetros: Investidor
@@ -91,7 +91,7 @@ def buscar_ultimas_operacoes(investidor, quantidade_operacoes):
     return ultimas_operacoes
 
 def buscar_operacoes_no_periodo(investidor, data_inicial, data_final):
-    from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB
+    from bagogold.cdb_rdb.models import OperacaoCDB_RDB
     """
     Busca as operações feitas pelo investidor, ordenadas por data crescente, no período especificado
     Parâmetros: Investidor
