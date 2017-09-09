@@ -716,9 +716,9 @@ def listar_cdb_rdb(request):
         # Preparar o valor mais atual de rendimento
         investimento.rendimento_atual = investimento.porcentagem_atual()
         
-        if investimento.tipo_rendimento == 1:
+        if investimento.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
             investimento.str_tipo_rendimento = 'Prefixado'
-        elif investimento.tipo_rendimento == 2:
+        elif investimento.tipo_rendimento in [CDB_RDB.CDB_RDB_DI, CDB_RDB.CDB_RDB_IPCA]:
             investimento.str_tipo_rendimento = 'Pós-fixado'
         
     return TemplateResponse(request, 'cdb_rdb/listar_cdb_rdb.html', {'cdb_rdb': cdb_rdb})
