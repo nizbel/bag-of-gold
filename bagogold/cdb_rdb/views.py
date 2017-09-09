@@ -812,14 +812,20 @@ def painel(request):
     total_ganho_prox_dia = 0
     total_vencimento = 0
     for operacao in operacoes:
-        # Calcular o ganho no dia seguinte, considerando taxa do dia anterior
+        # Calcular o ganho no dia seguinte
         if data_final < operacao.data_vencimento():
-            operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa_di(taxa_do_dia, operacao.atual, operacao.taxa) - operacao.atual
+            # Se prefixado apenas pegar rendimento de 1 dia
+            if operacao.investimento.eh_prefixado():
+                operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa) - operacao.atual
+            elif operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
+                # Considerar rendimento do dia anterior
+                operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa_di(taxa_do_dia, operacao.atual, operacao.taxa) - operacao.atual
+            # Formatar
             str_auxiliar = str(operacao.ganho_prox_dia.quantize(Decimal('.0001')))
             operacao.ganho_prox_dia = Decimal(str_auxiliar[:len(str_auxiliar)-2])
             total_ganho_prox_dia += operacao.ganho_prox_dia
         else:
-            operacao.ganho_prox_dia = Decimal(0)
+            operacao.ganho_prox_dia = Decimal('0.00')
         
         # Calcular impostos
         qtd_dias = (datetime.date.today() - operacao.data).days
@@ -842,8 +848,13 @@ def painel(request):
         # Estimativa para o valor do investimento na data de vencimento
         if data_final < operacao.data_vencimento():
             qtd_dias_uteis_ate_vencimento = qtd_dias_uteis_no_periodo(data_final + datetime.timedelta(days=1), operacao.data_vencimento())
-            operacao.valor_vencimento = calcular_valor_atualizado_com_taxas_di({HistoricoTaxaDI.objects.get(data=data_final).taxa: qtd_dias_uteis_ate_vencimento},
-                                                 operacao.atual, operacao.taxa)
+            # Se prefixado apenas pegar rendimento de 1 dia
+            if operacao.investimento.eh_prefixado():
+                operacao.valor_vencimento = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa, qtd_dias_uteis_ate_vencimento)
+            elif operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
+                # Considerar rendimento do dia anterior
+                operacao.valor_vencimento = calcular_valor_atualizado_com_taxas_di({HistoricoTaxaDI.objects.get(data=data_final).taxa: qtd_dias_uteis_ate_vencimento},
+                                                     operacao.atual, operacao.taxa)
             str_auxiliar = str(operacao.valor_vencimento.quantize(Decimal('.0001')))
             operacao.valor_vencimento = Decimal(str_auxiliar[:len(str_auxiliar)-2])
         else:

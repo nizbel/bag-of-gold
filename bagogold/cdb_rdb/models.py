@@ -90,11 +90,11 @@ class OperacaoCDB_RDB (models.Model):
     def __unicode__(self):
         return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.investimento, self.data)
     
-    def save(self, *args, **kw):
-        # Apagar operação venda caso operação seja editada para compra
-        if OperacaoVendaCDB_RDB.objects.filter(operacao_venda=self) and self.tipo_operacao == 'C':
-            OperacaoVendaCDB_RDB.objects.get(operacao_venda=self).delete()
-        super(OperacaoCDB_RDB, self).save(*args, **kw)
+#     def save(self, *args, **kw):
+#         # Apagar operação venda caso operação seja editada para compra
+#         if OperacaoVendaCDB_RDB.objects.filter(operacao_venda=self) and self.tipo_operacao == 'C':
+#             OperacaoVendaCDB_RDB.objects.get(operacao_venda=self).delete()
+#         super(OperacaoCDB_RDB, self).save(*args, **kw)
     
     def carencia(self):
         if HistoricoCarenciaCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.investimento).exists():
