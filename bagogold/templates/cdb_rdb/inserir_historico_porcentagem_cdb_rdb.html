@@ -12,57 +12,57 @@
 
 {% block content %}
 <div class="portlet-body form">
-        <!-- BEGIN FORM-->
-        <form method="POST" class="horizontal-form">{% csrf_token %}
-            <div class="form-body">
-                <div class="row">
-                    <div class="form-group col-md-6 {% if form.porcentagem.errors %} has-error {% endif %}">
-                        <label class="control-label col-md-4"> Porcentagem de rendimento: </label>
-                        <div class="col-md-8">
-                            <input id="id_porcentagem" type="text" value="{{form.porcentagem.value}}" name="porcentagem" class="form-control">
-                            {% if form.porcentagem.errors %} <span class="help-block"> {{ form.porcentagem.errors.as_text }} </span> {% endif %}
-                        </div>
-                    </div>
-                    <div class="form-group col-md-6 {% if form.data.errors %} has-error {% endif %}">
-                        <label class="control-label col-md-4" style="text-align: left;"> Data da variação: </label>
-                        <div class="col-md-8">
-                            <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" data-date-viewmode="years">
-                                <input type="text" class="form-control" id="id_data" name="data" 
-                                value="{% if form.data.value|date:'d/m/Y'|default:'' == '' %}{{form.data.value|default:''}}{% else %}{{form.data.value|date:'d/m/Y'}}{% endif %}">
-                                <span class="input-group-btn">
-                                    <button class="btn default" type="button">
-                                        <i class="fa fa-calendar"></i>
-                                    </button>
-                                </span>
-                            </div>
-                            {% if form.data.errors %} <span class="help-block"> {{ form.data.errors.as_text }} </span>
-                            {% else %} <span class="help-block"> Selecione uma data </span>
-                            {% endif %}
-                        </div>
+    <!-- BEGIN FORM-->
+    <form method="POST" class="horizontal-form">{% csrf_token %}
+        <div class="form-body">
+            <div class="row">
+                <div class="form-group col-md-6 {% if form.porcentagem.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4"> {{form.porcentagem.label}}: </label>
+                    <div class="col-md-8">
+                        <input id="id_porcentagem" type="text" value="{{form.porcentagem.value}}" name="porcentagem" class="form-control">
+                        {% if form.porcentagem.errors %} <span class="help-block"> {{ form.porcentagem.errors.as_text }} </span> {% endif %}
                     </div>
                 </div>
-                <div class="row">
-                    <div class="form-group col-md-6 {% if form.cdb_rdb.errors %} has-error {% endif %}">
-                        <label class="control-label col-md-4"> CDB/RDB: </label>
-                        <div class="col-md-8">
-                            <select class="selectpicker form-control" disabled id="id_cdb_rdb" name="cdb_rdb">
-                            {% for key, value in form.fields.cdb_rdb.widget.choices %}<option value="{{ key }}" {% if key == form.cdb_rdb.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
-                            </select>
-                            {% if form.cdb_rdb.errors %} <span class="help-block"> {{ form.cdb_rdb.errors.as_text }} </span> {% endif %}
+                <div class="form-group col-md-6 {% if form.data.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4" style="text-align: left;"> {{form.data.label}}: </label>
+                    <div class="col-md-8">
+                        <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" data-date-viewmode="years">
+                            <input type="text" class="form-control" id="id_data" name="data" 
+                            value="{% if form.data.value|date:'d/m/Y'|default:'' == '' %}{{form.data.value|default:''}}{% else %}{{form.data.value|date:'d/m/Y'}}{% endif %}">
+                            <span class="input-group-btn">
+                                <button class="btn default" type="button">
+                                    <i class="fa fa-calendar"></i>
+                                </button>
+                            </span>
                         </div>
-                    </div>
-                </div>
-                <div class="form-actions">
-                    <div class="row">
-                        <div class="col-md-offset col-md-3">
-                            <button type="submit" name="save" value="1" class="btn green-steel">Salvar</button>
-                        </div>
+                        {% if form.data.errors %} <span class="help-block"> {{ form.data.errors.as_text }} </span>
+                        {% else %} <span class="help-block"> Selecione uma data </span>
+                        {% endif %}
                     </div>
                 </div>
             </div>
-        </form>
-        <!-- END FORM-->
-    </div>
+            <div class="row">
+                <div class="form-group col-md-6 {% if form.cdb_rdb.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4"> {{form.cdb_rdb.label}}: </label>
+                    <div class="col-md-8">
+                        <select class="selectpicker form-control" disabled id="id_cdb_rdb" name="cdb_rdb">
+                        {% for key, value in form.fields.cdb_rdb.widget.choices %}<option value="{{ key }}" {% if key == form.cdb_rdb.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                        </select>
+                        {% if form.cdb_rdb.errors %} <span class="help-block"> {{ form.cdb_rdb.errors.as_text }} </span> {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions">
+                <div class="row">
+                    <div class="col-md-offset col-md-3">
+                        <button type="submit" name="save" value="1" class="btn green-steel">Salvar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    <!-- END FORM-->
+</div>
 
 {% endblock %}
     
