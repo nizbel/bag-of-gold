@@ -42,6 +42,16 @@ class CDB_RDB (models.Model):
             return 'RDB'
         raise ValueError('Tipo indefinido')
     
+    def eh_prefixado(self):
+        return self.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO
+    
+    def indice(self):
+        if self.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
+            return 'DI'
+        elif self.tipo_rendimento == CDB_RDB.CDB_RDB_IPCA:
+            return 'IPCA'
+        return 'Prefixado'
+    
     def porcentagem_atual(self):
         return self.porcentagem_na_data(datetime.date.today())
         
@@ -64,8 +74,8 @@ class CDB_RDB (models.Model):
         return self.vencimento_na_data(datetime.date.today())
         
     def vencimento_na_data(self, data):
-        if HistoricoVencimentoCDB_RDB.objects.filter(data__isnull=false, data__lte=data, cdb_rdb=self).exists():
-            return HistoricoVencimentoCDB_RDB.objects.filter(data__isnull=false, data__lte=data, cdb_rdb=self).order_by('-data')[0].vencimento
+        if HistoricoVencimentoCDB_RDB.objects.filter(data__isnull=False, data__lte=data, cdb_rdb=self).exists():
+            return HistoricoVencimentoCDB_RDB.objects.filter(data__isnull=False, data__lte=data, cdb_rdb=self).order_by('-data')[0].vencimento
         else:
             return HistoricoVencimentoCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self).vencimento
         
