@@ -18,7 +18,7 @@
 				<div class="form-group col-md-6 {% if form_cdb_rdb.nome.errors %} has-error {% endif %}">
 					<label class="control-label col-md-4" style="text-align: left;">Nome:</label>
 					<div class="col-md-8">
-						<input type="text" class="form-control" maxlength="50" name="nome" id="id_nome">
+						<input type="text" class="form-control" maxlength="50" name="nome" id="id_nome" value="{{form_cdb_rdb.nome.value|default:''}}">
 						{% if form_cdb_rdb.nome.errors %} <span class="help-block"> {{ form_cdb_rdb.nome.errors.as_text }} </span> {% endif %}
 					</div>
 				</div>
