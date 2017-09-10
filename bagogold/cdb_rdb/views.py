@@ -542,9 +542,9 @@ def inserir_cdb_rdb(request):
     PorcentagemFormSet = inlineformset_factory(CDB_RDB, HistoricoPorcentagemCDB_RDB, fields=('porcentagem',), form=LocalizedModelForm,
                                             extra=1, can_delete=False, max_num=1, validate_max=True)
     CarenciaFormSet = inlineformset_factory(CDB_RDB, HistoricoCarenciaCDB_RDB, fields=('carencia',), form=LocalizedModelForm,
-                                            extra=1, can_delete=False, max_num=1, validate_max=True, labels = {'carencia': 'Período de carência (em dias)',})
+                                            extra=1, can_delete=False, max_num=1, validate_max=True, labels = {'carencia': 'Período de carência',})
     VencimentoFormSet = inlineformset_factory(CDB_RDB, HistoricoVencimentoCDB_RDB, fields=('vencimento',), form=LocalizedModelForm,
-                                            extra=1, can_delete=False, max_num=1, validate_max=True, labels = {'vencimento': 'Período de vencimento (em dias)',})
+                                            extra=1, can_delete=False, max_num=1, validate_max=True, labels = {'vencimento': 'Período de vencimento',})
     
     if request.method == 'POST':
         form_cdb_rdb = CDB_RDBForm(request.POST)
@@ -565,10 +565,13 @@ def inserir_cdb_rdb(request):
                 if formset_carencia.is_valid():
                     if formset_vencimento.is_valid():
                         try:
+                            if formset_vencimento.forms[0].cleaned_data['vencimento'] < formset_carencia.forms[0].cleaned_data['carencia']:
+                                raise ValidationError('Período de carência não pode ser maior que período de vencimento')
                             with transaction.atomic():
                                 cdb_rdb.save()
                                 formset_carencia.save()
                                 formset_porcentagem.save()
+                                formset_vencimento.save()
                             return HttpResponseRedirect(reverse('cdb_rdb:listar_cdb_rdb'))
                         # Capturar erros oriundos da hora de salvar os objetos
                         except Exception as erro:
