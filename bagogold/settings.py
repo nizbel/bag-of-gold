@@ -50,6 +50,7 @@ INSTALLED_APPS = (
     'bagogold.cri_cra',
     'bagogold.fundo_investimento',
     'bagogold.criptomoeda',
+    'bagogold.outros_investimentos',
 )
 
 MIDDLEWARE_CLASSES = (
