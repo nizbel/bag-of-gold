@@ -17,13 +17,14 @@ from bagogold.cdb_rdb.forms import OperacaoCDB_RDBForm, \
 from bagogold.cdb_rdb.models import OperacaoCDB_RDB, HistoricoPorcentagemCDB_RDB, \
     CDB_RDB, HistoricoCarenciaCDB_RDB, OperacaoVendaCDB_RDB, \
     HistoricoVencimentoCDB_RDB
-from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia,\
+from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, \
     buscar_operacoes_vigentes_ate_data
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
+from django.db import transaction
 from django.db.models import Count
 from django.db.models.aggregates import Sum
 from django.db.models.expressions import F
@@ -542,11 +543,14 @@ def inserir_cdb_rdb(request):
                                             extra=1, can_delete=False, max_num=1, validate_max=True)
     CarenciaFormSet = inlineformset_factory(CDB_RDB, HistoricoCarenciaCDB_RDB, fields=('carencia',), form=LocalizedModelForm,
                                             extra=1, can_delete=False, max_num=1, validate_max=True, labels = {'carencia': 'Período de carência (em dias)',})
+    VencimentoFormSet = inlineformset_factory(CDB_RDB, HistoricoVencimentoCDB_RDB, fields=('vencimento',), form=LocalizedModelForm,
+                                            extra=1, can_delete=False, max_num=1, validate_max=True, labels = {'vencimento': 'Período de vencimento (em dias)',})
     
     if request.method == 'POST':
         form_cdb_rdb = CDB_RDBForm(request.POST)
         formset_porcentagem = PorcentagemFormSet(request.POST)
         formset_carencia = CarenciaFormSet(request.POST)
+        formset_vencimento = VencimentoFormSet(request.POST)
         if form_cdb_rdb.is_valid():
             cdb_rdb = form_cdb_rdb.save(commit=False)
             cdb_rdb.investidor = investidor
@@ -554,20 +558,24 @@ def inserir_cdb_rdb(request):
             formset_porcentagem.forms[0].empty_permitted=False
             formset_carencia = CarenciaFormSet(request.POST, instance=cdb_rdb)
             formset_carencia.forms[0].empty_permitted=False
+            formset_vencimento = VencimentoFormSet(request.POST, instance=cdb_rdb)
+            formset_vencimento.forms[0].empty_permitted=False
             
             if formset_porcentagem.is_valid():
                 if formset_carencia.is_valid():
-                    try:
-                        cdb_rdb.save()
-                        formset_porcentagem.save()
-                        formset_carencia.save()
-                    # Capturar erros oriundos da hora de salvar os objetos
-                    except Exception as erro:
-                        messages.error(request, erro.message)
-                        return TemplateResponse(request, 'cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'formset_porcentagem': formset_porcentagem,
-                                                          'formset_carencia': formset_carencia})
-                        
-                    return HttpResponseRedirect(reverse('cdb_rdb:listar_cdb_rdb'))
+                    if formset_vencimento.is_valid():
+                        try:
+                            with transaction.atomic():
+                                cdb_rdb.save()
+                                formset_carencia.save()
+                                formset_porcentagem.save()
+                            return HttpResponseRedirect(reverse('cdb_rdb:listar_cdb_rdb'))
+                        # Capturar erros oriundos da hora de salvar os objetos
+                        except Exception as erro:
+                            messages.error(request, erro.message)
+                            return TemplateResponse(request, 'cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'formset_porcentagem': formset_porcentagem,
+                                                              'formset_carencia': formset_carencia, 'formset_vencimento': formset_vencimento})
+                            
                 
         for erro in [erro for erro in form_cdb_rdb.non_field_errors()]:
             messages.error(request, erro)
@@ -575,13 +583,16 @@ def inserir_cdb_rdb(request):
             messages.error(request, erro)
         for erro in formset_carencia.non_form_errors():
             messages.error(request, erro)
+        for erro in formset_vencimento.non_form_errors():
+            messages.error(request, erro)
             
     else:
         form_cdb_rdb = CDB_RDBForm()
         formset_porcentagem = PorcentagemFormSet()
         formset_carencia = CarenciaFormSet()
+        formset_vencimento = VencimentoFormSet()
     return TemplateResponse(request, 'cdb_rdb/inserir_cdb_rdb.html', {'form_cdb_rdb': form_cdb_rdb, 'formset_porcentagem': formset_porcentagem,
-                                                              'formset_carencia': formset_carencia})
+                                                              'formset_carencia': formset_carencia, 'formset_vencimento': formset_vencimento})
 
 @login_required
 @adiciona_titulo_descricao('Inserir registro de carência para um CDB/RDB', 'Inserir registro de alteração de carência ao histórico de '
