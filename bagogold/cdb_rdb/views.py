@@ -562,8 +562,8 @@ def inserir_cdb_rdb(request):
             formset_vencimento.forms[0].empty_permitted=False
             
             if formset_porcentagem.is_valid():
-                if formset_carencia.is_valid():
-                    if formset_vencimento.is_valid():
+                if formset_vencimento.is_valid():
+                    if formset_carencia.is_valid():
                         try:
                             if formset_vencimento.forms[0].cleaned_data['vencimento'] < formset_carencia.forms[0].cleaned_data['carencia']:
                                 raise ValidationError('Período de carência não pode ser maior que período de vencimento')
@@ -572,6 +572,7 @@ def inserir_cdb_rdb(request):
                                 formset_carencia.save()
                                 formset_porcentagem.save()
                                 formset_vencimento.save()
+                            messages.success(request, 'CDB/RDB incluído com sucesso')
                             return HttpResponseRedirect(reverse('cdb_rdb:listar_cdb_rdb'))
                         # Capturar erros oriundos da hora de salvar os objetos
                         except Exception as erro:
