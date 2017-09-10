@@ -206,6 +206,25 @@ class HistoricoCarenciaCDB_RDBForm(LocalizedModelForm):
         # Testar se já existe algum histórico para o investimento na data
         if not self.inicial and cleaned_data.get('data') and HistoricoCarenciaCDB_RDB.objects.filter(cdb_rdb=cleaned_data.get('cdb_rdb'), data=cleaned_data.get('data')).exists():
             raise forms.ValidationError('Já existe uma alteração de carência para essa data')
+        
+        # Verificar vencimento vigente, e alterações de vencimento ao longo do período que a nova carência estiver vigente
+        vencimento_vigente = cleaned_data.get('cdb_rdb').vencimento_na_data(cleaned_data.get('data'))
+        if vencimento_vigente < cleaned_data.get('carencia'):
+            raise forms.ValidationError('Vencimento na data de início está menor do que o período de carência')
+        # Testar se período de carência será maior que algum período de vencimento vigente
+        if HistoricoCarenciaCDB_RDB.objects.filter(cdb_rdb=cleaned_data.get('cdb_rdb'), data__gt=cleaned_data.get('data')).exists():
+            # Verificar alterações de vencimento entre a data dessa alteração de carência e a próxima
+            proxima_carencia = HistoricoCarenciaCDB_RDB.objects.filter(cdb_rdb=cleaned_data.get('cdb_rdb'), data__gt=cleaned_data.get('data')).order_by('data')[0]
+            for vencimento_periodo in HistoricoVencimentoCDB_RDB.objects.filter(cdb_rdb=cleaned_data.get('cdb_rdb'), data__range=[cleaned_data.get('data') + datetime.timedelta(days=1), 
+                                                                                                               proxima_carencia.data - datetime.timedelta(days=1)]):
+                if vencimento_periodo.vencimento < cleaned_data.get('carencia'):
+                    raise forms.ValidationError('Vencimento vigente em %s está menor do que o período de carência' % (vencimento_periodo.data.strftime('%d/%m/%Y')))
+        else:
+            # Verificar alterações de vencimento a partir da data dessa alteração de carência
+            for vencimento_periodo in HistoricoVencimentoCDB_RDB.objects.filter(cdb_rdb=cleaned_data.get('cdb_rdb'), data__gt=cleaned_data.get('data')):
+                if vencimento_periodo.vencimento < cleaned_data.get('carencia'):
+                    raise forms.ValidationError('Vencimento vigente em %s está menor do que o período de carência' % (vencimento_periodo.data.strftime('%d/%m/%Y')))
+                
         return cleaned_data
     
 class HistoricoVencimentoCDB_RDBForm(LocalizedModelForm):
@@ -259,7 +278,27 @@ class HistoricoVencimentoCDB_RDBForm(LocalizedModelForm):
     
     def clean(self):
         cleaned_data = super(HistoricoVencimentoCDB_RDBForm, self).clean()
+        cleaned_data.get('cdb_rdb')
         # Testar se já existe algum histórico para o investimento na data
         if not self.inicial and cleaned_data.get('data') and HistoricoVencimentoCDB_RDB.objects.filter(cdb_rdb=cleaned_data.get('cdb_rdb'), data=cleaned_data.get('data')).exists():
             raise forms.ValidationError('Já existe uma alteração de vencimento para essa data')
+        
+        # Verificar carência vigente, e alterações de carência ao longo do período que esse novo vencimento estiver vigente
+        carencia_vigente = cleaned_data.get('cdb_rdb').carencia_na_data(cleaned_data.get('data'))
+        if carencia_vigente > cleaned_data.get('vencimento'):
+            raise forms.ValidationError('Carência na data de início está maior do que o período de vencimento')
+        # Testar se período de vencimento será menor que algum período de carência vigente
+        if HistoricoVencimentoCDB_RDB.objects.filter(cdb_rdb=cleaned_data.get('cdb_rdb'), data__gt=cleaned_data.get('data')).exists():
+            # Verificar alterações de carência entre a data dessa alteração de vencimento e a próxima
+            proximo_vencimento = HistoricoVencimentoCDB_RDB.objects.filter(cdb_rdb=cleaned_data.get('cdb_rdb'), data__gt=cleaned_data.get('data')).order_by('data')[0]
+            for carencia_periodo in HistoricoCarenciaCDB_RDB.objects.filter(cdb_rdb=cleaned_data.get('cdb_rdb'), data__range=[cleaned_data.get('data') + datetime.timedelta(days=1), 
+                                                                                                               proximo_vencimento.data - datetime.timedelta(days=1)]):
+                if carencia_periodo.carencia > cleaned_data.get('vencimento'):
+                    raise forms.ValidationError('Carência vigente em %s está maior do que o período de vencimento' % (carencia_periodo.data.strftime('%d/%m/%Y')))
+        else:
+            # Verificar alterações de carência a partir da data dessa alteração de vencimento
+            for carencia_periodo in HistoricoCarenciaCDB_RDB.objects.filter(cdb_rdb=cleaned_data.get('cdb_rdb'), data__gt=cleaned_data.get('data')):
+                if carencia_periodo.carencia > cleaned_data.get('vencimento'):
+                    raise forms.ValidationError('Carência vigente em %s está maior do que o período de vencimento' % (carencia_periodo.data.strftime('%d/%m/%Y')))
+                
         return cleaned_data
