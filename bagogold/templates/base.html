@@ -127,12 +127,6 @@
                                                     <a href="{% url "minha_conta" %}">
                                                         <i class="icon-user"></i> Minha conta </a>
                                                 </li>
-                                                {% if request.user.id == 1 or request.user.id == 31 %}
-                                                <li>
-                                                    <a href="{% url "carregar_nova_aparencia" request.path|slice:"1:-1" %}">
-                                                        <i class="fa fa-warning"></i> Carregar arquivos </a>
-                                                </li>
-                                                {% endif %}
                                                 <li class="divider"> </li>
                                                 <li>
                                                     <a href="{% url "logout" %}">
