@@ -866,7 +866,9 @@ def painel_geral(request):
 @login_required
 def grafico_renda_fixa_painel_geral(request):
     if request.is_ajax():
+        investidor = request.user.investidor
         data_atual = datetime.datetime.now()
+        
         qtd_ultimos_dias = 22
         # Guardar valores totais
         diario_cdb_rdb = {}
