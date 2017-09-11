@@ -169,9 +169,6 @@ urlpatterns = [
     
     url(r'^', include(inicio_patterns, namespace='inicio')),
     
-    # Teste de aparência
-    url(r'^teste/carregar/(?P<url>[\w/]+)/$', views.misc.carregar_nova_aparencia, name='carregar_nova_aparencia'),
-    
     # Investidores
     url(r'^login/$', LoginView.as_view(template_name='login.html', authentication_form=ExtendedAuthForm), name='login'),
     url(r'^logout/$', logout, {'next_page': '/login'}, name='logout'),
