@@ -9,6 +9,4 @@ import gerador_proventos
 import investidores
 import home
 
-import misc
-
 import imposto_renda
