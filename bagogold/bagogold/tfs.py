@@ -116,7 +116,10 @@ def buscar_historico(ticker, data_inicial, data_final):
                 historico.append(dados_data)
         if len(historico) > 0:
             sucesso = True
-    except:
+    except Exception as ex:
+#         template = "An exception of type {0} occured. Arguments:\n{1!r}"
+#         message = template.format(type(ex).__name__, ex.args)
+#         print ticker, ":", message
         sucesso = False
     
     if sucesso:
@@ -145,9 +148,13 @@ def buscar_historico(ticker, data_inicial, data_final):
 #         message = template.format(type(ex).__name__, ex.args)
 #         print ticker, ":", message
         sucesso = False
+        
+    if sucesso:
+        return historico
+    
     tentativas = 0
     # Testa busca então no yahoo finance API
-    while tentativas < 3 and not sucesso:
+    while tentativas < 2 and not sucesso:
         try:
             papel = Share('%s.SA' % (ticker))
             historico = papel.get_historical(data_inicial.strftime('%Y-%m-%d'), data_final.strftime('%Y-%m-%d'))
@@ -166,40 +173,40 @@ def buscar_historico(ticker, data_inicial, data_final):
 #             template = "An exception of type {0} occured. Arguments:\n{1!r}"
 #             message = template.format(type(ex).__name__, ex.args)
 #             print ticker, ":", message
-    if not sucesso:
-        try:
-            # Última tentativa, buscar no site da exame
-            url_exame_csv = 'http://financas.exame.abril.com.br/coletor/export/stocks/%s/interday.csv?start_date=%s-%s-%s&end_date=%s-%s-%s' % \
-                               (ticker, data_inicial.year, int(data_inicial.month), data_inicial.day, data_final.year, int(data_final.month), data_final.day)
-            response_csv = urlopen(url_exame_csv)
-            csv = response_csv.read()
-            book = pyexcel.get_book(file_type="csv", file_content=csv)
-            sheets = book.to_dict()
-            for key in sheets.keys():
-                dados_papel = sheets[key]
-                for linha in xrange(1,len(dados_papel)):
-                    # Testar se a linha de data está vazia, passar ao proximo
-                    if dados_papel[linha][0] == '':
-                        break
-                    dados_data = {}
-                    dados_data['Date'] = datetime.datetime.strptime(dados_papel[linha][0], '%d/%m/%Y').strftime('%Y-%m-%d')
-                    dados_data['Close'] = dados_papel[linha][1].replace(',', '.')
-                    historico.append(dados_data)
-        except Exception as ex:
-#             template = "An exception of type {0} occured. Arguments:\n{1!r}"
-#             message = template.format(type(ex).__name__, ex.args)
-#             print ticker, ":", message
-            historico = list()
-#         print historico
+    if sucesso:
+        return historico
     
+    try:
+        # Última tentativa, buscar no site da exame
+        url_exame_csv = 'http://financas.exame.abril.com.br/coletor/export/stocks/%s/interday.csv?start_date=%s-%s-%s&end_date=%s-%s-%s' % \
+                           (ticker, data_inicial.year, int(data_inicial.month), data_inicial.day, data_final.year, int(data_final.month), data_final.day)
+        response_csv = urlopen(url_exame_csv)
+        csv = response_csv.read()
+        book = pyexcel.get_book(file_type="csv", file_content=csv)
+        sheets = book.to_dict()
+        for key in sheets.keys():
+            dados_papel = sheets[key]
+            for linha in xrange(1,len(dados_papel)):
+                # Testar se a linha de data está vazia, passar ao proximo
+                if dados_papel[linha][0] == '':
+                    break
+                dados_data = {}
+                dados_data['Date'] = datetime.datetime.strptime(dados_papel[linha][0], '%d/%m/%Y').strftime('%Y-%m-%d')
+                dados_data['Close'] = dados_papel[linha][1].replace(',', '.')
+                historico.append(dados_data)
+    except Exception as ex:
+#         template = "An exception of type {0} occured. Arguments:\n{1!r}"
+#         message = template.format(type(ex).__name__, ex.args)
+#         print ticker, ":", message
+        historico = list()
+#     print historico
+            
     return historico
         
 def preencher_historico_acao(ticker, historico):
     acao = Acao.objects.get(ticker=ticker)
-    print acao
 #     print acao
     for dia_papel in historico:
-        print dia_papel
         if not HistoricoAcao.objects.filter(acao=acao, data=dia_papel['Date']).exists():
             historico_acao = HistoricoAcao(acao=acao, data=dia_papel['Date'], preco_unitario=Decimal(dia_papel['Close']).quantize(Decimal('0.01')))
             historico_acao.save()

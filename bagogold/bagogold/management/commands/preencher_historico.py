@@ -7,6 +7,7 @@ from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
 from django.core.management.base import BaseCommand
 from threading import Thread
 import datetime
+import time
 
 
 class PreencheHistoricoAcaoThread(Thread):
@@ -20,12 +21,18 @@ class PreencheHistoricoAcaoThread(Thread):
         try:
             for index, ticker in enumerate(self.tickers):
 #                 print 'Starting', ticker, '%s%%' % (format(float(index)/len(self.tickers)*100, '.2f'))
+                inicio = datetime.datetime.now()
                 preencher_historico_acao(ticker, buscar_historico(ticker, self.data_inicial, self.data_final))
+                fim = datetime.datetime.now()
+                # Limitar a taxa de requisições
+                if int((fim - inicio).seconds) < 3:
+                    time.sleep(4 - int((fim - inicio).seconds))
+            print 'thread acao terminada'
         except Exception as ex:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print ticker, "Thread:", message
-            pass
+#             pass
         
 class PreencheHistoricoFIIThread(Thread):
     def __init__(self, tickers, data_inicial, data_final):
@@ -38,12 +45,18 @@ class PreencheHistoricoFIIThread(Thread):
         try:
             for index, ticker in enumerate(self.tickers):
 #                 print 'Starting', ticker, '%s%%' % (format(float(index)/len(self.tickers)*100, '.2f'))
+                inicio = datetime.datetime.now()
                 preencher_historico_fii(ticker, buscar_historico(ticker, self.data_inicial, self.data_final))
+                fim = datetime.datetime.now()
+                # Limitar a taxa de requisições
+                if int((fim - inicio).seconds) < 3:
+                    time.sleep(4 - int((fim - inicio).seconds))
+            print 'thread fii terminada'
         except Exception as ex:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
             print ticker, "Thread:", message
-            pass
+#             pass
                     
 
 class Command(BaseCommand):
@@ -91,14 +104,13 @@ class Command(BaseCommand):
             ultimo_dia_util = datetime.date.today() - datetime.timedelta(days=1)
             while ultimo_dia_util.weekday() > 4 or verificar_feriado_bovespa(ultimo_dia_util):
                 ultimo_dia_util = ultimo_dia_util - datetime.timedelta(days=1)
-            acoes_sem_fechamento = HistoricoAcao.objects.filter(data=ultimo_dia_util).values_list('acao__ticker', flat=True)
-            acoes = Acao.objects.all().exclude(ticker__in=acoes_sem_fechamento)
+            acoes_sem_fechamento = HistoricoAcao.objects.filter(data=ultimo_dia_util).values_list('acao__id', flat=True)
+            acoes = Acao.objects.all().exclude(id__in=acoes_sem_fechamento)
         else:
             # Pegar fechamento do dia
             acoes = Acao.objects.all()
-        acoes = Acao.objects.filter(ticker='BBAS3')
-        print acoes
-        qtd_threads = 32
+        
+        qtd_threads = 8
         qtd_por_thread = int(len(acoes)/qtd_threads)+1
         contador = 0
         threads = []
@@ -110,8 +122,6 @@ class Command(BaseCommand):
         for t in threads:
             t.join()
              
-        if 2 == 2:
-            return    
         # FII
         fiis = FII.objects.all()
         qtd_por_thread = int(len(fiis)/qtd_threads)+1
