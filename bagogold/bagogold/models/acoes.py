@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
+from decimal import Decimal
 from django.db import models
 from django.db.models.aggregates import Count
 import datetime
@@ -95,7 +96,7 @@ class Provento (models.Model):
     @property
     def valor_final(self):
         if hasattr(self, 'atualizacaoselicprovento'):
-            return self.valor_unitario + self.atualizacaoselicprovento.rendimento()
+            return self.valor_unitario + self.atualizacaoselicprovento.rendimento().quantize(Decimal('0.0000000000000001'))
         return self.valor_unitario
     
     objects = ProventoOficialManager()
