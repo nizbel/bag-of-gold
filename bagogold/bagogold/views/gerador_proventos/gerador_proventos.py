@@ -827,7 +827,6 @@ def validar_documento_provento(request, id_pendencia):
                     # Remover 0s a direita para valores
                     provento_proximo.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento_proximo.valor_unitario))
                             
-                    provento_proximo.id += 1000
             # Descrição da decisão do responsável pela leitura
             pendencia.decisao = 'Criar %s provento(s)' % (ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).count())
         elif pendencia.documento.tipo == 'F':
