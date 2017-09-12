@@ -57,6 +57,11 @@
 $.fn.dataTable.moment( 'DD/MM/YYYY' );
 
 $( document ).ready(function() {
+	App.blockUI({
+        target: '#posicoes',
+        iconOnly: true,
+        overlayColor: 'none'
+    });
 	var tickers = '{% for moeda in moedas %}{{moeda.ticker}}{% if forloop.counter < moedas|length %},{% endif %}{% endfor %}';
 	$.ajax({
         url : "https://min-api.cryptocompare.com/data/pricemulti?fsyms=" + tickers + "&tsyms=BRL", // the endpoint
@@ -76,10 +81,13 @@ $( document ).ready(function() {
                 valor_total += total_ticker;
             }
             $('#total').text('R$ ' + valor_total.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.'));
+
+            App.unblockUI('#posicoes');
         },
 
         // handle a non-successful response
         error : function(xhr,errmsg,err) {
+            App.unblockUI('#posicoes');
             console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
         }
     });
