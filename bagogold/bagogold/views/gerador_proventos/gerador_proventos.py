@@ -710,6 +710,8 @@ def validar_documento_provento(request, id_pendencia):
                                 except:
                                     if settings.ENV == 'PROD':
                                         mail_admins(u'Erro em Validar provento de ações', traceback.format_exc())
+                                    elif settings.ENV == 'DEV':
+                                        print traceback.format_exc()
                                     messages.error(request, 'Houve erro no relacionamento de proventos')
                                     raise ValueError('Não foi possível validar provento')
                             # Qualquer erro que deixe a validação incompleta faz necessário desfazer investidor responsável pela validação
@@ -758,6 +760,8 @@ def validar_documento_provento(request, id_pendencia):
                                 except:
                                     if settings.ENV == 'PROD':
                                         mail_admins(u'Erro em Validar provento de FIIs', traceback.format_exc())
+                                    elif settings.ENV == 'DEV':
+                                        print traceback.format_exc()
                                     messages.error(request, 'Houve erro no relacionamento de proventos')
                                     raise ValueError('Não foi possível validar provento')
                             # Qualquer erro que deixe a validação incompleta faz necessário desfazer investidor responsável pela validação
@@ -779,6 +783,8 @@ def validar_documento_provento(request, id_pendencia):
             except:
                 if settings.ENV == 'PROD':
                     mail_admins(u'Erro em Validar provento', traceback.format_exc())
+                elif settings.ENV == 'DEV':
+                    print traceback.format_exc()
         
         elif request.POST.get('recusar'):
 #             print 'Recusar'
@@ -821,6 +827,7 @@ def validar_documento_provento(request, id_pendencia):
                     # Remover 0s a direita para valores
                     provento_proximo.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento_proximo.valor_unitario))
                             
+                    provento_proximo.id += 1000
             # Descrição da decisão do responsável pela leitura
             pendencia.decisao = 'Criar %s provento(s)' % (ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).count())
         elif pendencia.documento.tipo == 'F':
