@@ -709,7 +709,7 @@ def validar_documento_provento(request, id_pendencia):
                                         pendencia_finalizada = True
                                 except:
                                     if settings.ENV == 'PROD':
-                                        mail_admins(u'Erro em Buscar fundos investimento', traceback.format_exc())
+                                        mail_admins(u'Erro em Validar provento de ações', traceback.format_exc())
                                     messages.error(request, 'Houve erro no relacionamento de proventos')
                                     raise ValueError('Não foi possível validar provento')
                             # Qualquer erro que deixe a validação incompleta faz necessário desfazer investidor responsável pela validação
@@ -756,6 +756,8 @@ def validar_documento_provento(request, id_pendencia):
                                                 provento.save()
                                         pendencia_finalizada = True
                                 except:
+                                    if settings.ENV == 'PROD':
+                                        mail_admins(u'Erro em Validar provento de FIIs', traceback.format_exc())
                                     messages.error(request, 'Houve erro no relacionamento de proventos')
                                     raise ValueError('Não foi possível validar provento')
                             # Qualquer erro que deixe a validação incompleta faz necessário desfazer investidor responsável pela validação
@@ -775,7 +777,8 @@ def validar_documento_provento(request, id_pendencia):
                     messages.success(request, 'Pendência validada com sucesso')
                     return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
             except:
-                pass
+                if settings.ENV == 'PROD':
+                    mail_admins(u'Erro em Validar provento', traceback.format_exc())
         
         elif request.POST.get('recusar'):
 #             print 'Recusar'
