@@ -27,7 +27,6 @@ class PreencheHistoricoAcaoThread(Thread):
                 # Limitar a taxa de requisições
                 if int((fim - inicio).seconds) < 3:
                     time.sleep(4 - int((fim - inicio).seconds))
-            print 'thread acao terminada'
         except Exception as ex:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -51,7 +50,6 @@ class PreencheHistoricoFIIThread(Thread):
                 # Limitar a taxa de requisições
                 if int((fim - inicio).seconds) < 3:
                     time.sleep(4 - int((fim - inicio).seconds))
-            print 'thread fii terminada'
         except Exception as ex:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
