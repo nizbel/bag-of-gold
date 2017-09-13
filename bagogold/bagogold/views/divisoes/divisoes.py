@@ -445,8 +445,10 @@ def listar_divisoes(request):
         # Criptomoedas
         criptomoedas_divisao = calcular_qtd_moedas_ate_dia_por_divisao(divisao.id, data_atual)
         moedas = Criptomoeda.objects.filter(id__in=criptomoedas_divisao.keys())
-        valores_criptomoedas = buscar_valor_criptomoedas_atual([moeda.ticker for moeda in moedas])
-        divisao.valor_atual_criptomoeda += sum([(criptomoedas_divisao[moeda.id] * valores_criptomoedas[moeda.ticker]) for moeda in moedas])
+        # Busca valores apenas se existem criptomoedas na divisão
+        if moedas:
+            valores_criptomoedas = buscar_valor_criptomoedas_atual([moeda.ticker for moeda in moedas])
+            divisao.valor_atual_criptomoeda += sum([(criptomoedas_divisao[moeda.id] * valores_criptomoedas[moeda.ticker]) for moeda in moedas])
         divisao.valor_atual += divisao.valor_atual_criptomoeda
         
         # Debêntures
