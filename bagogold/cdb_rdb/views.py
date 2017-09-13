@@ -270,7 +270,7 @@ def editar_historico_vencimento(request, historico_vencimento_id):
                                                                        investidor=investidor)
             if form_historico_vencimento.is_valid():
                 historico_vencimento.save()
-                messages.success(request, 'Histórico de carência editado com sucesso')
+                messages.success(request, 'Histórico de vencimento editado com sucesso')
                 return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': historico_vencimento.cdb_rdb.id}))
             
             for erro in [erro for erro in form_historico_vencimento.non_field_errors()]:
@@ -278,13 +278,13 @@ def editar_historico_vencimento(request, historico_vencimento_id):
                 
         elif request.POST.get("delete"):
             if historico_vencimento.data is None:
-                messages.error(request, 'Valor inicial de carência não pode ser excluído')
+                messages.error(request, 'Valor inicial de vencimento não pode ser excluído')
                 return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': historico_vencimento.cdb_rdb.id}))
             # Pegar investimento para o redirecionamento no caso de exclusão
             inicial = False
             cdb_rdb = historico_vencimento.cdb_rdb
             historico_vencimento.delete()
-            messages.success(request, 'Histórico de carência excluído com sucesso')
+            messages.success(request, 'Histórico de vencimento excluído com sucesso')
             return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': cdb_rdb.id}))
  
     else:
