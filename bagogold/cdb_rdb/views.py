@@ -262,18 +262,18 @@ def editar_historico_vencimento(request, historico_vencimento_id):
         if request.POST.get("save"):
             if historico_vencimento.data is None:
                 inicial = True
-                form_historico_carencia = HistoricoVencimentoCDB_RDBForm(request.POST, instance=historico_vencimento, cdb_rdb=historico_vencimento.cdb_rdb, \
+                form_historico_vencimento = HistoricoVencimentoCDB_RDBForm(request.POST, instance=historico_vencimento, cdb_rdb=historico_vencimento.cdb_rdb, \
                                                                        investidor=investidor, inicial=inicial)
             else:
                 inicial = False
-                form_historico_carencia = HistoricoVencimentoCDB_RDBForm(request.POST, instance=historico_vencimento, cdb_rdb=historico_vencimento.cdb_rdb, \
+                form_historico_vencimento = HistoricoVencimentoCDB_RDBForm(request.POST, instance=historico_vencimento, cdb_rdb=historico_vencimento.cdb_rdb, \
                                                                        investidor=investidor)
-            if form_historico_carencia.is_valid():
+            if form_historico_vencimento.is_valid():
                 historico_vencimento.save()
                 messages.success(request, 'Histórico de carência editado com sucesso')
                 return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': historico_vencimento.cdb_rdb.id}))
             
-            for erro in [erro for erro in form_historico_carencia.non_field_errors()]:
+            for erro in [erro for erro in form_historico_vencimento.non_field_errors()]:
                 messages.error(request, erro)
                 
         elif request.POST.get("delete"):
