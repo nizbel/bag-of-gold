@@ -93,20 +93,49 @@ def ler_serie_historica_anual_bovespa(nome_arquivo):
                         acoes_lista = acoes.values_list('ticker', flat=True)
             
 
-def buscar_historico(ticker, data_final=datetime.date.today()):
-    # Busca historico dos ultimos 180 dias
-    data_180_dias_atras = data_final - datetime.timedelta(days=180)
+def buscar_historico(ticker, data_inicial, data_final):
+    sucesso = False
+    # Busca histórico no google finance
     try:
         historico = list()
+        url_google_finance = 'http://www.google.com/finance/historical?q=BVMF:%s&histperiod=daily&startdate=%s&enddate=%s&output=csv' % (ticker, data_inicial.strftime('%Y-%m-%d'),
+                                                                                                                                         data_final.strftime('%Y-%m-%d'))
+        response_csv = urlopen(url_google_finance)
+        csv = response_csv.read()
+        book = pyexcel.get_book(file_type="csv", file_content=csv)
+        sheets = book.to_dict()
+        for key in sheets.keys():
+            dados_papel = sheets[key]
+            for linha in xrange(1,len(dados_papel)):
+                # Testar se a linha de data está vazia, passar ao proximo
+                if dados_papel[linha][0] == '':
+                    break
+                dados_data = {}
+                dados_data['Date'] = datetime.datetime.strptime(dados_papel[linha][0], '%d-%b-%y').date()
+                dados_data['Close'] = dados_papel[linha][4]
+                historico.append(dados_data)
+        if len(historico) > 0:
+            sucesso = True
+    except Exception as ex:
+#         template = "An exception of type {0} occured. Arguments:\n{1!r}"
+#         message = template.format(type(ex).__name__, ex.args)
+#         print ticker, ":", message
+        sucesso = False
+    
+    if sucesso:
+        return historico
+    
+    # Testa busca no yahoo finance
+    try:
         url_yahoo_csv = 'http://ichart.finance.yahoo.com/table.csv?s=%s.SA&a=%s&b=%s&c=%s&d=%s&e=%s&f=%s&g=d&ignore=.csv' % \
-                               (ticker, int(data_180_dias_atras.month)-1, data_180_dias_atras.day, data_180_dias_atras.year, int(data_final.month)-1, data_final.day, data_final.year)
+                               (ticker, int(data_inicial.month)-1, data_inicial.day, data_inicial.year, int(data_final.month)-1, data_final.day, data_final.year)
         response_csv = urlopen(url_yahoo_csv)
         csv = response_csv.read()
         book = pyexcel.get_book(file_type="csv", file_content=csv)
         sheets = book.to_dict()
         for key in sheets.keys():
             dados_papel = sheets[key]
-            for linha in range(1,len(dados_papel)):
+            for linha in xrange(1,len(dados_papel)):
                 # Testar se a linha de data está vazia, passar ao proximo
                 if dados_papel[linha][0] == '':
                     break
@@ -118,60 +147,67 @@ def buscar_historico(ticker, data_final=datetime.date.today()):
 #         template = "An exception of type {0} occured. Arguments:\n{1!r}"
 #         message = template.format(type(ex).__name__, ex.args)
 #         print ticker, ":", message
-        tentativas = 0
         sucesso = False
-        while tentativas < 3 and not sucesso:
-            try:
-                papel = Share('%s.SA' % (ticker))
-                historico = papel.get_historical(data_180_dias_atras.strftime('%Y-%m-%d'), data_final.strftime('%Y-%m-%d'))
-                
-                # Verificar erro pois no código do yahoo-finance ele só verifica se não for lista
-                if 'ERROR' in str(historico).upper() or 'NOT FOUND' in str(historico).upper():
-                    # Resetar histórico
-                    historico = list()
-                    raise Exception
-                if len(historico) == 0:
-                    raise Exception
-                
-                sucesso = True
-            except Exception as ex:
-                tentativas += 1
-#                 template = "An exception of type {0} occured. Arguments:\n{1!r}"
-#                 message = template.format(type(ex).__name__, ex.args)
-#                 print ticker, ":", message
-        if not sucesso:
-            try:
-                # terceira opção, buscar no site da exame
-                url_exame_csv = 'http://financas.exame.abril.com.br/coletor/export/stocks/%s/interday.csv?start_date=%s-%s-%s&end_date=%s-%s-%s' % \
-                                   (ticker, data_180_dias_atras.year, int(data_180_dias_atras.month), data_180_dias_atras.day, data_final.year, int(data_final.month), data_final.day)
-                response_csv = urlopen(url_exame_csv)
-                csv = response_csv.read()
-                book = pyexcel.get_book(file_type="csv", file_content=csv)
-                sheets = book.to_dict()
-                for key in sheets.keys():
-                    dados_papel = sheets[key]
-                    for linha in range(1,len(dados_papel)):
-                        # Testar se a linha de data está vazia, passar ao proximo
-                        if dados_papel[linha][0] == '':
-                            break
-                        dados_data = {}
-                        dados_data['Date'] = datetime.datetime.strptime(dados_papel[linha][0], '%d/%m/%Y').strftime('%Y-%m-%d')
-                        dados_data['Close'] = dados_papel[linha][1].replace(',', '.')
-                        historico.append(dados_data)
-            except Exception as ex:
-#                 template = "An exception of type {0} occured. Arguments:\n{1!r}"
-#                 message = template.format(type(ex).__name__, ex.args)
-#                 print ticker, ":", message
-                return list()
-#         print historico
+        
+    if sucesso:
+        return historico
     
+    tentativas = 0
+    # Testa busca então no yahoo finance API
+    while tentativas < 2 and not sucesso:
+        try:
+            papel = Share('%s.SA' % (ticker))
+            historico = papel.get_historical(data_inicial.strftime('%Y-%m-%d'), data_final.strftime('%Y-%m-%d'))
+            
+            # Verificar erro pois no código do yahoo-finance ele só verifica se não for lista
+            if 'ERROR' in str(historico).upper() or 'NOT FOUND' in str(historico).upper():
+                # Resetar histórico
+                historico = list()
+                raise Exception
+            if len(historico) == 0:
+                raise Exception
+            
+            sucesso = True
+        except Exception as ex:
+            tentativas += 1
+#             template = "An exception of type {0} occured. Arguments:\n{1!r}"
+#             message = template.format(type(ex).__name__, ex.args)
+#             print ticker, ":", message
+    if sucesso:
+        return historico
+    
+    try:
+        # Última tentativa, buscar no site da exame
+        url_exame_csv = 'http://financas.exame.abril.com.br/coletor/export/stocks/%s/interday.csv?start_date=%s-%s-%s&end_date=%s-%s-%s' % \
+                           (ticker, data_inicial.year, int(data_inicial.month), data_inicial.day, data_final.year, int(data_final.month), data_final.day)
+        response_csv = urlopen(url_exame_csv)
+        csv = response_csv.read()
+        book = pyexcel.get_book(file_type="csv", file_content=csv)
+        sheets = book.to_dict()
+        for key in sheets.keys():
+            dados_papel = sheets[key]
+            for linha in xrange(1,len(dados_papel)):
+                # Testar se a linha de data está vazia, passar ao proximo
+                if dados_papel[linha][0] == '':
+                    break
+                dados_data = {}
+                dados_data['Date'] = datetime.datetime.strptime(dados_papel[linha][0], '%d/%m/%Y').strftime('%Y-%m-%d')
+                dados_data['Close'] = dados_papel[linha][1].replace(',', '.')
+                historico.append(dados_data)
+    except Exception as ex:
+#         template = "An exception of type {0} occured. Arguments:\n{1!r}"
+#         message = template.format(type(ex).__name__, ex.args)
+#         print ticker, ":", message
+        historico = list()
+#     print historico
+            
     return historico
         
 def preencher_historico_acao(ticker, historico):
     acao = Acao.objects.get(ticker=ticker)
 #     print acao
     for dia_papel in historico:
-        if not HistoricoAcao.objects.filter(acao=acao, data=dia_papel['Date']):
+        if not HistoricoAcao.objects.filter(acao=acao, data=dia_papel['Date']).exists():
             historico_acao = HistoricoAcao(acao=acao, data=dia_papel['Date'], preco_unitario=Decimal(dia_papel['Close']).quantize(Decimal('0.01')))
             historico_acao.save()
     return
@@ -180,7 +216,7 @@ def preencher_historico_fii(ticker, historico):
     fii = FII.objects.get(ticker=ticker)
 #     print fii
     for dia_papel in historico:
-        if not HistoricoFII.objects.filter(fii=fii, data=dia_papel['Date']):
+        if not HistoricoFII.objects.filter(fii=fii, data=dia_papel['Date']).exists():
             historico_fii = HistoricoFII(fii=fii, data=dia_papel['Date'], preco_unitario=Decimal(dia_papel['Close']).quantize(Decimal('0.01')))
             historico_fii.save()
     return

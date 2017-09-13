@@ -21,6 +21,7 @@ inicio_patterns = [
     url(r'^calendario/$', views.home.calendario, name='calendario'),
     url(r'^detalhar_acumulados_mensais/$', views.home.detalhar_acumulados_mensais, name='detalhar_acumulados_mensais'),
     url(r'^detalhamento_investimentos/$', views.home.detalhamento_investimentos, name='detalhamento_investimentos'),
+    url(r'^renda_fixa', views.home.grafico_renda_fixa_painel_geral, name='grafico_renda_fixa_painel_geral'),
     url(r'^painel_geral/$', views.home.painel_geral, name='painel_geral'),
     url(r'^sobre/$', views.home.sobre, name='sobre'),
     ]
@@ -168,9 +169,6 @@ urlpatterns = [
     # Páginas de início
     
     url(r'^', include(inicio_patterns, namespace='inicio')),
-    
-    # Teste de aparência
-    url(r'^teste/carregar/(?P<url>[\w/]+)/$', views.misc.carregar_nova_aparencia, name='carregar_nova_aparencia'),
     
     # Investidores
     url(r'^login/$', LoginView.as_view(template_name='login.html', authentication_form=ExtendedAuthForm), name='login'),

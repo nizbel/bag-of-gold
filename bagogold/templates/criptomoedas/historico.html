@@ -26,6 +26,9 @@
                 </div>
                 <div class="portlet-body">
                     <div class="chart" id="graf_historico" style="width:100%;height:400px"></div>
+                    <div class="text-center">
+                        <span>Valores históricos por <a href="https://www.cryptocompare.com">cryptocompare.com</a></span>
+                    </div>
                 </div>
             </div>
             <!-- END Portlet PORTLET-->
@@ -160,6 +163,19 @@
 <script type="text/javascript">
 $.fn.dataTable.moment( 'DD/MM/YYYY' );
 $( document ).ready(function() {
+	// Bloquear gráfico
+	App.blockUI({
+        target: '#graf_historico',
+        iconOnly: true,
+        overlayColor: 'none'
+    });
+	
+	App.blockUI({
+        target: '#graf_valor',
+        iconOnly: true,
+        overlayColor: 'none'
+    });
+	
     $.plot($("#graf_gasto"), [ {color: "#7D8C9D", lines: {show:true}, data: {{ graf_investido_total|safe }} } 
     ],
       {grid: {show: false}}  
@@ -188,6 +204,10 @@ $( document ).ready(function() {
                                   ],
                                     {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%d/%m/%y"} }  
         );
+        
+        App.unblockUI('#graf_historico');
+
+        App.unblockUI('#graf_valor');
         
         function showTooltip(x, y, contents) {
             
