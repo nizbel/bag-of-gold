@@ -314,7 +314,7 @@ class DivisaoOperacaoLC (models.Model):
     
 class DivisaoOperacaoCDB_RDB (models.Model):
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
-    operacao = models.ForeignKey('OperacaoCDB_RDB')
+    operacao = models.ForeignKey('cdb_rdb.OperacaoCDB_RDB')
     """
     Guarda a quantidade da operação que pertence a divisão
     """
