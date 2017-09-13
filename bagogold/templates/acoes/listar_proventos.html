@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load staticfiles %}
+{% load misc %}
 
 {% block extra_head %}
 <link href={% static "assets/global/plugins/datatables/datatables.min.css" %} rel="stylesheet" type="text/css" />
@@ -42,7 +43,7 @@
                                 <td>{{provento.descricao_tipo_provento}}</td>
                                 <td>{{provento.data_ex|date:'d/m/Y'}}</td>
                                 <td>{{provento.data_pagamento|date:'d/m/Y'}}</td>
-                                <td>R$ {{provento.valor_unitario}}</td>
+                                <td>R$ {{provento.valor_final|casas_decimais}}</td>
                                 <td>{{provento.data_insercao|date:'d/m/Y'}}</td>
                             </tr>
                             {% endfor %}
@@ -81,7 +82,7 @@
                                 <td>{{provento.descricao_tipo_provento}}</td>
                                 <td>{{provento.data_ex|date:'d/m/Y'}}</td>
                                 <td>{{provento.data_pagamento|date:'d/m/Y'}}</td>
-                                <td>R$ {{provento.valor_unitario}}</td>
+                                <td>R$ {{provento.valor_final|casas_decimais}}</td>
                                 <td>R$ {{provento.quantia_a_receber}}</td>
                             </tr>
                             {% endfor %}
@@ -109,7 +110,7 @@
                         <td>{{provento.descricao_tipo_provento}}</td>
                         <td>{{provento.data_ex|date:'d/m/Y'}}</td>
                         <td>{{provento.data_pagamento|date:'d/m/Y'}}</td>
-                        <td>R$ {{provento.valor_unitario}}</td>
+                        <td>R$ {{provento.valor_final|casas_decimais}}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

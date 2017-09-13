@@ -243,7 +243,7 @@
                                                             {% endif %}
                                                             <div class="md-radio">
                                                                 <input type="radio" id="descricao_{{descricao_provento.id}}_{{provento_proximo.id}}" name="descricao_{{descricao_provento.id}}" 
-                                                                    value="{{provento_proximo.id}}" disabled="disabled" class="md-radiobtn">
+                                                                    value="{{provento_proximo.id|stringformat:'i'}}" disabled="disabled" class="md-radiobtn">
                                                                 <label for="descricao_{{descricao_provento.id}}_{{provento_proximo.id}}">
                                                                     <span></span>
                                                                     <span class="check"></span>
@@ -311,7 +311,7 @@
                                                             </div>
                                                             <div class="md-radio">
                                                                 <input type="radio" id="descricao_{{descricao_provento.id}}_{{provento_proximo.id}}" name="descricao_{{descricao_provento.id}}" 
-                                                                    value="{{provento_proximo.id}}" disabled="disabled" class="md-radiobtn">
+                                                                    value="{{provento_proximo.id|add:'0'}}" disabled="disabled" class="md-radiobtn">
                                                                 <label for="descricao_{{descricao_provento.id}}_{{provento_proximo.id}}">
                                                                     <span></span>
                                                                     <span class="check"></span>
