@@ -180,21 +180,34 @@ def ler_documento_provento(request, id_pendencia):
     if request.method == 'POST':
         # Verifica se pendência não possuia responsável e usuário acaba de reservá-la
         if request.POST.get('reservar'):
-            # Calcular quantidade de pendências reservadas
-            qtd_pendencias_reservadas = InvestidorResponsavelPendencia.objects.filter(investidor=investidor).count()
-            if qtd_pendencias_reservadas == 20:
-                messages.error(request, u'Você já possui 20 pendências reservadas')
-            else:
-                # Tentar alocar para o usuário
-                retorno, mensagem = alocar_pendencia_para_investidor(pendencia, investidor)
+            # Verifica se a reserva está sendo feita ou cancelada
+            if request.POST.get('reservar') == '1':
+                # Calcular quantidade de pendências reservadas
+                qtd_pendencias_reservadas = InvestidorResponsavelPendencia.objects.filter(investidor=investidor).count()
+                if qtd_pendencias_reservadas == 20:
+                    messages.error(request, u'Você já possui 20 pendências reservadas')
+                else:
+                    # Tentar alocar para o usuário
+                    retorno, mensagem = alocar_pendencia_para_investidor(pendencia, investidor)
+                    
+                    if retorno:
+                        # Atualizar pendência
+                        pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
+                        messages.success(request, mensagem)
+                    else:
+                        messages.error(request, mensagem)
+                        
                 
+                    
+            elif request.POST.get('reservar') == '0':
+                retorno, mensagem = desalocar_pendencia_de_investidor(pendencia, investidor)
                 if retorno:
                     # Atualizar pendência
                     pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
                     messages.success(request, mensagem)
                 else:
                     messages.error(request, mensagem)
-                    
+                
             # Preparar formset de proventos
             if pendencia.documento.tipo == 'A':
                 formset_provento = ProventoFormset(prefix='provento')
@@ -203,7 +216,8 @@ def ler_documento_provento(request, id_pendencia):
             elif pendencia.documento.tipo == 'F':
                 formset_provento = ProventoFormset(prefix='provento')
                 formset_acao_provento = {}
-            
+                formset_acao_selic = {}
+                    
         elif request.POST.get('preparar_proventos'):
             if request.POST['num_proventos'].isdigit():
                 qtd_proventos = int(request.POST['num_proventos']) if request.POST['num_proventos'] in [str(valor) for valor in range(0, 31)] else 1
@@ -257,6 +271,8 @@ def ler_documento_provento(request, id_pendencia):
                         proventos_iniciais.append(model_to_dict(provento_fii_documento.descricao_provento))
                     formset_provento = ProventoFormset(prefix='provento', initial=proventos_iniciais)
                     formset_acao_provento = {}
+                    formset_acao_selic = {}
+                    
                 
         # Caso o botão de salvar ter sido apertado
         elif request.POST.get('save'):
@@ -346,6 +362,7 @@ def ler_documento_provento(request, id_pendencia):
                 elif pendencia.documento.tipo == 'F':
                     formset_provento = ProventoFormset(request.POST, prefix='provento')
                     formset_acao_provento = {}
+                    formset_acao_selic = {}
                     
                     # Apaga descrições que já existam para poder rodar validações, serão posteriormente readicionadas caso haja algum erro
                     info_proventos_a_apagar = list(ProventoFIIDocumento.objects.filter(documento=pendencia.documento)) \
@@ -440,7 +457,7 @@ def ler_documento_provento(request, id_pendencia):
     elif pendencia.documento.tipo == 'F':
         for form in formset_provento:
             form.fields['fii'].queryset = FII.objects.filter(empresa=pendencia.documento.empresa)
-    
+            
     # Preparar motivo de recusa, caso haja
     recusa = pendencia.documento.ultima_recusa()
     
