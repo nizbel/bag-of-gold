@@ -197,8 +197,7 @@ def ler_documento_provento(request, id_pendencia):
                     else:
                         messages.error(request, mensagem)
                         
-                
-                    
+            # Cancelar 
             elif request.POST.get('reservar') == '0':
                 retorno, mensagem = desalocar_pendencia_de_investidor(pendencia, investidor)
                 if retorno:
@@ -658,14 +657,25 @@ def validar_documento_provento(request, id_pendencia):
     if request.method == 'POST':
         # Verifica se pendência não possuia responsável e usuário acaba de reservá-la
         if request.POST.get('reservar'):
-            # Calcular quantidade de pendências reservadas
-            qtd_pendencias_reservadas = InvestidorResponsavelPendencia.objects.filter(investidor=investidor).count()
-            if qtd_pendencias_reservadas == 20:
-                messages.error(request, u'Você já possui 20 pendências reservadas')
-            else:
-                # Tentar alocar para o usuário
-                retorno, mensagem = alocar_pendencia_para_investidor(pendencia, investidor)
-                
+            # Verificar se é reserva ou cancelamento
+            if request.POST.get('reservar') == '1':
+                # Calcular quantidade de pendências reservadas
+                qtd_pendencias_reservadas = InvestidorResponsavelPendencia.objects.filter(investidor=investidor).count()
+                if qtd_pendencias_reservadas == 20:
+                    messages.error(request, u'Você já possui 20 pendências reservadas')
+                else:
+                    # Tentar alocar para o usuário
+                    retorno, mensagem = alocar_pendencia_para_investidor(pendencia, investidor)
+                    
+                    if retorno:
+                        # Atualizar pendência
+                        pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
+                        messages.success(request, mensagem)
+                    else:
+                        messages.error(request, mensagem)
+            # Cancelamento
+            elif request.POST.get('reservar') == '2':
+                retorno, mensagem = desalocar_pendencia_de_investidor(pendencia, investidor)
                 if retorno:
                     # Atualizar pendência
                     pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
