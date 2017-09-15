@@ -34,14 +34,18 @@
 				<div class="portlet-body">
 					<div class="m-grid m-grid-responsive-xs">
 						<div class="m-grid-row">
+                            <div class="m-grid-col m-grid-col-left"><strong>Nome:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{cdb_rdb.nome}}</div>
 							<div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
 							<div class="m-grid-col m-grid-col-left">{{cdb_rdb.tipo}}</div>
 							<div class="m-grid-col m-grid-col-left"><strong>Rendimento atual:</strong></div>
 							<div class="m-grid-col m-grid-col-left">{{cdb_rdb.porcentagem_atual}}% {% if cdb_rdb.eh_prefixado %}ao ano{% else %}do {{cdb_rdb.indice}}{% endif %}</div>
-							<div class="m-grid-col m-grid-col-left"><strong>Carência atual:</strong></div>
-							<div class="m-grid-col m-grid-col-left">{{cdb_rdb.carencia_atual}} dia(s)</div>
 						</div>
 						<div class="m-grid-row">
+                            <div class="m-grid-col m-grid-col-left"><strong>Carência atual:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{cdb_rdb.carencia_atual}} dia(s)</div>
+                            <div class="m-grid-col m-grid-col-left"><strong>Vencimento atual:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{cdb_rdb.vencimento_atual}} dia(s)</div>
 							<div class="m-grid-col m-grid-col-left"><strong>Total de operações:</strong></div>
 							<div class="m-grid-col m-grid-col-left">{{cdb_rdb.total_operacoes}}</div>
 						</div>
@@ -109,7 +113,7 @@
 					<tbody>
 					{% for item in historico_porcentagem %}
 					<tr>
-						<td>{{item.data|default:"Inicial"}}</td>
+						<td>{{item.data|date:'d/m/Y'|default:"Inicial"}}</td>
 						<td>{{item.porcentagem}}%</td>
 						<td><a href="{% url 'cdb_rdb:editar_historico_porcentagem' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
 					</tr>
@@ -142,7 +146,7 @@
 					<tbody>
 					{% for item in historico_carencia %}
 					<tr>
-						<td>{{item.data|default:"Inicial"}}</td>
+						<td>{{item.data|date:'d/m/Y'|default:"Inicial"}}</td>
 						<td>{{item.carencia}} dia(s)</td>
 						<td><a href="{% url 'cdb_rdb:editar_historico_carencia' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
 					</tr>
@@ -175,7 +179,7 @@
                     <tbody>
                     {% for item in historico_vencimento %}
                     <tr>
-                        <td>{{item.data|default:"Inicial"}}</td>
+                        <td>{{item.data|date:'d/m/Y'|default:"Inicial"}}</td>
                         <td>{{item.vencimento}} dia(s)</td>
                         <td><a href="{% url 'cdb_rdb:editar_historico_vencimento' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
                     </tr>
@@ -196,4 +200,9 @@
 <script src={% static "assets/global/plugins/datatables/datatables.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.js" %} type="text/javascript"></script>
 <script src={% static "assets/pages/scripts/table-datatables-fixedheader.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/moment.min.js" %} type="text/javascript"></script>
+<script src="https://cdn.datatables.net/plug-ins/1.10.15/sorting/datetime-moment.js" type="text/javascript"></script>
+<script>
+$.fn.dataTable.moment( 'DD/MM/YYYY' );
+</script>
 {% endblock %}

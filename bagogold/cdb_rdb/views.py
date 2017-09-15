@@ -66,7 +66,7 @@ def detalhar_cdb_rdb(request, cdb_rdb_id):
     # Contar total de operações já realizadas 
     cdb_rdb.total_operacoes = len(operacoes)
     # Remover operacoes totalmente vendidas
-    operacoes = [operacao for operacao in operacoes if operacao.qtd_disponivel_venda() > 0]
+    operacoes = [operacao for operacao in operacoes if operacao.tipo_operacao == 'C' and operacao.qtd_disponivel_venda() > 0]
     if operacoes:
         historico_di = HistoricoTaxaDI.objects.filter(data__range=[operacoes[0].data, datetime.date.today()])
         for operacao in operacoes:
@@ -105,7 +105,8 @@ def detalhar_cdb_rdb(request, cdb_rdb_id):
         cdb_rdb.lucro_percentual = cdb_rdb.lucro / cdb_rdb.total_investido * 100
     try: 
         cdb_rdb.dias_prox_vencimento = (min(operacao.data + datetime.timedelta(days=operacao.vencimento()) for operacao in operacoes if \
-                                             (operacao.data + datetime.timedelta(days=operacao.vencimento())) > datetime.date.today()) - datetime.date.today()).days
+                                            operacao.tipo_operacao == 'C' and \
+                                            (operacao.data + datetime.timedelta(days=operacao.vencimento())) > datetime.date.today()) - datetime.date.today()).days
     except ValueError:
         cdb_rdb.dias_prox_vencimento = 0
     
