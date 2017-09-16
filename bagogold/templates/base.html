@@ -512,6 +512,30 @@
                                                 {% endcomment %}
                                             </ul>
                                         </li>
+                                        <li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'outros_investimentos' in request.resolver_match.namespace %}active{% endif %}">
+                                            <a href="javascript:;"> Outros inv.
+                                                <span class="arrow"></span>
+                                            </a>
+                                            <ul class="dropdown-menu pull-left">
+                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'historico_outros_invest' %}active{% endif %}">
+                                                    <a href="{% url "outros_investimentos:historico_outros_invest" %}" class="nav-link  "> Histórico </a>
+                                                </li>
+                                                {% if request.user.is_authenticated %}
+                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_outros_invest' %}active{% endif %}">
+                                                    <a href="{% url "outros_investimentos:inserir_investimento" %}" class="nav-link  "> Inserir investimento </a>
+                                                </li>
+                                                {% endif %}
+                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_investimentos' %}active{% endif %}">
+                                                    <a href="{% url "outros_investimentos:listar_investimentos" %}" class="nav-link  "> Listar investimentos </a>
+                                                </li>
+                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_outros_invest' %}active{% endif %}">
+                                                    <a href="{% url "outros_investimentos:painel_outros_invest" %}" class="nav-link  "> Painel </a>
+                                                </li>
+                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'sobre_outros_invest' %}active{% endif %}">
+                                                    <a href="{% url "outros_investimentos:sobre_outros_invest" %}" class="nav-link  "> Sobre </a>
+                                                </li>
+                                            </ul>
+                                        </li>
                                         <li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'divisoes' in request.resolver_match.namespace %}active{% endif %}">
                                             <a href="javascript:;"> Divisões
                                                 <span class="arrow"></span>
