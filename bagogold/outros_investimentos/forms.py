@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.forms.utils import LocalizedModelForm
-from bagogold.outros_investimentos.models import Investimento, \
-    OperacaoInvestimento
+from bagogold.outros_investimentos.models import Investimento, Rendimento
 from django import forms
 from django.forms import widgets
 
@@ -11,23 +10,24 @@ ESCOLHAS_TIPO_OPERACAO=(('C', "Compra"),
 class InvestimentoForm(LocalizedModelForm):
     class Meta:
         model = Investimento
-        fields = ('nome', 'descricao',)
+        fields = ('nome', 'descricao', 'quantidade', 'data')
         
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
         # first call parent's constructor
         super(InvestimentoForm, self).__init__(*args, **kwargs)
 
-class OperacaoInvestimentoForm(LocalizedModelForm):
+class RendimentoForm(LocalizedModelForm):
     class Meta:
-        model = OperacaoInvestimento
-        fields = ('tipo_operacao', 'quantidade', 'investimento', 'data')
+        model = Rendimento
+        fields = ('investimento', 'valor', 'data')
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
-                                            'placeholder':'Selecione uma data'}),
-                 'tipo_operacao': widgets.Select(choices=ESCOLHAS_TIPO_OPERACAO),}
-    
-    class Media:
-        js = ('js/bagogold/form_operacao_investimento.js',)
+                                            'placeholder':'Selecione uma data'})}
         
-    def clean(self):
-        data = super(OperacaoInvestimentoForm, self).clean()
+    def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
+        # first call parent's constructor
+        super(RendimentoForm, self).__init__(*args, **kwargs)
+        # there's a `fields` property now
+        self.fields['investimento'].queryset = CDB_RDB.objects.filter(investidor=self.investidor)
+        
