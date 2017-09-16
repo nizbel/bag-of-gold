@@ -19,7 +19,7 @@
 			<strong></strong> Última data carregada para valor de fechamento: <b>{{ dados.historico_mais_recente }}</b>
 		</div>
     {% endif %}
-	<table id="ordens" class="table table-striped table-bordered table-hover table-header-fixed">
+	<table id="acoes" class="table table-striped table-bordered table-hover table-header-fixed">
 	<thead>
 		<tr>
 			<th>Ação</th>
@@ -71,6 +71,40 @@
 	</tfoot>
 	</tbody>
 	</table>
+    <div class="row">
+        <div class="col-md-6">
+            <!-- BEGIN Portlet PORTLET-->
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-line-chart"></i>Composição</div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <div class="chart" id="graf_composicao"></div>
+                </div>
+            </div>
+            <!-- END Portlet PORTLET-->
+        </div>
+        <div class="col-md-6">
+            <!-- BEGIN Portlet PORTLET-->
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-line-chart"></i>Evolução</div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <div class="chart" id="graf_evolucao"></div>
+                </div>
+            </div>
+            <!-- END Portlet PORTLET-->
+        </div>
+    </div>
 </div>
 
 {% endblock %}
