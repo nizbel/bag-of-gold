@@ -291,6 +291,20 @@ class Divisao (models.Model):
 class DivisaoPrincipal (models.Model):
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
     investidor = models.OneToOneField('Investidor', on_delete=models.CASCADE, primary_key=True)
+
+class DivisaoInvestimento (models.Model):
+    divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
+    investimento = models.OneToOneField('outros_investimentos.Investimento')
+    """
+    Guarda a quantidade do investimento que pertence a divisão
+    """
+    quantidade = models.DecimalField('Quantidade', max_digits=11, decimal_places=2)
+    
+    class Meta:
+        unique_together=('divisao', 'investimento')
+        
+    def __unicode__(self):
+        return self.divisao.nome + ': ' + str(self.quantidade) + ' de ' + unicode(self.investimento)
     
 class DivisaoOperacaoLC (models.Model):
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
