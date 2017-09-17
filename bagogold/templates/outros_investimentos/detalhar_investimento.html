@@ -13,7 +13,7 @@
 {% block extra_titulo %}
 {% if request.user.is_authenticated %}
 <div class="actions">
-    <a href="{% url 'cdb_rdb:editar_cdb_rdb' cdb_rdb.id %}" class="btn btn-small btn-warning">Editar {{cdb_rdb.tipo}}</a>
+    <a href="{% url 'outros_investimentos:editar_investimento' investimento.id %}" class="btn btn-small btn-warning">Editar investimento</a>
 </div>
 {% endif %}
 {% endblock %}
@@ -34,16 +34,20 @@
 				<div class="portlet-body">
 					<div class="m-grid m-grid-responsive-xs">
 						<div class="m-grid-row">
-							<div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
-							<div class="m-grid-col m-grid-col-left">{{cdb_rdb.tipo}}</div>
-							<div class="m-grid-col m-grid-col-left"><strong>Rendimento atual:</strong></div>
-							<div class="m-grid-col m-grid-col-left">{{cdb_rdb.porcentagem_atual}}% {% if cdb_rdb.tipo_rendimento == 1 %}ao ano{% elif cdb_rdb.tipo_rendimento == 2 %}do DI{% endif %}</div>
-							<div class="m-grid-col m-grid-col-left"><strong>Carência atual:</strong></div>
-							<div class="m-grid-col m-grid-col-left">{{cdb_rdb.carencia_atual}} dia(s)</div>
+							<div class="m-grid-col m-grid-col-md-1 m-grid-col-left"><strong>Nome:</strong></div>
+							<div class="m-grid-col m-grid-col-md-1 m-grid-col-left">{{investimento.nome}}</div>
+							<div class="m-grid-col m-grid-col-md-1 m-grid-col-left"><strong>Descrição:</strong></div>
+							<div class="m-grid-col m-grid-col-md-3 m-grid-col-left">{{investimento.descricao|default:'Sem descrição'}}</div>
 						</div>
+                    </div>
+                    <div class="m-grid m-grid-responsive-xs">
 						<div class="m-grid-row">
-							<div class="m-grid-col m-grid-col-left"><strong>Total de operações:</strong></div>
-							<div class="m-grid-col m-grid-col-left">{{cdb_rdb.total_operacoes}}</div>
+							<div class="m-grid-col m-grid-col-left"><strong>Data de início:</strong></div>
+							<div class="m-grid-col m-grid-col-left">{{investimento.data}}</div>
+                            <div class="m-grid-col m-grid-col-left"><strong>Data de encerramento:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{investimento.data_encerramento|default:'Não encerrado'}}</div>
+                            <div class="m-grid-col m-grid-col-left"></div>
+                            <div class="m-grid-col m-grid-col-left"></div>
 						</div>
 					</div>
 				</div>
@@ -64,19 +68,25 @@
 					<div class="m-grid m-grid-responsive-xs">
 						<div class="m-grid-row">
 							<div class="m-grid-col m-grid-col-left"><strong>Total investido:</strong></div>
-							<div class="m-grid-col m-grid-col-left">R$ {{cdb_rdb.total_investido|floatformat:2}}</div>
+							<div class="m-grid-col m-grid-col-left">R$ {{investimento.quantidade|floatformat:2}}</div>
 							<div class="m-grid-col m-grid-col-left"><strong>Saldo atual:</strong></div>
-							<div class="m-grid-col m-grid-col-left">R$ {{cdb_rdb.saldo_atual|floatformat:2}}</div>
+							<div class="m-grid-col m-grid-col-left">R$ {{investimento.saldo_atual|floatformat:2}}</div>
 							<div class="m-grid-col m-grid-col-left"><strong>Lucro:</strong></div>
-							<div class="m-grid-col m-grid-col-left">R$ {{ cdb_rdb.lucro|floatformat:2 }} ({{ cdb_rdb.lucro_percentual|floatformat:2 }}%)</div>
+							<div class="m-grid-col m-grid-col-left">R$ {{ investimento.lucro|floatformat:2 }} ({{ investimento.lucro_percentual|floatformat:2 }}%)</div>
 						</div>
+                        <div class="m-grid-row">
+                            <div class="m-grid-col m-grid-col-left"><strong>Total de rendimentos:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">R$ {{investimento.total_rendimentos|floatformat:2}}</div>
+                            <div class="m-grid-col m-grid-col-left"><strong>Total de amortizações:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">R$ {{investimento.total_amortizacoes|floatformat:2}}</div>
+                        </div>
 						<div class="m-grid-row">
-							<div class="m-grid-col m-grid-col-left"><strong>Dias para próx. retirada:</strong></div>
-							<div class="m-grid-col m-grid-col-left">{{ cdb_rdb.dias_proxima_retirada }} dia(s)</div>
-							<div class="m-grid-col m-grid-col-left"><strong>IR:</strong></div>
-							<div class="m-grid-col m-grid-col-left">R$ {{cdb_rdb.total_ir|floatformat:2}}</div>
-							<div class="m-grid-col m-grid-col-left"><strong>IOF:</strong></div>
-							<div class="m-grid-col m-grid-col-left">R$ {{cdb_rdb.total_iof|floatformat:2}}</div>
+							<div class="m-grid-col m-grid-col-left"><strong>Dias para próx. rendimento:</strong></div>
+							<div class="m-grid-col m-grid-col-left">{{ investimento.dias_prox_rendimento }} dia{{ investimento.dias_prox_rendimento|pluralize:'s' }}</div>
+							<div class="m-grid-col m-grid-col-left"><strong>Dias para próx. amortização:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{ investimento.dias_prox_amortizacao }} dia{{ investimento.dias_prox_amortizacao|pluralize:'s' }}</div>
+                            <div class="m-grid-col m-grid-col-left"></div>
+                            <div class="m-grid-col m-grid-col-left"></div>
 						</div>
 					</div>
 				</div>
@@ -88,18 +98,18 @@
 			<div class="portlet box yellow-crusta">
 				<div class="portlet-title">
 					<div class="caption">
-						<i class="fa fa-money"></i>Rendimento</div>
+						<i class="fa fa-money"></i>Rendimentos</div>
 					<div class="tools">
 						<a href="javascript:;" class="collapse"></a>
 					</div>
 				</div>
 				<div class="portlet-body">
-					<table id="historico_porcentagem" class="table table-striped table-bordered table-hover table-header-fixed">
+					<table id="historico_rendimentos" class="table table-striped table-bordered table-hover table-header-fixed">
 					<thead>
 						<tr>
 							<th>Data</th>
 							<th>Rendimento</th>
-							<th><a href="{% url 'cdb_rdb:inserir_historico_porcentagem_cdb_rdb' cdb_rdb.id %}" class="btn btn-sm green-steel">Inserir</a></th>
+							<th><a href="{% url 'cdb_rdb:inserir_historico_porcentagem_cdb_rdb' investimento.id %}" class="btn btn-sm green-steel">Inserir</a></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -121,18 +131,18 @@
 			<div class="portlet box yellow-crusta">
 				<div class="portlet-title">
 					<div class="caption">
-						<i class="fa fa-calendar-check-o"></i>Carência</div>
+						<i class="fa fa-money"></i>Amortizações</div>
 					<div class="tools">
 						<a href="javascript:;" class="collapse"></a>
 					</div>
 				</div>
 				<div class="portlet-body">
-					<table id="historico_carencia" class="table table-striped table-bordered table-hover table-header-fixed">
+					<table id="historico_amortizacoes" class="table table-striped table-bordered table-hover table-header-fixed">
 					<thead>
 						<tr>
 							<th>Data</th>
 							<th>Carência (dias)</th>
-							<th><a href="{% url 'cdb_rdb:inserir_historico_carencia_cdb_rdb' cdb_rdb.id %}" class="btn btn-sm green-steel">Inserir</a></th>
+							<th><a href="{% comment %}{% url 'cdb_rdb:inserir_historico_carencia_cdb_rdb' investimento.id %}{% endcomment %}" class="btn btn-sm green-steel">Inserir</a></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -140,7 +150,7 @@
 					<tr>
 						<td>{{item.data|default:"Inicial"}}</td>
 						<td>{{item.carencia}} dia(s)</td>
-						<td><a href="{% url 'cdb_rdb:editar_historico_carencia' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
+						<td><a href="{% comment %}{% url 'cdb_rdb:editar_historico_carencia' item.id %}{% endcomment %}" class="btn btn-sm yellow-crusta">Editar</a></td>
 					</tr>
 					{% endfor %}
 					</tbody>

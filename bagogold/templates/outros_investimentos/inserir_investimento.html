@@ -20,7 +20,7 @@
 				<div class="form-group col-md-6 {% if form_outros_invest.nome.errors %} has-error {% endif %}">
 					<label class="control-label col-md-4" style="text-align: left;"> {{form_outros_invest.nome.label}}:</label>
 					<div class="col-md-8">
-						<input type="text" class="form-control" maxlength="30" name="nome" id="id_nome">
+						<input type="text" class="form-control" maxlength="30" name="nome" id="id_nome" value="{{form_outros_invest.nome.value|default:''}}">
 						{% if form_outros_invest.nome.errors %} <span class="help-block"> {{ form_outros_invest.nome.errors.as_text }} </span> {% endif %}
 					</div>
 				</div>
@@ -58,6 +58,15 @@
                     </div>
                 </div>
 			</div>
+            <div class="row">
+                <div class="form-group col-md-6 {% if form_outros_invest.taxa.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4" style="text-align: left;"> {{form_outros_invest.taxa.label}}: </label>
+                    <div class="col-md-8">
+                        <input id="id_taxa" type="text" value="{{form_outros_invest.taxa.value}}" name="taxa" class="form-control">
+                        {% if form_outros_invest.taxa.errors %} <span class="help-block"> {{ form_outros_invest.taxa.errors.as_text }} </span> {% endif %}
+                    </div>
+                </div>
+            </div>
             {% if varias_divisoes %}
             <div class="row" id="forms">
                 <h2 class="font-yellow-crusta" align="center">
@@ -73,7 +82,7 @@
                             <label class="control-label col-md-4" style="text-align: left;"> {{form_divisao.divisao.label}}: </label>
                             <div class="col-md-8">
                                 {% localize off %}
-                                <select class="selectpicker form-control" id="id_divisaoinvestimento_set-{{forloop.counter0}}-divisao" name="divisaoinvestimento_set-{{forloop.counter0}}-divisao">
+                                <select class="selectpicker form-control" id="id_divisaoinvestimento-{{forloop.counter0}}-divisao" name="divisaoinvestimento-{{forloop.counter0}}-divisao">
                                     {% for key, value in form_divisao.fields.divisao.widget.choices %}<option value="{{ key }}" 
                                         {% if key == form_divisao.divisao.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
                                 </select>
@@ -84,7 +93,7 @@
                         <div class="form-group col-md-6 {% if form_divisao.quantidade.errors %} has-error {% endif %}">
                             <label class="control-label col-md-4"> {{form_divisao.quantidade.label}}: </label>
                             <div class="col-md-8">
-                                <input id="id_divisaoinvestimento_set-{{forloop.counter0}}-quantidade" type="text" value="{{form_divisao.quantidade.value}}" name="divisaoinvestimento_set-{{forloop.counter0}}-quantidade" class="form-control">
+                                <input id="id_divisaoinvestimento-{{forloop.counter0}}-quantidade" type="text" value="{{form_divisao.quantidade.value}}" name="divisaoinvestimento-{{forloop.counter0}}-quantidade" class="form-control">
                                 {% if form_divisao.quantidade.errors %} <span class="help-block"> {{ form_divisao.quantidade.errors.as_text }} </span> {% endif %}
                             </div>
                         </div>
