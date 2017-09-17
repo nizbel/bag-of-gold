@@ -17,13 +17,15 @@
 			<tr>
 				<th>Nome</th>
 				<th>Data</th>
+                <th>Data de fim</th>
 			</tr>
 		</thead>
 		<tbody>
 		{% for investimento in investimentos %}
 		<tr>
 			<td><a href="{% url 'outros_investimentos:detalhar_investimento' investimento.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar investimento">{{investimento.nome}}</a></td>
-			<td>{{item.data}}</td>
+			<td>{{investimento.data|date:'d/m/Y'}}</td>
+            <td>{{ investimento.data_encerramento|date:'d/m/Y'|default:'Não encerrado' }}</td>
 		</tr>
 		{% endfor %}
 		</tbody>

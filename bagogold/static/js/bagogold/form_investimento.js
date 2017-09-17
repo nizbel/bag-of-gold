@@ -51,6 +51,14 @@ $(document).ready(function() {
         maxboostedstep: 100,
         prefix: 'R$'
  	});
+ 	$("input[name='taxa']").TouchSpin({
+		min: 0,
+		max: 9999999,
+		step: 0.01,
+		decimals: 2,
+		maxboostedstep: 100,
+		prefix: 'R$'
+	});
  	$("input[name$='-quantidade']").TouchSpin({
  		min: 0,
  		max: 999999999,

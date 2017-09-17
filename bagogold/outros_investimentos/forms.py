@@ -5,7 +5,8 @@ from django import forms
 from django.forms import widgets
 
 class InvestimentoForm(LocalizedModelForm):
-    taxa = forms.DecimalField()
+    taxa = forms.DecimalField(min_value=0,  max_digits=9, decimal_places=2)
+    
     class Meta:
         model = Investimento
         fields = ('nome', 'descricao', 'quantidade', 'data')
