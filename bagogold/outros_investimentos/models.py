@@ -24,8 +24,14 @@ class Investimento (models.Model):
     def eh_encerrado(self):
         return self.data_encerramento and self.data_encerramento < datetime.date.today()
     
+    @property
+    def taxa(self):
+        if hasattr(self, 'investimentotaxa'):
+            return self.investimentotaxa.valor
+        return Decimal(0)
+    
 class InvestimentoTaxa (models.Model):
-    operacao = models.OneToOneField('Investimento')
+    investimento = models.OneToOneField('Investimento')
     valor = models.DecimalField(u'Valor da taxa', max_digits=9, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
     
 class Rendimento (models.Model):

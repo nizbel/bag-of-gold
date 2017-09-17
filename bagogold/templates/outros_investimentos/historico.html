@@ -95,6 +95,7 @@
 							<th>Investimento</th>
 							<th>Data</th>
 							<th>Qtde.</th>
+                            <th>Taxa</th>
 							<th>Rendimentos</th>
                             <th>Amortizações</th>
 							<th>Data de fim</th>
@@ -103,9 +104,10 @@
 					<tbody>
 					{% for investimento in investimentos %}
 					<tr>
-						<td><a href="{% url 'outros_investimentos:detalhar_investimento' investimento.id %}">{{investimento.nome}}</a></td>
+						<td><a class="tooltips" data-original-title="Detalhar investimento" data-placement="top" href="{% url 'outros_investimentos:detalhar_investimento' investimento.id %}">{{investimento.nome}}</a></td>
 						<td>{{ investimento.data|date:"d/m/Y" }}</td>
 						<td>R$ {{investimento.quantidade|floatformat:'2'}}</td>
+                        <td>R$ {{investimento.taxa|floatformat:'2'}}</td>
 						<td>R$ {{ investimento.rendimentos|floatformat:'2' }}</td>
                         <td>R$ {{ investimento.amortizacoes|floatformat:'2' }}</td>
 						<td>{{ investimento.data_encerramento|date:'d/m/Y'|default:'Não encerrado' }}</td>
