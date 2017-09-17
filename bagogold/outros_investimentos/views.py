@@ -22,6 +22,9 @@ from django.template.response import TemplateResponse
 import datetime
 import traceback
 
+@login_required
+@adiciona_titulo_descricao('Detalhar investimento', 'Detalhar investimento, incluindo histórico de rendimentos e '
+                                                'amortizações, além de dados da posição do investidor')
 def detalhar_investimento(request, id_investimento):
     investidor = request.user.investidor
     
@@ -38,14 +41,15 @@ def detalhar_investimento(request, id_investimento):
 #     cdb_rdb.porcentagem_atual = cdb_rdb.porcentagem_atual()
     
     # Preparar estatísticas zeradas
-    investimento.total_investido = investimento.quantidade
+    investimento.total_investido = investimento.quantidade + investimento.taxa
     investimento.total_amortizacoes = sum(investimento.amortizacao_set.filter(data__lte=datetime.date.today()).values_list('valor', flat=True))
     investimento.saldo_atual = investimento.quantidade - investimento.total_amortizacoes
     investimento.total_rendimentos = sum(investimento.rendimento_set.filter(data__lte=datetime.date.today()).values_list('valor', flat=True))
 #     cdb_rdb.total_ir = Decimal(0)
 #     cdb_rdb.total_iof = Decimal(0)
     investimento.lucro = investimento.saldo_atual + investimento.total_amortizacoes + investimento.total_rendimentos - investimento.total_investido
-    investimento.lucro_percentual = Decimal(0)
+    investimento.lucro_percentual = investimento.lucro / 1 if investimento.total_investido == 0 else 100 * Decimal(investimento.lucro) / Decimal(investimento.total_investido)
+    print investimento.lucro_percentual
     
 #     operacoes = OperacaoCDB_RDB.objects.filter(investimento=cdb_rdb).order_by('data')
 #     # Contar total de operações já realizadas 
@@ -103,134 +107,102 @@ def detalhar_investimento(request, id_investimento):
     return TemplateResponse(request, 'outros_investimentos/detalhar_investimento.html', {'investimento': investimento, 'historico_rendimentos': historico_rendimentos,
                                                                        'historico_amortizacoes': historico_amortizacoes})
 
+@login_required
+@adiciona_titulo_descricao('Editar investimento', 'Alterar valores de um investimento')
 def editar_investimento(request, id_investimento):
     investidor = request.user.investidor
     
-    investimento = OperacaoCriptomoeda.objects.get(pk=id_operacao)
+    investimento = Investimento.objects.get(pk=id_investimento)
     # Verifica se a operação é do investidor, senão, jogar erro de permissão
-    if operacao_criptomoeda.investidor != investidor:
+    if investimento.investidor != investidor:
         raise PermissionDenied
     
     # Preparar formset para divisoes
-    DivisaoFormSet = inlineformset_factory(OperacaoCriptomoeda, DivisaoOperacaoCriptomoeda, fields=('divisao', 'quantidade'),
-                                            extra=1, formset=DivisaoOperacaoCriptomoedaFormSet)
+    DivisaoFormSet = inlineformset_factory(Investimento, DivisaoInvestimento, fields=('divisao', 'quantidade'),
+                                            extra=1, formset=DivisaoInvestimentoFormSet)
     
     # Testa se investidor possui mais de uma divisão
     varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
     
     if request.method == 'POST':
         if request.POST.get("save"):
-            form_operacao_criptomoeda = OperacaoCriptomoedaForm(request.POST, instance=operacao_criptomoeda, investidor=investidor)
-            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_criptomoeda, investidor=investidor) if varias_divisoes else None
+            form_outros_invest = InvestimentoForm(request.POST, instance=investimento, investidor=investidor)
+            formset_divisao = DivisaoFormSet(request.POST, instance=investimento, investidor=investidor) if varias_divisoes else None
                 
-            if form_operacao_criptomoeda.is_valid():
-                moeda_utilizada = Criptomoeda.objects.get(id=int(form_operacao_criptomoeda.cleaned_data['moeda_utilizada'])) \
-                    if form_operacao_criptomoeda.cleaned_data['moeda_utilizada'] != '' else None
+            if form_outros_invest.is_valid():
                 if varias_divisoes:
                     if formset_divisao.is_valid():
                         try:
                             with transaction.atomic():
-                                operacao_criptomoeda.save()
+                                investimento.save()
                                 # Caso o valor para a taxa da moeda comprada/vendida seja maior que 0, criar ou editar taxa
-                                if form_operacao_criptomoeda.cleaned_data['taxa'] > 0:
-                                    taxa_moeda = Criptomoeda.objects.get(id=int(form_operacao_criptomoeda.cleaned_data['taxa_moeda'])) \
-                                        if form_operacao_criptomoeda.cleaned_data['taxa_moeda'] != '' else None
-                                    OperacaoCriptomoedaTaxa.objects.update_or_create(operacao=operacao_criptomoeda, defaults={'moeda': taxa_moeda,
-                                                                                                                              'valor': form_operacao_criptomoeda.cleaned_data['taxa']})
+                                if form_outros_invest.cleaned_data['taxa'] > 0:
+                                    InvestimentoTaxa.objects.update_or_create(investimento=investimento, 
+                                                                              defaults={'valor': form_outros_invest.cleaned_data['taxa']})
                                 # Caso contrário, apagar taxa para a moeda, caso exista
-                                elif OperacaoCriptomoedaTaxa.objects.filter(operacao=operacao_criptomoeda).exists():
-                                    OperacaoCriptomoedaTaxa.objects.get(operacao=operacao_criptomoeda).delete()
+                                elif InvestimentoTaxa.objects.filter(investimento=investimento).exists():
+                                    InvestimentoTaxa.objects.get(investimento=investimento).delete()
                                 
-                                # Caso a moeda utilizada não seja o real, criar ou editar registro de moeda utilizada
-                                if moeda_utilizada:
-                                    OperacaoCriptomoedaMoeda.objects.update_or_create(operacao=operacao_criptomoeda, defaults={'criptomoeda': moeda_utilizada})
-                                # Caso moeda utilizada seja o real, verificar se existe registro de moeda utilizada para apagar
-                                elif OperacaoCriptomoedaMoeda.objects.filter(operacao=operacao_criptomoeda).exists():
-                                    OperacaoCriptomoedaMoeda.objects.get(operacao=operacao_criptomoeda).delete()
-                                    
                                 formset_divisao.save()
-                                messages.success(request, 'Operação editada com sucesso')
-                                return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
+                                messages.success(request, 'Investimento editado com sucesso')
+                                return HttpResponseRedirect(reverse('outros_investimentos:historico_outros_invest'))
                         except:
-                            messages.error(request, 'Houve um erro ao editar a operação')
+                            messages.error(request, 'Houve um erro ao editar o investimento')
                             if settings.ENV == 'DEV':
                                 raise
                             elif settings.ENV == 'PROD':
-                                mail_admins(u'Erro ao editar operação em criptomoeda com várias divisões', traceback.format_exc())
+                                mail_admins(u'Erro ao editar investimento com várias divisões', traceback.format_exc())
                     for erro in formset_divisao.non_form_errors():
                         messages.error(request, erro)
                         
                 else:
                     try:
                         with transaction.atomic():
-                            operacao_criptomoeda.save()
+                            investimento.save()
                             # Caso o valor para a taxa da moeda comprada/vendida seja maior que 0, criar ou editar taxa
-                            if form_operacao_criptomoeda.cleaned_data['taxa'] > 0:
-                                taxa_moeda = Criptomoeda.objects.get(id=int(form_operacao_criptomoeda.cleaned_data['taxa_moeda'])) \
-                                    if form_operacao_criptomoeda.cleaned_data['taxa_moeda'] != '' else None
-                                OperacaoCriptomoedaTaxa.objects.update_or_create(operacao=operacao_criptomoeda, defaults={'moeda': taxa_moeda,
-                                                                                                                          'valor': form_operacao_criptomoeda.cleaned_data['taxa']})
+                            if form_outros_invest.cleaned_data['taxa'] > 0:
+                                InvestimentoTaxa.objects.update_or_create(investimento=investimento, 
+                                                                          defaults={'valor': form_outros_invest.cleaned_data['taxa']})
                             # Caso contrário, apagar taxa para a moeda, caso exista
-                            elif OperacaoCriptomoedaTaxa.objects.filter(operacao=operacao_criptomoeda).exists():
-                                OperacaoCriptomoedaTaxa.objects.get(operacao=operacao_criptomoeda).delete()
-                                
-                            # Caso a moeda utilizada não seja o real, criar ou editar registro de moeda utilizada
-                            if moeda_utilizada:
-                                OperacaoCriptomoedaMoeda.objects.update_or_create(operacao=operacao_criptomoeda, defaults={'criptomoeda': moeda_utilizada})
-                            # Caso moeda utilizada seja o real, verificar se existe registro de moeda utilizada para apagar
-                            elif OperacaoCriptomoedaMoeda.objects.filter(operacao=operacao_criptomoeda).exists():
-                                OperacaoCriptomoedaMoeda.objects.get(operacao=operacao_criptomoeda).delete()
-                                
-                            divisao_operacao = DivisaoOperacaoCriptomoeda.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_criptomoeda)
-                            divisao_operacao.quantidade = operacao_criptomoeda.quantidade
+                            elif InvestimentoTaxa.objects.filter(investimento=investimento).exists():
+                                InvestimentoTaxa.objects.get(investimento=investimento).delete()
+                            divisao_operacao = DivisaoInvestimento.objects.get(divisao=investidor.divisaoprincipal.divisao, investimento=investimento)
+                            divisao_operacao.quantidade = investimento.quantidade
                             divisao_operacao.save()
-                            messages.success(request, 'Operação editada com sucesso')
-                            return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
+                            messages.success(request, 'Investimento editado com sucesso')
+                            return HttpResponseRedirect(reverse('outros_investimentos:historico_outros_invest'))
                     except:
-                        messages.error(request, 'Houve um erro ao editar a operação')
+                        messages.error(request, 'Houve um erro ao editar o investimento')
                         if settings.ENV == 'DEV':
                             raise
                         elif settings.ENV == 'PROD':
-                            mail_admins(u'Erro ao editar operação em criptomoeda com uma divisão', traceback.format_exc())
+                            mail_admins(u'Erro ao editar investimento com uma divisão', traceback.format_exc())
                 
-            for erro in [erro for erro in form_operacao_criptomoeda.non_field_errors()]:
+            for erro in [erro for erro in form_outros_invest.non_field_errors()]:
                 messages.error(request, erro)
 #                         print '%s %s'  % (divisao_criptomoeda.quantidade, divisao_criptomoeda.divisao)
                 
         elif request.POST.get("delete"):
             # Verifica se, em caso de compra, a quantidade de cotas do investidor não fica negativa
-            if operacao_criptomoeda.tipo_operacao == 'C' and calcular_qtd_cotas_ate_dia_por_fundo(investidor, operacao_criptomoeda.criptomoeda.id, datetime.date.today()) - operacao_criptomoeda.quantidade < 0:
-                messages.error(request, 'Operação de compra não pode ser apagada pois quantidade atual para o fundo %s seria negativa' % (operacao_criptomoeda.criptomoeda))
+            if Rendimento.objects.filter(investimento=investimento).exists() or Amortizacao.objects.filter(investimento=investimento).exists():
+                messages.error(request, 'Investimento não pode ser apagado pois já possui rendimentos e/ou amortizações cadastrados')
             else:
-                divisao_criptomoeda = DivisaoOperacaoCriptomoeda.objects.filter(operacao=operacao_criptomoeda)
-                for divisao in divisao_criptomoeda:
+                divisao_investimento = DivisaoInvestimento.objects.filter(investimento=investimento)
+                for divisao in divisao_investimento:
                     divisao.delete()
-                operacao_criptomoeda.delete()
-                messages.success(request, 'Operação apagada com sucesso')
+                investimento.delete()
+                messages.success(request, 'Investimento apagado com sucesso')
                 return HttpResponseRedirect(reverse('td:historico_td'))
  
     else:
-        if OperacaoCriptomoedaTaxa.objects.filter(operacao=operacao_criptomoeda).exists():
-            taxa = OperacaoCriptomoedaTaxa.objects.get(operacao=operacao_criptomoeda)
-            taxa_valor = taxa.valor
-            taxa_moeda = taxa.moeda.id
+        if InvestimentoTaxa.objects.filter(investimento=investimento).exists():
+            taxa = InvestimentoTaxa.objects.get(investimento=investimento).taxa
         else:
-            taxa_valor = 0
-            taxa_moeda = None
-        if OperacaoCriptomoedaMoeda.objects.filter(operacao=operacao_criptomoeda).exists():
-            moeda = OperacaoCriptomoedaMoeda.objects.get(operacao=operacao_criptomoeda)
-            moeda_utilizada = moeda.criptomoeda.id
-        else:
-            moeda_utilizada = None
-        form_operacao_criptomoeda = OperacaoCriptomoedaForm(instance=operacao_criptomoeda, investidor=investidor, initial={'taxa': taxa_valor, 'taxa_moeda': taxa_moeda, 'moeda_utilizada': moeda_utilizada})
-        formset_divisao = DivisaoFormSet(instance=operacao_criptomoeda, investidor=investidor)
+            taxa = 0
+        form_outros_invest = InvestimentoForm(instance=investimento, investidor=investidor, initial={'taxa': taxa})
+        formset_divisao = DivisaoFormSet(instance=investimento, investidor=investidor)
         
-    # Preparar nome de fundo selecionado
-#     if request.POST.get('criptomoeda', -1) != -1:
-#         fundo_selecionado = Criptomoeda.objects.get(id=request.POST['criptomoeda'])
-#     else:
-#         fundo_selecionado = operacao_criptomoeda.criptomoeda.nome
-    return TemplateResponse(request, 'criptomoedas/editar_operacao_criptomoeda.html', {'form_operacao_criptomoeda': form_operacao_criptomoeda, 'formset_divisao': formset_divisao, \
+    return TemplateResponse(request, 'outros_investimentos/editar_investimento.html', {'form_outros_invest': form_outros_invest, 'formset_divisao': formset_divisao, \
                                                                                              'varias_divisoes': varias_divisoes}) 
 
 def historico(request):
@@ -274,7 +246,7 @@ def inserir_investimento(request):
     investidor = request.user.investidor
     
     # Preparar formset para divisoes
-    DivisaoOutrosInvestimentosFormSet = inlineformset_factory(Investimento, DivisaoInvestimento, fields=('divisao', 'quantidade'), can_delete=False,
+    DivisaoFormSet = inlineformset_factory(Investimento, DivisaoInvestimento, fields=('divisao', 'quantidade'), can_delete=False,
                                             extra=1, formset=DivisaoInvestimentoFormSet)
     
     # Testa se investidor possui mais de uma divisão
@@ -282,7 +254,7 @@ def inserir_investimento(request):
     
     if request.method == 'POST':
         form_outros_invest = InvestimentoForm(request.POST, investidor=investidor)
-        formset_divisao = DivisaoOutrosInvestimentosFormSet(request.POST, investidor=investidor) if varias_divisoes else None
+        formset_divisao = DivisaoFormSet(request.POST, investidor=investidor) if varias_divisoes else None
         
         # Validar operação
         if form_outros_invest.is_valid():
@@ -291,7 +263,7 @@ def inserir_investimento(request):
                 
             # Testar se várias divisões
             if varias_divisoes:
-                formset_divisao = DivisaoOutrosInvestimentosFormSet(request.POST, instance=investimento, investidor=investidor)
+                formset_divisao = DivisaoFormSet(request.POST, instance=investimento, investidor=investidor)
                 if formset_divisao.is_valid():
                     try:
                         with transaction.atomic():
@@ -333,7 +305,7 @@ def inserir_investimento(request):
                 
     else:
         form_outros_invest = InvestimentoForm(investidor=investidor)
-        formset_divisao = DivisaoOutrosInvestimentosFormSet(investidor=investidor)
+        formset_divisao = DivisaoFormSet(investidor=investidor)
     
     return TemplateResponse(request, 'outros_investimentos/inserir_investimento.html', {'form_outros_invest': form_outros_invest, \
                                                                                               'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})

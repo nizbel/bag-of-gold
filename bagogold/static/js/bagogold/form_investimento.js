@@ -71,6 +71,7 @@ $(document).ready(function() {
  	   language: 'pt-BR'
  	});
      $("select[id$='-divisao']").selectpicker('refresh');
+ 	$("input[name='nome']").maxlength();
 	$("input[name='descricao']").maxlength();
 
 });
