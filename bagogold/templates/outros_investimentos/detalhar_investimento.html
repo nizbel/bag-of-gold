@@ -109,15 +109,15 @@
 						<tr>
 							<th>Data</th>
 							<th>Rendimento</th>
-							<th><a href="{% url 'cdb_rdb:inserir_historico_porcentagem_cdb_rdb' investimento.id %}" class="btn btn-sm green-steel">Inserir</a></th>
+							<th><a href="{% url 'outros_investimentos:inserir_rendimento' investimento.id %}" class="btn btn-sm green-steel">Inserir</a></th>
 						</tr>
 					</thead>
 					<tbody>
-					{% for item in historico_porcentagem %}
+					{% for item in historico_rendimento %}
 					<tr>
-						<td>{{item.data|default:"Inicial"}}</td>
-						<td>{{item.porcentagem}}%</td>
-						<td><a href="{% url 'cdb_rdb:editar_historico_porcentagem' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
+						<td>{{item.data|date:'d/m/Y'}}</td>
+						<td>{{item.valor}}%</td>
+						<td><a href="{% url 'outros_investimentos:editar_rendimento' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
 					</tr>
 					{% endfor %}
 					</tbody>
