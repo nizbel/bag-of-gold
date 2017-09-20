@@ -3,7 +3,8 @@ from bagogold import settings
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoInvestimentoFormSet
 from bagogold.bagogold.models.divisoes import DivisaoInvestimento, Divisao
-from bagogold.outros_investimentos.forms import InvestimentoForm, RendimentoForm
+from bagogold.outros_investimentos.forms import InvestimentoForm, RendimentoForm, \
+    AmortizacaoForm
 from bagogold.outros_investimentos.models import Investimento, InvestimentoTaxa, \
     Rendimento, Amortizacao
 from bagogold.outros_investimentos.utils import \
@@ -105,6 +106,39 @@ def detalhar_investimento(request, id_investimento):
     
     return TemplateResponse(request, 'outros_investimentos/detalhar_investimento.html', {'investimento': investimento, 'historico_rendimentos': historico_rendimentos,
                                                                        'historico_amortizacoes': historico_amortizacoes})
+
+@login_required
+@adiciona_titulo_descricao('Editar amortização de um investimento', 'Editar registro de amortização de um investimento')
+def editar_amortizacao(request, id_amortizacao):
+    investidor = request.user.investidor
+    amortizacao = get_object_or_404(Amortizacao, id=id_amortizacao)
+     
+    if amortizacao.investimento.investidor != investidor:
+        raise PermissionDenied
+     
+    if request.method == 'POST':
+        if request.POST.get("save"):
+            form_amortizacao = AmortizacaoForm(request.POST, instance=amortizacao, investimento=amortizacao.investimento, \
+                                                                         investidor=investidor)
+            if form_amortizacao.is_valid():
+                amortizacao.save(force_update=True)
+                messages.success(request, 'Amortização editada com sucesso')
+                return HttpResponseRedirect(reverse('outros_investimentos:detalhar_investimento', kwargs={'id_investimento': amortizacao.investimento.id}))
+                 
+            for erro in [erro for erro in form_amortizacao.non_field_errors()]:
+                messages.error(request, erro)
+                 
+        elif request.POST.get("delete"):
+            # Pegar investimento para o redirecionamento no caso de exclusão
+            investimento = amortizacao.investimento
+            amortizacao.delete()
+            messages.success(request, 'Amortização excluída com sucesso')
+            return HttpResponseRedirect(reverse('outros_investimentos:detalhar_investimento', kwargs={'id_investimento': investimento.id}))
+  
+    else:
+        form_amortizacao = AmortizacaoForm(instance=amortizacao, investimento=amortizacao.investimento, investidor=investidor)
+             
+    return TemplateResponse(request, 'outros_investimentos/editar_amortizacao.html', {'form_amortizacao': form_amortizacao}) 
 
 @login_required
 @adiciona_titulo_descricao('Editar investimento', 'Alterar valores de um investimento')
@@ -229,7 +263,7 @@ def editar_rendimento(request, id_rendimento):
             # Pegar investimento para o redirecionamento no caso de exclusão
             investimento = rendimento.investimento
             rendimento.delete()
-            messages.success(request, 'Histórico de porcentagem excluído com sucesso')
+            messages.success(request, 'Rendimento excluído com sucesso')
             return HttpResponseRedirect(reverse('outros_investimentos:detalhar_investimento', kwargs={'id_investimento': investimento.id}))
   
     else:
@@ -272,6 +306,30 @@ def historico(request):
     
     return TemplateResponse(request, 'outros_investimentos/historico.html', {'dados': dados, 'graf_patrimonio': graf_patrimonio, 'graf_total_investido': graf_total_investido,
                                                                              'investimentos': investimentos})
+
+@login_required
+@adiciona_titulo_descricao('Inserir amortização para um investimento', 'Inserir registro de amortização '
+                                                                    'ao histórico de um investimento')
+def inserir_amortizacao(request, investimento_id):
+    investidor = request.user.investidor
+    investimento = get_object_or_404(Investimento, id=investimento_id)
+    
+    if investimento.investidor != investidor:
+        raise PermissionDenied
+    
+    if request.method == 'POST':
+        form_amortizacao = AmortizacaoForm(request.POST, initial={'investimento': investimento.id}, investimento=investimento, investidor=investidor)
+        if form_amortizacao.is_valid():
+            amortizacao = form_amortizacao.save()
+            messages.success(request, 'Amortização para %s incluída com sucesso' % amortizacao.investimento)
+            return HttpResponseRedirect(reverse('outros_investimentos:detalhar_investimento', kwargs={'id_investimento': investimento.id}))
+        
+        for erro in [erro for erro in form_amortizacao.non_field_errors()]:
+            messages.error(request, erro)
+    else:
+        form_amortizacao = AmortizacaoForm(initial={'investimento': investimento.id}, investimento=investimento, investidor=investidor)
+            
+    return TemplateResponse(request, 'outros_investimentos/inserir_amortizacao.html', {'form_amortizacao': form_amortizacao})
 
 @login_required
 @adiciona_titulo_descricao('Inserir investimento', 'Inserir registro de investimento')

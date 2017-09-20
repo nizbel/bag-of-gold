@@ -142,15 +142,15 @@
 						<tr>
 							<th>Data</th>
 							<th>Carência (dias)</th>
-							<th><a href="{% comment %}{% url 'cdb_rdb:inserir_historico_carencia_cdb_rdb' investimento.id %}{% endcomment %}" class="btn btn-sm green-steel">Inserir</a></th>
+							<th><a href="{% url 'outros_investimentos:inserir_amortizacao' investimento.id %}" class="btn btn-sm green-steel">Inserir</a></th>
 						</tr>
 					</thead>
 					<tbody>
-					{% for item in historico_amortizacoes %}
+					{% for amortizacao in historico_amortizacoes %}
 					<tr>
-						<td>{{item.data|default:"Inicial"}}</td>
-						<td>{{item.carencia}} dia(s)</td>
-						<td><a href="{% comment %}{% url 'cdb_rdb:editar_historico_carencia' item.id %}{% endcomment %}" class="btn btn-sm yellow-crusta">Editar</a></td>
+						<td>{{amortizacao.data|date:'d/m/Y'}}</td>
+						<td>{{amortizacao.valor}} dia(s)</td>
+						<td><a href="{% url 'outros_investimentos:editar_amortizacao' amortizacao.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
 					</tr>
 					{% endfor %}
 					</tbody>
