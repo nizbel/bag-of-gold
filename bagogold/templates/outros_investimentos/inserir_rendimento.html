@@ -19,7 +19,7 @@
                 <div class="form-group col-md-6 {% if form_rendimento.valor.errors %} has-error {% endif %}">
                     <label class="control-label col-md-4"> {{ form_rendimento.valor.label}}: </label>
                     <div class="col-md-8">
-                        <input id="id_porcentagem" type="text" value="{{form_rendimento.valor.value}}" name="porcentagem" class="form-control">
+                        <input id="id_valor" type="text" value="{{form_rendimento.valor.value}}" name="valor" class="form-control">
                         {% if form_rendimento.valor.errors %} <span class="help-block"> {{ form_rendimento.valor.errors.as_text }} </span> {% endif %}
                     </div>
                 </div>
@@ -45,8 +45,9 @@
                 <div class="form-group col-md-6 {% if form_rendimento.investimento.errors %} has-error {% endif %}">
                     <label class="control-label col-md-4"> {{ form_rendimento.investimento.label}}: </label>
                     <div class="col-md-8">
-                        <select class="selectpicker form-control" disabled id="id_cdb_rdb" name="cdb_rdb">
-                        {% for key, value in form_rendimento.fields.cdb_rdb.widget.choices %}<option value="{{ key }}" {% if key == form_rendimento.investimento.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                        <select class="selectpicker form-control" disabled id="id_investimento" name="investimento">
+                        {% for key, value in form_rendimento.fields.investimento.widget.choices %}<option value="{{ key }}" 
+                        {% if key == form_rendimento.investimento.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
                         </select>
                         {% if form_rendimento.investimento.errors %} <span class="help-block"> {{ form_rendimento.investimento.errors.as_text }} </span> {% endif %}
                     </div>
@@ -85,7 +86,7 @@ $( document ).ready(function() {
         step: 0.01,
         decimals: 2,
         maxboostedstep: 100,
-        postfix: '%'
+        prefix: 'R$'
     });
     $('.date-picker').datepicker({
         language: 'pt-BR'

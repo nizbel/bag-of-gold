@@ -5,6 +5,7 @@ import views
 urlpatterns = [
     url(r'^detalhar_investimento/(?P<id_investimento>\d+)/$', views.detalhar_investimento, name='detalhar_investimento'),
     url(r'^editar_investimento/(?P<id_investimento>\d+)/$', views.editar_investimento, name='editar_investimento'),
+    url(r'^editar_rendimento/(?P<id_rendimento>\d+)/$', views.editar_rendimento, name='editar_rendimento'),
     url(r'^historico/$', views.historico, name='historico_outros_invest'),
 #     url(r'^inserir_amortizacao/$', views.inserir_amortizacao, name='inserir_amortizacao'),
     url(r'^inserir_investimento/$', views.inserir_investimento, name='inserir_investimento'),
