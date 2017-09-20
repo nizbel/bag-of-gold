@@ -88,7 +88,8 @@ class RendimentoForm(LocalizedModelForm):
     def clean(self):
         cleaned_data = super(RendimentoForm, self).clean()
         # Testar se já existe algum histórico para o investimento na data
-        if cleaned_data.get('data') and Rendimento.objects.filter(investimento=cleaned_data.get('investimento'), data=cleaned_data.get('data')).exists():
+        if Rendimento.objects.filter(investimento=cleaned_data.get('investimento'), data=cleaned_data.get('data')).exists() \
+            and Rendimento.objects.get(investimento=cleaned_data.get('investimento'), data=cleaned_data.get('data')).investimento.id != self.investimento.id:
             raise forms.ValidationError('Já existe um rendimento para essa data')
         return cleaned_data
         

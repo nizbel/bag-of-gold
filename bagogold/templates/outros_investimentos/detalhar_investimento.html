@@ -113,11 +113,11 @@
 						</tr>
 					</thead>
 					<tbody>
-					{% for item in historico_rendimento %}
+					{% for rendimento in historico_rendimentos %}
 					<tr>
-						<td>{{item.data|date:'d/m/Y'}}</td>
-						<td>{{item.valor}}%</td>
-						<td><a href="{% url 'outros_investimentos:editar_rendimento' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
+						<td>{{rendimento.data|date:'d/m/Y'}}</td>
+						<td>R$ {{rendimento.valor}}</td>
+						<td><a href="{% url 'outros_investimentos:editar_rendimento' rendimento.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
 					</tr>
 					{% endfor %}
 					</tbody>
@@ -146,7 +146,7 @@
 						</tr>
 					</thead>
 					<tbody>
-					{% for item in historico_carencia %}
+					{% for item in historico_amortizacoes %}
 					<tr>
 						<td>{{item.data|default:"Inicial"}}</td>
 						<td>{{item.carencia}} dia(s)</td>
