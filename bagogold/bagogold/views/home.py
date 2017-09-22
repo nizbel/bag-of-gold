@@ -49,6 +49,7 @@ import calendar
 import datetime
 import json
 import math
+from bagogold.outros_investimentos.models import Rendimento, Amortizacao
 
 
 @login_required
@@ -129,6 +130,14 @@ def calendario(request):
         transferencias_cripto = TransferenciaCriptomoeda.objects.filter(data__range=[data_inicial, data_final])
         calendario.extend([{'title': u'Transferência relacionada a Criptomoedas, %s %s' % (formatar_zeros_a_direita_apos_2_casas_decimais(transferencia.quantidade), transferencia.moeda_utilizada()),
                             'start': transferencia.data.strftime('%Y-%m-%d')} for transferencia in transferencias_cripto])
+        
+        # Rendimentos e amortizações de outros investimentos
+        rendimentos_outros_inv = Rendimento.objects.filter(investimento__investidor=investidor, data__range=[data_inicial, data_final])
+        calendario.exted([{'title': u'Rendimento de R$ %s para %s' % (data_rendimento.quantidade, data_rendimento.investimento),
+                           'start': data_rendimento.data.strftime('%Y-%m-%d')} for data_rendimento in rendimentos_outros_inv])
+        amortizacoes_outros_inv = Amortizacao.objects.filter(investimento__investidor=investidor, data__range=[data_inicial, data_final])
+        calendario.exted([{'title': u'Amortização de R$ %s para %s' % (data_amortizacao.quantidade, data_amortizacao.investimento),
+                           'start': data_amortizacao.data.strftime('%Y-%m-%d')} for data_amortizacao in amortizacoes_outros_inv])
         
         return HttpResponse(json.dumps(calendario), content_type = "application/json")   
     
