@@ -259,16 +259,13 @@ def detalhamento_investimentos(request):
     # Adicionar outros investimentos do investidor
     outros_investimentos = Investimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
     
-    # Adicionar rendimentos de outros investimentos
-    rend_outros_investimentos = Rendimento.objects.filter(investimento__investidor=investidor).exclude(data__isnull=True).order_by('data')
-    
     # Adicionar amortizações de outros investimentos
     amort_outros_investimentos = Amortizacao.objects.filter(investimento__investidor=investidor).exclude(data__isnull=True).order_by('data')
     
     # Juntar todas as operações
     lista_operacoes = sorted(chain(proventos_fii, operacoes_fii, operacoes_td, proventos_bh,  operacoes_bh, operacoes_t, operacoes_lc, operacoes_cdb_rdb, 
                                    operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento, operacoes_criptomoedas, 
-                                   transferencias_criptomoedas, outros_investimentos, rend_outros_investimentos, amort_outros_investimentos),
+                                   transferencias_criptomoedas, outros_investimentos, amort_outros_investimentos),
                             key=attrgetter('data'))
 
 	# Se não houver operações, retornar vazio
@@ -552,6 +549,9 @@ def detalhamento_investimentos(request):
             if item.id not in invest.keys():
                 invest[item.id] = 0
             invest[item.id] += item.quantidade
+            
+        elif isinstance(item, Amortizacao):
+            invest[item.investimento.id] -= item.valor
 
         # Se não cair em nenhum dos anteriores: item vazio
         
@@ -736,6 +736,11 @@ def detalhamento_investimentos(request):
             patrimonio['Criptomoedas'] = patrimonio_criptomoedas
             patrimonio['patrimonio_total'] += patrimonio['Criptomoedas']
             
+            # Outros investimentos
+#             inicio_outros_invest = datetime.datetime.now()
+            patrimonio['Outros inv.'] = sum(invest.values())
+            patrimonio['patrimonio_total'] += patrimonio['Outros inv.']
+            
 #             print 'Ações (B&H)          ', total_acoes_bh
 #             print 'Ações (Trading)      ', total_acoes_t
 #             print 'Prov. Ações          ', total_prov_acoes_bh
@@ -748,6 +753,7 @@ def detalhamento_investimentos(request):
 #             print 'Debêntures           ', total_debentures
 #             print 'Fundo Inv.           ', total_fundo_investimento
 #             print 'Cripto.              ', total_criptomoeda
+#             print 'Outros inv.          ', total_outros_invest
             
             # Preparar estatísticas
             for data_estatistica in datas_estatisticas:
@@ -794,6 +800,7 @@ def detalhamento_investimentos(request):
 #     print 'Debêntures:       ', total_debentures
 #     print 'Fundo Inv.:       ', total_fundo_investimento
 #     print 'Cripto.           ', total_criptomoeda
+#     print 'Outros inv.       ', total_outros_invest
     
     return TemplateResponse(request, 'detalhamento_investimentos.html', {'graf_patrimonio': graf_patrimonio, 'patrimonio_anual': patrimonio_anual,
                                             'estatisticas': estatisticas, 'graf_patrimonio_cripto': json.dumps(graf_patrimonio_cripto)})
