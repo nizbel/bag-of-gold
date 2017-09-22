@@ -26,13 +26,15 @@ from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia, \
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
 from bagogold.fundo_investimento.utils import \
     calcular_valor_fundos_investimento_ate_dia
+from bagogold.outros_investimentos.models import Investimento
+from bagogold.outros_investimentos.utils import \
+    calcular_valor_outros_investimentos_ate_data
 from decimal import Decimal
 from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 from itertools import chain
 from operator import attrgetter
 import datetime
-from bagogold.outros_investimentos.utils import calcular_valor_outros_investimentos_ate_data
 
 
 def is_superuser(user):
@@ -82,9 +84,10 @@ def buscar_ultimas_operacoes(investidor, quantidade_operacoes):
     operacoes_cri_cra = OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor).exclude(data__isnull=True).order_by('data')  
     operacoes_debentures = OperacaoDebenture.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
     operacoes_fundo_investimento = OperacaoFundoInvestimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
+    outros_investimentos = Investimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
     
     lista_operacoes = sorted(chain(operacoes_fii, operacoes_td, operacoes_acoes, operacoes_lc, operacoes_cdb_rdb, 
-                                   operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento),
+                                   operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento, outros_investimentos),
                             key=attrgetter('data'), reverse=True)
     
     ultimas_operacoes = lista_operacoes[:min(quantidade_operacoes, len(lista_operacoes))]
