@@ -31,6 +31,10 @@ from bagogold.fundo_investimento.models import FundoInvestimento, \
     HistoricoValorCotas, OperacaoFundoInvestimento
 from bagogold.fundo_investimento.utils import \
     calcular_qtd_cotas_ate_dia_por_divisao
+from bagogold.outros_investimentos.models import Investimento
+from bagogold.outros_investimentos.utils import \
+    calcular_valor_outros_investimentos_ate_data, \
+    calcular_valor_outros_investimentos_ate_data_por_divisao
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -39,8 +43,6 @@ from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
 import datetime
-from bagogold.outros_investimentos.utils import calcular_valor_outros_investimentos_ate_data,\
-    calcular_valor_outros_investimentos_ate_data_por_divisao
 
 @login_required
 @adiciona_titulo_descricao('Gerar transferências', 'Insere transferências no histórico automaticamente '
@@ -265,6 +267,28 @@ def detalhar_divisao(request, id):
             composicao['td'].composicao[titulo_id].composicao[operacao_divisao.operacao.id].quantidade = operacao_divisao.quantidade
             composicao['td'].composicao[titulo_id].composicao[operacao_divisao.operacao.id].valor_unitario = td_valor
             composicao['td'].composicao[titulo_id].composicao[operacao_divisao.operacao.id].patrimonio = operacao_divisao.quantidade * td_valor
+    
+    # Adicionar outros investimentos
+    composicao['outros'] = Object()
+    composicao['outros'].nome = 'Outros investimentos'
+    composicao['outros'].patrimonio = 0
+    composicao['outros'].composicao = {}
+    # Pegar outros investimentos contidos na divisão
+    qtd_outros_investimentos = calcular_valor_outros_investimentos_ate_data_por_divisao(divisao)
+    for investimento_id in qtd_outros_investimentos.keys():
+        investimento = Investimento.objects.get(id=investimento_id)
+        composicao['outros'].patrimonio += qtd_outros_investimentos[investimento_id]
+        composicao['outros'].composicao[investimento_id] = Object()
+        composicao['outros'].composicao[investimento_id].nome = investimento.nome
+        composicao['outros'].composicao[investimento_id].patrimonio = qtd_outros_investimentos[investimento_id]
+        composicao['outros'].composicao[investimento_id].composicao = {}
+        # Pegar dados do investimento
+        composicao['outros'].composicao[investimento_id].composicao[investimento_id] = Object()
+        composicao['outros'].composicao[investimento_id].composicao[investimento_id].nome = investimento.nome
+        composicao['outros'].composicao[investimento_id].composicao[investimento_id].data = investimento.data
+        composicao['outros'].composicao[investimento_id].composicao[investimento_id].quantidade = qtd_outros_investimentos[investimento_id]
+        composicao['outros'].composicao[investimento_id].composicao[investimento_id].valor_unitario = qtd_outros_investimentos[investimento_id]
+        composicao['outros'].composicao[investimento_id].composicao[investimento_id].patrimonio = qtd_outros_investimentos[investimento_id]
     
     # Calcular valor total da divisão
     for key, item in composicao.items():
