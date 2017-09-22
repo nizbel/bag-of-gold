@@ -276,7 +276,7 @@ class Divisao (models.Model):
         # Transferências
         saldo += -(TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_OUTROS_INVEST, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
             + (TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_OUTROS_INVEST, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
-        print saldo
+
         return saldo
     
     def saldo_td(self, data=datetime.date.today()):
