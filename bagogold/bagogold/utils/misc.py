@@ -181,7 +181,7 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDEFILO
     
     # Outros investimentos
     if 'O' in tipo_investimentos:
-        rendimentos['O'] = Rendimento.objects.filter(investimento__investidor=investidor, data__lte=data).aggregate(total_rendimentos=Sum('valor'))['valor'] or 0
+        rendimentos['O'] = Rendimento.objects.filter(investimento__investidor=investidor, data__lte=data).aggregate(total_rendimentos=Sum('valor'))['total_rendimentos'] or 0
     
     return rendimentos
 

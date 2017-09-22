@@ -39,6 +39,8 @@ from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
 import datetime
+from bagogold.outros_investimentos.utils import calcular_valor_outros_investimentos_ate_data,\
+    calcular_valor_outros_investimentos_ate_data_por_divisao
 
 @login_required
 @adiciona_titulo_descricao('Gerar transferências', 'Insere transferências no histórico automaticamente '
@@ -409,6 +411,7 @@ def listar_divisoes(request):
         divisao.valor_atual_fii = 0
         divisao.valor_atual_fundo_investimento = 0
         divisao.valor_atual_lc = 0
+        divisao.valor_atual_outros_invest = 0
         divisao.valor_atual_td = 0
         
         data_atual = datetime.date.today()
@@ -466,7 +469,6 @@ def listar_divisoes(request):
          
         # Fundos de investimento
         fundo_investimento_divisao = calcular_qtd_cotas_ate_dia_por_divisao(data_atual, divisao.id)
-        print fundo_investimento_divisao
         for fundo_id in fundo_investimento_divisao.keys():
             historico_fundo = HistoricoValorCotas.objects.filter(fundo_investimento__id=fundo_id).order_by('-data')
             ultima_operacao_fundo = OperacaoFundoInvestimento.objects.filter(fundo_investimento__id=fundo_id).order_by('-data')[0]
@@ -481,6 +483,11 @@ def listar_divisoes(request):
         lc_divisao = calcular_valor_lc_ate_dia_por_divisao(data_atual, divisao.id)
         divisao.valor_atual_lc += sum(lc_divisao.values())
         divisao.valor_atual += divisao.valor_atual_lc
+         
+        # Outros investimentos
+        outros_invest_divisao = calcular_valor_outros_investimentos_ate_data_por_divisao(divisao, data_atual)
+        divisao.valor_atual_outros_invest += sum(outros_invest_divisao.values())
+        divisao.valor_atual += divisao.valor_atual_outros_invest
          
         # Tesouro Direto
         td_divisao = calcular_qtd_titulos_ate_dia_por_divisao(data_atual, divisao.id)
@@ -507,11 +514,12 @@ def listar_divisoes(request):
         divisao.saldo_fii = divisao.saldo_fii()
         divisao.saldo_fundo_investimento = divisao.saldo_fundo_investimento()
         divisao.saldo_lc = divisao.saldo_lc()
+        divisao.saldo_outros_invest = divisao.saldo_outros_invest()
         divisao.saldo_td = divisao.saldo_td()
         divisao.saldo_trade = divisao.saldo_acoes_trade()
         divisao.saldo = divisao.saldo_bh + divisao.saldo_cdb_rdb + divisao.saldo_cri_cra + divisao.saldo_criptomoeda \
             + divisao.saldo_debentures + divisao.saldo_fii + divisao.saldo_fundo_investimento + divisao.saldo_lc \
-            + divisao.saldo_td + divisao.saldo_trade
+            + divisao.saldo_outros_invest + divisao.saldo_td + divisao.saldo_trade
               
     return TemplateResponse(request, 'divisoes/listar_divisoes.html', {'divisoes': divisoes})
 
