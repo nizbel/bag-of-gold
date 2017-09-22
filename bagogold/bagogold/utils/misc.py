@@ -3,17 +3,18 @@ from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao
 from bagogold.bagogold.models.fii import UsoProventosOperacaoFII
 from bagogold.bagogold.models.lc import OperacaoLetraCredito
 from bagogold.bagogold.models.td import HistoricoIPCA, OperacaoTitulo
+from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
 from bagogold.fundo_investimento.utils import \
     calcular_valor_fundos_investimento_ate_dia
 from decimal import Decimal
+from django.db.models.aggregates import Sum
+from django.utils import timezone
 from urllib2 import Request, urlopen, URLError, HTTPError
 import datetime
 import math
 import random
 import re
 import time
-from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
-from django.utils import timezone
 
 
 def calcular_iof_regressivo(dias):
@@ -119,13 +120,14 @@ def buscar_valores_diarios_selic(data_inicial=datetime.date.today() - datetime.t
                 lista_datas_valores.append((data, fator_diario))
         return lista_datas_valores
      
-def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDEFILRT'):
+def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDEFILORT'):
     """
     Calcula os rendimentos de operações até a data especificada, para os tipos de investimento definidos
     Parâmetros: Investidor
                 Data final (inclusive)
                 Tipo de investimento (seguindo o padrão
-    B = Buy and Hold; C = CDB/RDB; D = Tesouro Direto; E = Debêntures; F = FII; I = Fundo de investimento; L = Letra de Crédito; R = CRI/CRA; T = Trading;
+    B = Buy and Hold; C = CDB/RDB; D = Tesouro Direto; E = Debêntures; F = FII; I = Fundo de investimento; L = Letra de Crédito;
+    O = Outros investimentos; R = CRI/CRA; T = Trading;)
     Retorno: Valores de rendimentos para cada tipo de investimento {Tipo: Valor}
     """
     from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB
@@ -136,6 +138,7 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDEFILR
     from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia
     from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA
     from bagogold.cri_cra.utils.utils import calcular_valor_cri_cra_ate_dia, calcular_rendimentos_cri_cra_ate_data
+    from bagogold.outros_investimentos.models import Rendimento
     
     rendimentos = {}
     # Ações (Buy and Hold)
@@ -175,6 +178,10 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDEFILR
         rendimentos['R'] = sum(calcular_valor_cri_cra_ate_dia(investidor, data).values()) + calcular_rendimentos_cri_cra_ate_data(investidor, data) \
             - sum([(operacao.quantidade * operacao.preco_unitario) for operacao in OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, data__lte=data, tipo_operacao='C')]) \
             + sum([(operacao.quantidade * operacao.preco_unitario) for operacao in OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, data__lte=data, tipo_operacao='V')])
+    
+    # Outros investimentos
+    if 'O' in tipo_investimentos:
+        rendimentos['O'] = Rendimento.objects.filter(investimento__investidor=investidor, data__lte=data).aggregate(total_rendimentos=Sum('valor'))['valor'] or 0
     
     return rendimentos
 

@@ -32,6 +32,8 @@ from bagogold.criptomoeda.models import OperacaoCriptomoeda, \
 from bagogold.criptomoeda.utils import buscar_valor_criptomoedas_atual
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
     HistoricoValorCotas
+from bagogold.outros_investimentos.models import Rendimento, Amortizacao, \
+    Investimento
 from decimal import Decimal, ROUND_DOWN
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -49,7 +51,6 @@ import calendar
 import datetime
 import json
 import math
-from bagogold.outros_investimentos.models import Rendimento, Amortizacao
 
 
 @login_required
@@ -255,9 +256,19 @@ def detalhamento_investimentos(request):
     # Adicionar transferências em Criptomoedas do investidor
     transferencias_criptomoedas = TransferenciaCriptomoeda.objects.filter(investidor=investidor, taxa__gt=Decimal(0), moeda__isnull=False).exclude(data__isnull=True).order_by('data')
     
+    # Adicionar outros investimentos do investidor
+    outros_investimentos = Investimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
+    
+    # Adicionar rendimentos de outros investimentos
+    rend_outros_investimentos = Rendimento.objects.filter(investimento__investidor=investidor).exclude(data__isnull=True).order_by('data')
+    
+    # Adicionar amortizações de outros investimentos
+    amort_outros_investimentos = Amortizacao.objects.filter(investimento__investidor=investidor).exclude(data__isnull=True).order_by('data')
+    
     # Juntar todas as operações
     lista_operacoes = sorted(chain(proventos_fii, operacoes_fii, operacoes_td, proventos_bh,  operacoes_bh, operacoes_t, operacoes_lc, operacoes_cdb_rdb, 
-                                   operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento, operacoes_criptomoedas, transferencias_criptomoedas),
+                                   operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento, operacoes_criptomoedas, 
+                                   transferencias_criptomoedas, outros_investimentos, rend_outros_investimentos, amort_outros_investimentos),
                             key=attrgetter('data'))
 
 	# Se não houver operações, retornar vazio
@@ -344,6 +355,7 @@ def detalhamento_investimentos(request):
     fundos_investimento = {}
     debentures = {}
     criptomoedas = {}
+    invest = {}
     total_proventos_fii = 0
     total_proventos_bh = 0
     
@@ -367,6 +379,7 @@ def detalhamento_investimentos(request):
 #     total_debentures = datetime.timedelta(hours=0)
 #     total_fundo_investimento = datetime.timedelta(hours=0)
 #     total_criptomoeda = datetime.timedelta(hours=0)
+#     total_outros_invest = datetime.timedelta(hours=0)
     ############# TESTE
     
     for index, item in enumerate(lista_conjunta):    
@@ -535,6 +548,10 @@ def detalhamento_investimentos(request):
                 criptomoedas[item.moeda.ticker] = 0
             criptomoedas[item.moeda.ticker] -= item.taxa
             
+        elif isinstance(item, Investimento):
+            if item.id not in invest.keys():
+                invest[item.id] = 0
+            invest[item.id] += item.quantidade
 
         # Se não cair em nenhum dos anteriores: item vazio
         
@@ -825,6 +842,8 @@ def painel_geral(request):
             investimento.link = 'fundo_investimento:painel_fundo_investimento'
         elif chave == 'Letras de Crédito':
             investimento.link = 'lci_lca:painel_lci_lca'
+        elif chave == 'Outros inv.':
+            investimento.link = 'outros_investimentos:painel_outros_invest'
         elif chave == 'Tesouro Direto':
             investimento.link = 'td:painel_td'
             
