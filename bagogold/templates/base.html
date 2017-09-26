@@ -531,9 +531,11 @@
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_outros_invest' %}active{% endif %}">
                                                     <a href="{% url "outros_investimentos:painel_outros_invest" %}" class="nav-link  "> Painel </a>
                                                 </li>
+                                                {% comment %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'sobre_outros_invest' %}active{% endif %}">
                                                     <a href="{% url "outros_investimentos:sobre_outros_invest" %}" class="nav-link  "> Sobre </a>
                                                 </li>
+                                                {% endcomment %}
                                             </ul>
                                         </li>
                                         <li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'divisoes' in request.resolver_match.namespace %}active{% endif %}">

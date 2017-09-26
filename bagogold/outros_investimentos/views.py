@@ -48,7 +48,7 @@ def detalhar_investimento(request, id_investimento):
     investimento.total_rendimentos = sum(investimento.rendimento_set.filter(data__lte=datetime.date.today()).values_list('valor', flat=True))
 #     cdb_rdb.total_ir = Decimal(0)
 #     cdb_rdb.total_iof = Decimal(0)
-    investimento.lucro = investimento.saldo_atual + investimento.total_amortizacoes + investimento.total_rendimentos - investimento.total_investido
+    investimento.lucro = investimento.total_amortizacoes + investimento.total_rendimentos - investimento.total_investido
     investimento.lucro_percentual = investimento.lucro / 1 if investimento.total_investido == 0 else 100 * Decimal(investimento.lucro) / Decimal(investimento.total_investido)
     
 #     operacoes = OperacaoCDB_RDB.objects.filter(investimento=cdb_rdb).order_by('data')
@@ -440,11 +440,39 @@ def listar_investimentos(request):
 @adiciona_titulo_descricao('Painel de Outros Investimentos', 'Posição atual do investidor em outros investimentos')
 def painel(request):
     investidor = request.user.investidor
-    qtd_investimentos = calcular_valor_outros_investimentos_ate_data(investidor)
     
-    investimentos = Investimento.objects.filter(id__in=qtd_investimentos.keys())
+    investimentos = Investimento.objects.filter(investidor=investidor, data_encerramento__isnull=True)
     
-    return TemplateResponse(request, 'outros_investimentos/painel.html', {'investimentos': investimentos})
+    if not investimentos:
+        return TemplateResponse(request, 'outros_investimentos/historico.html', {'dados': {}, 'investimentos': list()})
+        
+    dados = {}
+    
+    total_investido = 0
+    total_taxas = 0
+    total_rendimentos = 0
+    total_amortizacoes = 0
+    total_lucro = 0
+    
+    for investimento in investimentos:
+        investimento.rendimentos = sum(investimento.rendimento_set.values_list('valor', flat=True))
+        investimento.amortizacoes = sum(investimento.amortizacao_set.values_list('valor', flat=True))
+        investimento.lucro = investimento.rendimentos + investimento.amortizacoes - investimento.quantidade - investimento.taxa
+        
+        total_investido += investimento.quantidade
+        total_taxas += investimento.taxa
+        total_rendimentos += investimento.rendimentos
+        total_amortizacoes += investimento.amortizacoes
+        total_lucro += investimento.lucro
+        
+    dados['total_atual'] = total_investido
+    dados['total_taxa'] = total_taxas
+    dados['total_rendimentos'] = total_rendimentos
+    dados['total_amortizacoes'] = total_amortizacoes
+    dados['total_lucro'] = total_lucro
+    
+    return TemplateResponse(request, 'outros_investimentos/painel.html', {'dados': dados, 'investimentos': investimentos})
+    
 
 @adiciona_titulo_descricao('', '')
 def sobre(request):
