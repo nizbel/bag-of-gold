@@ -105,8 +105,8 @@
 						<td><a class="tooltips" data-original-title="Detalhar investimento" data-placement="top" href="{% url 'outros_investimentos:detalhar_investimento' evento.investimento.id %}">{{evento.investimento.nome}}</a></td>
 						<td>{{ evento.tipo_evento }}</td>
                         <td>{{ evento.data|date:"d/m/Y" }}</td>
-						<td>R$ {{evento.quantidade|floatformat:'2'}}</td>
-                        <td>R$ {{evento.taxa|floatformat:'2'|default:'Indisponível'}}</td>
+						<td>{% if evento.quantidade > 0 %}R$ {{evento.quantidade|floatformat:'2'}}{% else %}Indisponível{% endif %}</td>
+                        <td>{% if evento.taxa > 0 %}R$ {{evento.taxa|floatformat:'2'}}{% else %}Indisponível{% endif %}</td>
 					</tr>
 					{% endfor %}
 					</tbody>
@@ -143,13 +143,13 @@ $( document ).ready(function() {
       {grid: {show: false}}  
     );
     
-    $.plot($("#graf_investido"), [ {color: "#7D8C9D", lines: {show:true}, data: {{ graf_total_investido|safe }} } 
+    $.plot($("#graf_investido"), [ {color: "#7D8C9D", lines: {show:true}, data: {{ graf_investido_total|safe }} } 
     ],
       {grid: {show: false}}  
     );
     
     $.plot($("#graf_historico"), [{lines: {show:true}, label: "Valor rendimentos", data: {{ graf_rendimentos|safe }}},
-                                {lines: {show:true}, label: "Total investido", data: {{ graf_total_investido|safe }}}
+                                {lines: {show:true}, label: "Total investido", data: {{ graf_investido_total|safe }}}
                               ],
                                 {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%d/%m/%y"} }  
     );

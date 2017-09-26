@@ -3,6 +3,7 @@ from bagogold import settings
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoInvestimentoFormSet
 from bagogold.bagogold.models.divisoes import DivisaoInvestimento, Divisao
+from bagogold.bagogold.utils.misc import converter_date_para_utc
 from bagogold.outros_investimentos.forms import InvestimentoForm, RendimentoForm, \
     AmortizacaoForm
 from bagogold.outros_investimentos.models import Investimento, InvestimentoTaxa, \
@@ -22,6 +23,7 @@ from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
 from itertools import chain
 from operator import attrgetter
+import calendar
 import datetime
 import traceback
 
@@ -279,10 +281,16 @@ def historico(request):
     class Object(object):
         pass
     
+    # Usada para guardar eventos de encerramento
+    class Encerramento(object):
+        def __init__(self, investimento):
+            self.investimento = investimento
+            self.data = investimento.data_encerramento
+    
     if request.user.is_authenticated():
         investidor = request.user.investidor
     else:
-        return TemplateResponse(request, 'outros_investimentos/historico.html', {'dados': {}, 'graf_rendimentos': list(), 'graf_total_investido': list(), 
+        return TemplateResponse(request, 'outros_investimentos/historico.html', {'dados': {}, 'graf_rendimentos': list(), 'graf_investido_total': list(), 
                                                                                  'lista_eventos': list()})
     
     investimentos = Investimento.objects.filter(investidor=investidor).order_by('data')
@@ -292,19 +300,21 @@ def historico(request):
     amortizacoes = Amortizacao.objects.filter(investimento__investidor=investidor).order_by('data')
     
     if not investimentos:
-        return TemplateResponse(request, 'outros_investimentos/historico.html', {'dados': {}, 'graf_rendimentos': list(), 'graf_total_investido': list(), 
+        return TemplateResponse(request, 'outros_investimentos/historico.html', {'dados': {}, 'graf_rendimentos': list(), 'graf_investido_total': list(), 
                                                                                  'lista_eventos': list()})
 
-        # TODO add encerramentos
-#     encerramentos = []
+    # TODO add encerramentos
+    encerramentos = [Encerramento(investimento) for investimento in investimentos.filter(data_encerramento__isnull=False)]
 
     # Juntar todos os eventos
-    lista_eventos = sorted(chain(investimentos, rendimentos, amortizacoes), key=attrgetter('data'))
+    lista_eventos = sorted(chain(investimentos, rendimentos, amortizacoes, encerramentos), key=attrgetter('data'))
         
     dados = {}
     
+    qtd_investimentos = {}
+    
     graf_rendimentos = list()
-    graf_total_investido = list()
+    graf_investido_total = list()
     
     total_rendimentos = 0
     total_investido = 0
@@ -313,32 +323,71 @@ def historico(request):
         if isinstance(evento, Investimento):
             evento.tipo_evento = u'Investimento'
             evento.investimento = evento
-#             evento.rendimentos = sum(evento.rendimento_set.values_list('valor', flat=True))
-#             evento.amortizacoes = sum(evento.amortizacao_set.values_list('valor', flat=True))
             
-            total_investido += evento.quantidade
+            qtd_investimentos[evento.id] = Object()
+            qtd_investimentos[evento.id].investido = evento.quantidade
+            qtd_investimentos[evento.id].rendimentos = 0
         
         elif isinstance(evento, Rendimento):
             evento.tipo_evento = u'Rendimento'
             evento.quantidade = evento.valor
             
-            total_rendimentos += evento.valor
+            qtd_investimentos[evento.investimento.id].rendimentos += evento.quantidade
             
         elif isinstance(evento, Amortizacao):
             evento.tipo_evento = u'Amortização'
             evento.quantidade = evento.valor
             
-            total_investido -= evento.valor
+            qtd_investimentos[evento.investimento.id].investido -= evento.quantidade
             
         else:
             evento.tipo_evento = u'Encerramento'
+            
+#             del qtd_investimentos[evento.investimento.id]
+            
+        total_rendimentos = sum([investimento.rendimentos for investimento in qtd_investimentos.values()])
+        total_investido = sum([investimento.investido for investimento in qtd_investimentos.values()])
+    
+        # Formatar data para inserir nos gráficos
+        data_formatada = str(calendar.timegm(converter_date_para_utc(evento.data).timetuple()) * 1000)    
+        # Verifica se altera ultima posicao do grafico ou adiciona novo registro
+        if len(graf_investido_total) > 0 and graf_investido_total[-1][0] == data_formatada:
+            graf_investido_total[len(graf_investido_total)-1][1] = float(total_investido)
+        else:
+            graf_investido_total += [[data_formatada, float(total_investido)]]
         
+        # Verifica se altera ultima posicao do grafico ou adiciona novo registro
+        if len(graf_rendimentos) > 0 and graf_rendimentos[-1][0] == data_formatada:
+            graf_rendimentos[len(graf_rendimentos)-1][1] = float(total_rendimentos)
+        else:
+            graf_rendimentos += [[data_formatada, float(total_rendimentos)]]
+    
+        
+    total_rendimentos = sum([investimento.rendimentos for investimento in qtd_investimentos.values()])
+    total_investido = sum([investimento.investido for investimento in qtd_investimentos.values()])
+    
+    # Adicionar data atual se não houver sido adicionada ainda
+    if lista_eventos and lista_eventos[-1].data < datetime.date.today():
+        # Formatar data para inserir nos gráficos
+        data_formatada = str(calendar.timegm(converter_date_para_utc(datetime.date.today()).timetuple()) * 1000)    
+        # Verifica se altera ultima posicao do grafico ou adiciona novo registro
+        if len(graf_investido_total) > 0 and graf_investido_total[-1][0] == data_formatada:
+            graf_investido_total[len(graf_investido_total)-1][1] = float(total_investido)
+        else:
+            graf_investido_total += [[data_formatada, float(total_investido)]]
+        
+        # Verifica se altera ultima posicao do grafico ou adiciona novo registro
+        if len(graf_rendimentos) > 0 and graf_rendimentos[-1][0] == data_formatada:
+            graf_rendimentos[len(graf_rendimentos)-1][1] = float(total_rendimentos)
+        else:
+            graf_rendimentos += [[data_formatada, float(total_rendimentos)]]
+    
     dados['total_investido'] = total_investido
     dados['total_rendimentos'] = total_rendimentos
     dados['lucro'] = total_rendimentos - total_investido
     dados['lucro_percentual'] = dados['lucro'] / 1 if total_investido == 0 else dados['lucro'] / dados['total_investido'] * 100
     
-    return TemplateResponse(request, 'outros_investimentos/historico.html', {'dados': dados, 'graf_rendimentos': graf_rendimentos, 'graf_total_investido': graf_total_investido,
+    return TemplateResponse(request, 'outros_investimentos/historico.html', {'dados': dados, 'graf_rendimentos': graf_rendimentos, 'graf_investido_total': graf_investido_total,
                                                                              'lista_eventos': lista_eventos})
 
 @login_required
