@@ -45,7 +45,11 @@
 							<div class="m-grid-col m-grid-col-left"><strong>Data de início:</strong></div>
 							<div class="m-grid-col m-grid-col-left">{{investimento.data}}</div>
                             <div class="m-grid-col m-grid-col-left"><strong>Data de encerramento:</strong></div>
-                            <div class="m-grid-col m-grid-col-left">{{investimento.data_encerramento|default:'Não encerrado'}}</div>
+                            <div class="m-grid-col m-grid-col-left">{{investimento.data_encerramento|default:'Não encerrado'}}
+                                {% if not investimento.data_encerramento %}
+                                    <a href="" class="btn btn-xs btn-warning">Encerrar</a>
+                                {% endif %}
+                            </div>
                             <div class="m-grid-col m-grid-col-left"></div>
                             <div class="m-grid-col m-grid-col-left"></div>
 						</div>
