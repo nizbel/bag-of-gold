@@ -20,6 +20,8 @@ from django.forms.models import inlineformset_factory
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
+from itertools import chain
+from operator import attrgetter
 import datetime
 import traceback
 
@@ -273,39 +275,71 @@ def editar_rendimento(request, id_rendimento):
 
 @adiciona_titulo_descricao('Histórico de outros investimentos', 'Histórico de movimentações em outros tipos de investimento')
 def historico(request):
+    # Usado para criar objetos vazios
+    class Object(object):
+        pass
+    
     if request.user.is_authenticated():
         investidor = request.user.investidor
     else:
-        return TemplateResponse(request, 'outros_investimentos/historico.html', {'dados': {}, 'graf_patrimonio': list(), 'graf_total_investido': list(), 
-                                                                                 'investimentos': list()})
+        return TemplateResponse(request, 'outros_investimentos/historico.html', {'dados': {}, 'graf_rendimentos': list(), 'graf_total_investido': list(), 
+                                                                                 'lista_eventos': list()})
     
     investimentos = Investimento.objects.filter(investidor=investidor).order_by('data')
     
+    rendimentos = Rendimento.objects.filter(investimento__investidor=investidor).order_by('data')
+    
+    amortizacoes = Amortizacao.objects.filter(investimento__investidor=investidor).order_by('data')
+    
     if not investimentos:
-        return TemplateResponse(request, 'outros_investimentos/historico.html', {'dados': {}, 'graf_patrimonio': list(), 'graf_total_investido': list(), 
-                                                                                 'investimentos': list()})
+        return TemplateResponse(request, 'outros_investimentos/historico.html', {'dados': {}, 'graf_rendimentos': list(), 'graf_total_investido': list(), 
+                                                                                 'lista_eventos': list()})
+
+        # TODO add encerramentos
+#     encerramentos = []
+
+    # Juntar todos os eventos
+    lista_eventos = sorted(chain(investimentos, rendimentos, amortizacoes), key=attrgetter('data'))
         
     dados = {}
     
-    graf_patrimonio = list()
+    graf_rendimentos = list()
     graf_total_investido = list()
     
-    total_patrimonio = 0
+    total_rendimentos = 0
     total_investido = 0
     
-    for investimento in investimentos:
-        investimento.rendimentos = sum(investimento.rendimento_set.values_list('valor', flat=True))
-        investimento.amortizacoes = sum(investimento.amortizacao_set.values_list('valor', flat=True))
+    for evento in lista_eventos:
+        if isinstance(evento, Investimento):
+            evento.tipo_evento = u'Investimento'
+            evento.investimento = evento
+#             evento.rendimentos = sum(evento.rendimento_set.values_list('valor', flat=True))
+#             evento.amortizacoes = sum(evento.amortizacao_set.values_list('valor', flat=True))
+            
+            total_investido += evento.quantidade
         
-        total_investido += investimento.quantidade - investimento.amortizacoes
+        elif isinstance(evento, Rendimento):
+            evento.tipo_evento = u'Rendimento'
+            evento.quantidade = evento.valor
+            
+            total_rendimentos += evento.valor
+            
+        elif isinstance(evento, Amortizacao):
+            evento.tipo_evento = u'Amortização'
+            evento.quantidade = evento.valor
+            
+            total_investido -= evento.valor
+            
+        else:
+            evento.tipo_evento = u'Encerramento'
         
     dados['total_investido'] = total_investido
-    dados['total_patrimonio'] = total_patrimonio
-    dados['lucro'] = total_patrimonio - total_investido
+    dados['total_rendimentos'] = total_rendimentos
+    dados['lucro'] = total_rendimentos - total_investido
     dados['lucro_percentual'] = dados['lucro'] / 1 if total_investido == 0 else dados['lucro'] / dados['total_investido'] * 100
     
-    return TemplateResponse(request, 'outros_investimentos/historico.html', {'dados': dados, 'graf_patrimonio': graf_patrimonio, 'graf_total_investido': graf_total_investido,
-                                                                             'investimentos': investimentos})
+    return TemplateResponse(request, 'outros_investimentos/historico.html', {'dados': dados, 'graf_rendimentos': graf_rendimentos, 'graf_total_investido': graf_total_investido,
+                                                                             'lista_eventos': lista_eventos})
 
 @login_required
 @adiciona_titulo_descricao('Inserir amortização para um investimento', 'Inserir registro de amortização '
