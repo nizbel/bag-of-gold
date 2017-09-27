@@ -94,3 +94,31 @@ class RendimentoForm(LocalizedModelForm):
             raise forms.ValidationError('Já existe um rendimento para essa data')
         return cleaned_data
         
+        
+class EncerramentoForm(LocalizedModelForm):
+    amortizacao = forms.DecimalField(min_value=0,  max_digits=9, decimal_places=2)
+
+    class Meta:
+        model = Investimento
+        fields = ('data_encerramento',)
+        widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
+                                            'placeholder':'Selecione uma data'})}
+        
+    def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
+        # first call parent's constructor
+        super(RendimentoForm, self).__init__(*args, **kwargs)
+        self.fields['amortizacao'].required = False
+        
+    def clean_amortizacao(self):
+        valor = self.cleaned_data['amortizacao']
+        if valor <= 0:
+            raise forms.ValidationError('Valor da amortização deve ser maior que zero')
+        return valor
+    
+    def clean(self):
+        cleaned_data = super(RendimentoForm, self).clean()
+        if self.instance.data <= cleaned_data.get('data_encerramento'):
+            raise forms.ValidationError('Data de encerramento deve ser posterior à data de início do investimento')
+        return cleaned_data
+        
