@@ -46,9 +46,9 @@
 							<div class="m-grid-col m-grid-col-left">{{investimento.data}}</div>
                             <div class="m-grid-col m-grid-col-left"><strong>Data de encerramento:</strong></div>
                             <div class="m-grid-col m-grid-col-left">{{investimento.data_encerramento|default:'Não encerrado'}}
-                                {% if not investimento.data_encerramento %}
-                                    <a href="" class="btn btn-xs btn-warning">Encerrar</a>
-                                {% endif %}
+                                <a href="{% url 'outros_investimentos:encerrar_investimento' investimento.id %}" class="btn btn-xs btn-warning">
+                                    {% if not investimento.data_encerramento %}Encerrar{% else %}Editar{% endif %}
+                                </a>
                             </div>
                             <div class="m-grid-col m-grid-col-left"></div>
                             <div class="m-grid-col m-grid-col-left"></div>
@@ -145,7 +145,7 @@
 					<thead>
 						<tr>
 							<th>Data</th>
-							<th>Carência (dias)</th>
+							<th>Valor</th>
 							<th><a href="{% url 'outros_investimentos:inserir_amortizacao' investimento.id %}" class="btn btn-sm green-steel">Inserir</a></th>
 						</tr>
 					</thead>
@@ -153,7 +153,7 @@
 					{% for amortizacao in historico_amortizacoes %}
 					<tr>
 						<td>{{amortizacao.data|date:'d/m/Y'}}</td>
-						<td>{{amortizacao.valor}} dia(s)</td>
+						<td>R$ {{amortizacao.valor}}</td>
 						<td><a href="{% url 'outros_investimentos:editar_amortizacao' amortizacao.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
 					</tr>
 					{% endfor %}

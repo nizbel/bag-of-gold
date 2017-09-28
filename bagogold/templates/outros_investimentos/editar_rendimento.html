@@ -73,7 +73,7 @@
                         <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
                         <h4 class="modal-title">Confirmar exclusão de rendimento</h4>
                     </div>
-                    <div class="modal-body">Confirma a exclusão do rendimento de {{ form_rendimento.data.value|date:'d/m/Y'}} para {{ form_rendimento.investimento }}?</div>
+                    <div class="modal-body">Confirma a exclusão do rendimento de {{ form_rendimento.data.value|date:'d/m/Y'}} para {{ form_rendimento.instance.investimento }}?</div>
                     <div class="modal-footer">
                         <a class="btn dark btn-outline" data-dismiss="modal">Cancelar</a>
                         <button type="submit" name="delete" value="1" class="btn red-thunderbird">Confirmar</button>
