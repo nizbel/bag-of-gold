@@ -34,13 +34,31 @@
                     </div>
                     <div class="list-group">
 						{% for periodo, _, acumulado in acumulados_mensais %}
-						<span class="list-group-item">{{periodo}}: <strong>R$ {{acumulado|floatformat:'2'}}</strong></span>
+                        <span class="list-group-item" data-inicial="{{periodo.0}}" data-final="{{periodo.1}}" name="periodo" id="periodo_{{forloop.counter}}">
+                            {{periodo.0}} a {{periodo.1}}: <strong>R$ {{acumulado|floatformat:'2'}}</strong>
+                        </span>
 						{% endfor %}
 					</div>
 				</div>
 			</div>
 			<!-- END Portlet PORTLET-->
 		</div>
+        <div class="col-md-8" style="display: none;" id="detalhe_portlet">
+            <!-- BEGIN Portlet PORTLET-->
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-clock-o"></i>Detalhe do período</div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <span id="detalhe_periodo"></span>
+                </div>
+            </div>
+            <!-- END Portlet PORTLET-->
+        </div>
         <div class="col-md-12">
             <div class="portlet box yellow-crusta">
                 <div class="portlet-title">
@@ -73,6 +91,31 @@
 <script src={% static "assets/global/plugins/flot/jquery.flot.time.min.js" %} type="text/javascript"></script>
 <script>
 $( document ).ready(function() {
+	// Adicionar detalhamento ao clicar
+	$('span[name="periodo"]').click(function() {
+		var data_inicio = $(this).attr('data-inicial');
+		var data_fim = $(this).attr('data-final');
+		$.ajax({
+	        url : "{% url 'inicio:detalhe_acumulado_mensal' %}",
+	        type : "GET",
+	        data : {data_inicio: data_inicio, data_fim: data_fim},
+
+	        // handle a successful response
+	        success : function(resultado) {
+	        	console.log(resultado);
+                $('#detalhe_portlet').show();
+	        	$('#detalhe_periodo').text(resultado);
+// 	                 App.unblockUI('#portlet_body_graf_rendimentos_mensal');
+	        },
+
+	        // handle a non-successful response
+	        error : function(xhr,errmsg,err) {
+// 	            App.unblockUI('#portlet_body_graf_rendimentos_mensal');
+	            console.log(xhr.status + ": " + xhr.responseText);
+	        }
+	    });
+	});
+	
     $.plot($("#graf_acumulados"), [ {color: "#33AA33", label: "Evolução do acumulado mensal", data: {{ graf_acumulados|safe }} }, 
                                       ],
                                         {grid: { hoverable: true}, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%m/%Y"},

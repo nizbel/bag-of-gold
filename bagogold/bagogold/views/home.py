@@ -167,7 +167,7 @@ def detalhar_acumulados_mensais(request):
         for investimento in acumulados_mensais[mes][1].keys():
             acumulados_mensais[mes][1][investimento] = acumulados_mensais[mes][1][investimento] - acumulados_mensais[mes+1][1][investimento]
         # Trocar data pela string de período
-        acumulados_mensais[mes][0] = '%s a %s' % (data_atual.replace(day=1).strftime('%d/%m/%Y'), data_atual.strftime('%d/%m/%Y'))
+        acumulados_mensais[mes][0] = ['%s' % (data_atual.replace(day=1).strftime('%d/%m/%Y')), '%s' % (data_atual.strftime('%d/%m/%Y'))]
         
         # Adiciona total mensal ao gráfico
         graf_acumulados.append([str(calendar.timegm(data_atual.replace(hour=12).timetuple()) * 1000), float(acumulados_mensais[mes][2])])
@@ -204,6 +204,26 @@ def detalhar_acumulados_mensais(request):
     
     return TemplateResponse(request, 'detalhar_acumulados_mensais.html', {'acumulados_mensais': acumulados_mensais, 'graf_acumulados': graf_acumulados, 'taxas': taxas})
     
+@login_required
+def detalhe_acumulado_mensal(request):
+    investidor = request.user.investidor
+    
+    data_inicio = datetime.datetime.strptime(request.GET.get('data_inicio'), '%d/%m/%Y').date()
+    data_fim = datetime.datetime.strptime(request.GET.get('data_fim'), '%d/%m/%Y').date()
+    
+    # Pegar acumulado mensal até o dia anterior da data inicial
+    rendimento_anterior = calcular_rendimentos_ate_data(investidor, (data_inicio - datetime.timedelta(days=1)))
+    
+    # Buscar acumulado até o final do período
+    rendimento = calcular_rendimentos_ate_data(investidor, data_fim)
+    
+    # Subtrair valores para pegar o acumulado no período indicado
+    acumulado = { k: float(rendimento.get(k, 0) - rendimento_anterior.get(k, 0)) for k in set(rendimento) | set(rendimento_anterior)}
+    
+    print acumulado
+    return HttpResponse(json.dumps(acumulado), content_type = "application/json")  
+
+
 @login_required
 @adiciona_titulo_descricao('Histórico detalhado', 'Histórico detalhado das operações feitas pelo investidor')
 def detalhamento_investimentos(request):
