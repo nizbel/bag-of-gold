@@ -5,7 +5,7 @@ from bagogold.bagogold.forms.divisoes import DivisaoInvestimentoFormSet
 from bagogold.bagogold.models.divisoes import DivisaoInvestimento, Divisao
 from bagogold.bagogold.utils.misc import converter_date_para_utc
 from bagogold.outros_investimentos.forms import InvestimentoForm, RendimentoForm, \
-    AmortizacaoForm
+    AmortizacaoForm, EncerramentoForm
 from bagogold.outros_investimentos.models import Investimento, InvestimentoTaxa, \
     Rendimento, Amortizacao
 from bagogold.outros_investimentos.utils import \
@@ -150,7 +150,7 @@ def editar_investimento(request, id_investimento):
     investidor = request.user.investidor
     
     investimento = Investimento.objects.get(pk=id_investimento)
-    # Verifica se a operação é do investidor, senão, jogar erro de permissão
+    # Verifica se o investimento é do investidor, senão, jogar erro de permissão
     if investimento.investidor != investidor:
         raise PermissionDenied
     
@@ -229,7 +229,7 @@ def editar_investimento(request, id_investimento):
                     divisao.delete()
                 investimento.delete()
                 messages.success(request, 'Investimento apagado com sucesso')
-                return HttpResponseRedirect(reverse('td:historico_td'))
+                return HttpResponseRedirect(reverse('outros_investimentos:historico_outros_invest'))
  
     else:
         if InvestimentoTaxa.objects.filter(investimento=investimento).exists():
@@ -274,6 +274,60 @@ def editar_rendimento(request, id_rendimento):
         form_rendimento = RendimentoForm(instance=rendimento, investimento=rendimento.investimento, investidor=investidor)
              
     return TemplateResponse(request, 'outros_investimentos/editar_rendimento.html', {'form_rendimento': form_rendimento}) 
+
+@login_required
+@adiciona_titulo_descricao('Encerrar investimento', 'Alterar data de encerramento de um investimento')
+def encerrar_investimento(request, id_investimento):
+    investidor = request.user.investidor
+    
+    investimento = Investimento.objects.get(pk=id_investimento)
+    # Verifica se o investimento é do investidor, senão, jogar erro de permissão
+    if investimento.investidor != investidor:
+        raise PermissionDenied
+    
+    if request.method == 'POST':
+        if request.POST.get("save"):
+            form_encerramento = EncerramentoForm(request.POST, instance=investimento, investidor=investidor)
+                
+            if form_encerramento.is_valid():
+                try:
+                    with transaction.atomic():
+                        investimento.save()
+                        # Caso o valor para a taxa da moeda comprada/vendida seja maior que 0, criar ou editar taxa
+                        if form_encerramento.cleaned_data['amortizacao'] > 0:
+                            Amortizacao.objects.update_or_create(investimento=investimento, data=form_encerramento.cleaned_data['data_encerramento'],
+                                                                      defaults={'valor': form_encerramento.cleaned_data['amortizacao']})
+                        # Caso contrário, apagar taxa para a moeda, caso exista
+                        elif Amortizacao.objects.filter(investimento=investimento, data=form_encerramento.cleaned_data['data_encerramento']).exists():
+                            Amortizacao.objects.get(investimento=investimento, data=form_encerramento.cleaned_data['data_encerramento']).delete()
+                        messages.success(request, 'Data de encerramento editada com sucesso')
+                        return HttpResponseRedirect(reverse('outros_investimentos:detalhar_investimento', kwargs={'id_investimento': investimento.id}))
+                except:
+                    messages.error(request, 'Houve um erro ao editar a data de encerramento')
+                    if settings.ENV == 'DEV':
+                        raise
+                    elif settings.ENV == 'PROD':
+                        mail_admins(u'Erro ao editar data de encerramento para investimento de id %s' % (investimento.id), traceback.format_exc())
+                
+            for erro in [erro for erro in form_encerramento.non_field_errors()]:
+                messages.error(request, erro)
+#                         print '%s %s'  % (divisao_criptomoeda.quantidade, divisao_criptomoeda.divisao)
+        
+        # Delete apaga data de encerramento
+        elif request.POST.get("delete"):
+            investimento.data_encerramento = None
+            investimento.save()
+            messages.success(request, 'Data de encerramento editada com sucesso')
+            return HttpResponseRedirect(reverse('outros_investimentos:detalhar_investimento', kwargs={'id_investimento': investimento.id}))
+ 
+    else:
+        if investimento.data_encerramento and Amortizacao.objects.filter(investimento=investimento, data=investimento.data_encerramento).exists():
+            amortizacao = Amortizacao.objects.get(investimento=investimento, data=investimento.data_encerramento).valor
+        else:
+            amortizacao = 0
+        form_encerramento = EncerramentoForm(instance=investimento, investidor=investidor, initial={'amortizacao': amortizacao})
+        
+    return TemplateResponse(request, 'outros_investimentos/encerrar_investimento.html', {'form_encerramento': form_encerramento}) 
 
 @adiciona_titulo_descricao('Histórico de outros investimentos', 'Histórico de movimentações em outros tipos de investimento')
 def historico(request):

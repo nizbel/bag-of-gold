@@ -7,6 +7,7 @@ urlpatterns = [
     url(r'^editar_amortizacao/(?P<id_amortizacao>\d+)/$', views.editar_amortizacao, name='editar_amortizacao'),
     url(r'^editar_investimento/(?P<id_investimento>\d+)/$', views.editar_investimento, name='editar_investimento'),
     url(r'^editar_rendimento/(?P<id_rendimento>\d+)/$', views.editar_rendimento, name='editar_rendimento'),
+    url(r'^encerrar_investimento/(?P<id_investimento>\d+)/$', views.encerrar_investimento, name='encerrar_investimento'),
     url(r'^historico/$', views.historico, name='historico_outros_invest'),
     url(r'^inserir_amortizacao/(?P<investimento_id>\d+)/$', views.inserir_amortizacao, name='inserir_amortizacao'),
     url(r'^inserir_investimento/$', views.inserir_investimento, name='inserir_investimento'),
