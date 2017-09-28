@@ -31,6 +31,10 @@ from bagogold.fundo_investimento.models import FundoInvestimento, \
     HistoricoValorCotas, OperacaoFundoInvestimento
 from bagogold.fundo_investimento.utils import \
     calcular_qtd_cotas_ate_dia_por_divisao
+from bagogold.outros_investimentos.models import Investimento
+from bagogold.outros_investimentos.utils import \
+    calcular_valor_outros_investimentos_ate_data, \
+    calcular_valor_outros_investimentos_ate_data_por_divisao
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -264,6 +268,28 @@ def detalhar_divisao(request, id):
             composicao['td'].composicao[titulo_id].composicao[operacao_divisao.operacao.id].valor_unitario = td_valor
             composicao['td'].composicao[titulo_id].composicao[operacao_divisao.operacao.id].patrimonio = operacao_divisao.quantidade * td_valor
     
+    # Adicionar outros investimentos
+    composicao['outros'] = Object()
+    composicao['outros'].nome = 'Outros investimentos'
+    composicao['outros'].patrimonio = 0
+    composicao['outros'].composicao = {}
+    # Pegar outros investimentos contidos na divisão
+    qtd_outros_investimentos = calcular_valor_outros_investimentos_ate_data_por_divisao(divisao)
+    for investimento_id in qtd_outros_investimentos.keys():
+        investimento = Investimento.objects.get(id=investimento_id)
+        composicao['outros'].patrimonio += qtd_outros_investimentos[investimento_id]
+        composicao['outros'].composicao[investimento_id] = Object()
+        composicao['outros'].composicao[investimento_id].nome = investimento.nome
+        composicao['outros'].composicao[investimento_id].patrimonio = qtd_outros_investimentos[investimento_id]
+        composicao['outros'].composicao[investimento_id].composicao = {}
+        # Pegar dados do investimento
+        composicao['outros'].composicao[investimento_id].composicao[investimento_id] = Object()
+        composicao['outros'].composicao[investimento_id].composicao[investimento_id].nome = investimento.nome
+        composicao['outros'].composicao[investimento_id].composicao[investimento_id].data = investimento.data
+        composicao['outros'].composicao[investimento_id].composicao[investimento_id].quantidade = qtd_outros_investimentos[investimento_id]
+        composicao['outros'].composicao[investimento_id].composicao[investimento_id].valor_unitario = qtd_outros_investimentos[investimento_id]
+        composicao['outros'].composicao[investimento_id].composicao[investimento_id].patrimonio = qtd_outros_investimentos[investimento_id]
+    
     # Calcular valor total da divisão
     for key, item in composicao.items():
         if item.patrimonio == 0:
@@ -409,6 +435,7 @@ def listar_divisoes(request):
         divisao.valor_atual_fii = 0
         divisao.valor_atual_fundo_investimento = 0
         divisao.valor_atual_lc = 0
+        divisao.valor_atual_outros_invest = 0
         divisao.valor_atual_td = 0
         
         data_atual = datetime.date.today()
@@ -468,7 +495,6 @@ def listar_divisoes(request):
          
         # Fundos de investimento
         fundo_investimento_divisao = calcular_qtd_cotas_ate_dia_por_divisao(data_atual, divisao.id)
-        print fundo_investimento_divisao
         for fundo_id in fundo_investimento_divisao.keys():
             historico_fundo = HistoricoValorCotas.objects.filter(fundo_investimento__id=fundo_id).order_by('-data')
             ultima_operacao_fundo = OperacaoFundoInvestimento.objects.filter(fundo_investimento__id=fundo_id).order_by('-data')[0]
@@ -483,6 +509,11 @@ def listar_divisoes(request):
         lc_divisao = calcular_valor_lc_ate_dia_por_divisao(data_atual, divisao.id)
         divisao.valor_atual_lc += sum(lc_divisao.values())
         divisao.valor_atual += divisao.valor_atual_lc
+         
+        # Outros investimentos
+        outros_invest_divisao = calcular_valor_outros_investimentos_ate_data_por_divisao(divisao, data_atual)
+        divisao.valor_atual_outros_invest += sum(outros_invest_divisao.values())
+        divisao.valor_atual += divisao.valor_atual_outros_invest
          
         # Tesouro Direto
         td_divisao = calcular_qtd_titulos_ate_dia_por_divisao(data_atual, divisao.id)
@@ -509,11 +540,12 @@ def listar_divisoes(request):
         divisao.saldo_fii = divisao.saldo_fii()
         divisao.saldo_fundo_investimento = divisao.saldo_fundo_investimento()
         divisao.saldo_lc = divisao.saldo_lc()
+        divisao.saldo_outros_invest = divisao.saldo_outros_invest()
         divisao.saldo_td = divisao.saldo_td()
         divisao.saldo_trade = divisao.saldo_acoes_trade()
         divisao.saldo = divisao.saldo_bh + divisao.saldo_cdb_rdb + divisao.saldo_cri_cra + divisao.saldo_criptomoeda \
             + divisao.saldo_debentures + divisao.saldo_fii + divisao.saldo_fundo_investimento + divisao.saldo_lc \
-            + divisao.saldo_td + divisao.saldo_trade
+            + divisao.saldo_outros_invest + divisao.saldo_td + divisao.saldo_trade
               
     return TemplateResponse(request, 'divisoes/listar_divisoes.html', {'divisoes': divisoes})
 

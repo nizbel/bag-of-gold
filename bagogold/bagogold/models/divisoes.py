@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.lc import HistoricoTaxaDI, HistoricoTaxaDI
+from bagogold.outros_investimentos.models import Amortizacao, Rendimento
 from decimal import Decimal
 from django import forms
 from django.db import models
@@ -239,6 +240,45 @@ class Divisao (models.Model):
         
         return saldo
     
+    def saldo_outros_invest(self, data=datetime.date.today()):
+        """
+        Calcula o saldo de outros investimentos de uma divisão (dinheiro livre)
+        """
+        saldo = Decimal(0)
+#         saldo -= (DivisaoInvestimento.objects.filter(divisao=self, investimento__data_lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
+        
+        investimentos = DivisaoInvestimento.objects.filter(divisao=self, investimento__data__lte=data, 
+                                                            investimento__data_encerramento__isnull=True) \
+                    .annotate(qtd_total=F('investimento__quantidade')).values_list('investimento__id', 'quantidade', 'qtd_total')
+    
+        dict_divisao = {investimento[0]: investimento[1] for investimento in investimentos}
+        # Quantidades totais investidas pela divisão
+        saldo -= sum(dict_divisao.values())
+        
+        dict_investimentos = {investimento[0]: investimento[2] for investimento in investimentos}
+    
+        amortizacoes = dict(Amortizacao.objects.filter(data__lte=data, investimento__in=dict_investimentos.keys()) \
+                            .values('investimento__id').annotate(total_amortizado=Sum('valor')).values_list('investimento__id', 'total_amortizado'))
+        saldo += sum({ k: (amortizacoes.get(k, 0) * dict_divisao.get(k, 0) / dict_investimentos.get(k, 0)).quantize(Decimal('0.01')) \
+                             for k in set(dict_investimentos) | set(amortizacoes) | set(dict_divisao) \
+                             if (amortizacoes.get(k, 0) * dict_divisao.get(k, 0) / dict_investimentos.get(k, 0)).quantize(Decimal('0.01')) > 0 }.values())
+        
+        rendimentos = dict(Rendimento.objects.filter(data__lte=data, investimento__in=dict_investimentos.keys()) \
+                            .values('investimento__id').annotate(total_rendimentos=Sum('valor')).values_list('investimento__id', 'total_rendimentos'))
+        saldo += sum({ k: (rendimentos.get(k, 0) * dict_divisao.get(k, 0) / dict_investimentos.get(k, 0)).quantize(Decimal('0.01')) \
+                             for k in set(dict_investimentos) | set(rendimentos) | set(dict_divisao) \
+                             if (rendimentos.get(k, 0) * dict_divisao.get(k, 0) / dict_investimentos.get(k, 0)).quantize(Decimal('0.01')) > 0 }.values())
+        
+#         qtd_investimentos = { k: (dict_divisao.get(k, 0) - (amortizacoes.get(k, 0) * dict_divisao.get(k, 0) / dict_investimentos.get(k, 0))).quantize(Decimal('0.01')) \
+#                              for k in set(dict_investimentos) | set(amortizacoes) | set(dict_divisao) \
+#                              if (dict_divisao.get(k, 0) - (amortizacoes.get(k, 0) * dict_divisao.get(k, 0) / dict_investimentos.get(k, 0))).quantize(Decimal('0.01')) > 0 }
+        
+        # Transferências
+        saldo += -(TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_OUTROS_INVEST, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
+            + (TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_OUTROS_INVEST, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
+
+        return saldo
+    
     def saldo_td(self, data=datetime.date.today()):
         """
         Calcula o saldo de operações de Tesouro Direto de uma divisão (dinheiro livre)
@@ -283,6 +323,8 @@ class Divisao (models.Model):
         saldo += self.saldo_fundo_investimento(data=data)
         # LC
         saldo += self.saldo_lc(data=data)
+        # Outros investimetnos
+        saldo += self.saldo_outros_invest(data=data)
         # TD
         saldo += self.saldo_td(data=data)
         
@@ -291,6 +333,20 @@ class Divisao (models.Model):
 class DivisaoPrincipal (models.Model):
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
     investidor = models.OneToOneField('Investidor', on_delete=models.CASCADE, primary_key=True)
+
+class DivisaoInvestimento (models.Model):
+    divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
+    investimento = models.OneToOneField('outros_investimentos.Investimento')
+    """
+    Guarda a quantidade do investimento que pertence a divisão
+    """
+    quantidade = models.DecimalField('Quantidade', max_digits=11, decimal_places=2)
+    
+    class Meta:
+        unique_together=('divisao', 'investimento')
+        
+    def __unicode__(self):
+        return self.divisao.nome + ': ' + str(self.quantidade) + ' de ' + unicode(self.investimento)
     
 class DivisaoOperacaoLC (models.Model):
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
@@ -501,6 +557,7 @@ class TransferenciaEntreDivisoes(models.Model):
     TIPO_INVESTIMENTO_FUNDO_INV = 'I'
     TIPO_INVESTIMENTO_LCI_LCA = 'L'
     TIPO_INVESTIMENTO_CRIPTOMOEDA = 'M'
+    TIPO_INVESTIMENTO_OUTROS_INVEST = 'O'
     TIPO_INVESTIMENTO_CRI_CRA = 'R'
     TIPO_INVESTIMENTO_TRADING = 'T'
     
@@ -514,7 +571,8 @@ class TransferenciaEntreDivisoes(models.Model):
                                   (TIPO_INVESTIMENTO_LCI_LCA, 'Letras de Crédito'), 
                                   (TIPO_INVESTIMENTO_CRIPTOMOEDA, 'Criptomoeda'),
                                   (TIPO_INVESTIMENTO_CRI_CRA, 'CRI/CRA'), 
-                                  (TIPO_INVESTIMENTO_TRADING, 'Trading'))
+                                  (TIPO_INVESTIMENTO_TRADING, 'Trading'),
+                                  (TIPO_INVESTIMENTO_OUTROS_INVEST, 'Outros investimentos'))
     
     """
     Transferências em dinheiro entre as divisões, cedente ou recebedor nulos significa que
@@ -525,7 +583,7 @@ class TransferenciaEntreDivisoes(models.Model):
     data = models.DateField(u'Data da transferência', blank=True, null=True)
     """
     B = Buy and Hold; C = CDB/RDB; D = Tesouro Direto; E = Debênture; F = FII; 
-    I = Fundo de investimento; L = Letra de Crédito; R = CRI/CRA; T = Trading; N = Não alocado
+    I = Fundo de investimento; L = Letra de Crédito; R = CRI/CRA; T = Trading; O = Outros investimentos; N = Não alocado
     """
     investimento_origem = models.CharField('Investimento de origem', blank=True, null=True, max_length=1)
     investimento_destino = models.CharField('Investimento de destino', blank=True, null=True, max_length=1)
@@ -568,6 +626,8 @@ class TransferenciaEntreDivisoes(models.Model):
             return 'CRI/CRA'
         elif self.investimento_origem == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_TRADING:
             return 'Trading'
+        elif self.investimento_origem == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_OUTROS_INVEST:
+            return 'Outros investimentos'
         elif self.investimento_origem == 'N':
             return 'Não alocado'
     
@@ -592,6 +652,8 @@ class TransferenciaEntreDivisoes(models.Model):
             return 'CRI/CRA'
         elif self.investimento_destino == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_TRADING:
             return 'Trading'
+        elif self.investimento_destino == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_OUTROS_INVEST:
+            return 'Outros investimentos'
         elif self.investimento_destino == 'N':
             return 'Não alocado'
     
