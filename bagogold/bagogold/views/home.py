@@ -32,6 +32,8 @@ from bagogold.criptomoeda.models import OperacaoCriptomoeda, \
 from bagogold.criptomoeda.utils import buscar_valor_criptomoedas_atual
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
     HistoricoValorCotas
+from bagogold.outros_investimentos.models import Rendimento, Amortizacao, \
+    Investimento
 from decimal import Decimal, ROUND_DOWN
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -129,6 +131,14 @@ def calendario(request):
         transferencias_cripto = TransferenciaCriptomoeda.objects.filter(data__range=[data_inicial, data_final])
         calendario.extend([{'title': u'Transferência relacionada a Criptomoedas, %s %s' % (formatar_zeros_a_direita_apos_2_casas_decimais(transferencia.quantidade), transferencia.moeda_utilizada()),
                             'start': transferencia.data.strftime('%Y-%m-%d')} for transferencia in transferencias_cripto])
+        
+        # Rendimentos e amortizações de outros investimentos
+        rendimentos_outros_inv = Rendimento.objects.filter(investimento__investidor=investidor, data__range=[data_inicial, data_final])
+        calendario.exted([{'title': u'Rendimento de R$ %s para %s' % (data_rendimento.quantidade, data_rendimento.investimento),
+                           'start': data_rendimento.data.strftime('%Y-%m-%d')} for data_rendimento in rendimentos_outros_inv])
+        amortizacoes_outros_inv = Amortizacao.objects.filter(investimento__investidor=investidor, data__range=[data_inicial, data_final])
+        calendario.exted([{'title': u'Amortização de R$ %s para %s' % (data_amortizacao.quantidade, data_amortizacao.investimento),
+                           'start': data_amortizacao.data.strftime('%Y-%m-%d')} for data_amortizacao in amortizacoes_outros_inv])
         
         return HttpResponse(json.dumps(calendario), content_type = "application/json")   
     
@@ -246,9 +256,16 @@ def detalhamento_investimentos(request):
     # Adicionar transferências em Criptomoedas do investidor
     transferencias_criptomoedas = TransferenciaCriptomoeda.objects.filter(investidor=investidor, taxa__gt=Decimal(0), moeda__isnull=False).exclude(data__isnull=True).order_by('data')
     
+    # Adicionar outros investimentos do investidor
+    outros_investimentos = Investimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
+    
+    # Adicionar amortizações de outros investimentos
+    amort_outros_investimentos = Amortizacao.objects.filter(investimento__investidor=investidor).exclude(data__isnull=True).order_by('data')
+    
     # Juntar todas as operações
     lista_operacoes = sorted(chain(proventos_fii, operacoes_fii, operacoes_td, proventos_bh,  operacoes_bh, operacoes_t, operacoes_lc, operacoes_cdb_rdb, 
-                                   operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento, operacoes_criptomoedas, transferencias_criptomoedas),
+                                   operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento, operacoes_criptomoedas, 
+                                   transferencias_criptomoedas, outros_investimentos, amort_outros_investimentos),
                             key=attrgetter('data'))
 
 	# Se não houver operações, retornar vazio
@@ -335,6 +352,7 @@ def detalhamento_investimentos(request):
     fundos_investimento = {}
     debentures = {}
     criptomoedas = {}
+    invest = {}
     total_proventos_fii = 0
     total_proventos_bh = 0
     
@@ -358,6 +376,7 @@ def detalhamento_investimentos(request):
 #     total_debentures = datetime.timedelta(hours=0)
 #     total_fundo_investimento = datetime.timedelta(hours=0)
 #     total_criptomoeda = datetime.timedelta(hours=0)
+#     total_outros_invest = datetime.timedelta(hours=0)
     ############# TESTE
     
     for index, item in enumerate(lista_conjunta):    
@@ -526,6 +545,13 @@ def detalhamento_investimentos(request):
                 criptomoedas[item.moeda.ticker] = 0
             criptomoedas[item.moeda.ticker] -= item.taxa
             
+        elif isinstance(item, Investimento):
+            if item.id not in invest.keys():
+                invest[item.id] = 0
+            invest[item.id] += item.quantidade
+            
+        elif isinstance(item, Amortizacao):
+            invest[item.investimento.id] -= item.valor
 
         # Se não cair em nenhum dos anteriores: item vazio
         
@@ -710,6 +736,11 @@ def detalhamento_investimentos(request):
             patrimonio['Criptomoedas'] = patrimonio_criptomoedas
             patrimonio['patrimonio_total'] += patrimonio['Criptomoedas']
             
+            # Outros investimentos
+#             inicio_outros_invest = datetime.datetime.now()
+            patrimonio['Outros inv.'] = sum(invest.values())
+            patrimonio['patrimonio_total'] += patrimonio['Outros inv.']
+            
 #             print 'Ações (B&H)          ', total_acoes_bh
 #             print 'Ações (Trading)      ', total_acoes_t
 #             print 'Prov. Ações          ', total_prov_acoes_bh
@@ -722,6 +753,7 @@ def detalhamento_investimentos(request):
 #             print 'Debêntures           ', total_debentures
 #             print 'Fundo Inv.           ', total_fundo_investimento
 #             print 'Cripto.              ', total_criptomoeda
+#             print 'Outros inv.          ', total_outros_invest
             
             # Preparar estatísticas
             for data_estatistica in datas_estatisticas:
@@ -768,6 +800,7 @@ def detalhamento_investimentos(request):
 #     print 'Debêntures:       ', total_debentures
 #     print 'Fundo Inv.:       ', total_fundo_investimento
 #     print 'Cripto.           ', total_criptomoeda
+#     print 'Outros inv.       ', total_outros_invest
     
     return TemplateResponse(request, 'detalhamento_investimentos.html', {'graf_patrimonio': graf_patrimonio, 'patrimonio_anual': patrimonio_anual,
                                             'estatisticas': estatisticas, 'graf_patrimonio_cripto': json.dumps(graf_patrimonio_cripto)})
@@ -816,6 +849,8 @@ def painel_geral(request):
             investimento.link = 'fundo_investimento:painel_fundo_investimento'
         elif chave == 'Letras de Crédito':
             investimento.link = 'lci_lca:painel_lci_lca'
+        elif chave == 'Outros inv.':
+            investimento.link = 'outros_investimentos:painel_outros_invest'
         elif chave == 'Tesouro Direto':
             investimento.link = 'td:painel_td'
             
