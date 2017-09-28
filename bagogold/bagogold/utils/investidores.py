@@ -113,7 +113,7 @@ def buscar_operacoes_no_periodo(investidor, data_inicial, data_final):
     operacoes_criptomoeda = OperacaoCriptomoeda.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')
     operacoes_debentures = OperacaoDebenture.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')  
     operacoes_fundo_investimento = OperacaoFundoInvestimento.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')
-    outros_investimentos = Investimento.objects.filter(investidor=investidor, data__range=[data_incial, data_final]).order_by('data')
+    outros_investimentos = Investimento.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')
     
     lista_operacoes = sorted(chain(operacoes_fii, operacoes_td, operacoes_acoes, operacoes_lc, operacoes_cdb_rdb, 
                                    operacoes_cri_cra, operacoes_criptomoeda, operacoes_debentures, operacoes_fundo_investimento, 

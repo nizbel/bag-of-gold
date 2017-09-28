@@ -134,10 +134,10 @@ def calendario(request):
         
         # Rendimentos e amortizações de outros investimentos
         rendimentos_outros_inv = Rendimento.objects.filter(investimento__investidor=investidor, data__range=[data_inicial, data_final])
-        calendario.exted([{'title': u'Rendimento de R$ %s para %s' % (data_rendimento.quantidade, data_rendimento.investimento),
+        calendario.extend([{'title': u'Rendimento de R$ %s para %s' % (data_rendimento.valor, data_rendimento.investimento),
                            'start': data_rendimento.data.strftime('%Y-%m-%d')} for data_rendimento in rendimentos_outros_inv])
         amortizacoes_outros_inv = Amortizacao.objects.filter(investimento__investidor=investidor, data__range=[data_inicial, data_final])
-        calendario.exted([{'title': u'Amortização de R$ %s para %s' % (data_amortizacao.quantidade, data_amortizacao.investimento),
+        calendario.extend([{'title': u'Amortização de R$ %s para %s' % (data_amortizacao.valor, data_amortizacao.investimento),
                            'start': data_amortizacao.data.strftime('%Y-%m-%d')} for data_amortizacao in amortizacoes_outros_inv])
         
         return HttpResponse(json.dumps(calendario), content_type = "application/json")   
