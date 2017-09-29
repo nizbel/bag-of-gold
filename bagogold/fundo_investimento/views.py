@@ -17,7 +17,7 @@ from bagogold.fundo_investimento.utils import \
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import PermissionDenied
 from django.core.mail import mail_admins
 from django.core.paginator import Paginator
 from django.core.urlresolvers import reverse
