@@ -11,17 +11,17 @@
         Os valores de proventos são considerados a partir da <strong>data EX</strong>
     </div>
 	<div class="row">
-		<div class="col-md-4">
+		<div class="col-md-3">
 			<!-- BEGIN Portlet PORTLET-->
 			<div class="portlet box yellow-crusta">
 				<div class="portlet-title">
 					<div class="caption">
-						<i class="fa fa-clock-o"></i>Acumulado mensal nos últimos 12 meses</div>
+						<i class="fa fa-clock-o"></i>Últimos 12 meses</div>
 					<div class="tools">
 						<a href="javascript:;" class="collapse"></a>
 					</div>
 				</div>
-				<div class="portlet-body">
+				<div class="portlet-body" id="periodos_mensais">
                     <div class="text-center">
                         <h4>
                             Taxa média dos últimos 12 meses
@@ -34,16 +34,16 @@
                     </div>
                     <div class="list-group">
 						{% for periodo, _, acumulado in acumulados_mensais %}
-                        <span class="list-group-item" data-inicial="{{periodo.0}}" data-final="{{periodo.1}}" name="periodo" id="periodo_{{forloop.counter}}">
+                        <a href="javascript:;" class="list-group-item" data-inicial="{{periodo.0}}" data-final="{{periodo.1}}" name="periodo" id="periodo_{{forloop.counter}}">
                             {{periodo.0}} a {{periodo.1}}: <strong>R$ {{acumulado|floatformat:'2'}}</strong>
-                        </span>
+                        </a>
 						{% endfor %}
 					</div>
 				</div>
 			</div>
 			<!-- END Portlet PORTLET-->
 		</div>
-        <div class="col-md-8" style="display: none;" id="detalhe_portlet">
+        <div class="col-md-3" style="display: none;" id="detalhe_portlet">
             <!-- BEGIN Portlet PORTLET-->
             <div class="portlet box yellow-crusta">
                 <div class="portlet-title">
@@ -53,8 +53,7 @@
                         <a href="javascript:;" class="collapse"></a>
                     </div>
                 </div>
-                <div class="portlet-body">
-                    <span id="detalhe_periodo"></span>
+                <div class="portlet-body" id="detalhe_periodo">
                 </div>
             </div>
             <!-- END Portlet PORTLET-->
@@ -92,25 +91,40 @@
 <script>
 $( document ).ready(function() {
 	// Adicionar detalhamento ao clicar
-	$('span[name="periodo"]').click(function() {
+	$('a[name="periodo"]').click(function() {
 		var data_inicio = $(this).attr('data-inicial');
 		var data_fim = $(this).attr('data-final');
+		App.blockUI({
+	        target: '#detalhe_periodo',
+	        iconOnly: true,
+	        overlayColor: 'none'
+	    });
+		App.blockUI({
+            target: '#periodos_mensais',
+            iconOnly: true,
+            overlayColor: 'none'
+        });
 		$.ajax({
-	        url : "{% url 'inicio:detalhe_acumulado_mensal' %}",
+	        url : "{% url 'inicio:detalhar_acumulado_mensal' %}",
 	        type : "GET",
 	        data : {data_inicio: data_inicio, data_fim: data_fim},
 
 	        // handle a successful response
 	        success : function(resultado) {
-	        	console.log(resultado);
                 $('#detalhe_portlet').show();
-	        	$('#detalhe_periodo').text(resultado);
-// 	                 App.unblockUI('#portlet_body_graf_rendimentos_mensal');
+	        	$('#detalhe_periodo').html(resultado);
+                App.unblockUI('#detalhe_periodo');
+                App.unblockUI('#periodos_mensais');
+                $("#detalhe_periodo [data-counter='counterup']").counterUp({
+                    delay: 10,
+                    time: 1000
+                });
 	        },
 
 	        // handle a non-successful response
 	        error : function(xhr,errmsg,err) {
-// 	            App.unblockUI('#portlet_body_graf_rendimentos_mensal');
+	            App.unblockUI('#detalhe_periodo');
+                App.unblockUI('#periodos_mensais');
 	            console.log(xhr.status + ": " + xhr.responseText);
 	        }
 	    });

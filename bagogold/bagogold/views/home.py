@@ -3,7 +3,6 @@ from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.misc import ContatoForm
 from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, Provento, \
     ValorDiarioAcao
-from bagogold.cdb_rdb.models import OperacaoCDB_RDB
 from bagogold.bagogold.models.debentures import OperacaoDebenture, \
     HistoricoValorDebenture
 from bagogold.bagogold.models.fii import OperacaoFII, HistoricoFII, ProventoFII, \
@@ -11,8 +10,6 @@ from bagogold.bagogold.models.fii import OperacaoFII, HistoricoFII, ProventoFII,
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
     ValorDiarioTitulo, Titulo
-from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, \
-    calcular_valor_venda_cdb_rdb
 from bagogold.bagogold.utils.debenture import calcular_valor_debentures_ate_dia
 from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
     buscar_totais_atuais_investimentos, buscar_proventos_a_receber, \
@@ -20,8 +17,12 @@ from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di, \
     calcular_valor_lc_ate_dia, calcular_valor_venda_lc
 from bagogold.bagogold.utils.misc import calcular_rendimentos_ate_data, \
-    verificar_feriado_bovespa, formatar_zeros_a_direita_apos_2_casas_decimais
+    verificar_feriado_bovespa, formatar_zeros_a_direita_apos_2_casas_decimais,\
+    converter_date_para_utc
 from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia
+from bagogold.cdb_rdb.models import OperacaoCDB_RDB
+from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, \
+    calcular_valor_venda_cdb_rdb
 from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA, \
     DataRemuneracaoCRI_CRA, DataAmortizacaoCRI_CRA, CRI_CRA
 from bagogold.cri_cra.utils.utils import calcular_valor_cri_cra_ate_dia, \
@@ -44,6 +45,7 @@ from django.db.models.expressions import F, Case, When
 from django.db.models.fields import DecimalField
 from django.http.response import HttpResponse
 from django.template import loader
+from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 from itertools import chain
 from operator import attrgetter
@@ -170,7 +172,7 @@ def detalhar_acumulados_mensais(request):
         acumulados_mensais[mes][0] = ['%s' % (data_atual.replace(day=1).strftime('%d/%m/%Y')), '%s' % (data_atual.strftime('%d/%m/%Y'))]
         
         # Adiciona total mensal ao gráfico
-        graf_acumulados.append([str(calendar.timegm(data_atual.replace(hour=12).timetuple()) * 1000), float(acumulados_mensais[mes][2])])
+        graf_acumulados.append([str(calendar.timegm(converter_date_para_utc(data_atual).timetuple()) * 1000), float(acumulados_mensais[mes][2])])
         
         # Coloca data_atual como último dia do mês anterior
         data_atual = ultimo_dia_mes_anterior
@@ -205,7 +207,12 @@ def detalhar_acumulados_mensais(request):
     return TemplateResponse(request, 'detalhar_acumulados_mensais.html', {'acumulados_mensais': acumulados_mensais, 'graf_acumulados': graf_acumulados, 'taxas': taxas})
     
 @login_required
-def detalhe_acumulado_mensal(request):
+def detalhar_acumulado_mensal(request):
+    class AcumuladoInvestimento(object):
+        def __init__(self, investimento, qtd):
+            self.investimento = investimento
+            self.qtd = qtd
+            
     investidor = request.user.investidor
     
     data_inicio = datetime.datetime.strptime(request.GET.get('data_inicio'), '%d/%m/%Y').date()
@@ -218,10 +225,36 @@ def detalhe_acumulado_mensal(request):
     rendimento = calcular_rendimentos_ate_data(investidor, data_fim)
     
     # Subtrair valores para pegar o acumulado no período indicado
-    acumulado = { k: float(rendimento.get(k, 0) - rendimento_anterior.get(k, 0)) for k in set(rendimento) | set(rendimento_anterior)}
+#     acumulado = { k: float(rendimento.get(k, 0) - rendimento_anterior.get(k, 0)) for k in set(rendimento) | set(rendimento_anterior)}
+    acumulado = [AcumuladoInvestimento(k, float(rendimento.get(k, 0) - rendimento_anterior.get(k, 0))) for k in set(rendimento) | set(rendimento_anterior)]
     
-    print acumulado
-    return HttpResponse(json.dumps(acumulado), content_type = "application/json")  
+    # Preparar nomes completos para cada investimento
+    for acumulado_inv in acumulado:
+        if acumulado_inv.investimento == 'B':
+            acumulado_inv.investimento = 'Buy and Hold'
+        elif acumulado_inv.investimento == 'C':
+            acumulado_inv.investimento = 'CDB/RDB'
+        elif acumulado_inv.investimento == 'D':
+            acumulado_inv.investimento = 'Tesouro Direto'
+        elif acumulado_inv.investimento == 'E':
+            acumulado_inv.investimento = 'Debêntures'
+        elif acumulado_inv.investimento == 'F':
+            acumulado_inv.investimento = 'FII'
+        elif acumulado_inv.investimento == 'I':
+            acumulado_inv.investimento = 'Fundos de investimento'
+        elif acumulado_inv.investimento == 'L':
+            acumulado_inv.investimento = 'Letras de Crédito'
+        elif acumulado_inv.investimento == 'O':
+            acumulado_inv.investimento = 'Outros investimentos'
+        elif acumulado_inv.investimento == 'R':
+            acumulado_inv.investimento = 'CRI/CRA'
+        elif acumulado_inv.investimento == 'T':
+            acumulado_inv.investimento = 'Trading'
+    
+    acumulado.sort(key=lambda x: x.investimento)
+    
+    return HttpResponse(json.dumps(render_to_string('utils/detalhar_acumulado_mensal.html', {'acumulado': acumulado, 'data_inicio': data_inicio,
+                                                                                             'data_fim': data_fim})), content_type = "application/json")  
 
 
 @login_required
