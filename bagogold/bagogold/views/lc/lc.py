@@ -727,11 +727,15 @@ def painel(request):
 @adiciona_titulo_descricao('Sobre Letras de Crédito', 'Detalha o que são Letras de Crédito')
 def sobre(request):
     if request.is_ajax():
-        filtros_simulador = {'periodo': Decimal(request.GET.get('periodo')), 'percentual_indice': Decimal(request.GET.get('percentual_indice')), \
-                             'tipo': 'POS', 'indice': 'DI', 'aplicacao': Decimal(1000)}
+        try:
+            aplicacao = Decimal(request.GET.get('qtd').replace('.', '').replace(',', '.'))
+            filtros_simulador = {'periodo': Decimal(request.GET.get('periodo')), 'percentual_indice': Decimal(request.GET.get('percentual_indice')), \
+                             'tipo': 'POS', 'indice': 'DI', 'aplicacao': aplicacao}
+        except:
+            return HttpResponse(json.dumps({'sucesso': False, 'mensagem': u'Variáveis de entrada inválidas'}), content_type = "application/json") 
         
         graf_simulador = [[str(calendar.timegm(data.timetuple()) * 1000), float(valor_lci_lca)] for data, valor_lci_lca in simulador_lci_lca(filtros_simulador)]
-        return HttpResponse(json.dumps({'graf_simulador': graf_simulador}), content_type = "application/json") 
+        return HttpResponse(json.dumps({'sucesso': True, 'graf_simulador': graf_simulador}), content_type = "application/json") 
     else:
         data_atual = datetime.date.today()
         historico_di = HistoricoTaxaDI.objects.filter(data__gte=data_atual.replace(year=data_atual.year-3))
