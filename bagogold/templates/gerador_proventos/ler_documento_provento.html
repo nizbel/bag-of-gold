@@ -42,7 +42,13 @@
                                 <div class="m-grid-col m-grid-col-left"><strong>Responsável:</strong></div>
                                 <div class="m-grid-col m-grid-col-left">
                                     {% if pendencia.responsavel %}
-                                        {{ pendencia.responsavel }}
+                                        {% if pendencia.responsavel == request.user.investidor %}
+                                            <form method="POST">{% csrf_token %}
+                                                <button name="reservar" value="0" type="submit" class="btn btn-warning btn-xs">Cancelar</button>
+                                            </form>
+                                        {% else %}
+                                            {{ pendencia.responsavel }}
+                                        {% endif %}
                                     {% else %}
                                         <form method="POST">{% csrf_token %}
                                             <button name="reservar" value="1" type="submit" class="btn btn-success btn-xs">Reservar</button>

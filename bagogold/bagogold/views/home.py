@@ -3,7 +3,6 @@ from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.misc import ContatoForm
 from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, Provento, \
     ValorDiarioAcao
-from bagogold.cdb_rdb.models import OperacaoCDB_RDB
 from bagogold.bagogold.models.debentures import OperacaoDebenture, \
     HistoricoValorDebenture
 from bagogold.bagogold.models.fii import OperacaoFII, HistoricoFII, ProventoFII, \
@@ -11,8 +10,6 @@ from bagogold.bagogold.models.fii import OperacaoFII, HistoricoFII, ProventoFII,
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
     ValorDiarioTitulo, Titulo
-from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, \
-    calcular_valor_venda_cdb_rdb
 from bagogold.bagogold.utils.debenture import calcular_valor_debentures_ate_dia
 from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
     buscar_totais_atuais_investimentos, buscar_proventos_a_receber, \
@@ -20,8 +17,12 @@ from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di, \
     calcular_valor_lc_ate_dia, calcular_valor_venda_lc
 from bagogold.bagogold.utils.misc import calcular_rendimentos_ate_data, \
-    verificar_feriado_bovespa, formatar_zeros_a_direita_apos_2_casas_decimais
+    verificar_feriado_bovespa, formatar_zeros_a_direita_apos_2_casas_decimais,\
+    converter_date_para_utc
 from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia
+from bagogold.cdb_rdb.models import OperacaoCDB_RDB
+from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, \
+    calcular_valor_venda_cdb_rdb
 from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA, \
     DataRemuneracaoCRI_CRA, DataAmortizacaoCRI_CRA, CRI_CRA
 from bagogold.cri_cra.utils.utils import calcular_valor_cri_cra_ate_dia, \
@@ -32,6 +33,8 @@ from bagogold.criptomoeda.models import OperacaoCriptomoeda, \
 from bagogold.criptomoeda.utils import buscar_valor_criptomoedas_atual
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
     HistoricoValorCotas
+from bagogold.outros_investimentos.models import Rendimento, Amortizacao, \
+    Investimento
 from decimal import Decimal, ROUND_DOWN
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -42,6 +45,7 @@ from django.db.models.expressions import F, Case, When
 from django.db.models.fields import DecimalField
 from django.http.response import HttpResponse
 from django.template import loader
+from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 from itertools import chain
 from operator import attrgetter
@@ -130,6 +134,14 @@ def calendario(request):
         calendario.extend([{'title': u'Transferência relacionada a Criptomoedas, %s %s' % (formatar_zeros_a_direita_apos_2_casas_decimais(transferencia.quantidade), transferencia.moeda_utilizada()),
                             'start': transferencia.data.strftime('%Y-%m-%d')} for transferencia in transferencias_cripto])
         
+        # Rendimentos e amortizações de outros investimentos
+        rendimentos_outros_inv = Rendimento.objects.filter(investimento__investidor=investidor, data__range=[data_inicial, data_final])
+        calendario.extend([{'title': u'Rendimento de R$ %s para %s' % (data_rendimento.valor, data_rendimento.investimento),
+                           'start': data_rendimento.data.strftime('%Y-%m-%d')} for data_rendimento in rendimentos_outros_inv])
+        amortizacoes_outros_inv = Amortizacao.objects.filter(investimento__investidor=investidor, data__range=[data_inicial, data_final])
+        calendario.extend([{'title': u'Amortização de R$ %s para %s' % (data_amortizacao.valor, data_amortizacao.investimento),
+                           'start': data_amortizacao.data.strftime('%Y-%m-%d')} for data_amortizacao in amortizacoes_outros_inv])
+        
         return HttpResponse(json.dumps(calendario), content_type = "application/json")   
     
     return TemplateResponse(request, 'calendario.html', {})
@@ -157,10 +169,10 @@ def detalhar_acumulados_mensais(request):
         for investimento in acumulados_mensais[mes][1].keys():
             acumulados_mensais[mes][1][investimento] = acumulados_mensais[mes][1][investimento] - acumulados_mensais[mes+1][1][investimento]
         # Trocar data pela string de período
-        acumulados_mensais[mes][0] = '%s a %s' % (data_atual.replace(day=1).strftime('%d/%m/%Y'), data_atual.strftime('%d/%m/%Y'))
+        acumulados_mensais[mes][0] = ['%s' % (data_atual.replace(day=1).strftime('%d/%m/%Y')), '%s' % (data_atual.strftime('%d/%m/%Y'))]
         
         # Adiciona total mensal ao gráfico
-        graf_acumulados.append([str(calendar.timegm(data_atual.replace(hour=12).timetuple()) * 1000), float(acumulados_mensais[mes][2])])
+        graf_acumulados.append([str(calendar.timegm(converter_date_para_utc(data_atual).timetuple()) * 1000), float(acumulados_mensais[mes][2])])
         
         # Coloca data_atual como último dia do mês anterior
         data_atual = ultimo_dia_mes_anterior
@@ -194,6 +206,57 @@ def detalhar_acumulados_mensais(request):
     
     return TemplateResponse(request, 'detalhar_acumulados_mensais.html', {'acumulados_mensais': acumulados_mensais, 'graf_acumulados': graf_acumulados, 'taxas': taxas})
     
+@login_required
+def detalhar_acumulado_mensal(request):
+    class AcumuladoInvestimento(object):
+        def __init__(self, investimento, qtd):
+            self.investimento = investimento
+            self.qtd = qtd
+            
+    investidor = request.user.investidor
+    
+    data_inicio = datetime.datetime.strptime(request.GET.get('data_inicio'), '%d/%m/%Y').date()
+    data_fim = datetime.datetime.strptime(request.GET.get('data_fim'), '%d/%m/%Y').date()
+    
+    # Pegar acumulado mensal até o dia anterior da data inicial
+    rendimento_anterior = calcular_rendimentos_ate_data(investidor, (data_inicio - datetime.timedelta(days=1)))
+    
+    # Buscar acumulado até o final do período
+    rendimento = calcular_rendimentos_ate_data(investidor, data_fim)
+    
+    # Subtrair valores para pegar o acumulado no período indicado
+#     acumulado = { k: float(rendimento.get(k, 0) - rendimento_anterior.get(k, 0)) for k in set(rendimento) | set(rendimento_anterior)}
+    acumulado = [AcumuladoInvestimento(k, float(rendimento.get(k, 0) - rendimento_anterior.get(k, 0))) for k in set(rendimento) | set(rendimento_anterior)]
+    
+    # Preparar nomes completos para cada investimento
+    for acumulado_inv in acumulado:
+        if acumulado_inv.investimento == 'B':
+            acumulado_inv.investimento = 'Buy and Hold'
+        elif acumulado_inv.investimento == 'C':
+            acumulado_inv.investimento = 'CDB/RDB'
+        elif acumulado_inv.investimento == 'D':
+            acumulado_inv.investimento = 'Tesouro Direto'
+        elif acumulado_inv.investimento == 'E':
+            acumulado_inv.investimento = 'Debêntures'
+        elif acumulado_inv.investimento == 'F':
+            acumulado_inv.investimento = 'FII'
+        elif acumulado_inv.investimento == 'I':
+            acumulado_inv.investimento = 'Fundos de investimento'
+        elif acumulado_inv.investimento == 'L':
+            acumulado_inv.investimento = 'Letras de Crédito'
+        elif acumulado_inv.investimento == 'O':
+            acumulado_inv.investimento = 'Outros investimentos'
+        elif acumulado_inv.investimento == 'R':
+            acumulado_inv.investimento = 'CRI/CRA'
+        elif acumulado_inv.investimento == 'T':
+            acumulado_inv.investimento = 'Trading'
+    
+    acumulado.sort(key=lambda x: x.investimento)
+    
+    return HttpResponse(json.dumps(render_to_string('utils/detalhar_acumulado_mensal.html', {'acumulado': acumulado, 'data_inicio': data_inicio,
+                                                                                             'data_fim': data_fim})), content_type = "application/json")  
+
+
 @login_required
 @adiciona_titulo_descricao('Histórico detalhado', 'Histórico detalhado das operações feitas pelo investidor')
 def detalhamento_investimentos(request):
@@ -246,9 +309,16 @@ def detalhamento_investimentos(request):
     # Adicionar transferências em Criptomoedas do investidor
     transferencias_criptomoedas = TransferenciaCriptomoeda.objects.filter(investidor=investidor, taxa__gt=Decimal(0), moeda__isnull=False).exclude(data__isnull=True).order_by('data')
     
+    # Adicionar outros investimentos do investidor
+    outros_investimentos = Investimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
+    
+    # Adicionar amortizações de outros investimentos
+    amort_outros_investimentos = Amortizacao.objects.filter(investimento__investidor=investidor).exclude(data__isnull=True).order_by('data')
+    
     # Juntar todas as operações
     lista_operacoes = sorted(chain(proventos_fii, operacoes_fii, operacoes_td, proventos_bh,  operacoes_bh, operacoes_t, operacoes_lc, operacoes_cdb_rdb, 
-                                   operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento, operacoes_criptomoedas, transferencias_criptomoedas),
+                                   operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento, operacoes_criptomoedas, 
+                                   transferencias_criptomoedas, outros_investimentos, amort_outros_investimentos),
                             key=attrgetter('data'))
 
 	# Se não houver operações, retornar vazio
@@ -335,6 +405,7 @@ def detalhamento_investimentos(request):
     fundos_investimento = {}
     debentures = {}
     criptomoedas = {}
+    invest = {}
     total_proventos_fii = 0
     total_proventos_bh = 0
     
@@ -358,6 +429,7 @@ def detalhamento_investimentos(request):
 #     total_debentures = datetime.timedelta(hours=0)
 #     total_fundo_investimento = datetime.timedelta(hours=0)
 #     total_criptomoeda = datetime.timedelta(hours=0)
+#     total_outros_invest = datetime.timedelta(hours=0)
     ############# TESTE
     
     for index, item in enumerate(lista_conjunta):    
@@ -526,6 +598,13 @@ def detalhamento_investimentos(request):
                 criptomoedas[item.moeda.ticker] = 0
             criptomoedas[item.moeda.ticker] -= item.taxa
             
+        elif isinstance(item, Investimento):
+            if item.id not in invest.keys():
+                invest[item.id] = 0
+            invest[item.id] += item.quantidade
+            
+        elif isinstance(item, Amortizacao):
+            invest[item.investimento.id] -= item.valor
 
         # Se não cair em nenhum dos anteriores: item vazio
         
@@ -710,6 +789,11 @@ def detalhamento_investimentos(request):
             patrimonio['Criptomoedas'] = patrimonio_criptomoedas
             patrimonio['patrimonio_total'] += patrimonio['Criptomoedas']
             
+            # Outros investimentos
+#             inicio_outros_invest = datetime.datetime.now()
+            patrimonio['Outros inv.'] = sum(invest.values())
+            patrimonio['patrimonio_total'] += patrimonio['Outros inv.']
+            
 #             print 'Ações (B&H)          ', total_acoes_bh
 #             print 'Ações (Trading)      ', total_acoes_t
 #             print 'Prov. Ações          ', total_prov_acoes_bh
@@ -722,6 +806,7 @@ def detalhamento_investimentos(request):
 #             print 'Debêntures           ', total_debentures
 #             print 'Fundo Inv.           ', total_fundo_investimento
 #             print 'Cripto.              ', total_criptomoeda
+#             print 'Outros inv.          ', total_outros_invest
             
             # Preparar estatísticas
             for data_estatistica in datas_estatisticas:
@@ -768,6 +853,7 @@ def detalhamento_investimentos(request):
 #     print 'Debêntures:       ', total_debentures
 #     print 'Fundo Inv.:       ', total_fundo_investimento
 #     print 'Cripto.           ', total_criptomoeda
+#     print 'Outros inv.       ', total_outros_invest
     
     return TemplateResponse(request, 'detalhamento_investimentos.html', {'graf_patrimonio': graf_patrimonio, 'patrimonio_anual': patrimonio_anual,
                                             'estatisticas': estatisticas, 'graf_patrimonio_cripto': json.dumps(graf_patrimonio_cripto)})
@@ -816,6 +902,8 @@ def painel_geral(request):
             investimento.link = 'fundo_investimento:painel_fundo_investimento'
         elif chave == 'Letras de Crédito':
             investimento.link = 'lci_lca:painel_lci_lca'
+        elif chave == 'Outros inv.':
+            investimento.link = 'outros_investimentos:painel_outros_invest'
         elif chave == 'Tesouro Direto':
             investimento.link = 'td:painel_td'
             
