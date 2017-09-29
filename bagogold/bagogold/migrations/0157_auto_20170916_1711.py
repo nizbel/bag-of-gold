@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('outros_investimentos', '0003_auto_20170915_2125'),
-        ('bagogold', '0155_auto_20170903_1439'),
+        ('bagogold', '0156_auto_20170913_0036'),
     ]
 
     operations = [
