@@ -21,11 +21,12 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
 from django.db.models.aggregates import Count
 from django.forms import inlineformset_factory
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
 import calendar
 import datetime
+import json
 
 @login_required
 @adiciona_titulo_descricao('Detalhar Letra de Crédito', 'Detalhar Letra de Crédito, incluindo histórico de carência e '
