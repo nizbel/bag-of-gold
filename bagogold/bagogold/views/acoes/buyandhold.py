@@ -725,7 +725,7 @@ def painel(request):
         total_valor += acoes[acao].valor_total
         total_variacao += acoes[acao].variacao * acoes[acao].quantidade
     
-    # Calcular percentagens
+    # Calcular porcentagens
     for acao in acoes.keys():
         acoes[acao].quantidade_percentual = float(acoes[acao].quantidade) / total_acoes * 100
         acoes[acao].valor_total_percentual = acoes[acao].valor_total / total_valor * 100
@@ -745,6 +745,10 @@ def painel(request):
     except:
         valor_diario_mais_recente = 'N/A'
     
+    # Gráfico de composição
+    graf_composicao = [{'label': acao, 'data': float(acoes[acao].valor_total_percentual)} for acao in acoes.keys()]
+    print graf_composicao
+    
     # Popular dados
     dados = {}
     dados['total_acoes'] = total_acoes
@@ -754,7 +758,7 @@ def painel(request):
     dados['historico_mais_recente'] = historico_mais_recente
     dados['valor_diario_mais_recente'] = valor_diario_mais_recente
 
-    return TemplateResponse(request, 'acoes/buyandhold/painel.html', {'acoes': acoes, 'dados': dados})
+    return TemplateResponse(request, 'acoes/buyandhold/painel.html', {'acoes': acoes, 'dados': dados, 'graf_composicao': json.dumps(graf_composicao)})
     
 @login_required
 def remover_taxa_custodia_acao(request, taxa_id):
