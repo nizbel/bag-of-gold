@@ -2,7 +2,7 @@
 from django.core.management.base import BaseCommand
 from django.db import connection
 
-TABELAS_SEM_BACKUP = ['bagogold_carregamentometronic', 'bagogold_valordiarioacao', 'bagogold_valordiariofii', 'bagogold_valordiariotitulo', 'django_session']
+TABELAS_SEM_BACKUP = ['bagogold_valordiarioacao', 'bagogold_valordiariofii', 'bagogold_valordiariotitulo', 'django_session']
 
 class Command(BaseCommand):
     help = 'Lista tabelas para backup'
