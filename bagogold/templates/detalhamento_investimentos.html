@@ -101,7 +101,7 @@
 								{% for estatistica in estatisticas %}
 									<tr>
 										<td>
-											<a href="javascript:;"><strong>{{ estatistica.0 }}:</strong></a>
+											<span><strong>{{ estatistica.0 }}:</strong></span>
 										</td>
 										{% if estatistica.1 > 0 %}
 										<td><i class="fa fa-arrow-up font-blue"></i></td>
@@ -117,7 +117,7 @@
 								{% empty %}
 									<tr>
 										<td>
-											<a href="javascript:;"><strong>Não há investimentos</strong></a>
+											<span><strong>Não há investimentos</strong></span>
 										</td>
 									</tr>
 								{% endfor %}
@@ -155,7 +155,7 @@
 									{% if k != 'patrimonio_total' and v != 0 %}
 									<tr name="composicao_{{ patrimonio_ano.0 }}" class="hidden">
 										<td>
-											<a href="javascript:;"><strong>{{ k }}:</strong></a>
+											<span><strong>{{ k }}:</strong></span>
 										</td>
 										<td style="text-align:right"><strong>R${{ v|floatformat:"2" }}</strong></td>
 									</tr>
