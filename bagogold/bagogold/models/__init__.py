@@ -1,5 +1,4 @@
 from acoes import *
-from cdb_rdb import *
 from debentures import *
 from fii import *
 from lc import *
