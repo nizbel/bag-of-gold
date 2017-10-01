@@ -38,7 +38,7 @@ class Command(BaseCommand):
                 dias_uteis.append(ultimo_dia_util())
             else:
                 # Buscar dias úteis que não tenham sido inseridos previamente
-                for _ in range(5):
+                for _ in range(3):
                     dia_util = buscar_dia_util_aleatorio(datetime.date(2002, 1 ,1), ultimo_dia_util())
                     while DocumentoCadastro.objects.filter(data_referencia=dia_util, leitura_realizada=True).exists():
                         dia_util = buscar_dia_util_aleatorio(datetime.date(2002, 1 ,1), ultimo_dia_util())
