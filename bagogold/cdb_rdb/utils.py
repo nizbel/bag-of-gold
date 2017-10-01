@@ -4,10 +4,8 @@ from bagogold.bagogold.models.lc import HistoricoTaxaDI
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di, \
     calcular_valor_atualizado_com_taxa_prefixado
 from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo
-from bagogold.cdb_rdb.models import OperacaoCDB_RDB, HistoricoPorcentagemCDB_RDB, \
-    OperacaoVendaCDB_RDB, CDB_RDB
+from bagogold.cdb_rdb.models import OperacaoCDB_RDB, CDB_RDB
 from decimal import Decimal, ROUND_DOWN
-from django.db.models import Q
 from django.db.models.aggregates import Sum, Count
 from django.db.models.expressions import F
 from django.db.models.functions import Coalesce
@@ -36,27 +34,15 @@ def calcular_valor_cdb_rdb_ate_dia(investidor, dia=datetime.date.today()):
                 Data final
     Retorno: Valor de cada CDB/RDB na data escolhida {id_letra: valor_na_data, }
     """
-    # Definir vendas do investidor
-    vendas = OperacaoVendaCDB_RDB.objects.filter(operacao_compra__investidor=investidor, operacao_venda__investidor=investidor, operacao_compra__data__lte=dia,
-                                                                             operacao_venda__data__lte=dia).values('operacao_compra').annotate(soma_venda=Sum('operacao_venda__quantidade'))
-    qtd_vendida_operacoes = {}
-    for venda in vendas:
-        qtd_vendida_operacoes[venda['operacao_compra']] = venda['soma_venda']
-    
-    # Definir compras do investidor
-    operacoes_queryset = OperacaoCDB_RDB.objects.filter(investidor=investidor, data__lte=dia, tipo_operacao='C').exclude(data__isnull=True)
-    if len(operacoes_queryset) == 0:
-        return {}
-    operacoes = list(operacoes_queryset)
+    operacoes = buscar_operacoes_vigentes_ate_data(investidor, dia)
     
     cdb_rdb = {}
     # Buscar taxas dos dias
     historico = HistoricoTaxaDI.objects.all()
     for operacao in operacoes:
         # TODO consertar verificação de todas vendidas
-        operacao.quantidade -= 0 if operacao.id not in qtd_vendida_operacoes.keys() else qtd_vendida_operacoes[operacao.id]
-        if operacao.quantidade == 0:
-            continue
+        operacao.quantidade = operacao.qtd_disponivel_venda
+
         if operacao.investimento.id not in cdb_rdb.keys():
             cdb_rdb[operacao.investimento.id] = 0
         
