@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
+from bagogold import settings
 from bagogold.bagogold.models.acoes import Acao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa
+from django.core.mail import mail_admins
 from django.core.management.base import BaseCommand
 from threading import Thread
 from urllib2 import Request, urlopen, HTTPError, URLError
@@ -28,7 +30,10 @@ class CriarDocumentoThread(Thread):
         except Exception as e:
                 template = "An exception of type {0} occured. Arguments:\n{1!r}"
                 message = template.format(type(e).__name__, e.args)
-                print message
+                if settings.ENV == 'PROD':
+                    mail_admins(u'Erro na thread de criar documento de ação', message.decode('utf-8'))
+                elif settings.ENV == 'DEV':
+                    print message
                 
 class GeraInfoDocumentoProtocoloThread(Thread):
     def run(self):
@@ -56,7 +61,10 @@ class GeraInfoDocumentoProtocoloThread(Thread):
         except Exception as e:
                 template = "An exception of type {0} occured. Arguments:\n{1!r}"
                 message = template.format(type(e).__name__, e.args)
-                print message
+                if settings.ENV == 'PROD':
+                    mail_admins(u'Erro na thread de gerar infos do documento de ação', message.decode('utf-8'))
+                elif settings.ENV == 'DEV':
+                    print message
 
 class BuscaProventosAcaoThread(Thread):
     def __init__(self, codigo_cvm, ticker, ano_inicial):
@@ -72,7 +80,10 @@ class BuscaProventosAcaoThread(Thread):
         except Exception as e:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
             message = template.format(type(e).__name__, e.args)
-            print self.codigo_cvm, "Thread:", message
+            if settings.ENV == 'PROD':
+                    mail_admins(u'Erro na thread de buscar proventos de ações', message.decode('utf-8'))
+            elif settings.ENV == 'DEV':
+                print message
 #             pass
         # Tenta remover seu código da listagem de threads até conseguir
         while self.codigo_cvm in threads_rodando:
