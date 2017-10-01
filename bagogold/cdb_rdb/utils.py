@@ -129,7 +129,7 @@ def buscar_operacoes_vigentes_ate_data(investidor, data=datetime.date.today()):
                 Data
     Retorno: Lista de operações vigentes, adicionando os campos qtd_disponivel_venda e qtd_vendida
     """
-    operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor, tipo_operacao='C').exclude(data__isnull=True) \
+    operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor, tipo_operacao='C', data__lte=data).exclude(data__isnull=True) \
         .annotate(qtd_vendida=Coalesce(Sum('operacao_compra__operacao_venda__quantidade'), 0)).exclude(quantidade=F('qtd_vendida')) \
         .annotate(qtd_disponivel_venda=(F('quantidade') - F('qtd_vendida')))
 
