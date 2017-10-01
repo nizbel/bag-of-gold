@@ -32,7 +32,7 @@ def resolver_pendencia_vencimento_td(request):
                     divisao_operacao.save()
                 
         except IntegrityError as e:
-            mail_admins(u'Erro na geração de venda para vencimento de Tesouro Direto', traceback.format_exc())
+            mail_admins(u'Erro na geração de venda para vencimento de Tesouro Direto', traceback.format_exc().decode('utf-8'))
             return HttpResponse(json.dumps({'resultado': False, 'mensagem': 'Erro na criação de operação de venda'}), content_type = "application/json")
         return HttpResponse(json.dumps({'resultado': True, 'mensagem': 'Operação de venda criada com sucesso', 'pendencia_id': pendencia.texto_id()}), content_type = "application/json")
         
