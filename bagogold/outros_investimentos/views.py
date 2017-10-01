@@ -188,7 +188,7 @@ def editar_investimento(request, id_investimento):
                             if settings.ENV == 'DEV':
                                 raise
                             elif settings.ENV == 'PROD':
-                                mail_admins(u'Erro ao editar investimento com várias divisões', traceback.format_exc())
+                                mail_admins(u'Erro ao editar investimento com várias divisões', traceback.format_exc().decode('utf-8'))
                     for erro in formset_divisao.non_form_errors():
                         messages.error(request, erro)
                         
@@ -213,7 +213,7 @@ def editar_investimento(request, id_investimento):
                         if settings.ENV == 'DEV':
                             raise
                         elif settings.ENV == 'PROD':
-                            mail_admins(u'Erro ao editar investimento com uma divisão', traceback.format_exc())
+                            mail_admins(u'Erro ao editar investimento com uma divisão', traceback.format_exc().decode('utf-8'))
                 
             for erro in [erro for erro in form_outros_invest.non_field_errors()]:
                 messages.error(request, erro)
@@ -307,7 +307,7 @@ def encerrar_investimento(request, id_investimento):
                     if settings.ENV == 'DEV':
                         raise
                     elif settings.ENV == 'PROD':
-                        mail_admins(u'Erro ao editar data de encerramento para investimento de id %s' % (investimento.id), traceback.format_exc())
+                        mail_admins(u'Erro ao editar data de encerramento para investimento de id %s' % (investimento.id), traceback.format_exc().decode('utf-8'))
                 
             for erro in [erro for erro in form_encerramento.non_field_errors()]:
                 messages.error(request, erro)
@@ -526,7 +526,7 @@ def inserir_investimento(request):
                         if settings.ENV == 'DEV':
                             raise
                         elif settings.ENV == 'PROD':
-                            mail_admins(u'Erro ao gerar investimento na seção outros investimentos, com várias divisões', traceback.format_exc())
+                            mail_admins(u'Erro ao gerar investimento na seção outros investimentos, com várias divisões', traceback.format_exc().decode('utf-8'))
                 for erro in formset_divisao.non_form_errors():
                     messages.error(request, erro)
             else:
@@ -545,7 +545,7 @@ def inserir_investimento(request):
                     if settings.ENV == 'DEV':
                         raise
                     elif settings.ENV == 'PROD':
-                        mail_admins(u'Erro ao gerar investimento na seção outros investimentos, com uma divisão', traceback.format_exc())
+                        mail_admins(u'Erro ao gerar investimento na seção outros investimentos, com uma divisão', traceback.format_exc().decode('utf-8'))
             
         for erro in [erro for erro in form_outros_invest.non_field_errors()]:
             messages.error(request, erro)

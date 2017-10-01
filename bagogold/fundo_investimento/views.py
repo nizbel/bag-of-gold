@@ -285,7 +285,7 @@ def inserir_operacao_fundo_investimento(request):
                         if settings.ENV == 'DEV':
                             raise
                         elif settings.ENV == 'PROD':
-                            mail_admins(u'Erro ao gerar operação em fundo de investimento com várias divisões', traceback.format_exc())
+                            mail_admins(u'Erro ao gerar operação em fundo de investimento com várias divisões', traceback.format_exc().decode('utf-8'))
                 for erro in formset_divisao.non_form_errors():
                     messages.error(request, erro)
             else:
@@ -301,7 +301,7 @@ def inserir_operacao_fundo_investimento(request):
                     if settings.ENV == 'DEV':
                         raise
                     elif settings.ENV == 'PROD':
-                        mail_admins(u'Erro ao gerar operação em fundo de investimento com uma divisão', traceback.format_exc())
+                        mail_admins(u'Erro ao gerar operação em fundo de investimento com uma divisão', traceback.format_exc().decode('utf-8'))
             
         for erro in [erro for erro in form_operacao_fundo_investimento.non_field_errors()]:
             messages.error(request, erro)

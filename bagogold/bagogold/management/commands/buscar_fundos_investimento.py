@@ -119,7 +119,7 @@ class Command(BaseCommand):
                     if settings.ENV == 'DEV':
                         print traceback.format_exc()
                     elif settings.ENV == 'PROD':
-                        mail_admins(u'Erro em Buscar fundos investimento na data %s' % (dia_util.strftime('%d/%m/%Y')), traceback.format_exc())
+                        mail_admins(u'Erro em Buscar fundos investimento na data %s' % (dia_util.strftime('%d/%m/%Y')), traceback.format_exc().decode('utf-8'))
                     continue
                 for libitem in unzipped.namelist():
                     try:
@@ -183,7 +183,7 @@ class Command(BaseCommand):
                         if settings.ENV == 'DEV':
                             print traceback.format_exc()
                         elif settings.ENV == 'PROD':
-                            mail_admins(u'Erro em Buscar fundos investimento na data %s' % (dia_util.strftime('%d/%m/%Y')), traceback.format_exc())
+                            mail_admins(u'Erro em Buscar fundos investimento na data %s' % (dia_util.strftime('%d/%m/%Y')), traceback.format_exc().decode('utf-8'))
                 # Verificar fundos que existem porém não foram listados, ou seja, estão terminados
                 if not options['aleatorio']:
                     # Verificar fundos não encontrados no cadastro para terminar
@@ -195,7 +195,7 @@ class Command(BaseCommand):
             if settings.ENV == 'DEV':
                 print traceback.format_exc()
             elif settings.ENV == 'PROD':
-                mail_admins(u'Erro em Buscar fundos investimento', traceback.format_exc())
+                mail_admins(u'Erro em Buscar fundos investimento', traceback.format_exc().decode('utf-8'))
 
 def definir_prazo__pelo_cadastro(str_tributacao_documento):
     if str_tributacao_documento == None:

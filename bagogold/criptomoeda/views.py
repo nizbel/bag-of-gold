@@ -87,7 +87,7 @@ def editar_operacao_criptomoeda(request, id_operacao):
                             if settings.ENV == 'DEV':
                                 raise
                             elif settings.ENV == 'PROD':
-                                mail_admins(u'Erro ao editar operação em criptomoeda com várias divisões', traceback.format_exc())
+                                mail_admins(u'Erro ao editar operação em criptomoeda com várias divisões', traceback.format_exc().decode('utf-8'))
                     for erro in formset_divisao.non_form_errors():
                         messages.error(request, erro)
                         
@@ -122,7 +122,7 @@ def editar_operacao_criptomoeda(request, id_operacao):
                         if settings.ENV == 'DEV':
                             raise
                         elif settings.ENV == 'PROD':
-                            mail_admins(u'Erro ao editar operação em criptomoeda com uma divisão', traceback.format_exc())
+                            mail_admins(u'Erro ao editar operação em criptomoeda com uma divisão', traceback.format_exc().decode('utf-8'))
                 
             for erro in [erro for erro in form_operacao_criptomoeda.non_field_errors()]:
                 messages.error(request, erro)
@@ -200,7 +200,7 @@ def editar_transferencia(request, id_transferencia):
                             if settings.ENV == 'DEV':
                                 raise
                             elif settings.ENV == 'PROD':
-                                mail_admins(u'Erro ao editar transferência para criptomoeda com várias divisões', traceback.format_exc())
+                                mail_admins(u'Erro ao editar transferência para criptomoeda com várias divisões', traceback.format_exc().decode('utf-8'))
                     for erro in formset_divisao.non_form_errors():
                         messages.error(request, erro)
                         
@@ -218,7 +218,7 @@ def editar_transferencia(request, id_transferencia):
                         if settings.ENV == 'DEV':
                             raise
                         elif settings.ENV == 'PROD':
-                            mail_admins(u'Erro ao editar transferência para criptomoeda com uma divisão', traceback.format_exc())
+                            mail_admins(u'Erro ao editar transferência para criptomoeda com uma divisão', traceback.format_exc().decode('utf-8'))
                 
             for erro in [erro for erro in form_transferencia_criptomoeda.non_field_errors()]:
                 messages.error(request, erro)
@@ -441,7 +441,7 @@ def inserir_operacao_criptomoeda(request):
                         if settings.ENV == 'DEV':
                             raise
                         elif settings.ENV == 'PROD':
-                            mail_admins(u'Erro ao gerar operação em criptomoeda com várias divisões', traceback.format_exc())
+                            mail_admins(u'Erro ao gerar operação em criptomoeda com várias divisões', traceback.format_exc().decode('utf-8'))
                 for erro in formset_divisao.non_form_errors():
                     messages.error(request, erro)
             else:
@@ -463,7 +463,7 @@ def inserir_operacao_criptomoeda(request):
                     if settings.ENV == 'DEV':
                         raise
                     elif settings.ENV == 'PROD':
-                        mail_admins(u'Erro ao gerar operação em criptomoeda com uma divisão', traceback.format_exc())
+                        mail_admins(u'Erro ao gerar operação em criptomoeda com uma divisão', traceback.format_exc().decode('utf-8'))
             
         for erro in [erro for erro in form_operacao_criptomoeda.non_field_errors()]:
             messages.error(request, erro)
@@ -512,7 +512,7 @@ def inserir_transferencia(request):
                         if settings.ENV == 'DEV':
                             raise
                         elif settings.ENV == 'PROD':
-                            mail_admins(u'Erro ao gerar transferência para criptomoedas com várias divisões', traceback.format_exc())
+                            mail_admins(u'Erro ao gerar transferência para criptomoedas com várias divisões', traceback.format_exc().decode('utf-8'))
                 for erro in formset_divisao.non_form_errors():
                     messages.error(request, erro)
             else:
@@ -528,7 +528,7 @@ def inserir_transferencia(request):
                     if settings.ENV == 'DEV':
                         raise
                     elif settings.ENV == 'PROD':
-                        mail_admins(u'Erro ao gerar transferência para criptomoedas com uma divisão', traceback.format_exc())
+                        mail_admins(u'Erro ao gerar transferência para criptomoedas com uma divisão', traceback.format_exc().decode('utf-8'))
             
         for erro in [erro for erro in form_transferencia_criptomoeda.non_field_errors()]:
             messages.error(request, erro)

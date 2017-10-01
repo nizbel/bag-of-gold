@@ -736,7 +736,7 @@ def validar_documento_provento(request, id_pendencia):
                                         pendencia_finalizada = True
                                 except:
                                     if settings.ENV == 'PROD':
-                                        mail_admins(u'Erro em Validar provento de ações', traceback.format_exc())
+                                        mail_admins(u'Erro em Validar provento de ações', traceback.format_exc().decode('utf-8'))
                                     elif settings.ENV == 'DEV':
                                         print traceback.format_exc()
                                     messages.error(request, 'Houve erro no relacionamento de proventos')
@@ -786,7 +786,7 @@ def validar_documento_provento(request, id_pendencia):
                                         pendencia_finalizada = True
                                 except:
                                     if settings.ENV == 'PROD':
-                                        mail_admins(u'Erro em Validar provento de FIIs', traceback.format_exc())
+                                        mail_admins(u'Erro em Validar provento de FIIs', traceback.format_exc().decode('utf-8'))
                                     elif settings.ENV == 'DEV':
                                         print traceback.format_exc()
                                     messages.error(request, 'Houve erro no relacionamento de proventos')
@@ -809,7 +809,7 @@ def validar_documento_provento(request, id_pendencia):
                     return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
             except:
                 if settings.ENV == 'PROD':
-                    mail_admins(u'Erro em Validar provento', traceback.format_exc())
+                    mail_admins(u'Erro em Validar provento', traceback.format_exc().decode('utf-8'))
                 elif settings.ENV == 'DEV':
                     print traceback.format_exc()
         
