@@ -65,14 +65,14 @@ def calcular_uso_proventos_por_mes(investidor, data_inicio=None, data_fim=None):
     """
     lista_ids_operacoes = list(UsoProventosOperacaoAcao.objects.filter(operacao__investidor=investidor).values_list('operacao', flat=True).distinct())
     
+    # Guarda as operações que tiveram uso de proventos
+    operacoes = OperacaoAcao.objects.filter(id__in=lista_ids_operacoes)
+    
     # Filtrar período
     if data_inicio:
         operacoes = operacoes.filter(data__gte=data_inicio)
     if data_fim:
         operacoes = operacoes.filter(data__lte=data_fim)
-        
-    # Guarda as operações que tiveram uso de proventos
-    operacoes = OperacaoAcao.objects.filter(id__in=lista_ids_operacoes)
     
     anos_meses = list()
     for operacao in operacoes:
@@ -91,7 +91,7 @@ def calcular_uso_proventos_por_mes(investidor, data_inicio=None, data_fim=None):
         
     return graf_uso_proventos_mes
 
-def calcular_media_uso_proventos_6_meses(investidor):
+def calcular_media_uso_proventos_6_meses(investidor, data_inicio=None, data_fim=None):
     """ 
     Calcula a média de uso de proventos em operações nos últimos 6 meses
     Parâmetros: Investidor
@@ -130,15 +130,24 @@ def calcular_media_uso_proventos_6_meses(investidor):
         
     return graf_uso_proventos_mes
     
-def calcular_provento_por_mes(investidor, proventos, operacoes):
+def calcular_provento_por_mes(investidor, proventos, operacoes, data_inicio=None, data_fim=None):
     """ 
     Calcula a quantidade de proventos em dinheiro recebido por mes
     Parâmetros: Investidor
                 Queryset de proventos ordenados por data
                 Queryset de operações ordenadas por data
+                Data de início do período
+                Data de fim do período
     Retorno: Lista de tuplas (data, quantidade)
     """
-    
+    # Filtrar período
+    if data_inicio:
+        operacoes = operacoes.filter(data__gte=data_inicio)
+        proventos = proventos.filter(data__gte=data_inicio)
+    if data_fim:
+        operacoes = operacoes.filter(data__lte=data_fim)
+        proventos = proventos.filter(data__lte=data_fim)
+        
     anos_meses = list()
     for provento in proventos:
         ano_mes = (provento.data_ex.month, provento.data_ex.year)
