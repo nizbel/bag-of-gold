@@ -464,7 +464,8 @@ def historico(request):
     graf_gasto_op_sem_prov_mes = calcular_operacoes_sem_proventos_por_mes(investidor, operacoes.filter(tipo_operacao='C'), 
                                                                           data_inicio=datetime.date.today() - datetime.timedelta(days=365*3), 
                                                                           data_fim=datetime.date.today())
-    graf_uso_proventos_mes = calcular_uso_proventos_por_mes(investidor)
+    graf_uso_proventos_mes = calcular_uso_proventos_por_mes(investidor, data_inicio=datetime.date.today() - datetime.timedelta(days=365*3), 
+                                                                          data_fim=datetime.date.today())
     
     # Calculos de patrimonio e gasto total
     for item_lista in lista_conjunta:      
