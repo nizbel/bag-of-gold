@@ -7,41 +7,41 @@
 
 {% block content %}
 <div class="portlet-body">
-	<div class="row">
-		<div class="col-md-12">
-			<!-- BEGIN Portlet PORTLET-->
-			<div class="portlet box yellow-crusta">
-				<div class="portlet-title">
-					<div class="caption">
-						<i class="fa fa-line-chart"></i>Gráfico de histórico de cotação</div>
-					<div class="tools">
-						<a href="javascript:;" class="collapse"></a>
+		<div class="row">
+			<div class="col-md-12">
+				<!-- BEGIN Portlet PORTLET-->
+				<div class="portlet box yellow-crusta">
+					<div class="portlet-title">
+						<div class="caption">
+							<i class="fa fa-line-chart"></i>Gráfico de histórico de cotação</div>
+						<div class="tools">
+							<a href="javascript:;" class="collapse"></a>
+						</div>
+					</div>
+					<div class="portlet-body">
+						<div class="chart" id="graf_historico" style="width:100%;height:400px"></div>
 					</div>
 				</div>
-				<div class="portlet-body">
-					<div class="chart" id="graf_historico" style="width:100%;height:400px"></div>
-				</div>
-			</div>
-			<!-- END Portlet PORTLET-->
-		</div>   
-		<div class="col-md-12">
-			<!-- BEGIN Portlet PORTLET-->
-			<div class="portlet box yellow-crusta">
-				<div class="portlet-title">
-					<div class="caption">
-						<i class="fa fa-line-chart"></i>Gráfico de preço médio </div>
-					<div class="tools">
-						<a href="javascript:;" class="collapse"></a>
+				<!-- END Portlet PORTLET-->
+			</div>   
+			<div class="col-md-12">
+				<!-- BEGIN Portlet PORTLET-->
+				<div class="portlet box yellow-crusta">
+					<div class="portlet-title">
+						<div class="caption">
+							<i class="fa fa-line-chart"></i>Gráfico de preço médio </div>
+						<div class="tools">
+							<a href="javascript:;" class="collapse"></a>
+						</div>
+					</div>
+					<div class="portlet-body">
+						<div class="chart" id="graf_preco_medio" style="width:100%;height:400px"></div>
 					</div>
 				</div>
-				<div class="portlet-body">
-					<div class="chart" id="graf_preco_medio" style="width:100%;height:400px"></div>
-				</div>
+				<!-- END Portlet PORTLET-->
 			</div>
-			<!-- END Portlet PORTLET-->
 		</div>
 	</div>
-</div>
 
 {% endblock %}
 

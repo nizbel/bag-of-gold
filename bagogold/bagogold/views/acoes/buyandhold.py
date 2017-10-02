@@ -32,6 +32,7 @@ from operator import attrgetter
 import calendar
 import datetime
 import json
+from bagogold.bagogold.utils.misc import converter_date_para_utc
 
 @login_required
 def calcular_poupanca_proventos_na_data(request):
@@ -328,6 +329,37 @@ def estatisticas_acao(request, ticker=None):
     
     return TemplateResponse(request, 'acoes/buyandhold/estatisticas_acao.html', {'graf_preco_medio': graf_preco_medio, 'graf_preco_medio_valor_acao': graf_preco_medio_valor_acao,
                                'graf_historico_proventos': graf_historico_proventos, 'graf_historico': graf_historico})
+
+@login_required
+def evolucao_posicao(request):
+    if request.is_ajax():
+        investidor = request.user.investidor
+        
+        graf_evolucao = {}
+        
+        # Buscar ações que o investidor possui atualmente
+        acoes_investidor = Acao.objects.filter(id__in=buscar_acoes_investidor_na_data(investidor, destinacao='B'))
+        
+        data_30_dias_atras = datetime.date.today() - datetime.timedelta(days=30)
+        # Preencher valores históricos
+        for acao in [acao for acao in acoes_investidor if quantidade_acoes_ate_dia(investidor, acao.ticker, datetime.date.today())]:
+#             data_formatada = str(calendar.timegm(converter_date_para_utc(historico.data).timetuple()) * 1000)
+            historico_30_dias = HistoricoAcao.objects.filter(acao=acao, data__range=[data_30_dias_atras, datetime.date.today() - datetime.timedelta(days=1)]).order_by('data')
+            graf_evolucao[acao.ticker] = [(str(calendar.timegm(converter_date_para_utc(historico.data).timetuple()) * 1000), float(historico.preco_unitario)) for historico in historico_30_dias]
+        
+            # Adicionar valor atual
+            if ValorDiarioAcao.objects.filter(acao__ticker=acao, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).exists():
+                graf_evolucao[acao.ticker].append((str(calendar.timegm(converter_date_para_utc(datetime.date.today()).timetuple()) * 1000), 
+                                                   float(ValorDiarioAcao.objects.filter(acao__ticker=acao, data_hora__day=datetime.date.today().day, 
+                                                                                        data_hora__month=datetime.date.today().month).order_by('-data_hora')[0].preco_unitario)))
+            else:
+                graf_evolucao[acao.ticker].append((str(calendar.timegm(converter_date_para_utc(datetime.date.today()).timetuple()) * 1000), 
+                                                   float(HistoricoAcao.objects.filter(acao__ticker=acao).order_by('-data')[0].preco_unitario)))
+        
+        return HttpResponse(json.dumps({'sucesso': True, 'graf_evolucao': graf_evolucao}), content_type = "application/json")   
+    else:
+        return HttpResponse(json.dumps({'sucesso': False}), content_type = "application/json")   
+    
 
 @adiciona_titulo_descricao('Histórico de Ações (Buy and Hold)', 'Histórico de operações de compra/venda em ações para Buy and Hold e proventos recebidos')
 def historico(request):
@@ -715,9 +747,9 @@ def painel(request):
     # Preencher totais   
     for acao in acoes.keys():
         total_acoes += acoes[acao].quantidade
-        try:
+        if ValorDiarioAcao.objects.filter(acao__ticker=acao, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).exists():
             acoes[acao].valor = ValorDiarioAcao.objects.filter(acao__ticker=acao, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).order_by('-data_hora')[0].preco_unitario
-        except:
+        else:
             acoes[acao].valor = HistoricoAcao.objects.filter(acao__ticker=acao).order_by('-data')[0].preco_unitario
         acoes[acao].variacao = acoes[acao].valor - acoes[acao].valor_dia_anterior
         acoes[acao].variacao_total = acoes[acao].variacao * acoes[acao].quantidade
@@ -747,7 +779,6 @@ def painel(request):
     
     # Gráfico de composição
     graf_composicao = [{'label': acao, 'data': float(acoes[acao].valor_total_percentual)} for acao in acoes.keys()]
-    print graf_composicao
     
     # Popular dados
     dados = {}
