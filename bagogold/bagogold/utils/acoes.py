@@ -13,18 +13,22 @@ import datetime
 import mechanize
 import re
 
-def calcular_operacoes_sem_proventos_por_mes(investidor, operacoes):
+def calcular_operacoes_sem_proventos_por_mes(investidor, operacoes, data_inicio=None, data_fim=None):
     """ 
     Calcula a quantidade investida em compras de ações sem usar proventos por mes
-    Parâmetros: Investidor, Queryset de operações ordenadas por data
+    Parâmetros: Investidor
+                Queryset de operações ordenadas por data
+                Data de início do período
+                Data de fim do período
     Retorno: Lista de tuplas (data, quantidade)
     """
-    lista_ids_operacoes = list()
-    usos_proventos = UsoProventosOperacaoAcao.objects.filter()
-    for uso_proventos in usos_proventos:
-        lista_ids_operacoes.append(uso_proventos.divisao_operacao.operacao.id)
-    # Remover elementos repetidos
-    lista_ids_operacoes = list(set(lista_ids_operacoes))
+    lista_ids_operacoes = list(UsoProventosOperacaoAcao.objects.filter(operacao__investidor=investidor).values_list('operacao', flat=True).distinct())
+
+    # Filtrar período
+    if data_inicio:
+        operacoes = operacoes.filter(data__gte=data_inicio)
+    if data_fim:
+        operacoes = operacoes.filter(data__lte=data_fim)
     
     anos_meses = list()
     for operacao in operacoes:
@@ -51,19 +55,22 @@ def calcular_operacoes_sem_proventos_por_mes(investidor, operacoes):
         
     return graf_gasto_op_sem_prov_mes
 
-def calcular_uso_proventos_por_mes(investidor):
+def calcular_uso_proventos_por_mes(investidor, data_inicio=None, data_fim=None):
     """ 
     Calcula a quantidade de uso de proventos em operações por mes
     Parâmetros: Investidor
+                Data de início do período
+                Data de fim do período
     Retorno: Lista de tuplas (data, quantidade)
     """
-    lista_ids_operacoes = list()
-    usos_proventos = UsoProventosOperacaoAcao.objects.filter()
-    for uso_proventos in usos_proventos:
-        lista_ids_operacoes.append(uso_proventos.operacao.id)
-    # Remover elementos repetidos
-    lista_ids_operacoes = list(set(lista_ids_operacoes))
+    lista_ids_operacoes = list(UsoProventosOperacaoAcao.objects.filter(operacao__investidor=investidor).values_list('operacao', flat=True).distinct())
     
+    # Filtrar período
+    if data_inicio:
+        operacoes = operacoes.filter(data__gte=data_inicio)
+    if data_fim:
+        operacoes = operacoes.filter(data__lte=data_fim)
+        
     # Guarda as operações que tiveram uso de proventos
     operacoes = OperacaoAcao.objects.filter(id__in=lista_ids_operacoes)
     
@@ -92,7 +99,7 @@ def calcular_media_uso_proventos_6_meses(investidor):
     """
     ultimos_6_meses = list()
     lista_ids_operacoes = list()
-    usos_proventos = UsoProventosOperacaoAcao.objects.filter()
+    usos_proventos = UsoProventosOperacaoAcao.objects.filter(operacao__investidor=investidor)
     for uso_proventos in usos_proventos:
         lista_ids_operacoes.append(uso_proventos.operacao.id)
     

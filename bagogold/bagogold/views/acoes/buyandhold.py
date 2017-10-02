@@ -461,7 +461,9 @@ def historico(request):
     graf_media_proventos_6_meses = calcular_media_proventos_6_meses(investidor, proventos.exclude(data_ex__gt=datetime.date.today()).exclude(tipo_provento='A'), operacoes)
     
     # Preparar gráfico de utilização de proventos por mês
-    graf_gasto_op_sem_prov_mes = calcular_operacoes_sem_proventos_por_mes(investidor, operacoes.filter(tipo_operacao='C'))
+    graf_gasto_op_sem_prov_mes = calcular_operacoes_sem_proventos_por_mes(investidor, operacoes.filter(tipo_operacao='C'), 
+                                                                          data_inicio=datetime.date.today() - datetime.timedelta(days=365*3), 
+                                                                          data_fim=datetime.date.today())
     graf_uso_proventos_mes = calcular_uso_proventos_por_mes(investidor)
     
     # Calculos de patrimonio e gasto total
