@@ -452,13 +452,16 @@ def historico(request):
     acoes = {}
     # Preparar gráfico de proventos em dinheiro por mês
 #     graf_proventos_mes = calcular_provento_por_mes(proventos.exclude(data_ex__gt=datetime.date.today()).exclude(tipo_provento='A'), operacoes)
-    proventos_mes = calcular_provento_por_mes(investidor, proventos.exclude(data_ex__gt=datetime.date.today()).exclude(tipo_provento='A'), operacoes)
+    proventos_mes = calcular_provento_por_mes(investidor, proventos.exclude(data_ex__gt=datetime.date.today()).exclude(tipo_provento='A'), operacoes,
+                                              data_inicio=datetime.date.today() - datetime.timedelta(days=365*3), data_fim=datetime.date.today())
     for x in proventos_mes:
         graf_proventos_mes += [[x[0], x[1] + x[2]]]
         graf_dividendos_mensal += [[x[0], x[1]]]
         graf_jscp_mensal += [[x[0], x[2]]]
     
-    graf_media_proventos_6_meses = calcular_media_proventos_6_meses(investidor, proventos.exclude(data_ex__gt=datetime.date.today()).exclude(tipo_provento='A'), operacoes)
+    graf_media_proventos_6_meses = calcular_media_proventos_6_meses(investidor, proventos.exclude(data_ex__gt=datetime.date.today()).exclude(tipo_provento='A'), 
+                                                                    operacoes, data_inicio=datetime.date.today() - datetime.timedelta(days=365*3), 
+                                                                          data_fim=datetime.date.today())
     
     # Preparar gráfico de utilização de proventos por mês
     graf_gasto_op_sem_prov_mes = calcular_operacoes_sem_proventos_por_mes(investidor, operacoes.filter(tipo_operacao='C'), 

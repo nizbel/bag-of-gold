@@ -143,10 +143,10 @@ def calcular_provento_por_mes(investidor, proventos, operacoes, data_inicio=None
     # Filtrar período
     if data_inicio:
         operacoes = operacoes.filter(data__gte=data_inicio)
-        proventos = proventos.filter(data__gte=data_inicio)
+        proventos = proventos.filter(data_ex__gte=data_inicio)
     if data_fim:
         operacoes = operacoes.filter(data__lte=data_fim)
-        proventos = proventos.filter(data__lte=data_fim)
+        proventos = proventos.filter(data_ex__lte=data_fim)
         
     anos_meses = list()
     for provento in proventos:
@@ -174,19 +174,31 @@ def calcular_provento_por_mes(investidor, proventos, operacoes, data_inicio=None
                     total_mes_div += qtd_acoes * provento.valor_unitario
                 elif provento.tipo_provento == 'J':
                     total_mes_jscp += qtd_acoes * provento.valor_unitario * Decimal(0.85)
-        data_formatada = str(calendar.timegm(datetime.date(ano, mes, 18).timetuple()) * 1000)
+        data_formatada = str(calendar.timegm(datetime.date(ano, mes, 12).timetuple()) * 1000)
         graf_proventos_mes += [[data_formatada, float(total_mes_div), float(total_mes_jscp)]]
         
     return graf_proventos_mes
 
-def calcular_media_proventos_6_meses(investidor, proventos, operacoes):
+def calcular_media_proventos_6_meses(investidor, proventos, operacoes, data_inicio=None, data_fim=None):
     """ 
     Calcula a média de proventos recebida nos últimos 6 meses
     Parâmetros: Investidor
                 Queryset de proventos ordenados por data
                 Queryset de operações ordenadas por data
+                Data de início do período
+                Data de fim do período
     Retorno: Lista de tuplas (data, quantidade)
     """
+    # Filtrar período
+    if data_inicio:
+        # Data de início levada para 6 meses atrás para verificar a média
+        data_inicio = (data_inicio - datetime.timedelta(days=30 * 6)).replace(day=1)
+        operacoes = operacoes.filter(data__gte=data_inicio)
+        proventos = proventos.filter(data_ex__gte=data_inicio)
+    if data_fim:
+        operacoes = operacoes.filter(data__lte=data_fim)
+        proventos = proventos.filter(data_ex__lte=data_fim)
+        
     # Verifica se há proventos a serem calculados
     if not proventos:
         return list()
@@ -217,15 +229,19 @@ def calcular_media_proventos_6_meses(investidor, proventos, operacoes):
                 elif provento.tipo_provento == 'J':
                     total_mes += qtd_acoes * provento.valor_unitario * Decimal(0.85)
 #         print total_mes
-        data_formatada = str(calendar.timegm(datetime.date(ano, mes, 15).timetuple()) * 1000)
         # Adicionar a lista de valores e calcular a media
         ultimos_6_meses.append(total_mes)
         if len(ultimos_6_meses) > 6:
             ultimos_6_meses.pop(0)
-        media_6_meses = 0
-        for valor in ultimos_6_meses:
-            media_6_meses += valor
-        graf_proventos_mes += [[data_formatada, float(media_6_meses/6)]]
+        
+        # Verifica se filtro de data está valendo
+        if not data_inicio or (ano - data_inicio.year) * 12 + mes - data_inicio.month >= 6:
+            # Somar valores guardados
+            media_6_meses = sum(ultimos_6_meses)
+            
+            data_formatada = str(calendar.timegm(datetime.date(ano, mes, 18).timetuple()) * 1000)
+    
+            graf_proventos_mes += [[data_formatada, float(media_6_meses/6)]]
         
     return graf_proventos_mes
 
