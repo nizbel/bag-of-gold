@@ -23,6 +23,11 @@ class Acao (models.Model):
                   'PND': u'Preferencial Classe D',
                   'UNT': u'UNIT'
     }
+    ESTADO_VIGENTE = 1
+    ESTADO_ENCERRADA = 2
+    ESTADOS_ACAO = {ESTADO_VIGENTE: 'Vigente',
+                    ESTADO_ENCERRADA: 'Encerrada'
+    }
     
     ticker = models.CharField(u'Ticker da ação', max_length=10)
     empresa = models.ForeignKey('Empresa') 
@@ -30,6 +35,7 @@ class Acao (models.Model):
     Tipos 3 (ON), 4 (PN), 5 (PNA), 6 (PNB), 7 (PNC), 8 (PND), 11 (UNT)
     """
     tipo = models.CharField(u'Tipo de ação', max_length=5)
+    estado = models.SmallIntegerField(u'Estado da ação', default=ESTADO_VIGENTE, choices=ESTADOS_ACAO)
     
     class Meta:
         ordering = ['ticker']
