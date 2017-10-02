@@ -46,7 +46,7 @@ def calcular_operacoes_sem_proventos_por_mes(investidor, operacoes):
 #                 print 'Com uso de proventos: %s' % (qtd_usada)
                 total_mes += (operacao.quantidade * operacao.preco_unitario + \
                 operacao.emolumentos + operacao.corretagem) - qtd_usada
-        data_formatada = str(calendar.timegm(datetime.date(ano, mes, 15).timetuple()) * 1000)
+        data_formatada = str(calendar.timegm(datetime.date(ano, mes, 18).timetuple()) * 1000)
         graf_gasto_op_sem_prov_mes += [[data_formatada, float(total_mes)]]
         
     return graf_gasto_op_sem_prov_mes
@@ -79,7 +79,7 @@ def calcular_uso_proventos_por_mes(investidor):
         total_mes = 0
         for operacao in operacoes_mes:                      
             total_mes += operacao.qtd_proventos_utilizada()
-        data_formatada = str(calendar.timegm(datetime.date(ano, mes, 15).timetuple()) * 1000)
+        data_formatada = str(calendar.timegm(datetime.date(ano, mes, 12).timetuple()) * 1000)
         graf_uso_proventos_mes += [[data_formatada, float(total_mes)]]
         
     return graf_uso_proventos_mes
@@ -158,7 +158,7 @@ def calcular_provento_por_mes(investidor, proventos, operacoes):
                     total_mes_div += qtd_acoes * provento.valor_unitario
                 elif provento.tipo_provento == 'J':
                     total_mes_jscp += qtd_acoes * provento.valor_unitario * Decimal(0.85)
-        data_formatada = str(calendar.timegm(datetime.date(ano, mes, 15).timetuple()) * 1000)
+        data_formatada = str(calendar.timegm(datetime.date(ano, mes, 18).timetuple()) * 1000)
         graf_proventos_mes += [[data_formatada, float(total_mes_div), float(total_mes_jscp)]]
         
     return graf_proventos_mes
