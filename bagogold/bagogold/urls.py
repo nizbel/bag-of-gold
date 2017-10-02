@@ -39,6 +39,7 @@ acoes_bh_patterns = [
     url(r'^editar_operacao_acao/(?P<operacao_id>\d+)/$', views.acoes.buyandhold.editar_operacao_acao, name='editar_operacao_bh'),
     url(r'^editar_provento_acao/(?P<id>\d+)/$', views.acoes.buyandhold.editar_provento_acao, name='editar_provento_bh'),
     url(r'^estatisticas_acao/(?P<ticker>\w+)/$', views.acoes.buyandhold.estatisticas_acao, name='estatisticas_acao_bh'),
+    url(r'^evolucao_posicao/$', views.acoes.buyandhold.evolucao_posicao, name='evolucao_posicao_bh'),
     url(r'^historico/$', views.acoes.buyandhold.historico, name='historico_bh'),
     url(r'^inserir_operacao_acao/$', views.acoes.buyandhold.inserir_operacao_acao, name='inserir_operacao_bh'),
     url(r'^inserir_provento_acao/$', views.acoes.buyandhold.inserir_provento_acao, name='inserir_provento_bh'),
