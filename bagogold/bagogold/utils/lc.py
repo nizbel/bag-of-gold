@@ -53,7 +53,7 @@ def calcular_valor_atualizado_com_taxas_di_e_juros(taxas_dos_dias, valor_atual, 
     taxa_acumulada = 1
     juros = Decimal(juros)
     for taxa_do_dia in taxas_dos_dias.keys():
-        taxa_acumulada *= pow(((pow((Decimal(1) + taxa_do_dia/100), Decimal(1)/Decimal(252)) - Decimal(1)) * operacao_taxa/100 + \
+        taxa_acumulada *= pow((((pow((Decimal(1) + taxa_do_dia/100), Decimal(1)/Decimal(252)) - Decimal(1)) * operacao_taxa/100 + Decimal(1)) * \
                                pow((Decimal(1) + juros/100), Decimal(1)/Decimal(252))), taxas_dos_dias[taxa_do_dia])
     return taxa_acumulada * valor_atual
 
