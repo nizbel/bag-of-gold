@@ -16,59 +16,98 @@
 
 {% block content %}
 <div class="portlet-body">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="portlet box yellow-crusta">
-                    <div class="portlet-title">
-                        <div class="caption">
-                        {% comment %}
-                        Buscar um ícone melhor para esse portlet header
-                        {% endcomment %}
-                            <i class="fa fa-line-chart"></i>Dados do documento
-                        </div>
-                        <div class="tools">
-                            <a href="javascript:;" class="collapse"></a>
-                        </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                    {% comment %}
+                    Buscar um ícone melhor para esse portlet header
+                    {% endcomment %}
+                        <i class="fa fa-line-chart"></i>Dados do documento
                     </div>
-                    <div class="portlet-body">
-                        <div class="m-grid m-grid-responsive-xs">
-                            <div class="m-grid-row">
-                                <div class="m-grid-col m-grid-col-left"><strong>Empresa:</strong></div>
-                                <div class="m-grid-col m-grid-col-left">{{pendencia.documento.empresa}}</div>
-                                <div class="m-grid-col m-grid-col-left"><strong>Protocolo:</strong></div>
-                                <div class="m-grid-col m-grid-col-left">{{pendencia.documento.protocolo}}</div>
-                                <div class="m-grid-col m-grid-col-left"><strong>Data Referência:</strong></div>
-                                <div class="m-grid-col m-grid-col-left">{{pendencia.documento.data_referencia|date:"d/m/Y"}}</div>
-                                <div class="m-grid-col m-grid-col-left"><strong>Responsável:</strong></div>
-                                <div class="m-grid-col m-grid-col-left">
-                                    {% if pendencia.responsavel %}
-                                        {% if pendencia.responsavel == request.user.investidor %}
-                                            <form method="POST">{% csrf_token %}
-                                                <button name="reservar" value="0" type="submit" class="btn btn-warning btn-xs">Cancelar</button>
-                                            </form>
-                                        {% else %}
-                                            {{ pendencia.responsavel }}
-                                        {% endif %}
-                                    {% else %}
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <div class="m-grid m-grid-responsive-xs">
+                        <div class="m-grid-row">
+                            <div class="m-grid-col m-grid-col-left"><strong>Empresa:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{pendencia.documento.empresa}}</div>
+                            <div class="m-grid-col m-grid-col-left"><strong>Protocolo:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{pendencia.documento.protocolo}}</div>
+                            <div class="m-grid-col m-grid-col-left"><strong>Data Referência:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{pendencia.documento.data_referencia|date:"d/m/Y"}}</div>
+                            <div class="m-grid-col m-grid-col-left"><strong>Responsável:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">
+                                {% if pendencia.responsavel %}
+                                    {% if pendencia.responsavel == request.user.investidor %}
                                         <form method="POST">{% csrf_token %}
-                                            <button name="reservar" value="1" type="submit" class="btn btn-success btn-xs">Reservar</button>
+                                            <button name="reservar" value="0" type="submit" class="btn btn-warning btn-xs">Cancelar</button>
                                         </form>
+                                    {% else %}
+                                        {{ pendencia.responsavel }}
                                     {% endif %}
-                                </div>
+                                {% else %}
+                                    <form method="POST">{% csrf_token %}
+                                        <button name="reservar" value="1" type="submit" class="btn btn-success btn-xs">Reservar</button>
+                                    </form>
+                                {% endif %}
                             </div>
                         </div>
-                        <a href="{% url 'gerador_proventos:baixar_documento_provento' pendencia.documento.id %}" class="btn btn-warning">Download</a>
+                    </div>
+                    <a href="{% url 'gerador_proventos:baixar_documento_provento' pendencia.documento.id %}" class="btn btn-warning">Download</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% if 'pdf' in pendencia.documento.extensao_documento %}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="icon-magnifier"></i>Visualização prévia 
+                    </div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <div class="row">
+                        <div class="col-md-5">
+                            <h4 class="text-right">
+                                <a class="font-yellow-crusta" href="javascript:;" onclick="antPagina();" id="btnAntPag"><i class="fa fa-arrow-left"></i></a>
+                            </h4>
+                        </div>
+                        <div class="col-md-2">
+                            <h4 class="text-center">
+                                Página <b><span id="pagAtual"></span></b> de <b><span id="numPags"></span></b>
+                            </h4>
+                        </div>
+                        <div class="col-md-5">
+                            <h4 class="text-left">
+                                <a class="font-yellow-crusta" href="javascript:;" onclick="proxPagina();" id="btnProxPag"><i class="fa fa-arrow-right"></i></a>
+                            </h4>
+                        </div>
+                        <div class="col-md-12 text-center">
+                            <canvas id="canvas"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        {% if 'pdf' in pendencia.documento.extensao_documento %}
+    </div>
+    {% endif %}
+    {% if pendencia.responsavel.id == request.user.investidor.id %}
+        {% if recusa %}
         <div class="row">
             <div class="col-md-12">
                 <div class="portlet box yellow-crusta">
                     <div class="portlet-title">
                         <div class="caption">
-                            <i class="icon-magnifier"></i>Visualização prévia 
+                            <i class="fa fa-warning"></i>Recusado em {{ recusa.data_recusa|date:'d/m/Y' }}
                         </div>
                         <div class="tools">
                             <a href="javascript:;" class="collapse"></a>
@@ -76,23 +115,9 @@
                     </div>
                     <div class="portlet-body">
                         <div class="row">
-                            <div class="col-md-5">
-                                <h4 class="text-right">
-                                    <a class="font-yellow-crusta" href="javascript:;" onclick="antPagina();" id="btnAntPag"><i class="fa fa-arrow-left"></i></a>
-                                </h4>
-                            </div>
-                            <div class="col-md-2">
-                                <h4 class="text-center">
-                                    Página <b><span id="pagAtual"></span></b> de <b><span id="numPags"></span></b>
-                                </h4>
-                            </div>
-                            <div class="col-md-5">
-                                <h4 class="text-left">
-                                    <a class="font-yellow-crusta" href="javascript:;" onclick="proxPagina();" id="btnProxPag"><i class="fa fa-arrow-right"></i></a>
-                                </h4>
-                            </div>
-                            <div class="col-md-12 text-center">
-                                <canvas id="canvas"></canvas>
+                            <div class="col-md-12">
+                                <h3>Recusado por {{ recusa.investidor }}</h3>
+                                <p>{{ recusa.motivo }}</p>
                             </div>
                         </div>
                     </div>
@@ -100,356 +125,331 @@
             </div>
         </div>
         {% endif %}
-        {% if pendencia.responsavel.id == request.user.investidor.id %}
-            {% if recusa %}
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="portlet box yellow-crusta">
-                        <div class="portlet-title">
-                            <div class="caption">
-                                <i class="fa fa-warning"></i>Recusado em {{ recusa.data_recusa|date:'d/m/Y' }}
-                            </div>
-                            <div class="tools">
-                                <a href="javascript:;" class="collapse"></a>
-                            </div>
-                        </div>
-                        <div class="portlet-body">
-                            <div class="row">
-                                <div class="col-md-12">
-                                    <h3>Recusado por {{ recusa.investidor }}</h3>
-                                    <p>{{ recusa.motivo }}</p>
-                                </div>
-                            </div>
-                        </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                    {% comment %}
+                    Buscar um ícone melhor para esse portlet header
+                    {% endcomment %}
+                        <i class="fa fa-line-chart"></i>Formulário do documento
                     </div>
                 </div>
-            </div>
-            {% endif %}
-        <div class="row">
-            <div class="col-md-12">
-                <div class="portlet box yellow-crusta">
-                    <div class="portlet-title">
-                        <div class="caption">
-                        {% comment %}
-                        Buscar um ícone melhor para esse portlet header
-                        {% endcomment %}
-                            <i class="fa fa-line-chart"></i>Formulário do documento
-                        </div>
-                    </div>
-                    <div class="portlet-body form">
-                        <div class="row">
-                            <form method="POST" class="col-md-12 horizontal-form">{% csrf_token %}
-                                <div class="form-body" style="margin: 0px 20px;">
-                                    <div class="row">
-                                        <div class="form-group col-md-6">
-                                            <label class="col-md-5 control-label"> Documento descreve proventos? </label>
-                                            <div class="col-md-7">
-                                                <div class="md-radio-inline">
-                                                    <div class="md-radio">
-                                                        <input type="radio" class="md-radiobtn" name="radioDocumento" id="radioDocumento1" value="1" checked>
-                                                        <label for="radioDocumento1">
-                                                            <span></span>
-                                                            <span class="check"></span>
-                                                            <span class="box"></span> Sim 
-                                                        </label>
-                                                    </div>
-                                                    <div class="md-radio">
-                                                        <input type="radio" class="md-radiobtn" name="radioDocumento" id="radioDocumento2" value="0">
-                                                        <label for="radioDocumento2">
-                                                            <span></span>
-                                                            <span class="check"></span>
-                                                            <span class="box"></span> Não 
-                                                        </label>
-                                                    </div>
+                <div class="portlet-body form">
+                    <div class="row">
+                        <form method="POST" class="col-md-12 horizontal-form">{% csrf_token %}
+                            <div class="form-body" style="margin: 0px 20px;">
+                                <div class="row">
+                                    <div class="form-group col-md-6">
+                                        <label class="col-md-5 control-label"> Documento descreve proventos? </label>
+                                        <div class="col-md-7">
+                                            <div class="md-radio-inline">
+                                                <div class="md-radio">
+                                                    <input type="radio" class="md-radiobtn" name="radioDocumento" id="radioDocumento1" value="1" checked>
+                                                    <label for="radioDocumento1">
+                                                        <span></span>
+                                                        <span class="check"></span>
+                                                        <span class="box"></span> Sim 
+                                                    </label>
+                                                </div>
+                                                <div class="md-radio">
+                                                    <input type="radio" class="md-radiobtn" name="radioDocumento" id="radioDocumento2" value="0">
+                                                    <label for="radioDocumento2">
+                                                        <span></span>
+                                                        <span class="check"></span>
+                                                        <span class="box"></span> Não 
+                                                    </label>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="form-group col-md-6" id="qtd_proventos">
-                                            <label class="control-label col-md-4" style="text-align: left;"> Número de proventos: </label>
-                                            <div class="col-md-2">
-                                                <select class="selectpicker form-control" id="num_proventos" name="num_proventos">
-                                                    {% with ''|center:30 as range %}
-                                                        {% for _ in range %}
-                                                            <option>{{ forloop.counter }}</option>
-                                                        {% endfor %}
-                                                    {% endwith %}
-                                                </select>
-                                            </div>
-                                            <input type="submit" class="btn btn-warning" value="Gerar campos para proventos" name="preparar_proventos" id="preparar_proventos">
-                                        </div>
                                     </div>
-                                    <div class="row" id="form_criar_proventos">
+                                    <div class="form-group col-md-6" id="qtd_proventos">
+                                        <label class="control-label col-md-4" style="text-align: left;"> Número de proventos: </label>
+                                        <div class="col-md-2">
+                                            <select class="selectpicker form-control" id="num_proventos" name="num_proventos">
+                                                {% with ''|center:30 as range %}
+                                                    {% for _ in range %}
+                                                        <option>{{ forloop.counter }}</option>
+                                                    {% endfor %}
+                                                {% endwith %}
+                                            </select>
+                                        </div>
+                                        <input type="submit" class="btn btn-warning" value="Gerar campos para proventos" name="preparar_proventos" id="preparar_proventos">
+                                    </div>
+                                </div>
+                                <div class="row" id="form_criar_proventos">
+                                    <div class="col-md-12">
+                                    {% if pendencia.documento.tipo == 'A' %}
+                                        {{ formset_provento.management_form }}
+                                        {{ formset_acao_provento.management_form }}
+                                        {{ formset_acao_selic.management_form }}
+                                        {% for form_provento in formset_provento.forms %}
                                         <div class="col-md-12">
-                                        {% if pendencia.documento.tipo == 'A' %}
-                                            {{ formset_provento.management_form }}
-                                            {{ formset_acao_provento.management_form }}
-                                            {{ formset_acao_selic.management_form }}
-                                            {% for form_provento in formset_provento.forms %}
-                                            <div class="col-md-12">
-                                                <h2 class="font-yellow-crusta" align="center">
-                                                    <strong>Provento {{ forloop.counter }}</strong>
-                                                </h2>
-                                            </div>
-                                            <div class="row">
-                                                <div class="form-group col-md-4 {% if form_provento.valor_unitario.errors %} has-error {% endif %}">
-                                                    <label class="control-label col-md-4"> Valor unitário: </label>
-                                                    <div class="col-md-8">
-                                                        <input id="id_provento-{{forloop.counter0}}-valor_unitario" type="text" value="{{form_provento.valor_unitario.value}}" name="provento-{{forloop.counter0}}-valor_unitario" class="form-control">
-                                                        {% if form_provento.valor_unitario.errors %} <span class="help-block"> {{ form_provento.valor_unitario.errors.as_text }} </span> {% endif %}
-                                                    </div>
-                                                </div>
-                                                <div class="form-group col-md-4 {% if form_provento.data_ex.errors %} has-error {% endif %}">
-                                                    <label class="control-label col-md-4" style="text-align: left;"> Data EX: </label>
-                                                    <div class="col-md-8">
-                                                        <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_provento-{{forloop.counter0}}-data_ex" name="provento-{{forloop.counter0}}-data_ex" 
-                                                        data-date-viewmode="years">
-                                                            <input type="text" class="form-control" name="provento-{{forloop.counter0}}-data_ex" 
-                                                            value="{% if form_provento.data_ex.value|date:'d/m/Y'|default:'' == '' %}{{form_provento.data_ex.value|default:''}}{% else %}{{form_provento.data_ex.value|date:'d/m/Y'}}{% endif %}">
-                                                            <span class="input-group-btn">
-                                                                <button class="btn default" type="button">
-                                                                    <i class="fa fa-calendar"></i>
-                                                                </button>
-                                                            </span>
-                                                        </div>
-                                                        {% if form_provento.data_ex.errors %} <span class="help-block"> {{ form_provento.data_ex.errors.as_text }} </span> 
-                                                        {% else %} <span class="help-block"> Selecione uma data </span>
-                                                        {% endif %}
-                                                    </div>
-                                                </div>
-                                                <div class="form-group col-md-4 {% if form.data_pagamento.errors %} has-error {% endif %}">
-                                                    <label class="control-label col-md-4" style="text-align: left;"> Data de pagamento: </label>
-                                                    <div class="col-md-8">
-                                                        <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_provento-{{forloop.counter0}}-data_pagamento" name="provento-{{forloop.counter0}}-data_pagamento" 
-                                                        data-date-viewmode="years">
-                                                            <input type="text" class="form-control" name="provento-{{forloop.counter0}}-data_pagamento" 
-                                                            value="{% if form_provento.data_pagamento.value|date:'d/m/Y'|default:'' == '' %}{{form_provento.data_pagamento.value|default:''}}{% else %}{{form_provento.data_pagamento.value|date:'d/m/Y'}}{% endif %}">
-                                                            <span class="input-group-btn">
-                                                                <button class="btn default" type="button">
-                                                                    <i class="fa fa-calendar"></i>
-                                                                </button>
-                                                            </span>
-                                                        </div>
-                                                        {% if form_provento.data_pagamento.errors %} <span class="help-block"> {{ form_provento.data_pagamento.errors.as_text }} </span> 
-                                                        {% else %} <span class="help-block"> Selecione uma data </span>
-                                                        {% endif %}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="form-group col-md-4 {% if form_provento.tipo_provento.errors %} has-error {% endif %}">
-                                                    <label class="control-label col-md-4" style="text-align: left;"> Tipo de provento: </label>
-                                                    <div class="col-md-8">
-                                                        <select class="selectpicker form-control" id="id_provento-{{forloop.counter0}}-tipo_provento" name="provento-{{forloop.counter0}}-tipo_provento">
-                                                            {% for key, value in form_provento.fields.tipo_provento.widget.choices %}<option value="{{ key }}" 
-                                                                {% if key == form_provento.tipo_provento.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
-                                                        </select>
-                                                        {% if form_provento.tipo_provento.errors %} <span class="help-block"> {{ form_provento.tipo_provento.errors.as_text }} </span> {% endif %}
-                                                    </div>
-                                                </div>
-                                                <div class="form-group col-md-4 {% if form_provento.acao.errors %} has-error {% endif %}">
-                                                    <label class="control-label col-md-4" style="text-align: left;"> Ação: </label>
-                                                    <div class="col-md-8">
-                                                        <select class="selectpicker form-control" id="id_provento-{{forloop.counter0}}-acao" name="provento-{{forloop.counter0}}-acao">
-                                                            {% for key, value in form_provento.fields.acao.choices %}<option value="{{ key|cut:'.' }}" 
-                                                                {% if key == form_provento.acao.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
-                                                        </select>
-                                                        {% if form_provento.acao.errors %} <span class="help-block"> {{ form_provento.acao.errors.as_text }} </span> {% endif %}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div id="provento_em_acao-{{forloop.counter0}}" class="row">
-                                            {% for form_acao_provento in formset_acao_provento.forms %}
-                                                {% if forloop.counter == forloop.parentloop.counter %}
-                                                    <div class="form-group col-md-4 {% if form_acao_provento.acao_recebida.errors %} has-error {% endif %}">
-                                                        <label class="control-label col-md-4" style="text-align: left;"> Ação recebida: </label>
-                                                        <div class="col-md-8">
-                                                            <select class="selectpicker form-control" id="id_acao_provento-{{forloop.counter0}}-acao_recebida" name="acao_provento-{{forloop.counter0}}-acao_recebida">
-                                                                {% for key, value in form_acao_provento.fields.acao_recebida.choices %}<option value="{{ key|cut:'.' }}" 
-                                                                    {% if key == form_acao_provento.acao_recebida.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
-                                                            </select>
-                                                            {% if form_acao_provento.acao_recebida.errors %} <span class="help-block"> {{ form_acao_provento.acao_recebida.errors.as_text }} </span> {% endif %}
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group col-md-4 {% if form_acao_provento.data_pagamento_frac.errors %} has-error {% endif %}">
-                                                        <label class="control-label col-md-4" style="text-align: left;"> Data de pagamento de frações: </label>
-                                                        <div class="col-md-8">
-                                                            <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_acao_provento-{{forloop.counter0}}-data_pagamento_frac" name="acao_provento-{{forloop.counter0}}-data_pagamento_frac" 
-                                                            data-date-viewmode="years">
-                                                                <input type="text" class="form-control" name="acao_provento-{{forloop.counter0}}-data_pagamento_frac" 
-                                                                value="{% if form_acao_provento.data_pagamento_frac.value|date:'d/m/Y'|default:'' == '' %}{{form_acao_provento.data_pagamento_frac.value|default:''}}{% else %}{{form_acao_provento.data_pagamento_frac.value|date:'d/m/Y'}}{% endif %}">
-                                                                <span class="input-group-btn">
-                                                                    <button class="btn default" type="button">
-                                                                        <i class="fa fa-calendar"></i>
-                                                                    </button>
-                                                                </span>
-                                                            </div>
-                                                            {% if form_acao_provento.data_pagamento_frac.errors %} <span class="help-block"> {{ form_acao_provento.data_pagamento_frac.errors.as_text }} </span> 
-                                                            {% else %} <span class="help-block"> Selecione uma data </span>
-                                                            {% endif %}
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group col-md-4 {% if form_acao_provento.valor_calculo_frac.errors %} has-error {% endif %}">
-                                                        <label class="control-label col-md-4"> Valor das frações: </label>
-                                                        <div class="col-md-8">
-                                                            <input id="id_acao_provento-{{forloop.counter0}}-valor_calculo_frac" type="text" value="{{form_acao_provento.valor_calculo_frac.value}}" name="acao_provento-{{forloop.counter0}}-valor_calculo_frac" class="form-control">
-                                                            {% if form_acao_provento.valor_calculo_frac.errors %} <span class="help-block"> {{ form_acao_provento.valor_calculo_frac.errors.as_text }} </span> {% endif %}
-                                                        </div>
-                                                    </div>
-                                                {% endif %}
-                                            {% endfor %}
-                                            </div>
-                                            <div class="row" id="row_selic">
-                                            {% for form_acao_selic in formset_acao_selic.forms %}
-                                                {% if forloop.counter == forloop.parentloop.counter %}
-                                                    <div class="form-group col-md-4">
-                                                        <div class="col-md-12">
-                                                            <div class="md-checkbox">
-                                                                <input type="checkbox" {% if form_acao_selic.initial %}checked="checked" {% endif %}id="checkbox_selic-{{forloop.counter0}}" name="selic-{{forloop.counter0}}" 
-                                                                class="md-check">
-                                                                <label for="checkbox_selic-{{forloop.counter0}}">
-                                                                    <span></span>
-                                                                    <span class="check"></span>
-                                                                    <span class="box"></span> Atualizado pela Selic?</label>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group col-md-4 {% if form_acao_selic.data_inicio.errors %} has-error {% endif %}" name="acao_selic-{{forloop.counter0}}">
-                                                        <label class="control-label col-md-4" style="text-align: left;"> Início da atualização: </label>
-                                                        <div class="col-md-8">
-                                                            <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_acao_selic-{{forloop.counter0}}-data_inicio" name="acao_selic-{{forloop.counter0}}-data_inicio" 
-                                                            data-date-viewmode="years">
-                                                                <input type="text" class="form-control" name="acao_selic-{{forloop.counter0}}-data_inicio" 
-                                                                value="{% if form_acao_selic.data_inicio.value|date:'d/m/Y'|default:'' == '' %}{{form_acao_selic.data_inicio.value|default:''}}{% else %}{{form_acao_selic.data_inicio.value|date:'d/m/Y'}}{% endif %}">
-                                                                <span class="input-group-btn">
-                                                                    <button class="btn default" type="button">
-                                                                        <i class="fa fa-calendar"></i>
-                                                                    </button>
-                                                                </span>
-                                                            </div>
-                                                            {% if form_acao_selic.data_inicio.errors %} <span class="help-block"> {{ form_acao_selic.data_inicio.errors.as_text }} </span> 
-                                                            {% else %} <span class="help-block"> Selecione uma data </span>
-                                                            {% endif %}
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group col-md-4 {% if form_acao_selic.data_fim.errors %} has-error {% endif %}" name="acao_selic-{{forloop.counter0}}">
-                                                        <label class="control-label col-md-4" style="text-align: left;"> Fim da atualização: </label>
-                                                        <div class="col-md-8">
-                                                            <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_acao_selic-{{forloop.counter0}}-data_fim" name="acao_selic-{{forloop.counter0}}-data_fim" 
-                                                            data-date-viewmode="years">
-                                                                <input type="text" class="form-control" name="acao_selic-{{forloop.counter0}}-data_fim" 
-                                                                value="{% if form_acao_selic.data_fim.value|date:'d/m/Y'|default:'' == '' %}{{form_acao_selic.data_fim.value|default:''}}{% else %}{{form_acao_selic.data_fim.value|date:'d/m/Y'}}{% endif %}">
-                                                                <span class="input-group-btn">
-                                                                    <button class="btn default" type="button">
-                                                                        <i class="fa fa-calendar"></i>
-                                                                    </button>
-                                                                </span>
-                                                            </div>
-                                                            {% if form_acao_selic.data_fim.errors %} <span class="help-block"> {{ form_acao_selic.data_fim.errors.as_text }} </span> 
-                                                            {% else %} <span class="help-block"> Selecione uma data </span>
-                                                            {% endif %}
-                                                        </div>
-                                                    </div>
-                                                {% endif %}
-                                            {% endfor %}
-                                            </div>
-                                            <hr>
-                                            {% endfor %}
-                                        {% elif pendencia.documento.tipo == 'F' %}
-                                            {{ formset_provento.management_form }}
-                                            {% for form_provento in formset_provento.forms %}
-                                            <div class="col-md-12">
-                                                <h2 class="font-yellow-crusta" align="center">
-                                                    <strong>Provento {{ forloop.counter }}</strong>
-                                                </h2>
-                                            </div>
-                                            <div class="row">
-                                                <div class="form-group col-md-4 {% if form_provento.valor_unitario.errors %} has-error {% endif %}">
-                                                    <label class="control-label col-md-4"> Valor unitário: </label>
-                                                    <div class="col-md-8">
-                                                        <input id="id_provento-{{forloop.counter0}}-valor_unitario" type="text" value="{{form_provento.valor_unitario.value}}" name="provento-{{forloop.counter0}}-valor_unitario" class="form-control">
-                                                        {% if form_provento.valor_unitario.errors %} <span class="help-block"> {{ form_provento.valor_unitario.errors.as_text }} </span> {% endif %}
-                                                    </div>
-                                                </div>
-                                                <div class="form-group col-md-4 {% if form_provento.data_ex.errors %} has-error {% endif %}">
-                                                    <label class="control-label col-md-4" style="text-align: left;"> Data EX: </label>
-                                                    <div class="col-md-8">
-                                                        <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_provento-{{forloop.counter0}}-data_ex" name="provento-{{forloop.counter0}}-data_ex" 
-                                                        data-date-viewmode="years">
-                                                            <input type="text" class="form-control" name="provento-{{forloop.counter0}}-data_ex" 
-                                                            value="{% if form_provento.data_ex.value|date:'d/m/Y'|default:'' == '' %}{{form_provento.data_ex.value|default:''}}{% else %}{{form_provento.data_ex.value|date:'d/m/Y'}}{% endif %}">
-                                                            <span class="input-group-btn">
-                                                                <button class="btn default" type="button">
-                                                                    <i class="fa fa-calendar"></i>
-                                                                </button>
-                                                            </span>
-                                                        </div>
-                                                        {% if form_provento.data_ex.errors %} <span class="help-block"> {{ form_provento.data_ex.errors.as_text }} </span> 
-                                                        {% else %} <span class="help-block"> Selecione uma data </span>
-                                                        {% endif %}
-                                                    </div>
-                                                </div>
-                                                <div class="form-group col-md-4 {% if form.data_pagamento.errors %} has-error {% endif %}">
-                                                    <label class="control-label col-md-4" style="text-align: left;"> Data de pagamento: </label>
-                                                    <div class="col-md-8">
-                                                        <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_provento-{{forloop.counter0}}-data_pagamento" name="provento-{{forloop.counter0}}-data_pagamento" 
-                                                        data-date-viewmode="years">
-                                                            <input type="text" class="form-control" name="provento-{{forloop.counter0}}-data_pagamento" 
-                                                            value="{% if form_provento.data_pagamento.value|date:'d/m/Y'|default:'' == '' %}{{form_provento.data_pagamento.value|default:''}}{% else %}{{form_provento.data_pagamento.value|date:'d/m/Y'}}{% endif %}">
-                                                            <span class="input-group-btn">
-                                                                <button class="btn default" type="button">
-                                                                    <i class="fa fa-calendar"></i>
-                                                                </button>
-                                                            </span>
-                                                        </div>
-                                                        {% if form_provento.data_pagamento.errors %} <span class="help-block"> {{ form_provento.data_pagamento.errors.as_text }} </span> 
-                                                        {% else %} <span class="help-block"> Selecione uma data </span>
-                                                        {% endif %}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="form-group col-md-4 {% if form_provento.tipo_provento.errors %} has-error {% endif %}">
-                                                    <label class="control-label col-md-4" style="text-align: left;"> Tipo de provento: </label>
-                                                    <div class="col-md-8">
-                                                        <select class="selectpicker form-control" id="id_provento-{{forloop.counter0}}-tipo_provento" name="provento-{{forloop.counter0}}-tipo_provento">
-                                                            {% for key, value in form_provento.fields.tipo_provento.widget.choices %}<option value="{{ key }}" 
-                                                                {% if key == form_provento.tipo_provento.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
-                                                        </select>
-                                                        {% if form_provento.tipo_provento.errors %} <span class="help-block"> {{ form_provento.tipo_provento.errors.as_text }} </span> {% endif %}
-                                                    </div>
-                                                </div>
-                                                <div class="form-group col-md-4 {% if form_provento.fii.errors %} has-error {% endif %}">
-                                                    <label class="control-label col-md-4" style="text-align: left;"> FII: </label>
-                                                    <div class="col-md-8">
-                                                        <select class="selectpicker form-control" id="id_provento-{{forloop.counter0}}-fii" name="provento-{{forloop.counter0}}-fii">
-                                                            {% for key, value in form_provento.fields.fii.choices %}<option value="{{ key|cut:'.' }}" 
-                                                                {% if key == form_provento.fii.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
-                                                        </select>
-                                                        {% if form_provento.fii.errors %} <span class="help-block"> {{ form_provento.fii.errors.as_text }} </span> {% endif %}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <hr>
-                                            {% endfor %}
-                                        {% endif %}
+                                            <h2 class="font-yellow-crusta" align="center">
+                                                <strong>Provento {{ forloop.counter }}</strong>
+                                            </h2>
                                         </div>
-                                    </div>
-                                    <div class="form-actions">
                                         <div class="row">
-                                            <div class="col-md-12">
-                                                <button type="submit" class="btn green-steel" name="save" value="1">Salvar</button>
+                                            <div class="form-group col-md-4 {% if form_provento.valor_unitario.errors %} has-error {% endif %}">
+                                                <label class="control-label col-md-4"> Valor unitário: </label>
+                                                <div class="col-md-8">
+                                                    <input id="id_provento-{{forloop.counter0}}-valor_unitario" type="text" value="{{form_provento.valor_unitario.value}}" name="provento-{{forloop.counter0}}-valor_unitario" class="form-control">
+                                                    {% if form_provento.valor_unitario.errors %} <span class="help-block"> {{ form_provento.valor_unitario.errors.as_text }} </span> {% endif %}
+                                                </div>
                                             </div>
+                                            <div class="form-group col-md-4 {% if form_provento.data_ex.errors %} has-error {% endif %}">
+                                                <label class="control-label col-md-4" style="text-align: left;"> Data EX: </label>
+                                                <div class="col-md-8">
+                                                    <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_provento-{{forloop.counter0}}-data_ex" name="provento-{{forloop.counter0}}-data_ex" 
+                                                    data-date-viewmode="years">
+                                                        <input type="text" class="form-control" name="provento-{{forloop.counter0}}-data_ex" 
+                                                        value="{% if form_provento.data_ex.value|date:'d/m/Y'|default:'' == '' %}{{form_provento.data_ex.value|default:''}}{% else %}{{form_provento.data_ex.value|date:'d/m/Y'}}{% endif %}">
+                                                        <span class="input-group-btn">
+                                                            <button class="btn default" type="button">
+                                                                <i class="fa fa-calendar"></i>
+                                                            </button>
+                                                        </span>
+                                                    </div>
+                                                    {% if form_provento.data_ex.errors %} <span class="help-block"> {{ form_provento.data_ex.errors.as_text }} </span> 
+                                                    {% else %} <span class="help-block"> Selecione uma data </span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="form-group col-md-4 {% if form.data_pagamento.errors %} has-error {% endif %}">
+                                                <label class="control-label col-md-4" style="text-align: left;"> Data de pagamento: </label>
+                                                <div class="col-md-8">
+                                                    <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_provento-{{forloop.counter0}}-data_pagamento" name="provento-{{forloop.counter0}}-data_pagamento" 
+                                                    data-date-viewmode="years">
+                                                        <input type="text" class="form-control" name="provento-{{forloop.counter0}}-data_pagamento" 
+                                                        value="{% if form_provento.data_pagamento.value|date:'d/m/Y'|default:'' == '' %}{{form_provento.data_pagamento.value|default:''}}{% else %}{{form_provento.data_pagamento.value|date:'d/m/Y'}}{% endif %}">
+                                                        <span class="input-group-btn">
+                                                            <button class="btn default" type="button">
+                                                                <i class="fa fa-calendar"></i>
+                                                            </button>
+                                                        </span>
+                                                    </div>
+                                                    {% if form_provento.data_pagamento.errors %} <span class="help-block"> {{ form_provento.data_pagamento.errors.as_text }} </span> 
+                                                    {% else %} <span class="help-block"> Selecione uma data </span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="form-group col-md-4 {% if form_provento.tipo_provento.errors %} has-error {% endif %}">
+                                                <label class="control-label col-md-4" style="text-align: left;"> Tipo de provento: </label>
+                                                <div class="col-md-8">
+                                                    <select class="selectpicker form-control" id="id_provento-{{forloop.counter0}}-tipo_provento" name="provento-{{forloop.counter0}}-tipo_provento">
+                                                        {% for key, value in form_provento.fields.tipo_provento.widget.choices %}<option value="{{ key }}" 
+                                                            {% if key == form_provento.tipo_provento.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                                                    </select>
+                                                    {% if form_provento.tipo_provento.errors %} <span class="help-block"> {{ form_provento.tipo_provento.errors.as_text }} </span> {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="form-group col-md-4 {% if form_provento.acao.errors %} has-error {% endif %}">
+                                                <label class="control-label col-md-4" style="text-align: left;"> Ação: </label>
+                                                <div class="col-md-8">
+                                                    <select class="selectpicker form-control" id="id_provento-{{forloop.counter0}}-acao" name="provento-{{forloop.counter0}}-acao">
+                                                        {% for key, value in form_provento.fields.acao.choices %}<option value="{{ key|cut:'.' }}" 
+                                                            {% if key == form_provento.acao.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                                                    </select>
+                                                    {% if form_provento.acao.errors %} <span class="help-block"> {{ form_provento.acao.errors.as_text }} </span> {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div id="provento_em_acao-{{forloop.counter0}}" class="row">
+                                        {% for form_acao_provento in formset_acao_provento.forms %}
+                                            {% if forloop.counter == forloop.parentloop.counter %}
+                                                <div class="form-group col-md-4 {% if form_acao_provento.acao_recebida.errors %} has-error {% endif %}">
+                                                    <label class="control-label col-md-4" style="text-align: left;"> Ação recebida: </label>
+                                                    <div class="col-md-8">
+                                                        <select class="selectpicker form-control" id="id_acao_provento-{{forloop.counter0}}-acao_recebida" name="acao_provento-{{forloop.counter0}}-acao_recebida">
+                                                            {% for key, value in form_acao_provento.fields.acao_recebida.choices %}<option value="{{ key|cut:'.' }}" 
+                                                                {% if key == form_acao_provento.acao_recebida.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                                                        </select>
+                                                        {% if form_acao_provento.acao_recebida.errors %} <span class="help-block"> {{ form_acao_provento.acao_recebida.errors.as_text }} </span> {% endif %}
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-md-4 {% if form_acao_provento.data_pagamento_frac.errors %} has-error {% endif %}">
+                                                    <label class="control-label col-md-4" style="text-align: left;"> Data de pagamento de frações: </label>
+                                                    <div class="col-md-8">
+                                                        <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_acao_provento-{{forloop.counter0}}-data_pagamento_frac" name="acao_provento-{{forloop.counter0}}-data_pagamento_frac" 
+                                                        data-date-viewmode="years">
+                                                            <input type="text" class="form-control" name="acao_provento-{{forloop.counter0}}-data_pagamento_frac" 
+                                                            value="{% if form_acao_provento.data_pagamento_frac.value|date:'d/m/Y'|default:'' == '' %}{{form_acao_provento.data_pagamento_frac.value|default:''}}{% else %}{{form_acao_provento.data_pagamento_frac.value|date:'d/m/Y'}}{% endif %}">
+                                                            <span class="input-group-btn">
+                                                                <button class="btn default" type="button">
+                                                                    <i class="fa fa-calendar"></i>
+                                                                </button>
+                                                            </span>
+                                                        </div>
+                                                        {% if form_acao_provento.data_pagamento_frac.errors %} <span class="help-block"> {{ form_acao_provento.data_pagamento_frac.errors.as_text }} </span> 
+                                                        {% else %} <span class="help-block"> Selecione uma data </span>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-md-4 {% if form_acao_provento.valor_calculo_frac.errors %} has-error {% endif %}">
+                                                    <label class="control-label col-md-4"> Valor das frações: </label>
+                                                    <div class="col-md-8">
+                                                        <input id="id_acao_provento-{{forloop.counter0}}-valor_calculo_frac" type="text" value="{{form_acao_provento.valor_calculo_frac.value}}" name="acao_provento-{{forloop.counter0}}-valor_calculo_frac" class="form-control">
+                                                        {% if form_acao_provento.valor_calculo_frac.errors %} <span class="help-block"> {{ form_acao_provento.valor_calculo_frac.errors.as_text }} </span> {% endif %}
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                        </div>
+                                        <div class="row" id="row_selic">
+                                        {% for form_acao_selic in formset_acao_selic.forms %}
+                                            {% if forloop.counter == forloop.parentloop.counter %}
+                                                <div class="form-group col-md-4">
+                                                    <div class="col-md-12">
+                                                        <div class="md-checkbox">
+                                                            <input type="checkbox" {% if form_acao_selic.initial %}checked="checked" {% endif %}id="checkbox_selic-{{forloop.counter0}}" name="selic-{{forloop.counter0}}" 
+                                                            class="md-check">
+                                                            <label for="checkbox_selic-{{forloop.counter0}}">
+                                                                <span></span>
+                                                                <span class="check"></span>
+                                                                <span class="box"></span> Atualizado pela Selic?</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-md-4 {% if form_acao_selic.data_inicio.errors %} has-error {% endif %}" name="acao_selic-{{forloop.counter0}}">
+                                                    <label class="control-label col-md-4" style="text-align: left;"> Início da atualização: </label>
+                                                    <div class="col-md-8">
+                                                        <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_acao_selic-{{forloop.counter0}}-data_inicio" name="acao_selic-{{forloop.counter0}}-data_inicio" 
+                                                        data-date-viewmode="years">
+                                                            <input type="text" class="form-control" name="acao_selic-{{forloop.counter0}}-data_inicio" 
+                                                            value="{% if form_acao_selic.data_inicio.value|date:'d/m/Y'|default:'' == '' %}{{form_acao_selic.data_inicio.value|default:''}}{% else %}{{form_acao_selic.data_inicio.value|date:'d/m/Y'}}{% endif %}">
+                                                            <span class="input-group-btn">
+                                                                <button class="btn default" type="button">
+                                                                    <i class="fa fa-calendar"></i>
+                                                                </button>
+                                                            </span>
+                                                        </div>
+                                                        {% if form_acao_selic.data_inicio.errors %} <span class="help-block"> {{ form_acao_selic.data_inicio.errors.as_text }} </span> 
+                                                        {% else %} <span class="help-block"> Selecione uma data </span>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-md-4 {% if form_acao_selic.data_fim.errors %} has-error {% endif %}" name="acao_selic-{{forloop.counter0}}">
+                                                    <label class="control-label col-md-4" style="text-align: left;"> Fim da atualização: </label>
+                                                    <div class="col-md-8">
+                                                        <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_acao_selic-{{forloop.counter0}}-data_fim" name="acao_selic-{{forloop.counter0}}-data_fim" 
+                                                        data-date-viewmode="years">
+                                                            <input type="text" class="form-control" name="acao_selic-{{forloop.counter0}}-data_fim" 
+                                                            value="{% if form_acao_selic.data_fim.value|date:'d/m/Y'|default:'' == '' %}{{form_acao_selic.data_fim.value|default:''}}{% else %}{{form_acao_selic.data_fim.value|date:'d/m/Y'}}{% endif %}">
+                                                            <span class="input-group-btn">
+                                                                <button class="btn default" type="button">
+                                                                    <i class="fa fa-calendar"></i>
+                                                                </button>
+                                                            </span>
+                                                        </div>
+                                                        {% if form_acao_selic.data_fim.errors %} <span class="help-block"> {{ form_acao_selic.data_fim.errors.as_text }} </span> 
+                                                        {% else %} <span class="help-block"> Selecione uma data </span>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                        </div>
+                                        <hr>
+                                        {% endfor %}
+                                    {% elif pendencia.documento.tipo == 'F' %}
+                                        {{ formset_provento.management_form }}
+                                        {% for form_provento in formset_provento.forms %}
+                                        <div class="col-md-12">
+                                            <h2 class="font-yellow-crusta" align="center">
+                                                <strong>Provento {{ forloop.counter }}</strong>
+                                            </h2>
+                                        </div>
+                                        <div class="row">
+                                            <div class="form-group col-md-4 {% if form_provento.valor_unitario.errors %} has-error {% endif %}">
+                                                <label class="control-label col-md-4"> Valor unitário: </label>
+                                                <div class="col-md-8">
+                                                    <input id="id_provento-{{forloop.counter0}}-valor_unitario" type="text" value="{{form_provento.valor_unitario.value}}" name="provento-{{forloop.counter0}}-valor_unitario" class="form-control">
+                                                    {% if form_provento.valor_unitario.errors %} <span class="help-block"> {{ form_provento.valor_unitario.errors.as_text }} </span> {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="form-group col-md-4 {% if form_provento.data_ex.errors %} has-error {% endif %}">
+                                                <label class="control-label col-md-4" style="text-align: left;"> Data EX: </label>
+                                                <div class="col-md-8">
+                                                    <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_provento-{{forloop.counter0}}-data_ex" name="provento-{{forloop.counter0}}-data_ex" 
+                                                    data-date-viewmode="years">
+                                                        <input type="text" class="form-control" name="provento-{{forloop.counter0}}-data_ex" 
+                                                        value="{% if form_provento.data_ex.value|date:'d/m/Y'|default:'' == '' %}{{form_provento.data_ex.value|default:''}}{% else %}{{form_provento.data_ex.value|date:'d/m/Y'}}{% endif %}">
+                                                        <span class="input-group-btn">
+                                                            <button class="btn default" type="button">
+                                                                <i class="fa fa-calendar"></i>
+                                                            </button>
+                                                        </span>
+                                                    </div>
+                                                    {% if form_provento.data_ex.errors %} <span class="help-block"> {{ form_provento.data_ex.errors.as_text }} </span> 
+                                                    {% else %} <span class="help-block"> Selecione uma data </span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="form-group col-md-4 {% if form.data_pagamento.errors %} has-error {% endif %}">
+                                                <label class="control-label col-md-4" style="text-align: left;"> Data de pagamento: </label>
+                                                <div class="col-md-8">
+                                                    <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_provento-{{forloop.counter0}}-data_pagamento" name="provento-{{forloop.counter0}}-data_pagamento" 
+                                                    data-date-viewmode="years">
+                                                        <input type="text" class="form-control" name="provento-{{forloop.counter0}}-data_pagamento" 
+                                                        value="{% if form_provento.data_pagamento.value|date:'d/m/Y'|default:'' == '' %}{{form_provento.data_pagamento.value|default:''}}{% else %}{{form_provento.data_pagamento.value|date:'d/m/Y'}}{% endif %}">
+                                                        <span class="input-group-btn">
+                                                            <button class="btn default" type="button">
+                                                                <i class="fa fa-calendar"></i>
+                                                            </button>
+                                                        </span>
+                                                    </div>
+                                                    {% if form_provento.data_pagamento.errors %} <span class="help-block"> {{ form_provento.data_pagamento.errors.as_text }} </span> 
+                                                    {% else %} <span class="help-block"> Selecione uma data </span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="form-group col-md-4 {% if form_provento.tipo_provento.errors %} has-error {% endif %}">
+                                                <label class="control-label col-md-4" style="text-align: left;"> Tipo de provento: </label>
+                                                <div class="col-md-8">
+                                                    <select class="selectpicker form-control" id="id_provento-{{forloop.counter0}}-tipo_provento" name="provento-{{forloop.counter0}}-tipo_provento">
+                                                        {% for key, value in form_provento.fields.tipo_provento.widget.choices %}<option value="{{ key }}" 
+                                                            {% if key == form_provento.tipo_provento.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                                                    </select>
+                                                    {% if form_provento.tipo_provento.errors %} <span class="help-block"> {{ form_provento.tipo_provento.errors.as_text }} </span> {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="form-group col-md-4 {% if form_provento.fii.errors %} has-error {% endif %}">
+                                                <label class="control-label col-md-4" style="text-align: left;"> FII: </label>
+                                                <div class="col-md-8">
+                                                    <select class="selectpicker form-control" id="id_provento-{{forloop.counter0}}-fii" name="provento-{{forloop.counter0}}-fii">
+                                                        {% for key, value in form_provento.fields.fii.choices %}<option value="{{ key|cut:'.' }}" 
+                                                            {% if key == form_provento.fii.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                                                    </select>
+                                                    {% if form_provento.fii.errors %} <span class="help-block"> {{ form_provento.fii.errors.as_text }} </span> {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        {% endfor %}
+                                    {% endif %}
+                                    </div>
+                                </div>
+                                <div class="form-actions">
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <button type="submit" class="btn green-steel" name="save" value="1">Salvar</button>
                                         </div>
                                     </div>
                                 </div>
-                            </form>
-                        </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
-        {% endif %}
     </div>
+    {% endif %}
+</div>
 
 {% endblock %}
 
