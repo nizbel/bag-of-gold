@@ -13,7 +13,7 @@ class Titulo (models.Model):
     TIPO_LETRA_TESOURO = ['LTN']
     TIPO_SELIC = ['LFT']
     TIPO_IPCA_COM_JUROS = ['NTN-B', 'NTNB']
-    TIPO_IPCA = ['NTN-B Principal', 'NTNBP']
+    TIPO_IPCA = ['NTN-B Principal', 'NTNBP', 'NTN-B Princ']
     TIPO_PREFIXADO_COM_JUROS = ['NTN-F', 'NTNF']
     TIPO_IGPM = ['NTN-C','NTNC']
     
@@ -48,7 +48,7 @@ class Titulo (models.Model):
         for tipo_oficial, possiveis_tipos in Titulo.VINCULO_TIPOS_OFICIAL.items():
             if tipo in possiveis_tipos:
                 return tipo_oficial
-        raise ValueError('Tipo %s é inválido' % (tipo))
+        raise ValueError(u'Tipo %s é inválido' % (tipo))
     
     def indexador(self):
         if self.tipo in self.TIPO_LETRA_TESOURO + self.TIPO_PREFIXADO_COM_JUROS:
