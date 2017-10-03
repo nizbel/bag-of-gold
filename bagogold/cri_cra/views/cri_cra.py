@@ -18,7 +18,7 @@ from bagogold.cri_cra.models.cri_cra import CRI_CRA, DataRemuneracaoCRI_CRA, \
 from bagogold.cri_cra.utils.utils import qtd_cri_cra_ate_dia_para_certificado, \
     calcular_valor_cri_cra_ate_dia, quantidade_cri_cra_na_data_para_certificado
 from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
-from decimal import Decimal
+from decimal import Decimal, ROUND_DOWN
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
