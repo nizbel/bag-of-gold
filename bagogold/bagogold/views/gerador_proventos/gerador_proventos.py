@@ -20,7 +20,6 @@ from bagogold.bagogold.utils.gerador_proventos import \
     desfazer_investidor_responsavel_por_leitura, buscar_proventos_proximos_acao, \
     versionar_descricoes_relacionadas_acoes, \
     salvar_investidor_responsavel_por_validacao, \
-    desfazer_investidor_responsavel_por_validacao, \
     salvar_investidor_responsavel_por_recusar_documento, \
     criar_descricoes_provento_fiis, buscar_proventos_proximos_fii, \
     versionar_descricoes_relacionadas_fiis
