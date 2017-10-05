@@ -110,7 +110,11 @@
                         <td>{{provento.descricao_tipo_provento}}</td>
                         <td>{{provento.data_ex|date:'d/m/Y'}}</td>
                         <td>{{provento.data_pagamento|date:'d/m/Y'}}</td>
-                        <td>R$ {{provento.valor_final|casas_decimais}}</td>
+                        <td>{% if provento.tipo_provento == 'A' %}
+                        {{provento.valor_final|casas_decimais}} %
+                        {% else %}
+                        R$ {{provento.valor_final|casas_decimais}}
+                        {% endif %}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
