@@ -52,11 +52,11 @@
                                 {% endfor %}
                             </div>
                         </div>
-                        <a href="{% if proventos %}
+                        <a href="{% if documento.pendencias or proventos %}
                         {% url 'gerador_proventos:baixar_documento_provento' documento.id %}
                         {% else %}
                         {{documento.url}}
-                        {% endif %}" class="btn btn-warning">{% if proventos %}Download{% else %}Ver na Bovespa{% endif %}</a>
+                        {% endif %}" class="btn btn-warning">{% if documento.pendencias or proventos %}Download{% else %}Ver na Bovespa{% endif %}</a>
                     </div>
                 </div>
             </div>
