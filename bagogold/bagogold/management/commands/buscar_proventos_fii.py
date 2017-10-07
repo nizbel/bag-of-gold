@@ -91,13 +91,9 @@ class BuscaRendimentosFIIThread(Thread):
             if self.ano_inicial != 0:
                 buscar_rendimentos_fii(self.ticker, self.ano_inicial, 0)
         except Exception as e:
-            template = "An exception of type {0} occured. Arguments:\n{1!r}"
-            message = template.format(type(e).__name__, e.args)
-            if settings.ENV == 'PROD':
-                mail_admins(u'Erro na thread de buscar rendimentos de fiis', message.decode('utf-8'))
-            elif settings.ENV == 'DEV':
-                print message
-#             pass
+#             template = "An exception of type {0} occured. Arguments:\n{1!r}"
+#             message = template.format(type(e).__name__, e.args)
+            pass
         # Tenta remover seu código da listagem de threads até conseguir
         while self.ticker in threads_rodando:
             del threads_rodando[self.ticker]

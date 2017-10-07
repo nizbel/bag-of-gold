@@ -78,13 +78,9 @@ class BuscaProventosAcaoThread(Thread):
             for ano in range(self.ano_inicial, datetime.date.today().year+1):
                 buscar_proventos_acao(self.codigo_cvm, ano, 0)
         except Exception as e:
-            template = "An exception of type {0} occured. Arguments:\n{1!r}"
-            message = template.format(type(e).__name__, e.args)
-            if settings.ENV == 'PROD':
-                    mail_admins(u'Erro na thread de buscar proventos de ações', message.decode('utf-8'))
-            elif settings.ENV == 'DEV':
-                print message
-#             pass
+#             template = "An exception of type {0} occured. Arguments:\n{1!r}"
+#             message = template.format(type(e).__name__, e.args)
+            pass
         # Tenta remover seu código da listagem de threads até conseguir
         while self.codigo_cvm in threads_rodando:
             del threads_rodando[self.codigo_cvm]
