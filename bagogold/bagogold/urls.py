@@ -57,29 +57,13 @@ acoes_trading_patterns = [
     url(r'^historico_operacoes_cv/$', views.acoes.trade.historico_operacoes_cv, name='historico_operacoes_cv'),
     url(r'^inserir_operacao/$', views.acoes.trade.inserir_operacao, name='inserir_operacao_t'),
     url(r'^inserir_operacao_acao/$', views.acoes.trade.inserir_operacao_acao, name='inserir_operacao_acao_t'),
-                     ]
+    ]
 
 acoes_patterns = [
     url(r'^', include(acoes_geral_patterns, namespace='geral')),
     url(r'^buyandhold/', include(acoes_bh_patterns, namespace='bh')),
     url(r'^trading/', include(acoes_trading_patterns, namespace='trading')),
     ]
-
-# cdb_rdb_patterns = [
-#     url(r'^detalhar_cdb_rdb/(?P<cdb_rdb_id>\d+)/$', views.cdb_rdb.cdb_rdb.detalhar_cdb_rdb, name='detalhar_cdb_rdb'),
-#     url(r'^editar_cdb_rdb/(?P<cdb_rdb_id>\d+)/$', views.cdb_rdb.cdb_rdb.editar_cdb_rdb, name='editar_cdb_rdb'),
-#     url(r'^editar_historico_carencia/(?P<historico_carencia_id>\d+)/$', views.cdb_rdb.cdb_rdb.editar_historico_carencia, name='editar_historico_carencia'),
-#     url(r'^editar_historico_porcentagem/(?P<historico_porcentagem_id>\d+)/$', views.cdb_rdb.cdb_rdb.editar_historico_porcentagem, name='editar_historico_porcentagem'),
-#     url(r'^editar_operacao/(?P<operacao_id>\d+)/$', views.cdb_rdb.cdb_rdb.editar_operacao_cdb_rdb, name='editar_operacao_cdb_rdb'),
-#     url(r'^historico/$', views.cdb_rdb.cdb_rdb.historico, name='historico_cdb_rdb'),
-#     url(r'^inserir_cdb_rdb/$', views.cdb_rdb.cdb_rdb.inserir_cdb_rdb, name='inserir_cdb_rdb'),
-#     url(r'^inserir_operacao_cdb_rdb/$', views.cdb_rdb.cdb_rdb.inserir_operacao_cdb_rdb, name='inserir_operacao_cdb_rdb'),
-#     url(r'^listar_cdb_rdb/$', views.cdb_rdb.cdb_rdb.listar_cdb_rdb, name='listar_cdb_rdb'),
-#     url(r'^inserir_historico_carencia_cdb_rdb/(?P<cdb_rdb_id>\d+)/$', views.cdb_rdb.cdb_rdb.inserir_historico_carencia_cdb_rdb, name='inserir_historico_carencia_cdb_rdb'),
-#     url(r'^inserir_historico_porcentagem_cdb_rdb/(?P<cdb_rdb_id>\d+)/$', views.cdb_rdb.cdb_rdb.inserir_historico_porcentagem_cdb_rdb, name='inserir_historico_porcentagem_cdb_rdb'),
-#     url(r'^painel/$', views.cdb_rdb.cdb_rdb.painel, name='painel_cdb_rdb'),
-#     url(r'^sobre/$', views.cdb_rdb.cdb_rdb.sobre, name='sobre_cdb_rdb'),
-#     ]
 
 debentures_patterns = [
     url(r'^detalhar_debenture/(?P<debenture_id>\d+)/$', views.debentures.debentures.detalhar_debenture, name='detalhar_debenture'),
