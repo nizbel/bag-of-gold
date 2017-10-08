@@ -636,7 +636,7 @@ def listar_lc(request):
 # Retorna id's das operações que podem ser vendidas na data especificada
 @login_required
 def listar_operacoes_passada_carencia(request):
-#     if request.is_ajax():
+    if request.is_ajax():
         if request.GET.get('data'):
             try:
                 data = datetime.datetime.strptime(request.GET.get('data'), '%d/%m/%Y').date()
@@ -658,8 +658,8 @@ def listar_operacoes_passada_carencia(request):
                 operacoes.append(operacao_compra_relacionada)
         
         return HttpResponse(json.dumps({'sucesso': True, 'operacoes': [str(operacao.id) for operacao in operacoes]}), content_type = "application/json")   
-#     else:
-#         return HttpResponse(json.dumps({'sucesso': False}), content_type = "application/json") 
+    else:
+        return HttpResponse(json.dumps({'sucesso': False}), content_type = "application/json") 
 
 @adiciona_titulo_descricao('Painel de Letras de Crédito', 'Posição atual do investidor em Letras de Crédito')
 def painel(request):
