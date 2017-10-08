@@ -547,7 +547,7 @@ def historico(request):
             valor_acao = HistoricoAcao.objects.get(acao__ticker=acao, data=ultimo_dia_util).preco_unitario
             patrimonio += (valor_acao * acoes[acao])
         
-        data_formatada = str(calendar.timegm(item_lista.data.timetuple()) * 1000)
+        data_formatada = str(calendar.timegm(converter_date_para_utc(item_lista.data).timetuple()) * 1000)
         # Verifica se altera ultima posicao do grafico ou adiciona novo registro
         if len(graf_total_gasto) > 0 and graf_total_gasto[-1][0] == data_formatada:
             graf_total_gasto[len(graf_total_gasto)-1][1] = float(-total_gasto)
@@ -576,7 +576,7 @@ def historico(request):
                 patrimonio += (valor_diario_mais_recente[0].preco_unitario * acoes[acao])
             else:
                 patrimonio += (historico_mais_recente[0].preco_unitario * acoes[acao])
-    data_formatada = str(calendar.timegm(datetime.date.today().timetuple()) * 1000)
+    data_formatada = str(calendar.timegm(converter_date_para_utc(datetime.date.today()).timetuple()) * 1000)
     # Verifica se altera ultima posicao do grafico ou adiciona novo registro
     if not(len(graf_total_gasto) > 0 and graf_total_gasto[-1][0] == data_formatada):
         graf_total_gasto += [[data_formatada, float(-total_gasto)]]
