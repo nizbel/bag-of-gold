@@ -4,6 +4,10 @@ from bagogold.bagogold.models.lc import OperacaoLetraCredito, \
     HistoricoPorcentagemLetraCredito, LetraCredito, HistoricoCarenciaLetraCredito, \
     OperacaoVendaLetraCredito
 from django import forms
+from django.db.models.aggregates import Sum
+from django.db.models.expressions import F
+from django.db.models.functions import Coalesce
+from django.db.models.query_utils import Q
 from django.forms import widgets
 import datetime
 
@@ -19,7 +23,7 @@ class LetraCreditoForm(LocalizedModelForm):
 
 class OperacaoLetraCreditoForm(LocalizedModelForm):
     # Campo verificado apenas no caso de venda de operação de lc
-    operacao_compra = forms.ModelChoiceField(label='Operação de compra',queryset=OperacaoLetraCredito.objects.filter(tipo_operacao='C'), required=False)
+    operacao_compra = forms.ModelChoiceField(label='Operação de compra', queryset=OperacaoLetraCredito.objects.none(), required=False)
     
     class Meta:
         model = OperacaoLetraCredito
@@ -39,14 +43,23 @@ class OperacaoLetraCreditoForm(LocalizedModelForm):
         # there's a `fields` property now
         self.fields['letra_credito'].required = False
         self.fields['letra_credito'].queryset = LetraCredito.objects.filter(investidor=self.investidor)
-        self.fields['operacao_compra'].queryset = OperacaoLetraCredito.objects.filter(investidor=self.investidor, tipo_operacao='C')
-        # Remover operações que já tenham sido totalmente vendidas e a própria operação
-        operacoes_compra_invalidas = [operacao_compra_invalida.id for operacao_compra_invalida in self.fields['operacao_compra'].queryset if operacao_compra_invalida.qtd_disponivel_venda() <= 0] + \
-            ([self.instance.id] if self.instance.id != None else [])
+#         self.fields['operacao_compra'].queryset = OperacaoLetraCredito.objects.filter(investidor=self.investidor, tipo_operacao='C')
+#         # Remover operações que já tenham sido totalmente vendidas e a própria operação
+#         operacoes_compra_invalidas = [operacao_compra_invalida.id for operacao_compra_invalida in self.fields['operacao_compra'].queryset if operacao_compra_invalida.qtd_disponivel_venda() <= 0] + \
+#             ([self.instance.id] if self.instance.id != None else [])
+#         # Manter operação de compra atual, caso seja edição de venda
+#         if self.instance.operacao_compra_relacionada():
+#             operacoes_compra_invalidas.remove(self.instance.operacao_compra_relacionada().id)
+#         self.fields['operacao_compra'].queryset = self.fields['operacao_compra'].queryset.exclude(id__in=operacoes_compra_invalidas)
         # Manter operação de compra atual, caso seja edição de venda
         if self.instance.operacao_compra_relacionada():
-            operacoes_compra_invalidas.remove(self.instance.operacao_compra_relacionada().id)
-        self.fields['operacao_compra'].queryset = self.fields['operacao_compra'].queryset.exclude(id__in=operacoes_compra_invalidas)
+            query_operacao_compra = OperacaoLetraCredito.objects.filter(investidor=self.investidor, tipo_operacao='C').annotate( \
+                qtd_vendida=Coalesce(Sum(F('operacao_compra__operacao_venda__quantidade')), 0)).filter(Q(qtd_vendida__lt=F('quantidade')) \
+                                                                                                   | Q(id=self.instance.operacao_compra_relacionada().id))
+        else:
+            query_operacao_compra = OperacaoLetraCredito.objects.filter(investidor=self.investidor, tipo_operacao='C').annotate( \
+                qtd_vendida=Coalesce(Sum(F('operacao_compra__operacao_venda__quantidade')), 0)).exclude(qtd_vendida=F('quantidade'))
+        self.fields['operacao_compra'].queryset = query_operacao_compra
     
     def clean_operacao_compra(self):
         tipo_operacao = self.cleaned_data['tipo_operacao']
