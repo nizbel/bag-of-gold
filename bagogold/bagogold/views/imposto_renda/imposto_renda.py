@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.models.acoes import OperacaoAcao, Provento
-from bagogold.cdb_rdb.models import OperacaoCDB_RDB
 from bagogold.bagogold.models.fii import OperacaoFII, ProventoFII
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, LetraCredito
 from bagogold.bagogold.models.td import OperacaoTitulo, Titulo, HistoricoTitulo
 from bagogold.bagogold.utils.misc import trazer_primeiro_registro, \
     verificar_feriado_bovespa
+from bagogold.cdb_rdb.models import OperacaoCDB_RDB
+from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA, CRI_CRA, \
+    DataAmortizacaoCRI_CRA
+from bagogold.cri_cra.utils.utils import qtd_cri_cra_ate_dia, \
+    calcular_rendimentos_cri_cra_ate_data
+from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
 from collections import OrderedDict
 from decimal import Decimal, ROUND_FLOOR
@@ -204,7 +209,23 @@ def detalhar_imposto_renda(request, ano):
             cdb_rdb[operacao.investimento.nome] -= operacao.quantidade
             
     ############################################################
-    ### Fundo de investimento  ###############################################
+    ### CRI/CRA  ###############################################
+    ############################################################
+    
+    cri_cra = {}
+    qtd_cri_cra = qtd_cri_cra_ate_dia(investidor, datetime.date(ano, 12, 31))
+    for cri_cra_id in qtd_cri_cra.keys():
+        certificado = CRI_CRA.objects.get(id=cri_cra_id)
+        # Busca valor na data atual ou no fim do ano, para preservar valor atualizado considerando que pode pegar valores vazios se começar
+        #de um rendimento futuro
+        cri_cra[certificado.nome] = calcular_valor_um_cri_cra_na_data(certificado, min(datetime.date.today(), datetime.date(ano, 12, 31))) * qtd_cri_cra[cri_cra_id]
+        
+    # Total de rendimentos recebidos no ano
+    total_rendimentos_cri_cra = calcular_rendimentos_cri_cra_ate_data(investidor, datetime.date(ano, 12, 31)) \
+        - calcular_rendimentos_cri_cra_ate_data(investidor, datetime.date(ano - 1, 12, 31))  
+    
+    ############################################################
+    ### Fundo de investimento  #################################
     ############################################################
     
     fundos_investimento = {}
@@ -319,6 +340,8 @@ def detalhar_imposto_renda(request, ano):
     dados['total_dividendos'] = total_dividendos
     dados['total_jscp'] = total_jscp
     dados['total_rendimentos_fii'] = total_rendimentos_fii
+    dados['total_rendimentos_cri_cra'] = total_rendimentos_cri_cra
+    dados['total_rendimentos_isentos_outros'] = total_rendimentos_fii + total_rendimentos_cri_cra
     dados['total_abaixo_vinte_mil'] = total_abaixo_vinte_mil
     dados['total_acima_vinte_mil'] = total_acima_vinte_mil
     dados['total_acumulado_td'] = total_acumulado_td
@@ -328,7 +351,7 @@ def detalhar_imposto_renda(request, ano):
     
     return TemplateResponse(request, 'imposto_renda/detalhar_imposto_ano.html', {'ano': ano, 'acoes': acoes, 'ganho_abaixo_vinte_mil': ganho_abaixo_vinte_mil, 'ganho_acima_vinte_mil': ganho_acima_vinte_mil, 
                                                                           'prejuizo_a_compensar': prejuizo_a_compensar, 'prejuizo_a_compensar_dt': prejuizo_a_compensar_dt, 'cdb_rdb': cdb_rdb, 
-                                                                          'fundos_investimento': fundos_investimento, 'fiis': fiis, 'letras_credito': letras_credito,'dados': dados})
+                                                                          'cri_cra': cri_cra, 'fundos_investimento': fundos_investimento, 'fiis': fiis, 'letras_credito': letras_credito,'dados': dados})
     
 @login_required
 @adiciona_titulo_descricao('Listar anos para declaração de IR', 'Traz os anos em que o investidor possui investimentos cadastrados')
