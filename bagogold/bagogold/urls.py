@@ -132,6 +132,7 @@ lci_lca_patterns = [
     url(r'^inserir_letra_credito/$', views.lc.lc.inserir_lc, name='inserir_lci_lca'),
     url(r'^inserir_operacao_lc/$', views.lc.lc.inserir_operacao_lc, name='inserir_operacao_lci_lca'),
     url(r'^listar_letras_credito/$', views.lc.lc.listar_lc, name='listar_lci_lca'),
+    url(r'^listar_operacoes_passada_carencia/$', views.lc.lc.listar_operacoes_passada_carencia, name='listar_operacoes_passada_carencia'),
     url(r'^inserir_historico_carencia_lci_lca/(?P<lci_lca_id>\d+)/$', views.lc.lc.inserir_historico_carencia, name='inserir_historico_carencia_lci_lca'),
     url(r'^inserir_historico_porcentagem_lci_lca/(?P<lci_lca_id>\d+)/$', views.lc.lc.inserir_historico_porcentagem, name='inserir_historico_porcentagem_lci_lca'),
     url(r'^painel/$', views.lc.lc.painel, name='painel_lci_lca'),
