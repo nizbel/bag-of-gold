@@ -9,195 +9,202 @@
 
 {% block content %}
 <div class="portlet-body">
-		<div class="row">
-			<div class="col-md-12">
-				<!-- BEGIN Portlet PORTLET-->
-				<div class="portlet box yellow-crusta">
-					<div class="portlet-title">
-						<div class="caption">
-							<i class="fa fa-folder-open-o"></i>Rendimentos isentos e não-tributáveis</div>
-						<div class="tools">
-							<a href="javascript:;" class="collapse"></a>
-						</div>
-					</div>
-					<div class="portlet-body">
-						<h5>Lucros e dividendos recebidos pelo titular e dependentes</h5>
-						<ul>
-						{% for ticker, acao in acoes.items %}
-							{% if acao.dividendos > 0 %}
-							<li>Dividendos de {{ticker}}: R${{acao.dividendos}}</li>
-							{% endif %}
-						{% endfor %}
-						<li><strong>Total: R${{dados.total_dividendos}}</strong></li>
-						</ul>
-						
-						<h5>Ganhos líquidos em operações no mercado à vista de ações negociadas em bolsa de valores nas alienações 
-						realizadas até R$ 20.000,00, em cada mês, para o conjunto de ações</h5>
-						<ul>
-						{% for mes, ganho in ganho_abaixo_vinte_mil.items %}
-							{% if ganho > 0 %}
-							<li>Mês {{mes}}: R${{ganho}}</li>
-							{% endif %}
-						{% endfor %}
-						<li><strong>Total: R${{dados.total_abaixo_vinte_mil}}</strong></li>
-						</ul>
-						
-						<h5>Outros</h5>
-						<ul>
-						{% for ticker, fii in fiis.items %}
-							{% if fii.rendimentos > 0 %}
-							<li>Rendimentos de {{ticker}}: R${{fii.rendimentos}}</li>
-							{% endif %}
-						{% endfor %}
-						<li><strong>Total: R${{dados.total_rendimentos_fii}}</strong></li>
-						</ul>
+	<div class="row">
+		<div class="col-md-12">
+			<!-- BEGIN Portlet PORTLET-->
+			<div class="portlet box yellow-crusta">
+				<div class="portlet-title">
+					<div class="caption">
+						<i class="fa fa-folder-open-o"></i>Rendimentos isentos e não-tributáveis</div>
+					<div class="tools">
+						<a href="javascript:;" class="collapse"></a>
 					</div>
 				</div>
-				<!-- END Portlet PORTLET-->
-			</div>
-			<div class="col-md-12">
-				<!-- BEGIN Portlet PORTLET-->
-				<div class="portlet box yellow-crusta">
-					<div class="portlet-title">
-						<div class="caption">
-							<i class="fa fa-folder-open-o"></i>Rendimentos sujeitos à tributação exclusiva/definitiva</div>
-						<div class="tools">
-							<a href="javascript:;" class="collapse"></a>
-						</div>
-					</div>
-					<div class="portlet-body">
-						<h5>Ganhos líquidos em renda variável (bolsa de valores, de mercadorias, de futuros e assemelhados e fundos de investimento imobiliário)</h5>
-						<ul>
-							<li><strong>Total: R${{dados.total_acima_vinte_mil}}</strong></li>
-						</ul>
-						<h5>Juros sobre capital próprio</h5>
-						<ul>
-						{% for ticker, acao in acoes.items %}
-							{% if acao.jscp > 0 %}
-							<li>{{ticker}}: R${{acao.jscp}}</li>
-							{% endif %}
-						{% endfor %}
-						<li><strong>Total: R${{dados.total_jscp}}</strong></li>
-						</ul>
-					</div>
-				</div>
-				<!-- END Portlet PORTLET-->
-			</div>
-			<div class="col-md-12">
-				<!-- BEGIN Portlet PORTLET-->
-				<div class="portlet box yellow-crusta">
-					<div class="portlet-title">
-						<div class="caption">
-							<i class="fa fa-folder-open-o"></i>Bens e Direitos</div>
-						<div class="tools">
-							<a href="javascript:;" class="collapse"></a>
-						</div>
-					</div>
-					<div class="portlet-body">
-						<br/>
-						<ul>
-						<!-- Ações -->
-						{% for ticker, acao in acoes.items %}
-							{% if acao.quantidade > 0 %}
-								<li>{{ticker}}: {{acao.quantidade}} ações a {{acao.preco_medio}}</li>
-							{% endif %}
-						{% endfor %}
-						<li>Proventos declarados no ano-calendário e que serão pagos no(s) ano(s) seguinte(s):
-							<ul>
-							{% for ticker, acao in acoes.items %}
-								{% if acao.credito_prox_ano > 0 %}
-									<li>{{ ticker }}: R${{acao.credito_prox_ano}}</li>
-								{% endif %}
-							{% endfor %}
-							</ul>
-						</li>
-						
-						<!-- CDB/RDB -->
-						{% for investimento, valor in cdb_rdb.items %}
-							{% if valor > 0 %}
-								<li>Aplicação em {{investimento}}: R${{ valor }}</li>
-							{% endif %}
-						{% endfor %}
-						
-						<!-- Fundo de Investimento -->
-						{% for fundo, valor in fundos_investimento.items %}
-							{% if valor > 0 %}
-								<li>Aplicação em {{fundo}}: R${{ valor }}</li>
-							{% endif %}
-						{% endfor %}
-								
-						<!-- FII -->
-						{% for ticker, fii in fiis.items %}
-							{% if fii.quantidade > 0 %}
-								<li>{{ticker}}: {{fii.quantidade}} cota(s) a {{fii.preco_medio}}</li>
-							{% endif %}
-						{% endfor %}
-						
-						<!-- Letras de Crédito -->
-						{% for letra, valor in letras_credito.items %}
-							{% if valor > 0 %}
-								<li>Aplicação em {{letra}}: R${{ valor }}</li>
-							{% endif %}
-						{% endfor %}
-						
-						<!-- Tesouro Direto -->
-						{% if dados.total_acumulado_td > 0 %}
-							<li>Aplicação em Tesouro Direto: R${{ dados.total_acumulado_td }}</li>
+				<div class="portlet-body">
+					<h5>Lucros e dividendos recebidos pelo titular e dependentes</h5>
+					<ul>
+					{% for ticker, acao in acoes.items %}
+						{% if acao.dividendos > 0 %}
+						<li>Dividendos de {{ticker}}: R${{acao.dividendos}}</li>
 						{% endif %}
+					{% endfor %}
+					<li><strong>Total: R${{dados.total_dividendos}}</strong></li>
+					</ul>
+					
+					<h5>Ganhos líquidos em operações no mercado à vista de ações negociadas em bolsa de valores nas alienações 
+					realizadas até R$ 20.000,00, em cada mês, para o conjunto de ações</h5>
+					<ul>
+					{% for mes, ganho in ganho_abaixo_vinte_mil.items %}
+						{% if ganho > 0 %}
+						<li>Mês {{mes}}: R${{ganho}}</li>
+						{% endif %}
+					{% endfor %}
+					<li><strong>Total: R${{dados.total_abaixo_vinte_mil}}</strong></li>
+					</ul>
+					
+					<h5>Outros</h5>
+					<ul>
+					{% for ticker, fii in fiis.items %}
+						{% if fii.rendimentos > 0 %}
+						<li>Rendimentos de {{ticker}}: R${{fii.rendimentos}}</li>
+						{% endif %}
+					{% endfor %}
+					<li><strong>Total: R${{dados.total_rendimentos_fii}}</strong></li>
+					</ul>
+				</div>
+			</div>
+			<!-- END Portlet PORTLET-->
+		</div>
+		<div class="col-md-12">
+			<!-- BEGIN Portlet PORTLET-->
+			<div class="portlet box yellow-crusta">
+				<div class="portlet-title">
+					<div class="caption">
+						<i class="fa fa-folder-open-o"></i>Rendimentos sujeitos à tributação exclusiva/definitiva</div>
+					<div class="tools">
+						<a href="javascript:;" class="collapse"></a>
+					</div>
+				</div>
+				<div class="portlet-body">
+					<h5>Ganhos líquidos em renda variável (bolsa de valores, de mercadorias, de futuros e assemelhados e fundos de investimento imobiliário)</h5>
+					<ul>
+						<li><strong>Total: R${{dados.total_acima_vinte_mil}}</strong></li>
+					</ul>
+					<h5>Juros sobre capital próprio</h5>
+					<ul>
+					{% for ticker, acao in acoes.items %}
+						{% if acao.jscp > 0 %}
+						<li>{{ticker}}: R${{acao.jscp}}</li>
+						{% endif %}
+					{% endfor %}
+					<li><strong>Total: R${{dados.total_jscp}}</strong></li>
+					</ul>
+				</div>
+			</div>
+			<!-- END Portlet PORTLET-->
+		</div>
+		<div class="col-md-12">
+			<!-- BEGIN Portlet PORTLET-->
+			<div class="portlet box yellow-crusta">
+				<div class="portlet-title">
+					<div class="caption">
+						<i class="fa fa-folder-open-o"></i>Bens e Direitos</div>
+					<div class="tools">
+						<a href="javascript:;" class="collapse"></a>
+					</div>
+				</div>
+				<div class="portlet-body">
+					<br/>
+					<ul>
+					<!-- Ações -->
+					{% for ticker, acao in acoes.items %}
+						{% if acao.quantidade > 0 %}
+							<li>{{ticker}}: {{acao.quantidade}} ações a {{acao.preco_medio}}</li>
+						{% endif %}
+					{% endfor %}
+					<li>Proventos declarados no ano-calendário e que serão pagos no(s) ano(s) seguinte(s):
+						<ul>
+						{% for ticker, acao in acoes.items %}
+							{% if acao.credito_prox_ano > 0 %}
+								<li>{{ ticker }}: R${{acao.credito_prox_ano}}</li>
+							{% endif %}
+						{% endfor %}
 						</ul>
+					</li>
+					
+					<!-- CDB/RDB -->
+					{% for investimento, valor in cdb_rdb.items %}
+						{% if valor > 0 %}
+							<li>Aplicação em {{investimento}}: R${{ valor }}</li>
+						{% endif %}
+					{% endfor %}
+                    
+                    <!-- CRI/CRA -->
+                    {% for investimento, valor in cri_cra.items %}
+                        {% if valor > 0 %}
+                            <li>Aplicação em {{investimento}}: R${{ valor|floatformat:4 }}</li>
+                        {% endif %}
+                    {% endfor %}
+					
+					<!-- Fundo de Investimento -->
+					{% for fundo, valor in fundos_investimento.items %}
+						{% if valor > 0 %}
+							<li>Aplicação em {{fundo}}: R${{ valor|floatformat:4 }}</li>
+						{% endif %}
+					{% endfor %}
+							
+					<!-- FII -->
+					{% for ticker, fii in fiis.items %}
+						{% if fii.quantidade > 0 %}
+							<li>{{ticker}}: {{fii.quantidade}} cota(s) a {{fii.preco_medio}}</li>
+						{% endif %}
+					{% endfor %}
+					
+					<!-- Letras de Crédito -->
+					{% for letra, valor in letras_credito.items %}
+						{% if valor > 0 %}
+							<li>Aplicação em {{letra}}: R${{ valor }}</li>
+						{% endif %}
+					{% endfor %}
+					
+					<!-- Tesouro Direto -->
+					{% if dados.total_acumulado_td > 0 %}
+						<li>Aplicação em Tesouro Direto: R${{ dados.total_acumulado_td }}</li>
+					{% endif %}
+					</ul>
+				</div>
+			</div>
+			<!-- END Portlet PORTLET-->
+		</div>
+		<div class="col-md-12">
+			<!-- BEGIN Portlet PORTLET-->
+			<div class="portlet box yellow-crusta">
+				<div class="portlet-title">
+					<div class="caption">
+						<i class="fa fa-folder-open-o"></i>Renda variável</div>
+					<div class="tools">
+						<a href="javascript:;" class="collapse"></a>
 					</div>
 				</div>
-				<!-- END Portlet PORTLET-->
-			</div>
-			<div class="col-md-12">
-				<!-- BEGIN Portlet PORTLET-->
-				<div class="portlet box yellow-crusta">
-					<div class="portlet-title">
-						<div class="caption">
-							<i class="fa fa-folder-open-o"></i>Renda variável</div>
-						<div class="tools">
-							<a href="javascript:;" class="collapse"></a>
-						</div>
-					</div>
-					<div class="portlet-body">
-						<div class="table-scrollable table-scrollable-borderless">
-							<table class="table table-hover table-light">
-								<thead>
-									<tr>
-										<th></th>
-										<th></th>
-										<th></th>
-										<th></th>
-									</tr>
-								</thead>
-								<tbody>
-								{% for mes, ganho in ganho_acima_vinte_mil.items %}
-									<tr>
-										<td>Mês {{mes}}:</td>
-										<td>Comum:</td>
-										{% if ganho.0 >= 0 %}
-										<td class="font-blue"><strong>R${{ganho.0|floatformat:"2"}}</strong></td>
-										{% elif ganho.0 <= 0 %}
-										<td class="font-red-thunderbird"><strong>R${{ganho.0|floatformat:"2"}}</strong></td>
-										{% endif %}
-										<td>Daytrade:</td>
-										{% if ganho.1 >= 0 %}
-										<td class="font-blue"><strong>R${{ganho.1|floatformat:"2"}}</strong></td>
-										{% elif ganho.1 <= 0%}
-										<td class="font-red-thunderbird"><strong>R${{ganho.1|floatformat:"2"}}</strong></td>
-										{% endif %}
-										<td>Prejuízo a compensar:</td>
-										<td>R${{prejuizo_a_compensar|dict_index:mes}}/R${{prejuizo_a_compensar_dt|dict_index:mes}}</td>
-									</tr>
-								{% endfor %}
-								</tbody>
-							</table>
-						</div>
+				<div class="portlet-body">
+					<div class="table-scrollable table-scrollable-borderless">
+						<table class="table table-hover table-light">
+							<thead>
+								<tr>
+									<th></th>
+									<th></th>
+									<th></th>
+									<th></th>
+								</tr>
+							</thead>
+							<tbody>
+							{% for mes, ganho in ganho_acima_vinte_mil.items %}
+								<tr>
+									<td>Mês {{mes}}:</td>
+									<td>Comum:</td>
+									{% if ganho.0 >= 0 %}
+									<td class="font-blue"><strong>R${{ganho.0|floatformat:"2"}}</strong></td>
+									{% elif ganho.0 <= 0 %}
+									<td class="font-red-thunderbird"><strong>R${{ganho.0|floatformat:"2"}}</strong></td>
+									{% endif %}
+									<td>Daytrade:</td>
+									{% if ganho.1 >= 0 %}
+									<td class="font-blue"><strong>R${{ganho.1|floatformat:"2"}}</strong></td>
+									{% elif ganho.1 <= 0%}
+									<td class="font-red-thunderbird"><strong>R${{ganho.1|floatformat:"2"}}</strong></td>
+									{% endif %}
+									<td>Prejuízo a compensar:</td>
+									<td>R${{prejuizo_a_compensar|dict_index:mes}}/R${{prejuizo_a_compensar_dt|dict_index:mes}}</td>
+								</tr>
+							{% endfor %}
+							</tbody>
+						</table>
 					</div>
 				</div>
-				<!-- END Portlet PORTLET-->
 			</div>
+			<!-- END Portlet PORTLET-->
 		</div>
 	</div>
+</div>
 
 {% endblock %}
