@@ -49,7 +49,8 @@
 						<li>Rendimentos de {{ticker}}: R${{fii.rendimentos}}</li>
 						{% endif %}
 					{% endfor %}
-					<li><strong>Total: R${{dados.total_rendimentos_fii}}</strong></li>
+                    <li>Rendimentos de CRI/CRA: R${{dados.total_rendimentos_cri_cra|floatformat:2}}
+					<li><strong>Total: R${{dados.total_rendimentos_isentos_outros|floatformat:2}}</strong></li>
 					</ul>
 				</div>
 			</div>
