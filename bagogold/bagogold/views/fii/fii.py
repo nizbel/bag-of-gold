@@ -357,16 +357,16 @@ def historico_fii(request):
             for fii in qtd_papeis.keys():
                 # Pegar último dia util com negociação do fii para calculo do patrimonio
                 ultimo_dia_util = item.data
-                while not HistoricoFII.objects.filter(data=ultimo_dia_util, fii__ticker=fii):
+                while not HistoricoFII.objects.filter(data=ultimo_dia_util, fii__ticker=fii).exists():
                     ultimo_dia_util -= datetime.timedelta(days=1)
                 patrimonio += (qtd_papeis[fii] * HistoricoFII.objects.get(fii__ticker=fii, data=ultimo_dia_util).preco_unitario)
         else:
             houve_operacao_hoje = True
             for fii in qtd_papeis.keys():
                 # Tenta pegar valor diario, se nao houver, pegar historico do ultimo dia util
-                try:
+                if ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).exists():
                     patrimonio += (Decimal(qtd_papeis[fii]) * ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).order_by('-data_hora')[0].preco_unitario)
-                except:
+                else:
                     patrimonio += (Decimal(qtd_papeis[fii]) * HistoricoFII.objects.filter(fii__ticker=fii).order_by('-data')[0].preco_unitario)
         # Verifica se altera ultima posicao do grafico ou adiciona novo registro
         if len(graf_patrimonio) > 0 and graf_patrimonio[-1][0] == data_formatada:
@@ -383,7 +383,11 @@ def historico_fii(request):
         patrimonio = 0
         for fii in qtd_papeis.keys():
             if qtd_papeis[fii] > 0:
-                patrimonio += (qtd_papeis[fii] * HistoricoFII.objects.filter(fii__ticker=fii)[0].preco_unitario)
+                if ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).exists():
+                    patrimonio += (qtd_papeis[fii] * ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month) \
+                                   .order_by('-data_hora')[0].preco_unitario)
+                else:
+                    patrimonio += (qtd_papeis[fii] * HistoricoFII.objects.filter(fii__ticker=fii).order_by('-data')[0].preco_unitario)
                 
         graf_patrimonio += [[str(calendar.timegm(data_mais_atual.timetuple()) * 1000), float(patrimonio)]]
         
@@ -534,9 +538,9 @@ def painel(request):
     # Preencher totais   
     for fii in fiis.keys():
         total_papeis += fiis[fii].quantidade
-        try:
+        if ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).exists():
             fiis[fii].valor = ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).order_by('-data_hora')[0].preco_unitario
-        except:
+        else:
             fiis[fii].valor = HistoricoFII.objects.filter(fii__ticker=fii).order_by('-data')[0].preco_unitario
         fiis[fii].valor_total = fiis[fii].valor * fiis[fii].quantidade
         fiis[fii].preco_medio = -fiis[fii].total_gasto / fiis[fii].quantidade
