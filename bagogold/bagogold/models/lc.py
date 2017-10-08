@@ -53,7 +53,7 @@ class OperacaoLetraCredito (models.Model):
     investidor = models.ForeignKey('Investidor')
     
     def __unicode__(self):
-        return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.letra_credito, self.data)
+        return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.letra_credito, self.data.strftime('%d/%m/%Y'))
     
     def save(self, *args, **kw):
         # Apagar operação venda caso operação seja editada para compra
