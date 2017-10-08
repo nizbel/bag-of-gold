@@ -9,7 +9,8 @@ from bagogold.bagogold.utils.misc import trazer_primeiro_registro, \
 from bagogold.cdb_rdb.models import OperacaoCDB_RDB
 from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA, CRI_CRA, \
     DataAmortizacaoCRI_CRA
-from bagogold.cri_cra.utils.utils import qtd_cri_cra_ate_dia
+from bagogold.cri_cra.utils.utils import qtd_cri_cra_ate_dia, \
+    calcular_rendimentos_cri_cra_ate_data
 from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
 from collections import OrderedDict
@@ -219,6 +220,10 @@ def detalhar_imposto_renda(request, ano):
         #de um rendimento futuro
         cri_cra[certificado.nome] = calcular_valor_um_cri_cra_na_data(certificado, min(datetime.date.today(), datetime.date(ano, 12, 31))) * qtd_cri_cra[cri_cra_id]
         
+    # Total de rendimentos recebidos no ano
+    total_rendimentos_cri_cra = calcular_rendimentos_cri_cra_ate_data(investidor, datetime.date(ano, 12, 31)) \
+        - calcular_rendimentos_cri_cra_ate_data(investidor, datetime.date(ano - 1, 12, 31))  
+    
     ############################################################
     ### Fundo de investimento  #################################
     ############################################################
@@ -335,6 +340,8 @@ def detalhar_imposto_renda(request, ano):
     dados['total_dividendos'] = total_dividendos
     dados['total_jscp'] = total_jscp
     dados['total_rendimentos_fii'] = total_rendimentos_fii
+    dados['total_rendimentos_cri_cra'] = total_rendimentos_cri_cra
+    dados['total_rendimentos_isentos_outros'] = total_rendimentos_fii + total_rendimentos_cri_cra
     dados['total_abaixo_vinte_mil'] = total_abaixo_vinte_mil
     dados['total_acima_vinte_mil'] = total_acima_vinte_mil
     dados['total_acumulado_td'] = total_acumulado_td
