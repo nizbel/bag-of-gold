@@ -19,7 +19,9 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
-from django.db.models.aggregates import Count
+from django.db.models.aggregates import Count, Sum
+from django.db.models.expressions import F
+from django.db.models.functions import Coalesce
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import get_object_or_404
@@ -630,6 +632,34 @@ def listar_lc(request):
             lc.rendimento_atual = HistoricoPorcentagemLetraCredito.objects.get(letra_credito=lc).porcentagem_di
 
     return TemplateResponse(request, 'lc/listar_lc.html', {'lcs': lcs})
+
+# Retorna id's das operações que podem ser vendidas na data especificada
+@login_required
+def listar_operacoes_passada_carencia(request):
+#     if request.is_ajax():
+        if request.GET.get('data'):
+            try:
+                data = datetime.datetime.strptime(request.GET.get('data'), '%d/%m/%Y').date()
+            except:
+                return HttpResponse(json.dumps({'sucesso': False, 'mensagem': u'Formato de data inválido'}), content_type = "application/json") 
+        else:
+            return HttpResponse(json.dumps({'sucesso': False, 'mensagem': u'Data é obrigatória'}), content_type = "application/json") 
+        
+        investidor = request.user.investidor
+        
+        operacoes = OperacaoLetraCredito.objects.filter(investidor=investidor, tipo_operacao='C').annotate( \
+            qtd_vendida=Coalesce(Sum(F('operacao_compra__operacao_venda__quantidade')), 0)).exclude(qtd_vendida=F('quantidade'))
+        operacoes = [operacao for operacao in operacoes if data >= operacao.data_carencia()]
+        
+         # Verificar se trata-se de uma edição de operação de venda
+        if request.GET.get('id_venda'):
+            operacao_compra_relacionada = OperacaoLetraCredito.objects.get(id=request.GET.get('id_venda')).operacao_compra_relacionada()
+            if operacao_compra_relacionada.id not in [operacao.id for operacao in operacoes] and data >= operacao_compra_relacionada.data_carencia():
+                operacoes.append(operacao_compra_relacionada)
+        
+        return HttpResponse(json.dumps({'sucesso': True, 'operacoes': [str(operacao.id) for operacao in operacoes]}), content_type = "application/json")   
+#     else:
+#         return HttpResponse(json.dumps({'sucesso': False}), content_type = "application/json") 
 
 @adiciona_titulo_descricao('Painel de Letras de Crédito', 'Posição atual do investidor em Letras de Crédito')
 def painel(request):
