@@ -59,7 +59,7 @@ class OperacaoLetraCreditoForm(LocalizedModelForm):
         else:
             query_operacao_compra = OperacaoLetraCredito.objects.filter(investidor=self.investidor, tipo_operacao='C').annotate( \
                 qtd_vendida=Coalesce(Sum(F('operacao_compra__operacao_venda__quantidade')), 0)).exclude(qtd_vendida=F('quantidade'))
-        self.fields['operacao_compra'].queryset = query_operacao_compra
+        self.fields['operacao_compra'].queryset = query_operacao_compra.order_by('data')
     
     def clean_operacao_compra(self):
         tipo_operacao = self.cleaned_data['tipo_operacao']
