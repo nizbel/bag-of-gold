@@ -348,6 +348,12 @@ class DivisaoInvestimento (models.Model):
     def __unicode__(self):
         return self.divisao.nome + ': ' + str(self.quantidade) + ' de ' + unicode(self.investimento)
     
+    """
+    Calcula o percentual do investimento que foi para a divisão
+    """
+    def percentual_divisao(self):
+        return self.quantidade / self.investimento.quantidade
+    
 class DivisaoOperacaoLC (models.Model):
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
     operacao = models.ForeignKey('OperacaoLetraCredito')
@@ -506,7 +512,7 @@ class DivisaoOperacaoAcao (models.Model):
     Calcula o percentual da operação que foi para a divisão
     """
     def percentual_divisao(self):
-        return self.quantidade / self.operacao.quantidade
+        return Decimal(self.quantidade) / self.operacao.quantidade
     
 class DivisaoOperacaoTD (models.Model):
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
@@ -522,10 +528,10 @@ class DivisaoOperacaoTD (models.Model):
     def __unicode__(self):
         return self.divisao.nome + ': ' + str(self.quantidade) + ' de ' + unicode(self.operacao)
         
+    """
+    Calcula o percentual da operação que foi para a divisão
+    """
     def percentual_divisao(self):
-        """
-        Calcula o percentual da operação que foi para a divisão
-        """
         return self.quantidade / self.operacao.quantidade
     
 class DivisaoOperacaoFII (models.Model):
@@ -542,11 +548,11 @@ class DivisaoOperacaoFII (models.Model):
     def __unicode__(self):
         return self.divisao.nome + ': ' + str(self.quantidade) + ' de ' + unicode(self.operacao)
         
+    """
+    Calcula o percentual da operação que foi para a divisão
+    """
     def percentual_divisao(self):
-        """
-        Calcula o percentual da operação que foi para a divisão
-        """
-        return self.quantidade / self.operacao.quantidade
+        return Decimal(self.quantidade) / self.operacao.quantidade
     
 class TransferenciaEntreDivisoes(models.Model):
     TIPO_INVESTIMENTO_BUY_AND_HOLD = 'B'
