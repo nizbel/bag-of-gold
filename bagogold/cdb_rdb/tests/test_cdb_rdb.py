@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoCDB_RDB, Divisao
 from bagogold.bagogold.models.investidores import Investidor
 from bagogold.bagogold.models.lc import HistoricoTaxaDI
 from bagogold.bagogold.utils.lc import \
@@ -11,7 +12,7 @@ from bagogold.cdb_rdb.models import CDB_RDB, HistoricoPorcentagemCDB_RDB, \
     OperacaoCDB_RDB, OperacaoVendaCDB_RDB, HistoricoCarenciaCDB_RDB, \
     HistoricoVencimentoCDB_RDB
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, \
-    buscar_operacoes_vigentes_ate_data
+    buscar_operacoes_vigentes_ate_data, calcular_valor_cdb_rdb_ate_dia_por_divisao
 from decimal import Decimal, ROUND_DOWN
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -97,6 +98,18 @@ class CalcularQuantidadesCDB_RDBTestCase(TestCase):
                                             investimento=cdb, investidor=user.investidor)
         OperacaoVendaCDB_RDB.objects.create(operacao_compra=operacao_4, operacao_venda=operacao_5)
         
+        # Divisões
+        divisao_1 = Divisao.objects.create(nome=u'Divisão 1', investidor=user.investidor)
+        divisao_operacao_1 = DivisaoOperacaoCDB_RDB.objects.create(divisao=divisao_1, operacao=operacao_1, quantidade=operacao_1.quantidade)
+        divisao_operacao_2 = DivisaoOperacaoCDB_RDB.objects.create(divisao=divisao_1, operacao=operacao_2, quantidade=operacao_2.quantidade)
+        divisao_operacao_3 = DivisaoOperacaoCDB_RDB.objects.create(divisao=divisao_1, operacao=operacao_3, quantidade=operacao_3.quantidade)
+        divisao_operacao_4 = DivisaoOperacaoCDB_RDB.objects.create(divisao=divisao_1, operacao=operacao_4, quantidade=Decimal(2000))
+        divisao_operacao_5 = DivisaoOperacaoCDB_RDB.objects.create(divisao=divisao_1, operacao=operacao_5, quantidade=Decimal(500))
+        
+        divisao_2 = Divisao.objects.create(nome=u'Divisão 2', investidor=user.investidor)
+        divisao_operacao_6 = DivisaoOperacaoCDB_RDB.objects.create(divisao=divisao_2, operacao=operacao_4, quantidade=Decimal(1000))
+        divisao_operacao_7 = DivisaoOperacaoCDB_RDB.objects.create(divisao=divisao_2, operacao=operacao_5, quantidade=Decimal(500))
+        
     def test_buscar_qtd_vigente_ao_fim_das_operacoes(self):
         """Testa a quantidade vigente de CDB/RDB ao fim das operações"""
         operacoes_vigentes = buscar_operacoes_vigentes_ate_data(Investidor.objects.get(user__username='tester'), datetime.date(2017, 5, 25))
@@ -105,6 +118,14 @@ class CalcularQuantidadesCDB_RDBTestCase(TestCase):
         self.assertEqual(operacoes_vigentes.get(id=1).qtd_disponivel_venda, Decimal(2000))
         self.assertIn(OperacaoCDB_RDB.objects.get(id=4), operacoes_vigentes)
         self.assertEqual(operacoes_vigentes.get(id=4).qtd_disponivel_venda, Decimal(2000))
+        
+    def test_verificar_qtds_por_divisao(self):
+        """Testa a quantidade em cada divisão"""
+        self.assertDictEqual(calcular_valor_cdb_rdb_ate_dia_por_divisao(datetime.date(2017, 6, 13), Divisao.objects.get(nome=u'Divisão 1').id),
+                             {CDB_RDB.objects.get(nome=u'CDB Teste').id: Decimal(3500)})
+        self.assertDictEqual(calcular_valor_cdb_rdb_ate_dia_por_divisao(datetime.date(2017, 6, 13), Divisao.objects.get(nome=u'Divisão 2').id),
+                             {CDB_RDB.objects.get(nome=u'CDB Teste').id: Decimal(500)})
+        
         
 class FormulariosCarenciaVencimentoTestCase(TestCase):
     
