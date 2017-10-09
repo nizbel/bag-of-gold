@@ -316,8 +316,8 @@ def historico_fii(request):
             if item.tipo_operacao == 'C':
                 item.tipo = 'Compra'
                 uso_proventos = Decimal(0)
-                if len(item.usoproventosoperacaofii_set.all()) > 0:
-                    uso_proventos += item.usoproventosoperacaofii_set.all()[0].qtd_utilizada
+                if item.utilizou_proventos():
+                    uso_proventos += item.qtd_proventos_utilizada()
                     total_proventos -= uso_proventos
                 item.total = Decimal(-1) * (item.quantidade * item.preco_unitario + \
                 item.emolumentos + item.corretagem - uso_proventos)
