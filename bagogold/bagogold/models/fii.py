@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII
 from django.db import models
+from django.db.models.aggregates import Sum
 import datetime
  
 class FII (models.Model):
@@ -71,14 +72,11 @@ class OperacaoFII (models.Model):
         return '(' + self.tipo_operacao + ') ' + str(self.quantidade) + ' ' + self.fii.ticker + ' a R$' + str(self.preco_unitario)
     
     def qtd_proventos_utilizada(self):
-        qtd_total = 0
-        for divisao in DivisaoOperacaoFII.objects.filter(operacao=self):
-            if hasattr(divisao, 'usoproventosoperacaofii'):
-                qtd_total += divisao.usoproventosoperacaofii.qtd_utilizada
+        qtd_total = UsoProventosOperacaoFII.objects.filter(operacao=self).aggregate(qtd_total=Sum('qtd_utilizada'))['qtd_total'] or 0
         return qtd_total
         
     def utilizou_proventos(self):
-        return self.qtd_proventos_utilizada() > 0
+        return UsoProventosOperacaoFII.objects.filter(operacao=self).exists()
     
 class UsoProventosOperacaoFII (models.Model):
     operacao = models.ForeignKey('OperacaoFII')
