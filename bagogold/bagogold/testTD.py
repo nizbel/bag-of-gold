@@ -54,10 +54,10 @@ def baixar_historico_td_total():
             data = time.strptime(key.split(' ')[len(key.split(' '))-1][0:4] + '20' + key.split(' ')[len(key.split(' '))-1][4:], "%d%m%Y")
             data = time.strftime('%Y-%m-%d', data)
 #                 print(data)
-            try:
-                titulo = Titulo.objects.get(tipo=tipo, data_vencimento=data)
-            except Titulo.DoesNotExist:
-                titulo = Titulo(tipo=tipo, data_vencimento=data, data_inicio=data)
+            if Titulo.objects.filter(tipo=Titulo.buscar_vinculo_oficial(tipo), data_vencimento=data).exists():
+                titulo = Titulo.objects.get(tipo=Titulo.buscar_vinculo_oficial(tipo), data_vencimento=data)
+            else:
+                titulo = Titulo(tipo=Titulo.buscar_vinculo_oficial(tipo), data_vencimento=data, data_inicio=data)
                 titulo.save()
             for linha in range(2,len(titulo_vencimento)):
                 # Testar se a linha de data está vazia, passar ao proximo
@@ -129,7 +129,7 @@ def baixar_historico_td_ano(ano):
                 data = time.strptime(key.split(' ')[len(key.split(' '))-1][0:4] + '20' + key.split(' ')[len(key.split(' '))-1][4:], "%d%m%Y")
                 data = time.strftime('%Y-%m-%d', data)
     #                 print(data)
-                if Titulo.objects.filter(tipo=tipo, data_vencimento=data).exists():
+                if Titulo.objects.filter(tipo=Titulo.buscar_vinculo_oficial(tipo), data_vencimento=data).exists():
                     titulo = Titulo.objects.get(tipo=tipo, data_vencimento=data)
                 else:
                     titulo = Titulo(tipo=Titulo.buscar_vinculo_oficial(tipo), data_vencimento=data, data_inicio=data)
@@ -208,18 +208,10 @@ def buscar_valores_diarios():
                     tipo_titulo = re.findall('\(.*?\)', dado)[0]
 #                     print tipo_titulo
                     tipo_titulo = tipo_titulo.replace('(', '').replace(')', '')
-                    if tipo_titulo == 'NTNB Princ':
-                        tipo_titulo = 'NTN-B Principal'
-                    elif tipo_titulo == 'NTNB':
-                        tipo_titulo = 'NTN-B'
-                    elif tipo_titulo == 'NTNF':
-                        tipo_titulo = 'NTN-F'
-                    elif tipo_titulo == 'NTNC':
-                        tipo_titulo = 'NTN-C'
                 elif contador == 1:
                     data_formatada = time.strptime(dado, "%d/%m/%Y")
                     data_formatada = time.strftime('%Y-%m-%d', data_formatada)
-                    valor_diario.titulo = Titulo.objects.get(tipo=tipo_titulo, data_vencimento=data_formatada)
+                    valor_diario.titulo = Titulo.objects.get(tipo=Titulo.buscar_vinculo_oficial(tipo_titulo), data_vencimento=data_formatada)
                 elif contador == 2:
                     valor_diario.taxa_compra = Decimal(re.sub(r'[^\d\.]', '', dado.replace('.', '').replace(',', '.')))
                 elif contador == 4:
