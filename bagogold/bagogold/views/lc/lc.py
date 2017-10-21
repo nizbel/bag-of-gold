@@ -731,6 +731,9 @@ def painel(request):
             data_iteracao = proximas_datas[0].data
         else:
             break
+        
+    # Preencher última taxa do dia caso não tenha sido preenchida no loop das operações
+    taxa_do_dia = HistoricoTaxaDI.objects.all().order_by('-data')[0].taxa
     
     # Remover operações que não estejam mais rendendo
     operacoes = [operacao for operacao in operacoes if (operacao.atual > 0 and operacao.tipo_operacao == 'C')]
