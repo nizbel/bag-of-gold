@@ -528,8 +528,15 @@ def listar_divisoes(request):
          
         if not divisao.objetivo_indefinido():
             divisao.quantidade_percentual = divisao.valor_atual / divisao.valor_objetivo * 100
+#             if divisao.valor_atual < divisao.valor_objetivo and TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=divisao).exists():
+#                 # Calcula o tempo restante com base na primeira transferência de dinheiro para a divisão
+#                 divisao.tempo_restante = (datetime.date.today() - TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=divisao).order_by('data')[0].data).days
+#                 divisao.tempo_restante = divisao.tempo_restante / (divisao.valor_atual / divisao.valor_objetivo) - divisao.tempo_restante
+#             else:
+#                 divisao.tempo_restante = None
         else:
             divisao.quantidade_percentual = 100
+#             divisao.tempo_restante = None
             
         # Calcular saldo da divisão
         divisao.saldo_bh = divisao.saldo_acoes_bh()

@@ -30,6 +30,7 @@
 							<th>Divisão</th>
 							<th>Objetivo</th>
 							<th>Valor atual</th>
+<!--                             <th>Dias restantes</th> -->
 							<th>Saldo</th>
 						</tr>
 					</thead>
@@ -39,6 +40,7 @@
 						<td><a href="{% url 'divisoes:detalhar_divisao' divisao.id %}">{{divisao.nome}}</a></td>
 						<td>R${{divisao.valor_objetivo}}</td>
 						<td>R${{divisao.valor_atual|floatformat:"2"}} ({{divisao.quantidade_percentual|floatformat:"2"}}%)</td>
+<!--                         <td>{{divisao.tempo_restante|floatformat:'1'|default:'0'}} dia(s)</td> -->
 						<td><span class="
 							{% if divisao.saldo < 0 %}
 							font-red-thunderbird
