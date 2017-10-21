@@ -171,16 +171,17 @@ def calcular_valor_lc_ate_dia_por_divisao(dia, divisao_id):
 def simulador_lci_lca(filtros):
     """
     Simula uma aplicação em LCI/LCA para os valores especificados nos filtros
-    Parâmetros:
+    Parâmetros: Dicionário com filtros
     Retorno:    Lista de datas (mes a mes) com valores, ex.: [(data, valor),...]
     """
     qtd_atual = filtros['aplicacao']
     data_atual = datetime.date.today()
     resultado = [(data_atual, qtd_atual)]
+    ultima_taxa_di = HistoricoTaxaDI.objects.all().order_by('-data')[0].taxa
     if filtros['tipo'] == 'POS':
         for _ in range(filtros['periodo']):
             qtd_dias_uteis = qtd_dias_uteis_no_periodo(data_atual, data_atual + datetime.timedelta(days=30))
             data_atual = data_atual + datetime.timedelta(days=30)
-            qtd_atual = calcular_valor_atualizado_com_taxas_di({Decimal('14.13'): qtd_dias_uteis}, qtd_atual, filtros['percentual_indice'])
+            qtd_atual = calcular_valor_atualizado_com_taxas_di({ultima_taxa_di: qtd_dias_uteis}, qtd_atual, filtros['percentual_indice'])
             resultado.append((data_atual, qtd_atual))
     return resultado
