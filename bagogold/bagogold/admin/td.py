@@ -3,7 +3,11 @@ from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, Titulo,
     ValorDiarioTitulo, HistoricoIPCA
 from django.contrib import admin
  
-admin.site.register(Titulo)
+class TituloAdmin(admin.ModelAdmin):
+    search_fields = ['tipo', 'data_vencimento']
+    list_display = ('tipo', 'data_inicio', 'data_vencimento')
+    
+admin.site.register(Titulo, TituloAdmin)
     
 admin.site.register(OperacaoTitulo)
 
