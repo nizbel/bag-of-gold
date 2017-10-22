@@ -453,7 +453,7 @@ def buscar_proventos_proximos_acao(descricao_provento):
     proventos_proximos_ant = Provento.objects.filter(acao=descricao_provento.acao, data_ex__range=range_ant) \
         .exclude(id=descricao_provento.proventoacaodocumento.provento.id).order_by('-data_ex')[:5]
         
-    range_post = [descricao_provento.data_ex, descricao_provento.data_ex + datetime.timedelta(days=365)]
+    range_post = [descricao_provento.data_ex + datetime.timedelta(days=1), descricao_provento.data_ex + datetime.timedelta(days=365)]
     proventos_proximos_post = Provento.objects.filter(acao=descricao_provento.acao, data_ex__range=range_post) \
         .exclude(id=descricao_provento.proventoacaodocumento.provento.id).order_by('data_ex')[:5]
     
@@ -471,7 +471,7 @@ def buscar_proventos_proximos_fii(descricao_provento):
     proventos_proximos_ant = ProventoFII.objects.filter(fii=descricao_provento.fii, data_ex__range=range_ant) \
         .exclude(id=descricao_provento.proventofiidocumento.provento.id).order_by('-data_ex')[:5]
         
-    range_post = [descricao_provento.data_ex, descricao_provento.data_ex + datetime.timedelta(days=365)]
+    range_post = [descricao_provento.data_ex + datetime.timedelta(days=1), descricao_provento.data_ex + datetime.timedelta(days=365)]
     proventos_proximos_post = ProventoFII.objects.filter(fii=descricao_provento.fii, data_ex__range=range_post) \
         .exclude(id=descricao_provento.proventofiidocumento.provento.id).order_by('data_ex')[:5]
     
