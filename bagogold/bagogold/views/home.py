@@ -17,8 +17,7 @@ from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di, \
     calcular_valor_lc_ate_dia, calcular_valor_venda_lc
 from bagogold.bagogold.utils.misc import calcular_rendimentos_ate_data, \
-    verificar_feriado_bovespa, formatar_zeros_a_direita_apos_2_casas_decimais,\
-    converter_date_para_utc
+    verificar_feriado_bovespa, formatar_zeros_a_direita_apos_2_casas_decimais
 from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia
 from bagogold.cdb_rdb.models import OperacaoCDB_RDB
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, \
@@ -172,7 +171,7 @@ def detalhar_acumulados_mensais(request):
         acumulados_mensais[mes][0] = ['%s' % (data_atual.replace(day=1).strftime('%d/%m/%Y')), '%s' % (data_atual.strftime('%d/%m/%Y'))]
         
         # Adiciona total mensal ao gráfico
-        graf_acumulados.append([str(calendar.timegm(converter_date_para_utc(data_atual).timetuple()) * 1000), float(acumulados_mensais[mes][2])])
+        graf_acumulados.append([str(calendar.timegm(data_atual.timetuple()) * 1000), float(acumulados_mensais[mes][2])])
         
         # Coloca data_atual como último dia do mês anterior
         data_atual = ultimo_dia_mes_anterior

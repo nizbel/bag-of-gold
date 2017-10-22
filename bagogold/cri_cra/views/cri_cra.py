@@ -9,7 +9,7 @@ from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
 from bagogold.bagogold.models.td import HistoricoIPCA
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di
 from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo, \
-    formatar_zeros_a_direita_apos_2_casas_decimais, converter_date_para_utc
+    formatar_zeros_a_direita_apos_2_casas_decimais
 from bagogold.cri_cra.forms.cri_cra import CRI_CRAForm, \
     DataRemuneracaoCRI_CRAForm, DataRemuneracaoCRI_CRAFormSet, \
     DataAmortizacaoCRI_CRAFormSet, OperacaoCRI_CRAForm
@@ -308,7 +308,7 @@ def historico(request):
             if qtd_certificados[cri_cra] > 0:
                 total_patrimonio += (qtd_certificados[cri_cra] * calcular_valor_um_cri_cra_na_data(operacao.cri_cra, operacao.data)).quantize(Decimal('.01'))
         
-        data_formatada = str(calendar.timegm(converter_date_para_utc(operacao.data).timetuple()) * 1000)
+        data_formatada = str(calendar.timegm(operacao.data.timetuple()) * 1000)
         # Verifica se altera ultima posicao do grafico ou adiciona novo registro
         if len(graf_investido_total) > 0 and graf_investido_total[-1][0] == data_formatada:
             graf_investido_total[len(graf_investido_total)-1][1] = float(-total_investido)
@@ -321,7 +321,7 @@ def historico(request):
             graf_patrimonio += [[data_formatada, float(total_patrimonio)]]
     
     # Adicionar data mais atual
-    data_atual_formatada = str(calendar.timegm(converter_date_para_utc(datetime.date.today()).timetuple()) * 1000)
+    data_atual_formatada = str(calendar.timegm(datetime.date.today().timetuple()) * 1000)
     if len(graf_patrimonio) > 0 and graf_patrimonio[-1][0] != data_atual_formatada:
         total_patrimonio = 0
         for cri_cra in qtd_certificados.keys():
