@@ -352,7 +352,6 @@ def ler_documento_provento(request, id_pendencia):
                         elemento.save()
                     
                     # Testando erros
-#                     print dir(formset_provento.errors)
 #                     print formset_provento.errors, formset_provento.non_form_errors()
                     for form in formset_provento:
                         for erro in form.non_field_errors():
@@ -401,8 +400,7 @@ def ler_documento_provento(request, id_pendencia):
                         elemento.save()
                     
                     # Testando erros
-#                     print dir(formset_provento.errors)
-                    print formset_provento.errors, formset_provento.non_form_errors()
+#                     print formset_provento.errors, formset_provento.non_form_errors()
                     for form in formset_provento:
                         for erro in form.non_field_errors():
                             messages.error(request, erro)

@@ -7,168 +7,168 @@
 
 {% block content %}
 <div class="portlet-body">
-        <div class="row">
-            <div class="{% if user.is_authenticated %}col-md-10{% else %}col-md-12{% endif %}">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h3>Significado das siglas</h3>
-                        <ul class="list-unstyled">
-                            <li><strong>CDB</strong>: Certificado de Depósito Bancário</li>
-                            <li><strong>RDB</strong>: Recibo de Depósito Bancário</li>
-                        </ul>
-                    </div>
-                    <div class="col-md-6">
-                        <h3>O que são?</h3>
-                        <p>
-                        CDB e RDB são títulos que bancos emitem para poder arrecadar capital. Na prática, é como se o investidor emprestasse dinheiro para que o
-                        banco exerça suas atividades, e, em contrapartida, o investidor recebe juros sobre esse dinheiro. Ambos os títulos pagam Imposto de Renda, sendo a 
-                        diferença entre eles a data de carência: enquanto no CDB o investidor pode resgatar o dinheiro antecipadamente (abrindo mão de parte do
-                        rendimento), no RDB o dinheiro só é pago ao investidor na data de vencimento.
-                        </p>
-                    </div>
-                    <div class="col-md-12">
-                        <div class="mt-element-step">
-                            <div class="row step-line">
-                                <div class="mt-step-desc text-center">
-                                    <h3>Como funciona</h3>
-                                </div>
-                                <div class="col-md-4 mt-step-col first ">
-                                    <div class="mt-step-number bg-white"><i class="icon-user font-yellow-crusta"></i></div>
-                                    <div class="mt-step-title uppercase">Investidor</div>
-                                    <div class="mt-step-content">Empresta dinheiro ao Banco ao adquirir um título</div>
-                                </div>
-                                <div class="col-md-4 mt-step-col">
-                                    <div class="mt-step-number bg-white"><i class="fa fa-bank font-yellow-crusta"></i></div>
-                                    <div class="mt-step-title uppercase">Banco</div>
-                                    <div class="mt-step-content">Opera com o dinheiro recebido</div>
-                                </div>
-                                <div class="col-md-4 mt-step-col last">
-                                    <div class="mt-step-number bg-white"><i class="fa fa-money font-yellow-crusta"></i></div>
-                                    <div class="mt-step-title uppercase">Retorno</div>
-                                    <div class="mt-step-content">Na data de vencimento, ou após o período de carência caso o investidor queira resgatar, o dinheiro volta ao
-                                    investidor, somado ao rendimento acordado na primeira etapa</div>
-                                </div>
+    <div class="row">
+        <div class="{% if user.is_authenticated %}col-md-10{% else %}col-md-12{% endif %}">
+            <div class="row">
+                <div class="col-md-6">
+                    <h3>Significado das siglas</h3>
+                    <ul class="list-unstyled">
+                        <li><strong>CDB</strong>: Certificado de Depósito Bancário</li>
+                        <li><strong>RDB</strong>: Recibo de Depósito Bancário</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h3>O que são?</h3>
+                    <p>
+                    CDB e RDB são títulos que bancos emitem para poder arrecadar capital. Na prática, é como se o investidor emprestasse dinheiro para que o
+                    banco exerça suas atividades, e, em contrapartida, o investidor recebe juros sobre esse dinheiro. Ambos os títulos pagam Imposto de Renda, sendo a 
+                    diferença entre eles a data de carência: enquanto no CDB o investidor pode resgatar o dinheiro antecipadamente (abrindo mão de parte do
+                    rendimento), no RDB o dinheiro só é pago ao investidor na data de vencimento.
+                    </p>
+                </div>
+                <div class="col-md-12">
+                    <div class="mt-element-step">
+                        <div class="row step-line">
+                            <div class="mt-step-desc text-center">
+                                <h3>Como funciona</h3>
+                            </div>
+                            <div class="col-md-4 mt-step-col first ">
+                                <div class="mt-step-number bg-white"><i class="icon-user font-yellow-crusta"></i></div>
+                                <div class="mt-step-title uppercase">Investidor</div>
+                                <div class="mt-step-content">Empresta dinheiro ao Banco ao adquirir um título</div>
+                            </div>
+                            <div class="col-md-4 mt-step-col">
+                                <div class="mt-step-number bg-white"><i class="fa fa-bank font-yellow-crusta"></i></div>
+                                <div class="mt-step-title uppercase">Banco</div>
+                                <div class="mt-step-content">Opera com o dinheiro recebido</div>
+                            </div>
+                            <div class="col-md-4 mt-step-col last">
+                                <div class="mt-step-number bg-white"><i class="fa fa-money font-yellow-crusta"></i></div>
+                                <div class="mt-step-title uppercase">Retorno</div>
+                                <div class="mt-step-content">Na data de vencimento, ou após o período de carência caso o investidor queira resgatar, o dinheiro volta ao
+                                investidor, somado ao rendimento acordado na primeira etapa</div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <h3>Garantia</h3>
-                        <p>
-                        São garantidos pelo FGC (Fundo Garantidor de Crédito) <strong>um limite de até R$ 250.000,00 por CPF por instituição</strong>.
-                        </p>
-                    </div>
-                    <div class="col-md-6">
-                        <h3>Tipos</h3>
-                        <p>
-                        Podem ser prefixados ou pós-fixados. Os prefixados já mostram ao investidor quanto ele irá receber na data de vencimento. Nos pós-fixados,
-                        a taxa de rendimento é atrelada a um índice, como o DI (mais comum) ou o IPCA, portanto o investidor só irá saber o rendimento final ao 
-                        término do prazo.
-                        </p>
-                    </div>
-                    <div class="col-md-6">
-                        <h3>Liquidez</h3>
-                        <p>
-                        <strong>CDB</strong>: O investidor apenas pode resgatar o dinheiro após um período de carência, se houver, ou na data de vencimento. Resgates em um
-                        período inferior a 30 dias também pagam IOF de acordo com a tabela regressiva de IOF.
-                        </p>
-                        <p>
-                        <strong>RDB</strong>: O investidor apenas pode resgatar o dinheiro na data de vencimento.
-                        </p>
-                    </div>
-                    <div class="col-md-6">
-                        <h3>Imposto de Renda</h3>
-                        <p>
-                        Os investimentos em CDB/RDB seguem a Tabela Regressiva:
-                        </p>
-                        <ul class="list-unstyled">
-                            <li>Até 180 dias: <strong>22,5% </strong>
-                            <li>Entre 181 e 360 dias: <strong>20% </strong>
-                            <li>Entre 361 e 720 dias: <strong>17,5% </strong>
-                            <li>Após 720 dias: <strong>15% </strong>
-                        </ul>
-                    </div>
-                    <div class="col-md-6">
-                        <h3>Para mais informações:</h3>
-                        <ul class="list-unstyled">
-                            <li><a href="http://www.infomoney.com.br/cdb">Infomoney</a></li>
-                            <li><a href="http://www.startpoint.com.br/InvRDB.htm">Start Point</a></li>
-                        </ul>
-                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h3>Garantia</h3>
+                    <p>
+                    São garantidos pelo FGC (Fundo Garantidor de Crédito) <strong>um limite de até R$ 250.000,00 por CPF por instituição</strong>.
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <h3>Tipos</h3>
+                    <p>
+                    Podem ser prefixados ou pós-fixados. Os prefixados já mostram ao investidor quanto ele irá receber na data de vencimento. Nos pós-fixados,
+                    a taxa de rendimento é atrelada a um índice, como o DI (mais comum) ou o IPCA, portanto o investidor só irá saber o rendimento final ao 
+                    término do prazo.
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <h3>Liquidez</h3>
+                    <p>
+                    <strong>CDB</strong>: O investidor apenas pode resgatar o dinheiro após um período de carência, se houver, ou na data de vencimento. Resgates em um
+                    período inferior a 30 dias também pagam IOF de acordo com a tabela regressiva de IOF.
+                    </p>
+                    <p>
+                    <strong>RDB</strong>: O investidor apenas pode resgatar o dinheiro na data de vencimento.
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <h3>Imposto de Renda</h3>
+                    <p>
+                    Os investimentos em CDB/RDB seguem a Tabela Regressiva:
+                    </p>
+                    <ul class="list-unstyled">
+                        <li>Até 180 dias: <strong>22,5% </strong>
+                        <li>Entre 181 e 360 dias: <strong>20% </strong>
+                        <li>Entre 361 e 720 dias: <strong>17,5% </strong>
+                        <li>Após 720 dias: <strong>15% </strong>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h3>Para mais informações:</h3>
+                    <ul class="list-unstyled">
+                        <li><a href="http://www.infomoney.com.br/cdb">Infomoney</a></li>
+                        <li><a href="http://www.startpoint.com.br/InvRDB.htm">Start Point</a></li>
+                    </ul>
                 </div>
             </div>
-            {% if user.is_authenticated %}
-            <div class="col-md-2">
-                <div class="portlet box yellow-crusta">
-                    <div class="portlet-title">
-                        <div class="caption">
-                            <i class="icon-user"></i>Investidor</div>
-                        <div class="tools">
-                            <a href="javascript:;" class="collapse"></a>
-                        </div>
-                    </div>
-                    <div class="portlet-body">
-                        {% if total_atual > 0 %}
-                        <h4>Total atual</h4>
-                        <div class="col-md-12 text-center font-yellow-crusta">
-                            <p class="lead">
-                                <strong>R$ <span data-counter="counterup" data-value="{{ total_atual }}">0</span></strong>
-                            </p>
-                        </div>
-                        {% endif %}
-                        <h4>Investimentos</h4>
-                        <ul class="list-unstyled">
-                            <li><a href="{% url "cdb_rdb:inserir_operacao_cdb_rdb" %}">Inserir operação</a></li>
-                            <li><a href="{% url "cdb_rdb:historico_cdb_rdb" %}">Histórico de operações</a></li>
-                            <li><a href="{% url "cdb_rdb:painel_cdb_rdb" %}">Painel de CDB/RDB</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
         </div>
-        
-        <div class="row">
-            <div class="col-md-6">
-                <div class="portlet box yellow-crusta">
-                    <div class="portlet-title">
-                        <div class="caption">
-                            <i class="fa fa-line-chart"></i>Últimos valores para o DI</div>
-                        <div class="tools">
-                            <a href="javascript:;" class="collapse"></a>
-                        </div>
-                    </div>
-                    <div class="portlet-body">
-                        <div class="chart" id="graf_historico_di" style="width:100%;height:300px"></div>
+        {% if user.is_authenticated %}
+        <div class="col-md-2">
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="icon-user"></i>Investidor</div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
                     </div>
                 </div>
+                <div class="portlet-body">
+                    {% if total_atual > 0 %}
+                    <h4>Total atual</h4>
+                    <div class="col-md-12 text-center font-yellow-crusta">
+                        <p class="lead">
+                            <strong>R$ <span data-counter="counterup" data-value="{{ total_atual }}">0</span></strong>
+                        </p>
+                    </div>
+                    {% endif %}
+                    <h4>Investimentos</h4>
+                    <ul class="list-unstyled">
+                        <li><a href="{% url "cdb_rdb:inserir_operacao_cdb_rdb" %}">Inserir operação</a></li>
+                        <li><a href="{% url "cdb_rdb:historico_cdb_rdb" %}">Histórico de operações</a></li>
+                        <li><a href="{% url "cdb_rdb:painel_cdb_rdb" %}">Painel de CDB/RDB</a></li>
+                    </ul>
+                </div>
             </div>
-            <div class="col-md-6">
-                <div class="portlet box yellow-crusta">
-                    <div class="portlet-title">
-                        <div class="caption">
-                            <i class="fa fa-line-chart"></i>Últimos valores para o IPCA</div>
-                        <div class="tools">
-                            <a href="javascript:;" class="collapse"></a>
-                        </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-line-chart"></i>Últimos valores para o DI</div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
                     </div>
-                    <div class="portlet-body">
-                        <div class="chart" id="graf_historico_ipca" style="width:100%;height:300px"></div>
+                </div>
+                <div class="portlet-body">
+                    <div class="chart" id="graf_historico_di" style="width:100%;height:300px"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-line-chart"></i>Últimos valores para o IPCA</div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
                     </div>
+                </div>
+                <div class="portlet-body">
+                    <div class="chart" id="graf_historico_ipca" style="width:100%;height:300px"></div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
 {% endblock %}
 
 {% block extra_footer %}
 <script src={% static "assets/global/plugins/counterup/jquery.waypoints.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/counterup/jquery.counterup.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/moment.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.axislabels.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.categories.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.crosshair.min.js" %} type="text/javascript"></script>
-<script src={% static "assets/global/plugins/flot/jquery.flot.resize.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.resize.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.stack.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.time.min.js" %} type="text/javascript"></script>
@@ -213,7 +213,7 @@ $( document ).ready(function() {
                     y = item.datapoint[1].toFixed(2).toString().replace('.', ',');
                 
                 var date = new Date(parseInt(x));
-                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%Y") +"</br>Taxa: " + y + "%");
+                showTooltip(item.pageX, item.pageY, moment.utc(date).format('DD/MM/YYYY') +"</br>Taxa: " + y + "%");
             }
         }
         else {
@@ -235,7 +235,7 @@ $( document ).ready(function() {
                     y = item.datapoint[1].toFixed(2).toString().replace('.', ',');
                 
                 var date = new Date(parseInt(x));
-                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%Y") +"</br>Taxa: " + y + "%");
+                showTooltip(item.pageX, item.pageY, moment.utc(date).format('DD/MM/YYYY') +"</br>Taxa: " + y + "%");
             }
         }
         else {
