@@ -29,7 +29,12 @@ class InvestidorRecusaDocumentoAdmin(admin.ModelAdmin):
 admin.site.register(InvestidorRecusaDocumento, InvestidorRecusaDocumentoAdmin)
     
 class InvestidorResponsavelPendenciaAdmin(admin.ModelAdmin):
-    list_display = ('investidor', 'pendencia')
+    search_fields = ['investidor__user__username', 'pendencia__documento__protocolo']
+    list_display = ('investidor', 'documento')
+
+    def documento(self, obj):
+        return obj.pendencia.documento
+    documento.short_description = 'Documento'
 
 admin.site.register(InvestidorResponsavelPendencia, InvestidorResponsavelPendenciaAdmin)
         
