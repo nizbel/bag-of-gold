@@ -5,7 +5,6 @@ from bagogold.bagogold.forms.divisoes import DivisaoOperacaoCriptomoedaFormSet, 
     DivisaoTransferenciaCriptomoedaFormSet
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoCriptomoeda, \
     Divisao, DivisaoTransferenciaCriptomoeda
-from bagogold.bagogold.utils.misc import converter_date_para_utc
 from bagogold.criptomoeda.forms import OperacaoCriptomoedaForm, \
     TransferenciaCriptomoedaForm
 from bagogold.criptomoeda.models import Criptomoeda, OperacaoCriptomoeda, \
@@ -364,7 +363,7 @@ def historico(request):
             
         total_investido = sum([(moeda.preco_medio * moeda.qtd) for moeda in moedas.values() if moeda.qtd > 0])
         
-        data_formatada = str(calendar.timegm(converter_date_para_utc(movimentacao.data).timetuple()) * 1000)
+        data_formatada = str(calendar.timegm(movimentacao.data.timetuple()) * 1000)
         # Adicionar no gráfico
         if graf_investido_total and data_formatada == graf_investido_total[-1][0]:
             graf_investido_total[-1][1] = float(total_investido)
@@ -380,7 +379,7 @@ def historico(request):
             graf_patrimonio += [[data_formatada, data_formatada_utc, patrimonio]]
             
     # Adicionar data atual formatada
-    data_formatada = str(calendar.timegm(converter_date_para_utc(datetime.date.today()).timetuple()) * 1000)
+    data_formatada = str(calendar.timegm(datetime.date.today().timetuple()) * 1000)
     # Se não existe a data em um gráfico, nenhum gráfico tem a data
     if not (graf_investido_total and data_formatada == graf_investido_total[-1][0]):
         graf_investido_total += [[data_formatada, float(total_investido)]]
