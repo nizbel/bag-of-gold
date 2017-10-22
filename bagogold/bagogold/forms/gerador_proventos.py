@@ -24,7 +24,7 @@ class ProventoAcaoDescritoDocumentoBovespaForm(LocalizedModelForm):
         dados = super(ProventoAcaoDescritoDocumentoBovespaForm, self).clean()
         data_ex = dados.get('data_ex')
         data_pagamento = dados.get('data_pagamento')
-        if (data_ex > data_pagamento):
+        if data_ex and data_pagamento and (data_ex > data_pagamento):
             raise forms.ValidationError("Data EX deve ser anterior a data de pagamento")
         return dados
 
@@ -56,11 +56,10 @@ class ProventoFIIDescritoDocumentoBovespaForm(LocalizedModelForm):
                  'data_pagamento': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),
                  'tipo_provento': widgets.Select(choices=ProventoFII.ESCOLHAS_TIPO_PROVENTO_FII),}
-        
+    
     def clean(self):
         dados = super(ProventoFIIDescritoDocumentoBovespaForm, self).clean()
         data_ex = dados.get('data_ex')
         data_pagamento = dados.get('data_pagamento')
-        if (data_ex > data_pagamento):
+        if data_ex and data_pagamento and (data_ex > data_pagamento):
             raise forms.ValidationError("Data EX deve ser anterior a data de pagamento")
-        return dados
