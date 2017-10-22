@@ -205,7 +205,7 @@ $( document ).ready(function() {
                     y = item.datapoint[1].toFixed(2);
                 
                 var date = new Date(parseInt(x));
-                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%y") +"</br>" + item.series.label + ": R$" + y.replace('.', ','));
+                showTooltip(item.pageX, item.pageY, moment.utc(date).format('DD/MM/YYYY') +"</br>" + item.series.label + ": R$" + y.replace('.', ','));
             }
         }
         else {
