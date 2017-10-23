@@ -209,11 +209,6 @@
                                                             <a href="{% url "acoes:bh:inserir_operacao_bh" %}"> Inserir operação </a>
                                                         </li>
                                                         {% endif %}
-                                                        {% if request.user.is_superuser %}
-                                                        <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_provento_bh' %}active{% endif %}">
-                                                            <a href="{% url "acoes:bh:inserir_provento_bh" %}"> Inserir provento </a>
-                                                        </li>
-                                                        {% endif %}
                                                         {% if request.user.is_authenticated %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_taxa_custodia_acao' %}active{% endif %}">
                                                             <a href="{% url "acoes:bh:inserir_taxa_custodia_acao" %}"> Inserir taxa de custódia </a>
@@ -280,11 +275,6 @@
                                                 {% if request.user.is_authenticated %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_fii' %}active{% endif %}">
                                                     <a href="{% url "fii:inserir_operacao_fii" %}" class="nav-link  "> Inserir operação </a>
-                                                </li>
-                                                {% endif %}
-                                                {% if request.user.is_superuser %}
-                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_provento_fii' %}active{% endif %}">
-                                                    <a href="{% url "fii:inserir_provento_fii" %}" class="nav-link  "> Inserir provento </a>
                                                 </li>
                                                 {% endif %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_fii' %}active{% endif %}">

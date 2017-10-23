@@ -656,19 +656,6 @@ def inserir_operacao_acao(request):
                                                                        'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})
     
 @login_required
-@user_passes_test(is_superuser)
-def inserir_provento_acao(request):
-    if request.method == 'POST':
-        form = ProventoAcaoForm(request.POST)
-        if form.is_valid():
-            operacao_acao = form.save()
-            return HttpResponseRedirect(reverse('acoes:bh:historico_bh'))
-    else:
-        form = ProventoAcaoForm()
-            
-    return TemplateResponse(request, 'acoes/buyandhold/inserir_provento_acao.html', {'form': form, })
-    
-@login_required
 @adiciona_titulo_descricao('Inserir taxa de custódia para Ações', 'Insere um registro no histórico de valores de taxa de custódia para o investidor')
 def inserir_taxa_custodia_acao(request):
     investidor = request.user.investidor
