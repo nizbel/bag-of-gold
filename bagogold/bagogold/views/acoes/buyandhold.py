@@ -147,25 +147,6 @@ def editar_operacao_acao(request, operacao_id):
     return TemplateResponse(request, 'acoes/buyandhold/editar_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,
                                                                        'formset_divisao': formset_divisao, 'poupanca_proventos': poupanca_proventos, 'varias_divisoes': varias_divisoes})
 
-@login_required
-@user_passes_test(is_superuser)
-def editar_provento_acao(request, id):
-    provento = Provento.objects.get(pk=id)
-    if request.method == 'POST':
-        if request.POST.get("save"):
-            form = ProventoAcaoForm(request.POST, instance=provento)
-            if form.is_valid():
-                form.save()
-                return HttpResponseRedirect(reverse('acoes:bh:historico_bh'))
-        elif request.POST.get("delete"):
-            provento.delete()
-            return HttpResponseRedirect(reverse('acoes:bh:historico_bh'))
-
-    else:
-        form = ProventoAcaoForm(instance=provento)
-            
-    return TemplateResponse(request, 'acoes/buyandhold/editar_provento_acao.html', {'form': form})  
-
 @adiciona_titulo_descricao('Estatísticas da ação', 'Mostra estatísticas e valores históricos de uma ação')
 def estatisticas_acao(request, ticker=None):
     if request.user.is_authenticated():

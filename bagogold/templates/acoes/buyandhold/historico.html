@@ -210,11 +210,14 @@
 					<tr>
 						<td><a href="{% url 'acoes:bh:estatisticas_acao_bh' operacao.acao.ticker %}" data-original-title="Estatísticas ação"
 							class="tooltips" data-placement="top">{{operacao.acao.ticker}}</a></td>
-						<td><a href={% if operacao.tipo != 'Compra' and operacao.tipo != 'Venda' %}
-							"{% url 'acoes:bh:editar_provento_bh' operacao.id %}" data-original-title="Editar provento"
-						{% else %}
-							"{% url 'acoes:bh:editar_operacao_bh' operacao.id %}" data-original-title="Editar operação" 
-						{% endif %} class="tooltips" data-placement="top" >{{operacao.tipo}}</a></td>
+						<td>
+                            {% if operacao.tipo == 'Compra' or operacao.tipo == 'Venda' %}
+                                <a href="{% url 'acoes:bh:editar_operacao_bh' operacao.id %}" data-original-title="Editar operação" 
+    						      class="tooltips" data-placement="top" >{{operacao.tipo}}</a>
+                            {% else %}
+                                {{operacao.tipo}}
+                            {% endif %}
+                        </td>
 						<td>{{ operacao.data|date:"Y-m-d" }}</td>
 						<td>{{operacao.quantidade}}</td>
 						<td>R${{operacao.preco_unitario}}</td>
