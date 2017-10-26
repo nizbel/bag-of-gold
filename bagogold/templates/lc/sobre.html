@@ -251,7 +251,7 @@ $( document ).ready(function() {
                     y = item.datapoint[1].toFixed(2).toString().replace('.', ',');
                 
                 var date = new Date(parseInt(x));
-                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%Y") +"</br>Taxa: " + y + "%");
+                showTooltip(item.pageX, item.pageY, moment.utc(date).format('DD/MM/YYYY') +"</br>Taxa: " + y + "%");
             }
         }
         else {
@@ -273,7 +273,7 @@ $( document ).ready(function() {
                     y = item.datapoint[1].toFixed(2).toString().replace('.', ',');
                 
                 var date = new Date(parseInt(x));
-                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%Y") +"</br>Taxa: " + y + "%");
+                showTooltip(item.pageX, item.pageY, moment.utc(date).format('DD/MM/YYYY') +"</br>Taxa: " + y + "%");
             }
         }
         else {
@@ -295,7 +295,7 @@ $( document ).ready(function() {
                     y = item.datapoint[1].toFixed(2).toString().replace('.', ',');
                 
                 var date = new Date(parseInt(x));
-                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%Y") +"</br>Valor: R$ " + y);
+                showTooltip(item.pageX, item.pageY, moment.utc(date).format('DD/MM/YYYY') +"</br>Valor: R$ " + y);
             }
         }
         else {
