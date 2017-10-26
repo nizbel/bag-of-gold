@@ -349,7 +349,7 @@ function showTooltip(x, y, contents) {
                     y = item.datapoint[1].toFixed(2);
                 
                 var date = new Date(parseInt(x));
-                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%m/%Y") +"</br>" + item.series.label + ": R$" + y.replace('.', ','));
+                showTooltip(item.pageX, item.pageY, moment.utc(date).format('MM/YYYY') +"</br>" + item.series.label + ": R$" + y.replace('.', ','));
             }
         }
         else {
@@ -371,7 +371,7 @@ function showTooltip(x, y, contents) {
                     y = item.datapoint[1].toFixed(2);
                 
                 var date = new Date(parseInt(x));
-                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%m/%Y") +"</br>" + item.series.label + ": R$" + y.replace('.', ','));
+                showTooltip(item.pageX, item.pageY, moment.utc(date).format('MM/YYYY') +"</br>" + item.series.label + ": R$" + y.replace('.', ','));
             }
         }
         else {
