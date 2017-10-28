@@ -15,7 +15,6 @@ jQuery(document).ready(function($){
 			timelineComponents['fillingLine'] = timelineComponents['eventsWrapper'].children('.filling-line');
 			timelineComponents['timelineEvents'] = timelineComponents['eventsWrapper'].find('a');
 			timelineComponents['timelineDates'] = parseDate(timelineComponents['timelineEvents']);
-			timelineComponents['eventsMinLapse'] = minLapse(timelineComponents['timelineDates']);
 			timelineComponents['timelineNavigation'] = timeline.find('.cd-timeline-navigation');
 			timelineComponents['eventsContent'] = timeline.children('.events-content');
 
@@ -129,18 +128,18 @@ jQuery(document).ready(function($){
 	}
 
 	function setDatePosition(timelineComponents, min) {
+		var totalDatesDistance = timelineComponents['timelineDates'].length*2 * min,
+			totalWidth = Math.max(totalDatesDistance, timelineComponents['timelineNavigation'].find('.next').position().left);
 		for (i = 0; i < timelineComponents['timelineDates'].length; i++) { 
-		    var distance = daydiff(timelineComponents['timelineDates'][0], timelineComponents['timelineDates'][i]),
-		    	distanceNorm = Math.round(distance/timelineComponents['eventsMinLapse']) + 2;
+		    var distance = i*2,
+		    	distanceNorm = distance * totalWidth / totalDatesDistance;
 		    timelineComponents['timelineEvents'].eq(i).css('left', distanceNorm*min+'px');
 		}
 	}
 
 	function setTimelineWidth(timelineComponents, width) {
-		var timeSpan = daydiff(timelineComponents['timelineDates'][0], timelineComponents['timelineDates'][timelineComponents['timelineDates'].length-1]),
-			timeSpanNorm = timeSpan/timelineComponents['eventsMinLapse'],
-			timeSpanNorm = Math.round(timeSpanNorm) + 4,
-			totalWidth = timeSpanNorm*width;
+		var timeSpan = timelineComponents['timelineDates'].length*2,
+			totalWidth = Math.max(timeSpan*width, timelineComponents['timelineNavigation'].find('.next').position().left);
 		timelineComponents['eventsWrapper'].css('width', totalWidth+'px');
 		updateFilling(timelineComponents['eventsWrapper'].find('a.selected'), timelineComponents['fillingLine'], totalWidth);
 		updateTimelinePosition('next', timelineComponents['eventsWrapper'].find('a.selected'), timelineComponents);
@@ -222,20 +221,6 @@ jQuery(document).ready(function($){
 			dateArrays.push(newDate);
 		});
 	    return dateArrays;
-	}
-
-	function daydiff(first, second) {
-	    return Math.round((second-first));
-	}
-
-	function minLapse(dates) {
-		//determine the minimum distance among events
-		var dateDistances = [];
-		for (i = 1; i < dates.length; i++) { 
-		    var distance = daydiff(dates[i-1], dates[i]);
-		    dateDistances.push(distance);
-		}
-		return Math.min.apply(null, dateDistances);
 	}
 
 	/*

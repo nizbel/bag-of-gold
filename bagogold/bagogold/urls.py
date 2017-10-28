@@ -82,6 +82,7 @@ divisoes_patterns = [
     url(r'^editar_transferencia/(?P<id>\d+)/$', views.divisoes.divisoes.editar_transferencia, name='editar_transferencia'),
     url(r'^inserir_divisao/$', views.divisoes.divisoes.inserir_divisao, name='inserir_divisao'),
     url(r'^inserir_transferencia/$', views.divisoes.divisoes.inserir_transferencia, name='inserir_transferencia'),
+    url(r'^linha_do_tempo/$', views.divisoes.linha_do_tempo.linha_do_tempo, name='linha_do_tempo'),
     url(r'^listar_divisoes/$', views.divisoes.divisoes.listar_divisoes, name='listar_divisoes'),
     url(r'^listar_transferencias/$', views.divisoes.divisoes.listar_transferencias, name='listar_transferencias'),
     ]
