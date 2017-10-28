@@ -12,185 +12,206 @@
 
 {% block content %}
 <div class="portlet-body">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="portlet box yellow-crusta">
-                    <div class="portlet-title">
-                        <div class="caption">
-                            <i class="fa fa-line-chart"></i>Acompanhamento de pendências
-                        </div>
-                        <div class="tools">
-                            <a href="javascript:;" class="collapse"></a>
-                        </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-line-chart"></i>Acompanhamento de pendências
                     </div>
-                    <div class="portlet-body">
-                        <div class="chart" id="graf_pendencias_usuario" style="width:100%;height:400px"></div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
                     </div>
                 </div>
-            </div>
-        </div>
-        
-        <div class="row">
-            <div class="col-md-4">
-                <div class="portlet box yellow-crusta">
-                	<div class="portlet-title">
-                		<div class="caption">
-                			<i class="icon-list"></i>Pendências atuais
-                        </div>
-                        <div class="tools">
-                            <a href="javascript:;" class="collapse"></a>
-                        </div>
-                	</div>
-                	<div class="portlet-body">
-                		<table id="pendencias" class="table table-striped table-bordered table-hover table-header-fixed">
-                		<thead>
-                			<tr>
-                				<th>Tipo</th>
-                				<th>Documento</th>
-                                <th>Data da alocação</th>
-                			</tr>
-                		</thead>
-                		<tbody>
-                		{% for pendencia in usuario.pendencias_alocadas %}
-                			<tr>
-                				<td>{{pendencia.tipo_pendencia}}</td>
-                                <td><a href="{% url "gerador_proventos:detalhar_documento" pendencia.documento.id %}">{{pendencia.documento}}</a></td>
-                                <td>{{pendencia.investidorresponsavelpendencia.data_alocacao|date:"d/m/Y H:i"}}</td>
-                			</tr>
-                		{% endfor %}	
-                		</tbody>
-                		</table>
-                	</div>
-                </div>
-            </div>
-            
-            <div class="col-md-4">
-                <div class="portlet box yellow-crusta">
-                    <div class="portlet-title">
-                        <div class="caption">
-                            <i class="icon-list"></i>Leituras feitas
-                        </div>
-                        <div class="tools">
-                            <a href="javascript:;" class="collapse"></a>
-                        </div>
-                    </div>
-                    <div class="portlet-body">
-                        <table id="leituras" class="table table-striped table-bordered table-hover table-header-fixed">
-                        <thead>
-                            <tr>
-                                <th>Documento</th>
-                                <th>Data da leitura</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        {% for leitura in usuario.leituras %}
-                            <tr>
-                                <td><a href="{% url "gerador_proventos:detalhar_documento" leitura.documento.id %}">{{leitura.documento}}</a></td>
-                                <td>{{leitura.data_leitura|date:"d/m/Y H:i"}}</td>
-                            </tr>
-                        {% endfor %}    
-                        </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-4">
-                <div class="portlet box yellow-crusta">
-                    <div class="portlet-title">
-                        <div class="caption">
-                            <i class="icon-list"></i>Validações feitas
-                        </div>
-                        <div class="tools">
-                            <a href="javascript:;" class="collapse"></a>
-                        </div>
-                    </div>
-                    <div class="portlet-body">
-                        <table id="validacoes" class="table table-striped table-bordered table-hover table-header-fixed">
-                        <thead>
-                            <tr>
-                                <th>Documento</th>
-                                <th>Data da validação</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        {% for validacao in usuario.validacoes %}
-                            <tr>
-                                <td><a href="{% url "gerador_proventos:detalhar_documento" validacao.documento.id %}">{{validacao.documento}}</a></td>
-                                <td>{{validacao.data_validacao|date:"d/m/Y H:i"}}</td>
-                            </tr>
-                        {% endfor %}    
-                        </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-            
-        <div class="row">
-            <div class="col-md-4">
-                <div class="portlet box yellow-crusta">
-                    <div class="portlet-title">
-                        <div class="caption">
-                            <i class="icon-list"></i>Leituras que recusou
-                        </div>
-                        <div class="tools">
-                            <a href="javascript:;" class="collapse"></a>
-                        </div>
-                    </div>
-                    <div class="portlet-body">
-                        <table id="validacoes" class="table table-striped table-bordered table-hover table-header-fixed">
-                        <thead>
-                            <tr>
-                                <th>Documento</th>
-                                <th>Data da recusa</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        {% for recusa in usuario.leituras_que_recusou %}
-                            <tr>
-                                <td><a href="{% url "gerador_proventos:detalhar_documento" recusa.documento.id %}">{{recusa.documento}}</a></td>
-                                <td>{{recusa.data_recusa|date:"d/m/Y H:i"}}</td>
-                            </tr>
-                        {% endfor %}    
-                        </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-4">
-                <div class="portlet box yellow-crusta">
-                    <div class="portlet-title">
-                        <div class="caption">
-                            <i class="icon-list"></i>Leituras que teve recusadas
-                        </div>
-                        <div class="tools">
-                            <a href="javascript:;" class="collapse"></a>
-                        </div>
-                    </div>
-                    <div class="portlet-body">
-                        <table id="validacoes" class="table table-striped table-bordered table-hover table-header-fixed">
-                        <thead>
-                            <tr>
-                                <th>Documento</th>
-                                <th>Data da recusa</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        {% for recusa in usuario.leituras_recusadas %}
-                            <tr>
-                                <td><a href="{% url "gerador_proventos:detalhar_documento" recusa.documento.id %}">{{recusa.documento}}</a></td>
-                                <td>{{recusa.data_recusa|date:"d/m/Y H:i"}}</td>
-                            </tr>
-                        {% endfor %}    
-                        </tbody>
-                        </table>
-                    </div>
+                <div class="portlet-body">
+                    <div class="chart" id="graf_pendencias_usuario" style="width:100%;height:400px"></div>
                 </div>
             </div>
         </div>
     </div>
+    
+    <div class="row">
+        <div class="col-md-4">
+            <div class="portlet box yellow-crusta">
+            	<div class="portlet-title">
+            		<div class="caption">
+            			<i class="icon-list"></i>Pendências atuais
+                    </div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+            	</div>
+            	<div class="portlet-body">
+            		<table id="pendencias" class="table table-striped table-bordered table-hover table-header-fixed">
+            		<thead>
+            			<tr>
+            				<th>Tipo</th>
+            				<th>Documento</th>
+                            <th>Data da alocação</th>
+            			</tr>
+            		</thead>
+            		<tbody>
+            		{% for pendencia in usuario.pendencias_alocadas %}
+            			<tr>
+            				<td>{{pendencia.tipo_pendencia}}</td>
+                            <td><a href="{% url "gerador_proventos:detalhar_documento" pendencia.documento.id %}">{{pendencia.documento}}</a></td>
+                            <td>{{pendencia.investidorresponsavelpendencia.data_alocacao|date:"d/m/Y H:i"}}</td>
+            			</tr>
+            		{% endfor %}	
+            		</tbody>
+            		</table>
+            	</div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="icon-list"></i>Leituras feitas
+                    </div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <table id="leituras" class="table table-striped table-bordered table-hover table-header-fixed">
+                    <thead>
+                        <tr>
+                            <th>Documento</th>
+                            <th>Data da leitura</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for leitura in usuario.leituras %}
+                        <tr>
+                            <td><a href="{% url "gerador_proventos:detalhar_documento" leitura.documento.id %}">{{leitura.documento}}</a></td>
+                            <td>{{leitura.data_leitura|date:"d/m/Y H:i"}}</td>
+                        </tr>
+                    {% endfor %}    
+                    </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="icon-list"></i>Validações feitas
+                    </div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <table id="validacoes" class="table table-striped table-bordered table-hover table-header-fixed">
+                    <thead>
+                        <tr>
+                            <th>Documento</th>
+                            <th>Data da validação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for validacao in usuario.validacoes %}
+                        <tr>
+                            <td><a href="{% url "gerador_proventos:detalhar_documento" validacao.documento.id %}">{{validacao.documento}}</a></td>
+                            <td>{{validacao.data_validacao|date:"d/m/Y H:i"}}</td>
+                        </tr>
+                    {% endfor %}    
+                    </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+        
+    <div class="row">
+        <div class="col-md-4">
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="icon-list"></i>Leituras que recusou
+                    </div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <table id="validacoes" class="table table-striped table-bordered table-hover table-header-fixed">
+                    <thead>
+                        <tr>
+                            <th>Documento</th>
+                            <th>Data da recusa</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for recusa in usuario.leituras_que_recusou %}
+                        <tr>
+                            <td><a href="{% url "gerador_proventos:detalhar_documento" recusa.documento.id %}">{{recusa.documento}}</a></td>
+                            <td>{{recusa.data_recusa|date:"d/m/Y H:i"}}</td>
+                        </tr>
+                    {% endfor %}    
+                    </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="icon-list"></i>Leituras que teve recusadas
+                    </div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <table id="validacoes" class="table table-striped table-bordered table-hover table-header-fixed">
+                    <thead>
+                        <tr>
+                            <th>Documento</th>
+                            <th>Data da recusa</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for recusa in usuario.leituras_recusadas %}
+                        <tr>
+                            <td><a href="{% url "gerador_proventos:detalhar_documento" recusa.documento.id %}">{{recusa.documento}}</a></td>
+                            <td>{{recusa.data_recusa|date:"d/m/Y H:i"}}</td>
+                        </tr>
+                    {% endfor %}    
+                    </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% if usuario.equipe_leitura %} 
+    <div class="row">
+        <div class="col-md-12">
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="icon-list"></i>Acompanhamento de leituras
+                    </div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <span>Horas contabilizadas: {{usuario.tempo_valido}}</span>
+                    <span>Total a pagar: R$ {{usuario.a_pagar}}</span>
+                    <span>Total pago: R$ {{usuario.pago}}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
 
 {% endblock %}
 
