@@ -9,11 +9,7 @@ class Command(BaseCommand):
     help = 'TEMPORÁRIO verificar o tempo médio que será dado para cada leitura'
 
     def handle(self, *args, **options):
-        leituras = InvestidorLeituraDocumento.objects.filter(data_leitura__date=datetime.date(2017, 10, 20)).order_by('data_leitura')
-        for leitura in leituras:
-            leitura.tempo_decorrido = (leitura.data_leitura \
-                                       - InvestidorLeituraDocumento.objects.filter(data_leitura__lt=leitura.data_leitura).order_by('-data_leitura')[0].data_leitura).seconds
-            print leitura, leitura.tempo_decorrido
+        leituras = InvestidorLeituraDocumento.objects.filter(data_leitura__date=datetime.date(2017, 10, 20)).order_by('data_leitura')[1:]
         leituras_fii = leituras.filter(documento__tipo='F')
         leituras_acao = leituras.filter(documento__tipo='A')
         
@@ -21,6 +17,9 @@ class Command(BaseCommand):
         tempo_medio_exclusao_fii = 0
         tempo_medio_provento_fii = 0
         for leitura in leituras_fii:
+            leitura.tempo_decorrido = (leitura.data_leitura \
+                                       - InvestidorLeituraDocumento.objects.filter(data_leitura__lt=leitura.data_leitura).order_by('-data_leitura')[0].data_leitura).seconds
+            print leitura, leitura.tempo_decorrido
             proventos_fii_criados += ProventoFIIDocumento.objects.filter(documento=leitura.documento).count()
             if leitura.decisao == 'E':
                 tempo_medio_exclusao_fii += leitura.tempo_decorrido
@@ -38,6 +37,9 @@ class Command(BaseCommand):
         tempo_medio_exclusao_acao = 0
         tempo_medio_provento_acao = 0
         for leitura in leituras_acao:
+            leitura.tempo_decorrido = (leitura.data_leitura \
+                                       - InvestidorLeituraDocumento.objects.filter(data_leitura__lt=leitura.data_leitura).order_by('-data_leitura')[0].data_leitura).seconds
+            print leitura, leitura.tempo_decorrido
             proventos_acao_criados += ProventoAcaoDocumento.objects.filter(documento=leitura.documento).count()
             if leitura.decisao == 'E':
                 tempo_medio_exclusao_acao += leitura.tempo_decorrido
