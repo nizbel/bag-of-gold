@@ -26,8 +26,9 @@ class Command(BaseCommand):
                 tempo_medio_exclusao_fii += leitura.tempo_decorrido
             else:
                 tempo_medio_provento_fii += leitura.tempo_decorrido
-        tempo_medio_exclusao_fii = Decimal(tempo_medio_exclusao_fii) / leituras_fii.filter(decisao='E').count()
-        tempo_medio_provento_fii = Decimal(tempo_medio_provento_fii) / proventos_fii_criados
+        tempo_medio_exclusao_fii = 0 if leituras_fii.filter(decisao='E').count() == 0 else \
+            Decimal(tempo_medio_exclusao_fii) / leituras_fii.filter(decisao='E').count()
+        tempo_medio_provento_fii = 0 if proventos_fii_criados == 0 else Decimal(tempo_medio_provento_fii) / proventos_fii_criados
             
         print 'Leituras de FII:', leituras_fii.count(), u'Exclusões:', leituras_fii.filter(decisao='E').count(), \
             'Proventos criados:', proventos_fii_criados
@@ -42,8 +43,9 @@ class Command(BaseCommand):
                 tempo_medio_exclusao_acao += leitura.tempo_decorrido
             else:
                 tempo_medio_provento_acao += leitura.tempo_decorrido
-        tempo_medio_exclusao_acao = Decimal(tempo_medio_exclusao_acao) / leituras_acao.filter(decisao='E').count()
-        tempo_medio_provento_acao = Decimal(tempo_medio_provento_acao) / proventos_acao_criados
+        tempo_medio_exclusao_acao = 0 if leituras_acao.filter(decisao='E').count() == 0 else \
+            Decimal(tempo_medio_exclusao_acao) / leituras_acao.filter(decisao='E').count()
+        tempo_medio_provento_acao = 0 if proventos_acao_criados == 0 else Decimal(tempo_medio_provento_acao) / proventos_acao_criados
         
         print u'Leituras de Ação:', leituras_acao.count(), u'Exclusões:', leituras_acao.filter(decisao='E').count(), \
             'Proventos criados:', proventos_acao_criados
