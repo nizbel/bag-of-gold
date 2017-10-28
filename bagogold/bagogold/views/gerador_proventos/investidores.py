@@ -47,6 +47,14 @@ def detalhar_pendencias_usuario(request, id_usuario):
             data_2_anos_atras = data_2_anos_atras.replace(month=data_2_anos_atras.month+1)
         else:
             data_2_anos_atras = data_2_anos_atras.replace(year=data_2_anos_atras.year+1, month=1)
+            
+    # Se usuário for do grupo da nova equipe de leituras, mostrar dados
+    if usuario.groups.filter(name='Equipe de leitura').exists():
+        usuario.equipe_leitura = True
+        usuario.pago = 0
+        usuario.a_pagar = 0
+        usuario.tempo_valido = 0
+
     return TemplateResponse(request, 'gerador_proventos/detalhar_pendencias_usuario.html', {'usuario': usuario, 'graf_leituras': graf_leituras, 'graf_validacoes': graf_validacoes,
                                                                                             'graf_leituras_que_recusou': graf_leituras_que_recusou, 'graf_leituras_recusadas': graf_leituras_recusadas})
 
