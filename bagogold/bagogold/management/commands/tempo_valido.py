@@ -9,7 +9,8 @@ class Command(BaseCommand):
     help = 'TEMPORÁRIO verificar o tempo médio que será dado para cada leitura'
 
     def handle(self, *args, **options):
-        leituras = InvestidorLeituraDocumento.objects.filter(data_leitura__date=datetime.date(2017, 10, 20)).order_by('data_leitura')[1:]
+        leituras = InvestidorLeituraDocumento.objects.filter(data_leitura__date=datetime.date(2017, 10, 20)) \
+            .filter(data_leitura__gt=datetime.datetime(2017, 10, 20, 19, 10)).order_by('data_leitura')[1:]
         leituras_fii = leituras.filter(documento__tipo='F')
         leituras_acao = leituras.filter(documento__tipo='A')
         
