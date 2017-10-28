@@ -25,6 +25,20 @@ def linha_do_tempo(request):
     
     eventos = sorted(chain(transf_recebedora, transf_cedente, operacoes),
                             key=attrgetter('data'))
+    eventos_remover = eventos
     
-    return TemplateResponse(request, 'divisoes/linha_do_tempo.html', {'divisao': divisao})
+    datas = list()
+    for evento in eventos_remover:
+        if evento.data not in datas:
+            datas.append(evento.data)
+        else:
+            eventos.remove(evento)
+    
+    for evento in eventos:
+        evento.titulo = 'Evento'
+        evento.texto = 'Teste'
+        evento.saldo = Decimal(450)
+        evento.investido = Decimal('2560.43')
+    
+    return TemplateResponse(request, 'divisoes/linha_do_tempo.html', {'divisao': divisao, 'eventos': eventos})
 
