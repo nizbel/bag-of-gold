@@ -283,7 +283,7 @@ def formatar_zeros_a_direita_apos_2_casas_decimais(valor):
     """
     if valor == 0:
         return '0.00'
-    str_valor_formatado = '{0:f}'.format(valor)
+    str_valor_formatado = str(valor)
     if '.' in str_valor_formatado:
         # Formatar número com casas decimais
         parte_inteira = str_valor_formatado.split('.')[0]
