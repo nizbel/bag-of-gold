@@ -165,15 +165,15 @@ def calcular_provento_por_mes(investidor, proventos, operacoes, data_inicio=None
         total_mes_div = 0
         total_mes_jscp = 0
         for provento in proventos_mes:                        
-            qtd_acoes = operacoes.filter(acao=provento.acao, data__lt=provento.data_ex).aggregate(qtd_acoes=Sum(
-                        Case(When(tipo_operacao='C', then=F('quantidade')), When(tipo_operacao='V', then=(F('quantidade')*-1)),
-                              output_field=IntegerField())))['qtd_acoes']
-            if (qtd_acoes is not None):
-                # TODO adicionar frações de proventos em ações
-                if provento.tipo_provento == 'D':
-                    total_mes_div += qtd_acoes * provento.valor_unitario
-                elif provento.tipo_provento == 'J':
-                    total_mes_jscp += qtd_acoes * provento.valor_unitario * Decimal(0.85)
+#             qtd_acoes = operacoes.filter(acao=provento.acao, data__lt=provento.data_ex).aggregate(qtd_acoes=Sum(
+#                         Case(When(tipo_operacao='C', then=F('quantidade')), When(tipo_operacao='V', then=(F('quantidade')*-1)),
+#                               output_field=IntegerField())))['qtd_acoes']
+            qtd_acoes = quantidade_acoes_ate_dia(investidor, provento.acao.ticker, provento.data_ex - datetime.timedelta(days=1))
+            # TODO adicionar frações de proventos em ações
+            if provento.tipo_provento == 'D':
+                total_mes_div += qtd_acoes * provento.valor_unitario
+            elif provento.tipo_provento == 'J':
+                total_mes_jscp += qtd_acoes * provento.valor_unitario * Decimal(0.85)
         data_formatada = str(calendar.timegm(datetime.date(ano, mes, 12).timetuple()) * 1000)
         graf_proventos_mes += [[data_formatada, float(total_mes_div), float(total_mes_jscp)]]
         
@@ -220,14 +220,14 @@ def calcular_media_proventos_6_meses(investidor, proventos, operacoes, data_inic
         proventos_mes = proventos.filter(data_ex__month=mes, data_ex__year=ano)
         total_mes = 0
         for provento in proventos_mes:                        
-            qtd_acoes = operacoes.filter(acao=provento.acao, data__lt=provento.data_ex).aggregate(qtd_acoes=Sum(
-                        Case(When(tipo_operacao='C', then=F('quantidade')), When(tipo_operacao='V', then=(F('quantidade')*-1)),
-                              output_field=IntegerField())))['qtd_acoes']
-            if (qtd_acoes is not None):
-                if provento.tipo_provento == 'D':
-                    total_mes += qtd_acoes * provento.valor_unitario
-                elif provento.tipo_provento == 'J':
-                    total_mes += qtd_acoes * provento.valor_unitario * Decimal(0.85)
+#             qtd_acoes = operacoes.filter(acao=provento.acao, data__lt=provento.data_ex).aggregate(qtd_acoes=Sum(
+#                         Case(When(tipo_operacao='C', then=F('quantidade')), When(tipo_operacao='V', then=(F('quantidade')*-1)),
+#                               output_field=IntegerField())))['qtd_acoes']
+            qtd_acoes = quantidade_acoes_ate_dia(investidor, provento.acao.ticker, provento.data_ex - datetime.timedelta(days=1))
+            if provento.tipo_provento == 'D':
+                total_mes += qtd_acoes * provento.valor_unitario
+            elif provento.tipo_provento == 'J':
+                total_mes += qtd_acoes * provento.valor_unitario * Decimal(0.85)
 #         print total_mes
         # Adicionar a lista de valores e calcular a media
         ultimos_6_meses.append(total_mes)

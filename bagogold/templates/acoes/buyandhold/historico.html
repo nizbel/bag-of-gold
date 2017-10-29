@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load staticfiles %}
+{% load misc %}
 
 {% block extra_head %}
 <link href={% static "assets/global/plugins/datatables/datatables.min.css" %} rel="stylesheet" type="text/css" />
@@ -220,9 +221,19 @@
                         </td>
 						<td>{{ operacao.data|date:"Y-m-d" }}</td>
 						<td>{{operacao.quantidade}}</td>
-						<td>R${{operacao.preco_unitario}}</td>
-						<td><span class="font-red-thunderbird">R${{operacao.emolumentos}}</span></td>
-						<td><span class="font-red-thunderbird">R${{operacao.corretagem}}</span></td>
+						<td>R${{operacao.preco_unitario|casas_decimais}}</td>
+						<td>
+                            {% if operacao.tipo == 'Compra' or operacao.tipo == 'Venda' %}
+                            <span class="font-red-thunderbird">R${{operacao.emolumentos}}</span>
+                            {% else %}<span>N/A</span>
+                            {% endif %}
+                        </td>
+						<td>
+                            {% if operacao.tipo == 'Compra' or operacao.tipo == 'Venda' %}
+                            <span class="font-red-thunderbird">R${{operacao.corretagem}}</span>
+                            {% else %}<span>N/A</span>
+                            {% endif %}
+                        </td>
 						<td><span class="
 						{% if operacao.total_gasto < 0 %}
 						font-red-thunderbird
