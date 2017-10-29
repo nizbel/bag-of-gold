@@ -196,17 +196,79 @@
             <div class="portlet box yellow-crusta">
                 <div class="portlet-title">
                     <div class="caption">
-                        <i class="icon-list"></i>Acompanhamento de leituras
+                        <i class="icon-list"></i>Acompanhamento de leituras remuneradas
                     </div>
                     <div class="tools">
                         <a href="javascript:;" class="collapse"></a>
                     </div>
                 </div>
                 <div class="portlet-body">
-                    <span>Horas validadas: {{usuario.tempo_validado|floatformat:'2'}}</span>
-                    <span>Horas a validar: {{usuario.tempo_a_validar|floatformat:'2'}}</span>
-                    <span>Total a pagar: R$ {{usuario.a_pagar|floatformat:'2'}}</span>
-                    <span>Total pago: R$ {{usuario.pago|floatformat:'2'}}</span>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="col-md-12 text-center">
+                                <h4>
+                                    Horas a validar
+                                </h4>
+                            </div>
+                            <div class="col-md-12 text-center">
+                                <p class="lead">
+                                    <strong><span data-counter="counterup" data-value="{{usuario.tempo_a_validar|floatformat:'2'}}">0</span></strong>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="col-md-12 text-center">
+                                <h4>
+                                    Horas validadas
+                                </h4>
+                            </div>
+                            <div class="col-md-12 text-center font-grey-gallery">
+                                <p class="lead">
+                                    <strong><span data-counter="counterup" data-value="{{usuario.tempo_validado|floatformat:'2'}}">0</span></strong>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="col-md-12 text-center">
+                                <h4>
+                                    Total a pagar
+                                </h4>
+                            </div>
+                            <div class="col-md-12 text-center font-blue">
+                                <p class="lead">
+                                    <strong>R$ <span data-counter="counterup" data-value="{{usuario.a_pagar|floatformat:'2'}}">0</span></strong>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="col-md-12 text-center">
+                                <h4>
+                                    Total pago
+                                </h4>
+                            </div>
+                            <div class="col-md-12 text-center font-yellow-crusta">
+                                <p class="lead">
+                                    <strong>R$ <span data-counter="counterup" data-value="{{usuario.pago|floatformat:'2'}}">0</span></strong>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="progress progress-striped active" style="background: rgba(0, 0, 0, 1); height: 30px;">
+                                <div class="progress-bar" role="progressbar" aria-valuenow="{{usuario.progresso_pago|stringformat:'f'}}" aria-valuemin="0" aria-valuemax="{{usuario.progresso_tempo_total|stringformat:'f'}}" 
+                                style="width: {{usuario.percentual_progresso_pago|stringformat:'f'}}%; background-color: #f3c200;">
+                                    <span class="sr-only"> {{usuario.percentual_progresso_pago|floatformat:'2'}}% pago </span>
+                                </div>
+                                <div class="progress-bar" role="progressbar" aria-valuenow="{{usuario.progresso_a_pagar|stringformat:'f'}}" aria-valuemin="0" aria-valuemax="{{usuario.progresso_tempo_total|stringformat:'f'}}" 
+                                style="width: {{usuario.percentual_progresso_a_pagar|stringformat:'f'}}%; background-color: #3598dc;">
+                                    <span class="sr-only"> {{usuario.percentual_progresso_a_pagar|floatformat:'2'}}% a pagar </span>
+                                </div>
+                                <div class="progress-bar" role="progressbar" aria-valuenow="{{usuario.progresso_validado|stringformat:'f'}}" aria-valuemin="0" aria-valuemax="{{usuario.progresso_tempo_total|stringformat:'f'}}" 
+                                style="width: {{usuario.percentual_progresso_validado|stringformat:'f'}}%; background-color: #555555;">
+                                    <span class="sr-only"> {{usuario.percentual_progresso_validado|floatformat:'2'}}% validado </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -217,6 +279,8 @@
 {% endblock %}
 
 {% block extra_footer %}
+<script src={% static "assets/global/plugins/counterup/jquery.waypoints.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/counterup/jquery.counterup.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/scripts/datatable.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/datatables/datatables.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.js" %} type="text/javascript"></script>
