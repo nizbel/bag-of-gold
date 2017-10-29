@@ -203,9 +203,10 @@
                     </div>
                 </div>
                 <div class="portlet-body">
-                    <span>Horas contabilizadas: {{usuario.tempo_valido}}</span>
-                    <span>Total a pagar: R$ {{usuario.a_pagar}}</span>
-                    <span>Total pago: R$ {{usuario.pago}}</span>
+                    <span>Horas validadas: {{usuario.tempo_validado|floatformat:'2'}}</span>
+                    <span>Horas a validar: {{usuario.tempo_a_validar|floatformat:'2'}}</span>
+                    <span>Total a pagar: R$ {{usuario.a_pagar|floatformat:'2'}}</span>
+                    <span>Total pago: R$ {{usuario.pago|floatformat:'2'}}</span>
                 </div>
             </div>
         </div>
