@@ -95,8 +95,18 @@ def detalhar_pendencias_usuario(request, id_usuario):
         usuario.tempo_a_validar = tempo_total - usuario.tempo_validado
         
         # TODO usar novo modelo pagamento leitura
+        valor_hora = Decimal(25)
         usuario.pago = 0
-        usuario.a_pagar = floor(usuario.tempo_validado) * 25 - usuario.pago
+        usuario.a_pagar = Decimal(floor(usuario.tempo_validado)) * valor_hora - usuario.pago
+        
+        # Parar popular a barra de acompanhamento
+        usuario.progresso_tempo_total = tempo_total * valor_hora
+        usuario.progresso_pago = usuario.pago
+        usuario.percentual_progresso_pago = usuario.progresso_pago / usuario.progresso_tempo_total * 100
+        usuario.progresso_a_pagar = usuario.a_pagar
+        usuario.percentual_progresso_a_pagar = usuario.progresso_a_pagar / usuario.progresso_tempo_total * 100
+        usuario.progresso_validado = usuario.tempo_validado * valor_hora - usuario.a_pagar - usuario.pago
+        usuario.percentual_progresso_validado = usuario.progresso_validado / usuario.progresso_tempo_total * 100
 
     return TemplateResponse(request, 'gerador_proventos/detalhar_pendencias_usuario.html', {'usuario': usuario, 'graf_leituras': graf_leituras, 'graf_validacoes': graf_validacoes,
                                                                                             'graf_leituras_que_recusou': graf_leituras_que_recusou, 'graf_leituras_recusadas': graf_leituras_recusadas})
