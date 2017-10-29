@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.acoes import OperacaoAcao, \
-    UsoProventosOperacaoAcao
+    UsoProventosOperacaoAcao, AtualizacaoSelicProvento
 from decimal import Decimal
 from django import forms
 from django.forms import widgets
@@ -62,3 +62,14 @@ class UsoProventosOperacaoAcaoForm(LocalizedModelForm):
             data['qtd_utilizada'] = qtd_utilizada
         else:
             data['qtd_utilizada'] = 0
+
+class AtualizacaoSelicProventoForm(LocalizedModelForm):
+    class Meta:
+        model = AtualizacaoSelicProvento
+        fields = ('data_inicio', 'data_fim',)
+        
+    def clean(self):
+        data = super(AtualizacaoSelicProventoForm, self).clean()
+        if data.get('data_inicio') is not None and data.get('data_fim') is not None:
+            if data.get('data_inicio') > data.get('data_fim'):
+                raise forms.ValidationError('Data de início da atualização pela Selic deve ser anterior à data final')

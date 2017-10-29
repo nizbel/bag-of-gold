@@ -47,9 +47,11 @@ INSTALLED_APPS = (
     #Bag-O-Gold
     'bagogold.bagogold',
     'bagogold.pendencias',
+    'bagogold.cdb_rdb',
     'bagogold.cri_cra',
     'bagogold.fundo_investimento',
     'bagogold.criptomoeda',
+    'bagogold.outros_investimentos',
 )
 
 MIDDLEWARE_CLASSES = (

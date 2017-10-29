@@ -116,9 +116,9 @@ def acompanhamento_td(request):
         # Carregar data de vencimento do título
         data_vencimento = Titulo.objects.get(id=titulo).data_vencimento
         for operacao in titulos[titulo]:
-            try:
+            if ValorDiarioTitulo.objects.filter(titulo__id=titulo, data_hora__date=datetime.date.today()).exists():
                 operacao.valor_atual = ValorDiarioTitulo.objects.filter(titulo__id=titulo, data_hora__date=datetime.date.today()).order_by('-data_hora')[0].preco_venda
-            except:
+            else:
                 operacao.valor_atual = HistoricoTitulo.objects.filter(titulo__id=titulo).order_by('-data')[0].preco_venda
             operacao.variacao = operacao.valor_atual - operacao.preco_unitario
             operacao.variacao_percentual = operacao.variacao / operacao.preco_unitario * 100
@@ -673,8 +673,12 @@ def sobre(request):
     else:
         total_atual = 0
     
-    ultima_data_hora_atualizacao = ValorDiarioTitulo.objects.all().order_by('-data_hora')[0].data_hora
-    ultimos_valores = ValorDiarioTitulo.objects.filter(data_hora=ultima_data_hora_atualizacao)
+    if ValorDiarioTitulo.objects.filter().exists():
+        ultima_data_hora_atualizacao = ValorDiarioTitulo.objects.all().order_by('-data_hora')[0].data_hora
+        ultimos_valores = ValorDiarioTitulo.objects.filter(data_hora=ultima_data_hora_atualizacao)
+    else:
+        ultima_data_hora_atualizacao = HistoricoTitulo.objects.all().order_by('-data')[0].data
+        ultimos_valores = HistoricoTitulo.objects.filter(data=ultima_data_hora_atualizacao)
     
     return TemplateResponse(request, 'td/sobre.html', {'graf_historico_ipca': graf_historico_ipca, 'graf_historico_selic': graf_historico_selic,
                                                        'total_atual': total_atual, 'ultimos_valores': ultimos_valores, 'ultima_data_hora_atualizacao': ultima_data_hora_atualizacao})

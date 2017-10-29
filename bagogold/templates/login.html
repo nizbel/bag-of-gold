@@ -3,7 +3,7 @@
 
 {% block content %}
     <!-- BEGIN LOGIN FORM -->
-    <form class="login-form" action="{% url "login" %}" method="post">
+    <form class="login-form" action="{% if next %}{% url "login" %}?next={{next}}{% else %}{% url "login" %}{% endif %}" method="post">
         {% csrf_token %}
         {% if messages %}
             {% for message in messages %}
@@ -86,7 +86,6 @@ $(function() {
         screenHeight = Math.min($(window).height(), 760),
         duration = 2500;
     img.css("top", screenHeight/2 - img.get(0).height/2);
-    console.log(img.css("top"), screenHeight/2, img.get(0).height/2);
 
     function animarBag1() {
         screenWidth = $(window).width();
@@ -94,13 +93,11 @@ $(function() {
         img.css({"left": -width, "width": "10%"}).css("top", screenHeight/2 - img.get(0).height/2).animate({
             "left": screenWidth/2 - width
         }, duration, "linear", animarBag2);
-        console.log(img.get(0).width);
     }
     function animarBag2() {
         img.css("width", img.get(0).width*2).css("top", screenHeight/2 - img.get(0).height/2).animate({
             "left": screenWidth
         }, duration, "linear", animarBag1);
-        console.log(img.get(0).width);
     }
 
     animarBag1();

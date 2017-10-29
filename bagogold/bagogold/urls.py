@@ -20,7 +20,9 @@ inicio_patterns = [
     url(r'^$', RedirectView.as_view(url='/painel_geral/')),
     url(r'^calendario/$', views.home.calendario, name='calendario'),
     url(r'^detalhar_acumulados_mensais/$', views.home.detalhar_acumulados_mensais, name='detalhar_acumulados_mensais'),
+    url(r'^detalhar_acumulado_mensal/$', views.home.detalhar_acumulado_mensal, name='detalhar_acumulado_mensal'),
     url(r'^detalhamento_investimentos/$', views.home.detalhamento_investimentos, name='detalhamento_investimentos'),
+    url(r'^renda_fixa', views.home.grafico_renda_fixa_painel_geral, name='grafico_renda_fixa_painel_geral'),
     url(r'^painel_geral/$', views.home.painel_geral, name='painel_geral'),
     url(r'^sobre/$', views.home.sobre, name='sobre'),
     ]
@@ -35,11 +37,10 @@ acoes_geral_patterns = [
 acoes_bh_patterns = [
     url(r'^calcular_poupanca_proventos_na_data/$', views.acoes.buyandhold.calcular_poupanca_proventos_na_data, name='calcular_poupanca_proventos_na_data'),
     url(r'^editar_operacao_acao/(?P<operacao_id>\d+)/$', views.acoes.buyandhold.editar_operacao_acao, name='editar_operacao_bh'),
-    url(r'^editar_provento_acao/(?P<id>\d+)/$', views.acoes.buyandhold.editar_provento_acao, name='editar_provento_bh'),
     url(r'^estatisticas_acao/(?P<ticker>\w+)/$', views.acoes.buyandhold.estatisticas_acao, name='estatisticas_acao_bh'),
+    url(r'^evolucao_posicao/$', views.acoes.buyandhold.evolucao_posicao, name='evolucao_posicao_bh'),
     url(r'^historico/$', views.acoes.buyandhold.historico, name='historico_bh'),
     url(r'^inserir_operacao_acao/$', views.acoes.buyandhold.inserir_operacao_acao, name='inserir_operacao_bh'),
-    url(r'^inserir_provento_acao/$', views.acoes.buyandhold.inserir_provento_acao, name='inserir_provento_bh'),
     url(r'^inserir_taxa_custodia_acao/$', views.acoes.buyandhold.inserir_taxa_custodia_acao, name='inserir_taxa_custodia_acao'),
     url(r'^listar_taxas_custodia_acao/$', views.acoes.buyandhold.listar_taxas_custodia_acao, name='listar_taxas_custodia_acao'),
     url(r'^painel/$', views.acoes.buyandhold.painel, name='painel_bh'),
@@ -54,28 +55,12 @@ acoes_trading_patterns = [
     url(r'^historico_operacoes_cv/$', views.acoes.trade.historico_operacoes_cv, name='historico_operacoes_cv'),
     url(r'^inserir_operacao/$', views.acoes.trade.inserir_operacao, name='inserir_operacao_t'),
     url(r'^inserir_operacao_acao/$', views.acoes.trade.inserir_operacao_acao, name='inserir_operacao_acao_t'),
-                     ]
+    ]
 
 acoes_patterns = [
     url(r'^', include(acoes_geral_patterns, namespace='geral')),
     url(r'^buyandhold/', include(acoes_bh_patterns, namespace='bh')),
     url(r'^trading/', include(acoes_trading_patterns, namespace='trading')),
-    ]
-
-cdb_rdb_patterns = [
-    url(r'^detalhar_cdb_rdb/(?P<cdb_rdb_id>\d+)/$', views.cdb_rdb.cdb_rdb.detalhar_cdb_rdb, name='detalhar_cdb_rdb'),
-    url(r'^editar_cdb_rdb/(?P<cdb_rdb_id>\d+)/$', views.cdb_rdb.cdb_rdb.editar_cdb_rdb, name='editar_cdb_rdb'),
-    url(r'^editar_historico_carencia/(?P<historico_carencia_id>\d+)/$', views.cdb_rdb.cdb_rdb.editar_historico_carencia, name='editar_historico_carencia'),
-    url(r'^editar_historico_porcentagem/(?P<historico_porcentagem_id>\d+)/$', views.cdb_rdb.cdb_rdb.editar_historico_porcentagem, name='editar_historico_porcentagem'),
-    url(r'^editar_operacao/(?P<operacao_id>\d+)/$', views.cdb_rdb.cdb_rdb.editar_operacao_cdb_rdb, name='editar_operacao_cdb_rdb'),
-    url(r'^historico/$', views.cdb_rdb.cdb_rdb.historico, name='historico_cdb_rdb'),
-    url(r'^inserir_cdb_rdb/$', views.cdb_rdb.cdb_rdb.inserir_cdb_rdb, name='inserir_cdb_rdb'),
-    url(r'^inserir_operacao_cdb_rdb/$', views.cdb_rdb.cdb_rdb.inserir_operacao_cdb_rdb, name='inserir_operacao_cdb_rdb'),
-    url(r'^listar_cdb_rdb/$', views.cdb_rdb.cdb_rdb.listar_cdb_rdb, name='listar_cdb_rdb'),
-    url(r'^inserir_historico_carencia_cdb_rdb/(?P<cdb_rdb_id>\d+)/$', views.cdb_rdb.cdb_rdb.inserir_historico_carencia_cdb_rdb, name='inserir_historico_carencia_cdb_rdb'),
-    url(r'^inserir_historico_porcentagem_cdb_rdb/(?P<cdb_rdb_id>\d+)/$', views.cdb_rdb.cdb_rdb.inserir_historico_porcentagem_cdb_rdb, name='inserir_historico_porcentagem_cdb_rdb'),
-    url(r'^painel/$', views.cdb_rdb.cdb_rdb.painel, name='painel_cdb_rdb'),
-    url(r'^sobre/$', views.cdb_rdb.cdb_rdb.sobre, name='sobre_cdb_rdb'),
     ]
 
 debentures_patterns = [
@@ -107,8 +92,6 @@ fiis_patterns = [
     url(r'^editar_operacao/(?P<operacao_id>\d+)/$', views.fii.fii.editar_operacao_fii, name='editar_operacao_fii'),
     url(r'^historico/$', views.fii.fii.historico_fii, name='historico_fii'),
     url(r'^inserir_operacao_fii/$', views.fii.fii.inserir_operacao_fii, name='inserir_operacao_fii'),
-    url(r'^editar_provento/(?P<id>\d+)/$', views.fii.fii.editar_provento_fii, name='editar_provento_fii'),
-    url(r'^inserir_provento_fii/$', views.fii.fii.inserir_provento_fii, name='inserir_provento_fii'),
     url(r'^painel/$', views.fii.fii.painel, name='painel_fii'),
     url(r'^sobre/$', views.fii.fii.sobre, name='sobre_fii'),
     ]
@@ -145,6 +128,7 @@ lci_lca_patterns = [
     url(r'^inserir_letra_credito/$', views.lc.lc.inserir_lc, name='inserir_lci_lca'),
     url(r'^inserir_operacao_lc/$', views.lc.lc.inserir_operacao_lc, name='inserir_operacao_lci_lca'),
     url(r'^listar_letras_credito/$', views.lc.lc.listar_lc, name='listar_lci_lca'),
+    url(r'^listar_operacoes_passada_carencia/$', views.lc.lc.listar_operacoes_passada_carencia, name='listar_operacoes_passada_carencia'),
     url(r'^inserir_historico_carencia_lci_lca/(?P<lci_lca_id>\d+)/$', views.lc.lc.inserir_historico_carencia, name='inserir_historico_carencia_lci_lca'),
     url(r'^inserir_historico_porcentagem_lci_lca/(?P<lci_lca_id>\d+)/$', views.lc.lc.inserir_historico_porcentagem, name='inserir_historico_porcentagem_lci_lca'),
     url(r'^painel/$', views.lc.lc.painel, name='painel_lci_lca'),
@@ -168,9 +152,6 @@ urlpatterns = [
     # Páginas de início
     
     url(r'^', include(inicio_patterns, namespace='inicio')),
-    
-    # Teste de aparência
-    url(r'^teste/carregar/(?P<url>[\w/]+)/$', views.misc.carregar_nova_aparencia, name='carregar_nova_aparencia'),
     
     # Investidores
     url(r'^login/$', LoginView.as_view(template_name='login.html', authentication_form=ExtendedAuthForm), name='login'),
@@ -217,7 +198,7 @@ urlpatterns = [
     url(r'^lci_lca/', include(lci_lca_patterns, namespace='lci_lca')),
     
     # CDB e RDB
-    url(r'^cdb_rdb/', include(cdb_rdb_patterns, namespace='cdb_rdb')),
+#     url(r'^cdb_rdb/', include(cdb_rdb_patterns, namespace='cdb_rdb')),
     
     # Debêntures
     url(r'^debentures/', include(debentures_patterns, namespace='debentures')),

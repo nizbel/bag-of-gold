@@ -3,7 +3,6 @@ from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.misc import ContatoForm
 from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, Provento, \
     ValorDiarioAcao
-from bagogold.bagogold.models.cdb_rdb import OperacaoCDB_RDB
 from bagogold.bagogold.models.debentures import OperacaoDebenture, \
     HistoricoValorDebenture
 from bagogold.bagogold.models.fii import OperacaoFII, HistoricoFII, ProventoFII, \
@@ -11,8 +10,6 @@ from bagogold.bagogold.models.fii import OperacaoFII, HistoricoFII, ProventoFII,
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
     ValorDiarioTitulo, Titulo
-from bagogold.bagogold.utils.cdb_rdb import calcular_valor_cdb_rdb_ate_dia, \
-    calcular_valor_venda_cdb_rdb
 from bagogold.bagogold.utils.debenture import calcular_valor_debentures_ate_dia
 from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
     buscar_totais_atuais_investimentos, buscar_proventos_a_receber, \
@@ -22,6 +19,9 @@ from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di, \
 from bagogold.bagogold.utils.misc import calcular_rendimentos_ate_data, \
     verificar_feriado_bovespa, formatar_zeros_a_direita_apos_2_casas_decimais
 from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia
+from bagogold.cdb_rdb.models import OperacaoCDB_RDB
+from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, \
+    calcular_valor_venda_cdb_rdb
 from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA, \
     DataRemuneracaoCRI_CRA, DataAmortizacaoCRI_CRA, CRI_CRA
 from bagogold.cri_cra.utils.utils import calcular_valor_cri_cra_ate_dia, \
@@ -32,6 +32,8 @@ from bagogold.criptomoeda.models import OperacaoCriptomoeda, \
 from bagogold.criptomoeda.utils import buscar_valor_criptomoedas_atual
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
     HistoricoValorCotas
+from bagogold.outros_investimentos.models import Rendimento, Amortizacao, \
+    Investimento
 from decimal import Decimal, ROUND_DOWN
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -42,6 +44,7 @@ from django.db.models.expressions import F, Case, When
 from django.db.models.fields import DecimalField
 from django.http.response import HttpResponse
 from django.template import loader
+from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 from itertools import chain
 from operator import attrgetter
@@ -130,6 +133,14 @@ def calendario(request):
         calendario.extend([{'title': u'Transferência relacionada a Criptomoedas, %s %s' % (formatar_zeros_a_direita_apos_2_casas_decimais(transferencia.quantidade), transferencia.moeda_utilizada()),
                             'start': transferencia.data.strftime('%Y-%m-%d')} for transferencia in transferencias_cripto])
         
+        # Rendimentos e amortizações de outros investimentos
+        rendimentos_outros_inv = Rendimento.objects.filter(investimento__investidor=investidor, data__range=[data_inicial, data_final])
+        calendario.extend([{'title': u'Rendimento de R$ %s para %s' % (data_rendimento.valor, data_rendimento.investimento),
+                           'start': data_rendimento.data.strftime('%Y-%m-%d')} for data_rendimento in rendimentos_outros_inv])
+        amortizacoes_outros_inv = Amortizacao.objects.filter(investimento__investidor=investidor, data__range=[data_inicial, data_final])
+        calendario.extend([{'title': u'Amortização de R$ %s para %s' % (data_amortizacao.valor, data_amortizacao.investimento),
+                           'start': data_amortizacao.data.strftime('%Y-%m-%d')} for data_amortizacao in amortizacoes_outros_inv])
+        
         return HttpResponse(json.dumps(calendario), content_type = "application/json")   
     
     return TemplateResponse(request, 'calendario.html', {})
@@ -157,10 +168,10 @@ def detalhar_acumulados_mensais(request):
         for investimento in acumulados_mensais[mes][1].keys():
             acumulados_mensais[mes][1][investimento] = acumulados_mensais[mes][1][investimento] - acumulados_mensais[mes+1][1][investimento]
         # Trocar data pela string de período
-        acumulados_mensais[mes][0] = '%s a %s' % (data_atual.replace(day=1).strftime('%d/%m/%Y'), data_atual.strftime('%d/%m/%Y'))
+        acumulados_mensais[mes][0] = ['%s' % (data_atual.replace(day=1).strftime('%d/%m/%Y')), '%s' % (data_atual.strftime('%d/%m/%Y'))]
         
         # Adiciona total mensal ao gráfico
-        graf_acumulados.append([str(calendar.timegm(data_atual.replace(hour=12).timetuple()) * 1000), float(acumulados_mensais[mes][2])])
+        graf_acumulados.append([str(calendar.timegm(data_atual.timetuple()) * 1000), float(acumulados_mensais[mes][2])])
         
         # Coloca data_atual como último dia do mês anterior
         data_atual = ultimo_dia_mes_anterior
@@ -194,6 +205,57 @@ def detalhar_acumulados_mensais(request):
     
     return TemplateResponse(request, 'detalhar_acumulados_mensais.html', {'acumulados_mensais': acumulados_mensais, 'graf_acumulados': graf_acumulados, 'taxas': taxas})
     
+@login_required
+def detalhar_acumulado_mensal(request):
+    class AcumuladoInvestimento(object):
+        def __init__(self, investimento, qtd):
+            self.investimento = investimento
+            self.qtd = qtd
+            
+    investidor = request.user.investidor
+    
+    data_inicio = datetime.datetime.strptime(request.GET.get('data_inicio'), '%d/%m/%Y').date()
+    data_fim = datetime.datetime.strptime(request.GET.get('data_fim'), '%d/%m/%Y').date()
+    
+    # Pegar acumulado mensal até o dia anterior da data inicial
+    rendimento_anterior = calcular_rendimentos_ate_data(investidor, (data_inicio - datetime.timedelta(days=1)))
+    
+    # Buscar acumulado até o final do período
+    rendimento = calcular_rendimentos_ate_data(investidor, data_fim)
+    
+    # Subtrair valores para pegar o acumulado no período indicado
+#     acumulado = { k: float(rendimento.get(k, 0) - rendimento_anterior.get(k, 0)) for k in set(rendimento) | set(rendimento_anterior)}
+    acumulado = [AcumuladoInvestimento(k, float(rendimento.get(k, 0) - rendimento_anterior.get(k, 0))) for k in set(rendimento) | set(rendimento_anterior)]
+    
+    # Preparar nomes completos para cada investimento
+    for acumulado_inv in acumulado:
+        if acumulado_inv.investimento == 'B':
+            acumulado_inv.investimento = 'Buy and Hold'
+        elif acumulado_inv.investimento == 'C':
+            acumulado_inv.investimento = 'CDB/RDB'
+        elif acumulado_inv.investimento == 'D':
+            acumulado_inv.investimento = 'Tesouro Direto'
+        elif acumulado_inv.investimento == 'E':
+            acumulado_inv.investimento = 'Debêntures'
+        elif acumulado_inv.investimento == 'F':
+            acumulado_inv.investimento = 'FII'
+        elif acumulado_inv.investimento == 'I':
+            acumulado_inv.investimento = 'Fundos de investimento'
+        elif acumulado_inv.investimento == 'L':
+            acumulado_inv.investimento = 'Letras de Crédito'
+        elif acumulado_inv.investimento == 'O':
+            acumulado_inv.investimento = 'Outros investimentos'
+        elif acumulado_inv.investimento == 'R':
+            acumulado_inv.investimento = 'CRI/CRA'
+        elif acumulado_inv.investimento == 'T':
+            acumulado_inv.investimento = 'Trading'
+    
+    acumulado.sort(key=lambda x: x.investimento)
+    
+    return HttpResponse(json.dumps(render_to_string('utils/detalhar_acumulado_mensal.html', {'acumulado': acumulado, 'data_inicio': data_inicio,
+                                                                                             'data_fim': data_fim})), content_type = "application/json")  
+
+
 @login_required
 @adiciona_titulo_descricao('Histórico detalhado', 'Histórico detalhado das operações feitas pelo investidor')
 def detalhamento_investimentos(request):
@@ -246,9 +308,16 @@ def detalhamento_investimentos(request):
     # Adicionar transferências em Criptomoedas do investidor
     transferencias_criptomoedas = TransferenciaCriptomoeda.objects.filter(investidor=investidor, taxa__gt=Decimal(0), moeda__isnull=False).exclude(data__isnull=True).order_by('data')
     
+    # Adicionar outros investimentos do investidor
+    outros_investimentos = Investimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
+    
+    # Adicionar amortizações de outros investimentos
+    amort_outros_investimentos = Amortizacao.objects.filter(investimento__investidor=investidor).exclude(data__isnull=True).order_by('data')
+    
     # Juntar todas as operações
     lista_operacoes = sorted(chain(proventos_fii, operacoes_fii, operacoes_td, proventos_bh,  operacoes_bh, operacoes_t, operacoes_lc, operacoes_cdb_rdb, 
-                                   operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento, operacoes_criptomoedas, transferencias_criptomoedas),
+                                   operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento, operacoes_criptomoedas, 
+                                   transferencias_criptomoedas, outros_investimentos, amort_outros_investimentos),
                             key=attrgetter('data'))
 
 	# Se não houver operações, retornar vazio
@@ -335,6 +404,7 @@ def detalhamento_investimentos(request):
     fundos_investimento = {}
     debentures = {}
     criptomoedas = {}
+    invest = {}
     total_proventos_fii = 0
     total_proventos_bh = 0
     
@@ -358,6 +428,7 @@ def detalhamento_investimentos(request):
 #     total_debentures = datetime.timedelta(hours=0)
 #     total_fundo_investimento = datetime.timedelta(hours=0)
 #     total_criptomoeda = datetime.timedelta(hours=0)
+#     total_outros_invest = datetime.timedelta(hours=0)
     ############# TESTE
     
     for index, item in enumerate(lista_conjunta):    
@@ -526,6 +597,13 @@ def detalhamento_investimentos(request):
                 criptomoedas[item.moeda.ticker] = 0
             criptomoedas[item.moeda.ticker] -= item.taxa
             
+        elif isinstance(item, Investimento):
+            if item.id not in invest.keys():
+                invest[item.id] = 0
+            invest[item.id] += item.quantidade
+            
+        elif isinstance(item, Amortizacao):
+            invest[item.investimento.id] -= item.valor
 
         # Se não cair em nenhum dos anteriores: item vazio
         
@@ -538,22 +616,14 @@ def detalhamento_investimentos(request):
             # Acoes (B&H)
 #             inicio_acoes_bh = datetime.datetime.now()
             patrimonio['Ações (Buy and Hold)'] = 0
-            periodo_1_ano = item.data - datetime.timedelta(days=3650)
             for acao, quantidade in acoes_bh.items():
                 if quantidade > 0:
-                    # Verifica se valor foi preenchido com valor mais atual (válido apenas para data atual)
-                    preenchido = False
-                    if item.data == datetime.date.today():
-                        try:
-                            valor_diario_mais_recente = ValorDiarioAcao.objects.filter(acao__ticker=acao).order_by('-data_hora')
-                            if valor_diario_mais_recente and valor_diario_mais_recente[0].data_hora.date() == datetime.date.today():
-                                valor_acao = valor_diario_mais_recente[0].preco_unitario
-                                preenchido = True
-                        except:
-                            preenchido = False
-                    if (not preenchido):
+                    # Pegar valor do dia caso seja data atual
+                    if item.data == datetime.date.today() and ValorDiarioAcao.objects.filter(acao__ticker=acao, data_hora__date=item.data).exists():
+                        valor_acao = ValorDiarioAcao.objects.filter(acao__ticker=acao).order_by('-data_hora')[0].preco_unitario
+                    else:
                         # Pegar último dia util com negociação da ação para calculo do patrimonio
-                        valor_acao = HistoricoAcao.objects.filter(acao__ticker=acao, data__range=[periodo_1_ano, item.data]).order_by('-data')[0].preco_unitario
+                        valor_acao = HistoricoAcao.objects.filter(acao__ticker=acao, data__lte=item.data).order_by('-data')[0].preco_unitario
                     patrimonio['Ações (Buy and Hold)'] += (valor_acao * quantidade)
             patrimonio['patrimonio_total'] += patrimonio['Ações (Buy and Hold)'] 
 #             fim_acoes_bh = datetime.datetime.now()
@@ -569,22 +639,14 @@ def detalhamento_investimentos(request):
             # Acoes (Trading)
 #             inicio_acoes_t = datetime.datetime.now()
             patrimonio['Ações (Trading)'] = 0
-            periodo_1_ano = item.data - datetime.timedelta(days=365)
             for acao, quantidade in acoes_t.items():
                 if quantidade > 0:
-                    # Verifica se valor foi preenchido com valor mais atual (válido apenas para data atual)
-                    preenchido = False
-                    if item.data == datetime.date.today():
-                        try:
-                            valor_diario_mais_recente = ValorDiarioAcao.objects.filter(acao__ticker=acao).order_by('-data_hora')
-                            if valor_diario_mais_recente and valor_diario_mais_recente[0].data_hora.date() == datetime.date.today():
-                                valor_acao = valor_diario_mais_recente[0].preco_unitario
-                                preenchido = True
-                        except:
-                            preenchido = False
-                    if (not preenchido):
+                    # Pegar valor do dia caso seja data atual
+                    if item.data == datetime.date.today() and ValorDiarioAcao.objects.filter(acao__ticker=acao, data_hora__date=item.data).exists():
+                        valor_acao = ValorDiarioAcao.objects.filter(acao__ticker=acao).order_by('-data_hora')[0].preco_unitario
+                    else:
                         # Pegar último dia util com negociação da ação para calculo do patrimonio
-                        valor_acao = HistoricoAcao.objects.filter(acao__ticker=acao, data__range=[periodo_1_ano, item.data]).order_by('-data')[0].preco_unitario
+                        valor_acao = HistoricoAcao.objects.filter(acao__ticker=acao, data__lte=item.data).order_by('-data')[0].preco_unitario
                     patrimonio['Ações (Trading)'] += (valor_acao * quantidade)
             patrimonio['patrimonio_total'] += patrimonio['Ações (Trading)'] 
 #             fim_acoes_t = datetime.datetime.now()
@@ -615,21 +677,13 @@ def detalhamento_investimentos(request):
             # FII
 #             inicio_fii = datetime.datetime.now()
             patrimonio['FII'] = 0
-            periodo_1_ano = item.data - datetime.timedelta(days=365)
             for papel, quantidade in fii.items():
-                # Verifica se valor foi preenchido com valor mais atual (válido apenas para data atual)
-                preenchido = False
-                if item.data == datetime.date.today():
-                    try:
-                        valor_diario_mais_recente = ValorDiarioFII.objects.filter(fii__ticker=papel).order_by('-data_hora')
-                        if valor_diario_mais_recente and valor_diario_mais_recente[0].data_hora.date() == datetime.date.today():
-                            valor_fii = valor_diario_mais_recente[0].preco_unitario
-                            preenchido = True
-                    except:
-                        preenchido = False
-                if (not preenchido):
+                # Pegar valor do dia caso seja data atual
+                if item.data == datetime.date.today() and ValorDiarioFII.objects.filter(fii__ticker=papel, data_hora__date=item.data).exists():
+                    valor_fii = ValorDiarioFII.objects.filter(fii__ticker=papel).order_by('-data_hora')[0].preco_unitario
+                else:
                     # Pegar último dia util com negociação da ação para calculo do patrimonio
-                    valor_fii = HistoricoFII.objects.filter(fii__ticker=papel, data__range=[periodo_1_ano, item.data]).order_by('-data')[0].preco_unitario
+                    valor_fii = HistoricoFII.objects.filter(fii__ticker=papel, data__lte=item.data).order_by('-data')[0].preco_unitario
                 patrimonio['FII'] += (quantidade * valor_fii)
             patrimonio['patrimonio_total'] += patrimonio['FII']  
 #             fim_fii = datetime.datetime.now()
@@ -734,6 +788,11 @@ def detalhamento_investimentos(request):
             patrimonio['Criptomoedas'] = patrimonio_criptomoedas
             patrimonio['patrimonio_total'] += patrimonio['Criptomoedas']
             
+            # Outros investimentos
+#             inicio_outros_invest = datetime.datetime.now()
+            patrimonio['Outros inv.'] = sum(invest.values())
+            patrimonio['patrimonio_total'] += patrimonio['Outros inv.']
+            
 #             print 'Ações (B&H)          ', total_acoes_bh
 #             print 'Ações (Trading)      ', total_acoes_t
 #             print 'Prov. Ações          ', total_prov_acoes_bh
@@ -746,6 +805,7 @@ def detalhamento_investimentos(request):
 #             print 'Debêntures           ', total_debentures
 #             print 'Fundo Inv.           ', total_fundo_investimento
 #             print 'Cripto.              ', total_criptomoeda
+#             print 'Outros inv.          ', total_outros_invest
             
             # Preparar estatísticas
             for data_estatistica in datas_estatisticas:
@@ -792,9 +852,10 @@ def detalhamento_investimentos(request):
 #     print 'Debêntures:       ', total_debentures
 #     print 'Fundo Inv.:       ', total_fundo_investimento
 #     print 'Cripto.           ', total_criptomoeda
+#     print 'Outros inv.       ', total_outros_invest
     
     return TemplateResponse(request, 'detalhamento_investimentos.html', {'graf_patrimonio': graf_patrimonio, 'patrimonio_anual': patrimonio_anual,
-                                            'estatisticas': estatisticas, 'graf_patrimonio_cripto': list()})
+                                            'estatisticas': estatisticas, 'graf_patrimonio_cripto': json.dumps(graf_patrimonio_cripto)})
 
 @adiciona_titulo_descricao('Painel geral', 'Traz informações gerais sobre a posição atual em cada tipo de investimento')
 def painel_geral(request):
@@ -817,7 +878,7 @@ def painel_geral(request):
     data_atual = datetime.datetime.now()
     
     ultimas_operacoes = buscar_ultimas_operacoes(request.user.investidor, 5) 
-
+    
     investimentos_atuais = list()
     investimentos = buscar_totais_atuais_investimentos(request.user.investidor) 
     for chave, valor in investimentos.items():
@@ -840,6 +901,8 @@ def painel_geral(request):
             investimento.link = 'fundo_investimento:painel_fundo_investimento'
         elif chave == 'Letras de Crédito':
             investimento.link = 'lci_lca:painel_lci_lca'
+        elif chave == 'Outros inv.':
+            investimento.link = 'outros_investimentos:painel_outros_invest'
         elif chave == 'Tesouro Direto':
             investimento.link = 'td:painel_td'
             
@@ -881,98 +944,108 @@ def painel_geral(request):
     ultimo_dia_mes_antes_do_anterior = ultimo_dia_mes_anterior.replace(day=1) - datetime.timedelta(days=1)         
     acumulado_mensal_anterior = sum(calcular_rendimentos_ate_data(investidor, ultimo_dia_mes_anterior).values()) - sum(calcular_rendimentos_ate_data(investidor, ultimo_dia_mes_antes_do_anterior).values())
     
-    qtd_ultimos_dias = 22
-    # Guardar valores totais
-    diario_cdb_rdb = {}
-    diario_lc = {}
-    diario_td = {}
-    diario_debentures = {}
-    diario_cri_cra = {}
-    
-    total_lc_dia_anterior = float(sum(calcular_valor_lc_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values()))
-    total_cdb_rdb_dia_anterior = float(sum(calcular_valor_cdb_rdb_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values()))
-    total_td_dia_anterior = float(sum(calcular_valor_td_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values()))
-    total_debentures_dia_anterior = float(sum(calcular_valor_debentures_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values()))
-    total_cri_cra_dia_anterior = float(sum(calcular_valor_cri_cra_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values()))
-    
-    operacoes_lci_lca_no_periodo = OperacaoLetraCredito.objects.filter(data__range=[data_atual - datetime.timedelta(qtd_ultimos_dias), data_atual], investidor=investidor)
-    operacoes_cdb_rdb_no_periodo = OperacaoCDB_RDB.objects.filter(data__range=[data_atual - datetime.timedelta(qtd_ultimos_dias), data_atual], investidor=investidor)
-    operacoes_td_no_periodo = OperacaoTitulo.objects.filter(data__range=[data_atual - datetime.timedelta(qtd_ultimos_dias), data_atual], investidor=investidor)
-    operacoes_debenture_no_periodo = OperacaoDebenture.objects.filter(data__range=[data_atual - datetime.timedelta(qtd_ultimos_dias), data_atual], investidor=investidor)
-    operacoes_cri_cra_no_periodo = OperacaoCRI_CRA.objects.filter(data__range=[data_atual - datetime.timedelta(qtd_ultimos_dias), data_atual], cri_cra__investidor=investidor)
-    
-    for dia in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))]:
-        dia = dia.date()
-        diario_cdb_rdb[dia] = 0
-        diario_lc[dia] = 0
-        diario_td[dia] = 0
-        diario_debentures[dia] = 0
-        diario_cri_cra[dia] = 0
-        
-        if dia.weekday() < 5 and not verificar_feriado_bovespa(dia):
-            # Letra de Crédito
-            total_lc = float(sum(calcular_valor_lc_ate_dia(investidor, dia).values()))
-#                     print '(%s) %s - %s =' % (dia, total_lc, total_lc_dia_anterior), total_lc - total_lc_dia_anterior
-            # Removendo operações do dia
-            diario_lc[dia] += total_lc - total_lc_dia_anterior - float(operacoes_lci_lca_no_periodo.filter(data=dia, tipo_operacao='C').aggregate(soma_compras=Sum('quantidade'))['soma_compras'] or Decimal(0)) + \
-                float(sum([calcular_valor_venda_lc(operacao_venda) for operacao_venda in operacoes_lci_lca_no_periodo.filter(data=dia, tipo_operacao='V')]))
-            total_lc_dia_anterior = total_lc
-            
-            # CDB / RDB
-            total_cdb_rdb = float(sum(calcular_valor_cdb_rdb_ate_dia(investidor, dia).values()))
-#                     print '(%s) %s - %s =' % (dia, total_cdb_rdb, total_cdb_rdb_dia_anterior), total_cdb_rdb - total_cdb_rdb_dia_anterior
-            # Removendo operações do dia
-            diario_cdb_rdb[dia] += total_cdb_rdb - total_cdb_rdb_dia_anterior - float(operacoes_cdb_rdb_no_periodo.filter(data=dia, tipo_operacao='C').aggregate(soma_compras=Sum('quantidade'))['soma_compras'] or Decimal(0)) + \
-                float(sum([calcular_valor_venda_cdb_rdb(operacao_venda) for operacao_venda in operacoes_cdb_rdb_no_periodo.filter(data=dia, tipo_operacao='V')]))
-            total_cdb_rdb_dia_anterior = total_cdb_rdb
-            
-            # Tesouro Direto
-            total_td = float(sum(calcular_valor_td_ate_dia(investidor, dia).values()))
-            # Removendo operações do dia
-            operacoes_do_dia = operacoes_td_no_periodo.filter(data=dia).aggregate(total=Sum(Case(When(tipo_operacao='C', then=F('preco_unitario')*F('quantidade')),
-                            When(tipo_operacao='V', then=F('preco_unitario')*F('quantidade')*-1),
-                            output_field=DecimalField())))['total'] or Decimal(0)
-            diario_td[dia] += total_td - total_td_dia_anterior - float(operacoes_do_dia)
-            total_td_dia_anterior = total_td
-            
-            # Debêntures
-            total_debentures = float(sum(calcular_valor_debentures_ate_dia(investidor, dia).values()))
-            # Removendo operações do dia
-            operacoes_do_dia = operacoes_debenture_no_periodo.filter(data=dia).aggregate(total=Sum(Case(When(tipo_operacao='C', then=F('preco_unitario')*F('quantidade') + F('taxa')),
-                            When(tipo_operacao='V', then=F('preco_unitario')*F('quantidade')*-1 - F('taxa')),
-                            output_field=DecimalField())))['total'] or Decimal(0)
-            diario_debentures[dia] += total_debentures - total_debentures_dia_anterior - float(operacoes_do_dia)
-            total_debentures_dia_anterior = total_debentures
-            
-            # CRI / CRA
-            total_cri_cra = float(sum(calcular_valor_cri_cra_ate_dia(investidor, dia).values())) + float(calcular_rendimentos_cri_cra_ate_data(investidor, dia))
-            # Removendo operações do dia
-            operacoes_do_dia = operacoes_cri_cra_no_periodo.filter(data=dia).aggregate(total=Sum(Case(When(tipo_operacao='C', then=F('preco_unitario')*F('quantidade') + F('taxa')),
-                            When(tipo_operacao='V', then=F('preco_unitario')*F('quantidade')*-1 - F('taxa')),
-                            output_field=DecimalField())))['total'] or Decimal(0)
-            diario_cri_cra[dia] += total_cri_cra - total_cri_cra_dia_anterior - float(operacoes_do_dia)
-            total_cri_cra_dia_anterior = total_cri_cra
-                
-    graf_rendimentos_mensal_cdb_rdb = [[str(calendar.timegm(data.replace(hour=3).timetuple()) * 1000), diario_cdb_rdb[data.date()] ] \
-                               for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ] 
-    graf_rendimentos_mensal_lc = [[str(calendar.timegm(data.replace(hour=6).timetuple()) * 1000), diario_lc[data.date()] ] \
-                               for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ] 
-    graf_rendimentos_mensal_td = [[str(calendar.timegm(data.replace(hour=9).timetuple()) * 1000), diario_td[data.date()] ] \
-                               for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ] 
-    graf_rendimentos_mensal_debentures = [[str(calendar.timegm(data.replace(hour=12).timetuple()) * 1000), diario_debentures[data.date()] ] \
-                               for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ] 
-    graf_rendimentos_mensal_cri_cra = [[str(calendar.timegm(data.replace(hour=15).timetuple()) * 1000), diario_cri_cra[data.date()] ] \
-                               for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ]
-    
     return TemplateResponse(request, 'painel_geral.html', {'ultimas_operacoes': ultimas_operacoes, 'investimentos_atuais': investimentos_atuais, 'acumulado_mensal_atual': acumulado_mensal_atual,
                                                      'acumulado_mensal_anterior': acumulado_mensal_anterior, 'proventos_acoes_recebidos_hoje': proventos_acoes_recebidos_hoje,
                                                      'proventos_fiis_recebidos_hoje': proventos_fiis_recebidos_hoje, 'proventos_acoes_a_receber': proventos_acoes_a_receber,
                                                      'proventos_fiis_a_receber': proventos_fiis_a_receber, 'proventos_acoes_futuros': proventos_acoes_futuros,
-                                                     'proventos_fiis_futuros': proventos_fiis_futuros,'graf_rendimentos_mensal_lc': graf_rendimentos_mensal_lc,
-                                                     'total_atual_investimentos': total_atual_investimentos, 'graf_rendimentos_mensal_cdb_rdb': graf_rendimentos_mensal_cdb_rdb,
-                                                     'graf_rendimentos_mensal_td': graf_rendimentos_mensal_td, 'graf_rendimentos_mensal_debentures': graf_rendimentos_mensal_debentures,
-                                                     'graf_rendimentos_mensal_cri_cra': graf_rendimentos_mensal_cri_cra})
+                                                     'proventos_fiis_futuros': proventos_fiis_futuros, 'total_atual_investimentos': total_atual_investimentos})
 
+@login_required
+def grafico_renda_fixa_painel_geral(request):
+    if request.is_ajax():
+        investidor = request.user.investidor
+        data_atual = datetime.datetime.now()
+        
+        qtd_ultimos_dias = 22
+        # Guardar valores totais
+        diario_cdb_rdb = {}
+        diario_lc = {}
+        diario_td = {}
+        diario_debentures = {}
+        diario_cri_cra = {}
+        
+        total_lc_dia_anterior = float(sum(calcular_valor_lc_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values()))
+        total_cdb_rdb_dia_anterior = float(sum(calcular_valor_cdb_rdb_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values()))
+        total_td_dia_anterior = float(sum(calcular_valor_td_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values()))
+        total_debentures_dia_anterior = float(sum(calcular_valor_debentures_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values()))
+        total_cri_cra_dia_anterior = float(sum(calcular_valor_cri_cra_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values())) \
+            + float(calcular_rendimentos_cri_cra_ate_data(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()))
+        
+        operacoes_lci_lca_no_periodo = OperacaoLetraCredito.objects.filter(data__range=[data_atual - datetime.timedelta(qtd_ultimos_dias), data_atual], investidor=investidor)
+        operacoes_cdb_rdb_no_periodo = OperacaoCDB_RDB.objects.filter(data__range=[data_atual - datetime.timedelta(qtd_ultimos_dias), data_atual], investidor=investidor)
+        operacoes_td_no_periodo = OperacaoTitulo.objects.filter(data__range=[data_atual - datetime.timedelta(qtd_ultimos_dias), data_atual], investidor=investidor)
+        operacoes_debenture_no_periodo = OperacaoDebenture.objects.filter(data__range=[data_atual - datetime.timedelta(qtd_ultimos_dias), data_atual], investidor=investidor)
+        operacoes_cri_cra_no_periodo = OperacaoCRI_CRA.objects.filter(data__range=[data_atual - datetime.timedelta(qtd_ultimos_dias), data_atual], cri_cra__investidor=investidor)
+        
+        for dia in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))]:
+            dia = dia.date()
+            diario_cdb_rdb[dia] = 0
+            diario_lc[dia] = 0
+            diario_td[dia] = 0
+            diario_debentures[dia] = 0
+            diario_cri_cra[dia] = 0
+            
+            if dia.weekday() < 5 and not verificar_feriado_bovespa(dia):
+                # Letra de Crédito
+                total_lc = float(sum(calcular_valor_lc_ate_dia(investidor, dia).values()))
+    #                     print '(%s) %s - %s =' % (dia, total_lc, total_lc_dia_anterior), total_lc - total_lc_dia_anterior
+                # Removendo operações do dia
+                diario_lc[dia] += total_lc - total_lc_dia_anterior - float(operacoes_lci_lca_no_periodo.filter(data=dia, tipo_operacao='C').aggregate(soma_compras=Sum('quantidade'))['soma_compras'] or Decimal(0)) + \
+                    float(sum([calcular_valor_venda_lc(operacao_venda) for operacao_venda in operacoes_lci_lca_no_periodo.filter(data=dia, tipo_operacao='V')]))
+                total_lc_dia_anterior = total_lc
+                
+                # CDB / RDB
+                total_cdb_rdb = float(sum(calcular_valor_cdb_rdb_ate_dia(investidor, dia).values()))
+    #                     print '(%s) %s - %s =' % (dia, total_cdb_rdb, total_cdb_rdb_dia_anterior), total_cdb_rdb - total_cdb_rdb_dia_anterior
+                # Removendo operações do dia
+                diario_cdb_rdb[dia] += total_cdb_rdb - total_cdb_rdb_dia_anterior - float(operacoes_cdb_rdb_no_periodo.filter(data=dia, tipo_operacao='C').aggregate(soma_compras=Sum('quantidade'))['soma_compras'] or Decimal(0)) + \
+                    float(sum([calcular_valor_venda_cdb_rdb(operacao_venda) for operacao_venda in operacoes_cdb_rdb_no_periodo.filter(data=dia, tipo_operacao='V')]))
+                total_cdb_rdb_dia_anterior = total_cdb_rdb
+                
+                # Tesouro Direto
+                total_td = float(sum(calcular_valor_td_ate_dia(investidor, dia).values()))
+                # Removendo operações do dia
+                operacoes_do_dia = operacoes_td_no_periodo.filter(data=dia).aggregate(total=Sum(Case(When(tipo_operacao='C', then=F('preco_unitario')*F('quantidade')),
+                                When(tipo_operacao='V', then=F('preco_unitario')*F('quantidade')*-1),
+                                output_field=DecimalField())))['total'] or Decimal(0)
+                diario_td[dia] += total_td - total_td_dia_anterior - float(operacoes_do_dia)
+                total_td_dia_anterior = total_td
+                
+                # Debêntures
+                total_debentures = float(sum(calcular_valor_debentures_ate_dia(investidor, dia).values()))
+                # Removendo operações do dia
+                operacoes_do_dia = operacoes_debenture_no_periodo.filter(data=dia).aggregate(total=Sum(Case(When(tipo_operacao='C', then=F('preco_unitario')*F('quantidade') + F('taxa')),
+                                When(tipo_operacao='V', then=F('preco_unitario')*F('quantidade')*-1 - F('taxa')),
+                                output_field=DecimalField())))['total'] or Decimal(0)
+                diario_debentures[dia] += total_debentures - total_debentures_dia_anterior - float(operacoes_do_dia)
+                total_debentures_dia_anterior = total_debentures
+                
+                # CRI / CRA
+                total_cri_cra = float(sum(calcular_valor_cri_cra_ate_dia(investidor, dia).values())) + float(calcular_rendimentos_cri_cra_ate_data(investidor, dia))
+                # Removendo operações do dia
+                operacoes_do_dia = operacoes_cri_cra_no_periodo.filter(data=dia).aggregate(total=Sum(Case(When(tipo_operacao='C', then=F('preco_unitario')*F('quantidade') + F('taxa')),
+                                When(tipo_operacao='V', then=F('preco_unitario')*F('quantidade')*-1 - F('taxa')),
+                                output_field=DecimalField())))['total'] or Decimal(0)
+                diario_cri_cra[dia] += total_cri_cra - total_cri_cra_dia_anterior - float(operacoes_do_dia)
+                total_cri_cra_dia_anterior = total_cri_cra
+                    
+        graf_rendimentos_mensal_cdb_rdb = [[str(calendar.timegm(data.replace(hour=3).timetuple()) * 1000), diario_cdb_rdb[data.date()] ] \
+                                   for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ] 
+        graf_rendimentos_mensal_lc = [[str(calendar.timegm(data.replace(hour=6).timetuple()) * 1000), diario_lc[data.date()] ] \
+                                   for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ] 
+        graf_rendimentos_mensal_td = [[str(calendar.timegm(data.replace(hour=9).timetuple()) * 1000), diario_td[data.date()] ] \
+                                   for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ] 
+        graf_rendimentos_mensal_debentures = [[str(calendar.timegm(data.replace(hour=12).timetuple()) * 1000), diario_debentures[data.date()] ] \
+                                   for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ] 
+        graf_rendimentos_mensal_cri_cra = [[str(calendar.timegm(data.replace(hour=15).timetuple()) * 1000), diario_cri_cra[data.date()] ] \
+                                   for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ]
+        
+        return HttpResponse(json.dumps({'sucesso': True, 'graf_rendimentos_mensal_cdb_rdb': graf_rendimentos_mensal_cdb_rdb,
+                                        'graf_rendimentos_mensal_lc': graf_rendimentos_mensal_lc, 'graf_rendimentos_mensal_td': graf_rendimentos_mensal_td,
+                                        'graf_rendimentos_mensal_debentures': graf_rendimentos_mensal_debentures,
+                                        'graf_rendimentos_mensal_cri_cra': graf_rendimentos_mensal_cri_cra}), content_type = "application/json")   
+    else:
+        return HttpResponse(json.dumps({'sucesso': False}), content_type = "application/json")   
 
 @adiciona_titulo_descricao('Sobre o site', 'O que é? Para quê?')
 def sobre(request):

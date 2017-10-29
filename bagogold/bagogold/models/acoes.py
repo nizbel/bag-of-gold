@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
-from django.db import models
-import datetime
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao
+from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
+from decimal import Decimal
+from django.db import models
+from django.db.models.aggregates import Count, Sum
+import datetime
  
 class Acao (models.Model):
     TIPOS_ACAO_NUMERO = {3: u'ON',
@@ -90,6 +93,12 @@ class Provento (models.Model):
         else:
             return u'Indefinido'
     
+    @property
+    def valor_final(self):
+        if hasattr(self, 'atualizacaoselicprovento'):
+            return self.valor_unitario + self.atualizacaoselicprovento.rendimento().quantize(Decimal('0.0000000000000001'))
+        return self.valor_unitario
+    
     objects = ProventoOficialManager()
     gerador_objects = models.Manager()
 
@@ -105,6 +114,32 @@ class AcaoProvento (models.Model):
     
     def __unicode__(self):
         return u'Ações de %s, com frações de R$%s a receber em %s' % (self.acao_recebida.ticker, self.valor_calculo_frac, self.data_pagamento_frac)
+    
+class AtualizacaoSelicProvento (models.Model):
+    """
+    Define o total de rendimento recebido por atualizar o provento pela Selic
+    """
+    valor_rendimento = models.DecimalField(u'Valor do rendimento', max_digits=19, decimal_places=15, blank=True, null=True)
+    data_inicio = models.DateField(u'Data de início')
+    data_fim = models.DateField(u'Data de fim')
+    provento = models.OneToOneField('Provento')
+    
+    def __unicode__(self):
+        if self.valor_rendimento:
+            return u'Atualização pela Selic de R$ %s' % (self.valor_rendimento)
+        return u'Atualização pela Selic de %s a %s' % (self.data_inicio.strftime('%d/%m/%Y'), self.data_fim.strftime('%d/%m/%Y'))
+    
+    def rendimento(self):
+        if self.valor_rendimento:
+            return self.valor_rendimento
+        
+        # Se não possui valor de rendimento definido, buscar valor pelo histórico da selic atual
+        from bagogold.bagogold.utils.taxas_indexacao import calcular_valor_atualizado_com_taxas_selic
+        historico_selic = HistoricoTaxaSelic.objects.filter(data__range=[self.data_inicio, self.data_fim]).values('taxa_diaria').annotate(qtd_dias=Count('taxa_diaria'))
+        taxas_dos_dias = {}
+        for taxa_quantidade in historico_selic:
+            taxas_dos_dias[taxa_quantidade['taxa_diaria']] = taxa_quantidade['qtd_dias']
+        return calcular_valor_atualizado_com_taxas_selic(taxas_dos_dias, self.provento.valor_unitario) - self.provento.valor_unitario
     
 class OperacaoAcao (models.Model):
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)  
@@ -122,17 +157,14 @@ class OperacaoAcao (models.Model):
     investidor = models.ForeignKey('Investidor')
      
     def __unicode__(self):
-        return '(' + self.tipo_operacao + ') ' +str(self.quantidade) + ' ' + self.acao.ticker + ' a R$' + str(self.preco_unitario) + ' em ' + str(self.data)
+        return '(' + self.tipo_operacao + ') ' +str(self.quantidade) + ' ' + self.acao.ticker + ' a R$' + str(self.preco_unitario) + ' em ' + str(self.data.strftime('%d/%m/%Y'))
 
     def qtd_proventos_utilizada(self):
-        qtd_total = 0
-        for divisao in DivisaoOperacaoAcao.objects.filter(operacao=self):
-            if hasattr(divisao, 'usoproventosoperacaoacao'):
-                qtd_total += divisao.usoproventosoperacaoacao.qtd_utilizada
+        qtd_total = UsoProventosOperacaoAcao.objects.filter(operacao=self).aggregate(qtd_total=Sum('qtd_utilizada'))['qtd_total'] or 0
         return qtd_total
         
     def utilizou_proventos(self):
-        return self.qtd_proventos_utilizada() > 0
+        return UsoProventosOperacaoAcao.objects.filter(operacao=self).exists()
 
 class UsoProventosOperacaoAcao (models.Model):
     operacao = models.ForeignKey('OperacaoAcao', verbose_name='Operação')
