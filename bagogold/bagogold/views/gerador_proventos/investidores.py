@@ -3,10 +3,14 @@ from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.models.gerador_proventos import \
     InvestidorResponsavelPendencia, InvestidorLeituraDocumento, \
     InvestidorValidacaoDocumento, PendenciaDocumentoProvento, \
-    InvestidorRecusaDocumento, DocumentoProventoBovespa
+    InvestidorRecusaDocumento, DocumentoProventoBovespa, ProventoFIIDocumento, \
+    ProventoAcaoDocumento
 from decimal import Decimal
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import Permission, User
+from django.db.models.aggregates import Count, Sum
+from django.db.models.expressions import Case, When, F
+from django.db.models.fields import BooleanField, DecimalField
 from django.db.models.query_utils import Q
 from django.template.response import TemplateResponse
 from math import floor
@@ -47,6 +51,63 @@ def detalhar_pendencias_usuario(request, id_usuario):
             data_2_anos_atras = data_2_anos_atras.replace(month=data_2_anos_atras.month+1)
         else:
             data_2_anos_atras = data_2_anos_atras.replace(year=data_2_anos_atras.year+1, month=1)
+            
+    # Se usuário for do grupo da nova equipe de leituras, mostrar dados
+    if usuario.groups.filter(name='Equipe de leitura').exists():
+        # Tempo médio por exclusão: 51.43 Tempo médio por provento ação: 122.07 Tempo médio por provento fii: 79.4
+        # Considerar leituras feitas a partir de 21/10/2017
+        usuario.equipe_leitura = True
+        
+        leituras = InvestidorLeituraDocumento.objects.filter(data_leitura__gt=datetime.date(2017, 10, 21), investidor=usuario.investidor) \
+            .annotate(validado=Case(When(documento__investidorvalidacaodocumento__isnull=False, then=True), # Anotar validação
+                   default=False, output_field=BooleanField())) 
+            
+        # Separar leituras e adicionar tempos
+        leituras_fii = leituras.filter(documento__tipo='F').annotate(proventos_criados=Count('documento__proventofiidocumento')) \
+            .annotate(tempo=Case(When(decisao='C', then=(Decimal('79.4') * F('proventos_criados'))), 
+                                 When(decisao='E', then=Decimal('51.43')), output_field=DecimalField()))
+        for leitura in leituras_fii:
+            print 'fii', leitura.tempo, leitura.proventos_criados
+        leituras_acao = leituras.filter(documento__tipo='A').annotate(proventos_criados=Count('documento__proventoacaodocumento')) \
+            .annotate(tempo=Case(When(decisao='C', then=(Decimal('122.07') * F('proventos_criados'))), 
+                                 When(decisao='E', then=Decimal('51.43')), output_field=DecimalField()))
+        for leitura in leituras_acao:
+            print 'acao', leitura.tempo, leitura.proventos_criados, leitura.validado
+        
+        # Totais
+        qtd_acao_exclusao = leituras_acao.filter(decisao='E').count()
+        qtd_acao_proventos = leituras_acao.filter(decisao='C').aggregate(total_proventos=Sum('proventos_criados'))['total_proventos'] or 0
+        
+        qtd_fii_exclusao = leituras_fii.filter(decisao='E').count()
+        qtd_fii_proventos = leituras_fii.filter(decisao='C').aggregate(total_proventos=Sum('proventos_criados'))['total_proventos'] or 0
+        
+        # Validado
+        qtd_acao_exclusao_validado = leituras_acao.filter(decisao='E', validado=True).count()
+        qtd_acao_proventos_validado = leituras_acao.filter(decisao='C', validado=True).aggregate(total_proventos=Sum('proventos_criados'))['total_proventos'] or 0
+        
+        qtd_fii_exclusao_validado = leituras_fii.filter(decisao='E', validado=True).count()
+        qtd_fii_proventos_validado = leituras_fii.filter(decisao='C', validado=True).aggregate(total_proventos=Sum('proventos_criados'))['total_proventos'] or 0
+        
+        tempo_total = Decimal((qtd_acao_exclusao + qtd_fii_exclusao) * Decimal('51.43') + qtd_acao_proventos * Decimal('122.07') \
+                                      + qtd_fii_proventos * Decimal('79.4')) / 3600
+        usuario.tempo_validado = Decimal((qtd_acao_exclusao_validado + qtd_fii_exclusao_validado) * Decimal('51.43') \
+                                         + qtd_acao_proventos_validado * Decimal('122.07') + qtd_fii_proventos_validado * Decimal('79.4')) / 3600
+        usuario.tempo_a_validar = tempo_total - usuario.tempo_validado
+        
+        # TODO usar novo modelo pagamento leitura
+        valor_hora = Decimal(25)
+        usuario.pago = 0
+        usuario.a_pagar = Decimal(floor(usuario.tempo_validado)) * valor_hora - usuario.pago
+        
+        # Parar popular a barra de acompanhamento
+        usuario.progresso_tempo_total = tempo_total * valor_hora
+        usuario.progresso_pago = usuario.pago
+        usuario.percentual_progresso_pago = usuario.progresso_pago / usuario.progresso_tempo_total * 100
+        usuario.progresso_a_pagar = usuario.a_pagar
+        usuario.percentual_progresso_a_pagar = usuario.progresso_a_pagar / usuario.progresso_tempo_total * 100
+        usuario.progresso_validado = usuario.tempo_validado * valor_hora - usuario.a_pagar - usuario.pago
+        usuario.percentual_progresso_validado = usuario.progresso_validado / usuario.progresso_tempo_total * 100
+
     return TemplateResponse(request, 'gerador_proventos/detalhar_pendencias_usuario.html', {'usuario': usuario, 'graf_leituras': graf_leituras, 'graf_validacoes': graf_validacoes,
                                                                                             'graf_leituras_que_recusou': graf_leituras_que_recusou, 'graf_leituras_recusadas': graf_leituras_recusadas})
 
