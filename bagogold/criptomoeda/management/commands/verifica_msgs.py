@@ -64,7 +64,7 @@ class Command(BaseCommand):
                                                                  sum(valor_atual.values())), parse_mode='Markdown')
             
             tempo_decorrido = datetime.datetime.now() - inicio_msg
-            if tempo_decorrido.seconds < 10:
-                time.sleep(10 - tempo_decorrido.seconds)
+            if tempo_decorrido.seconds < 3:
+                time.sleep(3 - tempo_decorrido.seconds)
             fim = datetime.datetime.now()
         

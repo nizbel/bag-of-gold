@@ -320,10 +320,11 @@ function mostrarOperacoes(key, adicionar) {
 }
 
 $.fn.dataTable.ext.search.push( function( settings, data, dataIndex, oData ) {
-	if ($(settings.nTable).is('.mostrar-acoes, .mostrar-fii, .mostrar-lc, .mostrar-td, .mostrar-cdb-rdb, .mostrar-fundo-investimento')) {
+	if ($(settings.nTable).is('.mostrar-acoes, .mostrar-fii, .mostrar-lc, .mostrar-td, .mostrar-cdb-rdb, .mostrar-fundo-investimento, .mostrar-outros')) {
      var mostrar = (oData[0].match(/acoes\_/) != null && $(settings.nTable).hasClass('mostrar-acoes')) || (oData[0].match(/fii\_/) != null && $(settings.nTable).hasClass('mostrar-fii')) ||
         (oData[0].match(/lc\_/) != null && $(settings.nTable).hasClass('mostrar-lc')) || (oData[0].match(/td\_/) != null && $(settings.nTable).hasClass('mostrar-td')) ||
-        (oData[0].match(/cdb-rdb\_/) != null && $(settings.nTable).hasClass('mostrar-cdb-rdb')) || (oData[0].match(/td\_/) != null && $(settings.nTable).hasClass('mostrar-fundo-investimento'));
+        (oData[0].match(/cdb-rdb\_/) != null && $(settings.nTable).hasClass('mostrar-cdb-rdb')) || (oData[0].match(/outros\_/) != null && $(settings.nTable).hasClass('mostrar-outros')) ||
+        (oData[0].match(/fundo-investimento\_/) != null && $(settings.nTable).hasClass('mostrar-fundo-investimento')) ;
         return mostrar;
     } else return true;
 });

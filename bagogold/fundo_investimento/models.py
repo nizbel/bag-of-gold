@@ -85,6 +85,7 @@ class FundoInvestimento (models.Model):
     
     def valor_no_dia(self, investidor, dia=datetime.date.today()):
         if HistoricoValorCotas.objects.filter(fundo_investimento=self, data__lte=dia).exists():
+            # Comparar o último valor de histórico com o último valor de transação do investidor para ver qual é a mais atual
             historico_fundo = HistoricoValorCotas.objects.filter(fundo_investimento=self).order_by('-data')[0]
             if investidor and OperacaoFundoInvestimento.objects.filter(fundo_investimento=self, investidor=investidor, data__range=[historico_fundo.data + datetime.timedelta(days=1), dia]).exists():
                 return OperacaoFundoInvestimento.objects.filter(fundo_investimento=self, investidor=investidor, 
@@ -143,7 +144,7 @@ class OperacaoFundoInvestimento (models.Model):
 class HistoricoValorCotas (models.Model):
     fundo_investimento = models.ForeignKey('FundoInvestimento')
     data = models.DateField(u'Data')
-    valor_cota = models.DecimalField(u'Valor da cota', max_digits=24, decimal_places=15)
+    valor_cota = models.DecimalField(u'Valor da cota', max_digits=31, decimal_places=15)
 
     class Meta:
         unique_together=('fundo_investimento', 'data')

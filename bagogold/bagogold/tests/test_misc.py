@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import Acao, OperacaoAcao, HistoricoAcao, \
     Provento
-from bagogold.bagogold.models.cdb_rdb import CDB_RDB, \
+from bagogold.cdb_rdb.models import CDB_RDB, \
     HistoricoPorcentagemCDB_RDB, OperacaoCDB_RDB
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.fii import ProventoFII, FII, OperacaoFII, \

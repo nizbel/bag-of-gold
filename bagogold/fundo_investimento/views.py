@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 from bagogold import settings
-from bagogold.bagogold.decorators import em_construcao, \
-    adiciona_titulo_descricao
+from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import \
     DivisaoOperacaoFundoInvestimentoFormSet
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFundoInvestimento, \
@@ -13,12 +12,12 @@ from bagogold.fundo_investimento.forms import OperacaoFundoInvestimentoForm
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
     HistoricoValorCotas, FundoInvestimento
 from bagogold.fundo_investimento.utils import \
-    calcular_qtd_cotas_ate_dia_por_fundo, calcular_qtd_cotas_ate_dia, \
+    calcular_qtd_cotas_ate_dia_por_fundo, \
     calcular_valor_fundos_investimento_ate_dia
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import PermissionDenied
 from django.core.mail import mail_admins
 from django.core.paginator import Paginator
 from django.core.urlresolvers import reverse
@@ -58,8 +57,12 @@ def detalhar_fundo(request, id_fundo):
     for registro in historico:
         registro.valor_cota = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(registro.valor_cota))
     # Pegar datas inicial e final do historico
-    historico_data_inicial = historico[len(historico)-1].data
-    historico_data_final = historico[0].data
+    if len(historico):
+        historico_data_inicial = historico[len(historico)-1].data
+        historico_data_final = historico[0].data
+    else:
+        historico_data_inicial = datetime.date.today()
+        historico_data_final = datetime.date.today()
     
     dados = {'total_operacoes': 0, 'qtd_cotas_atual': Decimal(0), 'total_atual': Decimal(0), 'total_lucro': Decimal(0), 'lucro_percentual': Decimal(0)}
     if request.user.is_authenticated():
@@ -152,14 +155,12 @@ def historico(request):
     if request.user.is_authenticated():
         investidor = request.user.investidor
     else:
-        return TemplateResponse(request, 'cdb_rdb/historico.html', {'dados': {}, 'operacoes': list(), 
-                                                    'graf_investido_total': list(), 'graf_patrimonio': list()})
+        return TemplateResponse(request, 'fundo_investimento/historico.html', {'dados': {}, 'graf_investido_total': list(), 'graf_patrimonio': list()})
     # Processa primeiro operações de venda (V), depois compra (C)
     operacoes = OperacaoFundoInvestimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data') 
     # Se investidor não tiver operações, retornar vazio
     if not operacoes:
-        return TemplateResponse(request, 'fundo_investimento/historico.html', {'dados': {}, 'operacoes': list(), 
-                                                    'graf_investido_total': list(), 'graf_patrimonio': list()})
+        return TemplateResponse(request, 'fundo_investimento/historico.html', {'dados': {}, 'graf_investido_total': list(), 'graf_patrimonio': list()})
     # Prepara o campo valor atual
     for operacao in operacoes:
         if operacao.tipo_operacao == 'C':
@@ -284,7 +285,7 @@ def inserir_operacao_fundo_investimento(request):
                         if settings.ENV == 'DEV':
                             raise
                         elif settings.ENV == 'PROD':
-                            mail_admins(u'Erro ao gerar operação em fundo de investimento com várias divisões', traceback.format_exc())
+                            mail_admins(u'Erro ao gerar operação em fundo de investimento com várias divisões', traceback.format_exc().decode('utf-8'))
                 for erro in formset_divisao.non_form_errors():
                     messages.error(request, erro)
             else:
@@ -300,7 +301,7 @@ def inserir_operacao_fundo_investimento(request):
                     if settings.ENV == 'DEV':
                         raise
                     elif settings.ENV == 'PROD':
-                        mail_admins(u'Erro ao gerar operação em fundo de investimento com uma divisão', traceback.format_exc())
+                        mail_admins(u'Erro ao gerar operação em fundo de investimento com uma divisão', traceback.format_exc().decode('utf-8'))
             
         for erro in [erro for erro in form_operacao_fundo_investimento.non_field_errors()]:
             messages.error(request, erro)

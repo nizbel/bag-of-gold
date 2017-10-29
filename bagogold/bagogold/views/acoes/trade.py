@@ -452,8 +452,9 @@ def historico_operacoes(request):
             for operacao_compra in operacao.venda.get_queryset().order_by('compra__preco_unitario'):
                 qtd_compra += operacao_compra.compra.quantidade
                 # TODO NAO PREVÊ MUITAS COMPRAS PARA MUITAS VENDAS
+                multiplicador_compra = min(1, Decimal(operacao.quantidade) / operacao_compra.compra.quantidade)
                 gasto_total_compras += (operacao_compra.compra.quantidade * operacao_compra.compra.preco_unitario + operacao_compra.compra.emolumentos + \
-                                        operacao_compra.compra.corretagem) * (Decimal(operacao.quantidade) / operacao_compra.compra.quantidade)
+                                        operacao_compra.compra.corretagem) * multiplicador_compra
                 
             lucro_bruto_venda = (operacao.quantidade * operacao.preco_unitario - operacao.corretagem - operacao.emolumentos) - \
                 gasto_total_compras

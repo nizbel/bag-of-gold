@@ -11,71 +11,81 @@
 
 {% block content %}
 <div class="portlet-body form">
-		<!-- BEGIN FORM-->
-		<form method="POST" class="horizontal-form">{% csrf_token %}
-			<div class="form-body">
-				<div class="row">
-					<div class="form-group col-md-6 {% if form_cdb_rdb.nome.errors %} has-error {% endif %}">
-						<label class="control-label col-md-4" style="text-align: left;">Nome:</label>
-						<div class="col-md-8">
-							<input type="text" class="form-control" maxlength="50" name="nome" id="id_nome">
-							{% if form_cdb_rdb.nome.errors %} <span class="help-block"> {{ form_cdb_rdb.nome.errors.as_text }} </span> {% endif %}
-						</div>
-					</div>
-					<div class="form-group col-md-6 {% if form_cdb_rdb.tipo.errors %} has-error {% endif %}">
-						<label class="control-label col-md-4" style="text-align: left;"> Tipo: </label>
-						<div class="col-md-8">
-							<select class="selectpicker form-control" id="id_tipo" name="tipo">
-								{% for key, value in form_cdb_rdb.fields.tipo.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
-							</select>
-							{% if form_cdb_rdb.tipo.errors %} <span class="help-block"> {{ form_cdb_rdb.tipo.errors.as_text }} </span> {% endif %}
-						</div>
+	<!-- BEGIN FORM-->
+	<form method="POST" class="horizontal-form">{% csrf_token %}
+		<div class="form-body">
+			<div class="row">
+				<div class="form-group col-md-6 {% if form_cdb_rdb.nome.errors %} has-error {% endif %}">
+					<label class="control-label col-md-4" style="text-align: left;">Nome:</label>
+					<div class="col-md-8">
+						<input type="text" class="form-control" maxlength="50" name="nome" id="id_nome" value="{{form_cdb_rdb.nome.value|default:''}}">
+						{% if form_cdb_rdb.nome.errors %} <span class="help-block"> {{ form_cdb_rdb.nome.errors.as_text }} </span> {% endif %}
 					</div>
 				</div>
-				<div class="row">
-					<div class="form-group col-md-6 {% if form_cdb_rdb.tipo_rendimento.errors %} has-error {% endif %}">
-						<label class="control-label col-md-4" style="text-align: left;"> Tipo de rendimento: </label>
-						<div class="col-md-8">
-							<select class="selectpicker form-control" id="id_tipo_rendimento" name="tipo_rendimento">
-								{% for key, value in form_cdb_rdb.fields.tipo_rendimento.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
-							</select>
-							{% if form_cdb_rdb.tipo_rendimento.errors %} <span class="help-block"> {{ form_cdb_rdb.tipo_rendimento.errors.as_text }} </span> {% endif %}
-						</div>
-					</div>
-					{{ formset_porcentagem.management_form }}
-					{% for form_porcentagem in formset_porcentagem %}
-					<div class="form-group col-md-6 {% if form_porcentagem.porcentagem.errors %} has-error {% endif %}">
-						<label class="control-label col-md-4"> Porcentagem de rendimento: </label>
-						<div class="col-md-8">
-							<input id="id_historicoporcentagemcdb_rdb_set_set-{{forloop.counter0}}-porcentagem" type="text" value="{{form_porcentagem.porcentagem.value}}" name="historicoporcentagemcdb_rdb_set-{{forloop.counter0}}-porcentagem" class="form-control">
-							{% if form_porcentagem.porcentagem.errors %} <span class="help-block"> {{ form_porcentagem.porcentagem.errors.as_text }} </span> {% endif %}
-						</div>
-					</div>
-					{% endfor %}
-				</div>
-				<div class="row">
-				{{ formset_carencia.management_form }}
-				{% for form_carencia in formset_carencia %}
-					<div class="form-group col-md-6 {% if form_carencia.carencia.errors %} has-error {% endif %}">
-						<label class="control-label col-md-4"> Período de carência: </label>
-						<div class="col-md-8">
-							<input id="id_historicocarenciacdb_rdb_set-{{forloop.counter0}}-carencia" type="text" value="{{form_carencia.carencia.value}}" name="historicocarenciacdb_rdb_set-{{forloop.counter0}}-carencia" class="form-control">
-							{% if form_carencia.carencia.errors %} <span class="help-block"> {{ form_carencia.carencia.errors.as_text }} </span> {% endif %}
-						</div>
-					</div>
-				{% endfor %}
-				</div>
-				<div class="form-actions">
-					<div class="row">
-						<div class="col-md-offset col-md-3">
-							<button type="submit" name="save" value="1" class="btn green-steel">Salvar</button>
-						</div>
+				<div class="form-group col-md-6 {% if form_cdb_rdb.tipo.errors %} has-error {% endif %}">
+					<label class="control-label col-md-4" style="text-align: left;"> Tipo: </label>
+					<div class="col-md-8">
+						<select class="selectpicker form-control" id="id_tipo" name="tipo">
+							{% for key, value in form_cdb_rdb.fields.tipo.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
+						</select>
+						{% if form_cdb_rdb.tipo.errors %} <span class="help-block"> {{ form_cdb_rdb.tipo.errors.as_text }} </span> {% endif %}
 					</div>
 				</div>
 			</div>
-		</form>
-		<!-- END FORM-->
-	</div>
+			<div class="row">
+				<div class="form-group col-md-6 {% if form_cdb_rdb.tipo_rendimento.errors %} has-error {% endif %}">
+					<label class="control-label col-md-4" style="text-align: left;"> Tipo de rendimento: </label>
+					<div class="col-md-8">
+						<select class="selectpicker form-control" id="id_tipo_rendimento" name="tipo_rendimento">
+							{% for key, value in form_cdb_rdb.fields.tipo_rendimento.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
+						</select>
+						{% if form_cdb_rdb.tipo_rendimento.errors %} <span class="help-block"> {{ form_cdb_rdb.tipo_rendimento.errors.as_text }} </span> {% endif %}
+					</div>
+				</div>
+				{{ formset_porcentagem.management_form }}
+				{% for form_porcentagem in formset_porcentagem %}
+				<div class="form-group col-md-6 {% if form_porcentagem.porcentagem.errors %} has-error {% endif %}">
+					<label class="control-label col-md-4"> {{ form_porcentagem.porcentagem.label }}: </label>
+					<div class="col-md-8">
+						<input id="id_historicoporcentagemcdb_rdb_set_set-{{forloop.counter0}}-porcentagem" type="text" value="{{form_porcentagem.porcentagem.value}}" name="historicoporcentagemcdb_rdb_set-{{forloop.counter0}}-porcentagem" class="form-control">
+						{% if form_porcentagem.porcentagem.errors %} <span class="help-block"> {{ form_porcentagem.porcentagem.errors.as_text }} </span> {% endif %}
+					</div>
+				</div>
+				{% endfor %}
+			</div>
+			<div class="row">
+			{{ formset_carencia.management_form }}
+			{% for form_carencia in formset_carencia %}
+				<div class="form-group col-md-6 {% if form_carencia.carencia.errors %} has-error {% endif %}">
+					<label class="control-label col-md-4"> {{ form_carencia.carencia.label }}: </label>
+					<div class="col-md-8">
+						<input id="id_historicocarenciacdb_rdb_set-{{forloop.counter0}}-carencia" type="text" value="{{form_carencia.carencia.value}}" name="historicocarenciacdb_rdb_set-{{forloop.counter0}}-carencia" class="form-control">
+						{% if form_carencia.carencia.errors %} <span class="help-block"> {{ form_carencia.carencia.errors.as_text }} </span> {% endif %}
+					</div>
+				</div>
+			{% endfor %}
+            {{ formset_vencimento.management_form }}
+            {% for form_vencimento in formset_vencimento %}
+                <div class="form-group col-md-6 {% if form_vencimento.vencimento.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4"> {{ form_vencimento.vencimento.label }}: </label>
+                    <div class="col-md-8">
+                        <input id="id_historicovencimentocdb_rdb_set-{{forloop.counter0}}-vencimento" type="text" value="{{form_vencimento.vencimento.value}}" name="historicovencimentocdb_rdb_set-{{forloop.counter0}}-vencimento" class="form-control">
+                        {% if form_vencimento.vencimento.errors %} <span class="help-block"> {{ form_vencimento.vencimento.errors.as_text }} </span> {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+            </div>
+			<div class="form-actions">
+				<div class="row">
+					<div class="col-md-offset col-md-3">
+						<button type="submit" name="save" value="1" class="btn green-steel">Salvar</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+	<!-- END FORM-->
+</div>
 
 {% endblock %}
     
@@ -94,9 +104,9 @@ $(document).ready(function() {
 	
 	$('#id_tipo_rendimento').change( function() {
 		if (String($(this).val()) == '1') {
-			label.text(label.text().replace(/\(.*?\)/, '(ao ano)'));
+			$("input[name='historicoporcentagemcdb_rdb_set-0-porcentagem']").parent().find('.bootstrap-touchspin-postfix').text('% ao ano');
 		} else if (String($(this).val()) == '2') {
-			label.text(label.text().replace(/\(.*?\)/, '(% do CDI)'));
+            $("input[name='historicoporcentagemcdb_rdb_set-0-porcentagem']").parent().find('.bootstrap-touchspin-postfix').text('% do CDI');
 		}
 	})
 	$("input[name='historicoporcentagemcdb_rdb_set-0-porcentagem']").TouchSpin({
@@ -116,6 +126,14 @@ $(document).ready(function() {
 		maxboostedstep: 100,
 		postfix: 'dias'
 	});
+	$("input[name='historicovencimentocdb_rdb_set-0-vencimento']").TouchSpin({
+        initval: 1,
+        min: 1,
+        max: 1000000000,
+        step: 1,
+        maxboostedstep: 100,
+        postfix: 'dias'
+    });
 	$("input[name='nome']").maxlength();
 });
 </script>

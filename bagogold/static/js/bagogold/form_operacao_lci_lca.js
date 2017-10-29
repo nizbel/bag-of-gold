@@ -61,6 +61,8 @@ $(document).ready(function() {
  	});
  	$('.date-picker').datepicker({
  	   language: 'pt-BR'
+ 	}).on('changeDate', function(e) {
+ 		verificarVendasPossiveis($(this).find('input').val());
  	});
      $("select[id$='-divisao']").selectpicker('refresh');
      $("#id_tipo_operacao").selectpicker('refresh');

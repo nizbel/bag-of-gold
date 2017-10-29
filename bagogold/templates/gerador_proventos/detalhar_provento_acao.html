@@ -41,6 +41,12 @@
                                 <div class="m-grid-col m-grid-col-left">{{provento.data_pagamento|date:'d/m/Y'}}</div>
                                 <div class="m-grid-col m-grid-col-left"><strong>Validado:</strong></div>
                                 <div class="m-grid-col m-grid-col-left">{{provento.oficial_bovespa|yesno:"Sim,Não,Não"}}</div>
+                                {% if provento.atualizacaoselicprovento %}
+                                <div class="m-grid-col m-grid-col-left"><strong>Atualização pela Selic:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">
+                                    {{provento.atualizacaoselicprovento.data_inicio|date:'d/m/Y'}} a {{provento.atualizacaoselicprovento.data_fim|date:'d/m/Y'}}
+                                </div>
+                                {% endif %}
                             </div>
                             {% if provento.tipo_provento == 'A' %}
                                 {% for acao_descricao_provento in provento.acoes_recebidas %}
@@ -98,9 +104,14 @@
                                 <div class="m-grid-col m-grid-col-left">{{versao.data_ex|date:'d/m/Y'}}</div>
                                 <div class="m-grid-col m-grid-col-left"><strong>Pagamento:</strong></div>
                                 <div class="m-grid-col m-grid-col-left">{{versao.data_pagamento|date:'d/m/Y'}}</div>
+                                {% if versao.selicproventoacaodescritodocbovespa %}
+                                <div class="m-grid-col m-grid-col-left"><strong>Atualização pela Selic:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">
+                                    {{versao.selicproventoacaodescritodocbovespa.data_inicio|date:'d/m/Y'}} a {{versao.selicproventoacaodescritodocbovespa.data_fim|date:'d/m/Y'}}
+                                </div>
+                                {% endif %}
                                 <div class="m-grid-col m-grid-col-left"><strong>Documento:</strong></div>
                                 <div class="m-grid-col m-grid-col-left"><a href="{% url "gerador_proventos:detalhar_documento" versao.proventoacaodocumento.documento.id %}">{{versao.proventoacaodocumento.documento}}</a></div>
-                                
                             </div>
                             {% if versao.tipo_provento == 'A' %}
                                 {% for acao_descricao_versao in versao.acoes_recebidas %}

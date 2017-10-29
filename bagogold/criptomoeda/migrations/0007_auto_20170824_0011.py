@@ -11,7 +11,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('bagogold', '0154_auto_20170824_0011'),
+        ('bagogold', '0154_selicproventoacaodescritodocbovespa'),
         ('criptomoeda', '0006_auto_20170823_0335'),
     ]
 
