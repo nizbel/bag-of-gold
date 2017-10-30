@@ -177,6 +177,18 @@ def buscar_valor_criptomoedas_atual(lista_tickers):
     dados = json.load(resultado) 
     return {ticker: Decimal(str(dados[ticker.upper()]['BRL'])) for ticker in lista_tickers if ticker.upper() in dados.keys()}
 
+def buscar_valor_criptomoedas_atual_varias_moedas(lista_tickers, lista_moedas):
+    """ 
+    Busca o valor atual de várias criptomoedas pela API do CryptoCompare
+    Parâmetros: Lista com os tickers das criptomoedas
+                Lista com as moedas utilizadas
+    Retorno: Valores atuais {ticker: {moeda: valor, }, }
+    """
+    url = 'https://min-api.cryptocompare.com/data/pricemulti?fsyms=%s&tsyms=%s' % (','.join(lista_tickers), ','.join(lista_moedas))
+    resultado = urlopen(url)
+    dados = json.load(resultado) 
+    return {ticker: dados[ticker.upper()] for ticker in lista_tickers if ticker.upper() in dados.keys()}
+
 def buscar_historico_criptomoeda(criptomoeda_ticker):
     """ 
     Busca os valores históricos de uma criptomoeda pela API do CryptoCompare

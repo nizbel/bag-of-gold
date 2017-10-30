@@ -2,11 +2,13 @@
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoCriptomoeda, \
     Divisao, DivisaoTransferenciaCriptomoeda
 from bagogold.criptomoeda.models import TransferenciaCriptomoeda, Criptomoeda, \
-    OperacaoCriptomoeda, OperacaoCriptomoedaMoeda, OperacaoCriptomoedaTaxa
+    OperacaoCriptomoeda, OperacaoCriptomoedaMoeda, OperacaoCriptomoedaTaxa,\
+    ValorDiarioCriptomoeda
 from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia, \
     calcular_qtd_moedas_ate_dia_por_criptomoeda, \
     calcular_qtd_moedas_ate_dia_por_divisao, buscar_valor_criptomoeda_atual, \
-    buscar_valor_criptomoedas_atual, buscar_historico_criptomoeda
+    buscar_valor_criptomoedas_atual, buscar_historico_criptomoeda, \
+    buscar_valor_criptomoedas_atual_varias_moedas
 from decimal import Decimal
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -155,10 +157,19 @@ class QuantidadesCriptomoedaTestCase(TestCase):
             self.assertNotEqual(buscar_valor_criptomoeda_atual, 0)
             
     def test_buscar_valores_atuais_criptomoeda(self):
-        """Testa a busca de valor atual para uma lista criptomoedas"""
+        """Testa a busca de valor atual para uma lista de criptomoedas"""
         tickers = Criptomoeda.objects.all().values_list('ticker', flat=True)[:3]
         valores_atuais = buscar_valor_criptomoedas_atual(tickers)
         self.assertEqual(len(tickers), len(valores_atuais))
+
+    def test_buscar_valores_atuais_criptomoeda_varias_moedas(self):
+        """Testa a busca de valor atual em várias moedas para uma lista de criptomoedas"""
+        tickers = Criptomoeda.objects.all().values_list('ticker', flat=True)[:3]
+        valores_atuais = buscar_valor_criptomoedas_atual_varias_moedas(tickers, [ValorDiarioCriptomoeda.MOEDA_DOLAR, ValorDiarioCriptomoeda.MOEDA_REAL])
+        self.assertEqual(len(tickers), len(valores_atuais))
+        for ticker in valores_atuais.keys():
+            self.assertIn(ValorDiarioCriptomoeda.MOEDA_DOLAR, valores_atuais[ticker].keys())
+            self.assertIn(ValorDiarioCriptomoeda.MOEDA_REAL, valores_atuais[ticker].keys())
 
     def test_buscar_historico(self):
         """Testa a busca de histórico de valor de uma criptomoeda"""
