@@ -2,12 +2,20 @@
 {% load staticfiles %}
 
 {% block pagina_titulo_icone %}
-<i class="icon-diamond font-yellow-crusta"></i>
+<i class="icon-hourglass font-yellow-crusta"></i>
 {% endblock %}
 
 {% block content %}
 <div class="portlet-body">
 	<div class="row">
+        <div class="col-md-12 text-center">
+            <h2>
+                {{ divisao.nome }} (CDB/RDB)
+            </h2>
+        </div>
+        <div class="col-md-12 text-right util-btn-margin-bottom-5">
+            <a class="btn btn-warning" href="{% url "divisoes:detalhar_divisao" divisao.id %}">Detalhar divisão</a>
+        </div>
 		<div class="col-md-12">
             <div class="cd-horizontal-timeline mt-timeline-horizontal" data-spacing="60">
                 <div class="timeline">
@@ -16,7 +24,12 @@
                             <ol>
                                 {% for evento in eventos %}
                                 <li>
-                                    <a href="javascript:;" data-date="{{evento.data|date:'d/m/Y'}}" class="border-after-yellow-crusta bg-after-yellow-crusta {% if forloop.counter0 == 0 %}selected{% endif %}">{{evento.data|date:'d/m/Y'}}</a>
+                                    <a href="javascript:;" data-date="{{evento.data|date:'d/m/Y'}}" class="border-after-yellow-crusta bg-after-yellow-crusta 
+                                    {% if forloop.counter0 == 0 %}selected{% endif %}">
+                                        <span class="{% if evento.saldo >= 0%}font-blue{% else %}font-red-thunderbird{% endif %}">R$ {{evento.saldo}}</span>
+                                        <br/>
+                                        {{evento.data|date:'d/m/Y'}}
+                                    </a>
                                 </li>
                                 {% endfor %}
                             </ol>
@@ -55,7 +68,9 @@
                             </div>
                             <div class="clearfix"></div>
                             <div class="mt-content border-grey-steel">
-                                <p>{{evento.texto}}</p>
+                                {% for texto in evento.texto %}
+                                <p>{{texto}}</p>
+                                {% endfor %}
                             </div>
                         </li>
                         {% endfor %}
