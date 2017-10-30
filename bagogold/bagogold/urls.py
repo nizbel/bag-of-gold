@@ -76,11 +76,12 @@ debentures_patterns = [
 
 divisoes_patterns = [
     url(r'^criar_transferencias/$', views.divisoes.divisoes.criar_transferencias, name='criar_transferencias'),
-    url(r'^detalhar_divisao/(?P<id>\d+)/$', views.divisoes.divisoes.detalhar_divisao, name='detalhar_divisao'),
-    url(r'^editar_divisao/(?P<id>\d+)/$', views.divisoes.divisoes.editar_divisao, name='editar_divisao'),
-    url(r'^editar_transferencia/(?P<id>\d+)/$', views.divisoes.divisoes.editar_transferencia, name='editar_transferencia'),
+    url(r'^detalhar_divisao/(?P<divisao_id>\d+)/$', views.divisoes.divisoes.detalhar_divisao, name='detalhar_divisao'),
+    url(r'^editar_divisao/(?P<divisao_id>\d+)/$', views.divisoes.divisoes.editar_divisao, name='editar_divisao'),
+    url(r'^editar_transferencia/(?P<divisao_id>\d+)/$', views.divisoes.divisoes.editar_transferencia, name='editar_transferencia'),
     url(r'^inserir_divisao/$', views.divisoes.divisoes.inserir_divisao, name='inserir_divisao'),
     url(r'^inserir_transferencia/$', views.divisoes.divisoes.inserir_transferencia, name='inserir_transferencia'),
+    url(r'^linha_do_tempo/(?P<divisao_id>\d+)/$', views.divisoes.linha_do_tempo.linha_do_tempo, name='linha_do_tempo'),
     url(r'^listar_divisoes/$', views.divisoes.divisoes.listar_divisoes, name='listar_divisoes'),
     url(r'^listar_transferencias/$', views.divisoes.divisoes.listar_transferencias, name='listar_transferencias'),
     ]
