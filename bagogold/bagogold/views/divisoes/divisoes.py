@@ -101,14 +101,14 @@ def criar_transferencias(request):
 
 @login_required
 @adiciona_titulo_descricao('Detalhar divisão', 'Detalha a composição de uma divisão')
-def detalhar_divisao(request, id):
+def detalhar_divisao(request, divisao_id):
     investidor = request.user.investidor
     
     # Usado para criar objetos vazios
     class Object(object):
         pass
     
-    divisao = Divisao.objects.get(id=id)
+    divisao = Divisao.objects.get(id=divisao_id)
     if divisao.investidor != investidor:
         raise PermissionDenied
     
@@ -308,10 +308,10 @@ def detalhar_divisao(request, id):
 
 @login_required
 @adiciona_titulo_descricao('Editar divisão', 'Alterar dados de uma divisão')
-def editar_divisao(request, id):
+def editar_divisao(request, divisao_id):
     investidor = request.user.investidor
     
-    divisao = Divisao.objects.get(pk=id)
+    divisao = Divisao.objects.get(pk=divisao_id)
     if divisao.investidor != investidor:
         raise PermissionDenied
     
@@ -345,11 +345,11 @@ def editar_divisao(request, id):
     
 @login_required
 @adiciona_titulo_descricao('Editar transferência', 'Alterar valores de uma transferência no histórico')
-def editar_transferencia(request, id):
+def editar_transferencia(request, divisao_id):
     investidor = request.user.investidor
     
     # Checar ambas as divisões
-    transferencia = TransferenciaEntreDivisoes.objects.get(pk=id)
+    transferencia = TransferenciaEntreDivisoes.objects.get(pk=divisao_id)
     if transferencia.divisao_cedente and transferencia.divisao_cedente.investidor != investidor:
         raise PermissionDenied
     if transferencia.divisao_recebedora and transferencia.divisao_recebedora.investidor != investidor:
