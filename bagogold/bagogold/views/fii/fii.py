@@ -245,28 +245,6 @@ def editar_operacao_fii(request, operacao_id):
                                                                'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})   
 
 
-@login_required
-@user_passes_test(is_superuser)
-def editar_provento_fii(request, id):
-    operacao = ProventoFII.objects.get(pk=id)
-    if request.method == 'POST':
-        if request.POST.get("save"):
-            form = ProventoFIIForm(request.POST, instance=operacao)
-            if form.is_valid():
-                form.save()
-            messages.success(request, 'Provento alterado com sucesso')
-            return HttpResponseRedirect(reverse('fii:historico_fii'))
-        elif request.POST.get("delete"):
-            operacao.delete()
-            messages.success(request, 'Provento apagado com sucesso')
-            return HttpResponseRedirect(reverse('fii:historico_fii'))
-
-    else:
-        form = ProventoFIIForm(instance=operacao)
-            
-    return TemplateResponse(request, 'fii/editar_provento_fii.html', {'form': form})   
-    
-    
 @adiciona_titulo_descricao('Histórico de FII', 'Histórico de operações de compra/venda e rendimentos/amortizações do investidor')
 def historico_fii(request):
     if request.user.is_authenticated():

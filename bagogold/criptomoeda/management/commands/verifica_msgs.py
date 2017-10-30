@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.criptomoeda.models import ValorDiarioCriptomoeda, Bot
+from bagogold.criptomoeda.utils import buscar_valor_criptomoedas_atual
 from decimal import Decimal
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -10,7 +11,6 @@ import datetime
 import re
 import time
 import urllib
-from bagogold.criptomoeda.utils import buscar_valor_criptomoedas_atual
 
 class Command(BaseCommand):
     help = 'Verifica mensagens'
@@ -38,8 +38,8 @@ class Command(BaseCommand):
 #                 print update
                 chat_id = update.message.sender.id
                 if update.message.text != None:
-                    bot.send_message(chat_id, u'%s' % ('\n'.join(['%s: *$%s*' % (valor.criptomoeda, valor.valor.quantize(Decimal('0.01'))) for valor in \
-                                                                  ValorDiarioCriptomoeda.objects.all()])), parse_mode='Markdown')
+                    bot.send_message(chat_id, u'%s' % ('\n'.join(['%s: *%s %s*' % (valor.criptomoeda, valor.valor.quantize(Decimal('0.01')), valor.moeda) \
+                                                                  for valor in ValorDiarioCriptomoeda.objects.all()])), parse_mode='Markdown')
                 
                 bot_principal.ultima_msg_lida = update.update_id + 1
                 bot_principal.save()
@@ -48,7 +48,8 @@ class Command(BaseCommand):
 #             bot.send_message(150143379, u'%s' % ('\n'.join(['(%s)%s: *$%s*' % (valor.data_hora.strftime('%H:%M'), valor.criptomoeda, valor.valor.quantize(Decimal('0.01'))) for valor in \
 #                                                           ValorDiarioCriptomoeda.objects.all().order_by('criptomoeda__ticker')])), parse_mode='Markdown')
             
-            valor_atual = buscar_valor_criptomoedas_atual(['XZC', 'ZEC', 'XMR', 'DCR'])
+            valor_atual = dict(ValorDiarioCriptomoeda.objects.filter(criptomoeda__ticker__in=['XZC', 'DCR', 'ZEC', 'XMR'], moeda='BRL') \
+                .values_list('criptomoeda__ticker', 'valor'))
             for ticker, valor in valor_atual.items():
                 if ticker == 'XZC':
                     valor_atual[ticker] = (valor * Decimal('157.9233536') * Decimal('0.97')).quantize(Decimal('0.01'))

@@ -116,9 +116,13 @@
 					<tbody>
 					{% for item in lista_conjunta %}
 						<tr>
-							<td><a href="{% if item.tipo == 'Provento' %}javascript:;
-							{% else %}{% url 'fii:editar_operacao_fii' item.id %}
-							{% endif %}">{{item.fii.ticker}}</a></td>
+							<td>
+                                {% if item.tipo == 'Provento' %}
+                                    {{item.fii.ticker}}
+                                {% else %}
+                                    <a href="{% url 'fii:editar_operacao_fii' item.id %}">{{item.fii.ticker}}</a>
+                                {% endif %}
+                            </td>
 							<td>{{item.tipo}}</td>
 							<td>{{ item.data|date:"d/m/Y" }}</td>
 							<td>{{item.quantidade}}</td>
