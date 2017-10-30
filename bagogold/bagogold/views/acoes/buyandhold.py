@@ -23,6 +23,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.db.models import Q
+from django.db.models.expressions import F
 from django.forms import inlineformset_factory
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -365,13 +366,10 @@ def historico(request):
     
     acoes = list(set(operacoes.values_list('acao', flat=True)))
 
-    proventos = Provento.objects.filter(acao__in=acoes).exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).order_by('data_ex')
+    proventos = Provento.objects.filter(acao__in=acoes).exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).order_by('data_ex') \
+        .annotate(data=F('data_ex'))
     for acao_id in operacoes.values_list('acao', flat=True):
         proventos = proventos.filter((Q(acao__id=acao_id) & Q(data_ex__gt=operacoes.filter(acao__id=acao_id)[0].data)) | ~Q(acao__id=acao_id))
-    for provento in proventos:
-        provento.data = provento.data_ex
-        provento.emolumentos = 0
-        provento.corretagem = 0
      
     taxas_custodia = TaxaCustodiaAcao.objects.filter(investidor=investidor).order_by('ano_vigencia', 'mes_vigencia')
 #     for taxa in taxas_custodia:

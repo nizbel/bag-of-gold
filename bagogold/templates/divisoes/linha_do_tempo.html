@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block pagina_titulo_icone %}
+<i class="icon-hourglass font-yellow-crusta"></i>
+{% endblock %}
+
+{% block content %}
+<div class="portlet-body">
+	<div class="row">
+        <div class="col-md-12 text-center">
+            <h2>
+                {{ divisao.nome }} (CDB/RDB)
+            </h2>
+        </div>
+        <div class="col-md-12 text-right util-btn-margin-bottom-5">
+            <a class="btn btn-warning" href="{% url "divisoes:detalhar_divisao" divisao.id %}">Detalhar divisão</a>
+        </div>
+		<div class="col-md-12">
+            <div class="cd-horizontal-timeline mt-timeline-horizontal" data-spacing="60">
+                <div class="timeline">
+                    <div class="events-wrapper">
+                        <div class="events">
+                            <ol>
+                                {% for evento in eventos %}
+                                <li>
+                                    <a href="javascript:;" data-date="{{evento.data|date:'d/m/Y'}}" class="border-after-yellow-crusta bg-after-yellow-crusta 
+                                    {% if forloop.counter0 == 0 %}selected{% endif %}">
+                                        <span class="{% if evento.saldo >= 0%}font-blue{% else %}font-red-thunderbird{% endif %}">R$ {{evento.saldo}}</span>
+                                        <br/>
+                                        {{evento.data|date:'d/m/Y'}}
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            </ol>
+                            <span class="filling-line bg-yellow-crusta" aria-hidden="true"></span>
+                        </div>
+                        <!-- .events -->
+                    </div>
+                    <!-- .events-wrapper -->
+                    <ul class="cd-timeline-navigation mt-ht-nav-icon">
+                        <li>
+                            <a href="#0" class="prev inactive btn btn-outline yellow-crusta md-skip">
+                                <i class="fa fa-chevron-left"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#0" class="next btn btn-outline yellow-crusta md-skip">
+                                <i class="fa fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                    <!-- .cd-timeline-navigation -->
+                </div>
+                <!-- .timeline -->
+                <div class="events-content">
+                    <ol>
+                        {% for evento in eventos %}
+                        <li {% if forloop.counter0 == 0 %}class="selected"{% endif %} data-date="{{evento.data|date:'d/m/Y'}}">
+                            <div class="mt-title">
+                                <h2 class="mt-content-title">{{evento.titulo}}</h2>
+                            </div>
+                            <div class="mt-author">
+                                <div class="mt-author-name">
+                                    <span>Saldo: R$ {{evento.saldo}} Investido: R$ {{evento.investido}}</span>
+                                </div>
+                                <div class="mt-author-datetime font-grey-gallery">{{evento.data}}</div>
+                            </div>
+                            <div class="clearfix"></div>
+                            <div class="mt-content border-grey-steel">
+                                {% for texto in evento.texto %}
+                                <p>{{texto}}</p>
+                                {% endfor %}
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ol>
+                </div>
+                <!-- .events-content -->
+            </div>
+		</div>
+	</div>
+</div>
+
+{% endblock %}
+
+{% block extra_footer %}
+<script src={% static "assets/global/plugins/horizontal-timeline/horizontal-timeline-normal.js" %} type="text/javascript"></script>
+{% endblock %}
