@@ -541,7 +541,7 @@ def inserir_transferencia(request):
     return TemplateResponse(request, 'criptomoedas/inserir_transferencia.html', {'form_transferencia_criptomoeda': form_transferencia_criptomoeda, \
                                                                                               'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})
 
-@adiciona_titulo_descricao('Listar criptomoedas cadastrados', 'Lista as criptomoedas no sistema')
+@adiciona_titulo_descricao('Listar criptomoedas cadastradas', 'Lista as criptomoedas no sistema')
 def listar_criptomoedas(request):
     moedas = Criptomoeda.objects.all()
     valores_diarios = ValorDiarioCriptomoeda.objects.all().values('valor')
