@@ -8,7 +8,10 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoCriptomoeda, \
 from bagogold.criptomoeda.forms import OperacaoCriptomoedaForm, \
     TransferenciaCriptomoedaForm
 from bagogold.criptomoeda.models import Criptomoeda, OperacaoCriptomoeda, \
-    OperacaoCriptomoedaMoeda, OperacaoCriptomoedaTaxa, TransferenciaCriptomoeda
+    OperacaoCriptomoedaMoeda, OperacaoCriptomoedaTaxa, TransferenciaCriptomoeda, \
+    ValorDiarioCriptomoeda
+from bagogold.criptomoeda.utils import buscar_valor_criptomoedas_atual, \
+    calcular_qtd_moedas_ate_dia
 from bagogold.fundo_investimento.utils import \
     calcular_qtd_cotas_ate_dia_por_fundo
 from decimal import Decimal
@@ -28,8 +31,6 @@ import calendar
 import datetime
 import json
 import traceback
-from bagogold.criptomoeda.utils import buscar_valor_criptomoedas_atual,\
-    calcular_qtd_moedas_ate_dia
 
 @login_required
 @adiciona_titulo_descricao('Editar operação em criptomoeda', 'Alterar valores de uma operação de compra/venda em criptomoeda')
@@ -540,25 +541,13 @@ def inserir_transferencia(request):
     return TemplateResponse(request, 'criptomoedas/inserir_transferencia.html', {'form_transferencia_criptomoeda': form_transferencia_criptomoeda, \
                                                                                               'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})
 
-@adiciona_titulo_descricao('Listar criptomoedas cadastrados', 'Lista as criptomoedas no sistema')
+@adiciona_titulo_descricao('Listar criptomoedas cadastradas', 'Lista as criptomoedas no sistema')
 def listar_criptomoedas(request):
     moedas = Criptomoeda.objects.all()
-    
-    # Carrega o valor de um dólar em reais, mais atual
-    url_dolar = 'http://api.fixer.io/latest?base=USD&symbols=BRL'
-    resultado = urlopen(url_dolar)
-    data = json.load(resultado) 
-    dolar_para_real = Decimal(data['rates']['BRL'])
-    
+    valores_diarios = ValorDiarioCriptomoeda.objects.all().values('valor')
     for moeda in moedas:
-        url = 'https://api.cryptonator.com/api/ticker/%s-usd' % (moeda.ticker)
-        resultado = urlopen(url)
-        data = json.load(resultado) 
-        if data['success']:
-            moeda.valor_atual_dolar = Decimal(data['ticker']['price'])
-            moeda.valor_atual = dolar_para_real * moeda.valor_atual_dolar
-            if moeda.ticker == 'BTC':
-                btc_para_dolar = moeda.valor_atual_dolar
+        moeda.valor_atual = valores_diarios.get(criptomoeda=moeda, moeda=ValorDiarioCriptomoeda.MOEDA_REAL)['valor']
+        moeda.valor_atual_dolar = valores_diarios.get(criptomoeda=moeda, moeda=ValorDiarioCriptomoeda.MOEDA_DOLAR)['valor']
     
     return TemplateResponse(request, 'criptomoedas/listar_moedas.html', {'moedas': moedas})
 

@@ -197,7 +197,7 @@ def ler_documento_provento(request, id_pendencia):
                         messages.error(request, mensagem)
                         
             # Cancelar 
-            elif request.POST.get('reservar') == '0':
+            elif request.POST.get('reservar') == '2':
                 retorno, mensagem = desalocar_pendencia_de_investidor(pendencia, investidor)
                 if retorno:
                     # Atualizar pendência
