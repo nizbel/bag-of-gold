@@ -22,6 +22,7 @@
 0 5 1 * * /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py preencher_historico_fundo_investimento --anual
 
 # Criptomoedas
-* * * * * /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py verifica_msgs
+* * * * * /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py preencher_valores_diarios_cripto
+*/3 * * * * /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py verifica_msgs
 # Apenas Prod
 #* * * * * /home/bagofgold/.virtualenvs/bagogold/bin/python /home/bagofgold/bagogold/manage.py rodar_dropbox

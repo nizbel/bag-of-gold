@@ -16,14 +16,18 @@
 	<thead>
 		<tr>
 			<th>Moeda</th>
-            <th>Valor</th>
+            <th>Sigla</th>
+            <th>Valor (em R$)</th>
+            <th>Valor (em USD)</th>
 		</tr>
 	</thead>
 	<tbody>
 	{% for moeda in moedas %}
 	<tr>
-		<td>{{moeda.nome}} (<strong>{{moeda.ticker}}</strong>)</td>
-		<td>{% if moeda.valor_atual%}<strong>R$ {{moeda.valor_atual|floatformat:'8'}}</strong> (USD {{moeda.valor_atual_dolar}}){% else %}Indisponível{% endif %}</td>
+		<td>{{moeda.nome}}</td>
+        <td><strong>{{moeda.ticker}}</strong></td>
+		<td>{% if moeda.valor_atual %}{{moeda.valor_atual|floatformat:'2'}}{% else %}Indisponível{% endif %}</td>
+        <td>{% if moeda.valor_atual_dolar %}{{moeda.valor_atual_dolar|floatformat:'2'}}{% else %}Indisponível{% endif %}</td>
 	</tr>
 	{% endfor %}
 	</tbody>

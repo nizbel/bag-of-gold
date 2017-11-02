@@ -130,7 +130,7 @@ def baixar_historico_td_ano(ano):
                 data = time.strftime('%Y-%m-%d', data)
     #                 print(data)
                 if Titulo.objects.filter(tipo=Titulo.buscar_vinculo_oficial(tipo), data_vencimento=data).exists():
-                    titulo = Titulo.objects.get(tipo=tipo, data_vencimento=data)
+                    titulo = Titulo.objects.get(tipo=Titulo.buscar_vinculo_oficial(tipo), data_vencimento=data)
                 else:
                     titulo = Titulo(tipo=Titulo.buscar_vinculo_oficial(tipo), data_vencimento=data, data_inicio=data)
                     titulo.save()
@@ -236,18 +236,10 @@ def buscar_valores_diarios():
                     tipo_titulo = re.findall('\(.*?\)', dado)[0]
 #                     print tipo_titulo
                     tipo_titulo = tipo_titulo.replace('(', '').replace(')', '')
-                    if tipo_titulo == 'NTNB Princ':
-                        tipo_titulo = 'NTN-B Principal'
-                    elif tipo_titulo == 'NTNB':
-                        tipo_titulo = 'NTN-B'
-                    elif tipo_titulo == 'NTNF':
-                        tipo_titulo = 'NTN-F'
-                    elif tipo_titulo == 'NTNC':
-                        tipo_titulo = 'NTN-C'
                 elif contador == 1:
                     data_formatada = time.strptime(dado, "%d/%m/%Y")
                     data_formatada = time.strftime('%Y-%m-%d', data_formatada)
-                    valor_diario.titulo = Titulo.objects.get(tipo=tipo_titulo, data_vencimento=data_formatada)
+                    valor_diario.titulo = Titulo.objects.get(tipo=Titulo.buscar_vinculo_oficial(tipo_titulo), data_vencimento=data_formatada)
                     if valor_diario.titulo in [valor_preenchido.titulo for valor_preenchido in valores_diarios]:
                         valor_diario = [valor_preenchido for valor_preenchido in valores_diarios if valor_preenchido.titulo == valor_diario.titulo][0]
                 elif contador == 2:

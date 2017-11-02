@@ -41,7 +41,6 @@ acoes_bh_patterns = [
     url(r'^evolucao_posicao/$', views.acoes.buyandhold.evolucao_posicao, name='evolucao_posicao_bh'),
     url(r'^historico/$', views.acoes.buyandhold.historico, name='historico_bh'),
     url(r'^inserir_operacao_acao/$', views.acoes.buyandhold.inserir_operacao_acao, name='inserir_operacao_bh'),
-    url(r'^inserir_provento_acao/$', views.acoes.buyandhold.inserir_provento_acao, name='inserir_provento_bh'),
     url(r'^inserir_taxa_custodia_acao/$', views.acoes.buyandhold.inserir_taxa_custodia_acao, name='inserir_taxa_custodia_acao'),
     url(r'^listar_taxas_custodia_acao/$', views.acoes.buyandhold.listar_taxas_custodia_acao, name='listar_taxas_custodia_acao'),
     url(r'^painel/$', views.acoes.buyandhold.painel, name='painel_bh'),
@@ -94,8 +93,6 @@ fiis_patterns = [
     url(r'^editar_operacao/(?P<operacao_id>\d+)/$', views.fii.fii.editar_operacao_fii, name='editar_operacao_fii'),
     url(r'^historico/$', views.fii.fii.historico_fii, name='historico_fii'),
     url(r'^inserir_operacao_fii/$', views.fii.fii.inserir_operacao_fii, name='inserir_operacao_fii'),
-    url(r'^editar_provento/(?P<id>\d+)/$', views.fii.fii.editar_provento_fii, name='editar_provento_fii'),
-    url(r'^inserir_provento_fii/$', views.fii.fii.inserir_provento_fii, name='inserir_provento_fii'),
     url(r'^painel/$', views.fii.fii.painel, name='painel_fii'),
     url(r'^sobre/$', views.fii.fii.sobre, name='sobre_fii'),
     ]
