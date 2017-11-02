@@ -3,14 +3,16 @@ from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoCDB_RDB, \
     TransferenciaEntreDivisoes
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia_por_divisao
-from decimal import Decimal
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models.expressions import F, Case, When, Value
 from django.db.models.fields import CharField
+from django.http import HttpResponse
+from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 from itertools import chain
 from operator import attrgetter
+import json
 
 @login_required
 @adiciona_titulo_descricao('Linha do tempo de divisão', 'Mostra as transferências e a utilização do dinheiro de uma divisão, ordenadas por data')
@@ -20,8 +22,19 @@ def linha_do_tempo(request, divisao_id):
     if divisao.investidor != request.user.investidor:
         raise PermissionDenied
     
-    divisao.saldo = Decimal(0)
+    if request.is_ajax():
+        try:
+            eventos = linha_do_tempo_cdb_rdb(divisao)
+            return HttpResponse(json.dumps({'sucesso': True, 'linha': render_to_string('divisoes/utils/linha_do_tempo.html', {'eventos': eventos})}), 
+                                            content_type = "application/json")  
+        except:
+            raise
+#             return HttpResponse(json.dumps({'sucesso': False}), content_type = "application/json")  
+    
+    return TemplateResponse(request, 'divisoes/linha_do_tempo.html', {'divisao': divisao})
 
+
+def linha_do_tempo_cdb_rdb(divisao):
     operacoes_divisao = DivisaoOperacaoCDB_RDB.objects.filter(divisao=divisao).annotate(data=F('operacao__data')) \
         .annotate(titulo=Case(When(operacao__tipo_operacao='C', then=Value(u'Operação de compra', CharField())),
                               When(operacao__tipo_operacao='V', then=Value(u'Operação de venda', CharField())), output_field=CharField()))
@@ -53,6 +66,5 @@ def linha_do_tempo(request, divisao_id):
     for evento in eventos:
         evento.saldo = divisao.saldo_cdb_rdb(evento.data)
         evento.investido = sum(calcular_valor_cdb_rdb_ate_dia_por_divisao(evento.data, divisao.id).values())
-    
-    return TemplateResponse(request, 'divisoes/linha_do_tempo.html', {'divisao': divisao, 'eventos': eventos})
-
+        
+    return eventos
