@@ -13,6 +13,7 @@ from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 from itertools import chain
 from operator import attrgetter
+import datetime
 import json
 
 @login_required
@@ -39,6 +40,9 @@ def linha_do_tempo(request, divisao_id):
 
 
 def linha_do_tempo_cdb_rdb(divisao):
+    class Object(object):
+        pass
+    
     operacoes_divisao = DivisaoOperacaoCDB_RDB.objects.filter(divisao=divisao).annotate(data=F('operacao__data')) \
         .annotate(titulo=Case(When(operacao__tipo_operacao='C', then=Value(u'Operação de compra', CharField())),
                               When(operacao__tipo_operacao='V', then=Value(u'Operação de venda', CharField())), output_field=CharField()))
@@ -67,6 +71,14 @@ def linha_do_tempo_cdb_rdb(divisao):
             evento.titulo = u'Múltiplos eventos'
             evento.texto.extend(evento_repetido.texto)
             
+    # Adicionar data atual para garantir que sempre haja pelo menos 1 evento
+    if len(eventos) == 0 or eventos[-1].data < datetime.date.today():
+        evento = Object()
+        evento.titulo = u'Data atual'
+        evento.texto = [u'Situação na data atual']
+        evento.data = datetime.date.today()
+        eventos.append(evento)        
+    
     for evento in eventos:
         evento.saldo = divisao.saldo_cdb_rdb(evento.data)
         evento.investido = sum(calcular_valor_cdb_rdb_ate_dia_por_divisao(evento.data, divisao.id).values())
@@ -74,6 +86,9 @@ def linha_do_tempo_cdb_rdb(divisao):
     return eventos
 
 def linha_do_tempo_lci_lca(divisao):
+    class Object(object):
+        pass
+    
     operacoes_divisao = DivisaoOperacaoLC.objects.filter(divisao=divisao).annotate(data=F('operacao__data')) \
         .annotate(titulo=Case(When(operacao__tipo_operacao='C', then=Value(u'Operação de compra', CharField())),
                               When(operacao__tipo_operacao='V', then=Value(u'Operação de venda', CharField())), output_field=CharField()))
@@ -101,6 +116,14 @@ def linha_do_tempo_lci_lca(divisao):
             evento_repetido = eventos.pop(indice + 1)
             evento.titulo = u'Múltiplos eventos'
             evento.texto.extend(evento_repetido.texto)
+            
+    # Adicionar data atual para garantir que sempre haja pelo menos 1 evento
+    if len(eventos) == 0 or eventos[-1].data < datetime.date.today():
+        evento = Object()
+        evento.titulo = u'Data atual'
+        evento.texto = [u'Situação na data atual']
+        evento.data = datetime.date.today()
+        eventos.append(evento)        
             
     for evento in eventos:
         evento.saldo = divisao.saldo_lc(evento.data)
