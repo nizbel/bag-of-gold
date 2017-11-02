@@ -7,7 +7,7 @@
                     <li>
                         <a href="javascript:;" data-date="{{evento.data|date:'d/m/Y'}}" class="border-after-yellow-crusta bg-after-yellow-crusta 
                         {% if forloop.counter0 == 0 %}selected{% endif %}">
-                            <span class="{% if evento.saldo >= 0%}font-blue{% else %}font-red-thunderbird{% endif %}">R$ {{evento.saldo}}</span>
+                            <span class="{% if evento.saldo >= 0%}font-blue{% else %}font-red-thunderbird{% endif %}">R$ {{evento.saldo|floatformat:'2'}}</span>
                             <br/>
                             {{evento.data|date:'d/m/Y'}}
                         </a>
@@ -43,7 +43,7 @@
                 </div>
                 <div class="mt-author">
                     <div class="mt-author-name">
-                        <span>Saldo: R$ {{evento.saldo}} Investido: R$ {{evento.investido}}</span>
+                        <span>Saldo: R$ {{evento.saldo|floatformat:'2'}} Investido: R$ {{evento.investido|floatformat:'2'}}</span>
                     </div>
                     <div class="mt-author-datetime font-grey-gallery">{{evento.data}}</div>
                 </div>
