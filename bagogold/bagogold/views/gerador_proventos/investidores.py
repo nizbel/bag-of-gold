@@ -52,6 +52,12 @@ def detalhar_pendencias_usuario(request, id_usuario):
         else:
             data_2_anos_atras = data_2_anos_atras.replace(year=data_2_anos_atras.year+1, month=1)
             
+    # Filtrar apenas últimas 200 para mostrar nas tabelas
+    usuario.leituras = usuario.leituras.order_by('-data_leitura')[:200]
+    usuario.validacoes = usuario.validacoes.order_by('-data_validacao')[:200]
+    usuario.leituras_que_recusou = usuario.leituras_que_recusou.order_by('-data_recusa')[:200]
+    usuario.leituras_recusadas = usuario.leituras_recusadas.order_by('-data_recusa')[:200]
+
     # Se usuário for do grupo da nova equipe de leituras, mostrar dados
     if usuario.groups.filter(name='Equipe de leitura').exists():
         # Tempo médio por exclusão: 51.43 Tempo médio por provento ação: 122.07 Tempo médio por provento fii: 79.4
@@ -66,13 +72,9 @@ def detalhar_pendencias_usuario(request, id_usuario):
         leituras_fii = leituras.filter(documento__tipo='F').annotate(proventos_criados=Count('documento__proventofiidocumento')) \
             .annotate(tempo=Case(When(decisao='C', then=(Decimal('79.4') * F('proventos_criados'))), 
                                  When(decisao='E', then=Decimal('51.43')), output_field=DecimalField()))
-        for leitura in leituras_fii:
-            print 'fii', leitura.tempo, leitura.proventos_criados
         leituras_acao = leituras.filter(documento__tipo='A').annotate(proventos_criados=Count('documento__proventoacaodocumento')) \
             .annotate(tempo=Case(When(decisao='C', then=(Decimal('122.07') * F('proventos_criados'))), 
                                  When(decisao='E', then=Decimal('51.43')), output_field=DecimalField()))
-        for leitura in leituras_acao:
-            print 'acao', leitura.tempo, leitura.proventos_criados, leitura.validado
         
         # Totais
         qtd_acao_exclusao = leituras_acao.filter(decisao='E').count()
