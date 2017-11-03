@@ -7,86 +7,86 @@
 
 {% block content %}
 <div class="portlet-body">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="portlet box yellow-crusta">
-                    <div class="portlet-title">
-                        <div class="caption">
-                            <i class="fa fa-folder-open-o"></i>Dados do provento
-                        </div>
-                        <div class="tools">
-                            <a href="javascript:;" class="collapse"></a>
-                        </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-folder-open-o"></i>Dados do provento
                     </div>
-                    <div class="portlet-body">
-                        <div class="m-grid m-grid-responsive-xs">
-                            <div class="m-grid-row">
-                                <div class="m-grid-col m-grid-col-left"><strong>FII:</strong></div>
-                                <div class="m-grid-col m-grid-col-left">{{provento.fii}}</div>
-                                <div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
-                                <div class="m-grid-col m-grid-col-left">{{provento.descricao_tipo_provento}}</div>
-                                <div class="m-grid-col m-grid-col-left"><strong>Valor unit.:</strong></div>
-                                <div class="m-grid-col m-grid-col-left">R$ {{provento.valor_unitario}}</div>
-                                <div class="m-grid-col m-grid-col-left"><strong>Versão:</strong></div>
-                                <div class="m-grid-col m-grid-col-left">{{provento.versao}}</div>
-                            </div>
-                            <div class="m-grid-row">
-                                <div class="m-grid-col m-grid-col-left"><strong>Data EX:</strong></div>
-                                <div class="m-grid-col m-grid-col-left">{{provento.data_ex|date:'d/m/Y'}}</div>
-                                <div class="m-grid-col m-grid-col-left"><strong>Pagamento:</strong></div>
-                                <div class="m-grid-col m-grid-col-left">{{provento.data_pagamento|date:'d/m/Y'}}</div>
-                            </div>
-                        </div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
                     </div>
                 </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-12">
-                <div class="portlet box yellow-crusta">
-                    <div class="portlet-title">
-                        <div class="caption">
-                            <i class="fa fa-money"></i>Versões
+                <div class="portlet-body">
+                    <div class="m-grid m-grid-responsive-xs">
+                        <div class="m-grid-row">
+                            <div class="m-grid-col m-grid-col-left"><strong>FII:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{provento.fii}}</div>
+                            <div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{provento.descricao_tipo_provento}}</div>
+                            <div class="m-grid-col m-grid-col-left"><strong>Valor unit.:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">R$ {{provento.valor_unitario}}</div>
+                            <div class="m-grid-col m-grid-col-left"><strong>Versão:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{provento.versao}}</div>
                         </div>
-                        <div class="tools">
-                            <a href="javascript:;" class="collapse"></a>
+                        <div class="m-grid-row">
+                            <div class="m-grid-col m-grid-col-left"><strong>Data EX:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{provento.data_ex|date:'d/m/Y'}}</div>
+                            <div class="m-grid-col m-grid-col-left"><strong>Pagamento:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{provento.data_pagamento|date:'d/m/Y'}}</div>
                         </div>
-                    </div>
-                    <div class="portlet-body">
-                        {% for versao in versoes %}
-                        <div class="m-grid m-grid-responsive-xs">
-                            <div class="m-grid-row">
-                                <div class="m-grid-col m-grid-col-left"><strong>FII:</strong></div>
-                                <div class="m-grid-col m-grid-col-left">{{versao.fii}}</div>
-                                <div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
-                                <div class="m-grid-col m-grid-col-left">{{versao.descricao_tipo_provento}}</div>
-                                <div class="m-grid-col m-grid-col-left"><strong>Valor unit.:</strong></div>
-                                <div class="m-grid-col m-grid-col-left">R$ {{versao.valor_unitario}}</div>
-                                <div class="m-grid-col m-grid-col-left"><strong>Versão</strong></div>
-                                <div class="m-grid-col m-grid-col-left">{{versao.proventofiidocumento.versao}}</div>
-                            </div>
-                            <div class="m-grid-row">
-                                <div class="m-grid-col m-grid-col-left"><strong>Data EX:</strong></div>
-                                <div class="m-grid-col m-grid-col-left">{{versao.data_ex|date:'d/m/Y'}}</div>
-                                <div class="m-grid-col m-grid-col-left"><strong>Pagamento:</strong></div>
-                                <div class="m-grid-col m-grid-col-left">{{versao.data_pagamento|date:'d/m/Y'}}</div>
-                                <div class="m-grid-col m-grid-col-left"><strong>Documento:</strong></div>
-                                <div class="m-grid-col m-grid-col-left"><a href="{% url "gerador_proventos:detalhar_documento" versao.proventofiidocumento.documento.id %}">{{versao.proventofiidocumento.documento}}</a></div>
-                            </div>
-                        </div>
-                        {% if forloop.counter < versoes|length %}
-                        <hr>
-                        {% endif %}
-                        {% empty %}
-                        <p align="center">
-                            <strong>Não há versões cadastradas</strong>
-                        </p>
-                        {% endfor %}
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-money"></i>Versões
+                    </div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    {% for versao in versoes %}
+                    <div class="m-grid m-grid-responsive-xs">
+                        <div class="m-grid-row">
+                            <div class="m-grid-col m-grid-col-left"><strong>FII:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{versao.fii}}</div>
+                            <div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{versao.descricao_tipo_provento}}</div>
+                            <div class="m-grid-col m-grid-col-left"><strong>Valor unit.:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">R$ {{versao.valor_unitario}}</div>
+                            <div class="m-grid-col m-grid-col-left"><strong>Versão</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{versao.proventofiidocumento.versao}}</div>
+                        </div>
+                        <div class="m-grid-row">
+                            <div class="m-grid-col m-grid-col-left"><strong>Data EX:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{versao.data_ex|date:'d/m/Y'}}</div>
+                            <div class="m-grid-col m-grid-col-left"><strong>Pagamento:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{versao.data_pagamento|date:'d/m/Y'}}</div>
+                            <div class="m-grid-col m-grid-col-left"><strong>Documento:</strong></div>
+                            <div class="m-grid-col m-grid-col-left"><a href="{% url "gerador_proventos:detalhar_documento" versao.proventofiidocumento.documento.id %}">{{versao.proventofiidocumento.documento}}</a></div>
+                        </div>
+                    </div>
+                    {% if forloop.counter < versoes|length %}
+                    <hr>
+                    {% endif %}
+                    {% empty %}
+                    <p align="center">
+                        <strong>Não há versões cadastradas</strong>
+                    </p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 {% endblock %}
 
