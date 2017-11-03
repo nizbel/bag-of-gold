@@ -137,15 +137,15 @@ def detalhar_provento_fii(request, id_provento):
     provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario))
     
     # Adicionar informação de versão
-    try:
-        provento.versao = ProventoFIIDocumento.objects.filter(provento=provento).order_by('-versao')[0].versao
-        versoes = ProventoFIIDescritoDocumentoBovespa.objects.filter(proventofiidocumento__provento=provento).order_by('proventofiidocumento__versao')
-        for versao in versoes:
-            # Remover 0s a direita para valores
-            versao.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(versao.valor_unitario))
-    except Exception as e:
-        provento.versao = 0
-        versoes = list()
+    provento.versao = ProventoFIIDocumento.objects.filter(provento=provento).order_by('-versao')[0].versao
+    versoes = ProventoFIIDescritoDocumentoBovespa.objects.filter(proventofiidocumento__provento=provento).order_by('proventofiidocumento__versao')
+    for versao in versoes:
+        # Remover 0s a direita para valores
+        versao.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(versao.valor_unitario))
+        
+    # Verificar se provento foi adicionado pelo sistema, nesse caso ele terá versão única pois o sistema não relaciona automaticamente
+    if provento.proventofiidocumento_set.all()[0].documento.tipo_documento == DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO:
+        provento.add_pelo_sistema = True
 
     return TemplateResponse(request, 'gerador_proventos/detalhar_provento_fii.html', {'provento': provento, 'versoes': versoes})
 
