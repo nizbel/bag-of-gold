@@ -35,6 +35,7 @@ from django.forms.formsets import formset_factory
 from django.forms.models import model_to_dict
 from django.http.response import HttpResponseRedirect, HttpResponse, Http404
 from django.template.response import TemplateResponse
+import datetime
 import json
 import os
 import traceback
@@ -548,8 +549,69 @@ def listar_pendencias(request):
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 @adiciona_titulo_descricao('Listagem de proventos de Ações e FIIs', 'Listar proventos recebidos por Ações e FIIs cadastrados no sistema')
 def listar_proventos(request):
-    proventos = list(Provento.gerador_objects.all())
-    proventos.extend(list(ProventoFII.gerador_objects.all()))
+    # Usado para criar objetos vazios
+    class Object(object):
+        pass
+    
+    # Valor padrão para o filtro de quantidade
+    filtros = Object()
+    # Verifica a quantidade de pendências escolhida para filtrar
+    if request.method == 'POST':
+        # Preparar filtro por tipo de investimento
+        filtros.filtro_investimento = request.POST.get('filtro_investimento')
+        if filtros.filtro_investimento == 'A':
+            query_proventos = Provento.gerador_objects.all()
+        elif filtros.filtro_investimento == 'F':
+            query_proventos = ProventoFII.gerador_objects.all()
+        else:
+            query_proventos = []
+            
+        # Preparar filtro para apenas documentos validados
+        filtros.filtro_validados = 'filtro_validados' in request.POST
+        if filtros.filtro_validados:
+            query_proventos = query_proventos.filter(oficial_bovespa=True)
+            
+        # Preparar filtros para datas
+        # Início data EX
+        filtros.filtro_inicio_data_ex = request.POST.get('filtro_inicio_data_ex')
+        if filtros.filtro_inicio_data_ex != '':
+            try:
+                query_proventos = query_proventos.filter(data_ex__gte=datetime.datetime.strptime(filtros.filtro_inicio_data_ex, '%d/%m/%Y'))
+            except:
+                filtros.filtro_inicio_data_ex = ''
+        # Fim data EX
+        filtros.filtro_fim_data_ex = request.POST.get('filtro_fim_data_ex')
+        if filtros.filtro_fim_data_ex != '':
+            try:
+                query_proventos = query_proventos.filter(data_ex__lte=datetime.datetime.strptime(filtros.filtro_fim_data_ex, '%d/%m/%Y'))
+            except:
+                filtros.filtro_fim_data_ex = ''
+        # Início data pagamento
+        filtros.filtro_inicio_data_pagamento = request.POST.get('filtro_inicio_data_pagamento')
+        if filtros.filtro_inicio_data_pagamento != '':
+            try:
+                query_proventos = query_proventos.filter(data_pagamento__gte=datetime.datetime.strptime(filtros.filtro_inicio_data_pagamento, '%d/%m/%Y'))
+            except:
+                filtros.filtro_inicio_data_pagamento = ''
+        # Fim data pagamento
+        filtros.filtro_fim_data_pagamento = request.POST.get('filtro_fim_data_pagamento')
+        if filtros.filtro_fim_data_pagamento != '':
+            try:
+                query_proventos = query_proventos.filter(data_pagamento__lte=datetime.datetime.strptime(filtros.filtro_fim_data_pagamento, '%d/%m/%Y'))
+            except:
+                filtros.filtro_fim_data_pagamento = ''
+    else:
+        filtros.filtro_investimento = 'A'
+        filtros.filtro_validados = False
+        data_ex_inicial = datetime.date.today() - datetime.timedelta(days=365)
+        filtros.filtro_inicio_data_ex = data_ex_inicial.strftime('%d/%m/%Y')
+        filtros.filtro_fim_data_ex = ''
+        filtros.filtro_inicio_data_pagamento = ''
+        filtros.filtro_fim_data_pagamento = ''
+        
+        query_proventos = Provento.gerador_objects.filter(data_ex__gte=data_ex_inicial)
+    
+    proventos = list(query_proventos)
     
     for provento in proventos:
         if isinstance(provento, Provento):
@@ -559,7 +621,7 @@ def listar_proventos(request):
         for documento in provento.documentos:
             documento.nome = documento.documento.name.split('/')[-1]
         
-    return TemplateResponse(request, 'gerador_proventos/listar_proventos.html', {'proventos': proventos})
+    return TemplateResponse(request, 'gerador_proventos/listar_proventos.html', {'proventos': proventos, 'filtros': filtros})
         
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
