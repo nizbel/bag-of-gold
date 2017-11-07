@@ -270,3 +270,11 @@ class ProventoFIIDescritoDocumentoBovespa (models.Model):
             return u'Rendimento'
         else:
             return u'Indefinido'
+            
+class PagamentoLeitura (models.Model):
+    investidor = models.ForeignKey('Investidor')
+    data = models.DateField(u'Data do pagamento')
+    valor = models.DecimalField(u'Valor pago', decimal_places=2, max_digits=6)
+    
+    def __unicode__(self):
+        return u'R$ %s pagos a %s em %s' % (self.valor, self.investidor, self.data.strftime('%d/%m/%Y'))
