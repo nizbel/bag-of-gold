@@ -108,7 +108,7 @@
 											<div class="list-datetime">{{provento.data_pagamento|date:"d \d\e N"}}</div>
 											<div class="list-item-content">
 												<h3 class="uppercase">
-													<a href="#">{{provento.acao.ticker}}</a>
+													<a href="{% url 'acoes:geral:detalhar_provento' provento.id %}">{{provento.acao.ticker}}</a>
 													<br/>R$ {{provento.quantia_a_receber}}  
 												</h3>
 											</div>
@@ -131,7 +131,7 @@
 											<div class="list-datetime">{{provento.data_pagamento|date:"d \d\e N"}}</div>
 											<div class="list-item-content">
 												<h3 class="uppercase">
-													<a href="#">{{provento.acao.ticker}}</a>
+													<a href="{% url 'acoes:geral:detalhar_provento' provento.id %}">{{provento.acao.ticker}}</a>
 													<br/>R$ {{provento.quantia_a_receber}}	
 												</h3>
 											</div>
@@ -159,7 +159,7 @@
 											<div class="list-datetime">{{provento.data_ex|date:"d \d\e N"}}</div>
 											<div class="list-item-content">
 												<h3 class="uppercase">
-													<a href="#">{{provento.acao.ticker}}</a>
+													<a href="{% url 'acoes:geral:detalhar_provento' provento.id %}">{{provento.acao.ticker}}</a>
 													<br/>R$ {{provento.quantia_a_receber}}
 												</h3>
 											</div>
