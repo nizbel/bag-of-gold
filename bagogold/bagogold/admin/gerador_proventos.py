@@ -3,7 +3,8 @@ from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa,
     ProventoAcaoDocumento, ProventoFIIDocumento, PendenciaDocumentoProvento, \
     ProventoAcaoDescritoDocumentoBovespa, ProventoFIIDescritoDocumentoBovespa, \
     InvestidorLeituraDocumento, InvestidorRecusaDocumento, \
-    InvestidorResponsavelPendencia, InvestidorValidacaoDocumento
+    InvestidorResponsavelPendencia, InvestidorValidacaoDocumento, \
+    PagamentoLeitura
 from django.contrib import admin
 
 
@@ -68,7 +69,11 @@ class PendenciaDocumentoProventoAdmin(admin.ModelAdmin):
     list_display = ('documento', 'data_criacao', 'tipo_completo', 'responsavel')
     
     def tipo_completo(self, obj):
-        return 'Leitura' if obj.tipo == 'L' else 'ValidaÃ§Ã£o'
-    tipo_completo.short_description = 'Tipo de pendÃªncia'
+        return 'Leitura' if obj.tipo == 'L' else 'Validação'
+    tipo_completo.short_description = 'Tipo de pendência'
     
 admin.site.register(PendenciaDocumentoProvento, PendenciaDocumentoProventoAdmin)
+
+class PagamentoLeituraAdmin(admin.ModelAdmin):
+    search_fields = ['investidor', 'data', 'valor']
+    list_display = ('investidor', 'valor', 'data')
