@@ -52,13 +52,17 @@ class Command(BaseCommand):
                 .values_list('criptomoeda__ticker', 'valor'))
             for ticker, valor in valor_atual.items():
                 if ticker == 'XZC':
-                    valor_atual[ticker] = (valor * Decimal('157.9233536') * Decimal('0.97')).quantize(Decimal('0.01'))
+#                     valor_atual[ticker] = (valor * Decimal('157.9233536') * Decimal('0.97')).quantize(Decimal('0.01'))
+                    valor_atual[ticker] = (valor * Decimal('0') * Decimal('0.97')).quantize(Decimal('0.01'))
                 elif ticker == 'DCR':
-                    valor_atual[ticker] = (valor * Decimal('50.16053218') * Decimal('0.97')).quantize(Decimal('0.01'))
+#                     valor_atual[ticker] = (valor * Decimal('50.16053218') * Decimal('0.97')).quantize(Decimal('0.01'))
+                    valor_atual[ticker] = (valor * Decimal('109.66648258') * Decimal('0.97')).quantize(Decimal('0.01'))
                 elif ticker == 'ZEC':
-                    valor_atual[ticker] = (valor * Decimal('7.23106982') * Decimal('0.97')).quantize(Decimal('0.01'))
+#                     valor_atual[ticker] = (valor * Decimal('7.23106982') * Decimal('0.97')).quantize(Decimal('0.01'))
+                    valor_atual[ticker] = (valor * Decimal('0') * Decimal('0.97')).quantize(Decimal('0.01'))
                 elif ticker == 'XMR':
-                    valor_atual[ticker] = (valor * Decimal('14.95360846') * Decimal('0.97')).quantize(Decimal('0.01'))
+#                     valor_atual[ticker] = (valor * Decimal('14.95360846') * Decimal('0.97')).quantize(Decimal('0.01'))
+                    valor_atual[ticker] = (valor * Decimal('34.43321466') * Decimal('0.97')).quantize(Decimal('0.01'))
 
             # Enviar mensagem com valor atual dos investimentos
             bot.send_message(150143379, u'%s\nTotal: *R$ %s*' % ('\n'.join([u'%s: *R$ %s* (%s%%)' % (ticker, valor, ((valor-6000)/Decimal('60')).quantize(Decimal('0.01'))) for ticker, valor in valor_atual.items()]),
