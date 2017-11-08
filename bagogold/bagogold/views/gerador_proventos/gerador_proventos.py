@@ -408,10 +408,30 @@ def ler_documento_provento(request, id_pendencia):
                 
             # Radio de documento estava em Excluir
             elif request.POST['radioDocumento'] == '0':
-                # Colocar investidor como responsável pela leitura do documento
-                salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao='E')
-                messages.success(request, 'Exclusão de arquivo registrada com sucesso')
-                return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
+                try:
+                    with transaction.atomic():
+                        # Preparar elementos a apagar
+                        if pendencia.documento.tipo == 'A':
+                            info_proventos_a_apagar = list(ProventoAcaoDocumento.objects.filter(documento=pendencia.documento)) \
+                                + list(AcaoProvento.objects.filter(provento__id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True))) \
+                                + list(AtualizacaoSelicProvento.objects.filter(provento__id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True))) \
+                                + list(Provento.gerador_objects.filter(id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True))) \
+                                + list(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento__id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True))) \
+                                + list(SelicProventoAcaoDescritoDocBovespa.objects.filter(provento__id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True))) \
+                                + list(ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)))
+                        elif pendencia.documento.tipo == 'F':
+                            info_proventos_a_apagar = list(ProventoFIIDocumento.objects.filter(documento=pendencia.documento)) \
+                                + list(ProventoFII.gerador_objects.filter(id__in=ProventoFIIDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True))) \
+                                + list(ProventoFIIDescritoDocumentoBovespa.objects.filter(id__in=ProventoFIIDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)))
+                        for elemento in info_proventos_a_apagar:
+                            elemento.delete()
+                        
+                        # Colocar investidor como responsável pela leitura do documento
+                        salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao='E')
+                        messages.success(request, 'Exclusão de arquivo registrada com sucesso')
+                        return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
+                except Exception as e:
+                    messages.error(request, str(e))
     else:
         # Preparar formset de proventos
         if pendencia.documento.tipo == 'A':
