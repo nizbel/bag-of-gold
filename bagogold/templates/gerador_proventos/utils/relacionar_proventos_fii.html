@@ -10,23 +10,23 @@
             </div>
         </div>
         <div class="portlet-body">
-            {% for provento in proventos_relacionaveis %}
+            {% for provento_relacionavel in proventos_relacionaveis %}
             <div class="m-grid m-grid-responsive-xs">
                 <div class="m-grid-row">
                     <div class="m-grid-col m-grid-col-left"><strong>FII:</strong></div>
-                    <div class="m-grid-col m-grid-col-left">{{provento.fii}}</div>
+                    <div class="m-grid-col m-grid-col-left">{{provento_relacionavel.fii}}</div>
                     <div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
-                    <div class="m-grid-col m-grid-col-left">{{provento.descricao_tipo_provento}}</div>
+                    <div class="m-grid-col m-grid-col-left">{{provento_relacionavel.descricao_tipo_provento}}</div>
                     <div class="m-grid-col m-grid-col-left"><strong>Valor unit.:</strong></div>
-                    <div class="m-grid-col m-grid-col-left">R$ {{provento.valor_unitario|casas_decimais}}</div>
+                    <div class="m-grid-col m-grid-col-left">R$ {{provento_relacionavel.valor_unitario|casas_decimais}}</div>
                 </div>
                 <div class="m-grid-row">
                     <div class="m-grid-col m-grid-col-left"><strong>Data EX:</strong></div>
-                    <div class="m-grid-col m-grid-col-left">{{provento.data_ex|date:'d/m/Y'}}</div>
+                    <div class="m-grid-col m-grid-col-left">{{provento_relacionavel.data_ex|date:'d/m/Y'}}</div>
                     <div class="m-grid-col m-grid-col-left"><strong>Pagamento:</strong></div>
-                    <div class="m-grid-col m-grid-col-left">{{provento.data_pagamento|date:'d/m/Y'}}</div>
+                    <div class="m-grid-col m-grid-col-left">{{provento_relacionavel.data_pagamento|date:'d/m/Y'}}</div>
                     <div class="m-grid-col m-grid-col-left">
-                        <a href="javascript:;" class="btn btn-warning btn-xs" id="botao_relacionar_{{provento.id}}" name="botao_relacionar">Relacionar</a></div>
+                        <a href="{% url 'gerador_proventos:relacionar_proventos_fii' provento.id provento_relacionavel.id %}" class="btn btn-warning btn-xs">Relacionar</a></div>
                 </div>
             </div>
             {% if forloop.counter < proventos_relacionaveis|length %}
@@ -34,7 +34,7 @@
             {% endif %}
             {% empty %}
             <p align="center">
-                <strong>N√£o h√° proventos relacion√°veis</strong>
+                <strong>N„o h· proventos relacion·veis</strong>
             </p>
             {% endfor %}
         </div>
