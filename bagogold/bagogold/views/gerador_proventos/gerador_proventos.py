@@ -140,8 +140,8 @@ def detalhar_provento_fii(request, id_provento):
     if request.is_ajax() and request.user.is_superuser:
         proventos_relacionaveis = buscar_proventos_proximos_fii(list(provento.proventofiidocumento_set.all())[-1].descricao_provento)
 
-        return HttpResponse(json.dumps(render_to_string('gerador_proventos/utils/relacionar_proventos_fii.html', {'proventos_relacionaveis': proventos_relacionaveis})),
-                            content_type = "application/json")  
+        return HttpResponse(json.dumps(render_to_string('gerador_proventos/utils/relacionar_proventos_fii.html', {'provento': provento, 
+                                                        'proventos_relacionaveis': proventos_relacionaveis})), content_type = "application/json")  
         
     # Remover 0s a direita para valores
     provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario))
