@@ -193,7 +193,6 @@ function mostrar_debentures_validas(data) {
         success : function(retorno) {
             $('#row-messages').show();
             if (retorno.resultado) {
-                console.log(retorno.debentures_validas);
                 $("#id_debenture option").each(function() {
                     if ($.inArray($(this).val(), retorno.debentures_validas) > -1) {
                         $(this).removeAttr('disabled');
