@@ -22,18 +22,21 @@ from bagogold.bagogold.utils.gerador_proventos import \
     salvar_investidor_responsavel_por_validacao, \
     salvar_investidor_responsavel_por_recusar_documento, \
     criar_descricoes_provento_fiis, buscar_proventos_proximos_fii, \
-    versionar_descricoes_relacionadas_fiis
+    versionar_descricoes_relacionadas_fiis, relacionar_proventos_lidos_sistema
+from bagogold.bagogold.utils.investidores import is_superuser
 from bagogold.bagogold.utils.misc import \
     formatar_zeros_a_direita_apos_2_casas_decimais
 from decimal import Decimal
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.decorators import login_required, permission_required, \
+    user_passes_test
 from django.core.mail import mail_admins
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.forms.formsets import formset_factory
 from django.forms.models import model_to_dict
 from django.http.response import HttpResponseRedirect, HttpResponse, Http404
+from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 import datetime
 import json
@@ -133,6 +136,22 @@ def detalhar_provento_acao(request, id_provento):
 def detalhar_provento_fii(request, id_provento):
     provento = ProventoFII.gerador_objects.get(id=id_provento)
     
+    # Verifica se requisição é ajax, para o relacionamento entre proventos
+    if request.is_ajax() and request.user.is_superuser:
+        if request.GET.get('acao') == 'preparar':
+            proventos_relacionaveis = buscar_proventos_proximos_fii(list(provento.proventofiidocumento_set.all())[-1].descricao_provento)
+            
+            return HttpResponse(json.dumps(render_to_string('gerador_proventos/utils/relacionar_proventos_fii.html', {'proventos_relacionaveis': proventos_relacionaveis})),
+                                content_type = "application/json")  
+        
+        elif request.GET.get('acao') == 'relacionar':
+            try:
+                relacionar_proventos_lidos_sistema(provento, ProventoFII.objects.get(id=request.GET.get('provento_id')))
+                return HttpResponse(json.dumps({'sucesso': True}), content_type = "application/json")
+            except Exception as e:
+                return HttpResponse(json.dumps({'sucesso': False, 'mensagem': e}), content_type = "application/json")
+            
+    
     # Remover 0s a direita para valores
     provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario))
     
@@ -143,10 +162,6 @@ def detalhar_provento_fii(request, id_provento):
         # Remover 0s a direita para valores
         versao.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(versao.valor_unitario))
         
-    # Verificar se provento foi adicionado pelo sistema, nesse caso ele terá versão única pois o sistema não relaciona automaticamente
-    if provento.proventofiidocumento_set.all()[0].documento.tipo_documento == DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO:
-        provento.add_pelo_sistema = True
-
     return TemplateResponse(request, 'gerador_proventos/detalhar_provento_fii.html', {'provento': provento, 'versoes': versoes})
 
 @login_required

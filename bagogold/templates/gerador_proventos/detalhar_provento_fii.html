@@ -15,9 +15,13 @@
                         <i class="fa fa-folder-open-o"></i>Dados do provento
                     </div>
                     <div class="tools">
-                        {% if provento.add_pelo_sistema %}<a href="#"><i class="fa fa-folder-open-o"></i></a>{% endif %}
                         <a href="javascript:;" class="collapse"></a>
                     </div>
+                    {% if request.user.is_superuser %}
+                    <div class="actions">
+                        {% if provento.add_pelo_sistema %}<a href="javascript:;" class="btn btn-default btn-sm"><i class="fa fa-exchange" id="botao_preparar_relacionar"> Relacionar</i></a>{% endif %}
+                    </div>
+                    {% endif %}
                 </div>
                 <div class="portlet-body">
                     <div class="m-grid m-grid-responsive-xs">
@@ -87,7 +91,71 @@
             </div>
         </div>
     </div>
+    {% if request.user.is_superuser %}
+    <div class="row" id="relacionar_proventos">
+    </div>
+    {% endif %}
 </div>
 
 {% endblock %}
 
+{% block extra_footer %}
+{% if request.user.is_superuser %}
+<script>
+$( document ).ready(function() {
+    $('#botao_preparar_relacionar').click(function() {
+        App.blockUI({
+        		iconOnly: true,
+                overlayColor: 'none'
+        });
+        $.ajax({
+            url : "{% url 'gerador_proventos:detalhar_provento_fii' provento.id %}",
+            type : "GET",
+            data : {acao: 'preparar'},
+
+            // handle a successful response
+            success : function(resultado) {
+                $('#relacionar_proventos').html(resultado);
+                
+                $('a[name="botao_relacionar"]').click(function() {
+                    App.blockUI({
+                        iconOnly: true,
+                        overlayColor: 'none'
+                    });
+                    var provento = $(this).attr('id').replace(/\D/g, '');
+                    $.ajax({
+                        url : "{% url 'gerador_proventos:detalhar_provento_fii' provento.id %}",
+                        type : "GET",
+                        data : {acao: 'relacionar', provento_id: provento},
+
+                        // handle a successful response
+                        success : function(resultado) {
+                            if (resultado.sucesso) {
+                               $('#messages').html('<div class="alert alert-success"><button type="button" class="close" data-dismiss="alert">×</button><i class="icon-ok"></i> Provento relacionado com sucesso</div>');
+                            } else {
+                                $('#messages').html('<div class="alert alert-error"><button type="button" class="close" data-dismiss="alert">×</button><i class="icon-ban-circle"></i> ' + retorno.mensagem + '</div>');
+                            }
+                            App.unblockUI('');
+                        },
+
+                        // handle a non-successful response
+                        error : function(xhr,errmsg,err) {
+                            App.unblockUI();
+                            console.log(xhr.status + ": " + xhr.responseText);
+                        }
+                    });
+                });
+                App.unblockUI();
+            },
+
+            // handle a non-successful response
+            error : function(xhr,errmsg,err) {
+                App.unblockUI();
+                console.log(xhr.status + ": " + xhr.responseText);
+            }
+        });
+    });
+});
+</script>
+{% endif %}
+{% endblock %}
