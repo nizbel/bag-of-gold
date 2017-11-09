@@ -1,0 +1,42 @@
+{% load misc %}
+<div class="col-md-12">
+    <div class="portlet box yellow-crusta">
+        <div class="portlet-title">
+            <div class="caption">
+                <i class="fa fa-exchange"></i>Relacionar proventos FII adicionados pelo sistema
+            </div>
+            <div class="tools">
+                <a href="javascript:;" class="collapse"></a>
+            </div>
+        </div>
+        <div class="portlet-body">
+            {% for provento in proventos_relacionaveis %}
+            <div class="m-grid m-grid-responsive-xs">
+                <div class="m-grid-row">
+                    <div class="m-grid-col m-grid-col-left"><strong>FII:</strong></div>
+                    <div class="m-grid-col m-grid-col-left">{{provento.fii}}</div>
+                    <div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
+                    <div class="m-grid-col m-grid-col-left">{{provento.descricao_tipo_provento}}</div>
+                    <div class="m-grid-col m-grid-col-left"><strong>Valor unit.:</strong></div>
+                    <div class="m-grid-col m-grid-col-left">R$ {{provento.valor_unitario|casas_decimais}}</div>
+                </div>
+                <div class="m-grid-row">
+                    <div class="m-grid-col m-grid-col-left"><strong>Data EX:</strong></div>
+                    <div class="m-grid-col m-grid-col-left">{{provento.data_ex|date:'d/m/Y'}}</div>
+                    <div class="m-grid-col m-grid-col-left"><strong>Pagamento:</strong></div>
+                    <div class="m-grid-col m-grid-col-left">{{provento.data_pagamento|date:'d/m/Y'}}</div>
+                    <div class="m-grid-col m-grid-col-left">
+                        <a href="javascript:;" class="btn btn-warning btn-xs" id="botao_relacionar_{{provento.id}}" name="botao_relacionar">Relacionar</a></div>
+                </div>
+            </div>
+            {% if forloop.counter < proventos_relacionaveis|length %}
+            <hr>
+            {% endif %}
+            {% empty %}
+            <p align="center">
+                <strong>Não há proventos relacionáveis</strong>
+            </p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
