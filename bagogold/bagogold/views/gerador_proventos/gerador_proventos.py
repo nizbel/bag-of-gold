@@ -138,20 +138,11 @@ def detalhar_provento_fii(request, id_provento):
     
     # Verifica se requisição é ajax, para o relacionamento entre proventos
     if request.is_ajax() and request.user.is_superuser:
-        if request.GET.get('acao') == 'preparar':
-            proventos_relacionaveis = buscar_proventos_proximos_fii(list(provento.proventofiidocumento_set.all())[-1].descricao_provento)
-            
-            return HttpResponse(json.dumps(render_to_string('gerador_proventos/utils/relacionar_proventos_fii.html', {'proventos_relacionaveis': proventos_relacionaveis})),
-                                content_type = "application/json")  
+        proventos_relacionaveis = buscar_proventos_proximos_fii(list(provento.proventofiidocumento_set.all())[-1].descricao_provento)
+
+        return HttpResponse(json.dumps(render_to_string('gerador_proventos/utils/relacionar_proventos_fii.html', {'proventos_relacionaveis': proventos_relacionaveis})),
+                            content_type = "application/json")  
         
-        elif request.GET.get('acao') == 'relacionar':
-            try:
-                relacionar_proventos_lidos_sistema(provento, ProventoFII.objects.get(id=request.GET.get('provento_id')))
-                return HttpResponse(json.dumps({'sucesso': True}), content_type = "application/json")
-            except Exception as e:
-                return HttpResponse(json.dumps({'sucesso': False, 'mensagem': e}), content_type = "application/json")
-            
-    
     # Remover 0s a direita para valores
     provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario))
     
@@ -688,6 +679,17 @@ def puxar_responsabilidade_documento_provento(request):
     
     return HttpResponse(json.dumps({'resultado': retorno, 'mensagem': mensagem, 'responsavel': responsavel, 'usuario_responsavel': usuario_responsavel, \
                                     'qtd_pendencias_reservadas': qtd_pendencias_reservadas}), content_type = "application/json") 
+
+@login_required
+@user_passes_test(is_superuser)
+def relacionar_proventos_fii_add_pelo_sistema(request, id_provento_a_relacionar, id_provento_relacionado)
+    try:
+        relacionar_proventos_lidos_sistema(ProventoFII.objects.get(id=id_provento_a_relacionar), ProventoFII.objects.get(id=id_provento_relacionado))
+        messages.success(request, 'Provento relacionado com sucesso')
+        return HttpResponseRedirect(reverse('gerador_proventos:detalhar_provento_fii', kwargs={'id_provento': id_provento_relacionado}))
+    except Exception as e:
+        messages.error(request, e)
+        return HttpResponseRedirect(reverse('gerador_proventos:detalhar_provento_fii', kwargs={'id_provento': id_provento_a_relacionar}))
 
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
