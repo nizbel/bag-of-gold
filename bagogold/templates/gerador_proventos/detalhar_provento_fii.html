@@ -111,40 +111,10 @@ $( document ).ready(function() {
         $.ajax({
             url : "{% url 'gerador_proventos:detalhar_provento_fii' provento.id %}",
             type : "GET",
-            data : {acao: 'preparar'},
 
             // handle a successful response
             success : function(resultado) {
                 $('#relacionar_proventos').html(resultado);
-                
-                $('a[name="botao_relacionar"]').click(function() {
-                    App.blockUI({
-                        iconOnly: true,
-                        overlayColor: 'none'
-                    });
-                    var provento = $(this).attr('id').replace(/\D/g, '');
-                    $.ajax({
-                        url : "{% url 'gerador_proventos:detalhar_provento_fii' provento.id %}",
-                        type : "GET",
-                        data : {acao: 'relacionar', provento_id: provento},
-
-                        // handle a successful response
-                        success : function(resultado) {
-                            if (resultado.sucesso) {
-                               $('#messages').html('<div class="alert alert-success"><button type="button" class="close" data-dismiss="alert">×</button><i class="icon-ok"></i> Provento relacionado com sucesso</div>');
-                            } else {
-                                $('#messages').html('<div class="alert alert-error"><button type="button" class="close" data-dismiss="alert">×</button><i class="icon-ban-circle"></i> ' + retorno.mensagem + '</div>');
-                            }
-                            App.unblockUI('');
-                        },
-
-                        // handle a non-successful response
-                        error : function(xhr,errmsg,err) {
-                            App.unblockUI();
-                            console.log(xhr.status + ": " + xhr.responseText);
-                        }
-                    });
-                });
                 App.unblockUI();
             },
 
