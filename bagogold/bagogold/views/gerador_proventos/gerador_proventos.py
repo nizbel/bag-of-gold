@@ -140,8 +140,8 @@ def detalhar_provento_fii(request, id_provento):
     if request.is_ajax() and request.user.is_superuser:
         proventos_relacionaveis = buscar_proventos_proximos_fii(list(provento.proventofiidocumento_set.all())[-1].descricao_provento)
 
-        return HttpResponse(json.dumps(render_to_string('gerador_proventos/utils/relacionar_proventos_fii.html', {'provento': provento, 
-                                                        'proventos_relacionaveis': proventos_relacionaveis})), content_type = "application/json")  
+        return HttpResponse(json.dumps(render_to_string('gerador_proventos/utils/relacionar_proventos_fii.html', {'proventos_relacionaveis': proventos_relacionaveis,
+                                                                                                                  'provento': provento})), content_type = "application/json")  
         
     # Remover 0s a direita para valores
     provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario))
@@ -682,7 +682,7 @@ def puxar_responsabilidade_documento_provento(request):
 
 @login_required
 @user_passes_test(is_superuser)
-def relacionar_proventos_fii_add_pelo_sistema(request, id_provento_a_relacionar, id_provento_relacionado)
+def relacionar_proventos_fii_add_pelo_sistema(request, id_provento_a_relacionar, id_provento_relacionado):
     try:
         relacionar_proventos_lidos_sistema(ProventoFII.objects.get(id=id_provento_a_relacionar), ProventoFII.objects.get(id=id_provento_relacionado))
         messages.success(request, 'Provento relacionado com sucesso')
