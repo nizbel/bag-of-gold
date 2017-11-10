@@ -159,9 +159,9 @@ def estatisticas_acao(request, ticker=None):
         acao = Acao.objects.all()[0]
     
     # Buscar historicos
-    historico = HistoricoAcao.objects.filter(acao__ticker=ticker).order_by('data')
+    historico = HistoricoAcao.objects.filter(acao__ticker=ticker, oficial_bovespa=True).order_by('data')
     if not historico:
-        return TemplateResponse(request, 'acoes/buyandhold/estatisticas_acao.html', {'graf_preco_medio': list(), 'graf_preco_medio_valor_acao': list(),
+        return TemplateResponse(request, 'acoes/estatisticas_acao.html', {'graf_preco_medio': list(), 'graf_preco_medio_valor_acao': list(),
                                'graf_historico_proventos': list(), 'graf_historico': list()})
         
     graf_historico = list()
@@ -171,7 +171,7 @@ def estatisticas_acao(request, ticker=None):
         graf_historico += [[data_formatada, float(item.preco_unitario)]]
     
     if not request.user.is_authenticated():
-        return TemplateResponse(request, 'acoes/buyandhold/estatisticas_acao.html', {'graf_preco_medio': list(), 'graf_preco_medio_valor_acao': list(),
+        return TemplateResponse(request, 'acoes/estatisticas_acao.html', {'graf_preco_medio': list(), 'graf_preco_medio_valor_acao': list(),
                                'graf_historico_proventos': list(), 'graf_historico': graf_historico})
         
     operacoes = OperacaoAcao.objects.filter(destinacao='B', acao__ticker=ticker, investidor=investidor).exclude(data__isnull=True).order_by('data')
@@ -259,7 +259,7 @@ def estatisticas_acao(request, ticker=None):
                                 
         data_formatada = str(calendar.timegm(item.data.timetuple()) * 1000)
         ultimo_dia_util = item.data
-        while not HistoricoAcao.objects.filter(data=ultimo_dia_util, acao=acao):
+        while not HistoricoAcao.objects.filter(data=ultimo_dia_util, acao=acao).exists():
             ultimo_dia_util -= datetime.timedelta(days=1)
         # Preço médio corrente
         try:
@@ -280,9 +280,9 @@ def estatisticas_acao(request, ticker=None):
 #     ultimo_dia_util = datetime.date.today()
 #     while not HistoricoAcao.objects.filter(data=ultimo_dia_util, acao=acao):
 #         ultimo_dia_util -= datetime.timedelta(days=1)
-    try:
+    if ValorDiarioAcao.objects.filter(acao__ticker=acao, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).exists():
         preco_unitario = ValorDiarioAcao.objects.filter(acao__ticker=acao, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).order_by('-data_hora')[0].preco_unitario
-    except:
+    else:
         preco_unitario = HistoricoAcao.objects.filter(acao__ticker=acao).order_by('-data')[0].preco_unitario
         
     # Verifica se altera ultima posicao do grafico ou adiciona novo registro
