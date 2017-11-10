@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII
+from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa
 from django.db import models
 from django.db.models.aggregates import Sum
 import datetime
@@ -53,6 +54,11 @@ class ProventoFII (models.Model):
             return u'Amortização'
         elif self.tipo_provento == self.TIPO_PROVENTO_RENDIMENTO:
             return u'Rendimento'
+    
+    @property    
+    def add_pelo_sistema(self):
+        return all([(provento_documento.documento.tipo_documento == DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO) \
+                                     for provento_documento in self.proventofiidocumento_set.all()])
         
     objects = ProventoFIIOficialManager()
     gerador_objects = models.Manager()
