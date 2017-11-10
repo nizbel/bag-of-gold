@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load staticfiles %}
+{% load misc %}
 
 {% block pagina_titulo_icone %}
 <i class="fa fa-folder-open-o font-yellow-crusta"></i>
@@ -27,9 +28,9 @@
                             <div class="m-grid-col m-grid-col-left">{{provento.descricao_tipo_provento}}</div>
                             <div class="m-grid-col m-grid-col-left"><strong>Valor unit.:</strong></div>
                             {% if provento.tipo_provento != 'A' %}
-                                <div class="m-grid-col m-grid-col-left">R$ {{provento.valor_unitario}}</div>
+                                <div class="m-grid-col m-grid-col-left">R$ {{provento.valor_unitario|casas_decimais}}</div>
                             {% else %}
-                                <div class="m-grid-col m-grid-col-left">{{provento.valor_unitario}}%</div>
+                                <div class="m-grid-col m-grid-col-left">{{provento.valor_unitario|casas_decimais}}%</div>
                             {% endif %}
                         </div>
                         <div class="m-grid-row">
@@ -48,7 +49,7 @@
                                 <div class="m-grid-col m-grid-col-left"><strong>Valor de frações:</strong></div>
                                 <div class="m-grid-col m-grid-col-left">
                                 {% if acao_descricao_provento.valor_calculo_frac %}
-                                R$ {{acao_descricao_provento.valor_calculo_frac}}
+                                R$ {{acao_descricao_provento.valor_calculo_frac|casas_decimais}}
                                 {% else %}
                                 Não há
                                 {% endif %}
@@ -83,9 +84,11 @@
                             <div class="m-grid-col m-grid-col-left"><strong>Data de referência:</strong></div>
                             <div class="m-grid-col m-grid-col-left">{{documento.documento.data_referencia|date:'d/m/Y'}}</div>
                         </div>
+                        {% if request.user.is_authenticated %}
                         <div class="m-grid-row">
                             <a href="{% url 'gerador_proventos:baixar_documento_provento' documento.documento.id %}" class="btn btn-warning btn-xs">Download</a>
                         </div>
+                        {% endif %}
                     </div>
                     {% if forloop.counter < documentos|length %}
                     <hr>
