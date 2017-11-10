@@ -489,11 +489,18 @@ def ler_documento_provento(request, id_pendencia):
         # Preparar informações sobre negociação das ações que são mostradas como opção
         infos_uteis = {'historico_negociacao': list()}
         for acao in Acao.objects.filter(empresa=pendencia.documento.empresa):
-            negociacao_acao = Object()
-            negociacao_acao.ticker = acao.ticker
-            negociacao_acao.inicio = HistoricoAcao.objects.filter(oficial_bovespa=True, acao=acao).order_by('data')[0].data
-            negociacao_acao.fim = HistoricoAcao.objects.filter(oficial_bovespa=True, acao=acao).order_by('-data')[0].data
-            infos_uteis['historico_negociacao'].append(negociacao_acao)
+            try:
+                negociacao_acao = Object()
+                negociacao_acao.ticker = acao.ticker
+                negociacao_acao.inicio = HistoricoAcao.objects.filter(oficial_bovespa=True, acao=acao).order_by('data')[0].data
+                negociacao_acao.fim = HistoricoAcao.objects.filter(oficial_bovespa=True, acao=acao).order_by('-data')[0].data
+                infos_uteis['historico_negociacao'].append(negociacao_acao)
+            except:
+                pass
+        
+        # Se histórico de negociação estiver vazio, removê-lo
+        if len(infos_uteis['historico_negociacao']) == 0:
+            del infos_uteis['historico_negociacao']
     elif pendencia.documento.tipo == 'F':
         for form in formset_provento:
             form.fields['fii'].queryset = FII.objects.filter(empresa=pendencia.documento.empresa)
@@ -756,6 +763,10 @@ def remover_responsabilidade_documento_provento(request):
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 @adiciona_titulo_descricao('Validar documento da Bovespa', 'Validar leitura de documento da Bovespa para gerar ações ou apagar o documento')
 def validar_documento_provento(request, id_pendencia):
+    # Usado para criar objetos vazios
+    class Object(object):
+        pass
+    
     investidor = request.user.investidor
     
     try:
@@ -993,4 +1004,25 @@ def validar_documento_provento(request, id_pendencia):
         # Descrição da decisão do responsável pela leitura
         pendencia.decisao = 'Excluir documento'
     
-    return TemplateResponse(request, 'gerador_proventos/validar_documento_provento.html', {'pendencia': pendencia, 'descricoes_proventos': descricoes_proventos})
+    # Área de infomações úteis
+    if pendencia.documento.tipo == 'A':
+        # Preparar informações sobre negociação das ações que são mostradas como opção
+        infos_uteis = {'historico_negociacao': list()}
+        for acao in Acao.objects.filter(empresa=pendencia.documento.empresa):
+            try:
+                negociacao_acao = Object()
+                negociacao_acao.ticker = acao.ticker
+                negociacao_acao.inicio = HistoricoAcao.objects.filter(oficial_bovespa=True, acao=acao).order_by('data')[0].data
+                negociacao_acao.fim = HistoricoAcao.objects.filter(oficial_bovespa=True, acao=acao).order_by('-data')[0].data
+                infos_uteis['historico_negociacao'].append(negociacao_acao)
+            except:
+                pass
+        
+        # Se histórico de negociação estiver vazio, removê-lo
+        if len(infos_uteis['historico_negociacao']) == 0:
+            del infos_uteis['historico_negociacao']
+    elif pendencia.documento.tipo == 'F':
+        infos_uteis = {}
+    
+    return TemplateResponse(request, 'gerador_proventos/validar_documento_provento.html', {'pendencia': pendencia, 'descricoes_proventos': descricoes_proventos, 
+                                                                                           'infos_uteis': infos_uteis})
