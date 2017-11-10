@@ -12,6 +12,8 @@ from decimal import Decimal
 from django.db.models.expressions import F
 from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
+from itertools import chain
+from operator import attrgetter
 import calendar
 import datetime
 
