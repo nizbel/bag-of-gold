@@ -12,7 +12,7 @@ class Acao (models.Model):
                   5: u'PNA',
                   6: u'PNB',
                   7: u'PNC',
-                  8: u'PNC',
+                  8: u'PND',
                   11: u'UNT'
     }
     TIPOS_ACAO_DESCRICAO = {'ON': u'Ordinária',
