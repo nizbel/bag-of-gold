@@ -151,6 +151,21 @@ def calendario(request):
 def detalhar_acumulados_mensais(request):
     investidor = request.user.investidor
     
+    if request.method == 'POST':
+        if mes_ano_fim > mes_ano_atual:
+            messages.error(request, 'Não é possível calcular o acumulado para meses futuros')
+            carregar dados como se não fosse POST
+        elif mes_ano_fim - mes_ano_inicio > 12 meses:
+            messages.error(request, 'Insira um período de até 12 meses')
+            carregar dados como se não fosse POST
+        else:
+            min(ultima data do mes_ano_fim, datetime.datetime.now())
+            ultima_data =  mes_ano_fim
+            primeira_data = mes_ano_inicio.replace(day=1)
+    else:
+        carregar dados da maneira como já carrega 
+        qtd_meses = 12
+    
     data_atual = datetime.datetime.now()
 
     acumulados_mensais = list()
@@ -158,7 +173,7 @@ def detalhar_acumulados_mensais(request):
     
     graf_acumulados = list()
     
-    for mes in range(12):
+    for mes in range(qtd_meses):
         # Buscar dados para o acumulado mensal
         ultimo_dia_mes_anterior = data_atual.replace(day=1) - datetime.timedelta(days=1)
         acumulados_mensais.append([ultimo_dia_mes_anterior.date(), calcular_rendimentos_ate_data(investidor, ultimo_dia_mes_anterior.date())])
