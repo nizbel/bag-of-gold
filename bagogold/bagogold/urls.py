@@ -29,6 +29,7 @@ inicio_patterns = [
 
 acoes_geral_patterns = [
     url(r'^detalhar_provento/(?P<provento_id>\d+)/$', views.acoes.acoes.detalhar_provento, name='detalhar_provento'),
+    url(r'^estatisticas_acao/(?P<ticker>\w+)/$', views.acoes.acoes.estatisticas_acao, name='estatisticas_acao_bh'),
     url(r'^listar_acoes/$', views.acoes.acoes.listar_acoes, name='listar_acoes'),
     url(r'^listar_proventos/$', views.acoes.acoes.listar_proventos, name='listar_proventos'),
     url(r'^sobre/$', views.acoes.acoes.sobre, name='sobre_acoes'),
@@ -37,7 +38,6 @@ acoes_geral_patterns = [
 acoes_bh_patterns = [
     url(r'^calcular_poupanca_proventos_na_data/$', views.acoes.buyandhold.calcular_poupanca_proventos_na_data, name='calcular_poupanca_proventos_na_data'),
     url(r'^editar_operacao_acao/(?P<operacao_id>\d+)/$', views.acoes.buyandhold.editar_operacao_acao, name='editar_operacao_bh'),
-    url(r'^estatisticas_acao/(?P<ticker>\w+)/$', views.acoes.buyandhold.estatisticas_acao, name='estatisticas_acao_bh'),
     url(r'^evolucao_posicao/$', views.acoes.buyandhold.evolucao_posicao, name='evolucao_posicao_bh'),
     url(r'^historico/$', views.acoes.buyandhold.historico, name='historico_bh'),
     url(r'^inserir_operacao_acao/$', views.acoes.buyandhold.inserir_operacao_acao, name='inserir_operacao_bh'),
