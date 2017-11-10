@@ -283,7 +283,7 @@ def estatisticas_acao(request, ticker=None):
     if ValorDiarioAcao.objects.filter(acao__ticker=acao, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).exists():
         preco_unitario = ValorDiarioAcao.objects.filter(acao__ticker=acao, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).order_by('-data_hora')[0].preco_unitario
     else:
-        preco_unitario = HistoricoAcao.objects.filter(acao__ticker=acao).order_by('-data')[0].preco_unitario
+        preco_unitario = historico.filter(acao__ticker=acao).order_by('-data')[0].preco_unitario
         
     # Verifica se altera ultima posicao do grafico ou adiciona novo registro
     if len(graf_historico) > 0 and graf_historico[len(graf_historico)-1][0] == data_atual_formatada:
@@ -308,7 +308,7 @@ def estatisticas_acao(request, ticker=None):
         graf_preco_medio += [[data_atual_formatada, preco_medio_corrente]]
         graf_preco_medio_valor_acao += [[data_atual_formatada, float(preco_unitario)]]
     
-    return TemplateResponse(request, 'acoes/buyandhold/estatisticas_acao.html', {'graf_preco_medio': graf_preco_medio, 'graf_preco_medio_valor_acao': graf_preco_medio_valor_acao,
+    return TemplateResponse(request, 'acoes/estatisticas_acao.html', {'graf_preco_medio': graf_preco_medio, 'graf_preco_medio_valor_acao': graf_preco_medio_valor_acao,
                                'graf_historico_proventos': graf_historico_proventos, 'graf_historico': graf_historico})
 
 @login_required
