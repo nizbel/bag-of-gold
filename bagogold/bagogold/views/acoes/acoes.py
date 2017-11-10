@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.decorators import adiciona_titulo_descricao, \
-    em_construcao
+from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.models.acoes import Acao, ValorDiarioAcao, HistoricoAcao, \
-    Provento
+    Provento, OperacaoAcao, AcaoProvento
 from bagogold.bagogold.models.gerador_proventos import \
-    InvestidorValidacaoDocumento, DocumentoProventoBovespa,\
-    ProventoAcaoDocumento
+    InvestidorValidacaoDocumento, ProventoAcaoDocumento
 from bagogold.bagogold.utils.acoes import quantidade_acoes_ate_dia, \
     calcular_poupanca_prov_acao_ate_dia
 from bagogold.bagogold.utils.investidores import buscar_acoes_investidor_na_data, \
     buscar_proventos_a_receber
-from django.contrib.auth.decorators import login_required
+from decimal import Decimal
 from django.db.models.expressions import F
+from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
+import calendar
 import datetime
 
 @adiciona_titulo_descricao('Detalhar provento', 'Detalhamento de proventos em ações')
@@ -22,6 +22,171 @@ def detalhar_provento(request, provento_id):
     documentos = ProventoAcaoDocumento.objects.filter(provento=provento)
     
     return TemplateResponse(request, 'acoes/detalhar_provento.html', {'provento': provento, 'documentos': documentos})
+
+@adiciona_titulo_descricao('Estatísticas da ação', 'Mostra estatísticas e valores históricos de uma ação')
+def estatisticas_acao(request, ticker=None):
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+        
+    if (ticker):
+        acao = get_object_or_404(Acao, ticker=ticker)
+    else:
+        acao = Acao.objects.all()[0]
+    
+    # Buscar historicos
+    historico = HistoricoAcao.objects.filter(acao__ticker=ticker, oficial_bovespa=True).order_by('data')
+    if not historico:
+        return TemplateResponse(request, 'acoes/estatisticas_acao.html', {'graf_preco_medio': list(), 'graf_preco_medio_valor_acao': list(),
+                               'graf_historico_proventos': list(), 'graf_historico': list()})
+        
+    graf_historico = list()
+    # Preparar gráfico com os valores históricos da acao
+    for item in historico:
+        data_formatada = str(calendar.timegm(item.data.timetuple()) * 1000)
+        graf_historico += [[data_formatada, float(item.preco_unitario)]]
+    
+    if not request.user.is_authenticated():
+        return TemplateResponse(request, 'acoes/estatisticas_acao.html', {'graf_preco_medio': list(), 'graf_preco_medio_valor_acao': list(),
+                               'graf_historico_proventos': list(), 'graf_historico': graf_historico})
+        
+    operacoes = OperacaoAcao.objects.filter(destinacao='B', acao__ticker=ticker, investidor=investidor).exclude(data__isnull=True).order_by('data')
+    # Pega os proventos em ações recebidos por outras ações
+    proventos_em_acoes = AcaoProvento.objects.filter(acao_recebida__ticker=ticker).exclude(provento__acao__ticker=ticker).order_by('provento__data_ex')
+    
+    # Verifica se houve operação
+    # TODO testar data mais antiga para ver se é operação ou provento em ação de outra ação
+    data_mais_antiga = datetime.date.today()
+    if operacoes:
+        data_mais_antiga = min(data_mais_antiga, operacoes[0].data)
+    if proventos_em_acoes:
+        data_mais_antiga = min(data_mais_antiga, proventos_em_acoes[0].data)
+    proventos = Provento.objects.filter(acao__ticker=ticker).exclude(data_ex__isnull=True).filter(data_ex__range=[data_mais_antiga, datetime.date.today()]).order_by('data_ex')
+    for provento in proventos:
+        provento.data = provento.data_ex
+    
+    proventos = list(proventos)
+    # Adicionar os proventos em ações provenientes de outras ações
+    for provento_em_acoes in proventos_em_acoes:
+        provento = provento_em_acoes.provento
+        provento.data = provento.data_ex
+        proventos.append(provento)
+        
+    # Proventos devem vir antes
+    lista_conjunta = sorted(chain(proventos, operacoes), key=attrgetter('data'))
+    
+    graf_historico_proventos = list()
+    graf_preco_medio = list()
+    graf_preco_medio_valor_acao = list()
+    
+    preco_medio = 0
+    total_gasto = 0
+    total_proventos = 0
+    proventos_acumulado = 0
+    qtd_acoes = 0
+    
+    for item in lista_conjunta:
+#         print item
+        if isinstance(item, OperacaoAcao):   
+            # Verificar se se trata de compra ou venda
+            if item.tipo_operacao == 'C':
+                item.total_gasto = -1 * (item.quantidade * item.preco_unitario + \
+                item.emolumentos + item.corretagem)
+                total_gasto += item.total_gasto
+                qtd_acoes += item.quantidade
+                
+            elif item.tipo_operacao == 'V':
+                item.total_gasto = (item.quantidade * item.preco_unitario - \
+                item.emolumentos - item.corretagem)
+                total_proventos += item.total_gasto
+                total_gasto += item.total_gasto
+                qtd_acoes -= item.quantidade
+        
+        # Verifica se é recebimento de proventos
+        elif isinstance(item, Provento):
+            if item.data_pagamento <= datetime.date.today():
+                if item.tipo_provento in ['D', 'J']:
+                    total_recebido = qtd_acoes * item.valor_unitario
+                    if item.tipo_provento == 'J':
+                        total_recebido = total_recebido * Decimal(0.85)
+                    total_gasto += total_recebido
+                    total_proventos += total_recebido
+                    proventos_acumulado += item.valor_unitario
+                elif item.tipo_provento == 'A':
+                    provento_acao = item.acaoprovento_set.all()[0]
+                    if provento_acao.acao_recebida.ticker == ticker:
+                        acoes_recebidas = int((quantidade_acoes_ate_dia(investidor, item.acao.ticker, item.data) * item.valor_unitario ) / 100 )
+                        qtd_acoes += acoes_recebidas
+                    if item.acao.ticker == ticker:
+                        if provento_acao.valor_calculo_frac > 0:
+                            if provento_acao.data_pagamento_frac <= datetime.date.today():
+    #                                 print u'recebido fracionado %s, %s ações de %s a %s' % (total_recebido, acoes[item.acao.ticker], item.acao.ticker, item.valor_unitario)
+                                total_gasto += (((qtd_acoes * item.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
+                                total_proventos += (((qtd_acoes * item.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
+                
+                # Preencher gráfico do histórico
+                data_formatada = str(calendar.timegm(item.data.timetuple()) * 1000)
+                # Verifica se altera ultima posicao do grafico ou adiciona novo registro
+                if len(graf_historico_proventos) > 0 and graf_historico_proventos[len(graf_historico_proventos)-1][0] == data_formatada:
+                    graf_historico_proventos[len(graf_historico_proventos)-1][1] = float(proventos_acumulado)
+                else:
+                    graf_historico_proventos += [[data_formatada, float(proventos_acumulado)]]
+                    
+                                
+        data_formatada = str(calendar.timegm(item.data.timetuple()) * 1000)
+        ultimo_dia_util = historico.filter(data__lte=item.data).order_by('-data')[0].data
+        # Preço médio corrente
+        try:
+            preco_medio_corrente = float(-float(total_gasto)/qtd_acoes)
+        except ZeroDivisionError:
+            preco_medio_corrente = float(0)
+        # Verifica se altera ultima posicao do grafico ou adiciona novo registro
+        if len(graf_preco_medio) > 0 and graf_preco_medio[len(graf_preco_medio)-1][0] == data_formatada:
+            graf_preco_medio[len(graf_preco_medio)-1][1] = preco_medio_corrente
+            graf_preco_medio_valor_acao[len(graf_preco_medio_valor_acao)-1][1] = float(historico.filter(data=ultimo_dia_util)[0].preco_unitario)
+        else:
+            graf_preco_medio += [[data_formatada, preco_medio_corrente]]
+            graf_preco_medio_valor_acao += [[data_formatada, float(historico.filter(data=ultimo_dia_util)[0].preco_unitario)]]
+                
+    
+    # Adicionar data atual
+    data_atual_formatada = str(calendar.timegm(datetime.date.today().timetuple()) * 1000)
+#     ultimo_dia_util = datetime.date.today()
+#     while not HistoricoAcao.objects.filter(data=ultimo_dia_util, acao=acao):
+#         ultimo_dia_util -= datetime.timedelta(days=1)
+    if ValorDiarioAcao.objects.filter(acao__ticker=acao, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).exists():
+        preco_unitario = ValorDiarioAcao.objects.filter(acao__ticker=acao, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).order_by('-data_hora')[0].preco_unitario
+        # Preparar data a ser usada nos grafs de histórico/proventos
+        data_valida_graf_historico = data_atual_formatada
+    else:
+        preco_unitario = historico.filter(acao__ticker=acao).order_by('-data')[0].preco_unitario
+        # Preparar data a ser usada nos grafs de histórico/proventos
+        data_valida_graf_historico = str(calendar.timegm(historico.filter(acao__ticker=acao).order_by('-data')[0].data.timetuple()) * 1000)
+        
+    # Verifica se altera ultima posicao do grafico ou adiciona novo registro
+    if len(graf_historico) > 0 and graf_historico[len(graf_historico)-1][0] == data_valida_graf_historico:
+        graf_historico[len(graf_historico)-1][1] = float(preco_unitario)
+    else:
+        graf_historico += [[data_valida_graf_historico, float(preco_unitario)]]
+    # Verifica se altera ultima posicao do grafico ou adiciona novo registro
+    if len(graf_historico_proventos) > 0 and graf_historico_proventos[len(graf_historico_proventos)-1][0] == data_valida_graf_historico:
+        graf_historico_proventos[len(graf_historico_proventos)-1][1] = float(proventos_acumulado)
+    else:
+        graf_historico_proventos += [[data_valida_graf_historico, float(proventos_acumulado)]]
+    # Preço médio corrente
+    try:
+        preco_medio_corrente = float(-float(total_gasto)/qtd_acoes)
+    except ZeroDivisionError:
+        preco_medio_corrente = float(0)
+    # Verifica se altera ultima posicao do grafico ou adiciona novo registro
+    if len(graf_preco_medio) > 0 and graf_preco_medio[len(graf_preco_medio)-1][0] == data_atual_formatada:
+        graf_preco_medio[len(graf_preco_medio)-1][1] = preco_medio_corrente
+        graf_preco_medio_valor_acao[len(graf_preco_medio_valor_acao)-1][1] = float(preco_unitario)
+    else:
+        graf_preco_medio += [[data_atual_formatada, preco_medio_corrente]]
+        graf_preco_medio_valor_acao += [[data_atual_formatada, float(preco_unitario)]]
+    
+    return TemplateResponse(request, 'acoes/estatisticas_acao.html', {'graf_preco_medio': graf_preco_medio, 'graf_preco_medio_valor_acao': graf_preco_medio_valor_acao,
+                               'graf_historico_proventos': graf_historico_proventos, 'graf_historico': graf_historico})
 
 @adiciona_titulo_descricao('Lista de ações', 'Lista as ações da Bovespa')
 def listar_acoes(request):

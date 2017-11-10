@@ -209,7 +209,7 @@
 					<tbody>
 					{% for operacao in operacoes %}
 					<tr>
-						<td><a href="{% url 'acoes:bh:estatisticas_acao_bh' operacao.acao.ticker %}" data-original-title="Estatísticas ação"
+						<td><a href="{% url 'acoes:geral:estatisticas_acao_bh' operacao.acao.ticker %}" data-original-title="Estatísticas ação"
 							class="tooltips" data-placement="top">{{operacao.acao.ticker}}</a></td>
 						<td>
                             {% if operacao.tipo == 'Compra' or operacao.tipo == 'Venda' %}
