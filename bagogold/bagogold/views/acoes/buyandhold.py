@@ -258,9 +258,9 @@ def estatisticas_acao(request, ticker=None):
                     
                                 
         data_formatada = str(calendar.timegm(item.data.timetuple()) * 1000)
-        ultimo_dia_util = item.data
-        while not HistoricoAcao.objects.filter(data=ultimo_dia_util, acao=acao).exists():
-            ultimo_dia_util -= datetime.timedelta(days=1)
+        ultimo_dia_util = historico.filter(data__lte=item.data).order_by('-data')[0].data
+#         while not HistoricoAcao.objects.filter(data=ultimo_dia_util, acao=acao).exists():
+#             ultimo_dia_util -= datetime.timedelta(days=1)
         # Preço médio corrente
         try:
             preco_medio_corrente = float(-float(total_gasto)/qtd_acoes)
