@@ -65,7 +65,7 @@ class Command(BaseCommand):
                     valor_atual[ticker] = (valor * Decimal('34.43321466') * Decimal('0.97')).quantize(Decimal('0.01'))
 
             # Enviar mensagem com valor atual dos investimentos
-            bot.send_message(150143379, u'%s\nTotal: *R$ %s*' % ('\n'.join([u'%s: *R$ %s* (%s%%)' % (ticker, valor, ((valor-12000)/Decimal('60')).quantize(Decimal('0.01'))) for ticker, valor in valor_atual.items()]),
+            bot.send_message(150143379, u'%s\nTotal: *R$ %s*' % ('\n'.join([u'%s: *R$ %s* (%s%%)' % (ticker, valor, ((valor-12000)/Decimal('120')).quantize(Decimal('0.01'))) for ticker, valor in valor_atual.items()]),
                                                                  sum(valor_atual.values())), parse_mode='Markdown')
             
             tempo_decorrido = datetime.datetime.now() - inicio_msg
