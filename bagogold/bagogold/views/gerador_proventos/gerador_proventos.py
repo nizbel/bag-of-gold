@@ -6,7 +6,7 @@ from bagogold.bagogold.forms.gerador_proventos import \
     AcaoProventoAcaoDescritoDocumentoBovespaForm, \
     ProventoFIIDescritoDocumentoBovespaForm, SelicProventoAcaoDescritoDocBovespaForm
 from bagogold.bagogold.models.acoes import Acao, Provento, AcaoProvento, \
-    AtualizacaoSelicProvento
+    AtualizacaoSelicProvento, HistoricoAcao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.fii import ProventoFII, FII
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
@@ -163,6 +163,10 @@ def detalhar_provento_fii(request, id_provento):
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 @adiciona_titulo_descricao('Ler documento da Bovespa', 'Ler documento da Bovespa e determinar se descreve recebimento de proventos ou não')
 def ler_documento_provento(request, id_pendencia):
+    # Usado para criar objetos vazios
+    class Object(object):
+        pass
+    
     try:
         pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
         # Verificar se pendência é de leitura
@@ -481,15 +485,25 @@ def ler_documento_provento(request, id_pendencia):
     if pendencia.documento.tipo == 'A':
         for form in formset_provento:
             form.fields['acao'].queryset = Acao.objects.filter(empresa=pendencia.documento.empresa)
+            
+        # Preparar informações sobre negociação das ações que são mostradas como opção
+        infos_uteis = {'historico_negociacao': list()}
+        for acao in Acao.objects.filter(empresa=pendencia.documento.empresa):
+            negociacao_acao = Object()
+            negociacao_acao.ticker = acao.ticker
+            negociacao_acao.inicio = HistoricoAcao.objects.filter(oficial_bovespa=True, acao=acao).order_by('data')[0].data
+            negociacao_acao.fim = HistoricoAcao.objects.filter(oficial_bovespa=True, acao=acao).order_by('-data')[0].data
+            infos_uteis['historico_negociacao'].append(negociacao_acao)
     elif pendencia.documento.tipo == 'F':
         for form in formset_provento:
             form.fields['fii'].queryset = FII.objects.filter(empresa=pendencia.documento.empresa)
-            
+        
+        infos_uteis = {}
     # Preparar motivo de recusa, caso haja
     recusa = pendencia.documento.ultima_recusa()
     
     return TemplateResponse(request, 'gerador_proventos/ler_documento_provento.html', {'pendencia': pendencia, 'formset_provento': formset_provento, 'formset_acao_provento': formset_acao_provento, \
-                                                                                       'formset_acao_selic': formset_acao_selic, 'recusa': recusa})
+                                                                                       'formset_acao_selic': formset_acao_selic, 'recusa': recusa, 'infos_uteis': infos_uteis})
     
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
