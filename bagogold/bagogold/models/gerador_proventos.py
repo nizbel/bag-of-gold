@@ -272,6 +272,8 @@ class ProventoFIIDescritoDocumentoBovespa (models.Model):
             return u'Indefinido'
             
 class PagamentoLeitura (models.Model):
+    VALOR_HORA = Decimal(25)
+
     investidor = models.ForeignKey('Investidor')
     data = models.DateField(u'Data do pagamento')
     valor = models.DecimalField(u'Valor pago', decimal_places=2, max_digits=6)
