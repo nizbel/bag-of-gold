@@ -69,11 +69,13 @@ class PendenciaDocumentoProventoAdmin(admin.ModelAdmin):
     list_display = ('documento', 'data_criacao', 'tipo_completo', 'responsavel')
     
     def tipo_completo(self, obj):
-        return 'Leitura' if obj.tipo == 'L' else 'Validação'
-    tipo_completo.short_description = 'Tipo de pendência'
+        return 'Leitura' if obj.tipo == 'L' else 'Validaï¿½ï¿½o'
+    tipo_completo.short_description = 'Tipo de pendï¿½ncia'
     
 admin.site.register(PendenciaDocumentoProvento, PendenciaDocumentoProventoAdmin)
 
 class PagamentoLeituraAdmin(admin.ModelAdmin):
     search_fields = ['investidor', 'data', 'valor']
     list_display = ('investidor', 'valor', 'data')
+    
+admin.site.register(PagamentoLeitura, PagamentoLeituraAdmin)
