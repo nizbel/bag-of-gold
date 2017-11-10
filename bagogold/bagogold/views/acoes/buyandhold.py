@@ -259,8 +259,6 @@ def estatisticas_acao(request, ticker=None):
                                 
         data_formatada = str(calendar.timegm(item.data.timetuple()) * 1000)
         ultimo_dia_util = historico.filter(data__lte=item.data).order_by('-data')[0].data
-#         while not HistoricoAcao.objects.filter(data=ultimo_dia_util, acao=acao).exists():
-#             ultimo_dia_util -= datetime.timedelta(days=1)
         # Preço médio corrente
         try:
             preco_medio_corrente = float(-float(total_gasto)/qtd_acoes)
@@ -282,19 +280,23 @@ def estatisticas_acao(request, ticker=None):
 #         ultimo_dia_util -= datetime.timedelta(days=1)
     if ValorDiarioAcao.objects.filter(acao__ticker=acao, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).exists():
         preco_unitario = ValorDiarioAcao.objects.filter(acao__ticker=acao, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).order_by('-data_hora')[0].preco_unitario
+        # Preparar data a ser usada nos grafs de histórico/proventos
+        data_valida_graf_historico = data_atual_formatada
     else:
         preco_unitario = historico.filter(acao__ticker=acao).order_by('-data')[0].preco_unitario
+        # Preparar data a ser usada nos grafs de histórico/proventos
+        data_valida_graf_historico = str(calendar.timegm(historico.filter(acao__ticker=acao).order_by('-data')[0].data.timetuple()) * 1000)
         
     # Verifica se altera ultima posicao do grafico ou adiciona novo registro
-    if len(graf_historico) > 0 and graf_historico[len(graf_historico)-1][0] == data_atual_formatada:
+    if len(graf_historico) > 0 and graf_historico[len(graf_historico)-1][0] == data_valida_graf_historico:
         graf_historico[len(graf_historico)-1][1] = float(preco_unitario)
     else:
-        graf_historico += [[data_atual_formatada, float(preco_unitario)]]
+        graf_historico += [[data_valida_graf_historico, float(preco_unitario)]]
     # Verifica se altera ultima posicao do grafico ou adiciona novo registro
-    if len(graf_historico_proventos) > 0 and graf_historico_proventos[len(graf_historico_proventos)-1][0] == data_atual_formatada:
+    if len(graf_historico_proventos) > 0 and graf_historico_proventos[len(graf_historico_proventos)-1][0] == data_valida_graf_historico:
         graf_historico_proventos[len(graf_historico_proventos)-1][1] = float(proventos_acumulado)
     else:
-        graf_historico_proventos += [[data_atual_formatada, float(proventos_acumulado)]]
+        graf_historico_proventos += [[data_valida_graf_historico, float(proventos_acumulado)]]
     # Preço médio corrente
     try:
         preco_medio_corrente = float(-float(total_gasto)/qtd_acoes)
