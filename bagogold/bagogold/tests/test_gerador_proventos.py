@@ -17,7 +17,8 @@ from bagogold.bagogold.utils.gerador_proventos import \
     converter_descricao_provento_para_provento_acoes, copiar_proventos_acoes, \
     converter_descricao_provento_para_provento_fiis, \
     versionar_descricoes_relacionadas_acoes, versionar_descricoes_relacionadas_fiis, \
-    ler_provento_estruturado_fii, criar_descricoes_provento_acoes
+    ler_provento_estruturado_fii, criar_descricoes_provento_acoes, \
+    relacionar_proventos_lidos_sistema
 from cStringIO import StringIO
 from decimal import Decimal
 from django.contrib.auth.models import User
@@ -701,4 +702,113 @@ class LeitorProventosEstruturadosTestCase(TestCase):
         self.assertFalse(documento.pendente())
         
 
+    def test_relacionar_a_outro_provento(self):
+        """Testa operação de relacionar proventos gerados pelo sistema"""
+        # Ler documento original
+        documento = DocumentoProventoBovespa.objects.get(protocolo='8679')
+        ler_provento_estruturado_fii(documento)
         
+        # Preparar documento
+        documento = DocumentoProventoBovespa()
+        documento.empresa = Empresa.objects.get(codigo_cvm=Empresa.objects.all()[0].codigo_cvm)
+        documento.url = 'https://fnet.bmfbovespa.com.br/fnet/publico/visualizarDocumento?id=8699'
+        documento.tipo = 'F'
+        documento.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO
+        documento.protocolo = '8689'
+        documento.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
+        conteudo = StringIO('<?xml version="1.0" encoding="UTF-8" standalone="yes"?> \
+<DadosEconomicoFinanceiros xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"> \
+    <DadosGerais> \
+        <NomeFundo>BB PROGRESSIVO II FUNDO DE INVESTIMENTO IMOBILIÁRIO – FII</NomeFundo> \
+        <CNPJFundo>14410722000129</CNPJFundo> \
+        <NomeAdministrador>VOTORANTIM ASSET MANAGEMENT DTVM LTDA.</NomeAdministrador> \
+        <CNPJAdministrador>03384738000198</CNPJAdministrador> \
+        <ResponsavelInformacao>Reinaldo Holanda de Lacerda</ResponsavelInformacao> \
+        <TelefoneContato>(11) 5171-5038</TelefoneContato> \
+        <CodISINCota>BRBBPOCTF003</CodISINCota> \
+        <CodNegociacaoCota>BBPO11</CodNegociacaoCota> \
+    </DadosGerais> \
+    <InformeRendimentos> \
+        <Rendimento> \
+            <DataAprovacao>2017-02-24</DataAprovacao> \
+            <DataBase>2017-02-24</DataBase> \
+            <DataPagamento>2017-03-15</DataPagamento> \
+            <ValorProventoCota>0.9550423</ValorProventoCota> \
+            <PeriodoReferencia>fevereiro</PeriodoReferencia> \
+            <Ano>2017</Ano> \
+            <RendimentoIsentoIR>true</RendimentoIsentoIR> \
+        </Rendimento> \
+        <Amortizacao tipo=""/> \
+    </InformeRendimentos> \
+</DadosEconomicoFinanceiros>')
+        documento.documento.save('%s-%s.%s' % (documento.ticker_empresa(), documento.protocolo, 'xml'), File(conteudo))
+        
+        # Ler documento
+        ler_provento_estruturado_fii(documento)
+        
+        # Verificar se agora há 2 proventos criados
+        self.assertEqual(ProventoFII.objects.all().count(), 2)
+        
+        # Relacionar
+        relacionar_proventos_lidos_sistema(ProventoFIIDocumento.objects.get(documento__protocolo='8689').provento, 
+                                           ProventoFIIDocumento.objects.get(documento__protocolo='8679').provento)
+        
+        # Verificar pós-validação
+        # Apenas um provento
+        self.assertEqual(ProventoFII.objects.all().count(), 1)
+        # 2 descrições
+        self.assertEqual(ProventoFIIDescritoDocumentoBovespa.objects.all().count(), 2)
+        # 2 versões
+        self.assertEqual(ProventoFII.objects.get(fii=FII.objects.get(ticker='BBPO11')).proventofiidocumento_set.count(), 2)
+        # Data de pagamento 15/03/2017
+        self.assertEqual(ProventoFII.objects.all()[0].data_pagamento, datetime.date(2017, 3, 15))
+        
+    def test_erro_ao_relacionar_por_tipo_documento(self):
+        """Testa se função joga erro ao tentar relacionar documentos que não foram adicionados pelo sistema"""
+        # Ler documento original
+        documento = DocumentoProventoBovespa.objects.get(protocolo='8679')
+        ler_provento_estruturado_fii(documento)
+        
+        # Preparar documento
+        documento = DocumentoProventoBovespa()
+        documento.empresa = Empresa.objects.get(codigo_cvm=Empresa.objects.all()[0].codigo_cvm)
+        documento.url = 'https://fnet.bmfbovespa.com.br/fnet/publico/visualizarDocumento?id=8699'
+        documento.tipo = 'F'
+        documento.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO
+        documento.protocolo = '8688'
+        documento.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
+        conteudo = StringIO('<?xml version="1.0" encoding="UTF-8" standalone="yes"?> \
+<DadosEconomicoFinanceiros xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"> \
+    <DadosGerais> \
+        <NomeFundo>BB PROGRESSIVO II FUNDO DE INVESTIMENTO IMOBILIÁRIO – FII</NomeFundo> \
+        <CNPJFundo>14410722000129</CNPJFundo> \
+        <NomeAdministrador>VOTORANTIM ASSET MANAGEMENT DTVM LTDA.</NomeAdministrador> \
+        <CNPJAdministrador>03384738000198</CNPJAdministrador> \
+        <ResponsavelInformacao>Reinaldo Holanda de Lacerda</ResponsavelInformacao> \
+        <TelefoneContato>(11) 5171-5038</TelefoneContato> \
+        <CodISINCota>BRBBPOCTF003</CodISINCota> \
+        <CodNegociacaoCota>BBPO11</CodNegociacaoCota> \
+    </DadosGerais> \
+    <InformeRendimentos> \
+        <Rendimento> \
+            <DataAprovacao>2017-02-24</DataAprovacao> \
+            <DataBase>2017-02-24</DataBase> \
+            <DataPagamento>2017-03-15</DataPagamento> \
+            <ValorProventoCota>0.0550423</ValorProventoCota> \
+            <PeriodoReferencia>fevereiro</PeriodoReferencia> \
+            <Ano>2017</Ano> \
+            <RendimentoIsentoIR>true</RendimentoIsentoIR> \
+        </Rendimento> \
+        <Amortizacao tipo=""/> \
+    </InformeRendimentos> \
+</DadosEconomicoFinanceiros>')
+        documento.documento.save('%s-%s.%s' % (documento.ticker_empresa(), documento.protocolo, 'xml'), File(conteudo))
+        
+        # Ler documento
+        ler_provento_estruturado_fii(documento)
+        
+        provento_teste = ProventoFIIDocumento.objects.get(documento__protocolo='8688')
+        provento_teste.documento.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS
+        provento_teste.documento.save()
+        with self.assertRaises(ValueError):
+            relacionar_proventos_lidos_sistema(provento_teste.provento, ProventoFIIDocumento.objects.get(documento__protocolo='8688').provento)

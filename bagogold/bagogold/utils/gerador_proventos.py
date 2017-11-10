@@ -517,3 +517,43 @@ def ler_provento_estruturado_fii(documento_fii):
         for pendencia_provento in PendenciaDocumentoProvento.objects.filter(documento=documento_fii):
             pendencia_provento.delete()
             
+def relacionar_proventos_lidos_sistema(provento_relacionar, provento_relacionado):
+    """
+    Relaciona proventos lidos pelo sistema
+    Parâmetros: Provento a relacionar
+                Provento a ser relacionado
+    """
+    # Verificar se proventos foram lidos pelo sistema
+    if not (provento_relacionar.add_pelo_sistema and provento_relacionado.add_pelo_sistema):
+        raise ValueError('Proventos devem ter sido adicionados pelo sistema')
+    elif provento_relacionar.id == provento_relacionado.id:
+        raise ValueError('Provento a relacionar é igual a provento relacionado')
+    
+    try:
+        with transaction.atomic():
+            # Buscar todas as versões do provento descrito
+            versoes_provento_relacionado = list(ProventoFIIDocumento.objects.filter(provento=provento_relacionado))
+            # Adicionar versões do provento a relacionar à lista de versões pelo número do protocolo do documento
+            versoes_provento_relacionado.extend(provento_relacionar.proventofiidocumento_set.all())
+            versoes_provento_relacionado.sort(key=lambda x: x.documento.protocolo)
+            # Gerar versões a partir de 1 na ordem feita
+            for versao, item in enumerate(versoes_provento_relacionado, start=1):
+                item.versao = versao
+                item.save()
+            
+            # Transformar provento em não oficial para depois oficializá-lo
+            provento_relacionado.oficial_bovespa = False
+            # Copiar última versão de descrição para o provento relacionado
+            copiar_proventos_fiis(provento_relacionado, versoes_provento_relacionado[-1].provento)
+            
+            for provento_documento in provento_relacionar.proventofiidocumento_set.all():
+                provento_documento.provento = provento_relacionado
+                provento_documento.save()
+            
+            provento_relacionar.delete()
+            
+            # Oficializar
+            provento_relacionado.oficial_bovespa = True
+            provento_relacionado.save()
+    except Exception as e:
+        raise ValueError('Houve um erro ao relacionar os documentos - %s' % e)
