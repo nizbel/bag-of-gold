@@ -3,8 +3,7 @@ from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.models.gerador_proventos import \
     InvestidorResponsavelPendencia, InvestidorLeituraDocumento, \
     InvestidorValidacaoDocumento, PendenciaDocumentoProvento, \
-    InvestidorRecusaDocumento, DocumentoProventoBovespa, ProventoFIIDocumento, \
-    ProventoAcaoDocumento
+    InvestidorRecusaDocumento, DocumentoProventoBovespa, PagamentoLeitura
 from decimal import Decimal
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import Permission, User
