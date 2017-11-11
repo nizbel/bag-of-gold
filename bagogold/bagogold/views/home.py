@@ -175,7 +175,7 @@ def detalhar_acumulados_mensais(request):
             
     if filtros['mes_inicial'] == '' or filtros['mes_final'] == '':
         data_atual = datetime.datetime.now()
-        qtd_meses = 1
+        qtd_meses = 12
         data_inicial = data_atual.replace(day=1)
         for _ in range(qtd_meses-1):
             data_inicial = (data_inicial - datetime.timedelta(days=1)).replace(day=1)
