@@ -66,7 +66,7 @@
                                 <div class="col-md-12">
                                     <label class="control-label col-md-1"> Início da data EX: </label>
                                     <div class="col-md-2">
-                                        <div class="input-group date date-picker" data-date-format="dd/mm/yyyy" data-date-viewmode="years">
+                                        <div class="input-group date date-picker" data-date-format="dd/mm/yyyy">
                                             <input type="text" class="form-control" name="filtro_inicio_data_ex" id="id_filtro_inicio_data_ex"
                                             value="{% if filtros.filtro_inicio_data_ex|date:'d/m/Y'|default:'' == '' %}{{filtros.filtro_inicio_data_ex|default:''}}{% else %}{{filtros.filtro_inicio_data_ex|date:'d/m/Y'}}{% endif %}">
                                             <span class="input-group-btn">
@@ -78,7 +78,7 @@
                                     </div>
                                     <label class="control-label col-md-1"> Fim da data EX: </label>
                                     <div class="col-md-2">
-                                        <div class="input-group date date-picker" data-date-format="dd/mm/yyyy" data-date-viewmode="years">
+                                        <div class="input-group date date-picker" data-date-format="dd/mm/yyyy">
                                             <input type="text" class="form-control" name="filtro_fim_data_ex" id="id_filtro_fim_data_ex"
                                             value="{% if filtros.filtro_fim_data_ex|date:'d/m/Y'|default:'' == '' %}{{filtros.filtro_fim_data_ex|default:''}}{% else %}{{filtros.filtro_fim_data_ex|date:'d/m/Y'}}{% endif %}">
                                             <span class="input-group-btn">
@@ -90,7 +90,7 @@
                                     </div>
                                     <label class="control-label col-md-1"> Início da data de pagamento: </label>
                                     <div class="col-md-2">
-                                        <div class="input-group date date-picker" data-date-format="dd/mm/yyyy" data-date-viewmode="years">
+                                        <div class="input-group date date-picker" data-date-format="dd/mm/yyyy">
                                             <input type="text" class="form-control" name="filtro_inicio_data_pagamento" id="id_filtro_inicio_data_pagamento"
                                             value="{% if filtros.filtro_inicio_data_pagamento|date:'d/m/Y'|default:'' == '' %}{{filtros.filtro_inicio_data_pagamento|default:''}}{% else %}{{filtros.filtro_inicio_data_pagamento|date:'d/m/Y'}}{% endif %}">
                                             <span class="input-group-btn">
@@ -102,7 +102,7 @@
                                     </div>
                                     <label class="control-label col-md-1"> Fim da data de pagamento: </label>
                                     <div class="col-md-2">
-                                        <div class="input-group date date-picker" data-date-format="dd/mm/yyyy" data-date-viewmode="years">
+                                        <div class="input-group date date-picker" data-date-format="dd/mm/yyyy">
                                             <input type="text" class="form-control" name="filtro_fim_data_pagamento" id="id_filtro_fim_data_pagamento"
                                             value="{% if filtros.filtro_fim_data_pagamento|date:'d/m/Y'|default:'' == '' %}{{filtros.filtro_fim_data_pagamento|default:''}}{% else %}{{filtros.filtro_fim_data_pagamento|date:'d/m/Y'}}{% endif %}">
                                             <span class="input-group-btn">
@@ -116,7 +116,7 @@
                                 {% comment %}
                                     <label class="control-label col-md-1"> Data EX: </label>
                                     <div class="col-md-3">
-                                        <div class="input-group input-daterange date-picker" data-date-format="dd/mm/yyyy" data-date-viewmode="years">
+                                        <div class="input-group input-daterange date-picker" data-date-format="dd/mm/yyyy">
                                             <input type="text" class="form-control" name="filtro_inicio_data_ex" id="id_filtro_inicio_data_ex"
                                             value="{% if filtros.filtro_inicio_data_ex|date:'d/m/Y'|default:'' == '' %}{{filtros.filtro_inicio_data_ex|default:''}}{% else %}{{filtros.filtro_inicio_data_ex|date:'d/m/Y'}}{% endif %}">
                                             <span class="input-group-addon"> a </span>
@@ -126,7 +126,7 @@
                                     </div>
                                     <label class="control-label col-md-2"> Data de pagamento: </label>
                                     <div class="col-md-3">
-                                        <div class="input-group input-daterange date-picker" data-date-format="dd/mm/yyyy" data-date-viewmode="years">
+                                        <div class="input-group input-daterange date-picker" data-date-format="dd/mm/yyyy">
                                             <input type="text" class="form-control" name="filtro_inicio_data_pagamento" id="id_filtro_inicio_data_pagamento"
                                             value="{% if filtros.filtro_inicio_data_pagamento|date:'d/m/Y'|default:'' == '' %}{{filtros.filtro_inicio_data_pagamento|default:''}}{% else %}{{filtros.filtro_inicio_data_pagamento|date:'d/m/Y'}}{% endif %}">
                                             <span class="input-group-addon"> a </span>

@@ -228,8 +228,7 @@
                                             <div class="form-group col-md-4 {% if form_provento.data_ex.errors %} has-error {% endif %}">
                                                 <label class="control-label col-md-4" style="text-align: left;"> Data EX: </label>
                                                 <div class="col-md-8">
-                                                    <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_provento-{{forloop.counter0}}-data_ex" name="provento-{{forloop.counter0}}-data_ex" 
-                                                    data-date-viewmode="years">
+                                                    <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_provento-{{forloop.counter0}}-data_ex" name="provento-{{forloop.counter0}}-data_ex">
                                                         <input type="text" class="form-control" name="provento-{{forloop.counter0}}-data_ex" 
                                                         value="{% if form_provento.data_ex.value|date:'d/m/Y'|default:'' == '' %}{{form_provento.data_ex.value|default:''}}{% else %}{{form_provento.data_ex.value|date:'d/m/Y'}}{% endif %}">
                                                         <span class="input-group-btn">
