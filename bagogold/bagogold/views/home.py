@@ -52,6 +52,7 @@ import calendar
 import datetime
 import json
 import math
+import traceback
 
 
 @login_required
@@ -151,23 +152,35 @@ def calendario(request):
 def detalhar_acumulados_mensais(request):
     investidor = request.user.investidor
     
+    filtros = {'mes_inicial': '', 'mes_final': ''}
     if request.method == 'POST':
-        if mes_ano_fim > mes_ano_atual:
-            messages.error(request, 'Não é possível calcular o acumulado para meses futuros')
-            carregar dados como se não fosse POST
-        elif mes_ano_fim - mes_ano_inicio > 12 meses:
-            messages.error(request, 'Insira um período de até 12 meses')
-            carregar dados como se não fosse POST
-        else:
-            min(ultima data do mes_ano_fim, datetime.datetime.now())
-            ultima_data =  mes_ano_fim
-            primeira_data = mes_ano_inicio.replace(day=1)
-    else:
-        carregar dados da maneira como já carrega 
-        qtd_meses = 12
-    
-    data_atual = datetime.datetime.now()
-
+        try:
+            data_inicial = datetime.datetime.strptime('01/%s' % (request.POST.get('mes_inicial')), '%d/%m/%Y')
+            filtros['mes_inicial'] = data_inicial.strftime('%m/%Y')
+            
+            mes, ano = [int(valor) for valor in request.POST.get('mes_final').split('/')]
+            data_atual = min(datetime.datetime(ano, mes, calendar.monthrange(ano, mes)[1]), datetime.datetime.now())
+            filtros['mes_final'] = data_atual.strftime('%m/%Y')
+            
+            qtd_meses = (data_atual.year - data_inicial.year) * 12 + (data_atual.month - data_inicial.month + 1)
+            print qtd_meses, data_inicial, data_atual
+            
+            if data_atual > datetime.datetime.now():
+                messages.error(request, 'Não é possível calcular o acumulado para meses futuros')
+            elif qtd_meses > 12 :
+                messages.error(request, 'Insira um período de até 12 meses')
+        except:
+            messages.error(request, 'Filtros de data inválidos')
+            filtros = {'mes_inicial': '', 'mes_final': ''}
+            
+    if filtros['mes_inicial'] == '' or filtros['mes_final'] == '':
+        data_atual = datetime.datetime.now()
+        qtd_meses = 1
+        data_inicial = data_atual.replace(day=1)
+        for _ in range(qtd_meses-1):
+            data_inicial = (data_inicial - datetime.timedelta(days=1)).replace(day=1)
+        filtros = {'mes_inicial': data_inicial.strftime('%m/%Y'), 'mes_final': data_atual.strftime('%m/%Y')}
+        
     acumulados_mensais = list()
     acumulados_mensais.append([data_atual.date(), calcular_rendimentos_ate_data(investidor, data_atual.date())])
     
@@ -218,7 +231,8 @@ def detalhar_acumulados_mensais(request):
 #         
 #     print '%s + %s*mes + (%s*mes^2)/2' % (acumulados_mensais[11][2], acumulados_mensais[10][2] - acumulados_mensais[11][2], aceleracao_media)
     
-    return TemplateResponse(request, 'detalhar_acumulados_mensais.html', {'acumulados_mensais': acumulados_mensais, 'graf_acumulados': graf_acumulados, 'taxas': taxas})
+    return TemplateResponse(request, 'detalhar_acumulados_mensais.html', {'acumulados_mensais': acumulados_mensais, 'graf_acumulados': graf_acumulados, 'taxas': taxas,
+                                                                          'filtros': filtros})
     
 @login_required
 def detalhar_acumulado_mensal(request):

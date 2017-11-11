@@ -268,10 +268,6 @@ $( document ).ready(function() {
     });
     
     $('#form_filtro').submit(function() {
-    	console.log('submit', $('#id_mes_inicial').datepicker('getDate'), $('#id_mes_final').datepicker('getDate'));
-//     	if (2 == 2) {
-//     		return false;
-//     	}
     	if ($('#id_mes_inicial').datepicker('getDate') == null || $('#id_mes_final').datepicker('getDate') == null) {
             App.alert({ container: '#messages', // alerts parent container
                         place: 'append', // append or prepent in container 
