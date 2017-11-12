@@ -34,7 +34,10 @@ import json
 @login_required
 def calcular_poupanca_proventos_na_data(request):
     investidor = request.user.investidor
-    data = datetime.datetime.strptime(request.GET['dataEscolhida'], '%d/%m/%Y').date()
+    try:
+        data = datetime.datetime.strptime(request.GET.get('dataEscolhida'), '%d/%m/%Y').date()
+    except:
+        return HttpResponse(json.dumps({'mensagem': u'Data inválida'}), content_type = "application/json")
     poupanca_proventos = str(calcular_poupanca_prov_acao_ate_dia(investidor, data))
     return HttpResponse(json.dumps(poupanca_proventos), content_type = "application/json") 
 
@@ -575,11 +578,14 @@ def painel(request):
     
     # Adicionar dados sobre última atualização
     # Histórico
-    historico_mais_recente = HistoricoAcao.objects.latest('data').data
+    if HistoricoAcao.objects.exists():
+        historico_mais_recente = HistoricoAcao.objects.latest('data').data
+    else:
+        historico_mais_recente = 'N/A'
     # Valor diário
-    try:
+    if ValorDiarioAcao.objects.exists():
         valor_diario_mais_recente = ValorDiarioAcao.objects.latest('data_hora').data_hora
-    except:
+    else:
         valor_diario_mais_recente = 'N/A'
     
     # Gráfico de composição

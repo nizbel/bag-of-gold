@@ -13,6 +13,7 @@ class UrlsTestCase(TestCase):
     
     def setUp(self):
         User.objects.create_user('teste', 'teste@teste.com', 'teste')
+        User.objects.create_superuser('nizbel', 'nizbel@teste.com', 'nizbel')
         
         # Considerar o período entre 01/01/2017 até 10/11/2017
         data_inicial = datetime.date(2017, 1, 1)
@@ -66,7 +67,7 @@ class UrlsTestCase(TestCase):
                     pass
 
     def test_responses_logado(self):
-        """Testa respostas das páginas, deslogado"""
+        """Testa respostas das páginas, logado"""
         self.client.login(username='teste', password='teste')
         url_list = [(url, '') for url in urlpatterns if url.app_name != 'admin']
         while len(url_list) > 0:
@@ -80,6 +81,33 @@ class UrlsTestCase(TestCase):
             elif isinstance(url_atual, RegexURLPattern):
                 try:
                     response = self.client.get(reverse('%s%s' % (namespace_atual, url_atual.name)))
-                    self.assertEqual(response.status_code, 200)
+                    if url_atual.name == 'logout':
+                        self.assertEqual(response.status_code, 302)
+                        self.client.login(username='teste', password='teste')
+                    else:
+                        self.assertIn(response.status_code, [200, 403])
+                except NoReverseMatch:
+                    pass
+                
+    def test_responses_logado_superuser(self):
+        """Testa respostas das páginas, logado como super usuário"""
+        self.client.login(username='nizbel', password='nizbel')
+        url_list = [(url, '') for url in urlpatterns if url.app_name != 'admin']
+        while len(url_list) > 0:
+            tupla_atual = url_list.pop(0)
+            url_atual = tupla_atual[0]
+            namespace_atual = '%s:' % (tupla_atual[1]) if tupla_atual[1] != '' else ''
+#             print tupla_atual
+            if isinstance(url_atual, RegexURLResolver):
+                for url_grupo in url_atual.url_patterns:
+                    url_list.insert(0, (url_grupo, '%s%s' % (namespace_atual, (url_atual.namespace or ''))))
+            elif isinstance(url_atual, RegexURLPattern):
+                try:
+                    response = self.client.get(reverse('%s%s' % (namespace_atual, url_atual.name)))
+                    if url_atual.name == 'logout':
+                        self.assertEqual(response.status_code, 302)
+                        self.client.login(username='nizbel', password='nizbel')
+                    else:
+                        self.assertEqual(response.status_code, 200)
                 except NoReverseMatch:
                     pass

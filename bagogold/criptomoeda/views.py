@@ -26,7 +26,6 @@ from django.http.response import HttpResponseRedirect
 from django.template.response import TemplateResponse
 from itertools import chain
 from operator import attrgetter
-from urllib2 import urlopen
 import calendar
 import datetime
 import json
