@@ -298,8 +298,6 @@ class DivisaoOperacaoDebentureFormSet(forms.models.BaseInlineFormSet):
                         divisao_a_excluir = True
                         
         if self.instance.quantidade < qtd_total_div:
-            print self.instance.preco_unitario
-            print self.instance.quantidade
             raise forms.ValidationError('Quantidade total alocada para as divisões é maior que quantidade da operação')
         elif self.instance.quantidade > qtd_total_div:
             if divisao_a_excluir:
@@ -534,7 +532,6 @@ class DivisaoOperacaoCRI_CRAFormSet(forms.models.BaseInlineFormSet):
                             raise forms.ValidationError('Quantidade da divisão %s é inválida, quantidade deve ser maior que 0' % (contador_forms))
                         
                         # Verificar em caso de venda
-                        print self.instance.tipo_operacao
                         if self.instance.tipo_operacao == 'V':
                             if qtd_cri_cra_ate_dia_para_divisao_para_certificado(form_divisao.cleaned_data['divisao'].id, self.instance.cri_cra.id, self.instance.data) < div_qtd:
                                 raise forms.ValidationError('Venda de quantidade acima da disponível para divisão %s' % (form_divisao.cleaned_data['divisao']))
