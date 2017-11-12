@@ -15,9 +15,9 @@ class BuscaHistoricoBovespaThread(Thread):
         try:
             ler_serie_historica_anual_bovespa('COTAHIST_A%s.TXT' % (self.ano))
         except Exception as e:
-            template = "An exception of type {0} occured. Arguments:\n{1!r}"
-            message = template.format(type(e).__name__, e.args)
-            print self.ano, "Thread:", message
+#             template = "An exception of type {0} occured. Arguments:\n{1!r}"
+#             message = template.format(type(e).__name__, e.args)
+#             print self.ano, "Thread:", message
             pass
 
 class Command(BaseCommand):

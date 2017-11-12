@@ -163,7 +163,6 @@ def detalhar_acumulados_mensais(request):
             filtros['mes_final'] = data_atual.strftime('%m/%Y')
             
             qtd_meses = (data_atual.year - data_inicial.year) * 12 + (data_atual.month - data_inicial.month + 1)
-            print qtd_meses, data_inicial, data_atual
             
             if data_atual > datetime.datetime.now():
                 messages.error(request, 'Não é possível calcular o acumulado para meses futuros')
