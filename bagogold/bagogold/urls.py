@@ -22,7 +22,7 @@ inicio_patterns = [
     url(r'^detalhar_acumulados_mensais/$', views.home.detalhar_acumulados_mensais, name='detalhar_acumulados_mensais'),
     url(r'^detalhar_acumulado_mensal/$', views.home.detalhar_acumulado_mensal, name='detalhar_acumulado_mensal'),
     url(r'^detalhamento_investimentos/$', views.home.detalhamento_investimentos, name='detalhamento_investimentos'),
-    url(r'^renda_fixa', views.home.grafico_renda_fixa_painel_geral, name='grafico_renda_fixa_painel_geral'),
+    url(r'^renda_fixa/$', views.home.grafico_renda_fixa_painel_geral, name='grafico_renda_fixa_painel_geral'),
     url(r'^painel_geral/$', views.home.painel_geral, name='painel_geral'),
     url(r'^sobre/$', views.home.sobre, name='sobre'),
     ]
@@ -176,7 +176,7 @@ urlpatterns = [
     # URL-safe base64 alphabet, plus the colon as a separator.
     url(r'^ativacao/(?P<activation_key>[-:\w]+)/$', registration_views.ActivationView.as_view(), name='ativar_cadastro'),
     url(r'^cadastro/completo/$', TemplateView.as_view(template_name='registration/registration_complete.html'), name='registration_complete'),
-    url(r'^cadastro/fechado/$', TemplateView.as_view(template_name='registration/registration_closed.html'), name='registration_closed'),
+#     url(r'^cadastro/fechado/$', TemplateView.as_view(template_name='registration/registration_closed.html'), name='registration_closed'),
     url(r'^minha_conta/$', views.investidores.investidores.minha_conta, name='minha_conta'),
 #     url(r'^minha_conta/editar_dados_cadastrais/(?P<id>\d+)/$', views.investidores.investidores.editar_dados_cadastrais, name='editar_dados_cadastrais'),
 

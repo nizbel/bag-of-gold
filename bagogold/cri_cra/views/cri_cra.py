@@ -358,7 +358,7 @@ def inserir_cri_cra(request):
     
     if request.method == 'POST':
         amortizacao_integral_venc = 'amortizacao_integral_venc' in request.POST.keys()
-        print request.POST
+#         print request.POST
         form_cri_cra = CRI_CRAForm(request.POST)
         formset_data_remuneracao = DataRemuneracaoFormSet(request.POST)
         formset_data_amortizacao = DataAmortizacaoFormSet(request.POST)

@@ -509,8 +509,7 @@ def verificar_historico_fundo_na_data(request):
     try:
         # Tenta pegar data no formato dd/mm/YYYY
         data = datetime.datetime.strptime(request.GET['data'], '%d/%m/%Y')
-    except Exception as e:
-        print e
+    except:
         return HttpResponse(json.dumps({'sucesso': False, 'erro':'Data inválida'}), content_type = "application/json")  
     
     # Buscar histórico

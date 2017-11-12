@@ -66,7 +66,7 @@
 			<div class="portlet box yellow-crusta">
 				<div class="portlet-title">
 					<div class="caption">
-						<i class="fa fa-clock-o"></i>Últimos 12 meses</div>
+						<i class="fa fa-clock-o"></i>Acumulado no período</div>
 					<div class="tools">
 						<a href="javascript:;" class="collapse"></a>
 					</div>
@@ -74,7 +74,9 @@
 				<div class="portlet-body" id="periodos_mensais">
                     <div class="text-center">
                         <h4>
-                            Taxa média dos últimos 12 meses
+                        {% with acumulados_mensais|last as ultimo_acumulado %}
+                            Taxa média entre <strong>{{acumulados_mensais.0.0.0}}</strong> e <strong>{{ultimo_acumulado.0.1}}</strong>
+                        {% endwith %}
                         </h4>
                     </div>
                     <div class="text-center font-yellow-crusta">
