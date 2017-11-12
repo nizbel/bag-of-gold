@@ -297,7 +297,7 @@ def listar_debentures(request):
 def listar_debentures_validas_na_data(request):
     # Verifica se é uma data válida
     try:
-        data = datetime.datetime.strptime(request.GET['data'], '%d/%m/%Y').date()
+        data = datetime.datetime.strptime(request.GET.get('data') or '', '%d/%m/%Y').date()
     except ValueError:
         return HttpResponse(json.dumps({'resultado': False, 'mensagem': 'Data deve estar no formato DD/MM/AAAA'}), content_type = "application/json") 
     
