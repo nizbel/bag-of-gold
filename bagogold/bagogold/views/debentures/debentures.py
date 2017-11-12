@@ -427,7 +427,6 @@ def sobre(request):
     graf_historico_selic = [[str(calendar.timegm(valor_historico.data.timetuple()) * 1000), float(pow(valor_historico.taxa_diaria, 252) - 1)*100] for valor_historico in historico_selic]
     
     if request.user.is_authenticated():
-        print sum(calcular_valor_debentures_ate_dia(request.user.investidor).values())
         total_atual = Decimal(sum(calcular_valor_debentures_ate_dia(request.user.investidor).values())).quantize(Decimal('0.01'))
     else:
         total_atual = 0

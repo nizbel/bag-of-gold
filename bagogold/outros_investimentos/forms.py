@@ -112,7 +112,6 @@ class EncerramentoForm(LocalizedModelForm):
         self.fields['amortizacao'].label = u'Amortização'
         
     def clean_amortizacao(self):
-        print 'oi2'
         valor = self.cleaned_data['amortizacao']
         if valor < 0:
             raise forms.ValidationError('Valor da amortização deve ser pelo menos igual a zero')
