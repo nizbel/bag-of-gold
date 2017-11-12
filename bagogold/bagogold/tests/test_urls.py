@@ -1,14 +1,31 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.models.lc import HistoricoTaxaDI
 from bagogold.urls import urlpatterns
+from decimal import Decimal
 from django.contrib.auth.models import User
-from django.core.urlresolvers import reverse, RegexURLResolver, RegexURLPattern,\
+from django.core.urlresolvers import reverse, RegexURLResolver, RegexURLPattern, \
     NoReverseMatch
 from django.test import Client, TestCase
+import datetime
+from bagogold.bagogold.models.td import Titulo, HistoricoTitulo
 
 class UrlsTestCase(TestCase):
     
     def setUp(self):
         User.objects.create_user('teste', 'teste@teste.com', 'teste')
+        
+        # Considerar o período entre 01/01/2017 até 10/11/2017
+        data_inicial = datetime.date(2017, 1, 1)
+        data_final = datetime.date(2017, 11, 10)
+        
+        # Preparar histórico de DI
+        for data in [(data_inicial + datetime.timedelta(days=x)) for x in xrange((data_final - data_inicial).days+1)]:
+            HistoricoTaxaDI.objects.create(taxa=Decimal('14.13'), data=data)
+        
+        # Preparar um histórico para Tesouro Direto
+        titulo = Titulo.objects.create(tipo='LTN', data_vencimento=datetime.date(2020, 1, 1), data_inicio=datetime.date(2017, 1, 2))
+        HistoricoTitulo.objects.create(data=datetime.date(2017, 11, 10), preco_venda=Decimal('610.35'), preco_compra=Decimal('613.56'), taxa_compra=Decimal('7.56'), taxa_venda=Decimal('7.78'),
+                                       titulo=titulo)
     
 #     def test_ver_tela(self):
 #         """Testa ver a tela de login"""
