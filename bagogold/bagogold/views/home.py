@@ -212,9 +212,10 @@ def detalhar_acumulados_mensais(request):
     taxas = {}
     taxas['taxa_media_12_meses'] = sum([acumulado for _, _, acumulado in acumulados_mensais]) / (datetime.date.today() - data_atual.date()).days / 24 / 3600
     
-    indice_primeiro_numero_valido = int(('%e' % taxas['taxa_media_12_meses']).partition('-')[2])
-    if str(taxas['taxa_media_12_meses']).index('.') + indice_primeiro_numero_valido + 2 <= len(str(taxas['taxa_media_12_meses'])):
-        taxas['taxa_media_12_meses'] = taxas['taxa_media_12_meses'].quantize(Decimal('0.' + '1'.zfill((indice_primeiro_numero_valido)+2)))
+    if taxas['taxa_media_12_meses'] != 0:
+        indice_primeiro_numero_valido = int(('%e' % taxas['taxa_media_12_meses']).partition('-')[2])
+        if str(taxas['taxa_media_12_meses']).index('.') + indice_primeiro_numero_valido + 2 <= len(str(taxas['taxa_media_12_meses'])):
+            taxas['taxa_media_12_meses'] = taxas['taxa_media_12_meses'].quantize(Decimal('0.' + '1'.zfill((indice_primeiro_numero_valido)+2)))
 
 #     velocidades = list()
 #     for mes in range(10):
@@ -242,8 +243,11 @@ def detalhar_acumulado_mensal(request):
             
     investidor = request.user.investidor
     
-    data_inicio = datetime.datetime.strptime(request.GET.get('data_inicio'), '%d/%m/%Y').date()
-    data_fim = datetime.datetime.strptime(request.GET.get('data_fim'), '%d/%m/%Y').date()
+    try:
+        data_inicio = datetime.datetime.strptime(request.GET.get('data_inicio'), '%d/%m/%Y').date()
+        data_fim = datetime.datetime.strptime(request.GET.get('data_fim'), '%d/%m/%Y').date()
+    except:
+        return HttpResponse(json.dumps({'mensagem': 'Datas inválidas'}), content_type = "application/json")
     
     # Pegar acumulado mensal até o dia anterior da data inicial
     rendimento_anterior = calcular_rendimentos_ate_data(investidor, (data_inicio - datetime.timedelta(days=1)))

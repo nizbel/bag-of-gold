@@ -471,7 +471,7 @@ def painel(request):
         
     operacoes_fiis = list(set(operacoes.values_list('fii', flat=True)))
     
-    proventos = ProventoFII.objects.filter(fii__in=operacoes_fiis).exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).order_by('data_ex')  
+    proventos = ProventoFII.objects.filter(fii__in=operacoes_fiis, tipo_provento='A').exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).order_by('data_ex')  
     for provento in proventos:
         provento.data = provento.data_ex
     
@@ -480,7 +480,6 @@ def painel(request):
                             key=attrgetter('data'))
     
     fiis = {}
-    
     
     for item in lista_conjunta:   
         if item.fii.ticker not in fiis.keys():
@@ -533,7 +532,7 @@ def painel(request):
     dados = {}
     dados['total_papeis'] = total_papeis
     dados['total_valor'] = total_valor
-    dados['valor_diario_mais_recente'] = ValorDiarioFII.objects.latest('data_hora').data_hora
+    dados['valor_diario_mais_recente'] = 'N/A' if not ValorDiarioFII.objects.exists() else ValorDiarioFII.objects.latest('data_hora').data_hora
 
     return TemplateResponse(request, 'fii/painel.html', {'fiis': fiis, 'dados': dados})
 

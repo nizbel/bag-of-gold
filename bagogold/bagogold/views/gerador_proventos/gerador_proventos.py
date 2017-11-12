@@ -516,6 +516,10 @@ def ler_documento_provento(request, id_pendencia):
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 @adiciona_titulo_descricao('Listar documentos da Bovespa', 'Listar documentos da Bovespa baixados pelo sistema')
 def listar_documentos(request):
+    # Verifica se existe empresa
+    if not Empresa.objects.exists():
+        return TemplateResponse(request, 'gerador_proventos/listar_documentos.html', {'documentos': list(), 'empresas': list(), 'empresa_atual': None})
+    
     empresa_id = Empresa.objects.all().order_by('id').values_list('id', flat=True)[0]
     if request.method == 'POST':
         if request.POST.get("busca_empresa"):
@@ -691,7 +695,7 @@ def manual_gerador(request, tipo_documento):
 def puxar_responsabilidade_documento_provento(request):
     investidor = request.user.investidor
     
-    id_pendencia = request.GET['id_pendencia'].replace('.', '')
+    id_pendencia = (request.GET.get('id_pendencia') or '').replace('.', '')
     # Verifica se id_pendencia contém apenas números
     if not id_pendencia.isdigit():
         return HttpResponse(json.dumps({'resultado': False, 'mensagem': u'Formato de pendência inválido', 'responsavel': None, 'usuario_responsavel': False}), content_type = "application/json") 
@@ -741,7 +745,7 @@ def relacionar_proventos_fii_add_pelo_sistema(request, id_provento_a_relacionar,
 def remover_responsabilidade_documento_provento(request):
     investidor = request.user.investidor
     
-    id_pendencia = request.GET['id_pendencia'].replace('.', '')
+    id_pendencia = (request.GET.get('id_pendencia') or '').replace('.', '')
     # Verifica se id_pendencia contém apenas números
     if not id_pendencia.isdigit():
         return HttpResponse(json.dumps({'resultado': False, 'mensagem': u'Formato de pendência inválido %s' % (id_pendencia)}), content_type = "application/json") 
