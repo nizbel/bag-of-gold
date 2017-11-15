@@ -5,6 +5,7 @@ from decimal import Decimal
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models.aggregates import Sum
+from math import floor
 import datetime
  
 class FII (models.Model):
@@ -120,6 +121,12 @@ class EventoAgrupamentoFII (EventoFII):
     proporcao = models.DecimalField(u'Proporção de agrupamento', max_digits=13, decimal_places=12, validators=[MaxValueValidator(Decimal('0.999999999999'))])
     valor_fracao = models.DecimalField(u'Valor para as frações', max_digits=6, decimal_places=2, default=Decimal('0.00'))
     
+    def qtd_apos(self, qtd_inicial):
+        return floor(qtd_inicial * self.proporcao)
+    
 class EventoDesdobramentoFII (EventoFII):
     proporcao = models.DecimalField(u'Proporção de desdobramento', max_digits=16, decimal_places=12, validators=[MinValueValidator(Decimal('1.000000000001'))])
     valor_fracao = models.DecimalField(u'Valor para as frações', max_digits=6, decimal_places=2, default=Decimal('0.00'))
+    
+    def qtd_apos(self, qtd_inicial):
+        return floor(qtd_inicial * self.proporcao)
