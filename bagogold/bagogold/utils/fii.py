@@ -22,9 +22,9 @@ def calcular_poupanca_prov_fii_ate_dia(investidor, dia=datetime.date.today()):
     # Remover valores repetidos
     fiis = list(set(operacoes.values_list('fii', flat=True)))
 
-    proventos = ProventoFII.objects.filter(data_ex__lte=dia, fii__in=fiis).order_by('data_ex')
-    for provento in proventos:
-        provento.data = provento.data_ex
+    proventos = ProventoFII.objects.filter(data_ex__lte=dia, fii__in=fiis).annotate(data=F('data_ex')).order_by('data_ex')
+#     for provento in proventos:
+#         provento.data = provento.data_ex
      
     lista_conjunta = sorted(chain(proventos, operacoes),
                             key=attrgetter('data'))
@@ -125,17 +125,11 @@ def calcular_qtd_fiis_ate_dia_por_ticker(investidor, dia, ticker):
                 Dia final
     Retorno: Quantidade de FIIs para o ticker determinado
     """
-    operacoes = OperacaoFII.objects.filter(fii__ticker=ticker, data__lte=dia, investidor=investidor).exclude(data__isnull=True).order_by('data')
-    qtd_fii = 0
+    qtd_fii = OperacaoFII.objects.filter(fii__ticker=ticker, data__lte=dia, investidor=investidor).exclude(data__isnull=True) \
+        .aggregate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
+                                  When(tipo_operacao='V', then=F('quantidade')*-1),
+                                  output_field=DecimalField())))['total'] or 0         
     
-    for item in operacoes:
-        # Verificar se se trata de compra ou venda
-        if item.tipo_operacao == 'C':
-            qtd_fii += item.quantidade
-            
-        elif item.tipo_operacao == 'V':
-            qtd_fii -= item.quantidade
-        
     return qtd_fii
 
 def calcular_qtd_fiis_ate_dia_por_divisao(dia, divisao_id):

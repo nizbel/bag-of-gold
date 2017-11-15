@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.bagogold.models.fii import FII, OperacaoFII
+from bagogold.bagogold.models.fii import FII, OperacaoFII, \
+    EventoDesdobramentoFII, EventoAgrupamentoFII, EventoIncorporacaoFII
+from bagogold.bagogold.models.investidores import Investidor
+from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia, \
+    calcular_qtd_fiis_ate_dia_por_ticker
 from decimal import Decimal
 from django.contrib.auth.models import User
 from django.test import TestCase
 import datetime
 
-class CalcularAtualizacaoProventoSelicTestCase(TestCase):
+class CalcularQuantidadesFIITestCase(TestCase):
     def setUp(self):
         user = User.objects.create(username='test', password='test')
         
@@ -19,18 +23,47 @@ class CalcularAtualizacaoProventoSelicTestCase(TestCase):
         empresa_4 = Empresa.objects.create(nome='BD', nome_pregao='FII BD')
         fii_4 = FII.objects.create(ticker='BDPO11', empresa=empresa_4)
         
-        # Desdobramento
-        OperacaoFII.objects.create(fii=fii_1, investidor=user.investidor, data=datetime.date(2017, 5, 11), quantidade=43, preco_unitario=Decimal('93.44'), corretagem=0, emolumentos=0)
-        # Agrupamento
-        OperacaoFII.objects.create(fii=fii_2, investidor=user.investidor, data=datetime.date(2017, 5, 11), quantidade=430, preco_unitario=Decimal('93.44'), corretagem=0, emolumentos=0)
-        # Desdobramento + Incorporação
-        OperacaoFII.objects.create(fii=fii_3, investidor=user.investidor, data=datetime.date(2017, 5, 11), quantidade=37, preco_unitario=Decimal('93.44'), corretagem=0, emolumentos=0)
-        OperacaoFII.objects.create(fii=fii_4, investidor=user.investidor, data=datetime.date(2017, 5, 11), quantidade=271, preco_unitario=Decimal('93.44'), corretagem=0, emolumentos=0)
+        for _ in range(10):
+            # Desdobramento
+            OperacaoFII.objects.create(fii=fii_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=43, preco_unitario=Decimal('93.44'), corretagem=0, emolumentos=0)
+            # Agrupamento
+            OperacaoFII.objects.create(fii=fii_2, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=430, preco_unitario=Decimal('93.44'), corretagem=0, emolumentos=0)
+            # Desdobramento + Incorporação
+            OperacaoFII.objects.create(fii=fii_3, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=37, preco_unitario=Decimal('93.44'), corretagem=0, emolumentos=0)
+            OperacaoFII.objects.create(fii=fii_4, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=271, preco_unitario=Decimal('93.44'), corretagem=0, emolumentos=0)
         
+        EventoDesdobramentoFII.objects.create(fii=fii_1, data=datetime.date(2017, 6, 3), proporcao=10)
+        EventoAgrupamentoFII.objects.create(fii=fii_2, data=datetime.date(2017, 6, 3), proporcao=Decimal('0.1'))
+        EventoDesdobramentoFII.objects.create(fii=fii_3, data=datetime.date(2017, 6, 3), proporcao=10)
+        EventoIncorporacaoFII.objects.create(fii=fii_3, data=datetime.date(2017, 6, 3), novo_fii=fii_4)
         
-    def test_verificar_qtd_apos_agrupamento(self):
+    def test_calculo_qtd_fii_por_ticker(self):
+        """Calcula quantidade de FIIs do usuário individualmente"""
+        investidor = Investidor.objects.get(user__username='test')
+        self.assertEqual(calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 5, 12), 'BAPO11'), 43)
+        self.assertEqual(calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 5, 12), 'BBPO11'), 430)
+        self.assertEqual(calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 5, 12), 'BCPO11'), 37)
+        self.assertEqual(calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 5, 12), 'BDPO11'), 271)
         
-    def test_verificar_qtd_apos_desdobramento(self):
+    def test_calculo_qtd_fiis(self):
+       """Calcula quantidade de FIIs do usuário"""
+       self.assertDictEqual(calcular_qtd_fiis_ate_dia(Investidor.objects.get(user__username='test'), datetime.date(2017, 5, 12)), 
+                            {'BAPO11': 43, 'BBPO11': 430, 'BCPO11': 37, 'BDPO11': 271}) 
+    
+    def test_calculo_qtd_apos_agrupamento(self):
+        """Verifica se a função que recebe uma quantidade calcula o resultado correto para agrupamento"""
+        self.assertEqual(EventoAgrupamentoFII.objects.get(fii=FII.objects.get(ticker='BBPO11')).qtd_apos(100), 10)
         
+    def test_calculo_qtd_apos_desdobramento(self):    
+        """Verifica se a função que recebe uma quantidade calcula o resultado correto para agrupamento"""
+        self.assertEqual(EventoDesdobramentoFII.objects.get(fii=FII.objects.get(ticker='BAPO11')).qtd_apos(100), 1000)
+    
+    def test_verificar_qtd_apos_agrupamento_fii_1(self):
+        """Testa se a quantidade de cotas do usuário está correta após o agrupamento do FII 1"""
+        pass
+    def test_verificar_qtd_apos_desdobramento_fii_2(self):
+        """Testa se a quantidade de cotas do usuário está correta após o desdobramento do FII 2"""
+        pass
     def test_verificar_qtd_apos_incorporacao(self):
-        
+        """Testa se a quantidade de cotas do usuário está correta após o desdobramento e incorporação do FII 3"""
+        pass
