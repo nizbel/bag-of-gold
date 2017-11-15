@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa
+from decimal import Decimal
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models.aggregates import Sum
 import datetime
@@ -106,3 +108,16 @@ class ValorDiarioFII (models.Model):
     data_hora = models.DateTimeField(u'Horário')
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)
     
+# Eventos
+class EventoFII (models.Model):
+    fii = models.ForeignKey('FII')
+    data = models.DateField(u'Data')
+    
+class EventoIncorporacaoFII (EventoFII):
+    novo_fii = models.ForeignKey('FII')
+    
+class EventoAgrupamentoFII (EventoFII):
+    proporcao = models.DecimalField(u'Proporção de agrupamento', max_digits=13, decimal_places=12, validators=[MaxValueValidator(Decimal('0.999999999999'))])
+    
+class EventoDesdobramentoFII (EventoFII):
+    proporcao = models.DecimalField(u'Proporção de desdobramento', max_digits=16, decimal_places=12, validators=[MinValueValidator(Decimal('1.000000000001'))])
