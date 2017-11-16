@@ -114,14 +114,12 @@ def calcular_qtd_fiis_ate_dia(investidor, dia):
     """
     if not all([verificar_se_existe_evento_para_fii(fii, dia) for fii in FII.objects.filter(id__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True) \
                                                                                             .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True))]):
-        print 'sem eventos'
         qtd_fii = dict(OperacaoFII.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True).annotate(ticker=F('fii__ticker')).values('ticker') \
             .annotate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
                                 When(tipo_operacao='V', then=F('quantidade')*-1),
                                 output_field=DecimalField()))).values_list('ticker', 'total').exclude(total=0))
     
     else:
-        print 'com eventos'
         qtd_fii = {}
         for fii in FII.objects.filter(id__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True) \
                                                                                             .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True)):
