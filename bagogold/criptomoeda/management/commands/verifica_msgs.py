@@ -48,7 +48,7 @@ class Command(BaseCommand):
 #             bot.send_message(150143379, u'%s' % ('\n'.join(['(%s)%s: *$%s*' % (valor.data_hora.strftime('%H:%M'), valor.criptomoeda, valor.valor.quantize(Decimal('0.01'))) for valor in \
 #                                                           ValorDiarioCriptomoeda.objects.all().order_by('criptomoeda__ticker')])), parse_mode='Markdown')
             
-            valor_atual = dict(ValorDiarioCriptomoeda.objects.filter(criptomoeda__ticker__in=['XZC', 'DCR', 'ZEC', 'XMR'], moeda='BRL') \
+            valor_atual = dict(ValorDiarioCriptomoeda.objects.filter(criptomoeda__ticker__in=['XZC', 'ZEC', 'XMR', 'LSK'], moeda='BRL') \
                 .values_list('criptomoeda__ticker', 'valor'))
 #             for ticker, valor in valor_atual.items():
 #                 if ticker == 'XZC':
