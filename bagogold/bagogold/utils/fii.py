@@ -112,11 +112,22 @@ def calcular_qtd_fiis_ate_dia(investidor, dia):
                 Dia final
     Retorno: Quantidade de FIIs {ticker: qtd}
     """
-    qtd_fii = dict(OperacaoFII.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True).annotate(ticker=F('fii__ticker')).values('ticker') \
-        .annotate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
-                            When(tipo_operacao='V', then=F('quantidade')*-1),
-                            output_field=DecimalField()))).values_list('ticker', 'total').exclude(total=0))
-
+    if not all([verificar_se_existe_evento_para_fii(fii, dia) for fii in FII.objects.filter(id__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True) \
+                                                                                            .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True))]):
+        print 'sem eventos'
+        qtd_fii = dict(OperacaoFII.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True).annotate(ticker=F('fii__ticker')).values('ticker') \
+            .annotate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
+                                When(tipo_operacao='V', then=F('quantidade')*-1),
+                                output_field=DecimalField()))).values_list('ticker', 'total').exclude(total=0))
+    
+    else:
+        print 'com eventos'
+        qtd_fii = {}
+        for fii in FII.objects.filter(id__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True) \
+                                                                                            .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True)):
+            qtd_fii_na_data = calcular_qtd_fiis_ate_dia_por_ticker(investidor, dia, fii.ticker)
+            if qtd_fii_na_data > 0:
+                qtd_fii[fii.ticker] = qtd_fii_na_data
     return qtd_fii
 
 def calcular_qtd_fiis_ate_dia_por_ticker(investidor, dia, ticker, ignorar_incorporacao_id=None):
