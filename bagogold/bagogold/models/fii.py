@@ -11,6 +11,7 @@ import datetime
 class FII (models.Model):
     ticker = models.CharField(u'Ticker do FII', max_length=10, unique=True) 
     empresa = models.ForeignKey('Empresa', blank=True, null=True) 
+    encerrado = models.BooleanField(u'FII encerrado?', default=False)
     
     class Meta:
         ordering = ['ticker']
@@ -114,19 +115,31 @@ class EventoFII (models.Model):
     fii = models.ForeignKey('FII')
     data = models.DateField(u'Data')
     
+    class Meta():
+        abstract = True
+        
 class EventoIncorporacaoFII (EventoFII):
-    novo_fii = models.ForeignKey('FII')
+    novo_fii = models.ForeignKey('FII', related_name='incorporacao')
+    
+    class Meta:
+        unique_together=('fii', 'data')
     
 class EventoAgrupamentoFII (EventoFII):
     proporcao = models.DecimalField(u'Proporção de agrupamento', max_digits=13, decimal_places=12, validators=[MaxValueValidator(Decimal('0.999999999999'))])
     valor_fracao = models.DecimalField(u'Valor para as frações', max_digits=6, decimal_places=2, default=Decimal('0.00'))
     
+    class Meta:
+        unique_together=('fii', 'data')
+        
     def qtd_apos(self, qtd_inicial):
-        return floor(qtd_inicial * self.proporcao)
+        return Decimal(floor(qtd_inicial * self.proporcao))
     
 class EventoDesdobramentoFII (EventoFII):
     proporcao = models.DecimalField(u'Proporção de desdobramento', max_digits=16, decimal_places=12, validators=[MinValueValidator(Decimal('1.000000000001'))])
     valor_fracao = models.DecimalField(u'Valor para as frações', max_digits=6, decimal_places=2, default=Decimal('0.00'))
     
+    class Meta:
+        unique_together=('fii', 'data')
+        
     def qtd_apos(self, qtd_inicial):
-        return floor(qtd_inicial * self.proporcao)
+        return Decimal(floor(qtd_inicial * self.proporcao))
