@@ -52,7 +52,8 @@ class CalcularQuantidadesFIITestCase(TestCase):
        """Calcula quantidade de FIIs do usuário"""
        self.assertDictEqual(calcular_qtd_fiis_ate_dia(Investidor.objects.get(user__username='test'), datetime.date(2017, 5, 12)), 
                             {'BAPO11': 43, 'BBPO11': 430, 'BCPO11': 37, 'BDPO11': 271}) 
-       calcular_qtd_fiis_ate_dia(Investidor.objects.get(user__username='test'), datetime.date(2017, 11, 13))
+       self.assertDictEqual(calcular_qtd_fiis_ate_dia(Investidor.objects.get(user__username='test'), datetime.date(2017, 11, 13)),
+                            {'BAPO11': 430, 'BBPO11': 43, 'BDPO11': 707})
     
     def test_calculo_qtd_apos_agrupamento(self):
         """Verifica se a função que recebe uma quantidade calcula o resultado correto para agrupamento"""
