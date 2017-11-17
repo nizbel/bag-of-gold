@@ -108,15 +108,15 @@ def calcular_qtd_fiis_ate_dia(investidor, dia, ignorar=False):
                 Dia final
     Retorno: Quantidade de FIIs {ticker: qtd}
     """
-    if not CheckpointFII.objects.filter(investidor=investidor).exists():
-        for ano in range(OperacaoFII.objects.filter(investidor=investidor).order_by('data')[0].data.year, datetime.date.today().year):
-            for ticker, quantidade in calcular_qtd_fiis_ate_dia(investidor, datetime.date(ano, 12, 31), True).items():
-                if quantidade > 0:
-                    CheckpointFII.objects.create_or_update(fii=FII.objects.get(ticker=ticker), investidor=investidor, ano=ano, defaults={'quantidade': quantidade, 'preco_medio': 0})
+#      if not CheckpointFII.objects.filter(investidor=investidor).exists():
+   #       for ano in range(OperacaoFII.objects.filter(investidor=investidor).order_by('data')[0].data.year, datetime.date.today().year):
+      #        for ticker, quantidade in calcular_qtd_fiis_ate_dia(investidor, datetime.date(ano, 12, 31), True).items():
+         #         if quantidade > 0:
+            #          CheckpointFII.objects.create_or_update(fii=FII.objects.get(ticker=ticker), investidor=investidor, ano=ano, defaults={'quantidade': quantidade, 'preco_medio': 0})
     if not all([verificar_se_existe_evento_para_fii(fii, dia) for fii in FII.objects.filter(id__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True) \
                                                                                             .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True))]):
         posicao_anterior = dict(CheckpointFII.objects.filter(investidor=investidor, ano=dia.year-1).values_list('fii__ticker', 'quantidade'))
-        novas_operacoes = dict(OperacaoFII.objects.filter(investidor=investidor, data__range=[dia.replace(month=1).replace(day=1),dia]).exclude(data__isnull=True).annotate(ticker=F('fii__ticker')).values('ticker') \
+        novas_operacoes = dict(OperacaoFII.objects.filter(investidor=investidor, data__range=[dia.replace(month=1).replace(day=1), dia]).exclude(data__isnull=True).annotate(ticker=F('fii__ticker')).values('ticker') \
             .annotate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
                                 When(tipo_operacao='V', then=F('quantidade')*-1),
                                 output_field=DecimalField()))).values_list('ticker', 'total').exclude(total=0))
@@ -142,10 +142,11 @@ def calcular_qtd_fiis_ate_dia_por_ticker(investidor, dia, ticker, ignorar_incorp
     Retorno: Quantidade de FIIs para o ticker determinado
     """
     if not verificar_se_existe_evento_para_fii(FII.objects.get(ticker=ticker), dia):
-        qtd_fii = OperacaoFII.objects.filter(fii__ticker=ticker, data__lte=dia, investidor=investidor).exclude(data__isnull=True) \
+        qtd_fii = CheckpointFII.objects.filter(investidor=investidor, ano=dia.year-1, ticker=ticker).quantidade
+        qtd_fii += (OperacaoFII.objects.filter(fii__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia], investidor=investidor).exclude(data__isnull=True) \
             .aggregate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
                                       When(tipo_operacao='V', then=F('quantidade')*-1),
-                                      output_field=DecimalField())))['total'] or 0
+                                      output_field=DecimalField())))['total'] or 0)
     else:
         qtd_fii = 0
         
