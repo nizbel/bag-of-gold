@@ -143,3 +143,18 @@ class EventoDesdobramentoFII (EventoFII):
         
     def qtd_apos(self, qtd_inicial):
         return Decimal(floor(qtd_inicial * self.proporcao))
+    
+class CheckpointFII(models.Model):
+    ano = models.SmallIntegerField(u'Ano')
+    fii = models.ForeignKey('FII')
+    investidor = models.ForeignKey('Investidor')
+    quantidade = models.IntegerField(u'Quantidade no ano', validators=[MinValueValidator(0)])
+    preco_medio = models.DecimalField(u'Preço médio', max_digits=11, decimal_places=4)
+    
+    class Meta:
+        unique_together=('fii', 'ano', 'investidor')
+        
+class CheckpointProventos(models.Model):
+    ano = models.SmallIntegerField(u'Ano')
+    investidor = models.ForeignKey('Investidor')
+    valor = models.DecimalField(u'Valor da poupança de proventos', max_digits=22, decimal_places=16)

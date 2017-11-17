@@ -2,7 +2,7 @@
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII
 from bagogold.bagogold.models.fii import OperacaoFII, ProventoFII, \
     ValorDiarioFII, HistoricoFII, EventoAgrupamentoFII, EventoDesdobramentoFII, \
-    EventoFII, EventoIncorporacaoFII, FII
+    EventoFII, EventoIncorporacaoFII, FII, CheckpointFII
 from decimal import Decimal
 from django.db.models.aggregates import Sum
 from django.db.models.expressions import F, Case, When, Value
@@ -25,8 +25,6 @@ def calcular_poupanca_prov_fii_ate_dia(investidor, dia=datetime.date.today()):
     fiis = list(set(operacoes.values_list('fii', flat=True)))
 
     proventos = ProventoFII.objects.filter(data_ex__lte=dia, fii__in=fiis).annotate(data=F('data_ex')).order_by('data_ex')
-#     for provento in proventos:
-#         provento.data = provento.data_ex
      
     lista_conjunta = sorted(chain(proventos, operacoes),
                             key=attrgetter('data'))
@@ -70,9 +68,7 @@ def calcular_poupanca_prov_fii_ate_dia_por_divisao(dia, divisao):
     
     operacoes = OperacaoFII.objects.filter(id__in=operacoes_divisao).order_by('data')
 
-    proventos = ProventoFII.objects.filter(data_ex__lte=dia).order_by('data_ex')
-    for provento in proventos:
-        provento.data = provento.data_ex
+    proventos = ProventoFII.objects.filter(data_ex__lte=dia).annotate(data=F('data_ex')).order_by('data_ex')
      
     lista_conjunta = sorted(chain(operacoes, proventos),
                             key=attrgetter('data'))
@@ -105,19 +101,27 @@ def calcular_poupanca_prov_fii_ate_dia_por_divisao(dia, divisao):
                     
     return total_proventos.quantize(Decimal('0.01'))
 
-def calcular_qtd_fiis_ate_dia(investidor, dia):
+def calcular_qtd_fiis_ate_dia(investidor, dia, ignorar=False):
     """ 
     Calcula a quantidade de FIIs até dia determinado
     Parâmetros: Investidor
                 Dia final
     Retorno: Quantidade de FIIs {ticker: qtd}
     """
+    if not CheckpointFII.objects.filter(investidor=investidor).exists():
+        for ano in range(OperacaoFII.objects.filter(investidor=investidor).order_by('data')[0].data.year, datetime.date.today().year):
+            for ticker, quantidade in calcular_qtd_fiis_ate_dia(investidor, datetime.date(ano, 12, 31), True).items():
+                if quantidade > 0:
+                    CheckpointFII.objects.create_or_update(fii=FII.objects.get(ticker=ticker), investidor=investidor, ano=ano, defaults={'quantidade': quantidade, 'preco_medio': 0})
     if not all([verificar_se_existe_evento_para_fii(fii, dia) for fii in FII.objects.filter(id__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True) \
                                                                                             .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True))]):
-        qtd_fii = dict(OperacaoFII.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True).annotate(ticker=F('fii__ticker')).values('ticker') \
+        posicao_anterior = dict(CheckpointFII.objects.filter(investidor=investidor, ano=dia.year-1).values_list('fii__ticker', 'quantidade'))
+        novas_operacoes = dict(OperacaoFII.objects.filter(investidor=investidor, data__range=[dia.replace(month=1).replace(day=1),dia]).exclude(data__isnull=True).annotate(ticker=F('fii__ticker')).values('ticker') \
             .annotate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
                                 When(tipo_operacao='V', then=F('quantidade')*-1),
                                 output_field=DecimalField()))).values_list('ticker', 'total').exclude(total=0))
+        
+        qtd_fii = { k: posicao_anterior.get(k, 0) + novas_operacoes.get(k, 0) for k in set(posicao_anterior) | set(novas_operacoes) }
     
     else:
         qtd_fii = {}
