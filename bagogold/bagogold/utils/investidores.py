@@ -167,6 +167,7 @@ def buscar_totais_atuais_investimentos(investidor):
         valor_atual = HistoricoValorDebenture.objects.filter(debenture__id=debenture_id).order_by('-data')[0].valor_total()
         totais_atuais['Debêntures'] += (debentures[debenture_id] * valor_atual)
         
+    inicio = datetime.datetime.now()
     # Fundos de investimento imobiliário
     fiis = calcular_qtd_fiis_ate_dia(investidor, data_atual)
     for ticker in fiis.keys():
@@ -176,6 +177,7 @@ def buscar_totais_atuais_investimentos(investidor):
             fii_valor = HistoricoFII.objects.filter(fii__ticker=ticker).order_by('-data')[0].preco_unitario
         totais_atuais['FII'] += (fiis[ticker] * fii_valor)
     totais_atuais['FII'] += calcular_poupanca_prov_fii_ate_dia(investidor, data_atual)
+    print datetime.datetime.now() - inicio
         
     # Fundos de investimento
     fundo_investimento_valores = calcular_valor_fundos_investimento_ate_dia(investidor, data_atual)
