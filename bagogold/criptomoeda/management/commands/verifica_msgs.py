@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from bagogold.criptomoeda.models import ValorDiarioCriptomoeda, Bot
-from bagogold.criptomoeda.utils import buscar_valor_criptomoedas_atual
 from decimal import Decimal
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -48,7 +47,7 @@ class Command(BaseCommand):
 #             bot.send_message(150143379, u'%s' % ('\n'.join(['(%s)%s: *$%s*' % (valor.data_hora.strftime('%H:%M'), valor.criptomoeda, valor.valor.quantize(Decimal('0.01'))) for valor in \
 #                                                           ValorDiarioCriptomoeda.objects.all().order_by('criptomoeda__ticker')])), parse_mode='Markdown')
             
-            valor_atual = dict(ValorDiarioCriptomoeda.objects.filter(criptomoeda__ticker__in=['XZC', 'ZEC', 'XMR', 'LSK'], moeda='BRL') \
+            valor_atual = dict(ValorDiarioCriptomoeda.objects.filter(criptomoeda__ticker__in=['XZC', 'ZEC', 'XMR', 'LSK'], moeda='USD') \
                 .values_list('criptomoeda__ticker', 'valor'))
 #             for ticker, valor in valor_atual.items():
 #                 if ticker == 'XZC':
@@ -65,7 +64,7 @@ class Command(BaseCommand):
 #                     valor_atual[ticker] = (valor * Decimal('34.43321466') * Decimal('0.97')).quantize(Decimal('0.01'))
 
             # Enviar mensagem com valor atual dos investimentos
-            bot.send_message(150143379, u'%s\nTotal: *R$ %s*' % ('\n'.join([u'%s: *R$ %s*' % (ticker, valor) for ticker, valor in valor_atual.items()]),
+            bot.send_message(150143379, u'%s\nTotal: *R$ %s*' % ('\n'.join([u'%s: *R$ %s*' % (ticker, valor.quantize(Decimal('0.01'))) for ticker, valor in valor_atual.items()]),
                                                                  sum(valor_atual.values())), parse_mode='Markdown')
             
             tempo_decorrido = datetime.datetime.now() - inicio_msg
