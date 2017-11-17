@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII, Divisao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.fii import FII, OperacaoFII, \
     EventoDesdobramentoFII, EventoAgrupamentoFII, EventoIncorporacaoFII
 from bagogold.bagogold.models.investidores import Investidor
 from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia, \
-    calcular_qtd_fiis_ate_dia_por_ticker
+    calcular_qtd_fiis_ate_dia_por_ticker, calcular_qtd_fiis_ate_dia_por_divisao
 from decimal import Decimal
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -34,6 +35,8 @@ class CalcularQuantidadesFIITestCase(TestCase):
         OperacaoFII.objects.create(fii=fii_4, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 11, 11), quantidade=40, preco_unitario=Decimal('93.44'), corretagem=0, emolumentos=0)
         OperacaoFII.objects.create(fii=fii_4, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 11, 12), quantidade=50, preco_unitario=Decimal('93.44'), corretagem=0, emolumentos=0)
         
+        for operacao in OperacaoFII.objects.all():
+            DivisaoOperacaoFII.objects.create(divisao=Divisao.objects.get(investidor=user.investidor), operacao=operacao, quantidade=operacao.quantidade)
         
         EventoDesdobramentoFII.objects.create(fii=fii_1, data=datetime.date(2017, 6, 3), proporcao=10)
         EventoAgrupamentoFII.objects.create(fii=fii_2, data=datetime.date(2017, 6, 3), proporcao=Decimal('0.1'))
@@ -76,3 +79,14 @@ class CalcularQuantidadesFIITestCase(TestCase):
         self.assertEqual(calcular_qtd_fiis_ate_dia_por_ticker(Investidor.objects.get(user__username='test'), datetime.date(2017, 6, 4), 'BCPO11'), 0)
         self.assertEqual(calcular_qtd_fiis_ate_dia_por_ticker(Investidor.objects.get(user__username='test'), datetime.date(2017, 6, 4), 'BDPO11'), 617)
 
+    def test_verificar_qtd_divisao_antes_eventos(self):
+        """Testa se a quantidade de cotas por divisão está correta antes dos eventos"""
+        investidor = Investidor.objects.get(user__username='test')
+        self.assertDictEqual(calcular_qtd_fiis_ate_dia_por_divisao(datetime.date(2017, 5, 12), Divisao.objects.get(investidor=investidor).id), 
+                             {'BAPO11': 43, 'BBPO11': 430, 'BCPO11': 37, 'BDPO11': 271})
+        
+    def test_verificar_qtd_divisao_apos_eventos(self):
+        """Testa se a quantidade de cotas por divisão está correta após os eventos"""
+        investidor = Investidor.objects.get(user__username='test')
+        self.assertDictEqual(calcular_qtd_fiis_ate_dia_por_divisao(datetime.date(2017, 11, 13), Divisao.objects.get(investidor=investidor).id), 
+                             {'BAPO11': 430, 'BBPO11': 43, 'BDPO11': 707})
