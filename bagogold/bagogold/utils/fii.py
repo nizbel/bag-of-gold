@@ -113,8 +113,9 @@ def calcular_qtd_fiis_ate_dia(investidor, dia, ignorar=False):
       #        for ticker, quantidade in calcular_qtd_fiis_ate_dia(investidor, datetime.date(ano, 12, 31), True).items():
          #         if quantidade > 0:
             #          CheckpointFII.objects.create_or_update(fii=FII.objects.get(ticker=ticker), investidor=investidor, ano=ano, defaults={'quantidade': quantidade, 'preco_medio': 0})
-    if not all([verificar_se_existe_evento_para_fii(fii, dia) for fii in FII.objects.filter(id__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True) \
-                                                                                            .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True))]):
+    if not all([verificar_se_existe_evento_para_fii_periodo(fii, dia.replace(month=1).replace(day=1), dia) for fii in \
+                FII.objects.filter(id__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True) \
+                                   .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True))]):
         posicao_anterior = dict(CheckpointFII.objects.filter(investidor=investidor, ano=dia.year-1).values_list('fii__ticker', 'quantidade'))
         novas_operacoes = dict(OperacaoFII.objects.filter(investidor=investidor, data__range=[dia.replace(month=1).replace(day=1), dia]).exclude(data__isnull=True).annotate(ticker=F('fii__ticker')).values('ticker') \
             .annotate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
@@ -141,27 +142,32 @@ def calcular_qtd_fiis_ate_dia_por_ticker(investidor, dia, ticker, ignorar_incorp
                 Id da incorporação a ser ignorada
     Retorno: Quantidade de FIIs para o ticker determinado
     """
-    if not verificar_se_existe_evento_para_fii(FII.objects.get(ticker=ticker), dia):
-        qtd_fii = CheckpointFII.objects.filter(investidor=investidor, ano=dia.year-1, ticker=ticker).quantidade
+    if not verificar_se_existe_evento_para_fii_periodo(FII.objects.get(ticker=ticker), dia.replace(month=1).replace(day=1), dia):
+        if CheckpointFII.objects.filter(investidor=investidor, ano=dia.year-1, fii__ticker=ticker).exists():
+            qtd_fii = CheckpointFII.objects.get(investidor=investidor, ano=dia.year-1, fii__ticker=ticker).quantidade
+        else:
+            qtd_fii = 0
         qtd_fii += (OperacaoFII.objects.filter(fii__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia], investidor=investidor).exclude(data__isnull=True) \
             .aggregate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
                                       When(tipo_operacao='V', then=F('quantidade')*-1),
                                       output_field=DecimalField())))['total'] or 0)
     else:
-        qtd_fii = 0
-        
-        operacoes = OperacaoFII.objects.filter(fii__ticker=ticker, data__lte=dia, investidor=investidor).exclude(data__isnull=True) \
+        if CheckpointFII.objects.filter(investidor=investidor, ano=dia.year-1, fii__ticker=ticker).exists():
+            qtd_fii = CheckpointFII.objects.get(investidor=investidor, ano=dia.year-1, fii__ticker=ticker).quantidade
+        else:
+            qtd_fii = 0
+        operacoes = OperacaoFII.objects.filter(fii__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia], investidor=investidor).exclude(data__isnull=True) \
             .annotate(qtd_final=(Case(When(tipo_operacao='C', then=F('quantidade')),
                                       When(tipo_operacao='V', then=F('quantidade')*-1),
                                       output_field=DecimalField()))).annotate(tipo=Value(u'Operação', output_field=CharField()))
                                       
                                       
         # Verificar agrupamentos e desdobramentos
-        agrupamentos = EventoAgrupamentoFII.objects.filter(fii__ticker=ticker, data__lte=dia).annotate(tipo=Value(u'Agrupamento', output_field=CharField()))
+        agrupamentos = EventoAgrupamentoFII.objects.filter(fii__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia]).annotate(tipo=Value(u'Agrupamento', output_field=CharField()))
 
-        desdobramentos = EventoDesdobramentoFII.objects.filter(fii__ticker=ticker, data__lte=dia).annotate(tipo=Value(u'Desdobramento', output_field=CharField()))
+        desdobramentos = EventoDesdobramentoFII.objects.filter(fii__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia]).annotate(tipo=Value(u'Desdobramento', output_field=CharField()))
         
-        incorporacoes = EventoIncorporacaoFII.objects.filter(Q(fii__ticker=ticker, data__lte=dia) | Q(novo_fii__ticker=ticker, data__lte=dia)).exclude(id=ignorar_incorporacao_id) \
+        incorporacoes = EventoIncorporacaoFII.objects.filter(Q(fii__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia]) | Q(novo_fii__ticker=ticker, data__lte=dia)).exclude(id=ignorar_incorporacao_id) \
             .annotate(tipo=Value(u'Incorporação', output_field=CharField()))
         
         lista_conjunta = sorted(chain(agrupamentos, desdobramentos, incorporacoes, operacoes), key=attrgetter('data'))
@@ -325,6 +331,24 @@ def calcular_valor_fii_ate_dia(investidor, dia=datetime.date.today()):
     return qtd_fii
 
 def verificar_se_existe_evento_para_fii(fii, data_limite=datetime.date.today()):
+    """
+    Verifica se existe evento para fii até data (data inclusive)
+    Parâmetros: FII
+                Data
+    Retorno: True caso exista, senão False
+    """
     # Verificar se há evento ou se outro FII foi incorporado a este
     return any([classe.objects.filter(fii=fii, data__lte=data_limite).exists() for classe in EventoFII.__subclasses__()]) \
         or EventoIncorporacaoFII.objects.filter(novo_fii=fii, data__lte=data_limite).exists()
+        
+def verificar_se_existe_evento_para_fii_periodo(fii, data_inicio, data_fim):
+    """
+    Verifica se existe evento para fii no período (datas inclusive)
+    Parâmetros: FII
+                Data de início
+                Data de fim
+    Retorno: True caso exista, senão False
+    """
+    # Verificar se há evento ou se outro FII foi incorporado a este
+    return any([classe.objects.filter(fii=fii, data__range=[data_inicio, data_fim]).exists() for classe in EventoFII.__subclasses__()]) \
+        or EventoIncorporacaoFII.objects.filter(novo_fii=fii, data__range=[data_inicio, data_fim]).exists()
