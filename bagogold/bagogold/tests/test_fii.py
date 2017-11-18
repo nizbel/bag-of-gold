@@ -252,7 +252,7 @@ class PerformanceSignalCheckpointFIITestCase(TestCase):
         inicio = datetime.datetime.now()
         EventoDesdobramentoFII.objects.create(fii=FII.objects.get(ticker='BDPO11'), data=datetime.date(2016, 11, 3), proporcao=Decimal('9.933'))
         fim = datetime.datetime.now()
-        print '\nAdicionar evento:', fim - inicio
+#         print '\nAdicionar evento:', fim - inicio
         
     def test_editar_evento(self):
         """Verifica a performance de se editar um evento"""
@@ -261,14 +261,14 @@ class PerformanceSignalCheckpointFIITestCase(TestCase):
         evento.proporcao = 15
         evento.save()
         fim = datetime.datetime.now()
-        print '\nEditar evento:', fim - inicio
+#         print '\nEditar evento:', fim - inicio
 
     def test_apagar_evento(self):
         """Verifica a performance de se apagar um evento"""
         inicio = datetime.datetime.now()
         EventoIncorporacaoFII.objects.filter(fii=FII.objects.get(ticker='BCPO11')).delete()
         fim = datetime.datetime.now()
-        print '\nExcluir evento:', fim - inicio
+#         print '\nExcluir evento:', fim - inicio
         
     def test_adicionar_operacao(self):
         """Verificar a performance de se adicionar uma operação"""
@@ -278,7 +278,7 @@ class PerformanceSignalCheckpointFIITestCase(TestCase):
         OperacaoFII.objects.create(fii=FII.objects.get(ticker='BBPO11'), investidor=investidor, tipo_operacao='C', data=datetime.date(2016, 11, 1), quantidade=10, preco_unitario=Decimal('100'), 
                                    corretagem=0, emolumentos=0)
         fim = datetime.datetime.now()
-        print '\nAdicionar operação:', fim - inicio
+#         print '\nAdicionar operação:', fim - inicio
         
     def test_editar_operacao(self):
         """Verificar a performance de se editar uma operação"""
@@ -289,7 +289,7 @@ class PerformanceSignalCheckpointFIITestCase(TestCase):
         operacao.quantidade = 40
         operacao.save()
         fim = datetime.datetime.now()
-        print '\nEditar operação:', fim - inicio
+#         print '\nEditar operação:', fim - inicio
         
     def test_apagar_operacao(self):
         """Verificar a performance de se apagar uma operação"""
@@ -298,4 +298,4 @@ class PerformanceSignalCheckpointFIITestCase(TestCase):
         inicio = datetime.datetime.now()
         OperacaoFII.objects.filter(fii=FII.objects.get(ticker='BBPO11'), investidor=investidor, tipo_operacao='C', data=datetime.date(2016, 3, 11)).delete()
         fim = datetime.datetime.now()
-        print '\nExcluir operação:', fim - inicio
+#         print '\nExcluir operação:', fim - inicio
