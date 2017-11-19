@@ -3,11 +3,11 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII, Divisao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.fii import FII, OperacaoFII, \
     EventoDesdobramentoFII, EventoAgrupamentoFII, EventoIncorporacaoFII,\
-    CheckpointFII
+    CheckpointFII, ProventoFII, CheckpointProventosFII
 from bagogold.bagogold.models.investidores import Investidor
 from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia, \
     calcular_qtd_fiis_ate_dia_por_ticker, calcular_qtd_fiis_ate_dia_por_divisao, \
-    verificar_se_existe_evento_para_fii
+    verificar_se_existe_evento_para_fii, calcular_poupanca_prov_fii_ate_dia
 from decimal import Decimal
 from django.contrib.auth.models import User
 from django.db.models.aggregates import Sum
@@ -50,6 +50,21 @@ class CalcularQuantidadesFIITestCase(TestCase):
         EventoAgrupamentoFII.objects.create(fii=fii_2, data=datetime.date(2017, 6, 3), proporcao=Decimal('0.1'))
         EventoDesdobramentoFII.objects.create(fii=fii_3, data=datetime.date(2017, 6, 3), proporcao=Decimal('9.3674360842'))
         EventoIncorporacaoFII.objects.create(fii=fii_3, data=datetime.date(2017, 6, 3), novo_fii=fii_4)
+        
+        # Proventos
+        ProventoFII.objects.create(fii=fii_1, data_ex=datetime.date(2016, 12, 31), data_pagamento=datetime.date(2017, 1, 14), valor_unitario=Decimal('0.98'),
+                                   tipo_provento='R', oficial_bovespa=True)
+        ProventoFII.objects.create(fii=fii_1, data_ex=datetime.date(2017, 1, 31), data_pagamento=datetime.date(2017, 2, 14), valor_unitario=Decimal('9.1'),
+                                   tipo_provento='A', oficial_bovespa=True)
+        ProventoFII.objects.create(fii=fii_2, data_ex=datetime.date(2017, 1, 31), data_pagamento=datetime.date(2017, 2, 14), valor_unitario=Decimal('9.8'),
+                                   tipo_provento='R', oficial_bovespa=True)
+        
+        ProventoFII.objects.create(fii=fii_1, data_ex=datetime.date(2017, 7, 31), data_pagamento=datetime.date(2017, 8, 14), valor_unitario=Decimal('0.98'),
+                                   tipo_provento='R', oficial_bovespa=True)
+        ProventoFII.objects.create(fii=fii_1, data_ex=datetime.date(2017, 8, 31), data_pagamento=datetime.date(2017, 9, 14), valor_unitario=Decimal('9.1'),
+                                   tipo_provento='A', oficial_bovespa=True)
+        ProventoFII.objects.create(fii=fii_2, data_ex=datetime.date(2017, 8, 31), data_pagamento=datetime.date(2017, 9, 14), valor_unitario=Decimal('9.8'),
+                                   tipo_provento='R', oficial_bovespa=True)
         
     def test_calculo_qtd_fii_por_ticker(self):
         """Calcula quantidade de FIIs do usuário individualmente"""
@@ -106,6 +121,20 @@ class CalcularQuantidadesFIITestCase(TestCase):
         for operacao in OperacaoFII.objects.filter(investidor=investidor):
             operacao.delete()
         self.assertFalse(CheckpointFII.objects.filter(investidor=investidor).exists())
+        
+    def test_verificar_poupanca_proventos(self):
+        """Testa se poupança de proventos está com valores corretos"""
+        investidor = Investidor.objects.get(user__username='test')
+        self.assertEqual(calcular_poupanca_prov_fii_ate_dia(investidor, datetime.date(2017, 3, 1)), 0)
+        self.assertEqual(calcular_poupanca_prov_fii_ate_dia(investidor, datetime.date(2017, 10, 1)), Decimal('4755.80'))
+        self.assertEqual(CheckpointProventosFII.objects.get(investidor=investidor, ano=2017).valor, Decimal('4755.80'))
+        
+        # Testar situação alterando uma operação
+        operacao = OperacaoFII.objects.get(fii__ticker='BAPO11')
+        operacao.quantidade = 45
+        operacao.save()
+        self.assertEqual(calcular_poupanca_prov_fii_ate_dia(investidor, datetime.date(2017, 10, 1)), Decimal('4957.40'))
+        self.assertEqual(CheckpointProventosFII.objects.get(investidor=investidor, ano=2017).valor, Decimal('4957.40'))
                              
 class PerformanceCheckpointFIITestCase(TestCase):
     def setUp(self):
@@ -216,7 +245,6 @@ class PerformanceCheckpointFIITestCase(TestCase):
         
 class PerformanceSignalCheckpointFIITestCase(TestCase):
     def setUp(self):
-        inicio = datetime.datetime.now()
         for num in range(5):
             User.objects.create(username='test%s' % (num), password='test%s' % (num))
         
