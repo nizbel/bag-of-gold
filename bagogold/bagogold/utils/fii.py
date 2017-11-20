@@ -145,15 +145,19 @@ def calcular_qtd_fiis_ate_dia(investidor, dia=datetime.date.today()):
     
     else:
         qtd_fii = {}
-        for fii in FII.objects.filter(Q(id__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia) \
-                                      .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True)) \
-                                      | Q(id__in=EventoIncorporacaoFII.objects.filter(fii__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia) \
-                                      .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True)) \
-                                          .order_by('novo_fii__id').distinct('novo_fii__id').values_list('novo_fii', flat=True))):
-#             print fii
-            qtd_fii_na_data = calcular_qtd_fiis_ate_dia_por_ticker(investidor, dia, fii.ticker)
+#         for fii in FII.objects.filter(Q(id__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia) \
+#                                       .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True)) \
+#                                       | Q(id__in=EventoIncorporacaoFII.objects.filter(fii__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia) \
+#                                       .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True)) \
+#                                           .order_by('novo_fii__id').distinct('novo_fii__id').values_list('novo_fii', flat=True))):
+        fiis_operacoes = list(OperacaoFII.objects.filter(investidor=investidor, data__lte=dia).order_by('fii__id').distinct('fii__id').values_list('fii__ticker', flat=True))
+        fiis_incorporados = list(EventoIncorporacaoFII.objects.filter(fii__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia) \
+                                    .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True)) \
+                                        .order_by('novo_fii__id').distinct('novo_fii__id').values_list('novo_fii__ticker', flat=True))
+        for ticker in list(set(fiis_operacoes + fiis_incorporados)):
+            qtd_fii_na_data = calcular_qtd_fiis_ate_dia_por_ticker(investidor, dia, ticker)
             if qtd_fii_na_data > 0:
-                qtd_fii[fii.ticker] = qtd_fii_na_data
+                qtd_fii[ticker] = qtd_fii_na_data
     return qtd_fii
 
 def calcular_qtd_fiis_ate_dia_por_ticker(investidor, dia, ticker, ignorar_incorporacao_id=None):
