@@ -658,9 +658,9 @@ def puxar_responsabilidade_documento_provento(request):
         return HttpResponse(json.dumps({'resultado': False, 'mensagem': u'Você já possui 20 pendências reservadas', 'responsavel': None, 'usuario_responsavel': False}), content_type = "application/json") 
     
     # Testa se pendência enviada existe
-    try:
+    if PendenciaDocumentoProvento.objects.filter(id=id_pendencia).exists():
         pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
-    except PendenciaDocumentoProvento.DoesNotExist:
+    else:
         return HttpResponse(json.dumps({'resultado': False, 'mensagem': u'A pendência enviada não existe', 'responsavel': None, 'usuario_responsavel': False}), content_type = "application/json") 
     
     retorno, mensagem = alocar_pendencia_para_investidor(pendencia, investidor)
@@ -679,6 +679,33 @@ def puxar_responsabilidade_documento_provento(request):
     
     return HttpResponse(json.dumps({'resultado': retorno, 'mensagem': mensagem, 'responsavel': responsavel, 'usuario_responsavel': usuario_responsavel, \
                                     'qtd_pendencias_reservadas': qtd_pendencias_reservadas}), content_type = "application/json") 
+
+@login_required
+@user_passes_test(is_superuser)
+def reiniciar_documento(request, id_documento):
+    documento = get_or_404(DocumentoBovespa.objects.get(id=id_documento))
+    
+    try:
+        with transaction.atomic():
+            InvestidorResponsavelValidacao.objects.filter(documento=documento).delete()
+            InvestidorResponsavelLeitura.objects.filter(documento=documento).delete()
+            InvestidorResponsavelPendencia.objects.filter(pendencia__documento=documento).delete()
+            
+            # Reverter proventos criados
+            if documento.tipo == 'A':
+                for documento_provento in DocumentoProventoAcao.objects.filter(documento=documento):
+                    if documento_provento.versao == DocumentoProventoAcao.objects.filter(provento=documento.provento).order_by('-versao')[0].versao:
+                        reverter_provento_para_versao_anterior(documento.provento)
+                    documento_provento.descricao.delete()
+                    documento_provento.delete()
+                            
+            elif documento.tipo == 'F':
+            
+            # Baixar documento se tiver sido apagado
+            
+            # Recriar pendência de leitura
+            
+            
 
 @login_required
 @user_passes_test(is_superuser)
