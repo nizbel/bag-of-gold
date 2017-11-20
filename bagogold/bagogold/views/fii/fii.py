@@ -7,7 +7,8 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII, Divisao
 from bagogold.bagogold.models.fii import OperacaoFII, ProventoFII, HistoricoFII, \
     FII, UsoProventosOperacaoFII, ValorDiarioFII
 from bagogold.bagogold.utils.fii import calcular_valor_fii_ate_dia, \
-    calcular_poupanca_prov_fii_ate_dia
+    calcular_poupanca_prov_fii_ate_dia, calcular_qtd_fiis_ate_dia,\
+    calcular_preco_medio_fiis_ate_dia
 from bagogold.bagogold.utils.investidores import is_superuser
 from decimal import Decimal, ROUND_FLOOR
 from django.contrib import messages
@@ -459,28 +460,29 @@ def painel(request):
     class Object(object):
         pass
     
+    inicio = datetime.datetime.now()
     if request.user.is_authenticated():
         investidor = request.user.investidor
     else:
         return TemplateResponse(request, 'fii/painel.html', {'fiis': list(), 'dados': {}})
         
-    
+    ######## ORIGINAL
     operacoes = OperacaoFII.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
     for operacao in operacoes:
         operacao.valor_unitario = operacao.preco_unitario
-        
+         
     operacoes_fiis = list(set(operacoes.values_list('fii', flat=True)))
-    
+     
     proventos = ProventoFII.objects.filter(fii__in=operacoes_fiis, tipo_provento='A').exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).order_by('data_ex')  
     for provento in proventos:
         provento.data = provento.data_ex
-    
+     
     # Proventos devem ser computados primeiro na data EX
     lista_conjunta = sorted(chain(proventos, operacoes),
                             key=attrgetter('data'))
-    
+     
     fiis = {}
-    
+     
     for item in lista_conjunta:   
         if item.fii.ticker not in fiis.keys():
             fiis[item.fii.ticker] = Object() 
@@ -493,25 +495,25 @@ def painel(request):
                 item.emolumentos + item.corretagem)
                 fiis[item.fii.ticker].total_gasto += float(item.total)
                 fiis[item.fii.ticker].quantidade += item.quantidade
-                
+                 
             elif item.tipo_operacao == 'V':
                 item.total = (item.quantidade * item.preco_unitario - \
                 item.emolumentos - item.corretagem)
                 fiis[item.fii.ticker].total_gasto += float(item.total)
                 fiis[item.fii.ticker].quantidade -= item.quantidade
-                
+                 
         elif isinstance(item, ProventoFII):
             item.total = math.floor(fiis[item.fii.ticker].quantidade * item.valor_unitario * 100) / 100
             fiis[item.fii.ticker].total_gasto += float(item.total)
-        
+         
     # Pegar totais de FIIs  
     total_papeis = 0      
     total_valor = 0
-    
+     
     for fii in fiis.keys():
         if fiis[fii].quantidade == 0:
             del fiis[fii]
-    
+     
     # Preencher totais   
     for fii in fiis.keys():
         total_papeis += fiis[fii].quantidade
@@ -522,18 +524,55 @@ def painel(request):
         fiis[fii].valor_total = fiis[fii].valor * fiis[fii].quantidade
         fiis[fii].preco_medio = -fiis[fii].total_gasto / fiis[fii].quantidade
         total_valor += fiis[fii].valor_total
-    
+     
     # Calcular percentagens
     for fii in fiis.keys():
         fiis[fii].quantidade_percentual = float(fiis[fii].quantidade) / total_papeis * 100
         fiis[fii].valor_total_percentual = fiis[fii].valor_total / total_valor * 100
-    
+     
     # Popular dados
     dados = {}
     dados['total_papeis'] = total_papeis
     dados['total_valor'] = total_valor
     dados['valor_diario_mais_recente'] = 'N/A' if not ValorDiarioFII.objects.exists() else ValorDiarioFII.objects.latest('data_hora').data_hora
 
+    ############ TESTE
+#     fiis = {}
+#     
+#     qtd_fiis = calcular_qtd_fiis_ate_dia(investidor)
+#     preco_medio_fiis = calcular_preco_medio_fiis_ate_dia(investidor)
+#     
+#     for ticker, qtd in qtd_fiis.items():
+#         novo_fii = Object()
+#         novo_fii.quantidade = qtd
+#         novo_fii.preco_medio = preco_medio_fiis[ticker]
+#         novo_fii.total_investido = novo_fii.preco_medio * novo_fii.quantidade
+#         fiis[ticker] = novo_fii
+#         
+#     total_papeis = 0      
+#     total_valor = 0
+#     # Preencher totais
+#     for fii in fiis.keys():
+#         total_papeis += fiis[fii].quantidade
+#         if ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).exists():
+#             fiis[fii].valor = ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).order_by('-data_hora')[0].preco_unitario
+#         else:
+#             fiis[fii].valor = HistoricoFII.objects.filter(fii__ticker=fii).order_by('-data')[0].preco_unitario
+#         fiis[fii].valor_total = fiis[fii].valor * fiis[fii].quantidade
+#         total_valor += fiis[fii].valor_total
+#         
+#     # Calcular percentagens
+#     for fii in fiis.keys():
+#         fiis[fii].quantidade_percentual = fiis[fii].quantidade / total_papeis * 100
+#         fiis[fii].valor_total_percentual = fiis[fii].valor_total / total_valor * 100
+#     
+#     # Popular dados
+#     dados = {}
+#     dados['total_papeis'] = total_papeis
+#     dados['total_valor'] = total_valor
+#     dados['valor_diario_mais_recente'] = 'N/A' if not ValorDiarioFII.objects.exists() else ValorDiarioFII.objects.latest('data_hora').data_hora
+    
+    print datetime.datetime.now() - inicio
     return TemplateResponse(request, 'fii/painel.html', {'fiis': fiis, 'dados': dados})
 
 @adiciona_titulo_descricao('Sobre FII', 'Detalha o que são Fundos de Investimento Imobiliário')
