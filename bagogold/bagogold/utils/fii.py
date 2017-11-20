@@ -124,14 +124,14 @@ def calcular_poupanca_prov_fii_ate_dia_por_divisao(dia, divisao):
                     
     return total_proventos.quantize(Decimal('0.01'))
 
-def calcular_qtd_fiis_ate_dia(investidor, dia, ignorar=False):
+def calcular_qtd_fiis_ate_dia(investidor, dia=datetime.date.today()):
     """ 
     Calcula a quantidade de FIIs até dia determinado
     Parâmetros: Investidor
                 Dia final
     Retorno: Quantidade de FIIs {ticker: qtd}
     """
-    if not all([verificar_se_existe_evento_para_fii_periodo(fii, dia.replace(month=1).replace(day=1), dia) for fii in \
+    if not any([verificar_se_existe_evento_para_fii_periodo(fii, dia.replace(month=1).replace(day=1), dia) for fii in \
                 FII.objects.filter(id__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia) \
                                    .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True))]):
         posicao_anterior = dict(CheckpointFII.objects.filter(investidor=investidor, ano=dia.year-1, quantidade__gt=0).values_list('fii__ticker', 'quantidade'))
@@ -145,8 +145,12 @@ def calcular_qtd_fiis_ate_dia(investidor, dia, ignorar=False):
     
     else:
         qtd_fii = {}
-        for fii in FII.objects.filter(id__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia) \
-                                                                                            .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True)):
+        for fii in FII.objects.filter(Q(id__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia) \
+                                      .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True)) \
+                                      | Q(id__in=EventoIncorporacaoFII.objects.filter(fii__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia) \
+                                      .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True)) \
+                                          .order_by('novo_fii__id').distinct('novo_fii__id').values_list('novo_fii', flat=True))):
+#             print fii
             qtd_fii_na_data = calcular_qtd_fiis_ate_dia_por_ticker(investidor, dia, fii.ticker)
             if qtd_fii_na_data > 0:
                 qtd_fii[fii.ticker] = qtd_fii_na_data
@@ -213,7 +217,7 @@ def calcular_qtd_fiis_ate_dia_por_divisao(dia, divisao_id):
                 Id da divisão
     Retorno: Quantidade de FIIs {ticker: qtd}
     """
-    if not all([verificar_se_existe_evento_para_fii(fii, dia) for fii in FII.objects.filter(id__in=DivisaoOperacaoFII.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id) \
+    if not any([verificar_se_existe_evento_para_fii(fii, dia) for fii in FII.objects.filter(id__in=DivisaoOperacaoFII.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id) \
                                                                                             .order_by('operacao__fii__id').distinct('operacao__fii__id').values_list('operacao__fii', flat=True))]):
         qtd_fii = dict(DivisaoOperacaoFII.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).annotate(ticker=F('operacao__fii__ticker')) \
             .values('ticker').annotate(qtd=Sum(Case(When(operacao__tipo_operacao='C', then=F('quantidade')),
@@ -288,7 +292,7 @@ def calcular_preco_medio_fiis_ate_dia(investidor, dia=datetime.date.today()):
     class Object(object):
         pass
     
-    if not all([verificar_se_existe_evento_para_fii_periodo(fii, dia.replace(month=1).replace(day=1), dia) for fii in \
+    if not any([verificar_se_existe_evento_para_fii_periodo(fii, dia.replace(month=1).replace(day=1), dia) for fii in \
                 FII.objects.filter(id__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia) \
                                    .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True))]):
         posicao_anterior = CheckpointFII.objects.filter(investidor=investidor, ano=dia.year-1, quantidade__gt=0)
@@ -339,8 +343,14 @@ def calcular_preco_medio_fiis_ate_dia(investidor, dia=datetime.date.today()):
             
     else:
         preco_medio_fii = {}
-        for fii in FII.objects.filter(id__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True) \
-                                                                                            .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True)):
+#         for fii in FII.objects.filter(id__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True) \
+#                                                                                             .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True)):
+        for fii in FII.objects.filter(Q(id__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia) \
+                                      .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True)) \
+                                      | Q(id__in=EventoIncorporacaoFII.objects.filter(fii__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia) \
+                                      .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True)) \
+                                          .order_by('novo_fii__id').distinct('novo_fii__id').values_list('novo_fii', flat=True))):
+#             print fii
             preco_medio_na_data = calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, dia, fii.ticker)
             if preco_medio_na_data > 0:
                 preco_medio_fii[fii.ticker] = preco_medio_na_data

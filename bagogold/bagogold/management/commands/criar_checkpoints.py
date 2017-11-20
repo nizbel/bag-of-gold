@@ -11,11 +11,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         CheckpointProventosFII.objects.all().delete()
         CheckpointFII.objects.all().delete()
-        for investidor in Investidor.objects.filter(id__in=OperacaoFII.objects.all().order_by('investidor').distinct('investidor')):
-            primeira_operacao = OperacaoFII.objects.filter(investidor=investidor)[0]
-            post_save.send(OperacaoFII, instance=primeira_operacao, created=False)
-            print investidor
-            for checkpoint in CheckpointFII.objects.filter(investidor=investidor).order_by('ano'):
-                print checkpoint.ano, checkpoint.quantidade, checkpoint.preco_medio
-            for checkpoint in CheckpointProventosFII.objects.filter(investidor=investidor).order_by('ano'):
-                print 'Provento', checkpoint.ano, checkpoint.valor
+        for operacao in OperacaoFII.objects.all():
+            post_save.send(OperacaoFII, instance=operacao, created=False)
+        for checkpoint in CheckpointFII.objects.all().order_by('investidor', 'ano'):
+            print checkpoint.investidor, checkpoint.ano, checkpoint.quantidade, checkpoint.preco_medio
+        for checkpoint in CheckpointProventosFII.objects.all().order_by('investidor', 'ano'):
+            print 'Provento', checkpoint.investidor, checkpoint.ano, checkpoint.valor
