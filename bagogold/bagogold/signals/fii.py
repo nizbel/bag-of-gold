@@ -35,7 +35,7 @@ def preparar_checkpointproventofii(sender, instance, created, **kwargs):
             """
             if ano != datetime.date.today().year:
                 for prox_ano in range(ano + 1, datetime.date.today().year + 1):
-                    CheckpointProventosFII.objects.update_or_create(investidor=investidor, fii=instance.fii, ano=prox_ano, 
+                    CheckpointProventosFII.objects.update_or_create(investidor=investidor, ano=prox_ano, 
                                                    defaults={'valor': calcular_poupanca_prov_fii_ate_dia(investidor, datetime.date(prox_ano, 12, 31))})
                     # Se amortização verificar checkpoint de quantidade
                     if instance.tipo_provento == 'A':

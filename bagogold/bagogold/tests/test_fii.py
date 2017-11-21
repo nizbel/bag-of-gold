@@ -2,14 +2,13 @@
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII, Divisao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.fii import FII, OperacaoFII, \
-    EventoDesdobramentoFII, EventoAgrupamentoFII, EventoIncorporacaoFII,\
+    EventoDesdobramentoFII, EventoAgrupamentoFII, EventoIncorporacaoFII, \
     CheckpointFII, ProventoFII, CheckpointProventosFII
 from bagogold.bagogold.models.investidores import Investidor
 from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia, \
     calcular_qtd_fiis_ate_dia_por_ticker, calcular_qtd_fiis_ate_dia_por_divisao, \
-    verificar_se_existe_evento_para_fii, calcular_poupanca_prov_fii_ate_dia,\
-    calcular_preco_medio_fiis_ate_dia_por_ticker,\
-    calcular_preco_medio_fiis_ate_dia
+    verificar_se_existe_evento_para_fii, calcular_poupanca_prov_fii_ate_dia, \
+    calcular_preco_medio_fiis_ate_dia_por_ticker, calcular_preco_medio_fiis_ate_dia
 from decimal import Decimal
 from django.contrib.auth.models import User
 from django.db.models.aggregates import Sum
@@ -67,6 +66,7 @@ class CalcularQuantidadesFIITestCase(TestCase):
                                    tipo_provento='A', oficial_bovespa=True)
         ProventoFII.objects.create(fii=fii_2, data_ex=datetime.date(2017, 8, 31), data_pagamento=datetime.date(2017, 9, 14), valor_unitario=Decimal('9.8'),
                                    tipo_provento='R', oficial_bovespa=True)
+        
         
     def test_calculo_qtd_fii_por_ticker(self):
         """Calcula quantidade de FIIs do usuário individualmente"""
@@ -178,7 +178,7 @@ class CalcularQuantidadesFIITestCase(TestCase):
         for fii in FII.objects.all():
             self.assertAlmostEqual(CheckpointFII.objects.get(investidor=investidor, ano=2017, fii=fii).preco_medio, 
                                    calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 12, 31), fii.ticker), places=3)
-        
+            
 class PerformanceCheckpointFIITestCase(TestCase):
     def setUp(self):
         user = User.objects.create(username='test', password='test')
