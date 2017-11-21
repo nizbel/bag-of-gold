@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.lc import HistoricoTaxaDI
-from bagogold.bagogold.utils.misc import calcular_iof_e_ir_longo_prazo
 from bagogold.outros_investimentos.models import Amortizacao, Rendimento
 from decimal import Decimal
 from django.db import models
@@ -75,7 +74,7 @@ class Divisao (models.Model):
     def saldo_cdb_rdb(self, data=datetime.date.today()):
         from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di, \
             calcular_valor_atualizado_com_taxa_prefixado
-        from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo
+        from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo, calcular_iof_e_ir_longo_prazo
         from bagogold.cdb_rdb.models import CDB_RDB
         """
         Calcula o saldo de operações de CDB/RDB de uma divisão (dinheiro livre)
