@@ -193,6 +193,11 @@ def preparar_checkpointfii_evento(sender, instance, created, **kwargs):
                 CheckpointFII.objects.update_or_create(investidor=investidor, fii=instance.fii, ano=prox_ano, 
                                                defaults={'quantidade': calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(prox_ano, 12, 31), instance.fii.ticker), 
                                                          'preco_medio': calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), instance.fii.ticker)})
+                
+                # Alterar checkpoint de poupança de proventos
+                CheckpointProventosFII.objects.update_or_create(investidor=investidor, ano=prox_ano, 
+                                                   defaults={'valor': calcular_poupanca_prov_fii_ate_dia(investidor, datetime.date(prox_ano, 12, 31))})
+            
             # Se incorporação
             if isinstance(instance, EventoIncorporacaoFII):
                 for prox_ano in range(ano + 1, datetime.date.today().year + 1):
@@ -200,9 +205,6 @@ def preparar_checkpointfii_evento(sender, instance, created, **kwargs):
                                                defaults={'quantidade': calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(prox_ano, 12, 31), instance.novo_fii.ticker), 
                                                          'preco_medio': calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), instance.novo_fii.ticker)})
             
-            # Alterar checkpoint de poupança de proventos
-            CheckpointProventosFII.objects.update_or_create(investidor=investidor, ano=prox_ano, 
-                                               defaults={'valor': calcular_poupanca_prov_fii_ate_dia(investidor, datetime.date(prox_ano, 12, 31))})
 
     
 @receiver(post_delete, sender=EventoAgrupamentoFII, dispatch_uid="evento_agrupamento_apagado")
@@ -238,6 +240,11 @@ def preparar_checkpointfii_evento_delete(sender, instance, **kwargs):
                 CheckpointFII.objects.update_or_create(investidor=investidor, fii=instance.fii, ano=prox_ano, 
                                                defaults={'quantidade': calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(prox_ano, 12, 31), instance.fii.ticker), 
                                                          'preco_medio': calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), instance.fii.ticker)})  
+                
+                # Alterar checkpoint de poupança de proventos
+                CheckpointProventosFII.objects.update_or_create(investidor=investidor, ano=prox_ano, 
+                                                   defaults={'valor': calcular_poupanca_prov_fii_ate_dia(investidor, datetime.date(prox_ano, 12, 31))})
+            
             # Se incorporação
             if isinstance(instance, EventoIncorporacaoFII):
                 for prox_ano in range(ano + 1, datetime.date.today().year + 1):
@@ -245,9 +252,6 @@ def preparar_checkpointfii_evento_delete(sender, instance, **kwargs):
                                                            defaults={'quantidade': calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(prox_ano, 12, 31), instance.novo_fii.ticker), 
                                                                      'preco_medio': calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), instance.novo_fii.ticker)})  
                     
-            # Alterar checkpoint de poupança de proventos
-            CheckpointProventosFII.objects.update_or_create(investidor=investidor, ano=prox_ano, 
-                                               defaults={'valor': calcular_poupanca_prov_fii_ate_dia(investidor, datetime.date(prox_ano, 12, 31))})
 
         """
         Apagar checkpoints iniciais zerados
@@ -266,7 +270,7 @@ def preparar_checkpointfii_evento_delete(sender, instance, **kwargs):
                     break 
         
         # Apagar checkpoints de proventos zerados
-        for checkpoint in CheckpointProventosFII.objects.filter(investidor=instance.investidor).order_by('ano'):
+        for checkpoint in CheckpointProventosFII.objects.filter(investidor=investidor).order_by('ano'):
             if checkpoint.valor == 0:
                 checkpoint.delete()
             else:
