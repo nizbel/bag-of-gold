@@ -483,8 +483,8 @@ def painel(request):
     # Preencher totais
     for fii in fiis.keys():
         total_papeis += fiis[fii].quantidade
-        if ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).exists():
-            fiis[fii].valor = ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).order_by('-data_hora')[0].preco_unitario
+        if ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__date=datetime.date.today()).exists():
+            fiis[fii].valor = ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__date=datetime.date.today()).order_by('-data_hora')[0].preco_unitario
         else:
             fiis[fii].valor = HistoricoFII.objects.filter(fii__ticker=fii).order_by('-data')[0].preco_unitario
         fiis[fii].valor_total = fiis[fii].valor * fiis[fii].quantidade

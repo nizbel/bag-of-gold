@@ -32,6 +32,8 @@ class CalcularQuantidadesFIITestCase(TestCase):
         fii_3 = FII.objects.create(ticker='BCPO11', empresa=empresa_3)
         empresa_4 = Empresa.objects.create(nome='BD', nome_pregao='FII BD')
         fii_4 = FII.objects.create(ticker='BDPO11', empresa=empresa_4)
+        empresa_5 = Empresa.objects.create(nome='BE', nome_pregao='FII BE')
+        fii_5 = FII.objects.create(ticker='BEPO11', empresa=empresa_5)
         
         # Desdobramento
         OperacaoFII.objects.create(fii=fii_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=43, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
@@ -47,10 +49,17 @@ class CalcularQuantidadesFIITestCase(TestCase):
         for operacao in OperacaoFII.objects.all():
             DivisaoOperacaoFII.objects.create(divisao=Divisao.objects.get(investidor=user.investidor), operacao=operacao, quantidade=operacao.quantidade)
         
+        # Operação extra para testes de divisão
+        operacao_divisao = OperacaoFII.objects.create(fii=fii_5, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=50, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
+        Divisao.objects.create(investidor=user.investidor, nome=u'Divisão de teste')
+        DivisaoOperacaoFII.objects.create(divisao=Divisao.objects.get(nome=u'Divisão de teste'), operacao=operacao_divisao, quantidade=operacao_divisao.quantidade)
+        
         EventoDesdobramentoFII.objects.create(fii=fii_1, data=datetime.date(2017, 6, 3), proporcao=10)
         EventoAgrupamentoFII.objects.create(fii=fii_2, data=datetime.date(2017, 6, 3), proporcao=Decimal('0.1'))
         EventoDesdobramentoFII.objects.create(fii=fii_3, data=datetime.date(2017, 6, 3), proporcao=Decimal('9.3674360842'))
         EventoIncorporacaoFII.objects.create(fii=fii_3, data=datetime.date(2017, 6, 3), novo_fii=fii_4)
+        
+        EventoDesdobramentoFII.objects.create(fii=fii_5, data=datetime.date(2017, 6, 3), proporcao=10)
         
         # Proventos
         ProventoFII.objects.create(fii=fii_1, data_ex=datetime.date(2016, 12, 31), data_pagamento=datetime.date(2017, 1, 14), valor_unitario=Decimal('0.98'),
@@ -75,13 +84,14 @@ class CalcularQuantidadesFIITestCase(TestCase):
         self.assertEqual(calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 5, 12), 'BBPO11'), 430)
         self.assertEqual(calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 5, 12), 'BCPO11'), 37)
         self.assertEqual(calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 5, 12), 'BDPO11'), 271)
+        self.assertEqual(calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 5, 12), 'BEPO11'), 50)
         
     def test_calculo_qtd_fiis(self):
        """Calcula quantidade de FIIs do usuário"""
        self.assertDictEqual(calcular_qtd_fiis_ate_dia(Investidor.objects.get(user__username='test'), datetime.date(2017, 5, 12)), 
-                            {'BAPO11': 43, 'BBPO11': 430, 'BCPO11': 37, 'BDPO11': 271}) 
+                            {'BAPO11': 43, 'BBPO11': 430, 'BCPO11': 37, 'BDPO11': 271, 'BEPO11': 50}) 
        self.assertDictEqual(calcular_qtd_fiis_ate_dia(Investidor.objects.get(user__username='test'), datetime.date(2017, 11, 13)),
-                            {'BAPO11': 430, 'BBPO11': 43, 'BDPO11': 707})
+                            {'BAPO11': 430, 'BBPO11': 43, 'BDPO11': 707, 'BEPO11': 500})
     
     def test_calculo_qtd_apos_agrupamento(self):
         """Verifica se a função que recebe uma quantidade calcula o resultado correto para agrupamento"""
@@ -107,14 +117,18 @@ class CalcularQuantidadesFIITestCase(TestCase):
     def test_verificar_qtd_divisao_antes_eventos(self):
         """Testa se a quantidade de cotas por divisão está correta antes dos eventos"""
         investidor = Investidor.objects.get(user__username='test')
-        self.assertDictEqual(calcular_qtd_fiis_ate_dia_por_divisao(datetime.date(2017, 5, 12), Divisao.objects.get(investidor=investidor).id), 
+        self.assertDictEqual(calcular_qtd_fiis_ate_dia_por_divisao(datetime.date(2017, 5, 12), Divisao.objects.get(nome='Geral').id), 
                              {'BAPO11': 43, 'BBPO11': 430, 'BCPO11': 37, 'BDPO11': 271})
+        self.assertDictEqual(calcular_qtd_fiis_ate_dia_por_divisao(datetime.date(2017, 5, 12), Divisao.objects.get(nome=u'Divisão de teste').id), 
+                             {'BEPO11': 50})
         
     def test_verificar_qtd_divisao_apos_eventos(self):
         """Testa se a quantidade de cotas por divisão está correta após os eventos"""
         investidor = Investidor.objects.get(user__username='test')
-        self.assertDictEqual(calcular_qtd_fiis_ate_dia_por_divisao(datetime.date(2017, 11, 13), Divisao.objects.get(investidor=investidor).id), 
+        self.assertDictEqual(calcular_qtd_fiis_ate_dia_por_divisao(datetime.date(2017, 11, 13), Divisao.objects.get(nome='Geral').id), 
                              {'BAPO11': 430, 'BBPO11': 43, 'BDPO11': 707})
+        self.assertDictEqual(calcular_qtd_fiis_ate_dia_por_divisao(datetime.date(2017, 11, 13), Divisao.objects.get(nome=u'Divisão de teste').id), 
+                             {'BEPO11': 500})
         
     def test_verificar_checkpoints_apagados(self):
         """Testa se checkpoints são apagados caso quantidades de FII do usuário se torne zero"""
