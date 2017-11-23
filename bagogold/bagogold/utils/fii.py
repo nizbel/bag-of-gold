@@ -223,10 +223,15 @@ def calcular_qtd_fiis_ate_dia_por_divisao(dia, divisao_id):
     """
     if not any([verificar_se_existe_evento_para_fii(fii, dia) for fii in FII.objects.filter(id__in=DivisaoOperacaoFII.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id) \
                                                                                             .order_by('operacao__fii__id').distinct('operacao__fii__id').values_list('operacao__fii', flat=True))]):
-        qtd_fii = dict(DivisaoOperacaoFII.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).annotate(ticker=F('operacao__fii__ticker')) \
+        
+        posicao_anterior = dict(CheckpointDivisaoFII.objects.filter(divisao__id=divisao_id, ano=dia.year-1, quantidade__gt=0).values_list('fii__ticker', 'quantidade'))
+        novas_operacoes = dict(DivisaoOperacaoFII.objects.filter(operacao__data__range=[dia.replace(month=1).replace(day=1), dia], divisao__id=divisao_id).annotate(ticker=F('operacao__fii__ticker')) \
             .values('ticker').annotate(qtd=Sum(Case(When(operacao__tipo_operacao='C', then=F('quantidade')),
                                 When(operacao__tipo_operacao='V', then=F('quantidade')*-1),
                                 output_field=DecimalField()))).values_list('ticker', 'qtd').exclude(qtd=0))
+        qtd_fii = { k: posicao_anterior.get(k, 0) + novas_operacoes.get(k, 0) for k in set(posicao_anterior) | set(novas_operacoes) \
+                   if posicao_anterior.get(k, 0) + novas_operacoes.get(k, 0) != 0}
+
     else:
         qtd_fii = {}
         for fii in FII.objects.filter(id__in=DivisaoOperacaoFII.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id) \
