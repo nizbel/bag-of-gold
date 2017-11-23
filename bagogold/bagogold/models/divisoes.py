@@ -2,6 +2,7 @@
 from bagogold.bagogold.models.lc import HistoricoTaxaDI
 from bagogold.outros_investimentos.models import Amortizacao, Rendimento
 from decimal import Decimal
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models.aggregates import Sum, Count
 from django.db.models.expressions import Case, When, F
@@ -563,6 +564,25 @@ class DivisaoOperacaoFII (models.Model):
     """
     def percentual_divisao(self):
         return Decimal(self.quantidade) / self.operacao.quantidade
+    
+class CheckpointDivisaoFII (models.Model):
+    ano = models.SmallIntegerField(u'Ano')
+    fii = models.ForeignKey('FII')
+    divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
+    quantidade = models.IntegerField(u'Quantidade no ano', validators=[MinValueValidator(0)])
+    preco_medio = models.DecimalField(u'Preço médio', max_digits=11, decimal_places=4)
+    
+    class Meta:
+        unique_together=('fii', 'ano', 'divisao')
+    
+class CheckpointDivisaoProventosFII (models.Model):
+    ano = models.SmallIntegerField(u'Ano')
+    divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
+    valor = models.DecimalField(u'Valor da poupança de proventos', max_digits=22, decimal_places=16)
+        
+    class Meta:
+        unique_together=('ano', 'divisao')
+    
     
 class TransferenciaEntreDivisoes(models.Model):
     TIPO_INVESTIMENTO_BUY_AND_HOLD = 'B'
