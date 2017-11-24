@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII, \
+    CheckpointDivisaoFII
 from bagogold.bagogold.models.fii import OperacaoFII, ProventoFII, \
     ValorDiarioFII, HistoricoFII, EventoAgrupamentoFII, EventoDesdobramentoFII, \
     EventoFII, EventoIncorporacaoFII, FII, CheckpointFII, CheckpointProventosFII
