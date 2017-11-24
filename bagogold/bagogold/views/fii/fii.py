@@ -139,7 +139,14 @@ def calcular_resultado_corretagem(request):
     
     return TemplateResponse(request, 'fii/calcular_resultado_corretagem.html', {'ranking': ranking, 'form_calcular': form_calcular})
     
+@adiciona_titulo_descricao('Detalhar provento', 'Detalhamento de proventos em FIIs')
+def detalhar_provento(request, provento_id):
+    provento = ProventoFII.objects.get(id=provento_id)
     
+    documentos = ProventoFIIDocumento.objects.filter(provento=provento)
+    
+    return TemplateResponse(request, 'fii/detalhar_provento.html', {'provento': provento, 'documentos': documentos})
+
 @login_required
 @adiciona_titulo_descricao('Editar operação em FII', 'Alterar valores de uma operação de compra/venda em Fundos de Investimento Imobiliário')
 def editar_operacao_fii(request, operacao_id):
@@ -452,6 +459,27 @@ def inserir_provento_fii(request):
         form = ProventoFIIForm()
             
     return TemplateResponse(request, 'fii/inserir_provento_fii.html', {'form': form})
+
+@adiciona_titulo_descricao('Lista de proventos', 'Lista os proventos de FIIs cadastrados')
+def listar_proventos(request):
+    proventos = ProventoFII.objects.all()
+    
+    # Montar filtros
+    filtros = {}
+    
+    # Buscar últimas atualizações
+    ultimas_validacoes = InvestidorValidacaoDocumento.objects.filter(documento__tipo='F').order_by('-data_validacao')[:10] \
+        .annotate(provento=F('documento__proventofiidocumento__provento')).values('provento', 'data_validacao')
+    ultimas_atualizacoes = ProventoFII.objects.filter(id__in=[validacao['provento'] for validacao in ultimas_validacoes])
+    for atualizacao in ultimas_atualizacoes:
+        atualizacao.data_insercao = next(validacao['data_validacao'].date() for validacao in ultimas_validacoes if validacao['provento'] == atualizacao.id)
+    
+    if request.user.is_authenticated():
+        proximos_proventos = buscar_proventos_a_receber(request.user.investidor, 'F')
+    else:
+        proximos_proventos = list()
+    
+    return TemplateResponse(request, 'fii/listar_proventos.html', {'proventos': proventos, 'ultimas_atualizacoes': ultimas_atualizacoes, 'proximos_proventos': proximos_proventos})
 
 @adiciona_titulo_descricao('Painel de FII', 'Posição atual do investidor em Fundos de Investimento Imobiliário')
 def painel(request):
