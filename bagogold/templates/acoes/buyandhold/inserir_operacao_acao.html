@@ -103,11 +103,11 @@
 				</div>
 				{% if not varias_divisoes %}
 				<div class="row">
-					<div class="form-group col-md-6 {% if form_operacao_acao.qtd_utilizada.errors %} has-error {% endif %}">
-						<label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_acao.qtd_utilizada.label}}: </label>
+					<div class="form-group col-md-6 {% if form_uso_proventos.qtd_utilizada.errors %} has-error {% endif %}">
+						<label class="control-label col-md-4" style="text-align: left;"> {{form_uso_proventos.qtd_utilizada.label}}: </label>
 						<div class="col-md-8">
-							<input id="id_qtd_utilizada" type="text" value="{{form_operacao_acao.qtd_utilizada.value}}" name="qtd_utilizada" class="form-control">
-							{% if form_operacao_acao.qtd_utilizada.errors %} <span class="help-block"> {{ form_operacao_acao.qtd_utilizada.errors.as_text }} </span> {% endif %}
+							<input id="id_qtd_utilizada" type="text" value="{{form_uso_proventos.qtd_utilizada.value}}" name="qtd_utilizada" class="form-control">
+							{% if form_uso_proventos.qtd_utilizada.errors %} <span class="help-block"> {{ form_uso_proventos.qtd_utilizada.errors.as_text }} </span> {% endif %}
 						</div>
 					</div>
 				</div>
