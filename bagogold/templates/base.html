@@ -277,6 +277,9 @@
                                                     <a href="{% url "fii:inserir_operacao_fii" %}" class="nav-link  "> Inserir operação </a>
                                                 </li>
                                                 {% endif %}
+                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_proventos_fii' %}active{% endif %}">
+                                                    <a href="{% url "fii:listar_proventos_fii" %}" class="nav-link  "> Listar proventos </a>
+                                                </li>
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_fii' %}active{% endif %}">
                                                     <a href="{% url "fii:painel_fii" %}" class="nav-link  "> Painel </a>
                                                 </li>
