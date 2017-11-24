@@ -251,26 +251,33 @@ def calcular_qtd_fiis_ate_dia_por_ticker_por_divisao(dia, divisao_id, ticker, ig
                 Id da incorporação a ser ignorada
     Retorno: Quantidade de cotas para o ticker determinado
     """
-    if not verificar_se_existe_evento_para_fii(FII.objects.get(ticker=ticker), dia):
-        qtd_fii = DivisaoOperacaoFII.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id, operacao__fii__ticker=ticker) \
+    if not verificar_se_existe_evento_para_fii_periodo(FII.objects.get(ticker=ticker), dia.replace(month=1).replace(day=1), dia):
+        if CheckpointDivisaoFII.objects.filter(divisao__id=divisao_id, ano=dia.year-1, fii__ticker=ticker, quantidade__gt=0).exists():
+            qtd_fii = CheckpointFII.objects.get(divisao__id=divisao_id, ano=dia.year-1, fii__ticker=ticker, quantidade__gt=0).quantidade
+        else:
+            qtd_fii = 0
+        qtd_fii += DivisaoOperacaoFII.objects.filter(operacao__data__range=[dia.replace(month=1).replace(day=1), dia], divisao__id=divisao_id, operacao__fii__ticker=ticker) \
                        .aggregate(qtd=Sum(Case(When(operacao__tipo_operacao='C', then=F('quantidade')),
                                 When(operacao__tipo_operacao='V', then=F('quantidade')*-1),
                                 output_field=DecimalField())))['qtd'] or 0
     else:
-        qtd_fii = 0
+        if CheckpointDivisaoFII.objects.filter(divisao__id=divisao_id, ano=dia.year-1, fii__ticker=ticker, quantidade__gt=0).exists():
+            qtd_fii = CheckpointFII.objects.get(divisao__id=divisao_id, ano=dia.year-1, fii__ticker=ticker, quantidade__gt=0).quantidade
+        else:
+            qtd_fii = 0
         
-        operacoes = DivisaoOperacaoFII.objects.filter(operacao__fii__ticker=ticker, operacao__data__lte=dia, divisao__id=divisao_id) \
+        operacoes = DivisaoOperacaoFII.objects.filter(operacao__fii__ticker=ticker, operacao__data__range=[dia.replace(month=1).replace(day=1), dia], divisao__id=divisao_id) \
             .annotate(qtd_final=(Case(When(operacao__tipo_operacao='C', then=F('quantidade')),
                                       When(operacao__tipo_operacao='V', then=F('quantidade')*-1),
                                       output_field=DecimalField()))).annotate(data=F('operacao__data')).annotate(tipo=Value(u'Operação', output_field=CharField()))
                                       
                                       
         # Verificar agrupamentos e desdobramentos
-        agrupamentos = EventoAgrupamentoFII.objects.filter(fii__ticker=ticker, data__lte=dia).annotate(tipo=Value(u'Agrupamento', output_field=CharField()))
+        agrupamentos = EventoAgrupamentoFII.objects.filter(fii__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia]).annotate(tipo=Value(u'Agrupamento', output_field=CharField()))
 
-        desdobramentos = EventoDesdobramentoFII.objects.filter(fii__ticker=ticker, data__lte=dia).annotate(tipo=Value(u'Desdobramento', output_field=CharField()))
+        desdobramentos = EventoDesdobramentoFII.objects.filter(fii__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia]).annotate(tipo=Value(u'Desdobramento', output_field=CharField()))
         
-        incorporacoes = EventoIncorporacaoFII.objects.filter(Q(fii__ticker=ticker, data__lte=dia) | Q(novo_fii__ticker=ticker, data__lte=dia)).exclude(id=ignorar_incorporacao_id) \
+        incorporacoes = EventoIncorporacaoFII.objects.filter(Q(fii__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia]) | Q(novo_fii__ticker=ticker, data__lte=dia)).exclude(id=ignorar_incorporacao_id) \
             .annotate(tipo=Value(u'Incorporação', output_field=CharField()))
         
         lista_conjunta = sorted(chain(agrupamentos, desdobramentos, incorporacoes, operacoes), key=attrgetter('data'))
