@@ -195,7 +195,7 @@ class Divisao (models.Model):
                 saldo += (operacao_divisao.quantidade * operacao.preco_unitario - (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
         
         # Proventos
-        saldo += calcular_poupanca_prov_fii_ate_dia_por_divisao(data, self)    
+        saldo += calcular_poupanca_prov_fii_ate_dia_por_divisao(self, data)    
         
         # Transferências
         saldo += -(TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_FII, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
