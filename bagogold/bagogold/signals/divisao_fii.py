@@ -1,13 +1,9 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoFII, \
     CheckpointDivisaoProventosFII, CheckpointDivisaoFII
-from bagogold.bagogold.models.fii import ProventoFII, OperacaoFII, \
+from bagogold.bagogold.models.fii import ProventoFII, \
     EventoAgrupamentoFII, EventoDesdobramentoFII, EventoIncorporacaoFII
-from bagogold.bagogold.models.investidores import Investidor
-from bagogold.bagogold.utils.fii import calcular_poupanca_prov_fii_ate_dia, \
-    calcular_qtd_fiis_ate_dia_por_ticker, \
-    calcular_preco_medio_fiis_ate_dia_por_ticker, \
-    calcular_qtd_fiis_ate_dia_por_ticker_por_divisao, \
+from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia_por_ticker_por_divisao, \
     calcular_poupanca_prov_fii_ate_dia_por_divisao
 from django.db.models.signals import post_save, post_delete
 from django.dispatch.dispatcher import receiver
@@ -27,7 +23,7 @@ def preparar_checkpointproventofii(sender, instance, created, **kwargs):
         for divisao in Divisao.objects.filter(id__in=DivisaoOperacaoFII.objects.filter(operacao__fii=instance.fii, operacao__data__lt=instance.data_ex) \
                                                     .order_by('divisao').distinct('divisao').values_list('divisao', flat=True)):
             CheckpointDivisaoProventosFII.objects.update_or_create(divisao=divisao, ano=ano, 
-                                               defaults={'valor': calcular_poupanca_prov_fii_ate_dia_por_divisao(datetime.date(ano, 12, 31), divisao)})
+                                               defaults={'valor': calcular_poupanca_prov_fii_ate_dia_por_divisao(divisao, datetime.date(ano, 12, 31))})
             # Se amortização verificar checkpoint de quantidade
             if instance.tipo_provento == 'A':
                 CheckpointDivisaoFII.objects.update_or_create(divisao=divisao, fii=instance.fii, ano=ano, 
@@ -40,7 +36,7 @@ def preparar_checkpointproventofii(sender, instance, created, **kwargs):
             if ano != datetime.date.today().year:
                 for prox_ano in range(ano + 1, datetime.date.today().year + 1):
                     CheckpointDivisaoProventosFII.objects.update_or_create(divisao=divisao, ano=prox_ano, 
-                                                   defaults={'valor': calcular_poupanca_prov_fii_ate_dia_por_divisao(datetime.date(prox_ano, 12, 31), divisao)})
+                                                   defaults={'valor': calcular_poupanca_prov_fii_ate_dia_por_divisao(divisao, datetime.date(prox_ano, 12, 31))})
                     # Se amortização verificar checkpoint de quantidade
                     if instance.tipo_provento == 'A':
                         CheckpointDivisaoFII.objects.update_or_create(divisao=divisao, fii=instance.fii, ano=prox_ano, 
@@ -60,7 +56,7 @@ def preparar_checkpointproventofii_delete(sender, instance, **kwargs):
         for divisao in Divisao.objects.filter(id__in=DivisaoOperacaoFII.objects.filter(operacao__fii=instance.fii, operacao__data__lt=instance.data) \
                                               .order_by('divisao').distinct('divisao').values_list('divisao', flat=True)):
             CheckpointDivisaoProventosFII.objects.update_or_create(divisao=divisao, ano=ano, 
-                                                   defaults={'valor': calcular_poupanca_prov_fii_ate_dia_por_divisao(datetime.date(ano, 12, 31), divisao)})
+                                                   defaults={'valor': calcular_poupanca_prov_fii_ate_dia_por_divisao(divisao, datetime.date(ano, 12, 31))})
             # Se amortização verificar checkpoint de quantidade
             if instance.tipo_provento == 'A':
                 CheckpointDivisaoFII.objects.update_or_create(divisao=divisao, fii=instance.fii, ano=ano, 
@@ -74,7 +70,7 @@ def preparar_checkpointproventofii_delete(sender, instance, **kwargs):
             if ano != datetime.date.today().year:
                 for prox_ano in range(ano + 1, datetime.date.today().year + 1):
                     CheckpointDivisaoProventosFII.objects.update_or_create(divisao=divisao, ano=prox_ano, 
-                                                   defaults={'valor': calcular_poupanca_prov_fii_ate_dia_por_divisao(datetime.date(prox_ano, 12, 31), divisao)})
+                                                   defaults={'valor': calcular_poupanca_prov_fii_ate_dia_por_divisao(divisao, datetime.date(prox_ano, 12, 31))})
                     # Se amortização verificar checkpoint de quantidade
                     if instance.tipo_provento == 'A':
                         CheckpointDivisaoFII.objects.update_or_create(divisao=divisao, fii=instance.fii, ano=prox_ano, 
@@ -106,7 +102,7 @@ def preparar_checkpointfii(sender, instance, created, **kwargs):
                                                      'preco_medio': 0})
     # Alterar checkpoint de poupança de proventos
     CheckpointDivisaoProventosFII.objects.update_or_create(divisao=instance.divisao, ano=ano, 
-                                               defaults={'valor': calcular_poupanca_prov_fii_ate_dia_por_divisao(datetime.date(ano, 12, 31), instance.divisao)})
+                                               defaults={'valor': calcular_poupanca_prov_fii_ate_dia_por_divisao(instance.divisao, datetime.date(ano, 12, 31))})
 
     """
     Verificar se existem anos posteriores
@@ -118,7 +114,7 @@ def preparar_checkpointfii(sender, instance, created, **kwargs):
                                                      'preco_medio': 0})
             # Alterar checkpoint de poupança de proventos
             CheckpointDivisaoProventosFII.objects.update_or_create(divisao=instance.divisao, ano=prox_ano, 
-                                                       defaults={'valor': calcular_poupanca_prov_fii_ate_dia_por_divisao(datetime.date(prox_ano, 12, 31), instance.divisao)})
+                                                       defaults={'valor': calcular_poupanca_prov_fii_ate_dia_por_divisao(instance.divisao, datetime.date(prox_ano, 12, 31))})
     
 @receiver(post_delete, sender=DivisaoOperacaoFII, dispatch_uid="operacaofii_divisao_apagada")
 def preparar_checkpointfii_delete(sender, instance, **kwargs):
@@ -134,7 +130,7 @@ def preparar_checkpointfii_delete(sender, instance, **kwargs):
                                                      'preco_medio': 0})
     # Alterar checkpoint de poupança de proventos
     CheckpointDivisaoProventosFII.objects.update_or_create(divisao=instance.divisao, ano=ano, 
-                                               defaults={'valor': calcular_poupanca_prov_fii_ate_dia_por_divisao(datetime.date(ano, 12, 31), instance.divisao)})
+                                               defaults={'valor': calcular_poupanca_prov_fii_ate_dia_por_divisao(instance.divisao, datetime.date(ano, 12, 31))})
 
     """
     Verificar se existem anos posteriores
@@ -146,7 +142,7 @@ def preparar_checkpointfii_delete(sender, instance, **kwargs):
                                                      'preco_medio': 0})   
             # Alterar checkpoint de poupança de proventos
             CheckpointDivisaoProventosFII.objects.update_or_create(divisao=instance.divisao, ano=prox_ano, 
-                                                       defaults={'valor': calcular_poupanca_prov_fii_ate_dia_por_divisao(datetime.date(prox_ano, 12, 31), instance.divisao)})
+                                                       defaults={'valor': calcular_poupanca_prov_fii_ate_dia_por_divisao(instance.divisao, datetime.date(prox_ano, 12, 31))})
 
     """
     Apagar checkpoints iniciais zerados
@@ -188,7 +184,7 @@ def preparar_checkpointfii_evento(sender, instance, created, **kwargs):
             
         # Alterar checkpoint de poupança de proventos
         CheckpointDivisaoProventosFII.objects.update_or_create(divisao=divisao, ano=ano, 
-                                               defaults={'valor': calcular_poupanca_prov_fii_ate_dia_por_divisao(datetime.date(ano, 12, 31), divisao)})
+                                               defaults={'valor': calcular_poupanca_prov_fii_ate_dia_por_divisao(divisao, datetime.date(ano, 12, 31))})
 
         """
         Verificar se existem anos posteriores
@@ -201,7 +197,7 @@ def preparar_checkpointfii_evento(sender, instance, created, **kwargs):
                 
                 # Alterar checkpoint de poupança de proventos
                 CheckpointDivisaoProventosFII.objects.update_or_create(divisao=divisao, ano=prox_ano, 
-                                                   defaults={'valor': calcular_poupanca_prov_fii_ate_dia_por_divisao(datetime.date(prox_ano, 12, 31), divisao)})
+                                                   defaults={'valor': calcular_poupanca_prov_fii_ate_dia_por_divisao(divisao, datetime.date(prox_ano, 12, 31))})
             
             # Se incorporação
             if isinstance(instance, EventoIncorporacaoFII):
@@ -236,7 +232,7 @@ def preparar_checkpointfii_evento_delete(sender, instance, **kwargs):
         
         # Alterar checkpoint de poupança de proventos
         CheckpointDivisaoProventosFII.objects.update_or_create(divisao=divisao, ano=ano, 
-                                               defaults={'valor': calcular_poupanca_prov_fii_ate_dia_por_divisao(datetime.date(prox_ano, 12, 31), divisao)})
+                                               defaults={'valor': calcular_poupanca_prov_fii_ate_dia_por_divisao(divisao, datetime.date(prox_ano, 12, 31))})
 
         """
         Verificar se existem anos posteriores
@@ -249,7 +245,7 @@ def preparar_checkpointfii_evento_delete(sender, instance, **kwargs):
                 
                 # Alterar checkpoint de poupança de proventos
                 CheckpointDivisaoProventosFII.objects.update_or_create(divisao=divisao, ano=prox_ano, 
-                                                   defaults={'valor': calcular_poupanca_prov_fii_ate_dia_por_divisao(datetime.date(prox_ano, 12, 31), divisao)})
+                                                   defaults={'valor': calcular_poupanca_prov_fii_ate_dia_por_divisao(divisao, datetime.date(prox_ano, 12, 31))})
                 
             # Se incorporação
             if isinstance(instance, EventoIncorporacaoFII):
