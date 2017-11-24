@@ -270,7 +270,7 @@
 						        {% for pagamento in usuario.pagamentos %}
 						            <div class="list-group-item">
                                         <span class="font-yellow-crusta">{{pagamento.valor}}</span>
-                                        <span>{{pagamento.data}}</span>
+                                        <span class="pull-right">{{pagamento.data|date:'d/m/Y'}}</span>
                                     </div>
 						        {% empty %}
 						            <div class="list-group-item">Não há pagamentos</div>
