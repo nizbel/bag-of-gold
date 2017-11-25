@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII, Divisao, \
-    CheckpointDivisaoProventosFII
+    CheckpointDivisaoProventosFII, CheckpointDivisaoFII
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.fii import FII, OperacaoFII, \
     EventoDesdobramentoFII, EventoAgrupamentoFII, EventoIncorporacaoFII, \
@@ -10,7 +10,9 @@ from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia, \
     calcular_qtd_fiis_ate_dia_por_ticker, calcular_qtd_fiis_ate_dia_por_divisao, \
     verificar_se_existe_evento_para_fii, calcular_poupanca_prov_fii_ate_dia, \
     calcular_preco_medio_fiis_ate_dia_por_ticker, calcular_preco_medio_fiis_ate_dia, \
-    calcular_poupanca_prov_fii_ate_dia_por_divisao
+    calcular_poupanca_prov_fii_ate_dia_por_divisao, \
+    calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao, \
+    calcular_preco_medio_fiis_ate_dia_por_divisao
 from decimal import Decimal
 from django.contrib.auth.models import User
 from django.db.models.aggregates import Sum
@@ -224,44 +226,46 @@ class CalcularQuantidadesFIITestCase(TestCase):
         teste = Divisao.objects.get(nome=u'Divisão de teste')
         
         # Testar funções individuais
-        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(geral, datetime.date(2017, 3, 1), 'BAPO11'), 0, places=3)
-        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(geral, datetime.date(2017, 5, 12), 'BAPO11'), Decimal(4500) / 43, places=3)
-        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(geral, datetime.date(2017, 6, 4), 'BAPO11'), Decimal(4500) / 430, places=3)
-        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(geral, datetime.date(2017, 11, 20), 'BAPO11'), Decimal(4500) / 430 - Decimal('9.1'), places=3)
+        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 3, 1), 'BAPO11'), 0, places=3)
+        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 5, 12), 'BAPO11'), Decimal(4500) / 43, places=3)
+        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 6, 4), 'BAPO11'), Decimal(4500) / 430, places=3)
+        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 11, 20), 'BAPO11'), Decimal(4500) / 430 - Decimal('9.1'), places=3)
         
-        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(geral, datetime.date(2017, 3, 1), 'BBPO11'), 0, places=3)
-        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(geral, datetime.date(2017, 5, 12), 'BBPO11'), Decimal(43200) / 430, places=3)
-        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(geral, datetime.date(2017, 6, 4), 'BBPO11'), Decimal(43200) / 43, places=3)
-        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(geral, datetime.date(2017, 11, 20), 'BBPO11'), Decimal(43200) / 43, places=3)
+        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 3, 1), 'BBPO11'), 0, places=3)
+        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 5, 12), 'BBPO11'), Decimal(43200) / 430, places=3)
+        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 6, 4), 'BBPO11'), Decimal(43200) / 43, places=3)
+        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 11, 20), 'BBPO11'), Decimal(43200) / 43, places=3)
         
-        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(geral, datetime.date(2017, 3, 1), 'BCPO11'), 0, places=3)
-        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(geral, datetime.date(2017, 5, 12), 'BCPO11'), Decimal(3900) / 37, places=3)
-        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(geral, datetime.date(2017, 6, 4), 'BCPO11'), 0, places=3)
-        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(geral, datetime.date(2017, 11, 20), 'BCPO11'), 0, places=3)
+        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 3, 1), 'BCPO11'), 0, places=3)
+        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 5, 12), 'BCPO11'), Decimal(3900) / 37, places=3)
+        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 6, 4), 'BCPO11'), 0, places=3)
+        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 11, 20), 'BCPO11'), 0, places=3)
         
-        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(geral, datetime.date(2017, 3, 1), 'BDPO11'), 0, places=3)
-        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(geral, datetime.date(2017, 5, 12), 'BDPO11'), Decimal(27300) / 271, places=3)
-        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(geral, datetime.date(2017, 6, 4), 'BDPO11'), Decimal(27300 + 3900) / 617, places=3)
-        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(geral, datetime.date(2017, 11, 20), 'BDPO11'), Decimal(27300 + 3900 + 9400) / 707, places=3)
+        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 3, 1), 'BDPO11'), 0, places=3)
+        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 5, 12), 'BDPO11'), Decimal(27300) / 271, places=3)
+        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 6, 4), 'BDPO11'), Decimal(27300 + 3900) / 617, places=3)
+        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 11, 20), 'BDPO11'), Decimal(27300 + 3900 + 9400) / 707, places=3)
         
-        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(teste, datetime.date(2017, 3, 1), 'BEPO11'), 0, places=3)
-        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(teste, datetime.date(2017, 5, 12), 'BEPO11'), Decimal(5200) / 50, places=3)
+        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(teste, datetime.date(2017, 3, 1), 'BEPO11'), 0, places=3)
+        self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(teste, datetime.date(2017, 5, 12), 'BEPO11'), Decimal(5200) / 50, places=3)
         
         # Testar função geral
         for data in [datetime.date(2017, 3, 1), datetime.date(2017, 5, 12), datetime.date(2017, 6, 4), datetime.date(2017, 11, 20)]:
-            precos_medios = calcular_preco_medio_fiis_ate_dia(investidor, data)
+            precos_medios = calcular_preco_medio_fiis_ate_dia_por_divisao(geral, data)
             for ticker in FII.objects.all().values_list('ticker', flat=True):
-                qtd_individual = calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, data, ticker)
+                qtd_individual = calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, data, ticker)
                 if qtd_individual > 0:
                     self.assertAlmostEqual(precos_medios[ticker], qtd_individual, places=3)
                 else:
                     self.assertNotIn(ticker, precos_medios.keys())
         
         # Testar checkpoints
-        self.assertFalse(CheckpointFII.objects.filter(investidor=investidor, ano=2016).exists())
-        for fii in FII.objects.all():
-            self.assertAlmostEqual(CheckpointFII.objects.get(investidor=investidor, ano=2017, fii=fii).preco_medio, 
-                                   calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 12, 31), fii.ticker), places=3)
+        self.assertFalse(CheckpointDivisaoFII.objects.filter(divisao=geral, ano=2016).exists())
+        for fii in FII.objects.all().exclude(ticker='BEPO11'):
+            self.assertAlmostEqual(CheckpointDivisaoFII.objects.get(divisao=geral, ano=2017, fii=fii).preco_medio, 
+                                   calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 12, 31), fii.ticker), places=3)
+        self.assertAlmostEqual(CheckpointDivisaoFII.objects.get(divisao=teste, ano=2017, fii=FII.objects.get(ticker='BEPO11')).preco_medio, 
+                               calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(teste, datetime.date(2017, 12, 31), 'BEPO11'), places=3)
             
 class PerformanceCheckpointFIITestCase(TestCase):
     def setUp(self):
