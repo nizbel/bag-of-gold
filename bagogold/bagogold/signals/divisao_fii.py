@@ -4,7 +4,8 @@ from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoFII, \
 from bagogold.bagogold.models.fii import ProventoFII, \
     EventoAgrupamentoFII, EventoDesdobramentoFII, EventoIncorporacaoFII
 from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia_por_ticker_por_divisao, \
-    calcular_poupanca_prov_fii_ate_dia_por_divisao
+    calcular_poupanca_prov_fii_ate_dia_por_divisao,\
+    calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao
 from django.db.models.signals import post_save, post_delete
 from django.dispatch.dispatcher import receiver
 import datetime
@@ -208,7 +209,7 @@ def preparar_checkpointfii_evento_delete(sender, instance, **kwargs):
             
 def gerar_checkpoint_divisao_fii(divisao, fii, ano):
     quantidade = calcular_qtd_fiis_ate_dia_por_ticker_por_divisao(datetime.date(ano, 12, 31), divisao.id, fii.ticker)
-    preco_medio = 0
+    preco_medio = calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(divisao, datetime.date(ano, 12, 31), fii.ticker)
     if CheckpointDivisaoFII.objects.filter(divisao=divisao, fii=fii, ano__lte=ano).exists() or (quantidade > 0 or preco_medio != 0):
         CheckpointDivisaoFII.objects.update_or_create(divisao=divisao, fii=fii, ano=ano, 
                                                defaults={'quantidade': quantidade, 'preco_medio': preco_medio})
