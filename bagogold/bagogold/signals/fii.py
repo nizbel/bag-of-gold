@@ -23,26 +23,20 @@ def preparar_checkpointproventofii(sender, instance, created, **kwargs):
         """
         for investidor in Investidor.objects.filter(id__in=OperacaoFII.objects.filter(fii=instance.fii, data__lt=instance.data_ex) \
                                                     .order_by('investidor').distinct('investidor').values_list('investidor', flat=True)):
-            CheckpointProventosFII.objects.update_or_create(investidor=investidor, ano=ano, 
-                                               defaults={'valor': calcular_poupanca_prov_fii_ate_dia(investidor, datetime.date(ano, 12, 31))})
+            gerar_checkpoint_proventos_fii(investidor, ano)
             # Se amortização verificar checkpoint de quantidade
             if instance.tipo_provento == 'A':
-                CheckpointFII.objects.update_or_create(investidor=investidor, fii=instance.fii, ano=ano, 
-                                           defaults={'quantidade': calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), instance.fii.ticker), 
-                                                     'preco_medio': calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), instance.fii.ticker)})
+                gerar_checkpoint_fii(investidor, instance.fii, ano)
     
             """
             Verificar se existem anos posteriores
             """
             if ano != datetime.date.today().year:
                 for prox_ano in range(ano + 1, datetime.date.today().year + 1):
-                    CheckpointProventosFII.objects.update_or_create(investidor=investidor, ano=prox_ano, 
-                                                   defaults={'valor': calcular_poupanca_prov_fii_ate_dia(investidor, datetime.date(prox_ano, 12, 31))})
+                    gerar_checkpoint_proventos_fii(investidor, prox_ano)
                     # Se amortização verificar checkpoint de quantidade
                     if instance.tipo_provento == 'A':
-                        CheckpointFII.objects.update_or_create(investidor=investidor, fii=instance.fii, ano=prox_ano, 
-                                           defaults={'quantidade': calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(prox_ano, 12, 31), instance.fii.ticker), 
-                                                     'preco_medio': calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(prox_ano, 12, 31), instance.fii.ticker)})
+                        gerar_checkpoint_fii(investidor, instance.fii, prox_ano)
 
 @receiver(post_delete, sender=ProventoFII, dispatch_uid="proventofii_apagado")
 def preparar_checkpointproventofii_delete(sender, instance, **kwargs):
@@ -54,38 +48,27 @@ def preparar_checkpointproventofii_delete(sender, instance, **kwargs):
         """ 
         Altera checkpoints existentes
         """
-        for investidor in Investidor.objects.filter(id__in=OperacaoFII.objects.filter(fii=instance.fii, data__lt=instance.data).order_by('investidor').distinct('investidor').values_list('investidor', flat=True)):
-            CheckpointProventosFII.objects.update_or_create(investidor=investidor, ano=ano, 
-                                                   defaults={'valor': calcular_poupanca_prov_fii_ate_dia(investidor, datetime.date(ano, 12, 31))})
+        for investidor in Investidor.objects.filter(id__in=OperacaoFII.objects.filter(fii=instance.fii, data__lt=instance.data) \
+                                                    .order_by('investidor').distinct('investidor').values_list('investidor', flat=True)):
+            gerar_checkpoint_proventos_fii(investidor, ano)
             # Se amortização verificar checkpoint de quantidade
             if instance.tipo_provento == 'A':
-                CheckpointFII.objects.update_or_create(investidor=investidor, fii=instance.fii, ano=ano, 
-                                                       defaults={'quantidade': calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), instance.fii.ticker), 
-                                                                 'preco_medio': calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), instance.fii.ticker)})
-            
+                gerar_checkpoint_fii(investidor, instance.fii, ano)
     
             """
             Verificar se existem anos posteriores
             """
             if ano != datetime.date.today().year:
                 for prox_ano in range(ano + 1, datetime.date.today().year + 1):
-                    CheckpointProventosFII.objects.update_or_create(investidor=investidor, ano=prox_ano, 
-                                                   defaults={'valor': calcular_poupanca_prov_fii_ate_dia(investidor, datetime.date(prox_ano, 12, 31))})
+                    gerar_checkpoint_proventos_fii(investidor, prox_ano)
                     # Se amortização verificar checkpoint de quantidade
                     if instance.tipo_provento == 'A':
-                        CheckpointFII.objects.update_or_create(investidor=investidor, fii=instance.fii, ano=prox_ano, 
-                                                               defaults={'quantidade': calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(prox_ano, 12, 31), instance.fii.ticker), 
-                                                                         'preco_medio': calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), instance.fii.ticker)})  
-                        
+                        gerar_checkpoint_fii(investidor, instance.fii, prox_ano)
     
             """
             Apagar checkpoints iniciais zerados
             """
-            for checkpoint in CheckpointProventosFII.objects.filter(investidor=investidor).order_by('ano'):
-                if checkpoint.valor == 0:
-                    checkpoint.delete()
-                else:
-                    break 
+            apagar_checkpoint_proventos_fii(investidor)
                 
 # Preparar checkpoints para alterações em operações de FII
 @receiver(post_save, sender=OperacaoFII, dispatch_uid="operacaofii_criada_alterada")
@@ -97,24 +80,18 @@ def preparar_checkpointfii(sender, instance, created, **kwargs):
     """ 
     Cria novo checkpoint ou altera existente
     """
-    CheckpointFII.objects.update_or_create(investidor=instance.investidor, fii=instance.fii, ano=ano, 
-                                           defaults={'quantidade': calcular_qtd_fiis_ate_dia_por_ticker(instance.investidor, datetime.date(ano, 12, 31), instance.fii.ticker), 
-                                                     'preco_medio': calcular_preco_medio_fiis_ate_dia_por_ticker(instance.investidor, datetime.date(ano, 12, 31), instance.fii.ticker)})
+    gerar_checkpoint_fii(instance.investidor, instance.fii, ano)
     # Alterar checkpoint de poupança de proventos
-    CheckpointProventosFII.objects.update_or_create(investidor=instance.investidor, ano=ano, 
-                                               defaults={'valor': calcular_poupanca_prov_fii_ate_dia(instance.investidor, datetime.date(ano, 12, 31))})
+    gerar_checkpoint_proventos_fii(instance.investidor, ano)
 
     """
     Verificar se existem anos posteriores
     """
     if ano != datetime.date.today().year:
         for prox_ano in range(ano + 1, datetime.date.today().year + 1):
-            CheckpointFII.objects.update_or_create(investidor=instance.investidor, fii=instance.fii, ano=prox_ano, 
-                                           defaults={'quantidade': calcular_qtd_fiis_ate_dia_por_ticker(instance.investidor, datetime.date(prox_ano, 12, 31), instance.fii.ticker), 
-                                                     'preco_medio': calcular_preco_medio_fiis_ate_dia_por_ticker(instance.investidor, datetime.date(ano, 12, 31), instance.fii.ticker)})
+            gerar_checkpoint_fii(instance.investidor, instance.fii, prox_ano)
             # Alterar checkpoint de poupança de proventos
-            CheckpointProventosFII.objects.update_or_create(investidor=instance.investidor, ano=prox_ano, 
-                                                       defaults={'valor': calcular_poupanca_prov_fii_ate_dia(instance.investidor, datetime.date(prox_ano, 12, 31))})
+            gerar_checkpoint_proventos_fii(instance.investidor, prox_ano)
     
 @receiver(post_delete, sender=OperacaoFII, dispatch_uid="operacaofii_apagada")
 def preparar_checkpointfii_delete(sender, instance, **kwargs):
@@ -125,39 +102,25 @@ def preparar_checkpointfii_delete(sender, instance, **kwargs):
     """ 
     Altera checkpoint existente
     """
-    CheckpointFII.objects.update_or_create(investidor=instance.investidor, fii=instance.fii, ano=ano, 
-                                           defaults={'quantidade': calcular_qtd_fiis_ate_dia_por_ticker(instance.investidor, datetime.date(ano, 12, 31), instance.fii.ticker), 
-                                                     'preco_medio': calcular_preco_medio_fiis_ate_dia_por_ticker(instance.investidor, datetime.date(ano, 12, 31), instance.fii.ticker)})
+    gerar_checkpoint_fii(instance.investidor, instance.fii, ano)
     # Alterar checkpoint de poupança de proventos
-    CheckpointProventosFII.objects.update_or_create(investidor=instance.investidor, ano=ano, 
-                                               defaults={'valor': calcular_poupanca_prov_fii_ate_dia(instance.investidor, datetime.date(ano, 12, 31))})
+    gerar_checkpoint_proventos_fii(instance.investidor, ano)
 
     """
     Verificar se existem anos posteriores
     """
     if ano != datetime.date.today().year:
         for prox_ano in range(ano + 1, datetime.date.today().year + 1):
-            CheckpointFII.objects.update_or_create(investidor=instance.investidor, fii=instance.fii, ano=prox_ano, 
-                                           defaults={'quantidade': calcular_qtd_fiis_ate_dia_por_ticker(instance.investidor, datetime.date(prox_ano, 12, 31), instance.fii.ticker), 
-                                                     'preco_medio': calcular_preco_medio_fiis_ate_dia_por_ticker(instance.investidor, datetime.date(ano, 12, 31), instance.fii.ticker)})   
+            gerar_checkpoint_fii(instance.investidor, instance.fii, prox_ano)
             # Alterar checkpoint de poupança de proventos
-            CheckpointProventosFII.objects.update_or_create(investidor=instance.investidor, ano=prox_ano, 
-                                                       defaults={'valor': calcular_poupanca_prov_fii_ate_dia(instance.investidor, datetime.date(prox_ano, 12, 31))})
+            gerar_checkpoint_proventos_fii(instance.investidor, prox_ano)
 
     """
     Apagar checkpoints iniciais zerados
     """
-    for checkpoint in CheckpointFII.objects.filter(investidor=instance.investidor, fii=instance.fii).order_by('ano'):
-        if checkpoint.quantidade == 0:
-            checkpoint.delete()
-        else:
-            break 
+    apagar_checkpoint_fii(instance.investidor, instance.fii)
     # Apagar checkpoints de proventos zerados
-    for checkpoint in CheckpointProventosFII.objects.filter(investidor=instance.investidor).order_by('ano'):
-        if checkpoint.valor == 0:
-            checkpoint.delete()
-        else:
-            break 
+    apagar_checkpoint_proventos_fii(instance.investidor)
         
 # Preparar checkpoints para alterações em eventos de FII
 @receiver(post_save, sender=EventoAgrupamentoFII, dispatch_uid="evento_agrupamento_criado_alterado")
@@ -171,40 +134,30 @@ def preparar_checkpointfii_evento(sender, instance, created, **kwargs):
     """ 
     Cria novo checkpoint ou altera existente
     """
-    for investidor in Investidor.objects.filter(id__in=OperacaoFII.objects.filter(fii=instance.fii, data__lt=instance.data).order_by('investidor').distinct('investidor').values_list('investidor', flat=True)):
-        CheckpointFII.objects.update_or_create(investidor=investidor, fii=instance.fii, ano=ano, 
-                                           defaults={'quantidade': calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), instance.fii.ticker), 
-                                                     'preco_medio': calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), instance.fii.ticker)})
+    for investidor in Investidor.objects.filter(id__in=OperacaoFII.objects.filter(fii=instance.fii, data__lt=instance.data) \
+                                                .order_by('investidor').distinct('investidor').values_list('investidor', flat=True)):
+        gerar_checkpoint_fii(investidor, instance.fii, ano)
         # Se incorporação
         if isinstance(instance, EventoIncorporacaoFII):
-            CheckpointFII.objects.update_or_create(investidor=investidor, fii=instance.novo_fii, ano=ano, 
-                                           defaults={'quantidade': calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), instance.novo_fii.ticker), 
-                                                     'preco_medio': calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), instance.novo_fii.ticker)})
+            gerar_checkpoint_fii(investidor, instance.novo_fii, ano)
             
         # Alterar checkpoint de poupança de proventos
-        CheckpointProventosFII.objects.update_or_create(investidor=investidor, ano=ano, 
-                                               defaults={'valor': calcular_poupanca_prov_fii_ate_dia(investidor, datetime.date(ano, 12, 31))})
+        gerar_checkpoint_proventos_fii(investidor, ano)
 
         """
         Verificar se existem anos posteriores
         """
         if ano != datetime.date.today().year:
             for prox_ano in range(ano + 1, datetime.date.today().year + 1):
-                CheckpointFII.objects.update_or_create(investidor=investidor, fii=instance.fii, ano=prox_ano, 
-                                               defaults={'quantidade': calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(prox_ano, 12, 31), instance.fii.ticker), 
-                                                         'preco_medio': calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), instance.fii.ticker)})
+                gerar_checkpoint_fii(investidor, instance.fii, prox_ano)
                 
                 # Alterar checkpoint de poupança de proventos
-                CheckpointProventosFII.objects.update_or_create(investidor=investidor, ano=prox_ano, 
-                                                   defaults={'valor': calcular_poupanca_prov_fii_ate_dia(investidor, datetime.date(prox_ano, 12, 31))})
+                gerar_checkpoint_proventos_fii(investidor, prox_ano)
             
             # Se incorporação
             if isinstance(instance, EventoIncorporacaoFII):
                 for prox_ano in range(ano + 1, datetime.date.today().year + 1):
-                    CheckpointFII.objects.update_or_create(investidor=investidor, fii=instance.novo_fii, ano=prox_ano, 
-                                               defaults={'quantidade': calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(prox_ano, 12, 31), instance.novo_fii.ticker), 
-                                                         'preco_medio': calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), instance.novo_fii.ticker)})
-            
+                    gerar_checkpoint_fii(investidor, instance.novo_fii, prox_ano)
 
     
 @receiver(post_delete, sender=EventoAgrupamentoFII, dispatch_uid="evento_agrupamento_apagado")
@@ -218,60 +171,65 @@ def preparar_checkpointfii_evento_delete(sender, instance, **kwargs):
     """ 
     Altera checkpoints existentes
     """
-    for investidor in Investidor.objects.filter(id__in=OperacaoFII.objects.filter(fii=instance.fii, data__lt=instance.data).order_by('investidor').distinct('investidor').values_list('investidor', flat=True)):
-        CheckpointFII.objects.update_or_create(investidor=investidor, fii=instance.fii, ano=ano, 
-                                           defaults={'quantidade': calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), instance.fii.ticker), 
-                                                     'preco_medio': calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), instance.fii.ticker)})
+    for investidor in Investidor.objects.filter(id__in=OperacaoFII.objects.filter(fii=instance.fii, data__lt=instance.data) \
+                                                .order_by('investidor').distinct('investidor').values_list('investidor', flat=True)):
+        gerar_checkpoint_fii(investidor, instance.fii, ano)
         # Se incorporação
         if isinstance(instance, EventoIncorporacaoFII):
-            CheckpointFII.objects.update_or_create(investidor=investidor, fii=instance.novo_fii, ano=ano, 
-                                           defaults={'quantidade': calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), instance.novo_fii.ticker), 
-                                                     'preco_medio': calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), instance.novo_fii.ticker)})
+            gerar_checkpoint_fii(investidor, instance.novo_fii, ano)
         
         # Alterar checkpoint de poupança de proventos
-        CheckpointProventosFII.objects.update_or_create(investidor=investidor, ano=ano, 
-                                               defaults={'valor': calcular_poupanca_prov_fii_ate_dia(investidor, datetime.date(ano, 12, 31))})
+        gerar_checkpoint_proventos_fii(investidor, ano)
 
         """
         Verificar se existem anos posteriores
         """
         if ano != datetime.date.today().year:
             for prox_ano in range(ano + 1, datetime.date.today().year + 1):
-                CheckpointFII.objects.update_or_create(investidor=investidor, fii=instance.fii, ano=prox_ano, 
-                                               defaults={'quantidade': calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(prox_ano, 12, 31), instance.fii.ticker), 
-                                                         'preco_medio': calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), instance.fii.ticker)})  
+                gerar_checkpoint_fii(investidor, instance.fii, prox_ano)
                 
                 # Alterar checkpoint de poupança de proventos
-                CheckpointProventosFII.objects.update_or_create(investidor=investidor, ano=prox_ano, 
-                                                   defaults={'valor': calcular_poupanca_prov_fii_ate_dia(investidor, datetime.date(prox_ano, 12, 31))})
+                gerar_checkpoint_proventos_fii(investidor, prox_ano)
             
             # Se incorporação
             if isinstance(instance, EventoIncorporacaoFII):
                 for prox_ano in range(ano + 1, datetime.date.today().year + 1):
-                    CheckpointFII.objects.update_or_create(investidor=investidor, fii=instance.novo_fii, ano=prox_ano, 
-                                                           defaults={'quantidade': calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(prox_ano, 12, 31), instance.novo_fii.ticker), 
-                                                                     'preco_medio': calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), instance.novo_fii.ticker)})  
-                    
+                    gerar_checkpoint_fii(investidor, instance.novo_fii, prox_ano)
 
         """
         Apagar checkpoints iniciais zerados
         """
-        for checkpoint in CheckpointFII.objects.filter(investidor=investidor, fii=instance.fii).order_by('ano'):
-            if checkpoint.quantidade == 0:
-                checkpoint.delete()
-            else:
-                break 
+        apagar_checkpoint_fii(investidor, instance.fii)
         # Se incorporação
         if isinstance(instance, EventoIncorporacaoFII):
-            for checkpoint in CheckpointFII.objects.filter(investidor=investidor, fii=instance.novo_fii).order_by('ano'):
-                if checkpoint.quantidade == 0:
-                    checkpoint.delete()
-                else:
-                    break 
+            apagar_checkpoint_fii(investidor, instance.novo_fii)
         
         # Apagar checkpoints de proventos zerados
-        for checkpoint in CheckpointProventosFII.objects.filter(investidor=investidor).order_by('ano'):
-            if checkpoint.valor == 0:
-                checkpoint.delete()
-            else:
-                break 
+        apagar_checkpoint_proventos_fii(investidor)
+            
+def gerar_checkpoint_fii(investidor, fii, ano):
+    quantidade = calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), fii.ticker)
+    preco_medio = calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), fii.ticker)
+    if CheckpointFII.objects.filter(investidor=investidor, fii=fii, ano__lte=ano).exists() or (quantidade > 0 or preco_medio != 0):
+        CheckpointFII.objects.update_or_create(investidor=investidor, fii=fii, ano=ano, 
+                                           defaults={'quantidade': quantidade, 'preco_medio': preco_medio})
+    
+def gerar_checkpoint_proventos_fii(investidor, ano):
+    valor = calcular_poupanca_prov_fii_ate_dia(investidor, datetime.date(ano, 12, 31))
+    if CheckpointProventosFII.objects.filter(investidor=investidor, ano__lte=ano).exists() or valor > 0:
+        CheckpointProventosFII.objects.update_or_create(investidor=investidor, ano=ano, 
+                                                   defaults={'valor': valor})
+    
+def apagar_checkpoint_fii(investidor, fii):
+    for checkpoint in CheckpointFII.objects.filter(investidor=investidor, fii=fii).order_by('ano'):
+        if checkpoint.quantidade == 0 and checkpoint.preco_medio == 0:
+            checkpoint.delete()
+        else:
+            return
+    
+def apagar_checkpoint_proventos_fii(investidor):
+    for checkpoint in CheckpointProventosFII.objects.filter(investidor=investidor).order_by('ano'):
+        if checkpoint.valor == 0:
+            checkpoint.delete()
+        else:
+            return 
