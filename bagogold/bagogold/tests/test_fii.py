@@ -164,7 +164,6 @@ class CalcularQuantidadesFIITestCase(TestCase):
         self.assertEqual(calcular_poupanca_prov_fii_ate_dia_por_divisao(geral, datetime.date(2017, 10, 1)), Decimal('4755.80'))
         self.assertEqual(calcular_poupanca_prov_fii_ate_dia_por_divisao(teste, datetime.date(2017, 10, 1)), 0)
         self.assertEqual(CheckpointDivisaoProventosFII.objects.get(divisao=geral, ano=2017).valor, Decimal('4755.80'))
-        print CheckpointDivisaoProventosFII.objects.filter(divisao=teste).values('ano', 'valor')
         self.assertFalse(CheckpointDivisaoProventosFII.objects.filter(divisao=teste, ano=2017).exists())
         
         # Testar situação alterando uma operação
