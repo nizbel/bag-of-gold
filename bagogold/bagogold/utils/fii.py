@@ -88,41 +88,6 @@ def calcular_poupanca_prov_fii_ate_dia_por_divisao(divisao, dia=datetime.date.to
                 Divisão escolhida
     Retorno: Quantidade provisionada no dia
     """
-#     operacoes_divisao = DivisaoOperacaoFII.objects.filter(divisao=divisao, operacao__data__lte=dia).values_list('operacao__id', flat=True)
-#     
-#     operacoes = OperacaoFII.objects.filter(id__in=operacoes_divisao).order_by('data')
-# 
-#     proventos = ProventoFII.objects.filter(data_ex__lte=dia).annotate(data=F('data_ex')).order_by('data_ex')
-#      
-#     lista_conjunta = sorted(chain(operacoes, proventos),
-#                             key=attrgetter('data'))
-#     
-#     total_proventos = Decimal(0)
-#     
-#     # Guarda as ações correntes para o calculo do patrimonio
-#     fiis = {}
-#     # Calculos de patrimonio e gasto total
-#     for item_lista in lista_conjunta:      
-#         if item_lista.fii.ticker not in fiis.keys():
-#             fiis[item_lista.fii.ticker] = 0
-#             
-#         # Verifica se é uma compra/venda
-#         if isinstance(item_lista, OperacaoFII):   
-#             # Verificar se se trata de compra ou venda
-#             if item_lista.tipo_operacao == 'C':
-#                 if item_lista.utilizou_proventos():
-#                     total_proventos -= item_lista.qtd_proventos_utilizada()
-#                 fiis[item_lista.fii.ticker] += item_lista.quantidade
-#                 
-#             elif item_lista.tipo_operacao == 'V':
-#                 fiis[item_lista.fii.ticker] -= item_lista.quantidade
-#         
-#         # Verifica se é recebimento de proventos
-#         elif isinstance(item_lista, ProventoFII):
-#             if item_lista.data_pagamento <= datetime.date.today() and fiis[item_lista.fii.ticker] > 0:
-#                 total_recebido = fiis[item_lista.fii.ticker] * item_lista.valor_unitario
-#                 total_proventos += total_recebido
-
     fiis = dict(CheckpointDivisaoFII.objects.filter(divisao=divisao, ano=dia.year-1).values_list('fii', 'quantidade'))
     operacoes = DivisaoOperacaoFII.objects.filter(divisao=divisao, operacao__data__range=[dia.replace(month=1).replace(day=1), dia]) \
         .annotate(data=F('operacao__data')).order_by('operacao__data')
@@ -417,8 +382,6 @@ def calcular_preco_medio_fiis_ate_dia(investidor, dia=datetime.date.today()):
             
     else:
         preco_medio_fii = {}
-#         for fii in FII.objects.filter(id__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True) \
-#                                                                                             .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True)):
         for fii in FII.objects.filter(Q(id__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia) \
                                       .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True)) \
                                       | Q(id__in=EventoIncorporacaoFII.objects.filter(fii__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia) \
