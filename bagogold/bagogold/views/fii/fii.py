@@ -347,7 +347,6 @@ def historico_fii(request):
             item.total = qtd_papeis[item.fii.ticker]
             
         elif item.tipo == 'Incorporação':
-            print 'incorpora'
             if qtd_papeis[item.fii.ticker] == 0:
                 item.quantidade = 0
                 continue

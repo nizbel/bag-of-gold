@@ -20,20 +20,20 @@ def calcular_poupanca_prov_fii_ate_dia(investidor, dia=datetime.date.today()):
                 Dia da posição de proventos
     Retorno: Quantidade provisionada no dia
     """
-    fiis = dict(CheckpointFII.objects.filter(investidor=investidor, ano=dia.year-1).values_list('fii', 'quantidade'))
+    fiis = dict(CheckpointFII.objects.filter(investidor=investidor, ano=dia.year-1).values_list('fii__ticker', 'quantidade'))
     operacoes = OperacaoFII.objects.filter(investidor=investidor, data__range=[dia.replace(month=1).replace(day=1), dia]).order_by('data')
     
     # Remover valores repetidos
-    fiis_proventos = list(set(fiis.keys() + list(operacoes.values_list('fii', flat=True))))
+    fiis_proventos = list(set(fiis.keys() + list(operacoes.values_list('fii__ticker', flat=True))))
     
-    proventos = ProventoFII.objects.filter(data_pagamento__range=[dia.replace(month=1).replace(day=1), dia], fii__in=fiis_proventos).annotate(data=F('data_ex')).order_by('data_ex')
+    proventos = ProventoFII.objects.filter(data_pagamento__range=[dia.replace(month=1).replace(day=1), dia], fii__ticker__in=fiis_proventos).annotate(data=F('data_ex')).order_by('data_ex')
      
     # Verificar agrupamentos e desdobramentos
-    agrupamentos = EventoAgrupamentoFII.objects.filter(fii__in=fiis_proventos, data__range=[dia.replace(month=1).replace(day=1), dia]).annotate(tipo=Value(u'Agrupamento', output_field=CharField()))
+    agrupamentos = EventoAgrupamentoFII.objects.filter(fii__ticker__in=fiis_proventos, data__range=[dia.replace(month=1).replace(day=1), dia]).annotate(tipo=Value(u'Agrupamento', output_field=CharField()))
 
-    desdobramentos = EventoDesdobramentoFII.objects.filter(fii__in=fiis_proventos, data__range=[dia.replace(month=1).replace(day=1), dia]).annotate(tipo=Value(u'Desdobramento', output_field=CharField()))
+    desdobramentos = EventoDesdobramentoFII.objects.filter(fii__ticker__in=fiis_proventos, data__range=[dia.replace(month=1).replace(day=1), dia]).annotate(tipo=Value(u'Desdobramento', output_field=CharField()))
     
-    incorporacoes = EventoIncorporacaoFII.objects.filter(Q(fii__in=fiis_proventos, data__range=[dia.replace(month=1).replace(day=1), dia]) | Q(novo_fii__in=fiis_proventos, data__lte=dia)) \
+    incorporacoes = EventoIncorporacaoFII.objects.filter(Q(fii__ticker__in=fiis_proventos, data__range=[dia.replace(month=1).replace(day=1), dia]) | Q(novo_fii__ticker__in=fiis_proventos, data__lte=dia)) \
         .annotate(tipo=Value(u'Incorporação', output_field=CharField())) 
     
     lista_conjunta = sorted(chain(proventos, agrupamentos, desdobramentos, incorporacoes, operacoes),
@@ -63,9 +63,15 @@ def calcular_poupanca_prov_fii_ate_dia(investidor, dia=datetime.date.today()):
         
         # Verifica se é recebimento de proventos
         elif isinstance(item_lista, ProventoFII):
-            if fiis[item_lista.fii.ticker] > 0:
-                total_recebido = fiis[item_lista.fii.ticker] * item_lista.valor_unitario
-                total_proventos += total_recebido
+            if item_lista.data_ex.year == dia.year:
+                if fiis[item_lista.fii.ticker] > 0:
+                    total_recebido = fiis[item_lista.fii.ticker] * item_lista.valor_unitario
+                    total_proventos += total_recebido
+            else:
+                qtd_na_data_ex = calcular_qtd_fiis_ate_dia_por_ticker(investidor, item_lista.data_ex - datetime.timedelta(days=1), item_lista.fii.ticker)
+                if qtd_na_data_ex > 0:
+                    total_recebido = qtd_na_data_ex * item_lista.valor_unitario
+                    total_proventos += total_recebido
 
         # Eventos
         else:
@@ -672,8 +678,8 @@ def calcular_valor_fii_ate_dia(investidor, dia=datetime.date.today()):
     qtd_fii = calcular_qtd_fiis_ate_dia(investidor, dia)
     
     for ticker in qtd_fii.keys():
-        if ValorDiarioFII.objects.filter(fii__ticker=ticker, data_hora__day=dia.day, data_hora__month=dia.month).exists():
-            qtd_fii[ticker] = ValorDiarioFII.objects.filter(fii__ticker=ticker, data_hora__day=dia.day, data_hora__month=dia.month).order_by('-data_hora')[0].preco_unitario * qtd_fii[ticker]
+        if ValorDiarioFII.objects.filter(fii__ticker=ticker, data_hora__date=dia).exists():
+            qtd_fii[ticker] = ValorDiarioFII.objects.filter(fii__ticker=ticker, data_hora__date=dia).order_by('-data_hora')[0].preco_unitario * qtd_fii[ticker]
         else:
             qtd_fii[ticker] = HistoricoFII.objects.filter(fii__ticker=ticker, data__lte=dia).order_by('-data')[0].preco_unitario * qtd_fii[ticker]
         
