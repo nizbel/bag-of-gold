@@ -5,7 +5,8 @@ from bagogold.bagogold.forms.fii import OperacaoFIIForm, ProventoFIIForm, \
     UsoProventosOperacaoFIIForm, CalculoResultadoCorretagemForm
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII, Divisao
 from bagogold.bagogold.models.fii import OperacaoFII, ProventoFII, HistoricoFII, \
-    FII, UsoProventosOperacaoFII, ValorDiarioFII
+    FII, UsoProventosOperacaoFII, ValorDiarioFII, EventoAgrupamentoFII, \
+    EventoDesdobramentoFII, EventoIncorporacaoFII
 from bagogold.bagogold.utils.fii import calcular_valor_fii_ate_dia, \
     calcular_poupanca_prov_fii_ate_dia, calcular_qtd_fiis_ate_dia, \
     calcular_preco_medio_fiis_ate_dia
@@ -17,6 +18,7 @@ from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db.models.expressions import F, Case, When, Value
 from django.db.models.fields import CharField
+from django.db.models.query_utils import Q
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -254,21 +256,34 @@ def historico_fii(request):
         investidor = request.user.investidor
     else:
         return TemplateResponse(request, 'fii/historico.html', {'dados': {}, 'lista_conjunta': list(), 'graf_poupanca_proventos': list(), 
-                                                     'graf_gasto_total': list(), 'graf_patrimonio': list()})
+                                                     'graf_gasto_total': list(), 'graf_patrimonio': list(), 'lista_eventos': list()})
         
-    operacoes = OperacaoFII.objects.filter(investidor=investidor).exclude(data__isnull=True).annotate(valor_unitario=F('preco_unitario')).annotate(tipo=Case(When(tipo_operacao='C', then=Value('Compra')),
-                                                                                                                                                            When(tipo_operacao='V', then=Value('Venda')),
+    operacoes = OperacaoFII.objects.filter(investidor=investidor).exclude(data__isnull=True).annotate(valor_unitario=F('preco_unitario')).annotate(tipo=Case(When(tipo_operacao='C', then=Value(u'Compra')),
+                                                                                                                                                            When(tipo_operacao='V', then=Value(u'Venda')),
                                                                                                                                                             output_field=CharField())).order_by('data') 
     
     # Se investidor não tiver feito operações
     if not operacoes:
-        return TemplateResponse(request, 'fii/historico.html', {'dados': {}})
+        return TemplateResponse(request, 'fii/historico.html', {'dados': {}, 'lista_conjunta': list(), 'graf_poupanca_proventos': list(), 
+                                                     'graf_gasto_total': list(), 'graf_patrimonio': list(), 'lista_eventos': list()})
     
+    # Proventos
     proventos = ProventoFII.objects.exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).filter(data_ex__gt=operacoes[0].data, fii__in=operacoes.values_list('fii', flat=True)) \
-        .annotate(tipo=Value('Provento', output_field=CharField())).annotate(data=F('data_ex')).order_by('data_ex')  
+        .annotate(tipo=Value(u'Provento', output_field=CharField())).annotate(data=F('data_ex')).order_by('data_ex')  
+    
+    # Eventos
+    agrupamentos = EventoAgrupamentoFII.objects.filter(fii__in=operacoes.values_list('fii', flat=True), data__lte=datetime.date.today()) \
+        .annotate(tipo=Value(u'Agrupamento', output_field=CharField())).order_by('data') 
+
+    desdobramentos = EventoDesdobramentoFII.objects.filter(fii__in=operacoes.values_list('fii', flat=True), data__lte=datetime.date.today()) \
+        .annotate(tipo=Value(u'Desdobramento', output_field=CharField())).order_by('data')
+    
+    incorporacoes = EventoIncorporacaoFII.objects.filter(Q(fii__in=operacoes.values_list('fii', flat=True), data__lte=datetime.date.today()) \
+                                                         | Q(novo_fii__in=operacoes.values_list('fii', flat=True), data__lte=datetime.date.today())).annotate(tipo=Value(u'Incorporação', output_field=CharField())).order_by('data')
+
     
     # Proventos devem ser computados primeiro na data EX
-    lista_conjunta = sorted(chain(proventos, operacoes),
+    lista_conjunta = sorted(chain(proventos, agrupamentos, desdobramentos, incorporacoes, operacoes),
                             key=attrgetter('data'))
     
     qtd_papeis = {}
@@ -306,10 +321,42 @@ def historico_fii(request):
             qtd_papeis[item.fii.ticker] -= item.quantidade
                 
         elif item.tipo == 'Provento':
+            if qtd_papeis[item.fii.ticker] == 0:
+                item.quantidade = 0
+                continue
             item.total = (qtd_papeis[item.fii.ticker] * item.valor_unitario * Decimal(100)).to_integral_exact(rounding=ROUND_FLOOR) / Decimal(100)
             item.quantidade = qtd_papeis[item.fii.ticker]
             total_proventos += item.total
-        
+            
+        elif item.tipo == 'Agrupamento':
+            if qtd_papeis[item.fii.ticker] == 0:
+                item.quantidade = 0
+                continue
+            item.quantidade = qtd_papeis[item.fii.ticker]
+            item.valor_unitario = item.proporcao
+            qtd_papeis[item.fii.ticker] = item.qtd_apos(item.quantidade)
+            item.total = qtd_papeis[item.fii.ticker]
+                        
+        elif item.tipo == 'Desdobramento':
+            if qtd_papeis[item.fii.ticker] == 0:
+                item.quantidade = 0
+                continue
+            item.quantidade = qtd_papeis[item.fii.ticker]
+            item.valor_unitario = item.proporcao
+            qtd_papeis[item.fii.ticker] = item.qtd_apos(item.quantidade)
+            item.total = qtd_papeis[item.fii.ticker]
+            
+        elif item.tipo == 'Incorporação':
+            print 'incorpora'
+            if qtd_papeis[item.fii.ticker] == 0:
+                item.quantidade = 0
+                continue
+            item.quantidade = qtd_papeis[item.fii.ticker]
+            item.valor_unitario = item.novo_fii.ticker
+            item.total = qtd_papeis[item.fii.ticker]
+            qtd_papeis[item.novo_fii.ticker] += qtd_papeis[item.fii.ticker]
+            qtd_papeis[item.fii.ticker] = 0
+            
         # Verifica se próximo elemento possui a mesma data
         if indice == len(lista_conjunta) - 1 or item.data != lista_conjunta[indice+1].data:
             # Prepara data
@@ -350,7 +397,9 @@ def historico_fii(request):
                     patrimonio += (qtd_papeis[fii] * HistoricoFII.objects.filter(fii__ticker=fii).order_by('-data')[0].preco_unitario)
                 
         graf_patrimonio += [[str(calendar.timegm(data_mais_atual.timetuple()) * 1000), float(patrimonio)]]
-        
+    
+    lista_conjunta = [item for item in lista_conjunta if item.quantidade != 0]
+    
     dados = {}
     dados['total_proventos'] = total_proventos
     dados['total_gasto'] = -total_gasto
@@ -358,7 +407,7 @@ def historico_fii(request):
     dados['lucro'] = patrimonio + total_proventos + total_gasto
     dados['lucro_percentual'] = (patrimonio + total_proventos + total_gasto) / -total_gasto * 100
     return TemplateResponse(request, 'fii/historico.html', {'dados': dados, 'lista_conjunta': lista_conjunta, 'graf_poupanca_proventos': graf_poupanca_proventos, 
-                                                     'graf_gasto_total': graf_gasto_total, 'graf_patrimonio': graf_patrimonio})
+                                                     'graf_gasto_total': graf_gasto_total, 'graf_patrimonio': graf_patrimonio, 'lista_eventos': ['Agrupamento', 'Desdobramento', 'Incorporação']})
     
     
 @login_required

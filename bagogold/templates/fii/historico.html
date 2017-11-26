@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load staticfiles %}
+{% load misc %}
 
 {% block extra_head %}
 <link href={% static "assets/global/plugins/datatables/datatables.min.css" %} rel="stylesheet" type="text/css" />
@@ -117,7 +118,7 @@
 					{% for item in lista_conjunta %}
 						<tr>
 							<td>
-                                {% if item.tipo == 'Provento' %}
+                                {% if item.tipo in lista_eventos or item.tipo == 'Provento'%}
                                     {{item.fii.ticker}}
                                 {% else %}
                                     <a href="{% url 'fii:editar_operacao_fii' item.id %}">{{item.fii.ticker}}</a>
@@ -126,16 +127,29 @@
 							<td>{{item.tipo}}</td>
 							<td>{{ item.data|date:"d/m/Y" }}</td>
 							<td>{{item.quantidade}}</td>
-							<td>R$ {{item.valor_unitario}}</td>
+                            {% if item.tipo in lista_eventos %}
+                                {% if item.tipo == lista_eventos.2 %}
+                                <td>{{item.valor_unitario}}</td>
+                                {% else %}
+                                <td>{{item.valor_unitario|casas_decimais}}</td>
+                                {% endif %}
+                            {% else %}
+							    <td>R$ {{item.valor_unitario|casas_decimais}}</td>
+                            {% endif %}
 							<td>{% if item.emolumentos != None %}<span class="font-red-thunderbird">R$ {{item.emolumentos|floatformat:"2"}}</span>{% else %}Não há{% endif %}</td>
 							<td>{% if item.corretagem != None %}<span class="font-red-thunderbird">R$ {{item.corretagem|floatformat:"2"}}</span>{% else %}Não há{% endif %}</td>
-							<td><span class="
+							<td>
+                            {% if item.tipo in lista_eventos %}
+                            {{item.total}}
+                            {% else %}<span class="
 							{% if item.total < 0 %}
 							font-red-thunderbird
 							{% else %}
 							font-blue
 							{% endif %}
-							">R$ {{item.total|floatformat:2}}</span></td>
+							">R$ {{item.total|floatformat:2}}</span>
+                            {% endif %}
+                            </td>
 						</tr>
 					{% endfor %}
 					</tbody>

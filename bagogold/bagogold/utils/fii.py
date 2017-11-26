@@ -129,7 +129,7 @@ def calcular_poupanca_prov_fii_ate_dia_por_divisao(divisao, dia=datetime.date.to
                     total_proventos -= item_lista.usoproventosoperacaofii.qtd_utilizada
                 fiis[item_lista.operacao.fii.ticker] += item_lista.quantidade
                 
-            elif item_lista.tipo_operacao == 'V':
+            elif item_lista.operacao.tipo_operacao == 'V':
                 fiis[item_lista.operacao.fii.ticker] -= item_lista.quantidade
         
         # Verifica se é recebimento de proventos
