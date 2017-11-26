@@ -490,7 +490,6 @@ def painel(request):
     class Object(object):
         pass
     
-    inicio = datetime.datetime.now()
     if request.user.is_authenticated():
         investidor = request.user.investidor
     else:
@@ -531,7 +530,6 @@ def painel(request):
     dados['total_valor'] = total_valor
     dados['valor_diario_mais_recente'] = 'N/A' if not ValorDiarioFII.objects.exists() else ValorDiarioFII.objects.latest('data_hora').data_hora
     
-    print datetime.datetime.now() - inicio
     return TemplateResponse(request, 'fii/painel.html', {'fiis': fiis, 'dados': dados})
 
 @adiciona_titulo_descricao('Sobre FII', 'Detalha o que são Fundos de Investimento Imobiliário')

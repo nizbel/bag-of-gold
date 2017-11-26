@@ -10,7 +10,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         CheckpointProventosFII.objects.all().delete()
         CheckpointFII.objects.all().delete()
-        for operacao in OperacaoFII.objects.all():
+        for operacao in OperacaoFII.objects.filter(quantidade__gt=0):
             post_save.send(OperacaoFII, instance=operacao, created=False)
         for checkpoint in CheckpointFII.objects.all().order_by('investidor', 'ano'):
             print checkpoint.investidor, checkpoint.ano, checkpoint.fii, checkpoint.quantidade, checkpoint.preco_medio

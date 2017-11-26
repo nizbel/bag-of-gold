@@ -68,7 +68,7 @@ class ProventoFII (models.Model):
 
 class OperacaoFII (models.Model):
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)  
-    quantidade = models.IntegerField(u'Quantidade') 
+    quantidade = models.IntegerField(u'Quantidade', validators=[MinValueValidator(1)]) 
     data = models.DateField(u'Data', blank=True, null=True)
     corretagem = models.DecimalField(u'Corretagem', max_digits=11, decimal_places=2)
     emolumentos = models.DecimalField(u'Emolumentos', max_digits=11, decimal_places=2)
