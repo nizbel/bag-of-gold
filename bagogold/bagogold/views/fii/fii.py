@@ -15,6 +15,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
+from django.db.models.expressions import F, Case, When, Value
+from django.db.models.fields import CharField
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -254,20 +256,22 @@ def historico_fii(request):
         return TemplateResponse(request, 'fii/historico.html', {'dados': {}, 'lista_conjunta': list(), 'graf_poupanca_proventos': list(), 
                                                      'graf_gasto_total': list(), 'graf_patrimonio': list()})
         
-    operacoes = OperacaoFII.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data') 
+    operacoes = OperacaoFII.objects.filter(investidor=investidor).exclude(data__isnull=True).annotate(valor_unitario=F('preco_unitario')).annotate(tipo=Case(When(tipo_operacao='C', then=Value('Compra')),
+                                                                                                                                                            When(tipo_operacao='V', then=Value('Venda')),
+                                                                                                                                                            output_field=CharField())).order_by('data') 
     
     # Se investidor não tiver feito operações
     if not operacoes:
         return TemplateResponse(request, 'fii/historico.html', {'dados': {}})
-    
      
-    for operacao in operacoes:
-        operacao.valor_unitario = operacao.preco_unitario
+#     for operacao in operacoes:
+#         operacao.valor_unitario = operacao.preco_unitario
     
-    proventos = ProventoFII.objects.exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).filter(data_ex__gt=operacoes[0].data, fii__in=operacoes.values_list('fii', flat=True)).order_by('data_ex')  
-    for provento in proventos:
-        provento.data = provento.data_ex
-        provento.tipo = 'Provento'
+    proventos = ProventoFII.objects.exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).filter(data_ex__gt=operacoes[0].data, fii__in=operacoes.values_list('fii', flat=True)) \
+        .annotate(tipo=Value('Provento', output_field=CharField())).annotate(data=F('data_ex')).order_by('data_ex')  
+#     for provento in proventos:
+#         provento.data = provento.data_ex
+#         provento.tipo = 'Provento'
     
     # Proventos devem ser computados primeiro na data EX
     lista_conjunta = sorted(chain(proventos, operacoes),
@@ -293,7 +297,7 @@ def historico_fii(request):
         if isinstance(item, OperacaoFII):
             # Verificar se se trata de compra ou venda
             if item.tipo_operacao == 'C':
-                item.tipo = 'Compra'
+#                 item.tipo = 'Compra'
                 uso_proventos = Decimal(0)
                 if item.utilizou_proventos():
                     uso_proventos += item.qtd_proventos_utilizada()
@@ -304,7 +308,7 @@ def historico_fii(request):
                 qtd_papeis[item.fii.ticker] += item.quantidade
                 
             elif item.tipo_operacao == 'V':
-                item.tipo = 'Venda'
+#                 item.tipo = 'Venda'
                 item.total = (item.quantidade * item.preco_unitario - \
                 item.emolumentos - item.corretagem)
                 total_gasto += item.total
@@ -335,16 +339,16 @@ def historico_fii(request):
         if item.data != datetime.date.today():
             for fii in qtd_papeis.keys():
                 # Pegar último dia util com negociação do fii para calculo do patrimonio
-                ultimo_dia_util = item.data
-                while not HistoricoFII.objects.filter(data=ultimo_dia_util, fii__ticker=fii).exists():
-                    ultimo_dia_util -= datetime.timedelta(days=1)
-                patrimonio += (qtd_papeis[fii] * HistoricoFII.objects.get(fii__ticker=fii, data=ultimo_dia_util).preco_unitario)
+                preco_no_dia = HistoricoFII.objects.filter(data__lte=item.data, fii__ticker=fii).order_by('-data')[0].preco_unitario
+#                 while not HistoricoFII.objects.filter(data=ultimo_dia_util, fii__ticker=fii).exists():
+#                     ultimo_dia_util -= datetime.timedelta(days=1)
+                patrimonio += (qtd_papeis[fii] * preco_no_dia)
         else:
             houve_operacao_hoje = True
             for fii in qtd_papeis.keys():
                 # Tenta pegar valor diario, se nao houver, pegar historico do ultimo dia util
-                if ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).exists():
-                    patrimonio += (Decimal(qtd_papeis[fii]) * ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).order_by('-data_hora')[0].preco_unitario)
+                if ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__date=datetime.date.today()).exists():
+                    patrimonio += (Decimal(qtd_papeis[fii]) * ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__date=datetime.date.today()).order_by('-data_hora')[0].preco_unitario)
                 else:
                     patrimonio += (Decimal(qtd_papeis[fii]) * HistoricoFII.objects.filter(fii__ticker=fii).order_by('-data')[0].preco_unitario)
         # Verifica se altera ultima posicao do grafico ou adiciona novo registro
@@ -362,8 +366,8 @@ def historico_fii(request):
         patrimonio = 0
         for fii in qtd_papeis.keys():
             if qtd_papeis[fii] > 0:
-                if ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).exists():
-                    patrimonio += (qtd_papeis[fii] * ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month) \
+                if ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__date=datetime.date.today()).exists():
+                    patrimonio += (qtd_papeis[fii] * ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__date=datetime.date.today()) \
                                    .order_by('-data_hora')[0].preco_unitario)
                 else:
                     patrimonio += (qtd_papeis[fii] * HistoricoFII.objects.filter(fii__ticker=fii).order_by('-data')[0].preco_unitario)
