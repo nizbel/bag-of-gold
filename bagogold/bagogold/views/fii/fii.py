@@ -285,7 +285,7 @@ def historico_fii(request):
     # Verifica se foi adicionada alguma operação na data de hoje
     houve_operacao_hoje = False
     
-    for item in lista_conjunta:   
+    for indice, item in enumerate(lista_conjunta):   
         if item.fii.ticker not in qtd_papeis.keys():
             qtd_papeis[item.fii.ticker] = Decimal(0)       
         # Verificar se se trata de compra, venda ou provento
@@ -310,39 +310,28 @@ def historico_fii(request):
             item.quantidade = qtd_papeis[item.fii.ticker]
             total_proventos += item.total
         
-        # Prepara data
-        data_formatada = str(calendar.timegm(item.data.timetuple()) * 1000)
-        
-        # Verifica se altera ultima posicao do grafico ou adiciona novo registro
-        if len(graf_poupanca_proventos) > 0 and graf_poupanca_proventos[-1][0] == data_formatada:
-            graf_poupanca_proventos[len(graf_gasto_total)-1][1] = float(total_proventos)
-        else:
+        # Verifica se próximo elemento possui a mesma data
+        if indice == len(lista_conjunta) - 1 or item.data != lista_conjunta[indice+1].data:
+            # Prepara data
+            data_formatada = str(calendar.timegm(item.data.timetuple()) * 1000)
+            
             graf_poupanca_proventos += [[data_formatada, float(total_proventos)]]
-        
-        # Verifica se altera ultima posicao do grafico ou adiciona novo registro
-        if len(graf_gasto_total) > 0 and graf_gasto_total[-1][0] == data_formatada:
-            graf_gasto_total[len(graf_gasto_total)-1][1] = float(-total_gasto)
-        else:
             graf_gasto_total += [[data_formatada, float(-total_gasto)]]
-        
-        patrimonio = 0
-        # Verifica se houve operacao hoje
-        if item.data != datetime.date.today():
-            for fii in qtd_papeis.keys():
-                # Pegar último dia util com negociação do fii para calculo do patrimonio
-                patrimonio += (qtd_papeis[fii] * HistoricoFII.objects.filter(data__lte=item.data, fii__ticker=fii).order_by('-data')[0].preco_unitario)
-        else:
-            houve_operacao_hoje = True
-            for fii in qtd_papeis.keys():
-                # Tenta pegar valor diario, se nao houver, pegar historico do ultimo dia util
-                if ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__date=datetime.date.today()).exists():
-                    patrimonio += (Decimal(qtd_papeis[fii]) * ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__date=datetime.date.today()).order_by('-data_hora')[0].preco_unitario)
-                else:
-                    patrimonio += (Decimal(qtd_papeis[fii]) * HistoricoFII.objects.filter(fii__ticker=fii).order_by('-data')[0].preco_unitario)
-        # Verifica se altera ultima posicao do grafico ou adiciona novo registro
-        if len(graf_patrimonio) > 0 and graf_patrimonio[-1][0] == data_formatada:
-            graf_patrimonio[len(graf_gasto_total)-1][1] = float(patrimonio)
-        else:
+            
+            patrimonio = 0
+            # Verifica se houve operacao hoje
+            if item.data != datetime.date.today():
+                for fii in qtd_papeis.keys():
+                    # Pegar último dia util com negociação do fii para calculo do patrimonio
+                    patrimonio += (qtd_papeis[fii] * HistoricoFII.objects.filter(data__lte=item.data, fii__ticker=fii).order_by('-data')[0].preco_unitario)
+            else:
+                houve_operacao_hoje = True
+                for fii in qtd_papeis.keys():
+                    # Tenta pegar valor diario, se nao houver, pegar historico do ultimo dia util
+                    if ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__date=datetime.date.today()).exists():
+                        patrimonio += (Decimal(qtd_papeis[fii]) * ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__date=datetime.date.today()).order_by('-data_hora')[0].preco_unitario)
+                    else:
+                        patrimonio += (Decimal(qtd_papeis[fii]) * HistoricoFII.objects.filter(fii__ticker=fii).order_by('-data')[0].preco_unitario)
             graf_patrimonio += [[data_formatada, float(patrimonio)]]
         
     # Adicionar valor mais atual para todos os gráficos
