@@ -216,11 +216,11 @@ def buscar_proventos_a_receber(investidor, fonte_provento=''):
     """
     proventos_a_receber = list()
     
+    data_atual = datetime.date.today()
+    
     # Buscar proventos em ações
     if fonte_provento != 'F':
         acoes_investidor = buscar_acoes_investidor_na_data(investidor)
-        
-        data_atual = datetime.date.today()
         
         for acao in Acao.objects.filter(id__in=acoes_investidor):
             proventos_a_pagar = Provento.objects.filter(acao=acao, data_ex__lte=data_atual, data_pagamento__gte=data_atual, tipo_provento__in=['D', 'J'])
