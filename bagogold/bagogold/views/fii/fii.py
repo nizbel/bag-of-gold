@@ -273,13 +273,14 @@ def historico_fii(request):
     
     # Eventos
     agrupamentos = EventoAgrupamentoFII.objects.filter(fii__in=operacoes.values_list('fii', flat=True), data__lte=datetime.date.today()) \
-        .annotate(tipo=Value(u'Agrupamento', output_field=CharField())).order_by('data') 
+        .annotate(tipo=Value(u'Agrupamento', output_field=CharField())).annotate(valor_unitario=F('proporcao')).order_by('data') 
 
     desdobramentos = EventoDesdobramentoFII.objects.filter(fii__in=operacoes.values_list('fii', flat=True), data__lte=datetime.date.today()) \
-        .annotate(tipo=Value(u'Desdobramento', output_field=CharField())).order_by('data')
+        .annotate(tipo=Value(u'Desdobramento', output_field=CharField())).annotate(valor_unitario=F('proporcao')).order_by('data')
     
     incorporacoes = EventoIncorporacaoFII.objects.filter(Q(fii__in=operacoes.values_list('fii', flat=True), data__lte=datetime.date.today()) \
-                                                         | Q(novo_fii__in=operacoes.values_list('fii', flat=True), data__lte=datetime.date.today())).annotate(tipo=Value(u'Incorporação', output_field=CharField())).order_by('data')
+                                                         | Q(novo_fii__in=operacoes.values_list('fii', flat=True), data__lte=datetime.date.today())).annotate(tipo=Value(u'Incorporação', output_field=CharField())) \
+                                                         .annotate(valor_unitario=F('novo_fii__ticker')).order_by('data')
 
     
     # Proventos devem ser computados primeiro na data EX
@@ -334,7 +335,6 @@ def historico_fii(request):
                 item.quantidade = 0
                 continue
             item.quantidade = qtd_papeis[item.fii.ticker]
-            item.valor_unitario = item.proporcao
             qtd_papeis[item.fii.ticker] = item.qtd_apos(item.quantidade)
             item.total = qtd_papeis[item.fii.ticker]
                         
@@ -343,7 +343,6 @@ def historico_fii(request):
                 item.quantidade = 0
                 continue
             item.quantidade = qtd_papeis[item.fii.ticker]
-            item.valor_unitario = item.proporcao
             qtd_papeis[item.fii.ticker] = item.qtd_apos(item.quantidade)
             item.total = qtd_papeis[item.fii.ticker]
             
@@ -352,7 +351,6 @@ def historico_fii(request):
                 item.quantidade = 0
                 continue
             item.quantidade = qtd_papeis[item.fii.ticker]
-            item.valor_unitario = item.novo_fii.ticker
             item.total = qtd_papeis[item.fii.ticker]
             qtd_papeis[item.novo_fii.ticker] += qtd_papeis[item.fii.ticker]
             qtd_papeis[item.fii.ticker] = 0
