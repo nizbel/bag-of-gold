@@ -6,14 +6,18 @@ from bagogold.bagogold.forms.fii import OperacaoFIIForm, ProventoFIIForm, \
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII, Divisao
 from bagogold.bagogold.models.fii import OperacaoFII, ProventoFII, HistoricoFII, \
     FII, UsoProventosOperacaoFII, ValorDiarioFII
+from bagogold.bagogold.models.gerador_proventos import ProventoFIIDocumento, \
+    InvestidorValidacaoDocumento
 from bagogold.bagogold.utils.fii import calcular_valor_fii_ate_dia, \
     calcular_poupanca_prov_fii_ate_dia
-from bagogold.bagogold.utils.investidores import is_superuser
+from bagogold.bagogold.utils.investidores import is_superuser, \
+    buscar_proventos_a_receber
 from decimal import Decimal, ROUND_FLOOR
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
+from django.db.models.expressions import F
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
