@@ -325,8 +325,7 @@ def historico_fii(request):
             if qtd_papeis[item.fii.ticker] == 0:
                 item.quantidade = 0
                 continue
-#             item.total = (qtd_papeis[item.fii.ticker] * item.valor_unitario * Decimal(100)).to_integral_exact(rounding=ROUND_FLOOR) / Decimal(100)
-            item.total = (qtd_papeis[item.fii.ticker] * item.valor_unitario).quantize(Decimal('0.01'))
+            item.total = (qtd_papeis[item.fii.ticker] * item.valor_unitario).quantize(Decimal('0.01'), rounding=ROUND_FLOOR)
             item.quantidade = qtd_papeis[item.fii.ticker]
             total_proventos += item.total
             
