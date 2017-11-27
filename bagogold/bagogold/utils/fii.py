@@ -4,7 +4,7 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII, \
 from bagogold.bagogold.models.fii import OperacaoFII, ProventoFII, \
     ValorDiarioFII, HistoricoFII, EventoAgrupamentoFII, EventoDesdobramentoFII, \
     EventoFII, EventoIncorporacaoFII, FII, CheckpointFII, CheckpointProventosFII
-from decimal import Decimal
+from decimal import Decimal, ROUND_FLOOR
 from django.db.models.aggregates import Sum
 from django.db.models.expressions import F, Case, When, Value
 from django.db.models.fields import DecimalField, CharField
