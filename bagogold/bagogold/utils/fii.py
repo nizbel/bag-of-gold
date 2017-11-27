@@ -65,12 +65,12 @@ def calcular_poupanca_prov_fii_ate_dia(investidor, dia=datetime.date.today()):
         elif isinstance(item_lista, ProventoFII):
             if item_lista.data_ex.year == dia.year:
                 if fiis[item_lista.fii.ticker] > 0:
-                    total_recebido = fiis[item_lista.fii.ticker] * item_lista.valor_unitario
+                    total_recebido = (fiis[item_lista.fii.ticker] * item_lista.valor_unitario).quantize(Decimal('0.01'), rounding=ROUND_FLOOR)
                     total_proventos += total_recebido
             else:
                 qtd_na_data_ex = calcular_qtd_fiis_ate_dia_por_ticker(investidor, item_lista.data_ex - datetime.timedelta(days=1), item_lista.fii.ticker)
                 if qtd_na_data_ex > 0:
-                    total_recebido = qtd_na_data_ex * item_lista.valor_unitario
+                    total_recebido = (qtd_na_data_ex * item_lista.valor_unitario).quantize(Decimal('0.01'), rounding=ROUND_FLOOR)
                     total_proventos += total_recebido
 
         # Eventos
@@ -141,7 +141,7 @@ def calcular_poupanca_prov_fii_ate_dia_por_divisao(divisao, dia=datetime.date.to
         # Verifica se é recebimento de proventos
         elif isinstance(item_lista, ProventoFII):
             if fiis[item_lista.fii.ticker] > 0:
-                total_recebido = fiis[item_lista.fii.ticker] * item_lista.valor_unitario
+                total_recebido = (fiis[item_lista.fii.ticker] * item_lista.valor_unitario).quantize(Decimal('0.01'), rounding=ROUND_FLOOR)
                 total_proventos += total_recebido
 
         # Eventos
