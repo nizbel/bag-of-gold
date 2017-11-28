@@ -104,133 +104,106 @@
                 </div>
                 <div class="portlet-body">
                     <div class="row">
-                        <form method="POST" class="col-md-12 horizontal-form">{% csrf_token %}
-                            <div class="row">
-                                <div class="col-md-12">
-                                    <div class="form-group">
-                                        <label class="col-md-1 control-label"> Tipo: </label>
-                                        <div class="col-md-8">
-                                            <div class="md-radio-inline">
-                                                <div class="md-radio">
-                                                    <input type="radio" class="md-radiobtn" name="filtro_tipo" id="filtro_tipo_todos" value="T" 
-                                                    {% if filtros.tipo_investimento == 'T' %}checked{% endif %}>
-                                                    <label for="filtro_tipo_todos">
-                                                        <span></span>
-                                                        <span class="check"></span>
-                                                        <span class="box"></span> Todos 
-                                                    </label>
-                                                </div>
-                                                <div class="md-radio">
-                                                    <input type="radio" class="md-radiobtn" name="filtro_tipo" id="filtro_tipo_dividendos" value="D" 
-                                                    {% if filtros.tipo_investimento == 'D' %}checked{% endif %}>
-                                                    <label for="filtro_tipo_dividendos">
-                                                        <span></span>
-                                                        <span class="check"></span>
-                                                        <span class="box"></span> Dividendos 
-                                                    </label>
-                                                </div>
-                                                <div class="md-radio">
-                                                    <input type="radio" class="md-radiobtn" name="filtro_tipo" id="filtro_tipo_jscp" value="J" 
-                                                    {% if filtros.tipo_investimento == 'J' %}checked{% endif %}>
-                                                    <label for="filtro_tipo_jscp">
-                                                        <span></span>
-                                                        <span class="check"></span>
-                                                        <span class="box"></span> JSCP 
-                                                    </label>
-                                                </div>
-                                                <div class="md-radio">
-                                                    <input type="radio" class="md-radiobtn" name="filtro_tipo" id="filtro_tipo_acoes" value="A" 
-                                                    {% if filtros.tipo_investimento == 'A' %}checked{% endif %}>
-                                                    <label for="filtro_tipo_acoes">
-                                                        <span></span>
-                                                        <span class="check"></span>
-                                                        <span class="box"></span> Proventos em ações 
-                                                    </label>
-                                                </div>
-                                            </div>
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="col-md-1 control-label"> Tipo: </label>
+                                <div class="col-md-8">
+                                    <div class="md-radio-inline">
+                                        <div class="md-radio">
+                                            <input type="radio" class="md-radiobtn" name="filtro_tipo" id="filtro_tipo_todos" value="T" 
+                                            {% if filtros.tipo_provento == 'T' %}checked{% endif %}>
+                                            <label for="filtro_tipo_todos">
+                                                <span></span>
+                                                <span class="check"></span>
+                                                <span class="box"></span> Todos 
+                                            </label>
+                                        </div>
+                                        <div class="md-radio">
+                                            <input type="radio" class="md-radiobtn" name="filtro_tipo" id="filtro_tipo_dividendos" value="D" 
+                                            {% if filtros.tipo_provento == 'D' %}checked{% endif %}>
+                                            <label for="filtro_tipo_dividendos">
+                                                <span></span>
+                                                <span class="check"></span>
+                                                <span class="box"></span> Dividendos 
+                                            </label>
+                                        </div>
+                                        <div class="md-radio">
+                                            <input type="radio" class="md-radiobtn" name="filtro_tipo" id="filtro_tipo_jscp" value="J" 
+                                            {% if filtros.tipo_provento == 'J' %}checked{% endif %}>
+                                            <label for="filtro_tipo_jscp">
+                                                <span></span>
+                                                <span class="check"></span>
+                                                <span class="box"></span> JSCP 
+                                            </label>
+                                        </div>
+                                        <div class="md-radio">
+                                            <input type="radio" class="md-radiobtn" name="filtro_tipo" id="filtro_tipo_acoes" value="A" 
+                                            {% if filtros.tipo_provento == 'A' %}checked{% endif %}>
+                                            <label for="filtro_tipo_acoes">
+                                                <span></span>
+                                                <span class="check"></span>
+                                                <span class="box"></span> Proventos em ações 
+                                            </label>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="col-md-12">
-                                    <label class="control-label col-md-1"> Início da data EX: </label>
-                                    <div class="col-md-2">
-                                        <div class="input-group date date-picker" data-date-format="dd/mm/yyyy">
-                                            <input type="text" class="form-control" name="filtro_inicio_data_ex" id="id_filtro_inicio_data_ex"
-                                            value="{% if filtros.filtro_inicio_data_ex|date:'d/m/Y'|default:'' == '' %}{{filtros.filtro_inicio_data_ex|default:''}}{% else %}{{filtros.filtro_inicio_data_ex|date:'d/m/Y'}}{% endif %}">
-                                            <span class="input-group-btn">
-                                                <button class="btn default" type="button">
-                                                    <i class="fa fa-calendar"></i>
-                                                </button>
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <label class="control-label col-md-1"> Fim da data EX: </label>
-                                    <div class="col-md-2">
-                                        <div class="input-group date date-picker" data-date-format="dd/mm/yyyy">
-                                            <input type="text" class="form-control" name="filtro_fim_data_ex" id="id_filtro_fim_data_ex"
-                                            value="{% if filtros.filtro_fim_data_ex|date:'d/m/Y'|default:'' == '' %}{{filtros.filtro_fim_data_ex|default:''}}{% else %}{{filtros.filtro_fim_data_ex|date:'d/m/Y'}}{% endif %}">
-                                            <span class="input-group-btn">
-                                                <button class="btn default" type="button">
-                                                    <i class="fa fa-calendar"></i>
-                                                </button>
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <label class="control-label col-md-1"> Início da data de pagamento: </label>
-                                    <div class="col-md-2">
-                                        <div class="input-group date date-picker" data-date-format="dd/mm/yyyy">
-                                            <input type="text" class="form-control" name="filtro_inicio_data_pagamento" id="id_filtro_inicio_data_pagamento"
-                                            value="{% if filtros.filtro_inicio_data_pagamento|date:'d/m/Y'|default:'' == '' %}{{filtros.filtro_inicio_data_pagamento|default:''}}{% else %}{{filtros.filtro_inicio_data_pagamento|date:'d/m/Y'}}{% endif %}">
-                                            <span class="input-group-btn">
-                                                <button class="btn default" type="button">
-                                                    <i class="fa fa-calendar"></i>
-                                                </button>
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <label class="control-label col-md-1"> Fim da data de pagamento: </label>
-                                    <div class="col-md-2">
-                                        <div class="input-group date date-picker" data-date-format="dd/mm/yyyy">
-                                            <input type="text" class="form-control" name="filtro_fim_data_pagamento" id="id_filtro_fim_data_pagamento"
-                                            value="{% if filtros.filtro_fim_data_pagamento|date:'d/m/Y'|default:'' == '' %}{{filtros.filtro_fim_data_pagamento|default:''}}{% else %}{{filtros.filtro_fim_data_pagamento|date:'d/m/Y'}}{% endif %}">
-                                            <span class="input-group-btn">
-                                                <button class="btn default" type="button">
-                                                    <i class="fa fa-calendar"></i>
-                                                </button>
-                                            </span>
-                                        </div>
-                                    </div>
-                                    
-                                {% comment %}
-                                    <label class="control-label col-md-1"> Data EX: </label>
-                                    <div class="col-md-3">
-                                        <div class="input-group input-daterange date-picker" data-date-format="dd/mm/yyyy">
-                                            <input type="text" class="form-control" name="filtro_inicio_data_ex" id="id_filtro_inicio_data_ex"
-                                            value="{% if filtros.filtro_inicio_data_ex|date:'d/m/Y'|default:'' == '' %}{{filtros.filtro_inicio_data_ex|default:''}}{% else %}{{filtros.filtro_inicio_data_ex|date:'d/m/Y'}}{% endif %}">
-                                            <span class="input-group-addon"> a </span>
-                                            <input type="text" class="form-control" name="filtro_fim_data_ex" id="id_filtro_fim_data_ex"
-                                            value="{% if filtros.filtro_fim_data_ex|date:'d/m/Y'|default:'' == '' %}{{filtros.filtro_fim_data_ex|default:''}}{% else %}{{filtros.filtro_fim_data_ex|date:'d/m/Y'}}{% endif %}">
-                                        </div>
-                                    </div>
-                                    <label class="control-label col-md-2"> Data de pagamento: </label>
-                                    <div class="col-md-3">
-                                        <div class="input-group input-daterange date-picker" data-date-format="dd/mm/yyyy">
-                                            <input type="text" class="form-control" name="filtro_inicio_data_pagamento" id="id_filtro_inicio_data_pagamento"
-                                            value="{% if filtros.filtro_inicio_data_pagamento|date:'d/m/Y'|default:'' == '' %}{{filtros.filtro_inicio_data_pagamento|default:''}}{% else %}{{filtros.filtro_inicio_data_pagamento|date:'d/m/Y'}}{% endif %}">
-                                            <span class="input-group-addon"> a </span>
-                                            <input type="text" class="form-control" name="filtro_fim_data_pagamento" id="id_filtro_fim_data_pagamento"
-                                            value="{% if filtros.filtro_fim_data_pagamento|date:'d/m/Y'|default:'' == '' %}{{filtros.filtro_fim_data_pagamento|default:''}}{% else %}{{filtros.filtro_fim_data_pagamento|date:'d/m/Y'}}{% endif %}">
-                                        </div>
-                                    </div>
-                                {% endcomment %}
                                 </div>
                             </div>
-                            <div class="row">
-                                <div class="col-md-12">
-                                    <button type="submit" class="btn green-steel">Filtrar</i></button>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="control-label col-md-1"> Início da data EX: </label>
+                            <div class="col-md-2">
+                                <div class="input-group date date-picker" data-date-format="dd/mm/yyyy">
+                                    <input type="text" class="form-control" name="filtro_inicio_data_ex" id="id_filtro_inicio_data_ex"
+                                    value="{% if filtros.filtro_inicio_data_ex|date:'d/m/Y'|default:'' == '' %}{{filtros.filtro_inicio_data_ex|default:''}}{% else %}{{filtros.filtro_inicio_data_ex|date:'d/m/Y'}}{% endif %}">
+                                    <span class="input-group-btn">
+                                        <button class="btn default" type="button">
+                                            <i class="fa fa-calendar"></i>
+                                        </button>
+                                    </span>
                                 </div>
                             </div>
-                        </form>
+                            <label class="control-label col-md-1"> Fim da data EX: </label>
+                            <div class="col-md-2">
+                                <div class="input-group date date-picker" data-date-format="dd/mm/yyyy">
+                                    <input type="text" class="form-control" name="filtro_fim_data_ex" id="id_filtro_fim_data_ex"
+                                    value="{% if filtros.filtro_fim_data_ex|date:'d/m/Y'|default:'' == '' %}{{filtros.filtro_fim_data_ex|default:''}}{% else %}{{filtros.filtro_fim_data_ex|date:'d/m/Y'}}{% endif %}">
+                                    <span class="input-group-btn">
+                                        <button class="btn default" type="button">
+                                            <i class="fa fa-calendar"></i>
+                                        </button>
+                                    </span>
+                                </div>
+                            </div>
+                            <label class="control-label col-md-1"> Início da data de pagamento: </label>
+                            <div class="col-md-2">
+                                <div class="input-group date date-picker" data-date-format="dd/mm/yyyy">
+                                    <input type="text" class="form-control" name="filtro_inicio_data_pagamento" id="id_filtro_inicio_data_pagamento"
+                                    value="{% if filtros.filtro_inicio_data_pagamento|date:'d/m/Y'|default:'' == '' %}{{filtros.filtro_inicio_data_pagamento|default:''}}{% else %}{{filtros.filtro_inicio_data_pagamento|date:'d/m/Y'}}{% endif %}">
+                                    <span class="input-group-btn">
+                                        <button class="btn default" type="button">
+                                            <i class="fa fa-calendar"></i>
+                                        </button>
+                                    </span>
+                                </div>
+                            </div>
+                            <label class="control-label col-md-1"> Fim da data de pagamento: </label>
+                            <div class="col-md-2">
+                                <div class="input-group date date-picker" data-date-format="dd/mm/yyyy">
+                                    <input type="text" class="form-control" name="filtro_fim_data_pagamento" id="id_filtro_fim_data_pagamento"
+                                    value="{% if filtros.filtro_fim_data_pagamento|date:'d/m/Y'|default:'' == '' %}{{filtros.filtro_fim_data_pagamento|default:''}}{% else %}{{filtros.filtro_fim_data_pagamento|date:'d/m/Y'}}{% endif %}">
+                                    <span class="input-group-btn">
+                                        <button class="btn default" type="button">
+                                            <i class="fa fa-calendar"></i>
+                                        </button>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <input type="button" id="btn_filtrar" class="btn green-steel" value="Filtrar" />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -278,5 +251,28 @@
 <script src={% static "assets/global/plugins/select2/js/select2.full.min.js" %} type="text/javascript"></script>
 <script>
 $.fn.dataTable.moment( 'DD/MM/YYYY' );
+$( document ).ready(function() {
+	$('#btn_filtrar').click(function() {
+		var tipo = $('input[name="filtro_tipo"]:checked').val();
+		
+		$.ajax({
+	        url : "{% url 'acoes:geral:listar_proventos_acao' %}",
+	        type : "GET",
+	        data : {tipo: tipo},
+
+	        // handle a successful response
+	        success : function(resultado) {
+	            if (resultado.sucesso) {
+	            	console.log(resultado);
+	            } 
+	        },
+
+	        // handle a non-successful response
+	        error : function(xhr,errmsg,err) {
+	            console.log(xhr.status + ": " + xhr.responseText);
+	        }
+	    });
+	})
+});
 </script>
 {% endblock %}
