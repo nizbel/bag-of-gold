@@ -151,6 +151,7 @@ def detalhar_provento(request, provento_id):
     
     # Se usuário autenticado, mostrar dados do recebimento do provento
     if request.user.is_authenticated():
+        provento.pago = datetime.date.today() > provento.data_pagamento
         provento.qtd_na_data_ex = calcular_qtd_fiis_ate_dia_por_ticker(request.user.investidor, provento.data_ex, provento.fii.ticker)
         provento.valor_recebido = (provento.qtd_na_data_ex * provento.valor_unitario).quantize(Decimal('0.01'), rounding=ROUND_FLOOR)
     

@@ -41,7 +41,7 @@
                         <div class="m-grid-row">
                             <div class="m-grid-col m-grid-col-left"><strong>Quantidade de cotas:</strong></div>
                             <div class="m-grid-col m-grid-col-left">{{provento.qtd_na_data_ex}}</div>
-                            <div class="m-grid-col m-grid-col-left"><strong>Valor recebido:</strong></div>
+                            <div class="m-grid-col m-grid-col-left"><strong>Valor {% if provento.pago %}recebido{% else %}a receber{% endif %}:</strong></div>
                             <div class="m-grid-col m-grid-col-left">R$ {{provento.valor_recebido}}</div>
                         </div>
                         {% endif %}
