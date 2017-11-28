@@ -214,7 +214,7 @@ def listar_proventos(request):
     proventos = Provento.objects.all()
     
     # Montar filtros
-    filtros = {}
+    filtros = {'tipo_investimento': 'T'}
     
     # Buscar últimas atualizações
     ultimas_validacoes = InvestidorValidacaoDocumento.objects.filter(documento__tipo='A').order_by('-data_validacao')[:10] \
@@ -228,7 +228,8 @@ def listar_proventos(request):
     else:
         proximos_proventos = list()
     
-    return TemplateResponse(request, 'acoes/listar_proventos.html', {'proventos': proventos, 'ultimas_atualizacoes': ultimas_atualizacoes, 'proximos_proventos': proximos_proventos})
+    return TemplateResponse(request, 'acoes/listar_proventos.html', {'proventos': proventos, 'ultimas_atualizacoes': ultimas_atualizacoes, 'proximos_proventos': proximos_proventos,
+                                                                     'filtros': filtros})
 
 @adiciona_titulo_descricao('Sobre Ações', 'Detalha o que são Ações')
 def sobre(request):
