@@ -8,7 +8,7 @@ from bagogold.bagogold.utils.acoes import quantidade_acoes_ate_dia, \
     calcular_poupanca_prov_acao_ate_dia
 from bagogold.bagogold.utils.investidores import buscar_acoes_investidor_na_data, \
     buscar_proventos_a_receber
-from decimal import Decimal
+from decimal import Decimal, ROUND_FLOOR
 from django.db.models.expressions import F
 from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
@@ -19,9 +19,17 @@ import datetime
 
 @adiciona_titulo_descricao('Detalhar provento', 'Detalhamento de proventos em ações')
 def detalhar_provento(request, provento_id):
-    provento = Provento.objects.get(id=provento_id)
+    provento = get_object_or_404(Provento, pk=provento_id)
     
-    documentos = ProventoAcaoDocumento.objects.filter(provento=provento)
+    documentos = ProventoAcaoDocumento.objects.filter(provento=provento).order_by('-versao')
+    
+    # Se usuário autenticado, mostrar dados do recebimento do provento
+    if request.user.is_authenticated():
+        provento.qtd_na_data_ex = quantidade_acoes_ate_dia(request.user.investidor, provento.fii.ticker, provento.data_ex, False)
+        provento.valor_recebido = (provento.qtd_na_data_ex * provento.valor_unitario).quantize(Decimal('0.01'), rounding=ROUND_FLOOR)
+    
+    # Preencher última versão
+    provento.ultima_versao = documentos[0].versao
     
     return TemplateResponse(request, 'acoes/detalhar_provento.html', {'provento': provento, 'documentos': documentos})
 

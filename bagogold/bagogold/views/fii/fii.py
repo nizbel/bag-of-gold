@@ -9,7 +9,7 @@ from bagogold.bagogold.models.fii import OperacaoFII, ProventoFII, HistoricoFII,
 from bagogold.bagogold.models.gerador_proventos import ProventoFIIDocumento, \
     InvestidorValidacaoDocumento
 from bagogold.bagogold.utils.fii import calcular_valor_fii_ate_dia, \
-    calcular_poupanca_prov_fii_ate_dia
+    calcular_poupanca_prov_fii_ate_dia, calcular_qtd_fiis_ate_dia_por_ticker
 from bagogold.bagogold.utils.investidores import is_superuser, \
     buscar_proventos_a_receber
 from decimal import Decimal, ROUND_FLOOR
@@ -145,9 +145,17 @@ def calcular_resultado_corretagem(request):
     
 @adiciona_titulo_descricao('Detalhar provento', 'Detalhamento de proventos em FIIs')
 def detalhar_provento(request, provento_id):
-    provento = ProventoFII.objects.get(id=provento_id)
+    provento = get_object_or_404(ProventoFII, pk=provento_id)
     
-    documentos = ProventoFIIDocumento.objects.filter(provento=provento)
+    documentos = ProventoFIIDocumento.objects.filter(provento=provento).order_by('-versao')
+    
+    # Se usuário autenticado, mostrar dados do recebimento do provento
+    if request.user.is_authenticated():
+        provento.qtd_na_data_ex = calcular_qtd_fiis_ate_dia_por_ticker(request.user.investidor, provento.data_ex, provento.fii.ticker)
+        provento.valor_recebido = (provento.qtd_na_data_ex * provento.valor_unitario).quantize(Decimal('0.01'), rounding=ROUND_FLOOR)
+    
+    # Preencher última versão
+    provento.ultima_versao = documentos[0].versao
     
     return TemplateResponse(request, 'fii/detalhar_provento.html', {'provento': provento, 'documentos': documentos})
 
