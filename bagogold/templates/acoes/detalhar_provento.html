@@ -64,10 +64,10 @@
                             <div class="m-grid-col m-grid-col-left"><strong>Quantidade de ações:</strong></div>
                             <div class="m-grid-col m-grid-col-left">{{provento.qtd_na_data_ex}}</div>
                             {% if provento.tipo_provento != 'A' %}
-                                <div class="m-grid-col m-grid-col-left"><strong>Valor recebido:</strong></div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Valor {% if provento.pago %}recebido{% else %}a receber{% endif %}:</strong></div>
                                 <div class="m-grid-col m-grid-col-left">R$ {{provento.valor_recebido}}</div>
                             {% else %}
-                                <div class="m-grid-col m-grid-col-left"><strong>Quantidade recebida:</strong></div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Quantidade {% if provento.pago %}recebida{% else %}a receber{% endif %}:</strong></div>
                                 <div class="m-grid-col m-grid-col-left">{{provento.valor_recebido}} ações</div>
                             {% endif %}
                         </div>

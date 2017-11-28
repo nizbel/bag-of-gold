@@ -25,7 +25,8 @@ def detalhar_provento(request, provento_id):
     
     # Se usuário autenticado, mostrar dados do recebimento do provento
     if request.user.is_authenticated():
-        provento.qtd_na_data_ex = quantidade_acoes_ate_dia(request.user.investidor, provento.fii.ticker, provento.data_ex, False)
+        provento.pago = datetime.date.today() > provento.data_pagamento
+        provento.qtd_na_data_ex = quantidade_acoes_ate_dia(request.user.investidor, provento.acao.ticker, provento.data_ex, False)
         provento.valor_recebido = (provento.qtd_na_data_ex * provento.valor_unitario).quantize(Decimal('0.01'), rounding=ROUND_FLOOR)
     
     # Preencher última versão
