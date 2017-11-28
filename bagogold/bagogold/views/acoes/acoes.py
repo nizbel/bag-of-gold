@@ -16,6 +16,7 @@ from itertools import chain
 from operator import attrgetter
 import calendar
 import datetime
+import math
 
 @adiciona_titulo_descricao('Detalhar provento', 'Detalhamento de proventos em ações')
 def detalhar_provento(request, provento_id):
@@ -27,7 +28,10 @@ def detalhar_provento(request, provento_id):
     if request.user.is_authenticated():
         provento.pago = datetime.date.today() > provento.data_pagamento
         provento.qtd_na_data_ex = quantidade_acoes_ate_dia(request.user.investidor, provento.acao.ticker, provento.data_ex, False)
-        provento.valor_recebido = (provento.qtd_na_data_ex * provento.valor_unitario).quantize(Decimal('0.01'), rounding=ROUND_FLOOR)
+        if provento.tipo_provento != 'A':
+            provento.valor_recebido = (provento.qtd_na_data_ex * provento.valor_unitario).quantize(Decimal('0.01'), rounding=ROUND_FLOOR)
+        else:
+            provento.valor_recebido = int(math.floor(provento.qtd_na_data_ex * provento.valor_unitario / 100))
     
     # Preencher última versão
     provento.ultima_versao = documentos[0].versao
