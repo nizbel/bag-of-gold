@@ -39,11 +39,11 @@
                         <tbody>
                             {% for provento in ultimas_atualizacoes %}
                             <tr>
-                                <td>{{provento.fii.ticker}}</td>
+                                <td><a href="{% url 'fii:detalhar_provento_fii' provento.id %}">{{provento.fii.ticker}}</a></td>
                                 <td>{{provento.descricao_tipo_provento}}</td>
                                 <td>{{provento.data_ex|date:'d/m/Y'}}</td>
                                 <td>{{provento.data_pagamento|date:'d/m/Y'}}</td>
-                                <td>R$ {{provento.valor_final|casas_decimais}}</td>
+                                <td>R$ {{provento.valor_unitario|casas_decimais}}</td>
                                 <td>{{provento.data_insercao|date:'d/m/Y'}}</td>
                             </tr>
                             {% endfor %}
@@ -78,11 +78,11 @@
                         <tbody>
                             {% for provento in proximos_proventos %}
                             <tr>
-                                <td>{{provento.fii.ticker}}</td>
+                                <td><a href="{% url 'fii:detalhar_provento_fii' provento.id %}">{{provento.fii.ticker}}</a></td>
                                 <td>{{provento.descricao_tipo_provento}}</td>
                                 <td>{{provento.data_ex|date:'d/m/Y'}}</td>
                                 <td>{{provento.data_pagamento|date:'d/m/Y'}}</td>
-                                <td>R$ {{provento.valor_final|casas_decimais}}</td>
+                                <td>R$ {{provento.valor_unitario|casas_decimais}}</td>
                                 <td>R$ {{provento.quantia_a_receber}}</td>
                             </tr>
                             {% endfor %}
@@ -110,7 +110,7 @@
                         <td>{{provento.descricao_tipo_provento}}</td>
                         <td>{{provento.data_ex|date:'d/m/Y'}}</td>
                         <td>{{provento.data_pagamento|date:'d/m/Y'}}</td>
-                        <td>R$ {{provento.valor_final|casas_decimais}}</td>
+                        <td>R$ {{provento.valor_unitario|casas_decimais}}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
