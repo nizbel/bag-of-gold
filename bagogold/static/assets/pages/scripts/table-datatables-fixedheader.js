@@ -18,7 +18,9 @@ var TableDatatablesFixedHeader = function () {
 		fixedHeaderOffset = 64; // admin 5 fixed height
 		}
 
-        var oTable = table.dataTable({
+        var oTable = table.filter(function() {
+        	return (! $.fn.DataTable.isDataTable($(this)) && ! ($(this).hasClass('fixedHeader-floating') || $(this).hasClass('fixedHeader-locked')));
+        	}).dataTable({
 
             // Internationalisation. For more info refer to http://datatables.net/manual/i18n
             "language": {

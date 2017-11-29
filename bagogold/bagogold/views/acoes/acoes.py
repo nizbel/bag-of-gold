@@ -255,13 +255,12 @@ def listar_proventos(request):
                 filtros['fim_data_pagamento'] = ''
                 
         proventos = list(query_proventos)
-                
         return HttpResponse(json.dumps(render_to_string('acoes/utils/lista_proventos.html', {'proventos': proventos})), content_type = "application/json")  
     else:
         filtros = {'tipo_provento': 'T', 'inicio_data_ex': '', 'fim_data_ex': '', 'inicio_data_pagamento': '', 'fim_data_pagamento': ''}
         
         query_proventos = Provento.objects.all()
-        
+          
         proventos = list(query_proventos)
     
     # Buscar últimas atualizações
