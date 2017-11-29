@@ -24,4 +24,13 @@
         </tr>
         {% endfor %}
     </tbody>
-</table>
+</table>{% comment %}
+{"data":[   {% for provento in proventos %}[
+                "{{provento.acao.ticker}}",
+                "{{provento.descricao_tipo_provento}}",
+                "{{provento.data_ex|date:'d/m/Y'}}",
+                "{{provento.data_pagamento|date:'d/m/Y'}}",
+                "{% if provento.tipo_provento == 'A' %}{{provento.valor_final|casas_decimais}} %{% else %}R$ {{provento.valor_final|casas_decimais}}{% endif %}"
+            ]{% if forloop.counter < proventos|length %},{% endif %}
+            {% endfor %}]
+}{% endcomment %}

@@ -93,7 +93,7 @@
         </div>
         {% endif %}
         <div class="col-md-12">
-            <div class="portlet box yellow-crusta">
+            <div class="portlet box yellow-crusta" id="filtros">
                 <div class="portlet-title">
                     <div class="caption">
                         <span class="glyphicon glyphicon-filter"></span>Filtros
@@ -208,7 +208,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-12">
+        <div class="col-md-12" id="tabela_proventos">
             <table id="proventos" class="table table-striped table-bordered table-hover table-header-fixed">
                 <thead>
                     <tr>
@@ -253,6 +253,16 @@
 $.fn.dataTable.moment( 'DD/MM/YYYY' );
 $( document ).ready(function() {
 	$('#btn_filtrar').click(function() {
+		App.blockUI({
+	        target: '#filtros',
+	        iconOnly: true,
+	        overlayColor: 'none'
+	    });
+		App.blockUI({
+	        target: '#proventos',
+	        iconOnly: true,
+	        overlayColor: 'none'
+	    });
 		var tipo = $('input[name="filtro_tipo"]:checked').val();
 		
 		$.ajax({
@@ -262,13 +272,17 @@ $( document ).ready(function() {
 
 	        // handle a successful response
 	        success : function(resultado) {
-	            if (resultado.sucesso) {
-	            	console.log(resultado);
-	            } 
+                App.unblockUI('#filtros');
+                App.unblockUI('#proventos');
+                $('#tabela_proventos').html(resultado);
+                TableDatatablesFixedHeader.init();
+                
 	        },
 
 	        // handle a non-successful response
 	        error : function(xhr,errmsg,err) {
+                App.unblockUI('#filtros');
+	        	App.unblockUI('#proventos');
 	            console.log(xhr.status + ": " + xhr.responseText);
 	        }
 	    });
