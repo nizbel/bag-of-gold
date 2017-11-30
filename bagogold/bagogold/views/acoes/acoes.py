@@ -264,12 +264,8 @@ def listar_proventos(request):
         proventos = list(query_proventos)
         return HttpResponse(json.dumps(render_to_string('acoes/utils/lista_proventos.html', {'proventos': proventos})), content_type = "application/json")  
     else:
-        filtros = {'tipo_provento': 'T', 'inicio_data_ex': '', 'fim_data_ex': '', 'inicio_data_pagamento': '', 'fim_data_pagamento': ''}
+        filtros = {'tipo_provento': 'T', 'inicio_data_ex': '', 'fim_data_ex': '', 'inicio_data_pagamento': '', 'fim_data_pagamento': '', 'acoes': ''}
         
-#         query_proventos = Provento.objects.all()
-#           
-#         proventos = list(query_proventos)
-    
     # Buscar últimas atualizações
     ultimas_validacoes = InvestidorValidacaoDocumento.objects.filter(documento__tipo='A').order_by('-data_validacao')[:10] \
         .annotate(provento=F('documento__proventoacaodocumento__provento')).values('provento', 'data_validacao')
@@ -282,8 +278,7 @@ def listar_proventos(request):
     else:
         proximos_proventos = list()
     
-    return TemplateResponse(request, 'acoes/listar_proventos.html', {'proventos': list(), 'ultimas_atualizacoes': ultimas_atualizacoes, 'proximos_proventos': proximos_proventos,
-                                                                     'filtros': filtros})
+    return TemplateResponse(request, 'acoes/listar_proventos.html', {'filtros': filtros, 'ultimas_atualizacoes': ultimas_atualizacoes, 'proximos_proventos': proximos_proventos})
 
 @adiciona_titulo_descricao('Sobre Ações', 'Detalha o que são Ações')
 def sobre(request):
