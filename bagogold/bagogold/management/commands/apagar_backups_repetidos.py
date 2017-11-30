@@ -43,7 +43,7 @@ class Command(BaseCommand):
             
         # Remover da lista ordenada os que tiverem data anterior
         string_data_ult_backup = ultimo_backup_temp.split('-')[4] + ultimo_backup_temp.split('-')[3] + ultimo_backup_temp.split('-')[2] + ultimo_backup_temp.split('-')[1]
-        chegou_na_data = False
+        chegou_na_data = (len(backups_ord) > 0)
         while not chegou_na_data:
             backup = backups_ord[0]
             string_data = backup.split('-')[4] + backup.split('-')[3] + backup.split('-')[2] + backup.split('-')[1]
