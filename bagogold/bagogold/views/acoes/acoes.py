@@ -212,6 +212,8 @@ def listar_acoes(request):
     
     return TemplateResponse(request, 'acoes/listar_acoes.html', {'acoes': acoes})
 
+
+
 @adiciona_titulo_descricao('Lista de proventos', 'Lista os proventos de ações cadastrados')
 def listar_proventos(request):
     # Montar filtros
@@ -226,28 +228,28 @@ def listar_proventos(request):
             
         # Preparar filtros para datas
         # Início data EX
-        filtros['inicio_data_ex'] = request.GET.get('filtro_inicio_data_ex', '')
+        filtros['inicio_data_ex'] = request.GET.get('inicio_data_ex', '')
         if filtros['inicio_data_ex'] != '':
             try:
                 query_proventos = query_proventos.filter(data_ex__gte=datetime.datetime.strptime(filtros['inicio_data_ex'], '%d/%m/%Y'))
             except:
                 filtros['inicio_data_ex'] = ''
         # Fim data EX
-        filtros['fim_data_ex'] = request.GET.get('filtro_fim_data_ex', '')
+        filtros['fim_data_ex'] = request.GET.get('fim_data_ex', '')
         if filtros['fim_data_ex'] != '':
             try:
                 query_proventos = query_proventos.filter(data_ex__lte=datetime.datetime.strptime(filtros['fim_data_ex'], '%d/%m/%Y'))
             except:
                 filtros['fim_data_ex'] = ''
         # Início data pagamento
-        filtros['inicio_data_pagamento'] = request.GET.get('filtro_inicio_data_pagamento', '')
+        filtros['inicio_data_pagamento'] = request.GET.get('inicio_data_pagamento', '')
         if filtros['inicio_data_pagamento'] != '':
             try:
                 query_proventos = query_proventos.filter(data_pagamento__gte=datetime.datetime.strptime(filtros['inicio_data_pagamento'], '%d/%m/%Y'))
             except:
                 filtros['inicio_data_pagamento'] = ''
         # Fim data pagamento
-        filtros['fim_data_pagamento'] = request.GET.get('filtro_fim_data_pagamento', '')
+        filtros['fim_data_pagamento'] = request.GET.get('fim_data_pagamento', '')
         if filtros['fim_data_pagamento'] != '':
             try:
                 query_proventos = query_proventos.filter(data_pagamento__lte=datetime.datetime.strptime(filtros['fim_data_pagamento'], '%d/%m/%Y'))
@@ -259,9 +261,9 @@ def listar_proventos(request):
     else:
         filtros = {'tipo_provento': 'T', 'inicio_data_ex': '', 'fim_data_ex': '', 'inicio_data_pagamento': '', 'fim_data_pagamento': ''}
         
-        query_proventos = Provento.objects.all()
-          
-        proventos = list(query_proventos)
+#         query_proventos = Provento.objects.all()
+#           
+#         proventos = list(query_proventos)
     
     # Buscar últimas atualizações
     ultimas_validacoes = InvestidorValidacaoDocumento.objects.filter(documento__tipo='A').order_by('-data_validacao')[:10] \
@@ -275,7 +277,7 @@ def listar_proventos(request):
     else:
         proximos_proventos = list()
     
-    return TemplateResponse(request, 'acoes/listar_proventos.html', {'proventos': proventos, 'ultimas_atualizacoes': ultimas_atualizacoes, 'proximos_proventos': proximos_proventos,
+    return TemplateResponse(request, 'acoes/listar_proventos.html', {'proventos': list(), 'ultimas_atualizacoes': ultimas_atualizacoes, 'proximos_proventos': proximos_proventos,
                                                                      'filtros': filtros})
 
 @adiciona_titulo_descricao('Sobre Ações', 'Detalha o que são Ações')
