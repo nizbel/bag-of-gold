@@ -149,7 +149,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="form-group col-md-7">
+                                <div class="form-group col-md-5">
                                     <label class="control-label col-md-1"> Ações: </label>
                                     <div class="col-md-11">
                                         <select class="mt-multiselect btn btn-default" multiple="multiple" data-label="left" data-width="100%" data-filter="true" data-height="300" id="id_acoes" name="acoes">
@@ -293,12 +293,16 @@ function buscarDadosTabela() {
     var fim_data_ex = $('#id_filtro_fim_data_ex').val();
     var inicio_data_pagamento = $('#id_filtro_inicio_data_pagamento').val();
     var fim_data_pagamento = $('#id_filtro_fim_data_pagamento').val();
+    var acoes = $('#id_acoes').val();
+    if (acoes != null) {
+    	acoes = acoes.join();
+    }
     
     $.ajax({
         url : "{% url 'acoes:geral:listar_proventos_acao' %}",
         type : "GET",
         data : {tipo: tipo, inicio_data_ex: inicio_data_ex, fim_data_ex: fim_data_ex, inicio_data_pagamento: inicio_data_pagamento, 
-            fim_data_pagamento: fim_data_pagamento},
+            fim_data_pagamento: fim_data_pagamento, acoes : acoes},
 
         // handle a successful response
         success : function(resultado) {
@@ -326,9 +330,6 @@ var ComponentsBootstrapMultiselect = function () {
         init: function () {
             $('.mt-multiselect').each(function(){
                 var btn_class = $(this).attr('class');
-                var collapse_groups = ($(this).data('collapse-groups')) ? $(this).data('collapse-groups') : false ;
-                var drop_right = ($(this).data('drop-right')) ? $(this).data('drop-right') : false ;
-                var drop_up = ($(this).data('drop-up')) ? $(this).data('drop-up') : false ;
                 var width = ($(this).data('width')) ? $(this).data('width') : '' ;
                 var height = ($(this).data('height')) ? $(this).data('height') : '' ;
                 var filter = ($(this).data('filter')) ? $(this).data('filter') : false ;
@@ -344,20 +345,19 @@ var ComponentsBootstrapMultiselect = function () {
 
                 // init multiselect
                 $(this).multiselect({
-                    enableCollapsibleOptGroups: collapse_groups,
                     disableIfEmpty: true,
                     enableFiltering: filter,
-                    filterPlaceholder: 'Escolha até 5 ações',
-                    dropRight: drop_right,
+                    filterPlaceholder: 'Escolha até 10 ações',
+                    enableCaseInsensitiveFiltering: true,
                     buttonWidth: width,
                     maxHeight: height,
                     buttonClass: btn_class,
+                    numberDisplayed: 10,
                     onChange: function(option, checked) {
                         // Get selected options.
                         var selectedOptions = $('#id_acoes option:selected');
-                        console.log(selectedOptions);
          
-                        if (selectedOptions.length >= 5) {
+                        if (selectedOptions.length >= 10) {
                             // Disable all other checkboxes.
                             var nonSelectedOptions = $('#id_acoes option').filter(function() {
                                 return !$(this).is(':selected');
@@ -379,21 +379,7 @@ var ComponentsBootstrapMultiselect = function () {
                         }
                     }
                 });   
-                
-                
-                var options = [
-                    {label: 'Option 1', title: 'Option 1', value: '1', selected: true},
-                    {label: 'Option 2', title: 'Option 2', value: '2'},
-                    {label: 'Option 3', title: 'Option 3', value: '3', selected: true},
-                    {label: 'Option 4', title: 'Option 4', value: '4'},
-                    {label: 'Option 5', title: 'Option 5', value: '5'},
-                    {label: 'Option 6', title: 'Option 6', value: '6', disabled: true},
-                    {label: 'Option 7', title: 'Option 7', value: '7'},
-                    {label: 'Option 8', title: 'Option 8', value: '8'}
-                ];
-                $(this).multiselect('dataprovider', options);
             });
-            
         }
     };
 
@@ -401,6 +387,21 @@ var ComponentsBootstrapMultiselect = function () {
 
 jQuery(document).ready(function() {    
    ComponentsBootstrapMultiselect.init(); 
+   $.ajax({
+       url : "{% url 'acoes:geral:listar_tickers_acoes' %}",
+       type : "GET",
+
+       // handle a successful response
+       success : function(resultado) {
+           var options = JSON.parse(resultado);
+           $('#id_acoes').multiselect('dataprovider', options);
+       },
+
+       // handle a non-successful response
+       error : function(xhr,errmsg,err) {
+           console.log(xhr.status + ": " + xhr.responseText);
+       }
+   });
 });
 </script>
 {% endblock %}

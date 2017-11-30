@@ -212,7 +212,8 @@ def listar_acoes(request):
     
     return TemplateResponse(request, 'acoes/listar_acoes.html', {'acoes': acoes})
 
-
+def listar_tickers_acoes(request):
+    return HttpResponse(json.dumps(render_to_string('acoes/utils/listar_tickers.html', {'acoes': Acao.objects.all().order_by('ticker')})), content_type = "application/json")  
 
 @adiciona_titulo_descricao('Lista de proventos', 'Lista os proventos de ações cadastrados')
 def listar_proventos(request):
@@ -225,6 +226,10 @@ def listar_proventos(request):
             query_proventos = Provento.objects.all()
         else:
             query_proventos = Provento.objects.filter(tipo_provento=filtros['tipo_provento'])
+            
+        filtros['acoes'] = request.GET.get('acoes', '')
+        if filtros['acoes'] != '':
+            query_proventos = query_proventos.filter(acao__id__in=filtros['acoes'].split(','))
             
         # Preparar filtros para datas
         # Início data EX
