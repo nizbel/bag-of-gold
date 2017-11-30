@@ -96,6 +96,7 @@ fiis_patterns = [
     url(r'^historico/$', views.fii.fii.historico_fii, name='historico_fii'),
     url(r'^inserir_operacao_fii/$', views.fii.fii.inserir_operacao_fii, name='inserir_operacao_fii'),
     url(r'^listar_proventos/$', views.fii.fii.listar_proventos, name='listar_proventos_fii'),
+    url(r'^listar_tickers_fiis/$', views.fii.fii.listar_tickers_fiis, name='listar_tickers_fii'),
     url(r'^painel/$', views.fii.fii.painel, name='painel_fii'),
     url(r'^sobre/$', views.fii.fii.sobre, name='sobre_fii'),
     ]
