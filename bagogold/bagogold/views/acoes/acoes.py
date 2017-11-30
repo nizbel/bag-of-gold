@@ -20,6 +20,7 @@ import calendar
 import datetime
 import json
 import math
+import re
 
 @adiciona_titulo_descricao('Detalhar provento', 'Detalhamento de proventos em ações')
 def detalhar_provento(request, provento_id):
@@ -227,7 +228,7 @@ def listar_proventos(request):
         else:
             query_proventos = Provento.objects.filter(tipo_provento=filtros['tipo_provento'])
             
-        filtros['acoes'] = request.GET.get('acoes', '')
+        filtros['acoes'] = re.sub('[^,\d]', '', request.GET.get('acoes', ''))
         if filtros['acoes'] != '':
             query_proventos = query_proventos.filter(acao__id__in=filtros['acoes'].split(','))
             

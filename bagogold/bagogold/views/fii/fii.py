@@ -19,14 +19,17 @@ from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db.models.expressions import F
 from django.forms import inlineformset_factory
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import get_object_or_404
+from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 from itertools import chain
 from operator import attrgetter, itemgetter
 import calendar
 import datetime
+import json
 import math
+import re
 
 
 
@@ -475,10 +478,54 @@ def inserir_provento_fii(request):
 
 @adiciona_titulo_descricao('Lista de proventos', 'Lista os proventos de FIIs cadastrados')
 def listar_proventos(request):
-    proventos = ProventoFII.objects.all()
-    
     # Montar filtros
-    filtros = {}
+    if request.is_ajax():
+        filtros = {}
+        # Preparar filtro por tipo de investimento
+        filtros['tipo_provento'] = request.GET.get('tipo', 'T')
+        if filtros['tipo_provento'] == 'T':
+            query_proventos = ProventoFII.objects.all()
+        else:
+            query_proventos = ProventoFII.objects.filter(tipo_provento=filtros['tipo_provento'])
+            
+        filtros['fiis'] = re.sub('[^,\d]', '', request.GET.get('fiis', ''))
+        if filtros['fiis'] != '':
+            query_proventos = query_proventos.filter(fii__id__in=filtros['fiis'].split(','))
+            
+        # Preparar filtros para datas
+        # Início data EX
+        filtros['inicio_data_ex'] = request.GET.get('inicio_data_ex', '')
+        if filtros['inicio_data_ex'] != '':
+            try:
+                query_proventos = query_proventos.filter(data_ex__gte=datetime.datetime.strptime(filtros['inicio_data_ex'], '%d/%m/%Y'))
+            except:
+                filtros['inicio_data_ex'] = ''
+        # Fim data EX
+        filtros['fim_data_ex'] = request.GET.get('fim_data_ex', '')
+        if filtros['fim_data_ex'] != '':
+            try:
+                query_proventos = query_proventos.filter(data_ex__lte=datetime.datetime.strptime(filtros['fim_data_ex'], '%d/%m/%Y'))
+            except:
+                filtros['fim_data_ex'] = ''
+        # Início data pagamento
+        filtros['inicio_data_pagamento'] = request.GET.get('inicio_data_pagamento', '')
+        if filtros['inicio_data_pagamento'] != '':
+            try:
+                query_proventos = query_proventos.filter(data_pagamento__gte=datetime.datetime.strptime(filtros['inicio_data_pagamento'], '%d/%m/%Y'))
+            except:
+                filtros['inicio_data_pagamento'] = ''
+        # Fim data pagamento
+        filtros['fim_data_pagamento'] = request.GET.get('fim_data_pagamento', '')
+        if filtros['fim_data_pagamento'] != '':
+            try:
+                query_proventos = query_proventos.filter(data_pagamento__lte=datetime.datetime.strptime(filtros['fim_data_pagamento'], '%d/%m/%Y'))
+            except:
+                filtros['fim_data_pagamento'] = ''
+                
+        proventos = list(query_proventos)
+        return HttpResponse(json.dumps(render_to_string('fii/utils/lista_proventos.html', {'proventos': proventos})), content_type = "application/json")  
+    else:
+        filtros = {'tipo_provento': 'T', 'inicio_data_ex': '', 'fim_data_ex': '', 'inicio_data_pagamento': '', 'fim_data_pagamento': '', 'fiis': ''}
     
     # Buscar últimas atualizações
     ultimas_validacoes = InvestidorValidacaoDocumento.objects.filter(documento__tipo='F').order_by('-data_validacao')[:10] \
@@ -492,7 +539,11 @@ def listar_proventos(request):
     else:
         proximos_proventos = list()
     
-    return TemplateResponse(request, 'fii/listar_proventos.html', {'proventos': proventos, 'ultimas_atualizacoes': ultimas_atualizacoes, 'proximos_proventos': proximos_proventos})
+    return TemplateResponse(request, 'fii/listar_proventos.html', {'ultimas_atualizacoes': ultimas_atualizacoes, 'proximos_proventos': proximos_proventos,
+                                                                   'filtros': filtros})
+
+def listar_tickers_fiis(request):
+    return HttpResponse(json.dumps(render_to_string('fii/utils/listar_tickers.html', {'fiis': FII.objects.all().order_by('ticker')})), content_type = "application/json")  
 
 @adiciona_titulo_descricao('Painel de FII', 'Posição atual do investidor em Fundos de Investimento Imobiliário')
 def painel(request):

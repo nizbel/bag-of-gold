@@ -333,7 +333,7 @@ function prepararFiltroAcoes() {
             }
             else {
                 // Enable all checkboxes.
-                $('#acoes option').each(function() {
+                $('#id_acoes option').each(function() {
                     var input = $('input[value="' + $('#id_acoes').val() + '"]');
                     input.prop('disabled', false);
                     input.parent('li').addClass('disabled');
@@ -358,6 +358,5 @@ function prepararFiltroAcoes() {
         }
     });
 }
-
 </script>
 {% endblock %}
