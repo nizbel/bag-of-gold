@@ -8,11 +8,11 @@ from django.template.loader import render_to_string
 import os
 import subprocess
 
-TABELAS_SEM_BACKUP = ['bagogold_valordiarioacao', 'bagogold_valordiariofii', 'bagogold_valordiariotitulo', 'criptomoeda_valordiariocriptomoeda', 
+TABELAS_SEM_CONTEUDO = ['bagogold_valordiarioacao', 'bagogold_valordiariofii', 'bagogold_valordiariotitulo', 'criptomoeda_valordiariocriptomoeda', 
                       'django_session']
 
 class Command(BaseCommand):
-    help = 'Lista tabelas para backup'
+    help = 'Busca tabelas atuais na base e prepara backup'
 
     def handle(self, *args, **options):
         str_tabelas = buscar_tabelas_string()
@@ -60,7 +60,6 @@ def buscar_tabelas_string():
     lista_tabelas = connection.introspection.get_table_list(cursor)
     lista_tabelas = [tabela.name for tabela in lista_tabelas if tabela.type == 't']
     str_lista = ['--table "public.%s"' % (tabela) for tabela in sorted(lista_tabelas)]
-    for tabela in TABELAS_SEM_BACKUP:
-        str_lista.extend(['--exclude-table-data "public.%s"' % (tabela) for tabela in TABELAS_SEM_BACKUP])
+    str_lista.extend(['--exclude-table-data "public.%s"' % (tabela) for tabela in TABELAS_SEM_CONTEUDO])
     str_lista = ' '.join(str_lista)
     return str_lista
