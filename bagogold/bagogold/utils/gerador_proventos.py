@@ -299,10 +299,12 @@ def reverter_provento_fii_para_versao_anterior(provento):
     """
     versao_anterior = ProventoFIIDocumento.objects.filter(provento=provento).order_by('-versao')[1]
     # Copiar dados da versão anterior para provento
-    print provento.id
+    guarda_id = provento.id
     provento = converter_descricao_provento_para_provento_fiis(versao_anterior.descricao_provento)
-    print provento.id
-#     provento.save()
+    provento.id = guarda_id
+    # Se provento estava versionado, é oficial
+    provento.oficial_bovespa = True
+    provento.save()
 
 def reiniciar_documento(documento):
     """
@@ -341,6 +343,7 @@ def reiniciar_documento(documento):
             elif documento.tipo == 'F':
                 for documento_provento in ProventoFIIDocumento.objects.filter(documento=documento):
                     if documento_provento.versao == ProventoFIIDocumento.objects.filter(provento=documento_provento.provento).order_by('-versao')[0].versao:
+                        print documento_provento.provento, documento_provento.versao
                         # Se for a versão 1, apagar provento
                         if documento_provento.versao == 1:
                             documento_provento.provento.delete()
@@ -351,11 +354,12 @@ def reiniciar_documento(documento):
                     else:
                         # Se não é a última, apagar e atualizar versões posteriores
                         versao = documento_provento.versao
+                        provento = documento_provento.provento
                         documento_provento.descricao_provento.delete()
                         documento_provento.delete()
                         
                         # Atualizar versões posteriores
-                        for documento_provento in ProventoFIIDocumento.objects.filter(provento=documento_provento.provento, versao__gt=versao).order_by('versao'):
+                        for documento_provento in ProventoFIIDocumento.objects.filter(provento=provento, versao__gt=versao).order_by('versao'):
                             documento_provento.versao -= 1
                             documento_provento.save()
             
@@ -364,13 +368,10 @@ def reiniciar_documento(documento):
                 documento.baixar_e_salvar_documento()
             
             # Recriar ou atualizar pendência de leitura
-            pendencia, criada = PendenciaDocumentoProvento.objects.get_or_create(documento=documento)
+            pendencia, criada = PendenciaDocumentoProvento.objects.get_or_create(documento=documento, defaults={'tipo': PendenciaDocumentoProvento.TIPO_LEITURA})
             if not criada:
                 pendencia.tipo = PendenciaDocumentoProvento.TIPO_LEITURA
                 pendencia.save()
-            
-            if 2 == 2:
-                raise ValueError('Rolou erro hein')
     except:
         raise
             
