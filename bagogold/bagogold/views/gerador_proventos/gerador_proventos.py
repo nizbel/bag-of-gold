@@ -13,7 +13,9 @@ from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa,
     PendenciaDocumentoProvento, ProventoAcaoDescritoDocumentoBovespa, \
     ProventoAcaoDocumento, InvestidorResponsavelPendencia, \
     AcaoProventoAcaoDescritoDocumentoBovespa, ProventoFIIDocumento, \
-    ProventoFIIDescritoDocumentoBovespa, SelicProventoAcaoDescritoDocBovespa
+    ProventoFIIDescritoDocumentoBovespa, SelicProventoAcaoDescritoDocBovespa, \
+    InvestidorRecusaDocumento, InvestidorLeituraDocumento, \
+    InvestidorValidacaoDocumento
 from bagogold.bagogold.utils.gerador_proventos import \
     alocar_pendencia_para_investidor, desalocar_pendencia_de_investidor, \
     salvar_investidor_responsavel_por_leitura, criar_descricoes_provento_acoes, \
@@ -22,7 +24,9 @@ from bagogold.bagogold.utils.gerador_proventos import \
     salvar_investidor_responsavel_por_validacao, \
     salvar_investidor_responsavel_por_recusar_documento, \
     criar_descricoes_provento_fiis, buscar_proventos_proximos_fii, \
-    versionar_descricoes_relacionadas_fiis, relacionar_proventos_lidos_sistema
+    versionar_descricoes_relacionadas_fiis, relacionar_proventos_lidos_sistema, \
+    reverter_provento_acao_para_versao_anterior, \
+    reverter_provento_fii_para_versao_anterior
 from bagogold.bagogold.utils.investidores import is_superuser
 from bagogold.bagogold.utils.misc import \
     formatar_zeros_a_direita_apos_2_casas_decimais
@@ -36,6 +40,7 @@ from django.db import transaction
 from django.forms.formsets import formset_factory
 from django.forms.models import model_to_dict
 from django.http.response import HttpResponseRedirect, HttpResponse, Http404
+from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 import datetime
@@ -728,6 +733,18 @@ def puxar_responsabilidade_documento_provento(request):
     
     return HttpResponse(json.dumps({'resultado': retorno, 'mensagem': mensagem, 'responsavel': responsavel, 'usuario_responsavel': usuario_responsavel, \
                                     'qtd_pendencias_reservadas': qtd_pendencias_reservadas}), content_type = "application/json") 
+
+@login_required
+@user_passes_test(is_superuser)
+def reiniciar_documento(request, id_documento):
+    documento = get_object_or_404(DocumentoProventoBovespa, pk=id_documento)
+    
+    try:
+        reiniciar_documento(documento)
+    except:
+        print traceback.format_exc()
+    
+                
 
 @login_required
 @user_passes_test(is_superuser)

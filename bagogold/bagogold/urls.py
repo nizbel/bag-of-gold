@@ -114,6 +114,7 @@ gerador_proventos_patterns = [
     url(r'^listar_proventos/$', views.gerador_proventos.gerador_proventos.listar_proventos, name='listar_proventos'),
     url(r'^listar_usuarios/$', views.gerador_proventos.investidores.listar_usuarios, name='listar_usuarios'),
     url(r'^puxar_responsabilidade_documento_provento/$', views.gerador_proventos.gerador_proventos.puxar_responsabilidade_documento_provento, name='puxar_responsabilidade_documento_provento'),
+    url(r'^reiniciar_documento/(?P<id_documento>\d+)/$', views.gerador_proventos.gerador_proventos.reiniciar_documento, name='reiniciar_documento'),
     url(r'^relacionar_proventos_fii/(?P<id_provento_a_relacionar>\d+)/(?P<id_provento_relacionado>\d+)/$', views.gerador_proventos.gerador_proventos.relacionar_proventos_fii_add_pelo_sistema, 
         name='relacionar_proventos_fii'),
     url(r'^remover_responsabilidade_documento_provento/$', views.gerador_proventos.gerador_proventos.remover_responsabilidade_documento_provento, name='remover_responsabilidade_documento_provento'),
