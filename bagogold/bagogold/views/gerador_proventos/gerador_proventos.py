@@ -26,7 +26,7 @@ from bagogold.bagogold.utils.gerador_proventos import \
     criar_descricoes_provento_fiis, buscar_proventos_proximos_fii, \
     versionar_descricoes_relacionadas_fiis, relacionar_proventos_lidos_sistema, \
     reverter_provento_acao_para_versao_anterior, \
-    reverter_provento_fii_para_versao_anterior
+    reverter_provento_fii_para_versao_anterior, reiniciar_documento
 from bagogold.bagogold.utils.investidores import is_superuser
 from bagogold.bagogold.utils.misc import \
     formatar_zeros_a_direita_apos_2_casas_decimais
@@ -736,14 +736,17 @@ def puxar_responsabilidade_documento_provento(request):
 
 @login_required
 @user_passes_test(is_superuser)
-def reiniciar_documento(request, id_documento):
+def reiniciar_documento_proventos(request, id_documento):
     documento = get_object_or_404(DocumentoProventoBovespa, pk=id_documento)
     
     try:
         reiniciar_documento(documento)
+        messages.success(request, 'Documento reiniciado com sucesso')
+        return HttpResponseRedirect(reverse('gerador_proventos:listar_documentos'))
     except:
+        messages.error(request, 'Não foi possível reiniciar documento')
         print traceback.format_exc()
-    
+        return HttpResponseRedirect(reverse('gerador_proventos:detalhar_documento', kwargs={'id_documento': id_documento}))
                 
 
 @login_required

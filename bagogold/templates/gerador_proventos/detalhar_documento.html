@@ -62,7 +62,7 @@
                             </div>
                             <div class="m-grid-col m-grid-col-left">
                                 {% if request.user.is_superuser %}
-                                <a href="{% url 'gerador_proventos:reiniciar_documento' documento.id %}" class="btn btn-warning">Reiniciar documento</a>
+                                <a href="{% url 'gerador_proventos:reiniciar_documento_proventos' documento.id %}" class="btn btn-warning">Reiniciar documento</a>
                                 {% endif %}
                             </div>
                         </div>
