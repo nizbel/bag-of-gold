@@ -265,6 +265,18 @@
                                     <strong>R$ <span data-counter="counterup" data-value="{{usuario.pago|floatformat:'2'}}">0</span></strong>
                                 </p>
                             </div>
+                            <div class="col-md-12">
+                                <div class="list-group">
+						        {% for pagamento in usuario.pagamentos %}
+						            <div class="list-group-item">
+                                        <span class="font-yellow-crusta">R$ {{pagamento.valor}}</span>
+                                        <span class="pull-right">{{pagamento.data|date:'d/m/Y'}}</span>
+                                    </div>
+						        {% empty %}
+						            <div class="list-group-item">Não há pagamentos</div>
+						        {% endfor %}
+					            </div>
+                            </div>
                         </div>
                     </div>
                 </div>

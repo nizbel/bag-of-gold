@@ -22,16 +22,12 @@
                 <div class="portlet-body">
                     <div class="m-grid m-grid-responsive-xs">
                         <div class="m-grid-row">
-                            <div class="m-grid-col m-grid-col-left"><strong>Ação:</strong></div>
-                            <div class="m-grid-col m-grid-col-left">{{provento.acao}}</div>
+                            <div class="m-grid-col m-grid-col-left"><strong>FII:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{provento.fii}}</div>
                             <div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
                             <div class="m-grid-col m-grid-col-left">{{provento.descricao_tipo_provento}}</div>
                             <div class="m-grid-col m-grid-col-left"><strong>Valor unit.:</strong></div>
-                            {% if provento.tipo_provento != 'A' %}
-                                <div class="m-grid-col m-grid-col-left">R$ {{provento.valor_unitario|casas_decimais}}</div>
-                            {% else %}
-                                <div class="m-grid-col m-grid-col-left">{{provento.valor_unitario|casas_decimais}}%</div>
-                            {% endif %}
+                            <div class="m-grid-col m-grid-col-left">R$ {{provento.valor_unitario|casas_decimais}}</div>
                         </div>
                         <div class="m-grid-row">
                             <div class="m-grid-col m-grid-col-left"><strong>Data EX:</strong></div>
@@ -41,35 +37,12 @@
                             <div class="m-grid-col m-grid-col-left"><strong>Versão:</strong></div>
                             <div class="m-grid-col m-grid-col-left">{{provento.ultima_versao}}</div>
                         </div>
-                        {% if provento.tipo_provento == 'A' %}
-                            {% for acao_provento in provento.acoes_recebidas %}
-                            <div class="m-grid-row">
-                                <div class="m-grid-col m-grid-col-left"><strong>Ação recebida:</strong></div>
-                                <div class="m-grid-col m-grid-col-left">{{acao_provento.acao_recebida}}</div>
-                                <div class="m-grid-col m-grid-col-left"><strong>Valor de frações:</strong></div>
-                                <div class="m-grid-col m-grid-col-left">
-                                {% if acao_provento.valor_calculo_frac %}
-                                R$ {{acao_provento.valor_calculo_frac|casas_decimais}}
-                                {% else %}
-                                Não há
-                                {% endif %}
-                                </div>
-                                <div class="m-grid-col m-grid-col-left"><strong>Pagamento de frações:</strong></div>
-                                <div class="m-grid-col m-grid-col-left">{{acao_provento.data_pagamento_frac|date:'d/m/Y'|default:'Não há'}}</div>
-                            </div>
-                            {% endfor %}
-                        {% endif %}
                         {% if request.user.is_authenticated and provento.valor_recebido > 0 %}
                         <div class="m-grid-row">
-                            <div class="m-grid-col m-grid-col-left"><strong>Quantidade de ações:</strong></div>
+                            <div class="m-grid-col m-grid-col-left"><strong>Quantidade de cotas:</strong></div>
                             <div class="m-grid-col m-grid-col-left">{{provento.qtd_na_data_ex}}</div>
-                            {% if provento.tipo_provento != 'A' %}
-                                <div class="m-grid-col m-grid-col-left"><strong>Valor {% if provento.pago %}recebido{% else %}a receber{% endif %}:</strong></div>
-                                <div class="m-grid-col m-grid-col-left">R$ {{provento.valor_recebido}}</div>
-                            {% else %}
-                                <div class="m-grid-col m-grid-col-left"><strong>Quantidade {% if provento.pago %}recebida{% else %}a receber{% endif %}:</strong></div>
-                                <div class="m-grid-col m-grid-col-left">{{provento.valor_recebido}} ações</div>
-                            {% endif %}
+                            <div class="m-grid-col m-grid-col-left"><strong>Valor {% if provento.pago %}recebido{% else %}a receber{% endif %}:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">R$ {{provento.valor_recebido}}</div>
                         </div>
                         {% endif %}
                     </div>
@@ -91,16 +64,12 @@
                     <div class="m-grid m-grid-responsive-xs">
                         {% with provento_documento.descricao_provento as descricao %}
                             <div class="m-grid-row">
-                                <div class="m-grid-col m-grid-col-left"><strong>Ação:</strong></div>
-                                <div class="m-grid-col m-grid-col-left">{{descricao.acao}}</div>
+                                <div class="m-grid-col m-grid-col-left"><strong>FII:</strong></div>
+                                <div class="m-grid-col m-grid-col-left">{{descricao.fii}}</div>
                                 <div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
                                 <div class="m-grid-col m-grid-col-left">{{descricao.descricao_tipo_provento}}</div>
                                 <div class="m-grid-col m-grid-col-left"><strong>Valor unit.:</strong></div>
-                                {% if descricao.tipo_provento != 'A' %}
-                                    <div class="m-grid-col m-grid-col-left">R$ {{descricao.valor_unitario|casas_decimais}}</div>
-                                {% else %}
-                                    <div class="m-grid-col m-grid-col-left">{{descricao.valor_unitario|casas_decimais}}%</div>
-                                {% endif %}
+                                <div class="m-grid-col m-grid-col-left">R$ {{descricao.valor_unitario|casas_decimais}}</div>
                             </div>
                             <div class="m-grid-row">
                                 <div class="m-grid-col m-grid-col-left"><strong>Data EX:</strong></div>
@@ -110,24 +79,6 @@
                                 <div class="m-grid-col m-grid-col-left"><strong>Versão:</strong></div>
                                 <div class="m-grid-col m-grid-col-left">{{provento_documento.versao}}</div>
                             </div>
-                            {% if descricao.tipo_provento == 'A' %}
-                                {% for acao_provento in descricao.acoes_recebidas %}
-                                <div class="m-grid-row">
-                                    <div class="m-grid-col m-grid-col-left"><strong>Ação recebida:</strong></div>
-                                    <div class="m-grid-col m-grid-col-left">{{acao_descricao.acao_recebida}}</div>
-                                    <div class="m-grid-col m-grid-col-left"><strong>Valor de frações:</strong></div>
-                                    <div class="m-grid-col m-grid-col-left">
-                                    {% if acao_descricao.valor_calculo_frac %}
-                                    R$ {{acao_descricao.valor_calculo_frac|casas_decimais}}
-                                    {% else %}
-                                    Não há
-                                    {% endif %}
-                                    </div>
-                                    <div class="m-grid-col m-grid-col-left"><strong>Pagamento de frações:</strong></div>
-                                    <div class="m-grid-col m-grid-col-left">{{acao_provento.data_pagamento_frac|date:'d/m/Y'|default:'Não há'}}</div>
-                                </div>
-                                {% endfor %}
-                            {% endif %}
                         {% endwith %}
                         <div class="m-grid-row">
                             <div class="m-grid-col m-grid-col-left"><strong>Protocolo do documento:</strong></div>

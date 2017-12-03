@@ -28,8 +28,7 @@ from bagogold.cri_cra.utils.utils import calcular_valor_cri_cra_ate_dia, \
     calcular_rendimentos_cri_cra_ate_data
 from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
 from bagogold.criptomoeda.models import OperacaoCriptomoeda, \
-    TransferenciaCriptomoeda
-from bagogold.criptomoeda.utils import buscar_valor_criptomoedas_atual
+    TransferenciaCriptomoeda, ValorDiarioCriptomoeda
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
     HistoricoValorCotas
 from bagogold.outros_investimentos.models import Rendimento, Amortizacao, \
@@ -816,7 +815,9 @@ def detalhamento_investimentos(request):
             # Verifica se é a data atual
             if item.data == datetime.date.today():
                 # Calcular pela função de valores atuais do CryptoCompare
-                patrimonio_criptomoedas = sum([criptomoedas[ticker] * valor for ticker, valor in buscar_valor_criptomoedas_atual(criptomoedas.keys()).items()])
+                patrimonio_criptomoedas = sum([criptomoedas[ticker] * valor for ticker, valor in \
+                                               {valor_diario.criptomoeda.ticker: valor_diario.valor for \
+                                                valor_diario in ValorDiarioCriptomoeda.objects.filter(criptomoeda__ticker__in=criptomoedas.keys(), moeda='BRL')}.items()])
             patrimonio['Criptomoedas'] = patrimonio_criptomoedas
             patrimonio['patrimonio_total'] += patrimonio['Criptomoedas']
             

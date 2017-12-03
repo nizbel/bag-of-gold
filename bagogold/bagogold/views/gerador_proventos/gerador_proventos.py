@@ -22,7 +22,8 @@ from bagogold.bagogold.utils.gerador_proventos import \
     salvar_investidor_responsavel_por_validacao, \
     salvar_investidor_responsavel_por_recusar_documento, \
     criar_descricoes_provento_fiis, buscar_proventos_proximos_fii, \
-    versionar_descricoes_relacionadas_fiis, relacionar_proventos_lidos_sistema
+    versionar_descricoes_relacionadas_fiis, relacionar_proventos_lidos_sistema, \
+    reiniciar_documento
 from bagogold.bagogold.utils.investidores import is_superuser
 from bagogold.bagogold.utils.misc import \
     formatar_zeros_a_direita_apos_2_casas_decimais
@@ -36,6 +37,7 @@ from django.db import transaction
 from django.forms.formsets import formset_factory
 from django.forms.models import model_to_dict
 from django.http.response import HttpResponseRedirect, HttpResponse, Http404
+from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 import datetime
@@ -728,6 +730,21 @@ def puxar_responsabilidade_documento_provento(request):
     
     return HttpResponse(json.dumps({'resultado': retorno, 'mensagem': mensagem, 'responsavel': responsavel, 'usuario_responsavel': usuario_responsavel, \
                                     'qtd_pendencias_reservadas': qtd_pendencias_reservadas}), content_type = "application/json") 
+
+@login_required
+@user_passes_test(is_superuser)
+def reiniciar_documento_proventos(request, id_documento):
+    documento = get_object_or_404(DocumentoProventoBovespa, pk=id_documento)
+    
+    try:
+        reiniciar_documento(documento)
+        messages.success(request, 'Documento reiniciado com sucesso')
+        return HttpResponseRedirect(reverse('gerador_proventos:listar_documentos'))
+    except:
+        messages.error(request, 'Não foi possível reiniciar documento')
+        print traceback.format_exc()
+        return HttpResponseRedirect(reverse('gerador_proventos:detalhar_documento', kwargs={'id_documento': id_documento}))
+                
 
 @login_required
 @user_passes_test(is_superuser)

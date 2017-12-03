@@ -8,20 +8,37 @@ from bagogold.bagogold.utils.acoes import quantidade_acoes_ate_dia, \
     calcular_poupanca_prov_acao_ate_dia
 from bagogold.bagogold.utils.investidores import buscar_acoes_investidor_na_data, \
     buscar_proventos_a_receber
-from decimal import Decimal
+from decimal import Decimal, ROUND_FLOOR
 from django.db.models.expressions import F
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 from itertools import chain
 from operator import attrgetter
 import calendar
 import datetime
+import json
+import math
+import re
 
 @adiciona_titulo_descricao('Detalhar provento', 'Detalhamento de proventos em ações')
 def detalhar_provento(request, provento_id):
-    provento = Provento.objects.get(id=provento_id)
+    provento = get_object_or_404(Provento, pk=provento_id)
     
-    documentos = ProventoAcaoDocumento.objects.filter(provento=provento)
+    documentos = ProventoAcaoDocumento.objects.filter(provento=provento).order_by('-versao')
+    
+    # Se usuário autenticado, mostrar dados do recebimento do provento
+    if request.user.is_authenticated():
+        provento.pago = datetime.date.today() > provento.data_pagamento
+        provento.qtd_na_data_ex = quantidade_acoes_ate_dia(request.user.investidor, provento.acao.ticker, provento.data_ex, False)
+        if provento.tipo_provento != 'A':
+            provento.valor_recebido = (provento.qtd_na_data_ex * provento.valor_unitario).quantize(Decimal('0.01'), rounding=ROUND_FLOOR)
+        else:
+            provento.valor_recebido = int(math.floor(provento.qtd_na_data_ex * provento.valor_unitario / 100))
+    
+    # Preencher última versão
+    provento.ultima_versao = documentos[0].versao
     
     return TemplateResponse(request, 'acoes/detalhar_provento.html', {'provento': provento, 'documentos': documentos})
 
@@ -196,13 +213,60 @@ def listar_acoes(request):
     
     return TemplateResponse(request, 'acoes/listar_acoes.html', {'acoes': acoes})
 
+def listar_tickers_acoes(request):
+    return HttpResponse(json.dumps(render_to_string('acoes/utils/listar_tickers.html', {'acoes': Acao.objects.all().order_by('ticker')})), content_type = "application/json")  
+
 @adiciona_titulo_descricao('Lista de proventos', 'Lista os proventos de ações cadastrados')
 def listar_proventos(request):
-    proventos = Provento.objects.all()
-    
     # Montar filtros
-    filtros = {}
-    
+    if request.is_ajax():
+        filtros = {}
+        # Preparar filtro por tipo de investimento
+        filtros['tipo_provento'] = request.GET.get('tipo', 'T')
+        if filtros['tipo_provento'] == 'T':
+            query_proventos = Provento.objects.all()
+        else:
+            query_proventos = Provento.objects.filter(tipo_provento=filtros['tipo_provento'])
+            
+        filtros['acoes'] = re.sub('[^,\d]', '', request.GET.get('acoes', ''))
+        if filtros['acoes'] != '':
+            query_proventos = query_proventos.filter(acao__id__in=filtros['acoes'].split(','))
+            
+        # Preparar filtros para datas
+        # Início data EX
+        filtros['inicio_data_ex'] = request.GET.get('inicio_data_ex', '')
+        if filtros['inicio_data_ex'] != '':
+            try:
+                query_proventos = query_proventos.filter(data_ex__gte=datetime.datetime.strptime(filtros['inicio_data_ex'], '%d/%m/%Y'))
+            except:
+                filtros['inicio_data_ex'] = ''
+        # Fim data EX
+        filtros['fim_data_ex'] = request.GET.get('fim_data_ex', '')
+        if filtros['fim_data_ex'] != '':
+            try:
+                query_proventos = query_proventos.filter(data_ex__lte=datetime.datetime.strptime(filtros['fim_data_ex'], '%d/%m/%Y'))
+            except:
+                filtros['fim_data_ex'] = ''
+        # Início data pagamento
+        filtros['inicio_data_pagamento'] = request.GET.get('inicio_data_pagamento', '')
+        if filtros['inicio_data_pagamento'] != '':
+            try:
+                query_proventos = query_proventos.filter(data_pagamento__gte=datetime.datetime.strptime(filtros['inicio_data_pagamento'], '%d/%m/%Y'))
+            except:
+                filtros['inicio_data_pagamento'] = ''
+        # Fim data pagamento
+        filtros['fim_data_pagamento'] = request.GET.get('fim_data_pagamento', '')
+        if filtros['fim_data_pagamento'] != '':
+            try:
+                query_proventos = query_proventos.filter(data_pagamento__lte=datetime.datetime.strptime(filtros['fim_data_pagamento'], '%d/%m/%Y'))
+            except:
+                filtros['fim_data_pagamento'] = ''
+                
+        proventos = list(query_proventos)
+        return HttpResponse(json.dumps(render_to_string('acoes/utils/lista_proventos.html', {'proventos': proventos})), content_type = "application/json")  
+    else:
+        filtros = {'tipo_provento': 'T', 'inicio_data_ex': '', 'fim_data_ex': '', 'inicio_data_pagamento': '', 'fim_data_pagamento': '', 'acoes': ''}
+        
     # Buscar últimas atualizações
     ultimas_validacoes = InvestidorValidacaoDocumento.objects.filter(documento__tipo='A').order_by('-data_validacao')[:10] \
         .annotate(provento=F('documento__proventoacaodocumento__provento')).values('provento', 'data_validacao')
@@ -215,7 +279,7 @@ def listar_proventos(request):
     else:
         proximos_proventos = list()
     
-    return TemplateResponse(request, 'acoes/listar_proventos.html', {'proventos': proventos, 'ultimas_atualizacoes': ultimas_atualizacoes, 'proximos_proventos': proximos_proventos})
+    return TemplateResponse(request, 'acoes/listar_proventos.html', {'filtros': filtros, 'ultimas_atualizacoes': ultimas_atualizacoes, 'proximos_proventos': proximos_proventos})
 
 @adiciona_titulo_descricao('Sobre Ações', 'Detalha o que são Ações')
 def sobre(request):

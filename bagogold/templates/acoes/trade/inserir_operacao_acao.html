@@ -12,181 +12,181 @@
 
 {% block content %}
 <div class="portlet-body form">
-		<!-- BEGIN FORM-->
-		<form method="POST" class="horizontal-form">{% csrf_token %}
-			<div class="form-body">
-                <div class="row">
-                    <div class="form-group col-md-3 col-md-offset-3">
-                        <div class="md-radio-inline">
-                            <div class="md-radio">
-                                <input type="radio" class="md-radiobtn" name="radioDT" id="radioOperacao1" value="0" {% if not operacao_day_trade %}checked=""{% endif %}>
-                                <label for="radioOperacao1">
-                                    <span></span>
-                                    <span class="check"></span>
-                                    <span class="box"></span> Operação comum 
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group col-md-3">
-                        <div class="md-radio-inline">
-                            <div class="md-radio">
-                                <input type="radio" class="md-radiobtn" name="radioDT" id="radioOperacao2" value="1" {% if operacao_day_trade %}checked=""{% endif %}>
-                                <label for="radioOperacao2">
-                                    <span></span>
-                                    <span class="check"></span>
-                                    <span class="box"></span> Operação Daytrade 
-                                </label>
-                            </div>
+	<!-- BEGIN FORM-->
+	<form method="POST" class="horizontal-form">{% csrf_token %}
+		<div class="form-body">
+            <div class="row">
+                <div class="form-group col-md-3 col-md-offset-3">
+                    <div class="md-radio-inline">
+                        <div class="md-radio">
+                            <input type="radio" class="md-radiobtn" name="radioDT" id="radioOperacao1" value="0" {% if not operacao_day_trade %}checked=""{% endif %}>
+                            <label for="radioOperacao1">
+                                <span></span>
+                                <span class="check"></span>
+                                <span class="box"></span> Operação comum 
+                            </label>
                         </div>
                     </div>
                 </div>
-				<div class="row">
-					<div class="form-group col-md-6 {% if form_operacao_acao.preco_unitario.errors %} has-error {% endif %}">
-						<label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_acao.preco_unitario.label}}: </label>
-						<div class="col-md-8">
-							<input id="id_preco_unitario" type="text" value="{{form_operacao_acao.preco_unitario.value}}" name="preco_unitario" class="form-control">
-							{% if form_operacao_acao.preco_unitario.errors %} <span class="help-block"> {{ form_operacao_acao.preco_unitario.errors.as_text }} </span> {% endif %}
-						</div>
-					</div>
-					<div class="form-group col-md-6 {% if form_operacao_acao.quantidade.errors %} has-error {% endif %}">
-						<label class="control-label col-md-4"> {{form_operacao_acao.quantidade.label}}: </label>
-						<div class="col-md-8">
-							<input id="id_quantidade" type="text" value="{{form_operacao_acao.quantidade.value}}" name="quantidade" class="form-control">
-							{% if form_operacao_acao.quantidade.errors %} <span class="help-block"> {{ form_operacao_acao.quantidade.errors.as_text }} </span> {% endif %}
-						</div>
-					</div>
-				</div>
-				<div class="row">
-					<div class="form-group col-md-6 {% if form_operacao_acao.data.errors %} has-error {% endif %}">
-						<label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_acao.data.label}}: </label>
-						<div class="col-md-8">
-							<div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy">
-								<input type="text" class="form-control" id="id_data" name="data" 
-                                value="{% if form_operacao_cdb_rdb.data.value|date:'d/m/Y'|default:'' == '' %}{{form_operacao_cdb_rdb.data.value|default:''}}{% else %}{{form_operacao_cdb_rdb.data.value|date:'d/m/Y'}}{% endif %}">
-								<span class="input-group-btn">
-									<button class="btn default" type="button">
-										<i class="fa fa-calendar"></i>
-									</button>
-								</span>
-							</div>
-                            {% if form_operacao_acao.data.errors %} <span class="help-block"> {{ form_operacao_acao.data.errors.as_text }} </span> 
-                            {% else %} <span class="help-block"> Selecione uma data </span>
-                            {% endif %}
-						</div>
-					</div>
-					<div class="form-group col-md-6 {% if form_operacao_acao.corretagem.errors %} has-error {% endif %}">
-						<label class="control-label col-md-4"> {{form_operacao_acao.corretagem.label}}: </label>
-						<div class="col-md-8">
-							<input id="id_corretagem" type="text" value="{{form_operacao_acao.corretagem.value}}" name="corretagem" class="form-control">
-							{% if form_operacao_acao.corretagem.errors %} <span class="help-block"> {{ form_operacao_acao.corretagem.errors.as_text }} </span> {% endif %}
-						</div>
-					</div>
-				</div>
-				<div class="row">
-					<div class="form-group col-md-6 {% if form_operacao_acao.emolumentos.errors %} has-error {% endif %}">
-						<label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_acao.emolumentos.label}}: </label>
-						<div class="col-md-8">
-							<input id="id_emolumentos" type="text" value="{{form_operacao_acao.emolumentos.value}}" name="emolumentos" class="form-control">
-							{% if form_operacao_acao.emolumentos.errors %} <span class="help-block"> {{ form_operacao_acao.emolumentos.errors.as_text }} </span> {% endif %}
-						</div>
-					</div>
-					<div class="form-group col-md-6 {% if form_operacao_acao.tipo_operacao.errors %} has-error {% endif %}">
-						<label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_acao.tipo_operacao.label}}: </label>
-						<div class="col-md-8">
-							<select class="selectpicker form-control" id="id_tipo_operacao" name="tipo_operacao">
-								{% for key, value in form_operacao_acao.fields.tipo_operacao.widget.choices %}<option value="{{ key }}"
-                                {% if key == form_operacao_acao.tipo_operacao.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
-							</select>
-							{% if form_operacao_acao.tipo_operacao.errors %} <span class="help-block"> {{ form_operacao_acao.tipo_operacao.errors.as_text }} </span> {% endif %}
-						</div>
-					</div>
-				</div>
-				<div class="row">
-					<div class="form-group col-md-6 {% if form_operacao_acao.acao.errors %} has-error {% endif %}">
-						<label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_acao.acao.label}}: </label>
-						<div class="col-md-8">
-							<select class="selectpicker form-control" id="id_acao" name="acao">
-								{% for key, value in form_operacao_acao.fields.acao.widget.choices %}<option value="{{ key }}"
-                                {% if key == form_operacao_acao.acao.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
-							</select>
-							{% if form_operacao_acao.acao.errors %} <span class="help-block"> {{ form_operacao_acao.acao.errors.as_text }} </span> {% endif %}
-						</div>
-					</div>
-					<div class="form-group col-md-6 {% if form_operacao_acao.consolidada.errors %} has-error {% endif %}">
-						<label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_acao.consolidada.label}} </label>
-						<div class="col-md-8">
-							<select class="selectpicker form-control" id="id_consolidada" name="consolidada">
-								{% for key, value in form_operacao_acao.fields.consolidada.widget.choices %}<option value="{{ key }}"
-                                {% if key|yesno:'True,False' == form_operacao_acao.consolidada.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
-							</select>
-							{% if form_operacao_acao.consolidada.errors %} <span class="help-block"> {{ form_operacao_acao.consolidada.errors.as_text }} </span> {% endif %}
-						</div>
-					</div>
-				</div>
-				{% if not varias_divisoes %}
-				<div class="row">
-					<div class="form-group col-md-6 {% if form_operacao_acao.qtd_utilizada.errors %} has-error {% endif %}">
-						<label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_acao.qtd_utilizada.label}}: </label>
-						<div class="col-md-8">
-							<input id="id_qtd_utilizada" type="text" value="{{form_operacao_acao.qtd_utilizada.value}}" name="qtd_utilizada" class="form-control">
-							{% if form_operacao_acao.qtd_utilizada.errors %} <span class="help-block"> {{ form_operacao_acao.qtd_utilizada.errors.as_text }} </span> {% endif %}
-						</div>
-					</div>
-				</div>
-				{% else %}
-                <div class="row" id="forms">
-					<h2 class="font-yellow-crusta" align="center">
-						<strong>Divisões</strong> <button id="add-another" class="btn btn-icon-only green-steel" type="button"><i class="fa fa-plus"></i></button>
-					</h2>
-					{{ formset_divisao.management_form }}
-					{% for form_divisao in formset_divisao %}
-					<h3 class="font-yellow-crusta" align="center"><strong>Divisão {{ forloop.counter }}</strong></h3>
-					<br/>
-                    <div class="col-md-12" id="divisao-{{forloop.counter0}}">
-    					<div class="row">
-    						<div class="form-group col-md-6 {% if form_divisao.divisao.errors %} has-error {% endif %}">
-    							<label class="control-label col-md-4" style="text-align: left;"> {{form_divisao.divisao.label}}: </label>
-    							<div class="col-md-8">
-    								<select class="selectpicker form-control" id="id_divisaooperacaoacao_set-{{forloop.counter0}}-divisao" name="divisaooperacaoacao_set-{{forloop.counter0}}-divisao">
-    									{% for key, value in form_divisao.fields.divisao.widget.choices %}<option value="{{ key }}"
-                                        {% if key == form_divisao.divisao.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
-    								</select>
-    								{% if form_divisao.divisao.errors %} <span class="help-block"> {{ form_divisao.divisao.errors.as_text }} </span> {% endif %}
-    							</div>
-    						</div>
-    						<div class="form-group col-md-6 {% if form_divisao.quantidade.errors %} has-error {% endif %}">
-    							<label class="control-label col-md-4"> {{form_divisao.quantidade.label}}: </label>
-    							<div class="col-md-8">
-    								<input id="id_divisaooperacaoacao_set-{{forloop.counter0}}-quantidade" type="text" value="{{form_divisao.quantidade.value}}" name="divisaooperacaoacao_set-{{forloop.counter0}}-quantidade" class="form-control">
-    								{% if form_divisao.quantidade.errors %} <span class="help-block"> {{ form_divisao.quantidade.errors.as_text }} </span> {% endif %}
-    							</div>
-    						</div>
-    					</div>
-    					<div class="row">
-    						<div class="form-group col-md-6 {% if form_divisao.qtd_proventos_utilizada.errors %} has-error {% endif %}">
-    							<label class="control-label col-md-4" style="text-align: left;"> {{form_divisao.qtd_proventos_utilizada.label}}: </label>
-    							<div class="col-md-8">
-    								<input id="id_divisaooperacaoacao_set-{{forloop.counter0}}-qtd_proventos_utilizada" type="text" value="0" name="divisaooperacaoacao_set-{{forloop.counter0}}-qtd_proventos_utilizada" class="form-control">
-    								{% if form_divisao.qtd_proventos_utilizada.errors %} <span class="help-block"> {{ form_divisao.qtd_proventos_utilizada.errors.as_text }} </span> {% endif %}
-    							</div>
-    						</div>
-    					</div>
+                <div class="form-group col-md-3">
+                    <div class="md-radio-inline">
+                        <div class="md-radio">
+                            <input type="radio" class="md-radiobtn" name="radioDT" id="radioOperacao2" value="1" {% if operacao_day_trade %}checked=""{% endif %}>
+                            <label for="radioOperacao2">
+                                <span></span>
+                                <span class="check"></span>
+                                <span class="box"></span> Operação Daytrade 
+                            </label>
+                        </div>
                     </div>
-					{% endfor %}
                 </div>
-				{% endif %}
-				<div class="form-actions">
-					<div class="row">
-						<div class="col-md-offset col-md-3">
-							<button type="submit" name="save" value="1" class="btn green-steel">Salvar</button>
-						</div>
+            </div>
+			<div class="row">
+				<div class="form-group col-md-6 {% if form_operacao_acao.preco_unitario.errors %} has-error {% endif %}">
+					<label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_acao.preco_unitario.label}}: </label>
+					<div class="col-md-8">
+						<input id="id_preco_unitario" type="text" value="{{form_operacao_acao.preco_unitario.value}}" name="preco_unitario" class="form-control">
+						{% if form_operacao_acao.preco_unitario.errors %} <span class="help-block"> {{ form_operacao_acao.preco_unitario.errors.as_text }} </span> {% endif %}
+					</div>
+				</div>
+				<div class="form-group col-md-6 {% if form_operacao_acao.quantidade.errors %} has-error {% endif %}">
+					<label class="control-label col-md-4"> {{form_operacao_acao.quantidade.label}}: </label>
+					<div class="col-md-8">
+						<input id="id_quantidade" type="text" value="{{form_operacao_acao.quantidade.value}}" name="quantidade" class="form-control">
+						{% if form_operacao_acao.quantidade.errors %} <span class="help-block"> {{ form_operacao_acao.quantidade.errors.as_text }} </span> {% endif %}
 					</div>
 				</div>
 			</div>
-		</form>
-		<!-- END FORM-->
-	</div>
+			<div class="row">
+				<div class="form-group col-md-6 {% if form_operacao_acao.data.errors %} has-error {% endif %}">
+					<label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_acao.data.label}}: </label>
+					<div class="col-md-8">
+						<div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy">
+							<input type="text" class="form-control" id="id_data" name="data" 
+                            value="{% if form_operacao_cdb_rdb.data.value|date:'d/m/Y'|default:'' == '' %}{{form_operacao_cdb_rdb.data.value|default:''}}{% else %}{{form_operacao_cdb_rdb.data.value|date:'d/m/Y'}}{% endif %}">
+							<span class="input-group-btn">
+								<button class="btn default" type="button">
+									<i class="fa fa-calendar"></i>
+								</button>
+							</span>
+						</div>
+                        {% if form_operacao_acao.data.errors %} <span class="help-block"> {{ form_operacao_acao.data.errors.as_text }} </span> 
+                        {% else %} <span class="help-block"> Selecione uma data </span>
+                        {% endif %}
+					</div>
+				</div>
+				<div class="form-group col-md-6 {% if form_operacao_acao.corretagem.errors %} has-error {% endif %}">
+					<label class="control-label col-md-4"> {{form_operacao_acao.corretagem.label}}: </label>
+					<div class="col-md-8">
+						<input id="id_corretagem" type="text" value="{{form_operacao_acao.corretagem.value}}" name="corretagem" class="form-control">
+						{% if form_operacao_acao.corretagem.errors %} <span class="help-block"> {{ form_operacao_acao.corretagem.errors.as_text }} </span> {% endif %}
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="form-group col-md-6 {% if form_operacao_acao.emolumentos.errors %} has-error {% endif %}">
+					<label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_acao.emolumentos.label}}: </label>
+					<div class="col-md-8">
+						<input id="id_emolumentos" type="text" value="{{form_operacao_acao.emolumentos.value}}" name="emolumentos" class="form-control">
+						{% if form_operacao_acao.emolumentos.errors %} <span class="help-block"> {{ form_operacao_acao.emolumentos.errors.as_text }} </span> {% endif %}
+					</div>
+				</div>
+				<div class="form-group col-md-6 {% if form_operacao_acao.tipo_operacao.errors %} has-error {% endif %}">
+					<label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_acao.tipo_operacao.label}}: </label>
+					<div class="col-md-8">
+						<select class="selectpicker form-control" id="id_tipo_operacao" name="tipo_operacao">
+							{% for key, value in form_operacao_acao.fields.tipo_operacao.widget.choices %}<option value="{{ key }}"
+                            {% if key == form_operacao_acao.tipo_operacao.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+						</select>
+						{% if form_operacao_acao.tipo_operacao.errors %} <span class="help-block"> {{ form_operacao_acao.tipo_operacao.errors.as_text }} </span> {% endif %}
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="form-group col-md-6 {% if form_operacao_acao.acao.errors %} has-error {% endif %}">
+					<label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_acao.acao.label}}: </label>
+					<div class="col-md-8">
+						<select class="selectpicker form-control" id="id_acao" name="acao">
+							{% for key, value in form_operacao_acao.fields.acao.widget.choices %}<option value="{{ key }}"
+                            {% if key == form_operacao_acao.acao.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+						</select>
+						{% if form_operacao_acao.acao.errors %} <span class="help-block"> {{ form_operacao_acao.acao.errors.as_text }} </span> {% endif %}
+					</div>
+				</div>
+				<div class="form-group col-md-6 {% if form_operacao_acao.consolidada.errors %} has-error {% endif %}">
+					<label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_acao.consolidada.label}} </label>
+					<div class="col-md-8">
+						<select class="selectpicker form-control" id="id_consolidada" name="consolidada">
+							{% for key, value in form_operacao_acao.fields.consolidada.widget.choices %}<option value="{{ key }}"
+                            {% if key|yesno:'True,False' == form_operacao_acao.consolidada.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+						</select>
+						{% if form_operacao_acao.consolidada.errors %} <span class="help-block"> {{ form_operacao_acao.consolidada.errors.as_text }} </span> {% endif %}
+					</div>
+				</div>
+			</div>
+			{% if not varias_divisoes %}
+			<div class="row">
+				<div class="form-group col-md-6 {% if form_uso_proventos.qtd_utilizada.errors %} has-error {% endif %}">
+					<label class="control-label col-md-4" style="text-align: left;"> {{form_uso_proventos.qtd_utilizada.label}}: </label>
+					<div class="col-md-8">
+						<input id="id_qtd_utilizada" type="text" value="{{form_uso_proventos.qtd_utilizada.value}}" name="qtd_utilizada" class="form-control">
+						{% if form_uso_proventos.qtd_utilizada.errors %} <span class="help-block"> {{ form_uso_proventos.qtd_utilizada.errors.as_text }} </span> {% endif %}
+					</div>
+				</div>
+			</div>
+			{% else %}
+            <div class="row" id="forms">
+				<h2 class="font-yellow-crusta" align="center">
+					<strong>Divisões</strong> <button id="add-another" class="btn btn-icon-only green-steel" type="button"><i class="fa fa-plus"></i></button>
+				</h2>
+				{{ formset_divisao.management_form }}
+				{% for form_divisao in formset_divisao %}
+				<h3 class="font-yellow-crusta" align="center"><strong>Divisão {{ forloop.counter }}</strong></h3>
+				<br/>
+                <div class="col-md-12" id="divisao-{{forloop.counter0}}">
+					<div class="row">
+						<div class="form-group col-md-6 {% if form_divisao.divisao.errors %} has-error {% endif %}">
+							<label class="control-label col-md-4" style="text-align: left;"> {{form_divisao.divisao.label}}: </label>
+							<div class="col-md-8">
+								<select class="selectpicker form-control" id="id_divisaooperacaoacao_set-{{forloop.counter0}}-divisao" name="divisaooperacaoacao_set-{{forloop.counter0}}-divisao">
+									{% for key, value in form_divisao.fields.divisao.widget.choices %}<option value="{{ key }}"
+                                    {% if key == form_divisao.divisao.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+								</select>
+								{% if form_divisao.divisao.errors %} <span class="help-block"> {{ form_divisao.divisao.errors.as_text }} </span> {% endif %}
+							</div>
+						</div>
+						<div class="form-group col-md-6 {% if form_divisao.quantidade.errors %} has-error {% endif %}">
+							<label class="control-label col-md-4"> {{form_divisao.quantidade.label}}: </label>
+							<div class="col-md-8">
+								<input id="id_divisaooperacaoacao_set-{{forloop.counter0}}-quantidade" type="text" value="{{form_divisao.quantidade.value}}" name="divisaooperacaoacao_set-{{forloop.counter0}}-quantidade" class="form-control">
+								{% if form_divisao.quantidade.errors %} <span class="help-block"> {{ form_divisao.quantidade.errors.as_text }} </span> {% endif %}
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="form-group col-md-6 {% if form_divisao.qtd_proventos_utilizada.errors %} has-error {% endif %}">
+							<label class="control-label col-md-4" style="text-align: left;"> {{form_divisao.qtd_proventos_utilizada.label}}: </label>
+							<div class="col-md-8">
+								<input id="id_divisaooperacaoacao_set-{{forloop.counter0}}-qtd_proventos_utilizada" type="text" value="0" name="divisaooperacaoacao_set-{{forloop.counter0}}-qtd_proventos_utilizada" class="form-control">
+								{% if form_divisao.qtd_proventos_utilizada.errors %} <span class="help-block"> {{ form_divisao.qtd_proventos_utilizada.errors.as_text }} </span> {% endif %}
+							</div>
+						</div>
+					</div>
+                </div>
+				{% endfor %}
+            </div>
+			{% endif %}
+			<div class="form-actions">
+				<div class="row">
+					<div class="col-md-offset col-md-3">
+						<button type="submit" name="save" value="1" class="btn green-steel">Salvar</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+	<!-- END FORM-->
+</div>
 
 {% endblock %}
 
