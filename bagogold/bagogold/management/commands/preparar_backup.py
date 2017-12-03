@@ -53,7 +53,7 @@ class Command(BaseCommand):
             arquivo.close()
             
             subprocess.call(['sh', '%s/%s' % (settings.BASE_DIR, arquivo_dump)])
-            os.remove(arquivo.nome)
+            os.remove(arquivo.name)
 
 def buscar_tabelas_string():
     cursor = connection.cursor()
