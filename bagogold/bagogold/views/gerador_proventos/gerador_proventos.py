@@ -13,9 +13,7 @@ from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa,
     PendenciaDocumentoProvento, ProventoAcaoDescritoDocumentoBovespa, \
     ProventoAcaoDocumento, InvestidorResponsavelPendencia, \
     AcaoProventoAcaoDescritoDocumentoBovespa, ProventoFIIDocumento, \
-    ProventoFIIDescritoDocumentoBovespa, SelicProventoAcaoDescritoDocBovespa, \
-    InvestidorRecusaDocumento, InvestidorLeituraDocumento, \
-    InvestidorValidacaoDocumento
+    ProventoFIIDescritoDocumentoBovespa, SelicProventoAcaoDescritoDocBovespa
 from bagogold.bagogold.utils.gerador_proventos import \
     alocar_pendencia_para_investidor, desalocar_pendencia_de_investidor, \
     salvar_investidor_responsavel_por_leitura, criar_descricoes_provento_acoes, \
@@ -25,8 +23,7 @@ from bagogold.bagogold.utils.gerador_proventos import \
     salvar_investidor_responsavel_por_recusar_documento, \
     criar_descricoes_provento_fiis, buscar_proventos_proximos_fii, \
     versionar_descricoes_relacionadas_fiis, relacionar_proventos_lidos_sistema, \
-    reverter_provento_acao_para_versao_anterior, \
-    reverter_provento_fii_para_versao_anterior, reiniciar_documento
+    reiniciar_documento
 from bagogold.bagogold.utils.investidores import is_superuser
 from bagogold.bagogold.utils.misc import \
     formatar_zeros_a_direita_apos_2_casas_decimais
