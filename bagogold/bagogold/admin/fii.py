@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.fii import FII, ProventoFII, OperacaoFII, \
-    UsoProventosOperacaoFII, HistoricoFII, ValorDiarioFII
+    UsoProventosOperacaoFII, HistoricoFII, ValorDiarioFII, EventoIncorporacaoFII, \
+    EventoAgrupamentoFII, EventoDesdobramentoFII
 from django.contrib import admin
  
 admin.site.register(FII)
@@ -33,3 +34,20 @@ admin.site.register(HistoricoFII, HistoricoFIIAdmin)
         
 admin.site.register(ValorDiarioFII)
     
+class EventoIncorporacaoFIIAdmin(admin.ModelAdmin):
+    search_fields = ['fii__ticker']
+    list_display = ('fii', 'data', 'novo_fii')
+    
+admin.site.register(EventoIncorporacaoFII, EventoIncorporacaoFIIAdmin)
+    
+class EventoAgrupamentoFIIAdmin(admin.ModelAdmin):
+    search_fields = ['fii__ticker']
+    list_display = ('fii', 'data', 'proporcao')
+    
+admin.site.register(EventoAgrupamentoFII, EventoAgrupamentoFIIAdmin)
+    
+class EventoDesdobramentoFIIAdmin(admin.ModelAdmin):
+    search_fields = ['fii__ticker']
+    list_display = ('fii', 'data', 'proporcao')
+    
+admin.site.register(EventoDesdobramentoFII, EventoDesdobramentoFIIAdmin)

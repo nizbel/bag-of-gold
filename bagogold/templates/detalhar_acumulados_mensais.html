@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% load staticfiles %}
 
+{% block extra_head %}
+<link href={% static "assets/global/plugins/bootstrap-datepicker/css/bootstrap-datepicker3.min.css" %} rel="stylesheet" type="text/css" />
+{% endblock %}
+
 {% block pagina_titulo_icone %}
 <i class="icon-user font-yellow-crusta"></i>
 {% endblock %}
@@ -11,12 +15,58 @@
         Os valores de proventos são considerados a partir da <strong>data EX</strong>
     </div>
 	<div class="row">
+        <div class="col-md-12">
+            <div class="portlet box yellow-crusta">
+				<div class="portlet-title">
+					<div class="caption">
+						<i class="fa fa-filter"></i>Filtros</div>
+					<div class="tools">
+						<a href="javascript:;" class="collapse"></a>
+					</div>
+				</div>
+				<div class="portlet-body">
+                    <div class="row">
+                        <form method="POST" class="col-md-12 horizontal-form" id="form_filtro">{% csrf_token %}
+                            <div class="form-group col-md-4">
+                                <label class="control-label col-md-4" style="text-align: left;"> Mês inicial: </label>
+                                <div class="col-md-8">
+                                    <div class="input-group date date-picker" data-date-format="mm/yyyy" data-date-end-date="0d" id="id_mes_inicial">
+                                        <input type="text" class="form-control" name="mes_inicial"
+                                        value="{% if filtros.mes_inicial|date:'d/m/Y'|default:'' == '' %}{{filtros.mes_inicial|default:''}}{% else %}{{filtros.mes_inicial|date:'d/m/Y'}}{% endif %}">
+                                        <span class="input-group-btn">
+                                            <button class="btn default" type="button">
+                                                <i class="fa fa-calendar"></i>
+                                            </button>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label class="control-label col-md-4" style="text-align: left;"> Mês final: </label>
+                                <div class="col-md-8">
+                                    <div class="input-group date date-picker" data-date-format="mm/yyyy" data-date-end-date="0d" id="id_mes_final">
+                                        <input type="text" class="form-control" name="mes_final"
+                                        value="{% if filtros.mes_final|date:'d/m/Y'|default:'' == '' %}{{filtros.mes_final|default:''}}{% else %}{{filtros.mes_final|date:'d/m/Y'}}{% endif %}">
+                                        <span class="input-group-btn">
+                                            <button class="btn default" type="button">
+                                                <i class="fa fa-calendar"></i>
+                                            </button>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="submit" class="btn btn-warning" value="Buscar acumulados">
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
 		<div class="col-md-3">
 			<!-- BEGIN Portlet PORTLET-->
 			<div class="portlet box yellow-crusta">
 				<div class="portlet-title">
 					<div class="caption">
-						<i class="fa fa-clock-o"></i>Últimos 12 meses</div>
+						<i class="fa fa-clock-o"></i>Acumulado no período</div>
 					<div class="tools">
 						<a href="javascript:;" class="collapse"></a>
 					</div>
@@ -24,7 +74,9 @@
 				<div class="portlet-body" id="periodos_mensais">
                     <div class="text-center">
                         <h4>
-                            Taxa média dos últimos 12 meses
+                        {% with acumulados_mensais|last as ultimo_acumulado %}
+                            Taxa média entre <strong>{{acumulados_mensais.0.0.0}}</strong> e <strong>{{ultimo_acumulado.0.1}}</strong>
+                        {% endwith %}
                         </h4>
                     </div>
                     <div class="text-center font-yellow-crusta">
@@ -81,6 +133,7 @@
 <script src={% static "assets/global/plugins/counterup/jquery.waypoints.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/counterup/jquery.counterup.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/jquery.pulsate.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/moment.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.resize.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.categories.min.js" %} type="text/javascript"></script>
@@ -88,6 +141,8 @@
 <script src={% static "assets/global/plugins/flot/jquery.flot.crosshair.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.axislabels.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.time.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-datepicker/js/bootstrap-datepicker.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-datepicker/locales/bootstrap-datepicker.pt-BR.min.js" %} type="text/javascript"></script>
 <script>
 $( document ).ready(function() {
 	// Adicionar detalhamento ao clicar
@@ -136,7 +191,7 @@ $( document ).ready(function() {
                                         } 
     );
     
-function showTooltip(x, y, contents) {
+    function showTooltip(x, y, contents) {
         
         $('<div id="tooltip">' + contents + '</div>').css( {
             position: 'absolute',
@@ -164,13 +219,69 @@ function showTooltip(x, y, contents) {
                     y = String(item.datapoint[1].toFixed(2)).replace('.', ',');
                 
                 var date = new Date(parseInt(x));
-                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%y") +"</br>" + item.series.label + ": R$" + y);
+                showTooltip(item.pageX, item.pageY, moment.utc(date).format('DD/MM/YYYY') +"</br>" + item.series.label + ": R$" + y);
             }
         }
         else {
             $("#tooltip").remove();
             clicksYet = false;
             previousPoint = null;            
+        }
+    });
+    
+    $('#id_mes_inicial').datepicker({
+        language: 'pt-BR',
+        minViewMode: 'months'
+    }).on('changeDate', function(e) {
+    	// Pegar valor dos inputs
+    	var data = $(this).datepicker('getDate');
+    	var data_fim = $('#id_mes_final').datepicker('getDate');
+    	$('#id_mes_final').datepicker('setStartDate', data);
+    	if (data > data_fim) {
+    		$('#id_mes_final').datepicker('setDate', data);
+    	}
+    	// Buscar data atual e período de 1 ano
+    	var data_atual = new Date();
+    	data_atual.setDate(2);
+    	var data_final = new Date(data);
+    	data_final.setDate(2);
+    	data_final.setMonth(data_final.getMonth() + 11);
+    	// Limitar mês final
+    	var data_limite = (data_atual < data_final ? data_atual : data_final);
+        $('#id_mes_final').datepicker('setEndDate', data_limite);
+        // Verificar se limite afeta mês final
+        if (data_fim > data_limite) {
+            var novo_mes_final = new Date(data_limite);
+            novo_mes_final.setDate(1);
+            $('#id_mes_final').datepicker('setDate', novo_mes_final);
+        }
+    });
+    
+    $('#id_mes_final').datepicker({
+        language: 'pt-BR',
+        minViewMode: 'months'
+    }).on('changeDate', function(e) {
+        // Pegar valor dos inputs
+        var data = $(this).datepicker('getDate');
+        var data_inicio = $('#id_mes_inicial').datepicker('getDate');
+        if (data < data_inicio) {
+            $('#id_mes_inicial').datepicker('setDate', data);
+        }
+    });
+    
+    $('#form_filtro').submit(function() {
+    	if ($('#id_mes_inicial').datepicker('getDate') == null || $('#id_mes_final').datepicker('getDate') == null) {
+            App.alert({ container: '#messages', // alerts parent container
+                        place: 'append', // append or prepent in container 
+                        type: 'danger', // alert's type 
+                        message: 'Ambos os campos do filtro devem ser preenchidos', // alert's message 
+                        close: true, // make alert closable 
+                        reset: false, // close all previouse alerts first 
+                        focus: true, // auto scroll to the alert after shown 
+                        closeInSeconds: 60, // auto close after defined seconds 
+                        icon: 'fa fa-warning' // put icon class before the message 
+                    });
+            return false;
         }
     });
 });

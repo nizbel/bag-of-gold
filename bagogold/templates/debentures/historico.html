@@ -148,6 +148,7 @@
 <script src={% static "assets/global/plugins/datatables/datatables.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.js" %} type="text/javascript"></script>
 <script src={% static "assets/pages/scripts/table-datatables-fixedheader.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/moment.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.axislabels.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.categories.min.js" %} type="text/javascript"></script>
@@ -201,7 +202,7 @@ $( document ).ready(function() {
                     y = item.datapoint[1].toFixed(2);
                 
                 var date = new Date(parseInt(x));
-                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%y") +"</br>" + item.series.label + ": R$" + y.replace('.', ','));
+                showTooltip(item.pageX, item.pageY, moment.utc(date).format('DD/MM/YYYY') +"</br>" + item.series.label + ": R$" + y.replace('.', ','));
             }
         }
         else {

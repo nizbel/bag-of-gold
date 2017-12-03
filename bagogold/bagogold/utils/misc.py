@@ -283,7 +283,7 @@ def formatar_zeros_a_direita_apos_2_casas_decimais(valor):
     """
     if valor == 0:
         return '0.00'
-    str_valor_formatado = '{0:f}'.format(valor)
+    str_valor_formatado = str(valor)
     if '.' in str_valor_formatado:
         # Formatar número com casas decimais
         parte_inteira = str_valor_formatado.split('.')[0]
@@ -337,17 +337,6 @@ def buscar_dia_util_aleatorio(data_inicial, data_final):
         data_aleatoria = buscar_data_aleatoria(data_inicial, data_final)
     return data_aleatoria
 
-def converter_date_para_utc(data):
-    if isinstance(data, datetime.date):
-        # Verificar offset atual
-        dt = datetime.datetime.now()
-        offset_seconds = timezone.get_current_timezone().utcoffset(dt).total_seconds()
-        
-        date_utc = datetime.datetime(year=data.year, month=data.month, day=data.day) - datetime.timedelta(seconds=offset_seconds)
-        return date_utc 
-    else:
-        raise ValueError('Objeto deve ser do tipo date')
-    
 def formatar_lista_para_string_create(lista):
     for objeto in lista:
         print '%s.objects.create(' % (objeto.__class__.__name__) + ', '.join(['%s=%s' % (field.name, getattr(objeto, field.name)) for field in objeto._meta.fields if field.name != 'id']) + ')'

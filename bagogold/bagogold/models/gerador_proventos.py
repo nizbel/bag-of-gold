@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 from bagogold import settings
-from bagogold.bagogold.models.acoes import Acao
 from bagogold.bagogold.testFII import baixar_demonstrativo_rendimentos
+from decimal import Decimal
 from django.core.files import File
+from django.core.validators import MinLengthValidator
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 import os
-import re
-from django.core.validators import MinLengthValidator
 
 def ticker_path(instance, filename):
     return 'doc proventos/{0}/{1}'.format(instance.ticker_empresa(), filename)
@@ -100,9 +99,8 @@ class DocumentoProventoBovespa (models.Model):
             return 'Tipo indefinido'
     
     def ultima_recusa(self):
-        recusas = InvestidorRecusaDocumento.objects.filter(documento=self).order_by('-data_recusa')
-        if recusas:
-            return recusas[0]
+        if InvestidorRecusaDocumento.objects.filter(documento=self).exists():
+            return InvestidorRecusaDocumento.objects.filter(documento=self).order_by('-data_recusa')[0]
         return None
 
 @receiver(post_save, sender=DocumentoProventoBovespa, dispatch_uid="documento_provento_bovespa_criado")
@@ -166,6 +164,9 @@ class InvestidorValidacaoDocumento (models.Model):
         return unicode(self.investidor)
             
 class PendenciaDocumentoProvento (models.Model):
+    TIPO_LEITURA = 'L'
+    TIPO_VALIDACAO = 'V'
+    
     documento = models.ForeignKey('DocumentoProventoBovespa')
     data_criacao = models.DateField(auto_now_add=True)
     """
@@ -270,3 +271,13 @@ class ProventoFIIDescritoDocumentoBovespa (models.Model):
             return u'Rendimento'
         else:
             return u'Indefinido'
+            
+class PagamentoLeitura (models.Model):
+    VALOR_HORA = Decimal(25)
+
+    investidor = models.ForeignKey('Investidor')
+    data = models.DateField(u'Data do pagamento')
+    valor = models.DecimalField(u'Valor pago', decimal_places=2, max_digits=6)
+    
+    def __unicode__(self):
+        return u'R$ %s pagos a %s em %s' % (self.valor, self.investidor, self.data.strftime('%d/%m/%Y'))

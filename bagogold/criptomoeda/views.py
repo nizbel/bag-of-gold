@@ -5,11 +5,13 @@ from bagogold.bagogold.forms.divisoes import DivisaoOperacaoCriptomoedaFormSet, 
     DivisaoTransferenciaCriptomoedaFormSet
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoCriptomoeda, \
     Divisao, DivisaoTransferenciaCriptomoeda
-from bagogold.bagogold.utils.misc import converter_date_para_utc
 from bagogold.criptomoeda.forms import OperacaoCriptomoedaForm, \
     TransferenciaCriptomoedaForm
 from bagogold.criptomoeda.models import Criptomoeda, OperacaoCriptomoeda, \
-    OperacaoCriptomoedaMoeda, OperacaoCriptomoedaTaxa, TransferenciaCriptomoeda
+    OperacaoCriptomoedaMoeda, OperacaoCriptomoedaTaxa, TransferenciaCriptomoeda, \
+    ValorDiarioCriptomoeda
+from bagogold.criptomoeda.utils import buscar_valor_criptomoedas_atual, \
+    calcular_qtd_moedas_ate_dia
 from bagogold.fundo_investimento.utils import \
     calcular_qtd_cotas_ate_dia_por_fundo
 from decimal import Decimal
@@ -24,13 +26,10 @@ from django.http.response import HttpResponseRedirect
 from django.template.response import TemplateResponse
 from itertools import chain
 from operator import attrgetter
-from urllib2 import urlopen
 import calendar
 import datetime
 import json
 import traceback
-from bagogold.criptomoeda.utils import buscar_valor_criptomoedas_atual,\
-    calcular_qtd_moedas_ate_dia
 
 @login_required
 @adiciona_titulo_descricao('Editar operação em criptomoeda', 'Alterar valores de uma operação de compra/venda em criptomoeda')
@@ -87,7 +86,7 @@ def editar_operacao_criptomoeda(request, id_operacao):
                             if settings.ENV == 'DEV':
                                 raise
                             elif settings.ENV == 'PROD':
-                                mail_admins(u'Erro ao editar operação em criptomoeda com várias divisões', traceback.format_exc())
+                                mail_admins(u'Erro ao editar operação em criptomoeda com várias divisões', traceback.format_exc().decode('utf-8'))
                     for erro in formset_divisao.non_form_errors():
                         messages.error(request, erro)
                         
@@ -122,7 +121,7 @@ def editar_operacao_criptomoeda(request, id_operacao):
                         if settings.ENV == 'DEV':
                             raise
                         elif settings.ENV == 'PROD':
-                            mail_admins(u'Erro ao editar operação em criptomoeda com uma divisão', traceback.format_exc())
+                            mail_admins(u'Erro ao editar operação em criptomoeda com uma divisão', traceback.format_exc().decode('utf-8'))
                 
             for erro in [erro for erro in form_operacao_criptomoeda.non_field_errors()]:
                 messages.error(request, erro)
@@ -200,7 +199,7 @@ def editar_transferencia(request, id_transferencia):
                             if settings.ENV == 'DEV':
                                 raise
                             elif settings.ENV == 'PROD':
-                                mail_admins(u'Erro ao editar transferência para criptomoeda com várias divisões', traceback.format_exc())
+                                mail_admins(u'Erro ao editar transferência para criptomoeda com várias divisões', traceback.format_exc().decode('utf-8'))
                     for erro in formset_divisao.non_form_errors():
                         messages.error(request, erro)
                         
@@ -218,7 +217,7 @@ def editar_transferencia(request, id_transferencia):
                         if settings.ENV == 'DEV':
                             raise
                         elif settings.ENV == 'PROD':
-                            mail_admins(u'Erro ao editar transferência para criptomoeda com uma divisão', traceback.format_exc())
+                            mail_admins(u'Erro ao editar transferência para criptomoeda com uma divisão', traceback.format_exc().decode('utf-8'))
                 
             for erro in [erro for erro in form_transferencia_criptomoeda.non_field_errors()]:
                 messages.error(request, erro)
@@ -364,7 +363,7 @@ def historico(request):
             
         total_investido = sum([(moeda.preco_medio * moeda.qtd) for moeda in moedas.values() if moeda.qtd > 0])
         
-        data_formatada = str(calendar.timegm(converter_date_para_utc(movimentacao.data).timetuple()) * 1000)
+        data_formatada = str(calendar.timegm(movimentacao.data.timetuple()) * 1000)
         # Adicionar no gráfico
         if graf_investido_total and data_formatada == graf_investido_total[-1][0]:
             graf_investido_total[-1][1] = float(total_investido)
@@ -380,7 +379,7 @@ def historico(request):
             graf_patrimonio += [[data_formatada, data_formatada_utc, patrimonio]]
             
     # Adicionar data atual formatada
-    data_formatada = str(calendar.timegm(converter_date_para_utc(datetime.date.today()).timetuple()) * 1000)
+    data_formatada = str(calendar.timegm(datetime.date.today().timetuple()) * 1000)
     # Se não existe a data em um gráfico, nenhum gráfico tem a data
     if not (graf_investido_total and data_formatada == graf_investido_total[-1][0]):
         graf_investido_total += [[data_formatada, float(total_investido)]]
@@ -390,7 +389,8 @@ def historico(request):
     
     dados = {}
     dados['total_investido'] = sum([(moeda.preco_medio * moeda.qtd) for moeda in moedas.values() if moeda.qtd > 0])
-    dados['patrimonio'] = sum([moedas[ticker].qtd * valor for ticker, valor in buscar_valor_criptomoedas_atual(moedas.keys()).items()])
+    dados['patrimonio'] = sum([moedas[ticker].qtd * valor for ticker, valor in {valor_diario.criptomoeda.ticker: valor_diario.valor for \
+                                                valor_diario in ValorDiarioCriptomoeda.objects.filter(criptomoeda__ticker__in=moedas.keys(), moeda='BRL')}.items()])
     dados['lucro'] = dados['patrimonio'] - dados['total_investido']
     dados['lucro_percentual'] = dados['lucro'] / (dados['total_investido'] or 1) * 100
     
@@ -441,7 +441,7 @@ def inserir_operacao_criptomoeda(request):
                         if settings.ENV == 'DEV':
                             raise
                         elif settings.ENV == 'PROD':
-                            mail_admins(u'Erro ao gerar operação em criptomoeda com várias divisões', traceback.format_exc())
+                            mail_admins(u'Erro ao gerar operação em criptomoeda com várias divisões', traceback.format_exc().decode('utf-8'))
                 for erro in formset_divisao.non_form_errors():
                     messages.error(request, erro)
             else:
@@ -463,7 +463,7 @@ def inserir_operacao_criptomoeda(request):
                     if settings.ENV == 'DEV':
                         raise
                     elif settings.ENV == 'PROD':
-                        mail_admins(u'Erro ao gerar operação em criptomoeda com uma divisão', traceback.format_exc())
+                        mail_admins(u'Erro ao gerar operação em criptomoeda com uma divisão', traceback.format_exc().decode('utf-8'))
             
         for erro in [erro for erro in form_operacao_criptomoeda.non_field_errors()]:
             messages.error(request, erro)
@@ -512,7 +512,7 @@ def inserir_transferencia(request):
                         if settings.ENV == 'DEV':
                             raise
                         elif settings.ENV == 'PROD':
-                            mail_admins(u'Erro ao gerar transferência para criptomoedas com várias divisões', traceback.format_exc())
+                            mail_admins(u'Erro ao gerar transferência para criptomoedas com várias divisões', traceback.format_exc().decode('utf-8'))
                 for erro in formset_divisao.non_form_errors():
                     messages.error(request, erro)
             else:
@@ -528,7 +528,7 @@ def inserir_transferencia(request):
                     if settings.ENV == 'DEV':
                         raise
                     elif settings.ENV == 'PROD':
-                        mail_admins(u'Erro ao gerar transferência para criptomoedas com uma divisão', traceback.format_exc())
+                        mail_admins(u'Erro ao gerar transferência para criptomoedas com uma divisão', traceback.format_exc().decode('utf-8'))
             
         for erro in [erro for erro in form_transferencia_criptomoeda.non_field_errors()]:
             messages.error(request, erro)
@@ -541,25 +541,13 @@ def inserir_transferencia(request):
     return TemplateResponse(request, 'criptomoedas/inserir_transferencia.html', {'form_transferencia_criptomoeda': form_transferencia_criptomoeda, \
                                                                                               'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})
 
-@adiciona_titulo_descricao('Listar criptomoedas cadastrados', 'Lista as criptomoedas no sistema')
+@adiciona_titulo_descricao('Listar criptomoedas cadastradas', 'Lista as criptomoedas no sistema')
 def listar_criptomoedas(request):
     moedas = Criptomoeda.objects.all()
-    
-    # Carrega o valor de um dólar em reais, mais atual
-    url_dolar = 'http://api.fixer.io/latest?base=USD&symbols=BRL'
-    resultado = urlopen(url_dolar)
-    data = json.load(resultado) 
-    dolar_para_real = Decimal(data['rates']['BRL'])
-    
+    valores_diarios = ValorDiarioCriptomoeda.objects.all().values('valor')
     for moeda in moedas:
-        url = 'https://api.cryptonator.com/api/ticker/%s-usd' % (moeda.ticker)
-        resultado = urlopen(url)
-        data = json.load(resultado) 
-        if data['success']:
-            moeda.valor_atual_dolar = Decimal(data['ticker']['price'])
-            moeda.valor_atual = dolar_para_real * moeda.valor_atual_dolar
-            if moeda.ticker == 'BTC':
-                btc_para_dolar = moeda.valor_atual_dolar
+        moeda.valor_atual = valores_diarios.get(criptomoeda=moeda, moeda=ValorDiarioCriptomoeda.MOEDA_REAL)['valor']
+        moeda.valor_atual_dolar = valores_diarios.get(criptomoeda=moeda, moeda=ValorDiarioCriptomoeda.MOEDA_DOLAR)['valor']
     
     return TemplateResponse(request, 'criptomoedas/listar_moedas.html', {'moedas': moedas})
 

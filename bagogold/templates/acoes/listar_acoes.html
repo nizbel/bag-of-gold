@@ -23,7 +23,7 @@
 		<tbody>
 		{% for acao in acoes %}
 		<tr>
-			<td><a href="{% url 'acoes:bh:estatisticas_acao_bh' acao.ticker %}" class="tooltips" data-placement="top" data-original-title="Estatísticas da ação">{{acao.ticker}}</a></td>
+			<td><a href="{% url 'acoes:geral:estatisticas_acao_bh' acao.ticker %}" class="tooltips" data-placement="top" data-original-title="Estatísticas da ação">{{acao.ticker}}</a></td>
             <td>{{acao.descricao_tipo}}</td>
 			<td>{{acao.empresa.nome}}</td>
 		</tr>

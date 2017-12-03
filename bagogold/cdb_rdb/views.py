@@ -26,8 +26,6 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.db.models import Count
-from django.db.models.aggregates import Sum
-from django.db.models.expressions import F
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -180,7 +178,6 @@ def editar_historico_carencia(request, historico_carencia_id):
                 messages.error(request, 'Valor inicial de carência não pode ser excluído')
                 return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': historico_carencia.cdb_rdb.id}))
             # Pegar investimento para o redirecionamento no caso de exclusão
-            inicial = False
             cdb_rdb = historico_carencia.cdb_rdb
             historico_carencia.delete()
             messages.success(request, 'Histórico de carência excluído com sucesso')
@@ -231,7 +228,6 @@ def editar_historico_porcentagem(request, historico_porcentagem_id):
                 messages.error(request, 'Valor inicial de porcentagem não pode ser excluído')
                 return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': historico_porcentagem.cdb_rdb.id}))
             # Pegar investimento para o redirecionamento no caso de exclusão
-            inicial = False
             cdb_rdb = historico_porcentagem.cdb_rdb
             historico_porcentagem.delete()
             messages.success(request, 'Histórico de porcentagem excluído com sucesso')
@@ -282,7 +278,6 @@ def editar_historico_vencimento(request, historico_vencimento_id):
                 messages.error(request, 'Valor inicial de vencimento não pode ser excluído')
                 return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': historico_vencimento.cdb_rdb.id}))
             # Pegar investimento para o redirecionamento no caso de exclusão
-            inicial = False
             cdb_rdb = historico_vencimento.cdb_rdb
             historico_vencimento.delete()
             messages.success(request, 'Histórico de vencimento excluído com sucesso')

@@ -33,7 +33,7 @@ admin.site.register(OperacaoCompraVenda)
 
 class HistoricoAcaoAdmin(admin.ModelAdmin):
     search_fields = ['acao__ticker', 'data']
-    list_display = ('acao', 'preco_unitario', 'data')
+    list_display = ('acao', 'preco_unitario', 'data', 'oficial_bovespa')
     
 admin.site.register(HistoricoAcao, HistoricoAcaoAdmin)
     

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold import settings
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.fii import FII, ProventoFII
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
@@ -6,6 +7,7 @@ from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa,
     ProventoFIIDescritoDocumentoBovespa
 from bagogold.bagogold.utils.gerador_proventos import \
     ler_provento_estruturado_fii
+from django.core.mail import mail_admins
 from django.core.management.base import BaseCommand
 from mechanize._form import ControlNotFoundError
 from threading import Thread
@@ -34,7 +36,10 @@ class CriarDocumentoThread(Thread):
         except Exception as e:
                 template = "An exception of type {0} occured. Arguments:\n{1!r}"
                 message = template.format(type(e).__name__, e.args)
-                print message
+                if settings.ENV == 'PROD':
+                    mail_admins(u'Erro na thread de criar documento de fiis', message.decode('utf-8'))
+                elif settings.ENV == 'DEV':
+                    print message
                 
 class GeraInfoDocumentoProtocoloThread(Thread):
     def run(self):
@@ -67,7 +72,10 @@ class GeraInfoDocumentoProtocoloThread(Thread):
         except Exception as e:
                 template = "An exception of type {0} occured. Arguments:\n{1!r}"
                 message = template.format(type(e).__name__, e.args)
-                print message
+                if settings.ENV == 'PROD':
+                    mail_admins(u'Erro na thread de gerar infos do documento de fiis', message.decode('utf-8'))
+                elif settings.ENV == 'DEV':
+                    print message
                 
 class BuscaRendimentosFIIThread(Thread):
     def __init__(self, ticker, antigos, ano_inicial):
@@ -83,10 +91,9 @@ class BuscaRendimentosFIIThread(Thread):
             if self.ano_inicial != 0:
                 buscar_rendimentos_fii(self.ticker, self.ano_inicial, 0)
         except Exception as e:
-            template = "An exception of type {0} occured. Arguments:\n{1!r}"
-            message = template.format(type(e).__name__, e.args)
-            print self.ticker, "Thread:", message
-#             pass
+#             template = "An exception of type {0} occured. Arguments:\n{1!r}"
+#             message = template.format(type(e).__name__, e.args)
+            pass
         # Tenta remover seu código da listagem de threads até conseguir
         while self.ticker in threads_rodando:
             del threads_rodando[self.ticker]

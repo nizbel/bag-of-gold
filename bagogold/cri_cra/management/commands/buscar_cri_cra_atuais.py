@@ -43,4 +43,4 @@ class Command(BaseCommand):
                 valor_emissao = Decimal(valores[6].replace('.', '').replace(',', '.')) / Decimal(valores[5].replace('.', '').replace(',', '.')) 
                 data_vencimento = datetime.datetime.strptime(valores[8] , '%d/%m/%Y').date()
                 novo_cri = CRI_CRA(tipo=tipo, data_emissao=data_emissao, codigo=codigo, data_vencimento=data_vencimento, valor_emissao=valor_emissao)
-                print novo_cri
+#                 print novo_cri
