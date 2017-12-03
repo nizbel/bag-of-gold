@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
+from bagogold import settings
+from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
 from bagogold.bagogold.utils.misc import buscar_valores_diarios_selic
+from django.core.mail import mail_admins
 from django.core.management.base import BaseCommand
 import datetime
-from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
+import traceback
 
 
 class Command(BaseCommand):
