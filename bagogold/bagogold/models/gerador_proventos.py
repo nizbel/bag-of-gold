@@ -100,9 +100,8 @@ class DocumentoProventoBovespa (models.Model):
             return 'Tipo indefinido'
     
     def ultima_recusa(self):
-        recusas = InvestidorRecusaDocumento.objects.filter(documento=self).order_by('-data_recusa')
-        if recusas:
-            return recusas[0]
+        if InvestidorRecusaDocumento.objects.filter(documento=self).exists():
+            return InvestidorRecusaDocumento.objects.filter(documento=self).order_by('-data_recusa')[0]
         return None
 
 @receiver(post_save, sender=DocumentoProventoBovespa, dispatch_uid="documento_provento_bovespa_criado")
@@ -166,6 +165,9 @@ class InvestidorValidacaoDocumento (models.Model):
         return unicode(self.investidor)
             
 class PendenciaDocumentoProvento (models.Model):
+    TIPO_LEITURA = 'L'
+    TIPO_VALIDACAO = 'V'
+    
     documento = models.ForeignKey('DocumentoProventoBovespa')
     data_criacao = models.DateField(auto_now_add=True)
     """
