@@ -828,6 +828,7 @@ class ReiniciarDocumentosTestCase(TestCase):
         # Empresa para ação
         empresa_2 = Empresa.objects.create(nome='Banco do Brasil', nome_pregao='BBAS')
         acao_1 = Acao.objects.create(empresa=empresa_2, ticker='BBAS3')
+        acao_2 = Acao.objects.create(empresa=empresa_2, ticker='BBAS4')
         
         # Documentos de FII
         # Documento da empresa 1 (leitura por xml)
@@ -981,12 +982,49 @@ class ReiniciarDocumentosTestCase(TestCase):
         PendenciaDocumentoProvento.objects.filter(documento=documento_acao_3).delete()
                                                                                      
         # Provento em ações com 1 versão
+        provento_acao_1 = Provento.objects.create(tipo_provento='A', data_ex=datetime.date(2016, 4, 4), data_pagamento=datetime.date(2016, 6, 4), 
+                                                  valor_unitario=Decimal('50'), acao=acao_1, oficial_bovespa=True)
+        acao_provento_acao_1 = AcaoProvento.objects.create(acao_recebida=acao_1, provento=provento_acao_1)
+        descricao_1_provento_acao_1 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento=provento_acao_1.tipo_provento, data_ex=provento_acao_1.data_ex, acao=acao_1,
+                                                                                          data_pagamento=provento_acao_1.data_pagamento, valor_unitario=provento_acao_1.valor_unitario)
+        acao_descricao_1_provento_acao_1 = AcaoProventoAcaoDescritoDocumentoBovespa.objects.create(acao_recebida=acao_1, provento=descricao_1_provento_acao_1)
+        ProventoAcaoDocumento.objects.create(provento=provento_acao_1, versao=1, descricao_provento=descricao_1_provento_acao_1, documento=documento_acao_1)
         
         # Provento em ações com 2 versões (ações em 1 e em 2)
+        provento_acao_2 = Provento.objects.create(tipo_provento='A', data_ex=datetime.date(2016, 4, 4), data_pagamento=datetime.date(2016, 7, 4), 
+                                                  valor_unitario=Decimal('50'), acao=acao_1, oficial_bovespa=True)
+        acao_provento_acao_2 = AcaoProvento.objects.create(acao_recebida=acao_1, provento=provento_acao_2)
+        descricao_1_provento_acao_2 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento=provento_acao_2.tipo_provento, data_ex=provento_acao_2.data_ex, acao=acao_1,
+                                                                                          data_pagamento=provento_acao_2.data_pagamento, valor_unitario=Decimal('100'))
+        acao_descricao_1_provento_acao_2 = AcaoProventoAcaoDescritoDocumentoBovespa.objects.create(acao_recebida=acao_2, provento=descricao_1_provento_acao_2)
+        ProventoAcaoDocumento.objects.create(provento=provento_acao_2, versao=1, descricao_provento=descricao_1_provento_acao_2, documento=documento_acao_1)
+        descricao_2_provento_acao_2 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento=provento_acao_2.tipo_provento, data_ex=provento_acao_2.data_ex, acao=acao_1,
+                                                                                          data_pagamento=provento_acao_2.data_pagamento, valor_unitario=provento_acao_2.valor_unitario)
+        acao_descricao_2_provento_acao_2 = AcaoProventoAcaoDescritoDocumentoBovespa.objects.create(acao_recebida=acao_1, provento=descricao_2_provento_acao_2)
+        ProventoAcaoDocumento.objects.create(provento=provento_acao_2, versao=2, descricao_provento=descricao_2_provento_acao_2, documento=documento_acao_2)
         
         # Provento em ações com 2 versões (ações em 1)
+        provento_acao_3 = Provento.objects.create(tipo_provento='D', data_ex=datetime.date(2016, 4, 4), data_pagamento=datetime.date(2016, 8, 4), 
+                                                  valor_unitario=Decimal('5.00'), acao=acao_1, oficial_bovespa=True)
+        descricao_1_provento_acao_3 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento='A', data_ex=provento_acao_3.data_ex, acao=acao_1,
+                                                                                          data_pagamento=provento_acao_3.data_pagamento, valor_unitario=Decimal('100'))
+        acao_descricao_1_provento_acao_3 = AcaoProventoAcaoDescritoDocumentoBovespa.objects.create(acao_recebida=acao_2, provento=descricao_1_provento_acao_3)
+        ProventoAcaoDocumento.objects.create(provento=provento_acao_3, versao=1, descricao_provento=descricao_1_provento_acao_3, documento=documento_acao_1)
+        descricao_2_provento_acao_3 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento=provento_acao_3.tipo_provento, data_ex=provento_acao_3.data_ex, acao=acao_1,
+                                                                                          data_pagamento=provento_acao_3.data_pagamento, valor_unitario=provento_acao_3.valor_unitario)
+        ProventoAcaoDocumento.objects.create(provento=provento_acao_3, versao=2, descricao_provento=descricao_2_provento_acao_3, documento=documento_acao_2)
         
         # Provento em ações com 2 versões (ações em 2)
+        provento_acao_4 = Provento.objects.create(tipo_provento='A', data_ex=datetime.date(2016, 4, 4), data_pagamento=datetime.date(2016, 9, 4), 
+                                                  valor_unitario=Decimal('50'), acao=acao_1, oficial_bovespa=True)
+        acao_provento_acao_4 = AcaoProvento.objects.create(acao_recebida=acao_1, provento=provento_acao_4)
+        descricao_1_provento_acao_4 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento='D', data_ex=provento_acao_4.data_ex, acao=acao_1,
+                                                                                          data_pagamento=provento_acao_4.data_pagamento, valor_unitario=Decimal('5.00'))
+        ProventoAcaoDocumento.objects.create(provento=provento_acao_4, versao=1, descricao_provento=descricao_1_provento_acao_4, documento=documento_acao_1)
+        descricao_2_provento_acao_4 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento=provento_acao_4.tipo_provento, data_ex=provento_acao_4.data_ex, acao=acao_1,
+                                                                                          data_pagamento=provento_acao_4.data_pagamento, valor_unitario=provento_acao_4.valor_unitario)
+        acao_descricao_2_provento_acao_4 = AcaoProventoAcaoDescritoDocumentoBovespa.objects.create(acao_recebida=acao_1, provento=descricao_2_provento_acao_4)
+        ProventoAcaoDocumento.objects.create(provento=provento_acao_4, versao=2, descricao_provento=descricao_2_provento_acao_4, documento=documento_acao_2)
         
         # Provento jscp com 1 versão
         provento_jscp_1 = Provento.objects.create(tipo_provento='J', data_ex=datetime.date(2016, 4, 4), data_pagamento=datetime.date(2016, 6, 4), 
@@ -1000,11 +1038,11 @@ class ReiniciarDocumentosTestCase(TestCase):
         provento_jscp_2 = Provento.objects.create(tipo_provento='J', data_ex=datetime.date(2016, 4, 4), data_pagamento=datetime.date(2016, 5, 4), 
                                                   valor_unitario=Decimal('5.50'), acao=acao_1, oficial_bovespa=True)
         # Versões do provento ação
-        descricao_1_provento_jscp_2 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento='J', data_ex=provento_jscp_2.data_ex, data_pagamento=provento_jscp_2.data_pagamento, 
-                                                                                          valor_unitario=Decimal('5.00'), acao=acao_1)
+        descricao_1_provento_jscp_2 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento=provento_jscp_2.tipo_provento, data_ex=provento_jscp_2.data_ex, 
+                                                                                          data_pagamento=provento_jscp_2.data_pagamento, valor_unitario=Decimal('5.00'), acao=acao_1)
         ProventoAcaoDocumento.objects.create(provento=provento_jscp_2, descricao_provento=descricao_1_provento_jscp_2, documento=documento_acao_1, versao=1)
-        descricao_2_provento_jscp_2 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento='J', data_ex=provento_jscp_2.data_ex, data_pagamento=provento_jscp_2.data_pagamento,
-                                                                                          valor_unitario=Decimal('5.50'), acao=acao_1)
+        descricao_2_provento_jscp_2 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento=provento_jscp_2.tipo_provento, data_ex=provento_jscp_2.data_ex, 
+                                                                                          data_pagamento=provento_jscp_2.data_pagamento, valor_unitario=provento_jscp_2.valor_unitario, acao=acao_1)
         ProventoAcaoDocumento.objects.create(provento=provento_jscp_2, descricao_provento=descricao_2_provento_jscp_2, documento=documento_acao_2, versao=2)
 
         # Provento jscp com selic com 1 versão
@@ -1040,7 +1078,7 @@ class ReiniciarDocumentosTestCase(TestCase):
         # Versões do provento ação
         descricao_1_provento_selic_3 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento=provento_selic_3.tipo_provento, data_ex=provento_selic_3.data_ex, 
                                                                                            data_pagamento=provento_selic_3.data_pagamento, valor_unitario=Decimal('5.00'), acao=acao_1)
-        atualizacao_1_provento_selic_3 = SelicProventoAcaoDescritoDocBovespa.objects.create(provento=descricao_1_provento_selic_3, data_inicio=datetime.date(2016, 1, 1), data_fim=provento_selic_3.data_pagamento)
+        atualizacao_1_provento_selic_3 = SelicProventoAcaoDescritoDocBovespa.objects.create(provento=descricao_1_provento_selic_3, data_inicio=datetime.date(2015, 12, 31), data_fim=provento_selic_3.data_pagamento)
         ProventoAcaoDocumento.objects.create(provento=provento_selic_3, descricao_provento=descricao_1_provento_selic_3, documento=documento_acao_1, versao=1)
         descricao_2_provento_selic_3 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento=provento_selic_3.tipo_provento, data_ex=provento_selic_3.data_ex, 
                                                                                            data_pagamento=provento_selic_3.data_pagamento, valor_unitario=provento_selic_3.valor_unitario, acao=acao_1)
@@ -1114,7 +1152,6 @@ class ReiniciarDocumentosTestCase(TestCase):
         reiniciar_documento(documento)
         
         # Provento 1 deve ter apenas uma versão e ter mesmo valor unitário da descrição 1
-        print ProventoFII.objects.all()
         provento_1 = ProventoFII.objects.get(data_pagamento=datetime.date(2016, 5, 4))
         provento_1_documento = ProventoFIIDocumento.objects.get(provento=provento_1)
         self.assertEqual(provento_1_documento.versao, 1)
@@ -1142,11 +1179,257 @@ class ReiniciarDocumentosTestCase(TestCase):
     
     def test_reiniciar_documento_acao_1(self):
         """Testa reiniciar documento de Ação de protocolo 8690"""
-        self.assertTrue(False)
+        documento = DocumentoProventoBovespa.objects.get(protocolo='8690')
+        self.assertFalse(PendenciaDocumentoProvento.objects.filter(documento=documento).exists())
+        # Provento ação 1
+        provento_acao_1 = Provento.objects.get(tipo_provento='A', data_pagamento=datetime.date(2016, 6, 4))
+        self.assertEqual(AcaoProvento.objects.filter(provento=provento_acao_1).count(), 1)
+        provento_acao_1_documento = ProventoAcaoDocumento.objects.get(provento=provento_acao_1)
+        self.assertEqual(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento=provento_acao_1_documento.descricao_provento).count(), 1)
+        # Provento ação 2
+        provento_acao_2 = Provento.objects.get(tipo_provento='A', data_pagamento=datetime.date(2016, 7, 4))
+        self.assertEqual(AcaoProvento.objects.filter(provento=provento_acao_2).count(), 1)
+        self.assertEqual(ProventoAcaoDocumento.objects.filter(provento=provento_acao_2).count(), 2)
+        self.assertEqual(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_acao_2).count(), 2)
+        # Provento ação 3
+        provento_acao_3 = Provento.objects.get(tipo_provento='D', data_pagamento=datetime.date(2016, 8, 4))
+        self.assertEqual(AcaoProvento.objects.filter(provento=provento_acao_3).count(), 0)
+        self.assertEqual(ProventoAcaoDocumento.objects.filter(provento=provento_acao_3).count(), 2)
+        self.assertEqual(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_acao_3).count(), 1)
+        # Provento ação 4
+        provento_acao_4 = Provento.objects.get(tipo_provento='A', data_pagamento=datetime.date(2016, 9, 4))
+        self.assertEqual(AcaoProvento.objects.filter(provento=provento_acao_4).count(), 1)
+        self.assertEqual(ProventoAcaoDocumento.objects.filter(provento=provento_acao_4).count(), 2)
+        self.assertEqual(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_acao_4).count(), 1)
+        
+        # Provento jscp 1
+        provento_jscp_1 = Provento.objects.get(tipo_provento='J', data_pagamento=datetime.date(2016, 6, 4))
+        self.assertTrue(ProventoAcaoDocumento.objects.filter(provento=provento_jscp_1).exists())
+        # Provento jscp 2
+        provento_jscp_2 = Provento.objects.get(tipo_provento='J', data_pagamento=datetime.date(2016, 5, 4))
+        self.assertEqual(ProventoAcaoDocumento.objects.filter(provento=provento_jscp_2).count(), 2)
+        
+        # Provento selic 1
+        provento_selic_1 = Provento.objects.get(tipo_provento='J', data_pagamento=datetime.date(2016, 7, 4))
+        self.assertTrue(ProventoAcaoDocumento.objects.filter(provento=provento_selic_1).exists())
+        self.assertEqual(AtualizacaoSelicProvento.objects.filter(provento=provento_selic_1).count(), 1)
+        self.assertEqual(SelicProventoAcaoDescritoDocBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_selic_1).count(), 1)
+        # Provento selic 2
+        provento_selic_2 = Provento.objects.get(tipo_provento='J', data_pagamento=datetime.date(2016, 8, 4))
+        self.assertTrue(ProventoAcaoDocumento.objects.filter(provento=provento_selic_2).exists())
+        self.assertEqual(AtualizacaoSelicProvento.objects.filter(provento=provento_selic_2).count(), 1)
+        self.assertEqual(SelicProventoAcaoDescritoDocBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_selic_2).count(), 2)
+        # Provento selic 3
+        provento_selic_3 = Provento.objects.get(tipo_provento='J', data_pagamento=datetime.date(2016, 9, 4))
+        self.assertTrue(ProventoAcaoDocumento.objects.filter(provento=provento_selic_3).exists())
+        self.assertFalse(AtualizacaoSelicProvento.objects.filter(provento=provento_selic_3).exists())
+        self.assertEqual(SelicProventoAcaoDescritoDocBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_selic_3).count(), 1)
+        # Provento selic 4
+        provento_selic_4 = Provento.objects.get(tipo_provento='J', data_pagamento=datetime.date(2016, 10, 4))
+        self.assertTrue(ProventoAcaoDocumento.objects.filter(provento=provento_selic_4).exists())
+        self.assertEqual(AtualizacaoSelicProvento.objects.filter(provento=provento_selic_4).count(), 1)
+        self.assertEqual(SelicProventoAcaoDescritoDocBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_selic_4).count(), 1)
+        
+        reiniciar_documento(documento)
+        
+        self.assertTrue(PendenciaDocumentoProvento.objects.filter(documento=documento, tipo=PendenciaDocumentoProvento.TIPO_LEITURA).exists())
+        
+        # Provento ação 1 não existe mais (verificar se ações foram apagadas)
+        self.assertFalse(Provento.objects.filter(tipo_provento=provento_acao_1.tipo_provento, data_pagamento=provento_acao_1.data_pagamento).exists())
+        self.assertFalse(AcaoProvento.objects.filter(provento=provento_acao_1).exists())
+        self.assertFalse(ProventoAcaoDocumento.objects.filter(provento=provento_acao_1).exists())
+        self.assertFalse(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento=provento_acao_1_documento.descricao_provento).exists())
+        # Provento ação 2 se mantém igual porém com apenas a versão 1 (verificar se ações foram apagadas)
+        self.assertTrue(Provento.objects.filter(tipo_provento=provento_acao_2.tipo_provento, data_pagamento=provento_acao_2.data_pagamento, 
+                                                valor_unitario=provento_acao_2.valor_unitario).exists())
+        self.assertEqual(AcaoProvento.objects.filter(provento=provento_acao_2).count(), 1)
+        self.assertEqual(ProventoAcaoDocumento.objects.filter(provento=provento_acao_2).count(), 1)
+        self.assertEqual(ProventoAcaoDocumento.objects.get(provento=provento_acao_2).versao, 1)
+        self.assertEqual(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_acao_2).count(), 1)
+        # Provento ação 3 se mantém igual porém com apenas a versão 1 (verificar se ações foram apagadas)
+        self.assertTrue(Provento.objects.filter(tipo_provento=provento_acao_3.tipo_provento, data_pagamento=provento_acao_3.data_pagamento, 
+                                                valor_unitario=provento_acao_3.valor_unitario).exists())
+        self.assertFalse(AcaoProvento.objects.filter(provento=provento_acao_3).exists())
+        self.assertEqual(ProventoAcaoDocumento.objects.filter(provento=provento_acao_3).count(), 1)
+        self.assertEqual(ProventoAcaoDocumento.objects.get(provento=provento_acao_3).versao, 1)
+        self.assertFalse(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_acao_3).exists())
+        # Provento ação 4 se mantém igual porém com apenas a versão 1
+        self.assertTrue(Provento.objects.filter(tipo_provento=provento_acao_4.tipo_provento, data_pagamento=provento_acao_4.data_pagamento, 
+                                                valor_unitario=provento_acao_4.valor_unitario).exists())
+        self.assertEqual(AcaoProvento.objects.filter(provento=provento_acao_4).count(), 1)
+        self.assertEqual(ProventoAcaoDocumento.objects.filter(provento=provento_acao_4).count(), 1)
+        self.assertEqual(ProventoAcaoDocumento.objects.get(provento=provento_acao_4).versao, 1)
+        self.assertEqual(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_acao_4).count(), 1)
+        
+        # Provento jscp 1 não existe mais
+        self.assertFalse(Provento.objects.filter(tipo_provento=provento_jscp_1.tipo_provento, data_pagamento=provento_jscp_1.data_pagamento).exists())
+        self.assertFalse(ProventoAcaoDocumento.objects.filter(provento=provento_jscp_1).exists())
+        self.assertFalse(ProventoAcaoDescritoDocumentoBovespa.objects.filter(proventoacaodocumento__provento=provento_jscp_1).exists())
+        # Provento jscp 2 se mantém igual porém com apenas a versão 1
+        self.assertTrue(Provento.objects.filter(tipo_provento=provento_jscp_2.tipo_provento, data_pagamento=provento_jscp_2.data_pagamento).exists())
+        self.assertEqual(ProventoAcaoDocumento.objects.filter(provento=provento_jscp_2).count(), 1)
+        self.assertEqual(ProventoAcaoDocumento.objects.get(provento=provento_jscp_2).versao, 1)
+        self.assertEqual(ProventoAcaoDescritoDocumentoBovespa.objects.filter(proventoacaodocumento__provento=provento_jscp_2).count(), 1)
+        
+        # Provento selic 1 não existe mais (verificar selic apagada)
+        self.assertFalse(Provento.objects.filter(tipo_provento=provento_selic_1.tipo_provento, data_pagamento=provento_selic_1.data_pagamento).exists())
+        self.assertFalse(ProventoAcaoDocumento.objects.filter(provento=provento_selic_1).exists())
+        self.assertFalse(ProventoAcaoDescritoDocumentoBovespa.objects.filter(proventoacaodocumento__provento=provento_selic_1).exists())
+        self.assertFalse(AtualizacaoSelicProvento.objects.filter(provento=provento_selic_1).exists())
+        self.assertFalse(SelicProventoAcaoDescritoDocBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_selic_1).exists())
+        # Provento selic 2 se mantém igual porém com apenas a versão 1 (verificar selic apagada)
+        self.assertTrue(Provento.objects.filter(tipo_provento=provento_selic_2.tipo_provento, data_pagamento=provento_selic_2.data_pagamento).exists())
+        self.assertEqual(ProventoAcaoDocumento.objects.filter(provento=provento_selic_2).count(), 1)
+        self.assertEqual(ProventoAcaoDocumento.objects.get(provento=provento_selic_2).versao, 1)
+        self.assertEqual(ProventoAcaoDescritoDocumentoBovespa.objects.filter(proventoacaodocumento__provento=provento_selic_2).count(), 1)
+        self.assertEqual(AtualizacaoSelicProvento.objects.filter(provento=provento_selic_2).count(), 1)
+        self.assertEqual(SelicProventoAcaoDescritoDocBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_selic_2).count(), 1)
+        self.assertEqual(AtualizacaoSelicProvento.objects.get(provento=provento_selic_2), provento_selic_2.atualizacaoselicprovento)
+        # Provento selic 3 se mantém igual porém com apenas a versão 1 (verificar selic apagada)
+        self.assertTrue(Provento.objects.filter(tipo_provento=provento_selic_3.tipo_provento, data_pagamento=provento_selic_3.data_pagamento).exists())
+        self.assertEqual(ProventoAcaoDocumento.objects.filter(provento=provento_selic_3).count(), 1)
+        self.assertEqual(ProventoAcaoDocumento.objects.get(provento=provento_selic_3).versao, 1)
+        self.assertEqual(ProventoAcaoDescritoDocumentoBovespa.objects.filter(proventoacaodocumento__provento=provento_selic_3).count(), 1)
+        self.assertFalse(AtualizacaoSelicProvento.objects.filter(provento=provento_selic_3).exists())
+        self.assertFalse(SelicProventoAcaoDescritoDocBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_selic_3).exists())
+        # Provento selic 4 se mantém igual porém com apenas a versão 1
+        self.assertTrue(Provento.objects.filter(tipo_provento=provento_selic_4.tipo_provento, data_pagamento=provento_selic_4.data_pagamento).exists())
+        self.assertEqual(ProventoAcaoDocumento.objects.filter(provento=provento_selic_4).count(), 1)
+        self.assertEqual(ProventoAcaoDocumento.objects.get(provento=provento_selic_4).versao, 1)
+        self.assertEqual(ProventoAcaoDescritoDocumentoBovespa.objects.filter(proventoacaodocumento__provento=provento_selic_4).count(), 1)
+        self.assertEqual(AtualizacaoSelicProvento.objects.filter(provento=provento_selic_4).count(), 1)
+        self.assertEqual(SelicProventoAcaoDescritoDocBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_selic_4).count(), 1)
+        self.assertEqual(AtualizacaoSelicProvento.objects.get(provento=provento_selic_4), provento_selic_4.atualizacaoselicprovento)
         
     def test_reiniciar_documento_acao_2(self):
         """Testa reiniciar documento de Ação de protocolo 8691"""
-        self.assertTrue(False)
+        documento = DocumentoProventoBovespa.objects.get(protocolo='8691')
+        self.assertFalse(PendenciaDocumentoProvento.objects.filter(documento=documento).exists())
+        # Provento ação 1
+        provento_acao_1 = Provento.objects.get(tipo_provento='A', data_pagamento=datetime.date(2016, 6, 4))
+        self.assertEqual(AcaoProvento.objects.filter(provento=provento_acao_1).count(), 1)
+        provento_acao_1_documento = ProventoAcaoDocumento.objects.get(provento=provento_acao_1)
+        self.assertEqual(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento=provento_acao_1_documento.descricao_provento).count(), 1)
+        # Provento ação 2
+        provento_acao_2 = Provento.objects.get(tipo_provento='A', data_pagamento=datetime.date(2016, 7, 4))
+        self.assertEqual(AcaoProvento.objects.filter(provento=provento_acao_2).count(), 1)
+        self.assertEqual(ProventoAcaoDocumento.objects.filter(provento=provento_acao_2).count(), 2)
+        self.assertEqual(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_acao_2).count(), 2)
+        # Provento ação 3
+        provento_acao_3 = Provento.objects.get(tipo_provento='D', data_pagamento=datetime.date(2016, 8, 4))
+        self.assertEqual(AcaoProvento.objects.filter(provento=provento_acao_3).count(), 0)
+        self.assertEqual(ProventoAcaoDocumento.objects.filter(provento=provento_acao_3).count(), 2)
+        self.assertEqual(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_acao_3).count(), 1)
+        # Provento ação 4
+        provento_acao_4 = Provento.objects.get(tipo_provento='A', data_pagamento=datetime.date(2016, 9, 4))
+        self.assertEqual(AcaoProvento.objects.filter(provento=provento_acao_4).count(), 1)
+        self.assertEqual(ProventoAcaoDocumento.objects.filter(provento=provento_acao_4).count(), 2)
+        self.assertEqual(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_acao_4).count(), 1)
+        
+        # Provento jscp 1
+        provento_jscp_1 = Provento.objects.get(tipo_provento='J', data_pagamento=datetime.date(2016, 6, 4))
+        self.assertTrue(ProventoAcaoDocumento.objects.filter(provento=provento_jscp_1).exists())
+        # Provento jscp 2
+        provento_jscp_2 = Provento.objects.get(tipo_provento='J', data_pagamento=datetime.date(2016, 5, 4))
+        self.assertEqual(ProventoAcaoDocumento.objects.filter(provento=provento_jscp_2).count(), 2)
+        
+        # Provento selic 1
+        provento_selic_1 = Provento.objects.get(tipo_provento='J', data_pagamento=datetime.date(2016, 7, 4))
+        self.assertTrue(ProventoAcaoDocumento.objects.filter(provento=provento_selic_1).exists())
+        self.assertEqual(AtualizacaoSelicProvento.objects.filter(provento=provento_selic_1).count(), 1)
+        self.assertEqual(SelicProventoAcaoDescritoDocBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_selic_1).count(), 1)
+        # Provento selic 2
+        provento_selic_2 = Provento.objects.get(tipo_provento='J', data_pagamento=datetime.date(2016, 8, 4))
+        self.assertTrue(ProventoAcaoDocumento.objects.filter(provento=provento_selic_2).exists())
+        self.assertEqual(AtualizacaoSelicProvento.objects.filter(provento=provento_selic_2).count(), 1)
+        self.assertEqual(SelicProventoAcaoDescritoDocBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_selic_2).count(), 2)
+        # Provento selic 3
+        provento_selic_3 = Provento.objects.get(tipo_provento='J', data_pagamento=datetime.date(2016, 9, 4))
+        self.assertTrue(ProventoAcaoDocumento.objects.filter(provento=provento_selic_3).exists())
+        self.assertFalse(AtualizacaoSelicProvento.objects.filter(provento=provento_selic_3).exists())
+        self.assertEqual(SelicProventoAcaoDescritoDocBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_selic_3).count(), 1)
+        # Provento selic 4
+        provento_selic_4 = Provento.objects.get(tipo_provento='J', data_pagamento=datetime.date(2016, 10, 4))
+        self.assertTrue(ProventoAcaoDocumento.objects.filter(provento=provento_selic_4).exists())
+        self.assertEqual(AtualizacaoSelicProvento.objects.filter(provento=provento_selic_4).count(), 1)
+        self.assertEqual(SelicProventoAcaoDescritoDocBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_selic_4).count(), 1)
+        
+        reiniciar_documento(documento)
+        
+        self.assertTrue(PendenciaDocumentoProvento.objects.filter(documento=documento, tipo=PendenciaDocumentoProvento.TIPO_LEITURA).exists())
+        
+        # Provento ação 1 se mantém inalterado
+        self.assertTrue(Provento.objects.filter(tipo_provento=provento_acao_1.tipo_provento, data_pagamento=provento_acao_1.data_pagamento).exists())
+        self.assertEqual(AcaoProvento.objects.filter(provento=provento_acao_1).count(), 1)
+        self.assertTrue(ProventoAcaoDocumento.objects.filter(provento=provento_acao_1).exists())
+        self.assertTrue(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento=provento_acao_1_documento.descricao_provento).exists())
+        # Provento ação 2 é alterado para descrição 1 (verificar se ações foram apagadas)
+        self.assertTrue(Provento.objects.filter(tipo_provento=provento_acao_2.tipo_provento, data_pagamento=provento_acao_2.data_pagamento, 
+                                                valor_unitario=Decimal('100')).exists())
+        self.assertEqual(AcaoProvento.objects.filter(provento=provento_acao_2).count(), 1)
+        self.assertTrue(AcaoProvento.objects.get(provento=provento_acao_2).acao_recebida, Acao.objects.get(ticker='BBAS4'))
+        self.assertEqual(ProventoAcaoDocumento.objects.filter(provento=provento_acao_2).count(), 1)
+        self.assertEqual(ProventoAcaoDocumento.objects.get(provento=provento_acao_2).versao, 1)
+        self.assertEqual(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_acao_2).count(), 1)
+        # Provento ação 3 é alterado para descrição 1 (verificar se possui ações)
+        self.assertTrue(Provento.objects.filter(tipo_provento='A', data_pagamento=provento_acao_3.data_pagamento, 
+                                                valor_unitario=Decimal('100')).exists())
+        self.assertEqual(AcaoProvento.objects.filter(provento=provento_acao_3).count(), 1)
+        self.assertTrue(AcaoProvento.objects.get(provento=provento_acao_2).acao_recebida, Acao.objects.get(ticker='BBAS4'))
+        self.assertEqual(ProventoAcaoDocumento.objects.filter(provento=provento_acao_3).count(), 1)
+        self.assertEqual(ProventoAcaoDocumento.objects.get(provento=provento_acao_3).versao, 1)
+        self.assertTrue(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_acao_3).exists())
+        # Provento ação 4 é alterado para descrição 1 (verificar se ações foram apagadas)
+        self.assertTrue(Provento.objects.filter(tipo_provento='D', data_pagamento=provento_acao_4.data_pagamento, 
+                                                valor_unitario=Decimal('5.00')).exists())
+        self.assertFalse(AcaoProvento.objects.filter(provento=provento_acao_4).exists())
+        self.assertEqual(ProventoAcaoDocumento.objects.filter(provento=provento_acao_4).count(), 1)
+        self.assertEqual(ProventoAcaoDocumento.objects.get(provento=provento_acao_4).versao, 1)
+        self.assertFalse(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_acao_4).exists())
+        
+        # Provento jscp 1 se mantém inalterado
+        self.assertTrue(Provento.objects.filter(tipo_provento=provento_jscp_1.tipo_provento, data_pagamento=provento_jscp_1.data_pagamento).exists())
+        self.assertTrue(ProventoAcaoDocumento.objects.filter(provento=provento_jscp_1).exists())
+        self.assertTrue(ProventoAcaoDescritoDocumentoBovespa.objects.filter(proventoacaodocumento__provento=provento_jscp_1).exists())
+        # Provento jscp 2 é alterado para descrição 1
+        self.assertTrue(Provento.objects.filter(tipo_provento=provento_jscp_2.tipo_provento, data_pagamento=provento_jscp_2.data_pagamento,
+                                                valor_unitario='5.00').exists())
+        self.assertEqual(ProventoAcaoDocumento.objects.filter(provento=provento_jscp_2).count(), 1)
+        self.assertEqual(ProventoAcaoDocumento.objects.get(provento=provento_jscp_2).versao, 1)
+        self.assertEqual(ProventoAcaoDescritoDocumentoBovespa.objects.filter(proventoacaodocumento__provento=provento_jscp_2).count(), 1)
+        
+        # Provento selic 1 se mantém inalterado
+        self.assertTrue(Provento.objects.filter(tipo_provento=provento_selic_1.tipo_provento, data_pagamento=provento_selic_1.data_pagamento).exists())
+        self.assertTrue(ProventoAcaoDocumento.objects.filter(provento=provento_selic_1).exists())
+        self.assertTrue(ProventoAcaoDescritoDocumentoBovespa.objects.filter(proventoacaodocumento__provento=provento_selic_1).exists())
+        self.assertTrue(AtualizacaoSelicProvento.objects.filter(provento=provento_selic_1).exists())
+        self.assertTrue(SelicProventoAcaoDescritoDocBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_selic_1).exists())
+        # Provento selic 2 é alterado para descrição 1 (verificar selic apagada)
+        self.assertTrue(Provento.objects.filter(tipo_provento=provento_selic_2.tipo_provento, data_pagamento=provento_selic_2.data_pagamento,
+                                                valor_unitario=Decimal('5.00')).exists())
+        self.assertEqual(ProventoAcaoDocumento.objects.filter(provento=provento_selic_2).count(), 1)
+        self.assertEqual(ProventoAcaoDocumento.objects.get(provento=provento_selic_2).versao, 1)
+        self.assertEqual(ProventoAcaoDescritoDocumentoBovespa.objects.filter(proventoacaodocumento__provento=provento_selic_2).count(), 1)
+        self.assertEqual(AtualizacaoSelicProvento.objects.filter(provento=provento_selic_2).count(), 1)
+        self.assertEqual(SelicProventoAcaoDescritoDocBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_selic_2).count(), 1)
+        self.assertEqual(AtualizacaoSelicProvento.objects.get(provento=provento_selic_2).data_inicio, datetime.date(2015, 12, 31))
+        # Provento selic 3 é alterado para descrição 1 (verificar se possui selic)
+        self.assertTrue(Provento.objects.filter(tipo_provento=provento_selic_3.tipo_provento, data_pagamento=provento_selic_3.data_pagamento,
+                                                valor_unitario=Decimal('5.00')).exists())
+        self.assertEqual(ProventoAcaoDocumento.objects.filter(provento=provento_selic_3).count(), 1)
+        self.assertEqual(ProventoAcaoDocumento.objects.get(provento=provento_selic_3).versao, 1)
+        self.assertEqual(ProventoAcaoDescritoDocumentoBovespa.objects.filter(proventoacaodocumento__provento=provento_selic_3).count(), 1)
+        self.assertEqual(AtualizacaoSelicProvento.objects.filter(provento=provento_selic_3).count(), 1)
+        self.assertEqual(SelicProventoAcaoDescritoDocBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_selic_3).count(), 1)
+        self.assertEqual(AtualizacaoSelicProvento.objects.get(provento=provento_selic_3).data_inicio, datetime.date(2015, 12, 31))
+        # Provento selic 4 é alterado para descrição 1 (verificar selic apagada)
+        self.assertTrue(Provento.objects.filter(tipo_provento=provento_selic_4.tipo_provento, data_pagamento=provento_selic_4.data_pagamento,
+                                                valor_unitario=Decimal('5.00')).exists())
+        self.assertEqual(ProventoAcaoDocumento.objects.filter(provento=provento_selic_4).count(), 1)
+        self.assertEqual(ProventoAcaoDocumento.objects.get(provento=provento_selic_4).versao, 1)
+        self.assertEqual(ProventoAcaoDescritoDocumentoBovespa.objects.filter(proventoacaodocumento__provento=provento_selic_4).count(), 1)
+        self.assertFalse(AtualizacaoSelicProvento.objects.filter(provento=provento_selic_4).exists())
+        self.assertFalse(SelicProventoAcaoDescritoDocBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_selic_4).exists())
         
     def test_reiniciar_documento_acao_3(self):
         """Testa reiniciar documento de Ação de protocolo 8692"""
@@ -1154,9 +1437,9 @@ class ReiniciarDocumentosTestCase(TestCase):
         self.assertFalse(PendenciaDocumentoProvento.objects.filter(documento=documento).exists())
         self.assertFalse(documento.documento)
         
-        proventos_antes = Provento.objects.all()
-        documentos_proventos_antes = ProventoAcaoDocumento.objects.all()
-        descricoes_acoes = ProventoAcaoDescritoDocumentoBovespa.objects.all()
+        proventos_antes = list(Provento.objects.all())
+        documentos_proventos_antes = list(ProventoAcaoDocumento.objects.all())
+        descricoes_acoes = list(ProventoAcaoDescritoDocumentoBovespa.objects.all())
         
         reiniciar_documento(documento)
         
@@ -1167,6 +1450,6 @@ class ReiniciarDocumentosTestCase(TestCase):
         self.assertTrue(documento.documento)
         
         # Proventos não são afetados
-        self.assertEqual(proventos_antes, Provento.objects.all())
-        self.assertEqual(documentos_proventos_antes, ProventoAcaoDocumento.objects.all())
-        self.assertEqual(descricoes_acoes, ProventoAcaoDescritoDocumentoBovespa.objects.all())
+        self.assertEqual(proventos_antes, list(Provento.objects.all()))
+        self.assertEqual(documentos_proventos_antes, list(ProventoAcaoDocumento.objects.all()))
+        self.assertEqual(descricoes_acoes, list(ProventoAcaoDescritoDocumentoBovespa.objects.all()))

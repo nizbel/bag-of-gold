@@ -247,24 +247,75 @@ def reverter_provento_acao_para_versao_anterior(provento):
     Parâmetros: Provento
     """
     versao_anterior = ProventoAcaoDocumento.objects.filter(provento=provento).order_by('-versao')[1]
-    # Copiar dados da versão anterior para provento
-    print provento.id
-    provento, acoes_provento = converter_descricao_provento_para_provento_acoes(versao_anterior.descricao_provento)
-    print provento.id
-#     provento.save()
-    if len(acoes_provento) == AcaoProvento.objects.filter(provento__id=provento.id).count():
-        acoes_recebidas_atuais = list(AcaoProvento.objects.filter(provento__id=provento.id))
-        for indice, acao in enumerate(acoes_recebidas_atuais):
-            print acao.id
-            acao = acoes_provento[indice]
-            print acao.id
-#             acao.save()
-    else:
-        pass
-        
-            
     
+    # Guardar atualização Selic atual
+    if hasattr(provento, 'atualizacaoselicprovento'):
+        atualizacao_selic = provento.atualizacaoselicprovento
+    else:
+        atualizacao_selic = None
+    
+    # Copiar dados da versão anterior para provento
+    guarda_id_provento = provento.id
+    provento, acoes_prov_versao_ant = converter_descricao_provento_para_provento_acoes(versao_anterior.descricao_provento)
+    provento.id = guarda_id_provento
+    # Se provento estava versionado, é oficial
+    provento.oficial_bovespa = True
+    provento.save()
+    
+    # Verificar Selic
+    if hasattr(versao_anterior.descricao_provento, 'selicproventoacaodescritodocbovespa'):
+        # Se versão anterior possui atualização, alterar guarda da Selic atual
+        if atualizacao_selic != None:
+            guarda_id_selic = atualizacao_selic.id
+        else:
+            guarda_id_selic = None
+        atualizacao_selic = provento.atualizacaoselicprovento
+        if guarda_id_selic != None:
+            atualizacao_selic.id = guarda_id_selic
+        atualizacao_selic.provento = provento
+        atualizacao_selic.save()
+    elif atualizacao_selic != None:
+        # Se não possui, apagar caso guarda não seja nula
+        atualizacao_selic.delete()
+    
+    acoes_recebidas_atuais = list(AcaoProvento.objects.filter(provento__id=provento.id))
+    qtd_acoes_atuais = len(acoes_recebidas_atuais)
+    if len(acoes_prov_versao_ant) == qtd_acoes_atuais:
+        # Quantidade de ações iguais a versão anterior, sobrescrever um a um
+        for indice, acao in enumerate(acoes_recebidas_atuais):
+            guarda_id_acao = acao.id
+            acao = acoes_prov_versao_ant[indice]
+            acao.id = guarda_id_acao
+            acao.provento = provento
+            acao.save()
+    elif len(acoes_prov_versao_ant) > qtd_acoes_atuais:
+        # Quantidade de ações menor que a versão anterior, sobrescrever as que existirem, e então criar novas
+        for indice, acao in enumerate(acoes_recebidas_atuais):
+            guarda_id_acao = acao.id
+            acao = acoes_prov_versao_ant[indice]
+            acao.id = guarda_id_acao
+            acao.provento = provento
+            acao.save()
+        # Continuar a partir do próx. valor de índice, ou 0 se não foi feita iteração
+        indice = 0 if qtd_acoes_atuais == 0 else len(qtd_acoes_atuais)
+        while indice < len(acoes_prov_versao_ant):
+            acao = acoes_prov_versao_ant[indice]
+            acao.provento = provento
+            acao.save()
+            indice += 1
         
+    elif len(acoes_prov_versao_ant) < qtd_acoes_atuais:
+        # Quantidade de ações maior que a versão anterior, sobrescrever com a versão anterior e apagar excedentes
+        for indice, acao in enumerate(acoes_recebidas_atuais):
+            if indice < len(acoes_prov_versao_ant):
+                guarda_id_acao = acao.id
+                acao = acoes_prov_versao_ant[indice]
+                acao.id = guarda_id_acao
+                acao.provento = provento
+                acao.save()
+            else:
+                acao.delete()
+            
 def versionar_descricoes_relacionadas_fiis(descricao, provento_relacionado):
     """
     Versiona descrições de proventos de FIIs relacionados
@@ -343,7 +394,6 @@ def reiniciar_documento(documento):
             elif documento.tipo == 'F':
                 for documento_provento in ProventoFIIDocumento.objects.filter(documento=documento):
                     if documento_provento.versao == ProventoFIIDocumento.objects.filter(provento=documento_provento.provento).order_by('-versao')[0].versao:
-                        print documento_provento.provento, documento_provento.versao
                         # Se for a versão 1, apagar provento
                         if documento_provento.versao == 1:
                             documento_provento.provento.delete()
@@ -412,6 +462,7 @@ def copiar_proventos_acoes(provento, provento_a_copiar):
             if hasattr(provento, 'atualizacaoselicprovento'):
                 provento.atualizacaoselicprovento.data_inicio = provento_a_copiar.atualizacaoselicprovento.data_inicio
                 provento.atualizacaoselicprovento.data_fim = provento_a_copiar.atualizacaoselicprovento.data_fim
+                provento.atualizacaoselicprovento.save()
             else:
                 AtualizacaoSelicProvento.objects.create(provento=provento, data_inicio=provento_a_copiar.atualizacaoselicprovento.data_inicio,
                                                         data_fim=provento_a_copiar.atualizacaoselicprovento.data_fim)
