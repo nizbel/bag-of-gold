@@ -10,7 +10,6 @@ from bagogold.bagogold.models.gerador_proventos import \
     ProventoFIIDescritoDocumentoBovespa, DocumentoProventoBovespa
 from decimal import Decimal
 from django.db import transaction
-from io import StringIO, BytesIO
 from itertools import chain
 from lxml import etree
 import datetime
@@ -241,6 +240,30 @@ def versionar_descricoes_relacionadas_acoes(descricao, provento_relacionado):
     if hasattr(provento_anterior, 'atualizacaoselicprovento'):
         provento_anterior.atualizacaoselicprovento.delete()
     provento_anterior.delete()
+    
+def reverter_provento_acao_para_versao_anterior(provento):
+    """
+    Reverte um provento de ações para sua versão anterior
+    Parâmetros: Provento
+    """
+    versao_anterior = ProventoAcaoDocumento.objects.filter(provento=provento).order_by('-versao')[1]
+    # Copiar dados da versão anterior para provento
+    print provento.id
+    provento, acoes_provento = converter_descricao_provento_para_provento_acoes(versao_anterior.descricao_provento)
+    print provento.id
+#     provento.save()
+    if len(acoes_provento) == AcaoProvento.objects.filter(provento__id=provento.id).count():
+        acoes_recebidas_atuais = list(AcaoProvento.objects.filter(provento__id=provento.id))
+        for indice, acao in enumerate(acoes_recebidas_atuais):
+            print acao.id
+            acao = acoes_provento[indice]
+            print acao.id
+#             acao.save()
+    else:
+        pass
+        
+            
+    
         
 def versionar_descricoes_relacionadas_fiis(descricao, provento_relacionado):
     """
@@ -268,7 +291,90 @@ def versionar_descricoes_relacionadas_fiis(descricao, provento_relacionado):
     
     # Apagar provento anterior
     provento_anterior.delete()
+    
+def reverter_provento_fii_para_versao_anterior(provento):
+    """
+    Reverte um provento de FIIS para sua versão anterior
+    Parâmetros: Provento
+    """
+    versao_anterior = ProventoFIIDocumento.objects.filter(provento=provento).order_by('-versao')[1]
+    # Copiar dados da versão anterior para provento
+    print provento.id
+    provento = converter_descricao_provento_para_provento_fiis(versao_anterior.descricao_provento)
+    print provento.id
+#     provento.save()
+
+def reiniciar_documento(documento):
+    """
+    Reinicia um documento, removendo responsáveis, voltando pendência para leitura e alterando proventos e suas descrições
+    Parâmetros: Documento
+    """
+    try:
+        with transaction.atomic():
+            InvestidorValidacaoDocumento.objects.filter(documento=documento).delete()
+            InvestidorLeituraDocumento.objects.filter(documento=documento).delete()
+            InvestidorResponsavelPendencia.objects.filter(pendencia__documento=documento).delete()
+            InvestidorRecusaDocumento.objects.filter(documento=documento).delete()
             
+            # Reverter proventos criados
+            if documento.tipo == 'A':
+                for documento_provento in ProventoAcaoDocumento.objects.filter(documento=documento):
+                    if documento_provento.versao == ProventoAcaoDocumento.objects.filter(provento=documento_provento.provento).order_by('-versao')[0].versao:
+                        # Se for a versão 1, apagar provento
+                        if documento_provento.versao == 1:
+                            documento_provento.provento.delete()
+                        else:
+                            reverter_provento_acao_para_versao_anterior(documento_provento.provento)
+                        documento_provento.descricao_provento.delete()
+                        documento_provento.delete()
+                    else:
+                        # Se não é a última, apagar e atualizar versões posteriores
+                        versao = documento_provento.versao
+                        documento_provento.descricao_provento.delete()
+                        documento_provento.delete()
+                        
+                        # Atualizar versões posteriores
+                        for documento_provento in ProventoAcaoDocumento.objects.filter(provento=documento_provento.provento, versao__gt=versao).order_by('versao'):
+                            documento_provento.versao -= 1
+                            documento_provento.save()
+                            
+            elif documento.tipo == 'F':
+                for documento_provento in ProventoFIIDocumento.objects.filter(documento=documento):
+                    if documento_provento.versao == ProventoFIIDocumento.objects.filter(provento=documento_provento.provento).order_by('-versao')[0].versao:
+                        # Se for a versão 1, apagar provento
+                        if documento_provento.versao == 1:
+                            documento_provento.provento.delete()
+                        else:
+                            reverter_provento_fii_para_versao_anterior(documento_provento.provento)
+                        documento_provento.descricao_provento.delete()
+                        documento_provento.delete()
+                    else:
+                        # Se não é a última, apagar e atualizar versões posteriores
+                        versao = documento_provento.versao
+                        documento_provento.descricao_provento.delete()
+                        documento_provento.delete()
+                        
+                        # Atualizar versões posteriores
+                        for documento_provento in ProventoFIIDocumento.objects.filter(provento=documento_provento.provento, versao__gt=versao).order_by('versao'):
+                            documento_provento.versao -= 1
+                            documento_provento.save()
+            
+            # Baixar documento se tiver sido apagado
+            if not documento.documento:
+                documento.baixar_e_salvar_documento()
+            
+            # Recriar ou atualizar pendência de leitura
+            pendencia, criada = PendenciaDocumentoProvento.objects.get_or_create(documento=documento)
+            if not criada:
+                pendencia.tipo = PendenciaDocumentoProvento.TIPO_LEITURA
+                pendencia.save()
+            
+            if 2 == 2:
+                raise ValueError('Rolou erro hein')
+    except:
+        raise
+            
+
 def copiar_proventos_acoes(provento, provento_a_copiar):
     """
     Copia dados de um provento de ações para outro

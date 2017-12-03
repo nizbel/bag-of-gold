@@ -9,7 +9,7 @@ from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa,
     InvestidorResponsavelPendencia, ProventoAcaoDescritoDocumentoBovespa, \
     AcaoProventoAcaoDescritoDocumentoBovespa, ProventoAcaoDocumento, \
     ProventoFIIDescritoDocumentoBovespa, ProventoFIIDocumento, \
-    SelicProventoAcaoDescritoDocBovespa
+    SelicProventoAcaoDescritoDocBovespa, InvestidorValidacaoDocumento
 from bagogold.bagogold.testFII import baixar_demonstrativo_rendimentos
 from bagogold.bagogold.utils.gerador_proventos import \
     alocar_pendencia_para_investidor, salvar_investidor_responsavel_por_leitura, \
@@ -18,7 +18,7 @@ from bagogold.bagogold.utils.gerador_proventos import \
     converter_descricao_provento_para_provento_fiis, \
     versionar_descricoes_relacionadas_acoes, versionar_descricoes_relacionadas_fiis, \
     ler_provento_estruturado_fii, criar_descricoes_provento_acoes, \
-    relacionar_proventos_lidos_sistema
+    relacionar_proventos_lidos_sistema, reiniciar_documento
 from cStringIO import StringIO
 from decimal import Decimal
 from django.contrib.auth.models import User
@@ -640,7 +640,7 @@ class LeitorProventosEstruturadosTestCase(TestCase):
         
         # Documento da empresa, já existe em media
         documento = DocumentoProventoBovespa()
-        documento.empresa = Empresa.objects.get(codigo_cvm=empresa1.codigo_cvm)
+        documento.empresa = empresa1
         documento.url = 'https://fnet.bmfbovespa.com.br/fnet/publico/visualizarDocumento?id=8679'
         documento.tipo = 'F'
         documento.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO
@@ -812,3 +812,175 @@ class LeitorProventosEstruturadosTestCase(TestCase):
         provento_teste.documento.save()
         with self.assertRaises(ValueError):
             relacionar_proventos_lidos_sistema(provento_teste.provento, ProventoFIIDocumento.objects.get(documento__protocolo='8688').provento)
+            
+class ReiniciarDocumentosTestCase(TestCase):
+
+    def setUp(self):
+        # Investidor
+        user_1 = User.objects.create(username='tester1')
+        user_2 = User.objects.create(username='tester2')
+        
+        
+        # Empresa para FII
+        empresa_1 = Empresa.objects.create(nome='Fundo BBPO', nome_pregao='BBPO')
+        fii_1 = FII.objects.create(empresa=empresa_1, ticker='BBPO11')
+        
+        # Empresa para ação
+        empresa_2 = Empresa.objects.create(nome='Banco do Brasil', nome_pregao='BBAS')
+        acao_1 = Acao.objects.create(empresa=empresa_2, ticker='BBAS3')
+        
+        # Documento da empresa 1 (leitura por xml)
+        documento_xml = DocumentoProventoBovespa()
+        documento_xml.empresa = empresa_1
+        documento_xml.url = 'https://fnet.bmfbovespa.com.br/fnet/publico/visualizarDocumento?id=8679'
+        documento_xml.tipo = 'F'
+        documento_xml.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO
+        documento_xml.protocolo = '8679'
+        documento_xml.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
+        conteudo = StringIO('<?xml version="1.0" encoding="UTF-8" standalone="yes"?> \
+<DadosEconomicoFinanceiros xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"> \
+    <DadosGerais> \
+        <NomeFundo>BB PROGRESSIVO II FUNDO DE INVESTIMENTO IMOBILIÁRIO – FII</NomeFundo> \
+        <CNPJFundo>14410722000129</CNPJFundo> \
+        <NomeAdministrador>VOTORANTIM ASSET MANAGEMENT DTVM LTDA.</NomeAdministrador> \
+        <CNPJAdministrador>03384738000198</CNPJAdministrador> \
+        <ResponsavelInformacao>Reinaldo Holanda de Lacerda</ResponsavelInformacao> \
+        <TelefoneContato>(11) 5171-5038</TelefoneContato> \
+        <CodISINCota>BRBBPOCTF003</CodISINCota> \
+        <CodNegociacaoCota>BBPO11</CodNegociacaoCota> \
+    </DadosGerais> \
+    <InformeRendimentos> \
+        <Rendimento> \
+            <DataAprovacao>2017-02-24</DataAprovacao> \
+            <DataBase>2017-02-24</DataBase> \
+            <DataPagamento>2017-03-15</DataPagamento> \
+            <ValorProventoCota>0.9550423</ValorProventoCota> \
+            <PeriodoReferencia>fevereiro</PeriodoReferencia> \
+            <Ano>2017</Ano> \
+            <RendimentoIsentoIR>true</RendimentoIsentoIR> \
+        </Rendimento> \
+        <Amortizacao tipo=""/> \
+    </InformeRendimentos> \
+</DadosEconomicoFinanceiros>')
+        documento_xml.documento.save('%s-%s.%s' % (documento_xml.ticker_empresa(), documento_xml.protocolo, 'xml'), File(conteudo))
+        
+        # Ler documento
+        ler_provento_estruturado_fii(documento_xml)
+        
+        # Documento da empresa 1 (leitura por usuários)
+        documento_fii_1 = DocumentoProventoBovespa()
+        documento_fii_1.empresa = empresa_1
+        documento_fii_1.url = 'https://fnet.bmfbovespa.com.br/fnet/publico/visualizarDocumento?id=8680'
+        documento_fii_1.tipo = 'F'
+        documento_fii_1.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS
+        documento_fii_1.protocolo = '8680'
+        documento_fii_1.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
+        documento_fii_1.save()
+        
+        # Responsáveis
+        InvestidorLeituraDocumento.objects.create(investidor=user_1.investidor, documento=documento_fii_1, decisao='C')
+        InvestidorValidacaoDocumento.objects.create(investidor=user_2.investidor, documento=documento_fii_1)
+        
+        # Documento da empresa 1 (leitura por usuários)
+        documento_fii_2 = DocumentoProventoBovespa()
+        documento_fii_2.empresa = empresa_1
+        documento_fii_2.url = 'https://fnet.bmfbovespa.com.br/fnet/publico/visualizarDocumento?id=8681'
+        documento_fii_2.tipo = 'F'
+        documento_fii_2.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS
+        documento_fii_2.protocolo = '8681'
+        documento_fii_2.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
+        documento_fii_2.save()
+        
+        # Responsáveis
+        InvestidorLeituraDocumento.objects.create(investidor=user_1.investidor, documento=documento_fii_2, decisao='C')
+        InvestidorValidacaoDocumento.objects.create(investidor=user_2.investidor, documento=documento_fii_2)
+        
+        # Documento da empresa 1 (não descreve proventos)
+        documento_fii_3 = DocumentoProventoBovespa()
+        documento_fii_3.empresa = empresa_1
+        documento_fii_3.url = 'https://fnet.bmfbovespa.com.br/fnet/publico/visualizarDocumento?id=8682'
+        documento_fii_3.tipo = 'F'
+        documento_fii_3.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS
+        documento_fii_3.protocolo = '8682'
+        documento_fii_3.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
+        documento_fii_3.save()
+        
+        # Responsáveis
+        InvestidorLeituraDocumento.objects.create(investidor=user_1.investidor, documento=documento_fii_3, decisao='E')
+        InvestidorValidacaoDocumento.objects.create(investidor=user_2.investidor, documento=documento_fii_3)
+
+        # Provento FII com 2 versões
+        provento_fii_1 = ProventoFII.objects.create(tipo_provento='A', data_ex=datetime.date(2016, 4, 4), data_pagamento=datetime.date(2016, 5, 4), valor_unitario=Decimal('5.50'), fii=fii_1)
+        
+        # Versões do provento FII
+        descricao_1_provento_fii_1 = ProventoFIIDescritoDocumentoBovespa.objects.create(tipo_provento='A', data_ex=datetime.date(2016, 4, 4), data_pagamento=datetime.date(2016, 5, 4), 
+                                                                                        valor_unitario=Decimal('5.00'), fii=fii_1)
+        ProventoFIIDocumento.objects.create(provento=provento_fii_1, descricao_provento=descricao_1_provento_fii_1, documento=documento_fii_1, versao=1)
+        descricao_2_provento_fii_1 = ProventoFIIDescritoDocumentoBovespa.objects.create(tipo_provento='A', data_ex=datetime.date(2016, 4, 4), data_pagamento=datetime.date(2016, 5, 4), 
+                                                                                        valor_unitario=Decimal('5.50'), fii=fii_1)
+        ProventoFIIDocumento.objects.create(provento=provento_fii_1, descricao_provento=descricao_2_provento_fii_1, documento=documento_fii_2, versao=2)
+        
+        # Provento FII com 1 versão
+        provento_fii_2 = ProventoFII.objects.create(tipo_provento='A', data_ex=datetime.date(2016, 5, 4), data_pagamento=datetime.date(2016, 6, 4), valor_unitario=Decimal('5.50'), fii=fii_1)
+        
+        # Versão do provento FII
+        descricao_1_provento_fii_2 = ProventoFIIDescritoDocumentoBovespa.objects.create(tipo_provento='A', data_ex=datetime.date(2016, 5, 4), data_pagamento=datetime.date(2016, 6, 4), 
+                                                                                        valor_unitario=Decimal('5.50'), fii=fii_1)
+        ProventoFIIDocumento.objects.create(provento=provento_fii_2, descricao_provento=descricao_1_provento_fii_2, documento=documento_fii_1, versao=1)
+
+
+    def test_reiniciar_documento_fii_estruturado(self):
+        """Testa o resultado de reiniciar um FII lido automaticamente como xml"""
+        documento = DocumentoProventoBovespa.objects.get(protocolo='8679')
+        
+        self.assertTrue(ProventoFIIDocumento.objects.filter(documento__protocolo='8679').exists())
+        self.assertTrue(ProventoFII.objects.filter(valor_unitario=Decimal('0.9550423')).exists())
+        self.assertTrue(ProventoFIIDescritoDocumentoBovespa.objects.filter(valor_unitario=Decimal('0.9550423')).exists())
+        self.assertFalse(PendenciaDocumentoProvento.objects.filter(documento=documento).exists())
+        
+        reiniciar_documento(documento)
+        
+        self.assertFalse(ProventoFIIDocumento.objects.filter(documento__protocolo='8679').exists())
+        self.assertFalse(ProventoFII.objects.filter(valor_unitario=Decimal('0.9550423')).exists())
+        self.assertFalse(ProventoFIIDescritoDocumentoBovespa.objects.filter(valor_unitario=Decimal('0.9550423')).exists())
+        self.assertTrue(PendenciaDocumentoProvento.objects.filter(documento=documento, tipo=PendenciaDocumentoProvento.TIPO_LEITURA).exists())
+        
+    
+    def test_reiniciar_documento_fii_1(self):
+        """Testa reiniciar documento de FII de protocolo 8680"""
+        documento = DocumentoProventoBovespa.objects.get(protocolo='8680')
+        provento_1 = ProventoFII.objects.get(data_pagamento=datetime.date(2016, 5, 4))
+        self.assertTrue(provento_1.valor_unitario, Decimal('5.50'))
+        
+        reiniciar_documento(documento)
+                
+        # Provento 1 deve ter apenas uma versão 
+        provento_1 = ProventoFII.objects.get(data_pagamento=datetime.date(2016, 5, 4))
+        provento_1_documento = ProventoFIIDocumento.objects.get(provento=provento_1)
+        self.assertEqual(provento_1_documento.versao, 1)
+        self.assertEqual(provento_1.valor_unitario, Decimal('5.00'))
+        
+        # Provento 2 não existe mais
+        self.assertFalse(ProventoFII.objects.filter(data_pagamento=datetime.date(2016, 6, 4)).exists())
+        self.assertFalse(ProventoFIIDescritoDocumentoBovespa.objects.filter(data_pagamento=datetime.date(2016, 6, 4)).exists())
+        self.assertFalse(ProventoFIIDocumento.objects.filter(documento__protocolo='8680').exists())
+        self.assertTrue(PendenciaDocumentoProvento.objects.filter(documento=documento, tipo=PendenciaDocumentoProvento.TIPO_LEITURA).exists())
+    
+    def test_reiniciar_documento_fii_2(self):
+        """Testa reiniciar documento de FII de protocolo 8681"""
+        # Provento 1 deve ter apenas uma versão e ter mesmo valor unitário da descrição 1
+        
+        # Provento 2 não é afetado
+        pass
+    
+    def test_reiniciar_documento_fii_3(self):
+        """Testa reiniciar documento de FII de protocolo 8682"""
+        # Documento não mais possuir responsáveis, ter uma pendência, e ser re-baixado
+        pass
+    
+    def test_reiniciar_documento_acao_1(self):
+        pass
+        
+    def test_reiniciar_documento_acao_2(self):
+        pass
+        
