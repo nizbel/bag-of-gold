@@ -49,6 +49,7 @@ class Command(BaseCommand):
         # Se produção, enviar backups para pasta do dropbox
         if settings.ENV == 'PROD':
             arquivo = file(arquivo_dump, 'w+')
+            arquivo.write('#!/bin/sh\n')
             arquivo.write('mv /home/bagofgold/bagogold/backups/backup-*?-*?-*?-* /home/bagofgold/Dropbox/BKP\ BOG/')
             arquivo.close()
             
