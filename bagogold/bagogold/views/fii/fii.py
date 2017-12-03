@@ -11,7 +11,7 @@ from bagogold.bagogold.models.gerador_proventos import ProventoFIIDocumento, \
     InvestidorValidacaoDocumento
 from bagogold.bagogold.utils.fii import calcular_valor_fii_ate_dia, \
     calcular_poupanca_prov_fii_ate_dia, calcular_qtd_fiis_ate_dia_por_ticker, \
-	calcular_preco_medio_fiis_ate_dia
+    calcular_preco_medio_fiis_ate_dia, calcular_qtd_fiis_ate_dia
 from bagogold.bagogold.utils.investidores import is_superuser, \
     buscar_proventos_a_receber
 from decimal import Decimal, ROUND_FLOOR

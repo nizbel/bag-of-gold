@@ -44,11 +44,11 @@ def preparar_checkpointproventofii_delete(sender, instance, **kwargs):
         """
         Verifica ano da data de pagamento do provento apagado
         """
-        ano = instance.data.year
+        ano = instance.data_pagamento.year
         """ 
         Altera checkpoints existentes
         """
-        for investidor in Investidor.objects.filter(id__in=OperacaoFII.objects.filter(fii=instance.fii, data__lt=instance.data) \
+        for investidor in Investidor.objects.filter(id__in=OperacaoFII.objects.filter(fii=instance.fii, data__lt=instance.data_ex) \
                                                     .order_by('investidor').distinct('investidor').values_list('investidor', flat=True)):
             gerar_checkpoint_proventos_fii(investidor, ano)
             # Se amortização verificar checkpoint de quantidade
