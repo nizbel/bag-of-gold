@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+
+{% block extra_head %}
+<link href={% static "assets/global/plugins/bootstrap-select/css/bootstrap-select.min.css" %} rel="stylesheet" type="text/css" />
+{% endblock %}
+
+{% block pagina_titulo_icone %}
+<i class="icon-hourglass font-yellow-crusta"></i>
+{% endblock %}
+
+{% block content %}
+<div class="portlet-body">
+	<div class="row">
+        <div class="col-md-12 text-center">
+            <h2>
+                {{ divisao.nome }}
+            </h2>
+        </div>
+        <div class="col-md-12 util-btn-margin-bottom-5">
+            <span class="col-md-2 col-md-offset-5">
+                <select class="selectpicker form-control" id="id_investimento" name="investimento">
+                    {% for key, value in investimentos.items %}<option value="{{ key }}" {% if forloop.counter0 == 0 %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                </select>
+            </span>
+            <span class="col-md-5 text-right">
+                <a class="btn btn-warning" href="{% url "divisoes:detalhar_divisao" divisao.id %}">Detalhar divisão</a>
+            </span>
+        </div>
+		<span class="col-md-12" id="linha_do_tempo">
+            <div style="height: 150px"></div>
+		</div>
+	</div>
+</div>
+
+{% endblock %}
+
+{% block extra_footer %}
+<script src={% static "assets/global/plugins/horizontal-timeline/horizontal-timeline-normal.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-select/js/bootstrap-select.min.js" %} type="text/javascript"></script>
+<script>
+$(document).ready(function() {
+	$('#id_investimento').change(function() {
+	    buscarLinhaTempo($(this).val());
+	});
+	
+	var investimento = $('#id_investimento').val();
+    buscarLinhaTempo(investimento);
+});
+
+function buscarLinhaTempo(investimento) {
+	App.blockUI({
+        target: '#linha_do_tempo',
+        iconOnly: true,
+        overlayColor: 'none'
+    });
+    $.ajax({
+        url : "{% url 'divisoes:linha_do_tempo' divisao.id %}",
+        type : "GET",
+        data : {investimento: investimento},
+
+        // handle a successful response
+        success : function(resultado) {
+            if (resultado.sucesso) {
+                $('#linha_do_tempo').html(resultado.linha);
+                timeline();
+            }
+            App.unblockUI('#linha_do_tempo');
+        },
+
+        // handle a non-successful response
+        error : function(xhr,errmsg,err) {
+            App.unblockUI('#linha_do_tempo');
+            console.log(xhr.status + ": " + xhr.responseText);
+        }
+    });
+}
+</script>
+{% endblock %}

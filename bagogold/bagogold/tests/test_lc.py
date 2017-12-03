@@ -3,8 +3,10 @@ from bagogold.bagogold.models.investidores import Investidor
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, LetraCredito, \
     HistoricoPorcentagemLetraCredito, HistoricoTaxaDI
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa_di, \
-    calcular_valor_lc_ate_dia
-from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
+    calcular_valor_lc_ate_dia, simulador_lci_lca, \
+    calcular_valor_atualizado_com_taxas_di
+from bagogold.bagogold.utils.misc import verificar_feriado_bovespa, \
+    qtd_dias_uteis_no_periodo
 from decimal import Decimal, ROUND_DOWN
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -66,7 +68,33 @@ class ValorLCAteDiaTestCase(TestCase):
             else:
                 HistoricoTaxaDI.objects.create(data=data, taxa=Decimal(14.13))
             
-    def test_valor_lc_ate_dia(self):
+    def test_valor_lci_lca_ate_dia(self):
         """Testar valores das operações no dia 27/10/2016, permitindo erro de até 1 centavo"""
         valor_lc = calcular_valor_lc_ate_dia(User.objects.get(username='tester').investidor, datetime.date(2016, 10, 27)).values()
         self.assertAlmostEqual(valor_lc[0], Decimal('15404.69'), delta=0.01)
+        
+class SimuladorLCI_LCATestCase(TestCase):
+    
+    def setUp(self):
+        HistoricoTaxaDI.objects.create(data=datetime.date(2017, 10, 19), taxa=Decimal(12.13))
+        HistoricoTaxaDI.objects.create(data=datetime.date(2017, 10, 20), taxa=Decimal(14.13))
+        
+    def test_simulador_lci_lca(self):
+        """Testa se simulador está buscando os valores corretamente"""
+        filtros_simulador = {'periodo': Decimal(12), 'percentual_indice': Decimal(88), \
+                             'tipo': 'POS', 'indice': 'DI', 'aplicacao': Decimal(1400)}
+        ultimo_valor_simulador = simulador_lci_lca(filtros_simulador)[-1][1]
+        
+        qtd_dias_uteis = qtd_dias_uteis_no_periodo(datetime.date.today(), datetime.date.today() \
+                                                   + datetime.timedelta(days=30 * int(filtros_simulador['periodo'])))
+        valor_atualizado = calcular_valor_atualizado_com_taxas_di({Decimal(14.13): qtd_dias_uteis}, 
+                                                                  filtros_simulador['aplicacao'], filtros_simulador['percentual_indice'])
+        self.assertAlmostEqual(ultimo_valor_simulador, valor_atualizado,  delta=0.01)
+        
+        # Alterar valor do último DI
+        HistoricoTaxaDI.objects.create(data=datetime.date(2017, 10, 23), taxa=Decimal(13.13))
+        ultimo_valor_simulador = simulador_lci_lca(filtros_simulador)[-1][1]
+        
+        valor_atualizado = calcular_valor_atualizado_com_taxas_di({Decimal(13.13): qtd_dias_uteis}, 
+                                                                  filtros_simulador['aplicacao'], filtros_simulador['percentual_indice'])
+        self.assertAlmostEqual(ultimo_valor_simulador, valor_atualizado,  delta=0.01)

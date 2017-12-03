@@ -6,7 +6,7 @@ from bagogold.bagogold.forms.gerador_proventos import \
     AcaoProventoAcaoDescritoDocumentoBovespaForm, \
     ProventoFIIDescritoDocumentoBovespaForm, SelicProventoAcaoDescritoDocBovespaForm
 from bagogold.bagogold.models.acoes import Acao, Provento, AcaoProvento, \
-    AtualizacaoSelicProvento
+    AtualizacaoSelicProvento, HistoricoAcao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.fii import ProventoFII, FII
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
@@ -20,22 +20,27 @@ from bagogold.bagogold.utils.gerador_proventos import \
     desfazer_investidor_responsavel_por_leitura, buscar_proventos_proximos_acao, \
     versionar_descricoes_relacionadas_acoes, \
     salvar_investidor_responsavel_por_validacao, \
-    desfazer_investidor_responsavel_por_validacao, \
     salvar_investidor_responsavel_por_recusar_documento, \
     criar_descricoes_provento_fiis, buscar_proventos_proximos_fii, \
-    versionar_descricoes_relacionadas_fiis
+    versionar_descricoes_relacionadas_fiis, relacionar_proventos_lidos_sistema, \
+    reiniciar_documento
+from bagogold.bagogold.utils.investidores import is_superuser
 from bagogold.bagogold.utils.misc import \
     formatar_zeros_a_direita_apos_2_casas_decimais
 from decimal import Decimal
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.decorators import login_required, permission_required, \
+    user_passes_test
 from django.core.mail import mail_admins
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.forms.formsets import formset_factory
 from django.forms.models import model_to_dict
 from django.http.response import HttpResponseRedirect, HttpResponse, Http404
+from django.shortcuts import get_object_or_404
+from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
+import datetime
 import json
 import os
 import traceback
@@ -133,6 +138,13 @@ def detalhar_provento_acao(request, id_provento):
 def detalhar_provento_fii(request, id_provento):
     provento = ProventoFII.gerador_objects.get(id=id_provento)
     
+    # Verifica se requisição é ajax, para o relacionamento entre proventos
+    if request.is_ajax() and request.user.is_superuser:
+        proventos_relacionaveis = buscar_proventos_proximos_fii(list(provento.proventofiidocumento_set.all())[-1].descricao_provento)
+
+        return HttpResponse(json.dumps(render_to_string('gerador_proventos/utils/relacionar_proventos_fii.html', {'proventos_relacionaveis': proventos_relacionaveis,
+                                                                                                                  'provento': provento})), content_type = "application/json")  
+        
     # Remover 0s a direita para valores
     provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario))
     
@@ -153,6 +165,10 @@ def detalhar_provento_fii(request, id_provento):
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 @adiciona_titulo_descricao('Ler documento da Bovespa', 'Ler documento da Bovespa e determinar se descreve recebimento de proventos ou não')
 def ler_documento_provento(request, id_pendencia):
+    # Usado para criar objetos vazios
+    class Object(object):
+        pass
+    
     try:
         pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
         # Verificar se pendência é de leitura
@@ -198,7 +214,7 @@ def ler_documento_provento(request, id_pendencia):
                         messages.error(request, mensagem)
                         
             # Cancelar 
-            elif request.POST.get('reservar') == '0':
+            elif request.POST.get('reservar') == '2':
                 retorno, mensagem = desalocar_pendencia_de_investidor(pendencia, investidor)
                 if retorno:
                     # Atualizar pendência
@@ -353,7 +369,6 @@ def ler_documento_provento(request, id_pendencia):
                         elemento.save()
                     
                     # Testando erros
-#                     print dir(formset_provento.errors)
 #                     print formset_provento.errors, formset_provento.non_form_errors()
                     for form in formset_provento:
                         for erro in form.non_field_errors():
@@ -402,18 +417,37 @@ def ler_documento_provento(request, id_pendencia):
                         elemento.save()
                     
                     # Testando erros
-#                     print dir(formset_provento.errors)
-                    print formset_provento.errors, formset_provento.non_form_errors()
+#                     print formset_provento.errors, formset_provento.non_form_errors()
                     for form in formset_provento:
                         for erro in form.non_field_errors():
                             messages.error(request, erro)
                 
             # Radio de documento estava em Excluir
             elif request.POST['radioDocumento'] == '0':
-                # Colocar investidor como responsável pela leitura do documento
-                salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao='E')
-                messages.success(request, 'Exclusão de arquivo registrada com sucesso')
-                return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
+                try:
+                    with transaction.atomic():
+                        # Preparar elementos a apagar
+                        if pendencia.documento.tipo == 'A':
+                            info_proventos_a_apagar = list(ProventoAcaoDocumento.objects.filter(documento=pendencia.documento)) \
+                                + list(AcaoProvento.objects.filter(provento__id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True))) \
+                                + list(AtualizacaoSelicProvento.objects.filter(provento__id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True))) \
+                                + list(Provento.gerador_objects.filter(id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True))) \
+                                + list(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento__id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True))) \
+                                + list(SelicProventoAcaoDescritoDocBovespa.objects.filter(provento__id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True))) \
+                                + list(ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)))
+                        elif pendencia.documento.tipo == 'F':
+                            info_proventos_a_apagar = list(ProventoFIIDocumento.objects.filter(documento=pendencia.documento)) \
+                                + list(ProventoFII.gerador_objects.filter(id__in=ProventoFIIDocumento.objects.filter(documento=pendencia.documento).values_list('provento', flat=True))) \
+                                + list(ProventoFIIDescritoDocumentoBovespa.objects.filter(id__in=ProventoFIIDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)))
+                        for elemento in info_proventos_a_apagar:
+                            elemento.delete()
+                        
+                        # Colocar investidor como responsável pela leitura do documento
+                        salvar_investidor_responsavel_por_leitura(pendencia, investidor, decisao='E')
+                        messages.success(request, 'Exclusão de arquivo registrada com sucesso')
+                        return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
+                except Exception as e:
+                    messages.error(request, str(e))
     else:
         # Preparar formset de proventos
         if pendencia.documento.tipo == 'A':
@@ -453,20 +487,41 @@ def ler_documento_provento(request, id_pendencia):
     if pendencia.documento.tipo == 'A':
         for form in formset_provento:
             form.fields['acao'].queryset = Acao.objects.filter(empresa=pendencia.documento.empresa)
+            
+        # Preparar informações sobre negociação das ações que são mostradas como opção
+        infos_uteis = {'historico_negociacao': list()}
+        for acao in Acao.objects.filter(empresa=pendencia.documento.empresa):
+            try:
+                negociacao_acao = Object()
+                negociacao_acao.ticker = acao.ticker
+                negociacao_acao.inicio = HistoricoAcao.objects.filter(oficial_bovespa=True, acao=acao).order_by('data')[0].data
+                negociacao_acao.fim = HistoricoAcao.objects.filter(oficial_bovespa=True, acao=acao).order_by('-data')[0].data
+                infos_uteis['historico_negociacao'].append(negociacao_acao)
+            except:
+                pass
+        
+        # Se histórico de negociação estiver vazio, removê-lo
+        if len(infos_uteis['historico_negociacao']) == 0:
+            del infos_uteis['historico_negociacao']
     elif pendencia.documento.tipo == 'F':
         for form in formset_provento:
             form.fields['fii'].queryset = FII.objects.filter(empresa=pendencia.documento.empresa)
-            
+        
+        infos_uteis = {}
     # Preparar motivo de recusa, caso haja
     recusa = pendencia.documento.ultima_recusa()
     
     return TemplateResponse(request, 'gerador_proventos/ler_documento_provento.html', {'pendencia': pendencia, 'formset_provento': formset_provento, 'formset_acao_provento': formset_acao_provento, \
-                                                                                       'formset_acao_selic': formset_acao_selic, 'recusa': recusa})
+                                                                                       'formset_acao_selic': formset_acao_selic, 'recusa': recusa, 'infos_uteis': infos_uteis})
     
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 @adiciona_titulo_descricao('Listar documentos da Bovespa', 'Listar documentos da Bovespa baixados pelo sistema')
 def listar_documentos(request):
+    # Verifica se existe empresa
+    if not Empresa.objects.exists():
+        return TemplateResponse(request, 'gerador_proventos/listar_documentos.html', {'documentos': list(), 'empresas': list(), 'empresa_atual': None})
+    
     empresa_id = Empresa.objects.all().order_by('id').values_list('id', flat=True)[0]
     if request.method == 'POST':
         if request.POST.get("busca_empresa"):
@@ -551,8 +606,69 @@ def listar_pendencias(request):
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 @adiciona_titulo_descricao('Listagem de proventos de Ações e FIIs', 'Listar proventos recebidos por Ações e FIIs cadastrados no sistema')
 def listar_proventos(request):
-    proventos = list(Provento.gerador_objects.all())
-    proventos.extend(list(ProventoFII.gerador_objects.all()))
+    # Usado para criar objetos vazios
+    class Object(object):
+        pass
+    
+    # Valor padrão para o filtro de quantidade
+    filtros = Object()
+    # Verifica a quantidade de pendências escolhida para filtrar
+    if request.method == 'POST':
+        # Preparar filtro por tipo de investimento
+        filtros.filtro_investimento = request.POST.get('filtro_investimento')
+        if filtros.filtro_investimento == 'A':
+            query_proventos = Provento.gerador_objects.all()
+        elif filtros.filtro_investimento == 'F':
+            query_proventos = ProventoFII.gerador_objects.all()
+        else:
+            query_proventos = []
+            
+        # Preparar filtro para apenas documentos validados
+        filtros.filtro_validados = 'filtro_validados' in request.POST
+        if filtros.filtro_validados:
+            query_proventos = query_proventos.filter(oficial_bovespa=True)
+            
+        # Preparar filtros para datas
+        # Início data EX
+        filtros.filtro_inicio_data_ex = request.POST.get('filtro_inicio_data_ex')
+        if filtros.filtro_inicio_data_ex != '':
+            try:
+                query_proventos = query_proventos.filter(data_ex__gte=datetime.datetime.strptime(filtros.filtro_inicio_data_ex, '%d/%m/%Y'))
+            except:
+                filtros.filtro_inicio_data_ex = ''
+        # Fim data EX
+        filtros.filtro_fim_data_ex = request.POST.get('filtro_fim_data_ex')
+        if filtros.filtro_fim_data_ex != '':
+            try:
+                query_proventos = query_proventos.filter(data_ex__lte=datetime.datetime.strptime(filtros.filtro_fim_data_ex, '%d/%m/%Y'))
+            except:
+                filtros.filtro_fim_data_ex = ''
+        # Início data pagamento
+        filtros.filtro_inicio_data_pagamento = request.POST.get('filtro_inicio_data_pagamento')
+        if filtros.filtro_inicio_data_pagamento != '':
+            try:
+                query_proventos = query_proventos.filter(data_pagamento__gte=datetime.datetime.strptime(filtros.filtro_inicio_data_pagamento, '%d/%m/%Y'))
+            except:
+                filtros.filtro_inicio_data_pagamento = ''
+        # Fim data pagamento
+        filtros.filtro_fim_data_pagamento = request.POST.get('filtro_fim_data_pagamento')
+        if filtros.filtro_fim_data_pagamento != '':
+            try:
+                query_proventos = query_proventos.filter(data_pagamento__lte=datetime.datetime.strptime(filtros.filtro_fim_data_pagamento, '%d/%m/%Y'))
+            except:
+                filtros.filtro_fim_data_pagamento = ''
+    else:
+        filtros.filtro_investimento = 'A'
+        filtros.filtro_validados = False
+        data_ex_inicial = datetime.date.today() - datetime.timedelta(days=365)
+        filtros.filtro_inicio_data_ex = data_ex_inicial.strftime('%d/%m/%Y')
+        filtros.filtro_fim_data_ex = ''
+        filtros.filtro_inicio_data_pagamento = ''
+        filtros.filtro_fim_data_pagamento = ''
+        
+        query_proventos = Provento.gerador_objects.filter(data_ex__gte=data_ex_inicial)
+    
+    proventos = list(query_proventos)
     
     for provento in proventos:
         if isinstance(provento, Provento):
@@ -562,7 +678,7 @@ def listar_proventos(request):
         for documento in provento.documentos:
             documento.nome = documento.documento.name.split('/')[-1]
         
-    return TemplateResponse(request, 'gerador_proventos/listar_proventos.html', {'proventos': proventos})
+    return TemplateResponse(request, 'gerador_proventos/listar_proventos.html', {'proventos': proventos, 'filtros': filtros})
         
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
@@ -581,7 +697,7 @@ def manual_gerador(request, tipo_documento):
 def puxar_responsabilidade_documento_provento(request):
     investidor = request.user.investidor
     
-    id_pendencia = request.GET['id_pendencia'].replace('.', '')
+    id_pendencia = (request.GET.get('id_pendencia') or '').replace('.', '')
     # Verifica se id_pendencia contém apenas números
     if not id_pendencia.isdigit():
         return HttpResponse(json.dumps({'resultado': False, 'mensagem': u'Formato de pendência inválido', 'responsavel': None, 'usuario_responsavel': False}), content_type = "application/json") 
@@ -616,11 +732,37 @@ def puxar_responsabilidade_documento_provento(request):
                                     'qtd_pendencias_reservadas': qtd_pendencias_reservadas}), content_type = "application/json") 
 
 @login_required
+@user_passes_test(is_superuser)
+def reiniciar_documento_proventos(request, id_documento):
+    documento = get_object_or_404(DocumentoProventoBovespa, pk=id_documento)
+    
+    try:
+        reiniciar_documento(documento)
+        messages.success(request, 'Documento reiniciado com sucesso')
+        return HttpResponseRedirect(reverse('gerador_proventos:listar_documentos'))
+    except:
+        messages.error(request, 'Não foi possível reiniciar documento')
+        print traceback.format_exc()
+        return HttpResponseRedirect(reverse('gerador_proventos:detalhar_documento', kwargs={'id_documento': id_documento}))
+                
+
+@login_required
+@user_passes_test(is_superuser)
+def relacionar_proventos_fii_add_pelo_sistema(request, id_provento_a_relacionar, id_provento_relacionado):
+    try:
+        relacionar_proventos_lidos_sistema(ProventoFII.objects.get(id=id_provento_a_relacionar), ProventoFII.objects.get(id=id_provento_relacionado))
+        messages.success(request, 'Provento relacionado com sucesso')
+        return HttpResponseRedirect(reverse('gerador_proventos:detalhar_provento_fii', kwargs={'id_provento': id_provento_relacionado}))
+    except Exception as e:
+        messages.error(request, e)
+        return HttpResponseRedirect(reverse('gerador_proventos:detalhar_provento_fii', kwargs={'id_provento': id_provento_a_relacionar}))
+
+@login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 def remover_responsabilidade_documento_provento(request):
     investidor = request.user.investidor
     
-    id_pendencia = request.GET['id_pendencia'].replace('.', '')
+    id_pendencia = (request.GET.get('id_pendencia') or '').replace('.', '')
     # Verifica se id_pendencia contém apenas números
     if not id_pendencia.isdigit():
         return HttpResponse(json.dumps({'resultado': False, 'mensagem': u'Formato de pendência inválido %s' % (id_pendencia)}), content_type = "application/json") 
@@ -642,6 +784,10 @@ def remover_responsabilidade_documento_provento(request):
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 @adiciona_titulo_descricao('Validar documento da Bovespa', 'Validar leitura de documento da Bovespa para gerar ações ou apagar o documento')
 def validar_documento_provento(request, id_pendencia):
+    # Usado para criar objetos vazios
+    class Object(object):
+        pass
+    
     investidor = request.user.investidor
     
     try:
@@ -736,7 +882,7 @@ def validar_documento_provento(request, id_pendencia):
                                         pendencia_finalizada = True
                                 except:
                                     if settings.ENV == 'PROD':
-                                        mail_admins(u'Erro em Validar provento de ações', traceback.format_exc())
+                                        mail_admins(u'Erro em Validar provento de ações', traceback.format_exc().decode('utf-8'))
                                     elif settings.ENV == 'DEV':
                                         print traceback.format_exc()
                                     messages.error(request, 'Houve erro no relacionamento de proventos')
@@ -786,7 +932,7 @@ def validar_documento_provento(request, id_pendencia):
                                         pendencia_finalizada = True
                                 except:
                                     if settings.ENV == 'PROD':
-                                        mail_admins(u'Erro em Validar provento de FIIs', traceback.format_exc())
+                                        mail_admins(u'Erro em Validar provento de FIIs', traceback.format_exc().decode('utf-8'))
                                     elif settings.ENV == 'DEV':
                                         print traceback.format_exc()
                                     messages.error(request, 'Houve erro no relacionamento de proventos')
@@ -809,7 +955,7 @@ def validar_documento_provento(request, id_pendencia):
                     return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
             except:
                 if settings.ENV == 'PROD':
-                    mail_admins(u'Erro em Validar provento', traceback.format_exc())
+                    mail_admins(u'Erro em Validar provento', traceback.format_exc().decode('utf-8'))
                 elif settings.ENV == 'DEV':
                     print traceback.format_exc()
         
@@ -879,4 +1025,25 @@ def validar_documento_provento(request, id_pendencia):
         # Descrição da decisão do responsável pela leitura
         pendencia.decisao = 'Excluir documento'
     
-    return TemplateResponse(request, 'gerador_proventos/validar_documento_provento.html', {'pendencia': pendencia, 'descricoes_proventos': descricoes_proventos})
+    # Área de infomações úteis
+    if pendencia.documento.tipo == 'A':
+        # Preparar informações sobre negociação das ações que são mostradas como opção
+        infos_uteis = {'historico_negociacao': list()}
+        for acao in Acao.objects.filter(empresa=pendencia.documento.empresa):
+            try:
+                negociacao_acao = Object()
+                negociacao_acao.ticker = acao.ticker
+                negociacao_acao.inicio = HistoricoAcao.objects.filter(oficial_bovespa=True, acao=acao).order_by('data')[0].data
+                negociacao_acao.fim = HistoricoAcao.objects.filter(oficial_bovespa=True, acao=acao).order_by('-data')[0].data
+                infos_uteis['historico_negociacao'].append(negociacao_acao)
+            except:
+                pass
+        
+        # Se histórico de negociação estiver vazio, removê-lo
+        if len(infos_uteis['historico_negociacao']) == 0:
+            del infos_uteis['historico_negociacao']
+    elif pendencia.documento.tipo == 'F':
+        infos_uteis = {}
+    
+    return TemplateResponse(request, 'gerador_proventos/validar_documento_provento.html', {'pendencia': pendencia, 'descricoes_proventos': descricoes_proventos, 
+                                                                                           'infos_uteis': infos_uteis})

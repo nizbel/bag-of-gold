@@ -33,7 +33,7 @@
 	<tbody>
 	{% for ticker, acao in acoes.items %}
 		<tr>
-			<td><a href="{% url 'acoes:bh:estatisticas_acao_bh' ticker %}" data-original-title="Estatísticas ação"
+			<td><a href="{% url 'acoes:geral:estatisticas_acao_bh' ticker %}" data-original-title="Estatísticas ação"
 				data-rel="tooltip" >{{ticker}}</a></td>
 			<td>{{acao.quantidade}} ({{acao.quantidade_percentual|floatformat:"2"}}%)</td>
 			<td>R${{acao.valor_dia_anterior}}</td>
@@ -114,6 +114,7 @@
 <script src={% static "assets/global/plugins/datatables/datatables.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.js" %} type="text/javascript"></script>
 <script src={% static "assets/pages/scripts/table-datatables-fixedheader.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/moment.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.axislabels.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.categories.min.js" %} type="text/javascript"></script>
@@ -124,6 +125,78 @@
 <script src={% static "assets/global/plugins/flot/jquery.flot.time.min.js" %} type="text/javascript"></script>
 <script type="text/javascript">
 $( document ).ready(function() {
+	// Gráfico de evolução
+    App.blockUI({
+        target: '#graf_evolucao',
+        iconOnly: true,
+        overlayColor: 'none'
+    });
+
+    $.ajax({
+        url : "{% url 'acoes:bh:evolucao_posicao_bh' %}",
+        type : "GET",
+
+        // handle a successful response
+        success : function(resultado) {
+            if (resultado.sucesso) {
+            	var graf_evolucao = [];
+            	var tickers = Object.keys(resultado.graf_evolucao);
+                for (var i = 0; i < tickers.length; i++) {
+            	    graf_evolucao.push({label: tickers[i], lines: { show: true}, data: resultado.graf_evolucao[tickers[i]]});
+            	}
+                
+                $.plot($("#graf_evolucao"), graf_evolucao,
+                		   {grid: { hoverable: true}, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%d/%m"},
+                 });
+                 
+                 function showTooltip(x, y, contents) {
+                     
+                     $('<div id="tooltip">' + contents + '</div>').css( {
+                         position: 'absolute',
+                         display: 'none',
+                         top: y + 5,
+                         left: x + 5,
+                         border: '1px solid #fdd',
+                         padding: '2px',
+                         'background-color': '#fee',
+                         opacity: 0.80
+                     }).appendTo("body").fadeIn(200);
+                 }
+
+                 var previousPoint = null;
+                 $("#graf_evolucao").bind("plothover", function (event, pos, item) {
+                     $("#x").text(pos.x.toFixed(2));
+                     $("#y").text(pos.y.toFixed(2));
+
+                     if (item) {
+                         if (previousPoint != item.datapoint) {
+                             previousPoint = item.datapoint;
+                             
+                             $("#tooltip").remove();
+                             var x = item.datapoint[0].toFixed(2),
+                                 y = String(item.datapoint[1].toFixed(2)).replace('.', ',');
+                             
+                             var date = new Date(parseInt(x));
+                             showTooltip(item.pageX, item.pageY, moment.utc(date).format('DD/MM/YYYY') +"</br>" + item.series.label + ": R$" + y);
+                         }
+                     }
+                     else {
+                         $("#tooltip").remove();
+                         clicksYet = false;
+                         previousPoint = null;            
+                     }
+                 });
+                 App.unblockUI('#graf_evolucao');
+            } 
+        },
+
+        // handle a non-successful response
+        error : function(xhr,errmsg,err) {
+            App.unblockUI('#graf_evolucao');
+            console.log(xhr.status + ": " + xhr.responseText);
+        }
+    });	
+	
     $.plot('#graf_composicao',  {{graf_composicao|safe}}, {
         series: {
             pie: {

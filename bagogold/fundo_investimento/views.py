@@ -17,7 +17,7 @@ from bagogold.fundo_investimento.utils import \
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import PermissionDenied
 from django.core.mail import mail_admins
 from django.core.paginator import Paginator
 from django.core.urlresolvers import reverse
@@ -285,7 +285,7 @@ def inserir_operacao_fundo_investimento(request):
                         if settings.ENV == 'DEV':
                             raise
                         elif settings.ENV == 'PROD':
-                            mail_admins(u'Erro ao gerar operação em fundo de investimento com várias divisões', traceback.format_exc())
+                            mail_admins(u'Erro ao gerar operação em fundo de investimento com várias divisões', traceback.format_exc().decode('utf-8'))
                 for erro in formset_divisao.non_form_errors():
                     messages.error(request, erro)
             else:
@@ -301,7 +301,7 @@ def inserir_operacao_fundo_investimento(request):
                     if settings.ENV == 'DEV':
                         raise
                     elif settings.ENV == 'PROD':
-                        mail_admins(u'Erro ao gerar operação em fundo de investimento com uma divisão', traceback.format_exc())
+                        mail_admins(u'Erro ao gerar operação em fundo de investimento com uma divisão', traceback.format_exc().decode('utf-8'))
             
         for erro in [erro for erro in form_operacao_fundo_investimento.non_field_errors()]:
             messages.error(request, erro)
@@ -509,8 +509,7 @@ def verificar_historico_fundo_na_data(request):
     try:
         # Tenta pegar data no formato dd/mm/YYYY
         data = datetime.datetime.strptime(request.GET['data'], '%d/%m/%Y')
-    except Exception as e:
-        print e
+    except:
         return HttpResponse(json.dumps({'sucesso': False, 'erro':'Data inválida'}), content_type = "application/json")  
     
     # Buscar histórico

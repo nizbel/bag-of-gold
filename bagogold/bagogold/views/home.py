@@ -17,8 +17,7 @@ from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di, \
     calcular_valor_lc_ate_dia, calcular_valor_venda_lc
 from bagogold.bagogold.utils.misc import calcular_rendimentos_ate_data, \
-    verificar_feriado_bovespa, formatar_zeros_a_direita_apos_2_casas_decimais,\
-    converter_date_para_utc
+    verificar_feriado_bovespa, formatar_zeros_a_direita_apos_2_casas_decimais
 from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia
 from bagogold.cdb_rdb.models import OperacaoCDB_RDB
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, \
@@ -29,8 +28,7 @@ from bagogold.cri_cra.utils.utils import calcular_valor_cri_cra_ate_dia, \
     calcular_rendimentos_cri_cra_ate_data
 from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
 from bagogold.criptomoeda.models import OperacaoCriptomoeda, \
-    TransferenciaCriptomoeda
-from bagogold.criptomoeda.utils import buscar_valor_criptomoedas_atual
+    TransferenciaCriptomoeda, ValorDiarioCriptomoeda
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
     HistoricoValorCotas
 from bagogold.outros_investimentos.models import Rendimento, Amortizacao, \
@@ -53,6 +51,7 @@ import calendar
 import datetime
 import json
 import math
+import traceback
 
 
 @login_required
@@ -152,14 +151,40 @@ def calendario(request):
 def detalhar_acumulados_mensais(request):
     investidor = request.user.investidor
     
-    data_atual = datetime.datetime.now()
-
+    filtros = {'mes_inicial': '', 'mes_final': ''}
+    if request.method == 'POST':
+        try:
+            data_inicial = datetime.datetime.strptime('01/%s' % (request.POST.get('mes_inicial')), '%d/%m/%Y')
+            filtros['mes_inicial'] = data_inicial.strftime('%m/%Y')
+            
+            mes, ano = [int(valor) for valor in request.POST.get('mes_final').split('/')]
+            data_atual = min(datetime.datetime(ano, mes, calendar.monthrange(ano, mes)[1]), datetime.datetime.now())
+            filtros['mes_final'] = data_atual.strftime('%m/%Y')
+            
+            qtd_meses = (data_atual.year - data_inicial.year) * 12 + (data_atual.month - data_inicial.month + 1)
+            
+            if data_atual > datetime.datetime.now():
+                messages.error(request, 'Não é possível calcular o acumulado para meses futuros')
+            elif qtd_meses > 12 :
+                messages.error(request, 'Insira um período de até 12 meses')
+        except:
+            messages.error(request, 'Filtros de data inválidos')
+            filtros = {'mes_inicial': '', 'mes_final': ''}
+            
+    if filtros['mes_inicial'] == '' or filtros['mes_final'] == '':
+        data_atual = datetime.datetime.now()
+        qtd_meses = 12
+        data_inicial = data_atual.replace(day=1)
+        for _ in range(qtd_meses-1):
+            data_inicial = (data_inicial - datetime.timedelta(days=1)).replace(day=1)
+        filtros = {'mes_inicial': data_inicial.strftime('%m/%Y'), 'mes_final': data_atual.strftime('%m/%Y')}
+        
     acumulados_mensais = list()
     acumulados_mensais.append([data_atual.date(), calcular_rendimentos_ate_data(investidor, data_atual.date())])
     
     graf_acumulados = list()
     
-    for mes in range(12):
+    for mes in range(qtd_meses):
         # Buscar dados para o acumulado mensal
         ultimo_dia_mes_anterior = data_atual.replace(day=1) - datetime.timedelta(days=1)
         acumulados_mensais.append([ultimo_dia_mes_anterior.date(), calcular_rendimentos_ate_data(investidor, ultimo_dia_mes_anterior.date())])
@@ -172,7 +197,7 @@ def detalhar_acumulados_mensais(request):
         acumulados_mensais[mes][0] = ['%s' % (data_atual.replace(day=1).strftime('%d/%m/%Y')), '%s' % (data_atual.strftime('%d/%m/%Y'))]
         
         # Adiciona total mensal ao gráfico
-        graf_acumulados.append([str(calendar.timegm(converter_date_para_utc(data_atual).timetuple()) * 1000), float(acumulados_mensais[mes][2])])
+        graf_acumulados.append([str(calendar.timegm(data_atual.timetuple()) * 1000), float(acumulados_mensais[mes][2])])
         
         # Coloca data_atual como último dia do mês anterior
         data_atual = ultimo_dia_mes_anterior
@@ -186,9 +211,10 @@ def detalhar_acumulados_mensais(request):
     taxas = {}
     taxas['taxa_media_12_meses'] = sum([acumulado for _, _, acumulado in acumulados_mensais]) / (datetime.date.today() - data_atual.date()).days / 24 / 3600
     
-    indice_primeiro_numero_valido = int(('%e' % taxas['taxa_media_12_meses']).partition('-')[2])
-    if str(taxas['taxa_media_12_meses']).index('.') + indice_primeiro_numero_valido + 2 <= len(str(taxas['taxa_media_12_meses'])):
-        taxas['taxa_media_12_meses'] = taxas['taxa_media_12_meses'].quantize(Decimal('0.' + '1'.zfill((indice_primeiro_numero_valido)+2)))
+    if taxas['taxa_media_12_meses'] != 0:
+        indice_primeiro_numero_valido = int(('%e' % taxas['taxa_media_12_meses']).partition('-')[2])
+        if str(taxas['taxa_media_12_meses']).index('.') + indice_primeiro_numero_valido + 2 <= len(str(taxas['taxa_media_12_meses'])):
+            taxas['taxa_media_12_meses'] = taxas['taxa_media_12_meses'].quantize(Decimal('0.' + '1'.zfill((indice_primeiro_numero_valido)+2)))
 
 #     velocidades = list()
 #     for mes in range(10):
@@ -204,7 +230,8 @@ def detalhar_acumulados_mensais(request):
 #         
 #     print '%s + %s*mes + (%s*mes^2)/2' % (acumulados_mensais[11][2], acumulados_mensais[10][2] - acumulados_mensais[11][2], aceleracao_media)
     
-    return TemplateResponse(request, 'detalhar_acumulados_mensais.html', {'acumulados_mensais': acumulados_mensais, 'graf_acumulados': graf_acumulados, 'taxas': taxas})
+    return TemplateResponse(request, 'detalhar_acumulados_mensais.html', {'acumulados_mensais': acumulados_mensais, 'graf_acumulados': graf_acumulados, 'taxas': taxas,
+                                                                          'filtros': filtros})
     
 @login_required
 def detalhar_acumulado_mensal(request):
@@ -215,8 +242,11 @@ def detalhar_acumulado_mensal(request):
             
     investidor = request.user.investidor
     
-    data_inicio = datetime.datetime.strptime(request.GET.get('data_inicio'), '%d/%m/%Y').date()
-    data_fim = datetime.datetime.strptime(request.GET.get('data_fim'), '%d/%m/%Y').date()
+    try:
+        data_inicio = datetime.datetime.strptime(request.GET.get('data_inicio'), '%d/%m/%Y').date()
+        data_fim = datetime.datetime.strptime(request.GET.get('data_fim'), '%d/%m/%Y').date()
+    except:
+        return HttpResponse(json.dumps({'mensagem': 'Datas inválidas'}), content_type = "application/json")
     
     # Pegar acumulado mensal até o dia anterior da data inicial
     rendimento_anterior = calcular_rendimentos_ate_data(investidor, (data_inicio - datetime.timedelta(days=1)))
@@ -785,7 +815,9 @@ def detalhamento_investimentos(request):
             # Verifica se é a data atual
             if item.data == datetime.date.today():
                 # Calcular pela função de valores atuais do CryptoCompare
-                patrimonio_criptomoedas = sum([criptomoedas[ticker] * valor for ticker, valor in buscar_valor_criptomoedas_atual(criptomoedas.keys()).items()])
+                patrimonio_criptomoedas = sum([criptomoedas[ticker] * valor for ticker, valor in \
+                                               {valor_diario.criptomoeda.ticker: valor_diario.valor for \
+                                                valor_diario in ValorDiarioCriptomoeda.objects.filter(criptomoeda__ticker__in=criptomoedas.keys(), moeda='BRL')}.items()])
             patrimonio['Criptomoedas'] = patrimonio_criptomoedas
             patrimonio['patrimonio_total'] += patrimonio['Criptomoedas']
             

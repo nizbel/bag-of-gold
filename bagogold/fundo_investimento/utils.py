@@ -89,7 +89,7 @@ def calcular_valor_fundos_investimento_ate_dia(investidor, dia=datetime.date.tod
     valor_fundos = {}
     for fundo_id in fundos.keys():
         if HistoricoValorCotas.objects.filter(fundo_investimento__id=fundo_id, data__lte=dia).exists():
-            historico_fundo = HistoricoValorCotas.objects.filter(fundo_investimento__id=fundo_id).order_by('-data')[0]
+            historico_fundo = HistoricoValorCotas.objects.filter(fundo_investimento__id=fundo_id, data__lte=dia).order_by('-data')[0]
             if investidor and OperacaoFundoInvestimento.objects.filter(fundo_investimento__id=fundo_id, investidor=investidor, data__range=[historico_fundo.data + datetime.timedelta(days=1), dia]).exists():
                 valor_cota = OperacaoFundoInvestimento.objects.filter(fundo_investimento__id=fundo_id, investidor=investidor, 
                                                                 data__range=[historico_fundo.data + datetime.timedelta(days=1), dia]).order_by('-data')[0].valor_cota()

@@ -49,7 +49,7 @@ class Command(BaseCommand):
                     if settings.ENV == 'DEV':
                         print traceback.format_exc()
                     elif settings.ENV == 'PROD':
-                        mail_admins(u'Erro em Buscar historico anual de fundo de investimento', traceback.format_exc())
+                        mail_admins(u'Erro em Buscar historico anual de fundo de investimento', traceback.format_exc().decode('utf-8'))
                 
             elif options['arquivo']:
                 # Ler da pasta específica para fundos de investimento
@@ -71,7 +71,7 @@ class Command(BaseCommand):
                     if settings.ENV == 'DEV':
                         print traceback.format_exc()
                     elif settings.ENV == 'PROD':
-                        mail_admins(u'Erro em Buscar historico ultimo dia util de fundo de investimento', traceback.format_exc())
+                        mail_admins(u'Erro em Buscar historico ultimo dia util de fundo de investimento', traceback.format_exc().decode('utf-8'))
         except:
             raise
 
@@ -129,7 +129,7 @@ def ler_arquivo(libitem, apagar_caso_erro=True):
         if settings.ENV == 'DEV':
             print traceback.format_exc()
         elif settings.ENV == 'PROD':
-            mail_admins(u'Erro em Preencher histórico de fundos de investimento. Arquivo %s' % (libitem), traceback.format_exc())
+            mail_admins(u'Erro em Preencher histórico de fundos de investimento. Arquivo %s' % (libitem), traceback.format_exc().decode('utf-8'))
     return erros
 
 def formatar_cnpj(string):
