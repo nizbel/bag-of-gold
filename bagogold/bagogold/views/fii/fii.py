@@ -581,7 +581,7 @@ def painel(request):
     if request.user.is_authenticated():
         investidor = request.user.investidor
     else:
-        return TemplateResponse(request, 'fii/painel.html', {'fiis': list(), 'dados': {}})
+        return TemplateResponse(request, 'fii/painel.html', {'fiis': list(), 'dados': {}, 'graf_composicao': list(), 'graf_valorizacao': list()})
         
     fiis = {}
      
@@ -612,13 +612,19 @@ def painel(request):
         fiis[fii].quantidade_percentual = fiis[fii].quantidade / total_papeis * 100
         fiis[fii].valor_total_percentual = fiis[fii].valor_total / total_valor * 100
      
+    # Gráfico de composição
+    graf_composicao = [{'label': str(fii), 'data': float(fiis[fii].valor_total_percentual)} for fii in fiis.keys()]
+    
+    # Gráfico de valorização
+    graf_valorizacao = [{'label': str(fii), 'data': float(((fiis[fii].valor - fiis[fii].preco_medio)/fiis[fii].preco_medio * 100).quantize(Decimal('0.01')))} for fii in sorted(fiis.keys())]
+    
     # Popular dados
     dados = {}
     dados['total_papeis'] = total_papeis
     dados['total_valor'] = total_valor
     dados['valor_diario_mais_recente'] = 'N/A' if not ValorDiarioFII.objects.exists() else ValorDiarioFII.objects.latest('data_hora').data_hora
     
-    return TemplateResponse(request, 'fii/painel.html', {'fiis': fiis, 'dados': dados})
+    return TemplateResponse(request, 'fii/painel.html', {'fiis': fiis, 'dados': dados, 'graf_composicao': graf_composicao, 'graf_valorizacao': graf_valorizacao})
 
 @adiciona_titulo_descricao('Sobre FII', 'Detalha o que são Fundos de Investimento Imobiliário')
 def sobre(request):
