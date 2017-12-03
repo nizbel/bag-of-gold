@@ -282,7 +282,7 @@ def calcular_qtd_fiis_ate_dia_por_ticker_por_divisao(dia, divisao_id, ticker, ig
     """
     if not verificar_se_existe_evento_para_fii_periodo(FII.objects.get(ticker=ticker), dia.replace(month=1).replace(day=1), dia):
         if CheckpointDivisaoFII.objects.filter(divisao__id=divisao_id, ano=dia.year-1, fii__ticker=ticker, quantidade__gt=0).exists():
-            qtd_fii = CheckpointFII.objects.get(divisao__id=divisao_id, ano=dia.year-1, fii__ticker=ticker, quantidade__gt=0).quantidade
+            qtd_fii = CheckpointDivisaoFII.objects.get(divisao__id=divisao_id, ano=dia.year-1, fii__ticker=ticker, quantidade__gt=0).quantidade
         else:
             qtd_fii = 0
         qtd_fii += DivisaoOperacaoFII.objects.filter(operacao__data__range=[dia.replace(month=1).replace(day=1), dia], divisao__id=divisao_id, operacao__fii__ticker=ticker) \
@@ -291,7 +291,7 @@ def calcular_qtd_fiis_ate_dia_por_ticker_por_divisao(dia, divisao_id, ticker, ig
                                 output_field=DecimalField())))['qtd'] or 0
     else:
         if CheckpointDivisaoFII.objects.filter(divisao__id=divisao_id, ano=dia.year-1, fii__ticker=ticker, quantidade__gt=0).exists():
-            qtd_fii = CheckpointFII.objects.get(divisao__id=divisao_id, ano=dia.year-1, fii__ticker=ticker, quantidade__gt=0).quantidade
+            qtd_fii = CheckpointDivisaoFII.objects.get(divisao__id=divisao_id, ano=dia.year-1, fii__ticker=ticker, quantidade__gt=0).quantidade
         else:
             qtd_fii = 0
         
