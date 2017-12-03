@@ -7,10 +7,13 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII, Divisao
 from bagogold.bagogold.models.fii import OperacaoFII, ProventoFII, HistoricoFII, \
     FII, UsoProventosOperacaoFII, ValorDiarioFII, EventoAgrupamentoFII, \
     EventoDesdobramentoFII, EventoIncorporacaoFII
+from bagogold.bagogold.models.gerador_proventos import ProventoFIIDocumento, \
+    InvestidorValidacaoDocumento
 from bagogold.bagogold.utils.fii import calcular_valor_fii_ate_dia, \
-    calcular_poupanca_prov_fii_ate_dia, calcular_qtd_fiis_ate_dia, \
-    calcular_preco_medio_fiis_ate_dia
-from bagogold.bagogold.utils.investidores import is_superuser
+    calcular_poupanca_prov_fii_ate_dia, calcular_qtd_fiis_ate_dia_por_ticker, \
+	calcular_preco_medio_fiis_ate_dia
+from bagogold.bagogold.utils.investidores import is_superuser, \
+    buscar_proventos_a_receber
 from decimal import Decimal, ROUND_FLOOR
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -20,14 +23,17 @@ from django.db.models.expressions import F, Case, When, Value
 from django.db.models.fields import CharField
 from django.db.models.query_utils import Q
 from django.forms import inlineformset_factory
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import get_object_or_404
+from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 from itertools import chain
 from operator import attrgetter, itemgetter
 import calendar
 import datetime
+import json
 import math
+import re
 
 
 
@@ -144,7 +150,23 @@ def calcular_resultado_corretagem(request):
     
     return TemplateResponse(request, 'fii/calcular_resultado_corretagem.html', {'ranking': ranking, 'form_calcular': form_calcular})
     
+@adiciona_titulo_descricao('Detalhar provento', 'Detalhamento de proventos em FIIs')
+def detalhar_provento(request, provento_id):
+    provento = get_object_or_404(ProventoFII, pk=provento_id)
     
+    documentos = ProventoFIIDocumento.objects.filter(provento=provento).order_by('-versao')
+    
+    # Se usuário autenticado, mostrar dados do recebimento do provento
+    if request.user.is_authenticated():
+        provento.pago = datetime.date.today() > provento.data_pagamento
+        provento.qtd_na_data_ex = calcular_qtd_fiis_ate_dia_por_ticker(request.user.investidor, provento.data_ex, provento.fii.ticker)
+        provento.valor_recebido = (provento.qtd_na_data_ex * provento.valor_unitario).quantize(Decimal('0.01'), rounding=ROUND_FLOOR)
+    
+    # Preencher última versão
+    provento.ultima_versao = documentos[0].versao
+    
+    return TemplateResponse(request, 'fii/detalhar_provento.html', {'provento': provento, 'documentos': documentos})
+
 @login_required
 @adiciona_titulo_descricao('Editar operação em FII', 'Alterar valores de uma operação de compra/venda em Fundos de Investimento Imobiliário')
 def editar_operacao_fii(request, operacao_id):
@@ -480,6 +502,75 @@ def inserir_provento_fii(request):
         form = ProventoFIIForm()
             
     return TemplateResponse(request, 'fii/inserir_provento_fii.html', {'form': form})
+
+@adiciona_titulo_descricao('Lista de proventos', 'Lista os proventos de FIIs cadastrados')
+def listar_proventos(request):
+    # Montar filtros
+    if request.is_ajax():
+        filtros = {}
+        # Preparar filtro por tipo de investimento
+        filtros['tipo_provento'] = request.GET.get('tipo', 'T')
+        if filtros['tipo_provento'] == 'T':
+            query_proventos = ProventoFII.objects.all()
+        else:
+            query_proventos = ProventoFII.objects.filter(tipo_provento=filtros['tipo_provento'])
+            
+        filtros['fiis'] = re.sub('[^,\d]', '', request.GET.get('fiis', ''))
+        if filtros['fiis'] != '':
+            query_proventos = query_proventos.filter(fii__id__in=filtros['fiis'].split(','))
+            
+        # Preparar filtros para datas
+        # Início data EX
+        filtros['inicio_data_ex'] = request.GET.get('inicio_data_ex', '')
+        if filtros['inicio_data_ex'] != '':
+            try:
+                query_proventos = query_proventos.filter(data_ex__gte=datetime.datetime.strptime(filtros['inicio_data_ex'], '%d/%m/%Y'))
+            except:
+                filtros['inicio_data_ex'] = ''
+        # Fim data EX
+        filtros['fim_data_ex'] = request.GET.get('fim_data_ex', '')
+        if filtros['fim_data_ex'] != '':
+            try:
+                query_proventos = query_proventos.filter(data_ex__lte=datetime.datetime.strptime(filtros['fim_data_ex'], '%d/%m/%Y'))
+            except:
+                filtros['fim_data_ex'] = ''
+        # Início data pagamento
+        filtros['inicio_data_pagamento'] = request.GET.get('inicio_data_pagamento', '')
+        if filtros['inicio_data_pagamento'] != '':
+            try:
+                query_proventos = query_proventos.filter(data_pagamento__gte=datetime.datetime.strptime(filtros['inicio_data_pagamento'], '%d/%m/%Y'))
+            except:
+                filtros['inicio_data_pagamento'] = ''
+        # Fim data pagamento
+        filtros['fim_data_pagamento'] = request.GET.get('fim_data_pagamento', '')
+        if filtros['fim_data_pagamento'] != '':
+            try:
+                query_proventos = query_proventos.filter(data_pagamento__lte=datetime.datetime.strptime(filtros['fim_data_pagamento'], '%d/%m/%Y'))
+            except:
+                filtros['fim_data_pagamento'] = ''
+                
+        proventos = list(query_proventos)
+        return HttpResponse(json.dumps(render_to_string('fii/utils/lista_proventos.html', {'proventos': proventos})), content_type = "application/json")  
+    else:
+        filtros = {'tipo_provento': 'T', 'inicio_data_ex': '', 'fim_data_ex': '', 'inicio_data_pagamento': '', 'fim_data_pagamento': '', 'fiis': ''}
+    
+    # Buscar últimas atualizações
+    ultimas_validacoes = InvestidorValidacaoDocumento.objects.filter(documento__tipo='F').order_by('-data_validacao')[:10] \
+        .annotate(provento=F('documento__proventofiidocumento__provento')).values('provento', 'data_validacao')
+    ultimas_atualizacoes = ProventoFII.objects.filter(id__in=[validacao['provento'] for validacao in ultimas_validacoes])
+    for atualizacao in ultimas_atualizacoes:
+        atualizacao.data_insercao = next(validacao['data_validacao'].date() for validacao in ultimas_validacoes if validacao['provento'] == atualizacao.id)
+    
+    if request.user.is_authenticated():
+        proximos_proventos = buscar_proventos_a_receber(request.user.investidor, 'F')
+    else:
+        proximos_proventos = list()
+    
+    return TemplateResponse(request, 'fii/listar_proventos.html', {'ultimas_atualizacoes': ultimas_atualizacoes, 'proximos_proventos': proximos_proventos,
+                                                                   'filtros': filtros})
+
+def listar_tickers_fiis(request):
+    return HttpResponse(json.dumps(render_to_string('fii/utils/listar_tickers.html', {'fiis': FII.objects.all().order_by('ticker')})), content_type = "application/json")  
 
 @adiciona_titulo_descricao('Painel de FII', 'Posição atual do investidor em Fundos de Investimento Imobiliário')
 def painel(request):

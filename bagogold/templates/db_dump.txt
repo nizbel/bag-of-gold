@@ -1,0 +1,3 @@
+#!/bin/sh
+
+/usr/bin/pg_dump --host localhost --port 5432 --username "bagogold" --no-password  --format custom --blobs --encoding UTF8 --verbose --file "/home/nizbel/bagogold/backups/backup-$(date +\%H-\%d-\%m-\%Y)" {{ tabelas|safe }} "bagogold"

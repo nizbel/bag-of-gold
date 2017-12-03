@@ -98,18 +98,22 @@ def detalhar_pendencias_usuario(request, id_usuario):
         # TODO usar novo modelo pagamento leitura
         valor_hora = PagamentoLeitura.VALOR_HORA
         usuario.pago = PagamentoLeitura.objects.filter(investidor=usuario.investidor).aggregate(total_pago=Sum('valor'))['total_pago'] or 0
-        usuario.a_pagar = Decimal(floor(usuario.tempo_validado)) * valor_hora - usuario.pago
+        # Valor a pagar deve ser 0 para casos em que pagamentos foram feitos antes das validações
+        usuario.a_pagar = max(Decimal(floor(usuario.tempo_validado)) * valor_hora - usuario.pago, 0)
         
         # Parar popular a barra de acompanhamento
-        usuario.progresso_tempo_total = tempo_total * valor_hora - usuario.pago
+        # Tempo total deve ser 1 para casos em que pagamentos foram feitos antes das validações, excedendo tempo
+        usuario.progresso_tempo_total = max(tempo_total * valor_hora - usuario.pago, 1)
 #         usuario.progresso_pago = usuario.pago
 #         usuario.percentual_progresso_pago = usuario.progresso_pago / usuario.progresso_tempo_total * 100
         usuario.progresso_a_pagar = usuario.a_pagar
         usuario.percentual_progresso_a_pagar = usuario.progresso_a_pagar / usuario.progresso_tempo_total * 100
-        usuario.progresso_validado = usuario.tempo_validado * valor_hora - usuario.a_pagar - usuario.pago
+        # Tempo validado deve ser 0 para casos em que pagamentos foram feitos antes das validações, excedendo tempo
+        usuario.progresso_validado = max(usuario.tempo_validado * valor_hora - usuario.a_pagar - usuario.pago, 0)
         usuario.percentual_progresso_validado = usuario.progresso_validado / usuario.progresso_tempo_total * 100
         
         # TODO Adicionar lista de pagamentos feitos
+        usuario.pagamentos = PagamentoLeitura.objects.filter(investidor=usuario.investidor)
 
     return TemplateResponse(request, 'gerador_proventos/detalhar_pendencias_usuario.html', {'usuario': usuario, 'graf_leituras': graf_leituras, 'graf_validacoes': graf_validacoes,
                                                                                             'graf_leituras_que_recusou': graf_leituras_que_recusou, 'graf_leituras_recusadas': graf_leituras_recusadas})

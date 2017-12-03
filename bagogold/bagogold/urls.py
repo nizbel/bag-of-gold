@@ -28,10 +28,11 @@ inicio_patterns = [
     ]
 
 acoes_geral_patterns = [
-    url(r'^detalhar_provento/(?P<provento_id>\d+)/$', views.acoes.acoes.detalhar_provento, name='detalhar_provento'),
+    url(r'^detalhar_provento/(?P<provento_id>\d+)/$', views.acoes.acoes.detalhar_provento, name='detalhar_provento_acao'),
     url(r'^estatisticas_acao/(?P<ticker>\w+)/$', views.acoes.acoes.estatisticas_acao, name='estatisticas_acao_bh'),
     url(r'^listar_acoes/$', views.acoes.acoes.listar_acoes, name='listar_acoes'),
-    url(r'^listar_proventos/$', views.acoes.acoes.listar_proventos, name='listar_proventos'),
+    url(r'^listar_tickers_acoes/$', views.acoes.acoes.listar_tickers_acoes, name='listar_tickers_acoes'),
+    url(r'^listar_proventos/$', views.acoes.acoes.listar_proventos, name='listar_proventos_acao'),
     url(r'^sobre/$', views.acoes.acoes.sobre, name='sobre_acoes'),
     ]
 
@@ -90,9 +91,12 @@ fiis_patterns = [
 #     url(r'^acompanhamento_mensal/$', views.fii.fii.acompanhamento_mensal_fii, name='acompanhamento_mensal_fii'),
     url(r'^acompanhamento/$', views.fii.fii.acompanhamento_fii, name='acompanhamento_fii'),
     url(r'^calcular_resultado_corretagem/$', views.fii.fii.calcular_resultado_corretagem, name='calcular_resultado_corretagem'),
+    url(r'^detalhar_provento/(?P<provento_id>\d+)/$', views.fii.fii.detalhar_provento, name='detalhar_provento_fii'),
     url(r'^editar_operacao/(?P<operacao_id>\d+)/$', views.fii.fii.editar_operacao_fii, name='editar_operacao_fii'),
     url(r'^historico/$', views.fii.fii.historico_fii, name='historico_fii'),
     url(r'^inserir_operacao_fii/$', views.fii.fii.inserir_operacao_fii, name='inserir_operacao_fii'),
+    url(r'^listar_proventos/$', views.fii.fii.listar_proventos, name='listar_proventos_fii'),
+    url(r'^listar_tickers_fiis/$', views.fii.fii.listar_tickers_fiis, name='listar_tickers_fii'),
     url(r'^painel/$', views.fii.fii.painel, name='painel_fii'),
     url(r'^sobre/$', views.fii.fii.sobre, name='sobre_fii'),
     ]
@@ -110,6 +114,7 @@ gerador_proventos_patterns = [
     url(r'^listar_proventos/$', views.gerador_proventos.gerador_proventos.listar_proventos, name='listar_proventos'),
     url(r'^listar_usuarios/$', views.gerador_proventos.investidores.listar_usuarios, name='listar_usuarios'),
     url(r'^puxar_responsabilidade_documento_provento/$', views.gerador_proventos.gerador_proventos.puxar_responsabilidade_documento_provento, name='puxar_responsabilidade_documento_provento'),
+    url(r'^reiniciar_documento_proventos/(?P<id_documento>\d+)/$', views.gerador_proventos.gerador_proventos.reiniciar_documento_proventos, name='reiniciar_documento_proventos'),
     url(r'^relacionar_proventos_fii/(?P<id_provento_a_relacionar>\d+)/(?P<id_provento_relacionado>\d+)/$', views.gerador_proventos.gerador_proventos.relacionar_proventos_fii_add_pelo_sistema, 
         name='relacionar_proventos_fii'),
     url(r'^remover_responsabilidade_documento_provento/$', views.gerador_proventos.gerador_proventos.remover_responsabilidade_documento_provento, name='remover_responsabilidade_documento_provento'),

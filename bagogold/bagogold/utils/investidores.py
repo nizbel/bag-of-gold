@@ -11,18 +11,18 @@ from bagogold.bagogold.models.td import OperacaoTitulo, ValorDiarioTitulo, \
     HistoricoTitulo
 from bagogold.bagogold.utils.acoes import quantidade_acoes_ate_dia, \
     calcular_poupanca_prov_acao_ate_dia
-from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia
 from bagogold.bagogold.utils.debenture import calcular_qtd_debentures_ate_dia
 from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia_por_ticker, \
     calcular_qtd_fiis_ate_dia, calcular_poupanca_prov_fii_ate_dia
 from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia
 from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia
+from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia
 from bagogold.cri_cra.models.cri_cra import CRI_CRA, OperacaoCRI_CRA
 from bagogold.cri_cra.utils.utils import qtd_cri_cra_ate_dia
 from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
-from bagogold.criptomoeda.models import Criptomoeda, OperacaoCriptomoeda
-from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia, \
-    buscar_valor_criptomoedas_atual
+from bagogold.criptomoeda.models import Criptomoeda, OperacaoCriptomoeda, \
+    ValorDiarioCriptomoeda
+from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
 from bagogold.fundo_investimento.utils import \
     calcular_valor_fundos_investimento_ate_dia
@@ -157,7 +157,7 @@ def buscar_totais_atuais_investimentos(investidor):
     qtd_criptomoedas = calcular_qtd_moedas_ate_dia(investidor, data_atual)
     moedas = Criptomoeda.objects.filter(id__in=qtd_criptomoedas.keys())
     # Buscar valor das criptomoedas em posse do investidor
-    valores_criptomoedas = buscar_valor_criptomoedas_atual([moeda.ticker for moeda in moedas])
+    valores_criptomoedas = {valor_diario.criptomoeda.ticker: valor_diario.valor for valor_diario in ValorDiarioCriptomoeda.objects.filter(criptomoeda__in=moedas, moeda='BRL')}
     for moeda in moedas:
         totais_atuais['Criptomoedas'] += qtd_criptomoedas[moeda.id] * valores_criptomoedas[moeda.ticker]
     
@@ -167,7 +167,6 @@ def buscar_totais_atuais_investimentos(investidor):
         valor_atual = HistoricoValorDebenture.objects.filter(debenture__id=debenture_id).order_by('-data')[0].valor_total()
         totais_atuais['Debêntures'] += (debentures[debenture_id] * valor_atual)
         
-    inicio = datetime.datetime.now()
     # Fundos de investimento imobiliário
     fiis = calcular_qtd_fiis_ate_dia(investidor, data_atual)
     for ticker in fiis.keys():
@@ -177,7 +176,6 @@ def buscar_totais_atuais_investimentos(investidor):
             fii_valor = HistoricoFII.objects.filter(fii__ticker=ticker).order_by('-data')[0].preco_unitario
         totais_atuais['FII'] += (fiis[ticker] * fii_valor)
     totais_atuais['FII'] += calcular_poupanca_prov_fii_ate_dia(investidor, data_atual)
-    print datetime.datetime.now() - inicio
         
     # Fundos de investimento
     fundo_investimento_valores = calcular_valor_fundos_investimento_ate_dia(investidor, data_atual)
@@ -218,11 +216,11 @@ def buscar_proventos_a_receber(investidor, fonte_provento=''):
     """
     proventos_a_receber = list()
     
+    data_atual = datetime.date.today()
+    
     # Buscar proventos em ações
     if fonte_provento != 'F':
         acoes_investidor = buscar_acoes_investidor_na_data(investidor)
-        
-        data_atual = datetime.date.today()
         
         for acao in Acao.objects.filter(id__in=acoes_investidor):
             proventos_a_pagar = Provento.objects.filter(acao=acao, data_ex__lte=data_atual, data_pagamento__gte=data_atual, tipo_provento__in=['D', 'J'])

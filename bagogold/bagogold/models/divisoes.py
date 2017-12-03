@@ -75,7 +75,7 @@ class Divisao (models.Model):
     def saldo_cdb_rdb(self, data=datetime.date.today()):
         from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di, \
             calcular_valor_atualizado_com_taxa_prefixado
-        from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo
+        from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo, calcular_iof_e_ir_longo_prazo
         from bagogold.cdb_rdb.models import CDB_RDB
         """
         Calcula o saldo de operações de CDB/RDB de uma divisão (dinheiro livre)
@@ -95,11 +95,15 @@ class Divisao (models.Model):
                 dias_de_rendimento = historico_di.filter(data__gte=venda_divisao.operacao.operacao_compra_relacionada().data, data__lt=venda_divisao.operacao.data)
                 taxas_dos_dias = dict(dias_de_rendimento.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
                 valor_venda = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor_venda, taxa)
+                valor_venda -= sum(calcular_iof_e_ir_longo_prazo(valor_venda - venda_divisao.quantidade, 
+                                                              (venda_divisao.operacao.data - venda_divisao.operacao.operacao_compra_relacionada().data).days))
             elif venda_divisao.operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
                 # Prefixado
                 # Calcular quantidade dias para valorização
                 qtd_dias = qtd_dias_uteis_no_periodo(venda_divisao.operacao.operacao_compra_relacionada().data, venda_divisao.operacao.data)
                 valor_venda = calcular_valor_atualizado_com_taxa_prefixado(valor_venda, taxa, qtd_dias)
+                valor_venda -= sum(calcular_iof_e_ir_longo_prazo(valor_venda - venda_divisao.quantidade, 
+                                                              (venda_divisao.operacao.data - venda_divisao.operacao.operacao_compra_relacionada().data).days))
             # Arredondar
             str_auxiliar = str(valor_venda.quantize(Decimal('.0001')))
             valor_venda = Decimal(str_auxiliar[:len(str_auxiliar)-2])
