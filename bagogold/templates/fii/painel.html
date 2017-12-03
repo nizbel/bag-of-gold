@@ -47,6 +47,40 @@
 		</tr>
 	</tfoot>
 	</table>
+    <div class="row">
+        <div class="col-md-6">
+            <!-- BEGIN Portlet PORTLET-->
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-line-chart"></i>Composição</div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <div class="chart" id="graf_composicao"></div>
+                </div>
+            </div>
+            <!-- END Portlet PORTLET-->
+        </div>
+        <div class="col-md-6">
+            <!-- BEGIN Portlet PORTLET-->
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-line-chart"></i>Valorização</div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <div class="chart" id="graf_valorizacao"></div>
+                </div>
+            </div>
+            <!-- END Portlet PORTLET-->
+        </div>
+    </div>
 </div>
 
 {% endblock %}
@@ -56,5 +90,88 @@
 <script src={% static "assets/global/plugins/datatables/datatables.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.js" %} type="text/javascript"></script>
 <script src={% static "assets/pages/scripts/table-datatables-fixedheader.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/flot/jquery.flot.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/flot/jquery.flot.axislabels.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/flot/jquery.flot.categories.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/flot/jquery.flot.crosshair.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/flot/jquery.flot.pie.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/flot/jquery.flot.resize.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/flot/jquery.flot.stack.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/flot/jquery.flot.time.min.js" %} type="text/javascript"></script>
+<script type="text/javascript">
+$( document ).ready(function() {
+    $.plot('#graf_composicao',  {{graf_composicao|safe}}, {
+        series: {
+            pie: {
+                show: true,
+                radius: 0.75,
+                label: {
+                    formatter: labelFormatter
+                }
+            }
+        },
+        grid: {
+            hoverable: true
+        },
+        legend: {
+            show: false
+        }
+    });
+    
+    $.plot($("#graf_valorizacao"), [ 
+         {% for barra in graf_valorizacao %}
+            {label: '{{barra.label}}', bars: {show:true, align:"center", barWidth: 0.75, lineWidth: 1, stacked: false}, data: [[{{forloop.counter0}}, {{barra.data|safe}}]]}
+            {% if not forloop.last %},{% endif %}
+         {% endfor %}
+           ],
+         {grid: { hoverable: true}, legend:{show: false}, xaxis: {
+             ticks: [{% for barra in graf_valorizacao %}[{{forloop.counter0}}, '{{barra.label}}']{% if not forloop.last %},{% endif %}{% endfor %}]
+         }
+     });
+    
+    function showTooltip(x, y, contents) {
+        
+        $('<div id="tooltip">' + contents + '</div>').css( {
+            position: 'absolute',
+            display: 'none',
+            top: y + 5,
+            left: x + 5,
+            border: '1px solid #fdd',
+            padding: '2px',
+            'background-color': '#fee',
+            opacity: 0.80
+        }).appendTo("body").fadeIn(200);
+    }
+
+    var previousPoint = null;
+    $("#graf_valorizacao").bind("plothover", function (event, pos, item) {
+        $("#x").text(pos.x.toFixed(2));
+        $("#y").text(pos.y.toFixed(2));
+
+        if (item) {
+            if (previousPoint != item.datapoint) {
+                previousPoint = item.datapoint;
+                
+                $("#tooltip").remove();
+                var x = item.datapoint[0].toFixed(2),
+                    y = String(item.datapoint[1].toFixed(2)).replace('.', ',');
+                
+                var date = new Date(parseInt(x));
+                showTooltip(item.pageX, item.pageY, item.series.label +"</br>" + y + "%");
+            }
+        }
+        else {
+            $("#tooltip").remove();
+            clicksYet = false;
+            previousPoint = null;            
+        }
+    });
+});
+
+function labelFormatter(label, series) {
+    return "<div style='font-size:10pt; text-align:center; padding:2px; color:" + series.color + ";'>" + label + "<br/>" + 
+    (Math.round(series.percent * 100) / 100) + "%</div>";
+}
+</script>
 {% endblock %}
 
