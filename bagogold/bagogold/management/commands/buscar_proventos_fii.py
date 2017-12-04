@@ -91,10 +91,10 @@ class BuscaRendimentosFIIThread(Thread):
                 for ano in range(self.ano_inicial, datetime.date.today().year + 1):
                     buscar_rendimentos_fii(self.ticker, ano, 0)
         except Exception as e:
-            template = "An exception of type {0} occured. Arguments:\n{1!r}"
-            message = template.format(type(e).__name__, e.args)
-            print self.ticker, message
-#             pass
+#             template = "An exception of type {0} occured. Arguments:\n{1!r}"
+#             message = template.format(type(e).__name__, e.args)
+#             print self.ticker, message
+            pass
         # Tenta remover seu código da listagem de threads até conseguir
         while self.ticker in threads_rodando:
             del threads_rodando[self.ticker]
@@ -145,10 +145,10 @@ class Command(BaseCommand):
                 t.start()
                 contador += 1
                 while (len(threads_rodando) > qtd_threads):
-                    print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
+#                     print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
                     time.sleep(3)
             while (len(threads_rodando) > 1 or len(documentos_para_download) > 0 or len(informacoes_rendimentos) > 0):
-                print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
+#                 print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
                 time.sleep(3)
             while 'Principal' in threads_rodando.keys():
                 del threads_rodando['Principal']
