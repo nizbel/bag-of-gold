@@ -5,7 +5,8 @@ from bagogold.bagogold.models.lc import HistoricoTaxaDI
 from bagogold.bagogold.utils.lc import \
     calcular_valor_atualizado_com_taxa_prefixado
 from bagogold.bagogold.utils.misc import verificar_feriado_bovespa, \
-    qtd_dias_uteis_no_periodo
+    qtd_dias_uteis_no_periodo, calcular_iof_regressivo,\
+    calcular_imposto_renda_longo_prazo
 from bagogold.cdb_rdb.forms import HistoricoVencimentoCDB_RDBForm, \
     HistoricoCarenciaCDB_RDBForm
 from bagogold.cdb_rdb.models import CDB_RDB, HistoricoPorcentagemCDB_RDB, \
@@ -54,6 +55,13 @@ class ValorCDB_RDBAteDiaTestCase(TestCase):
         """Testar valores das operações no dia 27/10/2016, permitindo erro de até 1 centavo"""
         valor_cdb_rdb = calcular_valor_cdb_rdb_ate_dia(User.objects.get(username='tester').investidor, datetime.date(2016, 11, 10)).values()
         self.assertAlmostEqual(valor_cdb_rdb[0], Decimal('3032.63'), delta=0.01)
+        
+    def test_valor_liquido_cdb_rdb_ate_dia(self):
+        """Testar valores líquidos das operações no dia 27/10/2016, permitindo erro de até 1 centavo"""
+        valor_cdb_rdb = calcular_valor_cdb_rdb_ate_dia(User.objects.get(username='tester').investidor, datetime.date(2016, 11, 10), True).values()
+        iof = Decimal('32.63') * calcular_iof_regressivo((datetime.date(2016, 11, 10) - datetime.date(2016, 10, 14)).days)
+        ir = calcular_imposto_renda_longo_prazo(Decimal('32.63') - iof, (datetime.date(2016, 11, 10) - datetime.date(2016, 10, 14)).days)
+        self.assertAlmostEqual(valor_cdb_rdb[0], Decimal('3032.63') - iof - ir, delta=0.01)
 
 class CalcularValorCDB_RDBPrefixadoTestCase(TestCase):
     
