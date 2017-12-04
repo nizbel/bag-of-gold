@@ -19,8 +19,8 @@ class Command(BaseCommand):
         try:
             with transaction.atomic():
                 for documento in documentos:
-                    print documento.ticker_empresa(), documento.documento.name, \
-                        ProventoFIIDocumento.objects.filter(documento=documento).count(), documento.data_referencia
+#                     print documento.ticker_empresa(), documento.documento.name, \
+#                         ProventoFIIDocumento.objects.filter(documento=documento).count(), documento.data_referencia
                     for provento in ProventoFIIDocumento.objects.filter(documento=documento):
                         if provento not in elementos_a_apagar:
                             elementos_a_apagar.append(provento)
