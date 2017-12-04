@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 from bagogold import settings
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.bagogold.models.fii import FII, ProventoFII
+from bagogold.bagogold.models.fii import FII
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
-    PendenciaDocumentoProvento, ProventoFIIDocumento, \
-    ProventoFIIDescritoDocumentoBovespa
+    PendenciaDocumentoProvento
 from bagogold.bagogold.utils.gerador_proventos import \
     ler_provento_estruturado_fii
 from django.core.mail import mail_admins
@@ -92,10 +91,10 @@ class BuscaRendimentosFIIThread(Thread):
                 for ano in range(self.ano_inicial, datetime.date.today().year + 1):
                     buscar_rendimentos_fii(self.ticker, ano, 0)
         except Exception as e:
-#             template = "An exception of type {0} occured. Arguments:\n{1!r}"
-#             message = template.format(type(e).__name__, e.args)
-#             print message
-            pass
+            template = "An exception of type {0} occured. Arguments:\n{1!r}"
+            message = template.format(type(e).__name__, e.args)
+            print self.ticker, message
+#             pass
         # Tenta remover seu código da listagem de threads até conseguir
         while self.ticker in threads_rodando:
             del threads_rodando[self.ticker]
@@ -146,10 +145,10 @@ class Command(BaseCommand):
                 t.start()
                 contador += 1
                 while (len(threads_rodando) > qtd_threads):
-#                     print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
+                    print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
                     time.sleep(3)
             while (len(threads_rodando) > 1 or len(documentos_para_download) > 0 or len(informacoes_rendimentos) > 0):
-#                 print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
+                print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
                 time.sleep(3)
             while 'Principal' in threads_rodando.keys():
                 del threads_rodando['Principal']
