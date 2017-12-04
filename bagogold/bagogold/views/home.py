@@ -998,7 +998,7 @@ def grafico_renda_fixa_painel_geral(request):
         diario_cri_cra = {}
         
         total_lc_dia_anterior = float(sum(calcular_valor_lc_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values()))
-        total_cdb_rdb_dia_anterior = float(sum(calcular_valor_cdb_rdb_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date(), True).values()))
+        total_cdb_rdb_dia_anterior = float(sum(calcular_valor_cdb_rdb_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values()))
         total_td_dia_anterior = float(sum(calcular_valor_td_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values()))
         total_debentures_dia_anterior = float(sum(calcular_valor_debentures_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values()))
         total_cri_cra_dia_anterior = float(sum(calcular_valor_cri_cra_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values())) \
@@ -1028,7 +1028,7 @@ def grafico_renda_fixa_painel_geral(request):
                 total_lc_dia_anterior = total_lc
                 
                 # CDB / RDB
-                total_cdb_rdb = float(sum(calcular_valor_cdb_rdb_ate_dia(investidor, dia, True).values()))
+                total_cdb_rdb = float(sum(calcular_valor_cdb_rdb_ate_dia(investidor, dia).values()))
     #                     print '(%s) %s - %s =' % (dia, total_cdb_rdb, total_cdb_rdb_dia_anterior), total_cdb_rdb - total_cdb_rdb_dia_anterior
                 # Removendo operações do dia
                 diario_cdb_rdb[dia] += total_cdb_rdb - total_cdb_rdb_dia_anterior - float(operacoes_cdb_rdb_no_periodo.filter(data=dia, tipo_operacao='C').aggregate(soma_compras=Sum('quantidade'))['soma_compras'] or Decimal(0)) + \
