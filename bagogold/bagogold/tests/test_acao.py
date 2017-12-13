@@ -1,16 +1,21 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.acoes import Acao, Provento,\
+from bagogold.bagogold.models.acoes import Acao, Provento, \
     AtualizacaoSelicProvento, HistoricoAcao
 from bagogold.bagogold.models.empresa import Empresa
+from bagogold.bagogold.models.fii import FII, HistoricoFII
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
 from bagogold.bagogold.utils.acoes import verificar_tipo_acao
-from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
+from bagogold.bagogold.utils.bovespa import buscar_historico_recente_bovespa, \
+    processar_historico_recente_bovespa
+from bagogold.bagogold.utils.misc import verificar_feriado_bovespa, \
+    ultimo_dia_util
 from bagogold.bagogold.utils.taxas_indexacao import \
     calcular_valor_atualizado_com_taxas_selic
 from decimal import Decimal
 from django.db.models.aggregates import Count
 from django.test import TestCase
 import datetime
+import os
 
 class VerificarTipoAcaoTestCase(TestCase):
     def test_verificar_tipo_acao(self):
@@ -79,10 +84,26 @@ class CalcularAtualizacaoProventoSelicTestCase(TestCase):
         
 class BuscarHistoricoRecenteTestCase(TestCase):
     def setUp(self):
-        empresa = Empresa.objects.create(nome='Banco do Brasil', nome_pregao='BBAS')
-        Acao.objects.create(ticker='BBAS3', tipo='ON', empresa=empresa)
+        empresa_acao = Empresa.objects.create(nome='Banco do Brasil', nome_pregao='BBAS')
+        Acao.objects.create(ticker='BBAS3', tipo='ON', empresa=empresa_acao)
         
-    def test_buscar_historico_7_dias(self):
-        """Testa a busca pelo histórico dos últimos 7 dias"""
-        buscar_historico_recente_bovespa()
-        self.assertTrue(HistoricoAcao.objects.all().exists())
+        empresa_fii = Empresa.objects.create(nome='BBPO', nome_pregao='BBPO')
+        FII.objects.create(ticker='BBPO11', empresa=empresa_fii)
+        
+    def test_buscar_historico_recente_bovespa(self):
+        """Testa se a busca por histórico recente retorna nome de documento"""
+        ultima_data_util = ultimo_dia_util()
+        nome_arq = buscar_historico_recente_bovespa(ultima_data_util)
+        self.assertTrue(nome_arq != None and nome_arq != '')
+        os.remove(nome_arq)
+        
+    def test_processar_historico_recente_bovespa(self):
+        ultima_data_util = ultimo_dia_util()
+        nome_arq = buscar_historico_recente_bovespa(ultima_data_util)
+        try:
+            processar_historico_recente_bovespa(nome_arq)
+        except:
+            pass
+        os.remove(nome_arq)
+        self.assertTrue(HistoricoAcao.objects.all().count() > 0)
+        self.assertTrue(HistoricoFII.objects.all().count() > 0)
