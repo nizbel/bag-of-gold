@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import Acao, Provento,\
-    AtualizacaoSelicProvento
+    AtualizacaoSelicProvento, HistoricoAcao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
 from bagogold.bagogold.utils.acoes import verificar_tipo_acao
@@ -76,3 +76,13 @@ class CalcularAtualizacaoProventoSelicTestCase(TestCase):
         atualizacao.valor_rendimento = calcular_valor_atualizado_com_taxas_selic(taxas_dos_dias, provento.valor_unitario) - atualizacao.provento.valor_unitario
         
         self.assertAlmostEqual(atualizacao.valor_rendimento, Decimal('0.00059183169'), delta=Decimal('0.00000000001'))
+        
+class BuscarHistoricoRecenteTestCase(TestCase):
+    def setUp(self):
+        empresa = Empresa.objects.create(nome='Banco do Brasil', nome_pregao='BBAS')
+        Acao.objects.create(ticker='BBAS3', tipo='ON', empresa=empresa)
+        
+    def test_buscar_historico_7_dias(self):
+        """Testa a busca pelo histórico dos últimos 7 dias"""
+        buscar_historico_recente_bovespa()
+        self.assertTrue(HistoricoAcao.objects.all().exists())
