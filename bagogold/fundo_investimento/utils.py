@@ -2,6 +2,7 @@
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFundoInvestimento
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
     HistoricoValorCotas
+from decimal import Decimal
 from django.db.models.aggregates import Sum
 from django.db.models.expressions import F, Case, When
 from django.db.models.fields import DecimalField
@@ -18,6 +19,59 @@ def calcular_qtd_cotas_ate_dia(investidor, dia=datetime.date.today()):
         .annotate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
                             When(tipo_operacao='V', then=F('quantidade')*-1),
                             output_field=DecimalField()))).values_list('fundo_investimento', 'total').exclude(total=0))
+    
+    for fundo_id in qtd_cotas.keys():
+        data_inicial = OperacaoFundoInvestimento.objects.filter(fundo_investimento__id=fundo_id).order_by('data')[0].data
+        # Guarda a data da última iteração do come-cotas
+        ultima_data_verificada = data_inicial
+        # Mantém controle sobre o valor inserido até cada iteração do come-cotas
+        valor_investido = Decimal(0)
+        while data_inicial < dia:
+            ano = data_inicial.year
+            data_come_cotas_maio = datetime.date(ano, 5, 31)
+            data_come_cotas_nov = datetime.date(ano, 11, 30)
+            
+            if (data_come_cotas_maio - data_inicial).days > 0 and data_come_cotas_maio < dia:
+                ultimo_valor_cotas = HistoricoValorCotas.objects.filter(fundo_investimento__id=fundo_id, data__lte=data_come_cotas_maio).order_by('-data')[0].valor_cota
+                qtd_cotas_na_data = calcular_qtd_cotas_ate_dia(investidor, data_come_cotas_maio)[fundo_id]
+                
+                valor_bruto_come_cotas = qtd_cotas_na_data * ultimo_valor_cotas
+                valor_investido += OperacaoFundoInvestimento.objects.filter(investidor=investidor, data__range=[ultima_data_verificada, data_come_cotas_maio - datetime.timedelta(days=1)], fundo_investimento__id=fundo_id).values('fundo_investimento') \
+                    .aggregate(total=Sum(Case(When(tipo_operacao='C', then=F('valor')),
+                                        When(tipo_operacao='V', then=F('valor')*-1),
+                                        output_field=DecimalField())))['total'] or 0
+                print 'valor investido maio', valor_investido
+                
+                print 'qtd cotas antes cc maio', qtd_cotas[fundo_id]
+                qtd_cotas[fundo_id] -= max(0, valor_bruto_come_cotas - valor_investido) * Decimal('0.15') / ultimo_valor_cotas
+                print 'qtd cotas depois cc maio', qtd_cotas[fundo_id]
+                
+                # Valor investido passa a ser o valor líquido
+                valor_investido = qtd_cotas_na_data * ultimo_valor_cotas
+                
+                ultima_data_verificada = data_come_cotas_maio
+                                
+            if (data_come_cotas_nov - data_inicial).days > 0 and data_come_cotas_nov < dia:                
+                ultimo_valor_cotas = HistoricoValorCotas.objects.filter(fundo_investimento__id=fundo_id, data__lte=data_come_cotas_nov).order_by('-data')[0].valor_cota
+                qtd_cotas_na_data = calcular_qtd_cotas_ate_dia(investidor, data_come_cotas_nov)[fundo_id]
+                
+                valor_bruto_come_cotas = qtd_cotas_na_data * ultimo_valor_cotas
+                valor_investido += OperacaoFundoInvestimento.objects.filter(investidor=investidor, data__range=[ultima_data_verificada, data_come_cotas_nov - datetime.timedelta(days=1)], fundo_investimento__id=fundo_id).values('fundo_investimento') \
+                    .aggregate(total=Sum(Case(When(tipo_operacao='C', then=F('valor')),
+                                        When(tipo_operacao='V', then=F('valor')*-1),
+                                        output_field=DecimalField())))['total'] or 0
+                print 'valor investido nov', valor_investido
+
+                print 'qtd cotas antes cc nov', qtd_cotas[fundo_id]
+                qtd_cotas[fundo_id] -= max(0, valor_bruto_come_cotas - valor_investido) * Decimal('0.15') / ultimo_valor_cotas
+                print 'qtd cotas depois cc nov', qtd_cotas[fundo_id]
+                
+                # Valor investido passa a ser o valor líquido
+                valor_investido = qtd_cotas_na_data * ultimo_valor_cotas
+                
+                ultima_data_verificada = data_come_cotas_nov
+                
+            data_inicial = datetime.date(ano + 1, 1, 1)
     
     return qtd_cotas
 
