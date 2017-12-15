@@ -1,0 +1,27 @@
+* 10-18 * * 1-5 /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py preencher_valores_diarios_acao_fii 0
+# * 10-18 * * 1-5 /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py preencher_valores_diarios_acao_fii 30
+59 8,22 * * 1-5 /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py apagar_valores_diarios
+20 9,23 * * 1-5 /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py preencher_historico
+*/15 9-18 * * 1-5 /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py preencher_valores_diarios_td
+50 8,20 * * 1-5 /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py  preencher_historico_ano_atual_td
+30 8,22 * * 1-5 /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py preencher_historico_di_lc
+35 8,22 * * 1-5 /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py preencher_historico_selic 1
+0 */3 * * * /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py preparar_backup
+0 23 12-16 * * /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py buscar_historico_ipca
+30 20 * * * /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py buscar_acoes_existentes_bovespa
+0 21 * * * /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py buscar_proventos_acoes 0
+20 21 * * * /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py buscar_fiis_existentes_bovespa
+30 21 * * * /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py buscar_proventos_fii
+0 3 * * 6 /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py buscar_debentures
+0 4 * * 1-5 /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py preencher_historico_debenture 0
+# Fundos de investimento
+40 23 * * * /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py buscar_fundos_investimento --aleatorio
+50 23 * * * /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py buscar_fundos_investimento
+55 23 * * * /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py preencher_historico_fundo_investimento
+0 5 1 * * /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py preencher_historico_fundo_investimento --anual
+
+# Criptomoedas
+* * * * * /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py preencher_valores_diarios_cripto
+*/3 * * * * /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py verifica_msgs
+# Apenas Prod
+#* * * * * /home/bagofgold/.virtualenvs/bagogold/bin/python /home/bagofgold/bagogold/manage.py rodar_dropbox
