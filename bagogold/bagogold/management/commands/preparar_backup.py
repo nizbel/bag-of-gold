@@ -29,12 +29,6 @@ class Command(BaseCommand):
         arquivo = file(arquivo_dump, 'w+')
         
         arquivo.write(render_to_string(arquivo_base, {'tabelas': str_tabelas}))
-#         conteudo = arquivo.read()
-# 
-#         novo_conteudo = re.sub('--table.*public\.[^\s"]+"', str_tabelas, conteudo, 1)  
-#         arquivo.seek(0)
-#         arquivo.truncate()
-#         arquivo.write(novo_conteudo)
         
         arquivo.close()
         
