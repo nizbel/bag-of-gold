@@ -435,6 +435,9 @@ def calcular_poupanca_prov_acao_ate_dia_por_divisao(dia, divisao, destinacao='B'
     
     operacoes = OperacaoAcao.objects.filter(id__in=operacoes_divisao).order_by('data')
 
+    # Remover valores repetidos
+    acoes = list(set(operacoes.values_list('acao', flat=True)))
+    
     proventos = Provento.objects.filter(data_pagamento__lte=dia, acao__in=acoes).annotate(data=F('data_ex')).order_by('data')
      
     lista_conjunta = sorted(chain(operacoes, proventos),
