@@ -7,6 +7,7 @@ from django.db import connection
 from django.template.loader import render_to_string
 import os
 import subprocess
+import time
 
 TABELAS_SEM_CONTEUDO = ['bagogold_valordiarioacao', 'bagogold_valordiariofii', 'bagogold_valordiariotitulo', 'criptomoeda_valordiariocriptomoeda', 
                       'django_session']
@@ -49,6 +50,12 @@ class Command(BaseCommand):
             
             subprocess.call(['sh', '%s/%s' % (settings.BASE_DIR, arquivo_dump)])
             os.remove(arquivo.name)
+            
+            # Rodar dropbox
+            subprocess.call(['/home/bagofgold/bin/dropbox.py', 'start'])
+            while 'Up to date' not in subprocess.check_output(['/home/bagofgold/bin/dropbox.py', 'status']):
+                time.sleep(5)
+            subprocess.call(['/home/bagofgold/bin/dropbox.py', 'stop'])
 
 def buscar_tabelas_string():
     cursor = connection.cursor()
