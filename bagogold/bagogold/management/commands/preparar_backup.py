@@ -29,7 +29,7 @@ class Command(BaseCommand):
         # Alterar db_dump.sh correspondente
         arquivo = file(arquivo_dump, 'w+')
         
-        arquivo.write(render_to_string(arquivo_base, {'tabelas': str_tabelas}))
+        arquivo.write(render_to_string(arquivo_base, {'tabelas': str_tabelas, 'nome_db': settings.DATABASES['default']['NAME']}))
         
         arquivo.close()
         
