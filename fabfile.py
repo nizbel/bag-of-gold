@@ -24,30 +24,32 @@ def prod():
 
 # Actions
 
-# def setup():
-#     require('path')
-#     require('repository')
-#     require('config')
-#     
-#     # Setup virtualenv and virtualenvwrapper
-#     # NOTE: pip must already be installed on the system
-#     sudo('pip install virtualenv virtualenvwrapper', shell=False)
-#     if not exists('~/.profile'):
-#         run('touch ~/.profile')
-#     if not exists('~/.virtualenvs'):
-#         run('mkdir ~/.virtualenvs')
-#     if not contains('WORKON_HOME', '~/.profile'):
-#         append(('\nexport WORKON_HOME=$HOME/.virtualenvs'
-#                 '\nsource /usr/local/bin/virtualenvwrapper.sh'), '~/.profile')
-#         run('source ~/.profile')
-# 
-#     # Create the virtualenv
-#     run('mkvirtualenv %(virtualenv)s' % env)
-# 
-#     # Clone the repository
-#     if not exists(env.path):
-#         run('hg clone %(repository)s %(path)s' % env)
+def setup():
+    require('path')
+    require('repository')
+    require('config')
+     
+    # Setup virtualenv and virtualenvwrapper
+    # NOTE: pip must already be installed on the system
+    sudo('pip install virtualenv virtualenvwrapper', shell=False)
+    if not exists('~/.profile'):
+        run('touch ~/.profile')
+    if not exists('~/.virtualenvs'):
+        run('mkdir ~/.virtualenvs')
+    if not contains('WORKON_HOME', '~/.profile'):
+        append(('\nexport WORKON_HOME=$HOME/.virtualenvs'
+                '\nsource /usr/local/bin/virtualenvwrapper.sh'), '~/.profile')
+        run('source ~/.profile')
+ 
+    # Create the virtualenv
+    run('mkvirtualenv %(virtualenv)s' % env)
+ 
+    # Clone the repository
+    if not exists(env.path):
+        run('hg clone %(repository)s %(path)s' % env)
 
+def add_cronjob():
+    run('crontab /crontab_prod')
 
 # def update(requirements=False, rev=None):
 #     require('path')
