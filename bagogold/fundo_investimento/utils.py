@@ -26,6 +26,7 @@ def calcular_qtd_cotas_ate_dia(investidor, dia=datetime.date.today()):
         ultima_data_verificada = data_inicial
         # Mantém controle sobre o valor inserido até cada iteração do come-cotas
         valor_investido = Decimal(0)
+        # TODO calcular come-cotas individualmente
         while data_inicial < dia:
             ano = data_inicial.year
             data_come_cotas_maio = datetime.date(ano, 5, 31)
@@ -42,9 +43,10 @@ def calcular_qtd_cotas_ate_dia(investidor, dia=datetime.date.today()):
                                         output_field=DecimalField())))['total'] or 0
                 print 'valor investido maio', valor_investido
                 
-                print 'qtd cotas antes cc maio', qtd_cotas[fundo_id]
-                qtd_cotas[fundo_id] -= max(0, valor_bruto_come_cotas - valor_investido) * Decimal('0.15') / ultimo_valor_cotas
-                print 'qtd cotas depois cc maio', qtd_cotas[fundo_id]
+                print 'valor cota', ultimo_valor_cotas, 'qtd cotas', qtd_cotas_na_data
+                valor_ir = (max(0, valor_bruto_come_cotas - valor_investido) * Decimal('0.15')).quantize(Decimal('0.01'))
+                qtd_cotas[fundo_id] -= valor_ir / ultimo_valor_cotas
+                print 'pagou', valor_ir, 'em', valor_ir / ultimo_valor_cotas, 'cotas'
                 
                 # Valor investido passa a ser o valor líquido
                 valor_investido = qtd_cotas_na_data * ultimo_valor_cotas
@@ -62,9 +64,10 @@ def calcular_qtd_cotas_ate_dia(investidor, dia=datetime.date.today()):
                                         output_field=DecimalField())))['total'] or 0
                 print 'valor investido nov', valor_investido
 
-                print 'qtd cotas antes cc nov', qtd_cotas[fundo_id]
-                qtd_cotas[fundo_id] -= max(0, valor_bruto_come_cotas - valor_investido) * Decimal('0.15') / ultimo_valor_cotas
-                print 'qtd cotas depois cc nov', qtd_cotas[fundo_id]
+                print 'valor cota', ultimo_valor_cotas, 'qtd cotas', qtd_cotas_na_data
+                valor_ir = (max(0, valor_bruto_come_cotas - valor_investido) * Decimal('0.15')).quantize(Decimal('0.01'))
+                qtd_cotas[fundo_id] -= valor_ir / ultimo_valor_cotas
+                print 'pagou', valor_ir, 'em', valor_ir / ultimo_valor_cotas, 'cotas'
                 
                 # Valor investido passa a ser o valor líquido
                 valor_investido = qtd_cotas_na_data * ultimo_valor_cotas

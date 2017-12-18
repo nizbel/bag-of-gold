@@ -4,7 +4,7 @@ from bagogold.fundo_investimento.models import Administrador, FundoInvestimento,
     OperacaoFundoInvestimento, HistoricoValorCotas
 from bagogold.fundo_investimento.utils import \
     calcular_valor_fundos_investimento_ate_dia, calcular_qtd_cotas_ate_dia
-from decimal import Decimal
+from decimal import Decimal, ROUND_FLOOR
 from django.contrib.auth.models import User
 from django.test import TestCase
 import datetime
@@ -34,14 +34,34 @@ class ComeCotasTestCase(TestCase):
         OperacaoFundoInvestimento.objects.create(fundo_investimento=fundo_1, tipo_operacao='C', data=datetime.date(2017, 9, 20), quantidade=('473.052823810187'), 
                                                  valor=Decimal(1200), investidor=user.investidor)
         
-        
+        HistoricoValorCotas.objects.create(fundo_investimento=fundo_1, data=datetime.date(2017, 5, 30), valor_cota=Decimal('2.45791446'))
         HistoricoValorCotas.objects.create(fundo_investimento=fundo_1, data=datetime.date(2017, 5, 31), valor_cota=Decimal('2.45883695'))
+        HistoricoValorCotas.objects.create(fundo_investimento=fundo_1, data=datetime.date(2017, 11, 29), valor_cota=Decimal('2.55930187'))
         HistoricoValorCotas.objects.create(fundo_investimento=fundo_1, data=datetime.date(2017, 11, 30), valor_cota=Decimal('2.55962314'))
         HistoricoValorCotas.objects.create(fundo_investimento=fundo_1, data=datetime.date(2017, 12, 13), valor_cota=Decimal('2.56529144'))
         
         
     def test_valor_em_13_12_2017(self):
         """Testa se em 13/12/2017 o valor das compras está num total de 18.283,74 para 7127,3542775 cotas"""
+        soma = 0
+        for operacao in OperacaoFundoInvestimento.objects.all():
+            print operacao
+            operacao.vlr_cota = operacao.valor_cota()
+            if operacao.data < datetime.date(2017, 5, 31):
+                print operacao.vlr_cota
+                ir = ((HistoricoValorCotas.objects.get(data=datetime.date(2017, 5 ,31)).valor_cota - operacao.vlr_cota) * operacao.quantidade * Decimal('0.15')).quantize(Decimal('0.01'), rounding=ROUND_FLOOR)
+                soma += ir
+                operacao.quantidade -= ir / HistoricoValorCotas.objects.get(data=datetime.date(2017, 5, 31)).valor_cota
+                operacao.vlr_cota = HistoricoValorCotas.objects.get(data=datetime.date(2017, 5, 31)).valor_cota
+            if operacao.data < datetime.date(2017, 11, 30):
+                print operacao.vlr_cota
+                ir = ((HistoricoValorCotas.objects.get(data=datetime.date(2017, 11 ,30)).valor_cota - operacao.vlr_cota) * operacao.quantidade * Decimal('0.15')).quantize(Decimal('0.01'), rounding=ROUND_FLOOR)
+                soma += ir
+                operacao.quantidade -= ir / HistoricoValorCotas.objects.get(data=datetime.date(2017, 11, 30)).valor_cota
+            
+            print 'Qtd final', operacao.quantidade
+        
+        print soma
         # Alcançar esses valores
         # Claritas Inst Fim    13/12/2017    2,56529144    7127,35427765    R$ 0,00    R$ 18.236,80    R$ 18.283,74    
         investidor = Investidor.objects.get(user__username='tester')
