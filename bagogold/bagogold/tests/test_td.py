@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.td import Titulo, OperacaoTitulo, HistoricoTitulo
-from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia_por_titulo,\
+from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia_por_titulo, \
     calcular_valor_td_ate_dia, quantidade_titulos_ate_dia
 from decimal import Decimal
 from django.contrib.auth.models import User
+from django.core.management import call_command
 from django.db.models.aggregates import Sum
 from django.test import TestCase
 import datetime
@@ -50,3 +51,16 @@ class TesouroDiretoTestCase(TestCase):
         qtd_titulos.update((titulo_id, Decimal(qtd*715)) for titulo_id, qtd in qtd_titulos.items())
         self.assertDictEqual(calcular_valor_td_ate_dia(investidor, datetime.date(2016, 9, 14)), qtd_titulos)
                          
+
+class ComandoPreencherHistoricoAnoAtualTDTestCase(TestCase):
+    def test_comando(self):
+        """Testa comando de preencher histórico para ano atual de Tesouro Direto"""
+
+        args = []
+        opts = {'test': True}
+        # Roda uma vez para preencher a tabela e outra para verificar o que foi inserido
+        call_command('preencher_historico_ano_atual_td', *args, **opts)
+        call_command('preencher_historico_ano_atual_td', *args, **opts)
+
+        self.assertTrue(Titulo.objects.filter().exists())
+        self.assertTrue(HistoricoTitulo.objects.filter().exists())

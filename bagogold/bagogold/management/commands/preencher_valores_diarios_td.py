@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.testTD import buscar_valores_diarios
 from django.core.management.base import BaseCommand
-from django.utils import timezone
-import time
 
 
 class Command(BaseCommand):

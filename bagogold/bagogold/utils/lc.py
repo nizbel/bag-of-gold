@@ -41,6 +41,22 @@ def calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor_atual, operacao
         taxa_acumulada *= pow(((pow((Decimal(1) + taxa_do_dia/100), Decimal(1)/Decimal(252)) - Decimal(1)) * operacao_taxa/100 + Decimal(1)), taxas_dos_dias[taxa_do_dia])
     return taxa_acumulada * valor_atual
 
+def calcular_valor_atualizado_com_taxas_di_e_juros(taxas_dos_dias, valor_atual, operacao_taxa, juros):
+    """
+    Calcula o valor atualizado de uma operação vinculada ao DI, a partir das taxa DI dos dias
+    Parâmetros: Taxas DI dos dias {taxa(Decimal): quantidade_de_dias}
+                Valor atual da operação
+                Taxa da operação
+                Juros (percentual ao ano)
+    Retorno: Valor atualizado com a taxa DI
+    """
+    taxa_acumulada = 1
+    juros = Decimal(juros)
+    for taxa_do_dia in taxas_dos_dias.keys():
+        taxa_acumulada *= pow((((pow((Decimal(1) + taxa_do_dia/100), Decimal(1)/Decimal(252)) - Decimal(1)) * operacao_taxa/100 + Decimal(1)) * \
+                               pow((Decimal(1) + juros/100), Decimal(1)/Decimal(252))), taxas_dos_dias[taxa_do_dia])
+    return taxa_acumulada * valor_atual
+
 def calcular_valor_venda_lc(operacao_venda):
     # Definir período do histórico relevante para a operação
     historico_utilizado = HistoricoTaxaDI.objects.filter(data__range=[operacao_venda.operacao_compra_relacionada().data, operacao_venda.data - datetime.timedelta(days=1)]).values('taxa').annotate(qtd_dias=Count('taxa'))
@@ -155,16 +171,17 @@ def calcular_valor_lc_ate_dia_por_divisao(dia, divisao_id):
 def simulador_lci_lca(filtros):
     """
     Simula uma aplicação em LCI/LCA para os valores especificados nos filtros
-    Parâmetros:
+    Parâmetros: Dicionário com filtros
     Retorno:    Lista de datas (mes a mes) com valores, ex.: [(data, valor),...]
     """
     qtd_atual = filtros['aplicacao']
     data_atual = datetime.date.today()
     resultado = [(data_atual, qtd_atual)]
+    ultima_taxa_di = HistoricoTaxaDI.objects.all().order_by('-data')[0].taxa
     if filtros['tipo'] == 'POS':
         for _ in range(filtros['periodo']):
             qtd_dias_uteis = qtd_dias_uteis_no_periodo(data_atual, data_atual + datetime.timedelta(days=30))
             data_atual = data_atual + datetime.timedelta(days=30)
-            qtd_atual = calcular_valor_atualizado_com_taxas_di({Decimal('14.13'): qtd_dias_uteis}, qtd_atual, filtros['percentual_indice'])
+            qtd_atual = calcular_valor_atualizado_com_taxas_di({ultima_taxa_di: qtd_dias_uteis}, qtd_atual, filtros['percentual_indice'])
             resultado.append((data_atual, qtd_atual))
     return resultado

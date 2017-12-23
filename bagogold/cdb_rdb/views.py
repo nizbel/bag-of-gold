@@ -26,8 +26,6 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.db.models import Count
-from django.db.models.aggregates import Sum
-from django.db.models.expressions import F
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -66,7 +64,7 @@ def detalhar_cdb_rdb(request, cdb_rdb_id):
     # Contar total de operações já realizadas 
     cdb_rdb.total_operacoes = len(operacoes)
     # Remover operacoes totalmente vendidas
-    operacoes = [operacao for operacao in operacoes if operacao.qtd_disponivel_venda() > 0]
+    operacoes = [operacao for operacao in operacoes if operacao.tipo_operacao == 'C' and operacao.qtd_disponivel_venda() > 0]
     if operacoes:
         historico_di = HistoricoTaxaDI.objects.filter(data__range=[operacoes[0].data, datetime.date.today()])
         for operacao in operacoes:
@@ -105,7 +103,8 @@ def detalhar_cdb_rdb(request, cdb_rdb_id):
         cdb_rdb.lucro_percentual = cdb_rdb.lucro / cdb_rdb.total_investido * 100
     try: 
         cdb_rdb.dias_prox_vencimento = (min(operacao.data + datetime.timedelta(days=operacao.vencimento()) for operacao in operacoes if \
-                                             (operacao.data + datetime.timedelta(days=operacao.vencimento())) > datetime.date.today()) - datetime.date.today()).days
+                                            operacao.tipo_operacao == 'C' and \
+                                            (operacao.data + datetime.timedelta(days=operacao.vencimento())) > datetime.date.today()) - datetime.date.today()).days
     except ValueError:
         cdb_rdb.dias_prox_vencimento = 0
     
@@ -179,7 +178,6 @@ def editar_historico_carencia(request, historico_carencia_id):
                 messages.error(request, 'Valor inicial de carência não pode ser excluído')
                 return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': historico_carencia.cdb_rdb.id}))
             # Pegar investimento para o redirecionamento no caso de exclusão
-            inicial = False
             cdb_rdb = historico_carencia.cdb_rdb
             historico_carencia.delete()
             messages.success(request, 'Histórico de carência excluído com sucesso')
@@ -230,7 +228,6 @@ def editar_historico_porcentagem(request, historico_porcentagem_id):
                 messages.error(request, 'Valor inicial de porcentagem não pode ser excluído')
                 return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': historico_porcentagem.cdb_rdb.id}))
             # Pegar investimento para o redirecionamento no caso de exclusão
-            inicial = False
             cdb_rdb = historico_porcentagem.cdb_rdb
             historico_porcentagem.delete()
             messages.success(request, 'Histórico de porcentagem excluído com sucesso')
@@ -262,29 +259,28 @@ def editar_historico_vencimento(request, historico_vencimento_id):
         if request.POST.get("save"):
             if historico_vencimento.data is None:
                 inicial = True
-                form_historico_carencia = HistoricoVencimentoCDB_RDBForm(request.POST, instance=historico_vencimento, cdb_rdb=historico_vencimento.cdb_rdb, \
+                form_historico_vencimento = HistoricoVencimentoCDB_RDBForm(request.POST, instance=historico_vencimento, cdb_rdb=historico_vencimento.cdb_rdb, \
                                                                        investidor=investidor, inicial=inicial)
             else:
                 inicial = False
-                form_historico_carencia = HistoricoVencimentoCDB_RDBForm(request.POST, instance=historico_vencimento, cdb_rdb=historico_vencimento.cdb_rdb, \
+                form_historico_vencimento = HistoricoVencimentoCDB_RDBForm(request.POST, instance=historico_vencimento, cdb_rdb=historico_vencimento.cdb_rdb, \
                                                                        investidor=investidor)
-            if form_historico_carencia.is_valid():
+            if form_historico_vencimento.is_valid():
                 historico_vencimento.save()
-                messages.success(request, 'Histórico de carência editado com sucesso')
+                messages.success(request, 'Histórico de vencimento editado com sucesso')
                 return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': historico_vencimento.cdb_rdb.id}))
             
-            for erro in [erro for erro in form_historico_carencia.non_field_errors()]:
+            for erro in [erro for erro in form_historico_vencimento.non_field_errors()]:
                 messages.error(request, erro)
                 
         elif request.POST.get("delete"):
             if historico_vencimento.data is None:
-                messages.error(request, 'Valor inicial de carência não pode ser excluído')
+                messages.error(request, 'Valor inicial de vencimento não pode ser excluído')
                 return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': historico_vencimento.cdb_rdb.id}))
             # Pegar investimento para o redirecionamento no caso de exclusão
-            inicial = False
             cdb_rdb = historico_vencimento.cdb_rdb
             historico_vencimento.delete()
-            messages.success(request, 'Histórico de carência excluído com sucesso')
+            messages.success(request, 'Histórico de vencimento excluído com sucesso')
             return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': cdb_rdb.id}))
  
     else:

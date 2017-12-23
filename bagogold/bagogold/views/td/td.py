@@ -36,8 +36,11 @@ import math
 
 @login_required
 def buscar_titulos_validos_na_data(request):
-    data = datetime.datetime.strptime(request.GET['dataEscolhida'], '%d/%m/%Y').date()
-    tipo_operacao = request.GET['tipoOperacao']
+    try:
+        data = datetime.datetime.strptime(request.GET.get('dataEscolhida'), '%d/%m/%Y').date()
+    except:
+        return HttpResponse(json.dumps({'mensagem': u'Data inválida'}))
+    tipo_operacao = request.GET.get('tipoOperacao')
     if tipo_operacao == 'C':
         lista_titulos_validos = list(Titulo.objects.filter(data_vencimento__gt=data).values_list('id', flat=True))
     else:
@@ -673,8 +676,12 @@ def sobre(request):
     else:
         total_atual = 0
     
-    ultima_data_hora_atualizacao = ValorDiarioTitulo.objects.all().order_by('-data_hora')[0].data_hora
-    ultimos_valores = ValorDiarioTitulo.objects.filter(data_hora=ultima_data_hora_atualizacao)
+    if ValorDiarioTitulo.objects.filter().exists():
+        ultima_data_hora_atualizacao = ValorDiarioTitulo.objects.all().order_by('-data_hora')[0].data_hora
+        ultimos_valores = ValorDiarioTitulo.objects.filter(data_hora=ultima_data_hora_atualizacao)
+    else:
+        ultima_data_hora_atualizacao = HistoricoTitulo.objects.all().order_by('-data')[0].data
+        ultimos_valores = HistoricoTitulo.objects.filter(data=ultima_data_hora_atualizacao)
     
     return TemplateResponse(request, 'td/sobre.html', {'graf_historico_ipca': graf_historico_ipca, 'graf_historico_selic': graf_historico_selic,
                                                        'total_atual': total_atual, 'ultimos_valores': ultimos_valores, 'ultima_data_hora_atualizacao': ultima_data_hora_atualizacao})

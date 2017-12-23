@@ -30,6 +30,7 @@
 							<th>Divisão</th>
 							<th>Objetivo</th>
 							<th>Valor atual</th>
+<!--                             <th>Dias restantes</th> -->
 							<th>Saldo</th>
 						</tr>
 					</thead>
@@ -39,6 +40,7 @@
 						<td><a href="{% url 'divisoes:detalhar_divisao' divisao.id %}">{{divisao.nome}}</a></td>
 						<td>R${{divisao.valor_objetivo}}</td>
 						<td>R${{divisao.valor_atual|floatformat:"2"}} ({{divisao.quantidade_percentual|floatformat:"2"}}%)</td>
+<!--                         <td>{{divisao.tempo_restante|floatformat:'1'|default:'0'}} dia(s)</td> -->
 						<td><span class="
 							{% if divisao.saldo < 0 %}
 							font-red-thunderbird
@@ -79,6 +81,7 @@
                             <th>FII</th>
                             <th>Fundo Inv.</th>
                             <th>Tes. Direto</th>
+                            <th>Outros</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -155,6 +158,13 @@
 							font-blue
 							{% endif %}
 							">R${{divisao.valor_atual_td|floatformat:"2"}}</span></td>
+                        <td><span class="
+                            {% if divisao.valor_atual_outros_invest < 0 %}
+                            font-red-thunderbird
+                            {% else %}
+                            font-blue
+                            {% endif %}
+                            ">R${{divisao.valor_atual_outros_invest|floatformat:"2"}}</span></td>
 					</tr>
 					{% endfor %}
 					</tbody>
@@ -188,6 +198,7 @@
 							<th>FII</th>
 							<th>Fundo Inv.</th>
 							<th>Tes. Direto</th>
+                            <th>Outros</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -264,6 +275,13 @@
 							font-blue
 							{% endif %}
 							">R${{divisao.saldo_td|floatformat:"2"}}</span></td>
+                        <td><span class="
+                            {% if divisao.saldo_outros_invest < 0 %}
+                            font-red-thunderbird
+                            {% else %}
+                            font-blue
+                            {% endif %}
+                            ">R${{divisao.saldo_outros_invest|floatformat:"2"}}</span></td>
 					</tr>
 					{% endfor %}
 					</tbody>

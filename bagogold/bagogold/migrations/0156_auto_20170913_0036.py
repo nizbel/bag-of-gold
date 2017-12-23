@@ -10,6 +10,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('bagogold', '0155_auto_20170903_1439'),
+        ('cdb_rdb', '0001_initial'),
     ]
 
     operations = [

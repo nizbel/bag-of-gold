@@ -11,21 +11,24 @@ from bagogold.bagogold.models.td import OperacaoTitulo, ValorDiarioTitulo, \
     HistoricoTitulo
 from bagogold.bagogold.utils.acoes import quantidade_acoes_ate_dia, \
     calcular_poupanca_prov_acao_ate_dia
-from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia
 from bagogold.bagogold.utils.debenture import calcular_qtd_debentures_ate_dia
 from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia_por_ticker, \
     calcular_qtd_fiis_ate_dia, calcular_poupanca_prov_fii_ate_dia
 from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia
 from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia
+from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia
 from bagogold.cri_cra.models.cri_cra import CRI_CRA, OperacaoCRI_CRA
 from bagogold.cri_cra.utils.utils import qtd_cri_cra_ate_dia
 from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
-from bagogold.criptomoeda.models import Criptomoeda, OperacaoCriptomoeda
-from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia, \
-    buscar_valor_criptomoedas_atual
+from bagogold.criptomoeda.models import Criptomoeda, OperacaoCriptomoeda, \
+    ValorDiarioCriptomoeda
+from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
 from bagogold.fundo_investimento.utils import \
     calcular_valor_fundos_investimento_ate_dia
+from bagogold.outros_investimentos.models import Investimento
+from bagogold.outros_investimentos.utils import \
+    calcular_valor_outros_investimentos_ate_data
 from decimal import Decimal
 from django.core.exceptions import PermissionDenied
 from django.utils import timezone
@@ -81,9 +84,10 @@ def buscar_ultimas_operacoes(investidor, quantidade_operacoes):
     operacoes_cri_cra = OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor).exclude(data__isnull=True).order_by('data')  
     operacoes_debentures = OperacaoDebenture.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
     operacoes_fundo_investimento = OperacaoFundoInvestimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
+    outros_investimentos = Investimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
     
     lista_operacoes = sorted(chain(operacoes_fii, operacoes_td, operacoes_acoes, operacoes_lc, operacoes_cdb_rdb, 
-                                   operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento),
+                                   operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento, outros_investimentos),
                             key=attrgetter('data'), reverse=True)
     
     ultimas_operacoes = lista_operacoes[:min(quantidade_operacoes, len(lista_operacoes))]
@@ -109,16 +113,19 @@ def buscar_operacoes_no_periodo(investidor, data_inicial, data_final):
     operacoes_criptomoeda = OperacaoCriptomoeda.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')
     operacoes_debentures = OperacaoDebenture.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')  
     operacoes_fundo_investimento = OperacaoFundoInvestimento.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')
+    outros_investimentos = Investimento.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')
     
     lista_operacoes = sorted(chain(operacoes_fii, operacoes_td, operacoes_acoes, operacoes_lc, operacoes_cdb_rdb, 
-                                   operacoes_cri_cra, operacoes_criptomoeda, operacoes_debentures, operacoes_fundo_investimento),
+                                   operacoes_cri_cra, operacoes_criptomoeda, operacoes_debentures, operacoes_fundo_investimento, 
+                                   outros_investimentos),
                             key=attrgetter('data'))
     
     return lista_operacoes
 
 def buscar_totais_atuais_investimentos(investidor):
     totais_atuais = {'Ações': Decimal(0), 'CDB/RDB': Decimal(0), 'CRI/CRA': Decimal(0), 'Criptomoedas': Decimal(0), 'Debêntures': Decimal(0), 
-                     'FII': Decimal(0), 'Fundos de Inv.': Decimal(0), 'Letras de Crédito': Decimal(0), 'Tesouro Direto': Decimal(0), }
+                     'FII': Decimal(0), 'Fundos de Inv.': Decimal(0), 'Letras de Crédito': Decimal(0), 'Outros inv.': Decimal(0), 
+                     'Tesouro Direto': Decimal(0), }
     
     data_atual = datetime.date.today()
     
@@ -150,7 +157,7 @@ def buscar_totais_atuais_investimentos(investidor):
     qtd_criptomoedas = calcular_qtd_moedas_ate_dia(investidor, data_atual)
     moedas = Criptomoeda.objects.filter(id__in=qtd_criptomoedas.keys())
     # Buscar valor das criptomoedas em posse do investidor
-    valores_criptomoedas = buscar_valor_criptomoedas_atual([moeda.ticker for moeda in moedas])
+    valores_criptomoedas = {valor_diario.criptomoeda.ticker: valor_diario.valor for valor_diario in ValorDiarioCriptomoeda.objects.filter(criptomoeda__in=moedas, moeda='BRL')}
     for moeda in moedas:
         totais_atuais['Criptomoedas'] += qtd_criptomoedas[moeda.id] * valores_criptomoedas[moeda.ticker]
     
@@ -180,6 +187,11 @@ def buscar_totais_atuais_investimentos(investidor):
     for total_lc in letras_credito.values():
         totais_atuais['Letras de Crédito'] += total_lc
     
+    # Outros investimentos
+    outros_investimentos = calcular_valor_outros_investimentos_ate_data(investidor, data_atual)
+    for valor_investimento in outros_investimentos.values():
+        totais_atuais['Outros inv.'] += valor_investimento
+    
     # Tesouro Direto
     titulos = quantidade_titulos_ate_dia(investidor, data_atual)
     for titulo_id in titulos.keys():
@@ -204,11 +216,11 @@ def buscar_proventos_a_receber(investidor, fonte_provento=''):
     """
     proventos_a_receber = list()
     
+    data_atual = datetime.date.today()
+    
     # Buscar proventos em ações
     if fonte_provento != 'F':
         acoes_investidor = buscar_acoes_investidor_na_data(investidor)
-        
-        data_atual = datetime.date.today()
         
         for acao in Acao.objects.filter(id__in=acoes_investidor):
             proventos_a_pagar = Provento.objects.filter(acao=acao, data_ex__lte=data_atual, data_pagamento__gte=data_atual, tipo_provento__in=['D', 'J'])

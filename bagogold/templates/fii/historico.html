@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load staticfiles %}
+{% load misc %}
 
 {% block extra_head %}
 <link href={% static "assets/global/plugins/datatables/datatables.min.css" %} rel="stylesheet" type="text/css" />
@@ -116,22 +117,39 @@
 					<tbody>
 					{% for item in lista_conjunta %}
 						<tr>
-							<td><a href="{% if item.tipo == 'Provento' %}javascript:;
-							{% else %}{% url 'fii:editar_operacao_fii' item.id %}
-							{% endif %}">{{item.fii.ticker}}</a></td>
+							<td>
+                                {% if item.tipo in lista_eventos or item.tipo == 'Provento'%}
+                                    {{item.fii.ticker}}
+                                {% else %}
+                                    <a href="{% url 'fii:editar_operacao_fii' item.id %}">{{item.fii.ticker}}</a>
+                                {% endif %}
+                            </td>
 							<td>{{item.tipo}}</td>
 							<td>{{ item.data|date:"d/m/Y" }}</td>
 							<td>{{item.quantidade}}</td>
-							<td>R$ {{item.valor_unitario}}</td>
+                            {% if item.tipo in lista_eventos %}
+                                {% if item.tipo == lista_eventos.2 %}
+                                <td>{{item.valor_unitario}}</td>
+                                {% else %}
+                                <td>{{item.valor_unitario|casas_decimais}}</td>
+                                {% endif %}
+                            {% else %}
+							    <td>R$ {{item.valor_unitario|casas_decimais}}</td>
+                            {% endif %}
 							<td>{% if item.emolumentos != None %}<span class="font-red-thunderbird">R$ {{item.emolumentos|floatformat:"2"}}</span>{% else %}Não há{% endif %}</td>
 							<td>{% if item.corretagem != None %}<span class="font-red-thunderbird">R$ {{item.corretagem|floatformat:"2"}}</span>{% else %}Não há{% endif %}</td>
-							<td><span class="
+							<td>
+                            {% if item.tipo in lista_eventos %}
+                            {{item.total}}
+                            {% else %}<span class="
 							{% if item.total < 0 %}
 							font-red-thunderbird
 							{% else %}
 							font-blue
 							{% endif %}
-							">R$ {{item.total|floatformat:2}}</span></td>
+							">R$ {{item.total|floatformat:2}}</span>
+                            {% endif %}
+                            </td>
 						</tr>
 					{% endfor %}
 					</tbody>
@@ -156,7 +174,6 @@
 <script src={% static "assets/global/plugins/flot/jquery.flot.axislabels.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.categories.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.crosshair.min.js" %} type="text/javascript"></script>
-<script src={% static "assets/global/plugins/flot/jquery.flot.resize.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.resize.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.stack.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.time.min.js" %} type="text/javascript"></script>
@@ -213,7 +230,7 @@ $( document ).ready(function() {
                     y = item.datapoint[1].toFixed(2);
                 
                 var date = new Date(parseInt(x));
-                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%y") +"</br>" + item.series.label + ": R$" + y.replace('.', ','));
+                showTooltip(item.pageX, item.pageY, moment.utc(date).format('DD/MM/YYYY') +"</br>" + item.series.label + ": R$" + y.replace('.', ','));
             }
         }
         else {

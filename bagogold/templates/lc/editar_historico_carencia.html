@@ -26,7 +26,7 @@
 					<div class="form-group col-md-6 {% if form_historico_carencia.data.errors %} has-error {% endif %}">
 						<label class="control-label col-md-4" style="text-align: left;"> Data da variação: </label>
 						<div class="col-md-8">
-							<div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" data-date-viewmode="years">
+							<div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy">
 								<input type="text" class="form-control" id="id_data" name="data" {% if inicial %}value="Carência inicial" disabled="disabled" readonly
                                 {% else %} value="{% if form_historico_carencia.data.value|date:'d/m/Y'|default:'' == '' %}{{form_historico_carencia.data.value|default:''}}{% else %}{{form_historico_carencia.data.value|date:'d/m/Y'}}{% endif %}"{% endif %}>
 								<span class="input-group-btn">

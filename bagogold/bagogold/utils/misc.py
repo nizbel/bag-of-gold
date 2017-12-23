@@ -3,17 +3,20 @@ from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao
 from bagogold.bagogold.models.fii import UsoProventosOperacaoFII
 from bagogold.bagogold.models.lc import OperacaoLetraCredito
 from bagogold.bagogold.models.td import HistoricoIPCA, OperacaoTitulo
+from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
 from bagogold.fundo_investimento.utils import \
     calcular_valor_fundos_investimento_ate_dia
 from decimal import Decimal
+from django.db.models.aggregates import Sum
+from django.utils import timezone
 from urllib2 import Request, urlopen, URLError, HTTPError
 import datetime
+import json
 import math
 import random
 import re
+import requests
 import time
-from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
-from django.utils import timezone
 
 
 def calcular_iof_regressivo(dias):
@@ -86,46 +89,36 @@ def buscar_valores_diarios_selic(data_inicial=datetime.date.today() - datetime.t
             if data_final.day > data_inicial.day:
                 raise ValueError('Intervalo deve ser inferior a 10 anos')
     
-    # from bagogold.bagogold.utils.misc import buscar_valores_diarios_selic
-    # http://www3.bcb.gov.br/selic/consulta/taxaSelic.do?method=listarTaxaDiaria&dataInicial=11/11/2016&dataFinal=16/11/2016&tipoApresentacao=arquivo
-    td_url = 'http://www3.bcb.gov.br/selic/consulta/taxaSelic.do?method=listarTaxaDiaria&dataInicial=%s&dataFinal=%s&tipoApresentacao=arquivo' % (data_inicial.strftime('%d/%m/%Y'),
-                                                                                                                                                  data_final.strftime('%d/%m/%Y'))
-    req = Request(td_url)
-    try:
-        response = urlopen(req)
-    except HTTPError as e:
-        print 'The server couldn\'t fulfill the request.'
-        print 'Error code: ', e.code
-    except URLError as e:
-        print 'We failed to reach a server.'
-        print 'Reason: ', e.reason
-    else:
-        data = response.read()
-#         print data
+    selic_url = 'https://www3.bcb.gov.br/selic/rest/taxaSelicApurada/pub/search?parametrosOrdenacao=%5B%7B%22nome%22%3A%22dataCotacao%22%2C%22decrescente%22%3Atrue%7D%5D&page=1&pageSize=2513'
+    head = { 'Content-Type': 'application/json; charset=UTF-8',
+             'Accept': 'application/json, text/javascript, */*; q=0.01',
+             'X-Requested-With': 'XMLHttpRequest' }
+    data = {'dataInicial': data_inicial.strftime('%d/%m/%Y'), 'dataFinal': data_final.strftime('%d/%m/%Y')}
+    response = requests.post(selic_url, json.dumps(data), headers=head)
+    
+    retorno = json.loads(response.text)
+    if retorno['totalItems'] > 0:
         lista_datas_valores = list()
-        # data vem como um arquivo txt separado por linhas com \n e delimitado por ;
-        linhas = data.split('\n')
-        # ler a partir da terceira linha
-        for linha in linhas[2:]:
-            dados_linha = linha.split(';')
-            if len(dados_linha) > 2:
-                try:
-                    data = datetime.datetime.strptime(dados_linha[0], '%d/%m/%Y').date()
-                except:
-                    continue
-                fator_diario = Decimal(dados_linha[2].replace(',', '.'))
-                if fator_diario.is_zero():
-                    continue
-                lista_datas_valores.append((data, fator_diario))
+        # Ler registros do JSON
+        
+        for item in retorno['registros']:
+            data = datetime.datetime.strptime(item['dataCotacaoStr'], '%d/%m/%Y').date()
+            fator_diario = Decimal(item['fatorDiario']).quantize(Decimal('0.000000000001'))
+            if fator_diario.is_zero():
+                continue
+            lista_datas_valores.append((data, fator_diario))
         return lista_datas_valores
+    else:
+        return list()
      
-def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDEFILRT'):
+def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDEFILORT'):
     """
     Calcula os rendimentos de operações até a data especificada, para os tipos de investimento definidos
     Parâmetros: Investidor
                 Data final (inclusive)
                 Tipo de investimento (seguindo o padrão
-    B = Buy and Hold; C = CDB/RDB; D = Tesouro Direto; E = Debêntures; F = FII; I = Fundo de investimento; L = Letra de Crédito; R = CRI/CRA; T = Trading;
+    B = Buy and Hold; C = CDB/RDB; D = Tesouro Direto; E = Debêntures; F = FII; I = Fundo de investimento; L = Letra de Crédito;
+    O = Outros investimentos; R = CRI/CRA; T = Trading;)
     Retorno: Valores de rendimentos para cada tipo de investimento {Tipo: Valor}
     """
     from bagogold.cdb_rdb.models import OperacaoCDB_RDB
@@ -136,6 +129,7 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDEFILR
     from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia
     from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA
     from bagogold.cri_cra.utils.utils import calcular_valor_cri_cra_ate_dia, calcular_rendimentos_cri_cra_ate_data
+    from bagogold.outros_investimentos.models import Rendimento
     
     rendimentos = {}
     # Ações (Buy and Hold)
@@ -175,6 +169,10 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDEFILR
         rendimentos['R'] = sum(calcular_valor_cri_cra_ate_dia(investidor, data).values()) + calcular_rendimentos_cri_cra_ate_data(investidor, data) \
             - sum([(operacao.quantidade * operacao.preco_unitario) for operacao in OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, data__lte=data, tipo_operacao='C')]) \
             + sum([(operacao.quantidade * operacao.preco_unitario) for operacao in OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, data__lte=data, tipo_operacao='V')])
+    
+    # Outros investimentos
+    if 'O' in tipo_investimentos:
+        rendimentos['O'] = Rendimento.objects.filter(investimento__investidor=investidor, data__lte=data).aggregate(total_rendimentos=Sum('valor'))['total_rendimentos'] or 0
     
     return rendimentos
 
@@ -275,7 +273,7 @@ def formatar_zeros_a_direita_apos_2_casas_decimais(valor):
     """
     if valor == 0:
         return '0.00'
-    str_valor_formatado = '{0:f}'.format(valor)
+    str_valor_formatado = str(valor)
     if '.' in str_valor_formatado:
         # Formatar número com casas decimais
         parte_inteira = str_valor_formatado.split('.')[0]
@@ -329,17 +327,6 @@ def buscar_dia_util_aleatorio(data_inicial, data_final):
         data_aleatoria = buscar_data_aleatoria(data_inicial, data_final)
     return data_aleatoria
 
-def converter_date_para_utc(data):
-    if isinstance(data, datetime.date):
-        # Verificar offset atual
-        dt = datetime.datetime.now()
-        offset_seconds = timezone.get_current_timezone().utcoffset(dt).total_seconds()
-        
-        date_utc = datetime.datetime(year=data.year, month=data.month, day=data.day) - datetime.timedelta(seconds=offset_seconds)
-        return date_utc 
-    else:
-        raise ValueError('Objeto deve ser do tipo date')
-    
 def formatar_lista_para_string_create(lista):
     for objeto in lista:
         print '%s.objects.create(' % (objeto.__class__.__name__) + ', '.join(['%s=%s' % (field.name, getattr(objeto, field.name)) for field in objeto._meta.fields if field.name != 'id']) + ')'

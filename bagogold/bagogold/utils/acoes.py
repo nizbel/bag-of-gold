@@ -13,18 +13,22 @@ import datetime
 import mechanize
 import re
 
-def calcular_operacoes_sem_proventos_por_mes(investidor, operacoes):
+def calcular_operacoes_sem_proventos_por_mes(investidor, operacoes, data_inicio=None, data_fim=None):
     """ 
     Calcula a quantidade investida em compras de ações sem usar proventos por mes
-    Parâmetros: Investidor, Queryset de operações ordenadas por data
+    Parâmetros: Investidor
+                Queryset de operações ordenadas por data
+                Data de início do período
+                Data de fim do período
     Retorno: Lista de tuplas (data, quantidade)
     """
-    lista_ids_operacoes = list()
-    usos_proventos = UsoProventosOperacaoAcao.objects.filter()
-    for uso_proventos in usos_proventos:
-        lista_ids_operacoes.append(uso_proventos.divisao_operacao.operacao.id)
-    # Remover elementos repetidos
-    lista_ids_operacoes = list(set(lista_ids_operacoes))
+    lista_ids_operacoes = list(UsoProventosOperacaoAcao.objects.filter(operacao__investidor=investidor).values_list('operacao', flat=True).distinct())
+
+    # Filtrar período
+    if data_inicio:
+        operacoes = operacoes.filter(data__gte=data_inicio)
+    if data_fim:
+        operacoes = operacoes.filter(data__lte=data_fim)
     
     anos_meses = list()
     for operacao in operacoes:
@@ -46,26 +50,29 @@ def calcular_operacoes_sem_proventos_por_mes(investidor, operacoes):
 #                 print 'Com uso de proventos: %s' % (qtd_usada)
                 total_mes += (operacao.quantidade * operacao.preco_unitario + \
                 operacao.emolumentos + operacao.corretagem) - qtd_usada
-        data_formatada = str(calendar.timegm(datetime.date(ano, mes, 15).timetuple()) * 1000)
+        data_formatada = str(calendar.timegm(datetime.date(ano, mes, 18).timetuple()) * 1000)
         graf_gasto_op_sem_prov_mes += [[data_formatada, float(total_mes)]]
         
     return graf_gasto_op_sem_prov_mes
 
-def calcular_uso_proventos_por_mes(investidor):
+def calcular_uso_proventos_por_mes(investidor, data_inicio=None, data_fim=None):
     """ 
     Calcula a quantidade de uso de proventos em operações por mes
     Parâmetros: Investidor
+                Data de início do período
+                Data de fim do período
     Retorno: Lista de tuplas (data, quantidade)
     """
-    lista_ids_operacoes = list()
-    usos_proventos = UsoProventosOperacaoAcao.objects.filter()
-    for uso_proventos in usos_proventos:
-        lista_ids_operacoes.append(uso_proventos.operacao.id)
-    # Remover elementos repetidos
-    lista_ids_operacoes = list(set(lista_ids_operacoes))
+    lista_ids_operacoes = list(UsoProventosOperacaoAcao.objects.filter(operacao__investidor=investidor).values_list('operacao', flat=True).distinct())
     
     # Guarda as operações que tiveram uso de proventos
     operacoes = OperacaoAcao.objects.filter(id__in=lista_ids_operacoes)
+    
+    # Filtrar período
+    if data_inicio:
+        operacoes = operacoes.filter(data__gte=data_inicio)
+    if data_fim:
+        operacoes = operacoes.filter(data__lte=data_fim)
     
     anos_meses = list()
     for operacao in operacoes:
@@ -79,12 +86,12 @@ def calcular_uso_proventos_por_mes(investidor):
         total_mes = 0
         for operacao in operacoes_mes:                      
             total_mes += operacao.qtd_proventos_utilizada()
-        data_formatada = str(calendar.timegm(datetime.date(ano, mes, 15).timetuple()) * 1000)
+        data_formatada = str(calendar.timegm(datetime.date(ano, mes, 12).timetuple()) * 1000)
         graf_uso_proventos_mes += [[data_formatada, float(total_mes)]]
         
     return graf_uso_proventos_mes
 
-def calcular_media_uso_proventos_6_meses(investidor):
+def calcular_media_uso_proventos_6_meses(investidor, data_inicio=None, data_fim=None):
     """ 
     Calcula a média de uso de proventos em operações nos últimos 6 meses
     Parâmetros: Investidor
@@ -92,7 +99,7 @@ def calcular_media_uso_proventos_6_meses(investidor):
     """
     ultimos_6_meses = list()
     lista_ids_operacoes = list()
-    usos_proventos = UsoProventosOperacaoAcao.objects.filter()
+    usos_proventos = UsoProventosOperacaoAcao.objects.filter(operacao__investidor=investidor)
     for uso_proventos in usos_proventos:
         lista_ids_operacoes.append(uso_proventos.operacao.id)
     
@@ -123,15 +130,24 @@ def calcular_media_uso_proventos_6_meses(investidor):
         
     return graf_uso_proventos_mes
     
-def calcular_provento_por_mes(investidor, proventos, operacoes):
+def calcular_provento_por_mes(investidor, proventos, operacoes, data_inicio=None, data_fim=None):
     """ 
     Calcula a quantidade de proventos em dinheiro recebido por mes
     Parâmetros: Investidor
                 Queryset de proventos ordenados por data
                 Queryset de operações ordenadas por data
+                Data de início do período
+                Data de fim do período
     Retorno: Lista de tuplas (data, quantidade)
     """
-    
+    # Filtrar período
+    if data_inicio:
+        operacoes = operacoes.filter(data__gte=data_inicio)
+        proventos = proventos.filter(data_ex__gte=data_inicio)
+    if data_fim:
+        operacoes = operacoes.filter(data__lte=data_fim)
+        proventos = proventos.filter(data_ex__lte=data_fim)
+        
     anos_meses = list()
     for provento in proventos:
         ano_mes = (provento.data_ex.month, provento.data_ex.year)
@@ -149,28 +165,40 @@ def calcular_provento_por_mes(investidor, proventos, operacoes):
         total_mes_div = 0
         total_mes_jscp = 0
         for provento in proventos_mes:                        
-            qtd_acoes = operacoes.filter(acao=provento.acao, data__lt=provento.data_ex).aggregate(qtd_acoes=Sum(
-                        Case(When(tipo_operacao='C', then=F('quantidade')), When(tipo_operacao='V', then=(F('quantidade')*-1)),
-                              output_field=IntegerField())))['qtd_acoes']
-            if (qtd_acoes is not None):
-                # TODO adicionar frações de proventos em ações
-                if provento.tipo_provento == 'D':
-                    total_mes_div += qtd_acoes * provento.valor_unitario
-                elif provento.tipo_provento == 'J':
-                    total_mes_jscp += qtd_acoes * provento.valor_unitario * Decimal(0.85)
-        data_formatada = str(calendar.timegm(datetime.date(ano, mes, 15).timetuple()) * 1000)
+#             qtd_acoes = operacoes.filter(acao=provento.acao, data__lt=provento.data_ex).aggregate(qtd_acoes=Sum(
+#                         Case(When(tipo_operacao='C', then=F('quantidade')), When(tipo_operacao='V', then=(F('quantidade')*-1)),
+#                               output_field=IntegerField())))['qtd_acoes']
+            qtd_acoes = quantidade_acoes_ate_dia(investidor, provento.acao.ticker, provento.data_ex - datetime.timedelta(days=1))
+            # TODO adicionar frações de proventos em ações
+            if provento.tipo_provento == 'D':
+                total_mes_div += qtd_acoes * provento.valor_unitario
+            elif provento.tipo_provento == 'J':
+                total_mes_jscp += qtd_acoes * provento.valor_unitario * Decimal(0.85)
+        data_formatada = str(calendar.timegm(datetime.date(ano, mes, 12).timetuple()) * 1000)
         graf_proventos_mes += [[data_formatada, float(total_mes_div), float(total_mes_jscp)]]
         
     return graf_proventos_mes
 
-def calcular_media_proventos_6_meses(investidor, proventos, operacoes):
+def calcular_media_proventos_6_meses(investidor, proventos, operacoes, data_inicio=None, data_fim=None):
     """ 
     Calcula a média de proventos recebida nos últimos 6 meses
     Parâmetros: Investidor
                 Queryset de proventos ordenados por data
                 Queryset de operações ordenadas por data
+                Data de início do período
+                Data de fim do período
     Retorno: Lista de tuplas (data, quantidade)
     """
+    # Filtrar período
+    if data_inicio:
+        # Data de início levada para 6 meses atrás para verificar a média
+        data_inicio = (data_inicio - datetime.timedelta(days=30 * 6)).replace(day=1)
+        operacoes = operacoes.filter(data__gte=data_inicio)
+        proventos = proventos.filter(data_ex__gte=data_inicio)
+    if data_fim:
+        operacoes = operacoes.filter(data__lte=data_fim)
+        proventos = proventos.filter(data_ex__lte=data_fim)
+        
     # Verifica se há proventos a serem calculados
     if not proventos:
         return list()
@@ -192,24 +220,28 @@ def calcular_media_proventos_6_meses(investidor, proventos, operacoes):
         proventos_mes = proventos.filter(data_ex__month=mes, data_ex__year=ano)
         total_mes = 0
         for provento in proventos_mes:                        
-            qtd_acoes = operacoes.filter(acao=provento.acao, data__lt=provento.data_ex).aggregate(qtd_acoes=Sum(
-                        Case(When(tipo_operacao='C', then=F('quantidade')), When(tipo_operacao='V', then=(F('quantidade')*-1)),
-                              output_field=IntegerField())))['qtd_acoes']
-            if (qtd_acoes is not None):
-                if provento.tipo_provento == 'D':
-                    total_mes += qtd_acoes * provento.valor_unitario
-                elif provento.tipo_provento == 'J':
-                    total_mes += qtd_acoes * provento.valor_unitario * Decimal(0.85)
+#             qtd_acoes = operacoes.filter(acao=provento.acao, data__lt=provento.data_ex).aggregate(qtd_acoes=Sum(
+#                         Case(When(tipo_operacao='C', then=F('quantidade')), When(tipo_operacao='V', then=(F('quantidade')*-1)),
+#                               output_field=IntegerField())))['qtd_acoes']
+            qtd_acoes = quantidade_acoes_ate_dia(investidor, provento.acao.ticker, provento.data_ex - datetime.timedelta(days=1))
+            if provento.tipo_provento == 'D':
+                total_mes += qtd_acoes * provento.valor_unitario
+            elif provento.tipo_provento == 'J':
+                total_mes += qtd_acoes * provento.valor_unitario * Decimal(0.85)
 #         print total_mes
-        data_formatada = str(calendar.timegm(datetime.date(ano, mes, 15).timetuple()) * 1000)
         # Adicionar a lista de valores e calcular a media
         ultimos_6_meses.append(total_mes)
         if len(ultimos_6_meses) > 6:
             ultimos_6_meses.pop(0)
-        media_6_meses = 0
-        for valor in ultimos_6_meses:
-            media_6_meses += valor
-        graf_proventos_mes += [[data_formatada, float(media_6_meses/6)]]
+        
+        # Verifica se filtro de data está valendo
+        if not data_inicio or (ano - data_inicio.year) * 12 + mes - data_inicio.month >= 6:
+            # Somar valores guardados
+            media_6_meses = sum(ultimos_6_meses)
+            
+            data_formatada = str(calendar.timegm(datetime.date(ano, mes, 18).timetuple()) * 1000)
+    
+            graf_proventos_mes += [[data_formatada, float(media_6_meses/6)]]
         
     return graf_proventos_mes
 
@@ -257,7 +289,7 @@ def quantidade_acoes_ate_dia(investidor, ticker, dia, considerar_trade=False):
     else:
         operacoes = OperacaoAcao.objects.filter(investidor=investidor, destinacao='B', acao__ticker=ticker, data__lte=dia).exclude(data__isnull=True).order_by('data')
     # Pega os proventos em ações recebidos por outras ações
-    proventos_em_acoes = AcaoProvento.objects.filter(acao_recebida__ticker=ticker, provento__data_ex__lte=dia).exclude(provento__data_ex__isnull=True).order_by('provento__data_ex')
+    proventos_em_acoes = AcaoProvento.objects.filter(provento__oficial_bovespa=True, acao_recebida__ticker=ticker, provento__data_ex__lte=dia).exclude(provento__data_ex__isnull=True).order_by('provento__data_ex')
     for provento in proventos_em_acoes:
         provento.data = provento.provento.data_ex
     
@@ -346,9 +378,7 @@ def calcular_poupanca_prov_acao_ate_dia(investidor, dia, destinacao='B'):
     # Remover valores repetidos
     acoes = list(set(operacoes.values_list('acao', flat=True)))
 
-    proventos = Provento.objects.filter(data_ex__lte=dia, acao__in=acoes).order_by('data_ex')
-    for provento in proventos:
-        provento.data = provento.data_ex
+    proventos = Provento.objects.filter(data_pagamento__lte=dia, acao__in=acoes).annotate(data=F('data_ex')).order_by('data')
      
     lista_conjunta = sorted(chain(proventos, operacoes),
                             key=attrgetter('data'))
@@ -375,7 +405,7 @@ def calcular_poupanca_prov_acao_ate_dia(investidor, dia, destinacao='B'):
         
         # Verifica se é recebimento de proventos
         elif isinstance(item_lista, Provento):
-            if item_lista.data_pagamento <= datetime.date.today() and acoes[item_lista.acao.ticker] > 0:
+            if acoes[item_lista.acao.ticker] > 0:
                 if item_lista.tipo_provento in ['D', 'J']:
                     total_recebido = acoes[item_lista.acao.ticker] * item_lista.valor_unitario
                     if item_lista.tipo_provento == 'J':
@@ -405,9 +435,10 @@ def calcular_poupanca_prov_acao_ate_dia_por_divisao(dia, divisao, destinacao='B'
     
     operacoes = OperacaoAcao.objects.filter(id__in=operacoes_divisao).order_by('data')
 
-    proventos = Provento.objects.filter(data_ex__lte=dia).order_by('data_ex')
-    for provento in proventos:
-        provento.data = provento.data_ex
+    # Remover valores repetidos
+    acoes = list(set(operacoes.values_list('acao', flat=True)))
+    
+    proventos = Provento.objects.filter(data_pagamento__lte=dia, acao__in=acoes).annotate(data=F('data_ex')).order_by('data')
      
     lista_conjunta = sorted(chain(operacoes, proventos),
                             key=attrgetter('data'))
@@ -434,7 +465,7 @@ def calcular_poupanca_prov_acao_ate_dia_por_divisao(dia, divisao, destinacao='B'
         
         # Verifica se é recebimento de proventos
         elif isinstance(item_lista, Provento):
-            if item_lista.data_pagamento <= datetime.date.today() and acoes[item_lista.acao.ticker] > 0:
+            if acoes[item_lista.acao.ticker] > 0:
                 if item_lista.tipo_provento in ['D', 'J']:
                     total_recebido = acoes[item_lista.acao.ticker] * item_lista.valor_unitario
                     if item_lista.tipo_provento == 'J':

@@ -18,7 +18,7 @@ from bagogold.cri_cra.models.cri_cra import CRI_CRA, DataRemuneracaoCRI_CRA, \
 from bagogold.cri_cra.utils.utils import qtd_cri_cra_ate_dia_para_certificado, \
     calcular_valor_cri_cra_ate_dia, quantidade_cri_cra_na_data_para_certificado
 from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
-from decimal import Decimal
+from decimal import Decimal, ROUND_DOWN
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
@@ -308,19 +308,28 @@ def historico(request):
             if qtd_certificados[cri_cra] > 0:
                 total_patrimonio += (qtd_certificados[cri_cra] * calcular_valor_um_cri_cra_na_data(operacao.cri_cra, operacao.data)).quantize(Decimal('.01'))
         
-        graf_investido_total += [[str(calendar.timegm(operacao.data.timetuple()) * 1000), float(-total_investido)]]
-        graf_patrimonio += [[str(calendar.timegm(operacao.data.timetuple()) * 1000), float(total_patrimonio)]]
+        data_formatada = str(calendar.timegm(operacao.data.timetuple()) * 1000)
+        # Verifica se altera ultima posicao do grafico ou adiciona novo registro
+        if len(graf_investido_total) > 0 and graf_investido_total[-1][0] == data_formatada:
+            graf_investido_total[len(graf_investido_total)-1][1] = float(-total_investido)
+        else:
+            graf_investido_total += [[data_formatada, float(-total_investido)]]
+        # Verifica se altera ultima posicao do grafico ou adiciona novo registro
+        if len(graf_patrimonio) > 0 and graf_patrimonio[-1][0] == data_formatada:
+            graf_patrimonio[len(graf_patrimonio)-1][1] = float(total_patrimonio)
+        else:
+            graf_patrimonio += [[data_formatada, float(total_patrimonio)]]
     
     # Adicionar data mais atual
-    data_atual = datetime.date.today()
-    if str(calendar.timegm(data_atual.timetuple()) * 1000) not in [data for data, _ in graf_patrimonio]:
+    data_atual_formatada = str(calendar.timegm(datetime.date.today().timetuple()) * 1000)
+    if len(graf_patrimonio) > 0 and graf_patrimonio[-1][0] != data_atual_formatada:
         total_patrimonio = 0
         for cri_cra in qtd_certificados.keys():
             if qtd_certificados[cri_cra] > 0:
-                total_patrimonio += qtd_certificados[cri_cra] * calcular_valor_um_cri_cra_na_data(operacao.cri_cra, data_atual).quantize(Decimal('.01'))
+                total_patrimonio += qtd_certificados[cri_cra] * calcular_valor_um_cri_cra_na_data(operacao.cri_cra, datetime.date.today()).quantize(Decimal('.01'))
         
-        graf_investido_total += [[str(calendar.timegm(data_atual.timetuple()) * 1000), float(-total_investido)]]
-        graf_patrimonio += [[str(calendar.timegm(data_atual.timetuple()) * 1000), float(total_patrimonio)]]
+        graf_investido_total += [[data_atual_formatada, float(-total_investido)]]
+        graf_patrimonio += [[data_atual_formatada, float(total_patrimonio)]]
     
     dados = {}
     dados['total_investido'] = -total_investido
@@ -349,7 +358,7 @@ def inserir_cri_cra(request):
     
     if request.method == 'POST':
         amortizacao_integral_venc = 'amortizacao_integral_venc' in request.POST.keys()
-        print request.POST
+#         print request.POST
         form_cri_cra = CRI_CRAForm(request.POST)
         formset_data_remuneracao = DataRemuneracaoFormSet(request.POST)
         formset_data_amortizacao = DataAmortizacaoFormSet(request.POST)
