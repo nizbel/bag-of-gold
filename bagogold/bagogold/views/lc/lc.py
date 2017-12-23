@@ -19,13 +19,16 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
-from django.db.models.aggregates import Count
+from django.db.models.aggregates import Count, Sum
+from django.db.models.expressions import F
+from django.db.models.functions import Coalesce
 from django.forms import inlineformset_factory
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
 import calendar
 import datetime
+import json
 
 @login_required
 @adiciona_titulo_descricao('Detalhar Letra de Crédito', 'Detalhar Letra de Crédito, incluindo histórico de carência e '
@@ -630,6 +633,34 @@ def listar_lc(request):
 
     return TemplateResponse(request, 'lc/listar_lc.html', {'lcs': lcs})
 
+# Retorna id's das operações que podem ser vendidas na data especificada
+@login_required
+def listar_operacoes_passada_carencia(request):
+    if request.is_ajax():
+        if request.GET.get('data'):
+            try:
+                data = datetime.datetime.strptime(request.GET.get('data'), '%d/%m/%Y').date()
+            except:
+                return HttpResponse(json.dumps({'sucesso': False, 'mensagem': u'Formato de data inválido'}), content_type = "application/json") 
+        else:
+            return HttpResponse(json.dumps({'sucesso': False, 'mensagem': u'Data é obrigatória'}), content_type = "application/json") 
+        
+        investidor = request.user.investidor
+        
+        operacoes = OperacaoLetraCredito.objects.filter(investidor=investidor, tipo_operacao='C').annotate( \
+            qtd_vendida=Coalesce(Sum(F('operacao_compra__operacao_venda__quantidade')), 0)).exclude(qtd_vendida=F('quantidade'))
+        operacoes = [operacao for operacao in operacoes if data >= operacao.data_carencia()]
+        
+         # Verificar se trata-se de uma edição de operação de venda
+        if request.GET.get('id_venda'):
+            operacao_compra_relacionada = OperacaoLetraCredito.objects.get(id=request.GET.get('id_venda')).operacao_compra_relacionada()
+            if operacao_compra_relacionada.id not in [operacao.id for operacao in operacoes] and data >= operacao_compra_relacionada.data_carencia():
+                operacoes.append(operacao_compra_relacionada)
+        
+        return HttpResponse(json.dumps({'sucesso': True, 'operacoes': [str(operacao.id) for operacao in operacoes]}), content_type = "application/json")   
+    else:
+        return HttpResponse(json.dumps({'sucesso': False}), content_type = "application/json") 
+
 @adiciona_titulo_descricao('Painel de Letras de Crédito', 'Posição atual do investidor em Letras de Crédito')
 def painel(request):
     if request.user.is_authenticated():
@@ -700,6 +731,9 @@ def painel(request):
             data_iteracao = proximas_datas[0].data
         else:
             break
+        
+    # Preencher última taxa do dia caso não tenha sido preenchida no loop das operações
+    taxa_do_dia = HistoricoTaxaDI.objects.all().order_by('-data')[0].taxa
     
     # Remover operações que não estejam mais rendendo
     operacoes = [operacao for operacao in operacoes if (operacao.atual > 0 and operacao.tipo_operacao == 'C')]
@@ -726,11 +760,15 @@ def painel(request):
 @adiciona_titulo_descricao('Sobre Letras de Crédito', 'Detalha o que são Letras de Crédito')
 def sobre(request):
     if request.is_ajax():
-        filtros_simulador = {'periodo': Decimal(request.GET.get('periodo')), 'percentual_indice': Decimal(request.GET.get('percentual_indice')), \
-                             'tipo': 'POS', 'indice': 'DI', 'aplicacao': Decimal(1000)}
+        try:
+            aplicacao = Decimal(request.GET.get('qtd').replace('.', '').replace(',', '.'))
+            filtros_simulador = {'periodo': Decimal(request.GET.get('periodo')), 'percentual_indice': Decimal(request.GET.get('percentual_indice')), \
+                             'tipo': 'POS', 'indice': 'DI', 'aplicacao': aplicacao}
+        except:
+            return HttpResponse(json.dumps({'sucesso': False, 'mensagem': u'Variáveis de entrada inválidas'}), content_type = "application/json") 
         
         graf_simulador = [[str(calendar.timegm(data.timetuple()) * 1000), float(valor_lci_lca)] for data, valor_lci_lca in simulador_lci_lca(filtros_simulador)]
-        return HttpResponse(json.dumps({'graf_simulador': graf_simulador}), content_type = "application/json") 
+        return HttpResponse(json.dumps({'sucesso': True, 'graf_simulador': graf_simulador}), content_type = "application/json") 
     else:
         data_atual = datetime.date.today()
         historico_di = HistoricoTaxaDI.objects.filter(data__gte=data_atual.replace(year=data_atual.year-3))

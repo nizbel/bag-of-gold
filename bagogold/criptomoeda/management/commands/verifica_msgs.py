@@ -10,7 +10,6 @@ import datetime
 import re
 import time
 import urllib
-from bagogold.criptomoeda.utils import buscar_valor_criptomoedas_atual
 
 class Command(BaseCommand):
     help = 'Verifica mensagens'
@@ -38,8 +37,8 @@ class Command(BaseCommand):
 #                 print update
                 chat_id = update.message.sender.id
                 if update.message.text != None:
-                    bot.send_message(chat_id, u'%s' % ('\n'.join(['%s: *$%s*' % (valor.criptomoeda, valor.valor.quantize(Decimal('0.01'))) for valor in \
-                                                                  ValorDiarioCriptomoeda.objects.all()])), parse_mode='Markdown')
+                    bot.send_message(chat_id, u'%s' % ('\n'.join(['%s: *%s %s*' % (valor.criptomoeda, valor.valor.quantize(Decimal('0.01')), valor.moeda) \
+                                                                  for valor in ValorDiarioCriptomoeda.objects.all()])), parse_mode='Markdown')
                 
                 bot_principal.ultima_msg_lida = update.update_id + 1
                 bot_principal.save()
@@ -48,19 +47,24 @@ class Command(BaseCommand):
 #             bot.send_message(150143379, u'%s' % ('\n'.join(['(%s)%s: *$%s*' % (valor.data_hora.strftime('%H:%M'), valor.criptomoeda, valor.valor.quantize(Decimal('0.01'))) for valor in \
 #                                                           ValorDiarioCriptomoeda.objects.all().order_by('criptomoeda__ticker')])), parse_mode='Markdown')
             
-            valor_atual = buscar_valor_criptomoedas_atual(['XZC', 'ZEC', 'XMR', 'DCR'])
-            for ticker, valor in valor_atual.items():
-                if ticker == 'XZC':
-                    valor_atual[ticker] = (valor * Decimal('157.9233536') * Decimal('0.97')).quantize(Decimal('0.01'))
-                elif ticker == 'DCR':
-                    valor_atual[ticker] = (valor * Decimal('50.16053218') * Decimal('0.97')).quantize(Decimal('0.01'))
-                elif ticker == 'ZEC':
-                    valor_atual[ticker] = (valor * Decimal('7.23106982') * Decimal('0.97')).quantize(Decimal('0.01'))
-                elif ticker == 'XMR':
-                    valor_atual[ticker] = (valor * Decimal('14.95360846') * Decimal('0.97')).quantize(Decimal('0.01'))
+            valor_atual = dict(ValorDiarioCriptomoeda.objects.filter(criptomoeda__ticker__in=['XZC', 'ZEC', 'XMR', 'LSK'], moeda='USD') \
+                .values_list('criptomoeda__ticker', 'valor'))
+#             for ticker, valor in valor_atual.items():
+#                 if ticker == 'XZC':
+# #                     valor_atual[ticker] = (valor * Decimal('157.9233536') * Decimal('0.97')).quantize(Decimal('0.01'))
+#                     valor_atual[ticker] = (valor * Decimal('0') * Decimal('0.97')).quantize(Decimal('0.01'))
+#                 elif ticker == 'DCR':
+# #                     valor_atual[ticker] = (valor * Decimal('50.16053218') * Decimal('0.97')).quantize(Decimal('0.01'))
+#                     valor_atual[ticker] = (valor * Decimal('109.66648258') * Decimal('0.97')).quantize(Decimal('0.01'))
+#                 elif ticker == 'ZEC':
+# #                     valor_atual[ticker] = (valor * Decimal('7.23106982') * Decimal('0.97')).quantize(Decimal('0.01'))
+#                     valor_atual[ticker] = (valor * Decimal('0') * Decimal('0.97')).quantize(Decimal('0.01'))
+#                 elif ticker == 'XMR':
+# #                     valor_atual[ticker] = (valor * Decimal('14.95360846') * Decimal('0.97')).quantize(Decimal('0.01'))
+#                     valor_atual[ticker] = (valor * Decimal('34.43321466') * Decimal('0.97')).quantize(Decimal('0.01'))
 
             # Enviar mensagem com valor atual dos investimentos
-            bot.send_message(150143379, u'%s\nTotal: *R$ %s*' % ('\n'.join([u'%s: *R$ %s* (%s%%)' % (ticker, valor, ((valor-6000)/Decimal('60')).quantize(Decimal('0.01'))) for ticker, valor in valor_atual.items()]),
+            bot.send_message(150143379, u'%s\nTotal: *R$ %s*' % ('\n'.join([u'%s: *R$ %s*' % (ticker, valor.quantize(Decimal('0.01'))) for ticker, valor in valor_atual.items()]),
                                                                  sum(valor_atual.values())), parse_mode='Markdown')
             
             tempo_decorrido = datetime.datetime.now() - inicio_msg

@@ -107,6 +107,32 @@
                 </div>
             </div>
             <div class="col-md-6">
+                <div class="portlet box yellow-crusta passo-2">
+                    <div class="portlet-title">
+                        <div class="caption">
+                            <i class="icon-diamond"></i>Múltiplos tickers
+                        </div>
+                        <div class="tools">
+                            <a href="javascript:;" class="collapse"></a>
+                        </div>
+                    </div>
+                    <div class="portlet-body">
+                        <ul>
+                            <li>Caso uma ação possua múltiplos tickers, deve ser verificado qual era o ticker válido na época do documento. Algumas formas de verificar são:</li>
+                            <ul>
+                                <li>Olhar no site da bovespa, buscar "bovespa <strong>nome da empresa</strong>", geralmente te leva a página da empresa, à direita pode ser
+                                verificado o estado atual dos tickers, os que são válidos.</li>
+                                <li>O website <strong>Fundamentus</strong> para algumas ações mostra a data da última negociação, se a última negociação do ticker faz
+                                muito tempo, provavelmente a ação não é mais válida.</li>
+                                <li>No sistema, na aba <strong>Ações</strong>, <strong>Geral</strong>, <strong>Listar ações</strong>, e clicar em uma ação. O primeiro gráfico 
+                                mostra os valores da ação nas datas de negociação, serve mais de base para a data em que a ação começou a ser negociada, pois as datas posteriores
+                                podem ser não oficiais.</li>
+                            </ul>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
                 <div class="portlet box yellow-crusta passo-2 passo-4">
                     <div class="portlet-title">
                         <div class="caption">
@@ -185,6 +211,7 @@
                             </ul>
                             <li>Caso o documento não descreva a <strong>DATA EX</strong>, pegar o próximo dia útil após a <strong>DATA BASE</strong> (também chamada de <strong>DATA DE CORTE</strong>), geralmente mencionada como 
                                 data na qual os detentores da ação fazem jus ao provento.</li>
+                            <li>Verificar se as datas inseridas são feriados, no caso geral as empresas não utilizam feriados para datas EX ou de pagamento, mas vale o que está escrito no documento.</li>
                         </ul>
                     </div>
                 </div>
@@ -201,8 +228,6 @@
                     </div>
                     <div class="portlet-body">
                         <ul>
-                            <li>Documento possui <strong>mais de 10 páginas</strong>.</li>
-                            <li>Documento é uma convocação para reunião/assembléia.</li>
                             <li>Documento é um <strong>Aviso a debenturistas</strong>.</li>
                         </ul>
                     </div>

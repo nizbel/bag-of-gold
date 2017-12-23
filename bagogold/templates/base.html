@@ -16,6 +16,7 @@
         {% if pagina_descricao %}<meta content="{{pagina_descricao}}" name="description" />{% endif %}
         <meta content="width=device-width, initial-scale=1" name="viewport" />
         <meta content="Guilherme Henrique Gimenes de Deus" name="author" />
+        <meta name="format-detection" content="telephone=no">
         <!-- BEGIN GLOBAL MANDATORY STYLES -->
         <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700&subset=all" rel="stylesheet" type="text/css" />
         <link href={% static "assets/global/plugins/font-awesome/css/font-awesome.min.css" %} rel="stylesheet" type="text/css" />
@@ -127,16 +128,10 @@
                                                     <a href="{% url "minha_conta" %}">
                                                         <i class="icon-user"></i> Minha conta </a>
                                                 </li>
-                                                {% if request.user.id == 1 or request.user.id == 31 %}
-                                                <li>
-                                                    <a href="{% url "carregar_nova_aparencia" request.path|slice:"1:-1" %}">
-                                                        <i class="fa fa-warning"></i> Carregar arquivos </a>
-                                                </li>
-                                                {% endif %}
                                                 <li class="divider"> </li>
                                                 <li>
                                                     <a href="{% url "logout" %}">
-                                                        <i class="icon-key"></i> Sair </a>
+                                                        <i class="icon-logout"></i> Sair </a>
                                                 </li>
                                             </ul>
                                         </li>
@@ -192,8 +187,8 @@
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_acoes' %}active{% endif %}">
                                                             <a href="{% url "acoes:geral:listar_acoes" %}" class="nav-link "> Listar ações </a>
                                                         </li>
-                                                        <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_proventos' %}active{% endif %}">
-                                                            <a href="{% url "acoes:geral:listar_proventos" %}" class="nav-link "> Listar proventos </a>
+                                                        <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_proventos_acao' %}active{% endif %}">
+                                                            <a href="{% url "acoes:geral:listar_proventos_acao" %}" class="nav-link "> Listar proventos </a>
                                                         </li>
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'sobre_acoes' %}active{% endif %}">
                                                             <a href="{% url "acoes:geral:sobre_acoes" %}" class="nav-link "> Sobre </a>
@@ -212,11 +207,6 @@
                                                         {% if request.user.is_authenticated %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_bh' %}active{% endif %}">
                                                             <a href="{% url "acoes:bh:inserir_operacao_bh" %}"> Inserir operação </a>
-                                                        </li>
-                                                        {% endif %}
-                                                        {% if request.user.is_superuser %}
-                                                        <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_provento_bh' %}active{% endif %}">
-                                                            <a href="{% url "acoes:bh:inserir_provento_bh" %}"> Inserir provento </a>
                                                         </li>
                                                         {% endif %}
                                                         {% if request.user.is_authenticated %}
@@ -287,11 +277,9 @@
                                                     <a href="{% url "fii:inserir_operacao_fii" %}" class="nav-link  "> Inserir operação </a>
                                                 </li>
                                                 {% endif %}
-                                                {% if request.user.is_superuser %}
-                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_provento_fii' %}active{% endif %}">
-                                                    <a href="{% url "fii:inserir_provento_fii" %}" class="nav-link  "> Inserir provento </a>
+                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_proventos_fii' %}active{% endif %}">
+                                                    <a href="{% url "fii:listar_proventos_fii" %}" class="nav-link  "> Listar proventos </a>
                                                 </li>
-                                                {% endif %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_fii' %}active{% endif %}">
                                                     <a href="{% url "fii:painel_fii" %}" class="nav-link  "> Painel </a>
                                                 </li>
@@ -512,6 +500,32 @@
                                                 {% endcomment %}
                                             </ul>
                                         </li>
+                                        <li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'outros_investimentos' in request.resolver_match.namespace %}active{% endif %}">
+                                            <a href="javascript:;"> Outros inv.
+                                                <span class="arrow"></span>
+                                            </a>
+                                            <ul class="dropdown-menu pull-left">
+                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'historico_outros_invest' %}active{% endif %}">
+                                                    <a href="{% url "outros_investimentos:historico_outros_invest" %}" class="nav-link  "> Histórico </a>
+                                                </li>
+                                                {% if request.user.is_authenticated %}
+                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_outros_invest' %}active{% endif %}">
+                                                    <a href="{% url "outros_investimentos:inserir_investimento" %}" class="nav-link  "> Inserir investimento </a>
+                                                </li>
+                                                {% endif %}
+                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_investimentos' %}active{% endif %}">
+                                                    <a href="{% url "outros_investimentos:listar_investimentos" %}" class="nav-link  "> Listar investimentos </a>
+                                                </li>
+                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_outros_invest' %}active{% endif %}">
+                                                    <a href="{% url "outros_investimentos:painel_outros_invest" %}" class="nav-link  "> Painel </a>
+                                                </li>
+                                                {% comment %}
+                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'sobre_outros_invest' %}active{% endif %}">
+                                                    <a href="{% url "outros_investimentos:sobre_outros_invest" %}" class="nav-link  "> Sobre </a>
+                                                </li>
+                                                {% endcomment %}
+                                            </ul>
+                                        </li>
                                         <li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown {% if 'divisoes' in request.resolver_match.namespace %}active{% endif %}">
                                             <a href="javascript:;"> Divisões
                                                 <span class="arrow"></span>
@@ -580,7 +594,7 @@
                 </div>
             </div>
             <div class="page-wrapper-row full-height">
-                <div class="page-wrapper-middle">
+                <div class="page-wrapper-middle bg-white">
                     <!-- BEGIN CONTAINER -->
                     <div class="page-container">
                         <!-- BEGIN CONTENT -->
@@ -613,7 +627,7 @@
                                             <div class="row row-same-size-columns">
                                                 <div class="col-md-12">
                                                     {% if pagina_titulo %}
-                                                    <div class="portlet light">
+                                                    <div class="portlet light" style="box-shadow: 0 2px 3px 3px rgba(0,0,0,.3);">
                                                         <div class="portlet-title">
                                                             <div class="page-head">
                                                                 <div class="page-title">

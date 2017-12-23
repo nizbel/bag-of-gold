@@ -66,9 +66,14 @@ class HistoricoValorCriptomoeda (models.Model):
         unique_together=('criptomoeda', 'data')
         
 class ValorDiarioCriptomoeda (models.Model):
+    
+    MOEDA_REAL = u'BRL'
+    MOEDA_DOLAR = u'USD'
+    
     criptomoeda = models.ForeignKey('Criptomoeda')
     data_hora = models.DateTimeField(u'Horário')
-    valor = models.DecimalField(u'Valor em dólares', max_digits=21, decimal_places=12)
+    valor = models.DecimalField(u'Valor', max_digits=21, decimal_places=12)
+    moeda = models.CharField(u'Moeda utilizada', max_length=10)
         
 class TransferenciaCriptomoeda (models.Model):
     moeda = models.ForeignKey('Criptomoeda', blank=True, null=True)

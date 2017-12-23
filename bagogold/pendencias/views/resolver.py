@@ -17,7 +17,11 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD
 @login_required
 def resolver_pendencia_vencimento_td(request):
     investidor = request.user.investidor
-    id_pendencia = int(request.GET['id_pendencia'])
+    # TODO achar um jeito melhor de testar pela pelo test_urls.py
+    try:
+        id_pendencia = int(request.GET.get('id_pendencia').replace('.', ''))
+    except:
+        return HttpResponse(json.dumps({'mensagem': u'Pendência inválida'}), content_type = "application/json") 
     pendencia = get_object_or_404(PendenciaVencimentoTesouroDireto, id=id_pendencia, investidor=investidor)
     
     if request.GET.get('confirmar'):
@@ -32,7 +36,7 @@ def resolver_pendencia_vencimento_td(request):
                     divisao_operacao.save()
                 
         except IntegrityError as e:
-            mail_admins(u'Erro na geração de venda para vencimento de Tesouro Direto', traceback.format_exc())
+            mail_admins(u'Erro na geração de venda para vencimento de Tesouro Direto', traceback.format_exc().decode('utf-8'))
             return HttpResponse(json.dumps({'resultado': False, 'mensagem': 'Erro na criação de operação de venda'}), content_type = "application/json")
         return HttpResponse(json.dumps({'resultado': True, 'mensagem': 'Operação de venda criada com sucesso', 'pendencia_id': pendencia.texto_id()}), content_type = "application/json")
         

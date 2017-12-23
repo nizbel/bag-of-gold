@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII
+from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa
+from decimal import Decimal
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models.aggregates import Sum
+from math import floor
 import datetime
  
 class FII (models.Model):
     ticker = models.CharField(u'Ticker do FII', max_length=10, unique=True) 
     empresa = models.ForeignKey('Empresa', blank=True, null=True) 
+    encerrado = models.BooleanField(u'FII encerrado?', default=False)
     
     class Meta:
         ordering = ['ticker']
@@ -52,13 +57,18 @@ class ProventoFII (models.Model):
             return u'Amortização'
         elif self.tipo_provento == self.TIPO_PROVENTO_RENDIMENTO:
             return u'Rendimento'
+    
+    @property    
+    def add_pelo_sistema(self):
+        return all([(provento_documento.documento.tipo_documento == DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO) \
+                                     for provento_documento in self.proventofiidocumento_set.all()])
         
     objects = ProventoFIIOficialManager()
     gerador_objects = models.Manager()
-        
+
 class OperacaoFII (models.Model):
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)  
-    quantidade = models.IntegerField(u'Quantidade') 
+    quantidade = models.IntegerField(u'Quantidade', validators=[MinValueValidator(1)]) 
     data = models.DateField(u'Data', blank=True, null=True)
     corretagem = models.DecimalField(u'Corretagem', max_digits=11, decimal_places=2)
     emolumentos = models.DecimalField(u'Emolumentos', max_digits=11, decimal_places=2)
@@ -68,18 +78,15 @@ class OperacaoFII (models.Model):
     investidor = models.ForeignKey('Investidor')
      
     def __unicode__(self):
-        return '(' + self.tipo_operacao + ') ' + str(self.quantidade) + ' ' + self.fii.ticker + ' a R$' + str(self.preco_unitario)
+        return '(' + self.tipo_operacao + ') ' + str(self.quantidade) + ' ' + self.fii.ticker + ' a R$' + str(self.preco_unitario) + ' em ' + str(self.data.strftime('%d/%m/%Y'))
     
     def qtd_proventos_utilizada(self):
-        qtd_total = 0
-        for divisao in DivisaoOperacaoFII.objects.filter(operacao=self):
-            if hasattr(divisao, 'usoproventosoperacaofii'):
-                qtd_total += divisao.usoproventosoperacaofii.qtd_utilizada
+        qtd_total = UsoProventosOperacaoFII.objects.filter(operacao=self).aggregate(qtd_total=Sum('qtd_utilizada'))['qtd_total'] or 0
         return qtd_total
         
     def utilizou_proventos(self):
-        return self.qtd_proventos_utilizada() > 0
-    
+        return UsoProventosOperacaoFII.objects.filter(operacao=self).exists()
+
 class UsoProventosOperacaoFII (models.Model):
     operacao = models.ForeignKey('OperacaoFII')
     qtd_utilizada = models.DecimalField(u'Quantidade de proventos utilizada', max_digits=11, decimal_places=2, blank=True)
@@ -102,3 +109,62 @@ class ValorDiarioFII (models.Model):
     data_hora = models.DateTimeField(u'Horário')
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)
     
+# Eventos
+class EventoFII (models.Model):
+    fii = models.ForeignKey('FII')
+    data = models.DateField(u'Data')
+    
+    class Meta():
+        abstract = True
+        
+class EventoIncorporacaoFII (EventoFII):
+    novo_fii = models.ForeignKey('FII', related_name='incorporacao')
+    
+    class Meta:
+        unique_together=('fii', 'data')
+    
+class EventoAgrupamentoFII (EventoFII):
+    proporcao = models.DecimalField(u'Proporção de agrupamento', max_digits=13, decimal_places=12, validators=[MaxValueValidator(Decimal('0.999999999999'))])
+    valor_fracao = models.DecimalField(u'Valor para as frações', max_digits=6, decimal_places=2, default=Decimal('0.00'))
+    
+    class Meta:
+        unique_together=('fii', 'data')
+        
+    def qtd_apos(self, qtd_inicial):
+        return Decimal(floor(qtd_inicial * self.proporcao))
+    
+    def preco_medio_apos(self, preco_medio_inicial, qtd_inicial):
+        qtd_apos = self.qtd_apos(qtd_inicial)
+        return 0 if qtd_apos == 0 else preco_medio_inicial * qtd_inicial / qtd_apos
+    
+class EventoDesdobramentoFII (EventoFII):
+    proporcao = models.DecimalField(u'Proporção de desdobramento', max_digits=16, decimal_places=12, validators=[MinValueValidator(Decimal('1.000000000001'))])
+    valor_fracao = models.DecimalField(u'Valor para as frações', max_digits=6, decimal_places=2, default=Decimal('0.00'))
+    
+    class Meta:
+        unique_together=('fii', 'data')
+        
+    def qtd_apos(self, qtd_inicial):
+        return Decimal(floor(qtd_inicial * self.proporcao))
+    
+    def preco_medio_apos(self, preco_medio_inicial, qtd_inicial):
+        qtd_apos = self.qtd_apos(qtd_inicial)
+        return 0 if qtd_apos == 0 else preco_medio_inicial * qtd_inicial / qtd_apos
+    
+class CheckpointFII(models.Model):
+    ano = models.SmallIntegerField(u'Ano')
+    fii = models.ForeignKey('FII')
+    investidor = models.ForeignKey('Investidor')
+    quantidade = models.IntegerField(u'Quantidade no ano', validators=[MinValueValidator(0)])
+    preco_medio = models.DecimalField(u'Preço médio', max_digits=11, decimal_places=4)
+    
+    class Meta:
+        unique_together=('fii', 'ano', 'investidor')
+        
+class CheckpointProventosFII(models.Model):
+    ano = models.SmallIntegerField(u'Ano')
+    investidor = models.ForeignKey('Investidor')
+    valor = models.DecimalField(u'Valor da poupança de proventos', max_digits=22, decimal_places=16)
+        
+    class Meta:
+        unique_together=('ano', 'investidor')

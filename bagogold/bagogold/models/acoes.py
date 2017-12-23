@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
+from decimal import Decimal
 from django.db import models
-from django.db.models.aggregates import Count
+from django.db.models.aggregates import Count, Sum
 import datetime
  
 class Acao (models.Model):
@@ -11,7 +12,7 @@ class Acao (models.Model):
                   5: u'PNA',
                   6: u'PNB',
                   7: u'PNC',
-                  8: u'PNC',
+                  8: u'PND',
                   11: u'UNT'
     }
     TIPOS_ACAO_DESCRICAO = {'ON': u'Ordinária',
@@ -95,7 +96,7 @@ class Provento (models.Model):
     @property
     def valor_final(self):
         if hasattr(self, 'atualizacaoselicprovento'):
-            return self.valor_unitario + self.atualizacaoselicprovento.rendimento()
+            return self.valor_unitario + self.atualizacaoselicprovento.rendimento().quantize(Decimal('0.0000000000000001'))
         return self.valor_unitario
     
     objects = ProventoOficialManager()
@@ -156,17 +157,14 @@ class OperacaoAcao (models.Model):
     investidor = models.ForeignKey('Investidor')
      
     def __unicode__(self):
-        return '(' + self.tipo_operacao + ') ' +str(self.quantidade) + ' ' + self.acao.ticker + ' a R$' + str(self.preco_unitario) + ' em ' + str(self.data)
+        return '(' + self.tipo_operacao + ') ' +str(self.quantidade) + ' ' + self.acao.ticker + ' a R$' + str(self.preco_unitario) + ' em ' + str(self.data.strftime('%d/%m/%Y'))
 
     def qtd_proventos_utilizada(self):
-        qtd_total = 0
-        for divisao in DivisaoOperacaoAcao.objects.filter(operacao=self):
-            if hasattr(divisao, 'usoproventosoperacaoacao'):
-                qtd_total += divisao.usoproventosoperacaoacao.qtd_utilizada
+        qtd_total = UsoProventosOperacaoAcao.objects.filter(operacao=self).aggregate(qtd_total=Sum('qtd_utilizada'))['qtd_total'] or 0
         return qtd_total
         
     def utilizou_proventos(self):
-        return self.qtd_proventos_utilizada() > 0
+        return UsoProventosOperacaoAcao.objects.filter(operacao=self).exists()
 
 class UsoProventosOperacaoAcao (models.Model):
     operacao = models.ForeignKey('OperacaoAcao', verbose_name='Operação')

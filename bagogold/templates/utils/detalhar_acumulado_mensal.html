@@ -1,0 +1,22 @@
+{% load misc %}
+<div class="text-center">
+    <h4><strong>{{data_inicio|date:'d/m/Y'}} a {{data_fim|date:'d/m/Y'}}</strong></h4>
+</div>
+<div class="list-group">
+    {% for acumulado_investimento in acumulado %}
+    <div class="list-group-item">
+        <div class="row">
+            <div class="col-md-8">
+                <span>{{acumulado_investimento.investimento}}:</span>
+            </div>
+            <div class="col-md-4 text-right">
+<!--             <span data-counter="counterup" data-value="{{ taxas.taxa_media_12_meses }}">0</span> -->
+                <strong class="{% if acumulado_investimento.qtd < 0 %}font-red-thunderbird{% else %}font-blue{% endif %}">
+                    R$ {% if acumulado_investimento.qtd < 0 %}-{% endif %}<span data-counter="counterup" data-value="{{acumulado_investimento.qtd|template_abs|floatformat:'2'}}" 
+                    class="{% if acumulado_investimento.qtd < 0 %}font-red-thunderbird{% else %}font-blue{% endif %}">0</span>
+                </strong>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>

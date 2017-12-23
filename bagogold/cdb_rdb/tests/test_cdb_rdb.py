@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoCDB_RDB, Divisao
 from bagogold.bagogold.models.investidores import Investidor
 from bagogold.bagogold.models.lc import HistoricoTaxaDI
 from bagogold.bagogold.utils.lc import \
     calcular_valor_atualizado_com_taxa_prefixado
 from bagogold.bagogold.utils.misc import verificar_feriado_bovespa, \
-    qtd_dias_uteis_no_periodo
+    qtd_dias_uteis_no_periodo, calcular_iof_regressivo,\
+    calcular_imposto_renda_longo_prazo
 from bagogold.cdb_rdb.forms import HistoricoVencimentoCDB_RDBForm, \
     HistoricoCarenciaCDB_RDBForm
 from bagogold.cdb_rdb.models import CDB_RDB, HistoricoPorcentagemCDB_RDB, \
     OperacaoCDB_RDB, OperacaoVendaCDB_RDB, HistoricoCarenciaCDB_RDB, \
     HistoricoVencimentoCDB_RDB
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, \
-    buscar_operacoes_vigentes_ate_data
+    buscar_operacoes_vigentes_ate_data, calcular_valor_cdb_rdb_ate_dia_por_divisao
 from decimal import Decimal, ROUND_DOWN
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -53,6 +55,13 @@ class ValorCDB_RDBAteDiaTestCase(TestCase):
         """Testar valores das operações no dia 27/10/2016, permitindo erro de até 1 centavo"""
         valor_cdb_rdb = calcular_valor_cdb_rdb_ate_dia(User.objects.get(username='tester').investidor, datetime.date(2016, 11, 10)).values()
         self.assertAlmostEqual(valor_cdb_rdb[0], Decimal('3032.63'), delta=0.01)
+        
+    def test_valor_liquido_cdb_rdb_ate_dia(self):
+        """Testar valores líquidos das operações no dia 27/10/2016, permitindo erro de até 1 centavo"""
+        valor_cdb_rdb = calcular_valor_cdb_rdb_ate_dia(User.objects.get(username='tester').investidor, datetime.date(2016, 11, 10), True).values()
+        iof = Decimal('32.63') * calcular_iof_regressivo((datetime.date(2016, 11, 10) - datetime.date(2016, 10, 14)).days)
+        ir = calcular_imposto_renda_longo_prazo(Decimal('32.63') - iof, (datetime.date(2016, 11, 10) - datetime.date(2016, 10, 14)).days)
+        self.assertAlmostEqual(valor_cdb_rdb[0], Decimal('3032.63') - iof - ir, delta=0.01)
 
 class CalcularValorCDB_RDBPrefixadoTestCase(TestCase):
     
@@ -97,6 +106,18 @@ class CalcularQuantidadesCDB_RDBTestCase(TestCase):
                                             investimento=cdb, investidor=user.investidor)
         OperacaoVendaCDB_RDB.objects.create(operacao_compra=operacao_4, operacao_venda=operacao_5)
         
+        # Divisões
+        divisao_1 = Divisao.objects.create(nome=u'Divisão 1', investidor=user.investidor)
+        divisao_operacao_1 = DivisaoOperacaoCDB_RDB.objects.create(divisao=divisao_1, operacao=operacao_1, quantidade=operacao_1.quantidade)
+        divisao_operacao_2 = DivisaoOperacaoCDB_RDB.objects.create(divisao=divisao_1, operacao=operacao_2, quantidade=operacao_2.quantidade)
+        divisao_operacao_3 = DivisaoOperacaoCDB_RDB.objects.create(divisao=divisao_1, operacao=operacao_3, quantidade=operacao_3.quantidade)
+        divisao_operacao_4 = DivisaoOperacaoCDB_RDB.objects.create(divisao=divisao_1, operacao=operacao_4, quantidade=Decimal(2000))
+        divisao_operacao_5 = DivisaoOperacaoCDB_RDB.objects.create(divisao=divisao_1, operacao=operacao_5, quantidade=Decimal(500))
+        
+        divisao_2 = Divisao.objects.create(nome=u'Divisão 2', investidor=user.investidor)
+        divisao_operacao_6 = DivisaoOperacaoCDB_RDB.objects.create(divisao=divisao_2, operacao=operacao_4, quantidade=Decimal(1000))
+        divisao_operacao_7 = DivisaoOperacaoCDB_RDB.objects.create(divisao=divisao_2, operacao=operacao_5, quantidade=Decimal(500))
+        
     def test_buscar_qtd_vigente_ao_fim_das_operacoes(self):
         """Testa a quantidade vigente de CDB/RDB ao fim das operações"""
         operacoes_vigentes = buscar_operacoes_vigentes_ate_data(Investidor.objects.get(user__username='tester'), datetime.date(2017, 5, 25))
@@ -105,6 +126,14 @@ class CalcularQuantidadesCDB_RDBTestCase(TestCase):
         self.assertEqual(operacoes_vigentes.get(id=1).qtd_disponivel_venda, Decimal(2000))
         self.assertIn(OperacaoCDB_RDB.objects.get(id=4), operacoes_vigentes)
         self.assertEqual(operacoes_vigentes.get(id=4).qtd_disponivel_venda, Decimal(2000))
+        
+    def test_verificar_qtds_por_divisao(self):
+        """Testa a quantidade em cada divisão"""
+        self.assertDictEqual(calcular_valor_cdb_rdb_ate_dia_por_divisao(datetime.date(2017, 6, 13), Divisao.objects.get(nome=u'Divisão 1').id),
+                             {CDB_RDB.objects.get(nome=u'CDB Teste').id: Decimal(3500)})
+        self.assertDictEqual(calcular_valor_cdb_rdb_ate_dia_por_divisao(datetime.date(2017, 6, 13), Divisao.objects.get(nome=u'Divisão 2').id),
+                             {CDB_RDB.objects.get(nome=u'CDB Teste').id: Decimal(500)})
+        
         
 class FormulariosCarenciaVencimentoTestCase(TestCase):
     

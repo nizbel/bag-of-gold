@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
+from bagogold import settings
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.bagogold.models.fii import FII, ProventoFII
+from bagogold.bagogold.models.fii import FII
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
-    PendenciaDocumentoProvento, ProventoFIIDocumento, \
-    ProventoFIIDescritoDocumentoBovespa
+    PendenciaDocumentoProvento
 from bagogold.bagogold.utils.gerador_proventos import \
     ler_provento_estruturado_fii
+from django.core.mail import mail_admins
 from django.core.management.base import BaseCommand
 from mechanize._form import ControlNotFoundError
 from threading import Thread
@@ -34,7 +35,10 @@ class CriarDocumentoThread(Thread):
         except Exception as e:
                 template = "An exception of type {0} occured. Arguments:\n{1!r}"
                 message = template.format(type(e).__name__, e.args)
-                print message
+                if settings.ENV == 'PROD':
+                    mail_admins(u'Erro na thread de criar documento de fiis', message.decode('utf-8'))
+                elif settings.ENV == 'DEV':
+                    print message
                 
 class GeraInfoDocumentoProtocoloThread(Thread):
     def run(self):
@@ -67,7 +71,10 @@ class GeraInfoDocumentoProtocoloThread(Thread):
         except Exception as e:
                 template = "An exception of type {0} occured. Arguments:\n{1!r}"
                 message = template.format(type(e).__name__, e.args)
-                print message
+                if settings.ENV == 'PROD':
+                    mail_admins(u'Erro na thread de gerar infos do documento de fiis', message.decode('utf-8'))
+                elif settings.ENV == 'DEV':
+                    print message
                 
 class BuscaRendimentosFIIThread(Thread):
     def __init__(self, ticker, antigos, ano_inicial):
@@ -81,12 +88,13 @@ class BuscaRendimentosFIIThread(Thread):
             if self.antigos:
                 buscar_rendimentos_fii_antigos(self.ticker, 0)
             if self.ano_inicial != 0:
-                buscar_rendimentos_fii(self.ticker, self.ano_inicial, 0)
+                for ano in range(self.ano_inicial, datetime.date.today().year + 1):
+                    buscar_rendimentos_fii(self.ticker, ano, 0)
         except Exception as e:
-            template = "An exception of type {0} occured. Arguments:\n{1!r}"
-            message = template.format(type(e).__name__, e.args)
-            print self.ticker, "Thread:", message
-#             pass
+#             template = "An exception of type {0} occured. Arguments:\n{1!r}"
+#             message = template.format(type(e).__name__, e.args)
+#             print self.ticker, message
+            pass
         # Tenta remover seu código da listagem de threads até conseguir
         while self.ticker in threads_rodando:
             del threads_rodando[self.ticker]
@@ -110,9 +118,9 @@ class Command(BaseCommand):
             ano_inicial = 0
         else:
             # Ano inicial não pode ser abaixo de 2016
-            if options['ano_inicial'] < 2016:
+            if int(options['ano_inicial']) < 2016:
                 raise ValueError('Ano inicial tem de ser no mínimo 2016')
-            ano_inicial = options['ano_inicial']
+            ano_inicial = int(options['ano_inicial'])
             antigos = False
             
         # Prepara thread de criação de documentos no sistema
@@ -196,7 +204,7 @@ def buscar_rendimentos_fii_antigos(ticker, num_tentativas):
             protocolo = 'A' + str(hex(qtd_mili))[2:-1]
             informacoes_rendimentos.append({'url': info[0].replace('&amp;', '&'), 'data_ref': info[1], 'ticker': ticker, 'tipo': 'Aviso aos Cotistas', 'protocolo': protocolo})
     
-def buscar_rendimentos_fii(ticker, ano_inicial, num_tentativas):
+def buscar_rendimentos_fii(ticker, ano, num_tentativas):
     """
     Busca distribuições de rendimentos de FII no formato atual no site da Bovespa
     """
@@ -211,37 +219,31 @@ def buscar_rendimentos_fii(ticker, ano_inicial, num_tentativas):
 
     try:
         br.select_form(nr=0)
-        br.set_all_readonly(False)
-        if not 'ctl00_contentPlaceHolderConteudo_ucInformacoesRelevantes_txtPeriodoDe' in [control.id for control in br.form.controls]:
-            br.find_control("ctl00$botaoNavegacaoVoltar").disabled = True
-            br.find_control(id='ctl00_contentPlaceHolderConteudo_ucInformacoesRelevantes_cmbAno').value = ['2016']
-            response = br.submit()
-            response.read()
-    #     try:
-        br.select_form(nr=0)
-        br.set_all_readonly(False)
+        br.form.set_all_readonly(False)
         br.find_control("ctl00$botaoNavegacaoVoltar").disabled = True
-        br.find_control(id='ctl00_contentPlaceHolderConteudo_ucInformacoesRelevantes_txtPeriodoDe').value = '01/01/%s' % (ano_inicial)
-        br.find_control(id='ctl00_contentPlaceHolderConteudo_ucInformacoesRelevantes_txtPeriodoAte').value = time.strftime("%d/%m/%Y")
-        br.find_control(id='ctl00_contentPlaceHolderConteudo_ucInformacoesRelevantes_ddlCategoria').value = ['0']
+        br.find_control("ctl00$contentPlaceHolderConteudo$ucInformacoesRelevantes$btnBuscar").disabled = True
+        br.find_control(id='ctl00_contentPlaceHolderConteudo_ucInformacoesRelevantes_cmbAno').value = [str(ano)]
+        br["__EVENTARGUMENT"] = ''
+        br['__EVENTTARGET'] = 'ctl00$contentPlaceHolderConteudo$ucInformacoesRelevantes$lkbCategoriaTodas'
+        response = br.submit()
+        
+        html = response.read()
     except ControlNotFoundError:
         if num_tentativas == 3:
             raise ValueError(u'Não encontrou os controles')
-        return buscar_rendimentos_fii(ticker, ano_inicial, num_tentativas+1)
+        return buscar_rendimentos_fii(ticker, ano, num_tentativas+1)
     
-    response = br.submit()
-    html = response.read()
     if 'Sistema indisponivel' in html:
         if num_tentativas == 3:
             raise ValueError(u'O sistema está indisponível')
-        return buscar_rendimentos_fii(ticker, ano_inicial, num_tentativas+1)
+        return buscar_rendimentos_fii(ticker, ano, num_tentativas+1)
     
     inicio = html.find('<div id="ctl00_contentPlaceHolderConteudo_ucInformacoesRelevantes_conteudoDetalhes">')
     fim = html.find('<script', inicio)
     string_importante = (html[inicio:fim])
     
     infos = re.findall('Data Referência:.*?(\d{2}/\d{2}/\d{4}).*?<tr><td>Assunto:</td><td>[^<]*(?:Distribuiç|Rendimento|Amortizaç)[^<]*</td></tr>.*?<a href=\"(https://fnet.bmfbovespa.com.br/fnet/publico/downloadDocumento\?id=[\d]*?)\">(.*?)</a>', string_importante,flags=re.IGNORECASE|re.DOTALL)
-
+    
     for info in infos:
 #         print info, ticker
         informacoes_rendimentos.append({'url': info[1], 'data_ref': info[0], 'ticker': ticker, 'tipo': info[2], 'protocolo': info[1].split('id=')[1]})

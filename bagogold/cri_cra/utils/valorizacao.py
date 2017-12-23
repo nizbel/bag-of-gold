@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.lc import HistoricoTaxaDI
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di, \
-    calcular_valor_atualizado_com_taxa_prefixado
+    calcular_valor_atualizado_com_taxa_prefixado, \
+    calcular_valor_atualizado_com_taxas_di_e_juros
+from bagogold.bagogold.utils.misc import verifica_se_dia_util
 from bagogold.cri_cra.models.cri_cra import CRI_CRA, DataRemuneracaoCRI_CRA
 from decimal import Decimal
 from django.db.models.aggregates import Count
 import datetime
-from bagogold.bagogold.utils.misc import verifica_se_dia_util
 
 def calcular_valor_um_cri_cra_na_data(certificado, data=datetime.date.today()):
     """
@@ -71,8 +72,7 @@ def calcular_valor_cri_cra_di(valor_inicial, percentual_di, data_inicial, data_f
     if (juros_adicional == 0):
         valor_atualizado = calcular_valor_atualizado_com_taxas_di(taxa_qtd_dias, valor_inicial, percentual_di)
     else:
-        # TODO adicionar juro adicional
-        pass
+        valor_atualizado = calcular_valor_atualizado_com_taxas_di_e_juros(taxa_qtd_dias, valor_inicial, percentual_di, juros_adicional)
     
     return valor_atualizado
 

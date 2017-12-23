@@ -10,7 +10,6 @@ from bagogold.bagogold.models.gerador_proventos import \
     ProventoFIIDescritoDocumentoBovespa, DocumentoProventoBovespa
 from decimal import Decimal
 from django.db import transaction
-from io import StringIO, BytesIO
 from itertools import chain
 from lxml import etree
 import datetime
@@ -241,7 +240,82 @@ def versionar_descricoes_relacionadas_acoes(descricao, provento_relacionado):
     if hasattr(provento_anterior, 'atualizacaoselicprovento'):
         provento_anterior.atualizacaoselicprovento.delete()
     provento_anterior.delete()
+    
+def reverter_provento_acao_para_versao_anterior(provento):
+    """
+    Reverte um provento de ações para sua versão anterior
+    Parâmetros: Provento
+    """
+    versao_anterior = ProventoAcaoDocumento.objects.filter(provento=provento).order_by('-versao')[1]
+    
+    # Guardar atualização Selic atual
+    if hasattr(provento, 'atualizacaoselicprovento'):
+        atualizacao_selic = provento.atualizacaoselicprovento
+    else:
+        atualizacao_selic = None
+    
+    # Copiar dados da versão anterior para provento
+    guarda_id_provento = provento.id
+    provento, acoes_prov_versao_ant = converter_descricao_provento_para_provento_acoes(versao_anterior.descricao_provento)
+    provento.id = guarda_id_provento
+    # Se provento estava versionado, é oficial
+    provento.oficial_bovespa = True
+    provento.save()
+    
+    # Verificar Selic
+    if hasattr(versao_anterior.descricao_provento, 'selicproventoacaodescritodocbovespa'):
+        # Se versão anterior possui atualização, alterar guarda da Selic atual
+        if atualizacao_selic != None:
+            guarda_id_selic = atualizacao_selic.id
+        else:
+            guarda_id_selic = None
+        atualizacao_selic = provento.atualizacaoselicprovento
+        if guarda_id_selic != None:
+            atualizacao_selic.id = guarda_id_selic
+        atualizacao_selic.provento = provento
+        atualizacao_selic.save()
+    elif atualizacao_selic != None:
+        # Se não possui, apagar caso guarda não seja nula
+        atualizacao_selic.delete()
+    
+    acoes_recebidas_atuais = list(AcaoProvento.objects.filter(provento__id=provento.id))
+    qtd_acoes_atuais = len(acoes_recebidas_atuais)
+    if len(acoes_prov_versao_ant) == qtd_acoes_atuais:
+        # Quantidade de ações iguais a versão anterior, sobrescrever um a um
+        for indice, acao in enumerate(acoes_recebidas_atuais):
+            guarda_id_acao = acao.id
+            acao = acoes_prov_versao_ant[indice]
+            acao.id = guarda_id_acao
+            acao.provento = provento
+            acao.save()
+    elif len(acoes_prov_versao_ant) > qtd_acoes_atuais:
+        # Quantidade de ações menor que a versão anterior, sobrescrever as que existirem, e então criar novas
+        for indice, acao in enumerate(acoes_recebidas_atuais):
+            guarda_id_acao = acao.id
+            acao = acoes_prov_versao_ant[indice]
+            acao.id = guarda_id_acao
+            acao.provento = provento
+            acao.save()
+        # Continuar a partir do próx. valor de índice, ou 0 se não foi feita iteração
+        indice = 0 if qtd_acoes_atuais == 0 else len(qtd_acoes_atuais)
+        while indice < len(acoes_prov_versao_ant):
+            acao = acoes_prov_versao_ant[indice]
+            acao.provento = provento
+            acao.save()
+            indice += 1
         
+    elif len(acoes_prov_versao_ant) < qtd_acoes_atuais:
+        # Quantidade de ações maior que a versão anterior, sobrescrever com a versão anterior e apagar excedentes
+        for indice, acao in enumerate(acoes_recebidas_atuais):
+            if indice < len(acoes_prov_versao_ant):
+                guarda_id_acao = acao.id
+                acao = acoes_prov_versao_ant[indice]
+                acao.id = guarda_id_acao
+                acao.provento = provento
+                acao.save()
+            else:
+                acao.delete()
+            
 def versionar_descricoes_relacionadas_fiis(descricao, provento_relacionado):
     """
     Versiona descrições de proventos de FIIs relacionados
@@ -268,7 +342,90 @@ def versionar_descricoes_relacionadas_fiis(descricao, provento_relacionado):
     
     # Apagar provento anterior
     provento_anterior.delete()
+    
+def reverter_provento_fii_para_versao_anterior(provento):
+    """
+    Reverte um provento de FIIS para sua versão anterior
+    Parâmetros: Provento
+    """
+    versao_anterior = ProventoFIIDocumento.objects.filter(provento=provento).order_by('-versao')[1]
+    # Copiar dados da versão anterior para provento
+    guarda_id = provento.id
+    provento = converter_descricao_provento_para_provento_fiis(versao_anterior.descricao_provento)
+    provento.id = guarda_id
+    # Se provento estava versionado, é oficial
+    provento.oficial_bovespa = True
+    provento.save()
+
+def reiniciar_documento(documento):
+    """
+    Reinicia um documento, removendo responsáveis, voltando pendência para leitura e alterando proventos e suas descrições
+    Parâmetros: Documento
+    """
+    try:
+        with transaction.atomic():
+            InvestidorValidacaoDocumento.objects.filter(documento=documento).delete()
+            InvestidorLeituraDocumento.objects.filter(documento=documento).delete()
+            InvestidorResponsavelPendencia.objects.filter(pendencia__documento=documento).delete()
+            InvestidorRecusaDocumento.objects.filter(documento=documento).delete()
             
+            # Reverter proventos criados
+            if documento.tipo == 'A':
+                for documento_provento in ProventoAcaoDocumento.objects.filter(documento=documento):
+                    if documento_provento.versao == ProventoAcaoDocumento.objects.filter(provento=documento_provento.provento).order_by('-versao')[0].versao:
+                        # Se for a versão 1, apagar provento
+                        if documento_provento.versao == 1:
+                            documento_provento.provento.delete()
+                        else:
+                            reverter_provento_acao_para_versao_anterior(documento_provento.provento)
+                        documento_provento.descricao_provento.delete()
+                        documento_provento.delete()
+                    else:
+                        # Se não é a última, apagar e atualizar versões posteriores
+                        versao = documento_provento.versao
+                        documento_provento.descricao_provento.delete()
+                        documento_provento.delete()
+                        
+                        # Atualizar versões posteriores
+                        for documento_provento in ProventoAcaoDocumento.objects.filter(provento=documento_provento.provento, versao__gt=versao).order_by('versao'):
+                            documento_provento.versao -= 1
+                            documento_provento.save()
+                            
+            elif documento.tipo == 'F':
+                for documento_provento in ProventoFIIDocumento.objects.filter(documento=documento):
+                    if documento_provento.versao == ProventoFIIDocumento.objects.filter(provento=documento_provento.provento).order_by('-versao')[0].versao:
+                        # Se for a versão 1, apagar provento
+                        if documento_provento.versao == 1:
+                            documento_provento.provento.delete()
+                        else:
+                            reverter_provento_fii_para_versao_anterior(documento_provento.provento)
+                        documento_provento.descricao_provento.delete()
+                        documento_provento.delete()
+                    else:
+                        # Se não é a última, apagar e atualizar versões posteriores
+                        versao = documento_provento.versao
+                        provento = documento_provento.provento
+                        documento_provento.descricao_provento.delete()
+                        documento_provento.delete()
+                        
+                        # Atualizar versões posteriores
+                        for documento_provento in ProventoFIIDocumento.objects.filter(provento=provento, versao__gt=versao).order_by('versao'):
+                            documento_provento.versao -= 1
+                            documento_provento.save()
+            
+            # Baixar documento se tiver sido apagado
+            if not documento.documento:
+                documento.baixar_e_salvar_documento()
+            
+            # Recriar ou atualizar pendência de leitura
+            pendencia, criada = PendenciaDocumentoProvento.objects.get_or_create(documento=documento, defaults={'tipo': PendenciaDocumentoProvento.TIPO_LEITURA})
+            if not criada:
+                pendencia.tipo = PendenciaDocumentoProvento.TIPO_LEITURA
+                pendencia.save()
+    except:
+        raise
+            
+
 def copiar_proventos_acoes(provento, provento_a_copiar):
     """
     Copia dados de um provento de ações para outro
@@ -305,6 +462,7 @@ def copiar_proventos_acoes(provento, provento_a_copiar):
             if hasattr(provento, 'atualizacaoselicprovento'):
                 provento.atualizacaoselicprovento.data_inicio = provento_a_copiar.atualizacaoselicprovento.data_inicio
                 provento.atualizacaoselicprovento.data_fim = provento_a_copiar.atualizacaoselicprovento.data_fim
+                provento.atualizacaoselicprovento.save()
             else:
                 AtualizacaoSelicProvento.objects.create(provento=provento, data_inicio=provento_a_copiar.atualizacaoselicprovento.data_inicio,
                                                         data_fim=provento_a_copiar.atualizacaoselicprovento.data_fim)
@@ -449,9 +607,12 @@ def buscar_proventos_proximos_acao(descricao_provento):
     Parâmetros: Descrição de provento de ação
     Retorno:    Lista de proventos ordenada por quantidade de dias em relação à data EX
     """
-    proventos_proximos_ant = Provento.objects.filter(acao=descricao_provento.acao, data_ex__lte=descricao_provento.data_ex) \
+    range_ant = [descricao_provento.data_ex - datetime.timedelta(days=365), descricao_provento.data_ex]
+    proventos_proximos_ant = Provento.objects.filter(acao=descricao_provento.acao, data_ex__range=range_ant) \
         .exclude(id=descricao_provento.proventoacaodocumento.provento.id).order_by('-data_ex')[:5]
-    proventos_proximos_post = Provento.objects.filter(acao=descricao_provento.acao, data_ex__gt=descricao_provento.data_ex) \
+        
+    range_post = [descricao_provento.data_ex + datetime.timedelta(days=1), descricao_provento.data_ex + datetime.timedelta(days=365)]
+    proventos_proximos_post = Provento.objects.filter(acao=descricao_provento.acao, data_ex__range=range_post) \
         .exclude(id=descricao_provento.proventoacaodocumento.provento.id).order_by('data_ex')[:5]
     
     # Ordenar pela diferença com a data da descrição de provento
@@ -464,9 +625,12 @@ def buscar_proventos_proximos_fii(descricao_provento):
     Parâmetros: Descrição de provento de FII
     Retorno:    Lista de proventos ordenada por quantidade de dias em relação à data EX
     """
-    proventos_proximos_ant = ProventoFII.objects.filter(fii=descricao_provento.fii, data_ex__lte=descricao_provento.data_ex) \
+    range_ant = [descricao_provento.data_ex - datetime.timedelta(days=365), descricao_provento.data_ex]
+    proventos_proximos_ant = ProventoFII.objects.filter(fii=descricao_provento.fii, data_ex__range=range_ant) \
         .exclude(id=descricao_provento.proventofiidocumento.provento.id).order_by('-data_ex')[:5]
-    proventos_proximos_post = ProventoFII.objects.filter(fii=descricao_provento.fii, data_ex__gt=descricao_provento.data_ex) \
+        
+    range_post = [descricao_provento.data_ex + datetime.timedelta(days=1), descricao_provento.data_ex + datetime.timedelta(days=365)]
+    proventos_proximos_post = ProventoFII.objects.filter(fii=descricao_provento.fii, data_ex__range=range_post) \
         .exclude(id=descricao_provento.proventofiidocumento.provento.id).order_by('data_ex')[:5]
     
     # Ordenar pela diferença com a data da descrição de provento
@@ -511,3 +675,43 @@ def ler_provento_estruturado_fii(documento_fii):
         for pendencia_provento in PendenciaDocumentoProvento.objects.filter(documento=documento_fii):
             pendencia_provento.delete()
             
+def relacionar_proventos_lidos_sistema(provento_relacionar, provento_relacionado):
+    """
+    Relaciona proventos lidos pelo sistema
+    Parâmetros: Provento a relacionar
+                Provento a ser relacionado
+    """
+    # Verificar se proventos foram lidos pelo sistema
+    if not (provento_relacionar.add_pelo_sistema and provento_relacionado.add_pelo_sistema):
+        raise ValueError('Proventos devem ter sido adicionados pelo sistema')
+    elif provento_relacionar.id == provento_relacionado.id:
+        raise ValueError('Provento a relacionar é igual a provento relacionado')
+    
+    try:
+        with transaction.atomic():
+            # Buscar todas as versões do provento descrito
+            versoes_provento_relacionado = list(ProventoFIIDocumento.objects.filter(provento=provento_relacionado))
+            # Adicionar versões do provento a relacionar à lista de versões pelo número do protocolo do documento
+            versoes_provento_relacionado.extend(provento_relacionar.proventofiidocumento_set.all())
+            versoes_provento_relacionado.sort(key=lambda x: x.documento.protocolo)
+            # Gerar versões a partir de 1 na ordem feita
+            for versao, item in enumerate(versoes_provento_relacionado, start=1):
+                item.versao = versao
+                item.save()
+            
+            # Transformar provento em não oficial para depois oficializá-lo
+            provento_relacionado.oficial_bovespa = False
+            # Copiar última versão de descrição para o provento relacionado
+            copiar_proventos_fiis(provento_relacionado, versoes_provento_relacionado[-1].provento)
+            
+            for provento_documento in provento_relacionar.proventofiidocumento_set.all():
+                provento_documento.provento = provento_relacionado
+                provento_documento.save()
+            
+            provento_relacionar.delete()
+            
+            # Oficializar
+            provento_relacionado.oficial_bovespa = True
+            provento_relacionado.save()
+    except Exception as e:
+        raise ValueError('Houve um erro ao relacionar os documentos - %s' % e)

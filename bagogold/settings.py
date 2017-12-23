@@ -49,8 +49,9 @@ INSTALLED_APPS = (
     'bagogold.pendencias',
     'bagogold.cdb_rdb',
     'bagogold.cri_cra',
-    'bagogold.criptomoeda',
     'bagogold.fundo_investimento',
+    'bagogold.criptomoeda',
+    'bagogold.outros_investimentos',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -97,6 +98,7 @@ DATABASES = {
         'NAME': 'bagogold',
         'USER': 'bagogold',
         'PASSWORD': 'bagogold',
+        'HOST': 'localhost',
     }
 }
 

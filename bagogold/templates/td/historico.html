@@ -118,7 +118,7 @@
 					<tr>
 						<td><a href="{% url 'td:editar_operacao_td' item.id %}">{{item.titulo}}</a></td>
 						<td>{{item.tipo}}</td>
-						<td>{{ item.data|date:"Y-m-d" }}</td>
+						<td>{{ item.data|date:"d/m/Y" }}</td>
 						<td>{{item.quantidade}}</td>
 						<td>R$ {{item.valor_unitario}}</td>
 						<td><span class="font-red-thunderbird">R$ {{item.taxa_bvmf}}</span></td>
@@ -148,15 +148,17 @@
 <script src={% static "assets/global/plugins/datatables/datatables.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.js" %} type="text/javascript"></script>
 <script src={% static "assets/pages/scripts/table-datatables-fixedheader.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/moment.min.js" %} type="text/javascript"></script>
+<script src="https://cdn.datatables.net/plug-ins/1.10.15/sorting/datetime-moment.js" type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.axislabels.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.categories.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.crosshair.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.resize.min.js" %} type="text/javascript"></script>
-<script src={% static "assets/global/plugins/flot/jquery.flot.resize.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.stack.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.time.min.js" %} type="text/javascript"></script>
 <script>
+$.fn.dataTable.moment( 'DD/MM/YYYY' );
 $( document ).ready(function() {    
 	$.plot($("#graf_total_venc"), [ {color: "#7D8C9D", lines: {show:true}, data: {{ graf_total_venc|safe }} } 
     ],
@@ -208,7 +210,7 @@ $( document ).ready(function() {
                     y = item.datapoint[1].toFixed(2);
                 
                 var date = new Date(parseInt(x));
-                showTooltip(item.pageX, item.pageY, $.plot.formatDate(date, "%d/%m/%y") +"</br>" + item.series.label + ": R$" + y.replace('.', ','));
+                showTooltip(item.pageX, item.pageY, moment.utc(date).format('DD/MM/YYYY') +"</br>" + item.series.label + ": R$" + y.replace('.', ','));
             }
         }
         else {

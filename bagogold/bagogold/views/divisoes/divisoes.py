@@ -3,8 +3,6 @@ from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoForm, \
     TransferenciaEntreDivisoesForm
 from bagogold.bagogold.models.acoes import ValorDiarioAcao, HistoricoAcao, Acao
-from bagogold.cdb_rdb.models import CDB_RDB, \
-    HistoricoPorcentagemCDB_RDB
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
     DivisaoOperacaoFII, DivisaoOperacaoTD, DivisaoOperacaoAcao, \
     TransferenciaEntreDivisoes, DivisaoOperacaoFundoInvestimento, \
@@ -15,22 +13,25 @@ from bagogold.bagogold.models.lc import HistoricoPorcentagemLetraCredito, \
 from bagogold.bagogold.models.td import ValorDiarioTitulo, HistoricoTitulo, \
     Titulo
 from bagogold.bagogold.utils.acoes import calcular_qtd_acoes_ate_dia_por_divisao
-from bagogold.cdb_rdb.utils import \
-    calcular_valor_cdb_rdb_ate_dia_por_divisao
 from bagogold.bagogold.utils.debenture import \
     calcular_valor_debentures_ate_dia_por_divisao
 from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia_por_divisao
 from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia_por_divisao
 from bagogold.bagogold.utils.td import calcular_qtd_titulos_ate_dia_por_divisao
+from bagogold.cdb_rdb.models import CDB_RDB, HistoricoPorcentagemCDB_RDB
+from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia_por_divisao
 from bagogold.cri_cra.utils.utils import \
     calcular_valor_cri_cra_ate_dia_para_divisao
-from bagogold.criptomoeda.models import Criptomoeda
-from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia_por_divisao, \
-    buscar_valor_criptomoedas_atual
+from bagogold.criptomoeda.models import Criptomoeda, ValorDiarioCriptomoeda
+from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia_por_divisao
 from bagogold.fundo_investimento.models import FundoInvestimento, \
     HistoricoValorCotas, OperacaoFundoInvestimento
 from bagogold.fundo_investimento.utils import \
     calcular_qtd_cotas_ate_dia_por_divisao
+from bagogold.outros_investimentos.models import Investimento
+from bagogold.outros_investimentos.utils import \
+    calcular_valor_outros_investimentos_ate_data, \
+    calcular_valor_outros_investimentos_ate_data_por_divisao
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -97,14 +98,14 @@ def criar_transferencias(request):
 
 @login_required
 @adiciona_titulo_descricao('Detalhar divisão', 'Detalha a composição de uma divisão')
-def detalhar_divisao(request, id):
+def detalhar_divisao(request, divisao_id):
     investidor = request.user.investidor
     
     # Usado para criar objetos vazios
     class Object(object):
         pass
     
-    divisao = Divisao.objects.get(id=id)
+    divisao = Divisao.objects.get(id=divisao_id)
     if divisao.investidor != investidor:
         raise PermissionDenied
     
@@ -264,6 +265,28 @@ def detalhar_divisao(request, id):
             composicao['td'].composicao[titulo_id].composicao[operacao_divisao.operacao.id].valor_unitario = td_valor
             composicao['td'].composicao[titulo_id].composicao[operacao_divisao.operacao.id].patrimonio = operacao_divisao.quantidade * td_valor
     
+    # Adicionar outros investimentos
+    composicao['outros'] = Object()
+    composicao['outros'].nome = 'Outros investimentos'
+    composicao['outros'].patrimonio = 0
+    composicao['outros'].composicao = {}
+    # Pegar outros investimentos contidos na divisão
+    qtd_outros_investimentos = calcular_valor_outros_investimentos_ate_data_por_divisao(divisao)
+    for investimento_id in qtd_outros_investimentos.keys():
+        investimento = Investimento.objects.get(id=investimento_id)
+        composicao['outros'].patrimonio += qtd_outros_investimentos[investimento_id]
+        composicao['outros'].composicao[investimento_id] = Object()
+        composicao['outros'].composicao[investimento_id].nome = investimento.nome
+        composicao['outros'].composicao[investimento_id].patrimonio = qtd_outros_investimentos[investimento_id]
+        composicao['outros'].composicao[investimento_id].composicao = {}
+        # Pegar dados do investimento
+        composicao['outros'].composicao[investimento_id].composicao[investimento_id] = Object()
+        composicao['outros'].composicao[investimento_id].composicao[investimento_id].nome = investimento.nome
+        composicao['outros'].composicao[investimento_id].composicao[investimento_id].data = investimento.data
+        composicao['outros'].composicao[investimento_id].composicao[investimento_id].quantidade = qtd_outros_investimentos[investimento_id]
+        composicao['outros'].composicao[investimento_id].composicao[investimento_id].valor_unitario = qtd_outros_investimentos[investimento_id]
+        composicao['outros'].composicao[investimento_id].composicao[investimento_id].patrimonio = qtd_outros_investimentos[investimento_id]
+    
     # Calcular valor total da divisão
     for key, item in composicao.items():
         if item.patrimonio == 0:
@@ -282,10 +305,10 @@ def detalhar_divisao(request, id):
 
 @login_required
 @adiciona_titulo_descricao('Editar divisão', 'Alterar dados de uma divisão')
-def editar_divisao(request, id):
+def editar_divisao(request, divisao_id):
     investidor = request.user.investidor
     
-    divisao = Divisao.objects.get(pk=id)
+    divisao = Divisao.objects.get(pk=divisao_id)
     if divisao.investidor != investidor:
         raise PermissionDenied
     
@@ -319,11 +342,11 @@ def editar_divisao(request, id):
     
 @login_required
 @adiciona_titulo_descricao('Editar transferência', 'Alterar valores de uma transferência no histórico')
-def editar_transferencia(request, id):
+def editar_transferencia(request, divisao_id):
     investidor = request.user.investidor
     
     # Checar ambas as divisões
-    transferencia = TransferenciaEntreDivisoes.objects.get(pk=id)
+    transferencia = TransferenciaEntreDivisoes.objects.get(pk=divisao_id)
     if transferencia.divisao_cedente and transferencia.divisao_cedente.investidor != investidor:
         raise PermissionDenied
     if transferencia.divisao_recebedora and transferencia.divisao_recebedora.investidor != investidor:
@@ -409,6 +432,7 @@ def listar_divisoes(request):
         divisao.valor_atual_fii = 0
         divisao.valor_atual_fundo_investimento = 0
         divisao.valor_atual_lc = 0
+        divisao.valor_atual_outros_invest = 0
         divisao.valor_atual_td = 0
         
         data_atual = datetime.date.today()
@@ -445,8 +469,10 @@ def listar_divisoes(request):
         # Criptomoedas
         criptomoedas_divisao = calcular_qtd_moedas_ate_dia_por_divisao(divisao.id, data_atual)
         moedas = Criptomoeda.objects.filter(id__in=criptomoedas_divisao.keys())
-        valores_criptomoedas = buscar_valor_criptomoedas_atual([moeda.ticker for moeda in moedas])
-        divisao.valor_atual_criptomoeda += sum([(criptomoedas_divisao[moeda.id] * valores_criptomoedas[moeda.ticker]) for moeda in moedas])
+        # Busca valores apenas se existem criptomoedas na divisão
+        if moedas:
+            valores_criptomoedas = {valor_diario.criptomoeda.ticker: valor_diario.valor for valor_diario in ValorDiarioCriptomoeda.objects.filter(criptomoeda__in=moedas, moeda='BRL')}
+            divisao.valor_atual_criptomoeda += sum([(criptomoedas_divisao[moeda.id] * valores_criptomoedas[moeda.ticker]) for moeda in moedas])
         divisao.valor_atual += divisao.valor_atual_criptomoeda
         
         # Debêntures
@@ -466,7 +492,6 @@ def listar_divisoes(request):
          
         # Fundos de investimento
         fundo_investimento_divisao = calcular_qtd_cotas_ate_dia_por_divisao(data_atual, divisao.id)
-        print fundo_investimento_divisao
         for fundo_id in fundo_investimento_divisao.keys():
             historico_fundo = HistoricoValorCotas.objects.filter(fundo_investimento__id=fundo_id).order_by('-data')
             ultima_operacao_fundo = OperacaoFundoInvestimento.objects.filter(fundo_investimento__id=fundo_id).order_by('-data')[0]
@@ -482,6 +507,11 @@ def listar_divisoes(request):
         divisao.valor_atual_lc += sum(lc_divisao.values())
         divisao.valor_atual += divisao.valor_atual_lc
          
+        # Outros investimentos
+        outros_invest_divisao = calcular_valor_outros_investimentos_ate_data_por_divisao(divisao, data_atual)
+        divisao.valor_atual_outros_invest += sum(outros_invest_divisao.values())
+        divisao.valor_atual += divisao.valor_atual_outros_invest
+         
         # Tesouro Direto
         td_divisao = calcular_qtd_titulos_ate_dia_por_divisao(data_atual, divisao.id)
         for titulo_id in td_divisao.keys():
@@ -495,8 +525,15 @@ def listar_divisoes(request):
          
         if not divisao.objetivo_indefinido():
             divisao.quantidade_percentual = divisao.valor_atual / divisao.valor_objetivo * 100
+#             if divisao.valor_atual < divisao.valor_objetivo and TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=divisao).exists():
+#                 # Calcula o tempo restante com base na primeira transferência de dinheiro para a divisão
+#                 divisao.tempo_restante = (datetime.date.today() - TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=divisao).order_by('data')[0].data).days
+#                 divisao.tempo_restante = divisao.tempo_restante / (divisao.valor_atual / divisao.valor_objetivo) - divisao.tempo_restante
+#             else:
+#                 divisao.tempo_restante = None
         else:
             divisao.quantidade_percentual = 100
+#             divisao.tempo_restante = None
             
         # Calcular saldo da divisão
         divisao.saldo_bh = divisao.saldo_acoes_bh()
@@ -507,11 +544,12 @@ def listar_divisoes(request):
         divisao.saldo_fii = divisao.saldo_fii()
         divisao.saldo_fundo_investimento = divisao.saldo_fundo_investimento()
         divisao.saldo_lc = divisao.saldo_lc()
+        divisao.saldo_outros_invest = divisao.saldo_outros_invest()
         divisao.saldo_td = divisao.saldo_td()
         divisao.saldo_trade = divisao.saldo_acoes_trade()
         divisao.saldo = divisao.saldo_bh + divisao.saldo_cdb_rdb + divisao.saldo_cri_cra + divisao.saldo_criptomoeda \
             + divisao.saldo_debentures + divisao.saldo_fii + divisao.saldo_fundo_investimento + divisao.saldo_lc \
-            + divisao.saldo_td + divisao.saldo_trade
+            + divisao.saldo_outros_invest + divisao.saldo_td + divisao.saldo_trade
               
     return TemplateResponse(request, 'divisoes/listar_divisoes.html', {'divisoes': divisoes})
 
