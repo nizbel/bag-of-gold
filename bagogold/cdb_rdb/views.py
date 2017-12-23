@@ -433,7 +433,7 @@ def historico(request):
             # Buscar operação de compra relacionada para reiniciar
             for indice_relacionada in xrange(indice):
                 if operacoes[indice_relacionada].id == operacao.operacao_compra_relacionada().id:
-                    operacoes[indice_relacionada].qtd_vendida = operacao.quantidade
+                    operacoes[indice_relacionada].qtd_vendida += operacao.quantidade
                     operacoes[indice_relacionada].atual = operacoes[indice_relacionada].quantidade - operacoes[indice_relacionada].qtd_vendida
                     if operacoes[indice_relacionada].atual > 0:
                         # Atualizar o valor
