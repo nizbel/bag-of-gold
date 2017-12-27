@@ -477,6 +477,11 @@ def inserir_operacao_criptomoeda(request):
                                                                                               'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})
 
 @login_required
+@adiciona_titulo_descricao('Inserir operação em criptomoedas em lote', 'Inserir lote de registros de operação de compra/venda em criptomoeda')
+def inserir_operacao_lote(request):
+    pass
+    
+@login_required
 @adiciona_titulo_descricao('Inserir transferência para criptomoedas', 'Inserir registro de transferência para criptomoedas')
 def inserir_transferencia(request):
     investidor = request.user.investidor
@@ -541,6 +546,11 @@ def inserir_transferencia(request):
     return TemplateResponse(request, 'criptomoedas/inserir_transferencia.html', {'form_transferencia_criptomoeda': form_transferencia_criptomoeda, \
                                                                                               'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})
 
+@login_required
+@adiciona_titulo_descricao('Inserir transferência para criptomoedas em lote', 'Inserir lote de registros de transferência para criptomoedas')
+def inserir_transferencia_lote(request):
+    pass
+    
 @adiciona_titulo_descricao('Listar criptomoedas cadastradas', 'Lista as criptomoedas no sistema')
 def listar_criptomoedas(request):
     moedas = Criptomoeda.objects.all()
