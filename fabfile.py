@@ -79,20 +79,21 @@ def update(requirements=False, rev=None):
             return
  
     # Stop apache
-    sudo('service apache2 stop', shell=False)
+    sudo('service apache2 stop')
     
     run('workon %(virtualenv)s' % {'virtualenv': env.virtualenv})
     
     # Backup first... always!
     if env.config == 'PROD':
         with cd(env.path):
-            run('python manage.py preparar_backup')
+            run('%s/bin/python ~/%s/manage.py preparar_backup' % (env.virtualenv_path, env.path))
         
         # Stop postgres
-        sudo('/etc/init.d/postgresql stop', shell=False)
+        sudo('/etc/init.d/postgresql stop')
          
     # Update the code
     with cd(env.path):
+        run('workon %(virtualenv)s' % {'virtualenv': env.virtualenv})
         run('find . -name "*.pyc" | xargs rm')
         if rev:
             run('hg pull; hg update -r %(rev)s' % {'rev': rev})
@@ -101,21 +102,22 @@ def update(requirements=False, rev=None):
         # Atualizar requirements
         sudo('pip install -U -r requirements.txt' % env)
  
-        # Syncdb, migrate, and sync extensions
+        
+        if env.config == 'PROD':
+            # Start postgres
+            sudo('/etc/init.d/postgresql start')
+            
+        # Migrações
         run('python manage.py migrate --noinput')
          
         # Collect static files
-        sudo('python manage.py collectstatic --noinput', shell=False)
+        sudo('python manage.py collectstatic --noinput')
         
         # Alterar cronjob
         alterar_cron()
     
-    if env.config == 'PROD':
-        # Start postgres
-        sudo('/etc/init.d/postgresql start', shell=False)
-    
     # Start apache
-    sudo('service apache2 start', shell=False)
+    sudo('service apache2 start')
     
 def verificar_update():
     run('workon %(virtualenv)s' % {'virtualenv': env.virtualenv})
@@ -127,16 +129,16 @@ def verificar_update():
         hotfix_date = datetime.datetime.fromtimestamp(int(hotfix_date.split('.')[0])) - datetime.timedelta(seconds=int(hotfix_date.split('.')[1]))
         prod_date = datetime.datetime.fromtimestamp(int(prod_date.split('.')[0])) - datetime.timedelta(seconds=int(prod_date.split('.')[1]))
         
-        # Buscar data da revisão atual
-        atual_date = run('hg parent --template "{date}"')  
-        atual_date = datetime.datetime.fromtimestamp(int(atual_date.split('.')[0])) - datetime.timedelta(seconds=int(atual_date.split('.')[1]))
-        if max(hotfix_date, prod_date) > atual_date:
-            if hotfix_date > prod_date:
-                return 'hotfix'
-            else:
-                return 'prod'
+#         # Buscar data da revisão atual
+#         atual_date = run('hg parent --template "{date}"')  
+#         atual_date = datetime.datetime.fromtimestamp(int(atual_date.split('.')[0])) - datetime.timedelta(seconds=int(atual_date.split('.')[1]))
+#         if max(hotfix_date, prod_date) > atual_date:
+        if hotfix_date > prod_date:
+            return 'hotfix'
         else:
-            return None
+            return 'prod'
+#         else:
+#             return None
             
         
 # TODO preparar verificação de update a fazer 
