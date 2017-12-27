@@ -4,14 +4,10 @@ from fabric.api import env, require, run, sudo, local as lrun
 from fabric.context_managers import cd
 from fabric.contrib.files import append, contains, exists
 import datetime
-import time
 from bagogold.bagogold.management.commands.preparar_backup import preparar_backup
 
 
-
-
 # Servers
-
 def prod():
     env.config = 'PROD'
     env.hosts = ['bagofgold.com.br']
@@ -34,7 +30,6 @@ def dev():
     env.virtualenv_path = '/home/nizbel/.virtualenvs/bagogold'
 
 # Actions
-
 def setup():
     require('path')
     require('repository')
@@ -68,15 +63,12 @@ def alterar_cron():
 def update(requirements=False, rev=None):
     require('path')
     require('virtualenv')
-    env.warn_only = True
  
     # Pegar revisão
     rev = rev
     # Se não há revisão, verificar se há update a ser feito
     if not rev:
         branch = verificar_update()
-        if not branch:
-            return
  
     # Stop apache
     sudo('service apache2 stop')
@@ -98,9 +90,9 @@ def update(requirements=False, rev=None):
         if rev:
             run('hg pull; hg update -r %(rev)s' % {'rev': rev})
         else:
-            run('hg pull; hg update %(branch)s' % {'branch': branch})
+            run('hg update %(branch)s' % {'branch': branch})
         # Atualizar requirements
-        sudo('pip install -U -r requirements.txt' % env)
+        sudo('pip install -U -r requirements.txt')
  
         
         if env.config == 'PROD':
@@ -117,7 +109,7 @@ def update(requirements=False, rev=None):
         alterar_cron()
     
     # Start apache
-    sudo('service apache2 start')
+    sudo('service apache2 start', pty=False)
     
 def verificar_update():
     run('workon %(virtualenv)s' % {'virtualenv': env.virtualenv})
@@ -129,17 +121,7 @@ def verificar_update():
         hotfix_date = datetime.datetime.fromtimestamp(int(hotfix_date.split('.')[0])) - datetime.timedelta(seconds=int(hotfix_date.split('.')[1]))
         prod_date = datetime.datetime.fromtimestamp(int(prod_date.split('.')[0])) - datetime.timedelta(seconds=int(prod_date.split('.')[1]))
         
-#         # Buscar data da revisão atual
-#         atual_date = run('hg parent --template "{date}"')  
-#         atual_date = datetime.datetime.fromtimestamp(int(atual_date.split('.')[0])) - datetime.timedelta(seconds=int(atual_date.split('.')[1]))
-#         if max(hotfix_date, prod_date) > atual_date:
         if hotfix_date > prod_date:
             return 'hotfix'
         else:
             return 'prod'
-#         else:
-#             return None
-            
-        
-# TODO preparar verificação de update a fazer 
-# hg log -b prod --template '{rev}\n' -l 1
