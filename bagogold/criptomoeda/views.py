@@ -26,7 +26,6 @@ from django.http.response import HttpResponseRedirect
 from django.template.response import TemplateResponse
 from itertools import chain
 from operator import attrgetter
-from urllib2 import urlopen
 import calendar
 import datetime
 import json
@@ -390,7 +389,8 @@ def historico(request):
     
     dados = {}
     dados['total_investido'] = sum([(moeda.preco_medio * moeda.qtd) for moeda in moedas.values() if moeda.qtd > 0])
-    dados['patrimonio'] = sum([moedas[ticker].qtd * valor for ticker, valor in buscar_valor_criptomoedas_atual(moedas.keys()).items()])
+    dados['patrimonio'] = sum([moedas[ticker].qtd * valor for ticker, valor in {valor_diario.criptomoeda.ticker: valor_diario.valor for \
+                                                valor_diario in ValorDiarioCriptomoeda.objects.filter(criptomoeda__ticker__in=moedas.keys(), moeda='BRL')}.items()])
     dados['lucro'] = dados['patrimonio'] - dados['total_investido']
     dados['lucro_percentual'] = dados['lucro'] / (dados['total_investido'] or 1) * 100
     
@@ -541,7 +541,7 @@ def inserir_transferencia(request):
     return TemplateResponse(request, 'criptomoedas/inserir_transferencia.html', {'form_transferencia_criptomoeda': form_transferencia_criptomoeda, \
                                                                                               'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})
 
-@adiciona_titulo_descricao('Listar criptomoedas cadastrados', 'Lista as criptomoedas no sistema')
+@adiciona_titulo_descricao('Listar criptomoedas cadastradas', 'Lista as criptomoedas no sistema')
 def listar_criptomoedas(request):
     moedas = Criptomoeda.objects.all()
     valores_diarios = ValorDiarioCriptomoeda.objects.all().values('valor')

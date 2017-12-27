@@ -71,7 +71,10 @@ class OperacaoCDB_RDBForm(LocalizedModelForm):
                                                 ((operacao_compra.data + datetime.timedelta(days=operacao_compra.carencia())).strftime("%d/%m/%Y")))
             # Testar quantidade
             quantidade = self.cleaned_data['quantidade']
-            if quantidade > operacao_compra.qtd_disponivel_venda(desconsiderar_vendas=[self.instance]):
+            registros_desconsiderar = list()
+            if self.instance.id != None:
+                registros_desconsiderar.append(self.instance.id)
+            if quantidade > operacao_compra.qtd_disponivel_venda(desconsiderar_vendas=registros_desconsiderar):
                 raise forms.ValidationError('Não é possível vender mais do que o disponível na operação de compra')
             return operacao_compra
         return None

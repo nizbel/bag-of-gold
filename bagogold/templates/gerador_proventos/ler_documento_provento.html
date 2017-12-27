@@ -21,10 +21,7 @@
             <div class="portlet box yellow-crusta">
                 <div class="portlet-title">
                     <div class="caption">
-                    {% comment %}
-                    Buscar um ícone melhor para esse portlet header
-                    {% endcomment %}
-                        <i class="fa fa-line-chart"></i>Dados do documento
+                        <i class="fa fa-folder-open-o"></i>Dados do documento
                     </div>
                     <div class="tools">
                         <a href="javascript:;" class="collapse"></a>
@@ -94,6 +91,36 @@
                         <div class="col-md-12 text-center">
                             <canvas id="canvas"></canvas>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% if infos_uteis.keys %}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-diamond"></i>Informações úteis
+                    </div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <div class="row">
+                        {% if 'historico_negociacao' in infos_uteis.keys %}
+                            <div class="col-md-12">
+                                <h3>Datas com negociação oficial</h3>
+                            </div>
+                            {% for info_negociacao in infos_uteis.historico_negociacao %}
+                            <div class="col-md-3">
+                                <p><strong>{{info_negociacao.ticker}}</strong>: <strong>{{info_negociacao.inicio|date:'d/m/Y'}}</strong> a <strong>{{info_negociacao.fim|date:'d/m/Y'}}</strong></p>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -201,8 +228,7 @@
                                             <div class="form-group col-md-4 {% if form_provento.data_ex.errors %} has-error {% endif %}">
                                                 <label class="control-label col-md-4" style="text-align: left;"> Data EX: </label>
                                                 <div class="col-md-8">
-                                                    <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_provento-{{forloop.counter0}}-data_ex" name="provento-{{forloop.counter0}}-data_ex" 
-                                                    data-date-viewmode="years">
+                                                    <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_provento-{{forloop.counter0}}-data_ex" name="provento-{{forloop.counter0}}-data_ex">
                                                         <input type="text" class="form-control" name="provento-{{forloop.counter0}}-data_ex" 
                                                         value="{% if form_provento.data_ex.value|date:'d/m/Y'|default:'' == '' %}{{form_provento.data_ex.value|default:''}}{% else %}{{form_provento.data_ex.value|date:'d/m/Y'}}{% endif %}">
                                                         <span class="input-group-btn">
@@ -219,8 +245,7 @@
                                             <div class="form-group col-md-4 {% if form.data_pagamento.errors %} has-error {% endif %}">
                                                 <label class="control-label col-md-4" style="text-align: left;"> Data de pagamento: </label>
                                                 <div class="col-md-8">
-                                                    <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_provento-{{forloop.counter0}}-data_pagamento" name="provento-{{forloop.counter0}}-data_pagamento" 
-                                                    data-date-viewmode="years">
+                                                    <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_provento-{{forloop.counter0}}-data_pagamento" name="provento-{{forloop.counter0}}-data_pagamento">
                                                         <input type="text" class="form-control" name="provento-{{forloop.counter0}}-data_pagamento" 
                                                         value="{% if form_provento.data_pagamento.value|date:'d/m/Y'|default:'' == '' %}{{form_provento.data_pagamento.value|default:''}}{% else %}{{form_provento.data_pagamento.value|date:'d/m/Y'}}{% endif %}">
                                                         <span class="input-group-btn">
@@ -273,8 +298,7 @@
                                                 <div class="form-group col-md-4 {% if form_acao_provento.data_pagamento_frac.errors %} has-error {% endif %}">
                                                     <label class="control-label col-md-4" style="text-align: left;"> Data de pagamento de frações: </label>
                                                     <div class="col-md-8">
-                                                        <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_acao_provento-{{forloop.counter0}}-data_pagamento_frac" name="acao_provento-{{forloop.counter0}}-data_pagamento_frac" 
-                                                        data-date-viewmode="years">
+                                                        <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_acao_provento-{{forloop.counter0}}-data_pagamento_frac" name="acao_provento-{{forloop.counter0}}-data_pagamento_frac">
                                                             <input type="text" class="form-control" name="acao_provento-{{forloop.counter0}}-data_pagamento_frac" 
                                                             value="{% if form_acao_provento.data_pagamento_frac.value|date:'d/m/Y'|default:'' == '' %}{{form_acao_provento.data_pagamento_frac.value|default:''}}{% else %}{{form_acao_provento.data_pagamento_frac.value|date:'d/m/Y'}}{% endif %}">
                                                             <span class="input-group-btn">
@@ -316,8 +340,7 @@
                                                 <div class="form-group col-md-4 {% if form_acao_selic.data_inicio.errors %} has-error {% endif %}" name="acao_selic-{{forloop.counter0}}">
                                                     <label class="control-label col-md-4" style="text-align: left;"> Início da atualização: </label>
                                                     <div class="col-md-8">
-                                                        <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_acao_selic-{{forloop.counter0}}-data_inicio" name="acao_selic-{{forloop.counter0}}-data_inicio" 
-                                                        data-date-viewmode="years">
+                                                        <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_acao_selic-{{forloop.counter0}}-data_inicio" name="acao_selic-{{forloop.counter0}}-data_inicio">
                                                             <input type="text" class="form-control" name="acao_selic-{{forloop.counter0}}-data_inicio" 
                                                             value="{% if form_acao_selic.data_inicio.value|date:'d/m/Y'|default:'' == '' %}{{form_acao_selic.data_inicio.value|default:''}}{% else %}{{form_acao_selic.data_inicio.value|date:'d/m/Y'}}{% endif %}">
                                                             <span class="input-group-btn">
@@ -334,8 +357,7 @@
                                                 <div class="form-group col-md-4 {% if form_acao_selic.data_fim.errors %} has-error {% endif %}" name="acao_selic-{{forloop.counter0}}">
                                                     <label class="control-label col-md-4" style="text-align: left;"> Fim da atualização: </label>
                                                     <div class="col-md-8">
-                                                        <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_acao_selic-{{forloop.counter0}}-data_fim" name="acao_selic-{{forloop.counter0}}-data_fim" 
-                                                        data-date-viewmode="years">
+                                                        <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_acao_selic-{{forloop.counter0}}-data_fim" name="acao_selic-{{forloop.counter0}}-data_fim">
                                                             <input type="text" class="form-control" name="acao_selic-{{forloop.counter0}}-data_fim" 
                                                             value="{% if form_acao_selic.data_fim.value|date:'d/m/Y'|default:'' == '' %}{{form_acao_selic.data_fim.value|default:''}}{% else %}{{form_acao_selic.data_fim.value|date:'d/m/Y'}}{% endif %}">
                                                             <span class="input-group-btn">
@@ -373,8 +395,7 @@
                                             <div class="form-group col-md-4 {% if form_provento.data_ex.errors %} has-error {% endif %}">
                                                 <label class="control-label col-md-4" style="text-align: left;"> Data EX: </label>
                                                 <div class="col-md-8">
-                                                    <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_provento-{{forloop.counter0}}-data_ex" name="provento-{{forloop.counter0}}-data_ex" 
-                                                    data-date-viewmode="years">
+                                                    <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_provento-{{forloop.counter0}}-data_ex" name="provento-{{forloop.counter0}}-data_ex">
                                                         <input type="text" class="form-control" name="provento-{{forloop.counter0}}-data_ex" 
                                                         value="{% if form_provento.data_ex.value|date:'d/m/Y'|default:'' == '' %}{{form_provento.data_ex.value|default:''}}{% else %}{{form_provento.data_ex.value|date:'d/m/Y'}}{% endif %}">
                                                         <span class="input-group-btn">
@@ -391,8 +412,7 @@
                                             <div class="form-group col-md-4 {% if form.data_pagamento.errors %} has-error {% endif %}">
                                                 <label class="control-label col-md-4" style="text-align: left;"> Data de pagamento: </label>
                                                 <div class="col-md-8">
-                                                    <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_provento-{{forloop.counter0}}-data_pagamento" name="provento-{{forloop.counter0}}-data_pagamento" 
-                                                    data-date-viewmode="years">
+                                                    <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" id="id_provento-{{forloop.counter0}}-data_pagamento" name="provento-{{forloop.counter0}}-data_pagamento">
                                                         <input type="text" class="form-control" name="provento-{{forloop.counter0}}-data_pagamento" 
                                                         value="{% if form_provento.data_pagamento.value|date:'d/m/Y'|default:'' == '' %}{{form_provento.data_pagamento.value|default:''}}{% else %}{{form_provento.data_pagamento.value|date:'d/m/Y'}}{% endif %}">
                                                         <span class="input-group-btn">

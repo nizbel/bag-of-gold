@@ -1,17 +1,13 @@
 # -*- encoding: utf-8 -*-
 from __future__ import with_statement
-from datetime import datetime
-from fabric.api import env, require, run, sudo
+from fabric.api import env, require, run, sudo, local as lrun
 from fabric.context_managers import cd
 from fabric.contrib.files import append, contains, exists
-import os
-import time
-
-
+import datetime
+from bagogold.bagogold.management.commands.preparar_backup import preparar_backup
 
 
 # Servers
-
 def prod():
     env.config = 'PROD'
     env.hosts = ['bagofgold.com.br']
@@ -20,72 +16,112 @@ def prod():
     env.user = 'bagofgold'
     env.virtualenv = 'bagogold'
     env.virtualenv_path = '/home/bagofgold/.virtualenvs/bagogold'
+    env.forward_agent = True
 #     env.procs = ['nginx', 'site', 'winfinity']
 
+def dev():
+    env.run = lrun
+    env.config = 'DEV'
+    env.hosts = ['localhost']
+    env.path = 'bagogold'
+    env.repository = 'https://bitbucket.org/nizbel/bag-of-gold'
+    env.user = 'nizbel'
+    env.virtualenv = 'bagogold'
+    env.virtualenv_path = '/home/nizbel/.virtualenvs/bagogold'
+
 # Actions
+def setup():
+    require('path')
+    require('repository')
+    require('config')
+     
+    # Setup virtualenv and virtualenvwrapper
+    # NOTE: pip must already be installed on the system
+    sudo('pip install virtualenv virtualenvwrapper', shell=False)
+    if not exists('~/.profile'):
+        run('touch ~/.profile')
+    if not exists('~/.virtualenvs'):
+        run('mkdir ~/.virtualenvs')
+    if not contains('WORKON_HOME', '~/.profile'):
+        append(('\nexport WORKON_HOME=$HOME/.virtualenvs'
+                '\nsource /usr/local/bin/virtualenvwrapper.sh'), '~/.profile')
+        run('source ~/.profile')
+ 
+    # Create the virtualenv
+    run('mkvirtualenv %(virtualenv)s' % env)
+  
+    # Clone the repository
+    if not exists(env.path):
+        run('hg clone %(repository)s %(path)s' % env)
 
-# def setup():
-#     require('path')
-#     require('repository')
-#     require('config')
-#     
-#     # Setup virtualenv and virtualenvwrapper
-#     # NOTE: pip must already be installed on the system
-#     sudo('pip install virtualenv virtualenvwrapper', shell=False)
-#     if not exists('~/.profile'):
-#         run('touch ~/.profile')
-#     if not exists('~/.virtualenvs'):
-#         run('mkdir ~/.virtualenvs')
-#     if not contains('WORKON_HOME', '~/.profile'):
-#         append(('\nexport WORKON_HOME=$HOME/.virtualenvs'
-#                 '\nsource /usr/local/bin/virtualenvwrapper.sh'), '~/.profile')
-#         run('source ~/.profile')
-# 
-#     # Create the virtualenv
-#     run('mkvirtualenv %(virtualenv)s' % env)
-# 
-#     # Clone the repository
-#     if not exists(env.path):
-#         run('hg clone %(repository)s %(path)s' % env)
+def alterar_cron():
+    if env.config == 'PROD':
+        run('crontab ~/%s/crontab_prod' % env.path)
+    elif env.config == 'DEV':
+        run('crontab ~/%s/crontab_copy' % env.path)
 
-
-# def update(requirements=False, rev=None):
-#     require('path')
-#     require('virtualenv')
-#     env.warn_only = True
-# 
-#     requirements = _to_bool(requirements)
-#     rev = rev
-# 
-#     sudo('/etc/init.d/supervisor stop')
-#     run('sleep 10')
-#     
-#     # Backup first... always!
-#     if env.config == 'prod':
-#         backup_db()
-#         
-#     # Update the code
-#     with cd(env.path):
-#         run('find . -name "*.pyc" | xargs rm')
-#         if rev:
-#             run('workon %(virtualenv)s; hg pull; hg update -r %(rev)s' % {'virtualenv': env.virtualenv, 'rev': rev})
-#         else:
-#             run('workon %(virtualenv)s; hg pull; hg update' % {'virtualenv': env.virtualenv})
-#         if requirements:
-#             run('workon %(virtualenv)s; pip install -U -r requirements.stable.txt' % env)
-# 
-#         # Syncdb, migrate, and sync extensions
-#         run('workon %(virtualenv)s; python manage.py syncdb --migrate --noinput' % env)
-#         run('workon %(virtualenv)s; python manage.py syncext' % env)
-#         
-#         # Collect static files
-#         run('workon %(virtualenv)s; python manage.py collectstatic --noinput' % env)
-#         run('workon %(virtualenv)s; python manage.py collectstatic --settings=winfinity.settings_sites --noinput' % env)
-#                 
-#         # Rebuild assets
-#         run('workon %(virtualenv)s; python manage.py assets build' % env)
-#     
-#     sudo('/etc/init.d/supervisor start')
+def update(requirements=False, rev=None):
+    require('path')
+    require('virtualenv')
+ 
+    # Pegar revisão
+    rev = rev
+    # Se não há revisão, verificar se há update a ser feito
+    if not rev:
+        branch = verificar_update()
+ 
+    # Stop apache
+    sudo('service apache2 stop')
     
-# TODO preparar verificação de update a fazer 
-# hg log -b prod --template '{rev}\n' -l 1
+    run('workon %(virtualenv)s' % {'virtualenv': env.virtualenv})
+    
+    # Backup first... always!
+    if env.config == 'PROD':
+        with cd(env.path):
+            run('%s/bin/python ~/%s/manage.py preparar_backup' % (env.virtualenv_path, env.path))
+        
+        # Stop postgres
+        sudo('/etc/init.d/postgresql stop')
+         
+    # Update the code
+    with cd(env.path):
+        run('workon %(virtualenv)s' % {'virtualenv': env.virtualenv})
+        run('find . -name "*.pyc" | xargs rm')
+        if rev:
+            run('hg pull; hg update -r %(rev)s' % {'rev': rev})
+        else:
+            run('hg update %(branch)s' % {'branch': branch})
+        # Atualizar requirements
+        sudo('pip install -U -r requirements.txt')
+ 
+        
+        if env.config == 'PROD':
+            # Start postgres
+            sudo('/etc/init.d/postgresql start')
+            
+        # Migrações
+        run('python manage.py migrate --noinput')
+         
+        # Collect static files
+        sudo('python manage.py collectstatic --noinput')
+        
+        # Alterar cronjob
+        alterar_cron()
+    
+    # Start apache
+    sudo('service apache2 start', pty=False)
+    
+def verificar_update():
+    run('workon %(virtualenv)s' % {'virtualenv': env.virtualenv})
+    with cd(env.path):
+        run('hg pull', shell=False)
+        # Verificar datas dos últimos commits em prod e hotfix
+        hotfix_date = run('hg head hotfix --template "{date}"')  
+        prod_date = run('hg head prod --template "{date}"')
+        hotfix_date = datetime.datetime.fromtimestamp(int(hotfix_date.split('.')[0])) - datetime.timedelta(seconds=int(hotfix_date.split('.')[1]))
+        prod_date = datetime.datetime.fromtimestamp(int(prod_date.split('.')[0])) - datetime.timedelta(seconds=int(prod_date.split('.')[1]))
+        
+        if hotfix_date > prod_date:
+            return 'hotfix'
+        else:
+            return 'prod'

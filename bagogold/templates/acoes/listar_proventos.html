@@ -5,6 +5,8 @@
 {% block extra_head %}
 <link href={% static "assets/global/plugins/datatables/datatables.min.css" %} rel="stylesheet" type="text/css" />
 <link href={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.css" %} rel="stylesheet" type="text/css" />
+<link href={% static "assets/global/plugins/bootstrap-multiselect/css/bootstrap-multiselect.css" %} rel="stylesheet" type="text/css" />
+<link href={% static "assets/global/plugins/bootstrap-datepicker/css/bootstrap-datepicker3.min.css" %} rel="stylesheet" type="text/css" />
 {% endblock %}
 
 {% block pagina_titulo_icone %}
@@ -39,7 +41,7 @@
                         <tbody>
                             {% for provento in ultimas_atualizacoes %}
                             <tr>
-                                <td>{{provento.acao.ticker}}</td>
+                                <td><a href="{% url 'acoes:geral:detalhar_provento_acao' provento.id %}">{{provento.acao.ticker}}</a></td>
                                 <td>{{provento.descricao_tipo_provento}}</td>
                                 <td>{{provento.data_ex|date:'d/m/Y'}}</td>
                                 <td>{{provento.data_pagamento|date:'d/m/Y'}}</td>
@@ -78,7 +80,7 @@
                         <tbody>
                             {% for provento in proximos_proventos %}
                             <tr>
-                                <td>{{provento.acao.ticker}}</td>
+                                <td><a href="{% url 'acoes:geral:detalhar_provento_acao' provento.id %}">{{provento.acao.ticker}}</a></td>
                                 <td>{{provento.descricao_tipo_provento}}</td>
                                 <td>{{provento.data_ex|date:'d/m/Y'}}</td>
                                 <td>{{provento.data_pagamento|date:'d/m/Y'}}</td>
@@ -93,32 +95,129 @@
         </div>
         {% endif %}
         <div class="col-md-12">
-            <table id="proventos" class="table table-striped table-bordered table-hover table-header-fixed">
-                <thead>
-                    <tr>
-                        <th>Ação</th>
-                        <th>Tipo</th>
-                        <th>Data EX</th>
-                        <th>Data de pagamento</th>
-                        <th>Valor</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for provento in proventos %}
-                    <tr>
-                        <td><a href="{% url 'acoes:geral:detalhar_provento' provento.id %}">{{provento.acao.ticker}}</a></td>
-                        <td>{{provento.descricao_tipo_provento}}</td>
-                        <td>{{provento.data_ex|date:'d/m/Y'}}</td>
-                        <td>{{provento.data_pagamento|date:'d/m/Y'}}</td>
-                        <td>{% if provento.tipo_provento == 'A' %}
-                        {{provento.valor_final|casas_decimais}} %
-                        {% else %}
-                        R$ {{provento.valor_final|casas_decimais}}
-                        {% endif %}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <div class="portlet box yellow-crusta" id="filtros">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <span class="glyphicon glyphicon-filter"></span>Filtros
+                    </div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="col-md-1 control-label"> Tipo: </label>
+                                <div class="col-md-4">
+                                    <div class="md-radio-inline">
+                                        <div class="md-radio">
+                                            <input type="radio" class="md-radiobtn" name="filtro_tipo" id="filtro_tipo_todos" value="T" 
+                                            {% if filtros.tipo_provento == 'T' %}checked{% endif %}>
+                                            <label for="filtro_tipo_todos">
+                                                <span></span>
+                                                <span class="check"></span>
+                                                <span class="box"></span> Todos 
+                                            </label>
+                                        </div>
+                                        <div class="md-radio">
+                                            <input type="radio" class="md-radiobtn" name="filtro_tipo" id="filtro_tipo_dividendos" value="D" 
+                                            {% if filtros.tipo_provento == 'D' %}checked{% endif %}>
+                                            <label for="filtro_tipo_dividendos">
+                                                <span></span>
+                                                <span class="check"></span>
+                                                <span class="box"></span> Dividendos 
+                                            </label>
+                                        </div>
+                                        <div class="md-radio">
+                                            <input type="radio" class="md-radiobtn" name="filtro_tipo" id="filtro_tipo_jscp" value="J" 
+                                            {% if filtros.tipo_provento == 'J' %}checked{% endif %}>
+                                            <label for="filtro_tipo_jscp">
+                                                <span></span>
+                                                <span class="check"></span>
+                                                <span class="box"></span> JSCP 
+                                            </label>
+                                        </div>
+                                        <div class="md-radio">
+                                            <input type="radio" class="md-radiobtn" name="filtro_tipo" id="filtro_tipo_acoes" value="A" 
+                                            {% if filtros.tipo_provento == 'A' %}checked{% endif %}>
+                                            <label for="filtro_tipo_acoes">
+                                                <span></span>
+                                                <span class="check"></span>
+                                                <span class="box"></span> Proventos em ações 
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group col-md-5">
+                                    <label class="control-label col-md-1"> Ações: </label>
+                                    <div class="col-md-11">
+                                        <select class="mt-multiselect btn btn-default" multiple="multiple" data-label="left" data-width="100%" data-filter="true" data-height="300" id="id_acoes" name="acoes">
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="control-label col-md-1"> Início da data EX: </label>
+                            <div class="col-md-2">
+                                <div class="input-group date date-picker" data-date-format="dd/mm/yyyy">
+                                    <input type="text" class="form-control" name="filtro_inicio_data_ex" id="id_filtro_inicio_data_ex"
+                                    value="{% if filtros.filtro_inicio_data_ex|date:'d/m/Y'|default:'' == '' %}{{filtros.filtro_inicio_data_ex|default:''}}{% else %}{{filtros.filtro_inicio_data_ex|date:'d/m/Y'}}{% endif %}">
+                                    <span class="input-group-btn">
+                                        <button class="btn default" type="button">
+                                            <i class="fa fa-calendar"></i>
+                                        </button>
+                                    </span>
+                                </div>
+                            </div>
+                            <label class="control-label col-md-1"> Fim da data EX: </label>
+                            <div class="col-md-2">
+                                <div class="input-group date date-picker" data-date-format="dd/mm/yyyy">
+                                    <input type="text" class="form-control" name="filtro_fim_data_ex" id="id_filtro_fim_data_ex"
+                                    value="{% if filtros.filtro_fim_data_ex|date:'d/m/Y'|default:'' == '' %}{{filtros.filtro_fim_data_ex|default:''}}{% else %}{{filtros.filtro_fim_data_ex|date:'d/m/Y'}}{% endif %}">
+                                    <span class="input-group-btn">
+                                        <button class="btn default" type="button">
+                                            <i class="fa fa-calendar"></i>
+                                        </button>
+                                    </span>
+                                </div>
+                            </div>
+                            <label class="control-label col-md-1"> Início da data de pagamento: </label>
+                            <div class="col-md-2">
+                                <div class="input-group date date-picker" data-date-format="dd/mm/yyyy">
+                                    <input type="text" class="form-control" name="filtro_inicio_data_pagamento" id="id_filtro_inicio_data_pagamento"
+                                    value="{% if filtros.filtro_inicio_data_pagamento|date:'d/m/Y'|default:'' == '' %}{{filtros.filtro_inicio_data_pagamento|default:''}}{% else %}{{filtros.filtro_inicio_data_pagamento|date:'d/m/Y'}}{% endif %}">
+                                    <span class="input-group-btn">
+                                        <button class="btn default" type="button">
+                                            <i class="fa fa-calendar"></i>
+                                        </button>
+                                    </span>
+                                </div>
+                            </div>
+                            <label class="control-label col-md-1"> Fim da data de pagamento: </label>
+                            <div class="col-md-2">
+                                <div class="input-group date date-picker" data-date-format="dd/mm/yyyy">
+                                    <input type="text" class="form-control" name="filtro_fim_data_pagamento" id="id_filtro_fim_data_pagamento"
+                                    value="{% if filtros.filtro_fim_data_pagamento|date:'d/m/Y'|default:'' == '' %}{{filtros.filtro_fim_data_pagamento|default:''}}{% else %}{{filtros.filtro_fim_data_pagamento|date:'d/m/Y'}}{% endif %}">
+                                    <span class="input-group-btn">
+                                        <button class="btn default" type="button">
+                                            <i class="fa fa-calendar"></i>
+                                        </button>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <input type="button" id="btn_filtrar" class="btn green-steel" value="Filtrar" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12" id="tabela_proventos">
         </div>
     </div>
 </div>
@@ -133,7 +232,131 @@
 <script src={% static "assets/global/plugins/moment.min.js" %} type="text/javascript"></script>
 <script src="https://cdn.datatables.net/plug-ins/1.10.15/sorting/datetime-moment.js" type="text/javascript"></script>
 <script src={% static "assets/global/plugins/select2/js/select2.full.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-multiselect/js/bootstrap-multiselect.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-datepicker/js/bootstrap-datepicker.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-datepicker/locales/bootstrap-datepicker.pt-BR.min.js" %} type="text/javascript"></script>
 <script>
 $.fn.dataTable.moment( 'DD/MM/YYYY' );
+$( document ).ready(function() {
+	$('.date-picker').datepicker({
+        language: 'pt-BR'
+    });
+    
+    prepararFiltroAcoes();
+	
+    buscarDadosTabela();
+    
+	$('#btn_filtrar').click(function() {
+		buscarDadosTabela();
+	})
+});
+
+function buscarDadosTabela() {
+	App.blockUI({
+        target: '#filtros',
+        iconOnly: true,
+        overlayColor: 'none'
+    });
+    
+    // Preparar variáveis
+    var tipo = $('input[name="filtro_tipo"]:checked').val();
+    var inicio_data_ex = $('#id_filtro_inicio_data_ex').val();
+    var fim_data_ex = $('#id_filtro_fim_data_ex').val();
+    var inicio_data_pagamento = $('#id_filtro_inicio_data_pagamento').val();
+    var fim_data_pagamento = $('#id_filtro_fim_data_pagamento').val();
+    var acoes = $('#id_acoes').val();
+    if (acoes != null) {
+    	acoes = acoes.join();
+    }
+    
+    $.ajax({
+        url : "{% url 'acoes:geral:listar_proventos_acao' %}",
+        type : "GET",
+        data : {tipo: tipo, inicio_data_ex: inicio_data_ex, fim_data_ex: fim_data_ex, inicio_data_pagamento: inicio_data_pagamento, 
+            fim_data_pagamento: fim_data_pagamento, acoes : acoes},
+
+        // handle a successful response
+        success : function(resultado) {
+            App.unblockUI('#filtros');
+            $('#tabela_proventos').html(resultado);
+            TableDatatablesFixedHeader.init();
+        },
+
+        // handle a non-successful response
+        error : function(xhr,errmsg,err) {
+            App.unblockUI('#filtros');
+            console.log(xhr.status + ": " + xhr.responseText);
+        }
+    });
+}
+
+function prepararFiltroAcoes() {
+    var btn_class = $('#id_acoes').attr('class');
+    var width = ($('#id_acoes').data('width')) ? $('#id_acoes').data('width') : '' ;
+    var height = ($('#id_acoes').data('height')) ? $('#id_acoes').data('height') : '' ;
+    var filter = ($('#id_acoes').data('filter')) ? $('#id_acoes').data('filter') : false ;
+
+    // template functions
+    // init variables
+    var li_template;
+    if ($('#id_acoes').attr('multiple')){
+        li_template = '<li class="mt-checkbox-list"><a href="javascript:void(0);"><label class="mt-checkbox"> <span></span></label></a></li>';
+    } else {
+        li_template = '<li><a href="javascript:void(0);"><label></label></a></li>';
+    }
+
+    // init multiselect
+    $('#id_acoes').multiselect({
+        disableIfEmpty: true,
+        enableFiltering: filter,
+        filterPlaceholder: 'Escolha até 10 ações',
+        enableCaseInsensitiveFiltering: true,
+        buttonWidth: width,
+        maxHeight: height,
+        buttonClass: btn_class,
+        numberDisplayed: 10,
+        onChange: function(option, checked) {
+            // Get selected options.
+            var selectedOptions = $('#id_acoes option:selected');
+
+            if (selectedOptions.length >= 10) {
+                // Disable all other checkboxes.
+                var nonSelectedOptions = $('#id_acoes option').filter(function() {
+                    return !$('#id_acoes').is(':selected');
+                });
+
+                nonSelectedOptions.each(function() {
+                    var input = $('input[value="' + $('#id_acoes').val() + '"]');
+                    input.prop('disabled', true);
+                    input.parent('li').addClass('disabled');
+                });
+            }
+            else {
+                // Enable all checkboxes.
+                $('#id_acoes option').each(function() {
+                    var input = $('input[value="' + $('#id_acoes').val() + '"]');
+                    input.prop('disabled', false);
+                    input.parent('li').addClass('disabled');
+                });
+            }
+        }
+    });   
+    
+    $.ajax({
+        url : "{% url 'acoes:geral:listar_tickers_acoes' %}",
+        type : "GET",
+
+        // handle a successful response
+        success : function(resultado) {
+            var options = JSON.parse(resultado);
+           $('#id_acoes').multiselect('dataprovider', options);
+        },
+
+        // handle a non-successful response
+        error : function(xhr,errmsg,err) {
+            console.log(xhr.status + ": " + xhr.responseText);
+        }
+    });
+}
 </script>
 {% endblock %}

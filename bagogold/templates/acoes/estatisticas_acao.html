@@ -24,6 +24,7 @@
 			</div>
 			<!-- END Portlet PORTLET-->
 		</div>   
+        {% if request.user.is_authenticated %}
 		<div class="col-md-12">
 			<!-- BEGIN Portlet PORTLET-->
 			<div class="portlet box yellow-crusta">
@@ -40,6 +41,7 @@
 			</div>
 			<!-- END Portlet PORTLET-->
 		</div>
+        {% endif %}
 	</div>
 </div>
 

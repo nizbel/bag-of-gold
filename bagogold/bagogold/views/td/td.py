@@ -36,8 +36,11 @@ import math
 
 @login_required
 def buscar_titulos_validos_na_data(request):
-    data = datetime.datetime.strptime(request.GET['dataEscolhida'], '%d/%m/%Y').date()
-    tipo_operacao = request.GET['tipoOperacao']
+    try:
+        data = datetime.datetime.strptime(request.GET.get('dataEscolhida'), '%d/%m/%Y').date()
+    except:
+        return HttpResponse(json.dumps({'mensagem': u'Data inválida'}))
+    tipo_operacao = request.GET.get('tipoOperacao')
     if tipo_operacao == 'C':
         lista_titulos_validos = list(Titulo.objects.filter(data_vencimento__gt=data).values_list('id', flat=True))
     else:
