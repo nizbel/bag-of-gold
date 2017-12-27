@@ -20,6 +20,7 @@ def prod():
     env.user = 'bagofgold'
     env.virtualenv = 'bagogold'
     env.virtualenv_path = '/home/bagofgold/.virtualenvs/bagogold'
+    env.forward_agent = True
 #     env.procs = ['nginx', 'site', 'winfinity']
 
 def dev():
@@ -60,9 +61,9 @@ def setup():
 
 def alterar_cron():
     if env.config == 'PROD':
-        run('crontab /crontab_prod')
+        run('crontab ~/%s/crontab_prod' % env.path)
     elif env.config == 'DEV':
-        run('crontab /crontab_copy')
+        run('crontab ~/%s/crontab_copy' % env.path)
 
 def update(requirements=False, rev=None):
     require('path')
@@ -78,15 +79,18 @@ def update(requirements=False, rev=None):
             return
  
     # Stop apache
-    sudo('service apache2 stop')
-    # Stop postgres
-    sudo('/etc/init.d/postgresql stop')
+    sudo('service apache2 stop', shell=False)
+    
+    run('workon %(virtualenv)s' % {'virtualenv': env.virtualenv})
     
     # Backup first... always!
     if env.config == 'PROD':
-        preparar_backup()
+        with cd(env.path):
+            run('python manage.py preparar_backup')
+        
+        # Stop postgres
+        sudo('/etc/init.d/postgresql stop', shell=False)
          
-    run('workon %(virtualenv)s' % {'virtualenv': env.virtualenv})
     # Update the code
     with cd(env.path):
         run('find . -name "*.pyc" | xargs rm')
@@ -95,26 +99,28 @@ def update(requirements=False, rev=None):
         else:
             run('hg pull; hg update %(branch)s' % {'branch': branch})
         # Atualizar requirements
-        run('pip install -U -r requirements.txt' % env)
+        sudo('pip install -U -r requirements.txt' % env)
  
         # Syncdb, migrate, and sync extensions
         run('python manage.py migrate --noinput')
          
         # Collect static files
-        run('python manage.py collectstatic --noinput')
+        sudo('python manage.py collectstatic --noinput', shell=False)
         
         # Alterar cronjob
         alterar_cron()
-                 
-    # Start postgres
-    sudo('/etc/init.d/postgresql start')
+    
+    if env.config == 'PROD':
+        # Start postgres
+        sudo('/etc/init.d/postgresql start', shell=False)
     
     # Start apache
-    sudo('service apache2 start')
+    sudo('service apache2 start', shell=False)
     
 def verificar_update():
     run('workon %(virtualenv)s' % {'virtualenv': env.virtualenv})
     with cd(env.path):
+        run('hg pull', shell=False)
         # Verificar datas dos últimos commits em prod e hotfix
         hotfix_date = run('hg head hotfix --template "{date}"')  
         prod_date = run('hg head prod --template "{date}"')
