@@ -58,7 +58,7 @@ def setup():
     if not exists(env.path):
         run('hg clone %(repository)s %(path)s' % env)
 
-def add_cronjob():
+def alterar_cron():
     if env.config == 'PROD':
         run('crontab /crontab_prod')
     elif env.config == 'DEV':
@@ -102,6 +102,9 @@ def update(requirements=False, rev=None):
          
         # Collect static files
         run('python manage.py collectstatic --noinput')
+        
+        # Alterar cronjob
+        alterar_cron()
                  
     # Start postgres
     sudo('/etc/init.d/postgresql start')
