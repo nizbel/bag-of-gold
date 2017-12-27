@@ -3,7 +3,8 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoCDB_RDB
 from bagogold.bagogold.models.lc import HistoricoTaxaDI
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di, \
     calcular_valor_atualizado_com_taxa_prefixado
-from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo
+from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo,\
+    calcular_iof_e_ir_longo_prazo
 from bagogold.cdb_rdb.models import OperacaoCDB_RDB, CDB_RDB
 from decimal import Decimal, ROUND_DOWN
 from django.db.models.aggregates import Sum, Count
@@ -12,7 +13,13 @@ from django.db.models.fields import DecimalField
 from django.db.models.functions import Coalesce
 import datetime
 
-def calcular_valor_venda_cdb_rdb(operacao_venda):
+def calcular_valor_venda_cdb_rdb(operacao_venda, considerar_impostos=False):
+    """
+    Calcula o valor de venda de uma operação em CDB/RDB
+    Parâmetros: Operação de venda
+                Levar em consideração impostos (IOF e IR)
+    Resultado: Valor em reais da venda
+    """
     if operacao_venda.operacao_compra_relacionada().investimento.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
         # Definir período do histórico relevante para a operação
         historico_utilizado = HistoricoTaxaDI.objects.filter(data__range=[operacao_venda.operacao_compra_relacionada().data, operacao_venda.data - datetime.timedelta(days=1)]).values('taxa').annotate(qtd_dias=Count('taxa'))
@@ -21,18 +28,32 @@ def calcular_valor_venda_cdb_rdb(operacao_venda):
             taxas_dos_dias[taxa_quantidade['taxa']] = taxa_quantidade['qtd_dias']
         
         # Calcular
-        return calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao_venda.quantidade, operacao_venda.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
+        if considerar_impostos:
+            valor_final = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao_venda.quantidade, 
+                                                                                        operacao_venda.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
+            return valor_final - sum(calcular_iof_e_ir_longo_prazo(valor_final - operacao_venda.quantidade, 
+                                                 (operacao_venda.data - operacao_venda.operacao_compra_relacionada().data).days))
+        else:
+            return calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao_venda.quantidade, operacao_venda.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
     elif operacao_venda.operacao_compra_relacionada().investimento.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
         # Prefixado
-        return calcular_valor_atualizado_com_taxa_prefixado(operacao_venda.quantidade, operacao_venda.porcentagem(), qtd_dias_uteis_no_periodo(operacao_venda.operacao_compra_relacionada().data, 
+        if considerar_impostos:
+            valor_final = calcular_valor_atualizado_com_taxa_prefixado(operacao_venda.quantidade, operacao_venda.porcentagem(), 
+                                                                                              qtd_dias_uteis_no_periodo(operacao_venda.operacao_compra_relacionada().data, 
+                                                                                                                        operacao_venda.data - datetime.timedelta(days=1)))
+            return valor_final - sum(calcular_iof_e_ir_longo_prazo(valor_final - operacao_venda.quantidade, 
+                                                 (operacao_venda.data - operacao_venda.operacao_compra_relacionada().data).days))
+        else:
+            return calcular_valor_atualizado_com_taxa_prefixado(operacao_venda.quantidade, operacao_venda.porcentagem(), qtd_dias_uteis_no_periodo(operacao_venda.operacao_compra_relacionada().data, 
                                                                                                                                                operacao_venda.data - datetime.timedelta(days=1)))
     
 
-def calcular_valor_cdb_rdb_ate_dia(investidor, dia=datetime.date.today()):
+def calcular_valor_cdb_rdb_ate_dia(investidor, dia=datetime.date.today(), considerar_impostos=False):
     """ 
     Calcula o valor dos CDB/RDB no dia determinado
     Parâmetros: Investidor
                 Data final
+                Levar em consideração impostos (IOF e IR)
     Retorno: Valor de cada CDB/RDB na data escolhida {id_letra: valor_na_data, }
     """
     operacoes = buscar_operacoes_vigentes_ate_data(investidor, dia)
@@ -56,10 +77,22 @@ def calcular_valor_cdb_rdb_ate_dia(investidor, dia=datetime.date.today()):
                 taxas_dos_dias[taxa_quantidade['taxa']] = taxa_quantidade['qtd_dias']
             
             # Calcular
-            cdb_rdb[operacao.investimento.id] += calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, operacao.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
+            if considerar_impostos:
+                valor_final = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, operacao.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
+                cdb_rdb[operacao.investimento.id] += valor_final - sum(calcular_iof_e_ir_longo_prazo(valor_final - operacao.quantidade, 
+                                                 (dia - operacao.data).days))
+            else:
+                cdb_rdb[operacao.investimento.id] += calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, operacao.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
         elif operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
             # Prefixado
-            cdb_rdb[operacao.investimento.id] += calcular_valor_atualizado_com_taxa_prefixado(operacao.quantidade, operacao.porcentagem(), qtd_dias_uteis_no_periodo(operacao.data, datetime.date.today())).quantize(Decimal('.01'), ROUND_DOWN)
+            if considerar_impostos:
+                valor_final = calcular_valor_atualizado_com_taxa_prefixado(operacao.quantidade, operacao.porcentagem(), qtd_dias_uteis_no_periodo(operacao.data, datetime.date.today())) \
+                    .quantize(Decimal('.01'), ROUND_DOWN)
+                cdb_rdb[operacao.investimento.id] += valor_final - sum(calcular_iof_e_ir_longo_prazo(valor_final - operacao.quantidade, 
+                                                 (dia - operacao.data).days))
+            else:
+                cdb_rdb[operacao.investimento.id] += calcular_valor_atualizado_com_taxa_prefixado(operacao.quantidade, operacao.porcentagem(), 
+                                                                                                  qtd_dias_uteis_no_periodo(operacao.data, datetime.date.today())).quantize(Decimal('.01'), ROUND_DOWN)
     
     return cdb_rdb
 

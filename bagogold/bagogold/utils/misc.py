@@ -3,6 +3,7 @@ from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao
 from bagogold.bagogold.models.fii import UsoProventosOperacaoFII
 from bagogold.bagogold.models.lc import OperacaoLetraCredito
 from bagogold.bagogold.models.td import HistoricoIPCA, OperacaoTitulo
+from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
 from bagogold.fundo_investimento.utils import \
     calcular_valor_fundos_investimento_ate_dia
 from decimal import Decimal
@@ -10,12 +11,12 @@ from django.db.models.aggregates import Sum
 from django.utils import timezone
 from urllib2 import Request, urlopen, URLError, HTTPError
 import datetime
+import json
 import math
 import random
 import re
+import requests
 import time
-from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
-from django.utils import timezone
 
 
 def calcular_iof_regressivo(dias):
@@ -88,38 +89,27 @@ def buscar_valores_diarios_selic(data_inicial=datetime.date.today() - datetime.t
             if data_final.day > data_inicial.day:
                 raise ValueError('Intervalo deve ser inferior a 10 anos')
     
-    # from bagogold.bagogold.utils.misc import buscar_valores_diarios_selic
-    # http://www3.bcb.gov.br/selic/consulta/taxaSelic.do?method=listarTaxaDiaria&dataInicial=11/11/2016&dataFinal=16/11/2016&tipoApresentacao=arquivo
-    td_url = 'http://www3.bcb.gov.br/selic/consulta/taxaSelic.do?method=listarTaxaDiaria&dataInicial=%s&dataFinal=%s&tipoApresentacao=arquivo' % (data_inicial.strftime('%d/%m/%Y'),
-                                                                                                                                                  data_final.strftime('%d/%m/%Y'))
-    req = Request(td_url)
-    try:
-        response = urlopen(req)
-    except HTTPError as e:
-        print 'The server couldn\'t fulfill the request.'
-        print 'Error code: ', e.code
-    except URLError as e:
-        print 'We failed to reach a server.'
-        print 'Reason: ', e.reason
-    else:
-        data = response.read()
-#         print data
+    selic_url = 'https://www3.bcb.gov.br/selic/rest/taxaSelicApurada/pub/search?parametrosOrdenacao=%5B%7B%22nome%22%3A%22dataCotacao%22%2C%22decrescente%22%3Atrue%7D%5D&page=1&pageSize=2513'
+    head = { 'Content-Type': 'application/json; charset=UTF-8',
+             'Accept': 'application/json, text/javascript, */*; q=0.01',
+             'X-Requested-With': 'XMLHttpRequest' }
+    data = {'dataInicial': data_inicial.strftime('%d/%m/%Y'), 'dataFinal': data_final.strftime('%d/%m/%Y')}
+    response = requests.post(selic_url, json.dumps(data), headers=head)
+    
+    retorno = json.loads(response.text)
+    if retorno['totalItems'] > 0:
         lista_datas_valores = list()
-        # data vem como um arquivo txt separado por linhas com \n e delimitado por ;
-        linhas = data.split('\n')
-        # ler a partir da terceira linha
-        for linha in linhas[2:]:
-            dados_linha = linha.split(';')
-            if len(dados_linha) > 2:
-                try:
-                    data = datetime.datetime.strptime(dados_linha[0], '%d/%m/%Y').date()
-                except:
-                    continue
-                fator_diario = Decimal(dados_linha[2].replace(',', '.'))
-                if fator_diario.is_zero():
-                    continue
-                lista_datas_valores.append((data, fator_diario))
+        # Ler registros do JSON
+        
+        for item in retorno['registros']:
+            data = datetime.datetime.strptime(item['dataCotacaoStr'], '%d/%m/%Y').date()
+            fator_diario = Decimal(item['fatorDiario']).quantize(Decimal('0.000000000001'))
+            if fator_diario.is_zero():
+                continue
+            lista_datas_valores.append((data, fator_diario))
         return lista_datas_valores
+    else:
+        return list()
      
 def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDEFILORT'):
     """
