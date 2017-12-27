@@ -25,4 +25,4 @@
 * * * * * /home/bagofgold/.virtualenvs/bagogold/bin/python /home/bagofgold/bagogold/manage.py preencher_valores_diarios_cripto
 
 # Apenas prod
-# * * * * * /home/bagofgold/.virtualenvs/bagogold/bin/python /home/bagofgold/bagogold/manage.py rodar_dropbo
+# * * * * * /home/bagofgold/.virtualenvs/bagogold/bin/python /home/bagofgold/bagogold/manage.py rodar_dropbox
