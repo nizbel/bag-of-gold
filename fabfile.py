@@ -3,7 +3,9 @@ from __future__ import with_statement
 from fabric.api import env, require, run, sudo, local as lrun
 from fabric.context_managers import cd
 from fabric.contrib.files import append, contains, exists
+import datetime
 import time
+from bagogold.bagogold.management.commands.preparar_backup import preparar_backup
 
 
 
@@ -62,49 +64,71 @@ def add_cronjob():
     elif env.config == 'DEV':
         run('crontab /crontab_copy')
 
-# def update(requirements=False, rev=None):
-#     require('path')
-#     require('virtualenv')
-#     env.warn_only = True
-# 
-#     requirements = _to_bool(requirements)
-#     rev = rev
-# 
-#     sudo('/etc/init.d/supervisor stop')
-#     run('sleep 10')
-#     
-#     # Backup first... always!
-#     if env.config == 'prod':
-#         backup_db()
-#         
-#     # Update the code
-#     with cd(env.path):
-#         run('find . -name "*.pyc" | xargs rm')
-#         if rev:
-#             run('workon %(virtualenv)s; hg pull; hg update -r %(rev)s' % {'virtualenv': env.virtualenv, 'rev': rev})
-#         else:
-#             run('workon %(virtualenv)s; hg pull; hg update' % {'virtualenv': env.virtualenv})
-#         if requirements:
-#             run('workon %(virtualenv)s; pip install -U -r requirements.stable.txt' % env)
-# 
-#         # Syncdb, migrate, and sync extensions
-#         run('workon %(virtualenv)s; python manage.py syncdb --migrate --noinput' % env)
-#         run('workon %(virtualenv)s; python manage.py syncext' % env)
-#         
-#         # Collect static files
-#         run('workon %(virtualenv)s; python manage.py collectstatic --noinput' % env)
-#         run('workon %(virtualenv)s; python manage.py collectstatic --settings=winfinity.settings_sites --noinput' % env)
-#                 
-#         # Rebuild assets
-#         run('workon %(virtualenv)s; python manage.py assets build' % env)
-#     
-#     sudo('/etc/init.d/supervisor start')
+def update(requirements=False, rev=None):
+    require('path')
+    require('virtualenv')
+    env.warn_only = True
+ 
+    # Pegar revisão
+    rev = rev
+    # Se não há revisão, verificar se há update a ser feito
+    if not rev:
+        branch = verificar_update()
+        if not branch:
+            return
+ 
+    # Stop apache
+    sudo('service apache2 stop')
+    # Stop postgres
+    sudo('/etc/init.d/postgresql stop')
+    
+    # Backup first... always!
+    if env.config == 'PROD':
+        preparar_backup()
+         
+    run('workon %(virtualenv)s' % {'virtualenv': env.virtualenv})
+    # Update the code
+    with cd(env.path):
+        run('find . -name "*.pyc" | xargs rm')
+        if rev:
+            run('hg pull; hg update -r %(rev)s' % {'rev': rev})
+        else:
+            run('hg pull; hg update %(branch)s' % {'branch': branch})
+        # Atualizar requirements
+        run('pip install -U -r requirements.txt' % env)
+ 
+        # Syncdb, migrate, and sync extensions
+        run('python manage.py migrate --noinput')
+         
+        # Collect static files
+        run('python manage.py collectstatic --noinput')
+                 
+    # Start postgres
+    sudo('/etc/init.d/postgresql start')
+    
+    # Start apache
+    sudo('service apache2 start')
     
 def verificar_update():
+    run('workon %(virtualenv)s' % {'virtualenv': env.virtualenv})
     with cd(env.path):
-        hotfix_date = run('workon %(virtualenv)s; hg head hotfix --template "{date}"' % {'virtualenv': env.virtualenv})  
-        prod_date = run('workon %(virtualenv)s; hg head prod --template "{date}"' % {'virtualenv': env.virtualenv})
-        print hotfix_date, prod_date
-
+        # Verificar datas dos últimos commits em prod e hotfix
+        hotfix_date = run('hg head hotfix --template "{date}"')  
+        prod_date = run('hg head prod --template "{date}"')
+        hotfix_date = datetime.datetime.fromtimestamp(int(hotfix_date.split('.')[0])) - datetime.timedelta(seconds=int(hotfix_date.split('.')[1]))
+        prod_date = datetime.datetime.fromtimestamp(int(prod_date.split('.')[0])) - datetime.timedelta(seconds=int(prod_date.split('.')[1]))
+        
+        # Buscar data da revisão atual
+        atual_date = run('hg parent --template "{date}"')  
+        atual_date = datetime.datetime.fromtimestamp(int(atual_date.split('.')[0])) - datetime.timedelta(seconds=int(atual_date.split('.')[1]))
+        if max(hotfix_date, prod_date) > atual_date:
+            if hotfix_date > prod_date:
+                return 'hotfix'
+            else:
+                return 'prod'
+        else:
+            return None
+            
+        
 # TODO preparar verificação de update a fazer 
 # hg log -b prod --template '{rev}\n' -l 1
