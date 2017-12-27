@@ -82,16 +82,16 @@ def detalhar_cdb_rdb(request, cdb_rdb_id):
             # Calcular impostos
             qtd_dias = (datetime.date.today() - operacao.data).days
             # IOF
-            operacao.iof = Decimal(calcular_iof_regressivo(qtd_dias)) * (operacao.atual - operacao.quantidade)
+            operacao.iof = Decimal(calcular_iof_regressivo(qtd_dias)) * (operacao.atual - operacao.qtd_disponivel_venda())
             # IR
             if qtd_dias <= 180:
-                operacao.imposto_renda =  Decimal(0.225) * (operacao.atual - operacao.quantidade - operacao.iof)
+                operacao.imposto_renda =  Decimal(0.225) * (operacao.atual - operacao.qtd_disponivel_venda() - operacao.iof)
             elif qtd_dias <= 360:
-                operacao.imposto_renda =  Decimal(0.2) * (operacao.atual - operacao.quantidade - operacao.iof)
+                operacao.imposto_renda =  Decimal(0.2) * (operacao.atual - operacao.qtd_disponivel_venda() - operacao.iof)
             elif qtd_dias <= 720:
-                operacao.imposto_renda =  Decimal(0.175) * (operacao.atual - operacao.quantidade - operacao.iof)
+                operacao.imposto_renda =  Decimal(0.175) * (operacao.atual - operacao.qtd_disponivel_venda() - operacao.iof)
             else: 
-                operacao.imposto_renda =  Decimal(0.15) * (operacao.atual - operacao.quantidade - operacao.iof)
+                operacao.imposto_renda =  Decimal(0.15) * (operacao.atual - operacao.qtd_disponivel_venda() - operacao.iof)
             cdb_rdb.total_ir += operacao.imposto_renda
             cdb_rdb.total_iof += operacao.iof
     
@@ -433,7 +433,7 @@ def historico(request):
             # Buscar operação de compra relacionada para reiniciar
             for indice_relacionada in xrange(indice):
                 if operacoes[indice_relacionada].id == operacao.operacao_compra_relacionada().id:
-                    operacoes[indice_relacionada].qtd_vendida = operacao.quantidade
+                    operacoes[indice_relacionada].qtd_vendida += operacao.quantidade
                     operacoes[indice_relacionada].atual = operacoes[indice_relacionada].quantidade - operacoes[indice_relacionada].qtd_vendida
                     if operacoes[indice_relacionada].atual > 0:
                         # Atualizar o valor

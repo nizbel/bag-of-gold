@@ -378,9 +378,7 @@ def calcular_poupanca_prov_acao_ate_dia(investidor, dia, destinacao='B'):
     # Remover valores repetidos
     acoes = list(set(operacoes.values_list('acao', flat=True)))
 
-    proventos = Provento.objects.filter(data_ex__lte=dia, acao__in=acoes).order_by('data_ex')
-    for provento in proventos:
-        provento.data = provento.data_ex
+    proventos = Provento.objects.filter(data_pagamento__lte=dia, acao__in=acoes).annotate(data=F('data_ex')).order_by('data')
      
     lista_conjunta = sorted(chain(proventos, operacoes),
                             key=attrgetter('data'))
@@ -407,7 +405,7 @@ def calcular_poupanca_prov_acao_ate_dia(investidor, dia, destinacao='B'):
         
         # Verifica se é recebimento de proventos
         elif isinstance(item_lista, Provento):
-            if item_lista.data_pagamento <= datetime.date.today() and acoes[item_lista.acao.ticker] > 0:
+            if acoes[item_lista.acao.ticker] > 0:
                 if item_lista.tipo_provento in ['D', 'J']:
                     total_recebido = acoes[item_lista.acao.ticker] * item_lista.valor_unitario
                     if item_lista.tipo_provento == 'J':
@@ -437,9 +435,10 @@ def calcular_poupanca_prov_acao_ate_dia_por_divisao(dia, divisao, destinacao='B'
     
     operacoes = OperacaoAcao.objects.filter(id__in=operacoes_divisao).order_by('data')
 
-    proventos = Provento.objects.filter(data_ex__lte=dia).order_by('data_ex')
-    for provento in proventos:
-        provento.data = provento.data_ex
+    # Remover valores repetidos
+    acoes = list(set(operacoes.values_list('acao', flat=True)))
+    
+    proventos = Provento.objects.filter(data_pagamento__lte=dia, acao__in=acoes).annotate(data=F('data_ex')).order_by('data')
      
     lista_conjunta = sorted(chain(operacoes, proventos),
                             key=attrgetter('data'))
@@ -466,7 +465,7 @@ def calcular_poupanca_prov_acao_ate_dia_por_divisao(dia, divisao, destinacao='B'
         
         # Verifica se é recebimento de proventos
         elif isinstance(item_lista, Provento):
-            if item_lista.data_pagamento <= datetime.date.today() and acoes[item_lista.acao.ticker] > 0:
+            if acoes[item_lista.acao.ticker] > 0:
                 if item_lista.tipo_provento in ['D', 'J']:
                     total_recebido = acoes[item_lista.acao.ticker] * item_lista.valor_unitario
                     if item_lista.tipo_provento == 'J':
