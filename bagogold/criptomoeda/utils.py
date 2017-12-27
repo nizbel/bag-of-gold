@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoCriptomoeda, \
-    DivisaoTransferenciaCriptomoeda
+    DivisaoTransferenciaCriptomoeda, Divisao
 from bagogold.criptomoeda.models import OperacaoCriptomoeda, \
-    TransferenciaCriptomoeda
+    TransferenciaCriptomoeda, Criptomoeda, OperacaoCriptomoedaTaxa, \
+    OperacaoCriptomoedaMoeda
 from decimal import Decimal
+from django.db import transaction
 from django.db.models.aggregates import Sum
 from django.db.models.expressions import F, Case, When
 from django.db.models.fields import DecimalField
@@ -205,3 +207,48 @@ def buscar_historico_criptomoeda(criptomoeda_ticker):
         historico.append((data, Decimal(informacao['close'])))
     
     return historico
+
+def criar_operacoes_lote(lista_operacoes, investidor, divisao_id):
+    """
+    Cria várias operações com base em uma lista de strings com ponto e vírgula como separador, 
+    vinculando a uma única divisão
+    Parâmetros: Lista de strings
+                Investidor
+                ID da divisão
+    """
+    if len(lista_operacoes) > 20:
+        raise ValueError('Tamanho do lote é de no máximo 20 operações')
+    
+    if not Divisao.objects.filter(investidor=investidor, id=divisao_id).exists():
+        raise ValueError('Investidor não possui a divisão enviada')
+    divisao = Divisao.objects.get(id=divisao_id)
+    
+    try:
+        with transaction.atomic():
+            for operacao_string in lista_operacoes:
+                infos = operacao_string.split(';')
+                moeda = Criptomoeda.objects.get(ticker=infos[0].split('/')[0])
+                moeda_utilizada = infos[0].split('/')[1]
+                quantidade = Decimal(infos[1].replace(',', '.'))
+                preco_unitario = Decimal(infos[2].replace(',', '.'))
+                data = datetime.datetime.strptime(infos[3], '%d/%m/%Y').date()
+                tipo_operacao = infos[4]
+                valor_taxa = Decimal(infos[5].replace(',', '.'))
+                moeda_taxa = infos[6]
+                
+                # Criar objetos
+                operacao = OperacaoCriptomoeda.objects.create(quantidade=quantidade, preco_unitario=preco_unitario, data=data, tipo_operacao=tipo_operacao, 
+                                                              criptomoeda=moeda, investidor=investidor)
+                
+                DivisaoOperacaoCriptomoeda.objects.create(operacao=operacao, divisao=divisao, quantidade=quantidade)
+                
+                if moeda_utilizada != 'BRL':
+                    OperacaoCriptomoedaMoeda.objects.create(operacao=operacao, criptomoeda=Criptomoeda.objects.get(ticker=moeda_utilizada))
+                    
+                if valor_taxa > 0:
+                    if moeda_taxa != 'BRL':
+                        OperacaoCriptomoedaTaxa.objects.create(valor=valor_taxa, operacao=operacao, moeda=Criptomoeda.objects.get(ticker=moeda_taxa))
+                    else:
+                        OperacaoCriptomoedaTaxa.objects.create(valor=valor_taxa, operacao=operacao)
+    except:
+        raise
