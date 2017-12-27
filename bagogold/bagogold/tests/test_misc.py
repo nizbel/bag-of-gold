@@ -49,7 +49,7 @@ class BuscarTaxaSELICTestCase(TestCase):
     def test_buscar_se_periodo_igual_10_anos(self):
         """Testa se busca funciona para período igual a 10 anos"""
         dados = buscar_valores_diarios_selic(datetime.date(2006,11,17), datetime.date(2016,11,17))
-        self.assertTrue(len(dados) == 2513)
+        self.assertEqual(len(dados), 2513)
 
     def test_buscar_unico_dia(self):
         """Testa se função retorna resultado para um dia"""

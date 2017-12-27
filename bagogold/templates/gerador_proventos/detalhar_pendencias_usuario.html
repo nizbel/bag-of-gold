@@ -139,7 +139,7 @@
                     </div>
                 </div>
                 <div class="portlet-body">
-                    <table id="validacoes" class="table table-striped table-bordered table-hover table-header-fixed">
+                    <table id="recusou" class="table table-striped table-bordered table-hover table-header-fixed">
                     <thead>
                         <tr>
                             <th>Documento</th>
@@ -170,7 +170,7 @@
                     </div>
                 </div>
                 <div class="portlet-body">
-                    <table id="validacoes" class="table table-striped table-bordered table-hover table-header-fixed">
+                    <table id="recusado" class="table table-striped table-bordered table-hover table-header-fixed">
                     <thead>
                         <tr>
                             <th>Documento</th>
@@ -204,40 +204,54 @@
                 </div>
                 <div class="portlet-body">
                     <div class="row">
-                        <div class="col-md-3">
-                            <div class="col-md-12 text-center">
-                                <h4>
-                                    Horas a validar
-                                </h4>
+                        <div class="col-md-9">
+                            <div class="col-md-4">
+                                <div class="col-md-12 text-center">
+                                    <h4>
+                                        Horas a validar
+                                    </h4>
+                                </div>
+                                <div class="col-md-12 text-center">
+                                    <p class="lead">
+                                        <strong><span data-counter="counterup" data-value="{{usuario.tempo_a_validar|floatformat:'2'}}">0</span></strong>
+                                    </p>
+                                </div>
                             </div>
-                            <div class="col-md-12 text-center">
-                                <p class="lead">
-                                    <strong><span data-counter="counterup" data-value="{{usuario.tempo_a_validar|floatformat:'2'}}">0</span></strong>
-                                </p>
+                            <div class="col-md-4">
+                                <div class="col-md-12 text-center">
+                                    <h4>
+                                        Horas validadas
+                                    </h4>
+                                </div>
+                                <div class="col-md-12 text-center font-blue">
+                                    <p class="lead">
+                                        <strong><span data-counter="counterup" data-value="{{usuario.tempo_validado|floatformat:'2'}}">0</span></strong>
+                                    </p>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="col-md-12 text-center">
-                                <h4>
-                                    Horas validadas
-                                </h4>
+                            <div class="col-md-4">
+                                <div class="col-md-12 text-center">
+                                    <h4>
+                                        Total a pagar
+                                    </h4>
+                                </div>
+                                <div class="col-md-12 text-center font-yellow-crusta">
+                                    <p class="lead">
+                                        <strong>R$ <span data-counter="counterup" data-value="{{usuario.a_pagar|floatformat:'2'}}">0</span></strong>
+                                    </p>
+                                </div>
                             </div>
-                            <div class="col-md-12 text-center font-grey-gallery">
-                                <p class="lead">
-                                    <strong><span data-counter="counterup" data-value="{{usuario.tempo_validado|floatformat:'2'}}">0</span></strong>
-                                </p>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="col-md-12 text-center">
-                                <h4>
-                                    Total a pagar
-                                </h4>
-                            </div>
-                            <div class="col-md-12 text-center font-blue">
-                                <p class="lead">
-                                    <strong>R$ <span data-counter="counterup" data-value="{{usuario.a_pagar|floatformat:'2'}}">0</span></strong>
-                                </p>
+                            <div class="col-md-12">
+                                <div class="progress progress-striped active" style="background: rgba(0, 0, 0, 1); height: 30px;">
+                                    <div class="progress-bar" role="progressbar" aria-valuenow="{{usuario.progresso_a_pagar|stringformat:'f'}}" aria-valuemin="0" aria-valuemax="{{usuario.progresso_tempo_total|stringformat:'f'}}" 
+                                    style="width: {{usuario.percentual_progresso_a_pagar|stringformat:'f'}}%; background-color: #f3c200;">
+                                        <span class="sr-only"> {{usuario.percentual_progresso_a_pagar|floatformat:'2'}}% a pagar </span>
+                                    </div>
+                                    <div class="progress-bar" role="progressbar" aria-valuenow="{{usuario.progresso_validado|stringformat:'f'}}" aria-valuemin="0" aria-valuemax="{{usuario.progresso_tempo_total|stringformat:'f'}}" 
+                                    style="width: {{usuario.percentual_progresso_validado|stringformat:'f'}}%; background-color: #3598dc;">
+                                        <span class="sr-only"> {{usuario.percentual_progresso_validado|floatformat:'2'}}% validado </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -251,21 +265,17 @@
                                     <strong>R$ <span data-counter="counterup" data-value="{{usuario.pago|floatformat:'2'}}">0</span></strong>
                                 </p>
                             </div>
-                        </div>
-                        <div class="col-md-12">
-                            <div class="progress progress-striped active" style="background: rgba(0, 0, 0, 1); height: 30px;">
-                                <div class="progress-bar" role="progressbar" aria-valuenow="{{usuario.progresso_pago|stringformat:'f'}}" aria-valuemin="0" aria-valuemax="{{usuario.progresso_tempo_total|stringformat:'f'}}" 
-                                style="width: {{usuario.percentual_progresso_pago|stringformat:'f'}}%; background-color: #f3c200;">
-                                    <span class="sr-only"> {{usuario.percentual_progresso_pago|floatformat:'2'}}% pago </span>
-                                </div>
-                                <div class="progress-bar" role="progressbar" aria-valuenow="{{usuario.progresso_a_pagar|stringformat:'f'}}" aria-valuemin="0" aria-valuemax="{{usuario.progresso_tempo_total|stringformat:'f'}}" 
-                                style="width: {{usuario.percentual_progresso_a_pagar|stringformat:'f'}}%; background-color: #3598dc;">
-                                    <span class="sr-only"> {{usuario.percentual_progresso_a_pagar|floatformat:'2'}}% a pagar </span>
-                                </div>
-                                <div class="progress-bar" role="progressbar" aria-valuenow="{{usuario.progresso_validado|stringformat:'f'}}" aria-valuemin="0" aria-valuemax="{{usuario.progresso_tempo_total|stringformat:'f'}}" 
-                                style="width: {{usuario.percentual_progresso_validado|stringformat:'f'}}%; background-color: #555555;">
-                                    <span class="sr-only"> {{usuario.percentual_progresso_validado|floatformat:'2'}}% validado </span>
-                                </div>
+                            <div class="col-md-12">
+                                <div class="list-group">
+						        {% for pagamento in usuario.pagamentos %}
+						            <div class="list-group-item">
+                                        <span class="font-yellow-crusta">R$ {{pagamento.valor}}</span>
+                                        <span class="pull-right">{{pagamento.data|date:'d/m/Y'}}</span>
+                                    </div>
+						        {% empty %}
+						            <div class="list-group-item">Não há pagamentos</div>
+						        {% endfor %}
+					            </div>
                             </div>
                         </div>
                     </div>

@@ -3,8 +3,7 @@ from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.models.gerador_proventos import \
     InvestidorResponsavelPendencia, InvestidorLeituraDocumento, \
     InvestidorValidacaoDocumento, PendenciaDocumentoProvento, \
-    InvestidorRecusaDocumento, DocumentoProventoBovespa, ProventoFIIDocumento, \
-    ProventoAcaoDocumento
+    InvestidorRecusaDocumento, DocumentoProventoBovespa, PagamentoLeitura
 from decimal import Decimal
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import Permission, User
@@ -52,6 +51,12 @@ def detalhar_pendencias_usuario(request, id_usuario):
         else:
             data_2_anos_atras = data_2_anos_atras.replace(year=data_2_anos_atras.year+1, month=1)
             
+    # Filtrar apenas últimas 200 para mostrar nas tabelas
+    usuario.leituras = usuario.leituras.order_by('-data_leitura')[:200]
+    usuario.validacoes = usuario.validacoes.order_by('-data_validacao')[:200]
+    usuario.leituras_que_recusou = usuario.leituras_que_recusou.order_by('-data_recusa')[:200]
+    usuario.leituras_recusadas = usuario.leituras_recusadas.order_by('-data_recusa')[:200]
+
     # Se usuário for do grupo da nova equipe de leituras, mostrar dados
     if usuario.groups.filter(name='Equipe de leitura').exists():
         # Tempo médio por exclusão: 51.43 Tempo médio por provento ação: 122.07 Tempo médio por provento fii: 79.4
@@ -66,13 +71,9 @@ def detalhar_pendencias_usuario(request, id_usuario):
         leituras_fii = leituras.filter(documento__tipo='F').annotate(proventos_criados=Count('documento__proventofiidocumento')) \
             .annotate(tempo=Case(When(decisao='C', then=(Decimal('79.4') * F('proventos_criados'))), 
                                  When(decisao='E', then=Decimal('51.43')), output_field=DecimalField()))
-        for leitura in leituras_fii:
-            print 'fii', leitura.tempo, leitura.proventos_criados
         leituras_acao = leituras.filter(documento__tipo='A').annotate(proventos_criados=Count('documento__proventoacaodocumento')) \
             .annotate(tempo=Case(When(decisao='C', then=(Decimal('122.07') * F('proventos_criados'))), 
                                  When(decisao='E', then=Decimal('51.43')), output_field=DecimalField()))
-        for leitura in leituras_acao:
-            print 'acao', leitura.tempo, leitura.proventos_criados, leitura.validado
         
         # Totais
         qtd_acao_exclusao = leituras_acao.filter(decisao='E').count()
@@ -95,18 +96,24 @@ def detalhar_pendencias_usuario(request, id_usuario):
         usuario.tempo_a_validar = tempo_total - usuario.tempo_validado
         
         # TODO usar novo modelo pagamento leitura
-        valor_hora = Decimal(25)
-        usuario.pago = 0
-        usuario.a_pagar = Decimal(floor(usuario.tempo_validado)) * valor_hora - usuario.pago
+        valor_hora = PagamentoLeitura.VALOR_HORA
+        usuario.pago = PagamentoLeitura.objects.filter(investidor=usuario.investidor).aggregate(total_pago=Sum('valor'))['total_pago'] or 0
+        # Valor a pagar deve ser 0 para casos em que pagamentos foram feitos antes das validações
+        usuario.a_pagar = max(Decimal(floor(usuario.tempo_validado)) * valor_hora - usuario.pago, 0)
         
         # Parar popular a barra de acompanhamento
-        usuario.progresso_tempo_total = tempo_total * valor_hora
-        usuario.progresso_pago = usuario.pago
-        usuario.percentual_progresso_pago = usuario.progresso_pago / usuario.progresso_tempo_total * 100
+        # Tempo total deve ser 1 para casos em que pagamentos foram feitos antes das validações, excedendo tempo
+        usuario.progresso_tempo_total = max(tempo_total * valor_hora - usuario.pago, 1)
+#         usuario.progresso_pago = usuario.pago
+#         usuario.percentual_progresso_pago = usuario.progresso_pago / usuario.progresso_tempo_total * 100
         usuario.progresso_a_pagar = usuario.a_pagar
         usuario.percentual_progresso_a_pagar = usuario.progresso_a_pagar / usuario.progresso_tempo_total * 100
-        usuario.progresso_validado = usuario.tempo_validado * valor_hora - usuario.a_pagar - usuario.pago
+        # Tempo validado deve ser 0 para casos em que pagamentos foram feitos antes das validações, excedendo tempo
+        usuario.progresso_validado = max(usuario.tempo_validado * valor_hora - usuario.a_pagar - usuario.pago, 0)
         usuario.percentual_progresso_validado = usuario.progresso_validado / usuario.progresso_tempo_total * 100
+        
+        # TODO Adicionar lista de pagamentos feitos
+        usuario.pagamentos = PagamentoLeitura.objects.filter(investidor=usuario.investidor)
 
     return TemplateResponse(request, 'gerador_proventos/detalhar_pendencias_usuario.html', {'usuario': usuario, 'graf_leituras': graf_leituras, 'graf_validacoes': graf_validacoes,
                                                                                             'graf_leituras_que_recusou': graf_leituras_que_recusou, 'graf_leituras_recusadas': graf_leituras_recusadas})
@@ -144,20 +151,23 @@ def listar_usuarios(request):
     
     # Validados
     estatisticas['total_validado'] = estatisticas['total_documentos'] - PendenciaDocumentoProvento.objects.all().count()
-    estatisticas['percentual_validado'] = 100 * Decimal(estatisticas['total_validado']) / estatisticas['total_documentos']
+    estatisticas['percentual_validado'] = 100 * Decimal(estatisticas['total_validado']) / (estatisticas['total_documentos'] or 1)
     estatisticas['percentual_validado_progress'] = str(estatisticas['percentual_validado']).replace(',', '.')
     estatisticas['percentual_validado_progress'] = estatisticas['percentual_validado_progress'][: min(len(estatisticas['percentual_validado_progress']),
                                                                                                       estatisticas['percentual_validado_progress'].find('.') + 4)]
     estatisticas['total_validado_usuario'] = InvestidorValidacaoDocumento.objects.filter(investidor__isnull=False).count()
-    estatisticas['percentual_validado_usuario'] = 100 * Decimal(estatisticas['total_validado_usuario']) / estatisticas['total_validado']
+    estatisticas['percentual_validado_usuario'] = 100 * Decimal(estatisticas['total_validado_usuario']) / (estatisticas['total_validado'] or 1)
     estatisticas['total_validado_sistema'] = estatisticas['total_validado'] - estatisticas['total_validado_usuario']
-    estatisticas['percentual_validado_sistema'] = 100 * Decimal(estatisticas['total_validado_sistema']) / estatisticas['total_validado']
-    data_primeira_validacao = InvestidorValidacaoDocumento.objects.all().order_by('data_validacao')[0].data_validacao.date()
-    estatisticas['taxa_validacao_diaria'] =  Decimal(estatisticas['total_validado']) / (datetime.date.today() - data_primeira_validacao).days
+    estatisticas['percentual_validado_sistema'] = 100 * Decimal(estatisticas['total_validado_sistema']) / (estatisticas['total_validado'] or 1)
+    if InvestidorValidacaoDocumento.objects.exists():
+        data_primeira_validacao = InvestidorValidacaoDocumento.objects.all().order_by('data_validacao')[0].data_validacao.date()
+    else:
+        data_primeira_validacao = datetime.date.today()
+    estatisticas['taxa_validacao_diaria'] =  Decimal(estatisticas['total_validado']) / ((datetime.date.today() - data_primeira_validacao).days or 1)
     
     # Apenas lidos
     estatisticas['total_a_validar'] = PendenciaDocumentoProvento.objects.filter(tipo='V').count()
-    estatisticas['percentual_a_validar'] = 100 * Decimal(estatisticas['total_a_validar']) / estatisticas['total_documentos']
+    estatisticas['percentual_a_validar'] = 100 * Decimal(estatisticas['total_a_validar']) / (estatisticas['total_documentos'] or 1)
     estatisticas['percentual_a_validar_progress'] = str(estatisticas['percentual_a_validar']).replace(',', '.')
     estatisticas['percentual_a_validar_progress'] = estatisticas['percentual_a_validar_progress'][: min(len(estatisticas['percentual_a_validar_progress']), 
                                                                                                         estatisticas['percentual_a_validar_progress'].find('.') + 4)]
@@ -165,11 +175,12 @@ def listar_usuarios(request):
     # Previsões
     estatisticas['previsao_total_documentos'] = estatisticas['total_documentos'] + estatisticas['total_ref_30_dias']
     estatisticas['previsao_total_validado'] = estatisticas['total_validado'] + int(30 *  estatisticas['taxa_validacao_diaria'])
-    estatisticas['previsao_percentual_validado'] = 100 * Decimal(estatisticas['previsao_total_validado']) / estatisticas['previsao_total_documentos']
+    estatisticas['previsao_percentual_validado'] = 100 * Decimal(estatisticas['previsao_total_validado']) / (estatisticas['previsao_total_documentos'] or 1)
     estatisticas['previsao_percentual_validado_progress'] = str(estatisticas['previsao_percentual_validado']).replace(',', '.')
     estatisticas['previsao_percentual_validado_progress'] = estatisticas['previsao_percentual_validado_progress'][: min(len(estatisticas['previsao_percentual_validado_progress']),
                                                                                                       estatisticas['previsao_percentual_validado_progress'].find('.') + 4)]
-    dias_para_validacao_completa = (estatisticas['total_documentos'] - estatisticas['total_validado'])/(estatisticas['taxa_validacao_diaria'] - Decimal(estatisticas['total_ref_30_dias'])/30)
+    dias_para_validacao_completa = (estatisticas['total_documentos'] - estatisticas['total_validado'])/ \
+        ((estatisticas['taxa_validacao_diaria'] - Decimal(estatisticas['total_ref_30_dias'])/30) or 1)
     anos_validacao_completa = int(floor(dias_para_validacao_completa/365))
     dias_validacao_completa = int(floor(dias_para_validacao_completa % 365))
     horas_validacao_completa = int(floor((Decimal(dias_para_validacao_completa) - Decimal(floor(dias_para_validacao_completa))) * 24))

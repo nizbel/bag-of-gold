@@ -12,5 +12,5 @@ urlpatterns = [
     url(r'^listar_criptomoedas/$', views.listar_criptomoedas, name='listar_criptomoedas'),
     url(r'^listar_transferencias/$', views.listar_transferencias, name='listar_transferencias_criptomoeda'),
     url(r'^painel/$', views.painel, name='painel_criptomoeda'),
-    url(r'^sobre/$', views.sobre, name='sobre_criptomoeda'),
+#     url(r'^sobre/$', views.sobre, name='sobre_criptomoeda'),
     ]

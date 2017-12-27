@@ -3,8 +3,6 @@ from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoForm, \
     TransferenciaEntreDivisoesForm
 from bagogold.bagogold.models.acoes import ValorDiarioAcao, HistoricoAcao, Acao
-from bagogold.cdb_rdb.models import CDB_RDB, \
-    HistoricoPorcentagemCDB_RDB
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
     DivisaoOperacaoFII, DivisaoOperacaoTD, DivisaoOperacaoAcao, \
     TransferenciaEntreDivisoes, DivisaoOperacaoFundoInvestimento, \
@@ -15,18 +13,17 @@ from bagogold.bagogold.models.lc import HistoricoPorcentagemLetraCredito, \
 from bagogold.bagogold.models.td import ValorDiarioTitulo, HistoricoTitulo, \
     Titulo
 from bagogold.bagogold.utils.acoes import calcular_qtd_acoes_ate_dia_por_divisao
-from bagogold.cdb_rdb.utils import \
-    calcular_valor_cdb_rdb_ate_dia_por_divisao
 from bagogold.bagogold.utils.debenture import \
     calcular_valor_debentures_ate_dia_por_divisao
 from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia_por_divisao
 from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia_por_divisao
 from bagogold.bagogold.utils.td import calcular_qtd_titulos_ate_dia_por_divisao
+from bagogold.cdb_rdb.models import CDB_RDB, HistoricoPorcentagemCDB_RDB
+from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia_por_divisao
 from bagogold.cri_cra.utils.utils import \
     calcular_valor_cri_cra_ate_dia_para_divisao
-from bagogold.criptomoeda.models import Criptomoeda
-from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia_por_divisao, \
-    buscar_valor_criptomoedas_atual
+from bagogold.criptomoeda.models import Criptomoeda, ValorDiarioCriptomoeda
+from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia_por_divisao
 from bagogold.fundo_investimento.models import FundoInvestimento, \
     HistoricoValorCotas, OperacaoFundoInvestimento
 from bagogold.fundo_investimento.utils import \
@@ -101,14 +98,14 @@ def criar_transferencias(request):
 
 @login_required
 @adiciona_titulo_descricao('Detalhar divisão', 'Detalha a composição de uma divisão')
-def detalhar_divisao(request, id):
+def detalhar_divisao(request, divisao_id):
     investidor = request.user.investidor
     
     # Usado para criar objetos vazios
     class Object(object):
         pass
     
-    divisao = Divisao.objects.get(id=id)
+    divisao = Divisao.objects.get(id=divisao_id)
     if divisao.investidor != investidor:
         raise PermissionDenied
     
@@ -308,10 +305,10 @@ def detalhar_divisao(request, id):
 
 @login_required
 @adiciona_titulo_descricao('Editar divisão', 'Alterar dados de uma divisão')
-def editar_divisao(request, id):
+def editar_divisao(request, divisao_id):
     investidor = request.user.investidor
     
-    divisao = Divisao.objects.get(pk=id)
+    divisao = Divisao.objects.get(pk=divisao_id)
     if divisao.investidor != investidor:
         raise PermissionDenied
     
@@ -345,11 +342,11 @@ def editar_divisao(request, id):
     
 @login_required
 @adiciona_titulo_descricao('Editar transferência', 'Alterar valores de uma transferência no histórico')
-def editar_transferencia(request, id):
+def editar_transferencia(request, divisao_id):
     investidor = request.user.investidor
     
     # Checar ambas as divisões
-    transferencia = TransferenciaEntreDivisoes.objects.get(pk=id)
+    transferencia = TransferenciaEntreDivisoes.objects.get(pk=divisao_id)
     if transferencia.divisao_cedente and transferencia.divisao_cedente.investidor != investidor:
         raise PermissionDenied
     if transferencia.divisao_recebedora and transferencia.divisao_recebedora.investidor != investidor:
@@ -474,7 +471,7 @@ def listar_divisoes(request):
         moedas = Criptomoeda.objects.filter(id__in=criptomoedas_divisao.keys())
         # Busca valores apenas se existem criptomoedas na divisão
         if moedas:
-            valores_criptomoedas = buscar_valor_criptomoedas_atual([moeda.ticker for moeda in moedas])
+            valores_criptomoedas = {valor_diario.criptomoeda.ticker: valor_diario.valor for valor_diario in ValorDiarioCriptomoeda.objects.filter(criptomoeda__in=moedas, moeda='BRL')}
             divisao.valor_atual_criptomoeda += sum([(criptomoedas_divisao[moeda.id] * valores_criptomoedas[moeda.ticker]) for moeda in moedas])
         divisao.valor_atual += divisao.valor_atual_criptomoeda
         

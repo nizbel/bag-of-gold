@@ -2,6 +2,7 @@
 from bagogold.bagogold.models.lc import HistoricoTaxaDI
 from bagogold.outros_investimentos.models import Amortizacao, Rendimento
 from decimal import Decimal
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models.aggregates import Sum, Count
 from django.db.models.expressions import Case, When, F
@@ -74,7 +75,7 @@ class Divisao (models.Model):
     def saldo_cdb_rdb(self, data=datetime.date.today()):
         from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di, \
             calcular_valor_atualizado_com_taxa_prefixado
-        from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo
+        from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo, calcular_iof_e_ir_longo_prazo
         from bagogold.cdb_rdb.models import CDB_RDB
         """
         Calcula o saldo de operações de CDB/RDB de uma divisão (dinheiro livre)
@@ -94,11 +95,15 @@ class Divisao (models.Model):
                 dias_de_rendimento = historico_di.filter(data__gte=venda_divisao.operacao.operacao_compra_relacionada().data, data__lt=venda_divisao.operacao.data)
                 taxas_dos_dias = dict(dias_de_rendimento.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
                 valor_venda = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor_venda, taxa)
+                valor_venda -= sum(calcular_iof_e_ir_longo_prazo(valor_venda - venda_divisao.quantidade, 
+                                                              (venda_divisao.operacao.data - venda_divisao.operacao.operacao_compra_relacionada().data).days))
             elif venda_divisao.operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
                 # Prefixado
                 # Calcular quantidade dias para valorização
                 qtd_dias = qtd_dias_uteis_no_periodo(venda_divisao.operacao.operacao_compra_relacionada().data, venda_divisao.operacao.data)
                 valor_venda = calcular_valor_atualizado_com_taxa_prefixado(valor_venda, taxa, qtd_dias)
+                valor_venda -= sum(calcular_iof_e_ir_longo_prazo(valor_venda - venda_divisao.quantidade, 
+                                                              (venda_divisao.operacao.data - venda_divisao.operacao.operacao_compra_relacionada().data).days))
             # Arredondar
             str_auxiliar = str(valor_venda.quantize(Decimal('.0001')))
             valor_venda = Decimal(str_auxiliar[:len(str_auxiliar)-2])
@@ -194,7 +199,7 @@ class Divisao (models.Model):
                 saldo += (operacao_divisao.quantidade * operacao.preco_unitario - (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
         
         # Proventos
-        saldo += calcular_poupanca_prov_fii_ate_dia_por_divisao(data, self)    
+        saldo += calcular_poupanca_prov_fii_ate_dia_por_divisao(self, data)    
         
         # Transferências
         saldo += -(TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_FII, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
@@ -563,6 +568,25 @@ class DivisaoOperacaoFII (models.Model):
     """
     def percentual_divisao(self):
         return Decimal(self.quantidade) / self.operacao.quantidade
+    
+class CheckpointDivisaoFII (models.Model):
+    ano = models.SmallIntegerField(u'Ano')
+    fii = models.ForeignKey('FII')
+    divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
+    quantidade = models.IntegerField(u'Quantidade no ano', validators=[MinValueValidator(0)])
+    preco_medio = models.DecimalField(u'Preço médio', max_digits=11, decimal_places=4)
+    
+    class Meta:
+        unique_together=('fii', 'ano', 'divisao')
+    
+class CheckpointDivisaoProventosFII (models.Model):
+    ano = models.SmallIntegerField(u'Ano')
+    divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
+    valor = models.DecimalField(u'Valor da poupança de proventos', max_digits=22, decimal_places=16)
+        
+    class Meta:
+        unique_together=('ano', 'divisao')
+    
     
 class TransferenciaEntreDivisoes(models.Model):
     TIPO_INVESTIMENTO_BUY_AND_HOLD = 'B'

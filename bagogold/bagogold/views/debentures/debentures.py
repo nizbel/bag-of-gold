@@ -297,7 +297,7 @@ def listar_debentures(request):
 def listar_debentures_validas_na_data(request):
     # Verifica se é uma data válida
     try:
-        data = datetime.datetime.strptime(request.GET['data'], '%d/%m/%Y').date()
+        data = datetime.datetime.strptime(request.GET.get('data') or '', '%d/%m/%Y').date()
     except ValueError:
         return HttpResponse(json.dumps({'resultado': False, 'mensagem': 'Data deve estar no formato DD/MM/AAAA'}), content_type = "application/json") 
     
@@ -427,7 +427,6 @@ def sobre(request):
     graf_historico_selic = [[str(calendar.timegm(valor_historico.data.timetuple()) * 1000), float(pow(valor_historico.taxa_diaria, 252) - 1)*100] for valor_historico in historico_selic]
     
     if request.user.is_authenticated():
-        print sum(calcular_valor_debentures_ate_dia(request.user.investidor).values())
         total_atual = Decimal(sum(calcular_valor_debentures_ate_dia(request.user.investidor).values())).quantize(Decimal('0.01'))
     else:
         total_atual = 0

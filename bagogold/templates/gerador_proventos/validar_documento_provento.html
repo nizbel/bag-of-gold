@@ -18,10 +18,7 @@
             <div class="portlet box yellow-crusta">
                 <div class="portlet-title">
                     <div class="caption">
-                    {% comment %}
-                    Buscar um ícone melhor para esse portlet header
-                    {% endcomment %}
-                        <i class="fa fa-line-chart"></i>Dados do documento
+                        <i class="fa fa-folder-open-o"></i>Dados do documento
                     </div>
                     <div class="tools">
                         <a href="javascript:;" class="collapse"></a>
@@ -97,6 +94,36 @@
                         <div class="col-md-12 text-center">
                             <canvas id="canvas"></canvas>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% if infos_uteis.keys %}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-diamond"></i>Informações úteis
+                    </div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <div class="row">
+                        {% if 'historico_negociacao' in infos_uteis.keys %}
+                            <div class="col-md-12">
+                                <h3>Datas com negociação oficial</h3>
+                            </div>
+                            {% for info_negociacao in infos_uteis.historico_negociacao %}
+                            <div class="col-md-3">
+                                <p><strong>{{info_negociacao.ticker}}</strong>: <strong>{{info_negociacao.inicio|date:'d/m/Y'}}</strong> a <strong>{{info_negociacao.fim|date:'d/m/Y'}}</strong></p>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -435,7 +462,6 @@ $( document ).ready(function() {
                             closeInSeconds: 60, // auto close after defined seconds 
                             icon: 'fa fa-warning' // put icon class before the message 
                         });
-//     			alert('Texto de motivo deve ter mais de 10 caracteres');
     			return false;
     		}
 	    }

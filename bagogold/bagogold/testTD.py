@@ -41,7 +41,7 @@ def baixar_historico_td_total():
         response_xls = urlopen(url)
         _, params = cgi.parse_header(response_xls.headers.get('Content-Disposition', ''))
         filename = params['filename']
-        print 'Downloading %s from %s' % (filename, url)
+#         print 'Downloading %s from %s' % (filename, url)
         
         xls = response_xls.read()
         
@@ -169,7 +169,7 @@ def remover_titulos_duplicados():
         outros_titulos = Titulo.objects.filter(tipo=titulo.tipo, data_vencimento=titulo.data_vencimento)
         for outro in outros_titulos:
             if outro.id != titulo.id:
-                print 'Outro: %s %s %s' % (outro, outro.data_vencimento, outro.id)
+#                 print 'Outro: %s %s %s' % (outro, outro.data_vencimento, outro.id)
                 historicos = HistoricoTitulo.objects.filter(titulo__id=outro.id)
                 for historico in historicos:
                     historico.titulo = titulo
