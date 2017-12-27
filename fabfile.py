@@ -1,10 +1,8 @@
 # -*- encoding: utf-8 -*-
 from __future__ import with_statement
-from datetime import datetime
-from fabric.api import env, require, run, sudo
+from fabric.api import env, require, run, sudo, local as lrun
 from fabric.context_managers import cd
 from fabric.contrib.files import append, contains, exists
-import os
 import time
 
 
@@ -21,6 +19,16 @@ def prod():
     env.virtualenv = 'bagogold'
     env.virtualenv_path = '/home/bagofgold/.virtualenvs/bagogold'
 #     env.procs = ['nginx', 'site', 'winfinity']
+
+def dev():
+    env.run = lrun
+    env.config = 'DEV'
+    env.hosts = ['localhost']
+    env.path = 'bagogold'
+    env.repository = 'https://bitbucket.org/nizbel/bag-of-gold'
+    env.user = 'nizbel'
+    env.virtualenv = 'bagogold'
+    env.virtualenv_path = '/home/nizbel/.virtualenvs/bagogold'
 
 # Actions
 
@@ -43,13 +51,16 @@ def setup():
  
     # Create the virtualenv
     run('mkvirtualenv %(virtualenv)s' % env)
- 
+  
     # Clone the repository
     if not exists(env.path):
         run('hg clone %(repository)s %(path)s' % env)
 
 def add_cronjob():
-    run('crontab /crontab_prod')
+    if env.config == 'PROD':
+        run('crontab /crontab_prod')
+    elif env.config == 'DEV':
+        run('crontab /crontab_copy')
 
 # def update(requirements=False, rev=None):
 #     require('path')
@@ -89,5 +100,11 @@ def add_cronjob():
 #     
 #     sudo('/etc/init.d/supervisor start')
     
+def verificar_update():
+    with cd(env.path):
+        hotfix_date = run('workon %(virtualenv)s; hg head hotfix --template "{date}"' % {'virtualenv': env.virtualenv})  
+        prod_date = run('workon %(virtualenv)s; hg head prod --template "{date}"' % {'virtualenv': env.virtualenv})
+        print hotfix_date, prod_date
+
 # TODO preparar verificação de update a fazer 
 # hg log -b prod --template '{rev}\n' -l 1
