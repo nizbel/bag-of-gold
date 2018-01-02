@@ -8,7 +8,7 @@ from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia, \
     calcular_qtd_moedas_ate_dia_por_criptomoeda, \
     calcular_qtd_moedas_ate_dia_por_divisao, buscar_valor_criptomoeda_atual, \
     buscar_valor_criptomoedas_atual, buscar_historico_criptomoeda, \
-    buscar_valor_criptomoedas_atual_varias_moedas, criar_operacoes_lote
+    buscar_valor_criptomoedas_atual_varias_moedas, salvar_operacoes_lote
 from decimal import Decimal
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -48,7 +48,7 @@ class CriacaoLoteTestCase(TestCase):
                            'LSK/BTC;9,48627159;0,00117998;09/06/2017;C;0,02377511;LSK'
                            ]
                            
-        criar_operacoes_lote(lista_operacoes, investidor, Divisao.objects.get(investidor=investidor, nome="Geral").id)
+        salvar_operacoes_lote(lista_operacoes, investidor, Divisao.objects.get(investidor=investidor, nome="Geral").id)
         self.assertTrue(OperacaoCriptomoeda.objects.filter(investidor=investidor).exists())
         
         qtd_moedas = calcular_qtd_moedas_ate_dia(investidor, datetime.date(2017, 6, 10))
@@ -71,43 +71,35 @@ class CriacaoLoteTestCase(TestCase):
         
         # Moeda e moeda utilizada iguais
         with self.assertRaises(ValueError):
-            criar_operacoes_lote(['BTC/BTC;0,48784399;9968,99994;06/06/2017;C;0,00343898;BTC'], investidor, divisao.id)
-        
-        # Separador decimal quantidade deve ser vírgula
-        with self.assertRaises(ValueError):
-            criar_operacoes_lote(['BTC/BRL;0.48784399;9968,99994;06/06/2017;C;0,00343898;BTC'], investidor, divisao.id)
+            salvar_operacoes_lote(['BTC/BTC;0,48784399;9968,99994;06/06/2017;C;0,00343898;BTC'], investidor, divisao.id)
         
         # Quantidade 0
         with self.assertRaises(ValueError):
-            criar_operacoes_lote(['BTC/BRL;0;9968,99994;06/06/2017;C;0,00343898;BTC'], investidor, divisao.id)
+            salvar_operacoes_lote(['BTC/BRL;0;9968,99994;06/06/2017;C;0,00343898;BTC'], investidor, divisao.id)
         
         # Moeda taxa diferente de moeda e moeda utilizada
         with self.assertRaises(ValueError):
-            criar_operacoes_lote(['BTC/BRL;0,48784399;9968,99994;06/06/2017;C;0,00343898;LSK'], investidor, divisao.id)
+            salvar_operacoes_lote(['BTC/BRL;0,48784399;9968,99994;06/06/2017;C;0,00343898;LSK'], investidor, divisao.id)
             
         # Moeda não pode ser BRL
         with self.assertRaises(ValueError):
-            criar_operacoes_lote(['BRL/ETH;0,48784399;9968,99994;06/06/2017;C;0,00343898;ETH'], investidor, divisao.id)
+            salvar_operacoes_lote(['BRL/ETH;0,48784399;9968,99994;06/06/2017;C;0,00343898;ETH'], investidor, divisao.id)
             
         # String não pode ter mais ; que o formato padrão
         with self.assertRaises(ValueError):
-            criar_operacoes_lote(['BTC/BRL;0,48784399;9968,99994;06/06/2017;C;0,00343898;BTC;'], investidor, divisao.id)
-        
-        # Separador decimal valor taxa deve ser vírgula
-        with self.assertRaises(ValueError):
-            criar_operacoes_lote(['BTC/BRL;0,48784399;9968,99994;06/06/2017;C;0.00343898;BTC'], investidor, divisao.id)
+            salvar_operacoes_lote(['BTC/BRL;0,48784399;9968,99994;06/06/2017;C;0,00343898;BTC;'], investidor, divisao.id)
         
         # Valor taxa deve ser maior ou igual a 0
         with self.assertRaises(ValueError):
-            criar_operacoes_lote(['BTC/BRL;0,48784399;9968,99994;06/06/2017;C;-0,02;BTC'], investidor, divisao.id)
+            salvar_operacoes_lote(['BTC/BRL;0,48784399;9968,99994;06/06/2017;C;-0,02;BTC'], investidor, divisao.id)
         
         # Preço deve ser maior ou igual a 0
         with self.assertRaises(ValueError):
-            criar_operacoes_lote(['BTC/BRL;0,48784399;-3;06/06/2017;C;0,00343898;BTC'], investidor, divisao.id)
+            salvar_operacoes_lote(['BTC/BRL;0,48784399;-3;06/06/2017;C;0,00343898;BTC'], investidor, divisao.id)
         
         # Data deve ser dia/mes/ano
         with self.assertRaises(ValueError):
-            criar_operacoes_lote(['BTC/BRL;0,48784399;9968,99994;2017/06/06;C;0,00343898;BTC'], investidor, divisao.id)
+            salvar_operacoes_lote(['BTC/BRL;0,48784399;9968,99994;2017/06/06;C;0,00343898;BTC'], investidor, divisao.id)
         
     def test_criacao_lote_transf_sucesso(self):
         """Testa criação de operações em lote sem erros"""
@@ -134,8 +126,8 @@ class CriacaoLoteTestCase(TestCase):
                            'LSK/BTC;9,48627159;0,00117998;09/06/2017;C;0,02377511;LSK'
                            ]
                            
-        criar_operacoes_lote(lista_operacoes, investidor, Divisao.objects.get(investidor=investidor, nome="Geral").id)
+        salvar_operacoes_lote(lista_operacoes, investidor, Divisao.objects.get(investidor=investidor, nome="Geral").id)
         
         lista_transferencias = []
         
-        #criar_transferencias_lote(lista_transferencias, investidor, Divisao.objects.get(investidor=investidor, nome='Geral').id)
+        #salvar_transferencias_lote(lista_transferencias, investidor, Divisao.objects.get(investidor=investidor, nome='Geral').id)
