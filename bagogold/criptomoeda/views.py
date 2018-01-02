@@ -551,7 +551,7 @@ def inserir_transferencia(request):
 def inserir_transferencia_lote(request):
     pass
     
-@adiciona_titulo_descricao('Listar criptomoedas cadastradas', 'Lista as criptomoedas no sistema')
+@adiciona_titulo_descricao('Listar criptomoedas cadastradas', 'Lista as criptomoedas cadastradas no sistema')
 def listar_criptomoedas(request):
     moedas = Criptomoeda.objects.all()
     valores_diarios = ValorDiarioCriptomoeda.objects.all().values('valor')
@@ -563,7 +563,7 @@ def listar_criptomoedas(request):
 
 
 @login_required
-@adiciona_titulo_descricao('Listar criptomoedas cadastrados', 'Lista as criptomoedas no sistema')
+@adiciona_titulo_descricao('Listar transferências em criptomoedas', 'Lista as transferências feitas para criptomoedas pelo investidor')
 def listar_transferencias(request):
     investidor = request.user.investidor
     transferencias = TransferenciaCriptomoeda.objects.filter(investidor=investidor)
