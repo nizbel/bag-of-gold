@@ -671,19 +671,41 @@
                                     <h2>Sobre</h2>
                                     <p> O <strong>Bag of Gold</strong> é uma ferramenta para acompanhar os seus investimentos. Nele, você consegue ter uma visão geral de todos os investimentos que você possui, independente de onde eles estão. </p>
                                 </div>
-                                <div class="col-md-3 col-sm-6 col-xs-12 footer-block">
+                                <div class="col-md-2 col-sm-6 col-xs-12 footer-block">
                                     <h2>Contato</h2>
                                     <address class="margin-bottom-100">
                                         <br> E-mail:
                                         <a href="mailto:suporte@bagofgold.com.br">suporte@bagofgold.com.br</a>
                                     </address>
                                 </div>
-                                <div class="col-md-6 col-sm-12 col-xs-12 footer-block">
+                                <div class="col-md-4 col-sm-12 col-xs-12 footer-block">
                                     <h2>Aviso</h2>
                                     <p> Este site tem o intuito exclusivo de auxiliar o investidor a acompanhar seus investimentos. As informações contidas podem estar desatualizadas. 
                                     De maneira alguma este site aconselha um usuário sobre onde investir seu dinheiro. 
                                     Cabe somente ao investidor o papel de se informar e/ou procurar ajuda profissional para isso.
                                     </p>
+                                </div>
+                                <div class="col-md-3 col-sm-6 col-xs-12 footer-block">
+                                    <h2>Doações</h2>
+                                    <div style="font-size:16px;margin:0 auto;width:300px" class="blockchain-btn"
+                                         data-address="16ZvpLMG9TTSiEMrS9hnDreWM2XHusbQSn"
+                                         data-shared="false">
+                                        <div class="blockchain stage-begin">
+                                            <a href="javascript:;"><img src="https://blockchain.info/Resources/buttons/donate_64.png"/></a>
+                                        </div>
+                                        <div class="blockchain stage-loading" style="text-align:center">
+                                        </div>
+                                        <div class="blockchain stage-ready">
+                                             <p align="center">Endereço Bitcoin: <b>[[address]]</b></p>
+                                             <p align="center" class="qr-code"></p>
+                                        </div>
+                                        <div class="blockchain stage-paid">
+                                             Doação de <b>[[value]] BTC</b> recebida. Obrigado.
+                                        </div>
+                                        <div class="blockchain stage-error">
+                                            <font color="red">[[error]]</font>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -737,6 +759,7 @@
         <!-- BEGIN THEME LAYOUT SCRIPTS -->
         <script src={% static "assets/layouts/layout3/scripts/layout.min.js" %} type="text/javascript"></script>
         <!-- END THEME LAYOUT SCRIPTS -->
+        <script type="text/javascript" src="https://blockchain.info/Resources/js/pay-now-button.js"></script>
     </body>
 
 </html>
