@@ -134,7 +134,7 @@ class Command(BaseCommand):
             
         # Quantas threads correrão por vez
         qtd_threads = 8
-#         fiis = Empresa.objects.filter(codigo_cvm__in=[fii.ticker[:4] for fii in FII.objects.filter(ticker='BRCR11')]).values_list('codigo_cvm', flat=True)
+#         fiis = Empresa.objects.filter(codigo_cvm__in=[fii.ticker[:4] for fii in FII.objects.filter(ticker='RBVO11')]).values_list('codigo_cvm', flat=True)
         fiis = Empresa.objects.filter(codigo_cvm__in=[fii.ticker[:4] for fii in FII.objects.all()]).values_list('codigo_cvm', flat=True)
         contador = 0
         try:
@@ -221,7 +221,10 @@ def buscar_rendimentos_fii(ticker, ano, num_tentativas):
         br.select_form(nr=0)
         br.form.set_all_readonly(False)
         br.find_control("ctl00$botaoNavegacaoVoltar").disabled = True
-        br.find_control("ctl00$contentPlaceHolderConteudo$ucInformacoesRelevantes$btnBuscar").disabled = True
+        try:
+            br.find_control("ctl00$contentPlaceHolderConteudo$ucInformacoesRelevantes$btnBuscar").disabled = True
+        except:
+            pass
         br.find_control(id='ctl00_contentPlaceHolderConteudo_ucInformacoesRelevantes_cmbAno').value = [str(ano)]
         br["__EVENTARGUMENT"] = ''
         br['__EVENTTARGET'] = 'ctl00$contentPlaceHolderConteudo$ucInformacoesRelevantes$lkbCategoriaTodas'
