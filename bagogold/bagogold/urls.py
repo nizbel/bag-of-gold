@@ -60,7 +60,7 @@ acoes_trading_patterns = [
 
 acoes_patterns = [
     url(r'^', include(acoes_geral_patterns, namespace='geral')),
-    url(r'^buyandhold/', include(acoes_bh_patterns, namespace='bh')),
+    url(r'^buy-and-hold/', include(acoes_bh_patterns, namespace='bh')),
     url(r'^trading/', include(acoes_trading_patterns, namespace='trading')),
     ]
 
