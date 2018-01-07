@@ -17,7 +17,7 @@ import views
 validators.DUPLICATE_EMAIL = 'Já existe um usuário cadastrado com esse email'
 
 inicio_patterns = [
-    url(r'^$', RedirectView.as_view(url='/painel_geral/')),
+    url(r'^$', RedirectView.as_view(url='/painel-geral/')),
     url(r'^calendario/$', views.home.calendario, name='calendario'),
     url(r'^detalhar-acumulados-mensais/$', views.home.detalhar_acumulados_mensais, name='detalhar_acumulados_mensais'),
     url(r'^detalhar-acumulado-mensal/$', views.home.detalhar_acumulado_mensal, name='detalhar_acumulado_mensal'),
