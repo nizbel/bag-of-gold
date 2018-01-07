@@ -24,37 +24,37 @@ def preparar_backup():
 
     # Testar ambiente
     if settings.ENV == 'DEV':
-        arquivo_dump = 'db_dump.sh'
+        arquivo_dump = '%s/%s' % (settings.BASE_DIR, 'db_dump.sh')
         arquivo_base = 'db_dump.txt'
     elif settings.ENV == 'PROD':
-        arquivo_dump = 'db_prod_dump.sh'
+        arquivo_dump = '%s/%s' % (settings.BASE_DIR, 'db_prod_dump.sh')
         arquivo_base = 'db_prod_dump.txt'
-    
+
     # Alterar db_dump.sh correspondente
     arquivo = file(arquivo_dump, 'w+')
-    
+
     arquivo.write(render_to_string(arquivo_base, {'tabelas': str_tabelas, 'nome_db': settings.DATABASES['default']['NAME']}))
-    
+
     arquivo.close()
-    
+
     # Verificar se é possível chamar o db_dump por subprocess
-    subprocess.call(['sh', '%s/%s' % (settings.BASE_DIR, arquivo_dump)])
-    
-    os.remove(arquivo.name)
-    
+    subprocess.call(['sh', arquivo_dump])
+
+    os.remove(arquivo_dump)
+
     # Apagar backups repetidos
     apagar_backups_repetidos()
-    
+
     # Se produção, enviar backups para pasta do dropbox
     if settings.ENV == 'PROD':
         arquivo = file(arquivo_dump, 'w+')
         arquivo.write('#!/bin/sh\n')
         arquivo.write('mv /home/bagofgold/bagogold/backups/backup-*?-*?-*?-* /home/bagofgold/Dropbox/BKP\ BOG/')
         arquivo.close()
-        
-        subprocess.call(['sh', '%s/%s' % (settings.BASE_DIR, arquivo_dump)])
-        os.remove(arquivo.name)
-        
+
+        subprocess.call(['sh', arquivo_dump])
+        os.remove(arquivo_dump)
+
         # Rodar dropbox
         subprocess.call(['/home/bagofgold/bin/dropbox.py', 'start'])
         while 'Up to date' not in subprocess.check_output(['/home/bagofgold/bin/dropbox.py', 'status']):
