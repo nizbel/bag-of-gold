@@ -667,10 +667,27 @@ def ler_provento_estruturado_fii(documento_fii):
                 provento, criado = ProventoFII.gerador_objects.get_or_create(valor_unitario=descricao_provento.valor_unitario, fii=descricao_provento.fii, \
                                                                   data_ex=descricao_provento.data_ex, data_pagamento=descricao_provento.data_pagamento, \
                                                                   tipo_provento=descricao_provento.tipo_provento)
-                ProventoFIIDocumento.objects.create(documento=documento_fii, provento=provento, versao=1, descricao_provento=descricao_provento)
+                
+                # Verifica se provento foi criado
+                if criado:
+                    # Se sim, cria como primeira versão
+                    ProventoFIIDocumento.objects.create(documento=documento_fii, provento=provento, versao=1, descricao_provento=descricao_provento)
+                else:
+                    # Se não, versionar
+                    ProventoFIIDocumento.objects.create(documento=documento_fii, provento=provento, versao=0, descricao_provento=descricao_provento)
+                    
+                    # Buscar todas as versões do provento descrito
+                    versoes_provento = list(ProventoFIIDocumento.objects.filter(provento=provento))
+                    versoes_provento.sort(key=lambda x: x.documento.protocolo)
+                    # Gerar versões a partir de 1 na ordem feita
+                    for versao, item in enumerate(versoes_provento, start=1):
+                        item.versao = versao
+                        item.save()
+                    
                 if not provento.oficial_bovespa:
                     provento.oficial_bovespa = True
                     provento.save()
+                    
         # Apagar pendência
         for pendencia_provento in PendenciaDocumentoProvento.objects.filter(documento=documento_fii):
             pendencia_provento.delete()
