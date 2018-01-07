@@ -14,15 +14,15 @@ urlpatterns = [
     # App bagogold
     url(r'', include('bagogold.bagogold.urls')),
     # App CDB/RDB
-    url(r'^cdb_rdb/', include('bagogold.cdb_rdb.urls', namespace='cdb_rdb')),
+    url(r'^cdb-rdb/', include('bagogold.cdb_rdb.urls', namespace='cdb_rdb')),
     # App CRI/CRA
-    url(r'^cri_cra/', include('bagogold.cri_cra.urls', namespace='cri_cra')),
+    url(r'^cri-cra/', include('bagogold.cri_cra.urls', namespace='cri_cra')),
     # App Criptomoedas
     url(r'^criptomoeda/', include('bagogold.criptomoeda.urls', namespace='criptomoeda')),
     # App Fundos de investimento
-    url(r'^fundo_investimento/', include('bagogold.fundo_investimento.urls', namespace='fundo_investimento')),
+    url(r'^fundo-investimento/', include('bagogold.fundo_investimento.urls', namespace='fundo_investimento')),
     # App Outros investimentos
-    url(r'^outros_investimentos/', include('bagogold.outros_investimentos.urls', namespace='outros_investimentos')),
+    url(r'^outros-investimentos/', include('bagogold.outros_investimentos.urls', namespace='outros_investimentos')),
     # App pendencias
     url(r'', include('bagogold.pendencias.urls')),
 ]
