@@ -813,6 +813,54 @@ class LeitorProventosEstruturadosTestCase(TestCase):
         with self.assertRaises(ValueError):
             relacionar_proventos_lidos_sistema(provento_teste.provento, ProventoFIIDocumento.objects.get(documento__protocolo='8688').provento)
             
+    def test_versionar_documento_para_proventos_iguais(self):
+        # Ler documento original
+        documento_original = DocumentoProventoBovespa.objects.get(protocolo='8679')
+        ler_provento_estruturado_fii(documento_original)
+        
+        # Preparar documento para provento igual
+        documento = DocumentoProventoBovespa()
+        documento.empresa = Empresa.objects.get(codigo_cvm=Empresa.objects.all()[0].codigo_cvm)
+        documento.url = 'https://fnet.bmfbovespa.com.br/fnet/publico/visualizarDocumento?id=8680'
+        documento.tipo = 'F'
+        documento.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO
+        documento.protocolo = '8680'
+        documento.data_referencia = datetime.datetime.strptime('04/03/2016', '%d/%m/%Y')
+        conteudo = StringIO('<?xml version="1.0" encoding="UTF-8" standalone="yes"?> \
+<DadosEconomicoFinanceiros xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"> \
+    <DadosGerais> \
+        <NomeFundo>BB PROGRESSIVO II FUNDO DE INVESTIMENTO IMOBILIÁRIO – FII</NomeFundo> \
+        <CNPJFundo>14410722000129</CNPJFundo> \
+        <NomeAdministrador>VOTORANTIM ASSET MANAGEMENT DTVM LTDA.</NomeAdministrador> \
+        <CNPJAdministrador>03384738000198</CNPJAdministrador> \
+        <ResponsavelInformacao>Reinaldo Holanda de Lacerda</ResponsavelInformacao> \
+        <TelefoneContato>(11) 5171-5038</TelefoneContato> \
+        <CodISINCota>BRBBPOCTF003</CodISINCota> \
+        <CodNegociacaoCota>BBPO11</CodNegociacaoCota> \
+    </DadosGerais> \
+    <InformeRendimentos> \
+        <Rendimento> \
+            <DataAprovacao>2017-02-24</DataAprovacao> \
+            <DataBase>2017-02-24</DataBase> \
+            <DataPagamento>2017-03-14</DataPagamento> \
+            <ValorProventoCota>0.9550423</ValorProventoCota> \
+            <PeriodoReferencia>fevereiro</PeriodoReferencia> \
+            <Ano>2017</Ano> \
+            <RendimentoIsentoIR>true</RendimentoIsentoIR> \
+        </Rendimento> \
+        <Amortizacao tipo=""/> \
+    </InformeRendimentos> \
+</DadosEconomicoFinanceiros>')
+        documento.documento.save('%s-%s.%s' % (documento.ticker_empresa(), documento.protocolo, 'xml'), File(conteudo))      
+        
+        # Ler documento
+        ler_provento_estruturado_fii(documento)
+        
+        # Testar se foram criados duas versões para o mesmo provento  
+        self.assertTrue(ProventoFIIDocumento.objects.filter(documento=documento_original, versao=1))
+        self.assertTrue(ProventoFIIDocumento.objects.filter(documento=documento, versao=2))
+        self.assertEqual(len(ProventoFII.objects.all()), 1)
+    
 class ReiniciarDocumentosTestCase(TestCase):
 
     def setUp(self):
