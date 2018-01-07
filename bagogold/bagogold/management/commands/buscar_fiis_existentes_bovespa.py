@@ -36,9 +36,10 @@ class VerificarFIIThread(Thread):
                         fii.save()
                 time.sleep(10)
         except Exception as e:
-                template = "An exception of type {0} occured. Arguments:\n{1!r}"
-                message = template.format(type(e).__name__, e.args)
-                print message
+#             template = "An exception of type {0} occured. Arguments:\n{1!r}"
+#             message = template.format(type(e).__name__, e.args)
+#             print message
+            pass
                 
 class BuscaTickerThread(Thread):
     def __init__(self, sigla, empresa_nome, empresa_nome_pregao):
@@ -53,9 +54,10 @@ class BuscaTickerThread(Thread):
             if cod_negociacao:
                 fiis_para_verificar.append((self.sigla, cod_negociacao, self.empresa_nome, self.empresa_nome_pregao))
         except Exception as e:
-            template = "An exception of type {0} occured. Arguments:\n{1!r}"
-            message = template.format(type(e).__name__, e.args)
-            print self.sigla, "Thread:", message
+#             template = "An exception of type {0} occured. Arguments:\n{1!r}"
+#             message = template.format(type(e).__name__, e.args)
+#             print self.sigla, "Thread:", message
+            pass
         # Tenta remover seu código da listagem de threads até conseguir
         while self.sigla in threads_rodando:
             del threads_rodando[self.sigla]
@@ -76,7 +78,6 @@ class Command(BaseCommand):
         thread_verificar_fii = VerificarFIIThread()
         thread_verificar_fii.start()
         
-        threads = []
 #         start_time = time.time()
         try:
             while contador < len(fiis):
