@@ -102,11 +102,20 @@ class CriacaoLoteTestCase(TestCase):
             salvar_operacoes_lote(['BTC/BRL;0,48784399;9968,99994;2017/06/06;C;0,00343898;BTC'], investidor, divisao.id)
         
     def test_criacao_lote_transf_sucesso(self):
-        """Testa criação de operações em lote sem erros"""
-        pass
-        
+        """Testa criação de transferencias em lote sem erros"""
+        investidor = User.objects.get(username='tester').investidor
+        lista_transf = ['',
+                        '',
+                        '']
+        transferencia_1 = TransferenciaCriptomoeda.objects.create(moeda=None, investidor=user.investidor, data=datetime.date(2017, 6, 6), quantidade=Decimal('4999.99'), 
+                                                                  taxa=Decimal('102.39'), origem='Conta', destino='Mercado Bitcoin')
+        transferencia_2 = TransferenciaCriptomoeda.objects.create(moeda=bitcoin, data=datetime.date(2017, 6, 6), quantidade=Decimal('0.2'), investidor=user.investidor, 
+                                                                  origem='Mercado Bitcoin', destino='Poloniex', taxa=Decimal('0.0006102'))
+        transferencia_3 = TransferenciaCriptomoeda.objects.create(moeda=bitcoin, data=datetime.date(2017, 6, 9), quantidade=Decimal('0.19'), investidor=user.investidor, 
+                                                                  origem='Mercado Bitcoin', destino='Poloniex', taxa=Decimal('0.0006102'))
+            
     def test_criacao_lote_transf_erro(self):
-        """Testa criação de operações em lote com erros"""
+        """Testa criação de transferências em lote com erros"""
         pass
         
     def test_qtd_moedas_ate_dia(self):
