@@ -208,13 +208,14 @@ def buscar_historico_criptomoeda(criptomoeda_ticker):
     
     return historico
 
-def criar_operacoes_lote(lista_operacoes, investidor, divisao_id):
+def criar_operacoes_lote(lista_operacoes, investidor, divisao_id, salvar=False):
     """
     Cria várias operações com base em uma lista de strings com ponto e vírgula como separador, 
     vinculando a uma única divisão. Retorna os objetos criados
     Parâmetros: Lista de strings
                 Investidor
                 ID da divisão
+                Indicador se operações devem ser salvas na base
     Retorno: Lista com objetos referentes a operações em criptomoedas
     """
     if len(lista_operacoes) > 20:
@@ -277,21 +278,21 @@ def criar_operacoes_lote(lista_operacoes, investidor, divisao_id):
     
     return objetos_operacoes
 
-def salvar_operacoes_lote(lista_operacoes, investidor, divisao_id):
-    """
-    Salva operações criadas em lote
-    Parâmetros: Lista de strings
-                Investidor
-                ID da divisão
-    """
-    operacoes = criar_operacoes_lote(lista_operacoes, investidor, divisao_id)
-    try:
-        with transaction.atomic():
-            for objeto_operacao in operacoes:
-                objeto_operacao.save()
-    except:
-        raise
-#         raise ValueError('Houve um erro ao salvar as operações geradas em lote')
+# def salvar_operacoes_lote(lista_operacoes, investidor, divisao_id):
+#     """
+#     Salva operações criadas em lote
+#     Parâmetros: Lista de strings
+#                 Investidor
+#                 ID da divisão
+#     """
+#     operacoes = criar_operacoes_lote(lista_operacoes, investidor, divisao_id)
+#     try:
+#         with transaction.atomic():
+#             for objeto_operacao in operacoes:
+#                 objeto_operacao.save()
+#     except:
+#         raise
+# #         raise ValueError('Houve um erro ao salvar as operações geradas em lote')
 
 def criar_transferencias_lote(lista_transferencias, investidor, divisao_id):
     """
