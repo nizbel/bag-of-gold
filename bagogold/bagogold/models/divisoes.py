@@ -160,7 +160,11 @@ class Divisao (models.Model):
                             When(operacao__operacaocriptomoedataxa__moeda=F('operacao__operacaocriptomoedamoeda__criptomoeda'), 
                                 then=F('quantidade') * F('operacao__preco_unitario') - F('operacao__operacaocriptomoedataxa__valor') * (F('quantidade') / F('operacao__quantidade'))))),
                             output_field=DecimalField())).aggregate(soma_total=Sum('total'))['soma_total'] or Decimal(0)
-                            
+        
+        # Transferências de criptomoedas
+        saldo -= DivisaoTransferenciaCriptomoeda.objects.filter(divisao=self, transferencia__data__lte=data, transferencia__moeda__isnull=True) \
+                    .aggregate(total_taxas=Sum('transferencia__taxa'))['total_taxas'] or 0
+        
         # Transferências
         saldo += -(TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_CRIPTOMOEDA, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
             + (TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_CRIPTOMOEDA, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)

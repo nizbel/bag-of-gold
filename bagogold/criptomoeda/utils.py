@@ -225,82 +225,104 @@ def criar_operacoes_lote(lista_operacoes, investidor, divisao_id, salvar=False):
         raise ValueError('Investidor não possui a divisão enviada')
     divisao = Divisao.objects.get(id=divisao_id)
     
-    objetos_operacoes = list()
     houve_erro = False
     lista_erros = list()
-    for operacao_string in lista_operacoes:
+    # Se for para salvar, rodar transação atômica
+    if salvar:
         try:
-            infos = operacao_string.split(';')
-            if len(infos) != 7:
-                raise ValueError('Informações devem estar no formato indicado')
-            if len(infos[0].split('/')) != 2:
-                raise ValueError('Moedas devem estar no formato MOEDA/MOEDA_UTILIZADA')
-            if infos[0].split('/')[0] == infos[0].split('/')[1]:
-                raise ValueError('Moeda comprada/vendida não pode ser igual a moeda utilizada')
-            moeda = Criptomoeda.objects.get(ticker=infos[0].split('/')[0])
-            moeda_utilizada = infos[0].split('/')[1]
-            quantidade = Decimal(infos[1].replace('.', '').replace(',', '.'))
-            if quantidade <= 0:
-                raise ValueError('Quantidade deve ser maior que 0')
-            preco_unitario = Decimal(infos[2].replace('.', '').replace(',', '.'))
-            if preco_unitario < 0:
-                raise ValueError('Preço unitário não pode ser negativo')
-            data = datetime.datetime.strptime(infos[3], '%d/%m/%Y').date()
-            tipo_operacao = infos[4]
-            valor_taxa = Decimal(infos[5].replace('.', '').replace(',', '.'))
-            if valor_taxa < 0:
-                raise ValueError('Valor da taxa não pode ser negativo')
-            moeda_taxa = infos[6]
-            if moeda_taxa != moeda.ticker and moeda_taxa != moeda_utilizada:
-                raise ValueError('Moeda utilizada para taxa deve ser uma das 2 moedas utilizadas na operação')
-            
-            # Criar objetos
-            operacao = OperacaoCriptomoeda(quantidade=quantidade, preco_unitario=preco_unitario, data=data, tipo_operacao=tipo_operacao, 
-                                                          criptomoeda=moeda, investidor=investidor)
-            objetos_operacoes.append(operacao)
-            
-            objetos_operacoes.append(DivisaoOperacaoCriptomoeda(operacao=operacao, divisao=divisao, quantidade=quantidade))
-            
-            if moeda_utilizada != 'BRL':
-                objetos_operacoes.append(OperacaoCriptomoedaMoeda(operacao=operacao, criptomoeda=Criptomoeda.objects.get(ticker=moeda_utilizada)))
-            
-            if valor_taxa > 0:
-                if moeda_taxa != 'BRL':
-                    objetos_operacoes.append(OperacaoCriptomoedaTaxa(valor=valor_taxa, operacao=operacao, 
-                                                                     moeda=Criptomoeda.objects.get(ticker=moeda_taxa)))
-                else:
-                    objetos_operacoes.append(OperacaoCriptomoedaTaxa(valor=valor_taxa, operacao=operacao))
-        except Exception as e:
-            houve_erro = True
-            lista_erros.append(str(e))
-    if houve_erro:
-        raise ValueError('\n'.join(lista_erros))
-    
-    return objetos_operacoes
+            with transaction.atomic():
+                for operacao_string in lista_operacoes:
+                    try:
+                        info_operacao = verificar_operacao_string_lote(operacao_string)
+                        
+                        # Criar objetos
+                        operacao = OperacaoCriptomoeda.objects.create(quantidade=info_operacao['quantidade'], preco_unitario=info_operacao['preco_unitario'], data=info_operacao['data'], 
+                                                                      tipo_operacao=info_operacao['tipo_operacao'], criptomoeda=info_operacao['moeda'], investidor=investidor)
+                        
+                        DivisaoOperacaoCriptomoeda.objects.create(operacao=operacao, divisao=divisao, quantidade=info_operacao['quantidade'])
+                        
+                        if info_operacao['moeda_utilizada'] != 'BRL':
+                            OperacaoCriptomoedaMoeda.objects.create(operacao=operacao, criptomoeda=Criptomoeda.objects.get(ticker=info_operacao['moeda_utilizada']))
+                        
+                        if info_operacao['valor_taxa'] > 0:
+                            if info_operacao['moeda_taxa'] != 'BRL':
+                                OperacaoCriptomoedaTaxa.objects.create(valor=info_operacao['valor_taxa'], operacao=operacao, 
+                                                                       moeda=Criptomoeda.objects.get(ticker=info_operacao['moeda_taxa']))
+                            else:
+                                OperacaoCriptomoedaTaxa.objects.create(valor=info_operacao['valor_taxa'], operacao=operacao)
+                    except Exception as e:
+                        houve_erro = True
+                        lista_erros.append(str(e))
+            if houve_erro:
+                raise ValueError('\n'.join(lista_erros))
+        except:
+            raise
+    # Para o caso de não salvar, gerar objetos e retorná-los caso não haja erro
+    else:
+        # Guardar objetos a serem retornados
+        objetos_operacoes = list()
+        for operacao_string in lista_operacoes:
+            try:
+                info_operacao = verificar_operacao_string_lote(operacao_string)
+                
+                # Criar objetos
+                operacao = OperacaoCriptomoeda(quantidade=info_operacao['quantidade'], preco_unitario=info_operacao['preco_unitario'], data=info_operacao['data'], 
+                                               tipo_operacao=info_operacao['tipo_operacao'], criptomoeda=info_operacao['moeda'], investidor=investidor)
+                objetos_operacoes.append(operacao)
+                
+                objetos_operacoes.append(DivisaoOperacaoCriptomoeda(operacao=operacao, divisao=divisao, quantidade=info_operacao['quantidade']))
+                
+                if info_operacao['moeda_utilizada'] != 'BRL':
+                    objetos_operacoes.append(OperacaoCriptomoedaMoeda(operacao=operacao, criptomoeda=Criptomoeda.objects.get(ticker=info_operacao['moeda_utilizada'])))
+                
+                if info_operacao['valor_taxa'] > 0:
+                    if info_operacao['moeda_taxa'] != 'BRL':
+                        objetos_operacoes.append(OperacaoCriptomoedaTaxa(valor=info_operacao['valor_taxa'], operacao=operacao, 
+                                                                         moeda=Criptomoeda.objects.get(ticker=info_operacao['moeda_taxa'])))
+                    else:
+                        objetos_operacoes.append(OperacaoCriptomoedaTaxa(valor=info_operacao['valor_taxa'], operacao=operacao))
+            except Exception as e:
+                houve_erro = True
+                lista_erros.append(str(e))
+        if houve_erro:
+            raise ValueError('\n'.join(lista_erros))
+        return objetos_operacoes
 
-# def salvar_operacoes_lote(lista_operacoes, investidor, divisao_id):
-#     """
-#     Salva operações criadas em lote
-#     Parâmetros: Lista de strings
-#                 Investidor
-#                 ID da divisão
-#     """
-#     operacoes = criar_operacoes_lote(lista_operacoes, investidor, divisao_id)
-#     try:
-#         with transaction.atomic():
-#             for objeto_operacao in operacoes:
-#                 objeto_operacao.save()
-#     except:
-#         raise
-# #         raise ValueError('Houve um erro ao salvar as operações geradas em lote')
+def verificar_operacao_string_lote(operacao_string):
+    info_formatada = {}
+    infos = operacao_string.split(';')
+    if len(infos) != 7:
+        raise ValueError('Informações devem estar no formato indicado')
+    if len(infos[0].split('/')) != 2:
+        raise ValueError('Moedas devem estar no formato MOEDA/MOEDA_UTILIZADA')
+    if infos[0].split('/')[0] == infos[0].split('/')[1]:
+        raise ValueError('Moeda comprada/vendida não pode ser igual a moeda utilizada')
+    info_formatada['moeda'] = Criptomoeda.objects.get(ticker=infos[0].split('/')[0])
+    info_formatada['moeda_utilizada'] = infos[0].split('/')[1]
+    info_formatada['quantidade'] = Decimal(infos[1].replace('.', '').replace(',', '.'))
+    if info_formatada['quantidade'] <= 0:
+        raise ValueError('Quantidade deve ser maior que 0')
+    info_formatada['preco_unitario'] = Decimal(infos[2].replace('.', '').replace(',', '.'))
+    if info_formatada['preco_unitario'] < 0:
+        raise ValueError('Preço unitário não pode ser negativo')
+    info_formatada['data'] = datetime.datetime.strptime(infos[3], '%d/%m/%Y').date()
+    info_formatada['tipo_operacao'] = infos[4]
+    info_formatada['valor_taxa'] = Decimal(infos[5].replace('.', '').replace(',', '.'))
+    if info_formatada['valor_taxa'] < 0:
+        raise ValueError('Valor da taxa não pode ser negativo')
+    info_formatada['moeda_taxa'] = infos[6]
+    if info_formatada['moeda_taxa'] != info_formatada['moeda'].ticker and info_formatada['moeda_taxa'] != info_formatada['moeda_utilizada']:
+        raise ValueError('Moeda utilizada para taxa deve ser uma das 2 moedas utilizadas na operação')
+    return info_formatada
 
-def criar_transferencias_lote(lista_transferencias, investidor, divisao_id):
+def criar_transferencias_lote(lista_transferencias, investidor, divisao_id, salvar=False):
     """
     Cria várias transferências com base em uma lista de strings com ponto e vírgula como separador, 
     vinculando a uma única divisão. Retorna os objetos criados
     Parâmetros: Lista de strings
                 Investidor
                 ID da divisão
+                Indicador se transferências devem ser salvas na base
     Retorno: Lista com objetos referentes a transferências em criptomoedas
     """
     if len(lista_transferencias) > 20:
@@ -312,50 +334,72 @@ def criar_transferencias_lote(lista_transferencias, investidor, divisao_id):
      
     houve_erro = False
     lista_erros = list()
-    for transferencia_string in lista_transferencias:
+    # Para o caso de salvar os objetos na base
+    if salvar:
         try:
-            infos = transferencia_string.split(';')
-            if len(infos) != 6:
-                raise ValueError('Informações devem estar no formato indicado')
-            moeda = infos[0]
-            if moeda not in ['BRL',] or moeda not in Criptomoeda.objects.all().values_list('ticker', flat=True):
-                raise ValueError('Moeda inválida')
-            quantidade = Decimal(infos[1].replace('.', '').replace(',', '.'))
-            if quantidade <= 0:
-                raise ValueError('Quantidade deve ser maior que 0')
-            origem = infos[2]
-            if len(origem) > 50:
-                raise ValueError('Nome da origem deve ser de no máximo 50 caracteres')
-            destino = infos[3]
-            if len(destino) > 50:
-                raise ValueError('Nome da origem deve ser de no máximo 50 caracteres')
-            data = datetime.datetime.strptime(infos[4], '%d/%m/%Y').date()
-            taxa = Decimal(infos[5].replace('.', '').replace(',', '.'))
-            if taxa < 0:
-                raise ValueError('Valor da taxa não pode ser negativo')
-             
-            # Criar objetos
-            transferencia = TransferenciaCriptomoeda.objects.create(quantidade=quantidade, data=data, origem=origem, destino=destino,
-                                                                    taxa=taxa, moeda=moeda, investidor=investidor)
-             
-            DivisaoTransferenciaCriptomoeda.objects.create(transferencia=transferencia, divisao=divisao, quantidade=quantidade)
-        except Exception as e:
-            houve_erro = True
-            lista_erros.append(str(e))
-    if houve_erro:
-        raise ValueError('\n'.join(lista_erros))
+            with transaction.atomic():
+                for transferencia_string in lista_transferencias:
+                    try:
+                        info_transferencia = verificar_transferencia_string_lote(transferencia_string)
                          
-def salvar_transferencias_lote(lista_transferencias, investidor, divisao_id):
-    """
-    Salva transferências criadas em lote
-    Parâmetros: Lista de strings
-                Investidor
-                ID da divisão
-    """
-    transferencias = criar_transferencias_lote(lista_transferencias, investidor, divisao_id)
-    try:
-        with transaction.atomic():
-            for objeto_operacao in transferencias:
-                objeto_operacao.save()
-    except:
-        raise ValueError('Houve um erro ao salvar as transferências geradas em lote')
+                        # Criar objetos
+                        transferencia = TransferenciaCriptomoeda.objects.create(quantidade=info_transferencia['quantidade'], data=info_transferencia['data'], 
+                                                                                origem=info_transferencia['origem'], destino=info_transferencia['destino'],
+                                                                                taxa=info_transferencia['taxa'], moeda=info_transferencia['moeda'], investidor=investidor)
+                         
+                        DivisaoTransferenciaCriptomoeda.objects.create(transferencia=transferencia, divisao=divisao, quantidade=info_transferencia['quantidade'])
+                    except Exception as e:
+                        houve_erro = True
+                        lista_erros.append(str(e))
+                if houve_erro:
+                    raise ValueError('\n'.join(lista_erros))
+        except:
+            raise
+    # Para o caso de gerar objetos e visualizá-los, sem salvar na base
+    else:
+        # Guardar objetos a serem retornados
+        objetos_transferencias = list()
+        for transferencia_string in lista_transferencias:
+            try:
+                info_transferencia = verificar_transferencia_string_lote(transferencia_string)
+                 
+                # Criar objetos
+                transferencia = TransferenciaCriptomoeda(quantidade=info_transferencia['quantidade'], data=info_transferencia['data'], 
+                                                                        origem=info_transferencia['origem'], destino=info_transferencia['destino'],
+                                                                        taxa=info_transferencia['taxa'], moeda=info_transferencia['moeda'], investidor=investidor)
+                objetos_transferencias.append(transferencia)
+                 
+                objetos_transferencias.append(DivisaoTransferenciaCriptomoeda(transferencia=transferencia, divisao=divisao, quantidade=info_transferencia['quantidade']))
+            except Exception as e:
+                houve_erro = True
+                lista_erros.append(str(e))
+        if houve_erro:
+            raise ValueError('\n'.join(lista_erros))
+        return 
+                         
+def verificar_transferencia_string_lote(transferencia_string):
+    info_formatada = {}
+    infos = transferencia_string.split(';')
+    if len(infos) != 6:
+        raise ValueError('Informações devem estar no formato indicado')
+    info_formatada['moeda'] = infos[0]
+    if info_formatada['moeda'] == 'BRL':
+        info_formatada['moeda'] = None
+    elif Criptomoeda.objects.filter(ticker=info_formatada['moeda']).exists():
+        info_formatada['moeda'] = Criptomoeda.objects.get(ticker=info_formatada['moeda'])
+    else:
+        raise ValueError('Moeda inválida: %s' % info_formatada['moeda'])
+    info_formatada['quantidade'] = Decimal(infos[1].replace('.', '').replace(',', '.'))
+    if info_formatada['quantidade'] <= 0:
+        raise ValueError('Quantidade deve ser maior que 0')
+    info_formatada['origem'] = infos[2]
+    if len(info_formatada['origem']) > 50:
+        raise ValueError('Nome da origem deve ser de no máximo 50 caracteres')
+    info_formatada['destino'] = infos[3]
+    if len(info_formatada['destino']) > 50:
+        raise ValueError('Nome da origem deve ser de no máximo 50 caracteres')
+    info_formatada['data'] = datetime.datetime.strptime(infos[4], '%d/%m/%Y').date()
+    info_formatada['taxa'] = Decimal(infos[5].replace('.', '').replace(',', '.'))
+    if info_formatada['taxa'] < 0:
+        raise ValueError('Valor da taxa não pode ser negativo')
+    return info_formatada
