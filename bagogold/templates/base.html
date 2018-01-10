@@ -137,7 +137,7 @@
                                         </li>
                                         {% else %}
                                         <li class="dropdown">
-                                            <a class="dropdown-toggle font-yellow-crusta" href="{% url "login" %}">Entrar</a>
+                                            <a class="dropdown-toggle font-yellow-crusta" href="{% url "login" %}?next={{request.path}}">Entrar</a>
                                         </li>
                                         {% endif %}
                                         <!-- END USER LOGIN DROPDOWN -->
