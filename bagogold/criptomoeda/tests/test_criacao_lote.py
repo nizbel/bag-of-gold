@@ -5,10 +5,7 @@ from bagogold.criptomoeda.models import TransferenciaCriptomoeda, Criptomoeda, \
     OperacaoCriptomoeda, OperacaoCriptomoedaMoeda, OperacaoCriptomoedaTaxa, \
     ValorDiarioCriptomoeda
 from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia, \
-    calcular_qtd_moedas_ate_dia_por_criptomoeda, \
-    calcular_qtd_moedas_ate_dia_por_divisao, buscar_valor_criptomoeda_atual, \
-    buscar_valor_criptomoedas_atual, buscar_historico_criptomoeda, \
-    buscar_valor_criptomoedas_atual_varias_moedas, salvar_operacoes_lote
+    salvar_operacoes_lote, salvar_transferencias_lote
 from decimal import Decimal
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -104,15 +101,26 @@ class CriacaoLoteTestCase(TestCase):
     def test_criacao_lote_transf_sucesso(self):
         """Testa criação de transferencias em lote sem erros"""
         investidor = User.objects.get(username='tester').investidor
-        lista_transf = ['',
-                        '',
-                        '']
-        transferencia_1 = TransferenciaCriptomoeda.objects.create(moeda=None, investidor=user.investidor, data=datetime.date(2017, 6, 6), quantidade=Decimal('4999.99'), 
-                                                                  taxa=Decimal('102.39'), origem='Conta', destino='Mercado Bitcoin')
-        transferencia_2 = TransferenciaCriptomoeda.objects.create(moeda=bitcoin, data=datetime.date(2017, 6, 6), quantidade=Decimal('0.2'), investidor=user.investidor, 
-                                                                  origem='Mercado Bitcoin', destino='Poloniex', taxa=Decimal('0.0006102'))
-        transferencia_3 = TransferenciaCriptomoeda.objects.create(moeda=bitcoin, data=datetime.date(2017, 6, 9), quantidade=Decimal('0.19'), investidor=user.investidor, 
-                                                                  origem='Mercado Bitcoin', destino='Poloniex', taxa=Decimal('0.0006102'))
+        lista_transf = ['BRL;4999,99;Conta;Mercado Bitcoin;06/06/2017;102,39',
+                        'BTC;0,2;Mercado Bitcoin;Poloniex;06/06/2017;0,0006102',
+                        'BTC;0,19;Mercado Bitcoin;Poloniex;09/06/2017;0,0006102']
+        
+        divisao_geral = Divisao.objects.get(investidor=investidor, nome="Geral")
+        
+        salvar_transferencias_lote(lista_transf, investidor, divisao_geral.id)
+        self.assertTrue(TransferenciaCriptomoeda.objects.filter(investidor=investidor).exists())
+        
+        qtd_moedas = calcular_qtd_moedas_ate_dia(investidor, datetime.date(2017, 6, 10))
+        
+        bitcoin = Criptomoeda.objects.get(nome='Bitcoin', ticker='BTC').id
+        
+        situacao_no_dia = {bitcoin: Decimal('-0.39')}
+        
+        for id_criptomoeda in qtd_moedas.keys():
+            self.assertAlmostEqual(qtd_moedas[id_criptomoeda], situacao_no_dia[id_criptomoeda], delta=Decimal('0.00000001'))
+            
+        # Verificar saldo da divisão (deve estar negativo)
+        self.assertAlmostEqual(divisao_geral.saldo_criptomoeda(), Decimal('-4999.99'), delta=Decimal('0.01'))
             
     def test_criacao_lote_transf_erro(self):
         """Testa criação de transferências em lote com erros"""
