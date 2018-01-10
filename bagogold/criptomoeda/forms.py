@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.forms.utils import LocalizedModelForm
-from bagogold.criptomoeda.models import OperacaoCriptomoeda, Criptomoeda,\
+from bagogold.bagogold.models.divisoes import Divisao
+from bagogold.criptomoeda.models import OperacaoCriptomoeda, Criptomoeda, \
     TransferenciaCriptomoeda
 from bagogold.criptomoeda.utils import \
     calcular_qtd_moedas_ate_dia_por_criptomoeda
@@ -86,3 +87,18 @@ class TransferenciaCriptomoedaForm(LocalizedModelForm):
         # Testar se o campo criptomoeda foi preenchido, se não, transferência de reais
         if data.get('criptomoeda') and data.get('quantidade') > calcular_qtd_moedas_ate_dia_por_criptomoeda(self.investidor, data.get('criptomoeda').id, data.get('data')):
             raise forms.ValidationError('Não é possível transferir quantidade informada. Quantidade em %s: %s %s' % (data.get('data').strftime('%d/%m/%Y'), data.get('quantidade'), data.get('criptomoeda').ticker))
+        
+class OperacaoCriptomoedaLoteForm(forms.Form):
+    divisao = forms.ModelChoiceField(queryset=None, label=u'Divisão')
+    operacoes_lote = forms.CharField(label=u'Operações', widget=forms.Textarea)
+    
+    def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
+        # first call parent's constructor
+        super(OperacaoCriptomoedaLoteForm, self).__init__(*args, **kwargs)
+        # there's a `fields` property now
+        self.fields['divisao'].queryset = Divisao.objects.filter(investidor=self.investidor)
+
+    def clean(self):
+        data = super(OperacaoCriptomoedaLoteForm, self).clean()
+        
