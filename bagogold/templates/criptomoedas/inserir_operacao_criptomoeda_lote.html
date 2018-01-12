@@ -16,10 +16,12 @@
     <form id="form_inserir_op_cripto_lote" method="POST" class="horizontal-form">{% csrf_token %}
         <div class="form-body">
             <div class="row">
+            <div class="col-md-6">
+            <div class="row">
                 <div class="form-group col-md-6 {% if form_lote_operacoes.divisao.errors %} has-error {% endif %}">
                     <label class="control-label col-md-4" style="text-align: left;"> {{form_lote_operacoes.divisao.label}}: </label>
                     <div class="col-md-8">
-                        <select class="selectpicker form-control" id="id_divisao" name="divisao" required="">
+                        <select class="selectpicker form-control" id="id_divisao" name="divisao" {% if confirmacao %}disabled="disabled"{% endif %}>
                             {% for key, value in form_lote_operacoes.fields.divisao.widget.choices %}<option value="{{ key }}"
                             {% if key == form_lote_operacoes.divisao.value|add:"0" %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
                         </select>
@@ -31,15 +33,29 @@
                 <div class="form-group col-md-6 {% if form_lote_operacoes.operacoes_lote.errors %} has-error {% endif %}">
                     <label class="control-label col-md-4"> {{form_lote_operacoes.operacoes_lote.label}}: </label>
                     <div class="col-md-8">
-                        <textarea name="operacoes_lote" id="id_operacoes_lote" rows="10" cols="40" required=""></textarea>
+                        <textarea name="operacoes_lote" id="id_operacoes_lote" rows="10" cols="40" {% if confirmacao %}disabled="disabled"{% endif %}></textarea>
                         {% if form_lote_operacoes.operacoes_lote.errors %} <span class="help-block"> {{ form_lote_operacoes.operacoes_lote.errors.as_text }} </span> {% endif %}
                     </div>
                 </div>
             </div>
+            </div>
+            {% if confirmacao %}
+            <div class="col-md-6">
+            <h3>Operações geradas</h3>
+            <ul>
+                {% for operacao in operacoes %}
+                    <li>{{operacao}}</li>
+                {% endfor %}
+            </ul>
+            </div>
+            {% endif %}
+            </div>
             <div class="form-actions">
                 <div class="row">
                     <div class="col-md-offset col-md-3">
-                        <button type="submit" name="save" value="1" class="btn green-steel">Salvar</button>
+                        {% if confirmacao %}<button type="submit" name="confirmar" value="1" class="btn green-steel">Salvar</button>
+                        {% else %}<button type="submit" name="gerar" value="1" class="btn green-steel">Gerar operações</button>
+                        {% endif %}
                     </div>
                 </div>
             </div>
