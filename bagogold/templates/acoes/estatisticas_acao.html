@@ -24,7 +24,7 @@
 			</div>
 			<!-- END Portlet PORTLET-->
 		</div>   
-        {% if request.user.is_authenticated %}
+        {% if request.user.is_authenticated and dados.mostrar_grafico_preco_medio %}
 		<div class="col-md-12">
 			<!-- BEGIN Portlet PORTLET-->
 			<div class="portlet box yellow-crusta">
