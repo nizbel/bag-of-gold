@@ -4,7 +4,7 @@ from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoCriptomoedaFormSet, \
     DivisaoTransferenciaCriptomoedaFormSet
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoCriptomoeda, \
-    Divisao, DivisaoTransferenciaCriptomoeda
+    Divisao, DivisaoTransferenciaCriptomoeda, DivisaoPrincipal
 from bagogold.criptomoeda.forms import OperacaoCriptomoedaForm, \
     TransferenciaCriptomoedaForm, OperacaoCriptomoedaLoteForm, \
     TransferenciaCriptomoedaLoteForm
@@ -287,7 +287,7 @@ def historico(request):
                 moedas[movimentacao.criptomoeda.ticker].qtd = 0
                 
             # Verifica se há taxa cadastrada
-            movimentacao.taxa = movimentacao.operacaocriptomoedataxa if hasattr(movimentacao, 'operacaocriptomoedataxa') else None
+            movimentacao.taxa = movimentacao.taxa()
             
             if movimentacao.tipo_operacao == 'C':
                 movimentacao.tipo = 'Compra'
@@ -502,10 +502,17 @@ def inserir_operacao_lote(request):
                         criar_operacoes_lote(lista_string, investidor, divisao.id, salvar=True)
                         messages.success(request, 'Operações inseridas com sucesso')
                         return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
-                        
+                    
+                    # Verificar se foi enviado cancelamento da confirmação
+                    if request.POST.get('confirmar') == '0':
+                        # Validar operações
+                        operacoes = formatar_op_lote_confirmacao(criar_operacoes_lote(lista_string, investidor, divisao.id))
+                        return TemplateResponse(request, 'criptomoedas/inserir_operacao_criptomoeda_lote.html', {'form_lote_operacoes': form_lote_operacoes, 'operacoes': list(),
+                                                                                                                 'confirmacao': False})
+
                     else:
                         # Validar operações
-                        operacoes = criar_operacoes_lote(lista_string, investidor, divisao.id)
+                        operacoes = formatar_op_lote_confirmacao(criar_operacoes_lote(lista_string, investidor, divisao.id))
                         return TemplateResponse(request, 'criptomoedas/inserir_operacao_criptomoeda_lote.html', {'form_lote_operacoes': form_lote_operacoes, 'operacoes': operacoes,
                                                                                                                  'confirmacao': True})
                 else:
@@ -515,9 +522,43 @@ def inserir_operacao_lote(request):
     else:
         # Form do lote de operações
         form_lote_operacoes = OperacaoCriptomoedaLoteForm(investidor=investidor)
+        
+        # TESTE
+#         operacoes = formatar_op_lote_confirmacao(criar_operacoes_lote(['BTC/BRL;0,48784399;9968,99994;06/06/2017;C;0,00343898;BTC',
+#                            'FCT/BTC;2,04838866;0,0110499;07/06/2017;C;0,00513381;FCT',
+#                            'FCT/BTC;15,40786135;0,01104999;07/06/2017;C;0,03861619;FCT',
+#                            'FCT/BTC;0,61136046;0,01080999;07/06/2017;C;0,00153223;FCT',
+#                            'FCT/BTC;0,81185596;0,0098302;09/06/2017;V;0,00001995;BTC',
+#                            'FCT/BTC;7,68814404;0,0098302;09/06/2017;V;0,00011336;BTC',
+#                            'ETH/BTC;0,109725;0,0967;09/06/2017;C;0,000275;ETH',
+#                            'ETH/BTC;0,33706492;0,0967;09/06/2017;C;0,00050635;ETH',
+#                            'ETH/BTC;0,41450914;0,0967;09/06/2017;C;0,00062269;ETH',
+#                            'LSK/BTC;74,8125;0,00117999;09/06/2017;C;0,1875;LSK',
+#                            'LSK/BTC;9,48627159;0,00117998;09/06/2017;C;0,02377511;LSK'], investidor, DivisaoPrincipal.objects.get(investidor=investidor).divisao.id))
     
     return TemplateResponse(request, 'criptomoedas/inserir_operacao_criptomoeda_lote.html', {'form_lote_operacoes': form_lote_operacoes, 'operacoes': list(),
                                                                                              'confirmacao': False})
+    
+def formatar_op_lote_confirmacao(lista_operacoes_lote):
+    """
+    Formata operações geradas em lote para confirmação
+    Parâmetros: Lista de operações geradas no lote
+    Retorno: Operações formatadas para mostrar na página
+    """
+    operacoes_formatadas = list()
+    
+    # Testar elementos para agrupá-los por operação
+    for elemento in lista_operacoes_lote:
+        if isinstance(elemento, OperacaoCriptomoeda):
+            elemento.tipo_operacao = 'Compra' if elemento.tipo_operacao == 'C' else 'Venda'
+            operacoes_formatadas.append(elemento)
+            
+        elif isinstance(elemento, DivisaoOperacaoCriptomoeda):
+            operacoes_formatadas[len(operacoes_formatadas)-1].divisao = elemento.divisao
+            
+        elif isinstance(elemento, OperacaoCriptomoedaTaxa):
+            operacoes_formatadas[len(operacoes_formatadas)-1].taxa = elemento
+    return operacoes_formatadas
     
 @login_required
 @adiciona_titulo_descricao('Inserir transferência para criptomoedas', 'Inserir registro de transferência para criptomoedas')
@@ -648,11 +689,19 @@ def painel(request):
     investidor = request.user.investidor
     qtd_moedas = calcular_qtd_moedas_ate_dia(investidor)
     
+    dados = {}
+    dados['total_atual'] = Decimal(0)
+    
     moedas = Criptomoeda.objects.filter(id__in=qtd_moedas.keys())
+    valores_atuais = ValorDiarioCriptomoeda.objects.filter(criptomoeda__in=qtd_moedas.keys(), moeda=ValorDiarioCriptomoeda.MOEDA_REAL).values('valor')
     for moeda in moedas:
         moeda.qtd_atual = qtd_moedas[moeda.id]
+        moeda.valor_atual = valores_atuais.get(criptomoeda=moeda)['valor']
+        moeda.total_atual = moeda.qtd_atual * moeda.valor_atual
+        
+        dados['total_atual'] += moeda.total_atual
     
-    return TemplateResponse(request, 'criptomoedas/painel.html', {'moedas': moedas})
+    return TemplateResponse(request, 'criptomoedas/painel.html', {'moedas': moedas, 'dados': dados})
 
 def sobre(request):
     pass
