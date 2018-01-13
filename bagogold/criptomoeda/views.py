@@ -12,7 +12,8 @@ from bagogold.criptomoeda.models import Criptomoeda, OperacaoCriptomoeda, \
     OperacaoCriptomoedaMoeda, OperacaoCriptomoedaTaxa, TransferenciaCriptomoeda, \
     ValorDiarioCriptomoeda
 from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia, \
-    criar_operacoes_lote, criar_transferencias_lote
+    criar_operacoes_lote, criar_transferencias_lote,\
+    calcular_qtd_moedas_ate_dia_por_criptomoeda
 from bagogold.fundo_investimento.utils import \
     calcular_qtd_cotas_ate_dia_por_fundo
 from decimal import Decimal
@@ -131,15 +132,20 @@ def editar_operacao_criptomoeda(request, id_operacao):
                 
         elif request.POST.get("delete"):
             # Verifica se, em caso de compra, a quantidade de cotas do investidor não fica negativa
-            if operacao_criptomoeda.tipo_operacao == 'C' and calcular_qtd_cotas_ate_dia_por_fundo(investidor, operacao_criptomoeda.criptomoeda.id, datetime.date.today()) - operacao_criptomoeda.quantidade < 0:
-                messages.error(request, 'Operação de compra não pode ser apagada pois quantidade atual para o fundo %s seria negativa' % (operacao_criptomoeda.criptomoeda))
+            if operacao_criptomoeda.tipo_operacao == 'C' \
+                and calcular_qtd_moedas_ate_dia_por_criptomoeda(investidor, operacao_criptomoeda.criptomoeda.id) - operacao_criptomoeda.quantidade < 0:
+                
+                # Carregar formulários para evitar erro ao renderizar a página
+                form_operacao_criptomoeda = OperacaoCriptomoedaForm(request.POST, instance=operacao_criptomoeda, investidor=investidor)
+                formset_divisao = DivisaoFormSet(request.POST, instance=operacao_criptomoeda, investidor=investidor) if varias_divisoes else None
+                messages.error(request, u'Operação de compra não pode ser apagada pois quantidade atual para %s seria negativa' % (operacao_criptomoeda.criptomoeda.nome))
             else:
                 divisao_criptomoeda = DivisaoOperacaoCriptomoeda.objects.filter(operacao=operacao_criptomoeda)
                 for divisao in divisao_criptomoeda:
                     divisao.delete()
                 operacao_criptomoeda.delete()
-                messages.success(request, 'Operação apagada com sucesso')
-                return HttpResponseRedirect(reverse('td:historico_td'))
+                messages.success(request, u'Operação apagada com sucesso')
+                return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
  
     else:
         if OperacaoCriptomoedaTaxa.objects.filter(operacao=operacao_criptomoeda).exists():
