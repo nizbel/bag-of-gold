@@ -17,8 +17,8 @@
         <div class="form-body">
             <div class="row">
                 <div class="form-group col-md-6 {% if form_lote_operacoes.divisao.errors %} has-error {% endif %}">
-                    <label class="control-label col-md-4" style="text-align: left;"> {{form_lote_operacoes.divisao.label}}: </label>
-                    <div class="col-md-8">
+                    <label class="control-label col-md-2" style="text-align: left;"> {{form_lote_operacoes.divisao.label}}: </label>
+                    <div class="col-md-10">
                         <select class="selectpicker form-control" id="id_divisao" name="divisao" {% if confirmacao %}disabled="disabled"{% endif %}>
                             {% for key, value in form_lote_operacoes.fields.divisao.widget.choices %}<option value="{{ key }}"
                             {% if key == form_lote_operacoes.divisao.value|add:"0" %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
@@ -28,30 +28,107 @@
                     </div>
                 </div>
                 <div class="form-group col-md-6 {% if form_lote_operacoes.operacoes_lote.errors %} has-error {% endif %}">
-                    <label class="control-label col-md-4"> {{form_lote_operacoes.operacoes_lote.label}}: </label>
-                    <div class="col-md-8">
+                    <label class="control-label col-md-2"> {{form_lote_operacoes.operacoes_lote.label}}: </label>
+                    <div class="col-md-10">
                         <textarea class="form-control autosizeme" name="operacoes_lote" id="id_operacoes_lote"
-                        {% if confirmacao %}readonly="readonly"{% endif %}>{{form_lote_operacoes.operacoes_lote.value|default:''}}</textarea>
+                        {% if confirmacao %}readonly="readonly"{% endif %}>{% if confirmacao %}{{form_lote_operacoes.operacoes_lote.value|linenumbers}}
+                        {% else %}{{form_lote_operacoes.operacoes_lote.value|default:''}}{% endif %}</textarea>
                         {% if form_lote_operacoes.operacoes_lote.errors %} <span class="help-block"> {{ form_lote_operacoes.operacoes_lote.errors.as_text }} </span> {% endif %}
                     </div>
                 </div>
             </div>
+            {% if confirmacao or operacoes %}
             <div class="row">
-                {% if confirmacao %}
-                <div class="col-md-6">
-                    <h3>Operações geradas</h3>
-                    <ul>
-                        {% for operacao in operacoes %}
-                            <li>{{operacao}}</li>
-                        {% endfor %}
-                    </ul>
+                <div class="col-md-12">
+                    <div class="portlet box yellow-crusta">
+                        <div class="portlet-title">
+                            <div class="caption">
+                                <i class="icon-plus"></i> Operações geradas </div>
+                            <div class="tools">
+                                <a href="javascript:;" class="collapse"></a>
+                            </div>
+                        </div>
+                        <div class="portlet-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <ul class="list-group">
+                                        {% for operacao in operacoes %}
+                                            {% if forloop.counter0|divisibleby:2 %}
+                                            <li class="list-group-item">
+                                                <div class="row">
+                                                    <span class="col-md-5">
+                                                        <strong>{{forloop.counter}}:</strong> <strong>{{operacao.tipo_operacao}}</strong> de 
+                                                        <strong>{{operacao.quantidade}} {{operacao.criptomoeda.ticker}}</strong>
+                                                    </span>
+                                                    <span class="col-md-4">
+                                                        {% if operacao.taxa %}
+                                                        Taxa: <strong>{% if operacao.taxa.em_real %}R$ {{operacao.taxa.valor}}
+                                                            {% else %}{{operacao.taxa.valor}} {{operacao.taxa.moeda_utilizada}}{% endif %}</strong>
+                                                        {% else %}
+                                                        Taxa: <strong>Sem taxa</strong>
+                                                        {% endif %}
+                                                    </span>
+                                                    <span class="col-md-3">
+                                                        Data: <strong>{{operacao.data|date:'d/m/Y'}}</strong>
+                                                    </span>
+                                                    <span class="col-md-5">
+                                                        Preço unitário: <strong>{% if operacao.em_real %}R$ {{operacao.preco_unitario}}
+                                                            {% else %}{{operacao.preco_unitario}} {{operacao.moeda_utilizada}}{% endif %}</strong>
+                                                    </span>
+                                                    <span class="col-md-7">
+                                                        Divisão: <strong>{{operacao.divisao.nome}}</strong>
+                                                    </span>
+                                                </div>
+                                            </li>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <ul class="list-group">
+                                        {% for operacao in operacoes %}
+                                            {% if forloop.counter|divisibleby:2 %}
+                                            <li class="list-group-item">
+                                                <div class="row">
+                                                    <span class="col-md-5">
+                                                        <strong>{{forloop.counter}}:</strong> <strong>{{operacao.tipo_operacao}}</strong> de 
+                                                        <strong>{{operacao.quantidade}} {{operacao.criptomoeda.ticker}}</strong>
+                                                    </span>
+                                                    <span class="col-md-4">
+                                                        {% if operacao.taxa %}
+                                                        Taxa: <strong>{% if operacao.taxa.em_real %}R$ {{operacao.taxa.valor}}
+                                                            {% else %}{{operacao.taxa.valor}} {{operacao.taxa.moeda_utilizada}}{% endif %}</strong>
+                                                        {% else %}
+                                                        Taxa: <strong>Sem taxa</strong>
+                                                        {% endif %}
+                                                    </span>
+                                                    <span class="col-md-3">
+                                                        Data: <strong>{{operacao.data|date:'d/m/Y'}}</strong>
+                                                    </span>
+                                                    <span class="col-md-5">
+                                                        Preço unitário: <strong>{% if operacao.em_real %}R$ {{operacao.preco_unitario}}
+                                                            {% else %}{{operacao.preco_unitario}} {{operacao.moeda_utilizada}}{% endif %}</strong>
+                                                    </span>
+                                                    <span class="col-md-7">
+                                                        Divisão: <strong>{{operacao.divisao.nome}}</strong>
+                                                    </span>
+                                                </div>
+                                            </li>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                {% endif %}
             </div>
+            {% endif %}
             <div class="form-actions">
                 <div class="row">
                     <div class="col-md-offset col-md-3">
                         {% if confirmacao %}<button type="submit" name="confirmar" value="1" class="btn green-steel">Salvar</button>
+                        <button type="submit" name="confirmar" value="0" class="btn btn-warning">Cancelar</a>
                         {% else %}<button type="submit" name="gerar" value="1" class="btn green-steel">Gerar operações</button>
                         {% endif %}
                     </div>
