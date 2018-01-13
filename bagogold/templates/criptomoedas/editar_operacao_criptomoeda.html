@@ -51,7 +51,7 @@
                 <div class="form-group col-md-6 {% if form_operacao_criptomoeda.preco_unitario.errors %} has-error {% endif %}">
                     <label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_criptomoeda.preco_unitario.label}}: </label>
                     <div class="col-md-8">
-                        <input id="id_valor" type="text" value="{{form_operacao_criptomoeda.preco_unitario.value}}" name="valor" class="form-control">
+                        <input id="id_preco_unitario" type="text" value="{{form_operacao_criptomoeda.preco_unitario.value}}" name="preco_unitario" class="form-control">
                         {% if form_operacao_criptomoeda.preco_unitario.errors %} <span class="help-block"> {{ form_operacao_criptomoeda.preco_unitario.errors.as_text }} </span> {% endif %}
                     </div>
                 </div>
