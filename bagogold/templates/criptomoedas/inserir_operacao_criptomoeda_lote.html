@@ -31,8 +31,7 @@
                     <label class="control-label col-md-2"> {{form_lote_operacoes.operacoes_lote.label}}: </label>
                     <div class="col-md-10">
                         <textarea class="form-control autosizeme" name="operacoes_lote" id="id_operacoes_lote"
-                        {% if confirmacao %}readonly="readonly"{% endif %}>{% if confirmacao %}{{form_lote_operacoes.operacoes_lote.value|linenumbers}}
-                        {% else %}{{form_lote_operacoes.operacoes_lote.value|default:''}}{% endif %}</textarea>
+                        {% if confirmacao %}readonly="readonly"{% endif %}>{{form_lote_operacoes.operacoes_lote.value|default:''}}</textarea>
                         {% if form_lote_operacoes.operacoes_lote.errors %} <span class="help-block"> {{ form_lote_operacoes.operacoes_lote.errors.as_text }} </span> {% endif %}
                     </div>
                 </div>

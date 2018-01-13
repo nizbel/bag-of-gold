@@ -493,7 +493,7 @@ def inserir_operacao_lote(request):
                     lista_string = [string_operacao.strip() for string_operacao in form_lote_operacoes.cleaned_data.get('operacoes_lote').split('\n')]
                     
                     divisao = form_lote_operacoes.cleaned_data.get('divisao')
-                    if not divisao:
+                    if not divisao or divisao.investidor != investidor:
                         raise ValueError('Divisão inválida')
                     
                     # Verificar se foi enviada confirmação de criação
@@ -505,8 +505,6 @@ def inserir_operacao_lote(request):
                     
                     # Verificar se foi enviado cancelamento da confirmação
                     if request.POST.get('confirmar') == '0':
-                        # Validar operações
-                        operacoes = formatar_op_lote_confirmacao(criar_operacoes_lote(lista_string, investidor, divisao.id))
                         return TemplateResponse(request, 'criptomoedas/inserir_operacao_criptomoeda_lote.html', {'form_lote_operacoes': form_lote_operacoes, 'operacoes': list(),
                                                                                                                  'confirmacao': False})
 
