@@ -27,7 +27,7 @@
                     e <strong>uma operação por linha</strong>. Com um máximo de <strong>20 operações por lote</strong>. Cada operação deve estar no seguinte formato:</p>
                     <p class="text-center"><strong>MOEDA/MOEDA_UTILIZADA;QUANTIDADE;PREÇO;DATA;TIPO_OPERAÇÃO;VALOR_TAXA;MOEDA_TAXA</strong></p>
                     <ul>
-                        <li><strong>MOEDA:</strong> Código para a criptomoeda comprada/vendida, <a>lista de criptomoedas válidas</a>.</li>
+                        <li><strong>MOEDA:</strong> Código para a criptomoeda comprada/vendida, <a data-toggle="modal" href="#criptomoedas_validas">lista de criptomoedas válidas</a>.</li>
                         <li><strong>MOEDA_UTILIZADA:</strong> Código para a moeda utilizada na operação, pode ser tanto real (<strong>BRL</strong>) quanto 
                         uma criptomoeda válida.</li>
                         <li><strong>QUANTIDADE:</strong> Quantidade comprada/vendida, não é necessário separador para milhares. O separador decimal deve ser 
@@ -170,6 +170,28 @@
                     </div>
                 </div>
             </div>
+        </div>
+        <div class="modal fade" id="criptomoedas_validas" tabindex="-1" role="basic" aria-hidden="true" data-backdrop="static" data-keyboard="false"  style="display: none;">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                        <h4 class="modal-title">Criptomoedas válidas</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            {% for moeda in criptomoedas_validas %}
+                            <span class="col-md-3"><strong>{{moeda.ticker}}</strong> - {{moeda.nome}}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <a class="btn dark btn-outline" data-dismiss="modal">Fechar</a>
+                    </div>
+                </div>
+                <!-- /.modal-content -->
+            </div>
+            <!-- /.modal-dialog -->
         </div>
     </form>
     <!-- END FORM-->

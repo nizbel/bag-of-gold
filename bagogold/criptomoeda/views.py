@@ -488,7 +488,10 @@ def inserir_operacao_criptomoeda(request):
 @adiciona_titulo_descricao('Inserir operação em criptomoedas em lote', 'Inserir lote de registros de operação de compra/venda em criptomoeda')
 def inserir_operacao_lote(request):
     investidor = request.user.investidor
-        
+    
+    # Carregar lista com criptomoedas válidas
+    criptomoedas_validas = Criptomoeda.objects.all().order_by('ticker')
+    
     if request.method == 'POST':
         form_lote_operacoes = OperacaoCriptomoedaLoteForm(request.POST, investidor=investidor)
         
@@ -512,13 +515,13 @@ def inserir_operacao_lote(request):
                     # Verificar se foi enviado cancelamento da confirmação
                     if request.POST.get('confirmar') == '0':
                         return TemplateResponse(request, 'criptomoedas/inserir_operacao_criptomoeda_lote.html', {'form_lote_operacoes': form_lote_operacoes, 'operacoes': list(),
-                                                                                                                 'confirmacao': False})
+                                                                                                                 'confirmacao': False, 'criptomoedas_validas': criptomoedas_validas})
 
                     else:
                         # Validar operações
                         operacoes = formatar_op_lote_confirmacao(criar_operacoes_lote(lista_string, investidor, divisao.id))
                         return TemplateResponse(request, 'criptomoedas/inserir_operacao_criptomoeda_lote.html', {'form_lote_operacoes': form_lote_operacoes, 'operacoes': operacoes,
-                                                                                                                 'confirmacao': True})
+                                                                                                                 'confirmacao': True, 'criptomoedas_validas': criptomoedas_validas})
                 else:
                     raise ValueError('Insira as operações no formato indicado')
             except Exception as e:
@@ -541,7 +544,7 @@ def inserir_operacao_lote(request):
 #                            'LSK/BTC;9,48627159;0,00117998;09/06/2017;C;0,02377511;LSK'], investidor, DivisaoPrincipal.objects.get(investidor=investidor).divisao.id))
     
     return TemplateResponse(request, 'criptomoedas/inserir_operacao_criptomoeda_lote.html', {'form_lote_operacoes': form_lote_operacoes, 'operacoes': list(),
-                                                                                             'confirmacao': False})
+                                                                                             'confirmacao': False, 'criptomoedas_validas': criptomoedas_validas})
     
 def formatar_op_lote_confirmacao(lista_operacoes_lote):
     """
