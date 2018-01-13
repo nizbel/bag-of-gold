@@ -476,10 +476,16 @@
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_criptomoeda' %}active{% endif %}">
                                                     <a href="{% url "criptomoeda:inserir_operacao_criptomoeda" %}" class="nav-link  "> Inserir operação </a>
                                                 </li>
+                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_criptomoeda_lote' %}active{% endif %}">
+                                                    <a href="{% url "criptomoeda:inserir_operacao_criptomoeda_lote" %}" class="nav-link  "> Inserir operação em lote </a>
+                                                </li>
                                                 {% endif %}
                                                 {% if request.user.is_authenticated %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_transferencia_criptomoeda' %}active{% endif %}">
                                                     <a href="{% url "criptomoeda:inserir_transferencia_criptomoeda" %}" class="nav-link  "> Inserir transferência </a>
+                                                </li>
+                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_transferencia_criptomoeda_lote' %}active{% endif %}">
+                                                    <a href="{% url "criptomoeda:inserir_transferencia_criptomoeda_lote" %}" class="nav-link  "> Inserir transf. em lote </a>
                                                 </li>
                                                 {% endif %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_criptomoeda' %}active{% endif %}">
@@ -615,7 +621,7 @@
                                                     {% elif 'error' in message.tags %}
                                                         <i class="fa-lg fa fa-warning"></i>
                                                     {% endif %}
-                                                {% endif %} {{ message }}
+                                                {% endif %} {% if 'safe' in message.tags %}{{ message|safe|linebreaksbr }}{% else %}{{ message }}{% endif %}
                                             </div>
                                             {% endfor %}
                                         {% endif %}

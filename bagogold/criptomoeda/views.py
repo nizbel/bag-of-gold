@@ -522,7 +522,7 @@ def inserir_operacao_lote(request):
                 else:
                     raise ValueError('Insira as operações no formato indicado')
             except Exception as e:
-                messages.error(request, e)
+                messages.error(request, e, extra_tags='safe')
     else:
         # Form do lote de operações
         form_lote_operacoes = OperacaoCriptomoedaLoteForm(investidor=investidor)
