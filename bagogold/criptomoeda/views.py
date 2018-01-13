@@ -11,7 +11,8 @@ from bagogold.criptomoeda.forms import OperacaoCriptomoedaForm, \
 from bagogold.criptomoeda.models import Criptomoeda, OperacaoCriptomoeda, \
     OperacaoCriptomoedaMoeda, OperacaoCriptomoedaTaxa, TransferenciaCriptomoeda, \
     ValorDiarioCriptomoeda
-from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia, criar_operacoes_lote
+from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia, \
+    criar_operacoes_lote, criar_transferencias_lote
 from bagogold.fundo_investimento.utils import \
     calcular_qtd_cotas_ate_dia_por_fundo
 from decimal import Decimal
@@ -29,6 +30,7 @@ from operator import attrgetter
 import calendar
 import datetime
 import json
+import re
 import traceback
 
 @login_required
@@ -488,14 +490,14 @@ def inserir_operacao_lote(request):
             try:
                 # Verificar se foi enviada lista de strings
                 if form_lote_operacoes.cleaned_data.get('operacoes_lote'):
-                    lista_string = form_lote_operacoes.cleaned_data.get('operacoes_lote')
+                    lista_string = [string_operacao.strip() for string_operacao in form_lote_operacoes.cleaned_data.get('operacoes_lote').split('\n')]
                     
                     divisao = form_lote_operacoes.cleaned_data.get('divisao')
                     if not divisao:
                         raise ValueError('Divisão inválida')
                     
                     # Verificar se foi enviada confirmação de criação
-                    if request.POST.get('confirmacao') == '1':
+                    if request.POST.get('confirmar') == '1':
                         # Criar operações
                         criar_operacoes_lote(lista_string, investidor, divisao.id, salvar=True)
                         messages.success(request, 'Operações inseridas com sucesso')
@@ -504,7 +506,8 @@ def inserir_operacao_lote(request):
                     else:
                         # Validar operações
                         operacoes = criar_operacoes_lote(lista_string, investidor, divisao.id)
-                        return TemplateResponse(request, 'criptomoedas/inserir_operacao_criptomoeda_lote.html', {'form_lote_operacoes': form_lote_operacoes})
+                        return TemplateResponse(request, 'criptomoedas/inserir_operacao_criptomoeda_lote.html', {'form_lote_operacoes': form_lote_operacoes, 'operacoes': operacoes,
+                                                                                                                 'confirmacao': True})
                 else:
                     raise ValueError('Insira as operações no formato indicado')
             except Exception as e:
@@ -513,7 +516,8 @@ def inserir_operacao_lote(request):
         # Form do lote de operações
         form_lote_operacoes = OperacaoCriptomoedaLoteForm(investidor=investidor)
     
-    return TemplateResponse(request, 'criptomoedas/inserir_operacao_criptomoeda_lote.html', {'form_lote_operacoes': form_lote_operacoes})
+    return TemplateResponse(request, 'criptomoedas/inserir_operacao_criptomoeda_lote.html', {'form_lote_operacoes': form_lote_operacoes, 'operacoes': list(),
+                                                                                             'confirmacao': False})
     
 @login_required
 @adiciona_titulo_descricao('Inserir transferência para criptomoedas', 'Inserir registro de transferência para criptomoedas')

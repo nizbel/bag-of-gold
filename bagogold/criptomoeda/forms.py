@@ -102,3 +102,16 @@ class OperacaoCriptomoedaLoteForm(forms.Form):
     def clean(self):
         data = super(OperacaoCriptomoedaLoteForm, self).clean()
         
+class TransferenciaCriptomoedaLoteForm(forms.Form):
+    divisao = forms.ModelChoiceField(queryset=None, label=u'Divisão')
+    transferencias_lote = forms.CharField(label=u'Transferências', widget=forms.Textarea)
+    
+    def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
+        # first call parent's constructor
+        super(TransferenciaCriptomoedaLoteForm, self).__init__(*args, **kwargs)
+        # there's a `fields` property now
+        self.fields['divisao'].queryset = Divisao.objects.filter(investidor=self.investidor)
+
+    def clean(self):
+        data = super(OperacaoCriptomoedaLoteForm, self).clean()        
