@@ -253,8 +253,8 @@ def criar_operacoes_lote(lista_operacoes, investidor, divisao_id, salvar=False):
                     except Exception as e:
                         houve_erro = True
                         lista_erros.append(str(e))
-            if houve_erro:
-                raise ValueError('\n'.join(lista_erros))
+                if houve_erro:
+                    raise ValueError('\n'.join(lista_erros))
         except:
             raise
     # Para o caso de não salvar, gerar objetos e retorná-los caso não haja erro
