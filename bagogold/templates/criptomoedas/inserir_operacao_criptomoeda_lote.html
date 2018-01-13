@@ -93,7 +93,7 @@
                                             <li class="list-group-item">
                                                 <div class="row">
                                                     <span class="col-md-5">
-                                                        <strong>{{forloop.counter}}:</strong> <strong>{{operacao.tipo_operacao}}</strong> de 
+                                                        <strong>{{forloop.counter}}:</strong> <strong>{% if operacao.tipo_operacao == 'C' %}Compra{% else %}Venda{% endif %}</strong> de 
                                                         <strong>{{operacao.quantidade}} {{operacao.criptomoeda.ticker}}</strong>
                                                     </span>
                                                     <span class="col-md-4">
@@ -127,7 +127,7 @@
                                             <li class="list-group-item">
                                                 <div class="row">
                                                     <span class="col-md-5">
-                                                        <strong>{{forloop.counter}}:</strong> <strong>{{operacao.tipo_operacao}}</strong> de 
+                                                        <strong>{{forloop.counter}}:</strong> <strong>{% if operacao.tipo_operacao == 'C' %}Compra{% else %}Venda{% endif %}</strong> de 
                                                         <strong>{{operacao.quantidade}} {{operacao.criptomoeda.ticker}}</strong>
                                                     </span>
                                                     <span class="col-md-4">
