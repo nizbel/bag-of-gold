@@ -397,7 +397,7 @@ def criar_transferencias_lote(lista_transferencias, investidor, divisao_id, salv
                 lista_erros.append(str(e))
         if houve_erro:
             raise ValueError('\n'.join(lista_erros))
-        return 
+        return objetos_transferencias
                          
 def verificar_transferencia_string_lote(transferencia_string):
     info_formatada = {}
@@ -425,3 +425,20 @@ def verificar_transferencia_string_lote(transferencia_string):
     if info_formatada['taxa'] < 0:
         raise ValueError('Valor da taxa não pode ser negativo')
     return info_formatada
+
+def formatar_transf_lote_confirmacao(lista_transferencias_lote):
+    """
+    Formata transferências geradas em lote para confirmação
+    Parâmetros: Lista de transferências geradas no lote
+    Retorno: Transferências formatadas para mostrar na página
+    """
+    transferencias_formatadas = list()
+    
+    # Testar elementos para agrupá-los por operação
+    for elemento in lista_transferencias_lote:
+        if isinstance(elemento, TransferenciaCriptomoeda):
+            transferencias_formatadas.append(elemento)
+            
+        elif isinstance(elemento, DivisaoTransferenciaCriptomoeda):
+            transferencias_formatadas[len(transferencias_formatadas)-1].divisao = elemento.divisao
+    return transferencias_formatadas

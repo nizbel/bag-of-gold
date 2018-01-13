@@ -114,4 +114,4 @@ class TransferenciaCriptomoedaLoteForm(forms.Form):
         self.fields['divisao'].queryset = Divisao.objects.filter(investidor=self.investidor)
 
     def clean(self):
-        data = super(OperacaoCriptomoedaLoteForm, self).clean()        
+        data = super(TransferenciaCriptomoedaLoteForm, self).clean()        

@@ -25,26 +25,22 @@
                 <div class="portlet-body">
                     <p>As operações devem ser escritas utilizando <strong>ponto e vírgula</strong> como separador de atributos, <strong>vírgula</strong> como separador decimal
                     e <strong>uma operação por linha</strong>. Com um máximo de <strong>20 operações por lote</strong>. Cada operação deve estar no seguinte formato:</p>
-                    <p class="text-center"><strong>MOEDA/MOEDA_UTILIZADA;QUANTIDADE;PREÇO;DATA;TIPO_OPERAÇÃO;VALOR_TAXA;MOEDA_TAXA</strong></p>
+                    <p class="text-center"><strong>MOEDA;QUANTIDADE;ORIGEM;DESTINO;DATA;TAXA</strong></p>
                     <ul>
-                        <li><strong>MOEDA:</strong> Código para a criptomoeda comprada/vendida, <a data-toggle="modal" href="#criptomoedas_validas">lista de criptomoedas válidas</a>.</li>
-                        <li><strong>MOEDA_UTILIZADA:</strong> Código para a moeda utilizada na operação, pode ser tanto real (<strong>BRL</strong>) quanto 
-                        uma criptomoeda válida.</li>
-                        <li><strong>QUANTIDADE:</strong> Quantidade comprada/vendida, não é necessário separador para milhares. O separador decimal deve ser 
+                        <li><strong>MOEDA:</strong> Código para a moeda utilizada na operação, pode ser tanto real (<strong>BRL</strong>) quanto 
+                        uma <a data-toggle="modal" href="#criptomoedas_validas">criptomoeda válida</a>.</li>
+                        <li><strong>QUANTIDADE:</strong> Quantidade transferida, não é necessário separador para milhares. O separador decimal deve ser 
                         vírgula.</li>
-                        <li><strong>PREÇO:</strong> Preço unitário da criptomoeda na operação. Não necessita de separador para milhares. Separador decimal 
-                        é a vírgula.</li>
+                        <li><strong>ORIGEM:</strong> Descrição de origem da transferência, opcional.</li>
+                        <li><strong>DESTINO:</strong> Descrição de destino da transferência, opcional.</li>
                         <li><strong>DATA:</strong> Data da operação no formato <strong>DD/MM/AAAA</strong>.</li>
-                        <li><strong>TIPO_OPERAÇÃO:</strong> Caractere identificando compra (<strong>C</strong>) ou venda (<strong>V</strong>).</li>
-                        <li><strong>VALOR_TAXA:</strong> Quantidade paga de taxa pela operação. Sem separador para milhares e utilizando vírgula como 
+                        <li><strong>TAXA:</strong> Quantidade paga de taxa pela transferência. Sem separador para milhares e utilizando vírgula como 
                         separador decimal.</li>
-                        <li><strong>MOEDA_TAXA:</strong> Moeda utilizada na cobrança da taxa. Deve ser igual a <strong>MOEDA</strong> ou 
-                        <li><strong>MOEDA_UTILIZADA</strong>.</li>
                     </ul>
                     Exemplo:</br>
-                    <strong>BTC/BRL;0,48784399;9968,99994;06/06/2017;C;0,00343898;BTC</br>
-                    FCT/BTC;2,04838866;0,0110499;07/06/2017;C;0,00513381;FCT</br>
-                    FCT/BTC;15,40786135;0,01104999;07/06/2017;C;0,03861619;FCT</strong>
+                    <strong>BRL;4999,99;;Corretora 1;06/06/2017;102,39</br>
+                    BTC;0,2;Corretora 1;Corretora 2;06/06/2017;0,0006102</br>
+                    BTC;0,19;Corretora 1;Enviado para alguém;09/06/2017;0,0006102</strong>
                 </div>
             </div>
         </div>
@@ -53,33 +49,33 @@
     <form id="form_inserir_op_cripto_lote" method="POST" class="horizontal-form">{% csrf_token %}
         <div class="form-body">
             <div class="row">
-                <div class="form-group col-md-6 {% if form_lote_operacoes.divisao.errors %} has-error {% endif %}">
-                    <label class="control-label col-md-2" style="text-align: left;"> {{form_lote_operacoes.divisao.label}}: </label>
+                <div class="form-group col-md-6 {% if form_lote_transferencias.divisao.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-2" style="text-align: left;"> {{form_lote_transferencias.divisao.label}}: </label>
                     <div class="col-md-10">
                         <select class="selectpicker form-control" id="id_divisao" name="divisao" {% if confirmacao %}disabled="disabled"{% endif %}>
-                            {% for key, value in form_lote_operacoes.fields.divisao.widget.choices %}<option value="{{ key }}"
-                            {% if key == form_lote_operacoes.divisao.value|add:"0" %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                            {% for key, value in form_lote_transferencias.fields.divisao.widget.choices %}<option value="{{ key }}"
+                            {% if key == form_lote_transferencias.divisao.value|add:"0" %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
                         </select>
-                        {% if form_lote_operacoes.divisao.errors %} <span class="help-block"> {{ form_lote_operacoes.divisao.errors.as_text }} </span> {% endif %}
-                        {% if confirmacao %}<input type="hidden" name="divisao" value="{{form_lote_operacoes.divisao.value}}" />{% endif %}
+                        {% if form_lote_transferencias.divisao.errors %} <span class="help-block"> {{ form_lote_transferencias.divisao.errors.as_text }} </span> {% endif %}
+                        {% if confirmacao %}<input type="hidden" name="divisao" value="{{form_lote_transferencias.divisao.value}}" />{% endif %}
                     </div>
                 </div>
-                <div class="form-group col-md-6 {% if form_lote_operacoes.operacoes_lote.errors %} has-error {% endif %}">
-                    <label class="control-label col-md-2"> {{form_lote_operacoes.operacoes_lote.label}}: </label>
+                <div class="form-group col-md-6 {% if form_lote_transferencias.transferencias_lote.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-2"> {{form_lote_transferencias.transferencias_lote.label}}: </label>
                     <div class="col-md-10">
-                        <textarea class="form-control autosizeme" name="operacoes_lote" id="id_operacoes_lote"
-                        {% if confirmacao %}readonly="readonly"{% endif %}>{{form_lote_operacoes.operacoes_lote.value|default:''}}</textarea>
-                        {% if form_lote_operacoes.operacoes_lote.errors %} <span class="help-block"> {{ form_lote_operacoes.operacoes_lote.errors.as_text }} </span> {% endif %}
+                        <textarea class="form-control autosizeme" name="transferencias_lote" id="id_transferencias_lote"
+                        {% if confirmacao %}readonly="readonly"{% endif %}>{{form_lote_transferencias.transferencias_lote.value|default:''}}</textarea>
+                        {% if form_lote_transferencias.transferencias_lote.errors %} <span class="help-block"> {{ form_lote_transferencias.transferencias_lote.errors.as_text }} </span> {% endif %}
                     </div>
                 </div>
             </div>
-            {% if confirmacao or operacoes %}
+            {% if confirmacao or transferencias %}
             <div class="row">
                 <div class="col-md-12">
                     <div class="portlet box yellow-crusta">
                         <div class="portlet-title">
                             <div class="caption">
-                                <i class="icon-plus"></i> Operações geradas </div>
+                                <i class="icon-plus"></i> Transferências geradas </div>
                             <div class="tools">
                                 <a href="javascript:;" class="collapse"></a>
                             </div>
@@ -88,31 +84,31 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <ul class="list-group">
-                                        {% for operacao in operacoes %}
+                                        {% for transferencia in transferencias %}
                                             {% if forloop.counter0|divisibleby:2 %}
                                             <li class="list-group-item">
                                                 <div class="row">
-                                                    <span class="col-md-5">
-                                                        <strong>{{forloop.counter}}:</strong> <strong>{% if operacao.tipo_operacao == 'C' %}Compra{% else %}Venda{% endif %}</strong> de 
-                                                        <strong>{{operacao.quantidade}} {{operacao.criptomoeda.ticker}}</strong>
+                                                    <span class="col-md-6">
+                                                        <strong>{{forloop.counter}}:</strong> <strong>Transferência</strong> de 
+                                                        <strong>{% if transferencia.em_real %}R$ {{transferencia.quantidade}}
+                                                            {% else %}{{transferencia.quantidade}} {{transferencia.moeda.ticker}}{% endif %}</strong>
                                                     </span>
-                                                    <span class="col-md-4">
-                                                        {% if operacao.taxa %}
-                                                        Taxa: <strong>{% if operacao.taxa.em_real %}R$ {{operacao.taxa.valor}}
-                                                            {% else %}{{operacao.taxa.valor}} {{operacao.taxa.moeda_utilizada}}{% endif %}</strong>
+                                                    <span class="col-md-3">
+                                                        {% if transferencia.taxa %}
+                                                        Taxa: <strong>{% if transferencia.em_real %}R$ {{transferencia.taxa}}
+                                                            {% else %}{{transferencia.taxa}} {{transferencia.moeda_utilizada}}{% endif %}</strong>
                                                         {% else %}
                                                         Taxa: <strong>Sem taxa</strong>
                                                         {% endif %}
                                                     </span>
                                                     <span class="col-md-3">
-                                                        Data: <strong>{{operacao.data|date:'d/m/Y'}}</strong>
+                                                        Data: <strong>{{transferencia.data|date:'d/m/Y'}}</strong>
                                                     </span>
-                                                    <span class="col-md-5">
-                                                        Preço unitário: <strong>{% if operacao.em_real %}R$ {{operacao.preco_unitario}}
-                                                            {% else %}{{operacao.preco_unitario}} {{operacao.moeda_utilizada}}{% endif %}</strong>
+                                                    <span class="col-md-6">
+                                                        Origem/Destino: <strong>{{transferencia.origem|default:'Indefinido'}}/{{transferencia.destino|default:'Indefinido'}}</strong>
                                                     </span>
-                                                    <span class="col-md-7">
-                                                        Divisão: <strong>{{operacao.divisao.nome}}</strong>
+                                                    <span class="col-md-6">
+                                                        Divisão: <strong>{{transferencia.divisao.nome}}</strong>
                                                     </span>
                                                 </div>
                                             </li>
@@ -122,31 +118,31 @@
                                 </div>
                                 <div class="col-md-6">
                                     <ul class="list-group">
-                                        {% for operacao in operacoes %}
+                                        {% for transferencia in transferencias %}
                                             {% if forloop.counter|divisibleby:2 %}
                                             <li class="list-group-item">
                                                 <div class="row">
-                                                    <span class="col-md-5">
-                                                        <strong>{{forloop.counter}}:</strong> <strong>{% if operacao.tipo_operacao == 'C' %}Compra{% else %}Venda{% endif %}</strong> de 
-                                                        <strong>{{operacao.quantidade}} {{operacao.criptomoeda.ticker}}</strong>
+                                                    <span class="col-md-6">
+                                                        <strong>{{forloop.counter}}:</strong> <strong>Transferência</strong> de 
+                                                        <strong>{% if transferencia.em_real %}R$ {{transferencia.taxa}} {{transferencia.quantidade}}
+                                                            {% else %}{{transferencia.quantidade}} {{transferencia.moeda.ticker}}{% endif %}</strong>
                                                     </span>
-                                                    <span class="col-md-4">
-                                                        {% if operacao.taxa %}
-                                                        Taxa: <strong>{% if operacao.taxa.em_real %}R$ {{operacao.taxa.valor}}
-                                                            {% else %}{{operacao.taxa.valor}} {{operacao.taxa.moeda_utilizada}}{% endif %}</strong>
+                                                    <span class="col-md-3">
+                                                        {% if transferencia.taxa %}
+                                                        Taxa: <strong>{% if transferencia.em_real %}R$ {{transferencia.taxa}}
+                                                            {% else %}{{transferencia.taxa}} {{transferencia.moeda_utilizada}}{% endif %}</strong>
                                                         {% else %}
                                                         Taxa: <strong>Sem taxa</strong>
                                                         {% endif %}
                                                     </span>
                                                     <span class="col-md-3">
-                                                        Data: <strong>{{operacao.data|date:'d/m/Y'}}</strong>
+                                                        Data: <strong>{{transferencia.data|date:'d/m/Y'}}</strong>
                                                     </span>
-                                                    <span class="col-md-5">
-                                                        Preço unitário: <strong>{% if operacao.em_real %}R$ {{operacao.preco_unitario}}
-                                                            {% else %}{{operacao.preco_unitario}} {{operacao.moeda_utilizada}}{% endif %}</strong>
+                                                    <span class="col-md-6">
+                                                        Origem/Destino: <strong>{{transferencia.origem|default:'Indefinido'}}/{{transferencia.destino|default:'Indefinido'}}</strong>
                                                     </span>
-                                                    <span class="col-md-7">
-                                                        Divisão: <strong>{{operacao.divisao.nome}}</strong>
+                                                    <span class="col-md-6">
+                                                        Divisão: <strong>{{transferencia.divisao.nome}}</strong>
                                                     </span>
                                                 </div>
                                             </li>
@@ -165,7 +161,7 @@
                     <div class="col-md-offset col-md-3">
                         {% if confirmacao %}<button type="submit" name="confirmar" value="1" class="btn green-steel">Salvar</button>
                         <button type="submit" name="confirmar" value="0" class="btn btn-warning">Cancelar</a>
-                        {% else %}<button type="submit" name="gerar" value="1" class="btn green-steel">Gerar operações</button>
+                        {% else %}<button type="submit" name="gerar" value="1" class="btn green-steel">Gerar transferências</button>
                         {% endif %}
                     </div>
                 </div>

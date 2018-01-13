@@ -13,7 +13,8 @@ from bagogold.criptomoeda.models import Criptomoeda, OperacaoCriptomoeda, \
     ValorDiarioCriptomoeda
 from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia, \
     criar_operacoes_lote, criar_transferencias_lote, \
-    calcular_qtd_moedas_ate_dia_por_criptomoeda, formatar_op_lote_confirmacao
+    calcular_qtd_moedas_ate_dia_por_criptomoeda, formatar_op_lote_confirmacao, \
+    formatar_transf_lote_confirmacao
 from bagogold.fundo_investimento.utils import \
     calcular_qtd_cotas_ate_dia_por_fundo
 from decimal import Decimal
@@ -602,40 +603,51 @@ def inserir_transferencia(request):
 @adiciona_titulo_descricao('Inserir transferência para criptomoedas em lote', 'Inserir lote de registros de transferência para criptomoedas')
 def inserir_transferencia_lote(request):
     investidor = request.user.investidor
-        
+    
+    # Carregar lista com criptomoedas válidas
+    criptomoedas_validas = Criptomoeda.objects.all().order_by('ticker')
+    
     if request.method == 'POST':
         form_lote_transferencias = TransferenciaCriptomoedaLoteForm(request.POST, investidor=investidor)
         
         if form_lote_transferencias.is_valid():
             try:
                 # Verificar se foi enviada lista de strings
-                if form_lote_operacoes.cleaned_data.get('transferencias_lote'):
-                    lista_string = form_lote_operacoes.cleaned_data.get('transferencias_lote')
+                if form_lote_transferencias.cleaned_data.get('transferencias_lote'):
+                    lista_string = [string_transferencia.strip() for string_transferencia in form_lote_transferencias.cleaned_data.get('transferencias_lote').split('\n')]
                     
-                    divisao = form_lote_operacoes.cleaned_data.get('divisao')
-                    if not divisao:
+                    divisao = form_lote_transferencias.cleaned_data.get('divisao')
+                    if not divisao or divisao.investidor != investidor:
                         raise ValueError('Divisão inválida')
                     
                     # Verificar se foi enviada confirmação de criação
-                    if request.POST.get('confirmacao') == '1':
+                    if request.POST.get('confirmar') == '1':
                         # Criar operações
                         criar_transferencias_lote(lista_string, investidor, divisao.id, salvar=True)
-                        messages.success(request, 'Operações inseridas com sucesso')
+                        messages.success(request, 'Transferências inseridas com sucesso')
                         return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
-                        
+                    
+                    # Verificar se foi enviado cancelamento da confirmação
+                    if request.POST.get('confirmar') == '0':
+                        return TemplateResponse(request, 'criptomoedas/inserir_transferencia_lote.html', {'form_lote_transferencias': form_lote_transferencias, 'transferencias': list(),
+                                                                                                                 'confirmacao': False, 'criptomoedas_validas': criptomoedas_validas})
+
                     else:
                         # Validar operações
-                        operacoes = criar_transferencias_lote(lista_string, investidor, divisao.id)
-                        return TemplateResponse(request, 'criptomoedas/inserir_transferencia_criptomoeda_lote.html', {'form_lote_transferencias': form_lote_transferencias})
+                        transferencias = formatar_transf_lote_confirmacao(criar_transferencias_lote(lista_string, investidor, divisao.id))
+                        return TemplateResponse(request, 'criptomoedas/inserir_transferencia_lote.html', {'form_lote_transferencias': form_lote_transferencias, 'transferencias': transferencias,
+                                                                                                                 'confirmacao': True, 'criptomoedas_validas': criptomoedas_validas})
                 else:
                     raise ValueError('Insira as transferências no formato indicado')
             except Exception as e:
-                messages.error(request, e)
+                messages.error(request, e, extra_tags='safe')
+                raise
     else:
         # Form do lote de operações
         form_lote_transferencias = TransferenciaCriptomoedaLoteForm(investidor=investidor)
-    
-    return TemplateResponse(request, 'criptomoedas/inserir_transferencia_criptomoeda_lote.html', {'form_lote_transferencias': form_lote_transferencias})
+        
+    return TemplateResponse(request, 'criptomoedas/inserir_transferencia_lote.html', {'form_lote_transferencias': form_lote_transferencias, 'transferencias': list(),
+                                                                                             'confirmacao': False, 'criptomoedas_validas': criptomoedas_validas})
     
 @adiciona_titulo_descricao('Listar criptomoedas cadastradas', 'Lista as criptomoedas cadastradas no sistema')
 def listar_criptomoedas(request):
