@@ -231,7 +231,7 @@ def criar_operacoes_lote(lista_operacoes, investidor, divisao_id, salvar=False):
     if salvar:
         try:
             with transaction.atomic():
-                for operacao_string in lista_operacoes:
+                for indice, operacao_string in enumerate(lista_operacoes):
                     try:
                         info_operacao = verificar_operacao_string_lote(operacao_string)
                         
@@ -252,7 +252,7 @@ def criar_operacoes_lote(lista_operacoes, investidor, divisao_id, salvar=False):
                                 OperacaoCriptomoedaTaxa.objects.create(valor=info_operacao['valor_taxa'], operacao=operacao)
                     except Exception as e:
                         houve_erro = True
-                        lista_erros.append(str(e))
+                        lista_erros.append(u'Operação %s: %s' % (indice + 1, str(e)))
                 if houve_erro:
                     raise ValueError('\n'.join(lista_erros))
         except:
@@ -261,7 +261,7 @@ def criar_operacoes_lote(lista_operacoes, investidor, divisao_id, salvar=False):
     else:
         # Guardar objetos a serem retornados
         objetos_operacoes = list()
-        for operacao_string in lista_operacoes:
+        for indice, operacao_string in enumerate(lista_operacoes):
             try:
                 info_operacao = verificar_operacao_string_lote(operacao_string)
                 
@@ -283,7 +283,7 @@ def criar_operacoes_lote(lista_operacoes, investidor, divisao_id, salvar=False):
                         objetos_operacoes.append(OperacaoCriptomoedaTaxa(valor=info_operacao['valor_taxa'], operacao=operacao))
             except Exception as e:
                 houve_erro = True
-                lista_erros.append(str(e))
+                lista_erros.append(u'Operação %s: %s' % (indice + 1, str(e)))
         if houve_erro:
             raise ValueError('\n'.join(lista_erros))
         return objetos_operacoes
