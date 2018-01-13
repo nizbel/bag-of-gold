@@ -12,6 +12,43 @@
 
 {% block content %}
 <div class="portlet-body form">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="icon-info"></i> Instruções para utilização </div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <p>As operações devem ser escritas utilizando <strong>ponto e ǘirgula</strong> como separador de atributos, <strong>vírgula</strong> como separador decimal
+                    e <strong>uma operação por linha</strong>. Com um máximo de <strong>20 operações por lote</strong>. Cada operação deve estar no seguinte formato:</p>
+                    <p class="text-center"><strong>MOEDA/MOEDA_UTILIZADA;QUANTIDADE;PREÇO;DATA;TIPO_OPERAÇÃO;VALOR_TAXA;MOEDA_TAXA</strong></p>
+                    <ul>
+                        <li><strong>MOEDA:</strong> Código para a criptomoeda comprada/vendida, <a>lista de criptomoedas válidas</a>.</li>
+                        <li><strong>MOEDA_UTILIZADA:</strong> Código para a moeda utilizada na operação, pode ser tanto real (<strong>BRL</strong>) quanto 
+                        uma criptomoeda válida.</li>
+                        <li><strong>QUANTIDADE:</strong> Quantidade comprada/vendida, não é necessário separador para milhares. O separador decimal deve ser 
+                        vírgula.</li>
+                        <li><strong>PREÇO:</strong> Preço unitário da criptomoeda na operação. Não necessita de separador para milhares. Separador decimal 
+                        é a vírgula.</li>
+                        <li><strong>DATA:</strong> Data da operação no formato <strong>DD/MM/AAAA</strong>.</li>
+                        <li><strong>TIPO_OPERAÇÃO:</strong> Caractere identificando compra (<strong>C</strong>) ou venda (<strong>V</strong>).</li>
+                        <li><strong>VALOR_TAXA:</strong> Quantidade paga de taxa pela operação. Sem separador para milhares e utilizando vírgula como 
+                        separador decimal.</li>
+                        <li><strong>MOEDA_TAXA:</strong> Moeda utilizada na cobrança da taxa. Deve ser igual a <strong>MOEDA</strong> ou 
+                        <li><strong>MOEDA_UTILIZADA</strong>.</li>
+                    </ul>
+                    Exemplo:</br>
+                    <strong>BTC/BRL;0,48784399;9968,99994;06/06/2017;C;0,00343898;BTC</br>
+                    FCT/BTC;2,04838866;0,0110499;07/06/2017;C;0,00513381;FCT</br>
+                    FCT/BTC;15,40786135;0,01104999;07/06/2017;C;0,03861619;FCT</strong>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- BEGIN FORM-->
     <form id="form_inserir_op_cripto_lote" method="POST" class="horizontal-form">{% csrf_token %}
         <div class="form-body">

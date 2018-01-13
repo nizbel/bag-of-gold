@@ -297,8 +297,8 @@ def verificar_operacao_string_lote(operacao_string):
         raise ValueError('Moedas devem estar no formato MOEDA/MOEDA_UTILIZADA')
     if infos[0].split('/')[0] == infos[0].split('/')[1]:
         raise ValueError('Moeda comprada/vendida não pode ser igual a moeda utilizada')
-    info_formatada['moeda'] = Criptomoeda.objects.get(ticker=infos[0].split('/')[0])
-    info_formatada['moeda_utilizada'] = infos[0].split('/')[1]
+    info_formatada['moeda'] = Criptomoeda.objects.get(ticker=infos[0].split('/')[0].upper())
+    info_formatada['moeda_utilizada'] = infos[0].split('/')[1].upper()
     info_formatada['quantidade'] = Decimal(infos[1].replace('.', '').replace(',', '.'))
     if info_formatada['quantidade'] <= 0:
         raise ValueError('Quantidade deve ser maior que 0')
@@ -306,7 +306,9 @@ def verificar_operacao_string_lote(operacao_string):
     if info_formatada['preco_unitario'] < 0:
         raise ValueError('Preço unitário não pode ser negativo')
     info_formatada['data'] = datetime.datetime.strptime(infos[3], '%d/%m/%Y').date()
-    info_formatada['tipo_operacao'] = infos[4]
+    info_formatada['tipo_operacao'] = infos[4].upper()
+    if info_formatada['tipo_operacao'] not in ['C', 'V']:
+        raise ValueError('Tipo de operação inválido, deve ser C ou V')
     info_formatada['valor_taxa'] = Decimal(infos[5].replace('.', '').replace(',', '.'))
     if info_formatada['valor_taxa'] < 0:
         raise ValueError('Valor da taxa não pode ser negativo')
