@@ -12,8 +12,8 @@ from bagogold.criptomoeda.models import Criptomoeda, OperacaoCriptomoeda, \
     OperacaoCriptomoedaMoeda, OperacaoCriptomoedaTaxa, TransferenciaCriptomoeda, \
     ValorDiarioCriptomoeda
 from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia, \
-    criar_operacoes_lote, criar_transferencias_lote,\
-    calcular_qtd_moedas_ate_dia_por_criptomoeda
+    criar_operacoes_lote, criar_transferencias_lote, \
+    calcular_qtd_moedas_ate_dia_por_criptomoeda, formatar_op_lote_confirmacao
 from bagogold.fundo_investimento.utils import \
     calcular_qtd_cotas_ate_dia_por_fundo
 from decimal import Decimal
@@ -530,42 +530,8 @@ def inserir_operacao_lote(request):
         # Form do lote de operações
         form_lote_operacoes = OperacaoCriptomoedaLoteForm(investidor=investidor)
         
-        # TESTE
-#         operacoes = formatar_op_lote_confirmacao(criar_operacoes_lote(['BTC/BRL;0,48784399;9968,99994;06/06/2017;C;0,00343898;BTC',
-#                            'FCT/BTC;2,04838866;0,0110499;07/06/2017;C;0,00513381;FCT',
-#                            'FCT/BTC;15,40786135;0,01104999;07/06/2017;C;0,03861619;FCT',
-#                            'FCT/BTC;0,61136046;0,01080999;07/06/2017;C;0,00153223;FCT',
-#                            'FCT/BTC;0,81185596;0,0098302;09/06/2017;V;0,00001995;BTC',
-#                            'FCT/BTC;7,68814404;0,0098302;09/06/2017;V;0,00011336;BTC',
-#                            'ETH/BTC;0,109725;0,0967;09/06/2017;C;0,000275;ETH',
-#                            'ETH/BTC;0,33706492;0,0967;09/06/2017;C;0,00050635;ETH',
-#                            'ETH/BTC;0,41450914;0,0967;09/06/2017;C;0,00062269;ETH',
-#                            'LSK/BTC;74,8125;0,00117999;09/06/2017;C;0,1875;LSK',
-#                            'LSK/BTC;9,48627159;0,00117998;09/06/2017;C;0,02377511;LSK'], investidor, DivisaoPrincipal.objects.get(investidor=investidor).divisao.id))
-    
     return TemplateResponse(request, 'criptomoedas/inserir_operacao_criptomoeda_lote.html', {'form_lote_operacoes': form_lote_operacoes, 'operacoes': list(),
                                                                                              'confirmacao': False, 'criptomoedas_validas': criptomoedas_validas})
-    
-def formatar_op_lote_confirmacao(lista_operacoes_lote):
-    """
-    Formata operações geradas em lote para confirmação
-    Parâmetros: Lista de operações geradas no lote
-    Retorno: Operações formatadas para mostrar na página
-    """
-    operacoes_formatadas = list()
-    
-    # Testar elementos para agrupá-los por operação
-    for elemento in lista_operacoes_lote:
-        if isinstance(elemento, OperacaoCriptomoeda):
-            elemento.tipo_operacao = 'Compra' if elemento.tipo_operacao == 'C' else 'Venda'
-            operacoes_formatadas.append(elemento)
-            
-        elif isinstance(elemento, DivisaoOperacaoCriptomoeda):
-            operacoes_formatadas[len(operacoes_formatadas)-1].divisao = elemento.divisao
-            
-        elif isinstance(elemento, OperacaoCriptomoedaTaxa):
-            operacoes_formatadas[len(operacoes_formatadas)-1].taxa = elemento
-    return operacoes_formatadas
     
 @login_required
 @adiciona_titulo_descricao('Inserir transferência para criptomoedas', 'Inserir registro de transferência para criptomoedas')

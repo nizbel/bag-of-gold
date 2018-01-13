@@ -317,6 +317,26 @@ def verificar_operacao_string_lote(operacao_string):
         raise ValueError('Moeda utilizada para taxa deve ser uma das 2 moedas utilizadas na operação')
     return info_formatada
 
+def formatar_op_lote_confirmacao(lista_operacoes_lote):
+    """
+    Formata operações geradas em lote para confirmação
+    Parâmetros: Lista de operações geradas no lote
+    Retorno: Operações formatadas para mostrar na página
+    """
+    operacoes_formatadas = list()
+    
+    # Testar elementos para agrupá-los por operação
+    for elemento in lista_operacoes_lote:
+        if isinstance(elemento, OperacaoCriptomoeda):
+            operacoes_formatadas.append(elemento)
+            
+        elif isinstance(elemento, DivisaoOperacaoCriptomoeda):
+            operacoes_formatadas[len(operacoes_formatadas)-1].divisao = elemento.divisao
+            
+        elif isinstance(elemento, OperacaoCriptomoedaTaxa):
+            operacoes_formatadas[len(operacoes_formatadas)-1].taxa = elemento
+    return operacoes_formatadas
+
 def criar_transferencias_lote(lista_transferencias, investidor, divisao_id, salvar=False):
     """
     Cria várias transferências com base em uma lista de strings com ponto e vírgula como separador, 
