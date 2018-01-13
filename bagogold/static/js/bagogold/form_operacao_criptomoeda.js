@@ -44,7 +44,7 @@ $(document).ready(function() {
     
     // Pegar moeda utilizada escolhida atualmente
     if ($('#id_moeda_utilizada').val() == '') {
-	    $("input[name='valor']").TouchSpin({
+	    $("input[name='preco_unitario']").TouchSpin({
 			min: 0.000000000001,
 			max: 1000000000,
 			step: 0.000000000001,
@@ -54,7 +54,7 @@ $(document).ready(function() {
 		});
     } else {
         var utilizada_escolhida = $('#id_moeda_utilizada option:selected').text().split(' ')[0];
-        $("input[name='valor']").TouchSpin({
+        $("input[name='preco_unitario']").TouchSpin({
 			min: 0.000000000001,
 			max: 1000000000,
 			step: 0.000000000001,
@@ -127,14 +127,14 @@ $(document).ready(function() {
 	
     $('#id_moeda_utilizada').change(function() {
     	if ($(this).val() == '') {
-	    	$('#id_valor').parent().find('.bootstrap-touchspin-prefix').show();
-	    	$('#id_valor').parent().find('.bootstrap-touchspin-postfix').hide();
+	    	$('#id_preco_unitario').parent().find('.bootstrap-touchspin-prefix').show();
+	    	$('#id_preco_unitario').parent().find('.bootstrap-touchspin-postfix').hide();
     	}
     	else {
         	var escolhida = $('#id_moeda_utilizada option:selected').text().split(' ')[0];
-        	$('#id_valor').parent().find('.bootstrap-touchspin-prefix').hide();
-	    	$('#id_valor').parent().find('.bootstrap-touchspin-postfix').text(escolhida);
-	    	$('#id_valor').parent().find('.bootstrap-touchspin-postfix').show();
+        	$('#id_preco_unitario').parent().find('.bootstrap-touchspin-prefix').hide();
+	    	$('#id_preco_unitario').parent().find('.bootstrap-touchspin-postfix').text(escolhida);
+	    	$('#id_preco_unitario').parent().find('.bootstrap-touchspin-postfix').show();
     	}
     	
     	// Altera opções de moeda da taxa de acordo com escolha das moedas envolvidas na operação
