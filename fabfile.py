@@ -4,7 +4,8 @@ from fabric.api import env, require, run, sudo, local as lrun
 from fabric.context_managers import cd
 from fabric.contrib.files import append, contains, exists
 import datetime
-from bagogold.bagogold.management.commands.preparar_backup import preparar_backup
+import re
+import time
 
 
 # Servers
@@ -64,6 +65,27 @@ def update(requirements=False, rev=None):
     require('path')
     require('virtualenv')
  
+    
+    # Apagar cronjobs por enquanto
+    run('crontab -r')
+    
+    # Dar tempo para verificar cronjobs
+    time.sleep(5)
+    
+    # Verificar se há cronjobs rodando
+    cron_running = run('pstree -ap `pidof cron`')
+
+    if re.match('cron,\d+$', cron_running) == None:
+        print u'Há cronjob rodando, esperar 10 segundos'
+        time.sleep(10)
+        
+        # Se ainda estiver rodando, voltar cronjobs e desistir
+        cron_running = run('pstree -ap `pidof cron`')
+        if re.match('cron,\d+$', cron_running) == None:
+            print u'Update cancelado pois há cronjob ainda executando'
+            alterar_cron()
+            return
+        
     # Pegar revisão
     rev = rev
     # Se não há revisão, verificar se há update a ser feito
