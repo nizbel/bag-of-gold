@@ -36,7 +36,7 @@
 							{% for investimento in investimentos_atuais %}
 							<div class="col-md-2">
 								<div class="mt-overlay-6" style="background: none;">
-									<img src={% static "assets/global/img/bag-logo-overlay.png" %}>
+									<img src={% static "assets/global/img/bag-logo-overlay.png" %} alt="{{investimento.descricao}}">
 									<div class="mt-overlay">
 										<h2 class="font-dark"><strong>{{investimento.descricao}}<br/>R$<span data-counter="counterup" data-value="{{investimento.valor}}">0</span></strong></h2>
 										<a class="mt-info uppercase btn dark btn-outline" href="{% url investimento.link %}">Detalhar</a>

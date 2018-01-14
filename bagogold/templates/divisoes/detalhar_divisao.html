@@ -22,6 +22,29 @@
 <div class="portlet-body">
 	<div class="row">
 		<div class="col-md-12">
+			<div class="portlet box yellow-crusta">
+				<div class="portlet-title">
+					<div class="caption">
+						<i class="fa fa-cubes"></i> Divisão </div>
+					<div class="tools">
+						<a href="javascript:;" class="collapse"></a>
+					</div>
+				</div>
+				<div class="portlet-body">
+					<div class="m-grid m-grid-responsive-xs">
+						<div class="m-grid-row">
+                            <div class="m-grid-col m-grid-col-left"><strong>Nome:</strong></div>
+                            <div class="m-grid-col m-grid-col-md-2 m-grid-col-left">{{divisao.nome}}</div>
+							<div class="m-grid-col m-grid-col-left"><strong>Saldo:</strong></div>
+							<div class="m-grid-col m-grid-col-md-2 m-grid-col-left">R$ {{divisao.saldo|floatformat:"2"}}</div>
+							<div class="m-grid-col m-grid-col-left"><strong>Objetivo:</strong></div>
+							<div class="m-grid-col m-grid-col-md-2 m-grid-col-left">R$ {{divisao.valor_objetivo}}</div>
+                            <div class="m-grid-col m-grid-col-left"></div>
+                            <div class="m-grid-col m-grid-col-md-2 m-grid-col-left"></div>
+						</div>
+					</div>
+				</div>
+			</div>
 			<!-- BEGIN Portlet PORTLET-->
 			<div class="portlet box yellow-crusta">
 				<div class="portlet-title">

@@ -137,7 +137,7 @@
                                         </li>
                                         {% else %}
                                         <li class="dropdown">
-                                            <a class="dropdown-toggle font-yellow-crusta" href="{% url "login" %}">Entrar</a>
+                                            <a class="dropdown-toggle font-yellow-crusta" href="{% url "login" %}?next={{request.path}}">Entrar</a>
                                         </li>
                                         {% endif %}
                                         <!-- END USER LOGIN DROPDOWN -->
@@ -697,7 +697,7 @@
                                          data-address="16ZvpLMG9TTSiEMrS9hnDreWM2XHusbQSn"
                                          data-shared="false">
                                         <div class="blockchain stage-begin">
-                                            <a href="javascript:;"><img src="https://blockchain.info/Resources/buttons/donate_64.png"/></a>
+                                            <a href="javascript:;"><img alt="Doar bitcoins" src="https://blockchain.info/Resources/buttons/donate_64.png"/></a>
                                         </div>
                                         <div class="blockchain stage-loading" style="text-align:center">
                                         </div>
@@ -709,7 +709,7 @@
                                              Doação de <b>[[value]] BTC</b> recebida. Obrigado.
                                         </div>
                                         <div class="blockchain stage-error">
-                                            <font color="red">[[error]]</font>
+                                            <span class="font-red">[[error]]</span>
                                         </div>
                                     </div>
                                 </div>
