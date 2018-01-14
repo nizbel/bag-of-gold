@@ -69,7 +69,7 @@
                     <div class="col-md-10">
                         <textarea class="form-control autosizeme" name="operacoes_lote" id="id_operacoes_lote"
                         {% if confirmacao %}readonly="readonly"{% endif %}>{{form_lote_operacoes.operacoes_lote.value|default:''}}</textarea>
-                        {% if form_lote_operacoes.operacoes_lote.errors %} <span class="help-block" id="id_operacoes_lote-erro"> {{ form_lote_operacoes.operacoes_lote.errors.as_text }} </span> {% endif %}
+                        {% if form_lote_operacoes.operacoes_lote.errors %} <span class="help-block"> {{ form_lote_operacoes.operacoes_lote.errors.as_text }} </span> {% endif %}
                     </div>
                 </div>
             </div>
