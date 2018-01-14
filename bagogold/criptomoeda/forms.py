@@ -93,7 +93,7 @@ class OperacaoCriptomoedaLoteForm(forms.Form):
     operacoes_lote = forms.CharField(label=u'Operações', widget=forms.Textarea)
     
     class Media:
-        js = ('js/bagogold/form_operacao_criptomoeda_lote.js',)
+        js = ('js/bagogold/form_operacao_criptomoeda_lote.min.js',)
     
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
@@ -110,7 +110,7 @@ class TransferenciaCriptomoedaLoteForm(forms.Form):
     transferencias_lote = forms.CharField(label=u'Transferências', widget=forms.Textarea)
     
     class Media:
-        js = ('js/bagogold/form_transferencia_criptomoeda_lote.js',)
+        js = ('js/bagogold/form_transferencia_criptomoeda_lote.min.js',)
     
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
