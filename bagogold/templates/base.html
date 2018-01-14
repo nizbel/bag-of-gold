@@ -162,14 +162,14 @@
                                             <ul class="dropdown-menu pull-left">
                                                 {% if request.user.is_superuser %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'calendario' %}active{% endif %}">
-                                                    <a href="{% url "inicio:calendario" %}" class="nav-link  "> Calendário </a>
+                                                    <a href="{% url "inicio:calendario" %}" class="nav-link"> Calendário </a>
                                                 </li>
                                                 {% endif %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_geral' %}active{% endif %}">
-                                                    <a href="{% url "inicio:painel_geral" %}" class="nav-link  "> Painel Geral </a>
+                                                    <a href="{% url "inicio:painel_geral" %}" class="nav-link"> Painel Geral </a>
                                                 </li>
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'sobre' %}active{% endif %}">
-                                                    <a href="{% url "inicio:sobre" %}" class="nav-link  "> Sobre </a>
+                                                    <a href="{% url "inicio:sobre" %}" class="nav-link"> Sobre </a>
                                                 </li>
                                             </ul>
                                         </li>  
@@ -259,32 +259,32 @@
                                                 {% comment %}
                                                 {% if request.user.is_superuser %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'acompanhamento_mensal_fii' %}active{% endif %}">
-                                                    <a href="{% url "fii:acompanhamento_mensal_fii" %}" class="nav-link  "> Acompanhamento mensal </a>
+                                                    <a href="{% url "fii:acompanhamento_mensal_fii" %}" class="nav-link"> Acompanhamento mensal </a>
                                                 </li>
                                                 {% endif %}
                                                 {% endcomment %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'acompanhamento_fii' %}active{% endif %}">
-                                                    <a href="{% url "fii:acompanhamento_fii" %}" class="nav-link  "> Acompanhamento </a>
+                                                    <a href="{% url "fii:acompanhamento_fii" %}" class="nav-link"> Acompanhamento </a>
                                                 </li>
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'calcular_resultado_corretagem' %}active{% endif %}">
-                                                    <a href="{% url "fii:calcular_resultado_corretagem" %}" class="nav-link  "> Cálculo de res. da corretagem </a>
+                                                    <a href="{% url "fii:calcular_resultado_corretagem" %}" class="nav-link"> Cálculo de res. da corretagem </a>
                                                 </li>
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'historico_fii' %}active{% endif %}">
-                                                    <a href="{% url "fii:historico_fii" %}" class="nav-link  "> Histórico </a>
+                                                    <a href="{% url "fii:historico_fii" %}" class="nav-link"> Histórico </a>
                                                 </li>
                                                 {% if request.user.is_authenticated %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_fii' %}active{% endif %}">
-                                                    <a href="{% url "fii:inserir_operacao_fii" %}" class="nav-link  "> Inserir operação </a>
+                                                    <a href="{% url "fii:inserir_operacao_fii" %}" class="nav-link"> Inserir operação </a>
                                                 </li>
                                                 {% endif %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_proventos_fii' %}active{% endif %}">
-                                                    <a href="{% url "fii:listar_proventos_fii" %}" class="nav-link  "> Listar proventos </a>
+                                                    <a href="{% url "fii:listar_proventos_fii" %}" class="nav-link"> Listar proventos </a>
                                                 </li>
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_fii' %}active{% endif %}">
-                                                    <a href="{% url "fii:painel_fii" %}" class="nav-link  "> Painel </a>
+                                                    <a href="{% url "fii:painel_fii" %}" class="nav-link"> Painel </a>
                                                 </li>
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'sobre_fii' %}active{% endif %}">
-                                                    <a href="{% url "fii:sobre_fii" %}" class="nav-link  "> Sobre </a>
+                                                    <a href="{% url "fii:sobre_fii" %}" class="nav-link"> Sobre </a>
                                                 </li>
                                             </ul>
                                         </li>
@@ -294,21 +294,21 @@
                                             </a>
                                             <ul class="dropdown-menu pull-left">
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'historico_fundo_investimento' %}active{% endif %}">
-                                                    <a href="{% url "fundo_investimento:historico_fundo_investimento" %}" class="nav-link  "> Histórico </a>
+                                                    <a href="{% url "fundo_investimento:historico_fundo_investimento" %}" class="nav-link"> Histórico </a>
                                                 </li>
                                                 {% if request.user.is_authenticated %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_fundo_investimento' %}active{% endif %}">
-                                                    <a href="{% url "fundo_investimento:inserir_operacao_fundo_investimento" %}" class="nav-link  "> Inserir operação </a>
+                                                    <a href="{% url "fundo_investimento:inserir_operacao_fundo_investimento" %}" class="nav-link"> Inserir operação </a>
                                                 </li>
                                                 {% endif %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_fundo_investimento' %}active{% endif %}">
-                                                    <a href="{% url "fundo_investimento:listar_fundo_investimento" %}" class="nav-link  "> Listar Fundos </a>
+                                                    <a href="{% url "fundo_investimento:listar_fundo_investimento" %}" class="nav-link"> Listar Fundos </a>
                                                 </li>
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_fundo_investimento' %}active{% endif %}">
-                                                    <a href="{% url "fundo_investimento:painel_fundo_investimento" %}" class="nav-link  "> Painel </a>
+                                                    <a href="{% url "fundo_investimento:painel_fundo_investimento" %}" class="nav-link"> Painel </a>
                                                 </li>
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'sobre_fundo_investimento' %}active{% endif %}">
-                                                    <a href="{% url "fundo_investimento:sobre_fundo_investimento" %}" class="nav-link  "> Sobre </a>
+                                                    <a href="{% url "fundo_investimento:sobre_fundo_investimento" %}" class="nav-link"> Sobre </a>
                                                 </li>
                                             </ul>
                                         </li>
@@ -326,26 +326,26 @@
                                                     </a>
                                                     <ul class="dropdown-menu">
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'historico_cdb_rdb' %}active{% endif %}">
-                                                            <a href="{% url "cdb_rdb:historico_cdb_rdb" %}" class="nav-link  "> Histórico </a>
+                                                            <a href="{% url "cdb_rdb:historico_cdb_rdb" %}" class="nav-link"> Histórico </a>
                                                         </li>
                                                         {% if request.user.is_authenticated %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_cdb_rdb' %}active{% endif %}">
-                                                            <a href="{% url "cdb_rdb:inserir_cdb_rdb" %}" class="nav-link  "> Inserir CDB/RDB </a>
+                                                            <a href="{% url "cdb_rdb:inserir_cdb_rdb" %}" class="nav-link"> Inserir CDB/RDB </a>
                                                         </li>
                                                         {% endif %}
                                                         {% if request.user.is_authenticated %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_cdb_rdb' %}active{% endif %}">
-                                                            <a href="{% url "cdb_rdb:inserir_operacao_cdb_rdb" %}" class="nav-link  "> Inserir operação </a>
+                                                            <a href="{% url "cdb_rdb:inserir_operacao_cdb_rdb" %}" class="nav-link"> Inserir operação </a>
                                                         </li>
                                                         {% endif %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_cdb_rdb' %}active{% endif %}">
-                                                            <a href="{% url "cdb_rdb:listar_cdb_rdb" %}" class="nav-link  "> Listar CDB/RDB </a>
+                                                            <a href="{% url "cdb_rdb:listar_cdb_rdb" %}" class="nav-link"> Listar CDB/RDB </a>
                                                         </li>
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_cdb_rdb' %}active{% endif %}">
-                                                            <a href="{% url "cdb_rdb:painel_cdb_rdb" %}" class="nav-link  "> Painel </a>
+                                                            <a href="{% url "cdb_rdb:painel_cdb_rdb" %}" class="nav-link"> Painel </a>
                                                         </li>
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'sobre_cdb_rdb' %}active{% endif %}">
-                                                            <a href="{% url "cdb_rdb:sobre_cdb_rdb" %}" class="nav-link  "> Sobre </a>
+                                                            <a href="{% url "cdb_rdb:sobre_cdb_rdb" %}" class="nav-link"> Sobre </a>
                                                         </li>
                                                     </ul>
                                                 </li>
@@ -356,26 +356,26 @@
                                                     </a>
                                                     <ul class="dropdown-menu">
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'historico_cri_cra' %}active{% endif %}">
-                                                            <a href="{% url "cri_cra:historico_cri_cra" %}" class="nav-link  "> Histórico </a>
+                                                            <a href="{% url "cri_cra:historico_cri_cra" %}" class="nav-link"> Histórico </a>
                                                         </li>
                                                         {% if request.user.is_authenticated %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_cri_cra' %}active{% endif %}">
-                                                            <a href="{% url "cri_cra:inserir_cri_cra" %}" class="nav-link  "> Inserir CRI/CRA </a>
+                                                            <a href="{% url "cri_cra:inserir_cri_cra" %}" class="nav-link"> Inserir CRI/CRA </a>
                                                         </li>
                                                         {% endif %}
                                                         {% if request.user.is_authenticated %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_cri_cra' %}active{% endif %}">
-                                                            <a href="{% url "cri_cra:inserir_operacao_cri_cra" %}" class="nav-link  "> Inserir operação </a>
+                                                            <a href="{% url "cri_cra:inserir_operacao_cri_cra" %}" class="nav-link"> Inserir operação </a>
                                                         </li>
                                                         {% endif %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_cri_cra' %}active{% endif %}">
-                                                            <a href="{% url "cri_cra:listar_cri_cra" %}" class="nav-link  "> Listar CRI/CRA </a>
+                                                            <a href="{% url "cri_cra:listar_cri_cra" %}" class="nav-link"> Listar CRI/CRA </a>
                                                         </li>
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_cri_cra' %}active{% endif %}">
-                                                            <a href="{% url "cri_cra:painel_cri_cra" %}" class="nav-link  "> Painel </a>
+                                                            <a href="{% url "cri_cra:painel_cri_cra" %}" class="nav-link"> Painel </a>
                                                         </li>
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'sobre_cri_cra' %}active{% endif %}">
-                                                            <a href="{% url "cri_cra:sobre_cri_cra" %}" class="nav-link  "> Sobre </a>
+                                                            <a href="{% url "cri_cra:sobre_cri_cra" %}" class="nav-link"> Sobre </a>
                                                         </li>
                                                     </ul>
                                                 </li>
@@ -386,21 +386,21 @@
                                                     </a>
                                                     <ul class="dropdown-menu">
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'historico_debenture' %}active{% endif %}">
-                                                            <a href="{% url "debentures:historico_debenture" %}" class="nav-link  "> Histórico </a>
+                                                            <a href="{% url "debentures:historico_debenture" %}" class="nav-link"> Histórico </a>
                                                         </li>
                                                         {% if request.user.is_authenticated %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_debenture' %}active{% endif %}">
-                                                            <a href="{% url "debentures:inserir_operacao_debenture" %}" class="nav-link  "> Inserir operação </a>
+                                                            <a href="{% url "debentures:inserir_operacao_debenture" %}" class="nav-link"> Inserir operação </a>
                                                         </li>
                                                         {% endif %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_debentures' %}active{% endif %}">
-                                                            <a href="{% url "debentures:listar_debentures" %}" class="nav-link  "> Listar Debêntures </a>
+                                                            <a href="{% url "debentures:listar_debentures" %}" class="nav-link"> Listar Debêntures </a>
                                                         </li>
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_debenture' %}active{% endif %}">
-                                                            <a href="{% url "debentures:painel_debenture" %}" class="nav-link  "> Painel </a>
+                                                            <a href="{% url "debentures:painel_debenture" %}" class="nav-link"> Painel </a>
                                                         </li>
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'sobre_debenture' %}active{% endif %}">
-                                                            <a href="{% url "debentures:sobre_debenture" %}" class="nav-link  "> Sobre </a>
+                                                            <a href="{% url "debentures:sobre_debenture" %}" class="nav-link"> Sobre </a>
                                                         </li>
                                                     </ul>
                                                 </li>
@@ -411,26 +411,26 @@
                                                     </a>
                                                     <ul class="dropdown-menu">
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'historico_lci_lca' %}active{% endif %}">
-                                                            <a href="{% url "lci_lca:historico_lci_lca" %}" class="nav-link  "> Histórico </a>
+                                                            <a href="{% url "lci_lca:historico_lci_lca" %}" class="nav-link"> Histórico </a>
                                                         </li>
                                                         {% if request.user.is_authenticated %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_lci_lca' %}active{% endif %}">
-                                                            <a href="{% url "lci_lca:inserir_lci_lca" %}" class="nav-link  "> Inserir Letra de Crédito </a>
+                                                            <a href="{% url "lci_lca:inserir_lci_lca" %}" class="nav-link"> Inserir Letra de Crédito </a>
                                                         </li>
                                                         {% endif %}
                                                         {% if request.user.is_authenticated %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_lci_lca' %}active{% endif %}">
-                                                            <a href="{% url "lci_lca:inserir_operacao_lci_lca" %}" class="nav-link  "> Inserir operação </a>
+                                                            <a href="{% url "lci_lca:inserir_operacao_lci_lca" %}" class="nav-link"> Inserir operação </a>
                                                         </li>
                                                         {% endif %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_lci_lca' %}active{% endif %}">
-                                                            <a href="{% url "lci_lca:listar_lci_lca" %}" class="nav-link  "> Listar Letras de Crédito </a>
+                                                            <a href="{% url "lci_lca:listar_lci_lca" %}" class="nav-link"> Listar Letras de Crédito </a>
                                                         </li>
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_lci_lca' %}active{% endif %}">
-                                                            <a href="{% url "lci_lca:painel_lci_lca" %}" class="nav-link  "> Painel </a>
+                                                            <a href="{% url "lci_lca:painel_lci_lca" %}" class="nav-link"> Painel </a>
                                                         </li>
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'sobre_lci_lca' %}active{% endif %}">
-                                                            <a href="{% url "lci_lca:sobre_lci_lca" %}" class="nav-link  "> Sobre </a>
+                                                            <a href="{% url "lci_lca:sobre_lci_lca" %}" class="nav-link"> Sobre </a>
                                                         </li>
                                                     </ul>
                                                 </li>
@@ -441,24 +441,24 @@
                                                     </a>
                                                     <ul class="dropdown-menu">
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'acompanhamento_td' %}active{% endif %}">
-                                                            <a href="{% url "td:acompanhamento_td" %}" class="nav-link  "> Acompanhamento </a>
+                                                            <a href="{% url "td:acompanhamento_td" %}" class="nav-link"> Acompanhamento </a>
                                                         </li>
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'historico_td' %}active{% endif %}">
-                                                            <a href="{% url "td:historico_td" %}" class="nav-link  "> Histórico </a>
+                                                            <a href="{% url "td:historico_td" %}" class="nav-link"> Histórico </a>
                                                         </li>
                                                         {% if request.user.is_authenticated %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_td' %}active{% endif %}">
-                                                            <a href="{% url "td:inserir_operacao_td" %}" class="nav-link  "> Inserir operação </a>
+                                                            <a href="{% url "td:inserir_operacao_td" %}" class="nav-link"> Inserir operação </a>
                                                         </li>
                                                         {% endif %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_titulos_td' %}active{% endif %}">
-                                                            <a href="{% url "td:listar_titulos_td" %}" class="nav-link  "> Listar títulos </a>
+                                                            <a href="{% url "td:listar_titulos_td" %}" class="nav-link"> Listar títulos </a>
                                                         </li>
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_td' %}active{% endif %}">
-                                                            <a href="{% url "td:painel_td" %}" class="nav-link  "> Painel </a>
+                                                            <a href="{% url "td:painel_td" %}" class="nav-link"> Painel </a>
                                                         </li>
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'sobre_td' %}active{% endif %}">
-                                                            <a href="{% url "td:sobre_td" %}" class="nav-link  "> Sobre </a>
+                                                            <a href="{% url "td:sobre_td" %}" class="nav-link"> Sobre </a>
                                                         </li>
                                                     </ul>
                                                 </li>
@@ -470,38 +470,38 @@
                                             </a>
                                             <ul class="dropdown-menu pull-left">
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'historico_criptomoeda' %}active{% endif %}">
-                                                    <a href="{% url "criptomoeda:historico_criptomoeda" %}" class="nav-link  "> Histórico </a>
+                                                    <a href="{% url "criptomoeda:historico_criptomoeda" %}" class="nav-link"> Histórico </a>
                                                 </li>
                                                 {% if request.user.is_authenticated %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_criptomoeda' %}active{% endif %}">
-                                                    <a href="{% url "criptomoeda:inserir_operacao_criptomoeda" %}" class="nav-link  "> Inserir operação </a>
+                                                    <a href="{% url "criptomoeda:inserir_operacao_criptomoeda" %}" class="nav-link"> Inserir operação </a>
                                                 </li>
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_criptomoeda_lote' %}active{% endif %}">
-                                                    <a href="{% url "criptomoeda:inserir_operacao_criptomoeda_lote" %}" class="nav-link  "> Inserir operação em lote </a>
+                                                    <a href="{% url "criptomoeda:inserir_operacao_criptomoeda_lote" %}" class="nav-link"> Inserir operação em lote </a>
                                                 </li>
                                                 {% endif %}
                                                 {% if request.user.is_authenticated %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_transferencia_criptomoeda' %}active{% endif %}">
-                                                    <a href="{% url "criptomoeda:inserir_transferencia_criptomoeda" %}" class="nav-link  "> Inserir transferência </a>
+                                                    <a href="{% url "criptomoeda:inserir_transferencia_criptomoeda" %}" class="nav-link"> Inserir transferência </a>
                                                 </li>
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_transferencia_criptomoeda_lote' %}active{% endif %}">
-                                                    <a href="{% url "criptomoeda:inserir_transferencia_criptomoeda_lote" %}" class="nav-link  "> Inserir transf. em lote </a>
+                                                    <a href="{% url "criptomoeda:inserir_transferencia_criptomoeda_lote" %}" class="nav-link"> Inserir transf. em lote </a>
                                                 </li>
                                                 {% endif %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_criptomoeda' %}active{% endif %}">
-                                                    <a href="{% url "criptomoeda:listar_criptomoedas" %}" class="nav-link  "> Listar Moedas </a>
+                                                    <a href="{% url "criptomoeda:listar_criptomoedas" %}" class="nav-link"> Listar Moedas </a>
                                                 </li>
                                                 {% if request.user.is_authenticated %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_transferencias_criptomoeda' %}active{% endif %}">
-                                                    <a href="{% url "criptomoeda:listar_transferencias_criptomoeda" %}" class="nav-link  "> Listar transferências </a>
+                                                    <a href="{% url "criptomoeda:listar_transferencias_criptomoeda" %}" class="nav-link"> Listar transferências </a>
                                                 </li>
                                                 {% endif %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_criptomoeda' %}active{% endif %}">
-                                                    <a href="{% url "criptomoeda:painel_criptomoeda" %}" class="nav-link  "> Painel </a>
+                                                    <a href="{% url "criptomoeda:painel_criptomoeda" %}" class="nav-link"> Painel </a>
                                                 </li>
                                                 {% comment %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'sobre_criptomoeda' %}active{% endif %}">
-                                                    <a href="{% url "criptomoeda:sobre_criptomoeda" %}" class="nav-link  "> Sobre </a>
+                                                    <a href="{% url "criptomoeda:sobre_criptomoeda" %}" class="nav-link"> Sobre </a>
                                                 </li>
                                                 {% endcomment %}
                                             </ul>
@@ -512,22 +512,22 @@
                                             </a>
                                             <ul class="dropdown-menu pull-left">
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'historico_outros_invest' %}active{% endif %}">
-                                                    <a href="{% url "outros_investimentos:historico_outros_invest" %}" class="nav-link  "> Histórico </a>
+                                                    <a href="{% url "outros_investimentos:historico_outros_invest" %}" class="nav-link"> Histórico </a>
                                                 </li>
                                                 {% if request.user.is_authenticated %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_outros_invest' %}active{% endif %}">
-                                                    <a href="{% url "outros_investimentos:inserir_investimento" %}" class="nav-link  "> Inserir investimento </a>
+                                                    <a href="{% url "outros_investimentos:inserir_investimento" %}" class="nav-link"> Inserir investimento </a>
                                                 </li>
                                                 {% endif %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_investimentos' %}active{% endif %}">
-                                                    <a href="{% url "outros_investimentos:listar_investimentos" %}" class="nav-link  "> Listar investimentos </a>
+                                                    <a href="{% url "outros_investimentos:listar_investimentos" %}" class="nav-link"> Listar investimentos </a>
                                                 </li>
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_outros_invest' %}active{% endif %}">
-                                                    <a href="{% url "outros_investimentos:painel_outros_invest" %}" class="nav-link  "> Painel </a>
+                                                    <a href="{% url "outros_investimentos:painel_outros_invest" %}" class="nav-link"> Painel </a>
                                                 </li>
                                                 {% comment %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'sobre_outros_invest' %}active{% endif %}">
-                                                    <a href="{% url "outros_investimentos:sobre_outros_invest" %}" class="nav-link  "> Sobre </a>
+                                                    <a href="{% url "outros_investimentos:sobre_outros_invest" %}" class="nav-link"> Sobre </a>
                                                 </li>
                                                 {% endcomment %}
                                             </ul>
@@ -539,19 +539,19 @@
                                             <ul class="dropdown-menu pull-left">
                                                 {% if request.user.is_authenticated %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_divisao' %}active{% endif %}">
-                                                    <a href="{% url "divisoes:inserir_divisao" %}" class="nav-link  "> Inserir divisão </a>
+                                                    <a href="{% url "divisoes:inserir_divisao" %}" class="nav-link"> Inserir divisão </a>
                                                 </li>
                                                 {% endif %}
                                                 {% if request.user.is_authenticated %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_transferencia' %}active{% endif %}">
-                                                    <a href="{% url "divisoes:inserir_transferencia" %}" class="nav-link  "> Inserir transferência </a>
+                                                    <a href="{% url "divisoes:inserir_transferencia" %}" class="nav-link"> Inserir transferência </a>
                                                 </li>
                                                 {% endif %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_divisoes' %}active{% endif %}">
-                                                    <a href="{% url "divisoes:listar_divisoes" %}" class="nav-link  "> Listar divisões </a>
+                                                    <a href="{% url "divisoes:listar_divisoes" %}" class="nav-link"> Listar divisões </a>
                                                 </li>
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_transferencias' %}active{% endif %}">
-                                                    <a href="{% url "divisoes:listar_transferencias" %}" class="nav-link  "> Listar transferências </a>
+                                                    <a href="{% url "divisoes:listar_transferencias" %}" class="nav-link"> Listar transferências </a>
                                                 </li>
                                             </ul>
                                         </li>    
@@ -561,7 +561,7 @@
                                             </a>
                                             <ul class="dropdown-menu pull-left">
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_anos_imposto_renda' %}active{% endif %}">
-                                                    <a href="{% url "imposto_renda:listar_anos_imposto_renda" %}" class="nav-link  "> Listar anos </a>
+                                                    <a href="{% url "imposto_renda:listar_anos_imposto_renda" %}" class="nav-link"> Listar anos </a>
                                                 </li>
                                             </ul>
                                         </li>
@@ -746,12 +746,8 @@
         <script src={% static "assets/global/plugins/jquery-slimscroll/jquery.slimscroll.min.js" %} type="text/javascript"></script>
         <script src={% static "assets/global/plugins/jquery.blockui.min.js" %} type="text/javascript"></script>
         <script src={% static "assets/global/plugins/bootstrap-switch/js/bootstrap-switch.min.js" %} type="text/javascript"></script>
+        <script src={% static "js/bagogold/base.min.js" %} type="text/javascript"></script>
         <!-- END CORE PLUGINS -->
-        <script type="text/javascript">
-        $(document).ready(function() {
-            $('.em-construcao').attr('data-original-title', 'Em construção').attr('data-placement', 'top').addClass('tooltips').removeClass('em-construcao');
-        });
-        </script>
         <!-- BEGIN PAGE LEVEL PLUGINS -->
         {% block extra_footer %}
         
