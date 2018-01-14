@@ -92,6 +92,9 @@ class OperacaoCriptomoedaLoteForm(forms.Form):
     divisao = forms.ModelChoiceField(queryset=None, label=u'Divisão')
     operacoes_lote = forms.CharField(label=u'Operações', widget=forms.Textarea)
     
+    class Media:
+        js = ('js/bagogold/form_operacao_criptomoeda_lote.js',)
+    
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
         # first call parent's constructor
@@ -105,6 +108,9 @@ class OperacaoCriptomoedaLoteForm(forms.Form):
 class TransferenciaCriptomoedaLoteForm(forms.Form):
     divisao = forms.ModelChoiceField(queryset=None, label=u'Divisão')
     transferencias_lote = forms.CharField(label=u'Transferências', widget=forms.Textarea)
+    
+    class Media:
+        js = ('js/bagogold/form_transferencia_criptomoeda_lote.js',)
     
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
