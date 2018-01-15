@@ -47,7 +47,7 @@ def estatisticas_acao(request, ticker=None):
     if request.user.is_authenticated():
         investidor = request.user.investidor
         
-    if (ticker):
+    if ticker:
         acao = get_object_or_404(Acao, ticker=ticker)
     else:
         acao = Acao.objects.all()[0]
@@ -56,7 +56,7 @@ def estatisticas_acao(request, ticker=None):
     historico = HistoricoAcao.objects.filter(acao__ticker=ticker, oficial_bovespa=True).order_by('data')
     if not historico:
         return TemplateResponse(request, 'acoes/estatisticas_acao.html', {'graf_preco_medio': list(), 'graf_preco_medio_valor_acao': list(),
-                               'graf_historico_proventos': list(), 'graf_historico': list()})
+                               'graf_historico_proventos': list(), 'graf_historico': list(), 'dados': {}})
         
     graf_historico = list()
     # Preparar gráfico com os valores históricos da acao
@@ -66,7 +66,7 @@ def estatisticas_acao(request, ticker=None):
     
     if not request.user.is_authenticated():
         return TemplateResponse(request, 'acoes/estatisticas_acao.html', {'graf_preco_medio': list(), 'graf_preco_medio_valor_acao': list(),
-                               'graf_historico_proventos': list(), 'graf_historico': graf_historico})
+                               'graf_historico_proventos': list(), 'graf_historico': graf_historico, 'dados': {}})
         
     operacoes = OperacaoAcao.objects.filter(destinacao='B', acao__ticker=ticker, investidor=investidor).exclude(data__isnull=True).order_by('data')
     # Pega os proventos em ações recebidos por outras ações
@@ -92,6 +92,9 @@ def estatisticas_acao(request, ticker=None):
         
     # Proventos devem vir antes
     lista_conjunta = sorted(chain(proventos, operacoes), key=attrgetter('data'))
+    
+    # Dados da tela
+    dados = {}
     
     graf_historico_proventos = list()
     graf_preco_medio = list()
@@ -196,16 +199,21 @@ def estatisticas_acao(request, ticker=None):
         preco_medio_corrente = float(-float(total_gasto)/qtd_acoes)
     except ZeroDivisionError:
         preco_medio_corrente = float(0)
-    # Verifica se altera ultima posicao do grafico ou adiciona novo registro
-    if len(graf_preco_medio) > 0 and graf_preco_medio[len(graf_preco_medio)-1][0] == data_atual_formatada:
-        graf_preco_medio[len(graf_preco_medio)-1][1] = preco_medio_corrente
-        graf_preco_medio_valor_acao[len(graf_preco_medio_valor_acao)-1][1] = float(preco_unitario)
-    else:
-        graf_preco_medio += [[data_atual_formatada, preco_medio_corrente]]
-        graf_preco_medio_valor_acao += [[data_atual_formatada, float(preco_unitario)]]
+    
+    # Guarda se gráfico de preço médio será mostrado
+    dados['mostrar_grafico_preco_medio'] = len(graf_preco_medio) > 0
+    if dados['mostrar_grafico_preco_medio']:
+        # Verifica se altera ultima posicao do grafico ou adiciona novo registro
+        if graf_preco_medio[len(graf_preco_medio)-1][0] == data_atual_formatada:
+            graf_preco_medio[len(graf_preco_medio)-1][1] = preco_medio_corrente
+            graf_preco_medio_valor_acao[len(graf_preco_medio_valor_acao)-1][1] = float(preco_unitario)
+        else:
+            graf_preco_medio += [[data_atual_formatada, preco_medio_corrente]]
+            graf_preco_medio_valor_acao += [[data_atual_formatada, float(preco_unitario)]]
+        
     
     return TemplateResponse(request, 'acoes/estatisticas_acao.html', {'graf_preco_medio': graf_preco_medio, 'graf_preco_medio_valor_acao': graf_preco_medio_valor_acao,
-                               'graf_historico_proventos': graf_historico_proventos, 'graf_historico': graf_historico})
+                               'graf_historico_proventos': graf_historico_proventos, 'graf_historico': graf_historico, 'dados': dados})
 
 @adiciona_titulo_descricao('Lista de ações', 'Lista as ações da Bovespa')
 def listar_acoes(request):
