@@ -91,7 +91,7 @@ class Command(BaseCommand):
                     time.sleep(3)
             while (len(threads_rodando) > 0 or len(fiis_para_verificar) > 0):
 #                 print 'FIIs para verificar:', len(fiis_para_verificar), '... Threads:', len(threads_rodando), contador
-                if 'Principal' in threads_rodando.keys():
+                while 'Principal' in threads_rodando.keys():
                     del threads_rodando['Principal']
                 time.sleep(3)
         except KeyboardInterrupt:

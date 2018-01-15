@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
+from bagogold import settings
 from bagogold.bagogold.models.debentures import Debenture, JurosDebenture, \
     PremioDebenture, AmortizacaoDebenture
 from decimal import Decimal
+from django.core.mail import mail_admins
 from django.core.management.base import BaseCommand
 from threading import Thread
 from urllib2 import Request, urlopen, HTTPError, URLError
 import datetime
 import re
 import time
+import traceback
 
 # A thread 'Principal' indica se ainda está rodando a thread principal
 threads_rodando = {'Principal': 1}
@@ -160,9 +163,10 @@ class ProcessaDebentureThread(Thread):
                 
                 time.sleep(1)
         except Exception as e:
-            template = "An exception of type {0} occured. Arguments:\n{1!r}"
-            message = template.format(type(e).__name__, e.args)
-            print codigo, 'processamento', message
+#             template = "An exception of type {0} occured. Arguments:\n{1!r}"
+#             message = template.format(type(e).__name__, e.args)
+#             print codigo, 'processamento', message
+            pass
 
 class Command(BaseCommand):
     help = 'Busca as Debêntures'
@@ -176,14 +180,29 @@ class Command(BaseCommand):
             thread_processa_debenture.start()
             
             buscar_info_debentures()
+            # Terminar threads
             while (len(threads_rodando) > 0 or len(debentures_para_processar) > 0):
-                if 'Principal' in threads_rodando.keys():
+                while 'Principal' in threads_rodando.keys():
                     del threads_rodando['Principal']
                 time.sleep(3)
         except KeyboardInterrupt:
+            # Terminar threads
             while (len(threads_rodando) > 0 or len(debentures_para_processar) > 0):
 #                 print 'Debêntures a processar:', len(debentures_para_processar)
-                if 'Principal' in threads_rodando.keys():
+                while 'Principal' in threads_rodando.keys():
+                    del threads_rodando['Principal']
+                time.sleep(3)
+        except:
+            # Enviar mensagem em caso de erro
+            if settings.ENV == 'DEV':
+                print traceback.format_exc()
+            elif settings.ENV == 'PROD':
+                mail_admins(u'Erro em Buscar debêntures', traceback.format_exc().decode('utf-8'))
+            
+            # Terminar threads
+            while (len(threads_rodando) > 0 or len(debentures_para_processar) > 0):
+#                 print 'Debêntures a processar:', len(debentures_para_processar)
+                while 'Principal' in threads_rodando.keys():
                     del threads_rodando['Principal']
                 time.sleep(3)
 
