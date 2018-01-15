@@ -4,14 +4,17 @@ from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoCriptomoedaFormSet, \
     DivisaoTransferenciaCriptomoedaFormSet
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoCriptomoeda, \
-    Divisao, DivisaoTransferenciaCriptomoeda
+    Divisao, DivisaoTransferenciaCriptomoeda, DivisaoPrincipal
 from bagogold.criptomoeda.forms import OperacaoCriptomoedaForm, \
-    TransferenciaCriptomoedaForm
+    TransferenciaCriptomoedaForm, OperacaoCriptomoedaLoteForm, \
+    TransferenciaCriptomoedaLoteForm
 from bagogold.criptomoeda.models import Criptomoeda, OperacaoCriptomoeda, \
     OperacaoCriptomoedaMoeda, OperacaoCriptomoedaTaxa, TransferenciaCriptomoeda, \
     ValorDiarioCriptomoeda
-from bagogold.criptomoeda.utils import buscar_valor_criptomoedas_atual, \
-    calcular_qtd_moedas_ate_dia
+from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia, \
+    criar_operacoes_lote, criar_transferencias_lote, \
+    calcular_qtd_moedas_ate_dia_por_criptomoeda, formatar_op_lote_confirmacao, \
+    formatar_transf_lote_confirmacao
 from bagogold.fundo_investimento.utils import \
     calcular_qtd_cotas_ate_dia_por_fundo
 from decimal import Decimal
@@ -29,6 +32,7 @@ from operator import attrgetter
 import calendar
 import datetime
 import json
+import re
 import traceback
 
 @login_required
@@ -129,15 +133,20 @@ def editar_operacao_criptomoeda(request, id_operacao):
                 
         elif request.POST.get("delete"):
             # Verifica se, em caso de compra, a quantidade de cotas do investidor não fica negativa
-            if operacao_criptomoeda.tipo_operacao == 'C' and calcular_qtd_cotas_ate_dia_por_fundo(investidor, operacao_criptomoeda.criptomoeda.id, datetime.date.today()) - operacao_criptomoeda.quantidade < 0:
-                messages.error(request, 'Operação de compra não pode ser apagada pois quantidade atual para o fundo %s seria negativa' % (operacao_criptomoeda.criptomoeda))
+            if operacao_criptomoeda.tipo_operacao == 'C' \
+                and calcular_qtd_moedas_ate_dia_por_criptomoeda(investidor, operacao_criptomoeda.criptomoeda.id) - operacao_criptomoeda.quantidade < 0:
+                
+                # Carregar formulários para evitar erro ao renderizar a página
+                form_operacao_criptomoeda = OperacaoCriptomoedaForm(request.POST, instance=operacao_criptomoeda, investidor=investidor)
+                formset_divisao = DivisaoFormSet(request.POST, instance=operacao_criptomoeda, investidor=investidor) if varias_divisoes else None
+                messages.error(request, u'Operação de compra não pode ser apagada pois quantidade atual para %s seria negativa' % (operacao_criptomoeda.criptomoeda.nome))
             else:
                 divisao_criptomoeda = DivisaoOperacaoCriptomoeda.objects.filter(operacao=operacao_criptomoeda)
                 for divisao in divisao_criptomoeda:
                     divisao.delete()
                 operacao_criptomoeda.delete()
-                messages.success(request, 'Operação apagada com sucesso')
-                return HttpResponseRedirect(reverse('td:historico_td'))
+                messages.success(request, u'Operação apagada com sucesso')
+                return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
  
     else:
         if OperacaoCriptomoedaTaxa.objects.filter(operacao=operacao_criptomoeda).exists():
@@ -285,7 +294,7 @@ def historico(request):
                 moedas[movimentacao.criptomoeda.ticker].qtd = 0
                 
             # Verifica se há taxa cadastrada
-            movimentacao.taxa = movimentacao.operacaocriptomoedataxa if hasattr(movimentacao, 'operacaocriptomoedataxa') else None
+            movimentacao.taxa = movimentacao.taxa()
             
             if movimentacao.tipo_operacao == 'C':
                 movimentacao.tipo = 'Compra'
@@ -477,6 +486,55 @@ def inserir_operacao_criptomoeda(request):
                                                                                               'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})
 
 @login_required
+@adiciona_titulo_descricao('Inserir operação em criptomoedas em lote', 'Inserir lote de registros de operação de compra/venda em criptomoeda')
+def inserir_operacao_lote(request):
+    investidor = request.user.investidor
+    
+    # Carregar lista com criptomoedas válidas
+    criptomoedas_validas = Criptomoeda.objects.all().order_by('ticker')
+    
+    if request.method == 'POST':
+        form_lote_operacoes = OperacaoCriptomoedaLoteForm(request.POST, investidor=investidor)
+        
+        if form_lote_operacoes.is_valid():
+            try:
+                # Verificar se foi enviada lista de strings
+                if form_lote_operacoes.cleaned_data.get('operacoes_lote'):
+                    lista_string = [string_operacao.strip() for string_operacao in form_lote_operacoes.cleaned_data.get('operacoes_lote').split('\n')]
+                    
+                    divisao = form_lote_operacoes.cleaned_data.get('divisao')
+                    if not divisao or divisao.investidor != investidor:
+                        raise ValueError('Divisão inválida')
+                    
+                    # Verificar se foi enviada confirmação de criação
+                    if request.POST.get('confirmar') == '1':
+                        # Criar operações
+                        criar_operacoes_lote(lista_string, investidor, divisao.id, salvar=True)
+                        messages.success(request, 'Operações inseridas com sucesso')
+                        return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
+                    
+                    # Verificar se foi enviado cancelamento da confirmação
+                    if request.POST.get('confirmar') == '0':
+                        return TemplateResponse(request, 'criptomoedas/inserir_operacao_criptomoeda_lote.html', {'form_lote_operacoes': form_lote_operacoes, 'operacoes': list(),
+                                                                                                                 'confirmacao': False, 'criptomoedas_validas': criptomoedas_validas})
+
+                    else:
+                        # Validar operações
+                        operacoes = formatar_op_lote_confirmacao(criar_operacoes_lote(lista_string, investidor, divisao.id))
+                        return TemplateResponse(request, 'criptomoedas/inserir_operacao_criptomoeda_lote.html', {'form_lote_operacoes': form_lote_operacoes, 'operacoes': operacoes,
+                                                                                                                 'confirmacao': True, 'criptomoedas_validas': criptomoedas_validas})
+                else:
+                    raise ValueError('Insira as operações no formato indicado')
+            except Exception as e:
+                messages.error(request, e, extra_tags='safe')
+    else:
+        # Form do lote de operações
+        form_lote_operacoes = OperacaoCriptomoedaLoteForm(investidor=investidor)
+        
+    return TemplateResponse(request, 'criptomoedas/inserir_operacao_criptomoeda_lote.html', {'form_lote_operacoes': form_lote_operacoes, 'operacoes': list(),
+                                                                                             'confirmacao': False, 'criptomoedas_validas': criptomoedas_validas})
+    
+@login_required
 @adiciona_titulo_descricao('Inserir transferência para criptomoedas', 'Inserir registro de transferência para criptomoedas')
 def inserir_transferencia(request):
     investidor = request.user.investidor
@@ -541,7 +599,57 @@ def inserir_transferencia(request):
     return TemplateResponse(request, 'criptomoedas/inserir_transferencia.html', {'form_transferencia_criptomoeda': form_transferencia_criptomoeda, \
                                                                                               'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})
 
-@adiciona_titulo_descricao('Listar criptomoedas cadastradas', 'Lista as criptomoedas no sistema')
+@login_required
+@adiciona_titulo_descricao('Inserir transferência para criptomoedas em lote', 'Inserir lote de registros de transferência para criptomoedas')
+def inserir_transferencia_lote(request):
+    investidor = request.user.investidor
+    
+    # Carregar lista com criptomoedas válidas
+    criptomoedas_validas = Criptomoeda.objects.all().order_by('ticker')
+    
+    if request.method == 'POST':
+        form_lote_transferencias = TransferenciaCriptomoedaLoteForm(request.POST, investidor=investidor)
+        
+        if form_lote_transferencias.is_valid():
+            try:
+                # Verificar se foi enviada lista de strings
+                if form_lote_transferencias.cleaned_data.get('transferencias_lote'):
+                    lista_string = [string_transferencia.strip() for string_transferencia in form_lote_transferencias.cleaned_data.get('transferencias_lote').split('\n')]
+                    
+                    divisao = form_lote_transferencias.cleaned_data.get('divisao')
+                    if not divisao or divisao.investidor != investidor:
+                        raise ValueError('Divisão inválida')
+                    
+                    # Verificar se foi enviada confirmação de criação
+                    if request.POST.get('confirmar') == '1':
+                        # Criar operações
+                        criar_transferencias_lote(lista_string, investidor, divisao.id, salvar=True)
+                        messages.success(request, 'Transferências inseridas com sucesso')
+                        return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
+                    
+                    # Verificar se foi enviado cancelamento da confirmação
+                    if request.POST.get('confirmar') == '0':
+                        return TemplateResponse(request, 'criptomoedas/inserir_transferencia_lote.html', {'form_lote_transferencias': form_lote_transferencias, 'transferencias': list(),
+                                                                                                                 'confirmacao': False, 'criptomoedas_validas': criptomoedas_validas})
+
+                    else:
+                        # Validar operações
+                        transferencias = formatar_transf_lote_confirmacao(criar_transferencias_lote(lista_string, investidor, divisao.id))
+                        return TemplateResponse(request, 'criptomoedas/inserir_transferencia_lote.html', {'form_lote_transferencias': form_lote_transferencias, 'transferencias': transferencias,
+                                                                                                                 'confirmacao': True, 'criptomoedas_validas': criptomoedas_validas})
+                else:
+                    raise ValueError('Insira as transferências no formato indicado')
+            except Exception as e:
+                messages.error(request, e, extra_tags='safe')
+                raise
+    else:
+        # Form do lote de operações
+        form_lote_transferencias = TransferenciaCriptomoedaLoteForm(investidor=investidor)
+        
+    return TemplateResponse(request, 'criptomoedas/inserir_transferencia_lote.html', {'form_lote_transferencias': form_lote_transferencias, 'transferencias': list(),
+                                                                                             'confirmacao': False, 'criptomoedas_validas': criptomoedas_validas})
+    
+@adiciona_titulo_descricao('Listar criptomoedas cadastradas', 'Lista as criptomoedas cadastradas no sistema')
 def listar_criptomoedas(request):
     moedas = Criptomoeda.objects.all()
     valores_diarios = ValorDiarioCriptomoeda.objects.all().values('valor')
@@ -553,7 +661,7 @@ def listar_criptomoedas(request):
 
 
 @login_required
-@adiciona_titulo_descricao('Listar criptomoedas cadastrados', 'Lista as criptomoedas no sistema')
+@adiciona_titulo_descricao('Listar transferências em criptomoedas', 'Lista as transferências feitas para criptomoedas pelo investidor')
 def listar_transferencias(request):
     investidor = request.user.investidor
     transferencias = TransferenciaCriptomoeda.objects.filter(investidor=investidor)
@@ -566,11 +674,19 @@ def painel(request):
     investidor = request.user.investidor
     qtd_moedas = calcular_qtd_moedas_ate_dia(investidor)
     
+    dados = {}
+    dados['total_atual'] = Decimal(0)
+    
     moedas = Criptomoeda.objects.filter(id__in=qtd_moedas.keys())
+    valores_atuais = ValorDiarioCriptomoeda.objects.filter(criptomoeda__in=qtd_moedas.keys(), moeda=ValorDiarioCriptomoeda.MOEDA_REAL).values('valor')
     for moeda in moedas:
         moeda.qtd_atual = qtd_moedas[moeda.id]
+        moeda.valor_atual = valores_atuais.get(criptomoeda=moeda)['valor']
+        moeda.total_atual = moeda.qtd_atual * moeda.valor_atual
+        
+        dados['total_atual'] += moeda.total_atual
     
-    return TemplateResponse(request, 'criptomoedas/painel.html', {'moedas': moedas})
+    return TemplateResponse(request, 'criptomoedas/painel.html', {'moedas': moedas, 'dados': dados})
 
 def sobre(request):
     pass

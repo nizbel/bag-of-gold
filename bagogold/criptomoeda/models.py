@@ -32,6 +32,12 @@ class OperacaoCriptomoeda (models.Model):
             return self.operacaocriptomoedamoeda.criptomoeda.ticker
         return 'BRL'
     
+    def taxa(self):
+        if hasattr(self, 'operacaocriptomoedataxa'):
+            return self.operacaocriptomoedataxa 
+        else:
+            return None
+    
 class OperacaoCriptomoedaTaxa (models.Model):
     valor = models.DecimalField(u'Taxa da operação', max_digits=21, decimal_places=12, validators=[MinValueValidator(Decimal('0'))])
     operacao = models.OneToOneField('OperacaoCriptomoeda')

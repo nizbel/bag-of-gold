@@ -21,3 +21,19 @@
     padding-left: 0 !important;
     padding-right: 0 !important;
 }
+
+.font-doacao {
+	font-size: 18px;
+}
+
+@media (max-width: 991px) {
+  /* 991px */
+  .page-header .page-header-menu {
+    background: #ffffff;
+    margin-bottom: 20px;
+      border-bottom: 1px solid #F0F0F0 !important;
+    /* Horizontal mega menu */ }
+    .page-header .page-header-menu .hor-menu .navbar-nav {
+      border-top: 1px solid #F0F0F0 !important;
+      /* Mega menu content */
+      /* Classic menu */ }
