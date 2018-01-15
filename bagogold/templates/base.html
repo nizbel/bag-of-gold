@@ -655,6 +655,40 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <div class="modal fade" id="modal_doacoes" tabindex="-1" role="basic" aria-hidden="true" data-backdrop="static" data-keyboard="false"  style="display: none;">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                                                    <h4 class="modal-title">Formas de doação</h4>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="row">
+                                                        <div class="col-md-12 mt-clipboard-container text-center">
+                                                            <span class="col-md-12">Endereço Bitcoin:</span>
+                                                            <span class="col-md-12" id="mt-btc" type="text" readonly="readonly"><strong>16ZvpLMG9TTSiEMrS9hnDreWM2XHusbQSn</strong></span>
+                                                            <div class="col-md-12">
+                                                                <a href="javascript:;" class="btn btn-warning mt-clipboard" data-clipboard-action="copy" data-clipboard-target="#mt-btc">Copiar</a>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div class="col-md-12 mt-clipboard-container text-center">
+                                                            <span class="col-md-12">Endereço Ethereum:</span>
+                                                            <span class="col-md-12" id="mt-eth" type="text" readonly="readonly"><strong>0x3988A0ee96605ee03a28D9218F13E62210d2A66F</strong></span>
+                                                            <div class="col-md-12">
+                                                                <a href="javascript:;" class="btn btn-warning mt-clipboard" data-clipboard-action="copy" data-clipboard-target="#mt-eth">Copiar</a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <a class="btn dark btn-outline" data-dismiss="modal">Fechar</a>
+                                                </div>
+                                            </div>
+                                            <!-- /.modal-content -->
+                                        </div>
+                                        <!-- /.modal-dialog -->
+                                    </div>
                                     <!-- END PAGE CONTENT INNER -->
                                 </div>
                             </div>
@@ -693,25 +727,7 @@
                                 </div>
                                 <div class="col-md-3 col-sm-6 col-xs-12 footer-block">
                                     <h2>Doações</h2>
-                                    <div style="font-size:16px;margin:0 auto;width:300px" class="blockchain-btn"
-                                         data-address="16ZvpLMG9TTSiEMrS9hnDreWM2XHusbQSn"
-                                         data-shared="false">
-                                        <div class="blockchain stage-begin">
-                                            <a href="javascript:;"><img alt="Doar bitcoins" src="https://blockchain.info/Resources/buttons/donate_64.png"/></a>
-                                        </div>
-                                        <div class="blockchain stage-loading" style="text-align:center">
-                                        </div>
-                                        <div class="blockchain stage-ready">
-                                             <p align="center">Endereço Bitcoin: <b>[[address]]</b></p>
-                                             <p align="center" class="qr-code"></p>
-                                        </div>
-                                        <div class="blockchain stage-paid">
-                                             Doação de <b>[[value]] BTC</b> recebida. Obrigado.
-                                        </div>
-                                        <div class="blockchain stage-error">
-                                            <span class="font-red">[[error]]</span>
-                                        </div>
-                                    </div>
+                                    <a href="#modal_doacoes" data-toggle="modal"><span class="font-doacao">Opções de doação</span></a>
                                 </div>
                             </div>
                         </div>
@@ -734,6 +750,7 @@
             </div>
         </div>
         
+        
         <!--[if lt IE 9]>
 <script src={% static "assets/global/plugins/respond.min.js" %}></script>
 <script src={% static "assets/global/plugins/excanvas.min.js" %}></script> 
@@ -746,9 +763,10 @@
         <script src={% static "assets/global/plugins/jquery-slimscroll/jquery.slimscroll.min.js" %} type="text/javascript"></script>
         <script src={% static "assets/global/plugins/jquery.blockui.min.js" %} type="text/javascript"></script>
         <script src={% static "assets/global/plugins/bootstrap-switch/js/bootstrap-switch.min.js" %} type="text/javascript"></script>
-        <script src={% static "js/bagogold/base.min.js" %} type="text/javascript"></script>
         <!-- END CORE PLUGINS -->
         <!-- BEGIN PAGE LEVEL PLUGINS -->
+        <script src={% static "assets/global/plugins/clipboardjs/clipboard.min.js" %} type="text/javascript"></script>
+        <script src={% static "js/bagogold/base.min.js" %} type="text/javascript"></script>
         {% block extra_footer %}
         
         {% endblock %}
@@ -761,7 +779,6 @@
         <!-- BEGIN THEME LAYOUT SCRIPTS -->
         <script src={% static "assets/layouts/layout3/scripts/layout.min.js" %} type="text/javascript"></script>
         <!-- END THEME LAYOUT SCRIPTS -->
-        <script type="text/javascript" src="https://blockchain.info/Resources/js/pay-now-button.js"></script>
     </body>
 
 </html>
