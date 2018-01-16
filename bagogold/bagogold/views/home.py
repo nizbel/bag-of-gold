@@ -890,6 +890,9 @@ def detalhamento_investimentos(request):
     return TemplateResponse(request, 'detalhamento_investimentos.html', {'graf_patrimonio': graf_patrimonio, 'patrimonio_anual': patrimonio_anual,
                                             'estatisticas': estatisticas, 'graf_patrimonio_cripto': json.dumps(graf_patrimonio_cripto)})
 
+def inicio(request):
+    return TemplateResponse(request, 'inicio.html', {})
+
 @adiciona_titulo_descricao('Painel geral', 'Traz informações gerais sobre a posição atual em cada tipo de investimento')
 def painel_geral(request):
     # Usado para criar objetos vazios
