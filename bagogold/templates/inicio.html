@@ -39,7 +39,7 @@ Follow: http://www.twitter.com/themehats
 <!--     <link href="{% static 'assets_jango/plugins/revo-slider/css/navigation.css' %}" rel="stylesheet" type="text/css"/> -->
 <!--     <link href="{% static 'assets_jango/plugins/cubeportfolio/css/cubeportfolio.min.css' %}" rel="stylesheet" type="text/css"/> -->
     <link href="{% static 'assets_jango/plugins/owl-carousel/assets/owl.carousel.css' %}" rel="stylesheet" type="text/css"/>
-    <link href="{% static 'assets_jango/plugins/fancybox/jquery.fancybox.css' %}" rel="stylesheet" type="text/css"/>
+<!--     <link href="{% static 'assets_jango/plugins/fancybox/jquery.fancybox.css' %}" rel="stylesheet" type="text/css"/> -->
     <link href="{% static 'assets_jango/plugins/slider-for-bootstrap/css/slider.css' %}" rel="stylesheet" type="text/css"/>
     <!-- END: BASE PLUGINS -->
     
@@ -157,7 +157,7 @@ Follow: http://www.twitter.com/themehats
     </div>
 </div>
 
-<div class="c-content-box c-size-md c-no-padding c-bg-white">
+<div class="c-content-box c-size-md c-no-padding c-bg-dark">
     <div class="c-content-feature-4">
         <div class="c-bg-parallax c-feature-bg c-content-left c-arrow c-border-right-dark" 
         style="background-color: #ffffff; background-image: url({% static 'assets_jango/base/img/content/backgrounds/bg-43.jpg' %});"></div>     
@@ -232,7 +232,7 @@ Follow: http://www.twitter.com/themehats
             </div>
             <div class="row">
                 <div class="col-lg-3 col-md-4 col-sm-6 c-feature-13-tile">
-                    <div class="c-feature-13-content  wow animate fadeInLeft" data-wow-delay="0.2s">
+                    <div class="c-feature-13-content  wow animate fadeInUp" data-wow-delay="0.2s">
                         <h3 class="c-font-uppercase c-theme-font c-font-bold">Ações</h3>
                         <p>Acompanhe sua carteira de ações dividindo operações entre longo
                         prazo e trading</p>
@@ -241,17 +241,17 @@ Follow: http://www.twitter.com/themehats
                 <div class="col-lg-3 col-md-4 col-sm-6 c-feature-13-tile">
                     <div class="c-feature-13-content  wow animate fadeInUp" data-wow-delay="0.2s">
                         <h3 class="c-font-uppercase c-theme-font c-font-bold">Renda Fixa</h3>
-                        <p>CDB, CRA, CRI, Debêntures, LCA, LCI, Tesouro Direto e RDB</p>
+                        <p>Cadastre operações em CDB, CRA, CRI, Debêntures, LCA, LCI, Tesouro Direto e RDB</p>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-4 col-sm-6 c-feature-13-tile">
                     <div class="c-feature-13-content  wow animate fadeInUp" data-wow-delay="0.2s">
                         <h3 class="c-font-uppercase c-theme-font c-font-bold">Fundos de Investimento</h3>
-                        <p>Valores de fundos de invesitmento</p>
+                        <p>Acompanhe os valores de fundos de invesitmento</p>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-4 col-sm-6 c-feature-13-tile">
-                    <div class="c-feature-13-content  wow animate fadeInRight" data-wow-delay="0.2s">
+                    <div class="c-feature-13-content  wow animate fadeInUp" data-wow-delay="0.2s">
                         <h3 class="c-font-uppercase c-theme-font c-font-bold">Fundos de Investimento Imobiliários</h3>
                         <p>FII</p>
                     </div>
@@ -259,7 +259,7 @@ Follow: http://www.twitter.com/themehats
             </div>
             <div class="row">
                 <div class="col-lg-3 col-md-4 col-sm-6 c-feature-13-tile">
-                    <div class="c-feature-13-content  wow animate fadeInLeft" data-wow-delay="0.2s">
+                    <div class="c-feature-13-content  wow animate fadeInUp" data-wow-delay="0.2s">
                         <h3 class="c-font-uppercase c-theme-font c-font-bold">Criptomoedas</h3>
                         <p>Veja os valores mais atuais para criptomoedas</p>
                     </div>
@@ -277,12 +277,12 @@ Follow: http://www.twitter.com/themehats
                         e acompanhe metas de valor a acumular</p>
                     </div>
                 </div>
-                <div class="col-lg-3 col-md-4 col-sm-6 c-feature-13-tile">
-                    <div class="c-feature-13-content  wow animate fadeInRight" data-wow-delay="0.2s">
-                        <h3 class="c-font-uppercase c-theme-font c-font-bold">Imposto de Renda</h3>
-                        <p>Lorem ipsum sit dolor eamet dolore adipiscing</p>
-                    </div>
-                </div>
+<!--                 <div class="col-lg-3 col-md-4 col-sm-6 c-feature-13-tile"> -->
+<!--                     <div class="c-feature-13-content  wow animate fadeInUp" data-wow-delay="0.2s"> -->
+<!--                         <h3 class="c-font-uppercase c-theme-font c-font-bold">Imposto de Renda</h3> -->
+<!--                         <p>Lorem ipsum sit dolor eamet dolore adipiscing</p> -->
+<!--                     </div> -->
+<!--                 </div> -->
             </div>
         </div>
     </div> 
@@ -298,25 +298,14 @@ Follow: http://www.twitter.com/themehats
         <div class="c-content-blog-post-card-1-slider" data-slider="owl">
             <!-- Begin: Title 1 component -->
             <div class="c-content-title-1">
-                <h3 class="c-center c-font-uppercase c-font-bold">Recent Blog Posts</h3>
+                <h3 class="c-center c-font-uppercase c-font-bold">Postagens recentes</h3>
                 <div class="c-line-center c-theme-bg"></div>
             </div>
             <!-- End-->
             <!-- Begin: Owlcarousel -->
-            <div class="owl-carousel owl-theme c-theme c-owl-nav-center" data-items="3" data-slide-speed="8000" data-rtl="false"> 
+            <div class="owl-carousel owl-theme c-theme c-owl-nav-center" data-items="3" data-slide-speed="5000" data-rtl="false"> 
                 <div class="item">
                     <div class="c-content-blog-post-card-1 c-option-2">     
-                        <div class="c-media c-content-overlay">
-                            <div class="c-overlay-wrapper">
-                                <div class="c-overlay-content">
-                                    <a href="#"><i class="icon-link"></i></a>
-                                    <a href="{% static 'assets_jango/base/img/content/stock2/06.jpg' %}" data-lightbox="fancybox" data-fancybox-group="gallery">
-                                        <i class="icon-magnifier"></i>
-                                    </a>
-                                </div>
-                            </div>
-                            <img class="c-overlay-object img-responsive" src="{% static 'assets_jango/base/img/content/stock2/06.jpg' %}" alt="">
-                        </div>
                         <div class="c-body">
                             <div class="c-title c-font-uppercase c-font-bold">
                                 <a href="#">Web & Mobile Development</a>
@@ -343,17 +332,6 @@ Follow: http://www.twitter.com/themehats
                 </div>
                 <div class="item">
                     <div class="c-content-blog-post-card-1 c-option-2"> 
-                        <div class="c-media c-content-overlay">
-                            <div class="c-overlay-wrapper">
-                                <div class="c-overlay-content">
-                                    <a href="#"><i class="icon-link"></i></a>
-                                    <a href="{% static 'assets_jango/base/img/content/stock2/01.jpg' %}" data-lightbox="fancybox" data-fancybox-group="gallery">
-                                        <i class="icon-magnifier"></i>
-                                    </a>
-                                </div>
-                            </div>
-                            <img class="c-overlay-object img-responsive" src="{% static 'assets_jango/base/img/content/stock2/01.jpg' %}" alt="">
-                        </div>  
                         <div class="c-body">
                             <div class="c-title c-font-uppercase c-font-bold">
                                 <a href="#">Modern Design Trends</a>
@@ -376,17 +354,6 @@ Follow: http://www.twitter.com/themehats
                 </div>  
                 <div class="item">
                     <div class="c-content-blog-post-card-1 c-option-2">
-                        <div class="c-media c-content-overlay">
-                            <div class="c-overlay-wrapper">
-                                <div class="c-overlay-content">
-                                    <a href="#"><i class="icon-link"></i></a>
-                                    <a href="{% static 'assets_jango/base/img/content/stock2/03.jpg' %}" data-lightbox="fancybox" data-fancybox-group="gallery">
-                                        <i class="icon-magnifier"></i>
-                                    </a>
-                                </div>
-                            </div>
-                            <img class="c-overlay-object img-responsive" src="{% static 'assets_jango/base/img/content/stock2/03.jpg' %}" alt="">
-                        </div>  
                         <div class="c-body">
                             <div class="c-title c-font-uppercase c-font-bold">
                                 <a href="#">Beatifully crafted Code</a>
@@ -410,81 +377,7 @@ Follow: http://www.twitter.com/themehats
                             </p>
                         </div>
                     </div>
-                </div>      
-                <div class="item">
-                    <div class="c-content-blog-post-card-1 c-option-2">                     
-                        <div class="c-media c-content-overlay">
-                            <div class="c-overlay-wrapper">
-                                <div class="c-overlay-content">
-                                    <a href="#"><i class="icon-link"></i></a>
-                                    <a href="{% static 'assets_jango/base/img/content/stock2/04.jpg' %}" data-lightbox="fancybox" data-fancybox-group="gallery">
-                                        <i class="icon-magnifier"></i>
-                                    </a>
-                                </div>
-                            </div>
-                            <img class="c-overlay-object img-responsive" src="{% static 'assets_jango/base/img/content/stock2/04.jpg' %}" alt="">
-                        </div>  
-                        <div class="c-body">
-                            <div class="c-title c-font-uppercase c-font-bold">
-                                <a href="#">Optimized for all Devices</a>
-                            </div>
-                            <div class="c-author">
-                                By <a href="#"><span class="c-font-uppercase">Sara Conner</span></a>
-                                on <span class="c-font-uppercase">29 May 2015, 10:30AM</span>
-                            </div>
-
-                            <div class="c-panel">
-                                <ul class="c-tags c-theme-ul-bg">
-                                    <li>Mobile</li>
-                                    <li>web</li>
-                                    <li>ux</li>
-                                </ul>                           
-                                <div class="c-comments"><a href="#"><i class="icon-speech"></i> 25 comments</a></div>
-                            </div>
-                            <p>
-                                Lorem ipsum dolor sit amet, dolor adipisicing elit. 
-                                Nulla nemo ad sapiente officia amet.
-                            </p>
-                        </div>
-                    </div>
-                </div>  
-                <div class="item">
-                    <div class="c-content-blog-post-card-1 c-option-2">                     
-                        <div class="c-media c-content-overlay">
-                            <div class="c-overlay-wrapper">
-                                <div class="c-overlay-content">
-                                    <a href="#"><i class="icon-link"></i></a>
-                                    <a href="{% static 'assets_jango/base/img/content/stock2/05.jpg' %}" data-lightbox="fancybox" data-fancybox-group="gallery">
-                                        <i class="icon-magnifier"></i>
-                                    </a>
-                                </div>
-                            </div>
-                            <img class="c-overlay-object img-responsive" src="{% static 'assets_jango/base/img/content/stock2/05.jpg' %}" alt="">
-                        </div>  
-                        <div class="c-body">
-                            <div class="c-title c-font-uppercase c-font-bold">
-                                <a href="#">Compatible to all browsers</a>
-                            </div>
-                            <div class="c-author">
-                                By <a href="#"><span class="c-font-uppercase">Mary Jane</span></a>
-                                on <span class="c-font-uppercase">30 May 2015, 10:30AM</span>
-                            </div>
-
-                            <div class="c-panel">
-                                <ul class="c-tags c-theme-ul-bg">
-                                    <li>chrome</li>
-                                    <li>firefox</li>
-                                    <li>ie</li>
-                                </ul>                           
-                                <div class="c-comments"><a href="#"><i class="icon-speech"></i> 28 comments</a></div>
-                            </div>
-                            <p>
-                                Lorem ipsum dolor sit amet, dolor adipisicing elit. 
-                                Nulla nemo ad sapiente officia amet.
-                            </p>
-                        </div>
-                    </div>
-                </div>               
+                </div>              
             </div>
             <!-- End-->
         </div>
@@ -586,7 +479,7 @@ Follow: http://www.twitter.com/themehats
     <script src="{% static 'assets_jango/plugins/owl-carousel/owl.carousel.min.js' %}" type="text/javascript"></script>
     <script src="{% static 'assets_jango/plugins/counterup/jquery.waypoints.min.js' %}" type="text/javascript"></script>
     <script src="{% static 'assets_jango/plugins/counterup/jquery.counterup.min.js' %}" type="text/javascript"></script>
-    <script src="{% static 'assets_jango/plugins/fancybox/jquery.fancybox.pack.js' %}" type="text/javascript"></script>
+<!--     <script src="{% static 'assets_jango/plugins/fancybox/jquery.fancybox.pack.js' %}" type="text/javascript"></script> -->
     <script src="{% static 'assets_jango/plugins/smooth-scroll/jquery.smooth-scroll.js' %}" type="text/javascript"></script>
     <script src="{% static 'assets_jango/plugins/typed/typed.min.js' %}" type="text/javascript"></script>
     <script src="{% static 'assets_jango/plugins/slider-for-bootstrap/js/bootstrap-slider.js' %}" type="text/javascript"></script>
