@@ -27,7 +27,7 @@ Follow: http://www.twitter.com/themehats
     <link href='http://fonts.googleapis.com/css?family=Roboto+Condensed:300italic,400italic,700italic,400,300,700&amp;subset=all' rel='stylesheet' type='text/css'>
     <link href="{% static 'assets_jango/plugins/socicon/socicon.css' %}" rel="stylesheet" type="text/css"/>
     <link href="{% static 'assets_jango/plugins/bootstrap-social/bootstrap-social.css' %}" rel="stylesheet" type="text/css"/>       
-    <link href="{% static 'assets_jango/plugins/font-awesome/css/font-awesome.min.css' %}" rel="stylesheet" type="text/css"/>
+<!--     <link href="{% static 'assets_jango/plugins/font-awesome/css/font-awesome.min.css' %}" rel="stylesheet" type="text/css"/> -->
     <link href="{% static 'assets_jango/plugins/simple-line-icons/simple-line-icons.min.css' %}" rel="stylesheet" type="text/css"/>
     <link href="{% static 'assets_jango/plugins/animate/animate.min.css' %}" rel="stylesheet" type="text/css"/>
     <link href="{% static 'assets_jango/plugins/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" type="text/css"/>
@@ -66,7 +66,7 @@ Follow: http://www.twitter.com/themehats
             <!-- BEGIN: BRAND -->
             <div class="c-navbar-wrapper clearfix">
                 <div class="c-brand c-pull-left">
-                    <a href="index.html" class="c-logo">
+                    <a href="{% url 'inicio' %}" class="c-logo">
                         <img src="{% static "assets/global/img/text-logo.png" %}" alt="logo" class="c-desktop-logo" style="height:30px;">
                         <img src="{% static "assets/global/img/text-logo.png" %}" alt="logo" class="c-desktop-logo-inverse" style="height:30px;">
                         <img src="{% static "assets/global/img/text-logo.png" %}" alt="logo" class="c-mobile-logo" style="height:30px;">
@@ -75,9 +75,6 @@ Follow: http://www.twitter.com/themehats
                     <span class="c-line"></span>
                     <span class="c-line"></span>
                     <span class="c-line"></span>
-                    </button>       
-                                        <button class="c-search-toggler" type="button">
-                        <i class="fa fa-search"></i>
                     </button>
                 </div>
                 <!-- END: BRAND -->             
@@ -96,10 +93,10 @@ Follow: http://www.twitter.com/themehats
             <a href="#investimentos" class="c-link">Investimentos</a>
         </li>
                         <li class="c-onepage-link ">
-            <a href="#blog" class="c-link">Blog</a>
+            <a href="#postagens_recentes" class="c-link">Postagens recentes</a>
         </li>
                         <li class="c-onepage-link ">
-            <a href="#contact" class="c-link">Contato</a>
+            <a href="#contato" class="c-link">Contato</a>
         </li>
             </ul>
 </nav>
@@ -153,7 +150,6 @@ Follow: http://www.twitter.com/themehats
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
@@ -185,7 +181,6 @@ Follow: http://www.twitter.com/themehats
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
@@ -217,7 +212,6 @@ Follow: http://www.twitter.com/themehats
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
@@ -267,7 +261,7 @@ Follow: http://www.twitter.com/themehats
 </section>
 
 
-<section id="blog">
+<section id="postagens_recentes">
 <!-- BEGIN: CONTENT/BLOG/RECENT-POSTS -->
 <div class="c-content-box c-size-md c-bg-grey">
     <div class="container-fluid">
@@ -280,7 +274,7 @@ Follow: http://www.twitter.com/themehats
             </div>
             <!-- End-->
             <!-- Begin: Owlcarousel -->
-            <div class="owl-carousel owl-theme c-theme c-owl-nav-center" data-items="3" data-slide-speed="5000" data-rtl="false"> 
+            <div class="owl-carousel owl-theme c-theme c-owl-nav-center" data-items="3" data-slide-speed="5000"> 
                 <div class="item">
                     <div class="c-content-blog-post-card-1 c-option-2">     
                         <div class="c-body">
@@ -366,7 +360,7 @@ Follow: http://www.twitter.com/themehats
 </div><!-- END: CONTENT/BLOG/RECENT-POSTS -->
 </section>
 
-<section id="contact">
+<section id="contato">
 
 </section>
         <!-- END: PAGE CONTENT -->
