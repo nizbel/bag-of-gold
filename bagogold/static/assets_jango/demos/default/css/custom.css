@@ -3,4 +3,15 @@
     background-repeat: no-repeat;
 }
 
+/* BLOG TAGS */
+.c-theme-ul-bg > li.blog-tag {
+  padding: 0 !important; }
+  .c-theme-ul-bg > li.blog-tag:hover {
+	background: #f3c200 !important; }
+	  .c-theme-ul-bg > li.blog-tag > a {
+        color: #000000 !important;
+        display: block !important;
+        padding: 2px 6px 1px 6px !important; }
+
 /* FOOTER */
+
