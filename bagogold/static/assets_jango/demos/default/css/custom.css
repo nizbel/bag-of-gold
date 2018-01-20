@@ -3,6 +3,9 @@
     background-repeat: no-repeat;
 }
 
+.c-content-feature-4 .c-feature-bg-50 {
+  width: 50% !important; }
+  
 /* BLOG TAGS */
 .c-theme-ul-bg > li.blog-tag {
   padding: 0 !important; }
