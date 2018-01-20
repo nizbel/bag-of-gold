@@ -7211,9 +7211,10 @@ h1 {
     .c-content-feature-4 .c-content-area {
       width: 0px; }
     .c-content-feature-4 .c-feature-bg {
-      width: 100%;
-      height: 350px;
-      margin-bottom: -350px; }
+      /*width: 100%;
+      height: 0px;
+      margin-bottom: -350px;*/
+      display: none; }
     .c-content-feature-4 .c-content-left {
       float: left; }
       .c-content-feature-4 .c-content-left.c-semi-circle {
@@ -7244,7 +7245,7 @@ h1 {
       width: 100%; }
       .c-content-feature-4 .c-feature-content > .c-content-v-center {
         height: auto;
-        padding-top: 350px; }
+        /*padding-top: 350px;*/ }
       .c-content-feature-4 .c-feature-content.c-left {
         float: left; }
       .c-content-feature-4 .c-feature-content.c-right {
