@@ -1087,7 +1087,7 @@ Theme Panel
   z-index: -1; }
 
 /* Quick sidebar toggler */
-.page-quick-sidebar-toggler {
+/* .page-quick-sidebar-toggler {
   overflow: hidden;
   z-index: 99999;
   display: none;
@@ -1110,10 +1110,10 @@ Theme Panel
     .page-quick-sidebar-toggler > i:hover {
       color: #fff !important; }
     .page-quick-sidebar-open .page-quick-sidebar-toggler > i:before {
-      content: ""/*rtl:""*/; }
+      content: ""rtl:""; } */
 
 /* Quick sidebar wrapper */
-.page-quick-sidebar-wrapper {
+/* .page-quick-sidebar-wrapper {
   transition: right 0.3s;
   z-index: 9999;
   position: fixed;
@@ -1129,16 +1129,16 @@ Theme Panel
     right: 0; }
   .page-quick-sidebar-wrapper .page-quick-sidebar {
     background: #21282e;
-    /* Quick sidebar tabs content */
-    /* Quick sidebar general list heading */
-    /* Quick sidebar general list-items */
-    /* Inner content */
-    /* Quick sidebar list */
-    /* Quick sidebar list item */
-    /* Quick sidebar list item shown */
-    /* Quick sidebar chat */
-    /* Quick sidebar alerts */
-    /* Quick sidebar settings */ }
+    Quick sidebar tabs content
+    Quick sidebar general list heading
+    Quick sidebar general list-items
+    Inner content
+    Quick sidebar list
+    Quick sidebar list item
+    Quick sidebar list item shown
+    Quick sidebar chat
+    Quick sidebar alerts
+    Quick sidebar settings }
     .page-quick-sidebar-wrapper .page-quick-sidebar .nav-tabs {
       margin: 0;
       padding: 0;
@@ -1414,7 +1414,7 @@ Theme Panel
         border: 0;
         margin-top: -4px; }
       .page-quick-sidebar-wrapper .page-quick-sidebar .page-quick-sidebar-settings .page-quick-sidebar-settings-list .list-items li select.form-control {
-        padding: 4px 0px !important; }
+        padding: 4px 0px !important; } */
 
 .quick-nav {
   position: fixed;
