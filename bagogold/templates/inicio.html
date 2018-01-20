@@ -53,8 +53,8 @@ Follow: http://www.twitter.com/themehats
 
     <link rel="shortcut icon" href={% static "assets/global/img/favicon.png" %}/>
     
-    {% if ENV == 'PROD' %}
-        {% include "analytics" %}
+    {% if ENV == 'DEV' %}
+        {% include "analytics.html" %}
     {% endif%}
 </head><body class="c-layout-header-fixed c-layout-header-mobile-fixed c-layout-header-fullscreen"> 
         
@@ -66,7 +66,7 @@ Follow: http://www.twitter.com/themehats
             <!-- BEGIN: BRAND -->
             <div class="c-navbar-wrapper clearfix">
                 <div class="c-brand c-pull-left">
-                    <a href="{% url 'inicio' %}" class="c-logo">
+                    <a href="{% url 'inicio:home' %}" class="c-logo">
                         <img src="{% static "assets/global/img/text-logo.png" %}" alt="logo" class="c-desktop-logo" style="height:30px;">
                         <img src="{% static "assets/global/img/text-logo.png" %}" alt="logo" class="c-desktop-logo-inverse" style="height:30px;">
                         <img src="{% static "assets/global/img/text-logo.png" %}" alt="logo" class="c-mobile-logo" style="height:30px;">
