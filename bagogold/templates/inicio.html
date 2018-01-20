@@ -53,7 +53,7 @@ Follow: http://www.twitter.com/themehats
 
     <link rel="shortcut icon" href={% static "assets/global/img/favicon.png" %}/>
     
-    {% if ENV == 'DEV' %}
+    {% if ENV == 'PROD' %}
         {% include "analytics.html" %}
     {% endif%}
 </head><body class="c-layout-header-fixed c-layout-header-mobile-fixed c-layout-header-fullscreen"> 
@@ -230,30 +230,31 @@ Follow: http://www.twitter.com/themehats
             </div>
             <div class="row">
                 <div class="col-lg-3 col-md-4 col-sm-6 c-feature-13-tile">
-                    <div class="c-feature-13-content wow animate fadeInUp" data-wow-delay="0.1s">
+                    <div class="c-feature-13-content wow animate fadeInUp" data-wow-delay="{% cycle '0.2s' '0.4s' '0.6s' '0.8s' as delay  %}">
                         <h3 class="c-font-uppercase c-theme-font c-font-bold">Situação atualizada</h3>
                         <p class="c-font-grey">Verifique a situação atual de sua carteira de investimentos</p>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-4 col-sm-6 c-feature-13-tile">
-                    <div class="c-feature-13-content wow animate fadeInUp" data-wow-delay="0.2s">
+                    <div class="c-feature-13-content wow animate fadeInUp" data-wow-delay="{% cycle delay %}">
                         <h3 class="c-font-uppercase c-theme-font c-font-bold">Valores históricos</h3>
                         <p class="c-font-grey">Acompanhe a evolução do seu dinheiro</p>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-4 col-sm-6 c-feature-13-tile">
-                    <div class="c-feature-13-content wow animate fadeInUp" data-wow-delay="0.3s">
+                    <div class="c-feature-13-content wow animate fadeInUp" data-wow-delay="{% cycle delay %}">
                         <h3 class="c-font-uppercase c-theme-font c-font-bold">Divisões</h3>
                         <p class="c-font-grey">Separe seus investimentos de acordo com sua vontade. Estipule
                         e acompanhe metas de valor a acumular</p>
                     </div>
                 </div>
-<!--                 <div class="col-lg-3 col-md-4 col-sm-6 c-feature-13-tile"> -->
-<!--                     <div class="c-feature-13-content wow animate fadeInUp" data-wow-delay="0.2s"> -->
-<!--                         <h3 class="c-font-uppercase c-theme-font c-font-bold">Imposto de Renda</h3> -->
-<!--                         <p>Lorem ipsum sit dolor eamet dolore adipiscing</p> -->
-<!--                     </div> -->
-<!--                 </div> -->
+                <div class="col-lg-3 col-md-4 col-sm-6 c-feature-13-tile">
+                    <div class="c-feature-13-content wow animate fadeInUp" data-wow-delay="{% cycle delay %}">
+                        <h3 class="c-font-uppercase c-theme-font c-font-bold">Imposto de Renda</h3>
+                        <p class="c-font-grey">Veja estimativas de como devem ficar os seus investimentos
+                        na declaração do imposto de renda</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div> 
@@ -274,7 +275,7 @@ Follow: http://www.twitter.com/themehats
             </div>
             <!-- End-->
             <!-- Begin: Owlcarousel -->
-            <div class="owl-carousel owl-theme c-theme c-owl-nav-center" data-items="3" data-slide-speed="5000"> 
+            <div class="owl-carousel owl-theme c-theme c-owl-nav-center" data-items="3" data-slide-speed="5000" data-loop="false"> 
                 <div class="item">
                     <div class="c-content-blog-post-card-1 c-option-2">     
                         <div class="c-body">
@@ -286,10 +287,10 @@ Follow: http://www.twitter.com/themehats
                             </div>
 
                             <div class="c-panel">
-                                <ul class="c-tags c-theme-ul-bg wow animate fadeInDown" data-wow-delay="0.4s">
-                                    <li>ux</li>
-                                    <li>web</li>
-                                    <li>events</li>
+                                <ul class="c-tags c-theme-ul-bg">
+                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.1s"><a href="#">ux</a></li>
+                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.2s"><a href="#">web</a></li>
+                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.3s"><a href="#">events</a></li>
                                 </ul>                           
                             </div>
                             <p class="c-font-dark">
@@ -309,10 +310,10 @@ Follow: http://www.twitter.com/themehats
                                 <span class="c-font-uppercase c-font-dark">25 May 2015, 10:30AM</span>
                             </div>
                             <div class="c-panel">
-                                <ul class="c-tags c-theme-ul-bg wow animate fadeInDown" data-wow-delay="0.4s">
-                                    <li>design</li>
-                                    <li>art</li>
-                                    <li>trends</li>
+                                <ul class="c-tags c-theme-ul-bg">
+                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.1s"><a href="#">design</a></li>
+                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.2s"><a href="#">art</a></li>
+                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.3s"><a href="#">trends</a></li>
                                 </ul>                           
                             </div>
                             <p class="c-font-dark">
@@ -330,19 +331,17 @@ Follow: http://www.twitter.com/themehats
                             <div class="c-author">
                                 <span class="c-font-uppercase c-font-dark">26 May 2015, 10:30AM</span>
                             </div>
-
                             <div class="c-panel">
                                 <ul class="c-tags c-theme-ul-bg">
-                                    <li class="wow animate fadeInDown" data-wow-delay="0.1s">Programando por aí</li>
-                                    <li class="wow animate fadeInDown" data-wow-delay="0.2s">Investindo por aí</li>
-                                    <li class="wow animate fadeInDown" data-wow-delay="0.3s">CSS</li>
-                                    <li class="wow animate fadeInDown" data-wow-delay="0.4s">web</li>
-                                    <li class="wow animate fadeInDown" data-wow-delay="0.5s">HTML</li>
-                                    <li class="wow animate fadeInDown" data-wow-delay="0.6s">Por aí</li>
-                                    <li class="wow animate fadeInDown" data-wow-delay="0.7s">Nas ruas</li>
-                                    <li class="wow animate fadeInDown" data-wow-delay="0.8s">Grana</li>
-                                    <li class="wow animate fadeInDown" data-wow-delay="0.9s">Poder</li>
-                                    <li class="wow animate fadeInDown" data-wow-delay="1s">Fama</li>
+                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.1s"><a href="#">Programando por aí</a></li>
+                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.2s"><a href="#">Investindo por aí</a></li>
+                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.3s"><a href="#">CSS</a></li>
+                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.4s"><a href="#">web</a></li>
+                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.5s"><a href="#">HTML</a></li>
+                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.6s"><a href="#">Nas ruas</a></li>
+                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.7s"><a href="#">Grana</a></li>
+                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.8s"><a href="#">Poder</a></li>
+                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.9s"><a href="#">Fama</a></li>
                                 </ul>                           
                             </div>
                             <p class="c-font-dark">
