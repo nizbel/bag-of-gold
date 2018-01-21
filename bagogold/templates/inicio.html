@@ -17,12 +17,12 @@ Follow: http://www.twitter.com/themehats
 <!-- BEGIN HEAD -->
 <head>
     <meta charset="utf-8"/>
-    <title>JANGO | Ultimate Multipurpose Bootstrap HTML Theme - Onepage Version 9</title>
+    <title>Bag of Gold - {{pagina_titulo}}</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-    <meta content="" name="description"/>
-    <meta content="" name="author"/>
+    {% if pagina_descricao %}<meta content="{{pagina_descricao}}" name="description" />{% endif %}
+    <meta content="Guilherme Henrique Gimenes de Deus" name="author"/>
         <!-- BEGIN GLOBAL MANDATORY STYLES -->
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700,500&subset=all' rel='stylesheet' type='text/css'>
     <link href="{% static 'assets_jango/plugins/socicon/socicon.css' %}" rel="stylesheet" type="text/css"/>
@@ -377,7 +377,7 @@ Follow: http://www.twitter.com/themehats
                 </div>
                 <div class="col-md-2 col-sm-6 col-xs-12 footer-block">
                     <h2>Contato</h2>
-                    <address class="margin-bottom-100">
+                    <address>
                         <br> E-mail:
                         <a href="mailto:suporte@bagofgold.com.br">suporte@bagofgold.com.br</a>
                     </address>
@@ -397,23 +397,13 @@ Follow: http://www.twitter.com/themehats
         </div>
     </div>
     <div class="c-postfooter">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-md-6 col-sm-6">
-                    {% now "Y" %} &copy; Bag of Gold 
-                    <p class="c-copyright c-font-oswald c-font-14">
-                    Copyright &copy; JANGO Inc.
-                    </p>
-                </div>
-                <div class="col-md-6 col-sm-6">
-                    <ul class="c-socials">
-                        <li><a href="#"><i class="icon-social-facebook"></i></a></li>
-                    </ul>
-                </div>
-                <span class="pull-right">Feito com 
-                    <a target="_blank" href="http://themehats.com">Jango</a>
-                </span>
-            </div>
+        <div class="container-fluid"> {% now "Y" %} &copy; Bag of Gold 
+<!--             <ul class="c-socials"> -->
+<!--                 <li><a href="#"><i class="icon-social-facebook"></i></a></li> -->
+<!--             </ul> -->
+            <span class="pull-right">Feito com 
+                <a target="_blank" href="http://themehats.com">Jango</a>
+            </span>
         </div>
     </div>
 </footer><!-- END: LAYOUT/FOOTERS/FOOTER-1 -->
