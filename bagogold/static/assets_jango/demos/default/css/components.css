@@ -1955,10 +1955,6 @@ h1 {
 
 @media (min-width: 992px) {
   /* 992px */
-
-
-
-
   .c-layout-header.c-layout-header-default .c-navbar .c-mega-menu > .nav.navbar-nav > li:focus > a.c-btn-icon, .c-layout-header.c-layout-header-default .c-navbar .c-mega-menu > .nav.navbar-nav > li:active > a.c-btn-icon, .c-layout-header.c-layout-header-default .c-navbar .c-mega-menu > .nav.navbar-nav > li:hover > a.c-btn-icon, .c-layout-header.c-layout-header-default .c-navbar .c-mega-menu > .nav.navbar-nav > li.c-active > a.c-btn-icon {
     color: #ffffff; }
   .c-layout-header.c-layout-header-default .c-navbar .c-mega-menu > .nav.navbar-nav > li:focus > .c-search-toggler > i, .c-layout-header.c-layout-header-default .c-navbar .c-mega-menu > .nav.navbar-nav > li:active > .c-search-toggler > i, .c-layout-header.c-layout-header-default .c-navbar .c-mega-menu > .nav.navbar-nav > li:hover > .c-search-toggler > i, .c-layout-header.c-layout-header-default .c-navbar .c-mega-menu > .nav.navbar-nav > li.c-active > .c-search-toggler > i {
