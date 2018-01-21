@@ -18,48 +18,6 @@ var LayoutBrand = function () {
 }();
 // END
 
-// BEGIN: Layout Brand
-var LayoutHeaderCart = function () {
-
-	return {
-		//main function to initiate the module
-		init: function () {
-			var cart = $('.c-cart-menu');
-
-			if (cart.size() === 0) {
-				return;
-			}
-
-			if (App.getViewPort().width < App.getBreakpoint('md')) { // mpbile mode
-				$('body').on('click', '.c-cart-toggler', function (e) {
-					e.preventDefault();
-					e.stopPropagation();
-					$('body').toggleClass("c-header-cart-shown");
-				});
-
-				$('body').on('click', function (e) {
-					if (!cart.is(e.target) && cart.has(e.target).length === 0) {
-						$('body').removeClass('c-header-cart-shown');
-					}
-				});
-			} else { // desktop
-				$('body').on('hover', '.c-cart-toggler, .c-cart-menu', function (e) {
-					$('body').addClass("c-header-cart-shown");
-				});
-
-				$('body').on('hover', '.c-mega-menu > .navbar-nav > li:not(.c-cart-toggler-wrapper)', function (e) {
-					$('body').removeClass("c-header-cart-shown");
-				});
-
-				$('body').on('mouseleave', '.c-cart-menu', function (e) {
-					$('body').removeClass("c-header-cart-shown");
-				});
-			}
-		}
-	};
-}();
-// END
-
 // BEGIN: Layout Header
 var LayoutHeader = function () {
 	var offset = parseInt($('.c-layout-header').attr('data-minimize-offset') > 0 ? parseInt($('.c-layout-header').attr('data-minimize-offset')) : 0);
@@ -119,127 +77,6 @@ var LayoutMegaMenu = function () {
 					var height = App.getViewPort().height - $('.c-layout-header').outerHeight(true) - 60;
 					$('.c-mega-menu').css('max-height', height);
 				}
-			});
-		}
-	};
-}();
-// END
-
-// BEGIN: Layout Mega Menu
-var LayoutSidebarMenu = function () {
-
-	return {
-		//main function to initiate the module
-		init: function () {
-			$('.c-layout-sidebar-menu > .c-sidebar-menu .c-toggler').on('click', function (e) {
-				e.preventDefault();
-                $(this).closest('.c-dropdown').toggleClass('c-open').siblings().removeClass('c-open');
-			});
-		}
-	};
-}();
-// END
-
-// BEGIN: Layout Mega Menu
-var LayoutQuickSearch = function () {
-
-	return {
-		//main function to initiate the module
-		init: function () {
-			// desktop mode
-			$('.c-layout-header').on('click', '.c-mega-menu .c-search-toggler', function (e) {
-				e.preventDefault();
-
-				$('body').addClass('c-layout-quick-search-shown');
-
-				if (App.isIE() === false) {
-					$('.c-quick-search > .form-control').focus();
-				}
-			});
-
-			// mobile mode
-			$('.c-layout-header').on('click', '.c-brand .c-search-toggler', function (e) {
-				e.preventDefault();
-
-				$('body').addClass('c-layout-quick-search-shown');
-
-				if (App.isIE() === false) {
-					$('.c-quick-search > .form-control').focus();
-				}
-			});
-
-			// handle close icon for mobile and desktop
-			$('.c-quick-search').on('click', '> span', function (e) {
-				e.preventDefault();
-				$('body').removeClass('c-layout-quick-search-shown');
-			});
-		}
-	};
-}();
-// END
-
-var LayoutCartMenu = function () {
-
-	return {
-		//main function to initiate the module
-		init: function () {
-			// desktop mode
-			$('.c-layout-header').on('mouseenter', '.c-mega-menu .c-cart-toggler-wrapper', function (e) {
-				e.preventDefault();
-
-				$('.c-cart-menu').addClass('c-layout-cart-menu-shown');
-
-			});
-
-			$('.c-cart-menu, .c-layout-header').on('mouseleave', function (e) {
-				e.preventDefault();
-
-				$('.c-cart-menu').removeClass('c-layout-cart-menu-shown');
-
-			});
-
-			// mobile mode
-			$('.c-layout-header').on('click', '.c-brand .c-cart-toggler', function (e) {
-				e.preventDefault();
-
-				$('.c-cart-menu').toggleClass('c-layout-cart-menu-shown');
-
-			});
-		}
-	};
-}();
-// END
-
-// BEGIN: Layout Mega Menu
-var LayoutQuickSidebar = function () {
-
-	return {
-		//main function to initiate the module
-		init: function () {
-			// desktop mode
-			$('.c-layout-header').on('click', '.c-quick-sidebar-toggler', function (e) {
-				e.preventDefault();
-				e.stopPropagation();
-
-				if ($('body').hasClass("c-layout-quick-sidebar-shown")) {
-					$('body').removeClass("c-layout-quick-sidebar-shown");
-				} else {
-					$('body').addClass("c-layout-quick-sidebar-shown");
-				}
-			});
-
-			$('.c-layout-quick-sidebar').on('click', '.c-close', function (e) {
-				e.preventDefault();
-
-				$('body').removeClass("c-layout-quick-sidebar-shown");
-			});
-
-			$('.c-layout-quick-sidebar').on('click', function (e) {
-				e.stopPropagation();
-			});
-
-			$(document).on('click', '.c-layout-quick-sidebar-shown', function (e) {
-				$(this).removeClass("c-layout-quick-sidebar-shown");
 			});
 		}
 	};
@@ -668,106 +505,11 @@ var LayoutSmoothScroll = function () {
 }();
 // END : JQUERY SMOOTH SCROLL
 
-// BEGIN : TYPED.JS
-var ContentTyped = function () {
-
-	var _initInstances = function () {
-
-		$('.c-typed-animation').each(function(){
-			var final_string = [];
-			if($(this).data('first-sentence')){
-				final_string.push($(this).data('first-sentence'));
-			}
-			if($(this).data('second-sentence')){
-				final_string.push($(this).data('second-sentence'));
-			}
-			if($(this).data('third-sentence')){
-				final_string.push($(this).data('third-sentence'));
-			}
-			if($(this).data('forth-sentence')){
-				final_string.push($(this).data('forth-sentence'));
-			}
-			if($(this).data('fifth-sentence')){
-				final_string.push($(this).data('fifth-sentence'));
-			}
-			var type_speed = ($(this).attr('data-type-speed')) ? $(this).attr('data-type-speed') : 0;
-			var delay = ($(this).attr('data-delay')) ? $(this).attr('data-delay') : 0;
-			var backSpeed = ($(this).attr('data-backspace-speed')) ? $(this).attr('data-backspace-speed') : 0;
-			var shuffle = ($(this).attr('data-shuffle')) ? $(this).attr('data-shuffle') : false;
-			var backDelay = ($(this).attr('data-backspace-delay')) ? $(this).attr('data-bakcspace-delay') : 500;
-			var fadeOut = ($(this).attr('data-fadeout')) ? $(this).attr('data-fadeout') : false;
-			var fadeOutDelay = ($(this).attr('data-fadeout-delay')) ? $(this).attr('data-fadeout-delay') : 500;
-			var loop = ($(this).attr('data-loop')) ? $(this).attr('data-loop') : false;
-			var loopCount = ($(this).attr('data-loop-count')) ? $(this).attr('data-loop-count') : null;
-			var showCursor = ($(this).attr('data-cursor')) ? $(this).attr('data-cursor') : true;
-			var cursorChar = ($(this).attr('data-cursor-char')) ? $(this).attr('data-cursor-char') : "|";
-
-			$(this).typed({
-				strings: final_string,
-				typeSpeed: type_speed,
-				startDelay: delay,
-				backSpeed: backSpeed,
-				shuffle: shuffle,
-				backDelay: backDelay,
-				fadeOut: fadeOut,
-				fadeOutClass: 'typed-fade-out',
-				fadeOutDelay: fadeOutDelay,
-				loop: loop,
-				loopCount: loopCount,
-				showCursor: showCursor,
-				cursorChar: cursorChar,
-			});
-		});
-		
-	};
-
-	return {
-
-		//main function to initiate the module
-		init: function () {
-			_initInstances();
-		}
-
-	};
-}();
-// END : TYPED.JS
-
-// BEGIN : DATEPICKERS
-var ContentDatePickers = function () {
-
-    var handleDatePickers = function () {
-
-    	$('.date-picker').each(function(){
-    		$(this).datepicker({
-    			rtl: $(this).data('rtl'),
-                orientation: "left",
-                autoclose: true,
-                container: $(this),
-                format: $(this).data('date-format'),
-    		});
-    	});
-    }
-
-    return {
-        //main function to initiate the module
-        init: function () {
-            handleDatePickers();
-        }
-    };
-
-}();
-// END : DATEPICKERS
-
 // Main theme initialization
 $(document).ready(function () {
 	// init layout handlers
 	LayoutBrand.init();
-	LayoutHeaderCart.init();
 	LayoutMegaMenu.init();
-	LayoutSidebarMenu.init();
-	LayoutQuickSearch.init();
-	LayoutCartMenu.init();
-	LayoutQuickSidebar.init();
 	LayoutGo2Top.init();
 	LayoutOnepageNav.init();
 	LayoutThemeSettings.init();
@@ -778,6 +520,5 @@ $(document).ready(function () {
 	// init plugin wrappers
 	ContentOwlcarousel.init();
 	ContentCounterUp.init();
-	ContentTyped.init();
 });
 
