@@ -15982,14 +15982,14 @@ body.stop-scrolling {
               color: #26C281;
               text-decoration: none; }
       .mt-element-list .list-simple.mt-list-container ul > .mt-list-item > .list-item-content {
-        padding: 0 75px 0 60px; }
+        padding: 0 75px 0 0px; }
         .mt-element-list .list-simple.mt-list-container ul > .mt-list-item > .list-item-content > h3 {
           margin: 0;
           font-size: 18px; }
           .mt-element-list .list-simple.mt-list-container ul > .mt-list-item > .list-item-content > h3 > a {
             color: #34495e; }
             .mt-element-list .list-simple.mt-list-container ul > .mt-list-item > .list-item-content > h3 > a:hover {
-              color: #26C281;
+              color: #bfbfbf;
               text-decoration: none; }
       .mt-element-list .list-simple.mt-list-container ul > .mt-list-item > .list-datetime {
         text-align: right;
@@ -16012,12 +16012,13 @@ body.stop-scrolling {
   .mt-element-list .list-simple.ext-1.mt-list-container ul > .mt-list-item {
     padding: 15px;
     border-left: 3px solid;
-    border-color: #34495e;
+    border-color: #f4d03f;
+	border-top-color: #34495e;
     border-bottom-color: #e7ecf1; }
     .mt-element-list .list-simple.ext-1.mt-list-container ul > .mt-list-item:hover {
       background-color: #e5e5e5; }
     .mt-element-list .list-simple.ext-1.mt-list-container ul > .mt-list-item.done {
-      border-color: #26C281;
+      border-color: #f4d03f;
       border-bottom-color: #e7ecf1; }
       .mt-element-list .list-simple.ext-1.mt-list-container ul > .mt-list-item.done:hover {
         background-color: #96ebc8; }
@@ -16027,12 +16028,12 @@ body.stop-scrolling {
 
 .mt-element-list .list-simple.group .list-toggle-container .list-toggle {
   padding: 15px;
-  background-color: #34495e;
+  background-color: #f4d03f;
   font-weight: 700;
   color: #fff;
   text-decoration: none; }
   .mt-element-list .list-simple.group .list-toggle-container .list-toggle.done {
-    background-color: #26C281; }
+    background-color: #F4D03F; }
 
 .mt-element-list .list-news.mt-list-head {
   padding: 15px;
@@ -19534,7 +19535,7 @@ body.stop-scrolling {
   position: relative;
   text-align: center;
   cursor: default;
-  background: #42b078; }
+  background: #555555; }
   .mt-element-overlay .mt-overlay-6 .mt-overlay {
     width: 100%;
     height: 100%;
