@@ -17,4 +17,21 @@
         padding: 2px 6px 1px 6px !important; }
 
 /* FOOTER */
-
+.c-prefooter a, .c-prefooter h2 {
+    color: #32c5d2;
+}
+.c-prefooter h2 {
+    font-weight: 700;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 0 0 12px;
+}
+.c-prefooter address, .c-prefooter p {
+   margin: 0;
+   font-weight: 400;
+   font-size: 14px;
+}
+.c-postfooter a {
+	color: #e6e6e6;
+}
