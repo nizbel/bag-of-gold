@@ -1416,7 +1416,7 @@ Theme Panel
       .page-quick-sidebar-wrapper .page-quick-sidebar .page-quick-sidebar-settings .page-quick-sidebar-settings-list .list-items li select.form-control {
         padding: 4px 0px !important; } */
 
-.quick-nav {
+/* .quick-nav {
   position: fixed;
   z-index: 10103;
   top: 50%;
@@ -1424,7 +1424,7 @@ Theme Panel
   margin-top: -230px;
   pointer-events: none; }
   .quick-nav .quick-nav-bg {
-    /* this is the stretching navigation background */
+    this is the stretching navigation background
     position: absolute;
     z-index: 10102;
     top: 0;
@@ -1460,13 +1460,13 @@ Theme Panel
   .quick-nav-trigger span,
   .quick-nav-trigger span::after,
   .quick-nav-trigger span::before {
-    /* this is the hamburger icon */
+    this is the hamburger icon
     position: absolute;
     width: 16px;
     height: 2px;
     background-color: #ffffff; }
   .quick-nav-trigger span {
-    /* middle line of the hamburger icon */
+    middle line of the hamburger icon
     webkit-transition: background-color 0.2s;
     -moz-transition: background-color 0.2s;
     -ms-transition: background-color 0.2s;
@@ -1483,7 +1483,7 @@ Theme Panel
     transform: translateX(-50%) translateY(-50%); }
   .quick-nav-trigger span::after,
   .quick-nav-trigger span::before {
-    /* top and bottom lines of the hamburger icon */
+    top and bottom lines of the hamburger icon
     content: '';
     top: 0;
     left: 0;
@@ -1553,7 +1553,7 @@ Theme Panel
       .quick-nav ul > li a:hover > span {
         text-decoration: none; }
     .quick-nav ul > li a > i {
-      /* navigation item icons */
+      navigation item icons
       content: '';
       position: absolute;
       height: 16px;
@@ -1563,7 +1563,7 @@ Theme Panel
       top: 16px;
       color: #ebebeb; }
     .quick-nav ul > li a::before {
-      /* line visible next to the active navigation item */
+      line visible next to the active navigation item
       content: '';
       position: absolute;
       width: 3px;
@@ -1577,7 +1577,7 @@ Theme Panel
       transform: translateX(3px) translateY(-50%) scaleY(0);
       background-color: #FF3F3F; }
   .quick-nav ul > li span {
-    /* navigation item labels */
+    navigation item labels
     color: #ebebeb;
     font-weight: 400;
     display: block;
@@ -1593,7 +1593,7 @@ Theme Panel
 .quick-nav.nav-is-visible ul {
   visibility: visible; }
   .quick-nav.nav-is-visible ul a::after {
-    /* navigation item icons */
+    navigation item icons
     webkit-transform: translateY(-50%) scale(1);
     -moz-transform: translateY(-50%) scale(1);
     -ms-transform: translateY(-50%) scale(1);
@@ -1664,7 +1664,7 @@ Theme Panel
   -webkit-transition: background .7s ease-out;
   -moz-transition: background .7s ease-out;
   -o-transition: background .7s ease-out;
-  transition: background .7s ease-out; }
+  transition: background .7s ease-out; } */
 
 @media (max-width: 991px) {
   /* 991px */
