@@ -6462,8 +6462,8 @@ h1 {
 
 .c-content-feature-4 .c-feature-bg,
 .c-content-feature-4 .c-content-area {
-  height: 750px;
-  margin-bottom: -750px; }
+  height: 450px;
+  margin-bottom: -450px; }
 
 .c-content-feature-4 .c-content-left {
   float: left; }
@@ -6475,8 +6475,8 @@ h1 {
     border-top: 750px solid transparent; }
   .c-content-feature-4 .c-content-left.c-arrow {
     border-right: 200px solid;
-    border-top: 375px solid transparent;
-    border-bottom: 375px solid transparent; }
+    border-top: 225px solid transparent;
+    border-bottom: 225px solid transparent; }
 
 .c-content-feature-4 .c-content-right {
   float: right; }
@@ -6488,8 +6488,8 @@ h1 {
     border-top: 750px solid transparent; }
   .c-content-feature-4 .c-content-right.c-arrow {
     border-left: 200px solid;
-    border-top: 375px solid transparent;
-    border-bottom: 375px solid transparent; }
+    border-top: 225px solid transparent;
+    border-bottom: 225px solid transparent; }
 
 .c-content-feature-4 .c-feature-content {
   padding: 0;
@@ -6501,7 +6501,7 @@ h1 {
     float: right;
     position: relative; }
   .c-content-feature-4 .c-feature-content .c-content-v-center {
-    height: 750px; }
+    height: 450px; }
 
 @media only screen and (max-width: 1024px) {
   .c-content-feature-4 .c-content-left.c-arrow {
