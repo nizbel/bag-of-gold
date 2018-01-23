@@ -13,6 +13,8 @@ urlpatterns = [
     
     # App bagogold
     url(r'', include('bagogold.bagogold.urls')),
+    # App Blog
+    url(r'^blog/', include('bagogold.blog.urls', namespace='blog')),
     # App CDB/RDB
     url(r'^cdb-rdb/', include('bagogold.cdb_rdb.urls', namespace='cdb_rdb')),
     # App CRI/CRA
