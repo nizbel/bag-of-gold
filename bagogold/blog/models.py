@@ -14,8 +14,9 @@ class Post (models.Model):
     def __unicode__(self):
         return self.titulo
     
-    def Tags(self):
-        return [Tag_post.Tag for Tag_post in self.Tagpost_set.all()]
+    @property
+    def tags(self):
+        return [tag_post.tag for tag_post in self.tagpost_set.all()]
     
 class Tag (models.Model):
     nome = models.CharField(u'Nome', max_length=30)
@@ -29,7 +30,7 @@ class Tag (models.Model):
 
 class TagPost (models.Model):
     post = models.ForeignKey('Post')
-    Tag = models.ForeignKey('Tag')
+    tag = models.ForeignKey('Tag')
     
     class Meta():
-        unique_together=('post', 'Tag')
+        unique_together=('post', 'tag')

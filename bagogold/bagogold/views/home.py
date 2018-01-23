@@ -894,9 +894,6 @@ def detalhamento_investimentos(request):
 def inicio(request):
     posts = Post.objects.all().order_by('-data')[:6]
     
-    for post in posts:
-        post.Tags = [Tag_post.Tag for Tag_post in post.Tagpost_set.all()]
-        
     return TemplateResponse(request, 'inicio.html', {'posts': posts})
 
 @adiciona_titulo_descricao('Painel geral', 'Traz informações gerais sobre a posição atual em cada tipo de investimento')
