@@ -17,7 +17,23 @@ def detalhar_post(request, post_slug):
     return TemplateResponse(request, 'blog/detalhar_post.html', {'post': post, 'tags': tags, 'posts_recentes': posts_recentes})  
 
 def listar_posts(request):
-    pass
+    # Verificar pagina para paginação
+    try:
+        pagina = int(request.GET.get('pagina', 1))
+    except:
+        pagina = 1
+
+    # Buscar posts
+    posts = Post.objects.all().order_by('-data')]
+    # Paginar fundos
+    paginador_posts = Paginator(posts, 3)
+    if pagina > paginador_posts.num_pages:
+        pagina = paginador_posts.num_pages
+    
+    if request.is_ajax():
+        return HttpResponse(json.dumps({'sucesso': True, 'posts': paginador_posts.page(pagina).object_list, 'paginador': paginador_posts}), content_type = "application/json")
+    else:
+        return TemplateResponse(request, 'blog/listar_posts.html', {'posts': paginador_posts.page(pagina).object_list, 'paginador': paginador_posts})  
 
 def listar_posts_por_tag(request, tag_slug):
     pass
