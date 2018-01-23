@@ -52,6 +52,7 @@ import datetime
 import json
 import math
 import traceback
+from bagogold.blog.models import Postagem
 
 
 @login_required
@@ -891,7 +892,12 @@ def detalhamento_investimentos(request):
                                             'estatisticas': estatisticas, 'graf_patrimonio_cripto': json.dumps(graf_patrimonio_cripto)})
 
 def inicio(request):
-    return TemplateResponse(request, 'inicio.html', {})
+    postagens = Postagem.objects.all().order_by('-data')[:6]
+    
+    for postagem in postagens:
+        postagem.categorias = [categoria_postagem.categoria for categoria_postagem in postagem.categoriapostagem_set.all()]
+        
+    return TemplateResponse(request, 'inicio.html', {'postagens': postagens})
 
 @adiciona_titulo_descricao('Painel geral', 'Traz informações gerais sobre a posição atual em cada tipo de investimento')
 def painel_geral(request):
