@@ -47,6 +47,7 @@ INSTALLED_APPS = (
     #Bag-O-Gold
     'bagogold.bagogold',
     'bagogold.pendencias',
+    'bagogold.blog',
     'bagogold.cdb_rdb',
     'bagogold.cri_cra',
     'bagogold.fundo_investimento',
