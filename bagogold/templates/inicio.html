@@ -93,7 +93,7 @@ Follow: http://www.twitter.com/themehats
             <a href="#investimentos" class="c-link">Investimentos</a>
         </li>
                         <li class="c-onepage-link ">
-            <a href="#postagens_recentes" class="c-link">Postagens recentes</a>
+            <a href="#posts_recentes" class="c-link">Posts recentes</a>
         </li>
                         <li class="c-onepage-link ">
             <a href="#contato" class="c-link">Contato</a>
@@ -257,7 +257,7 @@ Follow: http://www.twitter.com/themehats
 </section>
 
 
-<section id="postagens_recentes">
+<section id="posts_recentes">
 <!-- BEGIN: CONTENT/BLOG/RECENT-POSTS -->
 <div class="c-content-box c-size-md c-bg-grey">
     <div class="container-fluid">
@@ -265,32 +265,32 @@ Follow: http://www.twitter.com/themehats
         <div class="c-content-blog-post-card-1-slider" data-slider="owl">
             <!-- Begin: Title 1 component -->
             <div class="c-content-title-1">
-                <h3 class="c-center c-font-uppercase c-font-bold c-font-black">Postagens recentes</h3>
+                <h3 class="c-center c-font-uppercase c-font-bold c-font-black">Posts recentes</h3>
                 <div class="c-line-center c-theme-bg"></div>
             </div>
             <!-- End-->
             <!-- Begin: Owlcarousel -->
             <div class="owl-carousel owl-theme c-theme c-owl-nav-center" data-items="3" data-slide-speed="5000"> 
-                {% for postagem in postagens %}
+                {% for post in posts %}
                 <div class="item">
                     <div class="c-content-blog-post-card-1 c-option-2">     
                         <div class="c-body">
                             <div class="c-title c-font-uppercase c-font-bold c-font-black">
-                                <a href="#">{{postagem.titulo}}</a>
+                                <a href="#">{{post.titulo}}</a>
                             </div>
                             <div class="c-author">
-                                <span class="c-font-uppercase c-font-dark">{{postagem.data|date:"d \d\e F \d\e Y - H:i"}}</span>
+                                <span class="c-font-uppercase c-font-dark">{{post.data|date:"d \d\e F \d\e Y - H:i"}}</span>
                             </div>
 
                             <div class="c-panel">
                                 <ul class="c-tags c-theme-ul-bg">
-                                    {% for categoria in postagem.categorias %}
-                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.{{forloop.counter}}s"><a href="#">{{categoria.nome}}</a></li>
+                                    {% for Tag in post.Tags %}
+                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.{{forloop.counter}}s"><a href="#">{{Tag.nome}}</a></li>
                                     {% endfor %}
                                 </ul>                           
                             </div>
                             <p class="c-font-dark">
-                                {{postagem.conteudo|safe|truncatechars:150}}
+                                {{post.conteudo|safe|truncatechars:150}}
                             </p>
                         </div>
                     </div>
