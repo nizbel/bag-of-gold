@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from bagogold.blog.models import Postagem, Categoria
+from bagogold.blog.models import Postagem, Categoria, CategoriaPostagem
 from django.contrib import admin
 
 class PostagemAdmin(admin.ModelAdmin):
@@ -10,4 +10,6 @@ class PostagemAdmin(admin.ModelAdmin):
 admin.site.register(Postagem, PostagemAdmin)
     
 admin.site.register(Categoria)
+
+admin.site.register(CategoriaPostagem)
 

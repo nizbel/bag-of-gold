@@ -25,8 +25,8 @@ Follow: http://www.twitter.com/themehats
     <meta content="Guilherme Henrique Gimenes de Deus" name="author"/>
         <!-- BEGIN GLOBAL MANDATORY STYLES -->
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700,500&subset=all' rel='stylesheet' type='text/css'>
-    <link href="{% static 'assets_jango/plugins/socicon/socicon.css' %}" rel="stylesheet" type="text/css"/>
-    <link href="{% static 'assets_jango/plugins/bootstrap-social/bootstrap-social.css' %}" rel="stylesheet" type="text/css"/>       
+<!--     <link href="{% static 'assets_jango/plugins/socicon/socicon.css' %}" rel="stylesheet" type="text/css"/> -->
+<!--     <link href="{% static 'assets_jango/plugins/bootstrap-social/bootstrap-social.css' %}" rel="stylesheet" type="text/css"/>        -->
 <!--     <link href="{% static 'assets_jango/plugins/font-awesome/css/font-awesome.min.css' %}" rel="stylesheet" type="text/css"/> -->
     <link href="{% static 'assets_jango/plugins/simple-line-icons/simple-line-icons.css' %}" rel="stylesheet" type="text/css"/>
     <link href="{% static 'assets_jango/plugins/animate/animate.min.css' %}" rel="stylesheet" type="text/css"/>
@@ -120,7 +120,7 @@ Follow: http://www.twitter.com/themehats
 </div>
 </section>
 
-<section id="features">
+<section id="vantagens">
 <!-- BEGIN: CONTENT/FEATURES/FEATURES-4-7 -->
 <!-- BEGIN: FEATURES 4.7 --> 
 <div class="c-content-box c-size-md c-no-padding c-bg-grey">
@@ -270,82 +270,32 @@ Follow: http://www.twitter.com/themehats
             </div>
             <!-- End-->
             <!-- Begin: Owlcarousel -->
-            <div class="owl-carousel owl-theme c-theme c-owl-nav-center" data-items="3" data-slide-speed="5000" data-loop="false"> 
+            <div class="owl-carousel owl-theme c-theme c-owl-nav-center" data-items="3" data-slide-speed="5000"> 
+                {% for postagem in postagens %}
                 <div class="item">
                     <div class="c-content-blog-post-card-1 c-option-2">     
                         <div class="c-body">
                             <div class="c-title c-font-uppercase c-font-bold c-font-black">
-                                <a href="#">Web & Mobile Development</a>
+                                <a href="#">{{postagem.titulo}}</a>
                             </div>
                             <div class="c-author">
-                                <span class="c-font-uppercase c-font-dark">{% now "d \d\e F \d\e Y - H:i" %}</span>
+                                <span class="c-font-uppercase c-font-dark">{{postagem.data|date:"d \d\e F \d\e Y - H:i"}}</span>
                             </div>
 
                             <div class="c-panel">
                                 <ul class="c-tags c-theme-ul-bg">
-                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.1s"><a href="#">ux</a></li>
-                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.2s"><a href="#">web</a></li>
-                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.3s"><a href="#">events</a></li>
+                                    {% for categoria in postagem.categorias %}
+                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.{{forloop.counter}}s"><a href="#">{{categoria.nome}}</a></li>
+                                    {% endfor %}
                                 </ul>                           
                             </div>
                             <p class="c-font-dark">
-                                Lorem ipsum dolor sit amet, dolor adipisicing elit. 
-                                Nulla nemo ad sapiente officia amet.
+                                {{postagem.conteudo|safe|truncatechars:150}}
                             </p>
                         </div>
                     </div>
                 </div>
-                <div class="item">
-                    <div class="c-content-blog-post-card-1 c-option-2"> 
-                        <div class="c-body">
-                            <div class="c-title c-font-uppercase c-font-bold c-font-black">
-                                <a href="#">Modern Design Trends</a>
-                            </div>
-                            <div class="c-author">
-                                <span class="c-font-uppercase c-font-dark">25 May 2015, 10:30AM</span>
-                            </div>
-                            <div class="c-panel">
-                                <ul class="c-tags c-theme-ul-bg">
-                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.1s"><a href="#">design</a></li>
-                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.2s"><a href="#">art</a></li>
-                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.3s"><a href="#">trends</a></li>
-                                </ul>                           
-                            </div>
-                            <p class="c-font-dark">
-                                Aqui vai a descrição de teste da postagem.
-                            </p>
-                        </div>
-                    </div>
-                </div>  
-                <div class="item">
-                    <div class="c-content-blog-post-card-1 c-option-2">
-                        <div class="c-body">
-                            <div class="c-title c-font-uppercase c-font-bold c-font-black">
-                                <a href="#">Beatifully crafted Code</a>
-                            </div>
-                            <div class="c-author">
-                                <span class="c-font-uppercase c-font-dark">26 May 2015, 10:30AM</span>
-                            </div>
-                            <div class="c-panel">
-                                <ul class="c-tags c-theme-ul-bg">
-                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.1s"><a href="#">Programando por aí</a></li>
-                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.2s"><a href="#">Investindo por aí</a></li>
-                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.3s"><a href="#">CSS</a></li>
-                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.4s"><a href="#">web</a></li>
-                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.5s"><a href="#">HTML</a></li>
-                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.6s"><a href="#">Nas ruas</a></li>
-                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.7s"><a href="#">Grana</a></li>
-                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.8s"><a href="#">Poder</a></li>
-                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.9s"><a href="#">Fama</a></li>
-                                </ul>                           
-                            </div>
-                            <p class="c-font-dark">
-                                Lorem ipsum dolor sit amet, dolor adipisicing elit. 
-                                Nulla nemo ad sapiente officia amet.
-                            </p>
-                        </div>
-                    </div>
-                </div>              
+                {% endfor %}
             </div>
             <!-- End-->
         </div>
