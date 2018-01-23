@@ -164,11 +164,6 @@ def editar_operacao_criptomoeda(request, id_operacao):
         form_operacao_criptomoeda = OperacaoCriptomoedaForm(instance=operacao_criptomoeda, investidor=investidor, initial={'taxa': taxa_valor, 'taxa_moeda': taxa_moeda, 'moeda_utilizada': moeda_utilizada})
         formset_divisao = DivisaoFormSet(instance=operacao_criptomoeda, investidor=investidor)
         
-    # Preparar nome de fundo selecionado
-#     if request.POST.get('criptomoeda', -1) != -1:
-#         fundo_selecionado = Criptomoeda.objects.get(id=request.POST['criptomoeda'])
-#     else:
-#         fundo_selecionado = operacao_criptomoeda.criptomoeda.nome
     return TemplateResponse(request, 'criptomoedas/editar_operacao_criptomoeda.html', {'form_operacao_criptomoeda': form_operacao_criptomoeda, 'formset_divisao': formset_divisao, \
                                                                                              'varias_divisoes': varias_divisoes})  
 

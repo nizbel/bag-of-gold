@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
-from bagogold.blog.models import Postagem, Categoria, CategoriaPostagem
+from bagogold.blog.models import Post, Tag, TagPost
 from django.contrib import admin
 
-class PostagemAdmin(admin.ModelAdmin):
+class PostAdmin(admin.ModelAdmin):
     search_fields = ['titulo', 'data']
-    # TODO adicionar categorias
+    # TODO adicionar Tags
     list_display = ('titulo', 'slug', 'data')
     
-admin.site.register(Postagem, PostagemAdmin)
+admin.site.register(Post, PostAdmin)
     
-admin.site.register(Categoria)
+admin.site.register(Tag)
 
-admin.site.register(CategoriaPostagem)
+admin.site.register(TagPost)
 
