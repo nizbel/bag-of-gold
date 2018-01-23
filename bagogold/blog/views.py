@@ -19,8 +19,8 @@ def detalhar_post(request, post_slug):
 def listar_posts(request):
     pass
 
-def listar_posts_por_Tag(request, Tag_slug):
+def listar_posts_por_tag(request, tag_slug):
     pass
 
-def listar_Tags(request):
+def listar_tags(request):
     pass
