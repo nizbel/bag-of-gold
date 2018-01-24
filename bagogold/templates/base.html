@@ -760,7 +760,7 @@
         <!-- END CORE PLUGINS -->
         <!-- BEGIN PAGE LEVEL PLUGINS -->
         <script src={% static "assets/global/plugins/clipboardjs/clipboard.min.js" %} type="text/javascript"></script>
-        <script src={% static "js/bagogold/base.min.js" %} type="text/javascript"></script>
+        <script type="text/javascript">$(document).ready(function(){$(".em-construcao").attr("data-original-title","Em construção").attr("data-placement","top").addClass("tooltips").removeClass("em-construcao")}),$(".mt-clipboard").each(function(){new Clipboard(this).on("success",function(t){})});</script>
         {% block extra_footer %}
         
         {% endblock %}
