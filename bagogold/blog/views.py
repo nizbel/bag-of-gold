@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.blog.models import Post, Tag
+from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http.response import HttpResponse
+from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 import json
-from django.shortcuts import get_object_or_404
 
 def criar_post(request):
     pass
