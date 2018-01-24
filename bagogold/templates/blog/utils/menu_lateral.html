@@ -1,0 +1,34 @@
+<div class="portlet box yellow-crusta" style="border-top: 1px solid #ffd327">
+    <div class="portlet-body">
+        <div class="blog-single-sidebar blog-container">
+            {% comment %}
+            <div class="blog-single-sidebar-search">
+                <div class="input-icon right">
+                    <i class="icon-magnifier"></i>
+                    <input type="text" class="form-control" placeholder="Search Blog"> </div>
+            </div>
+            {% endcomment %}
+            <div class="blog-single-sidebar-recent">
+                <h3 class="blog-sidebar-title uppercase">Posts recentes</h3>
+                <ul>
+                    {% for post_recente in posts_recentes %}
+                    <li>
+                        <a href="{% url 'blog:detalhar_post' post_recente.slug %}">{{post_recente.titulo}}</a>
+                    </li>
+                    {% endfor %}
+                    <a href="{% url 'blog:listar_posts' %}">Ver todos os posts</a>
+                </ul>
+            </div>
+            <div class="blog-single-sidebar-tags">
+                <h3 class="blog-sidebar-title uppercase">Tags</h3>
+                <ul class="blog-post-tags">
+                    {% for tag in tags %}
+                    <li class="uppercase">
+                        <a href="{% url 'blog:listar_posts_por_tag' tag.slug %}">{{tag.nome}}</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
