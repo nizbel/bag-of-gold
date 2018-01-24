@@ -1,0 +1,34 @@
+{% extends "blog/base.html" %}
+{% load staticfiles %}
+
+{% block pagina_titulo_icone %}
+<i class="icon-doc font-yellow-crusta"></i>
+{% endblock %}
+
+{% block blog_content %}
+<div class="portlet box yellow-crusta" style="border-top: 1px solid #ffd327">
+    <div class="portlet-body">
+        <div class="blog-single-content blog-container">
+            <div class="blog-single-head">
+                <h1 class="blog-single-head-title">{{post.titulo}}</h1>
+                <div class="blog-single-head-date">
+                    <i class="icon-calendar font-dark"></i>
+                    <span class="font-dark uppercase">{{post.data|date:"d \d\e F \d\e Y - H:i"}}</span>
+                </div>
+            </div>
+            <div class="blog-single-desc">
+                {{post.conteudo|safe}}
+            </div>
+            <div class="blog-single-foot">
+                <ul class="blog-post-tags">
+                    {% for tag in post.tags %}
+                    <li class="uppercase">
+                        <a href="{% url 'blog:listar_posts_por_tag' tag.slug %}">{{tag.nome}}</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
