@@ -80,3 +80,63 @@ def listar_posts_por_tag(request, tag_slug):
         tags = Tag.objects.all()
         return TemplateResponse(request, 'blog/listar_posts.html', {'posts': paginador_posts.page(pagina).object_list, 'paginador': paginador_posts,
                                                                     'tags': tags, 'posts_recentes': posts_recentes})  
+
+@login_required
+@require('is_superuser)
+@adiciona_titulo_descricao('Criar novo post', '')
+def inserir_post(request):
+    if request.POST:
+        post_form = PostForm(request.POST)
+        if post_form.is_valid():
+            post = post_form.save(false)
+            post.slug = gerar_slug_post(post.titulo)
+            
+            # TODO linkar com facebook
+            try:
+                with transaction.atomic():
+                    post.save()
+                    # TODO criar post no facebook
+                    # post.url_facebook = retorno_post_facebook(url=reverse('blog:detalhar_post', post.slug))
+                    # if falha:
+                    #    raise ValueError('erro ao postar no facebook')
+            except:
+                messages.error(request, u'Erro ao criar post')
+                if settings.ENV == 'DEV':
+                    print traceback.format_exc()
+                elif settings.ENV == 'PROD':
+                    mail_admins(erro)
+    else:
+        post_form = PostForm()
+    
+    return TemplateResponse(request, 'blog/inserir_post.html', {'post_form': post_form})  
+    
+@login_required
+@require('is_superuser)
+@adiciona_titulo_descricao('Editar post', '')
+def editar_post(request, post_slug):
+    post = get_object_or_404(Post, slug=post_slug)
+
+    if request.POST:
+        post_form = PostForm(request.POST, instance=post)
+        if post_form.is_valid():
+            post = post_form.save(false)
+            post.slug = gerar_slug_post(post.titulo)
+            
+            # TODO linkar com facebook
+            try:
+                with transaction.atomic():
+                    post.save()
+                    # TODO criar post no facebook
+                    # post.url_facebook = retorno_post_facebook(url=reverse('blog:detalhar_post', post.slug))
+                    # if falha:
+                    #    raise ValueError('erro ao postar no facebook')
+            except:
+                messages.error(request, u'Erro ao editar post')
+                if settings.ENV == 'DEV':
+                    print traceback.format_exc()
+                elif settings.ENV == 'PROD':
+                    mail_admins(erro)
+    else:
+        post_form = PostForm(instance=post)
+    
+    return TemplateResponse(request, 'blog/inserir_post.html', {'post_form': post_form}) 
