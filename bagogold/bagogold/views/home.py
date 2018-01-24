@@ -891,6 +891,7 @@ def detalhamento_investimentos(request):
     return TemplateResponse(request, 'detalhamento_investimentos.html', {'graf_patrimonio': graf_patrimonio, 'patrimonio_anual': patrimonio_anual,
                                             'estatisticas': estatisticas, 'graf_patrimonio_cripto': json.dumps(graf_patrimonio_cripto)})
 
+@login_required
 def inicio(request):
     posts = Post.objects.all().order_by('-data')[:6]
     
