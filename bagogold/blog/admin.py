@@ -5,7 +5,7 @@ from django.contrib import admin
 class PostAdmin(admin.ModelAdmin):
     search_fields = ['titulo', 'data']
     # TODO adicionar Tags
-    list_display = ('titulo', 'slug', 'data')
+    list_display = ('titulo', 'slug', 'data', 'chamada_facebook')
     
 admin.site.register(Post, PostAdmin)
     

@@ -34,3 +34,6 @@ class TagPost (models.Model):
     
     class Meta():
         unique_together=('post', 'tag')
+        
+    def __unicode__(self):
+        return u'Post: %s, Tag: %s' % (self.post.slug, self.tag)

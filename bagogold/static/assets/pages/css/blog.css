@@ -8,7 +8,7 @@ Blog Page
   border-color: #e7ecf1; }
 
 .blog-page .blog-container {
-  margin-bottom: 30px; }
+  margin-bottom: 20px; }
 
 .blog-page .blog-title > a {
   color: #4e5a64;
@@ -33,7 +33,7 @@ Blog Page
   padding: 20px 30px 30px 30px;
   background-color: #fff; }
   .blog-content-1 .blog-post-content > .blog-post-title {
-    margin: 0 0 30px 0; }
+    margin: 0 0 10px 0; }
     .blog-content-1 .blog-post-content > .blog-post-title > a {
       font-size: 20px; }
   .blog-content-1 .blog-post-content > .blog-post-desc {
@@ -59,7 +59,32 @@ Blog Page
   height: 480px; }
 
 .blog-content-1 .blog-post-lg > .blog-post-content > .blog-post-desc {
-  margin-bottom: 30px; }
+  margin-bottom: 0 0 10px;
+  display: block;
+  clear: both;
+  padding: 10px 0 0 0; }
+
+.blog-content-1 .blog-post-lg > .blog-post-content .blog-post-tags {
+  text-align: right;
+  float: right;
+  padding: 0;
+  margin: 3px 0 5px 0; }
+  .blog-content-1 .blog-post-lg > .blog-post-content .blog-post-tags > li {
+    list-style: none;
+    display: inline-block;
+    margin-right: 5px; }
+    .blog-content-1 .blog-post-lg > .blog-post-content .blog-post-tags > li > a {
+      background-color: #ffa91e;
+      color: #000;
+      font-size: 13px;
+      font-weight: 300;
+      padding: 2px 6px 1px 6px !important; }
+      .blog-content-1 .blog-post-lg > .blog-post-content .blog-post-tags > li > a:hover {
+        background-color: #f3c200;
+        color: #000;
+        text-decoration: none; }
+    .blog-content-1 .blog-post-lg > .blog-post-content .blog-post-tags > li:last-child {
+      margin-right: 0; }
 
 .blog-content-1 .blog-post-lg > .blog-post-content > .blog-post-foot {
   border-top: 1px solid;
@@ -162,7 +187,7 @@ Blog Page
       color: #3598DC; }
 
 .blog-content-2 .blog-single-content {
-  padding: 40px 30px 15px 30px;
+  padding: 30px 15px 0px 15px;
   background-color: #fff; }
   .blog-content-2 .blog-single-content > .blog-single-head > .blog-single-head-title {
     font-size: 25px;
@@ -251,7 +276,7 @@ Blog Page
       border: 1px solid #ccc; }
 
 .blog-content-2 .blog-single-sidebar {
-  padding: 40px 30px;
+  padding: 20px 15px;
   background-color: #fff; }
   .blog-content-2 .blog-single-sidebar .blog-sidebar-title {
     font-weight: 600;
