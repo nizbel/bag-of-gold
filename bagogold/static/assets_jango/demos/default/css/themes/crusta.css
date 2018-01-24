@@ -3,7 +3,7 @@ THEME COLOR - CRUSTA
 *********************/
 a {
   color: #2b15a8; }
-  a:active, a:hover, a:focus {
+  a:not(.c-link-nav):active, a:not(.c-link-nav):hover, a:not(.c-link-nav):focus {
     color: #f3c200 !important; }
 
 .c-theme-link:focus, .c-theme-link:active, .c-theme-link:hover {
