@@ -62,6 +62,24 @@ def alterar_cron():
     elif env.config == 'DEV':
         run('crontab ~/%s/crontab_copy' % env.path)
 
+def gerar_layout_def():
+    require('path')
+
+    with cd(env.path):
+        with cd('bagogold/static'):
+            run('gulp minify')
+            
+        texto = ''
+        with open('bagogold/static/assets/layouts/layout3/css/layout.min.css', 'r') as arquivo:
+            texto += arquivo.read()
+        with open('bagogold/static/assets/layouts/layout3/css/themes/default.min.css', 'r') as arquivo:
+            texto += arquivo.read()
+        with open('bagogold/static/assets/layouts/layout3/css/custom.min.css', 'r') as arquivo:
+            texto += arquivo.read()
+
+        with open('bagogold/static/assets/layouts/layout3/css/layout-def.min.css', 'w') as arquivo_final:
+            arquivo_final.write(texto)
+                    
 def minificar_html():
     require('path')
     
