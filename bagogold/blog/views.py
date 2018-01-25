@@ -1,16 +1,21 @@
 # -*- coding: utf-8 -*-
+from bagogold import settings
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
+from bagogold.bagogold.utils.investidores import is_superuser
+from bagogold.blog.forms import PostForm
 from bagogold.blog.models import Post, Tag
-from django.contrib.auth.decorators import login_required
+from bagogold.blog.utils import criar_slug_post_valido
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.mail import mail_admins
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 import json
-
-def criar_post(request):
-    pass
+import traceback
 
 @login_required
 @adiciona_titulo_descricao('Detalhar post', '')
@@ -82,14 +87,14 @@ def listar_posts_por_tag(request, tag_slug):
                                                                     'tags': tags, 'posts_recentes': posts_recentes})  
 
 @login_required
-@require('is_superuser)
+@user_passes_test(is_superuser)
 @adiciona_titulo_descricao('Criar novo post', '')
 def inserir_post(request):
     if request.POST:
         post_form = PostForm(request.POST)
         if post_form.is_valid():
-            post = post_form.save(false)
-            post.slug = gerar_slug_post(post.titulo)
+            post = post_form.save(commit=False)
+            post.slug = criar_slug_post_valido(post.titulo)
             
             # TODO linkar com facebook
             try:
@@ -104,14 +109,14 @@ def inserir_post(request):
                 if settings.ENV == 'DEV':
                     print traceback.format_exc()
                 elif settings.ENV == 'PROD':
-                    mail_admins(erro)
+                    mail_admins(u'Erro ao criar post', traceback.format_exc().decode('utf-8'))
     else:
         post_form = PostForm()
     
     return TemplateResponse(request, 'blog/inserir_post.html', {'post_form': post_form})  
     
 @login_required
-@require('is_superuser)
+@user_passes_test(is_superuser)
 @adiciona_titulo_descricao('Editar post', '')
 def editar_post(request, post_slug):
     post = get_object_or_404(Post, slug=post_slug)
@@ -119,8 +124,8 @@ def editar_post(request, post_slug):
     if request.POST:
         post_form = PostForm(request.POST, instance=post)
         if post_form.is_valid():
-            post = post_form.save(false)
-            post.slug = gerar_slug_post(post.titulo)
+            post = post_form.save(commit=False)
+            post.slug = criar_slug_post_valido(post.titulo)
             
             # TODO linkar com facebook
             try:
@@ -135,8 +140,8 @@ def editar_post(request, post_slug):
                 if settings.ENV == 'DEV':
                     print traceback.format_exc()
                 elif settings.ENV == 'PROD':
-                    mail_admins(erro)
+                    mail_admins(u'Erro ao editar post', traceback.format_exc().decode('utf-8'))
     else:
         post_form = PostForm(instance=post)
     
-    return TemplateResponse(request, 'blog/inserir_post.html', {'post_form': post_form}) 
+    return TemplateResponse(request, 'blog/editar_post.html', {'post_form': post_form}) 
