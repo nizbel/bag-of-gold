@@ -80,7 +80,10 @@ def gerar_layout_def():
             arquivo_final.write(texto)
 
 def minificar_html():
-    run('python fab_utils/minify_html.py')
+    require('path')
+    
+    with cd(env.path):
+        run('python fab_utils/minify_html.py')
 
 def update(requirements=False, rev=None):
     require('path')
