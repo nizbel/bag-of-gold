@@ -985,7 +985,7 @@ body {
 /***
 Theme Panel
 ***/
-.btn-theme-panel {
+/*.btn-theme-panel {
   margin-top: 25px; }
   .btn-theme-panel .btn {
     opacity: 0.6 ;
@@ -1068,7 +1068,7 @@ Theme Panel
       .theme-panel .theme-settings > li .form-control {
         color: #777;
         margin-top: -3px;
-        float: right; }
+        float: right; } */
 
 @media (max-width: 767px) {
   /* 767px */
