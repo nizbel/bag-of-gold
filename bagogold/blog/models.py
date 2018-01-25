@@ -2,7 +2,7 @@
 from django.db import models
 
 class Post (models.Model):
-    titulo = models.CharField(u'Título', max_length=30, unique=True)
+    titulo = models.CharField(u'Título', max_length=30)
     slug = models.SlugField(u'Slug', max_length=30, unique=True)
     conteudo = models.TextField(u'Conteúdo')
     data = models.DateTimeField(u'Data', auto_now_add=True)

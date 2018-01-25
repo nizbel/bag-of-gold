@@ -3333,7 +3333,7 @@ h1 {
 @media (max-width: 991px) {
   /* 991px */
   .c-content-box > .container-fluid {
-    padding: 0 100px; }
+    padding: 0 30px; }
   .c-content-box.c-size-sm {
     padding: 20px 0; }
   .c-content-box.c-size-md {
