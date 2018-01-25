@@ -3,7 +3,6 @@ from __future__ import with_statement
 from fabric.api import env, require, run, sudo, local as lrun
 from fabric.context_managers import cd
 from fabric.contrib.files import append, contains, exists
-from os import walk
 import datetime
 import re
 import time
@@ -79,22 +78,9 @@ def gerar_layout_def():
 
         with open('bagogold/static/assets/layouts/layout3/css/layout-def.min.css', 'w') as arquivo_final:
             arquivo_final.write(texto)
-                    
+
 def minificar_html():
-    require('path')
-    
-    with cd(env.path):
-        arqs = []
-        for (dirpath, _, arq_nomes) in walk('bagogold/templates'):
-            arqs.extend(['%s/%s' % (dirpath, arq_nome) for arq_nome in arq_nomes if arq_nome[-4:] == 'html'])
-            
-        for arq_nome in arqs:
-            with open(arq_nome, 'r+') as arquivo:
-                text = arquivo.read()
-                text = re.sub('>\s+<', '> <', re.sub('\n\s+', ' ', re.sub('<!--[^\[\]]+?-->', '', text)))
-                arquivo.seek(0)
-                arquivo.write(text)
-                arquivo.truncate()
+    run('python fab_utils/minify_html.py')
 
 def update(requirements=False, rev=None):
     require('path')
