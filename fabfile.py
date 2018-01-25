@@ -135,7 +135,7 @@ def update(requirements=False, rev=None):
         if rev:
             run('hg pull; hg update -r %(rev)s' % {'rev': rev})
         else:
-            run('hg update %(branch)s' % {'branch': branch})
+            run('hg update %(branch)s -C' % {'branch': branch})
         # Atualizar requirements
         sudo('pip install -U -r requirements.txt')
  
