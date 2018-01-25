@@ -3130,20 +3130,22 @@ h1 {
   padding: 0;
   margin: 0; }
   .c-layout-footer.c-layout-footer-1 .c-prefooter {
-    background: #48525e;
-    color: #a2abb7;
+    background: #e2e2dd;
+    color: #3e3a2a;
     padding: 30px 0;
     clear: both;
+    /* border-top: 1px solid #000;
+    box-shadow: 0 -2px 3px 3px rgba(0,0,0,.3); */
     /* padding: 60px 0;
     background: #394048; */ }
     .c-layout-footer.c-layout-footer-1 .c-prefooter .c-logo {
       padding-bottom: 20px; }
-    .c-layout-footer.c-layout-footer-1 .c-prefooter .c-about {
+    /*.c-layout-footer.c-layout-footer-1 .c-prefooter .c-about {
       color: #818e9a;
       font-size: 17px;
       font-weight: 500;
-      padding: 20px 0 10px 0; }
-    .c-layout-footer.c-layout-footer-1 .c-prefooter .c-links {
+      padding: 20px 0 10px 0; }*/
+    /*.c-layout-footer.c-layout-footer-1 .c-prefooter .c-links {
       padding: 0 0 10px 0; }
       .c-layout-footer.c-layout-footer-1 .c-prefooter .c-links:before, .c-layout-footer.c-layout-footer-1 .c-prefooter .c-links:after {
         content: " ";
@@ -3164,19 +3166,19 @@ h1 {
             font-weight: 600;
             text-transform: uppercase; }
             .c-layout-footer.c-layout-footer-1 .c-prefooter .c-links .c-nav > li > a:hover {
-              color: #edf0f3; }
-    .c-layout-footer.c-layout-footer-1 .c-prefooter .c-contact {
+              color: #edf0f3; }*/
+    /*.c-layout-footer.c-layout-footer-1 .c-prefooter .c-contact {
       color: #818e9a;
       font-size: 17px;
       font-weight: 500;
-      padding: 20px 0; }
+      padding: 20px 0; }*/
     .c-layout-footer.c-layout-footer-1 .c-prefooter .c-socials {
       padding: 0;
       margin: 0;
       padding-top: 9px; }
       .c-layout-footer.c-layout-footer-1 .c-prefooter .c-socials li {
         float: left;
-        opacity: 0.35; 
+        /* opacity: 0.7; */ 
         margin-right: 5px;
         margin-bottom: 5px;
         display: inline;}
@@ -3262,15 +3264,15 @@ h1 {
   .c-layout-footer.c-layout-footer-1 .c-postfooter {
     /* padding: 40px 0;
     background: #2f353b; */
-    background: #3b434c;
-    color: #a2abb7;
+    background: #cecec9;
+    color: #000;
     font-size: 13px;
     font-weight: 300;
     padding: 17px 0; }
-    .c-layout-footer.c-layout-footer-1 .c-postfooter .c-copyright {
+    /* .c-layout-footer.c-layout-footer-1 .c-postfooter .c-copyright {
       color: #a4aeb8;
       padding: 0;
-      margin-top: 10px; }
+      margin-top: 10px; } */
 
 @media (min-width: 992px) {
   /* 992px */
