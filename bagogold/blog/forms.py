@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.blog.models import Tag, Post
 from django import forms
 from django.forms import widgets
 
