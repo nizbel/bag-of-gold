@@ -73,7 +73,7 @@ def minificar_html():
         for arq_nome in arqs:
             with open(arq_nome, 'r+') as arquivo:
                 text = arquivo.read()
-                text = re.sub('>\s+<', '><', re.sub('\n\s+', ' ', re.sub('<!--[^\[\]]+?-->', '', text)))
+                text = re.sub('>\s+<', '> <', re.sub('\n\s+', ' ', re.sub('<!--[^\[\]]+?-->', '', text)))
                 arquivo.seek(0)
                 arquivo.write(text)
                 arquivo.truncate()
