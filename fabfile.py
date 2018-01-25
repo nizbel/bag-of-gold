@@ -83,7 +83,7 @@ def minificar_html():
     require('path')
     
     with cd(env.path):
-        run('python fab_utils/minify_html.py')
+        run('python manage.py minificar_html')
 
 def update(requirements=False, rev=None):
     require('path')
@@ -133,7 +133,7 @@ def update(requirements=False, rev=None):
         run('workon %(virtualenv)s' % {'virtualenv': env.virtualenv})
         run('find . -name "*.pyc" | xargs rm')
         if rev:
-            run('hg pull; hg update -r %(rev)s' % {'rev': rev})
+            run('hg pull; hg update -r %(rev)s -C' % {'rev': rev})
         else:
             run('hg update %(branch)s -C' % {'branch': branch})
         # Atualizar requirements
