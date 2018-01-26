@@ -145,7 +145,6 @@ STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR + '/bagogold', "static"),
-    '/var/www/static/',
 ]
 
 MEDIA_ROOT = PROJECT_ROOT + '/media/'
