@@ -14,7 +14,7 @@ class InvestimentoForm(LocalizedModelForm):
         fields = ('nome', 'descricao', 'quantidade', 'data')
     
     class Media:
-        js = ('js/bagogold/form_investimento.js',)
+        js = ('js/bagogold/form_investimento.min.js',)
         
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')

@@ -28,7 +28,7 @@ class OperacaoTituloForm(LocalizedModelForm):
                  'consolidada': widgets.Select(choices=ESCOLHAS_CONSOLIDADO),}
 
     class Media:
-        js = ('js/bagogold/form_operacao_td.js',)
+        js = ('js/bagogold/form_operacao_td.min.js',)
 
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')

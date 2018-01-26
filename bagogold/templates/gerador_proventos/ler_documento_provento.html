@@ -483,7 +483,7 @@
 <script src={% static "assets/global/plugins/bootstrap-datepicker/js/bootstrap-datepicker.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/bootstrap-datepicker/locales/bootstrap-datepicker.pt-BR.min.js" %} type="text/javascript"></script>
 
-<script>
+<script type="text/javascript">
 {% if 'pdf' in pendencia.documento.extensao_documento %}
 var pdfAtual = null;
 {% endif %}
@@ -605,7 +605,7 @@ $( document ).ready(function() {
 	    if (!$(this).is(':checked')) {
 	        $('div[name=acao_selic-' + id_provento + ']').hide();
 	    }
-	})
+	});
 	
 	{% if 'pdf' in pendencia.documento.extensao_documento %}
 	PDFJS.getDocument('{% url "gerador_proventos:baixar_documento_provento" pendencia.documento.id %}').then(function(pdf) {
