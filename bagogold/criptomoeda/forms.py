@@ -25,7 +25,7 @@ class OperacaoCriptomoedaForm(LocalizedModelForm):
         labels = {'criptomoeda': 'Criptomoeda'}
     
     class Media:
-        js = ('js/bagogold/form_operacao_criptomoeda.js',)
+        js = ('js/bagogold/form_operacao_criptomoeda.min.js',)
         
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
@@ -65,7 +65,7 @@ class TransferenciaCriptomoedaForm(LocalizedModelForm):
                                             'placeholder':'Selecione uma data'}),}
         
     class Media:
-        js = ('js/bagogold/form_transferencia_criptomoeda.js',)
+        js = ('js/bagogold/form_transferencia_criptomoeda.min.js',)
         
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
