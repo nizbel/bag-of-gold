@@ -18,7 +18,7 @@ class OperacaoDebentureForm(LocalizedModelForm):
                  'tipo_operacao': widgets.Select(choices=ESCOLHAS_TIPO_OPERACAO),}
         
     class Media:
-        js = ('js/bagogold/form_operacao_debenture.js',)
+        js = ('js/bagogold/form_operacao_debenture.min.js',)
         
     def clean(self):
         data = super(OperacaoDebentureForm, self).clean()

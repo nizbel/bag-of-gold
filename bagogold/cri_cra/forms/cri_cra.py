@@ -21,7 +21,7 @@ class CRI_CRAForm(LocalizedModelForm):
                  'tipo_indexacao': widgets.Select(choices=CRI_CRA.ESCOLHAS_TIPO_INDEXACAO),}
         
     class Media:
-        js = ('js/bagogold/form_cri_cra.js',)
+        js = ('js/bagogold/form_cri_cra.min.js',)
 
 class OperacaoCRI_CRAForm(LocalizedModelForm):
     class Meta:
@@ -33,7 +33,7 @@ class OperacaoCRI_CRAForm(LocalizedModelForm):
                  'tipo_operacao': widgets.Select(choices=ESCOLHAS_TIPO_OPERACAO),}
         
     class Media:
-        js = ('js/bagogold/form_operacao_cri_cra.js',)
+        js = ('js/bagogold/form_operacao_cri_cra.min.js',)
         
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')

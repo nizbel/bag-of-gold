@@ -41,8 +41,8 @@ class OperacaoFIIForm(LocalizedModelForm):
                  'consolidada': widgets.Select(choices=ESCOLHAS_CONSOLIDADO),}
         
     class Media:
-        js = ('js/bagogold/calculo_emolumentos.js', 
-              'js/bagogold/form_operacao_fii.js',)
+        js = ('js/bagogold/calculo_emolumentos.min.js', 
+              'js/bagogold/form_operacao_fii.min.js',)
         
     def clean(self):
         data = super(OperacaoFIIForm, self).clean()
