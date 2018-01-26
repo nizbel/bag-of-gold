@@ -7,6 +7,9 @@ import datetime
 import re
 import time
 
+STATIC_FOLDER = 'bagogold/static'
+CSS_LAYOUT_FOLDER = STATIC_FOLDER + '/assets/layouts/layout3/css'
+CSS_ICONS_FOLDER = ''
 
 # Servers
 def prod():
@@ -69,14 +72,14 @@ def gerar_layout_def():
             run('gulp minify')
             
         texto = ''
-        with open('bagogold/static/assets/layouts/layout3/css/layout.min.css', 'r') as arquivo:
+        with open(CSS_LAYOUT_FOLDER + '/layout.min.css', 'r') as arquivo:
             texto += arquivo.read()
-        with open('bagogold/static/assets/layouts/layout3/css/themes/default.min.css', 'r') as arquivo:
+        with open(CSS_LAYOUT_FOLDER + '/themes/default.min.css', 'r') as arquivo:
             texto += arquivo.read()
-        with open('bagogold/static/assets/layouts/layout3/css/custom.min.css', 'r') as arquivo:
+        with open(CSS_LAYOUT_FOLDER + '/custom.min.css', 'r') as arquivo:
             texto += arquivo.read()
 
-        with open('bagogold/static/assets/layouts/layout3/css/layout-def.min.css', 'w') as arquivo_final:
+        with open(CSS_LAYOUT_FOLDER + '/layout-def.min.css', 'w') as arquivo_final:
             arquivo_final.write(texto)
 
 def minificar_html():
