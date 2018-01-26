@@ -333,6 +333,7 @@
 <script src={% static "assets/global/plugins/counterup/jquery.counterup.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/jquery.pulsate.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/moment.min.js" %} type="text/javascript"></script>
+{% if request.user.is_authenticated %}
 <script src={% static "assets/global/plugins/flot/jquery.flot.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.resize.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.categories.min.js" %} type="text/javascript"></script>
@@ -340,6 +341,7 @@
 <script src={% static "assets/global/plugins/flot/jquery.flot.crosshair.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.axislabels.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.time.min.js" %} type="text/javascript"></script>
+{% endif %}
 <script type="text/javascript">
 $( document ).ready(function() {
 	{% if request.user.is_authenticated %}
