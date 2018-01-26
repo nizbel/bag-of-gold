@@ -99,6 +99,7 @@ def gerar_css_def():
         with open(CSS_LAYOUT_FOLDER + '/layout-def.min.css', 'w') as arquivo_final:
             arquivo_final.write(texto)
 
+# Deve ser utilizado em
 def minificar_html():
     require('path')
     
@@ -169,12 +170,13 @@ def update(requirements=False, rev=None):
          
         # Collect static files
         sudo('python manage.py collectstatic --noinput')
-        
-        # "Minificar" html
-        minificar_html()
-        
-        # Alterar cronjob
-        alterar_cron()
+    
+    # Minificar usa o manage.py porém o cd já ocorre dentro de seu código
+    # "Minificar" html
+    minificar_html()
+    
+    # Alterar cronjob
+    alterar_cron()
     
     # Start apache
     sudo('service apache2 start', pty=False)
