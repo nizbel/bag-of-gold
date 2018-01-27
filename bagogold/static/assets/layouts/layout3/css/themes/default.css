@@ -292,53 +292,6 @@ Page Footer
     color: #32c5d2; }
   .page-prefooter a {
     color: #32c5d2; }
-  .page-prefooter .subscribe-form .form-control {
-    background: #343b44;
-    border-color: #343b44;
-    color: #a2abb7; }
-    .page-prefooter .subscribe-form .form-control::-moz-placeholder {
-      color: #939eac;
-      opacity: 1; }
-    .page-prefooter .subscribe-form .form-control:-ms-input-placeholder {
-      color: #939eac; }
-    .page-prefooter .subscribe-form .form-control::-webkit-input-placeholder {
-      color: #939eac; }
-  .page-prefooter .subscribe-form .btn {
-    color: #fff;
-    background-color: #3fc9d5;
-    border-color: #3fc9d5; }
-    .page-prefooter .subscribe-form .btn:focus, .page-prefooter .subscribe-form .btn.focus {
-      color: #fff;
-      background-color: #28adb9;
-      border-color: #1b727a; }
-    .page-prefooter .subscribe-form .btn:hover {
-      color: #fff;
-      background-color: #28adb9;
-      border-color: #27a5b0; }
-    .page-prefooter .subscribe-form .btn:active, .page-prefooter .subscribe-form .btn.active,
-    .open > .page-prefooter .subscribe-form .btn.dropdown-toggle {
-      color: #fff;
-      background-color: #28adb9;
-      border-color: #27a5b0; }
-      .page-prefooter .subscribe-form .btn:active:hover, .page-prefooter .subscribe-form .btn:active:focus, .page-prefooter .subscribe-form .btn:active.focus, .page-prefooter .subscribe-form .btn.active:hover, .page-prefooter .subscribe-form .btn.active:focus, .page-prefooter .subscribe-form .btn.active.focus,
-      .open > .page-prefooter .subscribe-form .btn.dropdown-toggle:hover,
-      .open > .page-prefooter .subscribe-form .btn.dropdown-toggle:focus,
-      .open > .page-prefooter .subscribe-form .btn.dropdown-toggle.focus {
-        color: #fff;
-        background-color: #22929b;
-        border-color: #1b727a; }
-    .page-prefooter .subscribe-form .btn:active, .page-prefooter .subscribe-form .btn.active,
-    .open > .page-prefooter .subscribe-form .btn.dropdown-toggle {
-      background-image: none; }
-    .page-prefooter .subscribe-form .btn.disabled:hover, .page-prefooter .subscribe-form .btn.disabled:focus, .page-prefooter .subscribe-form .btn.disabled.focus, .page-prefooter .subscribe-form .btn[disabled]:hover, .page-prefooter .subscribe-form .btn[disabled]:focus, .page-prefooter .subscribe-form .btn[disabled].focus,
-    fieldset[disabled] .page-prefooter .subscribe-form .btn:hover,
-    fieldset[disabled] .page-prefooter .subscribe-form .btn:focus,
-    fieldset[disabled] .page-prefooter .subscribe-form .btn.focus {
-      background-color: #3fc9d5;
-      border-color: #3fc9d5; }
-    .page-prefooter .subscribe-form .btn .badge {
-      color: #3fc9d5;
-      background-color: #fff; }
 
 .page-footer {
   background: #3b434c;
