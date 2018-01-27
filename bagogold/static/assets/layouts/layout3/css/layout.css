@@ -908,16 +908,6 @@ body {
     text-transform: uppercase;
     letter-spacing: 1px;
     margin: 0 0 12px; }
-  .page-prefooter .subscribe-form {
-    padding-top: 5px; }
-    .page-prefooter .subscribe-form .form-control {
-      font-size: 12px;
-      padding: 0 14px;
-      height: 36px; }
-    .page-prefooter .subscribe-form .btn {
-      height: 34px;
-      text-transform: uppercase;
-      padding: 7px 16px; }
   .page-prefooter .social-icons {
     padding-top: 9px; }
     .page-prefooter .social-icons li {
