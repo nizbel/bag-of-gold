@@ -911,8 +911,8 @@ body {
   .page-prefooter .social-icons {
     padding-top: 9px; }
     .page-prefooter .social-icons li {
-      opacity: 0.35 ;
-      filter: alpha(opacity=35) ; }
+      opacity: 0.7;
+      filter: alpha(opacity=70) ; }
       .page-prefooter .social-icons li:hover {
         opacity: 1 ;
         filter: alpha(opacity=100) ; }

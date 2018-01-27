@@ -286,16 +286,16 @@ Page Header
 Page Footer 
 ******/
 .page-prefooter {
-  background: #48525e;
-  color: #a2abb7; }
+  background: #e2e2dd;
+  color: #3e3a2a; }
   .page-prefooter h2 {
-    color: #32c5d2; }
+    color: #2b15a8; }
   .page-prefooter a {
-    color: #32c5d2; }
+    color: #cc8718; }
 
 .page-footer {
-  background: #3b434c;
-  color: #a2abb7; }
+  background: #cecec9;
+  color: #000; }
 
 /* Scroll Top */
 .scroll-to-top > i {
