@@ -8,5 +8,12 @@ class PostForm(forms.ModelForm):
     
     class Meta:
         model = Post
-        fields = ('titulo', 'conteudo',)
+        fields = ('titulo', 'conteudo', 'chamada_facebook')
+        widgets={'conteudo': widgets.Textarea}
         
+    class Media:
+        js = ('js/bagogold/form_post_blog.min.js',)
+        
+#     def clean_tags(self):
+#         pass
+    
