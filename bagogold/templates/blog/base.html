@@ -9,7 +9,8 @@
 <div class="portlet-body">
     <div class="blog-page blog-content-2">
         <div class="row">
-            <div class="col-lg-10">
+            {% if not sem_menu_lateral %}
+            <div class="col-md-10">
                 {% if tag_filtro %}
                 <div class="row">
                     <div class="col-md-12 text-center">
@@ -17,9 +18,13 @@
                     </div>
                 </div>
                 {% endif %}
+            {% else %}
+            <div class="col-md-12">
+            {% endif %}
                 {% block blog_content %}
                 
                 {% endblock %}
+            {% if not sem_menu_lateral %}
                 {% if paginador %}
                 <div class="row text-center">
                     <ul class="pagination">
@@ -32,9 +37,12 @@
                 </div>
                 {% endif %}
             </div>
-            <div class="col-lg-2">
+            <div class="col-md-2">
                 {% include "blog/utils/menu_lateral.html" %}
             </div>
+            {% else %}
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
