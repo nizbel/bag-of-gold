@@ -157,15 +157,9 @@ def editar_post(request, post_slug):
         if post_form.is_valid():
             post = post_form.save(commit=False)
             post.slug = criar_slug_post_valido(post.titulo)
-            
-            # TODO linkar com facebook
             try:
                 with transaction.atomic():
                     post.save()
-                    # TODO criar post no facebook
-                    # post.url_facebook = retorno_post_facebook(url=reverse('blog:detalhar_post', post.slug))
-                    # if falha:
-                    #    raise ValueError('erro ao postar no facebook')
             except:
                 messages.error(request, u'Erro ao editar post')
                 if settings.ENV == 'DEV':

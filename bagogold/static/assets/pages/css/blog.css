@@ -303,17 +303,17 @@ Blog Page
       .blog-content-2 .blog-single-sidebar > .blog-single-sidebar-recent > ul > li > a {
         color: #49a7fa;
         font-size: 16px;
-        padding-left: 20px;
+        /* padding-left: 20px; */
         display: block; }
         .blog-content-2 .blog-single-sidebar > .blog-single-sidebar-recent > ul > li > a:hover {
           text-decoration: none;
           color: #3598DC; }
-      .blog-content-2 .blog-single-sidebar > .blog-single-sidebar-recent > ul > li:before {
+      /* .blog-content-2 .blog-single-sidebar > .blog-single-sidebar-recent > ul > li:before {
         content: "•";
         color: #dae0e5;
         font-size: 30px;
         position: absolute;
-        margin-top: -9px; }
+        margin-top: -9px; } */
   .blog-content-2 .blog-single-sidebar > .blog-single-sidebar-tags .blog-post-tags {
     text-align: left;
     padding: 0;

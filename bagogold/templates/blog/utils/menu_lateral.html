@@ -1,6 +1,16 @@
 <div class="portlet box yellow-crusta" style="border-top: 1px solid #ffd327">
     <div class="portlet-body">
         <div class="blog-single-sidebar blog-container">
+            {% if request.user.is_superuser %}
+                <div class="margin-bottom-10">
+                    <a class="btn blue" href="{% url 'blog:novo_post' %}"><i class="icon-plus"></i> Novo post</a>
+                </div>
+                {% if request.resolver_match.url_name == 'detalhar_post' %}
+                <div>
+                    <a class="btn blue" href="{% url 'blog:editar_post' post.slug %}"><i class="icon-note"></i> Editar post</a>
+                </div>
+                {% endif %}
+            {% endif %}
             {% comment %}
             <div class="blog-single-sidebar-search">
                 <div class="input-icon right">
