@@ -14,7 +14,6 @@ from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
-from random import randint
 import json
 import traceback
 
@@ -131,6 +130,10 @@ def inserir_post(request):
             try:
                 with transaction.atomic():
                     post.save()
+                    print post_form.cleaned_data['tags']
+#                     for tag in post_form.cleaned_data['tags']:
+                    raise ValueError('TESTE')
+                        
                     # TODO criar post no facebook
                     # post.url_facebook = retorno_post_facebook(url=reverse('blog:detalhar_post', post.slug))
                     # if falha:
@@ -144,7 +147,7 @@ def inserir_post(request):
     else:
         post_form = PostForm()
     
-    return TemplateResponse(request, 'blog/inserir_post.html', {'post_form': post_form})  
+    return TemplateResponse(request, 'blog/inserir_post.html', {'post_form': post_form, 'sem_menu_lateral': True})  
     
 @login_required
 @user_passes_test(is_superuser)
@@ -169,4 +172,4 @@ def editar_post(request, post_slug):
     else:
         post_form = PostForm(instance=post)
     
-    return TemplateResponse(request, 'blog/editar_post.html', {'post_form': post_form}) 
+    return TemplateResponse(request, 'blog/editar_post.html', {'post_form': post_form, 'sem_menu_lateral': True}) 
