@@ -10,6 +10,13 @@
     <div class="blog-page blog-content-2">
         <div class="row">
             <div class="col-lg-10">
+                {% if tag_filtro %}
+                <div class="row">
+                    <div class="col-md-12 text-center">
+                        <h4>Posts com a tag <span style="color: #ffa91e"><b>{{tag_filtro}}</b></span></h4>
+                    </div>
+                </div>
+                {% endif %}
                 {% block blog_content %}
                 
                 {% endblock %}

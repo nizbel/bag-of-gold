@@ -5981,7 +5981,7 @@ h1 {
   .c-content-blog-post-1 .c-panel .c-author {
     display: inline-block; }
 
-.c-content-blog-post-1 .c-comments {
+/* .c-content-blog-post-1 .c-comments {
   margin: 40px 0; }
   .c-content-blog-post-1 .c-comments .c-comment-list {
     margin-bottom: 60px; }
@@ -5997,7 +5997,7 @@ h1 {
       text-transform: uppercase; }
     .c-content-blog-post-1 .c-comments .c-comment-list .media-heading > .c-date {
       text-transform: uppercase;
-      font-size: 16px; }
+      font-size: 16px; } */
 
 .c-content-blog-post-1-list {
   padding-right: 30px; }
