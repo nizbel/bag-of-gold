@@ -160,8 +160,6 @@ Page Header
         color: #e2e2dd; }
         .page-header .page-header-menu .hor-menu .navbar-nav > li > a > i {
           color: #e2e2dd; }
-          /* 444d58 menu, 55616f ativo, 4e5966 hover, 55616f sublista, 5d6b7a subhover*/
-          /* 3e3a2a menu, 5c5848 ativo, 524e3e hover, 5c5848 sublista, 666252 subhover*/
       .page-header .page-header-menu .hor-menu .navbar-nav > li:hover > a,
       .page-header .page-header-menu .hor-menu .navbar-nav > li.open > a,
       .page-header .page-header-menu .hor-menu .navbar-nav > li > a:hover,
@@ -294,6 +292,8 @@ Page Footer
     color: #2b15a8; }
   .page-prefooter a {
     color: #cc8718; }
+    .page-prefooter a:hover {
+      color: #f3c200; }
 
 .page-footer {
   background: #cecec9;
