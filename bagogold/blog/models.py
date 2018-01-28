@@ -16,7 +16,7 @@ class Post (models.Model):
     
     @property
     def tags(self):
-        return [tag_post.tag for tag_post in self.tagpost_set.all()]
+        return [tag_post.tag for tag_post in self.tagpost_set.all().order_by('tag__nome')]
     
 class Tag (models.Model):
     nome = models.CharField(u'Nome', max_length=30)

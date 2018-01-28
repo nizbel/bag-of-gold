@@ -51,7 +51,7 @@ def listar_posts(request):
     else:
         posts_recentes = Post.objects.all().order_by('-data')[:6]
     
-        tags = Tag.objects.all()
+        tags = Tag.objects.all().order_by('nome')
         
         return TemplateResponse(request, 'blog/listar_posts.html', {'posts': paginador_posts.page(pagina).object_list, 'paginador': paginador_posts,
                                                                     'tags': tags, 'posts_recentes': posts_recentes})  
@@ -68,7 +68,6 @@ def listar_posts_por_tag(request, tag_slug):
         pagina = 1
 
     # Buscar posts
-    
     posts = Post.objects.filter(tagpost__tag=tag).order_by('-data')
     # Paginar fundos
     paginador_posts = Paginator(posts, 9)
@@ -82,9 +81,10 @@ def listar_posts_por_tag(request, tag_slug):
     else:
         posts_recentes = Post.objects.all().order_by('-data')[:6]
     
-        tags = Tag.objects.all()
+        tags = Tag.objects.all().order_by('nome')
+        
         return TemplateResponse(request, 'blog/listar_posts.html', {'posts': paginador_posts.page(pagina).object_list, 'paginador': paginador_posts,
-                                                                    'tags': tags, 'posts_recentes': posts_recentes})  
+                                                                    'tags': tags, 'posts_recentes': posts_recentes, 'tag_filtro': tag})  
 
 @login_required
 @user_passes_test(is_superuser)
