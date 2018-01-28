@@ -887,11 +887,12 @@ h6.block {
 a {
   outline: none !important;
   text-shadow: none;
-  color: #337ab7; }
+  color: #2b15a8; }
   a:hover {
-    color: #23527c; }
+    color: #f3c200; }
   a:focus, a:hover, a:active {
-    outline: 0; }
+    outline: none !important;
+    text-decoration: none; }
 
 /* Horizontal break */
 hr {
