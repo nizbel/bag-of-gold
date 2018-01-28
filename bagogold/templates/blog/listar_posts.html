@@ -8,64 +8,52 @@
 {% block blog_content %}
 <div class="portlet box yellow-crusta" style="border-top: 1px solid #ffd327">
     <div class="portlet-body" style="background-color: #f6f6f1">
-        <div class="blog-page blog-content-1" style="background-color: #f6f6f1">
-            <div class="row">
-                {% for post in posts %}
-                <div class="col-md-4">
-                    <div class="blog-post-lg blog-container bg-white">
-                        <div class="blog-post-content">
-                            <div class="blog-title blog-post-title uppercase">
-                                <a href="{% url 'blog:detalhar_post' post.slug %}">{{post.titulo}}</a>
-                            </div>
-                            <div class="blog-post-meta margin-bottom-10">
-                                <i class="icon-calendar font-dark uppercase"></i>
-                                <span class="font-dark uppercase">{{post.data|date:"d \d\e F \d\e Y - H:i"}}</span>
-                            </div>
-                            <div style="border-top: 1px solid #eeeeee; padding: 10px 0;">
-                                <ul class="blog-post-tags">
-                                    {% for tag in post.tags %}
-                                    <li class="uppercase">
-                                        <a href="{% url 'blog:listar_posts_por_tag' tag.slug %}">{{tag.nome}}</a>
-                                    </li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                            <p class="blog-post-desc font-dark"> 
-                                {{post.conteudo|safe|truncatechars:150}}
-                            </p>
-                        </div>
-                    </div>
-                    
-                    
-                    {% comment %}
-                    <div class="item">
-                        <div class="c-content-blog-post-card-1 c-option-2">     
-                            <div class="c-body">
-                                <div class="c-title c-font-uppercase c-font-bold c-font-black">
-                                    <a href="{% url 'blog:detalhar_post' post.slug %}">{{post.titulo}}</a>
-                                </div>
-                                <div class="c-author">
-                                    <span class="c-font-uppercase c-font-dark">{{post.data|date:"d \d\e F \d\e Y - H:i"}}</span>
-                                </div>
-                
-                                <div class="c-panel">
-                                    <ul class="c-tags c-theme-ul-bg">
-                                        {% for tag in post.tags %}
-                                        <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.{{forloop.counter}}s"><a href="{% url 'blog:listar_posts_por_tag' tag.slug %}">{{tag.nome}}</a></li>
-                                        {% endfor %}
-                                    </ul>                           
-                                </div>
-                                <p class="c-font-dark">
-                                    {{post.conteudo|safe|truncatechars:150}}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    {% endcomment %}
-                </div>
-                {% endfor %}
-            </div>
+        <div id="blog_posts" class="blog-page blog-content-1" style="background-color: #f6f6f1">
+            {% include 'blog/utils/lista_posts.html' %}
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_footer %}
+<script type="text/javascript">
+$( document ).ready(function() {
+    $('.pagina').click(function() {
+    	$('.pagina.active').removeClass('active');
+        $(this).addClass('active');
+        
+        App.blockUI({
+            target: '#blog_posts',
+            iconOnly: true,
+            overlayColor: 'none'
+        });
+        
+        var pagina = parseInt($(this).text());
+        
+        $.ajax({
+        	{% if request.resolver_match.url_name == 'listar_posts' %}
+            url : "{% url 'blog:listar_posts' %}",
+            {% else %}
+            url : "{% url 'blog:listar_posts_por_tag' tag_filtro.slug %}",
+            {% endif %}
+            type : "GET",
+            data : { pagina: pagina },
+    
+            // handle a successful response
+            success : function(resultado) {
+                console.log(resultado);
+                $('#blog_posts').empty().html(resultado);
+                
+                App.unblockUI('#blog_posts');
+            },
+    
+            // handle a non-successful response
+            error : function(xhr,errmsg,err) {
+                App.unblockUI('#blog_posts');
+                console.log(xhr.status + ": " + xhr.responseText);
+            }
+        });
+    });
+});
+</script>
 {% endblock %}

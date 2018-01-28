@@ -23,7 +23,7 @@
                 <h3 class="blog-sidebar-title uppercase">Tags</h3>
                 <ul class="blog-post-tags">
                     {% for tag in tags %}
-                    <li class="uppercase">
+                    <li class="uppercase {% if tag_filtro %}{% if tag_filtro.nome == tag.nome %}tag-atual{% endif %}{% endif %}">
                         <a href="{% url 'blog:listar_posts_por_tag' tag.slug %}">{{tag.nome}}</a>
                     </li>
                     {% endfor %}

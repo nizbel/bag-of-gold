@@ -20,6 +20,17 @@
                 {% block blog_content %}
                 
                 {% endblock %}
+                {% if paginador %}
+                <div class="row text-center">
+                    <ul class="pagination">
+                        {% for pagina in paginador.page_range %}
+                        <li class="pagina {% if paginador.pagina == pagina %}active{% endif %}">
+                            <a href="javascript:;"> {{pagina}} </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
             </div>
             <div class="col-lg-2">
                 {% include "blog/utils/menu_lateral.html" %}
@@ -28,3 +39,4 @@
     </div>
 </div>
 {% endblock %}
+
