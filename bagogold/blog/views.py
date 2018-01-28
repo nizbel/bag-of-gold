@@ -23,6 +23,11 @@ import traceback
 def detalhar_post(request, post_slug):
     post = get_object_or_404(Post, slug=post_slug)
     
+    if Post.objects.filter(data__lt=post.data).order_by('-data').exists():
+        post.post_anterior = Post.objects.filter(data__lt=post.data).order_by('-data')[0].slug
+    if Post.objects.filter(data__gt=post.data).order_by('data').exists():
+        post.proximo_post = Post.objects.filter(data__gt=post.data).order_by('data')[0].slug
+    
     posts_recentes = Post.objects.all().order_by('-data')[:6]
     
     tags = Tag.objects.all()

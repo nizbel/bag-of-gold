@@ -8,6 +8,18 @@
 {% block blog_content %}
 <div class="portlet box yellow-crusta" style="border-top: 1px solid #ffd327">
     <div class="portlet-body">
+        {% if post.proximo_post or post.post_anterior %}
+        <div class="col-md-6">
+            {% if post.post_anterior %}
+            <a class="btn blue pull-right" href="{% url 'blog:detalhar_post' post.post_anterior %}">Post anterior</a>
+            {% endif %}
+        </div>
+        <div class="col-md-6">
+            {% if post.proximo_post %}
+            <a class="btn blue pull-left" href="{% url 'blog:detalhar_post' post.proximo_post %}">Próximo post</a>
+            {% endif %}
+        </div>
+        {% endif %}
         <div class="blog-single-content blog-container">
             <div class="blog-single-head">
                 <h1 class="blog-single-head-title">{{post.titulo}}</h1>
