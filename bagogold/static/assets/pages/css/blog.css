@@ -8,6 +8,7 @@ Blog Page
   border-color: #e7ecf1; }
 
 .blog-page .blog-container {
+  margin-top: 20px;
   margin-bottom: 20px; }
 
 .blog-page .blog-title > a {
@@ -79,6 +80,8 @@ Blog Page
       font-size: 11px;
       font-weight: 600;
       padding: 7px 10px }
+      .blog-content-1 .blog-post-lg > .blog-post-content .blog-post-tags > li.tag-atual > a {
+        background-color: #ffa91e; }
       .blog-content-1 .blog-post-lg > .blog-post-content .blog-post-tags > li > a:hover {
         background-color: #f3c200;
         color: #000;
@@ -283,8 +286,8 @@ Blog Page
     font-size: 14px;
     color: #4e5a64;
     letter-spacing: 1px;
-    margin-top: 40px;
-    margin-bottom: 30px; }
+    margin-top: 20px;
+    margin-bottom: 20px; }
   .blog-content-2 .blog-single-sidebar > .blog-single-sidebar-search input {
     font-size: 14px;
     color: #a0a9b4; }
@@ -325,6 +328,8 @@ Blog Page
         font-size: 11px;
         font-weight: 600;
         padding: 7px 10px; }
+        .blog-content-2 .blog-single-sidebar > .blog-single-sidebar-tags .blog-post-tags > li.tag-atual > a {
+          background-color: #ffa91e; }
         .blog-content-2 .blog-single-sidebar > .blog-single-sidebar-tags .blog-post-tags > li > a:hover {
           background-color: #f3c200;
           color: #000;
@@ -379,3 +384,4 @@ Blog Page
   .blog-content-2 .blog-single-content > .blog-single-head > .blog-single-head-date {
     float: none;
     margin-bottom: 40px; } }
+    
