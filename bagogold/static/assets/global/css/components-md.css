@@ -885,6 +885,7 @@ h6.block {
 
 /* Links */
 a {
+  outline: none !important;
   text-shadow: none;
   color: #337ab7; }
   a:hover {
