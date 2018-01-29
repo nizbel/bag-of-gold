@@ -458,3 +458,13 @@ class PerformanceCheckpointFIITestCase(TestCase):
 #         OperacaoFII.objects.filter(fii=FII.objects.get(ticker='BBPO11'), investidor=investidor, tipo_operacao='C', data=datetime.date(2016, 3, 11)).delete()
 #         fim = datetime.datetime.now()
 # #         print '\nExcluir operação:', fim - inicio
+
+class QtdDivisaoFIITestCase(TestCase):
+    def setUp(self):
+        # TODO INSERIR DADOS DA PROD 
+        
+    def test_verificar_qtd_por_divisao(self):
+        """Verificar se a quantidade retornada para a divisão é a esperada para o dia DIA"""
+        # Esperado {ESPERADO}
+        pass
+        
