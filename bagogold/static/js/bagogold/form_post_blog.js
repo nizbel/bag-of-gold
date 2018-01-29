@@ -1,5 +1,5 @@
 $(document).ready(function() {
-	$('#summernote').summernote({lang: "pt-BR"});
+	$('#id_summernote').summernote({lang: "pt-BR"});
         //API:
         //var sHTML = $('#summernote_1').code(); // get code
         //$('#summernote_1').destroy(); // destroy
@@ -18,4 +18,9 @@ $(document).ready(function() {
         buttonClass: btn_class,
         numberDisplayed: 10
     });   
+	
+	$('#post_form').submit(function() {
+		console.log($('#summernote').summernote('code'));
+		$('#id_conteudo').val($('#summernote').summernote('code'));
+	});
 });
