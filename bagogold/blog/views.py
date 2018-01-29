@@ -130,8 +130,9 @@ def inserir_post(request):
             try:
                 with transaction.atomic():
                     post.save()
-                    print post_form.cleaned_data['tags']
-#                     for tag in post_form.cleaned_data['tags']:
+                    for tag in post_form.cleaned_data['tags']:
+                        TagPost.objects.create(tag=tag, post=post)
+                        
                     raise ValueError('TESTE')
                         
                     # TODO criar post no facebook

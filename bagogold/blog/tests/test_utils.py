@@ -4,7 +4,7 @@ from bagogold.blog.utils import criar_slug_post_valido
 from django.test.testcases import TestCase
 from django.utils.text import slugify
 
-class CriacaoSlugs(TestCase):
+class CriacaoSlugsTestCase(TestCase):
     
     def test_criacao_slug_titulo_simples(self):
         """Testa criação de slug de Post com tamanho certo e sem posts"""
