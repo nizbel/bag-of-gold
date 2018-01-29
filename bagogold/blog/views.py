@@ -9,7 +9,9 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.mail import mail_admins
 from django.core.paginator import Paginator
+from django.core.urlresolvers import reverse
 from django.db import transaction
+from django.http import HttpResponseRedirect
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
@@ -133,12 +135,12 @@ def inserir_post(request):
                     for tag in post_form.cleaned_data['tags']:
                         TagPost.objects.create(tag=tag, post=post)
                         
-                    raise ValueError('TESTE')
-                        
                     # TODO criar post no facebook
                     # post.url_facebook = retorno_post_facebook(url=reverse('blog:detalhar_post', post.slug))
                     # if falha:
                     #    raise ValueError('erro ao postar no facebook')
+                
+                return HttpResponseRedirect(reverse('blog:detalhar_post', kwargs={'post_slug': post.slug}))
             except:
                 messages.error(request, u'Erro ao criar post')
                 if settings.ENV == 'DEV':
@@ -160,10 +162,17 @@ def editar_post(request, post_slug):
         post_form = PostForm(request.POST, instance=post)
         if post_form.is_valid():
             post = post_form.save(commit=False)
-            post.slug = criar_slug_post_valido(post.titulo)
             try:
                 with transaction.atomic():
                     post.save()
+                    for tag in post_form.cleaned_data['tags']:
+                        if not TagPost.objects.filter(tag=tag, post=post).exists():
+                            TagPost.objects.create(tag=tag, post=post)
+                    for tag in TagPost.objects.filter(post=post).exclude(tag__in=post_form.cleaned_data['tags']):
+                        tag.delete()
+                    
+                return HttpResponseRedirect(reverse('blog:detalhar_post', kwargs={'post_slug': post.slug}))
+                    
             except:
                 messages.error(request, u'Erro ao editar post')
                 if settings.ENV == 'DEV':
@@ -171,6 +180,6 @@ def editar_post(request, post_slug):
                 elif settings.ENV == 'PROD':
                     mail_admins(u'Erro ao editar post', traceback.format_exc().decode('utf-8'))
     else:
-        post_form = PostForm(instance=post)
+        post_form = PostForm(instance=post, initial={'tags': [tag.id for tag in post.tags]})
     
     return TemplateResponse(request, 'blog/editar_post.html', {'post_form': post_form, 'sem_menu_lateral': True}) 
