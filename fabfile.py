@@ -67,6 +67,7 @@ def alterar_cron():
         run('crontab ~/%s/crontab_copy' % env.path)
 
 def gerar_css_def():
+    require('config')
     require('path')
 
     if env.config != 'DEV':

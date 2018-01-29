@@ -12,6 +12,11 @@ class PostForm(forms.ModelForm):
     class Media:
         js = ('js/bagogold/form_post_blog.js',)
         
+    def __init__(self, *args, **kwargs):
+        super(PostForm, self).__init__(*args, **kwargs)
+        if self.instance.id:
+            self.fields['chamada_facebook'].disabled = True
+        
     def clean_tags(self):
         tags = self.cleaned_data['tags']
         
