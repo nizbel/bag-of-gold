@@ -34,7 +34,7 @@ def postar_facebook(mensagem, link):
                 Link da mensagem
     Retorno: True se mensagem foi postada com sucesso
     """
-    PAGE_ACCESS_TOKEN = 'EAACavfhohbsBAEqnAZCbaNYR8jfGSU2jqopU8vmZAzmN5zqknTwb709Sl3e7KkNoyF8oiyF8TBQgNXB6JndOgKi2RZAkp6y8PcISP7c8IEZABZCapKmcKc8l12NqeMl8isYpX6eSDcs1zoasyUZBZBcIlc8t9TNjmN854rMjNeTSW5F6MoIf4DeZCbH4T0ZAZBEtJl7yFFbj2PlgZDZD'
+    PAGE_ACCESS_TOKEN = 'EAACavfhohbsBAM9HlUoCyh4MWkBwMDKnnTNXgbgQHe4ESksYzDtR1G26iaGYT2VMuzKkgyyhTRNVPZCG91Yrg5mDPeUw7F9H17MtqchrjZATRhSPfBTZBDkXoyS3g1Qk2e3ijRFisAqg1uRw1aPh6PwFwFPKXqrUUUFoKZCorAZDZD'
     PAGE_ID = '792948827546891'
     
     graph = facebook.GraphAPI(PAGE_ACCESS_TOKEN)
