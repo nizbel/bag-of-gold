@@ -161,9 +161,11 @@
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_posts' %}active{% endif %}">
                                                     <a href="{% url "blog:listar_posts" %}" class="nav-link"> Blog </a>
                                                 </li>
+                                                {% if request.user.is_authenticated %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'calendario' %}active{% endif %}">
                                                     <a href="{% url "inicio:calendario" %}" class="nav-link"> Calendário </a>
                                                 </li>
+                                                {% endif %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_geral' %}active{% endif %}">
                                                     <a href="{% url "inicio:painel_geral" %}" class="nav-link"> Painel Geral </a>
                                                 </li>
@@ -207,8 +209,6 @@
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_bh' %}active{% endif %}">
                                                             <a href="{% url "acoes:bh:inserir_operacao_bh" %}"> Inserir operação </a>
                                                         </li>
-                                                        {% endif %}
-                                                        {% if request.user.is_authenticated %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_taxa_custodia_acao' %}active{% endif %}">
                                                             <a href="{% url "acoes:bh:inserir_taxa_custodia_acao" %}"> Inserir taxa de custódia </a>
                                                         </li>
