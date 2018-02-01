@@ -137,14 +137,15 @@ def inserir_post(request):
                         
                     # TODO criar post no facebook
 #                     post.url_facebook = request.build_absolute_uri(reverse('blog:detalhar_post', args=(post.slug, )))
-                    post.url_facebook = 'https://bagofgold.com.br/blog/post/%s/' % post.slug
-                    
-                    sucesso = postar_facebook(mensagem=post.chamada_facebook, link=post.url_facebook)
-                    if not sucesso:
-                       raise ValueError('Erro ao postar no facebook')
+                post.url_facebook = 'https://bagofgold.com.br/blog/post/%s/' % post.slug
+                
+                sucesso = postar_facebook(mensagem=post.chamada_facebook, link=post.url_facebook)
+                if not sucesso:
+                    raise ValueError('Erro ao postar no facebook')
                 
                 return HttpResponseRedirect(reverse('blog:detalhar_post', kwargs={'post_slug': post.slug}))
             except:
+                post.delete()
                 messages.error(request, u'Erro ao criar post')
                 if settings.ENV == 'DEV':
                     print traceback.format_exc()
@@ -177,7 +178,7 @@ def editar_post(request, post_slug):
                 return HttpResponseRedirect(reverse('blog:detalhar_post', kwargs={'post_slug': post.slug}))
                     
             except:
-                messages.error(request, u'Erro ao editar post %s' % traceback.format_exc())
+                messages.error(request, u'Erro ao editar post')
                 if settings.ENV == 'DEV':
                     print traceback.format_exc()
                 elif settings.ENV == 'PROD':

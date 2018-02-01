@@ -501,7 +501,7 @@ def inserir_taxa_custodia_acao(request):
             taxa_custodia = form.save(commit=False)
             taxa_custodia.investidor = investidor
             taxa_custodia.save()
-            return HttpResponseRedirect(reverse('acoes:ver_taxas_custodia_acao'))
+            return HttpResponseRedirect(reverse('acoes:listar_taxas_custodia_acao'))
     else:
         form = TaxaCustodiaAcaoForm()
             
@@ -512,12 +512,12 @@ def listar_taxas_custodia_acao(request):
     if request.user.is_authenticated():
         investidor = request.user.investidor
     else:
-        return TemplateResponse(request, 'acoes/buyandhold/ver_taxas_custodia_acao.html', {'taxas_custodia': list()})
+        return TemplateResponse(request, 'acoes/buyandhold/listar_taxas_custodia_acao.html', {'taxas_custodia': list()})
     
     taxas_custodia = TaxaCustodiaAcao.objects.filter(investidor=investidor).order_by('ano_vigencia', 'mes_vigencia')
     for taxa in taxas_custodia:
         taxa.ano_vigencia = str(taxa.ano_vigencia).replace('.', '')
-    return TemplateResponse(request, 'acoes/buyandhold/ver_taxas_custodia_acao.html', {'taxas_custodia': taxas_custodia})
+    return TemplateResponse(request, 'acoes/buyandhold/listar_taxas_custodia_acao.html', {'taxas_custodia': taxas_custodia})
 
 @adiciona_titulo_descricao('Painel de Ações (Buy and Hold)', 'Posição atual do investidor em Ações para Buy and Hold')
 def painel(request):
@@ -617,4 +617,4 @@ def remover_taxa_custodia_acao(request, taxa_id):
     except Exception as e:
         messages.error(request, e)
     
-    return HttpResponseRedirect(reverse('acoes:ver_taxas_custodia_acao'))
+    return HttpResponseRedirect(reverse('acoes:listar_taxas_custodia_acao'))
