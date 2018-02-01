@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.blog.models import Post
-from django.db import transaction
 from django.utils.text import slugify
-from urllib2 import urlopen
-import datetime
 import facebook
-import json
 
 def criar_slug_tag_valido():
     pass
