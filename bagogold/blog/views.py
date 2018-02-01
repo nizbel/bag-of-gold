@@ -4,7 +4,7 @@ from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.utils.investidores import is_superuser
 from bagogold.blog.forms import PostForm
 from bagogold.blog.models import Post, Tag, TagPost
-from bagogold.blog.utils import criar_slug_post_valido
+from bagogold.blog.utils import criar_slug_post_valido, postar_facebook
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.mail import mail_admins
@@ -136,9 +136,12 @@ def inserir_post(request):
                         TagPost.objects.create(tag=tag, post=post)
                         
                     # TODO criar post no facebook
-                    # post.url_facebook = retorno_post_facebook(url=reverse('blog:detalhar_post', post.slug))
-                    # if falha:
-                    #    raise ValueError('erro ao postar no facebook')
+#                     post.url_facebook = request.build_absolute_uri(reverse('blog:detalhar_post', args=(post.slug, )))
+                    post.url_facebook = 'https://bagofgold.com.br/blog/post/%s/' % post.slug
+                    
+                    sucesso = postar_facebook(mensagem=post.chamada_facebook, link=post.url_facebook)
+                    if not sucesso:
+                       raise ValueError('Erro ao postar no facebook')
                 
                 return HttpResponseRedirect(reverse('blog:detalhar_post', kwargs={'post_slug': post.slug}))
             except:
