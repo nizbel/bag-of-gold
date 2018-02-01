@@ -1,8 +1,5 @@
 $(document).ready(function() {
 	$('#summernote').summernote({lang: "pt-BR"});
-        //API:
-        //var sHTML = $('#summernote_1').code(); // get code
-        //$('#summernote_1').destroy(); // destroy
 	
 	// Carregar multiselect
     var btn_class = $('#id_tags').attr('class');
@@ -22,4 +19,8 @@ $(document).ready(function() {
 	$('#post_form').submit(function() {
 		$('#id_conteudo').val($('#summernote').summernote('code'));
 	});
+    
+    // Aplicar maxlength
+    $("#id_titulo").maxlength({alwaysShow: true});
+    $("#id_chamada_facebook").maxlength({alwaysShow: true});
 });
