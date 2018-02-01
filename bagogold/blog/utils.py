@@ -39,7 +39,6 @@ def postar_facebook(mensagem, link):
     
     graph = facebook.GraphAPI(PAGE_ACCESS_TOKEN)
     if link:
-        print link
         graph.put_object(PAGE_ID, "feed", message=mensagem, link=link)
     else:
         raise ValueError('Envie um link válido')

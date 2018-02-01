@@ -177,7 +177,7 @@ def editar_post(request, post_slug):
                 return HttpResponseRedirect(reverse('blog:detalhar_post', kwargs={'post_slug': post.slug}))
                     
             except:
-                messages.error(request, u'Erro ao editar post')
+                messages.error(request, u'Erro ao editar post %s' % traceback.format_exc())
                 if settings.ENV == 'DEV':
                     print traceback.format_exc()
                 elif settings.ENV == 'PROD':
