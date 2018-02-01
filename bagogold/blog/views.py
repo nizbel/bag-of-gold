@@ -19,7 +19,6 @@ from django.template.response import TemplateResponse
 import json
 import traceback
 
-@login_required
 @adiciona_titulo_descricao('Detalhar post', '')
 def detalhar_post(request, post_slug):
     post = get_object_or_404(Post, slug=post_slug)
@@ -35,7 +34,6 @@ def detalhar_post(request, post_slug):
     
     return TemplateResponse(request, 'blog/detalhar_post.html', {'post': post, 'tags': tags, 'posts_recentes': posts_recentes})  
 
-@login_required
 @adiciona_titulo_descricao('Listar posts', '')
 def listar_posts(request):
 #     # TODO APAGAR TESTE
@@ -87,7 +85,6 @@ def listar_posts(request):
         return TemplateResponse(request, 'blog/listar_posts.html', {'posts': paginador_posts.page(pagina).object_list, 'paginador': paginador_posts,
                                                                     'tags': tags, 'posts_recentes': posts_recentes})  
 
-@login_required
 @adiciona_titulo_descricao('Listar posts por tag', '')
 def listar_posts_por_tag(request, tag_slug):
     tag = get_object_or_404(Tag, slug=tag_slug)
