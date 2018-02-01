@@ -20,7 +20,7 @@
 				<div class="form-group col-md-12 {% if post_form.titulo.errors %} has-error {% endif %}">
 					<label class="control-label col-md-1" style="text-align: left;"> {{post_form.titulo.label}}: </label>
 					<div class="col-md-11">
-						<input id="id_titulo" type="text" value="{{post_form.titulo.value|default:''}}" name="titulo" class="form-control">
+						<input id="id_titulo" type="text" value="{{post_form.titulo.value|default:''}}" name="titulo" class="form-control" maxlength="30">
 						{% if post_form.titulo.errors %} <span class="help-block"> {{ post_form.titulo.errors.as_text }} </span> {% endif %}
 					</div>
 				</div>
@@ -39,7 +39,8 @@
 				<div class="form-group col-md-12 {% if post_form.chamada_facebook.errors %} has-error {% endif %}">
                     <label class="control-label col-md-1" style="text-align: left;"> {{post_form.chamada_facebook.label}}: </label>
                     <div class="col-md-11">
-                        <input id="id_chamada_facebook" type="text" value="{{post_form.chamada_facebook.value|default:''}}" name="chamada_facebook" class="form-control">
+                        <input id="id_chamada_facebook" type="text" value="{{post_form.chamada_facebook.value|default:''}}" name="chamada_facebook" class="form-control"
+						maxlength="250">
                         {% if post_form.chamada_facebook.errors %} <span class="help-block"> {{ post_form.chamada_facebook.errors.as_text }} </span> {% endif %}
                     </div>
                 </div>
@@ -74,10 +75,10 @@
 {% endblock %}
 
 {% block extra_footer %}
-<script src={% static "assets/global/plugins/bootstrap-touchspin/bootstrap.touchspin.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/jquery-validation/js/jquery.validate.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/jquery-validation/js/additional-methods.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/bootstrap-multiselect/js/bootstrap-multiselect.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-maxlength/bootstrap-maxlength.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/bootstrap-summernote/summernote.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/bootstrap-summernote/lang/summernote-pt-BR.min.js" %} type="text/javascript"></script>
 {{ post_form.media }}
