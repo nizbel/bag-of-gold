@@ -3,7 +3,7 @@
 
 {% block extra_metatags %}
 <meta property="og:title" content="{{post.titulo}}"/>
-<meta property="og:description" content="{{post.conteudo|safe|truncatechars:350}}"/>
+<meta property="og:description" content="{{post.conteudo_fb}}"/>
 
 {% endblock %}
 
@@ -36,6 +36,9 @@
             </div>
             <div class="blog-single-desc">
                 {{post.conteudo|safe}}
+            </div>
+            <div class="blog-single-desc">
+                {{post.conteudo_fb}}
             </div>
             <div class="blog-single-foot">
                 <ul class="blog-post-tags">

@@ -17,11 +17,16 @@ from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 import json
+import re
 import traceback
 
 @adiciona_titulo_descricao('Detalhar post', '')
 def detalhar_post(request, post_slug):
     post = get_object_or_404(Post, slug=post_slug)
+
+    # Preparar preview para o facebook
+    post.conteudo_fb = post.conteudo[:post.conteudo.find('</p>')]
+    post.conteudo_fb = re.sub('<[^<\s]+?>', '', post.conteudo_fb)
     
     if Post.objects.filter(data__lt=post.data).order_by('-data').exists():
         post.post_anterior = Post.objects.filter(data__lt=post.data).order_by('-data')[0].slug
