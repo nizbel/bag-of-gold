@@ -3,7 +3,7 @@
 
 {% block extra_metatags %}
 <meta property="og:title" content="{{post.titulo}}"/>
-<meta property="og:description" content="{{post.conteudo|truncatechars:350}}"/>
+<meta property="og:description" content="{{post.conteudo|safe|truncatechars:350}}"/>
 
 {% endblock %}
 
