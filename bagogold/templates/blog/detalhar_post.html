@@ -3,7 +3,8 @@
 
 {% block extra_metatags %}
 <meta property="og:title" content="{{post.titulo}}"/>
-<meta property="og:description" content="{{post.conteudo|safe}}"/>
+<meta property="og:description" content="{{post.conteudo|truncatechars:350}}"/>
+
 {% endblock %}
 
 {% block pagina_titulo_icone %}
