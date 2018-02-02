@@ -4491,18 +4491,12 @@ Fonte da splash screen
 ***/
 @media (min-width: 992px) {
   .text-splash > h1 {
-    background-color: #3e3a2a;
-    color: #ffa91e;
     padding: 10px 10px;
-	border: 1px solid rgba(0, 0, 0, 0.5);
 	font-size: 18px; } }
 	
 @media (min-width: 1170px) {
   .text-splash > h1 {
-    background-color: #3e3a2a;
-    color: #ffa91e;
     padding: 20px 20px;
-    border: 1px solid rgba(0, 0, 0, 0.5);
     font-size: 26px; } }
 
 @media (max-width: 991px) {
