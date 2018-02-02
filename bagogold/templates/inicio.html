@@ -100,10 +100,20 @@
     <div class="c-layout-page">
         <!-- BEGIN: PAGE CONTENT -->
 <section id="inicio" >
-<div class="tp-banner-container tp-fullscreen tp-fullscreen-mobile">
+<div class="tp-banner-container tp-fullscreen tp-fullscreen-mobile text-center">
     <div class="c-content-box c-size-md c-no-padding c-bg-img-center-contain wow animate fadeIn" data-wow-duration="2.5s"
         style="background-image: url({% static 'assets/global/img/bag-logo-original.png' %}); margin: 10%; height: 60%;">
+        <div class="row">
+            <div class="col-md-3 text-splash wow animate fadeIn" data-wow-delay="0.8s">
+                <h1 class="c-font-bold" style="margin-top: 50%">Diversifique seus investimentos</h1>
+            </div>
+            <div class="col-md-offset-6 col-md-3 text-splash wow animate fadeIn" data-wow-delay="1.6s">
+                <h1 class="c-font-bold" style="margin-top: 50%">Mantenha-se informado</h1>
+            </div>
+        </div>
     </div>
+    <a href="{% url 'inicio:painel_geral' %}" class="btn btn-lg c-btn-blue c-btn-square c-btn-uppercase wow animate fadeIn"
+    style="margin-top: -2%;" data-wow-duration="2.5s" data-wow-delay="2s">Acessar</a>
 </div>
 </section>
 
