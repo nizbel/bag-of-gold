@@ -501,7 +501,7 @@ def inserir_taxa_custodia_acao(request):
             taxa_custodia = form.save(commit=False)
             taxa_custodia.investidor = investidor
             taxa_custodia.save()
-            return HttpResponseRedirect(reverse('acoes:listar_taxas_custodia_acao'))
+            return HttpResponseRedirect(reverse('acoes:bh:listar_taxas_custodia_acao'))
     else:
         form = TaxaCustodiaAcaoForm()
             
