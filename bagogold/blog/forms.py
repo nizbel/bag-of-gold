@@ -10,7 +10,7 @@ class PostForm(forms.ModelForm):
         fields = ('titulo', 'conteudo', 'chamada_facebook', 'tags')
         
     class Media:
-        js = ('js/bagogold/form_post_blog.js',)
+        js = ('js/bagogold/form_post_blog.min.js',)
         
     def __init__(self, *args, **kwargs):
         super(PostForm, self).__init__(*args, **kwargs)

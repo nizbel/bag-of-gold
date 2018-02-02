@@ -329,7 +329,7 @@ h1 {
 .c-font-30 {
   font-size: 30px; }
 
-.c-font-31 {
+/* .c-font-31 {
   font-size: 31px; }
 
 .c-font-32 {
@@ -507,7 +507,7 @@ h1 {
   font-size: 89px; }
 
 .c-font-90 {
-  font-size: 90px; }
+  font-size: 90px; } */
 
 .c-line-height-10 {
   line-height: 10px; }
@@ -4485,3 +4485,26 @@ Clipboard
   padding: 20px; }
   .mt-clipboard-container .mt-clipboard {
     margin: 10px 10px 10px 0; }
+    
+/***
+Fonte da splash screen
+***/
+@media (min-width: 992px) {
+  .text-splash > h1 {
+    background-color: #3e3a2a;
+    color: #ffa91e;
+    padding: 10px 10px;
+	border: 1px solid rgba(0, 0, 0, 0.5);
+	font-size: 18px; } }
+	
+@media (min-width: 1170px) {
+  .text-splash > h1 {
+    background-color: #3e3a2a;
+    color: #ffa91e;
+    padding: 20px 20px;
+    border: 1px solid rgba(0, 0, 0, 0.5);
+    font-size: 26px; } }
+
+@media (max-width: 991px) {
+  .text-splash {
+    display: none; } }
