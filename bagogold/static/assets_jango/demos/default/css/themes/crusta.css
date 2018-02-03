@@ -142,7 +142,7 @@ a {
   .c-content-pagination.c-theme > li.c-active > a > i {
     color: #fff; }
 
-.c-theme-btn.btn {
+/*.c-theme-btn.btn {
   color: #ffffff;
   background: #f3c200;
   border-color: #f3c200; }
@@ -241,7 +241,7 @@ a {
 
 .c-content-list-1.c-theme.c-separator-dot > li:before,
 .c-content-list-1.c-theme > li:before {
-  background: #f3c200; }
+  background: #f3c200; } */
 
 /*.c-content-tab-1.c-theme .nav > li:hover > a, .c-content-tab-1.c-theme .nav > li:focus > a, .c-content-tab-1.c-theme .nav > li:active > a, .c-content-tab-1.c-theme .nav > li.active > a,
 .c-content-tab-1.c-theme .nav.nav-justified > li:hover > a,
