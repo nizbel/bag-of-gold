@@ -26,33 +26,6 @@
             </p>
         </div>
     </div>
-    
-    
-    {% comment %}
-    <div class="item">
-        <div class="c-content-blog-post-card-1 c-option-2">     
-            <div class="c-body">
-                <div class="c-title c-font-uppercase c-font-bold c-font-black">
-                    <a href="{% url 'blog:detalhar_post' post.slug %}">{{post.titulo}}</a>
-                </div>
-                <div class="c-author">
-                    <span class="c-font-uppercase c-font-dark">{{post.data|date:"d \d\e F \d\e Y - H:i"}}</span>
-                </div>
-
-                <div class="c-panel">
-                    <ul class="c-tags c-theme-ul-bg">
-                        {% for tag in post.tags %}
-                        <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.{{forloop.counter}}s"><a href="{% url 'blog:listar_posts_por_tag' tag.slug %}">{{tag.nome}}</a></li>
-                        {% endfor %}
-                    </ul>                           
-                </div>
-                <p class="c-font-dark">
-                    {{post.conteudo|safe|truncatechars:150}}
-                </p>
-            </div>
-        </div>
-    </div>
-    {% endcomment %}
 {% if forloop.counter0|add:"1"|divisibleby:"3" %}
 </div>
 {% endif %}
