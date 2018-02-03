@@ -3,7 +3,7 @@ THEME COLOR - CRUSTA
 *********************/
 a {
   color: #2b15a8; }
-  a:not(.c-link-nav, .btn):active, a:not(.c-link-nav, .btn):hover, a:not(.c-link-nav, .btn):focus {
+  a:not(.c-link-nav):not(.btn):active, a:not(.c-link-nav):not(.btn):hover, a:not(.c-link-nav):not(.btn):focus {
     color: #f3c200 !important; }
 
 .c-theme-link:focus, .c-theme-link:active, .c-theme-link:hover {
@@ -243,7 +243,7 @@ a {
 .c-content-list-1.c-theme > li:before {
   background: #f3c200; }
 
-.c-content-tab-1.c-theme .nav > li:hover > a, .c-content-tab-1.c-theme .nav > li:focus > a, .c-content-tab-1.c-theme .nav > li:active > a, .c-content-tab-1.c-theme .nav > li.active > a,
+/*.c-content-tab-1.c-theme .nav > li:hover > a, .c-content-tab-1.c-theme .nav > li:focus > a, .c-content-tab-1.c-theme .nav > li:active > a, .c-content-tab-1.c-theme .nav > li.active > a,
 .c-content-tab-1.c-theme .nav.nav-justified > li:hover > a,
 .c-content-tab-1.c-theme .nav.nav-justified > li:focus > a,
 .c-content-tab-1.c-theme .nav.nav-justified > li:active > a,
@@ -265,7 +265,7 @@ a {
   border-left-color: #f3c200; }
 
 .c-content-tab-5.c-theme .c-nav-tab.c-arrow .active > a:after {
-  border-left-color: #f3c200; }
+  border-left-color: #f3c200; } */
 
 .c-content-accordion-1.c-theme .panel > .panel-heading > .panel-title > a {
   background-color: #f3c200; }
@@ -290,7 +290,7 @@ a {
   .owl-carousel.c-theme .owl-controls .owl-dot.active {
     background: #f3c200; }
 
-.cbp-l-filters-button .cbp-filter-counter,
+/*.cbp-l-filters-button .cbp-filter-counter,
 .cbp-l-filters-buttonCenter .cbp-filter-counter {
   background-color: #f3c200; }
   .cbp-l-filters-button .cbp-filter-counter:before,
@@ -313,12 +313,12 @@ a {
 
 .cbp-l-project-desc-title:before,
 .cbp-l-project-details-title:before {
-  background: #f3c200; }
+  background: #f3c200; } */
 
 .tp-bullets.round.c-theme .bullet {
   margin-right: 5px; }
   .tp-bullets.round.c-theme .bullet.selected {
     background: #f3c200; }
 
-.tp-banner-container.c-theme .tparrows.circle {
-  background-image: url(../../../../base/img/content/line-icons/default.png); }
+/*.tp-banner-container.c-theme .tparrows.circle {
+  background-image: url(../../../../base/img/content/line-icons/default.png); } */
