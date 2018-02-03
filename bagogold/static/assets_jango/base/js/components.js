@@ -190,90 +190,6 @@ var LayoutOnepageNav = function () {
 }();
 // END: Onepage Nav
 
-// BEGIN: Handle Theme Settings
-var LayoutThemeSettings = function () {
-
-	var handle = function () {
-
-		$('.c-settings .c-color').on('click', function () {
-			var val = $(this).attr('data-color');
-            var demo = App.getURLParameter('d') || 'default';
-			$('#style_theme').attr('href', '../assets/demos/' + demo + '/css/themes/' + val + '.css');
-
-			$('.c-settings .c-color').removeClass('c-active');
-			$(this).addClass('c-active');
-		});
-
-		$('.c-setting_header-type').on('click', function () {
-			var val = $(this).attr('data-value');
-			if (val == 'fluid') {
-				$('.c-layout-header .c-topbar > .container').removeClass('container').addClass('container-fluid');
-				$('.c-layout-header .c-navbar > .container').removeClass('container').addClass('container-fluid');
-			} else {
-				$('.c-layout-header .c-topbar > .container-fluid').removeClass('container-fluid').addClass('container');
-				$('.c-layout-header .c-navbar > .container-fluid').removeClass('container-fluid').addClass('container');
-			}
-			$('.c-setting_header-type').removeClass('active');
-			$(this).addClass('active');
-		});
-
-		$('.c-setting_header-mode').on('click', function () {
-			var val = $(this).attr('data-value');
-			if (val == 'static') {
-				$('body').removeClass('c-layout-header-fixed').addClass('c-layout-header-static');
-			} else {
-				$('body').removeClass('c-layout-header-static').addClass('c-layout-header-fixed');
-			}
-			$('.c-setting_header-mode').removeClass('active');
-			$(this).addClass('active');
-		});
-
-		$('.c-setting_font-style').on('click', function () {
-			var val = $(this).attr('data-value');
-
-			if (val == 'light') {
-				$('.c-font-uppercase').addClass('c-font-uppercase-reset').removeClass('c-font-uppercase');
-				$('.c-font-bold').addClass('c-font-bold-reset').removeClass('c-font-bold');
-
-				$('.c-fonts-uppercase').addClass('c-fonts-uppercase-reset').removeClass('c-fonts-uppercase');
-				$('.c-fonts-bold').addClass('c-fonts-bold-reset').removeClass('c-fonts-bold');
-			} else {
-				$('.c-font-uppercase-reset').addClass('c-font-uppercase').removeClass('c-font-uppercase-reset');
-				$('.c-font-bold-reset').addClass('c-font-bold').removeClass('c-font-bold-reset');
-
-				$('.c-fonts-uppercase-reset').addClass('c-fonts-uppercase').removeClass('c-fonts-uppercase-reset');
-				$('.c-fonts-bold-reset').addClass('c-fonts-bold').removeClass('c-fonts-bold-reset');
-			}
-
-			$('.c-setting_font-style').removeClass('active');
-			$(this).addClass('active');
-		});
-
-		$('.c-setting_megamenu-style').on('click', function () {
-			var val = $(this).attr('data-value');
-			if (val == 'dark') {
-				$('.c-mega-menu').removeClass('c-mega-menu-light').addClass('c-mega-menu-dark');
-			} else {
-				$('.c-mega-menu').removeClass('c-mega-menu-dark').addClass('c-mega-menu-light');
-			}
-			$('.c-setting_megamenu-style').removeClass('active');
-			$(this).addClass('active');
-		});
-
-	};
-
-	return {
-
-		//main function to initiate the module
-		init: function () {
-
-			handle();
-		}
-
-	};
-}();
-// END: Handle Theme Settings
-
 // BEGIN: OwlCarousel
 var ContentOwlcarousel = function () {
 
@@ -354,7 +270,7 @@ var ContentOwlcarousel = function () {
 }();
 // END: OwlCarousel
 
-
+/*
 // BEGIN: CounterUp
 var ContentCounterUp = function () {
 
@@ -377,7 +293,7 @@ var ContentCounterUp = function () {
 	};
 }();
 // END: CounterUp
-
+*/
 
 // BEGIN : SCROLL TO VIEW DETECTION
 function isScrolledIntoView(elem)
@@ -395,6 +311,7 @@ function isScrolledIntoView(elem)
 }
 // END : SCROLL TO VIEW FUNCTION
 
+/*
 // BEGIN : PROGRESS BAR 
 var LayoutProgressBar = function ($) {
 
@@ -477,33 +394,7 @@ var LayoutProgressBar = function ($) {
     }
 }(jQuery);
 // END : PROGRESS BAR
-
-// BEGIN : JQUERY SMOOTH SCROLL
-var LayoutSmoothScroll = function () {
-
-	var _initInstances = function () {
-
-		$('.js-smoothscroll').on('click', function() {
-			var scroll_target = $(this).data('target');
-			var scroll_offset = ($(this).data('scroll-offset')) ? $(this).data('scroll-offset') : 0;
-			$.smoothScroll({
-				scrollTarget: '#'+scroll_target,
-				offset: scroll_offset,
-			});
-			return false;
-		});
-	};
-
-	return {
-
-		//main function to initiate the module
-		init: function () {
-			_initInstances();
-		}
-
-	};
-}();
-// END : JQUERY SMOOTH SCROLL
+*/
 
 // Main theme initialization
 $(document).ready(function () {
@@ -512,13 +403,11 @@ $(document).ready(function () {
 	LayoutMegaMenu.init();
 	LayoutGo2Top.init();
 	LayoutOnepageNav.init();
-	LayoutThemeSettings.init();
-	LayoutProgressBar.init();
-	LayoutSmoothScroll.init();
+//	LayoutProgressBar.init();
 	LayoutHeader.init();
 
 	// init plugin wrappers
 	ContentOwlcarousel.init();
-	ContentCounterUp.init();
+//	ContentCounterUp.init();
 });
 
