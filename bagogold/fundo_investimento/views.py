@@ -229,7 +229,7 @@ def historico(request):
         for fundo in fundos_investimento:
             fundo.data_ultima_operacao = operacoes.filter(fundo_investimento=fundo).order_by('-data')[0].data
             if HistoricoValorCotas.objects.filter(fundo_investimento=fundo, data__gte=fundo.data_ultima_operacao).exists():
-                total_patrimonio += (fundo.qtd_cotas * HistoricoValorCotas.objects.filter(fundo_investimento=fundo, data__gt=fundo.data_ultima_operacao).order_by('-data')[0].valor_cota)
+                total_patrimonio += (fundo.qtd_cotas * HistoricoValorCotas.objects.filter(fundo_investimento=fundo, data__gte=fundo.data_ultima_operacao).order_by('-data')[0].valor_cota)
             else:
                 total_patrimonio += (operacoes.filter(fundo_investimento=fundo).order_by('-data')[0].valor_cota() * fundo.qtd_cotas)
         
