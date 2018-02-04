@@ -206,7 +206,7 @@
 <script src={% static "assets/global/plugins/nouislider/wNumb.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/nouislider/nouislider.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/bootstrap-touchspin/bootstrap.touchspin.min.js" %} type="text/javascript"></script>
-<script>
+<script type="text/javascript">
 $( document ).ready(function() {    
     $.plot($("#graf_historico_di"), [ {color: "#33AA33", lines: {show:true}, data: {{ graf_historico_di|safe }} } 
     ],
