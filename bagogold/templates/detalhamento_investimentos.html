@@ -199,7 +199,7 @@
 <script src={% static "assets/global/plugins/flot/jquery.flot.stack.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.time.min.js" %} type="text/javascript"></script>
 <script src={% static "js/bagogold/calculo_historico_cripto.js" %} type="text/javascript"></script>
-<script>
+<script type="text/javascript">
 $( document ).ready(function() {
 	var graf_patrimonio = {{ graf_patrimonio|safe }}
     var graf_patrimonio_cripto = {{ graf_patrimonio_cripto|safe }};
