@@ -159,11 +159,9 @@
                                                 <span class="arrow"></span>
                                             </a>
                                             <ul class="dropdown-menu pull-left">
-                                                {% if request.user.is_superuser %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_posts' %}active{% endif %}">
                                                     <a href="{% url "blog:listar_posts" %}" class="nav-link"> Blog </a>
                                                 </li>
-                                                {% endif %}
                                                 {% if request.user.is_authenticated %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'calendario' %}active{% endif %}">
                                                     <a href="{% url "inicio:calendario" %}" class="nav-link"> Calendário </a>
