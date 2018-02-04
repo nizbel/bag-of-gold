@@ -891,7 +891,6 @@ def detalhamento_investimentos(request):
     return TemplateResponse(request, 'detalhamento_investimentos.html', {'graf_patrimonio': graf_patrimonio, 'patrimonio_anual': patrimonio_anual,
                                             'estatisticas': estatisticas, 'graf_patrimonio_cripto': json.dumps(graf_patrimonio_cripto)})
 
-@login_required
 @adiciona_titulo_descricao('', 'O Bag of Gold permite que o usuário acompanhe seus investimentos em um único lugar')
 def inicio(request):
     posts = Post.objects.all().order_by('-data')[:6]
