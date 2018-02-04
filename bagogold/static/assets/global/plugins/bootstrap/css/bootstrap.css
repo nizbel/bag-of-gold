@@ -3260,7 +3260,7 @@ tbody.collapse.in {
     left: 0;
     right: auto; } }
 
-/*.btn-group,
+.btn-group,
 .btn-group-vertical {
   position: relative;
   display: inline-block;
@@ -3429,7 +3429,7 @@ tbody.collapse.in {
 [data-toggle="buttons"] > .btn-group > .btn input[type="checkbox"] {
   position: absolute;
   clip: rect(0, 0, 0, 0);
-  pointer-events: none; } */
+  pointer-events: none; }
 
 .input-group {
   position: relative;
