@@ -8,4 +8,8 @@ urlpatterns = [
     url(r'^posts/$', views.listar_posts, name='listar_posts'),
     url(r'^post/(?P<post_slug>[\w-]+)/$', views.detalhar_post, name='detalhar_post'),
     url(r'^tag/(?P<tag_slug>[\w-]+)/posts/$', views.listar_posts_por_tag, name='listar_posts_por_tag'),
+    
+    # URLs para o app do facebook
+    url(r'^tos/$', views.tos, name='tos'),
+    url(r'^privacy_policy/$', views.privacy_policy, name='privacy_policy'),
     ]
