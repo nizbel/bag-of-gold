@@ -185,7 +185,7 @@
 <script src={% static "assets/global/plugins/bootstrap-datepicker/js/bootstrap-datepicker.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/bootstrap-datepicker/locales/bootstrap-datepicker.pt-BR.min.js" %} type="text/javascript"></script>
 {{ form_operacao_td.media }}
-<script>
+<script type="text/javascript">
 $(document).ready(function() {
     $( "#id_data" ).change(function() {
         var dataEscolhida = $(this).val();
