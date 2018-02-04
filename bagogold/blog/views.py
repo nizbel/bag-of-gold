@@ -137,9 +137,7 @@ def inserir_post(request):
                     for tag in post_form.cleaned_data['tags']:
                         TagPost.objects.create(tag=tag, post=post)
                         
-                    # TODO criar post no facebook
-#                     post.url_facebook = request.build_absolute_uri(reverse('blog:detalhar_post', args=(post.slug, )))
-                post.url_facebook = 'https://bagofgold.com.br/blog/post/%s/' % post.slug
+                post.url_facebook = 'https://bagofgold.com.br%s' % reverse('blog:detalhar_post', kwargs={'post_slug': post.slug})
                 
                 sucesso = postar_facebook(mensagem=post.chamada_facebook, link=post.url_facebook)
                 if not sucesso:
