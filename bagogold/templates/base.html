@@ -65,7 +65,7 @@
                                 <!-- BEGIN LOGO -->
                                 <div class="page-logo">
 <!--                                 <div class="col-md-4 col-md-offset-4"> -->
-                                    <a href="{% url "inicio:painel_geral" %}">
+                                    <a href="{% url "inicio:home" %}">
 <!--                                        <img src={% static "assets/global/img/bag-logo.png" %} class="" alt="logo" style="height:95%;"> -->
                                         <img src={% static "assets/global/img/text-logo.png" %} class="" alt="logo" style="margin-top:20px; height:40px;">
                                     </a>
@@ -159,11 +159,9 @@
                                                 <span class="arrow"></span>
                                             </a>
                                             <ul class="dropdown-menu pull-left">
-                                                {% if request.user.is_superuser %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_posts' %}active{% endif %}">
                                                     <a href="{% url "blog:listar_posts" %}" class="nav-link"> Blog </a>
                                                 </li>
-                                                {% endif %}
                                                 {% if request.user.is_authenticated %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'calendario' %}active{% endif %}">
                                                     <a href="{% url "inicio:calendario" %}" class="nav-link"> Calendário </a>
@@ -716,7 +714,7 @@
                                         <a href="mailto:suporte@bagofgold.com.br">suporte@bagofgold.com.br</a>
                                         <ul class="social-icons">
                                             <li>
-                                                <a href="javascript:;" data-original-title="facebook" class="facebook"></a>
+                                                <a href="https://fb.me/myBagOfGold" data-original-title="facebook" class="facebook"></a>
                                             </li>
                                         </ul>
                                     </address>

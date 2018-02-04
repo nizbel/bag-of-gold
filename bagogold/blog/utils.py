@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold import settings
 from bagogold.blog.models import Post
 from django.utils.text import slugify
 import facebook
@@ -34,6 +35,8 @@ def postar_facebook(mensagem, link):
                 Link da mensagem
     Retorno: True se mensagem foi postada com sucesso
     """
+    if settings.ENV == 'DEV':
+        return True
     PAGE_ACCESS_TOKEN = 'EAACavfhohbsBAM9HlUoCyh4MWkBwMDKnnTNXgbgQHe4ESksYzDtR1G26iaGYT2VMuzKkgyyhTRNVPZCG91Yrg5mDPeUw7F9H17MtqchrjZATRhSPfBTZBDkXoyS3g1Qk2e3ijRFisAqg1uRw1aPh6PwFwFPKXqrUUUFoKZCorAZDZD'
     PAGE_ID = '792948827546891'
     
