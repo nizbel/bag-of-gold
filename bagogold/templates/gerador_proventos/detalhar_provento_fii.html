@@ -101,7 +101,7 @@
 
 {% block extra_footer %}
 {% if request.user.is_superuser %}
-<script>
+<script type="text/javascript">
 $( document ).ready(function() {
     $('#botao_preparar_relacionar').click(function() {
         App.blockUI({
