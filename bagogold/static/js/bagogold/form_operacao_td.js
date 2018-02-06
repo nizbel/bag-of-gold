@@ -82,6 +82,7 @@ $(document).ready(function() {
         postfix: 'títulos'
  	});
  	$('.date-picker').datepicker({
+ 		todayHighlight: true,
  		language: 'pt-BR'
  	});
 });

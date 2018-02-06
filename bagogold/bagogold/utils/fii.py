@@ -586,7 +586,7 @@ def calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(divisao, dia, ticke
                 preco_medio_fii = (qtd_fii * preco_medio_fii + elemento.custo_total) / (qtd_fii + elemento.quantidade)
                 qtd_fii += elemento.quantidade
                 
-            elif elemento.tipo_operacao == 'V':
+            elif elemento.operacao.tipo_operacao == 'V':
                 qtd_fii -= elemento.quantidade
                 if qtd_fii == 0:
                     preco_medio_fii = 0
