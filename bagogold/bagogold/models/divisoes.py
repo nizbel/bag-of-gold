@@ -559,7 +559,7 @@ class DivisaoOperacaoFII (models.Model):
     """
     Guarda a quantidade de FIIs que pertence a divisão
     """
-    quantidade = models.IntegerField('Quantidade')
+    quantidade = models.IntegerField('Quantidade', validators=[MinValueValidator(1)])
     
     class Meta:
         unique_together=('divisao', 'operacao')
