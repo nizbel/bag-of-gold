@@ -11,8 +11,10 @@ from bagogold.bagogold.models.investidores import LoginIncorreto
 from bagogold.bagogold.models.lc import OperacaoLetraCredito
 from bagogold.bagogold.models.td import OperacaoTitulo, ValorDiarioTitulo, \
     HistoricoTitulo
-from bagogold.bagogold.signals.divisao_fii import gerar_checkpoint_divisao_fii
-from bagogold.bagogold.signals.fii import gerar_checkpoint_fii
+from bagogold.bagogold.signals.divisao_fii import gerar_checkpoint_divisao_fii,\
+    gerar_checkpoint_divisao_proventos_fii
+from bagogold.bagogold.signals.fii import gerar_checkpoint_fii,\
+    gerar_checkpoint_proventos_fii
 from bagogold.bagogold.utils.acoes import quantidade_acoes_ate_dia, \
     calcular_poupanca_prov_acao_ate_dia
 from bagogold.bagogold.utils.debenture import calcular_qtd_debentures_ate_dia
@@ -48,6 +50,10 @@ def is_superuser(user):
     raise PermissionDenied
 
 def atualizar_checkpoints(investidor):
+    """
+    Atualiza os checkpoints para um investidor, buscando os últimos checkpoints registrados
+    Parâmetros: Investidor
+    """
     # FII
     # Verificar se usuário possui operações em FII
     if OperacaoFII.objects.filter(investidor=investidor).exists():
@@ -71,6 +77,18 @@ def atualizar_checkpoints(investidor):
                     
         # Gerar checkpoints de proventos
         # TODO gerar do ultimo ano de proventos até ano atual
+        if CheckpointProventosFII.objects.filter(investidor=investidor).exists():
+            for ano in range(CheckpointProventosFII.objects.filter(investidor=investidor).order_by('-ano')[0].ano+1, datetime.date.today().year+1):
+                gerar_checkpoint_proventos_fii(investidor, ano)
+        
+        lista_divisoes_anos = CheckpointDivisaoProventosFII.objects.filter(divisao__investidor=investidor).values('divisao').annotate(ultimo_ano=Max('ano')) \
+            .values('divisao', 'ultimo_ano', 'valor').exclude(valor=0)
+        for divisao_ano in lista_divisoes_anos:
+            ultimo_ano_checkpoint = divisao_ano['ultimo_ano']
+            divisao = Divisao.objects.get(id=divisao_ano['divisao'])
+            # Repete o procedimento ano a ano, até o ano atual
+            for ano in range(ultimo_ano_checkpoint+1, datetime.date.today().year+1):
+                gerar_checkpoint_divisao_proventos_fii(divisao, ano)
                 
 def buscar_acoes_investidor_na_data(investidor, data=datetime.date.today(), destinacao=''):
     """

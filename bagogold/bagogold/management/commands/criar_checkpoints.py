@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.models.divisoes import CheckpointDivisaoFII, \
+    CheckpointDivisaoProventosFII, DivisaoOperacaoFII
 from bagogold.bagogold.models.fii import OperacaoFII, CheckpointProventosFII, \
     CheckpointFII
 from django.core.management.base import BaseCommand
 from django.db.models.signals import post_save
-from bagogold.bagogold.models.divisoes import CheckpointDivisaoFII,\
-    CheckpointDivisaoProventosFII, DivisaoOperacaoFII
 
 class Command(BaseCommand):
     help = 'TEMPORÁRIO Criar checkpoints de FII'
@@ -18,13 +18,14 @@ class Command(BaseCommand):
             print checkpoint.investidor, checkpoint.ano, checkpoint.fii, checkpoint.quantidade, checkpoint.preco_medio
         for checkpoint in CheckpointProventosFII.objects.all().order_by('investidor', 'ano'):
             print 'Provento', checkpoint.investidor, checkpoint.ano, checkpoint.valor
-            
+        
         # Divisões
         CheckpointDivisaoFII.objects.all().delete()
         CheckpointDivisaoProventosFII.objects.all().delete()
         for operacao_divisao in DivisaoOperacaoFII.objects.all().order_by('operacao__data'):
             post_save.send(DivisaoOperacaoFII, instance=operacao_divisao, created=False)
         for checkpoint in CheckpointDivisaoFII.objects.all().order_by('divisao__investidor', 'ano'):
-            print checkpoint.divisao, checkpoint.ano, checkpoint.fii, checkpoint.quantidade, checkpoint.preco_medio
+            print checkpoint.divisao.investidor, checkpoint.divisao, checkpoint.ano, checkpoint.fii, checkpoint.quantidade, checkpoint.preco_medio
         for checkpoint in CheckpointDivisaoProventosFII.objects.all().order_by('divisao__investidor', 'ano'):
-            print 'Provento', checkpoint.divisao, checkpoint.ano, checkpoint.valor
+            print 'Provento', checkpoint.divisao.investidor, checkpoint.divisao, checkpoint.ano, checkpoint.valor
+            
