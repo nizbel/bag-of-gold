@@ -26,7 +26,7 @@
             </p>
         </div>
     </div>
-{% if forloop.counter0|add:"1"|divisibleby:"3" %}
+{% if forloop.counter0|add:"1"|divisibleby:"3" or forloop.last %}
 </div>
 {% endif %}
 </div>
