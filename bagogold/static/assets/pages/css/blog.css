@@ -66,14 +66,13 @@ Blog Page
   padding: 10px 0 0 0; }
 
 .blog-content-1 .blog-post-lg > .blog-post-content .blog-post-tags {
-  text-align: right;
   float: right;
   padding: 0;
-  margin: 3px 0 5px 0; }
+  margin: -3px 0 5px 0; }
   .blog-content-1 .blog-post-lg > .blog-post-content .blog-post-tags > li {
     list-style: none;
     display: inline-block;
-    margin-right: 5px; }
+    margin: 8px 2px; }
     .blog-content-1 .blog-post-lg > .blog-post-content .blog-post-tags > li > a {
       background-color: #e2e2dd;
       color: #3e3a2a;

@@ -281,7 +281,9 @@
                             <div class="c-panel">
                                 <ul class="c-tags c-theme-ul-bg">
                                     {% for tag in post.tags %}
-                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.{{forloop.counter}}s"><a href="{% url 'blog:listar_posts_por_tag' tag.slug %}">{{tag.nome}}</a></li>
+                                    <li class="blog-tag wow animate fadeInDown" data-wow-delay="0.{{forloop.counter}}s">
+                                        <a class="blog-tag" href="{% url 'blog:listar_posts_por_tag' tag.slug %}">{{tag.nome}}</a>
+                                    </li>
                                     {% endfor %}
                                 </ul>                           
                             </div>
