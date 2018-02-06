@@ -210,15 +210,21 @@ def preparar_checkpointfii_evento_delete(sender, instance, **kwargs):
 def gerar_checkpoint_fii(investidor, fii, ano):
     quantidade = calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), fii.ticker)
     preco_medio = calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), fii.ticker)
-    if CheckpointFII.objects.filter(investidor=investidor, fii=fii, ano=ano-1, quantidade__gt=0).exists() or (quantidade > 0 or preco_medio != 0):
+    if CheckpointFII.objects.filter(investidor=investidor, fii=fii, ano=ano-1).exclude(quantidade=0).exists() or quantidade != 0:
         CheckpointFII.objects.update_or_create(investidor=investidor, fii=fii, ano=ano, 
                                            defaults={'quantidade': quantidade, 'preco_medio': preco_medio})
+    else:
+        # Não existe checkpoint anterior e quantidade atual é 0
+        CheckpointFII.objects.filter(investidor=investidor, fii=fii, ano=ano).delete()
     
 def gerar_checkpoint_proventos_fii(investidor, ano):
     valor = calcular_poupanca_prov_fii_ate_dia(investidor, datetime.date(ano, 12, 31))
-    if CheckpointProventosFII.objects.filter(investidor=investidor, ano__lte=ano).exists() or valor > 0:
+    if CheckpointProventosFII.objects.filter(investidor=investidor, ano=ano-1).exclude(valor=0).exists() or valor != 0:
         CheckpointProventosFII.objects.update_or_create(investidor=investidor, ano=ano, 
                                                    defaults={'valor': valor})
+    else:
+        # Não existe checkpoint anterior e valor atual é 0
+        CheckpointProventosFII.objects.filter(investidor=investidor, ano=ano).delete()
     
 def apagar_checkpoint_fii(investidor, fii):
     for checkpoint in CheckpointFII.objects.filter(investidor=investidor, fii=fii).order_by('ano'):
