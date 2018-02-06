@@ -3,12 +3,16 @@ from bagogold.bagogold.models.acoes import OperacaoAcao, ValorDiarioAcao, \
     HistoricoAcao, AcaoProvento, Acao, Provento
 from bagogold.bagogold.models.debentures import HistoricoValorDebenture, \
     OperacaoDebenture
+from bagogold.bagogold.models.divisoes import CheckpointDivisaoFII, \
+    CheckpointDivisaoProventosFII, Divisao
 from bagogold.bagogold.models.fii import OperacaoFII, ValorDiarioFII, \
-    HistoricoFII, FII, ProventoFII
+    HistoricoFII, FII, ProventoFII, CheckpointFII, CheckpointProventosFII
 from bagogold.bagogold.models.investidores import LoginIncorreto
 from bagogold.bagogold.models.lc import OperacaoLetraCredito
 from bagogold.bagogold.models.td import OperacaoTitulo, ValorDiarioTitulo, \
     HistoricoTitulo
+from bagogold.bagogold.signals.divisao_fii import gerar_checkpoint_divisao_fii
+from bagogold.bagogold.signals.fii import gerar_checkpoint_fii
 from bagogold.bagogold.utils.acoes import quantidade_acoes_ate_dia, \
     calcular_poupanca_prov_acao_ate_dia
 from bagogold.bagogold.utils.debenture import calcular_qtd_debentures_ate_dia
@@ -31,6 +35,7 @@ from bagogold.outros_investimentos.utils import \
     calcular_valor_outros_investimentos_ate_data
 from decimal import Decimal
 from django.core.exceptions import PermissionDenied
+from django.db.models.aggregates import Max
 from django.utils import timezone
 from itertools import chain
 from operator import attrgetter
@@ -42,6 +47,31 @@ def is_superuser(user):
         return True
     raise PermissionDenied
 
+def atualizar_checkpoints(investidor):
+    # FII
+    # Verificar se usuário possui operações em FII
+    if OperacaoFII.objects.filter(investidor=investidor).exists():
+        # Pegar últimos anos de checkpoints com quantidade maior que 0
+        lista_fiis_anos = CheckpointFII.objects.filter(investidor=investidor).values('fii').annotate(ultimo_ano=Max('ano')) \
+            .values('fii', 'ultimo_ano', 'quantidade').exclude(quantidade=0)
+        for fii_ano in lista_fiis_anos:
+            ultimo_ano_checkpoint = fii_ano['ultimo_ano']
+            fii = FII.objects.get(id=fii_ano['fii'])
+            # Repete o procedimento para o ano posterior ao último checkpoint, até o ano atual
+            for ano in range(ultimo_ano_checkpoint+1, datetime.date.today().year+1):
+                ano_atual = ano
+                ano_anterior = ano_atual - 1
+                
+                # Verifica se ano anterior não possui quantidade 0 para poder gerar checkpoints do ano atual
+                if CheckpointFII.objects.filter(investidor=investidor, ano=ano_anterior, fii=fii, quantidade__gt=0).exists():
+                    gerar_checkpoint_fii(investidor, fii, ano_atual)
+                for divisao_id in CheckpointDivisaoFII.objects.filter(divisao__investidor=investidor, ano=ano_anterior, 
+                                                                      fii=fii, quantidade__gt=0).values_list('divisao', flat=True):
+                    gerar_checkpoint_divisao_fii(Divisao.objects.get(id=divisao_id), fii, ano_atual)
+                    
+        # Gerar checkpoints de proventos
+        # TODO gerar do ultimo ano de proventos até ano atual
+                
 def buscar_acoes_investidor_na_data(investidor, data=datetime.date.today(), destinacao=''):
     """
     Busca as ações que o investidor possui na da especificada
