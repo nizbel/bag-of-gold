@@ -38,6 +38,8 @@ class CalcularQuantidadesFIITestCase(TestCase):
         fii_4 = FII.objects.create(ticker='BDPO11', empresa=empresa_4)
         empresa_5 = Empresa.objects.create(nome='BE', nome_pregao='FII BE')
         fii_5 = FII.objects.create(ticker='BEPO11', empresa=empresa_5)
+        empresa_6 = Empresa.objects.create(nome='BF', nome_pregao='FII BF')
+        fii_6 = FII.objects.create(ticker='BFPO11', empresa=empresa_6)
         
         # Desdobramento
         OperacaoFII.objects.create(fii=fii_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=43, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
@@ -49,6 +51,10 @@ class CalcularQuantidadesFIITestCase(TestCase):
         
         OperacaoFII.objects.create(fii=fii_4, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 11, 11), quantidade=40, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
         OperacaoFII.objects.create(fii=fii_4, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 11, 12), quantidade=50, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
+        
+        # Operação de venda
+        OperacaoFII.objects.create(fii=fii_6, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=20, preco_unitario=Decimal('90'), corretagem=100, emolumentos=100)
+        OperacaoFII.objects.create(fii=fii_6, investidor=user.investidor, tipo_operacao='V', data=datetime.date(2017, 11, 12), quantidade=20, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
         
         for operacao in OperacaoFII.objects.all():
             DivisaoOperacaoFII.objects.create(divisao=Divisao.objects.get(investidor=user.investidor), operacao=operacao, quantidade=operacao.quantidade)
@@ -89,11 +95,12 @@ class CalcularQuantidadesFIITestCase(TestCase):
         self.assertEqual(calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 5, 12), 'BCPO11'), 37)
         self.assertEqual(calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 5, 12), 'BDPO11'), 271)
         self.assertEqual(calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 5, 12), 'BEPO11'), 50)
+        self.assertEqual(calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 5, 12), 'BFPO11'), 20)
         
     def test_calculo_qtd_fiis(self):
        """Calcula quantidade de FIIs do usuário"""
        self.assertDictEqual(calcular_qtd_fiis_ate_dia(Investidor.objects.get(user__username='test'), datetime.date(2017, 5, 12)), 
-                            {'BAPO11': 43, 'BBPO11': 430, 'BCPO11': 37, 'BDPO11': 271, 'BEPO11': 50}) 
+                            {'BAPO11': 43, 'BBPO11': 430, 'BCPO11': 37, 'BDPO11': 271, 'BEPO11': 50, 'BFPO11': 20}) 
        self.assertDictEqual(calcular_qtd_fiis_ate_dia(Investidor.objects.get(user__username='test'), datetime.date(2017, 11, 13)),
                             {'BAPO11': 430, 'BBPO11': 43, 'BDPO11': 707, 'BEPO11': 500})
     
@@ -122,7 +129,7 @@ class CalcularQuantidadesFIITestCase(TestCase):
         """Testa se a quantidade de cotas por divisão está correta antes dos eventos"""
         investidor = Investidor.objects.get(user__username='test')
         self.assertDictEqual(calcular_qtd_fiis_ate_dia_por_divisao(datetime.date(2017, 5, 12), Divisao.objects.get(nome='Geral').id), 
-                             {'BAPO11': 43, 'BBPO11': 430, 'BCPO11': 37, 'BDPO11': 271})
+                             {'BAPO11': 43, 'BBPO11': 430, 'BCPO11': 37, 'BDPO11': 271, 'BFPO11': 20})
         self.assertDictEqual(calcular_qtd_fiis_ate_dia_por_divisao(datetime.date(2017, 5, 12), Divisao.objects.get(nome=u'Divisão de teste').id), 
                              {'BEPO11': 50})
         
@@ -459,12 +466,12 @@ class PerformanceCheckpointFIITestCase(TestCase):
 #         fim = datetime.datetime.now()
 # #         print '\nExcluir operação:', fim - inicio
 
-class QtdDivisaoFIITestCase(TestCase):
-    def setUp(self):
-        # TODO INSERIR DADOS DA PROD 
-        
-    def test_verificar_qtd_por_divisao(self):
-        """Verificar se a quantidade retornada para a divisão é a esperada para o dia DIA"""
-        # Esperado {ESPERADO}
-        pass
+# class QtdDivisaoFIITestCase(TestCase):
+#     def setUp(self):
+#         # TODO INSERIR DADOS DA PROD 
+#         
+#     def test_verificar_qtd_por_divisao(self):
+#         """Verificar se a quantidade retornada para a divisão é a esperada para o dia DIA"""
+#         # Esperado {ESPERADO}
+#         pass
         
