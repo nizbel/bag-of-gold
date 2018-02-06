@@ -60,6 +60,7 @@ $(document).ready(function() {
  		prefix: 'R$'
  	});
  	$('.date-picker').datepicker({
+ 	   todayHighlight: true,
  	   language: 'pt-BR'
  	}).on('changeDate', function(e) {
  		verificarVendasPossiveis($(this).find('input').val());
