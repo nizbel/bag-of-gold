@@ -214,8 +214,8 @@ Blog Page
     margin: 0 0 35px 0; }
     .blog-content-2 .blog-single-content > .blog-single-img > img {
       width: 100%; }
-  .blog-content-2 .blog-single-content > .blog-single-desc > p {
-    margin: 0 0 35px 0;
+  .blog-content-2 .blog-single-content > .blog-single-desc > p,
+  .blog-content-2 .blog-single-content > .blog-single-desc > ul > li {
     font-size: 16px;
     color: #7e8691;
     line-height: 24px; }
