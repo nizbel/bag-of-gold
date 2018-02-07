@@ -116,9 +116,13 @@ def calcular_valor_cdb_rdb_ate_dia_por_divisao(dia, divisao_id):
     operacoes_cdb_rdb = { k: compras_cdb_rdb.get(k, 0) - vendas_cdb_rdb.get(k, 0) for k in set(compras_cdb_rdb) | set(vendas_cdb_rdb) \
                if compras_cdb_rdb.get(k, 0) - vendas_cdb_rdb.get(k, 0) > 0}
       
+    # Verificar se não há mais operações vigentes na divisão
+    if len(operacoes_cdb_rdb.keys()) == 0:
+        return {}
+    
     # Buscar operações presentes
     operacoes = OperacaoCDB_RDB.objects.filter(id__in=operacoes_cdb_rdb.keys()).order_by('data')
-      
+    
     # Calcular o valor atualizado do patrimonio
     historico = HistoricoTaxaDI.objects.filter(data__range=[operacoes[0].data, dia])
       
