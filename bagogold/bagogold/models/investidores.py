@@ -1,9 +1,19 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.models.acoes import OperacaoAcao
+from bagogold.bagogold.models.debentures import OperacaoDebenture
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoPrincipal
+from bagogold.bagogold.models.fii import OperacaoFII
+from bagogold.bagogold.models.lc import OperacaoLetraCredito
+from bagogold.bagogold.models.td import OperacaoTitulo
+from bagogold.cdb_rdb.models import OperacaoCDB_RDB
+from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA
+from bagogold.criptomoeda.models import OperacaoCriptomoeda
+from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from bagogold.outros_investimentos.models import Investimento
  
 class Investidor (models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -36,10 +46,12 @@ class Investidor (models.Model):
             datas_primeira_operacao.append(OperacaoDebenture.objects.filter(investidor=self).order_by('data')[0].data)
         if OperacaoFundoInvestimento.objects.filter(investidor=self).exists():
             datas_primeira_operacao.append(OperacaoFundoInvestimento.objects.filter(investidor=self).order_by('data')[0].data)
-        if OperacaoCRI_CRA.objects.filter(investidor=self).exists():
-            datas_primeira_operacao.append(OperacaoCRI_CRA.objects.filter(investidor=self).order_by('data')[0].data)
+        if OperacaoCRI_CRA.objects.filter(cri_cra__investidor=self).exists():
+            datas_primeira_operacao.append(OperacaoCRI_CRA.objects.filter(cri_cra__investidor=self).order_by('data')[0].data)
         if OperacaoTitulo.objects.filter(investidor=self).exists():
             datas_primeira_operacao.append(OperacaoTitulo.objects.filter(investidor=self).order_by('data')[0].data)
+        if Investimento.objects.filter(investidor=self).exists():
+            datas_primeira_operacao.append(Investimento.objects.filter(investidor=self).order_by('data')[0].data)
         
         return min(datas_primeira_operacao)
     

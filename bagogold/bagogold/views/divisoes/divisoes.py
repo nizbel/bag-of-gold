@@ -527,13 +527,13 @@ def listar_divisoes(request):
             divisao.quantidade_percentual = divisao.valor_atual / divisao.valor_objetivo * 100
             if divisao.valor_atual < divisao.valor_objetivo:
                 # Calcula o tempo restante com base na primeira operação da divisão
-                divisao.tempo_restante = (datetime.date.today() - investidor.buscar_primeira_operacao().data)
+                divisao.tempo_restante = (datetime.date.today() - divisao.buscar_data_primeira_operacao()).days
                 divisao.tempo_restante = divisao.tempo_restante / (divisao.valor_atual / divisao.valor_objetivo) - divisao.tempo_restante
             else:
                 divisao.tempo_restante = None
-        else:
-            divisao.quantidade_percentual = 100
-            divisao.tempo_restante = None
+#         else:
+#             divisao.quantidade_percentual = 100
+#             divisao.tempo_restante = None
             
         # Calcular saldo da divisão
         divisao.saldo_bh = divisao.saldo_acoes_bh()

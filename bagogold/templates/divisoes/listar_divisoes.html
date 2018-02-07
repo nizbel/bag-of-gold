@@ -30,7 +30,8 @@
 							<th>Divisão</th>
 							<th>Objetivo</th>
 							<th>Valor atual</th>
-<!--                             <th>Dias restantes</th> -->
+                            <th>Progresso</th>
+                            <th>Tempo estimado*</th>
 							<th>Saldo</th>
 						</tr>
 					</thead>
@@ -38,16 +39,30 @@
 					{% for divisao in divisoes %}
 					<tr>
 						<td><a href="{% url 'divisoes:detalhar_divisao' divisao.id %}">{{divisao.nome}}</a></td>
-						<td>R${{divisao.valor_objetivo}}</td>
-						<td>R${{divisao.valor_atual|floatformat:"2"}} ({{divisao.quantidade_percentual|floatformat:"2"}}%)</td>
-<!--                         <td>{{divisao.tempo_restante|floatformat:'1'|default:'0'}} dia(s)</td> -->
+						<td>{% if not divisao.objetivo_indefinido %}R$ {% endif %}{{divisao.valor_objetivo|default:'Indefinido'}}</td>
+						<td>R$ {{divisao.valor_atual|floatformat:"2"}}</td>
+                        <td>
+                            <div class="row">
+                                <span class="col-md-4">{% if not divisao.objetivo_indefinido %}{{divisao.quantidade_percentual|floatformat:"2"}}%{% endif %}</span>
+                                {% if not divisao.objetivo_indefinido %}
+                                <div class="col-md-8">
+                                    <div class="progress progress-striped active" style="background: rgba(68, 77, 88, 1); height: 10px; width: 100%; margin-bottom: 0px; margin-top: 5px;">
+                                        <div id="progresso_{{divisao.id}}"class="progress-bar" role="progressbar" aria-valuenow="{{divisao.quantidade_percentual|stringformat:'s'}}" 
+                                        aria-valuemin="0" aria-valuemax="100" style="width: 0%; background-color: {% if divisao.quantidade_percentual >= 100 %}#f3c200{% else %}#cc8718{% endif %};">
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>{% if divisao.tempo_restante %}{{divisao.tempo_restante|floatformat:'0'}} dia{{divisao.tempo_restante|pluralize}}{% endif %}</td>
 						<td><span class="
 							{% if divisao.saldo < 0 %}
 							font-red-thunderbird
 							{% else %}
 							font-blue
 							{% endif %}
-							">R${{divisao.saldo|floatformat:"2"}}</span></td>
+							">R$ {{divisao.saldo|floatformat:"2"}}</span></td>
 					</tr>
 					{% endfor %}
 					</tbody>
@@ -77,7 +92,7 @@
                             <th>CRI/CRA</th>
                             <th>Cripto.</th>
                             <th>Debêntures</th>
-                            <th>Letra de Créd.</th>
+                            <th>LCI/LCA</th>
                             <th>FII</th>
                             <th>Fundo Inv.</th>
                             <th>Tes. Direto</th>
@@ -94,77 +109,77 @@
 							{% else %}
 							font-blue
 							{% endif %}
-							">R${{divisao.valor_atual_bh|floatformat:"2"}}</span></td>
+							">R$ {{divisao.valor_atual_bh|floatformat:"2"}}</span></td>
 						<td><span class="
 							{% if divisao.valor_atual_trade < 0 %}
 							font-red-thunderbird
 							{% else %}
 							font-blue
 							{% endif %}
-							">R${{divisao.valor_atual_trade|floatformat:"2"}}</span></td>
+							">R$ {{divisao.valor_atual_trade|floatformat:"2"}}</span></td>
 						<td><span class="
 							{% if divisao.valor_atual_cdb_rdb < 0 %}
 							font-red-thunderbird
 							{% else %}
 							font-blue
 							{% endif %}
-							">R${{divisao.valor_atual_cdb_rdb|floatformat:"2"}}</span></td>
+							">R$ {{divisao.valor_atual_cdb_rdb|floatformat:"2"}}</span></td>
                         <td><span class="
                             {% if divisao.valor_atual_cri_cra < 0 %}
                             font-red-thunderbird
                             {% else %}
                             font-blue
                             {% endif %}
-                            ">R${{divisao.valor_atual_cri_cra|floatformat:"2"}}</span></td>
+                            ">R$ {{divisao.valor_atual_cri_cra|floatformat:"2"}}</span></td>
                         <td><span class="
                             {% if divisao.valor_atual_criptomoeda < 0 %}
                             font-red-thunderbird
                             {% else %}
                             font-blue
                             {% endif %}
-                            ">R${{divisao.valor_atual_criptomoeda|floatformat:"2"}}</span></td>
+                            ">R$ {{divisao.valor_atual_criptomoeda|floatformat:"2"}}</span></td>
                         <td><span class="
                             {% if divisao.valor_atual_debentures < 0 %}
                             font-red-thunderbird
                             {% else %}
                             font-blue
                             {% endif %}
-                            ">R${{divisao.valor_atual_debentures|floatformat:"2"}}</span></td>
+                            ">R$ {{divisao.valor_atual_debentures|floatformat:"2"}}</span></td>
 						<td><span class="
 							{% if divisao.valor_atual_lc < 0 %}
 							font-red-thunderbird
 							{% else %}
 							font-blue
 							{% endif %}
-							">R${{divisao.valor_atual_lc|floatformat:"2"}}</span></td>
+							">R$ {{divisao.valor_atual_lc|floatformat:"2"}}</span></td>
 						<td><span class="
 							{% if divisao.valor_atual_fii < 0 %}
 							font-red-thunderbird
 							{% else %}
 							font-blue
 							{% endif %}
-							">R${{divisao.valor_atual_fii|floatformat:"2"}}</span></td>
+							">R$ {{divisao.valor_atual_fii|floatformat:"2"}}</span></td>
 						<td><span class="
 							{% if divisao.valor_atual_fundo_investimento < 0 %}
 							font-red-thunderbird
 							{% else %}
 							font-blue
 							{% endif %}
-							">R${{divisao.valor_atual_fundo_investimento|floatformat:"2"}}</span></td>
+							">R$ {{divisao.valor_atual_fundo_investimento|floatformat:"2"}}</span></td>
 						<td><span class="
 							{% if divisao.valor_atual_td < 0 %}
 							font-red-thunderbird
 							{% else %}
 							font-blue
 							{% endif %}
-							">R${{divisao.valor_atual_td|floatformat:"2"}}</span></td>
+							">R$ {{divisao.valor_atual_td|floatformat:"2"}}</span></td>
                         <td><span class="
                             {% if divisao.valor_atual_outros_invest < 0 %}
                             font-red-thunderbird
                             {% else %}
                             font-blue
                             {% endif %}
-                            ">R${{divisao.valor_atual_outros_invest|floatformat:"2"}}</span></td>
+                            ">R$ {{divisao.valor_atual_outros_invest|floatformat:"2"}}</span></td>
 					</tr>
 					{% endfor %}
 					</tbody>
@@ -194,7 +209,7 @@
                             <th>CRI/CRA</th>
                             <th>Cripto.</th>
                             <th>Debêntures</th>
-							<th>Letra de Créd.</th>
+							<th>LCI/LCA</th>
 							<th>FII</th>
 							<th>Fundo Inv.</th>
 							<th>Tes. Direto</th>
@@ -211,77 +226,77 @@
 							{% else %}
 							font-blue
 							{% endif %}
-							">R${{divisao.saldo_bh|floatformat:"2"}}</span></td>
+							">R$ {{divisao.saldo_bh|floatformat:"2"}}</span></td>
 						<td><span class="
 							{% if divisao.saldo_trade < 0 %}
 							font-red-thunderbird
 							{% else %}
 							font-blue
 							{% endif %}
-							">R${{divisao.saldo_trade|floatformat:"2"}}</span></td>
+							">R$ {{divisao.saldo_trade|floatformat:"2"}}</span></td>
 						<td><span class="
 							{% if divisao.saldo_cdb_rdb < 0 %}
 							font-red-thunderbird
 							{% else %}
 							font-blue
 							{% endif %}
-							">R${{divisao.saldo_cdb_rdb|floatformat:"2"}}</span></td>
+							">R$ {{divisao.saldo_cdb_rdb|floatformat:"2"}}</span></td>
                         <td><span class="
                             {% if divisao.saldo_cri_cra < 0 %}
                             font-red-thunderbird
                             {% else %}
                             font-blue
                             {% endif %}
-                            ">R${{divisao.saldo_cri_cra|floatformat:"2"}}</span></td>
+                            ">R$ {{divisao.saldo_cri_cra|floatformat:"2"}}</span></td>
                         <td><span class="
                             {% if divisao.saldo_criptomoeda < 0 %}
                             font-red-thunderbird
                             {% else %}
                             font-blue
                             {% endif %}
-                            ">R${{divisao.saldo_criptomoeda|floatformat:"2"}}</span></td>
+                            ">R$ {{divisao.saldo_criptomoeda|floatformat:"2"}}</span></td>
                         <td><span class="
                             {% if divisao.saldo_debentures < 0 %}
                             font-red-thunderbird
                             {% else %}
                             font-blue
                             {% endif %}
-                            ">R${{divisao.saldo_debentures|floatformat:"2"}}</span></td>
+                            ">R$ {{divisao.saldo_debentures|floatformat:"2"}}</span></td>
 						<td><span class="
 							{% if divisao.saldo_lc < 0 %}
 							font-red-thunderbird
 							{% else %}
 							font-blue
 							{% endif %}
-							">R${{divisao.saldo_lc|floatformat:"2"}}</span></td>
+							">R$ {{divisao.saldo_lc|floatformat:"2"}}</span></td>
 						<td><span class="
 							{% if divisao.saldo_fii < 0 %}
 							font-red-thunderbird
 							{% else %}
 							font-blue
 							{% endif %}
-							">R${{divisao.saldo_fii|floatformat:"2"}}</span></td>
+							">R$ {{divisao.saldo_fii|floatformat:"2"}}</span></td>
 						<td><span class="
 							{% if divisao.saldo_fundo_investimento < 0 %}
 							font-red-thunderbird
 							{% else %}
 							font-blue
 							{% endif %}
-							">R${{divisao.saldo_fundo_investimento|floatformat:"2"}}</span></td>
+							">R$ {{divisao.saldo_fundo_investimento|floatformat:"2"}}</span></td>
 						<td><span class="
 							{% if divisao.saldo_td < 0 %}
 							font-red-thunderbird
 							{% else %}
 							font-blue
 							{% endif %}
-							">R${{divisao.saldo_td|floatformat:"2"}}</span></td>
+							">R$ {{divisao.saldo_td|floatformat:"2"}}</span></td>
                         <td><span class="
                             {% if divisao.saldo_outros_invest < 0 %}
                             font-red-thunderbird
                             {% else %}
                             font-blue
                             {% endif %}
-                            ">R${{divisao.saldo_outros_invest|floatformat:"2"}}</span></td>
+                            ">R$ {{divisao.saldo_outros_invest|floatformat:"2"}}</span></td>
 					</tr>
 					{% endfor %}
 					</tbody>
@@ -300,4 +315,27 @@
 <script src={% static "assets/global/plugins/datatables/datatables.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.js" %} type="text/javascript"></script>
 <script src={% static "assets/pages/scripts/table-datatables-fixedheader.min.js" %} type="text/javascript"></script>
+<script type="text/javascript">
+function fill(elem) {
+  var lastFrame = +new Date;
+  var width = 0;
+  var limit = elem.attr('aria-valuenow');
+  var timer = setInterval(frame, 16);
+  function frame() {
+	var now = +new Date;
+	var deltaT = now - lastFrame;
+    elem.css('width', ( width += (limit / 200) * deltaT / 16 ) + '%'); 
+    lastFrame = now;
+    if (width >= limit) {
+      elem.css('width', limit + '%'); 
+      clearInterval(timer);
+    }
+  }
+}
+$(document).ready(function() {
+	$('.progress-bar').each(function() {
+		fill($(this));
+	});
+});
+</script>
 {% endblock %}

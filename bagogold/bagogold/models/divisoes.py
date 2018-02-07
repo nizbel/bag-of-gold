@@ -24,10 +24,39 @@ class Divisao (models.Model):
         return self.investidor.divisaoprincipal.divisao.id == self.id
 
     def possui_operacoes_registradas(self):
-        possui_operacoes = (DivisaoOperacaoAcao.objects.filter(divisao=self).count() + DivisaoOperacaoCDB_RDB.objects.filter(divisao=self).count() + DivisaoOperacaoFII.objects.filter(divisao=self).count() + \
-            DivisaoOperacaoFundoInvestimento.objects.filter(divisao=self).count() + DivisaoOperacaoLC.objects.filter(divisao=self).count() + DivisaoOperacaoTD.objects.filter(divisao=self).count()) > 0
+        possui_operacoes = (DivisaoOperacaoAcao.objects.filter(divisao=self).count() + DivisaoOperacaoCDB_RDB.objects.filter(divisao=self).count() + DivisaoOperacaoFII.objects.filter(divisao=self).count() \
+            + DivisaoOperacaoFundoInvestimento.objects.filter(divisao=self).count() + DivisaoOperacaoLC.objects.filter(divisao=self).count() + DivisaoOperacaoTD.objects.filter(divisao=self).count() \
+            + DivisaoOperacaoCriptomoeda.objects.filter(divisao=self).count() + DivisaoOperacaoDebenture.objects.filter(divisao=self).count() + DivisaoOperacaoCRI_CRA.objects.filter(divisao=self).count() \
+            + DivisaoInvestimento.objects.filter(divisao=self).count()) > 0
         
         return possui_operacoes
+    
+    def buscar_data_primeira_operacao(self):
+        datas_primeira_operacao = list()
+        
+        # Preencher com as primeiras datas de operação para cada investimento
+        if DivisaoOperacaoAcao.objects.filter(divisao=self).exists():
+            datas_primeira_operacao.append(DivisaoOperacaoAcao.objects.filter(divisao=self).order_by('operacao__data')[0].operacao.data)
+        if DivisaoOperacaoCDB_RDB.objects.filter(divisao=self).exists():
+            datas_primeira_operacao.append(DivisaoOperacaoCDB_RDB.objects.filter(divisao=self).order_by('operacao__data')[0].operacao.data)
+        if DivisaoOperacaoCriptomoeda.objects.filter(divisao=self).exists():
+            datas_primeira_operacao.append(DivisaoOperacaoCriptomoeda.objects.filter(divisao=self).order_by('operacao__data')[0].operacao.data)
+        if DivisaoOperacaoFII.objects.filter(divisao=self).exists():
+            datas_primeira_operacao.append(DivisaoOperacaoFII.objects.filter(divisao=self).order_by('operacao__data')[0].operacao.data)
+        if DivisaoOperacaoLC.objects.filter(divisao=self).exists():
+            datas_primeira_operacao.append(DivisaoOperacaoLC.objects.filter(divisao=self).order_by('operacao__data')[0].operacao.data)
+        if DivisaoOperacaoDebenture.objects.filter(divisao=self).exists():
+            datas_primeira_operacao.append(DivisaoOperacaoDebenture.objects.filter(divisao=self).order_by('operacao__data')[0].operacao.data)
+        if DivisaoOperacaoFundoInvestimento.objects.filter(divisao=self).exists():
+            datas_primeira_operacao.append(DivisaoOperacaoFundoInvestimento.objects.filter(divisao=self).order_by('operacao__data')[0].operacao.data)
+        if DivisaoOperacaoCRI_CRA.objects.filter(divisao=self).exists():
+            datas_primeira_operacao.append(DivisaoOperacaoCRI_CRA.objects.filter(divisao=self).order_by('operacao__data')[0].operacao.data)
+        if DivisaoOperacaoTD.objects.filter(divisao=self).exists():
+            datas_primeira_operacao.append(DivisaoOperacaoTD.objects.filter(divisao=self).order_by('operacao__data')[0].operacao.data)
+        if DivisaoInvestimento.objects.filter(divisao=self).exists():
+            datas_primeira_operacao.append(DivisaoInvestimento.objects.filter(divisao=self).order_by('investimento__data')[0].investimento.data)
+        
+        return min(datas_primeira_operacao)
     
     def saldo_acoes_bh(self, data=datetime.date.today()):
         from bagogold.bagogold.utils.acoes import \
