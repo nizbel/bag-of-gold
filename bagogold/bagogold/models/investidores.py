@@ -18,6 +18,30 @@ class Investidor (models.Model):
     def __unicode__(self):
         return self.user.username
     
+    def buscar_data_primeira_operacao(self):
+        datas_primeira_operacao = list()
+        
+        # Preencher com as primeiras datas de operação para cada investimento
+        if OperacaoAcao.objects.filter(investidor=self).exists():
+            datas_primeira_operacao.append(OperacaoAcao.objects.filter(investidor=self).order_by('data')[0].data)
+        if OperacaoCDB_RDB.objects.filter(investidor=self).exists():
+            datas_primeira_operacao.append(OperacaoCDB_RDB.objects.filter(investidor=self).order_by('data')[0].data)
+        if OperacaoCriptomoeda.objects.filter(investidor=self).exists():
+            datas_primeira_operacao.append(OperacaoCriptomoeda.objects.filter(investidor=self).order_by('data')[0].data)
+        if OperacaoFII.objects.filter(investidor=self).exists():
+            datas_primeira_operacao.append(OperacaoFII.objects.filter(investidor=self).order_by('data')[0].data)
+        if OperacaoLetraCredito.objects.filter(investidor=self).exists():
+            datas_primeira_operacao.append(OperacaoLetraCredito.objects.filter(investidor=self).order_by('data')[0].data)
+        if OperacaoDebenture.objects.filter(investidor=self).exists():
+            datas_primeira_operacao.append(OperacaoDebenture.objects.filter(investidor=self).order_by('data')[0].data)
+        if OperacaoFundoInvestimento.objects.filter(investidor=self).exists():
+            datas_primeira_operacao.append(OperacaoFundoInvestimento.objects.filter(investidor=self).order_by('data')[0].data)
+        if OperacaoCRI_CRA.objects.filter(investidor=self).exists():
+            datas_primeira_operacao.append(OperacaoCRI_CRA.objects.filter(investidor=self).order_by('data')[0].data)
+        if OperacaoTitulo.objects.filter(investidor=self).exists():
+            datas_primeira_operacao.append(OperacaoTitulo.objects.filter(investidor=self).order_by('data')[0].data)
+        
+        return min(datas_primeira_operacao)
     
 @receiver(post_save, sender=User, dispatch_uid="usuario_criado")
 def create_investidor(sender, instance, created, **kwargs):
