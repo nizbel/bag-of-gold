@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFundoInvestimento
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
-    HistoricoValorCotas
+    HistoricoValorCotas, FundoInvestimento
 from django.db.models.aggregates import Sum
 from django.db.models.expressions import F, Case, When
 from django.db.models.fields import DecimalField
+from django.utils.text import slugify
 import datetime
+import re
 
 def calcular_qtd_cotas_ate_dia(investidor, dia=datetime.date.today()):
     """ 
@@ -99,3 +101,34 @@ def calcular_valor_fundos_investimento_ate_dia(investidor, dia=datetime.date.tod
             valor_cota = OperacaoFundoInvestimento.objects.filter(fundo_investimento__id=fundo_id, investidor=investidor, data__lte=dia).order_by('-data')[0].valor_cota()
         valor_fundos[fundo_id] = valor_cota * fundos[fundo_id]
     return valor_fundos
+
+def criar_slug_fundo_investimento_valido(fundo_nome):
+    """
+    Gera um slug válido para um fundo de investimento a partir de seu nome
+    Parâmetros: Nome do fundo de investimento
+    Retorno: Slug válido
+    """
+#     fundo_nome = fundo_nome.replace('+', 'mais')
+    slug = slugify(fundo_nome)
+    slug = slug.replace('-de-', '-').replace('-no-', '-').replace('-em-', '-')
+    slug = re.sub('-$', '', re.sub('^-', '', re.sub('-+', '-', re.sub('(fi-|fundos|fundo|fdo|investimentos|investimento|invest|inv)', '', slug))))
+    # Verifica se já existe o slug de Fundo de Investimento criado
+    while FundoInvestimento.objects.filter(slug=slug).exists():
+        # Adicionar numeral ao final do slug, mantendo o limite de 30 caracteres
+#         print 'colisao', slug
+#         print fundo_nome
+#         print list(FundoInvestimento.objects.filter(slug=slug))
+        # Buscar último fundo com esse nome
+        ultimo_fundo_mesmo_nome = FundoInvestimento.objects.filter(slug=slug).order_by('-data_constituicao')[0]
+        slug_ultimo_fundo = ultimo_fundo_mesmo_nome.slug
+        final_slug = slug_ultimo_fundo[slug_ultimo_fundo.rfind('-')+1:]
+        # Número do slug
+        numero_slug = 1 if not final_slug.isdigit() else int(final_slug)+1
+        
+        # Criar slug temporário para verificar tamanho
+        slug_temp = u'%s-%s' % (slug, numero_slug)
+        while len(slug_temp) > 100:
+            slug = slug[:-1]
+            slug_temp = u'%s-%s' % (slug, numero_slug)
+        slug = slug_temp
+    return slug
