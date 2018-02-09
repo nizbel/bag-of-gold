@@ -324,11 +324,11 @@ if (!window.requestAnimationFrame) {
 function fill() {
   var start = null;
   function timer(timestamp) {
-	if (!start) start = timestamp;
-	var progress = (timestamp - start);
+	if (!start) start = timestamp + 50;
+	var progress = Math.max(timestamp - start, 0);
 	elem = $('.progress-bar:not(.progress-done)').first();
 	var limit = Math.min(100, parseFloat(elem.attr('aria-valuenow'))); 
-    elem.css('width', progress*limit/15 + '%'); 
+    elem.css('width', progress*limit/5 + '%'); 
     if (parseFloat(elem.css('width')) >= limit) {
       elem.css('width', limit + '%').addClass('progress-done');
       start = null;
