@@ -76,9 +76,10 @@ class FundoInvestimento (models.Model):
     Última data de documento de cadastro que conteve registro do fundo
     """
     ultimo_registro = models.DateField(u'Último registro')
+    slug = models.SlugField(u'Slug', max_length=100)
     
     class Meta:
-        unique_together=('cnpj',)
+        unique_together=(('cnpj',), ('slug',))
     
     def __unicode__(self):
         return self.nome
