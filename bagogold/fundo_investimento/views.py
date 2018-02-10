@@ -33,9 +33,15 @@ import json
 import re
 import traceback
 
+# Mantendo versão anterior com redirecionamento
 @adiciona_titulo_descricao('Detalhar fundo de investimento', 'Traz características do fundo, posição do investidor e histórico de cotações')
-def detalhar_fundo(request, id_fundo):
+def detalhar_fundo_id(request, id_fundo):
     fundo = get_object_or_404(FundoInvestimento, id=id_fundo)
+    return HttpResponseRedirect(reverse('fundo_investimento:detalhar_fundo'), kwargs={'slug_fundo': fundo.slug})
+
+@adiciona_titulo_descricao('Detalhar fundo de investimento', 'Traz características do fundo, posição do investidor e histórico de cotações')
+def detalhar_fundo(request, slug_fundo):
+    fundo = get_object_or_404(FundoInvestimento, slug=slug_fundo)
     
     # Preparar o valor mais atual de rendimento
     if HistoricoValorCotas.objects.filter(fundo_investimento=fundo).exists():
