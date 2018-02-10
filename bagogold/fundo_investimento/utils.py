@@ -108,20 +108,17 @@ def criar_slug_fundo_investimento_valido(fundo_nome):
     Parâmetros: Nome do fundo de investimento
     Retorno: Slug válido
     """
-#     fundo_nome = fundo_nome.replace('+', 'mais')
     slug = slugify(fundo_nome.replace('.', '-'))
-#     slug = slug.replace('-de-', '-').replace('-no-', '-').replace('-em-', '-')
+
     for string in ['de', 'no', 'em', 'com', 'da[s]?', 'do[s]?', 'na[s]?', 'sem', 'fi[i]?', 'fundo[s]?', 'fdo[s]?', 'investimento[s]?', 'invest', 'inv']:
         slug = re.sub('-%s(?=-)' % (string), '-', re.sub('(^%s-|-%s$)' % (string, string), '', slug))
     slug = re.sub('-$', '', re.sub('^-', '', re.sub('-+', '-', slug)))
+    
     final = 0
     slug_temp = slug
     # Verifica se já existe o slug de Fundo de Investimento criado
     while FundoInvestimento.objects.filter(slug=slug_temp).exists():
-        # Adicionar numeral ao final do slug, mantendo o limite de 30 caracteres
-#         print 'colisao', slug
-#         print fundo_nome
-#         print list(FundoInvestimento.objects.filter(slug=slug))
+        # Adicionar numeral ao final do slug, mantendo o limite de 100 caracteres
         final += 1
         slug_temp = '%s-%s' % (slug, final)
         if slug_temp > 100:
