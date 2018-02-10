@@ -12,8 +12,7 @@ from bagogold.fundo_investimento.forms import OperacaoFundoInvestimentoForm
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
     HistoricoValorCotas, FundoInvestimento
 from bagogold.fundo_investimento.utils import \
-    calcular_qtd_cotas_ate_dia_por_fundo, \
-    calcular_valor_fundos_investimento_ate_dia
+    calcular_qtd_cotas_ate_dia_por_fundo, calcular_valor_fundos_investimento_ate_dia
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -23,7 +22,8 @@ from django.core.paginator import Paginator
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.forms.models import inlineformset_factory
-from django.http.response import HttpResponseRedirect, HttpResponse
+from django.http.response import HttpResponseRedirect, HttpResponse, \
+    HttpResponsePermanentRedirect
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
@@ -37,7 +37,7 @@ import traceback
 @adiciona_titulo_descricao('Detalhar fundo de investimento', 'Traz características do fundo, posição do investidor e histórico de cotações')
 def detalhar_fundo_id(request, id_fundo):
     fundo = get_object_or_404(FundoInvestimento, id=id_fundo)
-    return HttpResponseRedirect(reverse('fundo_investimento:detalhar_fundo'), kwargs={'slug_fundo': fundo.slug})
+    return HttpResponsePermanentRedirect(reverse('fundo_investimento:detalhar_fundo', kwargs={'slug_fundo': fundo.slug}))
 
 @adiciona_titulo_descricao('Detalhar fundo de investimento', 'Traz características do fundo, posição do investidor e histórico de cotações')
 def detalhar_fundo(request, slug_fundo):
@@ -76,7 +76,7 @@ def detalhar_fundo(request, slug_fundo):
         
         # TODO Considerar vendas parciais de titulos
         dados['total_operacoes'] = OperacaoFundoInvestimento.objects.filter(fundo_investimento=fundo, investidor=investidor).count()
-        dados['qtd_cotas_atual'] = calcular_qtd_cotas_ate_dia_por_fundo(investidor, id_fundo)
+        dados['qtd_cotas_atual'] = calcular_qtd_cotas_ate_dia_por_fundo(investidor, fundo.id)
         dados['total_atual'] = dados['qtd_cotas_atual'] * fundo.valor_cota if fundo.valor_cota else Decimal(0)
 #         preco_medio = (OperacaoFundoInvestimento.objects.filter(fundo_investimento=fundo, investidor=investidor, tipo_operacao='C').annotate(valor_investido=F('quantidade') * F('preco_unitario')) \
 #             .aggregate(total_investido=Sum('valor_investido'))['total_investido'] or Decimal(0)) / (OperacaoTitulo.objects.filter(titulo=titulo, investidor=investidor, tipo_operacao='C') \
