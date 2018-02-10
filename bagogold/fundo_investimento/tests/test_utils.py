@@ -20,7 +20,7 @@ class TestSlugTest(TestCase):
                 nome = line[line.find('"')+1 : line.rfind('"')]
                 cnpj = str(cnt).rjust(10, '0')
                 slug = criar_slug_fundo_investimento_valido(nome)
-                print slug, nome
+#                 print slug, nome
                 FundoInvestimento.objects.create(nome=nome, cnpj=cnpj, administrador=administrador, data_constituicao=datetime.date(2018, 2, 9),
                                                  situacao=FundoInvestimento.SITUACAO_FUNCIONAMENTO_NORMAL, tipo_prazo=FundoInvestimento.PRAZO_LONGO,
                                                  classe=FundoInvestimento.CLASSE_FUNDO_ACOES, exclusivo_qualificados=False, 

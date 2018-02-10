@@ -109,26 +109,23 @@ def criar_slug_fundo_investimento_valido(fundo_nome):
     Retorno: Slug válido
     """
 #     fundo_nome = fundo_nome.replace('+', 'mais')
-    slug = slugify(fundo_nome)
-    slug = slug.replace('-de-', '-').replace('-no-', '-').replace('-em-', '-')
-    slug = re.sub('-$', '', re.sub('^-', '', re.sub('-+', '-', re.sub('(fi-|fundos|fundo|fdo|investimentos|investimento|invest|inv)', '', slug))))
+    slug = slugify(fundo_nome.replace('.', '-'))
+#     slug = slug.replace('-de-', '-').replace('-no-', '-').replace('-em-', '-')
+    for string in ['de', 'no', 'em', 'com', 'da[s]?', 'do[s]?', 'na[s]?', 'sem', 'fi[i]?', 'fundo[s]?', 'fdo[s]?', 'investimento[s]?', 'invest', 'inv']:
+        slug = re.sub('-%s(?=-)' % (string), '-', re.sub('(^%s-|-%s$)' % (string, string), '', slug))
+    slug = re.sub('-$', '', re.sub('^-', '', re.sub('-+', '-', slug)))
+    final = 0
+    slug_temp = slug
     # Verifica se já existe o slug de Fundo de Investimento criado
-    while FundoInvestimento.objects.filter(slug=slug).exists():
+    while FundoInvestimento.objects.filter(slug=slug_temp).exists():
         # Adicionar numeral ao final do slug, mantendo o limite de 30 caracteres
 #         print 'colisao', slug
 #         print fundo_nome
 #         print list(FundoInvestimento.objects.filter(slug=slug))
-        # Buscar último fundo com esse nome
-        ultimo_fundo_mesmo_nome = FundoInvestimento.objects.filter(slug=slug).order_by('-data_constituicao')[0]
-        slug_ultimo_fundo = ultimo_fundo_mesmo_nome.slug
-        final_slug = slug_ultimo_fundo[slug_ultimo_fundo.rfind('-')+1:]
-        # Número do slug
-        numero_slug = 1 if not final_slug.isdigit() else int(final_slug)+1
-        
-        # Criar slug temporário para verificar tamanho
-        slug_temp = u'%s-%s' % (slug, numero_slug)
-        while len(slug_temp) > 100:
-            slug = slug[:-1]
-            slug_temp = u'%s-%s' % (slug, numero_slug)
-        slug = slug_temp
+        final += 1
+        slug_temp = '%s-%s' % (slug, final)
+        if slug_temp > 100:
+            string_final = str(final)
+            slug_temp = '%s-%s' % (slug[: 100 - (len(string_final) + 1)], string_final)
+    slug = slug_temp
     return slug
