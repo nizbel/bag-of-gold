@@ -3,8 +3,8 @@ from django.conf.urls import url
 import views
 
 urlpatterns = [
-    url(r'^detalhar-fundo/(?P<slug_fundo>\d+)/$', views.detalhar_fundo, name='detalhar_fundo'),
     url(r'^detalhar-fundo/(?P<id_fundo>\d+)/$', views.detalhar_fundo_id, name='detalhar_fundo_id'),
+    url(r'^detalhar-fundo/(?P<slug_fundo>[-\w]+)/$', views.detalhar_fundo, name='detalhar_fundo'),
     url(r'^editar-operacao/(?P<id_operacao>\d+)/$', views.editar_operacao_fundo_investimento, name='editar_operacao_fundo_investimento'),
     url(r'^historico/$', views.historico, name='historico_fundo_investimento'),
     url(r'^inserir-operacao-fundo-investimento/$', views.inserir_operacao_fundo_investimento, name='inserir_operacao_fundo_investimento'),
