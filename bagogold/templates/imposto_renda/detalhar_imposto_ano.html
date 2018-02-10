@@ -25,10 +25,10 @@
 					<ul>
 					{% for ticker, acao in acoes.items %}
 						{% if acao.dividendos > 0 %}
-						<li>Dividendos de {{ticker}}: R${{acao.dividendos}}</li>
+						<li>Dividendos de {{ticker}}: R$ {{acao.dividendos|floatformat:2}}</li>
 						{% endif %}
 					{% endfor %}
-					<li><strong>Total: R${{dados.total_dividendos}}</strong></li>
+					<li><strong>Total: R$ {{dados.total_dividendos|floatformat:2}}</strong></li>
 					</ul>
 					
 					<h5>Ganhos líquidos em operações no mercado à vista de ações negociadas em bolsa de valores nas alienações 
@@ -36,21 +36,21 @@
 					<ul>
 					{% for mes, ganho in ganho_abaixo_vinte_mil.items %}
 						{% if ganho > 0 %}
-						<li>Mês {{mes}}: R${{ganho}}</li>
+						<li>Mês {{mes}}: R$ {{ganho|floatformat:2}}</li>
 						{% endif %}
 					{% endfor %}
-					<li><strong>Total: R${{dados.total_abaixo_vinte_mil}}</strong></li>
+					<li><strong>Total: R${{dados.total_abaixo_vinte_mil|floatformat:2}}</strong></li>
 					</ul>
 					
 					<h5>Outros</h5>
 					<ul>
 					{% for ticker, fii in fiis.items %}
 						{% if fii.rendimentos > 0 %}
-						<li>Rendimentos de {{ticker}}: R${{fii.rendimentos}}</li>
+						<li>Rendimentos de {{ticker}}: R$ {{fii.rendimentos}}</li>
 						{% endif %}
 					{% endfor %}
-                    <li>Rendimentos de CRI/CRA: R${{dados.total_rendimentos_cri_cra|floatformat:2}}
-					<li><strong>Total: R${{dados.total_rendimentos_isentos_outros|floatformat:2}}</strong></li>
+                    <li>Rendimentos de CRI/CRA: R$ {{dados.total_rendimentos_cri_cra|floatformat:2}}
+					<li><strong>Total: R$ {{dados.total_rendimentos_isentos_outros|floatformat:2}}</strong></li>
 					</ul>
 				</div>
 			</div>
@@ -69,16 +69,16 @@
 				<div class="portlet-body">
 					<h5>Ganhos líquidos em renda variável (bolsa de valores, de mercadorias, de futuros e assemelhados e fundos de investimento imobiliário)</h5>
 					<ul>
-						<li><strong>Total: R${{dados.total_acima_vinte_mil}}</strong></li>
+						<li><strong>Total: R$ {{dados.total_acima_vinte_mil|floatformat:2}}</strong></li>
 					</ul>
 					<h5>Juros sobre capital próprio</h5>
 					<ul>
 					{% for ticker, acao in acoes.items %}
 						{% if acao.jscp > 0 %}
-						<li>{{ticker}}: R${{acao.jscp}}</li>
+						<li>{{ticker}}: R$ {{acao.jscp|floatformat:2}}</li>
 						{% endif %}
 					{% endfor %}
-					<li><strong>Total: R${{dados.total_jscp}}</strong></li>
+					<li><strong>Total: R$ {{dados.total_jscp|floatformat:2}}</strong></li>
 					</ul>
 				</div>
 			</div>
@@ -123,14 +123,14 @@
                     <!-- CRI/CRA -->
                     {% for investimento, valor in cri_cra.items %}
                         {% if valor > 0 %}
-                            <li>Aplicação em {{investimento}}: R${{ valor|floatformat:4 }}</li>
+                            <li>Aplicação em {{investimento}}: R${{ valor|floatformat:2 }}</li>
                         {% endif %}
                     {% endfor %}
 					
 					<!-- Fundo de Investimento -->
 					{% for fundo, valor in fundos_investimento.items %}
 						{% if valor > 0 %}
-							<li>Aplicação em {{fundo}}: R${{ valor|floatformat:4 }}</li>
+							<li>Aplicação em {{fundo}}: R${{ valor|floatformat:2 }}</li>
 						{% endif %}
 					{% endfor %}
 							
@@ -184,18 +184,18 @@
 									<td>Mês {{mes}}:</td>
 									<td>Comum:</td>
 									{% if ganho.0 >= 0 %}
-									<td class="font-blue"><strong>R${{ganho.0|floatformat:"2"}}</strong></td>
+									<td class="font-blue"><strong>R${{ganho.0|floatformat:2}}</strong></td>
 									{% elif ganho.0 <= 0 %}
-									<td class="font-red-thunderbird"><strong>R${{ganho.0|floatformat:"2"}}</strong></td>
+									<td class="font-red-thunderbird"><strong>R${{ganho.0|floatformat:2}}</strong></td>
 									{% endif %}
 									<td>Daytrade:</td>
 									{% if ganho.1 >= 0 %}
-									<td class="font-blue"><strong>R${{ganho.1|floatformat:"2"}}</strong></td>
+									<td class="font-blue"><strong>R${{ganho.1|floatformat:2}}</strong></td>
 									{% elif ganho.1 <= 0%}
-									<td class="font-red-thunderbird"><strong>R${{ganho.1|floatformat:"2"}}</strong></td>
+									<td class="font-red-thunderbird"><strong>R${{ganho.1|floatformat:2}}</strong></td>
 									{% endif %}
 									<td>Prejuízo a compensar:</td>
-									<td>R${{prejuizo_a_compensar|dict_index:mes}}/R${{prejuizo_a_compensar_dt|dict_index:mes}}</td>
+									<td>R${{prejuizo_a_compensar|dict_index:mes|floatformat:2}}/R${{prejuizo_a_compensar_dt|dict_index:mes|floatformat:2}}</td>
 								</tr>
 							{% endfor %}
 							</tbody>
