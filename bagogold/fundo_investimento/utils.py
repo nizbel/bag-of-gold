@@ -108,7 +108,7 @@ def criar_slug_fundo_investimento_valido(fundo_nome):
     Parâmetros: Nome do fundo de investimento
     Retorno: Slug válido
     """
-    slug = slugify(fundo_nome.replace('.', '-'))
+    slug = slugify(fundo_nome.replace('.', '-').replace('/', '-'))
 
     for string in ['de', 'no', 'em', 'com', 'da[s]?', 'do[s]?', 'na[s]?', 'sem', 'fi[i]?', 'fundo[s]?', 'fdo[s]?', 'investimento[s]?', 'invest', 'inv']:
         slug = re.sub('-%s(?=-)' % (string), '-', re.sub('(^%s-|-%s$)' % (string, string), '', slug))
