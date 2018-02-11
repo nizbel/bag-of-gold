@@ -950,7 +950,6 @@ def painel_geral(request):
 #         print chave, investimento.link
     # Pegar total atual de todos os investimentos
     total_atual_investimentos = sum([valor for valor in investimentos.values()])
-    print datetime.datetime.now() - data_atual
     
     # Ordenar proventos a receber e separar por grupos
     # Proventos a receber com data EX já passada
