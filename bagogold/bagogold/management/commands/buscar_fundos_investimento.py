@@ -17,6 +17,7 @@ import time
 import traceback
 import zeep
 import zipfile
+from bagogold.fundo_investimento.utils import criar_slug_fundo_investimento_valido
 
 class Command(BaseCommand):
     help = 'Buscar fundos de investimento na CVM'
@@ -147,7 +148,7 @@ class Command(BaseCommand):
                                                                    data_constituicao=campos['DT_CONSTITUICAO'].strip(), situacao=FundoInvestimento.buscar_tipo_situacao(campos['SITUACAO']), 
                                                                    tipo_prazo=definir_prazo__pelo_cadastro(campos['TRATAMENTO_TRIBUTARIO']),
                                                                    classe=FundoInvestimento.buscar_tipo_classe(campos['CLASSE']), exclusivo_qualificados=(campos['INVESTIDORES_QUALIFICADOS'].strip().upper() == 'SIM'),
-                                                                   ultimo_registro=dia_util)
+                                                                   ultimo_registro=dia_util, slug=criar_slug_fundo_investimento_valido(campos['NOME'].strip()))
                                     novo_fundo.save()
                                 else:
                                     # Verificar se houve alteração no fundo
