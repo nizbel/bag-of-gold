@@ -577,16 +577,10 @@ def painel(request):
         total_variacao_percentual = total_variacao / total_variacao_percentual * Decimal(100)
     
     # Adicionar dados sobre última atualização
-    # Histórico
-    if HistoricoAcao.objects.exists():
-        historico_mais_recente = HistoricoAcao.objects.latest('data').data
-    else:
-        historico_mais_recente = 'N/A'
-    # Valor diário
     if ValorDiarioAcao.objects.exists():
         valor_diario_mais_recente = ValorDiarioAcao.objects.latest('data_hora').data_hora
     else:
-        valor_diario_mais_recente = 'N/A'
+        valor_diario_mais_recente = HistoricoAcao.objects.latest('data').data
     
     # Gráfico de composição
     graf_composicao = [{'label': acao, 'data': float(acoes[acao].valor_total_percentual)} for acao in acoes.keys()]
@@ -597,7 +591,6 @@ def painel(request):
     dados['total_valor'] = total_valor
     dados['total_variacao'] = total_variacao
     dados['total_variacao_percentual'] = total_variacao_percentual
-    dados['historico_mais_recente'] = historico_mais_recente
     dados['valor_diario_mais_recente'] = valor_diario_mais_recente
 
     return TemplateResponse(request, 'acoes/buyandhold/painel.html', {'acoes': acoes, 'dados': dados, 'graf_composicao': json.dumps(graf_composicao)})

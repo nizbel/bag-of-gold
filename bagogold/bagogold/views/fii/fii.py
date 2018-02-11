@@ -622,7 +622,8 @@ def painel(request):
     dados = {}
     dados['total_papeis'] = total_papeis
     dados['total_valor'] = total_valor
-    dados['valor_diario_mais_recente'] = 'N/A' if not ValorDiarioFII.objects.exists() else ValorDiarioFII.objects.latest('data_hora').data_hora
+    dados['valor_diario_mais_recente'] = ValorDiarioFII.objects.latest('data_hora').data_hora if ValorDiarioFII.objects.exists() else \
+        HistoricoFII.objects.latest('data').data
     
     return TemplateResponse(request, 'fii/painel.html', {'fiis': fiis, 'dados': dados, 'graf_composicao': graf_composicao, 'graf_valorizacao': graf_valorizacao})
 
