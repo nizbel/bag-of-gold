@@ -343,7 +343,7 @@ function fill() {
 }
 $(document).ready(function() {
 	if ($('.progress-bar:not(.progress-done)').length > 0) {
-	    fill();
+	    setTimeout(fill, 200);
 	}
 });
 </script>
