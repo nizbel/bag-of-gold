@@ -328,7 +328,7 @@ function fill() {
 	var progress = Math.max(timestamp - start, 0);
 	elem = $('.progress-bar:not(.progress-done)').first();
 	var limit = Math.min(100, parseFloat(elem.attr('aria-valuenow'))); 
-    elem.css('width', progress*limit/5 + '%'); 
+    elem.css('width', Math.min(progress*limit/5, limit) + '%'); 
     if (parseFloat(elem.css('width')) >= limit) {
       elem.css('width', limit + '%').addClass('progress-done');
       start = null;
@@ -337,13 +337,14 @@ function fill() {
     	requestAnimationFrame(timer);
     } else {
     	$('.progress-done').removeClass('progress-done');
+    	requestAnimationFrame(function(){});
     }
   }
   requestAnimationFrame(timer);
 }
 $(document).ready(function() {
 	if ($('.progress-bar:not(.progress-done)').length > 0) {
-	    setTimeout(fill, 200);
+	    fill();
 	}
 });
 </script>
