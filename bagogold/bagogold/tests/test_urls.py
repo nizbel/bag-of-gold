@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.models.acoes import HistoricoAcao, Acao
+from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.lc import HistoricoTaxaDI
+from bagogold.bagogold.models.td import Titulo, HistoricoTitulo
+from bagogold.fii.models import HistoricoFII, FII
 from bagogold.urls import urlpatterns
 from decimal import Decimal
 from django.contrib.auth.models import User
@@ -7,7 +11,6 @@ from django.core.urlresolvers import reverse, RegexURLResolver, RegexURLPattern,
     NoReverseMatch
 from django.test import Client, TestCase
 import datetime
-from bagogold.bagogold.models.td import Titulo, HistoricoTitulo
 
 class UrlsTestCase(TestCase):
     
@@ -27,6 +30,15 @@ class UrlsTestCase(TestCase):
         titulo = Titulo.objects.create(tipo='LTN', data_vencimento=datetime.date(2020, 1, 1), data_inicio=datetime.date(2017, 1, 2))
         HistoricoTitulo.objects.create(data=datetime.date(2017, 11, 10), preco_venda=Decimal('610.35'), preco_compra=Decimal('613.56'), taxa_compra=Decimal('7.56'), taxa_venda=Decimal('7.78'),
                                        titulo=titulo)
+        
+        # Preparar histórico para ações
+        empresa = Empresa.objects.create(nome='BB', nome_pregao='Banco')
+        acao = Acao.objects.create(empresa=empresa, ticker='BBAS3')
+        HistoricoAcao.objects.create(acao=acao, data=datetime.date(2018, 2, 12), preco_unitario=Decimal(20), oficial_bovespa=True)
+        
+        # Preparar histórico para FII
+        fii = FII.objects.create(empresa=empresa, ticker='BBPO11')
+        HistoricoFII.objects.create(fii=fii, data=datetime.date(2018, 2, 12), preco_unitario=Decimal(100), oficial_bovespa=True)
     
 #     def test_ver_tela(self):
 #         """Testa ver a tela de login"""

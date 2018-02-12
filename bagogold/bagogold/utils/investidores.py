@@ -13,7 +13,7 @@ from bagogold.bagogold.models.td import OperacaoTitulo, ValorDiarioTitulo, \
     HistoricoTitulo
 from bagogold.bagogold.signals.divisao_fii import gerar_checkpoint_divisao_fii,\
     gerar_checkpoint_divisao_proventos_fii
-from bagogold.bagogold.signals.fii import gerar_checkpoint_fii,\
+from bagogold.fii.signals import gerar_checkpoint_fii,\
     gerar_checkpoint_proventos_fii
 from bagogold.bagogold.utils.acoes import quantidade_acoes_ate_dia, \
     calcular_poupanca_prov_acao_ate_dia
