@@ -584,7 +584,7 @@ class DivisaoOperacaoTD (models.Model):
     
 class DivisaoOperacaoFII (models.Model):
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
-    operacao = models.ForeignKey('OperacaoFII')
+    operacao = models.ForeignKey('fii.OperacaoFII')
     """
     Guarda a quantidade de FIIs que pertence a divisão
     """
