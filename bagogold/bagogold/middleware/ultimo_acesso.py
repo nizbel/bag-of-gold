@@ -9,7 +9,7 @@ class UltimoAcessoMiddleWare(object):
         if not request.user.is_anonymous():
             if (not request.user.investidor.data_ultimo_acesso) or request.user.investidor.data_ultimo_acesso != datetime.date.today():
                 # Se último acesso foi em ano anterior, atualizar checkpoints
-                if request.user.investidor.data_ultimo_acesso.year < datetime.date.today().year:
+                if (not request.user.investidor.data_ultimo_acesso) and request.user.investidor.data_ultimo_acesso.year < datetime.date.today().year:
                     atualizar_checkpoints(request.user.investidor)
                 
                 request.user.investidor.data_ultimo_acesso = datetime.date.today()
