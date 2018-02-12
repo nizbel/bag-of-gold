@@ -1,0 +1,28 @@
+{% load misc %}
+<div class="row">
+    <div class="col-md-12">
+        <h4>
+            Mês atual
+        </h4>
+    </div>
+    <div class="col-md-12 font-yellow-crusta">
+        <p class="lead">
+            <strong>R$ {% if acumulado_mensal_atual < 0 %}-{% endif %}<span data-counter="counterup" data-value="{{ acumulado_mensal_atual|template_abs|floatformat:'2' }}">0</span></strong>
+        </p>
+    </div>
+    <div class="col-md-12">
+        <h4>
+            Mês anterior
+        </h4>
+    </div>
+    <div class="col-md-12 font-yellow-crusta">
+        <p class="lead">
+            <strong>R$ {% if acumulado_mensal_anterior < 0 %}-{% endif %}<span data-counter="counterup" data-value="{{ acumulado_mensal_anterior|template_abs|floatformat:'2' }}">0</span></strong>
+        </p>
+    </div>
+    {% if request.user.is_authenticated %}
+    <div class="col-md-12">
+        <a href="{% url "inicio:detalhar_acumulados_mensais" %}" class="btn btn-warning">Mais</a>
+    </div>
+</div>
+{% endif %}

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import Acao, HistoricoAcao
-from bagogold.bagogold.models.fii import FII, HistoricoFII
+from bagogold.fii.models import FII, HistoricoFII
 from django.core.management.base import BaseCommand
 
 class Command(BaseCommand):

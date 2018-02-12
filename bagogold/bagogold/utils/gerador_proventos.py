@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import Provento, AcaoProvento,\
     AtualizacaoSelicProvento
-from bagogold.bagogold.models.fii import ProventoFII, FII
+from bagogold.fii.models import ProventoFII, FII
 from bagogold.bagogold.models.gerador_proventos import \
     InvestidorResponsavelPendencia, InvestidorLeituraDocumento, \
     PendenciaDocumentoProvento, ProventoAcaoDocumento, \

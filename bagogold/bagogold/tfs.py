@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import Acao, HistoricoAcao
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.bagogold.models.fii import FII, HistoricoFII
+from bagogold.fii.models import FII, HistoricoFII
 from bagogold.bagogold.utils.acoes import verificar_tipo_acao
 from decimal import Decimal
 from django.contrib.auth.models import User

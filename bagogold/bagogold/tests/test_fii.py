@@ -2,11 +2,11 @@
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII, Divisao, \
     CheckpointDivisaoProventosFII, CheckpointDivisaoFII
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.bagogold.models.fii import FII, OperacaoFII, \
+from bagogold.fii.models import FII, OperacaoFII, \
     EventoDesdobramentoFII, EventoAgrupamentoFII, EventoIncorporacaoFII, \
     CheckpointFII, ProventoFII, CheckpointProventosFII
 from bagogold.bagogold.models.investidores import Investidor
-from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia, \
+from bagogold.fii.utils import calcular_qtd_fiis_ate_dia, \
     calcular_qtd_fiis_ate_dia_por_ticker, calcular_qtd_fiis_ate_dia_por_divisao, \
     verificar_se_existe_evento_para_fii, calcular_poupanca_prov_fii_ate_dia, \
     calcular_preco_medio_fiis_ate_dia_por_ticker, calcular_preco_medio_fiis_ate_dia, \
