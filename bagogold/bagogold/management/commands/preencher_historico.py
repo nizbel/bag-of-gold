@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import Acao, HistoricoAcao
-from bagogold.bagogold.models.fii import FII
+from bagogold.fii.models import FII
 from bagogold.bagogold.tfs import preencher_historico_acao, buscar_historico, \
     preencher_historico_fii
 from bagogold.bagogold.utils.misc import verificar_feriado_bovespa

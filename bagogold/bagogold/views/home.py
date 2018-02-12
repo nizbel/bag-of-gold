@@ -5,7 +5,7 @@ from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, Provento
     ValorDiarioAcao
 from bagogold.bagogold.models.debentures import OperacaoDebenture, \
     HistoricoValorDebenture
-from bagogold.bagogold.models.fii import OperacaoFII, HistoricoFII, ProventoFII, \
+from bagogold.fii.models import OperacaoFII, HistoricoFII, ProventoFII, \
     ValorDiarioFII
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \

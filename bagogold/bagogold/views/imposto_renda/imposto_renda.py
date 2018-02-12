@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.models.acoes import OperacaoAcao, Provento
-from bagogold.bagogold.models.fii import OperacaoFII, ProventoFII
+from bagogold.fii.models import OperacaoFII, ProventoFII
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, LetraCredito
 from bagogold.bagogold.models.td import OperacaoTitulo, Titulo, HistoricoTitulo
 from bagogold.bagogold.utils.misc import trazer_primeiro_registro, \

@@ -2,7 +2,7 @@
 from bagogold.bagogold.models.acoes import Acao, Provento, \
     AtualizacaoSelicProvento, HistoricoAcao
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.bagogold.models.fii import FII, HistoricoFII
+from bagogold.fii.models import FII, HistoricoFII
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
 from bagogold.bagogold.utils.acoes import verificar_tipo_acao
 from bagogold.bagogold.utils.bovespa import buscar_historico_recente_bovespa, \

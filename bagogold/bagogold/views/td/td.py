@@ -3,12 +3,12 @@ from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoTDFormSet
 from bagogold.bagogold.forms.td import OperacaoTituloForm
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD, Divisao
-from bagogold.bagogold.models.fii import FII
+from bagogold.fii.models import FII
 from bagogold.bagogold.models.lc import LetraCredito, HistoricoTaxaDI
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
     ValorDiarioTitulo, Titulo, HistoricoIPCA
-from bagogold.bagogold.utils.fii import \
+from bagogold.fii.utils import \
     calcular_rendimento_proventos_fii_12_meses, \
     calcular_variacao_percentual_fii_por_periodo
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di

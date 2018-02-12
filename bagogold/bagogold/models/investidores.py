@@ -2,7 +2,7 @@
 from bagogold.bagogold.models.acoes import OperacaoAcao
 from bagogold.bagogold.models.debentures import OperacaoDebenture
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoPrincipal
-from bagogold.bagogold.models.fii import OperacaoFII
+from bagogold.fii.models import OperacaoFII
 from bagogold.bagogold.models.lc import OperacaoLetraCredito
 from bagogold.bagogold.models.td import OperacaoTitulo
 from bagogold.cdb_rdb.models import OperacaoCDB_RDB

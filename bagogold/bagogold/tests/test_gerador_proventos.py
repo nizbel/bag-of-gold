@@ -3,7 +3,7 @@ from bagogold import settings
 from bagogold.bagogold.models.acoes import Acao, Provento, AcaoProvento, \
     AtualizacaoSelicProvento
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.bagogold.models.fii import FII, ProventoFII
+from bagogold.fii.models import FII, ProventoFII
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
     PendenciaDocumentoProvento, InvestidorLeituraDocumento, \
     InvestidorResponsavelPendencia, ProventoAcaoDescritoDocumentoBovespa, \
