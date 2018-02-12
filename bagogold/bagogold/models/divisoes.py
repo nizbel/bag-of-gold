@@ -218,7 +218,7 @@ class Divisao (models.Model):
         return saldo
     
     def saldo_fii(self, data=datetime.date.today()):
-        from bagogold.bagogold.utils.fii import \
+        from bagogold.fii.utils import \
             calcular_poupanca_prov_fii_ate_dia_por_divisao
         """
         Calcula o saldo de operações de FII de uma divisão (dinheiro livre)

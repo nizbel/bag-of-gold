@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import CheckpointDivisaoFII, \
     CheckpointDivisaoProventosFII, DivisaoOperacaoFII
-from bagogold.bagogold.models.fii import OperacaoFII, CheckpointProventosFII, \
+from bagogold.fii.models import OperacaoFII, CheckpointProventosFII, \
     CheckpointFII
 from django.core.management.base import BaseCommand
 from django.db.models.signals import post_save

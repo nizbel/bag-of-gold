@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.fii import ProventoFII
+from bagogold.fii.models import ProventoFII
 from django.core.management.base import BaseCommand
 
 

@@ -4,12 +4,12 @@ from bagogold.bagogold.forms.divisoes import DivisaoOperacaoFIIFormSet
 from bagogold.bagogold.forms.fii import OperacaoFIIForm, ProventoFIIForm, \
     UsoProventosOperacaoFIIForm, CalculoResultadoCorretagemForm
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII, Divisao
-from bagogold.bagogold.models.fii import OperacaoFII, ProventoFII, HistoricoFII, \
+from bagogold.fii.models import OperacaoFII, ProventoFII, HistoricoFII, \
     FII, UsoProventosOperacaoFII, ValorDiarioFII, EventoAgrupamentoFII, \
     EventoDesdobramentoFII, EventoIncorporacaoFII
 from bagogold.bagogold.models.gerador_proventos import ProventoFIIDocumento, \
     InvestidorValidacaoDocumento
-from bagogold.bagogold.utils.fii import calcular_valor_fii_ate_dia, \
+from bagogold.fii.utils import calcular_valor_fii_ate_dia, \
     calcular_poupanca_prov_fii_ate_dia, calcular_qtd_fiis_ate_dia_por_ticker, \
     calcular_preco_medio_fiis_ate_dia, calcular_qtd_fiis_ate_dia
 from bagogold.bagogold.utils.investidores import is_superuser, \

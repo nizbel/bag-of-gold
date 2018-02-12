@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.fii import FII, ProventoFII, OperacaoFII, \
+from bagogold.fii.models import FII, ProventoFII, OperacaoFII, \
     UsoProventosOperacaoFII, HistoricoFII, ValorDiarioFII, EventoIncorporacaoFII, \
     EventoAgrupamentoFII, EventoDesdobramentoFII
 from django.contrib import admin

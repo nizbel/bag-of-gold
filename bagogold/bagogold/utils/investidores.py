@@ -5,7 +5,7 @@ from bagogold.bagogold.models.debentures import HistoricoValorDebenture, \
     OperacaoDebenture
 from bagogold.bagogold.models.divisoes import CheckpointDivisaoFII, \
     CheckpointDivisaoProventosFII, Divisao
-from bagogold.bagogold.models.fii import OperacaoFII, ValorDiarioFII, \
+from bagogold.fii.models import OperacaoFII, ValorDiarioFII, \
     HistoricoFII, FII, ProventoFII, CheckpointFII, CheckpointProventosFII
 from bagogold.bagogold.models.investidores import LoginIncorreto
 from bagogold.bagogold.models.lc import OperacaoLetraCredito
@@ -18,7 +18,7 @@ from bagogold.bagogold.signals.fii import gerar_checkpoint_fii,\
 from bagogold.bagogold.utils.acoes import quantidade_acoes_ate_dia, \
     calcular_poupanca_prov_acao_ate_dia
 from bagogold.bagogold.utils.debenture import calcular_qtd_debentures_ate_dia
-from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia_por_ticker, \
+from bagogold.fii.utils import calcular_qtd_fiis_ate_dia_por_ticker, \
     calcular_qtd_fiis_ate_dia, calcular_poupanca_prov_fii_ate_dia
 from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia
 from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia

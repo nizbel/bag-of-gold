@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII, \
     CheckpointDivisaoFII, CheckpointDivisaoProventosFII
-from bagogold.bagogold.models.fii import OperacaoFII, ProventoFII, \
+from bagogold.fii.models import OperacaoFII, ProventoFII, \
     ValorDiarioFII, HistoricoFII, EventoAgrupamentoFII, EventoDesdobramentoFII, \
     EventoFII, EventoIncorporacaoFII, FII, CheckpointFII, CheckpointProventosFII
 from decimal import Decimal, ROUND_FLOOR

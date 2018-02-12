@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.acoes import Provento
-from bagogold.bagogold.models.fii import ProventoFII
+from bagogold.fii.models import ProventoFII
 from bagogold.bagogold.models.gerador_proventos import \
     ProventoAcaoDescritoDocumentoBovespa, AcaoProventoAcaoDescritoDocumentoBovespa, \
     ProventoFIIDescritoDocumentoBovespa, SelicProventoAcaoDescritoDocBovespa
