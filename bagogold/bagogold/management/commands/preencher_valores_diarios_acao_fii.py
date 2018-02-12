@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import Acao, ValorDiarioAcao
-from bagogold.bagogold.models.fii import FII, ValorDiarioFII
+from bagogold.fii.models import FII, ValorDiarioFII
 from bagogold.bagogold.tfs import buscar_ultimos_valores_geral_acao, \
     buscar_ultimos_valores_geral_fii
 from bagogold.bagogold.utils.misc import verificar_feriado_bovespa

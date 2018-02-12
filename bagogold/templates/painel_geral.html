@@ -277,34 +277,14 @@
 						<a href="javascript:;" class="collapse"></a>
 					</div>
 				</div>
-				<div class="portlet-body">
-					<div class="row">
-						<div class="col-md-12 text-center">
-							<h4>
-								Mês atual
-							</h4>
-						</div>
-						<div class="col-md-12 text-center font-yellow-crusta">
-							<p class="lead">
-								<strong>R$ {% if acumulado_mensal_atual < 0 %}-{% endif %}<span data-counter="counterup" data-value="{{ acumulado_mensal_atual|template_abs|floatformat:'2' }}">0</span></strong>
-							</p>
-						</div>
-						<div class="col-md-12 text-center">
-							<h4>
-								Mês anterior
-							</h4>
-						</div>
-						<div class="col-md-12 text-center font-yellow-crusta">
-							<p class="lead">
-								<strong>R$ {% if acumulado_mensal_anterior < 0 %}-{% endif %}<span data-counter="counterup" data-value="{{ acumulado_mensal_anterior|template_abs|floatformat:'2' }}">0</span></strong>
-							</p>
-						</div>
-                        {% if request.user.is_authenticated %}
-                        <div class="col-md-12 text-center">
-                            <a href="{% url "inicio:detalhar_acumulados_mensais" %}" class="btn btn-warning">Mais</a>
+				<div class="portlet-body text-center" id="acumulado_mensal" style="min-height: 50px;">
+                    {% if not request.user.is_authenticated %}
+                    <div class="row">
+                        <div class="col-md-12">
+                            <span>Não há dados</span>
                         </div>
-                        {% endif %}
-					</div>
+                    </div>
+                    {% endif %}
 				</div>
 			</div>
 			<!-- END Portlet PORTLET-->
@@ -418,6 +398,33 @@ $( document ).ready(function() {
         // handle a non-successful response
         error : function(xhr,errmsg,err) {
             App.unblockUI('#portlet_body_graf_rendimentos_mensal');
+            console.log(xhr.status + ": " + xhr.responseText);
+        }
+    });
+	
+	App.blockUI({
+        target: '#acumulado_mensal',
+        iconOnly: true,
+        overlayColor: 'none'
+    });
+
+    $.ajax({
+        url : "{% url 'inicio:acumulado_mensal_painel_geral' %}",
+        type : "GET",
+
+        // handle a successful response
+        success : function(resultado) {
+            $('#acumulado_mensal').html(resultado);
+            $("#acumulado_mensal [data-counter='counterup']").counterUp({
+                delay: 10,
+                time: 1000
+            });
+            App.unblockUI('#acumulado_mensal');
+        },
+
+        // handle a non-successful response
+        error : function(xhr,errmsg,err) {
+            App.unblockUI('#acumulado_mensal');
             console.log(xhr.status + ": " + xhr.responseText);
         }
     });

@@ -7,7 +7,7 @@ from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
     DivisaoOperacaoFII, DivisaoOperacaoTD, DivisaoOperacaoAcao, \
     TransferenciaEntreDivisoes, DivisaoOperacaoFundoInvestimento, \
     DivisaoOperacaoCDB_RDB
-from bagogold.bagogold.models.fii import ValorDiarioFII, HistoricoFII, FII
+from bagogold.fii.models import ValorDiarioFII, HistoricoFII, FII
 from bagogold.bagogold.models.lc import HistoricoPorcentagemLetraCredito, \
     LetraCredito
 from bagogold.bagogold.models.td import ValorDiarioTitulo, HistoricoTitulo, \
@@ -15,7 +15,7 @@ from bagogold.bagogold.models.td import ValorDiarioTitulo, HistoricoTitulo, \
 from bagogold.bagogold.utils.acoes import calcular_qtd_acoes_ate_dia_por_divisao
 from bagogold.bagogold.utils.debenture import \
     calcular_valor_debentures_ate_dia_por_divisao
-from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia_por_divisao
+from bagogold.fii.utils import calcular_qtd_fiis_ate_dia_por_divisao
 from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia_por_divisao
 from bagogold.bagogold.utils.td import calcular_qtd_titulos_ate_dia_por_divisao
 from bagogold.cdb_rdb.models import CDB_RDB, HistoricoPorcentagemCDB_RDB

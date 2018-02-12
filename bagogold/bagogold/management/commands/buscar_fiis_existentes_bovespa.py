@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.bagogold.models.fii import FII
+from bagogold.fii.models import FII
 from bagogold.bagogold.utils.bovespa import preencher_empresa_fii_nao_listado
 from django.core.management.base import BaseCommand
 from threading import Thread

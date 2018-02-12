@@ -5,7 +5,7 @@ from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, Provento
     ValorDiarioAcao
 from bagogold.bagogold.models.debentures import OperacaoDebenture, \
     HistoricoValorDebenture
-from bagogold.bagogold.models.fii import OperacaoFII, HistoricoFII, ProventoFII, \
+from bagogold.fii.models import OperacaoFII, HistoricoFII, ProventoFII, \
     ValorDiarioFII
 from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
@@ -906,14 +906,14 @@ def painel_geral(request):
     if request.user.is_authenticated():
         investidor = request.user.investidor
     else:
-        return TemplateResponse(request, 'painel_geral.html', {'ultimas_operacoes': list(), 'investimentos_atuais': {}, 'acumulado_mensal_atual': 0,
-                                                     'acumulado_mensal_anterior': 0, 'proventos_acoes_recebidos_hoje': list(),
-                                                     'proventos_fiis_recebidos_hoje': list(), 'proventos_acoes_a_receber': list(),
-                                                     'proventos_fiis_a_receber': list(), 'proventos_acoes_futuros': list(),
-                                                     'proventos_fiis_futuros': list(),'graf_rendimentos_mensal_lc': list(),
-                                                     'total_atual_investimentos': 0, 'graf_rendimentos_mensal_cdb_rdb': list(),
-                                                     'graf_rendimentos_mensal_td': list(), 'graf_rendimentos_mensal_debentures': list(),
-                                                     'graf_rendimentos_mensal_cri_cra': list()})
+        return TemplateResponse(request, 'painel_geral.html', {'ultimas_operacoes': list(), 'investimentos_atuais': {}, 
+                                                               'proventos_acoes_recebidos_hoje': list(),
+                                                               'proventos_fiis_recebidos_hoje': list(), 'proventos_acoes_a_receber': list(),
+                                                               'proventos_fiis_a_receber': list(), 'proventos_acoes_futuros': list(),
+                                                               'proventos_fiis_futuros': list(),'graf_rendimentos_mensal_lc': list(),
+                                                               'total_atual_investimentos': 0, 'graf_rendimentos_mensal_cdb_rdb': list(),
+                                                               'graf_rendimentos_mensal_td': list(), 'graf_rendimentos_mensal_debentures': list(),
+                                                               'graf_rendimentos_mensal_cri_cra': list()})
     # Guardar data atual
     data_atual = datetime.datetime.now()
     
@@ -977,18 +977,29 @@ def painel_geral(request):
     proventos_fiis_futuros = [provento for provento in proventos_futuros if isinstance(provento, ProventoFII)]
     proventos_fiis_futuros.sort(key=lambda provento: provento.data_ex)
     
-    # Buscar dados para o acumulado mensal
-    ultimo_dia_mes_anterior = data_atual.date().replace(day=1) - datetime.timedelta(days=1)
-    acumulado_mensal_atual = sum(calcular_rendimentos_ate_data(investidor, data_atual.date()).values()) - sum(calcular_rendimentos_ate_data(investidor, ultimo_dia_mes_anterior).values())
-                                                                                          
-    ultimo_dia_mes_antes_do_anterior = ultimo_dia_mes_anterior.replace(day=1) - datetime.timedelta(days=1)         
-    acumulado_mensal_anterior = sum(calcular_rendimentos_ate_data(investidor, ultimo_dia_mes_anterior).values()) - sum(calcular_rendimentos_ate_data(investidor, ultimo_dia_mes_antes_do_anterior).values())
-    
-    return TemplateResponse(request, 'painel_geral.html', {'ultimas_operacoes': ultimas_operacoes, 'investimentos_atuais': investimentos_atuais, 'acumulado_mensal_atual': acumulado_mensal_atual,
-                                                     'acumulado_mensal_anterior': acumulado_mensal_anterior, 'proventos_acoes_recebidos_hoje': proventos_acoes_recebidos_hoje,
-                                                     'proventos_fiis_recebidos_hoje': proventos_fiis_recebidos_hoje, 'proventos_acoes_a_receber': proventos_acoes_a_receber,
-                                                     'proventos_fiis_a_receber': proventos_fiis_a_receber, 'proventos_acoes_futuros': proventos_acoes_futuros,
-                                                     'proventos_fiis_futuros': proventos_fiis_futuros, 'total_atual_investimentos': total_atual_investimentos})
+    return TemplateResponse(request, 'painel_geral.html', {'ultimas_operacoes': ultimas_operacoes, 'investimentos_atuais': investimentos_atuais, 
+                                                           'proventos_acoes_recebidos_hoje': proventos_acoes_recebidos_hoje,
+                                                           'proventos_fiis_recebidos_hoje': proventos_fiis_recebidos_hoje, 'proventos_acoes_a_receber': proventos_acoes_a_receber,
+                                                           'proventos_fiis_a_receber': proventos_fiis_a_receber, 'proventos_acoes_futuros': proventos_acoes_futuros,
+                                                           'proventos_fiis_futuros': proventos_fiis_futuros, 'total_atual_investimentos': total_atual_investimentos})
+
+@login_required
+def acumulado_mensal_painel_geral(request):
+    if request.is_ajax():
+        investidor = request.user.investidor
+        data_atual = datetime.date.today()
+        
+        # Buscar dados para o acumulado mensal
+        ultimo_dia_mes_anterior = data_atual.replace(day=1) - datetime.timedelta(days=1)
+        acumulado_mensal_atual = sum(calcular_rendimentos_ate_data(investidor, data_atual).values()) - sum(calcular_rendimentos_ate_data(investidor, ultimo_dia_mes_anterior).values())
+                                                                                              
+        ultimo_dia_mes_antes_do_anterior = ultimo_dia_mes_anterior.replace(day=1) - datetime.timedelta(days=1)         
+        acumulado_mensal_anterior = sum(calcular_rendimentos_ate_data(investidor, ultimo_dia_mes_anterior).values()) - sum(calcular_rendimentos_ate_data(investidor, ultimo_dia_mes_antes_do_anterior).values())
+        
+        return HttpResponse(json.dumps(render_to_string('utils/acumulado_mensal_painel_geral.html', {'acumulado_mensal_atual': acumulado_mensal_atual,
+                                                     'acumulado_mensal_anterior': acumulado_mensal_anterior})), content_type = "application/json")   
+    else:
+        return HttpResponse(json.dumps({'sucesso': False}), content_type = "application/json")   
 
 @login_required
 def grafico_renda_fixa_painel_geral(request):

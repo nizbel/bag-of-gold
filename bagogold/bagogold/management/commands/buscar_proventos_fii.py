@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold import settings
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.bagogold.models.fii import FII
+from bagogold.fii.models import FII
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
     PendenciaDocumentoProvento
 from bagogold.bagogold.utils.gerador_proventos import \

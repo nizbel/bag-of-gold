@@ -50,8 +50,10 @@ INSTALLED_APPS = (
     'bagogold.blog',
     'bagogold.cdb_rdb',
     'bagogold.cri_cra',
+    'bagogold.fii',
     'bagogold.fundo_investimento',
     'bagogold.criptomoeda',
+#     'bagogold.lci_lca',
     'bagogold.outros_investimentos',
 )
 

@@ -3,7 +3,7 @@ from bagogold.bagogold.models.acoes import OperacaoAcao, Acao, HistoricoAcao
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
     DivisaoOperacaoFII, DivisaoOperacaoAcao
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.bagogold.models.fii import OperacaoFII, FII, HistoricoFII
+from bagogold.fii.models import OperacaoFII, FII, HistoricoFII
 from bagogold.bagogold.models.investidores import Investidor
 from bagogold.bagogold.models.lc import LetraCredito, OperacaoLetraCredito, \
     HistoricoTaxaDI, HistoricoPorcentagemLetraCredito

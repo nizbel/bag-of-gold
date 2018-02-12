@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao
-from bagogold.bagogold.models.fii import UsoProventosOperacaoFII
+from bagogold.fii.models import UsoProventosOperacaoFII
 from bagogold.bagogold.models.lc import OperacaoLetraCredito
 from bagogold.bagogold.models.td import HistoricoIPCA, OperacaoTitulo
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
@@ -124,7 +124,7 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDEFILO
     from bagogold.cdb_rdb.models import OperacaoCDB_RDB
     from bagogold.bagogold.utils.acoes import calcular_poupanca_prov_acao_ate_dia
     from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, calcular_valor_venda_cdb_rdb
-    from bagogold.bagogold.utils.fii import calcular_poupanca_prov_fii_ate_dia
+    from bagogold.fii.utils import calcular_poupanca_prov_fii_ate_dia
     from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia, calcular_valor_venda_lc
     from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia
     from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA

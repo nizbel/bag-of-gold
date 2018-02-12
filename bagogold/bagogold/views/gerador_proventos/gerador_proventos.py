@@ -8,7 +8,7 @@ from bagogold.bagogold.forms.gerador_proventos import \
 from bagogold.bagogold.models.acoes import Acao, Provento, AcaoProvento, \
     AtualizacaoSelicProvento, HistoricoAcao
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.bagogold.models.fii import ProventoFII, FII
+from bagogold.fii.models import ProventoFII, FII
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
     PendenciaDocumentoProvento, ProventoAcaoDescritoDocumentoBovespa, \
     ProventoAcaoDocumento, InvestidorResponsavelPendencia, \

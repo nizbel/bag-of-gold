@@ -2,7 +2,7 @@
 from StringIO import StringIO
 from bagogold.bagogold.models.acoes import HistoricoAcao, Acao
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.bagogold.models.fii import FII, HistoricoFII
+from bagogold.fii.models import FII, HistoricoFII
 from decimal import Decimal
 from django.db import transaction
 from lxml import etree

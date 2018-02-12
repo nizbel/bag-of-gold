@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoFII, \
     CheckpointDivisaoProventosFII, CheckpointDivisaoFII
-from bagogold.bagogold.models.fii import ProventoFII, \
+from bagogold.fii.models import ProventoFII, \
     EventoAgrupamentoFII, EventoDesdobramentoFII, EventoIncorporacaoFII
-from bagogold.bagogold.utils.fii import calcular_qtd_fiis_ate_dia_por_ticker_por_divisao, \
+from bagogold.fii.utils import calcular_qtd_fiis_ate_dia_por_ticker_por_divisao, \
     calcular_poupanca_prov_fii_ate_dia_por_divisao,\
     calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao
 from django.db.models.signals import post_save, post_delete
