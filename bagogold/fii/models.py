@@ -150,7 +150,7 @@ class EventoDesdobramentoFII (EventoFII):
     
 class CheckpointFII(models.Model):
     ano = models.SmallIntegerField(u'Ano')
-    fii = models.ForeignKey('FII', related_name='chkp_fii_novo')
+    fii = models.ForeignKey('FII')
     investidor = models.ForeignKey('bagogold.Investidor', related_name='chkp_fii_novo')
     quantidade = models.IntegerField(u'Quantidade no ano', validators=[MinValueValidator(0)])
     preco_medio = models.DecimalField(u'Preço médio', max_digits=11, decimal_places=4)
