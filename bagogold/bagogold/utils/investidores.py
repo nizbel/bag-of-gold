@@ -172,12 +172,16 @@ def buscar_operacoes_no_periodo(investidor, data_inicial, data_final):
     
     return lista_operacoes
 
-def buscar_totais_atuais_investimentos(investidor):
+def buscar_totais_atuais_investimentos(investidor, data_atual=datetime.date.today()):
+    """
+    Traz os totais de investimento do investidor em data especificada
+    Parâmetros: Investidor
+                Data
+    Retorno: Totais atuais {investimento: total}
+    """
     totais_atuais = {'Ações': Decimal(0), 'CDB/RDB': Decimal(0), 'CRI/CRA': Decimal(0), 'Criptomoedas': Decimal(0), 'Debêntures': Decimal(0), 
                      'FII': Decimal(0), 'Fundos de Inv.': Decimal(0), 'Letras de Crédito': Decimal(0), 'Outros inv.': Decimal(0), 
                      'Tesouro Direto': Decimal(0), }
-    
-    data_atual = datetime.date.today()
     
     # Ações
     acoes_investidor = buscar_acoes_investidor_na_data(investidor)
