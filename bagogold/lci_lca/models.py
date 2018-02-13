@@ -4,7 +4,7 @@ import datetime
 
 class LetraCredito (models.Model):
     nome = models.CharField(u'Nome', max_length=50)  
-    investidor = models.ForeignKey('Investidor')
+    investidor = models.ForeignKey('bagogold.Investidor', related_name='lci_lca_novo')
     
     def __unicode__(self):
         return self.nome
@@ -50,7 +50,7 @@ class OperacaoLetraCredito (models.Model):
     data = models.DateField(u'Data da operação')
     tipo_operacao = models.CharField(u'Tipo de operação', max_length=1)
     letra_credito = models.ForeignKey('LetraCredito', verbose_name='Letra de Crédito')
-    investidor = models.ForeignKey('Investidor')
+    investidor = models.ForeignKey('bagogold.Investidor', related_name='op_lci_lca_novo')
     
     def __unicode__(self):
         return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.letra_credito, self.data.strftime('%d/%m/%Y'))
