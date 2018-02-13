@@ -390,90 +390,90 @@ class PerformanceCheckpointFIITestCase(TestCase):
         self.assertDictEqual(qtd_antigo, qtd_novo)
         self.assertTrue(fim_novo < fim_antigo)
         
-class PerformanceSignalCheckpointFIITestCase(TestCase):
-    def setUp(self):
-        for num in range(5):
-            User.objects.create(username='test%s' % (num), password='test%s' % (num))
-         
-        empresa_1 = Empresa.objects.create(nome='BA', nome_pregao='FII BA')
-        fii_1 = FII.objects.create(ticker='BAPO11', empresa=empresa_1)
-        empresa_2 = Empresa.objects.create(nome='BB', nome_pregao='FII BB')
-        fii_2 = FII.objects.create(ticker='BBPO11', empresa=empresa_2)
-        empresa_3 = Empresa.objects.create(nome='BC', nome_pregao='FII BC')
-        fii_3 = FII.objects.create(ticker='BCPO11', empresa=empresa_3)
-        empresa_4 = Empresa.objects.create(nome='BD', nome_pregao='FII BD')
-        fii_4 = FII.objects.create(ticker='BDPO11', empresa=empresa_4)
-         
-        # Gerar operações mensalmente para os 150 primeirs usuários
-        for investidor in Investidor.objects.all()[:3]:
-            for mes in range(1, 13):
-                OperacaoFII.objects.create(fii=fii_1, investidor=investidor, tipo_operacao='C', data=datetime.date(2016, mes, 11), quantidade=10, preco_unitario=Decimal('100'), corretagem=0, emolumentos=0)
-                OperacaoFII.objects.create(fii=fii_2, investidor=investidor, tipo_operacao='C', data=datetime.date(2016, mes, 11), quantidade=10, preco_unitario=Decimal('100'), corretagem=0, emolumentos=0)
-                OperacaoFII.objects.create(fii=fii_3, investidor=investidor, tipo_operacao='C', data=datetime.date(2016, mes, 11), quantidade=10, preco_unitario=Decimal('100'), corretagem=0, emolumentos=0)
-                OperacaoFII.objects.create(fii=fii_4, investidor=investidor, tipo_operacao='C', data=datetime.date(2016, mes, 11), quantidade=10, preco_unitario=Decimal('100'), corretagem=0, emolumentos=0)
- 
-                OperacaoFII.objects.create(fii=fii_1, investidor=investidor, tipo_operacao='C', data=datetime.date(2017, mes, 11), quantidade=10, preco_unitario=Decimal('100'), corretagem=0, emolumentos=0)
-                OperacaoFII.objects.create(fii=fii_2, investidor=investidor, tipo_operacao='C', data=datetime.date(2017, mes, 11), quantidade=10, preco_unitario=Decimal('100'), corretagem=0, emolumentos=0)
-                OperacaoFII.objects.create(fii=fii_3, investidor=investidor, tipo_operacao='C', data=datetime.date(2017, mes, 11), quantidade=10, preco_unitario=Decimal('100'), corretagem=0, emolumentos=0)
-                OperacaoFII.objects.create(fii=fii_4, investidor=investidor, tipo_operacao='C', data=datetime.date(2017, mes, 11), quantidade=10, preco_unitario=Decimal('100'), corretagem=0, emolumentos=0)
-         
-        EventoDesdobramentoFII.objects.create(fii=fii_1, data=datetime.date(2016, 6, 3), proporcao=10)
-        EventoAgrupamentoFII.objects.create(fii=fii_2, data=datetime.date(2016, 6, 3), proporcao=Decimal('0.1'))
-        EventoDesdobramentoFII.objects.create(fii=fii_3, data=datetime.date(2016, 6, 3), proporcao=10)
-        EventoIncorporacaoFII.objects.create(fii=fii_3, data=datetime.date(2016, 6, 3), novo_fii=fii_4)
-         
-    def test_adicionar_evento(self):
-        """Verifica a performance de se adicionar um evento"""
-        inicio = datetime.datetime.now()
-        EventoDesdobramentoFII.objects.create(fii=FII.objects.get(ticker='BDPO11'), data=datetime.date(2016, 11, 3), proporcao=Decimal('9.933'))
-        fim = datetime.datetime.now()
-#         print '\nAdicionar evento:', fim - inicio
-         
-    def test_editar_evento(self):
-        """Verifica a performance de se editar um evento"""
-        inicio = datetime.datetime.now()
-        evento = EventoDesdobramentoFII.objects.get(fii=FII.objects.get(ticker='BCPO11'))
-        evento.proporcao = 15
-        evento.save()
-        fim = datetime.datetime.now()
-#         print '\nEditar evento:', fim - inicio
- 
-    def test_apagar_evento(self):
-        """Verifica a performance de se apagar um evento"""
-        inicio = datetime.datetime.now()
-        EventoIncorporacaoFII.objects.filter(fii=FII.objects.get(ticker='BCPO11')).delete()
-        fim = datetime.datetime.now()
-#         print '\nExcluir evento:', fim - inicio
-         
-    def test_adicionar_operacao(self):
-        """Verificar a performance de se adicionar uma operação"""
-        investidor = Investidor.objects.get(user__username='test0')
-         
-        inicio = datetime.datetime.now()
-        OperacaoFII.objects.create(fii=FII.objects.get(ticker='BBPO11'), investidor=investidor, tipo_operacao='C', data=datetime.date(2016, 11, 1), quantidade=10, preco_unitario=Decimal('100'), 
-                                   corretagem=0, emolumentos=0)
-        fim = datetime.datetime.now()
-#         print '\nAdicionar operação:', fim - inicio
-         
-    def test_editar_operacao(self):
-        """Verificar a performance de se editar uma operação"""
-        investidor = Investidor.objects.get(user__username='test0')
-         
-        inicio = datetime.datetime.now()
-        operacao = OperacaoFII.objects.get(fii=FII.objects.get(ticker='BBPO11'), investidor=investidor, tipo_operacao='C', data=datetime.date(2016, 3, 11))
-        operacao.quantidade = 40
-        operacao.save()
-        fim = datetime.datetime.now()
-#         print '\nEditar operação:', fim - inicio
-         
-    def test_apagar_operacao(self):
-        """Verificar a performance de se apagar uma operação"""
-        investidor = Investidor.objects.get(user__username='test0')
-         
-        inicio = datetime.datetime.now()
-        OperacaoFII.objects.filter(fii=FII.objects.get(ticker='BBPO11'), investidor=investidor, tipo_operacao='C', data=datetime.date(2016, 3, 11)).delete()
-        fim = datetime.datetime.now()
-#         print '\nExcluir operação:', fim - inicio
+# class PerformanceSignalCheckpointFIITestCase(TestCase):
+#     def setUp(self):
+#         for num in range(5):
+#             User.objects.create(username='test%s' % (num), password='test%s' % (num))
+#          
+#         empresa_1 = Empresa.objects.create(nome='BA', nome_pregao='FII BA')
+#         fii_1 = FII.objects.create(ticker='BAPO11', empresa=empresa_1)
+#         empresa_2 = Empresa.objects.create(nome='BB', nome_pregao='FII BB')
+#         fii_2 = FII.objects.create(ticker='BBPO11', empresa=empresa_2)
+#         empresa_3 = Empresa.objects.create(nome='BC', nome_pregao='FII BC')
+#         fii_3 = FII.objects.create(ticker='BCPO11', empresa=empresa_3)
+#         empresa_4 = Empresa.objects.create(nome='BD', nome_pregao='FII BD')
+#         fii_4 = FII.objects.create(ticker='BDPO11', empresa=empresa_4)
+#          
+#         # Gerar operações mensalmente para os 150 primeirs usuários
+#         for investidor in Investidor.objects.all()[:3]:
+#             for mes in range(1, 13):
+#                 OperacaoFII.objects.create(fii=fii_1, investidor=investidor, tipo_operacao='C', data=datetime.date(2016, mes, 11), quantidade=10, preco_unitario=Decimal('100'), corretagem=0, emolumentos=0)
+#                 OperacaoFII.objects.create(fii=fii_2, investidor=investidor, tipo_operacao='C', data=datetime.date(2016, mes, 11), quantidade=10, preco_unitario=Decimal('100'), corretagem=0, emolumentos=0)
+#                 OperacaoFII.objects.create(fii=fii_3, investidor=investidor, tipo_operacao='C', data=datetime.date(2016, mes, 11), quantidade=10, preco_unitario=Decimal('100'), corretagem=0, emolumentos=0)
+#                 OperacaoFII.objects.create(fii=fii_4, investidor=investidor, tipo_operacao='C', data=datetime.date(2016, mes, 11), quantidade=10, preco_unitario=Decimal('100'), corretagem=0, emolumentos=0)
+#  
+#                 OperacaoFII.objects.create(fii=fii_1, investidor=investidor, tipo_operacao='C', data=datetime.date(2017, mes, 11), quantidade=10, preco_unitario=Decimal('100'), corretagem=0, emolumentos=0)
+#                 OperacaoFII.objects.create(fii=fii_2, investidor=investidor, tipo_operacao='C', data=datetime.date(2017, mes, 11), quantidade=10, preco_unitario=Decimal('100'), corretagem=0, emolumentos=0)
+#                 OperacaoFII.objects.create(fii=fii_3, investidor=investidor, tipo_operacao='C', data=datetime.date(2017, mes, 11), quantidade=10, preco_unitario=Decimal('100'), corretagem=0, emolumentos=0)
+#                 OperacaoFII.objects.create(fii=fii_4, investidor=investidor, tipo_operacao='C', data=datetime.date(2017, mes, 11), quantidade=10, preco_unitario=Decimal('100'), corretagem=0, emolumentos=0)
+#          
+#         EventoDesdobramentoFII.objects.create(fii=fii_1, data=datetime.date(2016, 6, 3), proporcao=10)
+#         EventoAgrupamentoFII.objects.create(fii=fii_2, data=datetime.date(2016, 6, 3), proporcao=Decimal('0.1'))
+#         EventoDesdobramentoFII.objects.create(fii=fii_3, data=datetime.date(2016, 6, 3), proporcao=10)
+#         EventoIncorporacaoFII.objects.create(fii=fii_3, data=datetime.date(2016, 6, 3), novo_fii=fii_4)
+#          
+#     def test_adicionar_evento(self):
+#         """Verifica a performance de se adicionar um evento"""
+#         inicio = datetime.datetime.now()
+#         EventoDesdobramentoFII.objects.create(fii=FII.objects.get(ticker='BDPO11'), data=datetime.date(2016, 11, 3), proporcao=Decimal('9.933'))
+#         fim = datetime.datetime.now()
+# #         print '\nAdicionar evento:', fim - inicio
+#          
+#     def test_editar_evento(self):
+#         """Verifica a performance de se editar um evento"""
+#         inicio = datetime.datetime.now()
+#         evento = EventoDesdobramentoFII.objects.get(fii=FII.objects.get(ticker='BCPO11'))
+#         evento.proporcao = 15
+#         evento.save()
+#         fim = datetime.datetime.now()
+# #         print '\nEditar evento:', fim - inicio
+#  
+#     def test_apagar_evento(self):
+#         """Verifica a performance de se apagar um evento"""
+#         inicio = datetime.datetime.now()
+#         EventoIncorporacaoFII.objects.filter(fii=FII.objects.get(ticker='BCPO11')).delete()
+#         fim = datetime.datetime.now()
+# #         print '\nExcluir evento:', fim - inicio
+#          
+#     def test_adicionar_operacao(self):
+#         """Verificar a performance de se adicionar uma operação"""
+#         investidor = Investidor.objects.get(user__username='test0')
+#          
+#         inicio = datetime.datetime.now()
+#         OperacaoFII.objects.create(fii=FII.objects.get(ticker='BBPO11'), investidor=investidor, tipo_operacao='C', data=datetime.date(2016, 11, 1), quantidade=10, preco_unitario=Decimal('100'), 
+#                                    corretagem=0, emolumentos=0)
+#         fim = datetime.datetime.now()
+# #         print '\nAdicionar operação:', fim - inicio
+#          
+#     def test_editar_operacao(self):
+#         """Verificar a performance de se editar uma operação"""
+#         investidor = Investidor.objects.get(user__username='test0')
+#          
+#         inicio = datetime.datetime.now()
+#         operacao = OperacaoFII.objects.get(fii=FII.objects.get(ticker='BBPO11'), investidor=investidor, tipo_operacao='C', data=datetime.date(2016, 3, 11))
+#         operacao.quantidade = 40
+#         operacao.save()
+#         fim = datetime.datetime.now()
+# #         print '\nEditar operação:', fim - inicio
+#          
+#     def test_apagar_operacao(self):
+#         """Verificar a performance de se apagar uma operação"""
+#         investidor = Investidor.objects.get(user__username='test0')
+#          
+#         inicio = datetime.datetime.now()
+#         OperacaoFII.objects.filter(fii=FII.objects.get(ticker='BBPO11'), investidor=investidor, tipo_operacao='C', data=datetime.date(2016, 3, 11)).delete()
+#         fim = datetime.datetime.now()
+# #         print '\nExcluir operação:', fim - inicio
 
 class CheckpointEventoAposOperacaoTestCase(TestCase):
     def setUp(self):

@@ -81,6 +81,7 @@ class Command(BaseCommand):
         not post_delete.disconnect(sender=EventoIncorporacaoFII, dispatch_uid='evento_incorporacao_divisao_apagado'):
             print 'evento_agrupamento_divisao_apagado'
             return
+        
         try:
             with transaction.atomic():
                 FII.objects.all().delete()
@@ -98,18 +99,6 @@ class Command(BaseCommand):
                 for fii in FII_old.objects.all().values():
                     print fii
                     FII.objects.create(**fii)
-                       
-                for incorporacao in EventoIncorporacaoFII_old.objects.all().values():
-                    print incorporacao
-                    EventoIncorporacaoFII.objects.create(**incorporacao)
-                       
-                for agrupamento in EventoAgrupamentoFII_old.objects.all().values():
-                    print agrupamento
-                    EventoAgrupamentoFII.objects.create(**agrupamento)
-                       
-                for desdobramento in EventoDesdobramentoFII_old.objects.all().values():
-                    print desdobramento
-                    EventoDesdobramentoFII.objects.create(**desdobramento)
                        
                 for operacao in OperacaoFII_old.objects.all().values():
                     print operacao
@@ -130,14 +119,27 @@ class Command(BaseCommand):
                 for valor_diario in ValorDiarioFII_old.objects.all().values():
                     print valor_diario
                     ValorDiarioFII.objects.create(**valor_diario)
+                
+                for incorporacao in EventoIncorporacaoFII_old.objects.all().values():
+                    print incorporacao
+                    EventoIncorporacaoFII.objects.create(**incorporacao)
+                       
+                for agrupamento in EventoAgrupamentoFII_old.objects.all().values():
+                    print agrupamento
+                    EventoAgrupamentoFII.objects.create(**agrupamento)
+                       
+                for desdobramento in EventoDesdobramentoFII_old.objects.all().values():
+                    print desdobramento
+                    EventoDesdobramentoFII.objects.create(**desdobramento)
                     
                 for chkp in CheckpointFII_old.objects.all().values():
                     print chkp
                     CheckpointFII.objects.create(**chkp)
-                     
+                      
                 for chkp_prov in CheckpointProventosFII_old.objects.all().values():
                     print chkp_prov
                     CheckpointProventosFII.objects.create(**chkp_prov)
+                
         except Exception as e:
             print e
         
