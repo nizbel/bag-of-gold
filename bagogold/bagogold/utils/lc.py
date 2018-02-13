@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC
-from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI, \
+from bagogold.lci_lca.models import OperacaoLetraCredito, \
     HistoricoPorcentagemLetraCredito, OperacaoVendaLetraCredito
+from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo
 from decimal import Decimal, ROUND_DOWN
 from django.db.models import Q

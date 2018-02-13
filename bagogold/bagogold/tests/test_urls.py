@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import HistoricoAcao, Acao
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.bagogold.models.lc import HistoricoTaxaDI
+from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 from bagogold.bagogold.models.td import Titulo, HistoricoTitulo
 from bagogold.fii.models import HistoricoFII, FII
 from bagogold.urls import urlpatterns

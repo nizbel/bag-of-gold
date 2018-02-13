@@ -3,7 +3,7 @@ from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
     TransferenciaEntreDivisoes, DivisaoOperacaoAcao, DivisaoOperacaoFII, \
     DivisaoOperacaoCDB_RDB, DivisaoOperacaoTD
-from bagogold.bagogold.models.lc import OperacaoVendaLetraCredito
+from bagogold.lci_lca.models import OperacaoVendaLetraCredito
 from bagogold.bagogold.utils.td import calcular_qtd_titulos_ate_dia_por_divisao
 from bagogold.cri_cra.utils.utils import \
     qtd_cri_cra_ate_dia_para_divisao_para_certificado

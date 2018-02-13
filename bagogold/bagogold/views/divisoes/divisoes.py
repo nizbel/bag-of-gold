@@ -8,7 +8,7 @@ from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
     TransferenciaEntreDivisoes, DivisaoOperacaoFundoInvestimento, \
     DivisaoOperacaoCDB_RDB
 from bagogold.fii.models import ValorDiarioFII, HistoricoFII, FII
-from bagogold.bagogold.models.lc import HistoricoPorcentagemLetraCredito, \
+from bagogold.lci_lca.models import HistoricoPorcentagemLetraCredito, \
     LetraCredito
 from bagogold.bagogold.models.td import ValorDiarioTitulo, HistoricoTitulo, \
     Titulo

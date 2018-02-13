@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.lc import HistoricoTaxaDI
+from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
 from bagogold.cri_cra.models.cri_cra import CRI_CRA, OperacaoCRI_CRA,\
     DataRemuneracaoCRI_CRA

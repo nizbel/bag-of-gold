@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.forms.utils import LocalizedModelForm
-from bagogold.bagogold.models.lc import OperacaoLetraCredito, \
+from bagogold.lci_lca.models import OperacaoLetraCredito, \
     HistoricoPorcentagemLetraCredito, LetraCredito, HistoricoCarenciaLetraCredito, \
     OperacaoVendaLetraCredito
 from django import forms

@@ -6,9 +6,10 @@ from bagogold.bagogold.forms.lc import OperacaoLetraCreditoForm, \
     HistoricoCarenciaLetraCreditoForm
 from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoLC, Divisao
-from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI, \
+from bagogold.lci_lca.models import OperacaoLetraCredito, \
     HistoricoPorcentagemLetraCredito, LetraCredito, HistoricoCarenciaLetraCredito, \
     OperacaoVendaLetraCredito
+from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 from bagogold.bagogold.models.td import HistoricoIPCA
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa_di, \
     calcular_valor_lc_ate_dia, simulador_lci_lca, \

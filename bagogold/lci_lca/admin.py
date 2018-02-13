@@ -1,15 +1,20 @@
 # -*- coding: utf-8 -*-
-from bagogold.blog.models import Post, Tag, TagPost
+from bagogold.lci_lca.models import LetraCredito, OperacaoLetraCredito, \
+    OperacaoVendaLetraCredito, HistoricoPorcentagemLetraCredito, \
+    HistoricoCarenciaLetraCredito, HistoricoValorMinimoInvestimento
 from django.contrib import admin
 
-class PostAdmin(admin.ModelAdmin):
-    search_fields = ['titulo', 'data']
-    # TODO adicionar Tags
-    list_display = ('titulo', 'slug', 'data', 'chamada_facebook')
+admin.site.register(LetraCredito)
     
-admin.site.register(Post, PostAdmin)
+admin.site.register(OperacaoLetraCredito)
     
-admin.site.register(Tag)
-
-admin.site.register(TagPost)
-
+class OperacaoVendaLetraCreditoAdmin(admin.ModelAdmin):
+    list_display = ('operacao_venda', 'operacao_compra')
+    
+admin.site.register(OperacaoVendaLetraCredito, OperacaoVendaLetraCreditoAdmin)
+    
+admin.site.register(HistoricoPorcentagemLetraCredito)
+    
+admin.site.register(HistoricoCarenciaLetraCredito)
+            
+admin.site.register(HistoricoValorMinimoInvestimento)

@@ -8,7 +8,7 @@ from bagogold.bagogold.models.divisoes import CheckpointDivisaoFII, \
 from bagogold.fii.models import OperacaoFII, ValorDiarioFII, \
     HistoricoFII, FII, ProventoFII, CheckpointFII, CheckpointProventosFII
 from bagogold.bagogold.models.investidores import LoginIncorreto
-from bagogold.bagogold.models.lc import OperacaoLetraCredito
+from bagogold.lci_lca.models import OperacaoLetraCredito
 from bagogold.bagogold.models.td import OperacaoTitulo, ValorDiarioTitulo, \
     HistoricoTitulo
 from bagogold.bagogold.signals.divisao_fii import gerar_checkpoint_divisao_fii,\

@@ -5,9 +5,7 @@ from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, Provento
     ValorDiarioAcao
 from bagogold.bagogold.models.debentures import OperacaoDebenture, \
     HistoricoValorDebenture
-from bagogold.fii.models import OperacaoFII, HistoricoFII, ProventoFII, \
-    ValorDiarioFII
-from bagogold.bagogold.models.lc import OperacaoLetraCredito, HistoricoTaxaDI
+from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
     ValorDiarioTitulo, Titulo
 from bagogold.bagogold.utils.debenture import calcular_valor_debentures_ate_dia
@@ -19,6 +17,7 @@ from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di, \
 from bagogold.bagogold.utils.misc import calcular_rendimentos_ate_data, \
     verificar_feriado_bovespa, formatar_zeros_a_direita_apos_2_casas_decimais
 from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia
+from bagogold.blog.models import Post
 from bagogold.cdb_rdb.models import OperacaoCDB_RDB
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, \
     calcular_valor_venda_cdb_rdb
@@ -29,8 +28,11 @@ from bagogold.cri_cra.utils.utils import calcular_valor_cri_cra_ate_dia, \
 from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
 from bagogold.criptomoeda.models import OperacaoCriptomoeda, \
     TransferenciaCriptomoeda, ValorDiarioCriptomoeda
+from bagogold.fii.models import OperacaoFII, HistoricoFII, ProventoFII, \
+    ValorDiarioFII
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
     HistoricoValorCotas
+from bagogold.lci_lca.models import OperacaoLetraCredito
 from bagogold.outros_investimentos.models import Rendimento, Amortizacao, \
     Investimento
 from decimal import Decimal, ROUND_DOWN
@@ -52,7 +54,6 @@ import datetime
 import json
 import math
 import traceback
-from bagogold.blog.models import Post
 
 
 @login_required
