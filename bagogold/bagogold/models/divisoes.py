@@ -404,7 +404,7 @@ class DivisaoInvestimento (models.Model):
     
 class DivisaoOperacaoLC (models.Model):
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
-    operacao = models.ForeignKey('OperacaoLetraCredito')
+    operacao = models.ForeignKey('lci_lca.OperacaoLetraCredito')
     """
     Guarda a quantidade da operação que pertence a divisão
     """
@@ -584,7 +584,7 @@ class DivisaoOperacaoTD (models.Model):
     
 class DivisaoOperacaoFII (models.Model):
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
-    operacao = models.ForeignKey('OperacaoFII')
+    operacao = models.ForeignKey('fii.OperacaoFII')
     """
     Guarda a quantidade de FIIs que pertence a divisão
     """
@@ -604,7 +604,7 @@ class DivisaoOperacaoFII (models.Model):
     
 class CheckpointDivisaoFII (models.Model):
     ano = models.SmallIntegerField(u'Ano')
-    fii = models.ForeignKey('FII')
+    fii = models.ForeignKey('fii.FII')
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
     quantidade = models.IntegerField(u'Quantidade no ano', validators=[MinValueValidator(0)])
     preco_medio = models.DecimalField(u'Preço médio', max_digits=11, decimal_places=4)
