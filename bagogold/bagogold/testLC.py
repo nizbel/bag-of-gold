@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.lc import HistoricoTaxaDI
+from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 from decimal import Decimal
 from ftplib import FTP
 from urllib2 import Request, urlopen, URLError, HTTPError

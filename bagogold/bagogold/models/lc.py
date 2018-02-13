@@ -158,10 +158,3 @@ class HistoricoValorMinimoInvestimento (models.Model):
 #                 raise forms.ValidationError('Valor mínimo não pode ser negativo')
 #             super(HistoricoValorMinimoInvestimento, self).save(*args, **kw)
     
-class HistoricoTaxaDI (models.Model):
-    data = models.DateField(u'Data')
-    taxa = models.DecimalField(u'Rendimento anual', max_digits=5, decimal_places=2, unique_for_date='data')
-    
-    def save(self, *args, **kw):
-        if not HistoricoTaxaDI.objects.filter(taxa=self.taxa, data=self.data).exists():
-            super(HistoricoTaxaDI, self).save(*args, **kw)

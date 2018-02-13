@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import Acao, OperacaoAcao, HistoricoAcao, \
     Provento
-from bagogold.cdb_rdb.models import CDB_RDB, \
-    HistoricoPorcentagemCDB_RDB, OperacaoCDB_RDB
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.fii.models import ProventoFII, FII, OperacaoFII, \
-    HistoricoFII
-from bagogold.bagogold.models.lc import LetraCredito, \
-    HistoricoPorcentagemLetraCredito, OperacaoLetraCredito, HistoricoTaxaDI
+from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 from bagogold.bagogold.models.td import Titulo, OperacaoTitulo
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo, \
     verificar_feriado_bovespa, qtd_dias_uteis_no_periodo, \
     calcular_domingo_pascoa_no_ano, buscar_valores_diarios_selic, \
     calcular_rendimentos_ate_data, formatar_zeros_a_direita_apos_2_casas_decimais
+from bagogold.cdb_rdb.models import CDB_RDB, HistoricoPorcentagemCDB_RDB, \
+    OperacaoCDB_RDB
+from bagogold.fii.models import ProventoFII, FII, OperacaoFII, HistoricoFII
+from bagogold.lci_lca.models import LetraCredito, \
+    HistoricoPorcentagemLetraCredito, OperacaoLetraCredito
 from decimal import Decimal, ROUND_DOWN
 from django.contrib.auth.models import User
 from django.db.models.aggregates import Count

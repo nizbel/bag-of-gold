@@ -3,13 +3,14 @@ from bagogold.bagogold.models.acoes import OperacaoAcao, Acao, HistoricoAcao
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
     DivisaoOperacaoFII, DivisaoOperacaoAcao
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.fii.models import OperacaoFII, FII, HistoricoFII
 from bagogold.bagogold.models.investidores import Investidor
-from bagogold.bagogold.models.lc import LetraCredito, OperacaoLetraCredito, \
-    HistoricoTaxaDI, HistoricoPorcentagemLetraCredito
+from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
     buscar_totais_atuais_investimentos
 from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
+from bagogold.fii.models import OperacaoFII, FII, HistoricoFII
+from bagogold.lci_lca.models import LetraCredito, OperacaoLetraCredito, \
+    HistoricoPorcentagemLetraCredito
 from decimal import Decimal
 from django.contrib.auth.models import User
 from django.test import TestCase

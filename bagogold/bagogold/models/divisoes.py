@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.lc import HistoricoTaxaDI
+from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 from bagogold.outros_investimentos.models import Amortizacao, Rendimento
 from decimal import Decimal
 from django.core.validators import MinValueValidator

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.investidores import Investidor
-from bagogold.bagogold.models.lc import OperacaoLetraCredito, LetraCredito, \
+from bagogold.lci_lca.models import OperacaoLetraCredito, LetraCredito, \
     HistoricoPorcentagemLetraCredito, HistoricoTaxaDI
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa_di, \
     calcular_valor_lc_ate_dia, simulador_lci_lca, \
