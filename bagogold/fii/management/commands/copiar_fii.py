@@ -34,7 +34,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # FII
-#         print post_save.disconnect(sender=OperacaoFII, dispatch_uid='operacaofii_criada_alterada')
         if not post_save.disconnect(sender=OperacaoFII, dispatch_uid='operacaofii_criada_alterada'):
             print 'operacaofii_criada_alterada'
             return
@@ -90,7 +89,6 @@ class Command(BaseCommand):
                 UsoProventosOperacaoFII.objects.all().delete()
                 HistoricoFII.objects.all().delete()
                 ValorDiarioFII.objects.all().delete()
-        #         EventoFII.objects.all().delete()
                 EventoIncorporacaoFII.objects.all().delete()
                 EventoAgrupamentoFII.objects.all().delete()
                 EventoDesdobramentoFII.objects.all().delete()
@@ -100,10 +98,6 @@ class Command(BaseCommand):
                 for fii in FII_old.objects.all().values():
                     print fii
                     FII.objects.create(**fii)
-                       
-        #         for evento in EventoFII_old.objects.all().values():
-        #             print evento
-        #             EventoFII.objects.create(**evento)
                        
                 for incorporacao in EventoIncorporacaoFII_old.objects.all().values():
                     print incorporacao
@@ -148,7 +142,6 @@ class Command(BaseCommand):
             print e
         
         # Reconectar signals
-#         post_save.connect(preparar_checkpointfii, sender=OperacaoFII, dispatch_uid='operacaofii_criada_alterada')
         # FII
         post_save.connect(preparar_checkpointfii, sender=OperacaoFII, dispatch_uid='operacaofii_criada_alterada')
         post_save.connect(preparar_checkpointproventofii, sender=ProventoFII, dispatch_uid='proventofii_criado_alterado')
@@ -173,12 +166,4 @@ class Command(BaseCommand):
         post_delete.connect(divisao_chkp_evento_delete, sender=EventoAgrupamentoFII, dispatch_uid='evento_agrupamento_divisao_apagado')
         post_delete.connect(divisao_chkp_evento_delete, sender=EventoDesdobramentoFII, dispatch_uid='evento_desdobramento_divisao_apagado')
         post_delete.connect(divisao_chkp_evento_delete, sender=EventoIncorporacaoFII, dispatch_uid='evento_incorporacao_divisao_apagado')
-
-        for chkp in CheckpointFII_old.objects.all():
-            print 'antigo', chkp.ano, chkp.investidor, chkp.quantidade, chkp.fii, CheckpointFII.objects.filter(investidor=chkp.investidor, ano=chkp.ano, 
-                                                     quantidade=chkp.quantidade, preco_medio=chkp.preco_medio, fii__id=chkp.fii.id).exists()
-                                                     
-        for chkp in CheckpointFII.objects.all():
-            print 'novo', chkp.ano, chkp.investidor, chkp.quantidade, chkp.fii, CheckpointFII_old.objects.filter(investidor=chkp.investidor, ano=chkp.ano, 
-                                                     quantidade=chkp.quantidade, preco_medio=chkp.preco_medio, fii__id=chkp.fii.id).exists()
         
