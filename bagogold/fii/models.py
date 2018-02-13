@@ -118,7 +118,7 @@ class EventoIncorporacaoFII (EventoFII):
     novo_fii = models.ForeignKey('FII', related_name='incorporacao')
     
     class Meta:
-        unique_together=('fii', 'data')
+        unique_together=(('fii',))
     
 class EventoAgrupamentoFII (EventoFII):
     proporcao = models.DecimalField(u'Proporção de agrupamento', max_digits=13, decimal_places=12, validators=[MaxValueValidator(Decimal('0.999999999999'))])
