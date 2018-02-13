@@ -20,7 +20,7 @@ from django.db.models.aggregates import Sum
 from django.db.models.expressions import F, Case, When, Value
 from django.db.models.fields import DecimalField, CharField
 from django.db.models.query_utils import Q
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from itertools import chain
 from operator import attrgetter
 import datetime
@@ -475,6 +475,26 @@ class PerformanceSignalCheckpointFIITestCase(TestCase):
         fim = datetime.datetime.now()
 #         print '\nExcluir operação:', fim - inicio
 
+class CheckpointEventoAposOperacaoTestCase(TestCase):
+    def setUp(self):
+        user = User.objects.create(username='test', password='test')
+        user.investidor.data_ultimo_acesso = datetime.date(2016, 5, 11)
+        user.investidor.save()
+        
+        empresa_1 = Empresa.objects.create(nome='BA', nome_pregao='FII BA')
+        fii_1 = FII.objects.create(ticker='BAPO11', empresa=empresa_1)
+        empresa_2 = Empresa.objects.create(nome='BB', nome_pregao='FII BB')
+        fii_2 = FII.objects.create(ticker='BBPO11', empresa=empresa_1)
+        OperacaoFII.objects.create(fii=fii_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=100, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
+        OperacaoFII.objects.create(fii=fii_2, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2018, 1, 11), quantidade=50, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
+        
+        EventoDesdobramentoFII.objects.create(fii=fii_1, data=datetime.date(2017, 6, 3), proporcao=Decimal('9.3674360842'))
+        EventoIncorporacaoFII.objects.create(fii=fii_1, data=datetime.date(2017, 6, 3), novo_fii=fii_2)
+        
+    def test_qtd(self):
+        """Testa se algoritmo calculou quantidade atual corretamente"""
+        self.assertEqual(calcular_qtd_fiis_ate_dia_por_ticker(Investidor.objects.get(user__username='test'), datetime.date(2018, 2, 13), 'BBPO11'), 986)
+
 class AtualizarCheckpointAnualTestCase(TestCase):
     def setUp(self):
         user = User.objects.create(username='test', password='test')
@@ -565,8 +585,8 @@ class AtualizarCheckpointAnualTestCase(TestCase):
         # Verificar se quantidade de cotas está correta
         self.assertEqual(CheckpointFII.objects.get(investidor=investidor, ano=ano_atual, fii=fii).quantidade, 86)
         
-    def test_checkpoints_venda_acoes(self):
-        """Verificar se checkpoints são apagados quando ação é vendida"""
+    def test_checkpoints_venda_cotas(self):
+        """Verificar se checkpoints são apagados quando cota é vendida"""
         investidor = Investidor.objects.get(user__username='test')
         fii = FII.objects.get(ticker='BAPO11')
         
