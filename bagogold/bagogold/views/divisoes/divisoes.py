@@ -525,9 +525,11 @@ def listar_divisoes(request):
          
         if not divisao.objetivo_indefinido():
             divisao.quantidade_percentual = divisao.valor_atual / divisao.valor_objetivo * 100
-            if divisao.valor_atual < divisao.valor_objetivo:
+            # Guardar data da primeira operação para garantir que divisão possui pelo menos uma operação
+            data_primeira_operacao = divisao.buscar_data_primeira_operacao()
+            if divisao.valor_atual < divisao.valor_objetivo and data_primeira_operacao:
                 # Calcula o tempo restante com base na primeira operação da divisão
-                divisao.tempo_restante = (datetime.date.today() - divisao.buscar_data_primeira_operacao()).days
+                divisao.tempo_restante = (datetime.date.today() - data_primeira_operacao).days
                 divisao.tempo_restante = divisao.tempo_restante / (divisao.valor_atual / divisao.valor_objetivo) - divisao.tempo_restante
             else:
                 divisao.tempo_restante = None

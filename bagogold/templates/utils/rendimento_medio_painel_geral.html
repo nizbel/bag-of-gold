@@ -1,0 +1,12 @@
+{% load misc %}
+<div class="row">
+    <div class="col-md-12">
+        <span>Rendimentos desde {{data_inicial|date:'d/m/Y'}}: <strong>R$ {% if rendimento < 0 %}-{% endif %}<span data-counter="counterup" data-value="{{ rendimento|template_abs|floatformat:'2' }}">0</span></strong></span>
+    </div>
+    <div class="col-md-12">
+        <span>Rendimento médio mensal: <strong>{% if rendimento_medio_mensal < 0 %}-{% endif %}<span data-counter="counterup" data-value="{{ rendimento_medio_mensal|template_abs|floatformat:'2' }}">0</span>%</strong></span>
+    </div>
+    <div class="col-md-12">
+        <span>Rendimento médio anual: <strong>{% if rendimento_medio_anual < 0 %}-{% endif %}<span data-counter="counterup" data-value="{{ rendimento_medio_anual|template_abs|floatformat:'2' }}">0</span>%</strong></span>
+    </div>
+</div>

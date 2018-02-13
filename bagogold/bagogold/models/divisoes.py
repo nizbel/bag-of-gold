@@ -56,6 +56,9 @@ class Divisao (models.Model):
         if DivisaoInvestimento.objects.filter(divisao=self).exists():
             datas_primeira_operacao.append(DivisaoInvestimento.objects.filter(divisao=self).order_by('investimento__data')[0].investimento.data)
         
+        if len(datas_primeira_operacao) == 0:
+            return None
+        
         return min(datas_primeira_operacao)
     
     def saldo_acoes_bh(self, data=datetime.date.today()):

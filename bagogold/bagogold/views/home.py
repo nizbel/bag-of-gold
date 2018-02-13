@@ -5,6 +5,8 @@ from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, Provento
     ValorDiarioAcao
 from bagogold.bagogold.models.debentures import OperacaoDebenture, \
     HistoricoValorDebenture
+from bagogold.bagogold.models.divisoes import TransferenciaEntreDivisoes, \
+    Divisao
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
     ValorDiarioTitulo, Titulo
@@ -918,10 +920,10 @@ def painel_geral(request):
     # Guardar data atual
     data_atual = datetime.datetime.now()
     
-    ultimas_operacoes = buscar_ultimas_operacoes(request.user.investidor, 5) 
+    ultimas_operacoes = buscar_ultimas_operacoes(investidor, 5) 
     
     investimentos_atuais = list()
-    investimentos = buscar_totais_atuais_investimentos(request.user.investidor) 
+    investimentos = buscar_totais_atuais_investimentos(investidor) 
     for chave, valor in investimentos.items():
         investimento = Object()
         investimento.valor = valor
@@ -954,7 +956,7 @@ def painel_geral(request):
     
     # Ordenar proventos a receber e separar por grupos
     # Proventos a receber com data EX já passada
-    proventos_a_receber = buscar_proventos_a_receber(request.user.investidor)
+    proventos_a_receber = buscar_proventos_a_receber(investidor)
     
     # Recebidos hoje
     proventos_acoes_recebidos_hoje = [provento for provento in proventos_a_receber if isinstance(provento, Provento) and provento.data_pagamento == data_atual.date()]
@@ -1000,7 +1002,7 @@ def acumulado_mensal_painel_geral(request):
         return HttpResponse(json.dumps(render_to_string('utils/acumulado_mensal_painel_geral.html', {'acumulado_mensal_atual': acumulado_mensal_atual,
                                                      'acumulado_mensal_anterior': acumulado_mensal_anterior})), content_type = "application/json")   
     else:
-        return HttpResponse(json.dumps({'sucesso': False}), content_type = "application/json")   
+        return HttpResponse(json.dumps({}), content_type = "application/json")   
 
 @login_required
 def grafico_renda_fixa_painel_geral(request):
@@ -1098,6 +1100,44 @@ def grafico_renda_fixa_painel_geral(request):
                                         'graf_rendimentos_mensal_cri_cra': graf_rendimentos_mensal_cri_cra}), content_type = "application/json")   
     else:
         return HttpResponse(json.dumps({'sucesso': False}), content_type = "application/json")   
+
+@login_required
+def rendimento_medio_painel_geral(request):
+    if request.is_ajax():
+        investidor = request.user.investidor
+        data_atual = datetime.date.today()
+         
+        # Verificar rendimento médio do investidor
+        data_primeira_operacao = investidor.buscar_data_primeira_operacao()
+        if data_primeira_operacao and data_primeira_operacao < data_atual:
+            data_inicial = max(data_primeira_operacao, data_atual - datetime.timedelta(days=365))
+            
+            # Buscar totais
+            total_atual_investimentos = sum([valor for valor in buscar_totais_atuais_investimentos(request.user.investidor).values()])
+            total_inicial_investimentos = sum([valor for valor in buscar_totais_atuais_investimentos(request.user.investidor, data_inicial).values()])
+            
+            # Rendimento é a variação do valor total dos investimentos, menos o que foi investido 
+            #(saldo inicial - saldo final + transferencias entrando - transferencias saindo)
+            rendimento = total_atual_investimentos - total_inicial_investimentos
+            rendimento += sum([(divisao.saldo() - divisao.saldo(data_inicial)) for divisao in Divisao.objects.filter(investidor=investidor)])
+            rendimento += (TransferenciaEntreDivisoes.objects.filter(data__range=[data_inicial, data_atual], divisao_cedente__investidor=investidor, divisao_recebedora__isnull=True).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
+                - (TransferenciaEntreDivisoes.objects.filter(data__range=[data_inicial, data_atual], divisao_recebedora__investidor=request.user.investidor, divisao_cedente__isnull=True).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
+            
+            # Calcular rendimento percentual
+            rendimento_percentual = (rendimento / (total_inicial_investimentos or 1))
+            # Calcular média mensal e anual
+            rendimento_medio_mensal = 100 * (pow((1 + rendimento_percentual), Decimal(30) / (data_atual - data_inicial).days) - 1)
+            rendimento_medio_anual = 100 * (pow((1 + rendimento_medio_mensal/100), 12) - 1)
+            
+        else:
+            rendimento = 0
+            rendimento_medio_mensal = 0
+            rendimento_medio_anual = 0
+        return HttpResponse(json.dumps(render_to_string('utils/rendimento_medio_painel_geral.html', {'rendimento': rendimento, 'data_inicial': data_inicial or data_atual, 
+                                                     'rendimento_medio_mensal': rendimento_medio_mensal, 'rendimento_medio_anual': rendimento_medio_anual})), 
+                            content_type = "application/json")   
+    else:
+        return HttpResponse(json.dumps({}), content_type = "application/json")  
 
 @adiciona_titulo_descricao('Sobre o site', 'O que é? Para quê?')
 def sobre(request):

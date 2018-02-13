@@ -289,6 +289,28 @@
 			</div>
 			<!-- END Portlet PORTLET-->
 		</div>
+        <div class="col-md-3">
+            <!-- BEGIN Portlet PORTLET-->
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-money"></i>Rendimento médio atual</div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+                </div>
+                <div class="portlet-body" id="rendimento_medio" style="min-height: 50px;">
+                    {% if not request.user.is_authenticated %}
+                    <div class="row">
+                        <div class="col-md-12">
+                            <span>Não há dados</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <!-- END Portlet PORTLET-->
+        </div>
 		<div class="col-md-12">
 			<div class="portlet box yellow-crusta">
 				<div class="portlet-title">
@@ -325,6 +347,7 @@
 <script type="text/javascript">
 $( document ).ready(function() {
 	{% if request.user.is_authenticated %}
+	// Gráfico renda fixa
 	App.blockUI({
         target: '#portlet_body_graf_rendimentos_mensal',
         iconOnly: true,
@@ -402,6 +425,7 @@ $( document ).ready(function() {
         }
     });
 	
+	// Acumulado mensal
 	App.blockUI({
         target: '#acumulado_mensal',
         iconOnly: true,
@@ -425,6 +449,34 @@ $( document ).ready(function() {
         // handle a non-successful response
         error : function(xhr,errmsg,err) {
             App.unblockUI('#acumulado_mensal');
+            console.log(xhr.status + ": " + xhr.responseText);
+        }
+    });
+    
+    // Rendimento mensal
+    App.blockUI({
+        target: '#rendimento_medio',
+        iconOnly: true,
+        overlayColor: 'none'
+    });
+
+    $.ajax({
+        url : "{% url 'inicio:rendimento_medio_painel_geral' %}",
+        type : "GET",
+
+        // handle a successful response
+        success : function(resultado) {
+            $('#rendimento_medio').html(resultado);
+            $("#rendimento_medio [data-counter='counterup']").counterUp({
+                delay: 10,
+                time: 1000
+            });
+            App.unblockUI('#rendimento_medio');
+        },
+
+        // handle a non-successful response
+        error : function(xhr,errmsg,err) {
+            App.unblockUI('#rendimento_medio');
             console.log(xhr.status + ": " + xhr.responseText);
         }
     });

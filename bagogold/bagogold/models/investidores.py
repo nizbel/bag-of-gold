@@ -53,6 +53,9 @@ class Investidor (models.Model):
         if Investimento.objects.filter(investidor=self).exists():
             datas_primeira_operacao.append(Investimento.objects.filter(investidor=self).order_by('data')[0].data)
         
+        if len(datas_primeira_operacao) == 0:
+            return None
+        
         return min(datas_primeira_operacao)
     
 @receiver(post_save, sender=User, dispatch_uid="usuario_criado")
