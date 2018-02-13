@@ -195,7 +195,7 @@ class ProventoAcaoDocumento (models.Model):
         return u'Versão %s no documento %s' % (self.versao, self.documento)
         
 class ProventoFIIDocumento (models.Model):
-    provento = models.ForeignKey('ProventoFII')
+    provento = models.ForeignKey('fii.ProventoFII')
     documento = models.ForeignKey('DocumentoProventoBovespa')
     versao = models.PositiveSmallIntegerField(u'Versão')
     descricao_provento = models.OneToOneField('ProventoFIIDescritoDocumentoBovespa')
@@ -251,7 +251,7 @@ class SelicProventoAcaoDescritoDocBovespa (models.Model):
         return u'Atualização pela Selic de %s a %s' % (self.data_inicio.strftime('%d/%m/%Y'), self.data_fim.strftime('%d/%m/%Y'))
 
 class ProventoFIIDescritoDocumentoBovespa (models.Model):
-    fii = models.ForeignKey('FII')
+    fii = models.ForeignKey('fii.FII')
     valor_unitario = models.DecimalField(u'Valor unitário', max_digits=20, decimal_places=16)
     """
     A = amortização, R = rendimentos
