@@ -485,15 +485,22 @@ class CheckpointEventoAposOperacaoTestCase(TestCase):
         fii_1 = FII.objects.create(ticker='BAPO11', empresa=empresa_1)
         empresa_2 = Empresa.objects.create(nome='BB', nome_pregao='FII BB')
         fii_2 = FII.objects.create(ticker='BBPO11', empresa=empresa_1)
-        OperacaoFII.objects.create(fii=fii_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=100, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
-        OperacaoFII.objects.create(fii=fii_2, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2018, 1, 11), quantidade=50, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
+        OperacaoFII.objects.create(fii=fii_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 1, 10), quantidade=24, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
+        OperacaoFII.objects.create(fii=fii_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 3, 13), quantidade=13, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
         
-        EventoDesdobramentoFII.objects.create(fii=fii_1, data=datetime.date(2017, 6, 3), proporcao=Decimal('9.3674360842'))
-        EventoIncorporacaoFII.objects.create(fii=fii_1, data=datetime.date(2017, 6, 3), novo_fii=fii_2)
+        
+        OperacaoFII.objects.create(fii=fii_2, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 9, 1), quantidade=45, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
+        OperacaoFII.objects.create(fii=fii_2, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 8, 15), quantidade=82, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
+        OperacaoFII.objects.create(fii=fii_2, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 10, 20), quantidade=102, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
+        OperacaoFII.objects.create(fii=fii_2, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 10, 31), quantidade=42, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
+        
+        EventoIncorporacaoFII.objects.create(fii=fii_1, data=datetime.date(2017, 5, 17), novo_fii=fii_2)
+        EventoDesdobramentoFII.objects.create(fii=fii_2, data=datetime.date(2017, 5, 17), proporcao=Decimal('10'))
+        EventoDesdobramentoFII.objects.create(fii=fii_1, data=datetime.date(2017, 5, 17), proporcao=Decimal('9.3674360842'))
         
     def test_qtd(self):
         """Testa se algoritmo calculou quantidade atual corretamente"""
-        self.assertEqual(calcular_qtd_fiis_ate_dia_por_ticker(Investidor.objects.get(user__username='test'), datetime.date(2018, 2, 13), 'BBPO11'), 986)
+        self.assertEqual(calcular_qtd_fiis_ate_dia_por_ticker(Investidor.objects.get(user__username='test'), datetime.date(2018, 2, 13), 'BBPO11'), 617)
 
 class AtualizarCheckpointAnualTestCase(TestCase):
     def setUp(self):
