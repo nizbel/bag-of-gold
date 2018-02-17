@@ -19,7 +19,7 @@
 	<div class="row">
 		<div class="col-md-12">
 			<h2 class="font-yellow-crusta" align="center">
-			Total atual: <strong>R$ <span data-counter="counterup" data-value="{{total_atual_investimentos}}">0</span></strong></h2>
+			Total atual: <strong>R$ <span data-counter="counterup" id="total_atual" data-value="{{total_atual_investimentos}}">0</span></strong></h2>
 			<br/>	
 			<!-- BEGIN Portlet PORTLET-->
 			<div class="portlet box yellow-crusta">
@@ -54,28 +54,76 @@
 			</div>
 			<!-- END Portlet PORTLET-->
 		</div>
-		<div class="col-md-4">
-			<!-- BEGIN Portlet PORTLET-->
-			<div class="portlet box yellow-crusta">
-				<div class="portlet-title">
-					<div class="caption">
-						<i class="fa fa-clock-o"></i>Últimas operações</div>
-					<div class="tools">
-						<a href="javascript:;" class="collapse"></a>
-					</div>
-				</div>
-				<div class="portlet-body">
-					<div class="list-group">
-						{% for operacao in ultimas_operacoes %}
-						<a href="#" class="list-group-item">{{operacao}}</a>
-						{% empty %}
-						<a href="#" class="list-group-item">Não há operações</a>
-						{% endfor %}
-					</div>
-				</div>
-			</div>
-			<!-- END Portlet PORTLET-->
-		</div>
+        <div class="col-md-4">
+            <div class="row">
+                <div class="col-md-12">
+                    <!-- BEGIN Portlet PORTLET-->
+                    <div class="portlet box yellow-crusta">
+                        <div class="portlet-title">
+                            <div class="caption">
+                                <i class="fa fa-money"></i>Rendimento médio atual</div>
+                            <div class="tools">
+                                <a href="javascript:;" class="collapse"></a>
+                            </div>
+                        </div>
+                        <div class="portlet-body" id="rendimento_medio" style="min-height: 50px;">
+                            {% if not request.user.is_authenticated %}
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <span>Não há dados</span>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <!-- END Portlet PORTLET-->
+                </div>
+                <div class="col-md-12">
+                    <!-- BEGIN Portlet PORTLET-->
+                    <div class="portlet box yellow-crusta">
+                        <div class="portlet-title">
+                            <div class="caption">
+                                <i class="fa fa-clock-o"></i>Últimas operações</div>
+                            <div class="tools">
+                                <a href="javascript:;" class="collapse"></a>
+                            </div>
+                        </div>
+                        <div class="portlet-body">
+                            <div class="list-group">
+                                {% for operacao in ultimas_operacoes %}
+                                <a href="#" class="list-group-item">{{operacao}}</a>
+                                {% empty %}
+                                <a href="#" class="list-group-item">Não há operações</a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <!-- END Portlet PORTLET-->
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <!-- BEGIN Portlet PORTLET-->
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-money"></i>Acum. mensal</div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+                </div>
+                <div class="portlet-body text-center" id="acumulado_mensal" style="min-height: 50px;">
+                    {% if not request.user.is_authenticated %}
+                    <div class="row">
+                        <div class="col-md-12">
+                            <span>Não há dados</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <!-- END Portlet PORTLET-->
+        </div>
 		<div class="col-md-6">
 			<!-- BEGIN Portlet PORTLET-->
 			<div class="portlet box yellow-crusta">
@@ -267,50 +315,6 @@
 			</div>
 			<!-- END Portlet PORTLET-->
 		</div>
-		<div class="col-md-2">
-			<!-- BEGIN Portlet PORTLET-->
-			<div class="portlet box yellow-crusta">
-				<div class="portlet-title">
-					<div class="caption">
-						<i class="fa fa-money"></i>Acum. mensal</div>
-					<div class="tools">
-						<a href="javascript:;" class="collapse"></a>
-					</div>
-				</div>
-				<div class="portlet-body text-center" id="acumulado_mensal" style="min-height: 50px;">
-                    {% if not request.user.is_authenticated %}
-                    <div class="row">
-                        <div class="col-md-12">
-                            <span>Não há dados</span>
-                        </div>
-                    </div>
-                    {% endif %}
-				</div>
-			</div>
-			<!-- END Portlet PORTLET-->
-		</div>
-        <div class="col-md-3">
-            <!-- BEGIN Portlet PORTLET-->
-            <div class="portlet box yellow-crusta">
-                <div class="portlet-title">
-                    <div class="caption">
-                        <i class="fa fa-money"></i>Rendimento médio atual</div>
-                    <div class="tools">
-                        <a href="javascript:;" class="collapse"></a>
-                    </div>
-                </div>
-                <div class="portlet-body" id="rendimento_medio" style="min-height: 50px;">
-                    {% if not request.user.is_authenticated %}
-                    <div class="row">
-                        <div class="col-md-12">
-                            <span>Não há dados</span>
-                        </div>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-            <!-- END Portlet PORTLET-->
-        </div>
 		<div class="col-md-12">
 			<div class="portlet box yellow-crusta">
 				<div class="portlet-title">
@@ -460,9 +464,11 @@ $( document ).ready(function() {
         overlayColor: 'none'
     });
 
+    var total_atual = $('#total_atual').attr('data-value').replace(/\./g, '').replace(',', '.');
     $.ajax({
         url : "{% url 'inicio:rendimento_medio_painel_geral' %}",
         type : "GET",
+        data : {total_atual: total_atual},
 
         // handle a successful response
         success : function(resultado) {
