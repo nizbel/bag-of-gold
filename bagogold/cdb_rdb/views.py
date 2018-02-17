@@ -437,13 +437,13 @@ def historico(request):
                     operacoes[indice_relacionada].atual = operacoes[indice_relacionada].quantidade - operacoes[indice_relacionada].qtd_vendida
                     if operacoes[indice_relacionada].atual > 0:
                         # Atualizar o valor
-                        if operacoes[indice_relacionada].investimento.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
+                        if operacoes[indice_relacionada].cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
                             # DI
                             historico = HistoricoTaxaDI.objects.filter(data__range=[operacoes[indice_relacionada].data, ultima_data])
                             taxas_dos_dias = dict(historico.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
                             operacoes[indice_relacionada].atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacoes[indice_relacionada].atual, 
                                                                                                          operacoes[indice_relacionada].taxa)
-                        elif operacoes[indice_relacionada].investimento.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
+                        elif operacoes[indice_relacionada].cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
                             # Prefixado
                             # Calcular quantidade dias para valorização, adicionar 1 pois a função exclui a data final
                             qtd_dias = qtd_dias_uteis_no_periodo(operacoes[indice_relacionada].data, ultima_data) + 1
@@ -465,13 +465,13 @@ def historico(request):
                     ultima_data_valorizacao = min(operacoes[indice_atualizacao].data_vencimento(), operacao.data)
                     if ultima_data_valorizacao >= ultima_data:
                         # Calcular o valor atualizado para cada operacao
-                        if operacoes[indice_atualizacao].investimento.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
+                        if operacoes[indice_atualizacao].cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
                             # DI
                             historico = HistoricoTaxaDI.objects.filter(data__range=[primeira_data_valorizacao, ultima_data_valorizacao])
                             taxas_dos_dias = dict(historico.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
                             operacoes[indice_atualizacao].atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacoes[indice_atualizacao].atual, 
                                                                                                          operacoes[indice_atualizacao].taxa)
-                        elif operacoes[indice_atualizacao].investimento.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
+                        elif operacoes[indice_atualizacao].cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
                             # Prefixado
                             # Calcular quantidade dias para valorização, adicionar 1 pois a função exclui a data final
                             qtd_dias = qtd_dias_uteis_no_periodo(primeira_data_valorizacao, ultima_data_valorizacao) + 1
@@ -499,12 +499,12 @@ def historico(request):
                 ultima_data_valorizacao = min(operacao.data_vencimento(), data_final)
                 if ultima_data_valorizacao >= ultima_data:
                     # Calcular o valor atualizado para cada operacao
-                    if operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
+                    if operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
                         # DI
                         historico = HistoricoTaxaDI.objects.filter(data__range=[ultima_data, ultima_data_valorizacao])
                         taxas_dos_dias = dict(historico.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
                         operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.atual, operacao.taxa)
-                    elif operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
+                    elif operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
                         # Prefixado
                         # Calcular quantidade dias para valorização, adicionar 1 pois a função exclui a data final
                         qtd_dias = qtd_dias_uteis_no_periodo(ultima_data, ultima_data_valorizacao) + 1
@@ -809,12 +809,12 @@ def painel(request):
         operacao.taxa = operacao.porcentagem()
         data_final_valorizacao = min(data_final, operacao.data_vencimento() - datetime.timedelta(days=1))
         # Calcular o valor atualizado
-        if operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
+        if operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
             # DI
             historico = HistoricoTaxaDI.objects.filter(data__range=[operacao.data, data_final_valorizacao])
             taxas_dos_dias = dict(historico.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
             operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.atual, operacao.taxa)
-        elif operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
+        elif operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
             # Prefixado
             # Calcular quantidade dias para valorização, adicionar 1 pois a função exclui a data final
             qtd_dias = qtd_dias_uteis_no_periodo(operacao.data, data_final_valorizacao) + 1
@@ -838,9 +838,9 @@ def painel(request):
         # Calcular o ganho no dia seguinte
         if data_final < operacao.data_vencimento():
             # Se prefixado apenas pegar rendimento de 1 dia
-            if operacao.investimento.eh_prefixado():
+            if operacao.cdb_rdb.eh_prefixado():
                 operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa) - operacao.atual
-            elif operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
+            elif operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
                 # Considerar rendimento do dia anterior
                 operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa_di(ultima_taxa_di, operacao.atual, operacao.taxa) - operacao.atual
             # Formatar
@@ -872,9 +872,9 @@ def painel(request):
         if data_final < operacao.data_vencimento():
             qtd_dias_uteis_ate_vencimento = qtd_dias_uteis_no_periodo(data_final + datetime.timedelta(days=1), operacao.data_vencimento())
             # Se prefixado apenas pegar rendimento de 1 dia
-            if operacao.investimento.eh_prefixado():
+            if operacao.cdb_rdb.eh_prefixado():
                 operacao.valor_vencimento = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa, qtd_dias_uteis_ate_vencimento)
-            elif operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
+            elif operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
                 # Considerar rendimento do dia anterior
                 operacao.valor_vencimento = calcular_valor_atualizado_com_taxas_di({HistoricoTaxaDI.objects.get(data=data_final).taxa: qtd_dias_uteis_ate_vencimento},
                                                      operacao.atual, operacao.taxa)

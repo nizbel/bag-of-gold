@@ -232,10 +232,10 @@ def detalhar_divisao(request, divisao_id):
             composicao['cdb-rdb'].composicao[cdb_rdb_id].composicao[operacao_divisao.operacao.id].data = operacao_divisao.operacao.data
             composicao['cdb-rdb'].composicao[cdb_rdb_id].composicao[operacao_divisao.operacao.id].quantidade = operacao_divisao.quantidade
             try:
-                composicao['cdb-rdb'].composicao[cdb_rdb_id].composicao[operacao_divisao.operacao.id].valor_unitario = HistoricoPorcentagemCDB_RDB.objects.filter(cdb_rdb=operacao_divisao.operacao.investimento, \
+                composicao['cdb-rdb'].composicao[cdb_rdb_id].composicao[operacao_divisao.operacao.id].valor_unitario = HistoricoPorcentagemCDB_RDB.objects.filter(cdb_rdb=operacao_divisao.operacao.cdb_rdb, \
                                                                                                                                         data__lte=operacao_divisao.operacao.data).order_by('-data')[0].porcentagem
             except:
-                composicao['cdb-rdb'].composicao[cdb_rdb_id].composicao[operacao_divisao.operacao.id].valor_unitario = HistoricoPorcentagemCDB_RDB.objects.get(data__isnull=True, cdb_rdb=operacao_divisao.operacao.investimento).porcentagem
+                composicao['cdb-rdb'].composicao[cdb_rdb_id].composicao[operacao_divisao.operacao.id].valor_unitario = HistoricoPorcentagemCDB_RDB.objects.get(data__isnull=True, cdb_rdb=operacao_divisao.operacao.cdb_rdb).porcentagem
             
             composicao['cdb-rdb'].composicao[cdb_rdb_id].composicao[operacao_divisao.operacao.id].patrimonio = operacao_divisao.quantidade
     

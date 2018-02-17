@@ -20,7 +20,7 @@ def calcular_valor_venda_cdb_rdb(operacao_venda, considerar_impostos=False):
                 Levar em consideração impostos (IOF e IR)
     Resultado: Valor em reais da venda
     """
-    if operacao_venda.operacao_compra_relacionada().investimento.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
+    if operacao_venda.operacao_compra_relacionada().cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
         # Definir período do histórico relevante para a operação
         historico_utilizado = HistoricoTaxaDI.objects.filter(data__range=[operacao_venda.operacao_compra_relacionada().data, operacao_venda.data - datetime.timedelta(days=1)]).values('taxa').annotate(qtd_dias=Count('taxa'))
         taxas_dos_dias = {}
@@ -35,7 +35,7 @@ def calcular_valor_venda_cdb_rdb(operacao_venda, considerar_impostos=False):
                                                  (operacao_venda.data - operacao_venda.operacao_compra_relacionada().data).days))
         else:
             return calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao_venda.quantidade, operacao_venda.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
-    elif operacao_venda.operacao_compra_relacionada().investimento.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
+    elif operacao_venda.operacao_compra_relacionada().cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
         # Prefixado
         if considerar_impostos:
             valor_final = calcular_valor_atualizado_com_taxa_prefixado(operacao_venda.quantidade, operacao_venda.porcentagem(), 
@@ -65,10 +65,10 @@ def calcular_valor_cdb_rdb_ate_dia(investidor, dia=datetime.date.today(), consid
         # TODO consertar verificação de todas vendidas
         operacao.quantidade = operacao.qtd_disponivel_venda
 
-        if operacao.investimento.id not in cdb_rdb.keys():
-            cdb_rdb[operacao.investimento.id] = 0
+        if operacao.cdb_rdb.id not in cdb_rdb.keys():
+            cdb_rdb[operacao.cdb_rdb.id] = 0
         
-        if operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
+        if operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
             # DI
             # Definir período do histórico relevante para a operação
             historico_utilizado = historico.filter(data__range=[operacao.data, dia]).values('taxa').annotate(qtd_dias=Count('taxa'))
@@ -79,19 +79,19 @@ def calcular_valor_cdb_rdb_ate_dia(investidor, dia=datetime.date.today(), consid
             # Calcular
             if considerar_impostos:
                 valor_final = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, operacao.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
-                cdb_rdb[operacao.investimento.id] += valor_final - sum(calcular_iof_e_ir_longo_prazo(valor_final - operacao.quantidade, 
+                cdb_rdb[operacao.cdb_rdb.id] += valor_final - sum(calcular_iof_e_ir_longo_prazo(valor_final - operacao.quantidade, 
                                                  (dia - operacao.data).days))
             else:
-                cdb_rdb[operacao.investimento.id] += calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, operacao.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
-        elif operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
+                cdb_rdb[operacao.cdb_rdb.id] += calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, operacao.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
+        elif operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
             # Prefixado
             if considerar_impostos:
                 valor_final = calcular_valor_atualizado_com_taxa_prefixado(operacao.quantidade, operacao.porcentagem(), qtd_dias_uteis_no_periodo(operacao.data, datetime.date.today())) \
                     .quantize(Decimal('.01'), ROUND_DOWN)
-                cdb_rdb[operacao.investimento.id] += valor_final - sum(calcular_iof_e_ir_longo_prazo(valor_final - operacao.quantidade, 
+                cdb_rdb[operacao.cdb_rdb.id] += valor_final - sum(calcular_iof_e_ir_longo_prazo(valor_final - operacao.quantidade, 
                                                  (dia - operacao.data).days))
             else:
-                cdb_rdb[operacao.investimento.id] += calcular_valor_atualizado_com_taxa_prefixado(operacao.quantidade, operacao.porcentagem(), 
+                cdb_rdb[operacao.cdb_rdb.id] += calcular_valor_atualizado_com_taxa_prefixado(operacao.quantidade, operacao.porcentagem(), 
                                                                                                   qtd_dias_uteis_no_periodo(operacao.data, datetime.date.today())).quantize(Decimal('.01'), ROUND_DOWN)
     
     return cdb_rdb
@@ -127,11 +127,11 @@ def calcular_valor_cdb_rdb_ate_dia_por_divisao(dia, divisao_id):
     historico = HistoricoTaxaDI.objects.filter(data__range=[operacoes[0].data, dia])
       
     for operacao in operacoes:
-        if operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
+        if operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
             # DI
             taxas_dos_dias = dict(historico.filter(data__range=[operacao.data, dia]).values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
             operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacoes_cdb_rdb[operacao.id], operacao.porcentagem())
-        elif operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
+        elif operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
             # Prefixado
             operacao.atual = calcular_valor_atualizado_com_taxa_prefixado(operacoes_cdb_rdb[operacao.id], operacao.porcentagem(), qtd_dias_uteis_no_periodo(operacao.data, datetime.date.today()))
                
@@ -143,7 +143,7 @@ def calcular_valor_cdb_rdb_ate_dia_por_divisao(dia, divisao_id):
   
     # Preencher os valores nos cdb/rdb
     for investimento in list(set(operacoes.values_list('investimento', flat=True))):
-        cdb_rdb[investimento] = sum([operacao.atual for operacao in operacoes if operacao.investimento.id == investimento])
+        cdb_rdb[investimento] = sum([operacao.atual for operacao in operacoes if operacao.cdb_rdb.id == investimento])
     
     return cdb_rdb
 
