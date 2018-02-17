@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.investidores import Investidor
+from bagogold.cdb_rdb.models import OperacaoCDB_RDB, HistoricoPorcentagemCDB_RDB
+from bagogold.cdb_rdb.utils import calcular_valor_operacao_cdb_rdb_ate_dia
 from django.db.models.signals import post_save, post_delete
 from django.dispatch.dispatcher import receiver
 import datetime
-from bagogold.cdb_rdb.models import OperacaoCDB_RDB
 
                 
 # Preparar checkpoints para alterações em operações de CDB/RDB
@@ -16,24 +17,20 @@ def preparar_checkpoint_cdb_rdb(sender, instance, created, **kwargs):
     """ 
     Cria novo checkpoint ou altera existente
     """
-    gerar_checkpoint_cdb_rdb(instance.investidor, instance.cdb_rdb, ano)
-    
+    if instance.tipo_operacao == 'C':
+        gerar_checkpoint_cdb_rdb(instance, ano)
+    elif instance.tipo_operacao == 'V':
+        gerar_checkpoint_cdb_rdb(instance.operacao_compra_relacionada(), ano)
+        
     """
     Verificar se existem anos posteriores
     """
     if ano != datetime.date.today().year:
         for prox_ano in range(ano + 1, datetime.date.today().year + 1):
-            gerar_checkpoint_cdb_rdb(instance.investidor, instance.cdb_rdb, prox_ano)
-            
-            # Se existe incorporação
-            if incorporacao and incorporacao.data.year <= prox_ano:
-                gerar_checkpoint_cdb_rdb(instance.investidor, incorporacao.novo_cdb_rdb, prox_ano)
-                
-            # Alterar checkpoint de poupança de proventos
-            gerar_checkpoint_proventos_cdb_rdb(instance.investidor, prox_ano)
+            gerar_checkpoint_cdb_rdb(instance, prox_ano)
             
     
-@receiver(post_delete, sender=Operacaocdb_rdb, dispatch_uid="operacao_cdb_rdb_apagada")
+@receiver(post_delete, sender=OperacaoCDB_RDB, dispatch_uid="operacao_cdb_rdb_apagada")
 def preparar_checkpoint_cdb_rdb_delete(sender, instance, **kwargs):
     """
     Verifica ano da operação apagada
@@ -42,110 +39,64 @@ def preparar_checkpoint_cdb_rdb_delete(sender, instance, **kwargs):
     """ 
     Altera checkpoint existente
     """
-    gerar_checkpoint_cdb_rdb(instance.investidor, instance.cdb_rdb, ano)
-    # Verificar se cdb_rdb é incorporado
-    incorporacao = None if not EventoIncorporacaocdb_rdb.objects.filter(cdb_rdb=instance.cdb_rdb).exists() else EventoIncorporacaocdb_rdb.objects.get(cdb_rdb=instance.cdb_rdb)
-    # Se existe incorporação
-    if incorporacao and incorporacao.data.year == ano:
-        gerar_checkpoint_cdb_rdb(instance.investidor, incorporacao.novo_cdb_rdb, ano)
-        
-    # Alterar checkpoint de poupança de proventos
-    gerar_checkpoint_proventos_cdb_rdb(instance.investidor, ano)
+    if instance.tipo_operacao == 'C':
+        gerar_checkpoint_cdb_rdb(instance, ano)
+    elif instance.tipo_operacao == 'V':
+        gerar_checkpoint_cdb_rdb(instance.operacao_compra_relacionada(), ano)
 
     """
     Verificar se existem anos posteriores
     """
     if ano != datetime.date.today().year:
         for prox_ano in range(ano + 1, datetime.date.today().year + 1):
-            gerar_checkpoint_cdb_rdb(instance.investidor, instance.cdb_rdb, prox_ano)
+            gerar_checkpoint_cdb_rdb(instance, prox_ano)
             
-            # Se existe incorporação
-            if incorporacao and incorporacao.data.year <= prox_ano:
-                gerar_checkpoint_cdb_rdb(instance.investidor, incorporacao.novo_cdb_rdb, prox_ano)
-                
-            # Alterar checkpoint de poupança de proventos
-            gerar_checkpoint_proventos_cdb_rdb(instance.investidor, prox_ano)
-
         
 # Preparar checkpoints para alterações em histórico de porcentagem
-@receiver(post_save, sender=EventoAgrupamentocdb_rdb, dispatch_uid="evento_agrupamento_criado_alterado")
+@receiver(post_save, sender=HistoricoPorcentagemCDB_RDB, dispatch_uid="hist_porcent_cdb_rdb_criado_alterado")
 def preparar_checkpoint_cdb_rdb_historico(sender, instance, created, **kwargs):
-    """
-    Verifica ano da operação alterada
-    """
-    ano = instance.data.year
     """ 
-    Cria novo checkpoint ou altera existente
+    Cria novo checkpoint ou altera existente para as operações afetadas
     """
-    # Verificar se cdb_rdb é incorporado
-    incorporacao = None if not EventoIncorporacaocdb_rdb.objects.filter(cdb_rdb=instance.cdb_rdb).exists() else EventoIncorporacaocdb_rdb.objects.get(cdb_rdb=instance.cdb_rdb)
-    for investidor in Investidor.objects.filter(id__in=Operacaocdb_rdb.objects.filter(cdb_rdb=instance.cdb_rdb, data__lt=instance.data) \
-                                                .order_by('investidor').distinct('investidor').values_list('investidor', flat=True)):
-        gerar_checkpoint_cdb_rdb(investidor, instance.cdb_rdb, ano)
-        # Se existe incorporação
-        if incorporacao and incorporacao.data.year == ano:
-            gerar_checkpoint_cdb_rdb(investidor, incorporacao.novo_cdb_rdb, ano)
-            
-        # Alterar checkpoint de poupança de proventos
-        gerar_checkpoint_proventos_cdb_rdb(investidor, ano)
+    # Todas podem ser afetadas
+    for operacao in OperacaoCDB_RDB.objects.filter(cdb_rdb=instance.cdb_rdb, tipo_operacao='C'):
+        ano = operacao.data.year
+        gerar_checkpoint_cdb_rdb(operacao, ano)
 
         """
         Verificar se existem anos posteriores
         """
         if ano != datetime.date.today().year:
             for prox_ano in range(ano + 1, datetime.date.today().year + 1):
-                gerar_checkpoint_cdb_rdb(investidor, instance.cdb_rdb, prox_ano)
-                
-                # Se existe incorporação
-                if incorporacao and incorporacao.data.year <= prox_ano:
-                    gerar_checkpoint_cdb_rdb(investidor, incorporacao.novo_cdb_rdb, prox_ano)
-                
-                # Alterar checkpoint de poupança de proventos
-                gerar_checkpoint_proventos_cdb_rdb(investidor, prox_ano)
-            
-    
-@receiver(post_delete, sender=EventoAgrupamentocdb_rdb, dispatch_uid="evento_agrupamento_apagado")
-def preparar_checkpoint_cdb_rdb_historico_delete(sender, instance, **kwargs):
-    """
-    Verifica ano do evento apagado
-    """
-    ano = instance.data.year
-    """ 
-    Altera checkpoints existentes
-    """
-    incorporacao = None if not EventoIncorporacaocdb_rdb.objects.filter(cdb_rdb=instance.cdb_rdb).exists() else EventoIncorporacaocdb_rdb.objects.get(cdb_rdb=instance.cdb_rdb)
-    for investidor in Investidor.objects.filter(id__in=Operacaocdb_rdb.objects.filter(cdb_rdb=instance.cdb_rdb, data__lt=instance.data) \
-                                                .order_by('investidor').distinct('investidor').values_list('investidor', flat=True)):
-        gerar_checkpoint_cdb_rdb(investidor, instance.cdb_rdb, ano)
-        # Se existe incorporação
-        if incorporacao and incorporacao.data.year == ano:
-            gerar_checkpoint_cdb_rdb(investidor, instance.novo_cdb_rdb, ano)
+                gerar_checkpoint_cdb_rdb(operacao, prox_ano)
         
-        # Alterar checkpoint de poupança de proventos
-        gerar_checkpoint_proventos_cdb_rdb(investidor, ano)
+                
+    
+@receiver(post_delete, sender=HistoricoPorcentagemCDB_RDB, dispatch_uid="hist_porcent_cdb_rdb_apagado")
+def preparar_checkpoint_cdb_rdb_historico_delete(sender, instance, **kwargs):
+    """ 
+    Altera checkpoints para as operações afetadas
+    """
+    # Todas podem ser afetadas
+    for operacao in OperacaoCDB_RDB.objects.filter(cdb_rdb=instance.cdb_rdb, tipo_operacao='C'):
+        ano = operacao.data.year
+        gerar_checkpoint_cdb_rdb(operacao, ano)
 
         """
         Verificar se existem anos posteriores
         """
         if ano != datetime.date.today().year:
             for prox_ano in range(ano + 1, datetime.date.today().year + 1):
-                gerar_checkpoint_cdb_rdb(investidor, instance.cdb_rdb, prox_ano)
+                gerar_checkpoint_cdb_rdb(operacao, prox_ano)
                 
-                # Se existe incorporação
-                if incorporacao and incorporacao.data.year <= prox_ano:
-                    gerar_checkpoint_cdb_rdb(investidor, incorporacao.novo_cdb_rdb, prox_ano)
-                
-                # Alterar checkpoint de poupança de proventos
-                gerar_checkpoint_proventos_cdb_rdb(investidor, prox_ano)
             
-            
-def gerar_checkpoint_cdb_rdb(investidor, cdb_rdb, ano):
-    quantidade = calcular_qtd_cdb_rdbs_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), cdb_rdb.ticker)
-    preco_medio = calcular_preco_medio_cdb_rdbs_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), cdb_rdb.ticker)
-    if Checkpointcdb_rdb.objects.filter(investidor=investidor, cdb_rdb=cdb_rdb, ano=ano-1).exclude(quantidade=0).exists() or quantidade != 0:
-        Checkpointcdb_rdb.objects.update_or_create(investidor=investidor, cdb_rdb=cdb_rdb, ano=ano, 
-                                           defaults={'quantidade': quantidade, 'preco_medio': preco_medio})
+def gerar_checkpoint_cdb_rdb(operacao, ano):
+    qtd_restante = operacao.quantidade_disponivel_venda_na_data(datetime.date(ano, 12, 31))
+    qtd_atualizada = calcular_valor_operacao_cdb_rdb_ate_dia(operacao, datetime.date(ano, 12, 31))
+    if qtd_restante != 0:
+        Checkpointcdb_rdb.objects.update_or_create(operacao=operacao, ano=ano, 
+                                           defaults={'qtd_restante': qtd_restante, 'qtd_atualizada': qtd_atualizada})
     else:
         # Não existe checkpoint anterior e quantidade atual é 0
-        Checkpointcdb_rdb.objects.filter(investidor=investidor, cdb_rdb=cdb_rdb, ano=ano).delete()
+        Checkpointcdb_rdb.objects.filter(operacao=operacao, ano=ano).delete()
     

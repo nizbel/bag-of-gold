@@ -111,6 +111,12 @@ class OperacaoCDB_RDB (models.Model):
             data_carencia += datetime.timedelta(days=1)
         return data_carencia
         
+    def data_inicial(self):
+        if self.tipo_operacao == 'V':
+            return OperacaoVendaCDB_RDB.objects.get(operacao_venda=self).operacao_compra.data
+        else:
+            return self.data
+        
     def data_vencimento(self):
         data_vencimento = self.data + datetime.timedelta(days=self.vencimento())
         # Verifica se é fim de semana ou feriado
@@ -140,10 +146,10 @@ class OperacaoCDB_RDB (models.Model):
             qtd_vendida += venda.quantidade
         return self.quantidade - qtd_vendida
     
-    def qtd_disponivel_venda_na_data(self, data):
-        vendas = OperacaoVendaCDB_RDB.objects.filter(operacao_compra=self).values_list('operacao_venda__id', flat=True)
+    def qtd_disponivel_venda_na_data(self, data, desconsiderar_operacao=None):
+        vendas = OperacaoVendaCDB_RDB.objects.filter(operacao_compra=self).exclude(operacao_venda=desconsiderar_operacao).values_list('operacao_venda__id', flat=True)
         qtd_vendida = 0
-        for venda in OperacaoCDB_RDB.objects.filter(id__in=vendas, data__lt=data):
+        for venda in OperacaoCDB_RDB.objects.filter(id__in=vendas, data__lte=data):
             qtd_vendida += venda.quantidade
         return self.quantidade - qtd_vendida
     
@@ -179,6 +185,25 @@ class HistoricoPorcentagemCDB_RDB (models.Model):
     data = models.DateField(u'Data da variação', blank=True, null=True)
     cdb_rdb = models.ForeignKey('CDB_RDB')
     
+    def alteracao_anterior(self):
+        if self.data == None:
+            return None
+        else:
+            if HistoricoPorcentagemCDB_RDB.objects.filter(cdb_rdb=self.cdb_rdb, data__lt=self.data).exists():
+                return HistoricoPorcentagemCDB_RDB.objects.filter(cdb_rdb=self.cdb_rdb, data__lt=self.data).order_by('-data')[0]
+            else:
+                return HistoricoPorcentagemCDB_RDB.objects.get(cdb_rdb=self.cdb_rdb, data=None)
+            
+    def alteracao_posterior(self):
+        if self.data == None:
+            if HistoricoPorcentagemCDB_RDB.objects.filter(cdb_rdb=self.cdb_rdb, data__isnull=False).exists():
+                return HistoricoPorcentagemCDB_RDB.objects.filter(cdb_rdb=self.cdb_rdb, data__isnull=False).order_by('data')[0]
+            return None
+        else:
+            if HistoricoPorcentagemCDB_RDB.objects.filter(cdb_rdb=self.cdb_rdb, data__gt=self.data).exists():
+                return HistoricoPorcentagemCDB_RDB.objects.filter(cdb_rdb=self.cdb_rdb, data__gt=self.data).order_by('data')[0]
+            return None
+    
 class HistoricoCarenciaCDB_RDB (models.Model):
     """
     O período de carência é medido em dias
@@ -208,7 +233,8 @@ class HistoricoValorMinimoInvestimentoCDB_RDB (models.Model):
 class CheckpointCDB_RDB (models.Model):
     ano = models.SmallIntegerField(u'Ano')
     operacao = models.ForeignKey('OperacaoCDB_RDB')
-    investidor = models.ForeignKey('bagogold.Investidor')
     qtd_restante = models.DecimalField(u'Quantidade restante da operação', max_digits=11, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
     qtd_atualizada = models.DecimalField(u'Quantidade atualizada da operação', max_digits=17, decimal_places=8, validators=[MinValueValidator(Decimal('0.00000001'))])
     
+    class Meta:
+        unique_together=('operacao', 'ano')
