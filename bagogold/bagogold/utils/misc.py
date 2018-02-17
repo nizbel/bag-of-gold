@@ -234,9 +234,11 @@ def verificar_feriado_bovespa(data):
     # Calcular feriados dependentes da páscoa
     domingo_pascoa = calcular_domingo_pascoa_no_ano(data.year)
     carnaval = domingo_pascoa - datetime.timedelta(days=47)
+    segunda_carnaval = carnaval - datetime.timedelta(days=1)
     sexta_santa = domingo_pascoa - datetime.timedelta(days=2)
     corpus_christi = domingo_pascoa + datetime.timedelta(days=60)
     lista_feriados = ((1, 1), # Confraternização Universal
+                      (segunda_carnaval.day, segunda_carnaval.month), # Segunda de Carnaval
                       (carnaval.day, carnaval.month), # Carnaval
                       (sexta_santa.day, sexta_santa.month), # Sexta-feira santa
                       (corpus_christi.day, corpus_christi.month), # Corpus Christi
