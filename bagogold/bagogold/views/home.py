@@ -557,7 +557,7 @@ def detalhamento_investimentos(request):
                 cdb_rdb[item.id] = item
                 
             elif item.tipo_operacao == 'V':
-                if item.quantidade == item.operacao_compra_relacionada().qtd_disponivel_venda_na_data(item.data):
+                if item.quantidade == item.operacao_compra_relacionada().qtd_disponivel_venda_na_data(item.data, item):
                     del cdb_rdb[item.operacao_compra_relacionada().id]
                 else:
                     cdb_rdb[item.operacao_compra_relacionada().id].quantidade -= cdb_rdb[item.operacao_compra_relacionada().id].quantidade * item.quantidade / item.operacao_compra_relacionada().quantidade
