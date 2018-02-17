@@ -1106,14 +1106,14 @@ def rendimento_medio_painel_geral(request):
     if request.is_ajax():
         investidor = request.user.investidor
         data_atual = datetime.date.today()
-         
+        
         # Verificar rendimento médio do investidor
         data_primeira_operacao = investidor.buscar_data_primeira_operacao()
         if data_primeira_operacao and data_primeira_operacao < data_atual:
             data_inicial = max(data_primeira_operacao, data_atual - datetime.timedelta(days=365))
             
             # Buscar totais
-            total_atual_investimentos = sum([valor for valor in buscar_totais_atuais_investimentos(request.user.investidor).values()])
+            total_atual_investimentos = Decimal(request.GET.get('total_atual'))
             total_inicial_investimentos = sum([valor for valor in buscar_totais_atuais_investimentos(request.user.investidor, data_inicial).values()])
             
             # Rendimento é a variação do valor total dos investimentos, menos o que foi investido 
