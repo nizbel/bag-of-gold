@@ -122,14 +122,14 @@ class Divisao (models.Model):
             taxa = venda_divisao.operacao.porcentagem()
              
             # Calcular o valor atualizado
-            if venda_divisao.operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
+            if venda_divisao.operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
                 # DI
                 dias_de_rendimento = historico_di.filter(data__gte=venda_divisao.operacao.operacao_compra_relacionada().data, data__lt=venda_divisao.operacao.data)
                 taxas_dos_dias = dict(dias_de_rendimento.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
                 valor_venda = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor_venda, taxa)
                 valor_venda -= sum(calcular_iof_e_ir_longo_prazo(valor_venda - venda_divisao.quantidade, 
                                                               (venda_divisao.operacao.data - venda_divisao.operacao.operacao_compra_relacionada().data).days))
-            elif venda_divisao.operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
+            elif venda_divisao.operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
                 # Prefixado
                 # Calcular quantidade dias para valorização
                 qtd_dias = qtd_dias_uteis_no_periodo(venda_divisao.operacao.operacao_compra_relacionada().data, venda_divisao.operacao.data)

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
+from decimal import Decimal
+from django.core.validators import MinValueValidator
 from django.db import models
 import datetime
 
@@ -84,11 +86,11 @@ class OperacaoCDB_RDB (models.Model):
     quantidade = models.DecimalField(u'Quantidade investida/resgatada', max_digits=11, decimal_places=2)
     data = models.DateField(u'Data da operação')
     tipo_operacao = models.CharField(u'Tipo de operação', max_length=1)
-    investimento = models.ForeignKey('CDB_RDB')
+    cdb_rdb = models.ForeignKey('CDB_RDB')
     investidor = models.ForeignKey('bagogold.Investidor', related_name='op_cdb_rdb_novo')
     
     def __unicode__(self):
-        return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.investimento, self.data)
+        return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.cdb_rdb, self.data)
     
 #     def save(self, *args, **kw):
 #         # Apagar operação venda caso operação seja editada para compra
@@ -97,10 +99,10 @@ class OperacaoCDB_RDB (models.Model):
 #         super(OperacaoCDB_RDB, self).save(*args, **kw)
     
     def carencia(self):
-        if HistoricoCarenciaCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.investimento).exists():
-            return HistoricoCarenciaCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.investimento).order_by('-data')[0].carencia
+        if HistoricoCarenciaCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb).exists():
+            return HistoricoCarenciaCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb).order_by('-data')[0].carencia
         else:
-            return HistoricoCarenciaCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.investimento).carencia
+            return HistoricoCarenciaCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.cdb_rdb).carencia
         
     def data_carencia(self):
         data_carencia = self.data + datetime.timedelta(days=self.carencia())
@@ -124,10 +126,10 @@ class OperacaoCDB_RDB (models.Model):
     
     def porcentagem(self):
         if self.tipo_operacao == 'C':
-            if HistoricoPorcentagemCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.investimento).exists():
-                return HistoricoPorcentagemCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.investimento).order_by('-data')[0].porcentagem
+            if HistoricoPorcentagemCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb).exists():
+                return HistoricoPorcentagemCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb).order_by('-data')[0].porcentagem
             else:
-                return HistoricoPorcentagemCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.investimento).porcentagem
+                return HistoricoPorcentagemCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.cdb_rdb).porcentagem
         elif self.tipo_operacao == 'V':
             return self.operacao_compra_relacionada().porcentagem()
     
@@ -146,10 +148,10 @@ class OperacaoCDB_RDB (models.Model):
         return self.quantidade - qtd_vendida
     
     def vencimento(self):
-        if HistoricoVencimentoCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.investimento).exists():
-            return HistoricoVencimentoCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.investimento).order_by('-data')[0].vencimento
+        if HistoricoVencimentoCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb).exists():
+            return HistoricoVencimentoCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb).order_by('-data')[0].vencimento
         else:
-            return HistoricoVencimentoCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.investimento).vencimento
+            return HistoricoVencimentoCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.cdb_rdb).vencimento
     
     def venda_permitida(self, data_venda=None):
         if data_venda == None:
@@ -160,7 +162,7 @@ class OperacaoCDB_RDB (models.Model):
                 # Verifica o período de carência pegando a data mais recente antes da operação de compra
                 return (historico[0].carencia <= (data_venda - self.data).days)
             else:
-                carencia = HistoricoCarenciaCDB_RDB.objects.get(cdb_rdb=self.investimento).carencia
+                carencia = HistoricoCarenciaCDB_RDB.objects.get(cdb_rdb=self.cdb_rdb).carencia
                 return (carencia <= (data_venda - self.data).days)
         else:
             return False
@@ -202,4 +204,11 @@ class HistoricoValorMinimoInvestimentoCDB_RDB (models.Model):
 #         if self.valor_minimo < 0:
 #             raise forms.ValidationError('Valor mínimo não pode ser negativo')
 #         super(HistoricoValorMinimoInvestimentoCDB_RDB, self).save(*args, **kw)
+    
+class CheckpointCDB_RDB (models.Model):
+    ano = models.SmallIntegerField(u'Ano')
+    operacao = models.ForeignKey('OperacaoCDB_RDB')
+    investidor = models.ForeignKey('bagogold.Investidor')
+    qtd_restante = models.DecimalField(u'Quantidade restante da operação', max_digits=11, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
+    qtd_atualizada = models.DecimalField(u'Quantidade atualizada da operação', max_digits=17, decimal_places=8, validators=[MinValueValidator(Decimal('0.00000001'))])
     

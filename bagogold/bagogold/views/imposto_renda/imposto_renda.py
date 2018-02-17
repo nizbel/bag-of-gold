@@ -201,12 +201,12 @@ def detalhar_imposto_renda(request, ano):
     cdb_rdb = {}
      
     for operacao in OperacaoCDB_RDB.objects.filter(data__lte='%s-12-31' % (ano), investidor=investidor).order_by('data'):
-        if operacao.investimento.nome not in cdb_rdb:
-            cdb_rdb[operacao.investimento.nome] = Decimal(0)
+        if operacao.cdb_rdb.nome not in cdb_rdb:
+            cdb_rdb[operacao.cdb_rdb.nome] = Decimal(0)
         if operacao.tipo_operacao == 'C':
-            cdb_rdb[operacao.investimento.nome] += operacao.quantidade
+            cdb_rdb[operacao.cdb_rdb.nome] += operacao.quantidade
         elif operacao.tipo_operacao == 'V':
-            cdb_rdb[operacao.investimento.nome] -= operacao.quantidade
+            cdb_rdb[operacao.cdb_rdb.nome] -= operacao.quantidade
             
     ############################################################
     ### CRI/CRA  ###############################################

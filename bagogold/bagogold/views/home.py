@@ -106,7 +106,7 @@ def calendario(request):
         vencimento_cdb_rdb = OperacaoCDB_RDB.objects.filter(investidor=investidor, data__lt=data_final, tipo_operacao='C')
         # Buscar apenas operações que vencem no período especificado
         vencimento_cdb_rdb = [operacao for operacao in vencimento_cdb_rdb if operacao.data_vencimento() >= data_inicial and operacao.data_vencimento() <= data_final]
-        calendario.extend([{'title': u'Vencimento de operação de R$ %s em %s, feita em %s' % (operacao.quantidade, operacao.investimento.nome, operacao.data.strftime('%d/%m/%Y')), 
+        calendario.extend([{'title': u'Vencimento de operação de R$ %s em %s, feita em %s' % (operacao.quantidade, operacao.cdb_rdb.nome, operacao.data.strftime('%d/%m/%Y')), 
                             'start': operacao.data_vencimento().strftime('%Y-%m-%d')} for operacao in vencimento_cdb_rdb])
         
         # Carência de LCI/LCA
