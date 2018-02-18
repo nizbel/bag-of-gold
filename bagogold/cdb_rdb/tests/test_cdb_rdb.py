@@ -40,13 +40,6 @@ class ValorCDB_RDBAteDiaTestCase(TestCase):
         date_list = [data for data in date_list if data.weekday() < 5 and not verificar_feriado_bovespa(data)]
         
         for data in date_list:
-            # Pular sexta-feira santa
-            if data == datetime.date(2016, 3, 25):
-                continue
-            # Pular corpus christi
-            if data == datetime.date(2016, 5, 26):
-                continue
-            
             if data >= datetime.date(2016, 10, 20):
                 HistoricoTaxaDI.objects.create(data=data, taxa=Decimal(13.88))
             else:
@@ -95,6 +88,17 @@ class CalcularValorCDB_RDBPrefixadoTestCase(TestCase):
         operacao = OperacaoCDB_RDB.objects.get(cdb_rdb=CDB_RDB.objects.get(nome="CDB Teste"))
         valor = calcular_valor_atualizado_com_taxa_prefixado(operacao.quantidade, operacao.porcentagem(), qtd_dias)
         self.assertAlmostEqual(valor, Decimal('2014.67'), delta=0.01)
+        self.assertEqual(valor, calcular_valor_operacao_cdb_rdb_ate_dia(operacao, datetime.date(2017, 6, 16)))
+        
+    def test_valor_venda_cdb_rdb_no_dia(self):
+        """Testar valor da operação de venda no dia 17/06/2017, permitindo erro de até 1 centavo"""
+        cdb = CDB_RDB.objects.get(nome="CDB Teste")
+        investidor = Investidor.objects.get(user__username='tester')
+        
+        operacao_venda = OperacaoCDB_RDB.objects.create(quantidade=Decimal(2000), data=datetime.date(2017, 6, 17), tipo_operacao='V', \
+                                            cdb_rdb=cdb, investidor=investidor)
+        OperacaoVendaCDB_RDB.objects.create(operacao_compra=OperacaoCDB_RDB.objects.get(investidor=investidor, cdb_rdb=cdb, tipo_operacao='C'), operacao_venda=operacao_venda)
+        self.assertAlmostEqual(calcular_valor_venda_cdb_rdb(operacao_venda), Decimal('2014.67'), delta=0.01)
         
 class CalcularQuantidadesCDB_RDBTestCase(TestCase):
     
