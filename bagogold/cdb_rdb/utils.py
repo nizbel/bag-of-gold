@@ -11,6 +11,7 @@ from decimal import Decimal, ROUND_DOWN
 from django.db.models.aggregates import Sum, Count
 from django.db.models.expressions import F, Case, When
 from django.db.models.functions import Coalesce
+from django.db.models.query_utils import Q
 import datetime
 
 def calcular_valor_venda_cdb_rdb(operacao_venda, valor_liquido=False):
@@ -23,10 +24,10 @@ def calcular_valor_venda_cdb_rdb(operacao_venda, valor_liquido=False):
     if operacao_venda.tipo_operacao != 'V':
         raise ValueError('Apenas para operações de venda')
     return calcular_valor_atualizado_operacao_ate_dia(operacao_venda.quantidade, operacao_venda.data_inicial(), operacao_venda.data - datetime.timedelta(days=1), operacao_venda,
-                                                      operacao_venda.quantidade, valor_liquido)
+                                                      operacao_venda.quantidade, valor_liquido).quantize(Decimal('.01'), ROUND_DOWN)
     
 
-def calcular_valor_operacao_cdb_rdb_ate_dia(operacao, dia, valor_liquido=False):
+def calcular_valor_operacao_cdb_rdb_ate_dia(operacao, dia, arredondar=True, valor_liquido=False):
     if operacao.tipo_operacao != 'C':
         raise ValueError('Apenas para operações de compra')
     if CheckpointCDB_RDB.objects.filter(operacao=operacao, ano=dia.year-1).exists():
@@ -36,16 +37,19 @@ def calcular_valor_operacao_cdb_rdb_ate_dia(operacao, dia, valor_liquido=False):
             qtd_restante = CheckpointCDB_RDB.objects.get(operacao=operacao, ano=dia.year-1).qtd_restante
             qtd_restante -= sum(OperacaoVendaCDB_RDB.objects.filter(operacao_compra=operacao, operacao_venda__data__range=[dia.replace(month=1).replace(day=1), dia]) \
                                 .values_list('operacao_venda__quantidade', flat=True))
-            return calcular_valor_atualizado_operacao_ate_dia(qtd_restante, operacao.data, dia, operacao, qtd_restante, valor_liquido)
+            valor = calcular_valor_atualizado_operacao_ate_dia(qtd_restante, operacao.data, dia, operacao, qtd_restante, valor_liquido)
         else:
             # Se não, calcular valor da operação a partir do checkpoint
             checkpoint = CheckpointCDB_RDB.objects.get(operacao=operacao, ano=dia.year-1)
-            return calcular_valor_atualizado_operacao_ate_dia(checkpoint.qtd_atualizada, dia.replace(month=1).replace(day=1), dia, 
+            valor = calcular_valor_atualizado_operacao_ate_dia(checkpoint.qtd_atualizada, dia.replace(month=1).replace(day=1), dia, 
                                                               operacao, checkpoint.qtd_restante, valor_liquido)
     else:
         # Sem checkpoint, calcular do começo
         qtd_restante = operacao.qtd_disponivel_venda_na_data(dia)
-        return calcular_valor_atualizado_operacao_ate_dia(qtd_restante, operacao.data, dia, operacao, qtd_restante, valor_liquido)
+        valor = calcular_valor_atualizado_operacao_ate_dia(qtd_restante, operacao.data, dia, operacao, qtd_restante, valor_liquido)
+    if arredondar:
+        return valor.quantize(Decimal('.01'), ROUND_DOWN)
+    return valor
         
     
 def calcular_valor_atualizado_operacao_ate_dia(valor, data_inicial, data_final, operacao, qtd_original, valor_liquido=False):
@@ -68,11 +72,11 @@ def calcular_valor_atualizado_operacao_ate_dia(valor, data_inicial, data_final, 
         
         # Calcular
         if valor_liquido:
-            valor_final = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor, operacao.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
+            valor_final = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor, operacao.porcentagem())
             return valor_final - sum(calcular_iof_e_ir_longo_prazo(valor_final - qtd_original, 
                                                  (data_final - operacao.data_inicial()).days))
         else:
-            return calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor, operacao.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
+            return calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor, operacao.porcentagem())
     elif operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
         # Prefixado
         if valor_liquido:
@@ -85,9 +89,9 @@ def calcular_valor_atualizado_operacao_ate_dia(valor, data_inicial, data_final, 
     elif operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_IPCA:
         # IPCA
         if valor_liquido:
-            return valor
+            return Decimal(valor)
         else:
-            return valor
+            return Decimal(valor)
 
 def calcular_valor_cdb_rdb_ate_dia(investidor, dia=datetime.date.today(), valor_liquido=False):
     """ 
@@ -108,7 +112,7 @@ def calcular_valor_cdb_rdb_ate_dia(investidor, dia=datetime.date.today(), valor_
             cdb_rdb[operacao.cdb_rdb.id] = 0
         
 #         cdb_rdb[operacao.cdb_rdb.id] += calcular_valor_atualizado_operacao_ate_dia(operacao.quantidade, operacao.data, dia, operacao, valor_liquido)
-        cdb_rdb[operacao.cdb_rdb.id] += calcular_valor_operacao_cdb_rdb_ate_dia(operacao, dia, valor_liquido)
+        cdb_rdb[operacao.cdb_rdb.id] += calcular_valor_operacao_cdb_rdb_ate_dia(operacao, dia, True, valor_liquido)
     
     return cdb_rdb
 
@@ -173,5 +177,11 @@ def buscar_operacoes_vigentes_ate_data(investidor, data=datetime.date.today()):
     operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor, tipo_operacao='C', data__lte=data).exclude(data__isnull=True) \
         .annotate(qtd_vendida=Coalesce(Sum(Case(When(operacao_compra__operacao_venda__data__lte=data, then='operacao_compra__operacao_venda__quantidade'))), 0)).exclude(quantidade=F('qtd_vendida')) \
         .annotate(qtd_disponivel_venda=(F('quantidade') - F('qtd_vendida')))
+    
+#     operacoes = OperacaoCDB_RDB.objects.filter(Q(investidor=investidor, checkpointcdb_rdb__ano=data.year-1) | \
+#                                                Q(investidor=investidor, tipo_operacao='C', data__range=[data.replace(month=1).replace(day=1), data])) \
+#         .annotate(qtd_restante=Coalesce(F('checkpointcdb_rdb__qtd_restante'), F('quantidade'))) \
+#         .annotate(qtd_vendida=Coalesce(Sum(Case(When(operacao_compra__operacao_venda__data__range=[data.replace(month=1).replace(day=1), data], then='operacao_compra__operacao_venda__quantidade'))), 0)).exclude(qtd_restante=F('qtd_vendida')) \
+#         .annotate(qtd_disponivel_venda=(F('qtd_restante') - F('qtd_vendida')))
 
     return operacoes

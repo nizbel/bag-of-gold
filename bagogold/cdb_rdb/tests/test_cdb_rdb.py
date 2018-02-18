@@ -88,7 +88,7 @@ class CalcularValorCDB_RDBPrefixadoTestCase(TestCase):
         operacao = OperacaoCDB_RDB.objects.get(cdb_rdb=CDB_RDB.objects.get(nome="CDB Teste"))
         valor = calcular_valor_atualizado_com_taxa_prefixado(operacao.quantidade, operacao.porcentagem(), qtd_dias)
         self.assertAlmostEqual(valor, Decimal('2014.67'), delta=0.01)
-        self.assertEqual(valor, calcular_valor_operacao_cdb_rdb_ate_dia(operacao, datetime.date(2017, 6, 16)))
+        self.assertEqual(valor.quantize(Decimal('.01'), ROUND_DOWN), calcular_valor_operacao_cdb_rdb_ate_dia(operacao, datetime.date(2017, 6, 16)))
         
     def test_valor_venda_cdb_rdb_no_dia(self):
         """Testar valor da operação de venda no dia 17/06/2017, permitindo erro de até 1 centavo"""
