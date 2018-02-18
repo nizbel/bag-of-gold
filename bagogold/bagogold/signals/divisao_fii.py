@@ -48,6 +48,7 @@ def preparar_checkpointproventofii(sender, instance, created, **kwargs):
                         if incorporacao and incorporacao.data.year <= prox_ano:
                             gerar_checkpoint_divisao_fii(divisao, incorporacao.novo_fii, prox_ano)
 
+
 @receiver(post_delete, sender=ProventoFII, dispatch_uid="proventofii_divisao_apagado")
 def preparar_checkpointproventofii_delete(sender, instance, **kwargs):
     if instance.oficial_bovespa:
@@ -85,10 +86,6 @@ def preparar_checkpointproventofii_delete(sender, instance, **kwargs):
                         if incorporacao and incorporacao.data.year <= prox_ano:
                             gerar_checkpoint_divisao_fii(divisao, incorporacao.novo_fii, prox_ano)
     
-#             """
-#             Apagar checkpoints iniciais zerados
-#             """
-#             apagar_checkpoint_divisao_proventos_fii(divisao)
                 
 # Preparar checkpoints para alterações em operações de FII
 @receiver(post_save, sender=DivisaoOperacaoFII, dispatch_uid="operacaofii_divisao_criada_alterada")
@@ -124,6 +121,7 @@ def preparar_checkpointfii(sender, instance, created, **kwargs):
             # Alterar checkpoint de poupança de proventos
             gerar_checkpoint_divisao_proventos_fii(instance.divisao, prox_ano)
     
+    
 @receiver(post_delete, sender=DivisaoOperacaoFII, dispatch_uid="operacaofii_divisao_apagada")
 def preparar_checkpointfii_delete(sender, instance, **kwargs):
     """
@@ -157,12 +155,6 @@ def preparar_checkpointfii_delete(sender, instance, **kwargs):
             # Alterar checkpoint de poupança de proventos
             gerar_checkpoint_divisao_proventos_fii(instance.divisao, prox_ano)
 
-#     """
-#     Apagar checkpoints iniciais zerados
-#     """
-#     apagar_checkpoint_divisao_fii(instance.divisao, instance.operacao.fii)
-#     # Apagar checkpoints de proventos zerados
-#     apagar_checkpoint_divisao_proventos_fii(instance.divisao)
         
 # Preparar checkpoints para alterações em eventos de FII
 @receiver(post_save, sender=EventoAgrupamentoFII, dispatch_uid="evento_agrupamento_divisao_criado_alterado")
@@ -239,16 +231,6 @@ def preparar_checkpointfii_evento_delete(sender, instance, **kwargs):
                 # Alterar checkpoint de poupança de proventos
                 gerar_checkpoint_divisao_proventos_fii(divisao, prox_ano)
                 
-#         """
-#         Apagar checkpoints iniciais zerados
-#         """
-#         apagar_checkpoint_divisao_fii(divisao, instance.fii)
-#         
-#         # Se incorporação
-#         apagar_checkpoint_divisao_fii(divisao, instance.novo_fii)
-#         
-#         # Apagar checkpoints de proventos zerados
-#         apagar_checkpoint_divisao_proventos_fii(divisao)
             
 def gerar_checkpoint_divisao_fii(divisao, fii, ano):
     quantidade = calcular_qtd_fiis_ate_dia_por_ticker_por_divisao(datetime.date(ano, 12, 31), divisao.id, fii.ticker)
@@ -269,16 +251,3 @@ def gerar_checkpoint_divisao_proventos_fii(divisao, ano):
         # Não existe checkpoint anterior e quantidade atual é igual a 0
         CheckpointDivisaoProventosFII.objects.filter(divisao=divisao, ano=ano).delete()
     
-# def apagar_checkpoint_divisao_fii(divisao, fii):
-#     for checkpoint in CheckpointDivisaoFII.objects.filter(divisao=divisao, fii=fii).order_by('ano'):
-#         if checkpoint.quantidade == 0 and checkpoint.preco_medio == 0:
-#             checkpoint.delete()
-#         else:
-#             return
-#     
-# def apagar_checkpoint_divisao_proventos_fii(divisao):
-#     for checkpoint in CheckpointDivisaoProventosFII.objects.filter(divisao=divisao).order_by('ano'):
-#         if checkpoint.valor == 0:
-#             checkpoint.delete()
-#         else:
-#             return
