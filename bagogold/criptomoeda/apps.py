@@ -5,4 +5,4 @@ from django.apps import AppConfig
 
 
 class CriptomoedaConfig(AppConfig):
-    name = 'criptomoeda'
+    name = 'bagogold.criptomoeda'
