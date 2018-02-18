@@ -179,6 +179,10 @@ class OperacaoVendaCDB_RDB (models.Model):
     
     class Meta:
         unique_together=('operacao_compra', 'operacao_venda')
+        
+    @property
+    def data(self):
+        return self.operacao_venda.data
     
 class HistoricoPorcentagemCDB_RDB (models.Model):
     porcentagem = models.DecimalField(u'Porcentagem de rendimento', max_digits=5, decimal_places=2)

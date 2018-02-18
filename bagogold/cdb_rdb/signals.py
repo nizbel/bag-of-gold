@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.investidores import Investidor
-from bagogold.cdb_rdb.models import OperacaoCDB_RDB, HistoricoPorcentagemCDB_RDB
+from bagogold.cdb_rdb.models import OperacaoCDB_RDB, HistoricoPorcentagemCDB_RDB, \
+    CheckpointCDB_RDB, OperacaoVendaCDB_RDB
 from bagogold.cdb_rdb.utils import calcular_valor_operacao_cdb_rdb_ate_dia
 from django.db.models.signals import post_save, post_delete
 from django.dispatch.dispatcher import receiver
@@ -9,6 +9,7 @@ import datetime
                 
 # Preparar checkpoints para alterações em operações de CDB/RDB
 @receiver(post_save, sender=OperacaoCDB_RDB, dispatch_uid="operacao_cdb_rdb_criada_alterada")
+@receiver(post_save, sender=OperacaoVendaCDB_RDB, dispatch_uid="operacao_cdb_rdb_criada_alterada")
 def preparar_checkpoint_cdb_rdb(sender, instance, created, **kwargs):
     """
     Verifica ano da operação alterada
@@ -17,17 +18,27 @@ def preparar_checkpoint_cdb_rdb(sender, instance, created, **kwargs):
     """ 
     Cria novo checkpoint ou altera existente
     """
-    if instance.tipo_operacao == 'C':
-        gerar_checkpoint_cdb_rdb(instance, ano)
-    elif instance.tipo_operacao == 'V':
-        gerar_checkpoint_cdb_rdb(instance.operacao_compra_relacionada(), ano)
+    # Definir operacao
+    if sender == OperacaoCDB_RDB:
+        if instance.tipo_operacao == 'C':
+            operacao = instance
+        elif instance.tipo_operacao == 'V' and not created:
+            operacao = instance.operacao_compra_relacionada()
+        else:
+            return
+    elif sender == OperacaoVendaCDB_RDB:
+        if created:
+            operacao = instance.operacao_compra
+        else:
+            return
+    gerar_checkpoint_cdb_rdb(operacao, ano)
         
     """
     Verificar se existem anos posteriores
     """
     if ano != datetime.date.today().year:
         for prox_ano in range(ano + 1, datetime.date.today().year + 1):
-            gerar_checkpoint_cdb_rdb(instance, prox_ano)
+            gerar_checkpoint_cdb_rdb(operacao, prox_ano)
             
     
 @receiver(post_delete, sender=OperacaoCDB_RDB, dispatch_uid="operacao_cdb_rdb_apagada")
@@ -39,17 +50,15 @@ def preparar_checkpoint_cdb_rdb_delete(sender, instance, **kwargs):
     """ 
     Altera checkpoint existente
     """
-    if instance.tipo_operacao == 'C':
-        gerar_checkpoint_cdb_rdb(instance, ano)
-    elif instance.tipo_operacao == 'V':
-        gerar_checkpoint_cdb_rdb(instance.operacao_compra_relacionada(), ano)
+    operacao = instance if instance.tipo_operacao == 'C' else instance.operacao_compra_relacionada()
+    gerar_checkpoint_cdb_rdb(operacao, ano)
 
     """
     Verificar se existem anos posteriores
     """
     if ano != datetime.date.today().year:
         for prox_ano in range(ano + 1, datetime.date.today().year + 1):
-            gerar_checkpoint_cdb_rdb(instance, prox_ano)
+            gerar_checkpoint_cdb_rdb(operacao, prox_ano)
             
         
 # Preparar checkpoints para alterações em histórico de porcentagem
@@ -91,12 +100,12 @@ def preparar_checkpoint_cdb_rdb_historico_delete(sender, instance, **kwargs):
                 
             
 def gerar_checkpoint_cdb_rdb(operacao, ano):
-    qtd_restante = operacao.quantidade_disponivel_venda_na_data(datetime.date(ano, 12, 31))
-    qtd_atualizada = calcular_valor_operacao_cdb_rdb_ate_dia(operacao, datetime.date(ano, 12, 31))
+    qtd_restante = operacao.qtd_disponivel_venda_na_data(datetime.date(ano, 12, 31))
+    qtd_atualizada = calcular_valor_operacao_cdb_rdb_ate_dia(operacao, datetime.date(ano, 12, 31), False)
     if qtd_restante != 0:
-        Checkpointcdb_rdb.objects.update_or_create(operacao=operacao, ano=ano, 
+        CheckpointCDB_RDB.objects.update_or_create(operacao=operacao, ano=ano, 
                                            defaults={'qtd_restante': qtd_restante, 'qtd_atualizada': qtd_atualizada})
     else:
         # Não existe checkpoint anterior e quantidade atual é 0
-        Checkpointcdb_rdb.objects.filter(operacao=operacao, ano=ano).delete()
+        CheckpointCDB_RDB.objects.filter(operacao=operacao, ano=ano).delete()
     
