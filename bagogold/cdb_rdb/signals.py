@@ -8,8 +8,8 @@ import datetime
 
                 
 # Preparar checkpoints para alterações em operações de CDB/RDB
-@receiver(post_save, sender=OperacaoCDB_RDB, dispatch_uid="operacao_cdb_rdb_criada_alterada")
-@receiver(post_save, sender=OperacaoVendaCDB_RDB, dispatch_uid="operacao_cdb_rdb_criada_alterada")
+@receiver(post_save, sender=OperacaoCDB_RDB, dispatch_uid="operacao_cdb_rdb_compra_criada_alterada")
+@receiver(post_save, sender=OperacaoVendaCDB_RDB, dispatch_uid="operacao_cdb_rdb_venda_criada_alterada")
 def preparar_checkpoint_cdb_rdb(sender, instance, created, **kwargs):
     """
     Verifica ano da operação alterada
@@ -41,7 +41,7 @@ def preparar_checkpoint_cdb_rdb(sender, instance, created, **kwargs):
             gerar_checkpoint_cdb_rdb(operacao, prox_ano)
             
     
-@receiver(post_delete, sender=OperacaoCDB_RDB, dispatch_uid="operacao_cdb_rdb_apagada")
+@receiver(post_delete, sender=OperacaoVendaCDB_RDB, dispatch_uid="operacao_cdb_rdb_venda_apagada")
 def preparar_checkpoint_cdb_rdb_delete(sender, instance, **kwargs):
     """
     Verifica ano da operação apagada
@@ -50,7 +50,9 @@ def preparar_checkpoint_cdb_rdb_delete(sender, instance, **kwargs):
     """ 
     Altera checkpoint existente
     """
-    operacao = instance if instance.tipo_operacao == 'C' else instance.operacao_compra_relacionada()
+    # Definir operacao
+    operacao = instance.operacao_compra
+    
     gerar_checkpoint_cdb_rdb(operacao, ano)
 
     """

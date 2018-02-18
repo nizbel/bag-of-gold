@@ -6,7 +6,7 @@ from bagogold.bagogold.utils.investidores import atualizar_checkpoints
 from bagogold.bagogold.utils.misc import verificar_feriado_bovespa, \
     qtd_dias_uteis_no_periodo, calcular_iof_e_ir_longo_prazo
 from bagogold.cdb_rdb.models import CDB_RDB, OperacaoVendaCDB_RDB, \
-    OperacaoCDB_RDB, HistoricoPorcentagemCDB_RDB
+    OperacaoCDB_RDB, HistoricoPorcentagemCDB_RDB, CheckpointCDB_RDB
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, \
     buscar_operacoes_vigentes_ate_data, calcular_valor_operacao_cdb_rdb_ate_dia
 from bagogold.lci_lca.utils import calcular_valor_atualizado_com_taxas_di, \
@@ -144,39 +144,78 @@ class CalcularQuantidadesCDB_RDBTestCase(TestCase):
 #         self.assertDictEqual(calcular_qtd_fiis_ate_dia_por_divisao(datetime.date(2017, 11, 13), Divisao.objects.get(nome=u'Divisão de teste').id), 
 #                              {'BEPO11': 500})
 #          
-#     def test_verificar_checkpoints_apagados(self):
-#         """Testa se checkpoints são apagados caso quantidades de FII do usuário se torne zero"""
-#         investidor = Investidor.objects.get(user__username='test')
-#         self.assertTrue(len(CheckpointFII.objects.filter(investidor=investidor)) > 0)
-#         for operacao in OperacaoCDB_RDB.objects.filter(investidor=investidor):
-#             operacao.delete()
-#         self.assertFalse(CheckpointFII.objects.filter(investidor=investidor).exists())
-#          
-#          
-#     def test_verificar_preco_medio(self):
-#         """Testa cálculos de preço médio"""
-#         investidor = Investidor.objects.get(user__username='test')
+    def test_verificar_checkpoints_apagados(self):
+        """Testa se checkpoints são apagados caso quantidades de CDB do usuário se torne zero"""
+        investidor = Investidor.objects.get(user__username='test')
+        cdb = CDB_RDB.objects.get(nome='CDB 1')
+        
+        compra = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb, investidor=investidor, tipo_operacao='C', data=datetime.date(2017, 8, 11), quantidade=3000)
+        self.assertTrue(CheckpointCDB_RDB.objects.filter(operacao=compra).exists())
+         
+        # Apagar checkpoint por venda
+        venda = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb, investidor=investidor, tipo_operacao='V', data=datetime.date(2017, 8, 15), quantidade=3000)
+        OperacaoVendaCDB_RDB.objects.create(operacao_compra=compra, operacao_venda=venda)
+        self.assertFalse(CheckpointCDB_RDB.objects.filter(operacao=compra).exists())
+         
+        # Checkpoints devem retornar ao apagar venda
+        venda.delete()
+        self.assertTrue(CheckpointCDB_RDB.objects.filter(operacao=compra).exists())
+        
+        # Checkpoints devem sumir ao apagar compra
+        compra_id = compra.id
+        compra.delete()
+        self.assertFalse(CheckpointCDB_RDB.objects.filter(operacao__id=compra_id).exists())
+          
+    def test_verificar_qtd_atualizada(self):
+        """Testa cálculos de quantidade atualizada"""
+        investidor = Investidor.objects.get(user__username='test')
+        cdb_1 = CDB_RDB.objects.get(nome="CDB 1")
+        cdb_3 = CDB_RDB.objects.get(nome="CDB 3")
+        
+        for operacao in OperacaoCDB_RDB.objects.filter(investidor=investidor, tipo_operacao='C').exclude(cdb_rdb=CDB_RDB.objects.get(nome="CDB 2")):
+            if operacao.cdb_rdb == cdb_1:
+                data = datetime.date(2017, 12, 31)
+                valor_operacao_fim_2017 = calcular_valor_operacao_cdb_rdb_ate_dia(operacao, data)
+                if valor_operacao_fim_2017 > 0:
+                    self.assertAlmostEqual(CheckpointCDB_RDB.objects.get(operacao=operacao, ano=2017).qtd_atualizada, 
+                                     CheckpointCDB_RDB.objects.get(operacao=operacao, ano=2017).qtd_restante * Decimal('1.05552808'),
+                                     delta=Decimal('0.01'))
+                else:
+                    self.assertFalse(CheckpointCDB_RDB.objects.filter(operacao=operacao, ano=2017).exists())
+            elif operacao.cdb_rdb == cdb_3:
+                data = datetime.date(2017, 12, 31)
+                qtd_dias_uteis = Decimal(qtd_dias_uteis_no_periodo(operacao.data, data))
+                valor_operacao_fim_2017 = calcular_valor_operacao_cdb_rdb_ate_dia(operacao, data)
+                if valor_operacao_fim_2017 > 0:
+                    self.assertAlmostEqual(CheckpointCDB_RDB.objects.get(operacao=operacao, ano=2017).qtd_atualizada, 
+                                     CheckpointCDB_RDB.objects.get(operacao=operacao, ano=2017).qtd_restante * pow((1+Decimal('0.1')), (qtd_dias_uteis/252)),
+                                     delta=Decimal('0.01'))
+                else:
+                    self.assertFalse(CheckpointCDB_RDB.objects.filter(operacao=operacao, ano=2017).exists())
+                
+        
+        
 #         # Testar funções individuais
 #         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 3, 1), 'BAPO11'), 0, places=3)
 #         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 5, 12), 'BAPO11'), Decimal(4500) / 43, places=3)
 #         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 6, 4), 'BAPO11'), Decimal(4500) / 430, places=3)
 #         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 11, 20), 'BAPO11'), Decimal(4500) / 430 - Decimal('9.1'), places=3)
-#          
+#           
 #         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 3, 1), 'BBPO11'), 0, places=3)
 #         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 5, 12), 'BBPO11'), Decimal(43200) / 430, places=3)
 #         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 6, 4), 'BBPO11'), Decimal(43200) / 43, places=3)
 #         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 11, 20), 'BBPO11'), Decimal(43200) / 43, places=3)
-#          
+#           
 #         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 3, 1), 'BCPO11'), 0, places=3)
 #         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 5, 12), 'BCPO11'), Decimal(3900) / 37, places=3)
 #         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 6, 4), 'BCPO11'), 0, places=3)
 #         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 11, 20), 'BCPO11'), 0, places=3)
-#          
+#           
 #         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 3, 1), 'BDPO11'), 0, places=3)
 #         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 5, 12), 'BDPO11'), Decimal(27300) / 271, places=3)
 #         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 6, 4), 'BDPO11'), Decimal(27300 + 3900) / 617, places=3)
 #         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 11, 20), 'BDPO11'), Decimal(27300 + 3900 + 9400) / 707, places=3)
-#          
+#           
 #         # Testar função geral
 #         for data in [datetime.date(2017, 3, 1), datetime.date(2017, 5, 12), datetime.date(2017, 6, 4), datetime.date(2017, 11, 20)]:
 #             precos_medios = calcular_preco_medio_fiis_ate_dia(investidor, data)
@@ -186,7 +225,7 @@ class CalcularQuantidadesCDB_RDBTestCase(TestCase):
 #                     self.assertAlmostEqual(precos_medios[ticker], qtd_individual, places=3)
 #                 else:
 #                     self.assertNotIn(ticker, precos_medios.keys())
-#          
+#           
 #         # Testar checkpoints
 #         self.assertFalse(CheckpointFII.objects.filter(investidor=investidor, ano=2016).exists())
 #         for fii in FII.objects.all().exclude(ticker__in=['BCPO11', 'BFPO11']):
@@ -248,115 +287,115 @@ class CalcularQuantidadesCDB_RDBTestCase(TestCase):
 #         self.assertAlmostEqual(CheckpointDivisaoFII.objects.get(divisao=teste, ano=2017, cdb_rdb=FII.objects.get(ticker='BEPO11')).preco_medio, 
 #                                calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(teste, datetime.date(2017, 12, 31), 'BEPO11'), places=3)
 #              
-class PerformanceCheckpointCDB_RDBTestCase(TestCase):
-    def setUp(self):
-        user = User.objects.create(username='test', password='test')
-           
-        cdb_1 = CDB_RDB.objects.create(nome="CDB 1", investidor=user.investidor, tipo='C', tipo_rendimento=CDB_RDB.CDB_RDB_DI)
-        cdb_3 = CDB_RDB.objects.create(nome="CDB 3", investidor=user.investidor, tipo='C', tipo_rendimento=CDB_RDB.CDB_RDB_PREFIXADO)
-           
-        HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cdb_1, porcentagem=100)
-        HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cdb_3, porcentagem=10)
-        
-        # Históricos DI e IPCA
-        # Data final é 14/02/2018 mas atualizações só contam até data anterior para manter DI e prefixado pareados
-        data_final = datetime.date(2018, 2, 13)
-        date_list = [data_final - datetime.timedelta(days=x) for x in range(0, (data_final - datetime.date(2012, 1, 1)).days+1)]
-        date_list = [data for data in date_list if data.weekday() < 5 and not verificar_feriado_bovespa(data)]
-        
-        for data in date_list:
-            HistoricoTaxaDI.objects.create(data=data, taxa=Decimal(11.13))   
-        
-        # Gerar operações mensalmente de 2012 a 2016
-        for ano in range(2012, 2018):
-            for mes in range(1, 13):
-                compra_1 = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(ano, mes, 11), quantidade=2000)
-                compra_2 = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(ano, mes, 11), quantidade=1000)
-                compra_5 = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_3, investidor=user.investidor, tipo_operacao='C', data=datetime.date(ano, mes, 11), quantidade=2000)
-                compra_6 = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_3, investidor=user.investidor, tipo_operacao='C', data=datetime.date(ano, mes, 11), quantidade=1000)
-                compra_7 = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_3, investidor=user.investidor, tipo_operacao='C', data=datetime.date(ano, mes, 11), quantidade=3000)
-                 
-                # Operações de venda
-                venda_1 = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_1, investidor=user.investidor, tipo_operacao='V', data=datetime.date(ano, mes, 15), quantidade=500)
-                OperacaoVendaCDB_RDB.objects.create(operacao_compra=compra_2, operacao_venda=venda_1)
-                venda_3 = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_3, investidor=user.investidor, tipo_operacao='V', data=datetime.date(ano, mes, 15), quantidade=500)
-                OperacaoVendaCDB_RDB.objects.create(operacao_compra=compra_6, operacao_venda=venda_3)
-                venda_4 = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_3, investidor=user.investidor, tipo_operacao='V', data=datetime.date(ano, mes, 15), quantidade=3000)
-                OperacaoVendaCDB_RDB.objects.create(operacao_compra=compra_7, operacao_venda=venda_4)
-        
-    def calcular_valor_cdb_rdb_ate_dia_antigo(self, investidor, dia=datetime.date.today(), considerar_impostos=False):
-        """ 
-        Calcula o valor dos CDB/RDB no dia determinado
-        Parâmetros: Investidor
-                    Data final
-                    Levar em consideração impostos (IOF e IR)
-        Retorno: Valor de cada CDB/RDB na data escolhida {id_letra: valor_na_data, }
-        """
-        operacoes = self.buscar_operacoes_vigentes_ate_data_antigo(investidor, dia)
-        
-        cdb_rdb = {}
-        # Buscar taxas dos dias
-        historico = HistoricoTaxaDI.objects.all()
-        for operacao in operacoes:
-            # TODO consertar verificação de todas vendidas
-            operacao.quantidade = operacao.qtd_disponivel_venda
-    
-            if operacao.cdb_rdb.id not in cdb_rdb.keys():
-                cdb_rdb[operacao.cdb_rdb.id] = 0
-            
-            if operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
-                # DI
-                # Definir período do histórico relevante para a operação
-                historico_utilizado = historico.filter(data__range=[operacao.data, dia]).values('taxa').annotate(qtd_dias=Count('taxa'))
-                taxas_dos_dias = {}
-                for taxa_quantidade in historico_utilizado:
-                    taxas_dos_dias[taxa_quantidade['taxa']] = taxa_quantidade['qtd_dias']
-                
-                # Calcular
-                if considerar_impostos:
-                    valor_final = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, operacao.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
-                    cdb_rdb[operacao.cdb_rdb.id] += valor_final - sum(calcular_iof_e_ir_longo_prazo(valor_final - operacao.quantidade, 
-                                                     (dia - operacao.data).days))
-                else:
-                    cdb_rdb[operacao.cdb_rdb.id] += calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, operacao.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
-            elif operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
-                # Prefixado
-                if considerar_impostos:
-                    valor_final = calcular_valor_atualizado_com_taxa_prefixado(operacao.quantidade, operacao.porcentagem(), qtd_dias_uteis_no_periodo(operacao.data, dia)) \
-                        .quantize(Decimal('.01'), ROUND_DOWN)
-                    cdb_rdb[operacao.cdb_rdb.id] += valor_final - sum(calcular_iof_e_ir_longo_prazo(valor_final - operacao.quantidade, 
-                                                     (dia - operacao.data).days))
-                else:
-                    cdb_rdb[operacao.cdb_rdb.id] += calcular_valor_atualizado_com_taxa_prefixado(operacao.quantidade, operacao.porcentagem(), 
-                                                                                                      qtd_dias_uteis_no_periodo(operacao.data, dia)).quantize(Decimal('.01'), ROUND_DOWN)
-        
-        return cdb_rdb
-    
-    def buscar_operacoes_vigentes_ate_data_antigo(self, investidor, data=datetime.date.today()):
-        operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor, tipo_operacao='C', data__lte=data).exclude(data__isnull=True) \
-            .annotate(qtd_vendida=Coalesce(Sum(Case(When(operacao_compra__operacao_venda__data__lte=data, then='operacao_compra__operacao_venda__quantidade'))), 0)).exclude(quantidade=F('qtd_vendida')) \
-            .annotate(qtd_disponivel_venda=(F('quantidade') - F('qtd_vendida')))
-    
-        return operacoes
-       
-    def test_verificar_performance(self):
-        """Verifica se a forma de calcular quantidades a partir de checkpoints melhora a performance"""
-        investidor = Investidor.objects.get(user__username='test')
-           
-        data_final = datetime.date(2018, 1, 1)
-        # Verificar no ano de 2017 após eventos
-        inicio = datetime.datetime.now()
-        qtd_antigo = self.calcular_valor_cdb_rdb_ate_dia_antigo(investidor, data_final)
-        fim_antigo = datetime.datetime.now() - inicio
-               
-        inicio = datetime.datetime.now()
-        qtd_novo = calcular_valor_cdb_rdb_ate_dia(investidor, data_final)
-        fim_novo = datetime.datetime.now() - inicio
-           
-#         print '%s: ' % (data_final.year), fim_antigo, fim_novo, (Decimal((fim_novo - fim_antigo).total_seconds() / fim_antigo.total_seconds() * 100)).quantize(Decimal('0.01'))
-           
-        self.assertDictEqual(qtd_antigo, qtd_novo)
-        self.assertTrue(fim_novo < fim_antigo)
+# class PerformanceCheckpointCDB_RDBTestCase(TestCase):
+#     def setUp(self):
+#         user = User.objects.create(username='test', password='test')
+#            
+#         cdb_1 = CDB_RDB.objects.create(nome="CDB 1", investidor=user.investidor, tipo='C', tipo_rendimento=CDB_RDB.CDB_RDB_DI)
+#         cdb_3 = CDB_RDB.objects.create(nome="CDB 3", investidor=user.investidor, tipo='C', tipo_rendimento=CDB_RDB.CDB_RDB_PREFIXADO)
+#            
+#         HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cdb_1, porcentagem=100)
+#         HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cdb_3, porcentagem=10)
+#         
+#         # Históricos DI e IPCA
+#         # Data final é 14/02/2018 mas atualizações só contam até data anterior para manter DI e prefixado pareados
+#         data_final = datetime.date(2018, 2, 13)
+#         date_list = [data_final - datetime.timedelta(days=x) for x in range(0, (data_final - datetime.date(2012, 1, 1)).days+1)]
+#         date_list = [data for data in date_list if data.weekday() < 5 and not verificar_feriado_bovespa(data)]
+#         
+#         for data in date_list:
+#             HistoricoTaxaDI.objects.create(data=data, taxa=Decimal(11.13))   
+#         
+#         # Gerar operações mensalmente de 2012 a 2017
+#         for ano in range(2012, 2018):
+#             for mes in range(1, 13):
+#                 compra_1 = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(ano, mes, 11), quantidade=2000)
+#                 compra_2 = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(ano, mes, 11), quantidade=1000)
+#                 compra_5 = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_3, investidor=user.investidor, tipo_operacao='C', data=datetime.date(ano, mes, 11), quantidade=2000)
+#                 compra_6 = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_3, investidor=user.investidor, tipo_operacao='C', data=datetime.date(ano, mes, 11), quantidade=1000)
+#                 compra_7 = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_3, investidor=user.investidor, tipo_operacao='C', data=datetime.date(ano, mes, 11), quantidade=3000)
+#                  
+#                 # Operações de venda
+#                 venda_1 = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_1, investidor=user.investidor, tipo_operacao='V', data=datetime.date(ano, mes, 15), quantidade=500)
+#                 OperacaoVendaCDB_RDB.objects.create(operacao_compra=compra_2, operacao_venda=venda_1)
+#                 venda_3 = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_3, investidor=user.investidor, tipo_operacao='V', data=datetime.date(ano, mes, 15), quantidade=500)
+#                 OperacaoVendaCDB_RDB.objects.create(operacao_compra=compra_6, operacao_venda=venda_3)
+#                 venda_4 = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_3, investidor=user.investidor, tipo_operacao='V', data=datetime.date(ano, mes, 15), quantidade=3000)
+#                 OperacaoVendaCDB_RDB.objects.create(operacao_compra=compra_7, operacao_venda=venda_4)
+#         
+#     def calcular_valor_cdb_rdb_ate_dia_antigo(self, investidor, dia=datetime.date.today(), considerar_impostos=False):
+#         """ 
+#         Calcula o valor dos CDB/RDB no dia determinado
+#         Parâmetros: Investidor
+#                     Data final
+#                     Levar em consideração impostos (IOF e IR)
+#         Retorno: Valor de cada CDB/RDB na data escolhida {id_letra: valor_na_data, }
+#         """
+#         operacoes = self.buscar_operacoes_vigentes_ate_data_antigo(investidor, dia)
+#         
+#         cdb_rdb = {}
+#         # Buscar taxas dos dias
+#         historico = HistoricoTaxaDI.objects.all()
+#         for operacao in operacoes:
+#             # TODO consertar verificação de todas vendidas
+#             operacao.quantidade = operacao.qtd_disponivel_venda
+#     
+#             if operacao.cdb_rdb.id not in cdb_rdb.keys():
+#                 cdb_rdb[operacao.cdb_rdb.id] = 0
+#             
+#             if operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
+#                 # DI
+#                 # Definir período do histórico relevante para a operação
+#                 historico_utilizado = historico.filter(data__range=[operacao.data, dia]).values('taxa').annotate(qtd_dias=Count('taxa'))
+#                 taxas_dos_dias = {}
+#                 for taxa_quantidade in historico_utilizado:
+#                     taxas_dos_dias[taxa_quantidade['taxa']] = taxa_quantidade['qtd_dias']
+#                 
+#                 # Calcular
+#                 if considerar_impostos:
+#                     valor_final = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, operacao.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
+#                     cdb_rdb[operacao.cdb_rdb.id] += valor_final - sum(calcular_iof_e_ir_longo_prazo(valor_final - operacao.quantidade, 
+#                                                      (dia - operacao.data).days))
+#                 else:
+#                     cdb_rdb[operacao.cdb_rdb.id] += calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, operacao.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
+#             elif operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
+#                 # Prefixado
+#                 if considerar_impostos:
+#                     valor_final = calcular_valor_atualizado_com_taxa_prefixado(operacao.quantidade, operacao.porcentagem(), qtd_dias_uteis_no_periodo(operacao.data, dia)) \
+#                         .quantize(Decimal('.01'), ROUND_DOWN)
+#                     cdb_rdb[operacao.cdb_rdb.id] += valor_final - sum(calcular_iof_e_ir_longo_prazo(valor_final - operacao.quantidade, 
+#                                                      (dia - operacao.data).days))
+#                 else:
+#                     cdb_rdb[operacao.cdb_rdb.id] += calcular_valor_atualizado_com_taxa_prefixado(operacao.quantidade, operacao.porcentagem(), 
+#                                                                                                       qtd_dias_uteis_no_periodo(operacao.data, dia)).quantize(Decimal('.01'), ROUND_DOWN)
+#         
+#         return cdb_rdb
+#     
+#     def buscar_operacoes_vigentes_ate_data_antigo(self, investidor, data=datetime.date.today()):
+#         operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor, tipo_operacao='C', data__lte=data).exclude(data__isnull=True) \
+#             .annotate(qtd_vendida=Coalesce(Sum(Case(When(operacao_compra__operacao_venda__data__lte=data, then='operacao_compra__operacao_venda__quantidade'))), 0)).exclude(quantidade=F('qtd_vendida')) \
+#             .annotate(qtd_disponivel_venda=(F('quantidade') - F('qtd_vendida')))
+#     
+#         return operacoes
+#        
+#     def test_verificar_performance(self):
+#         """Verifica se a forma de calcular quantidades a partir de checkpoints melhora a performance"""
+#         investidor = Investidor.objects.get(user__username='test')
+#            
+#         data_final = datetime.date(2018, 1, 1)
+#         # Verificar no ano de 2017 após eventos
+#         inicio = datetime.datetime.now()
+#         qtd_antigo = self.calcular_valor_cdb_rdb_ate_dia_antigo(investidor, data_final)
+#         fim_antigo = datetime.datetime.now() - inicio
+#                
+#         inicio = datetime.datetime.now()
+#         qtd_novo = calcular_valor_cdb_rdb_ate_dia(investidor, data_final)
+#         fim_novo = datetime.datetime.now() - inicio
+#            
+# #         print '%s: ' % (data_final.year), fim_antigo, fim_novo, (Decimal((fim_novo - fim_antigo).total_seconds() / fim_antigo.total_seconds() * 100)).quantize(Decimal('0.01'))
+#            
+#         self.assertDictEqual(qtd_antigo, qtd_novo)
+#         self.assertTrue(fim_novo < fim_antigo)
          
 # class AtualizarCheckpointAnualTestCase(TestCase):
 #     def setUp(self):
