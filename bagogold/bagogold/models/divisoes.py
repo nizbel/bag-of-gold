@@ -445,6 +445,16 @@ class DivisaoOperacaoCDB_RDB (models.Model):
     def percentual_divisao(self):
         return self.quantidade / self.operacao.quantidade
     
+class CheckpointDivisaoCDB_RDB (models.Model):
+    ano = models.SmallIntegerField(u'Ano')
+    operacao = models.ForeignKey('cdb_rdb.OperacaoCDB_RDB', limit_choices_to={'tipo_operacao': 'C'})
+    divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
+    qtd_restante = models.DecimalField(u'Quantidade restante da operação', max_digits=11, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
+    qtd_atualizada = models.DecimalField(u'Quantidade atualizada da operação', max_digits=17, decimal_places=8, validators=[MinValueValidator(Decimal('0.00000001'))])
+    
+    class Meta:
+        unique_together=('operacao', 'ano', 'divisao')
+    
 class DivisaoOperacaoCriptomoeda (models.Model):
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
     operacao = models.ForeignKey('criptomoeda.OperacaoCriptomoeda')
