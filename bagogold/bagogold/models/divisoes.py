@@ -445,6 +445,23 @@ class DivisaoOperacaoCDB_RDB (models.Model):
     def percentual_divisao(self):
         return self.quantidade / self.operacao.quantidade
     
+    def divisao_operacao_compra_relacionada(self):
+        from bagogold.cdb_rdb.models import OperacaoVendaCDB_RDB
+        if self.operacao.tipo_operacao == 'V':
+            return DivisaoOperacaoCDB_RDB.objects.get(operacao=OperacaoVendaCDB_RDB.objects.get(operacao_venda=self.operacao).operacao_compra, divisao=self.divisao)
+        else:
+            return None
+    
+    def qtd_disponivel_venda_na_data(self, data, desconsiderar_operacao=None):
+        from bagogold.cdb_rdb.models import OperacaoVendaCDB_RDB
+        if self.operacao.tipo_operacao != 'C':
+            raise ValueError('Operação deve ser de compra')
+        vendas = OperacaoVendaCDB_RDB.objects.filter(operacao_compra=self.operacao, operacao_venda__data__lte=data).exclude(operacao_venda=desconsiderar_operacao).values_list('operacao_venda__id', flat=True)
+        qtd_vendida = 0
+        for venda in DivisaoOperacaoCDB_RDB.objects.filter(operacao__id__in=vendas, divisao=self.divisao):
+            qtd_vendida += venda.quantidade
+        return self.quantidade - qtd_vendida
+    
 class CheckpointDivisaoCDB_RDB (models.Model):
     ano = models.SmallIntegerField(u'Ano')
     operacao = models.ForeignKey('cdb_rdb.OperacaoCDB_RDB', limit_choices_to={'tipo_operacao': 'C'})
