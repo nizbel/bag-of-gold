@@ -464,13 +464,12 @@ class DivisaoOperacaoCDB_RDB (models.Model):
     
 class CheckpointDivisaoCDB_RDB (models.Model):
     ano = models.SmallIntegerField(u'Ano')
-    operacao = models.ForeignKey('cdb_rdb.OperacaoCDB_RDB', limit_choices_to={'tipo_operacao': 'C'})
-    divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
+    divisao_operacao = models.ForeignKey('DivisaoOperacaoCDB_RDB', limit_choices_to={'operacao__tipo_operacao': 'C'})
     qtd_restante = models.DecimalField(u'Quantidade restante da operação', max_digits=11, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
     qtd_atualizada = models.DecimalField(u'Quantidade atualizada da operação', max_digits=17, decimal_places=8, validators=[MinValueValidator(Decimal('0.00000001'))])
     
     class Meta:
-        unique_together=('operacao', 'ano', 'divisao')
+        unique_together=('divisao_operacao', 'ano')
     
 class DivisaoOperacaoCriptomoeda (models.Model):
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
