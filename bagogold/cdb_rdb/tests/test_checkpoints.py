@@ -5,20 +5,15 @@ from bagogold.bagogold.models.investidores import Investidor
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 from bagogold.bagogold.utils.investidores import atualizar_checkpoints
 from bagogold.bagogold.utils.misc import verificar_feriado_bovespa, \
-    qtd_dias_uteis_no_periodo, calcular_iof_e_ir_longo_prazo
+    qtd_dias_uteis_no_periodo
 from bagogold.cdb_rdb.models import CDB_RDB, OperacaoVendaCDB_RDB, \
     OperacaoCDB_RDB, HistoricoPorcentagemCDB_RDB, CheckpointCDB_RDB
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, \
     buscar_operacoes_vigentes_ate_data, calcular_valor_operacao_cdb_rdb_ate_dia, \
-    calcular_valor_cdb_rdb_ate_dia_por_divisao, \
     calcular_valor_um_cdb_rdb_ate_dia_por_divisao
-from bagogold.lci_lca.utils import calcular_valor_atualizado_com_taxas_di, \
-    calcular_valor_atualizado_com_taxa_prefixado
-from decimal import Decimal, ROUND_DOWN
+from decimal import Decimal
 from django.contrib.auth.models import User
-from django.db.models.aggregates import Count, Sum
-from django.db.models.expressions import Case, When, F
-from django.db.models.functions import Coalesce
+from django.db.models.aggregates import Sum
 from django.test import TestCase
 import datetime
  
@@ -75,13 +70,16 @@ class CalcularQuantidadesCDB_RDBTestCase(TestCase):
         venda_4 = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_3, investidor=user.investidor, tipo_operacao='V', data=datetime.date(2017, 6, 15), quantidade=3000)
         OperacaoVendaCDB_RDB.objects.create(operacao_compra=compra_7, operacao_venda=venda_4)
          
+        # Criar operação na divisão geral
+        divisao_geral = Divisao.objects.get(investidor=user.investidor)
         for operacao in OperacaoCDB_RDB.objects.all():
-            DivisaoOperacaoCDB_RDB.objects.create(divisao=Divisao.objects.get(investidor=user.investidor), operacao=operacao, quantidade=operacao.quantidade)
+            DivisaoOperacaoCDB_RDB.objects.create(divisao=divisao_geral, operacao=operacao, quantidade=operacao.quantidade)
          
         # Operação extra para testes de divisão
         operacao_divisao = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=3000)
         divisao_teste = Divisao.objects.create(investidor=user.investidor, nome=u'Divisão de teste')
-        DivisaoOperacaoCDB_RDB.objects.create(divisao=divisao_teste, operacao=operacao_divisao, quantidade=operacao_divisao.quantidade)
+        DivisaoOperacaoCDB_RDB.objects.create(divisao=divisao_teste, operacao=operacao_divisao, quantidade=2000)
+        DivisaoOperacaoCDB_RDB.objects.create(divisao=divisao_geral, operacao=operacao_divisao, quantidade=1000)
          
          
     def test_calculo_qtd_cdb_por_operacao(self):
@@ -161,32 +159,40 @@ class CalcularQuantidadesCDB_RDBTestCase(TestCase):
             
         # Verificar checkpoints criados para divisão
         for checkpoint in CheckpointCDB_RDB.objects.all():
-            self.assertAlmostEqual(checkpoint.qtd_restante, CheckpointDivisaoCDB_RDB.objects.filter(ano=checkpoint.ano, operacao=checkpoint.operacao) \
+            self.assertAlmostEqual(checkpoint.qtd_restante, CheckpointDivisaoCDB_RDB.objects.filter(ano=checkpoint.ano, divisao_operacao__operacao=checkpoint.operacao) \
                                    .aggregate(total_restante=Sum('qtd_restante'))['total_restante'], delta=Decimal('0.01'))
             
           
     def test_verificar_checkpoints_apagados(self):
-        """Testa se checkpoints são apagados caso quantidades de CDB do usuário se torne zero"""
+        """Testa se checkpoints são apagados caso quantidades de CDB do usuário se tornem zero"""
         investidor = Investidor.objects.get(user__username='test')
         cdb = CDB_RDB.objects.get(nome='CDB 1')
+        divisao_geral = Divisao.objects.get(nome='Geral', investidor=investidor)
         
         compra = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb, investidor=investidor, tipo_operacao='C', data=datetime.date(2017, 8, 11), quantidade=3000)
+        divisao_compra = DivisaoOperacaoCDB_RDB.objects.create(divisao=divisao_geral, operacao=compra, quantidade=compra.quantidade)
         self.assertTrue(CheckpointCDB_RDB.objects.filter(operacao=compra).exists())
+        self.assertTrue(CheckpointDivisaoCDB_RDB.objects.filter(divisao_operacao__operacao=compra).exists())
          
         # Apagar checkpoint por venda
         venda = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb, investidor=investidor, tipo_operacao='V', data=datetime.date(2017, 8, 15), quantidade=3000)
         OperacaoVendaCDB_RDB.objects.create(operacao_compra=compra, operacao_venda=venda)
+        divisao_venda = DivisaoOperacaoCDB_RDB.objects.create(divisao=divisao_geral, operacao=venda, quantidade=venda.quantidade)
         self.assertFalse(CheckpointCDB_RDB.objects.filter(operacao=compra).exists())
+        self.assertFalse(CheckpointDivisaoCDB_RDB.objects.filter(divisao_operacao__operacao=compra).exists())
          
         # Checkpoints devem retornar ao apagar venda
         venda.delete()
         self.assertTrue(CheckpointCDB_RDB.objects.filter(operacao=compra).exists())
+        self.assertTrue(CheckpointDivisaoCDB_RDB.objects.filter(divisao_operacao__operacao=compra).exists())
         
         # Checkpoints devem sumir ao apagar compra
         compra_id = compra.id
         self.assertTrue(CheckpointCDB_RDB.objects.filter(operacao__id=compra_id).exists())
+        self.assertTrue(CheckpointDivisaoCDB_RDB.objects.filter(divisao_operacao__operacao__id=compra_id).exists())
         compra.delete()
         self.assertFalse(CheckpointCDB_RDB.objects.filter(operacao__id=compra_id).exists())
+        self.assertFalse(CheckpointDivisaoCDB_RDB.objects.filter(divisao_operacao__operacao__id=compra_id).exists())
           
     def test_verificar_qtd_atualizada(self):
         """Testa cálculos de quantidade atualizada"""
@@ -202,8 +208,15 @@ class CalcularQuantidadesCDB_RDBTestCase(TestCase):
                     self.assertAlmostEqual(CheckpointCDB_RDB.objects.get(operacao=operacao, ano=2017).qtd_atualizada, 
                                      CheckpointCDB_RDB.objects.get(operacao=operacao, ano=2017).qtd_restante * Decimal('1.05552808'),
                                      delta=Decimal('0.01'))
+#                     print CheckpointCDB_RDB.objects.get(operacao=operacao, ano=2017).qtd_restante, '->', CheckpointCDB_RDB.objects.get(operacao=operacao, ano=2017).qtd_atualizada
+                    for divisao_operacao in DivisaoOperacaoCDB_RDB.objects.filter(operacao=operacao):
+                        self.assertAlmostEqual(CheckpointDivisaoCDB_RDB.objects.get(divisao_operacao=divisao_operacao, ano=2017).qtd_atualizada, 
+                                               CheckpointDivisaoCDB_RDB.objects.get(divisao_operacao=divisao_operacao, ano=2017).qtd_restante * Decimal('1.05552808'), delta=Decimal('0.01'))
+#                         print divisao_operacao.divisao, CheckpointDivisaoCDB_RDB.objects.get(divisao_operacao=divisao_operacao, ano=2017).qtd_restante, '->', \
+#                             CheckpointDivisaoCDB_RDB.objects.get(divisao_operacao=divisao_operacao, ano=2017).qtd_atualizada
                 else:
                     self.assertFalse(CheckpointCDB_RDB.objects.filter(operacao=operacao, ano=2017).exists())
+                    self.assertFalse(CheckpointDivisaoCDB_RDB.objects.filter(divisao_operacao__operacao=operacao, ano=2017).exists())
             elif operacao.cdb_rdb == cdb_3:
                 data = datetime.date(2017, 12, 31)
                 qtd_dias_uteis = Decimal(qtd_dias_uteis_no_periodo(operacao.data, data))
@@ -212,103 +225,18 @@ class CalcularQuantidadesCDB_RDBTestCase(TestCase):
                     self.assertAlmostEqual(CheckpointCDB_RDB.objects.get(operacao=operacao, ano=2017).qtd_atualizada, 
                                      CheckpointCDB_RDB.objects.get(operacao=operacao, ano=2017).qtd_restante * pow((1+Decimal('0.1')), (qtd_dias_uteis/252)),
                                      delta=Decimal('0.01'))
+#                     print CheckpointCDB_RDB.objects.get(operacao=operacao, ano=2017).qtd_restante, '->', CheckpointCDB_RDB.objects.get(operacao=operacao, ano=2017).qtd_atualizada
+                    for divisao_operacao in DivisaoOperacaoCDB_RDB.objects.filter(operacao=operacao):
+                        self.assertAlmostEqual(CheckpointDivisaoCDB_RDB.objects.get(divisao_operacao=divisao_operacao, ano=2017).qtd_atualizada, 
+                                               CheckpointDivisaoCDB_RDB.objects.get(divisao_operacao=divisao_operacao, ano=2017).qtd_restante * pow((1+Decimal('0.1')), (qtd_dias_uteis/252)), 
+                                               delta=Decimal('0.01'))
+#                         print divisao_operacao.divisao, CheckpointDivisaoCDB_RDB.objects.get(divisao_operacao=divisao_operacao, ano=2017).qtd_restante, '->', \
+#                             CheckpointDivisaoCDB_RDB.objects.get(divisao_operacao=divisao_operacao, ano=2017).qtd_atualizada
                 else:
                     self.assertFalse(CheckpointCDB_RDB.objects.filter(operacao=operacao, ano=2017).exists())
+                    self.assertFalse(CheckpointDivisaoCDB_RDB.objects.filter(divisao_operacao__operacao=operacao, ano=2017).exists())
                 
         
-        
-#         # Testar funções individuais
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 3, 1), 'BAPO11'), 0, places=3)
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 5, 12), 'BAPO11'), Decimal(4500) / 43, places=3)
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 6, 4), 'BAPO11'), Decimal(4500) / 430, places=3)
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 11, 20), 'BAPO11'), Decimal(4500) / 430 - Decimal('9.1'), places=3)
-#           
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 3, 1), 'BBPO11'), 0, places=3)
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 5, 12), 'BBPO11'), Decimal(43200) / 430, places=3)
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 6, 4), 'BBPO11'), Decimal(43200) / 43, places=3)
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 11, 20), 'BBPO11'), Decimal(43200) / 43, places=3)
-#           
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 3, 1), 'BCPO11'), 0, places=3)
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 5, 12), 'BCPO11'), Decimal(3900) / 37, places=3)
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 6, 4), 'BCPO11'), 0, places=3)
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 11, 20), 'BCPO11'), 0, places=3)
-#           
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 3, 1), 'BDPO11'), 0, places=3)
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 5, 12), 'BDPO11'), Decimal(27300) / 271, places=3)
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 6, 4), 'BDPO11'), Decimal(27300 + 3900) / 617, places=3)
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 11, 20), 'BDPO11'), Decimal(27300 + 3900 + 9400) / 707, places=3)
-#           
-#         # Testar função geral
-#         for data in [datetime.date(2017, 3, 1), datetime.date(2017, 5, 12), datetime.date(2017, 6, 4), datetime.date(2017, 11, 20)]:
-#             precos_medios = calcular_preco_medio_fiis_ate_dia(investidor, data)
-#             for ticker in FII.objects.all().values_list('ticker', flat=True):
-#                 qtd_individual = calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, data, ticker)
-#                 if qtd_individual > 0:
-#                     self.assertAlmostEqual(precos_medios[ticker], qtd_individual, places=3)
-#                 else:
-#                     self.assertNotIn(ticker, precos_medios.keys())
-#           
-#         # Testar checkpoints
-#         self.assertFalse(CheckpointFII.objects.filter(investidor=investidor, ano=2016).exists())
-#         for fii in FII.objects.all().exclude(ticker__in=['BCPO11', 'BFPO11']):
-#             self.assertAlmostEqual(CheckpointFII.objects.get(investidor=investidor, ano=2017, cdb_rdb=fii).preco_medio, 
-#                                    calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date(2017, 12, 31), fii.ticker), places=3)
-#         # Garantir que o checkpoint do BCPO11 e BFPO11 não foi criado pois não há um ano anterior com quantidade diferente de 0, e
-#         #a quantidade atual é 0
-#         self.assertFalse(CheckpointFII.objects.filter(investidor=investidor, ano=2017, cdb_rdb=FII.objects.get(ticker='BCPO11')).exists())
-#         self.assertFalse(CheckpointFII.objects.filter(investidor=investidor, ano=2017, cdb_rdb=FII.objects.get(ticker='BFPO11')).exists())
-#              
-#     def test_verificar_preco_medio_por_divisao(self):
-#         """Testa cálculos de preço médio por divisão"""
-#         geral = Divisao.objects.get(nome='Geral')
-#         teste = Divisao.objects.get(nome=u'Divisão de teste')
-#          
-#         # Testar funções individuais
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 3, 1), 'BAPO11'), 0, places=3)
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 5, 12), 'BAPO11'), Decimal(4500) / 43, places=3)
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 6, 4), 'BAPO11'), Decimal(4500) / 430, places=3)
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 11, 20), 'BAPO11'), Decimal(4500) / 430 - Decimal('9.1'), places=3)
-#          
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 3, 1), 'BBPO11'), 0, places=3)
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 5, 12), 'BBPO11'), Decimal(43200) / 430, places=3)
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 6, 4), 'BBPO11'), Decimal(43200) / 43, places=3)
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 11, 20), 'BBPO11'), Decimal(43200) / 43, places=3)
-#          
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 3, 1), 'BCPO11'), 0, places=3)
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 5, 12), 'BCPO11'), Decimal(3900) / 37, places=3)
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 6, 4), 'BCPO11'), 0, places=3)
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 11, 20), 'BCPO11'), 0, places=3)
-#          
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 3, 1), 'BDPO11'), 0, places=3)
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 5, 12), 'BDPO11'), Decimal(27300) / 271, places=3)
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 6, 4), 'BDPO11'), Decimal(27300 + 3900) / 617, places=3)
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 11, 20), 'BDPO11'), Decimal(27300 + 3900 + 9400) / 707, places=3)
-#          
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(teste, datetime.date(2017, 3, 1), 'BEPO11'), 0, places=3)
-#         self.assertAlmostEqual(calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(teste, datetime.date(2017, 5, 12), 'BEPO11'), Decimal(5200) / 50, places=3)
-#          
-#         # Testar função geral
-#         for data in [datetime.date(2017, 3, 1), datetime.date(2017, 5, 12), datetime.date(2017, 6, 4), datetime.date(2017, 11, 20)]:
-#             precos_medios = calcular_preco_medio_fiis_ate_dia_por_divisao(geral, data)
-#             for ticker in FII.objects.all().values_list('ticker', flat=True):
-#                 qtd_individual = calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, data, ticker)
-#                 if qtd_individual > 0:
-#                     self.assertAlmostEqual(precos_medios[ticker], qtd_individual, places=3)
-#                 else:
-#                     self.assertNotIn(ticker, precos_medios.keys())
-#          
-#         # Testar checkpoints
-#         self.assertFalse(CheckpointDivisaoFII.objects.filter(divisao=geral, ano=2016).exists())
-#         for fii in FII.objects.all().exclude(ticker__in=['BCPO11', 'BEPO11', 'BFPO11']):
-#             self.assertAlmostEqual(CheckpointDivisaoFII.objects.get(divisao=geral, ano=2017, cdb_rdb=fii).preco_medio, 
-#                                    calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(geral, datetime.date(2017, 12, 31), fii.ticker), places=3)
-#         # Garantir que o checkpoint do BCPO11 e BFPO11 não foi criado pois não há um ano anterior com quantidade diferente de 0, e
-#         #a quantidade atual é 0
-#         self.assertFalse(CheckpointDivisaoFII.objects.filter(divisao=geral, ano=2017, cdb_rdb=FII.objects.get(ticker='BCPO11')).exists())
-#         self.assertFalse(CheckpointDivisaoFII.objects.filter(divisao=geral, ano=2017, cdb_rdb=FII.objects.get(ticker='BFPO11')).exists())
-#         self.assertAlmostEqual(CheckpointDivisaoFII.objects.get(divisao=teste, ano=2017, cdb_rdb=FII.objects.get(ticker='BEPO11')).preco_medio, 
-#                                calcular_preco_medio_fiis_ate_dia_por_ticker_por_divisao(teste, datetime.date(2017, 12, 31), 'BEPO11'), places=3)
-#              
 # class PerformanceCheckpointCDB_RDBTestCase(TestCase):
 #     def setUp(self):
 #         user = User.objects.create(username='test', password='test')

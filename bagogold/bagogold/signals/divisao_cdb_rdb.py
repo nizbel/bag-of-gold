@@ -21,10 +21,8 @@ def preparar_checkpointcdb_rdb(sender, instance, created, **kwargs):
     # Definir operacao
     if instance.operacao.tipo_operacao == 'C':
         divisao_operacao = instance
-    elif instance.operacao.tipo_operacao == 'V' and instance.operacao.operacao_compra_relacionada() != None:
+    elif instance.operacao.tipo_operacao == 'V':
         divisao_operacao = instance.divisao_operacao_compra_relacionada()
-    else:
-        return
     gerar_checkpoint_divisao_cdb_rdb(divisao_operacao, ano)
         
     """
@@ -46,11 +44,11 @@ def preparar_checkpointcdb_rdb_delete(sender, instance, **kwargs):
     """
     # Definir operacao
     if instance.operacao.tipo_operacao == 'C':
-        divisao_operacao = instance
+        return
     elif instance.operacao.tipo_operacao == 'V':
         divisao_operacao = instance.divisao_operacao_compra_relacionada()
     gerar_checkpoint_divisao_cdb_rdb(divisao_operacao, ano)
-
+  
     """
     Verificar se existem anos posteriores
     """
@@ -109,11 +107,11 @@ def preparar_checkpoint_cdb_rdb_historico_delete(sender, instance, **kwargs):
             
 def gerar_checkpoint_divisao_cdb_rdb(divisao_operacao, ano):
     qtd_restante = divisao_operacao.qtd_disponivel_venda_na_data(datetime.date(ano, 12, 31))
-    qtd_atualizada = calcular_valor_op_cdb_rdb_ate_dia_por_divisao(divisao_operacao.operacao, divisao_operacao.divisao.id, datetime.date(ano, 12, 31))
+    qtd_atualizada = calcular_valor_op_cdb_rdb_ate_dia_por_divisao(divisao_operacao, datetime.date(ano, 12, 31), False)
     if qtd_restante != 0:
-        CheckpointDivisaoCDB_RDB.objects.update_or_create(divisao=divisao_operacao.divisao, operacao=divisao_operacao.operacao, ano=ano, 
+        CheckpointDivisaoCDB_RDB.objects.update_or_create(divisao_operacao=divisao_operacao, ano=ano, 
                                                defaults={'qtd_restante': qtd_restante, 'qtd_atualizada': qtd_atualizada})
     else:
         # Não existe checkpoint anterior e quantidade atual é igual a 0
-        CheckpointDivisaoCDB_RDB.objects.filter(divisao=divisao_operacao.divisao, operacao=divisao_operacao.operacao, ano=ano).delete()
+        CheckpointDivisaoCDB_RDB.objects.filter(divisao_operacao=divisao_operacao, ano=ano).delete()
     
