@@ -159,6 +159,11 @@ class CalcularQuantidadesCDB_RDBTestCase(TestCase):
             self.assertAlmostEqual(valor_cdb_rdb[cdb_rdb_id], sum([calcular_valor_um_cdb_rdb_ate_dia_por_divisao(cdb_rdb, divisao.id, data) \
                                                              for divisao in Divisao.objects.filter(investidor=investidor)]), delta=Decimal('0.01'))
             
+        # Verificar checkpoints criados para divisão
+        for checkpoint in CheckpointCDB_RDB.objects.all():
+            self.assertAlmostEqual(checkpoint.qtd_restante, CheckpointDivisaoCDB_RDB.objects.filter(ano=checkpoint.ano, operacao=checkpoint.operacao) \
+                                   .aggregate(total_restante=Sum('qtd_restante'))['total_restante'], delta=Decimal('0.01'))
+            
           
     def test_verificar_checkpoints_apagados(self):
         """Testa se checkpoints são apagados caso quantidades de CDB do usuário se torne zero"""
