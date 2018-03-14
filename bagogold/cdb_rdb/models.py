@@ -140,6 +140,8 @@ class OperacaoCDB_RDB (models.Model):
             return self.operacao_compra_relacionada().porcentagem()
     
     def qtd_disponivel_venda(self, desconsiderar_vendas=list()):
+        if self.tipo_operacao != 'C':
+            raise ValueError('Operação deve ser de compra')
         vendas = OperacaoVendaCDB_RDB.objects.filter(operacao_compra=self).exclude(operacao_venda__in=desconsiderar_vendas).values_list('operacao_venda__id', flat=True)
         qtd_vendida = 0
         for venda in OperacaoCDB_RDB.objects.filter(id__in=vendas):
@@ -147,9 +149,11 @@ class OperacaoCDB_RDB (models.Model):
         return self.quantidade - qtd_vendida
     
     def qtd_disponivel_venda_na_data(self, data, desconsiderar_operacao=None):
-        vendas = OperacaoVendaCDB_RDB.objects.filter(operacao_compra=self).exclude(operacao_venda=desconsiderar_operacao).values_list('operacao_venda__id', flat=True)
+        if self.tipo_operacao != 'C':
+            raise ValueError('Operação deve ser de compra')
+        vendas = OperacaoVendaCDB_RDB.objects.filter(operacao_compra=self, operacao_venda__data__lte=data).exclude(operacao_venda=desconsiderar_operacao).values_list('operacao_venda__id', flat=True)
         qtd_vendida = 0
-        for venda in OperacaoCDB_RDB.objects.filter(id__in=vendas, data__lte=data):
+        for venda in OperacaoCDB_RDB.objects.filter(id__in=vendas):
             qtd_vendida += venda.quantidade
         return self.quantidade - qtd_vendida
     
