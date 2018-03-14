@@ -4,7 +4,7 @@ from bagogold.bagogold.models.acoes import OperacaoAcao, ValorDiarioAcao, \
 from bagogold.bagogold.models.debentures import HistoricoValorDebenture, \
     OperacaoDebenture
 from bagogold.bagogold.models.divisoes import CheckpointDivisaoFII, \
-    CheckpointDivisaoProventosFII, Divisao
+    CheckpointDivisaoProventosFII, Divisao, CheckpointDivisaoCDB_RDB
 from bagogold.fii.models import OperacaoFII, ValorDiarioFII, \
     HistoricoFII, FII, ProventoFII, CheckpointFII, CheckpointProventosFII
 from bagogold.bagogold.models.investidores import LoginIncorreto
@@ -42,6 +42,9 @@ from django.utils import timezone
 from itertools import chain
 from operator import attrgetter
 import datetime
+from bagogold.cdb_rdb.models import OperacaoCDB_RDB, CheckpointCDB_RDB
+from bagogold.cdb_rdb.signals import gerar_checkpoint_cdb_rdb
+from bagogold.bagogold.signals.divisao_cdb_rdb import gerar_checkpoint_divisao_cdb_rdb
 
 
 def is_superuser(user):
@@ -76,7 +79,6 @@ def atualizar_checkpoints(investidor):
                     gerar_checkpoint_divisao_fii(Divisao.objects.get(id=divisao_id), fii, ano_atual)
                     
         # Gerar checkpoints de proventos
-        # TODO gerar do ultimo ano de proventos até ano atual
         if CheckpointProventosFII.objects.filter(investidor=investidor).exists():
             for ano in range(CheckpointProventosFII.objects.filter(investidor=investidor).order_by('-ano')[0].ano+1, datetime.date.today().year+1):
                 gerar_checkpoint_proventos_fii(investidor, ano)
@@ -89,6 +91,38 @@ def atualizar_checkpoints(investidor):
             # Repete o procedimento ano a ano, até o ano atual
             for ano in range(ultimo_ano_checkpoint+1, datetime.date.today().year+1):
                 gerar_checkpoint_divisao_proventos_fii(divisao, ano)
+                
+    # CDB/RDB
+    # Verificar se usuário possui operações em CDB/RDB
+    if OperacaoCDB_RDB.objects.filter(investidor=investidor).exists():
+        # Buscar ano mais recente de checkpoints anterior ao ano atual
+        if CheckpointCDB_RDB.objects.filter(operacao__investidor=investidor, ano__lt=datetime.date.today().year).exists():
+            ano_mais_recente = CheckpointCDB_RDB.objects.filter(operacao__investidor=investidor, ano__lt=datetime.date.today().year).order_by('-ano')[0].ano
+        # Caso não haja checkpoint, buscar ano da primeira operação em cdb/rdb
+        else:
+            ano_mais_recente = OperacaoCDB_RDB.objects.filter(investidor=investidor).order_by('-data')[0].data.year
+            
+        # Gerar checkpoints a partir do ano seguinte a esse ano mais recente
+        for ano in xrange(ano_mais_recente, datetime.date.today().year+1):
+            # Para checkpoints no ano mais recente
+            for checkpoint in CheckpointCDB_RDB.objects.filter(operacao__investidor=investidor, ano=ano_mais_recente):
+                gerar_checkpoint_cdb_rdb(checkpoint.operacao, ano)
+        
+#             # Para compras feitas entre o ano mais recente e o atual
+#             for operacao in OperacaoCDB_RDB.objects.filter(investidor=investidor, data__year__gte=ano_mais_recente)
+        
+        # Repetir o processo para divisões
+        if CheckpointDivisaoCDB_RDB.objects.filter(divisao_operacao__divisao__investidor=investidor, ano__lt=datetime.date.today().year).exists():
+            ano_mais_recente = CheckpointDivisaoCDB_RDB.objects.filter(divisao_operacao__divisao__investidor=investidor, ano__lt=datetime.date.today().year).order_by('-ano')[0].ano
+        # Caso não haja checkpoint, buscar ano da primeira operação em cdb/rdb
+        else:
+            ano_mais_recente = OperacaoCDB_RDB.objects.filter(investidor=investidor).order_by('-data')[0].data.year
+            
+        # Gerar checkpoints a partir do ano seguinte a esse ano mais recente
+        for ano in xrange(ano_mais_recente, datetime.date.today().year+1):
+            # Para checkpoints no ano mais recente
+            for checkpoint in CheckpointDivisaoCDB_RDB.objects.filter(divisao_operacao__operacao__investidor=investidor, ano=ano_mais_recente):
+                gerar_checkpoint_divisao_cdb_rdb(checkpoint.divisao_operacao, ano)
                 
 def buscar_acoes_investidor_na_data(investidor, data=datetime.date.today(), destinacao=''):
     """

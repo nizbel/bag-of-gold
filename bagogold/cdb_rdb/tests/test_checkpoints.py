@@ -347,101 +347,105 @@ class CalcularQuantidadesCDB_RDBTestCase(TestCase):
 #         self.assertDictEqual(qtd_antigo, qtd_novo)
 #         self.assertTrue(fim_novo < fim_antigo)
          
-# class AtualizarCheckpointAnualTestCase(TestCase):
-#     def setUp(self):
-#         user = User.objects.create(username='test', password='test')
-#         user.investidor.data_ultimo_acesso = datetime.date(2016, 5, 11)
-#         user.investidor.save()
-#          
-#         empresa_1 = Empresa.objects.create(nome='BA', nome_pregao='FII BA')
-#         fii_1 = FII.objects.create(ticker='BAPO11', empresa=empresa_1)
-#          
-#         OperacaoCDB_RDB.objects.create(cdb_rdb=fii_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2016, 5, 11), quantidade=43, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
-#         # Gera operação no futuro para depois trazer para ano atual
-#         OperacaoCDB_RDB.objects.create(cdb_rdb=fii_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(datetime.date.today().year+1, 5, 11), quantidade=43, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
-#         # Apagar checkpoint gerado
-#         CheckpointFII.objects.filter(ano__gt=datetime.date.today().year).delete()
-#           
-#     def test_atualizacao_ao_logar_prox_ano(self):
-#         """Verifica se é feita atualização ao logar em pŕoximo ano"""
-#         investidor = Investidor.objects.get(user__username='test')
-#         fii = FII.objects.get(ticker='BAPO11')
-#          
-#         # Verifica que existe checkpoint até ano atual
-#         ano_atual = datetime.date.today().year
-#         self.assertTrue(CheckpointFII.objects.filter(investidor=investidor, ano=ano_atual, cdb_rdb=fii).exists())
-#          
-#         # Apaga ano atual
-#         CheckpointFII.objects.filter(investidor=investidor, ano=ano_atual, cdb_rdb=fii).delete()
-#         self.assertFalse(CheckpointFII.objects.filter(investidor=investidor, ano=ano_atual, cdb_rdb=fii).exists())
-#          
-#         # Chamar o teste do middleware de ultimo acesso
-#         if investidor.data_ultimo_acesso.year < ano_atual:
-#             atualizar_checkpoints(investidor)
-#  
-#         # Verifica se ao logar foi gerado novamente checkpoint
-#         self.assertTrue(CheckpointFII.objects.filter(investidor=investidor, ano=ano_atual, cdb_rdb=fii).exists())
-#          
-#     def test_atualizacao_ao_logar_apos_varios_anos(self):
-#         """Verifica se é feita atualização ao logar depois de vários anos"""
-#         investidor = Investidor.objects.get(user__username='test')
-#         fii = FII.objects.get(ticker='BAPO11')
-#          
-#         # Verifica que existe checkpoint até ano atual
-#         ano_atual = datetime.date.today().year
-#         self.assertTrue(CheckpointFII.objects.filter(investidor=investidor, ano=ano_atual, cdb_rdb=fii).exists())
-#          
-#         # Apaga ano atual e ano passado
-#         CheckpointFII.objects.filter(investidor=investidor, ano__gte=ano_atual-1, cdb_rdb=fii).delete()
-#         self.assertFalse(CheckpointFII.objects.filter(investidor=investidor, ano=ano_atual, cdb_rdb=fii).exists())
-#         self.assertFalse(CheckpointFII.objects.filter(investidor=investidor, ano=ano_atual-1, cdb_rdb=fii).exists())
-#          
-#         # Chamar o teste do middleware de ultimo acesso
-#         if investidor.data_ultimo_acesso.year < ano_atual:
-#             atualizar_checkpoints(investidor)
-#  
-#         # Verifica se ao logar foi gerado novamente checkpoint
-#         self.assertTrue(CheckpointFII.objects.filter(investidor=investidor, ano=ano_atual, cdb_rdb=fii).exists())
-#         self.assertTrue(CheckpointFII.objects.filter(investidor=investidor, ano=ano_atual-1, cdb_rdb=fii).exists())
-#          
-#     def test_nao_atualizar_caso_mesmo_ano(self):
-#         """Verificar se em caso de já haver checkpoint no ano, função não altera nada"""
-#         investidor = Investidor.objects.get(user__username='test')
-#         fii = FII.objects.get(ticker='BAPO11')
-#         checkpoint = CheckpointFII.objects.get(investidor=investidor, ano=datetime.date.today().year, cdb_rdb=fii)
-#          
-#         # Chamar atualizar ano
-#         atualizar_checkpoints(investidor)
-#          
-#         # Verificar se houve alteração no checkpoint
-#         self.assertEqual(checkpoint, CheckpointFII.objects.get(investidor=investidor, ano=datetime.date.today().year, cdb_rdb=fii))
-#          
-#     def test_verificar_checkpoint_operacao_ano_futuro(self):
-#         """Verificar se checkpoint de operação no futuro funciona ao chegar no ano da operação"""
-#         investidor = Investidor.objects.get(user__username='test')
-#         fii = FII.objects.get(ticker='BAPO11')
-#          
-#         # Apagar ano atual para fingir que acabamos de chegar a esse ano
-#         ano_atual = datetime.date.today().year
-#         self.assertTrue(CheckpointFII.objects.filter(investidor=investidor, ano=ano_atual, cdb_rdb=fii).exists())
-#         CheckpointFII.objects.filter(investidor=investidor, ano=ano_atual, cdb_rdb=fii).delete()
-#         self.assertFalse(CheckpointFII.objects.filter(investidor=investidor, ano=ano_atual, cdb_rdb=fii).exists())
-#          
-#         # Trazer operação do futuro para ano atual
-#         OperacaoCDB_RDB.objects.filter(investidor=investidor, data__gt=datetime.date.today()).update(data=datetime.date.today())
-#          
-#         # Atualizar da forma como é feito pelo middleware de ultimo acesso
-#         if investidor.data_ultimo_acesso.year < ano_atual:
-#             atualizar_checkpoints(investidor)
-#              
-#         # Verificar se quantidade de cotas está correta
-#         self.assertEqual(CheckpointFII.objects.get(investidor=investidor, ano=ano_atual, cdb_rdb=fii).quantidade, 86)
-#          
-#     def test_checkpoints_venda_cotas(self):
-#         """Verificar se checkpoints são apagados quando cota é vendida"""
-#         investidor = Investidor.objects.get(user__username='test')
-#         fii = FII.objects.get(ticker='BAPO11')
-#          
-#         ano_atual = datetime.date.today().year
-#         OperacaoCDB_RDB.objects.create(cdb_rdb=fii, investidor=investidor, tipo_operacao='V', data=datetime.date(2016, 5, 11), quantidade=43, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
-#         self.assertFalse(CheckpointFII.objects.filter(investidor=investidor, cdb_rdb=fii).exists())
+class AtualizarCheckpointAnualTestCase(TestCase):
+    def setUp(self):
+        user = User.objects.create(username='test', password='test')
+        user.investidor.data_ultimo_acesso = datetime.date(2016, 5, 11)
+        user.investidor.save()
+          
+        cdb_1 = CDB_RDB.objects.create(nome="CDB 1", investidor=user.investidor, tipo='C', tipo_rendimento=CDB_RDB.CDB_RDB_DI)
+        
+        HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cdb_1, porcentagem=100)
+         
+        # Históricos DI e IPCA
+        # Data final é 14/02/2018 mas atualizações só contam até data anterior para manter DI e prefixado pareados
+        data_final = datetime.date(2018, 2, 13)
+        date_list = [data_final - datetime.timedelta(days=x) for x in range(0, (data_final - datetime.date(2017, 5, 11)).days+1)]
+        date_list = [data for data in date_list if data.weekday() < 5 and not verificar_feriado_bovespa(data)]
+        
+        for data in date_list:
+            if data >= datetime.date(2018, 2, 8):
+                HistoricoTaxaDI.objects.create(data=data, taxa=Decimal(6.64))
+            elif data >= datetime.date(2017, 12, 7):
+                HistoricoTaxaDI.objects.create(data=data, taxa=Decimal(6.89))
+            elif data >= datetime.date(2017, 10, 26):
+                HistoricoTaxaDI.objects.create(data=data, taxa=Decimal(7.39))
+            elif data >= datetime.date(2017, 9, 8):
+                HistoricoTaxaDI.objects.create(data=data, taxa=Decimal(8.14))
+            elif data >= datetime.date(2017, 7, 27):
+                HistoricoTaxaDI.objects.create(data=data, taxa=Decimal(9.14))
+            elif data >= datetime.date(2017, 6, 1):
+                HistoricoTaxaDI.objects.create(data=data, taxa=Decimal(10.14))
+            else:
+                HistoricoTaxaDI.objects.create(data=data, taxa=Decimal(11.13))
+          
+        OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2016, 5, 11), quantidade=2000)
+        # Gera operação no futuro para depois trazer para ano atual
+        OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(datetime.date.today().year+1, 5, 11), quantidade=2000)
+        
+        # Apagar checkpoint gerado
+        CheckpointCDB_RDB.objects.filter(ano__gt=datetime.date.today().year).delete()
+           
+    def test_atualizacao_ao_logar_prox_ano(self):
+        """Verifica se é feita atualização ao logar em pŕoximo ano"""
+        investidor = Investidor.objects.get(user__username='test')
+        compra = OperacaoCDB_RDB.objects.get(investidor=investidor, data=datetime.date(2016, 5, 11))
+          
+        # Verifica que existe checkpoint até ano atual
+        ano_atual = datetime.date.today().year
+        self.assertTrue(CheckpointCDB_RDB.objects.filter(ano=ano_atual, operacao=compra).exists())
+          
+        # Apaga ano atual
+        CheckpointCDB_RDB.objects.filter(ano=ano_atual, operacao=compra).delete()
+        self.assertFalse(CheckpointCDB_RDB.objects.filter(ano=ano_atual, operacao=compra).exists())
+          
+        # Chamar o teste do middleware de ultimo acesso
+        if investidor.data_ultimo_acesso.year < ano_atual:
+            atualizar_checkpoints(investidor)
+  
+        # Verifica se ao logar foi gerado novamente checkpoint
+        self.assertTrue(CheckpointCDB_RDB.objects.filter(ano=ano_atual, operacao=compra).exists())
+          
+    def test_atualizacao_ao_logar_apos_varios_anos(self):
+        """Verifica se é feita atualização ao logar depois de vários anos"""
+        investidor = Investidor.objects.get(user__username='test')
+        compra = OperacaoCDB_RDB.objects.get(investidor=investidor, data=datetime.date(2016, 5, 11))
+          
+        # Verifica que existe checkpoint até ano atual
+        ano_atual = datetime.date.today().year
+        self.assertTrue(CheckpointCDB_RDB.objects.filter(ano=ano_atual, operacao=compra).exists())
+          
+        # Apaga ano atual e ano passado
+        CheckpointCDB_RDB.objects.filter(ano__gte=ano_atual-1, operacao=compra).delete()
+        self.assertFalse(CheckpointCDB_RDB.objects.filter(ano=ano_atual, operacao=compra).exists())
+        self.assertFalse(CheckpointCDB_RDB.objects.filter(ano=ano_atual-1, operacao=compra).exists())
+          
+        # Chamar o teste do middleware de ultimo acesso
+        if investidor.data_ultimo_acesso.year < ano_atual:
+            atualizar_checkpoints(investidor)
+  
+        # Verifica se ao logar foi gerado novamente checkpoint
+        self.assertTrue(CheckpointCDB_RDB.objects.filter(ano=ano_atual, operacao=compra).exists())
+        self.assertTrue(CheckpointCDB_RDB.objects.filter(ano=ano_atual-1, operacao=compra).exists())
+          
+    def test_nao_atualizar_caso_mesmo_ano(self):
+        """Verificar se em caso de já haver checkpoint no ano, função não altera nada"""
+        investidor = Investidor.objects.get(user__username='test')
+        compra = OperacaoCDB_RDB.objects.get(data=datetime.date(2016, 5, 11))
+        checkpoint = CheckpointCDB_RDB.objects.get(ano=datetime.date.today().year, operacao=compra)
+          
+        # Chamar atualizar ano
+        atualizar_checkpoints(investidor)
+          
+        # Verificar se houve alteração no checkpoint
+        self.assertEqual(checkpoint, CheckpointCDB_RDB.objects.get(ano=datetime.date.today().year, operacao=compra))
+          
+    def test_checkpoints_venda(self):
+        """Verificar se checkpoints são apagados quando CDB é vendido"""
+        investidor = Investidor.objects.get(user__username='test')
+        compra = OperacaoCDB_RDB.objects.get(investidor=investidor, data=datetime.date(2016, 5, 11))
+          
+        ano_atual = datetime.date.today().year
+        venda = OperacaoCDB_RDB.objects.create(cdb_rdb=compra.cdb_rdb, tipo_operacao='V', data=datetime.date(2016, 6, 15), quantidade=2000, investidor=investidor)
+        OperacaoVendaCDB_RDB.objects.create(operacao_compra=compra, operacao_venda=venda)
+        self.assertFalse(CheckpointCDB_RDB.objects.filter(operacao=compra).exists())
