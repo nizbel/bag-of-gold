@@ -81,7 +81,6 @@ def preparar_checkpoint_cdb_rdb_historico(sender, instance, created, **kwargs):
             for prox_ano in range(ano + 1, datetime.date.today().year + 1):
                 gerar_checkpoint_cdb_rdb(operacao, prox_ano)
         
-                
     
 @receiver(post_delete, sender=HistoricoPorcentagemCDB_RDB, dispatch_uid="hist_porcent_cdb_rdb_apagado")
 def preparar_checkpoint_cdb_rdb_historico_delete(sender, instance, **kwargs):

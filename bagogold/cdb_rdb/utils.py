@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoCDB_RDB
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoCDB_RDB,\
+    CheckpointDivisaoCDB_RDB
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di, \
     calcular_valor_atualizado_com_taxa_prefixado
@@ -166,6 +167,74 @@ def calcular_valor_cdb_rdb_ate_dia_por_divisao(dia, divisao_id):
         cdb_rdb[investimento] = sum([operacao.atual for operacao in operacoes if operacao.cdb_rdb.id == investimento])
     
     return cdb_rdb
+
+def calcular_valor_um_cdb_rdb_ate_dia_por_divisao(cdb_rdb, divisao_id, dia=datetime.date.today()):
+    """ 
+    Calcula o valor total de um CDB/RDB da divisão no dia determinado
+    Parâmetros: CDB/RDB escolhido
+                ID da divisão
+                Data final
+    Retorno: Valor atualizado do CDB/RDB na data
+    """
+    valor_atualizado = 0
+    # Buscar checkpoints de divisão para o CDB/RDB
+    for checkpoint in CheckpointDivisaoCDB_RDB.objects.filter(operacao__cdb_rdb=cdb_rdb, ano=dia.year-1, divisao__id=divisao_id):
+        # Verificar se há vendas
+        if OperacaoVendaCDB_RDB.objects.filter(operacao_compra=checkpoint.operacao, operacao_venda__data__range=[dia.replace(month=1).replace(day=1), dia]).exists():
+            # Se sim, calcular valor restante e então calcular valor da operação no dia desde o começo
+            qtd_restante = checkpoint.qtd_restante
+            vendas = OperacaoVendaCDB_RDB.objects.filter(operacao_compra=checkpoint.operacao, operacao_venda__data__range=[dia.replace(month=1).replace(day=1), dia]) \
+                .values_list('operacao_venda__id', flat=True)
+            for venda in DivisaoOperacaoCDB_RDB.objects.filter(operacao__id__in=vendas, divisao__id=divisao_id):
+                qtd_restante -= venda.quantidade
+            
+            valor_atualizado += calcular_valor_atualizado_operacao_ate_dia(qtd_restante, checkpoint.operacao.data, dia, checkpoint.operacao, qtd_restante).quantize(Decimal('.01'), ROUND_DOWN)
+        else:
+            # Se não, calcular valor da operação a partir do checkpoint
+            valor_atualizado += calcular_valor_atualizado_operacao_ate_dia(checkpoint.qtd_atualizada, dia.replace(month=1).replace(day=1), dia, 
+                                                              checkpoint.operacao, checkpoint.qtd_restante).quantize(Decimal('.01'), ROUND_DOWN)
+    
+    # Somar operações feitas no ano    
+    for divisao_operacao in DivisaoOperacaoCDB_RDB.objects.filter(divisao__id=divisao_id, operacao__data__range=[dia.replace(day=1).replace(month=1), dia], operacao__cdb_rdb=cdb_rdb,
+                                                                  operacao__tipo_operacao='C'):
+        valor_restante = divisao_operacao.qtd_disponivel_venda_na_data(dia)
+        valor_atualizado += calcular_valor_atualizado_operacao_ate_dia(valor_restante, divisao_operacao.operacao.data, dia, divisao_operacao.operacao, valor_restante).quantize(Decimal('.01'), ROUND_DOWN)
+    
+    return valor_atualizado
+
+def calcular_valor_op_cdb_rdb_ate_dia_por_divisao(operacao, divisao_id, dia=datetime.date.today()):
+    """ 
+    Calcula o valor de uma operação em CDB/RDB para uma divisão divisão no dia determinado
+    Parâmetros: Operação em CDB/RDB
+                ID da divisão
+                Data final
+    Retorno: Valor atualizado da operação na data
+    """
+    # Verificar existência de checkpoint
+    if CheckpointDivisaoCDB_RDB.objects.filter(operacao=operacao, ano=dia.year-1, divisao__id=divisao_id).exists():
+        checkpoint = CheckpointDivisaoCDB_RDB.objects.get(operacao=operacao, ano=dia.year-1, divisao__id=divisao_id)
+        # Verificar se há vendas
+        if OperacaoVendaCDB_RDB.objects.filter(operacao_compra=operacao, operacao_venda__data__range=[dia.replace(month=1).replace(day=1), dia]).exists():
+            # Se sim, calcular valor restante e então calcular valor da operação no dia desde o começo
+            qtd_restante = checkpoint.qtd_restante
+            vendas = OperacaoVendaCDB_RDB.objects.filter(operacao_compra=operacao, operacao_venda__data__range=[dia.replace(month=1).replace(day=1), dia]) \
+                .values_list('operacao_venda__id', flat=True)
+            for venda in DivisaoOperacaoCDB_RDB.objects.filter(operacao__id__in=vendas, divisao__id=divisao_id):
+                qtd_restante -= venda.quantidade
+            
+            valor_atualizado = calcular_valor_atualizado_operacao_ate_dia(qtd_restante, operacao.data, dia, operacao, qtd_restante).quantize(Decimal('.01'), ROUND_DOWN)
+        else:
+            # Se não, calcular valor da operação a partir do checkpoint
+            valor_atualizado = calcular_valor_atualizado_operacao_ate_dia(checkpoint.qtd_atualizada, dia.replace(month=1).replace(day=1), dia, 
+                                                              operacao, checkpoint.qtd_restante).quantize(Decimal('.01'), ROUND_DOWN)
+    
+    else:
+        divisao_operacao = DivisaoOperacaoCDB_RDB.objects.get(divisao__id=divisao_id, operacao=operacao)
+        valor_restante = divisao_operacao.qtd_disponivel_venda_na_data(dia)
+        valor_atualizado = calcular_valor_atualizado_operacao_ate_dia(valor_restante, divisao_operacao.operacao.data, dia, divisao_operacao.operacao, valor_restante).quantize(Decimal('.01'), ROUND_DOWN)
+    
+    return valor_atualizado
+    
 
 def buscar_operacoes_vigentes_ate_data(investidor, data=datetime.date.today()):
     """

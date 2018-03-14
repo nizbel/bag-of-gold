@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoCDB_RDB, Divisao
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoCDB_RDB, Divisao, \
+    CheckpointDivisaoCDB_RDB
 from bagogold.bagogold.models.investidores import Investidor
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 from bagogold.bagogold.utils.investidores import atualizar_checkpoints
@@ -8,7 +9,9 @@ from bagogold.bagogold.utils.misc import verificar_feriado_bovespa, \
 from bagogold.cdb_rdb.models import CDB_RDB, OperacaoVendaCDB_RDB, \
     OperacaoCDB_RDB, HistoricoPorcentagemCDB_RDB, CheckpointCDB_RDB
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, \
-    buscar_operacoes_vigentes_ate_data, calcular_valor_operacao_cdb_rdb_ate_dia
+    buscar_operacoes_vigentes_ate_data, calcular_valor_operacao_cdb_rdb_ate_dia, \
+    calcular_valor_cdb_rdb_ate_dia_por_divisao, \
+    calcular_valor_um_cdb_rdb_ate_dia_por_divisao
 from bagogold.lci_lca.utils import calcular_valor_atualizado_com_taxas_di, \
     calcular_valor_atualizado_com_taxa_prefixado
 from decimal import Decimal, ROUND_DOWN
@@ -127,23 +130,36 @@ class CalcularQuantidadesCDB_RDBTestCase(TestCase):
         cdb_rdb = calcular_valor_cdb_rdb_ate_dia(investidor, data)
         for cdb_rdb_id in cdb_rdb.keys():
             self.assertEqual(cdb_rdb[cdb_rdb_id], sum([calcular_valor_operacao_cdb_rdb_ate_dia(operacao, data) for operacao in OperacaoCDB_RDB.objects.filter(tipo_operacao='C', cdb_rdb__id=cdb_rdb_id)]))
-#      
-#     def test_verificar_qtd_divisao_antes_eventos(self):
-#         """Testa se a quantidade de cotas por divisão está correta antes dos eventos"""
-#         investidor = Investidor.objects.get(user__username='test')
-#         self.assertDictEqual(calcular_qtd_fiis_ate_dia_por_divisao(datetime.date(2017, 5, 12), Divisao.objects.get(nome='Geral').id), 
-#                              {'BAPO11': 43, 'BBPO11': 430, 'BCPO11': 37, 'BDPO11': 271, 'BFPO11': 20})
-#         self.assertDictEqual(calcular_qtd_fiis_ate_dia_por_divisao(datetime.date(2017, 5, 12), Divisao.objects.get(nome=u'Divisão de teste').id), 
-#                              {'BEPO11': 50})
-#          
-#     def test_verificar_qtd_divisao_apos_eventos(self):
-#         """Testa se a quantidade de cotas por divisão está correta após os eventos"""
-#         investidor = Investidor.objects.get(user__username='test')
-#         self.assertDictEqual(calcular_qtd_fiis_ate_dia_por_divisao(datetime.date(2017, 11, 13), Divisao.objects.get(nome='Geral').id), 
-#                              {'BAPO11': 430, 'BBPO11': 43, 'BDPO11': 707})
-#         self.assertDictEqual(calcular_qtd_fiis_ate_dia_por_divisao(datetime.date(2017, 11, 13), Divisao.objects.get(nome=u'Divisão de teste').id), 
-#                              {'BEPO11': 500})
-#          
+      
+    def test_verificar_qtd_divisao(self):
+        """Testa se a quantidade de CDB/RDB por divisão está correta"""
+        investidor = Investidor.objects.get(user__username='test')
+        
+        data = datetime.date(2017, 5, 11)
+        valor_cdb_rdb = calcular_valor_cdb_rdb_ate_dia(investidor, data)
+        # Comparar a soma das divisões para cada investimento com o total calculado
+        for cdb_rdb_id in valor_cdb_rdb.keys():
+            cdb_rdb = CDB_RDB.objects.get(id=cdb_rdb_id)
+            self.assertAlmostEqual(valor_cdb_rdb[cdb_rdb_id], sum([calcular_valor_um_cdb_rdb_ate_dia_por_divisao(cdb_rdb, divisao.id, data) \
+                                                             for divisao in Divisao.objects.filter(investidor=investidor)]), delta=Decimal('0.01'))
+            
+        data = datetime.date(2017, 6, 15)
+        valor_cdb_rdb = calcular_valor_cdb_rdb_ate_dia(investidor, data)
+        # Comparar a soma das divisões para cada investimento com o total calculado
+        for cdb_rdb_id in valor_cdb_rdb.keys():
+            cdb_rdb = CDB_RDB.objects.get(id=cdb_rdb_id)
+            self.assertAlmostEqual(valor_cdb_rdb[cdb_rdb_id], sum([calcular_valor_um_cdb_rdb_ate_dia_por_divisao(cdb_rdb, divisao.id, data) \
+                                                             for divisao in Divisao.objects.filter(investidor=investidor)]), delta=Decimal('0.01'))
+            
+        data = datetime.date(2018, 2, 14)
+        valor_cdb_rdb = calcular_valor_cdb_rdb_ate_dia(investidor, data)
+        # Comparar a soma das divisões para cada investimento com o total calculado
+        for cdb_rdb_id in valor_cdb_rdb.keys():
+            cdb_rdb = CDB_RDB.objects.get(id=cdb_rdb_id)
+            self.assertAlmostEqual(valor_cdb_rdb[cdb_rdb_id], sum([calcular_valor_um_cdb_rdb_ate_dia_por_divisao(cdb_rdb, divisao.id, data) \
+                                                             for divisao in Divisao.objects.filter(investidor=investidor)]), delta=Decimal('0.01'))
+            
+          
     def test_verificar_checkpoints_apagados(self):
         """Testa se checkpoints são apagados caso quantidades de CDB do usuário se torne zero"""
         investidor = Investidor.objects.get(user__username='test')
@@ -163,6 +179,7 @@ class CalcularQuantidadesCDB_RDBTestCase(TestCase):
         
         # Checkpoints devem sumir ao apagar compra
         compra_id = compra.id
+        self.assertTrue(CheckpointCDB_RDB.objects.filter(operacao__id=compra_id).exists())
         compra.delete()
         self.assertFalse(CheckpointCDB_RDB.objects.filter(operacao__id=compra_id).exists())
           
