@@ -60,7 +60,7 @@ def detalhar_cdb_rdb(request, cdb_rdb_id):
     cdb_rdb.lucro = Decimal(0)
     cdb_rdb.lucro_percentual = Decimal(0)
     
-    operacoes = OperacaoCDB_RDB.objects.filter(investimento=cdb_rdb).order_by('data')
+    operacoes = OperacaoCDB_RDB.objects.filter(cdb_rdb=cdb_rdb).order_by('data')
     # Contar total de operações já realizadas 
     cdb_rdb.total_operacoes = len(operacoes)
     # Remover operacoes totalmente vendidas
@@ -496,7 +496,7 @@ def historico(request):
         total_patrimonio = 0
         for operacao in operacoes:
             if operacao.tipo_operacao == 'C' and operacao.atual > 0:
-                ultima_data_valorizacao = min(operacao.data_vencimento(), data_final)
+                ultima_data_valorizacao = min(operacao.data_vencimento() - datetime.timedelta(days=1), data_final)
                 if ultima_data_valorizacao >= ultima_data:
                     # Calcular o valor atualizado para cada operacao
                     if operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
@@ -507,7 +507,7 @@ def historico(request):
                     elif operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
                         # Prefixado
                         # Calcular quantidade dias para valorização, adicionar 1 pois a função exclui a data final
-                        qtd_dias = qtd_dias_uteis_no_periodo(ultima_data, ultima_data_valorizacao) + 1
+                        qtd_dias = qtd_dias_uteis_no_periodo(ultima_data, ultima_data_valorizacao + datetime.timedelta(days=1))
                         operacao.atual = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa, qtd_dias)
                 # Formatar
                 str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
@@ -817,7 +817,7 @@ def painel(request):
         elif operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
             # Prefixado
             # Calcular quantidade dias para valorização, adicionar 1 pois a função exclui a data final
-            qtd_dias = qtd_dias_uteis_no_periodo(operacao.data, data_final_valorizacao) + 1
+            qtd_dias = qtd_dias_uteis_no_periodo(operacao.data, data_final_valorizacao + datetime.timedelta(days=1))
             operacao.atual = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa, qtd_dias)
         # Arredondar valores
         str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
