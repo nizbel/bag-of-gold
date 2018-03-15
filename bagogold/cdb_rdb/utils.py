@@ -24,6 +24,7 @@ def calcular_valor_venda_cdb_rdb(operacao_venda, valor_liquido=False):
     """
     if operacao_venda.tipo_operacao != 'V':
         raise ValueError('Apenas para operações de venda')
+    # TODO adicionar checkpoints aqui
     return calcular_valor_atualizado_operacao_ate_dia(operacao_venda.quantidade, operacao_venda.data_inicial(), operacao_venda.data - datetime.timedelta(days=1), operacao_venda,
                                                       operacao_venda.quantidade, valor_liquido).quantize(Decimal('.01'), ROUND_DOWN)
     
@@ -64,6 +65,15 @@ def calcular_valor_atualizado_operacao_ate_dia(valor, data_inicial, data_final, 
                 Deve retornar o valor líquido?
     Retorno: Valor atualizado
     """
+    # Calcular limitado ao vencimento do CDB/RDB
+    data_final = min(operacao.data_vencimento(), data_final)
+    if data_final < data_inicial:
+        if valor_liquido:
+            return valor - sum(calcular_iof_e_ir_longo_prazo(valor - qtd_original, 
+                                                 (data_final - operacao.data_inicial()).days))
+        else:
+            return valor
+        
     if operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
         # Definir período do histórico relevante para a operação
         historico_utilizado = HistoricoTaxaDI.objects.filter(data__range=[data_inicial, data_final]).values('taxa').annotate(qtd_dias=Count('taxa'))
