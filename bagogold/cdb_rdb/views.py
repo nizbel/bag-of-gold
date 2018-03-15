@@ -422,9 +422,15 @@ def historico(request):
         else:
             total_gasto -= operacao.quantidade
             # Preparar o valor atual e reiniciar valor da operação de compra
-            historico = HistoricoTaxaDI.objects.filter(data__range=[operacao.operacao_compra_relacionada().data, (operacao.data - datetime.timedelta(days=1))])
-            taxas_dos_dias = dict(historico.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
-            operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.atual, operacao.taxa)
+            if operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
+                # DI
+                historico = HistoricoTaxaDI.objects.filter(data__range=[operacao.operacao_compra_relacionada().data, (operacao.data - datetime.timedelta(days=1))])
+                taxas_dos_dias = dict(historico.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
+                operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.atual, operacao.taxa)
+            elif operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
+                # Prefixado
+                qtd_dias = qtd_dias_uteis_no_periodo(operacao.operacao_compra_relacionada().data, operacao.data)
+                operacao.atual = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.porcentagem(), qtd_dias)
             # Retirar iof e IR
             operacao.atual -= sum(calcular_iof_e_ir_longo_prazo(operacao.atual - operacao.quantidade, (operacao.data - operacao.operacao_compra_relacionada().data).days))
             str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
@@ -446,7 +452,7 @@ def historico(request):
                         elif operacoes[indice_relacionada].cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
                             # Prefixado
                             # Calcular quantidade dias para valorização, adicionar 1 pois a função exclui a data final
-                            qtd_dias = qtd_dias_uteis_no_periodo(operacoes[indice_relacionada].data, ultima_data) + 1
+                            qtd_dias = qtd_dias_uteis_no_periodo(operacoes[indice_relacionada].data, ultima_data + datetime.timedelta(days=1))
                             operacoes[indice_relacionada].atual = calcular_valor_atualizado_com_taxa_prefixado(operacoes[indice_relacionada].atual, 
                                                                                                                operacoes[indice_relacionada].taxa, qtd_dias)
                     break
