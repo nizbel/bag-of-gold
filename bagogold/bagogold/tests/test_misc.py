@@ -90,6 +90,14 @@ class QtdDiasUteisNoPeriodoTestCase(TestCase):
     def test_quantidade_com_feriados(self):
         """Testa se retorna os 81 dias úteis"""
         self.assertEqual(qtd_dias_uteis_no_periodo(datetime.date(2016, 7, 1), datetime.date(2016, 10, 26)), 81)
+        
+    def test_um_dia_apenas(self):
+        """Testa função para trazer apenas um dia"""
+        self.assertEqual(qtd_dias_uteis_no_periodo(datetime.date(2018, 3, 8), datetime.date(2018, 3, 9)), 1)
+        
+    def test_zero_dias(self):
+        """Testa função para trazer 0 caso sejam enviadas datas iguais"""
+        self.assertEqual(qtd_dias_uteis_no_periodo(datetime.date(2018, 3, 9), datetime.date(2018, 3, 9)), 0)
 
 class FormatarZerosADireitaApos2CasasTestCase(TestCase):
     
@@ -147,9 +155,9 @@ class RendimentosTestCase(TestCase):
         # CDB/RDB
         cdb_rdb = CDB_RDB.objects.create(nome='CDB de teste', investidor=user.investidor, tipo='C', tipo_rendimento='2')
         cdb_rdb_porcentagem_di = HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cdb_rdb, porcentagem=Decimal(90))
-        operacao_cdb_rdb1 = OperacaoCDB_RDB.objects.create(investidor=user.investidor, investimento=cdb_rdb, data=data_atual + datetime.timedelta(days=1), tipo_operacao='C',
+        operacao_cdb_rdb1 = OperacaoCDB_RDB.objects.create(investidor=user.investidor, cdb_rdb=cdb_rdb, data=data_atual + datetime.timedelta(days=1), tipo_operacao='C',
                                            quantidade=Decimal(1000))
-        operacao_cdb_rdb2 = OperacaoCDB_RDB.objects.create(investidor=user.investidor, investimento=cdb_rdb, data=data_atual - datetime.timedelta(days=10), tipo_operacao='C',
+        operacao_cdb_rdb2 = OperacaoCDB_RDB.objects.create(investidor=user.investidor, cdb_rdb=cdb_rdb, data=data_atual - datetime.timedelta(days=10), tipo_operacao='C',
                                            quantidade=Decimal(2000))
         
         # Gerar valores históricos
