@@ -93,10 +93,7 @@ def calcular_valor_atualizado_operacao_ate_dia(valor, data_inicial, data_final, 
         
     if operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
         # Definir período do histórico relevante para a operação
-        historico_utilizado = HistoricoTaxaDI.objects.filter(data__range=[data_inicial, data_ultima_valorizacao]).values('taxa').annotate(qtd_dias=Count('taxa'))
-        taxas_dos_dias = {}
-        for taxa_quantidade in historico_utilizado:
-            taxas_dos_dias[taxa_quantidade['taxa']] = taxa_quantidade['qtd_dias']
+        taxas_dos_dias = dict(HistoricoTaxaDI.objects.filter(data__range=[data_inicial, data_ultima_valorizacao]).values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
             
         # Calcular
         if valor_liquido:
