@@ -28,6 +28,7 @@ class CalcularQuantidadesCDB_RDBTestCase(TestCase):
         cdb_3 = CDB_RDB.objects.create(nome="CDB 3", investidor=user.investidor, tipo='C', tipo_rendimento=CDB_RDB.CDB_RDB_PREFIXADO)
         
         HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cdb_1, porcentagem=100)
+        HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cdb_2, porcentagem=5)
         HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cdb_3, porcentagem=10)
         
         HistoricoVencimentoCDB_RDB.objects.create(cdb_rdb=cdb_1, vencimento=1080)
