@@ -383,7 +383,6 @@ def editar_operacao_cdb_rdb(request, operacao_id):
     
 @adiciona_titulo_descricao('Histórico de CDB/RDB', 'Histórico de operações de compra/venda em CDB/RDB')
 def historico(request):
-    inicio = datetime.datetime.now()
     if request.user.is_authenticated():
         investidor = request.user.investidor
     else:
@@ -495,7 +494,6 @@ def historico(request):
     dados['patrimonio'] = total_patrimonio
     dados['lucro'] = total_patrimonio - total_gasto
     dados['lucro_percentual'] = (total_patrimonio - total_gasto) / total_gasto * 100
-    print datetime.datetime.now() - inicio
     
     return TemplateResponse(request, 'cdb_rdb/historico.html', {'dados': dados, 'operacoes': operacoes, 
                                                     'graf_gasto_total': graf_gasto_total, 'graf_patrimonio': graf_patrimonio})
