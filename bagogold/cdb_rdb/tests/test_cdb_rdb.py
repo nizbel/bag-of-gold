@@ -31,7 +31,8 @@ class ValorCDB_RDBAteDiaTestCase(TestCase):
         
         # RDB
         rdb = CDB_RDB.objects.create(nome="RDB Teste", investidor=user.investidor, tipo='R', tipo_rendimento=CDB_RDB.CDB_RDB_DI)
-        rdb_porcentagem_di = HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=rdb, porcentagem=Decimal(110))
+        HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=rdb, porcentagem=Decimal(110))
+        HistoricoVencimentoCDB_RDB.objects.create(cdb_rdb=rdb, vencimento=2000)
         OperacaoCDB_RDB.objects.create(quantidade=Decimal(3000), data=datetime.date(2016, 10, 14), tipo_operacao='C', \
                                             cdb_rdb=rdb, investidor=user.investidor)
         
@@ -76,26 +77,27 @@ class CalcularValorCDB_RDBPrefixadoTestCase(TestCase):
         # Usuário
         user = User.objects.create(username='tester')
         
-        # RDB
+        # CDB
         cdb = CDB_RDB.objects.create(nome="CDB Teste", investidor=user.investidor, tipo='C', tipo_rendimento=CDB_RDB.CDB_RDB_PREFIXADO)
-        cdb_porcentagem = HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cdb, porcentagem=Decimal('11.44'))
+        HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cdb, porcentagem=Decimal('11.44'))
+        HistoricoVencimentoCDB_RDB.objects.create(cdb_rdb=cdb, vencimento=2000)
         OperacaoCDB_RDB.objects.create(quantidade=Decimal(2000), data=datetime.date(2017, 5, 23), tipo_operacao='C', \
                                             cdb_rdb=cdb, investidor=user.investidor)
         
     def test_valor_prefixado_no_dia(self):
-        """Testar valor do CDB no dia 17/06/2017, permitindo erro de até 1 centavo"""
+        """Testar valor do CDB no dia 16/06/2017, permitindo erro de até 1 centavo"""
         qtd_dias = qtd_dias_uteis_no_periodo(datetime.date(2017, 5, 23), datetime.date(2017, 6, 16))
         operacao = OperacaoCDB_RDB.objects.get(cdb_rdb=CDB_RDB.objects.get(nome="CDB Teste"))
         valor = calcular_valor_atualizado_com_taxa_prefixado(operacao.quantidade, operacao.porcentagem(), qtd_dias)
         self.assertAlmostEqual(valor, Decimal('2014.67'), delta=0.01)
-        self.assertEqual(valor.quantize(Decimal('.01'), ROUND_DOWN), calcular_valor_operacao_cdb_rdb_ate_dia(operacao, datetime.date(2017, 6, 16)))
+        self.assertEqual(valor.quantize(Decimal('.01'), ROUND_DOWN), calcular_valor_operacao_cdb_rdb_ate_dia(operacao, datetime.date(2017, 6, 15)))
         
     def test_valor_venda_cdb_rdb_no_dia(self):
-        """Testar valor da operação de venda no dia 17/06/2017, permitindo erro de até 1 centavo"""
+        """Testar valor da operação de venda no dia 16/06/2017, permitindo erro de até 1 centavo"""
         cdb = CDB_RDB.objects.get(nome="CDB Teste")
         investidor = Investidor.objects.get(user__username='tester')
         
-        operacao_venda = OperacaoCDB_RDB.objects.create(quantidade=Decimal(2000), data=datetime.date(2017, 6, 17), tipo_operacao='V', \
+        operacao_venda = OperacaoCDB_RDB.objects.create(quantidade=Decimal(2000), data=datetime.date(2017, 6, 16), tipo_operacao='V', \
                                             cdb_rdb=cdb, investidor=investidor)
         OperacaoVendaCDB_RDB.objects.create(operacao_compra=OperacaoCDB_RDB.objects.get(investidor=investidor, cdb_rdb=cdb, tipo_operacao='C'), operacao_venda=operacao_venda)
         self.assertAlmostEqual(calcular_valor_venda_cdb_rdb(operacao_venda), Decimal('2014.67'), delta=0.01)
@@ -108,7 +110,8 @@ class CalcularQuantidadesCDB_RDBTestCase(TestCase):
         
         # CDB
         cdb = CDB_RDB.objects.create(nome='CDB Teste', investidor=user.investidor, tipo='C', tipo_rendimento=CDB_RDB.CDB_RDB_DI)
-        cdb_porcentagem_di = HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cdb, porcentagem=Decimal(110))
+        HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cdb, porcentagem=Decimal(110))
+        HistoricoVencimentoCDB_RDB.objects.create(cdb_rdb=cdb, vencimento=2000)
         
         # Operações
         operacao_1 = OperacaoCDB_RDB.objects.create(quantidade=Decimal(2000), data=datetime.date(2017, 1, 23), tipo_operacao='C', \
