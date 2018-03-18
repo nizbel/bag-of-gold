@@ -156,24 +156,24 @@ def calcular_valor_cdb_rdb_ate_dia_por_divisao(dia, divisao_id):
     
     compras_cdb_rdb = dict(DivisaoOperacaoCDB_RDB.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id, operacao__tipo_operacao='C') \
                            .values_list('operacao', 'quantidade'))
-       
+        
     vendas_cdb_rdb = dict(DivisaoOperacaoCDB_RDB.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id, operacao__tipo_operacao='V') \
                           .annotate(compra=F('operacao__operacao_venda__operacao_compra')).values('compra').annotate(qtd_total=Sum('quantidade')) \
                           .values_list('compra', 'qtd_total'))
-                                    
+                                     
     operacoes_cdb_rdb = { k: compras_cdb_rdb.get(k, 0) - vendas_cdb_rdb.get(k, 0) for k in set(compras_cdb_rdb) | set(vendas_cdb_rdb) \
                if compras_cdb_rdb.get(k, 0) - vendas_cdb_rdb.get(k, 0) > 0}
-      
+       
     # Verificar se não há mais operações vigentes na divisão
     if len(operacoes_cdb_rdb.keys()) == 0:
         return {}
-    
-    # Buscar operações presentes
+     
+    # Buscar operações não totalmente vendidas
     operacoes = OperacaoCDB_RDB.objects.filter(id__in=operacoes_cdb_rdb.keys()).order_by('data')
-    
+      
     # Calcular o valor atualizado do patrimonio
     historico = HistoricoTaxaDI.objects.filter(data__range=[operacoes[0].data, dia])
-      
+        
     for operacao in operacoes:
         if operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
             # DI
@@ -182,17 +182,17 @@ def calcular_valor_cdb_rdb_ate_dia_por_divisao(dia, divisao_id):
         elif operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
             # Prefixado
             operacao.atual = calcular_valor_atualizado_com_taxa_prefixado(operacoes_cdb_rdb[operacao.id], operacao.porcentagem(), qtd_dias_uteis_no_periodo(operacao.data, datetime.date.today()))
-               
+                 
         # Arredondar valores
         str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
         operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-           
+             
     cdb_rdb = {}
-  
-    # Preencher os valores nos cdb/rdb
+    
+    # Preencher os valores nos CDB/RDB
     for investimento in list(set(operacoes.values_list('cdb_rdb', flat=True))):
         cdb_rdb[investimento] = sum([operacao.atual for operacao in operacoes if operacao.cdb_rdb.id == investimento])
-    
+        
     return cdb_rdb
 
 def calcular_valor_um_cdb_rdb_ate_dia_por_divisao(cdb_rdb, divisao_id, dia=datetime.date.today()):
