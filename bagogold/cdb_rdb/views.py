@@ -18,7 +18,8 @@ from bagogold.cdb_rdb.models import OperacaoCDB_RDB, HistoricoPorcentagemCDB_RDB
     CDB_RDB, HistoricoCarenciaCDB_RDB, OperacaoVendaCDB_RDB, \
     HistoricoVencimentoCDB_RDB
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, \
-    buscar_operacoes_vigentes_ate_data
+    buscar_operacoes_vigentes_ate_data, calcular_valor_atualizado_operacao_ate_dia, \
+    calcular_valor_operacao_cdb_rdb_ate_dia
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -505,16 +506,8 @@ def historico(request):
                 ultima_data_valorizacao = min(operacao.data_vencimento() - datetime.timedelta(days=1), data_final)
                 if ultima_data_valorizacao >= ultima_data:
                     # Calcular o valor atualizado para cada operacao
-                    if operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
-                        # DI
-                        historico = HistoricoTaxaDI.objects.filter(data__range=[ultima_data, ultima_data_valorizacao])
-                        taxas_dos_dias = dict(historico.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
-                        operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.atual, operacao.taxa)
-                    elif operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
-                        # Prefixado
-                        # Calcular quantidade dias para valorização, adicionar 1 pois a função exclui a data final
-                        qtd_dias = qtd_dias_uteis_no_periodo(ultima_data, ultima_data_valorizacao + datetime.timedelta(days=1))
-                        operacao.atual = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa, qtd_dias)
+                    operacao.atual = calcular_valor_atualizado_operacao_ate_dia(operacao.atual, ultima_data, ultima_data_valorizacao, operacao, 
+                                                                                operacao.quantidade)
                 # Formatar
                 str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
                 operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
@@ -809,26 +802,13 @@ def painel(request):
      
     # Prepara o campo valor atual
     for operacao in operacoes:
-        operacao.quantidade = operacao.qtd_disponivel_venda
-        operacao.atual = operacao.quantidade
         operacao.inicial = operacao.quantidade
         operacao.taxa = operacao.porcentagem()
         data_final_valorizacao = min(data_final, operacao.data_vencimento() - datetime.timedelta(days=1))
+
         # Calcular o valor atualizado
-        if operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
-            # DI
-            historico = HistoricoTaxaDI.objects.filter(data__range=[operacao.data, data_final_valorizacao])
-            taxas_dos_dias = dict(historico.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
-            operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.atual, operacao.taxa)
-        elif operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
-            # Prefixado
-            # Calcular quantidade dias para valorização, adicionar 1 pois a função exclui a data final
-            qtd_dias = qtd_dias_uteis_no_periodo(operacao.data, data_final_valorizacao + datetime.timedelta(days=1))
-            operacao.atual = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa, qtd_dias)
-        # Arredondar valores
-        str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
-        operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-                         
+        operacao.atual = calcular_valor_operacao_cdb_rdb_ate_dia(operacao, data_final_valorizacao)
+        
     # Remover operações que não estejam mais rendendo
     operacoes = [operacao for operacao in operacoes if (operacao.atual > 0 and operacao.tipo_operacao == 'C')]
      
