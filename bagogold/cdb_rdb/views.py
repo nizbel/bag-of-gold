@@ -802,6 +802,7 @@ def painel(request):
      
     # Prepara o campo valor atual
     for operacao in operacoes:
+        operacao.quantidade = operacao.qtd_disponivel_venda
         operacao.inicial = operacao.quantidade
         operacao.taxa = operacao.porcentagem()
         data_final_valorizacao = min(data_final, operacao.data_vencimento() - datetime.timedelta(days=1))
