@@ -105,7 +105,10 @@ class OperacaoCDB_RDB (models.Model):
             return HistoricoCarenciaCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.cdb_rdb).carencia
         
     def data_carencia(self):
-        data_carencia = self.data + datetime.timedelta(days=self.carencia())
+        if self.tipo_operacao == 'C':
+            data_carencia = self.data + datetime.timedelta(days=self.carencia())
+        elif self.tipo_operacao == 'V':
+            data_carencia = self.operacao_compra_relacionada().data + datetime.timedelta(days=self.carencia())
         # Verifica se é fim de semana ou feriado
         while data_carencia.weekday() > 4 or verificar_feriado_bovespa(data_carencia):
             data_carencia += datetime.timedelta(days=1)
@@ -118,7 +121,10 @@ class OperacaoCDB_RDB (models.Model):
             return self.data
         
     def data_vencimento(self):
-        data_vencimento = self.data + datetime.timedelta(days=self.vencimento())
+        if self.tipo_operacao == 'C':
+            data_vencimento = self.data + datetime.timedelta(days=self.vencimento())
+        elif self.tipo_operacao == 'V':
+            data_vencimento = self.operacao_compra_relacionada().data + datetime.timedelta(days=self.vencimento())
         # Verifica se é fim de semana ou feriado
         while data_vencimento.weekday() > 4 or verificar_feriado_bovespa(data_vencimento):
             data_vencimento += datetime.timedelta(days=1)
