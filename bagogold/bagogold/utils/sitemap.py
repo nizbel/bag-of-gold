@@ -18,7 +18,7 @@ def gerar_sitemap():
     
     # Trabalhar sempre com (url, qtd_vezes_encontrada)
     lista_urls_encontradas = {url_inicial: 0}
-    while len(lista_urls) > 0 and max(lista_urls_encontradas.values()) < 50:
+    while len(lista_urls) > 0:
         url = lista_urls.pop(0)
         print len(lista_urls), url
         req = urllib2.Request(url)
@@ -28,7 +28,6 @@ def gerar_sitemap():
 #         urls_page = re.findall('(http|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?', page)
         urls_page = re.findall('"/[-\d\w_/]*"', page)
         urls_page = ['%s%s' % (host, url_page.replace('"', '')) for url_page in urls_page]
-        print urls_page
         for url_encontrada in [url_page for url_page in urls_page if 'static' not in url_page and '?' not in url_page]:
             # Se URL encontrada já havia sido encontrada antes, apenas incrementa quantidade de vezes vista
             if url_encontrada in lista_urls_encontradas.keys():
