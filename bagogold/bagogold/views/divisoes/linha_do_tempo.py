@@ -2,7 +2,7 @@
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoCDB_RDB, \
     TransferenciaEntreDivisoes, DivisaoOperacaoLC
-from bagogold.lci_lca.utils import calcular_valor_lc_ate_dia_por_divisao
+from bagogold.lci_lca.utils import calcular_valor_lci_lca_ate_dia_por_divisao
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia_por_divisao
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
@@ -126,7 +126,7 @@ def linha_do_tempo_lci_lca(divisao):
         eventos.append(evento)        
             
     for evento in eventos:
-        evento.saldo = divisao.saldo_lc(evento.data)
-        evento.investido = sum(calcular_valor_lc_ate_dia_por_divisao(evento.data, divisao.id).values())
+        evento.saldo = divisao.saldo_lci_lca(evento.data)
+        evento.investido = sum(calcular_valor_lci_lca_ate_dia_por_divisao(evento.data, divisao.id).values())
         
     return eventos

@@ -54,14 +54,14 @@ class TelaInicioTestCase(TestCase):
         divisao_operacao_fii2 = DivisaoOperacaoFII.objects.create(divisao=divisao1, operacao=operacao_fii2, quantidade=operacao_fii2.quantidade)
         
         # LC
-        lc = LetraCredito.objects.create(nome='Letra de teste', investidor=user.investidor)
-        lc_porcentagem_di = HistoricoPorcentagemLetraCredito.objects.create(letra_credito=lc, porcentagem_di=Decimal(90))
-        operacao_lc1 = OperacaoLetraCredito.objects.create(investidor=user.investidor, letra_credito=lc, data=data_atual - datetime.timedelta(days=0), tipo_operacao='C',
+        lci_lca = LetraCredito.objects.create(nome='Letra de teste', investidor=user.investidor)
+        lci_lca_porcentagem_di = HistoricoPorcentagemLetraCredito.objects.create(letra_credito=lc, porcentagem_di=Decimal(90))
+        operacao_lci_lca1 = OperacaoLetraCredito.objects.create(investidor=user.investidor, letra_credito=lc, data=data_atual - datetime.timedelta(days=0), tipo_operacao='C',
                                             quantidade=Decimal(1000))
-        divisao_operacao_lc1 = DivisaoOperacaoLC.objects.create(divisao=divisao1, operacao=operacao_lc1, quantidade=operacao_lc1.quantidade)
-        operacao_lc2 = OperacaoLetraCredito.objects.create(investidor=user.investidor, letra_credito=lc, data=data_atual - datetime.timedelta(days=1), tipo_operacao='C',
+        divisao_operacao_lci_lca1 = DivisaoOperacaoLC.objects.create(divisao=divisao1, operacao=operacao_lci_lca1, quantidade=operacao_lci_lca1.quantidade)
+        operacao_lci_lca2 = OperacaoLetraCredito.objects.create(investidor=user.investidor, letra_credito=lc, data=data_atual - datetime.timedelta(days=1), tipo_operacao='C',
                                             quantidade=Decimal(2000))
-        divisao_operacao_lc2 = DivisaoOperacaoLC.objects.create(divisao=divisao2, operacao=operacao_lc2, quantidade=operacao_lc2.quantidade)
+        divisao_operacao_lci_lca2 = DivisaoOperacaoLC.objects.create(divisao=divisao2, operacao=operacao_lci_lca2, quantidade=operacao_lci_lca2.quantidade)
         
         # Gerar valores históricos
         date_list = [data_atual - datetime.timedelta(days=x) for x in range(0, (data_atual - datetime.date(2016, 1, 1)).days+1)]

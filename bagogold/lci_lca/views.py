@@ -12,7 +12,7 @@ from bagogold.lci_lca.models import OperacaoLetraCredito, \
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 from bagogold.bagogold.models.td import HistoricoIPCA
 from bagogold.lci_lca.utils import calcular_valor_atualizado_com_taxa_di, \
-    calcular_valor_lc_ate_dia, simulador_lci_lca, \
+    calcular_valor_lci_lca_ate_dia, simulador_lci_lca, \
     calcular_valor_atualizado_com_taxas_di
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo
 from decimal import Decimal
@@ -259,10 +259,10 @@ def editar_operacao_lci_lca(request, operacao_id):
                         operacao_lci_lca.save()
                         if operacao_lci_lca.tipo_operacao == 'V':
                             if not OperacaoVendaLetraCredito.objects.filter(operacao_venda=operacao_lci_lca):
-                                operacao_venda_lc = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_lci_lca)
+                                operacao_venda_lci_lca = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_lci_lca)
                                 operacao_venda_lci_lca.save()
                             else: 
-                                operacao_venda_lc = OperacaoVendaLetraCredito.objects.get(operacao_venda=operacao_lci_lca)
+                                operacao_venda_lci_lca = OperacaoVendaLetraCredito.objects.get(operacao_venda=operacao_lci_lca)
                                 if operacao_venda_lci_lca.operacao_compra != operacao_compra:
                                     operacao_venda_lci_lca.operacao_compra = operacao_compra
                                     operacao_venda_lci_lca.save()
@@ -275,10 +275,10 @@ def editar_operacao_lci_lca(request, operacao_id):
                     operacao_lci_lca.save()
                     if operacao_lci_lca.tipo_operacao == 'V':
                         if not OperacaoVendaLetraCredito.objects.filter(operacao_venda=operacao_lci_lca):
-                            operacao_venda_lc = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_lci_lca)
+                            operacao_venda_lci_lca = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_lci_lca)
                             operacao_venda_lci_lca.save()
                         else: 
-                            operacao_venda_lc = OperacaoVendaLetraCredito.objects.get(operacao_venda=operacao_lci_lca)
+                            operacao_venda_lci_lca = OperacaoVendaLetraCredito.objects.get(operacao_venda=operacao_lci_lca)
                             if operacao_venda_lci_lca.operacao_compra != operacao_compra:
                                 operacao_venda_lci_lca.operacao_compra = operacao_compra
                                 operacao_venda_lci_lca.save()
@@ -295,8 +295,8 @@ def editar_operacao_lci_lca(request, operacao_id):
         elif request.POST.get("delete"):
             # Testa se operação a excluir não é uma operação de compra com vendas já registradas
             if not OperacaoVendaLetraCredito.objects.filter(operacao_compra=operacao_lci_lca):
-                divisao_lc = DivisaoOperacaoLC.objects.filter(operacao=operacao_lci_lca)
-                for divisao in divisao_lc:
+                divisao_lci_lca = DivisaoOperacaoLC.objects.filter(operacao=operacao_lci_lca)
+                for divisao in divisao_lci_lca:
                     divisao.delete()
                 if operacao_lci_lca.tipo_operacao == 'V':
                     OperacaoVendaLetraCredito.objects.get(operacao_venda=operacao_lci_lca).delete()
@@ -468,7 +468,7 @@ def inserir_historico_porcentagem(request, lci_lca_id):
 
 @login_required
 @adiciona_titulo_descricao('Inserir Letra de Crédito', 'Inserir Letra de Crédito às letras cadastradas pelo investidor')
-def inserir_lc(request):
+def inserir_lci_lca(request):
     investidor = request.user.investidor
     
     # Preparar formsets 
@@ -479,12 +479,12 @@ def inserir_lc(request):
     
     if request.method == 'POST':
         if request.POST.get("save"):
-            form_lc = LetraCreditoForm(request.POST)
+            form_lci_lca = LetraCreditoForm(request.POST)
             formset_porcentagem = PorcentagemFormSet(request.POST)
             formset_carencia = CarenciaFormSet(request.POST)
             if form_lci_lca.is_valid():
-                lc = form_lci_lca.save(commit=False)
-                lc.investidor = investidor
+                lci_lca = form_lci_lca.save(commit=False)
+                lci_lca.investidor = investidor
                 formset_porcentagem = PorcentagemFormSet(request.POST, instance=lc)
                 formset_porcentagem.forms[0].empty_permitted=False
                 formset_carencia = CarenciaFormSet(request.POST, instance=lc)
@@ -493,13 +493,13 @@ def inserir_lc(request):
                 if formset_porcentagem.is_valid():
                     if formset_carencia.is_valid():
                         try:
-                            lc.save()
+                            lci_lca.save()
                             formset_porcentagem.save()
                             formset_carencia.save()
                         # Capturar erros oriundos da hora de salvar os objetos
                         except Exception as erro:
                             messages.error(request, erro.message)
-                            return TemplateResponse(request, 'lci_lca/inserir_lci_lca.html', {'form_lc': form_lc, 'formset_porcentagem': formset_porcentagem,
+                            return TemplateResponse(request, 'lci_lca/inserir_lci_lca.html', {'form_lci_lca': form_lci_lca, 'formset_porcentagem': formset_porcentagem,
                                                                          'formset_carencia': formset_carencia})
                         return HttpResponseRedirect(reverse('lci_lca:listar_lci_lca'))
                     
@@ -511,10 +511,10 @@ def inserir_lc(request):
                 messages.error(request, erro)
 
     else:
-        form_lc = LetraCreditoForm()
+        form_lci_lca = LetraCreditoForm()
         formset_porcentagem = PorcentagemFormSet()
         formset_carencia = CarenciaFormSet()
-    return TemplateResponse(request, 'lci_lca/inserir_lci_lca.html', {'form_lc': form_lc, 'formset_porcentagem': formset_porcentagem,
+    return TemplateResponse(request, 'lci_lca/inserir_lci_lca.html', {'form_lci_lca': form_lci_lca, 'formset_porcentagem': formset_porcentagem,
                                                               'formset_carencia': formset_carencia})
 
 @login_required
@@ -536,10 +536,10 @@ def inserir_operacao_lci_lca(request):
             
             # Validar Letra de Crédito
             if form_operacao_lci_lca.is_valid():
-                operacao_lc = form_operacao_lci_lca.save(commit=False)
+                operacao_lci_lca = form_operacao_lci_lca.save(commit=False)
                 operacao_lci_lca.investidor = investidor
                 operacao_compra = form_operacao_lci_lca.cleaned_data['operacao_compra']
-                formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lc, operacao_compra=operacao_compra, investidor=investidor) if varias_divisoes else None
+                formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lci_lca, operacao_compra=operacao_compra, investidor=investidor) if varias_divisoes else None
                     
                 # Validar em caso de venda
                 if form_operacao_lci_lca.cleaned_data['tipo_operacao'] == 'V':
@@ -548,11 +548,11 @@ def inserir_operacao_lci_lca(request):
                     if form_operacao_lci_lca.cleaned_data['quantidade'] == operacao_compra.quantidade:
                         # Desconsiderar divisões inseridas, copiar da operação de compra
                         operacao_lci_lca.save()
-                        for divisao_lc in DivisaoOperacaoLC.objects.filter(operacao=operacao_compra):
-                            divisao_lc_venda = DivisaoOperacaoLC(quantidade=divisao_lci_lca.quantidade, divisao=divisao_lci_lca.divisao, \
-                                                                 operacao=operacao_lc)
-                            divisao_lc_venda.save()
-                        operacao_venda_lc = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_lc)
+                        for divisao_lci_lca in DivisaoOperacaoLC.objects.filter(operacao=operacao_compra):
+                            divisao_lci_lca_venda = DivisaoOperacaoLC(quantidade=divisao_lci_lca.quantidade, divisao=divisao_lci_lca.divisao, \
+                                                                 operacao=operacao_lci_lca)
+                            divisao_lci_lca_venda.save()
+                        operacao_venda_lci_lca = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_lci_lca)
                         operacao_venda_lci_lca.save()
                         messages.success(request, 'Operação inserida com sucesso')
                         return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))
@@ -563,7 +563,7 @@ def inserir_operacao_lci_lca(request):
                             if formset_divisao.is_valid():
                                 operacao_lci_lca.save()
                                 formset_divisao.save()
-                                operacao_venda_lc = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_lc)
+                                operacao_venda_lci_lca = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_lci_lca)
                                 operacao_venda_lci_lca.save()
                                 messages.success(request, 'Operação inserida com sucesso')
                                 return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))
@@ -572,9 +572,9 @@ def inserir_operacao_lci_lca(request):
                                 
                         else:
                             operacao_lci_lca.save()
-                            divisao_operacao = DivisaoOperacaoLC(operacao=operacao_lc, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_lci_lca.quantidade)
+                            divisao_operacao = DivisaoOperacaoLC(operacao=operacao_lci_lca, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_lci_lca.quantidade)
                             divisao_operacao.save()
-                            operacao_venda_lc = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_lc)
+                            operacao_venda_lci_lca = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_lci_lca)
                             operacao_venda_lci_lca.save()
                             messages.success(request, 'Operação inserida com sucesso')
                             return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))
@@ -593,7 +593,7 @@ def inserir_operacao_lci_lca(request):
                             
                     else:
                         operacao_lci_lca.save()
-                        divisao_operacao = DivisaoOperacaoLC(operacao=operacao_lc, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_lci_lca.quantidade)
+                        divisao_operacao = DivisaoOperacaoLC(operacao=operacao_lci_lca, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_lci_lca.quantidade)
                         divisao_operacao.save()
                         messages.success(request, 'Operação inserida com sucesso')
                         return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))
@@ -632,7 +632,7 @@ def listar_lci_lca(request):
         else:
             letra_credito.rendimento_atual = HistoricoPorcentagemLetraCredito.objects.get(letra_credito=letra_credito).porcentagem_di
 
-    return TemplateResponse(request, 'lci_lca/listar_lci_lca.html', {'lcs': letras_credito})
+    return TemplateResponse(request, 'lci_lca/listar_lci_lca.html', {'letras_credito': letras_credito})
 
 # Retorna id's das operações que podem ser vendidas na data especificada
 @login_required
@@ -779,7 +779,7 @@ def sobre(request):
         graf_historico_ipca = [[str(calendar.timegm(valor_historico.data().timetuple()) * 1000), float(valor_historico.valor)] for valor_historico in historico_ipca]
         
         if request.user.is_authenticated():
-            total_atual = sum(calcular_valor_lc_ate_dia(request.user.investidor).values())
+            total_atual = sum(calcular_valor_lci_lca_ate_dia(request.user.investidor).values())
         else:
             total_atual = 0
         

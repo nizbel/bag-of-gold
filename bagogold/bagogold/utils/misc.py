@@ -125,7 +125,7 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDEFILO
     from bagogold.bagogold.utils.acoes import calcular_poupanca_prov_acao_ate_dia
     from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, calcular_valor_venda_cdb_rdb
     from bagogold.fii.utils import calcular_poupanca_prov_fii_ate_dia
-    from bagogold.lci_lca.utils import calcular_valor_lc_ate_dia, calcular_valor_venda_lc
+    from bagogold.lci_lca.utils import calcular_valor_lci_lca_ate_dia, calcular_valor_venda_lci_lca
     from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia
     from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA
     from bagogold.cri_cra.utils.utils import calcular_valor_cri_cra_ate_dia, calcular_rendimentos_cri_cra_ate_data
@@ -160,9 +160,9 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDEFILO
     
     # Letras de Crédito
     if 'L' in tipo_investimentos:
-        rendimentos['L'] = sum(calcular_valor_lc_ate_dia(investidor, data).values()) \
+        rendimentos['L'] = sum(calcular_valor_lci_lca_ate_dia(investidor, data).values()) \
             - sum([operacao.quantidade for operacao in OperacaoLetraCredito.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='C')]) \
-            + sum([calcular_valor_venda_lc(operacao) for operacao in OperacaoLetraCredito.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='V')])
+            + sum([calcular_valor_venda_lci_lca(operacao) for operacao in OperacaoLetraCredito.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='V')])
     
     # CRI/CRA
     if 'R' in tipo_investimentos:
