@@ -92,12 +92,6 @@ class OperacaoCDB_RDB (models.Model):
     def __unicode__(self):
         return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.cdb_rdb, self.data)
     
-#     def save(self, *args, **kw):
-#         # Apagar operação venda caso operação seja editada para compra
-#         if OperacaoVendaCDB_RDB.objects.filter(operacao_venda=self) and self.tipo_operacao == 'C':
-#             OperacaoVendaCDB_RDB.objects.get(operacao_venda=self).delete()
-#         super(OperacaoCDB_RDB, self).save(*args, **kw)
-    
     def carencia(self):
         if HistoricoCarenciaCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb).exists():
             return HistoricoCarenciaCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb).order_by('-data')[0].carencia
@@ -238,11 +232,6 @@ class HistoricoValorMinimoInvestimentoCDB_RDB (models.Model):
     valor_minimo = models.DecimalField(u'Valor mínimo para investimento', max_digits=9, decimal_places=2)
     data = models.DateField(u'Data da variação', blank=True, null=True)
     cdb_rdb = models.ForeignKey('CDB_RDB')
-    
-#     def save(self, *args, **kw):
-#         if self.valor_minimo < 0:
-#             raise forms.ValidationError('Valor mínimo não pode ser negativo')
-#         super(HistoricoValorMinimoInvestimentoCDB_RDB, self).save(*args, **kw)
     
 class CheckpointCDB_RDB (models.Model):
     ano = models.SmallIntegerField(u'Ano')
