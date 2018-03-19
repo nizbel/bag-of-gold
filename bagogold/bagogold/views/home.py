@@ -424,16 +424,16 @@ def detalhamento_investimentos(request):
     acoes_t = {}
     titulos_td = {}
     letras_credito = {}
-    # Caso haja LC, preparar para o cálculo
-    try:
+    # Caso haja Letra de Crédito, preparar para o cálculo
+    if operacoes_lci_lca.exists():
         ultima_data_calculada_lci_lca = operacoes_lci_lca[0].data
-    except:
+    else:
         ultima_data_calculada_lci_lca = datetime.date.today()
     cdb_rdb = {}
     # Caso haja CDB/RDB, preparar para o cálculo
-    try:
+    if operacoes_cdb_rdb.exists():
         ultima_data_calculada_cdb_rdb = operacoes_cdb_rdb[0].data
-    except:
+    else:
         ultima_data_calculada_cdb_rdb = datetime.date.today()
     cri_cra = {}
     fundos_investimento = {}
@@ -731,7 +731,7 @@ def detalhamento_investimentos(request):
 #             fim_prov_fii = datetime.datetime.now()
 #             total_prov_fii += fim_prov_fii - inicio_prov_fii
             
-            # LC
+            # LCI/LCA
 #             inicio_lci_lca = datetime.datetime.now()
             patrimonio_lci_lca = 0
             # Rodar calculo com as datas desde o último calculo, com 1 dia de atraso pois a atualização é a do dia anterior
@@ -836,7 +836,7 @@ def detalhamento_investimentos(request):
 #             print 'TD                   ', total_td
 #             print 'FII                  ', total_fii
 #             print 'Prov. FII            ', total_prov_fii
-#             print 'LC                   ', total_lci_lca
+#             print 'LCI/LCA              ', total_lci_lca
 #             print 'CDB/RDB              ', total_cdb_rdb
 #             print 'CRI/CRA              ', total_cri_cra
 #             print 'Debêntures           ', total_debentures
@@ -883,7 +883,7 @@ def detalhamento_investimentos(request):
 #     print 'FII:              ', total_fii 
 #     print 'Prov. FII:        ', total_prov_fii 
 #     print 'TD:               ', total_td 
-#     print 'LC:               ', total_lci_lca 
+#     print 'LCI/LCA:          ', total_lci_lca 
 #     print 'CDB/RDB:          ', total_cdb_rdb
 #     print 'CRI/CRA:          ', total_cri_cra
 #     print 'Debêntures:       ', total_debentures

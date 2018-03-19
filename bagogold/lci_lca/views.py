@@ -485,9 +485,9 @@ def inserir_lci_lca(request):
             if form_lci_lca.is_valid():
                 lci_lca = form_lci_lca.save(commit=False)
                 lci_lca.investidor = investidor
-                formset_porcentagem = PorcentagemFormSet(request.POST, instance=lc)
+                formset_porcentagem = PorcentagemFormSet(request.POST, instance=lci_lca)
                 formset_porcentagem.forms[0].empty_permitted=False
-                formset_carencia = CarenciaFormSet(request.POST, instance=lc)
+                formset_carencia = CarenciaFormSet(request.POST, instance=lci_lca)
                 formset_carencia.forms[0].empty_permitted=False
                 
                 if formset_porcentagem.is_valid():
@@ -613,7 +613,7 @@ def listar_lci_lca(request):
     if request.user.is_authenticated():
         investidor = request.user.investidor
     else:
-        return TemplateResponse(request, 'lci_lca/listar_lci_lca.html', {'lcs': list()})
+        return TemplateResponse(request, 'lci_lca/listar_lci_lca.html', {'letras_credito': list()})
         
     letras_credito = LetraCredito.objects.filter(investidor=investidor)
     

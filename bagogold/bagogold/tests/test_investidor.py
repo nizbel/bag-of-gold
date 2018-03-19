@@ -53,13 +53,13 @@ class TelaInicioTestCase(TestCase):
                                     data=data_atual - datetime.timedelta(days=2), tipo_operacao='C', fii=fii, emolumentos=Decimal(0))
         divisao_operacao_fii2 = DivisaoOperacaoFII.objects.create(divisao=divisao1, operacao=operacao_fii2, quantidade=operacao_fii2.quantidade)
         
-        # LC
+        # Letra de Crédito
         lci_lca = LetraCredito.objects.create(nome='Letra de teste', investidor=user.investidor)
-        lci_lca_porcentagem_di = HistoricoPorcentagemLetraCredito.objects.create(letra_credito=lc, porcentagem_di=Decimal(90))
-        operacao_lci_lca1 = OperacaoLetraCredito.objects.create(investidor=user.investidor, letra_credito=lc, data=data_atual - datetime.timedelta(days=0), tipo_operacao='C',
+        lci_lca_porcentagem_di = HistoricoPorcentagemLetraCredito.objects.create(letra_credito=lci_lca, porcentagem_di=Decimal(90))
+        operacao_lci_lca1 = OperacaoLetraCredito.objects.create(investidor=user.investidor, letra_credito=lci_lca, data=data_atual - datetime.timedelta(days=0), tipo_operacao='C',
                                             quantidade=Decimal(1000))
         divisao_operacao_lci_lca1 = DivisaoOperacaoLC.objects.create(divisao=divisao1, operacao=operacao_lci_lca1, quantidade=operacao_lci_lca1.quantidade)
-        operacao_lci_lca2 = OperacaoLetraCredito.objects.create(investidor=user.investidor, letra_credito=lc, data=data_atual - datetime.timedelta(days=1), tipo_operacao='C',
+        operacao_lci_lca2 = OperacaoLetraCredito.objects.create(investidor=user.investidor, letra_credito=lci_lca, data=data_atual - datetime.timedelta(days=1), tipo_operacao='C',
                                             quantidade=Decimal(2000))
         divisao_operacao_lci_lca2 = DivisaoOperacaoLC.objects.create(divisao=divisao2, operacao=operacao_lci_lca2, quantidade=operacao_lci_lca2.quantidade)
         

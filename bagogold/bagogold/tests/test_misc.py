@@ -10,7 +10,7 @@ from bagogold.bagogold.utils.misc import calcular_iof_regressivo, \
     calcular_domingo_pascoa_no_ano, buscar_valores_diarios_selic, \
     calcular_rendimentos_ate_data, formatar_zeros_a_direita_apos_2_casas_decimais
 from bagogold.cdb_rdb.models import CDB_RDB, HistoricoPorcentagemCDB_RDB, \
-    OperacaoCDB_RDB
+    OperacaoCDB_RDB, HistoricoVencimentoCDB_RDB
 from bagogold.fii.models import ProventoFII, FII, OperacaoFII, HistoricoFII
 from bagogold.lci_lca.models import LetraCredito, \
     HistoricoPorcentagemLetraCredito, OperacaoLetraCredito
@@ -154,7 +154,8 @@ class RendimentosTestCase(TestCase):
         
         # CDB/RDB
         cdb_rdb = CDB_RDB.objects.create(nome='CDB de teste', investidor=user.investidor, tipo='C', tipo_rendimento='2')
-        cdb_rdb_porcentagem_di = HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cdb_rdb, porcentagem=Decimal(90))
+        HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cdb_rdb, porcentagem=Decimal(90))
+        HistoricoVencimentoCDB_RDB.objects.create(cdb_rdb=cdb_rdb, vencimento=2000)
         operacao_cdb_rdb1 = OperacaoCDB_RDB.objects.create(investidor=user.investidor, cdb_rdb=cdb_rdb, data=data_atual + datetime.timedelta(days=1), tipo_operacao='C',
                                            quantidade=Decimal(1000))
         operacao_cdb_rdb2 = OperacaoCDB_RDB.objects.create(investidor=user.investidor, cdb_rdb=cdb_rdb, data=data_atual - datetime.timedelta(days=10), tipo_operacao='C',

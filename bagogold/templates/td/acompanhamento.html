@@ -83,9 +83,9 @@
 					<tbody>
 						{% for lci_lca in letras_credito %}
 						<tr>
-							<td>{{lc.nome}}</td>
-							<td>{{lc.rendimento_atual|floatformat:"2"}}%</td>
-							<td>{{lc.rendimento_12_meses|floatformat:"2"}}%</td>
+							<td>{{lci_lca.nome}}</td>
+							<td>{{lci_lca.rendimento_atual|floatformat:"2"}}%</td>
+							<td>{{lci_lca.rendimento_12_meses|floatformat:"2"}}%</td>
 						</tr>
 						{% endfor %}
 					</tbody>
