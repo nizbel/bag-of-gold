@@ -172,7 +172,7 @@ def acompanhamento_td(request):
 
         # Calcular
         lci_lca.rendimento_12_meses = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, lci_lca.rendimento_12_meses, lci_lca.taxa_atual).quantize(Decimal('.01'), ROUND_DOWN)
-        lci_lca.rendimento_12_meses = (lc.rendimento_12_meses - 1000) / 10
+        lci_lca.rendimento_12_meses = (lci_lca.rendimento_12_meses - 1000) / 10
     letras_credito.sort(key=lambda x: x.rendimento_atual, reverse=True)
         
     fiis = list(FII.objects.all())

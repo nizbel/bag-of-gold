@@ -188,30 +188,30 @@ def detalhar_divisao(request, divisao_id):
                 composicao['fundo-investimento'].composicao[fundo_id].composicao[operacao_divisao.operacao.id].valor_unitario
     
     # Adicionar letras de crédito
-    composicao['lc'] = Object()
-    composicao['lc'].nome = 'Letras de Crédito'
-    composicao['lc'].patrimonio = 0
-    composicao['lc'].composicao = {}
+    composicao['lci-lca'] = Object()
+    composicao['lci-lca'].nome = 'Letras de Crédito'
+    composicao['lci-lca'].patrimonio = 0
+    composicao['lci-lca'].composicao = {}
     valores_letras_credito_dia = calcular_valor_lci_lca_ate_dia_por_divisao(datetime.date.today(), divisao.id)
     for lci_lca_id in valores_letras_credito_dia.keys():
-        composicao['lc'].patrimonio += valores_letras_credito_dia[lc_id]
-        composicao['lc'].composicao[lc_id] = Object()
-        composicao['lc'].composicao[lc_id].nome = LetraCredito.objects.get(id=lc_id).nome
-        composicao['lc'].composicao[lc_id].patrimonio = valores_letras_credito_dia[lc_id]
-        composicao['lc'].composicao[lc_id].composicao = {}
-        # Pegar operações dos LCs
-        for operacao_divisao in DivisaoOperacaoLC.objects.filter(divisao=divisao, operacao__letra_credito__id=lc_id):
-            composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id] = Object()
-            composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].nome = operacao_divisao.operacao.tipo_operacao
-            composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].data = operacao_divisao.operacao.data
-            composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].quantidade = operacao_divisao.quantidade
+        composicao['lci-lca'].patrimonio += valores_letras_credito_dia[lci_lca_id]
+        composicao['lci-lca'].composicao[lci_lca_id] = Object()
+        composicao['lci-lca'].composicao[lci_lca_id].nome = LetraCredito.objects.get(id=lci_lca_id).nome
+        composicao['lci-lca'].composicao[lci_lca_id].patrimonio = valores_letras_credito_dia[lci_lca_id]
+        composicao['lci-lca'].composicao[lci_lca_id].composicao = {}
+        # Pegar operações das Letras de Crédito
+        for operacao_divisao in DivisaoOperacaoLC.objects.filter(divisao=divisao, operacao__letra_credito__id=lci_lca_id):
+            composicao['lci-lca'].composicao[lci_lca_id].composicao[operacao_divisao.operacao.id] = Object()
+            composicao['lci-lca'].composicao[lci_lca_id].composicao[operacao_divisao.operacao.id].nome = operacao_divisao.operacao.tipo_operacao
+            composicao['lci-lca'].composicao[lci_lca_id].composicao[operacao_divisao.operacao.id].data = operacao_divisao.operacao.data
+            composicao['lci-lca'].composicao[lci_lca_id].composicao[operacao_divisao.operacao.id].quantidade = operacao_divisao.quantidade
             try:
-                composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].valor_unitario = HistoricoPorcentagemLetraCredito.objects.filter(letra_credito=operacao_divisao.operacao.letra_credito, \
+                composicao['lci-lca'].composicao[lci_lca_id].composicao[operacao_divisao.operacao.id].valor_unitario = HistoricoPorcentagemLetraCredito.objects.filter(letra_credito=operacao_divisao.operacao.letra_credito, \
                                                                                                                                         data__lte=operacao_divisao.operacao.data).order_by('-data')[0].porcentagem_di
             except:
-                composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].valor_unitario = HistoricoPorcentagemLetraCredito.objects.get(data__isnull=True, letra_credito=operacao_divisao.operacao.letra_credito).porcentagem_di
+                composicao['lci-lca'].composicao[lci_lca_id].composicao[operacao_divisao.operacao.id].valor_unitario = HistoricoPorcentagemLetraCredito.objects.get(data__isnull=True, letra_credito=operacao_divisao.operacao.letra_credito).porcentagem_di
             
-            composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].patrimonio = operacao_divisao.quantidade
+            composicao['lci-lca'].composicao[lci_lca_id].composicao[operacao_divisao.operacao.id].patrimonio = operacao_divisao.quantidade
             
     # Adicionar cdb-rdb
     composicao['cdb-rdb'] = Object()
@@ -504,7 +504,7 @@ def listar_divisoes(request):
              
         # Letras de crédito
         lci_lca_divisao = calcular_valor_lci_lca_ate_dia_por_divisao(data_atual, divisao.id)
-        divisao.valor_atual_lci_lca += sum(lc_divisao.values())
+        divisao.valor_atual_lci_lca += sum(lci_lca_divisao.values())
         divisao.valor_atual += divisao.valor_atual_lci_lca
          
         # Outros investimentos
