@@ -39,6 +39,11 @@ class Rendimento (models.Model):
     valor = models.DecimalField(u'Valor do rendimento', max_digits=9, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
     data = models.DateField(u'Data do rendimento')
     
+    def valor_liquido(self):
+        if hasattr(self, 'impostorendarendimento'):
+            return self.valor * (1 - self.impostorendarendimento.percentual_ir((self.data - self.investimento.data).days))
+        return self.valor
+    
 class PeriodoRendimentos (models.Model):
     investimento = models.ForeignKey('Investimento')
     tipo_periodo = models.CharField(u'Tipo de período', max_length=1)
@@ -52,3 +57,26 @@ class Amortizacao (models.Model):
     valor = models.DecimalField(u'Valor da amortização', max_digits=11, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
     data = models.DateField(u'Data da amortização')
     
+class ImpostoRendaRendimento (models.Model):
+    TIPO_LONGO_PRAZO = 'L'
+    TIPO_VALOR_ESPECIFICO = 'P'
+    
+    rendimento = models.OneToOneField('Rendimento')
+    tipo = models.CharField(u'Tipo de cálculo')
+    
+    def percentual_ir(self, qtd_dias):
+        if self.tipo == self.TIPO_LONGO_PRAZO:
+            if qtd_dias <= 180:
+                return Decimal(0.225)
+            elif qtd_dias <= 360:
+                return Decimal(0.2)
+            elif qtd_dias <= 720:
+                return Decimal(0.175)
+            else: 
+                return Decimal(0.15)
+        elif self.tipo == self.TIPO_VALOR_ESPECIFICO:
+            return self.impostorendavalorespecifico.percentual
+    
+class ImpostoRendaValorEspecifico (models.Model):
+    imposto = models.OneToOneField('ImpostoRendaRendimento')
+    percentual = models.DecimalField(u'Percentual de IR', max_digits=5, decimal_places=3, validators=[MinValueValidator(Decimal('0.001'))])
