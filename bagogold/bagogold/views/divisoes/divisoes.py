@@ -16,7 +16,7 @@ from bagogold.bagogold.utils.acoes import calcular_qtd_acoes_ate_dia_por_divisao
 from bagogold.bagogold.utils.debenture import \
     calcular_valor_debentures_ate_dia_por_divisao
 from bagogold.fii.utils import calcular_qtd_fiis_ate_dia_por_divisao
-from bagogold.lci_lca.utils import calcular_valor_lc_ate_dia_por_divisao
+from bagogold.lci_lca.utils import calcular_valor_lci_lca_ate_dia_por_divisao
 from bagogold.bagogold.utils.td import calcular_qtd_titulos_ate_dia_por_divisao
 from bagogold.cdb_rdb.models import CDB_RDB, HistoricoPorcentagemCDB_RDB
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia_por_divisao
@@ -59,9 +59,9 @@ def criar_transferencias(request):
         print divisao
         # Letra de crédito
         for divisao_operacao in DivisaoOperacaoLC.objects.filter(divisao=divisao, operacao__tipo_operacao='C').order_by('operacao__data'):
-            saldo_no_dia = divisao.saldo_lc(divisao_operacao.operacao.data) + sum([transferencia.quantidade for transferencia in transferencias if transferencia.investimento_destino == 'L'])
+            saldo_no_dia = divisao.saldo_lci_lca(divisao_operacao.operacao.data) + sum([transferencia.quantidade for transferencia in transferencias if transferencia.investimento_destino == 'L'])
 #             print 'Compra na Data:', divisao_operacao.operacao.data, divisao_operacao.quantidade
-#             print 'Saldo:', divisao.saldo_lc(divisao_operacao.operacao.data)
+#             print 'Saldo:', divisao.saldo_lci_lca(divisao_operacao.operacao.data)
             
             if saldo_no_dia < 0:
                 transferencia = TransferenciaEntreDivisoes(divisao_recebedora=divisao, investimento_destino='L', quantidade=-saldo_no_dia, data=divisao_operacao.operacao.data, descricao='Gerada automaticamente')
@@ -192,8 +192,8 @@ def detalhar_divisao(request, divisao_id):
     composicao['lc'].nome = 'Letras de Crédito'
     composicao['lc'].patrimonio = 0
     composicao['lc'].composicao = {}
-    valores_letras_credito_dia = calcular_valor_lc_ate_dia_por_divisao(datetime.date.today(), divisao.id)
-    for lc_id in valores_letras_credito_dia.keys():
+    valores_letras_credito_dia = calcular_valor_lci_lca_ate_dia_por_divisao(datetime.date.today(), divisao.id)
+    for lci_lca_id in valores_letras_credito_dia.keys():
         composicao['lc'].patrimonio += valores_letras_credito_dia[lc_id]
         composicao['lc'].composicao[lc_id] = Object()
         composicao['lc'].composicao[lc_id].nome = LetraCredito.objects.get(id=lc_id).nome
@@ -431,7 +431,7 @@ def listar_divisoes(request):
         divisao.valor_atual_debentures = 0
         divisao.valor_atual_fii = 0
         divisao.valor_atual_fundo_investimento = 0
-        divisao.valor_atual_lc = 0
+        divisao.valor_atual_lci_lca = 0
         divisao.valor_atual_outros_invest = 0
         divisao.valor_atual_td = 0
         
@@ -503,9 +503,9 @@ def listar_divisoes(request):
         divisao.valor_atual += divisao.valor_atual_fundo_investimento
              
         # Letras de crédito
-        lc_divisao = calcular_valor_lc_ate_dia_por_divisao(data_atual, divisao.id)
-        divisao.valor_atual_lc += sum(lc_divisao.values())
-        divisao.valor_atual += divisao.valor_atual_lc
+        lci_lca_divisao = calcular_valor_lci_lca_ate_dia_por_divisao(data_atual, divisao.id)
+        divisao.valor_atual_lci_lca += sum(lc_divisao.values())
+        divisao.valor_atual += divisao.valor_atual_lci_lca
          
         # Outros investimentos
         outros_invest_divisao = calcular_valor_outros_investimentos_ate_data_por_divisao(divisao, data_atual)
@@ -545,12 +545,12 @@ def listar_divisoes(request):
         divisao.saldo_debentures = divisao.saldo_debentures()
         divisao.saldo_fii = divisao.saldo_fii()
         divisao.saldo_fundo_investimento = divisao.saldo_fundo_investimento()
-        divisao.saldo_lc = divisao.saldo_lc()
+        divisao.saldo_lci_lca = divisao.saldo_lci_lca()
         divisao.saldo_outros_invest = divisao.saldo_outros_invest()
         divisao.saldo_td = divisao.saldo_td()
         divisao.saldo_trade = divisao.saldo_acoes_trade()
         divisao.saldo = divisao.saldo_bh + divisao.saldo_cdb_rdb + divisao.saldo_cri_cra + divisao.saldo_criptomoeda \
-            + divisao.saldo_debentures + divisao.saldo_fii + divisao.saldo_fundo_investimento + divisao.saldo_lc \
+            + divisao.saldo_debentures + divisao.saldo_fii + divisao.saldo_fundo_investimento + divisao.saldo_lci_lca \
             + divisao.saldo_outros_invest + divisao.saldo_td + divisao.saldo_trade
               
     return TemplateResponse(request, 'divisoes/listar_divisoes.html', {'divisoes': divisoes})

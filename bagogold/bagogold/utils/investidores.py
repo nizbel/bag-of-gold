@@ -20,7 +20,7 @@ from bagogold.bagogold.utils.acoes import quantidade_acoes_ate_dia, \
 from bagogold.bagogold.utils.debenture import calcular_qtd_debentures_ate_dia
 from bagogold.fii.utils import calcular_qtd_fiis_ate_dia_por_ticker, \
     calcular_qtd_fiis_ate_dia, calcular_poupanca_prov_fii_ate_dia
-from bagogold.lci_lca.utils import calcular_valor_lc_ate_dia
+from bagogold.lci_lca.utils import calcular_valor_lci_lca_ate_dia
 from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia
 from bagogold.cri_cra.models.cri_cra import CRI_CRA, OperacaoCRI_CRA
@@ -161,7 +161,7 @@ def buscar_ultimas_operacoes(investidor, quantidade_operacoes):
     operacoes_fii = OperacaoFII.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-data')[:quantidade_operacoes]
     operacoes_td = OperacaoTitulo.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-data')[:quantidade_operacoes]
     operacoes_acoes = OperacaoAcao.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-data')[:quantidade_operacoes]
-    operacoes_lc = OperacaoLetraCredito.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-data')[:quantidade_operacoes]
+    operacoes_lci_lca = OperacaoLetraCredito.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-data')[:quantidade_operacoes]
     operacoes_cdb_rdb = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-data')[:quantidade_operacoes]
     operacoes_cri_cra = OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor).exclude(data__isnull=True).order_by('-data')[:quantidade_operacoes]
     operacoes_debentures = OperacaoDebenture.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-data')[:quantidade_operacoes]
@@ -169,7 +169,7 @@ def buscar_ultimas_operacoes(investidor, quantidade_operacoes):
     operacoes_criptomoedas = OperacaoCriptomoeda.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-data')[:quantidade_operacoes]
     outros_investimentos = Investimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-data')[:quantidade_operacoes]
     
-    lista_operacoes = sorted(chain(operacoes_fii, operacoes_td, operacoes_acoes, operacoes_lc, operacoes_cdb_rdb, 
+    lista_operacoes = sorted(chain(operacoes_fii, operacoes_td, operacoes_acoes, operacoes_lci_lca, operacoes_cdb_rdb, 
                                    operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento, operacoes_criptomoedas, 
                                    outros_investimentos),
                             key=attrgetter('data'), reverse=True)
@@ -191,7 +191,7 @@ def buscar_operacoes_no_periodo(investidor, data_inicial, data_final):
     operacoes_fii = OperacaoFII.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')
     operacoes_td = OperacaoTitulo.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')
     operacoes_acoes = OperacaoAcao.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')
-    operacoes_lc = OperacaoLetraCredito.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')  
+    operacoes_lci_lca = OperacaoLetraCredito.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')  
     operacoes_cdb_rdb = OperacaoCDB_RDB.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')  
     operacoes_cri_cra = OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')  
     operacoes_criptomoeda = OperacaoCriptomoeda.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')
@@ -199,7 +199,7 @@ def buscar_operacoes_no_periodo(investidor, data_inicial, data_final):
     operacoes_fundo_investimento = OperacaoFundoInvestimento.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')
     outros_investimentos = Investimento.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')
     
-    lista_operacoes = sorted(chain(operacoes_fii, operacoes_td, operacoes_acoes, operacoes_lc, operacoes_cdb_rdb, 
+    lista_operacoes = sorted(chain(operacoes_fii, operacoes_td, operacoes_acoes, operacoes_lci_lca, operacoes_cdb_rdb, 
                                    operacoes_cri_cra, operacoes_criptomoeda, operacoes_debentures, operacoes_fundo_investimento, 
                                    outros_investimentos),
                             key=attrgetter('data'))
@@ -271,9 +271,9 @@ def buscar_totais_atuais_investimentos(investidor, data_atual=datetime.date.toda
         totais_atuais['Fundos de Inv.'] += valor
             
     # Letras de crédito
-    letras_credito = calcular_valor_lc_ate_dia(investidor, data_atual)
-    for total_lc in letras_credito.values():
-        totais_atuais['Letras de Crédito'] += total_lc
+    letras_credito = calcular_valor_lci_lca_ate_dia(investidor, data_atual)
+    for total_lci_lca in letras_credito.values():
+        totais_atuais['Letras de Crédito'] += total_lci_lca
     
     # Outros investimentos
     outros_investimentos = calcular_valor_outros_investimentos_ate_data(investidor, data_atual)

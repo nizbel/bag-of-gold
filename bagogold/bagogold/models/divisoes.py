@@ -261,7 +261,7 @@ class Divisao (models.Model):
         
         return saldo
     
-    def saldo_lc(self, data=datetime.date.today()):
+    def saldo_lci_lca(self, data=datetime.date.today()):
         from bagogold.lci_lca.utils import calcular_valor_atualizado_com_taxas_di
         """
         Calcula o saldo de operações de Letra de Crédito de uma divisão (dinheiro livre)
@@ -373,7 +373,7 @@ class Divisao (models.Model):
         # Fundo de investimento
         saldo += self.saldo_fundo_investimento(data=data)
         # LC
-        saldo += self.saldo_lc(data=data)
+        saldo += self.saldo_lci_lca(data=data)
         # Outros investimetnos
         saldo += self.saldo_outros_invest(data=data)
         # TD
