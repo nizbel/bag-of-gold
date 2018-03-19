@@ -200,8 +200,8 @@ def ler_documento_provento(request, id_pendencia):
             if request.POST.get('reservar') == '1':
                 # Calcular quantidade de pendências reservadas
                 qtd_pendencias_reservadas = InvestidorResponsavelPendencia.objects.filter(investidor=investidor).count()
-                if qtd_pendencias_reservadas == 20:
-                    messages.error(request, u'Você já possui 20 pendências reservadas')
+                if qtd_pendencias_reservadas == PendenciaDocumentoProvento.MAX_PENDENCIAS_POR_USUARIO:
+                    messages.error(request, u'Você já possui %s pendências reservadas' % (PendenciaDocumentoProvento.MAX_PENDENCIAS_POR_USUARIO))
                 else:
                     # Tentar alocar para o usuário
                     retorno, mensagem = alocar_pendencia_para_investidor(pendencia, investidor)
@@ -569,13 +569,22 @@ def listar_pendencias(request):
         filtros.filtro_tipo_validacao = 'filtro_tipo_validacao' in request.POST
         # Preparar filtro por pendências reserváveis
         filtros.filtro_reservaveis = 'filtro_reservaveis' in request.POST
+        # Preparar filtro para tipo de investimento
+        filtros.filtro_tipo_inv = request.POST.get('filtro_tipo_inv')
     else:
         filtros.filtro_qtd = 200
         filtros.filtro_tipo_leitura = True
         filtros.filtro_tipo_validacao = True
         filtros.filtro_reservaveis = True
+        # Valores são F (FII), A (Ação) e T (Todos)
+        filtros.filtro_tipo_inv = 'T'
         
     # Filtrar
+    if filtros.filtro_tipo_inv == 'A':
+        query_pendencias = query_pendencias.filter(documento__tipo='A')
+    elif filtros.filtro_tipo_inv == 'F':
+        query_pendencias = query_pendencias.filter(documento__tipo='F')
+        
     if not filtros.filtro_tipo_leitura:
         query_pendencias = query_pendencias.exclude(tipo='L')
     if not filtros.filtro_tipo_validacao:
@@ -588,7 +597,7 @@ def listar_pendencias(request):
         pendencias = query_pendencias
     else:
         pendencias = query_pendencias[:filtros.filtro_qtd]
-        
+    
     
     # Calcular quantidade de pendências reservadas
     qtd_pendencias_reservadas = InvestidorResponsavelPendencia.objects.filter(investidor=investidor).count()
@@ -705,8 +714,9 @@ def puxar_responsabilidade_documento_provento(request):
     
     # Calcular quantidade de pendências reservadas
     qtd_pendencias_reservadas = InvestidorResponsavelPendencia.objects.filter(investidor=investidor).count()
-    if qtd_pendencias_reservadas == 20:
-        return HttpResponse(json.dumps({'resultado': False, 'mensagem': u'Você já possui 20 pendências reservadas', 'responsavel': None, 'usuario_responsavel': False}), content_type = "application/json") 
+    if qtd_pendencias_reservadas == PendenciaDocumentoProvento.MAX_PENDENCIAS_POR_USUARIO:
+        return HttpResponse(json.dumps({'resultado': False, 'mensagem': u'Você já possui %s pendências reservadas' % (PendenciaDocumentoProvento.MAX_PENDENCIAS_POR_USUARIO), 
+                                        'responsavel': None, 'usuario_responsavel': False}), content_type = "application/json") 
     
     # Testa se pendência enviada existe
     try:
@@ -807,8 +817,8 @@ def validar_documento_provento(request, id_pendencia):
             if request.POST.get('reservar') == '1':
                 # Calcular quantidade de pendências reservadas
                 qtd_pendencias_reservadas = InvestidorResponsavelPendencia.objects.filter(investidor=investidor).count()
-                if qtd_pendencias_reservadas == 20:
-                    messages.error(request, u'Você já possui 20 pendências reservadas')
+                if qtd_pendencias_reservadas == PendenciaDocumentoProvento.MAX_PENDENCIAS_POR_USUARIO:
+                    messages.error(request, u'Você já possui %s pendências reservadas' % (PendenciaDocumentoProvento.MAX_PENDENCIAS_POR_USUARIO))
                 else:
                     # Tentar alocar para o usuário
                     retorno, mensagem = alocar_pendencia_para_investidor(pendencia, investidor)
