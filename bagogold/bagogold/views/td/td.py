@@ -7,7 +7,7 @@ from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic, \
     HistoricoTaxaDI
 from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
     ValorDiarioTitulo, Titulo, HistoricoIPCA
-from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di
+from bagogold.lci_lca.utils import calcular_valor_atualizado_com_taxas_di
 from bagogold.bagogold.utils.td import calcular_imposto_venda_td, \
     buscar_data_valor_mais_recente, quantidade_titulos_ate_dia, \
     quantidade_titulos_ate_dia_por_titulo, calcular_valor_td_ate_dia
