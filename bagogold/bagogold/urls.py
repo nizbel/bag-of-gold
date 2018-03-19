@@ -206,7 +206,7 @@ urlpatterns = [
     # Poupança
     
     # LCA e LCI
-    url(r'^lci-lca/', include(lci_lca_patterns, namespace='lci_lca')),
+#     url(r'^lci-lca/', include(lci_lca_patterns, namespace='lci_lca')),
     
     # CDB e RDB
 #     url(r'^cdb-rdb/', include(cdb_rdb_patterns, namespace='cdb_rdb')),
