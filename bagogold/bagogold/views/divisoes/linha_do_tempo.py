@@ -2,7 +2,7 @@
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoCDB_RDB, \
     TransferenciaEntreDivisoes, DivisaoOperacaoLCI_LCA
-from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia_por_divisao
+from bagogold.lci_lca.utils import calcular_valor_lc_ate_dia_por_divisao
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia_por_divisao
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied

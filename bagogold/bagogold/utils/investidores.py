@@ -20,7 +20,7 @@ from bagogold.bagogold.utils.acoes import quantidade_acoes_ate_dia, \
 from bagogold.bagogold.utils.debenture import calcular_qtd_debentures_ate_dia
 from bagogold.fii.utils import calcular_qtd_fiis_ate_dia_por_ticker, \
     calcular_qtd_fiis_ate_dia, calcular_poupanca_prov_fii_ate_dia
-from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia
+from bagogold.lci_lca.utils import calcular_valor_lci_lca_ate_dia
 from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia
 from bagogold.cri_cra.models.cri_cra import CRI_CRA, OperacaoCRI_CRA
