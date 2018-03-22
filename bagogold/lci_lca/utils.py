@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoLCI_LCA
 from bagogold.lci_lca.models import OperacaoLetraCredito, \
-    OperacaoVendaLetraCredito
+    HistoricoPorcentagemLetraCredito, OperacaoVendaLetraCredito
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo
 from decimal import Decimal, ROUND_DOWN

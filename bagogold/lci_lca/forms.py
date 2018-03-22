@@ -22,7 +22,7 @@ class LetraCreditoForm(LocalizedModelForm):
         fields = ('nome',)
 
 class OperacaoLetraCreditoForm(LocalizedModelForm):
-    # Campo verificado apenas no caso de venda de operação de lc
+    # Campo verificado apenas no caso de venda de operação de lci_lca
     operacao_compra = forms.ModelChoiceField(label='Operação de compra', queryset=OperacaoLetraCredito.objects.none(), required=False)
     
     class Meta:

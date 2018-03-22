@@ -147,12 +147,12 @@
                             {% endif %}
                             ">R$ {{divisao.valor_atual_debentures|floatformat:"2"}}</span></td>
 						<td><span class="
-							{% if divisao.valor_atual_lc < 0 %}
+							{% if divisao.valor_atual_lci_lca < 0 %}
 							font-red-thunderbird
 							{% else %}
 							font-blue
 							{% endif %}
-							">R$ {{divisao.valor_atual_lc|floatformat:"2"}}</span></td>
+							">R$ {{divisao.valor_atual_lci_lca|floatformat:"2"}}</span></td>
 						<td><span class="
 							{% if divisao.valor_atual_fii < 0 %}
 							font-red-thunderbird
@@ -264,12 +264,12 @@
                             {% endif %}
                             ">R$ {{divisao.saldo_debentures|floatformat:"2"}}</span></td>
 						<td><span class="
-							{% if divisao.saldo_lc < 0 %}
+							{% if divisao.saldo_lci_lca < 0 %}
 							font-red-thunderbird
 							{% else %}
 							font-blue
 							{% endif %}
-							">R$ {{divisao.saldo_lc|floatformat:"2"}}</span></td>
+							">R$ {{divisao.saldo_lci_lca|floatformat:"2"}}</span></td>
 						<td><span class="
 							{% if divisao.saldo_fii < 0 %}
 							font-red-thunderbird

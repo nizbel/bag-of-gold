@@ -123,6 +123,36 @@
                                                     <span class="check"></span>
                                                     <span class="box"></span> Apenas reserváveis</label>
                                             </div>
+                                            <label class="col-md-12 control-label">Investimento:</label>
+                                            <div class="md-radio-list">
+                                                <div class="md-radio col-md-12">
+                                                    <input type="radio" class="md-radiobtn" name="filtro_tipo_inv" id="radioDocumentoTodos" value="T" 
+                                                    {% if filtros.filtro_tipo_inv == 'T' %}checked{% endif %}>
+                                                    <label for="radioDocumentoTodos">
+                                                        <span></span>
+                                                        <span class="check"></span>
+                                                        <span class="box"></span> Todos 
+                                                    </label>
+                                                </div>
+                                                <div class="md-radio col-md-12">
+                                                    <input type="radio" class="md-radiobtn" name="filtro_tipo_inv" id="radioDocumentoAcao" value="A"
+                                                    {% if filtros.filtro_tipo_inv == 'A' %}checked{% endif %}>
+                                                    <label for="radioDocumentoAcao">
+                                                        <span></span>
+                                                        <span class="check"></span>
+                                                        <span class="box"></span> Ações 
+                                                    </label>
+                                                </div>
+                                                <div class="md-radio col-md-12">
+                                                    <input type="radio" class="md-radiobtn" name="filtro_tipo_inv" id="radioDocumentoFII" value="F"
+                                                    {% if filtros.filtro_tipo_inv == 'F' %}checked{% endif %}>
+                                                    <label for="radioDocumentoFII">
+                                                        <span></span>
+                                                        <span class="check"></span>
+                                                        <span class="box"></span> FIIs 
+                                                    </label>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

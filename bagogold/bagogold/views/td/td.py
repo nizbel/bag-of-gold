@@ -158,21 +158,21 @@ def acompanhamento_td(request):
     letras_credito = list(LetraCredito.objects.filter(investidor=investidor))
     historico_di = HistoricoTaxaDI.objects.filter(data__range=[data_12_meses, datetime.date.today()]).values('taxa').annotate(qtd_dias=Count('taxa'))
     # Comparativo com letras de crédito
-    for lc in letras_credito:
+    for lci_lca in letras_credito:
         # Calcular rendimento atual
-        lc.taxa_atual = lc.porcentagem_di_atual()
-        lc.rendimento_atual = calcular_valor_atualizado_com_taxas_di({HistoricoTaxaDI.objects.filter(data__isnull=False).order_by('-data')[0].taxa: 252}, Decimal(100),
-                                                                  lc.taxa_atual).quantize(Decimal('.01'), ROUND_DOWN) - 100
+        lci_lca.taxa_atual = lci_lca.porcentagem_di_atual()
+        lci_lca.rendimento_atual = calcular_valor_atualizado_com_taxas_di({HistoricoTaxaDI.objects.filter(data__isnull=False).order_by('-data')[0].taxa: 252}, Decimal(100),
+                                                                  lci_lca.taxa_atual).quantize(Decimal('.01'), ROUND_DOWN) - 100
         # Calcular rendimento real dos últimos 12 meses
-        lc.rendimento_12_meses = 1000
+        lci_lca.rendimento_12_meses = 1000
         # Definir taxas dos dias para o cálculo
         taxas_dos_dias = {}
         for taxa_quantidade in historico_di:
             taxas_dos_dias[taxa_quantidade['taxa']] = taxa_quantidade['qtd_dias']
 
         # Calcular
-        lc.rendimento_12_meses = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, lc.rendimento_12_meses, lc.taxa_atual).quantize(Decimal('.01'), ROUND_DOWN)
-        lc.rendimento_12_meses = (lc.rendimento_12_meses - 1000) / 10
+        lci_lca.rendimento_12_meses = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, lci_lca.rendimento_12_meses, lci_lca.taxa_atual).quantize(Decimal('.01'), ROUND_DOWN)
+        lci_lca.rendimento_12_meses = (lci_lca.rendimento_12_meses - 1000) / 10
     letras_credito.sort(key=lambda x: x.rendimento_atual, reverse=True)
         
     fiis = list(FII.objects.all())

@@ -167,6 +167,8 @@ class PendenciaDocumentoProvento (models.Model):
     TIPO_LEITURA = 'L'
     TIPO_VALIDACAO = 'V'
     
+    MAX_PENDENCIAS_POR_USUARIO = 50
+    
     documento = models.ForeignKey('DocumentoProventoBovespa')
     data_criacao = models.DateField(auto_now_add=True)
     """

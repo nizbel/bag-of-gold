@@ -2,7 +2,6 @@
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 from decimal import Decimal
 from ftplib import FTP
-from urllib2 import Request, urlopen, URLError, HTTPError
 import datetime
 
 
@@ -12,6 +11,7 @@ def buscar_valores_diarios():
     ftp.cwd('MediaCDI')
     linhas = []
     ftp.retrlines('NLST', linhas.append)
+    linhas.sort()
     for nome in linhas:
         # Verifica se são os .txt do CDI
         if '.txt' in nome:
