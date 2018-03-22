@@ -126,7 +126,7 @@ def linha_do_tempo_lci_lca(divisao):
         eventos.append(evento)        
             
     for evento in eventos:
-        evento.saldo = divisao.saldo_lc(evento.data)
+        evento.saldo = divisao.saldo_lci_lca(evento.data)
         evento.investido = sum(calcular_valor_lc_ate_dia_por_divisao(evento.data, divisao.id).values())
         
     return eventos

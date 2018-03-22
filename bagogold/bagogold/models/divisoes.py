@@ -264,6 +264,36 @@ class Divisao (models.Model):
     def saldo_lc(self, data=datetime.date.today()):
         from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di
         """
+        Calcula o saldo de operações de Letra de Câmbio de uma divisão (dinheiro livre)
+        """
+        saldo = Decimal(0)
+        historico_di = HistoricoTaxaDI.objects.all()
+        
+        # Computar compras
+        saldo -= (DivisaoOperacaoLC.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='C').aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
+        for venda_divisao in DivisaoOperacaoLC.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='V'):
+            # Para venda, calcular valor do cdb/rdb no dia da venda
+            valor_venda = venda_divisao.quantidade
+            taxa = venda_divisao.operacao.porcentagem_di()
+             
+            # Calcular o valor atualizado
+            dias_de_rendimento = historico_di.filter(data__gte=venda_divisao.operacao.operacao_compra_relacionada().data, data__lt=venda_divisao.operacao.data)
+            taxas_dos_dias = dict(dias_de_rendimento.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
+            valor_venda = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor_venda, taxa)
+            # Arredondar
+            str_auxiliar = str(valor_venda.quantize(Decimal('.0001')))
+            valor_venda = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+            saldo += valor_venda
+        
+        # Transferências
+        saldo += -(TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_LCI_LCA, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
+            + (TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_LCI_LCA, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
+        
+        return saldo
+    
+    def saldo_lci_lca(self, data=datetime.date.today()):
+        from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di
+        """
         Calcula o saldo de operações de Letra de Crédito de uma divisão (dinheiro livre)
         """
         saldo = Decimal(0)
@@ -373,7 +403,7 @@ class Divisao (models.Model):
         # Fundo de investimento
         saldo += self.saldo_fundo_investimento(data=data)
         # LC
-        saldo += self.saldo_lc(data=data)
+        saldo += self.saldo_lci_lca(data=data)
         # Outros investimetnos
         saldo += self.saldo_outros_invest(data=data)
         # TD
@@ -405,6 +435,52 @@ class DivisaoInvestimento (models.Model):
     def percentual_divisao(self):
         return self.quantidade / self.investimento.quantidade
     
+class DivisaoOperacaoLetraCambio (models.Model):
+    divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
+    operacao = models.ForeignKey('lc.OperacaoLetraCambio')
+    """
+    Guarda a quantidade da operação que pertence a divisão
+    """
+    quantidade = models.DecimalField('Quantidade',  max_digits=11, decimal_places=2)
+    
+    class Meta:
+        unique_together=('divisao', 'operacao')
+    
+    def __unicode__(self):
+        return self.divisao.nome + ': ' + str(self.quantidade) + ' de ' + unicode(self.operacao)
+    
+    """
+    Calcula o percentual da operação que foi para a divisão
+    """
+    def percentual_divisao(self):
+        return self.quantidade / self.operacao.quantidade
+    
+    def divisao_operacao_compra_relacionada(self):
+        from bagogold.lc.models import OperacaoVendaLetraCambio
+        if self.operacao.tipo_operacao == 'V':
+            return DivisaoOperacaoLetraCambio.objects.get(operacao=OperacaoVendaLetraCambio.objects.get(operacao_venda=self.operacao).operacao_compra, divisao=self.divisao)
+        else:
+            return None
+    
+    def qtd_disponivel_venda_na_data(self, data, desconsiderar_operacao=None):
+        from bagogold.lc.models import OperacaoVendaLetraCambio
+        if self.operacao.tipo_operacao != 'C':
+            raise ValueError('Operação deve ser de compra')
+        vendas = OperacaoVendaLetraCambio.objects.filter(operacao_compra=self.operacao, operacao_venda__data__lte=data).exclude(operacao_venda=desconsiderar_operacao).values_list('operacao_venda__id', flat=True)
+        qtd_vendida = 0
+        for venda in DivisaoOperacaoLetraCambio.objects.filter(operacao__id__in=vendas, divisao=self.divisao):
+            qtd_vendida += venda.quantidade
+        return self.quantidade - qtd_vendida
+    
+class CheckpointDivisaoLetraCambio (models.Model):
+    ano = models.SmallIntegerField(u'Ano')
+    divisao_operacao = models.ForeignKey('DivisaoOperacaoLetraCambio', limit_choices_to={'operacao__tipo_operacao': 'C'})
+    qtd_restante = models.DecimalField(u'Quantidade restante da operação', max_digits=11, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
+    qtd_atualizada = models.DecimalField(u'Quantidade atualizada da operação', max_digits=17, decimal_places=8, validators=[MinValueValidator(Decimal('0.00000001'))])
+    
+    class Meta:
+        unique_together=('divisao_operacao', 'ano')
+        
 class DivisaoOperacaoLC (models.Model):
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
     operacao = models.ForeignKey('lci_lca.OperacaoLetraCredito')
@@ -657,6 +733,7 @@ class TransferenciaEntreDivisoes(models.Model):
     TIPO_INVESTIMENTO_DEBENTURE = 'E'
     TIPO_INVESTIMENTO_FII = 'F'
     TIPO_INVESTIMENTO_FUNDO_INV = 'I'
+    TIPO_INVESTIMENTO_LC = 'A'
     TIPO_INVESTIMENTO_LCI_LCA = 'L'
     TIPO_INVESTIMENTO_CRIPTOMOEDA = 'M'
     TIPO_INVESTIMENTO_OUTROS_INVEST = 'O'
@@ -670,7 +747,8 @@ class TransferenciaEntreDivisoes(models.Model):
                                   (TIPO_INVESTIMENTO_DEBENTURE, 'Debênture'),
                                   (TIPO_INVESTIMENTO_FII, 'Fundo de Inv. Imobiliário'), 
                                   (TIPO_INVESTIMENTO_FUNDO_INV, 'Fundo de Investimento'),
-                                  (TIPO_INVESTIMENTO_LCI_LCA, 'Letras de Crédito'), 
+                                  (TIPO_INVESTIMENTO_LCI_LCA, 'Letra de Câmbio'), 
+                                  (TIPO_INVESTIMENTO_LCI_LCA, 'LCI/LCA'), 
                                   (TIPO_INVESTIMENTO_CRIPTOMOEDA, 'Criptomoeda'),
                                   (TIPO_INVESTIMENTO_CRI_CRA, 'CRI/CRA'), 
                                   (TIPO_INVESTIMENTO_TRADING, 'Trading'),
@@ -720,6 +798,8 @@ class TransferenciaEntreDivisoes(models.Model):
             return 'FII'
         elif self.investimento_origem == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_FUNDO_INV:
             return 'Fundo de inv.'
+        elif self.investimento_destino == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_LC:
+            return 'Letra de Câmbio'
         elif self.investimento_origem == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_LCI_LCA:
             return 'Letra de Crédito'
         elif self.investimento_origem == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_CRIPTOMOEDA:
@@ -746,6 +826,8 @@ class TransferenciaEntreDivisoes(models.Model):
             return 'FII'
         elif self.investimento_destino == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_FUNDO_INV:
             return 'Fundo de inv.'
+        elif self.investimento_destino == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_LC:
+            return 'Letra de Câmbio'
         elif self.investimento_destino == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_LCI_LCA:
             return 'Letra de Crédito'
         elif self.investimento_destino == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_CRIPTOMOEDA:
