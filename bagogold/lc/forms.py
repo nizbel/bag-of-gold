@@ -17,7 +17,7 @@ ESCOLHAS_TIPO_OPERACAO=(('C', "Compra"),
 class LetraCambioForm(LocalizedModelForm):
     class Meta:
         model = LetraCambio
-        fields = ('nome', 'tipo', 'tipo_rendimento')
+        fields = ('nome', 'tipo_rendimento')
         widgets={'tipo_rendimento': widgets.Select(choices=ESCOLHAS_TIPO_RENDIMENTO),}
 
 class OperacaoLetraCambioForm(LocalizedModelForm):
