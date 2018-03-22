@@ -16,14 +16,14 @@
 		<div class="form-body">
 			<div class="row">
 				<div class="form-group col-md-6 {% if form_lc.nome.errors %} has-error {% endif %}">
-					<label class="control-label col-md-4" style="text-align: left;">Nome:</label>
+					<label class="control-label col-md-4" style="text-align: left;"> {{ form_lc.nome.label }}:</label>
 					<div class="col-md-8">
 						<input type="text" class="form-control" maxlength="50" name="nome" id="id_nome" value="{{form_lc.nome.value|default:''}}">
 						{% if form_lc.nome.errors %} <span class="help-block"> {{ form_lc.nome.errors.as_text }} </span> {% endif %}
 					</div>
 				</div>
                 <div class="form-group col-md-6 {% if form_lc.tipo_rendimento.errors %} has-error {% endif %}">
-                    <label class="control-label col-md-4" style="text-align: left;"> Tipo de rendimento: </label>
+                    <label class="control-label col-md-4" style="text-align: left;"> {{ form_lc.tipo_rendimento.label }}: </label>
                     <div class="col-md-8">
                         <select class="selectpicker form-control" id="id_tipo_rendimento" name="tipo_rendimento">
                             {% for key, value in form_lc.fields.tipo_rendimento.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
@@ -38,7 +38,7 @@
 				<div class="form-group col-md-6 {% if form_porcentagem.porcentagem.errors %} has-error {% endif %}">
 					<label class="control-label col-md-4"> {{ form_porcentagem.porcentagem.label }}: </label>
 					<div class="col-md-8">
-						<input id="id_historicoporcentagemlc_set_set-{{forloop.counter0}}-porcentagem" type="text" value="{{form_porcentagem.porcentagem.value}}" name="historicoporcentagemlc_set-{{forloop.counter0}}-porcentagem" class="form-control">
+						<input id="id_historicoporcentagemletracambio_set-{{forloop.counter0}}-porcentagem" type="text" value="{{form_porcentagem.porcentagem.value}}" name="historicoporcentagemletracambio_set-{{forloop.counter0}}-porcentagem" class="form-control">
 						{% if form_porcentagem.porcentagem.errors %} <span class="help-block"> {{ form_porcentagem.porcentagem.errors.as_text }} </span> {% endif %}
 					</div>
 				</div>
@@ -48,7 +48,7 @@
                     <div class="form-group col-md-6 {% if form_carencia.carencia.errors %} has-error {% endif %}">
                         <label class="control-label col-md-4"> {{ form_carencia.carencia.label }}: </label>
                         <div class="col-md-8">
-                            <input id="id_historicocarencialc_set-{{forloop.counter0}}-carencia" type="text" value="{{form_carencia.carencia.value}}" name="historicocarencialc_set-{{forloop.counter0}}-carencia" class="form-control">
+                            <input id="id_historicocarencialetracambio_set-{{forloop.counter0}}-carencia" type="text" value="{{form_carencia.carencia.value}}" name="historicocarencialetracambio_set-{{forloop.counter0}}-carencia" class="form-control">
                             {% if form_carencia.carencia.errors %} <span class="help-block"> {{ form_carencia.carencia.errors.as_text }} </span> {% endif %}
                         </div>
                     </div>
@@ -60,7 +60,7 @@
                     <div class="form-group col-md-6 {% if form_vencimento.vencimento.errors %} has-error {% endif %}">
                         <label class="control-label col-md-4"> {{ form_vencimento.vencimento.label }}: </label>
                         <div class="col-md-8">
-                            <input id="id_historicovencimentolc_set-{{forloop.counter0}}-vencimento" type="text" value="{{form_vencimento.vencimento.value}}" name="historicovencimentolc_set-{{forloop.counter0}}-vencimento" class="form-control">
+                            <input id="id_historicovencimentoletracambio_set-{{forloop.counter0}}-vencimento" type="text" value="{{form_vencimento.vencimento.value}}" name="historicovencimentoletracambio_set-{{forloop.counter0}}-vencimento" class="form-control">
                             {% if form_vencimento.vencimento.errors %} <span class="help-block"> {{ form_vencimento.vencimento.errors.as_text }} </span> {% endif %}
                         </div>
                     </div>
@@ -90,17 +90,17 @@
 {{ form_lc.media }}
 <script type="text/javascript">
 $(document).ready(function() {
-	var label = $("label[for='id_historicoporcentagemlc_set-0-porcentagem']");
+	var label = $("label[for='id_historicoporcentagemletracambio_set-0-porcentagem']");
 	label.text(label.text().replace(':', '') + ' (ao ano):');
 	
 	$('#id_tipo_rendimento').change( function() {
 		if (String($(this).val()) == '1') {
-			$("input[name='historicoporcentagemlc_set-0-porcentagem']").parent().find('.bootstrap-touchspin-postfix').text('% ao ano');
+			$("input[name='historicoporcentagemletracambio_set-0-porcentagem']").parent().find('.bootstrap-touchspin-postfix').text('% ao ano');
 		} else if (String($(this).val()) == '2') {
-            $("input[name='historicoporcentagemlc_set-0-porcentagem']").parent().find('.bootstrap-touchspin-postfix').text('% do CDI');
+            $("input[name='historicoporcentagemletracambio_set-0-porcentagem']").parent().find('.bootstrap-touchspin-postfix').text('% do CDI');
 		}
 	})
-	$("input[name='historicoporcentagemlc_set-0-porcentagem']").TouchSpin({
+	$("input[name='historicoporcentagemletracambio_set-0-porcentagem']").TouchSpin({
 		initval: 0.01,
 		min: 0.01,
 		max: 1000000000,
@@ -109,7 +109,7 @@ $(document).ready(function() {
 		maxboostedstep: 100,
 		postfix: '% ao ano'
 	});
-	$("input[name='historicocarencialc_set-0-carencia']").TouchSpin({
+	$("input[name='historicocarencialetracambio_set-0-carencia']").TouchSpin({
 		initval: 1,
 		min: 1,
 		max: 1000000000,
@@ -117,7 +117,7 @@ $(document).ready(function() {
 		maxboostedstep: 100,
 		postfix: 'dias'
 	});
-	$("input[name='historicovencimentolc_set-0-vencimento']").TouchSpin({
+	$("input[name='historicovencimentoletracambio_set-0-vencimento']").TouchSpin({
         initval: 1,
         min: 1,
         max: 1000000000,
