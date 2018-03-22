@@ -30,13 +30,6 @@ class LetraCambio (models.Model):
         else:
             return HistoricoCarenciaLetraCambio.objects.get(data__isnull=True, lc=self).carencia
         
-    def descricao_tipo(self):
-        if self.tipo == self.CDB:
-            return 'CDB'
-        elif self.tipo == self.RDB:
-            return 'RDB'
-        raise ValueError('Tipo indefinido')
-    
     def eh_prefixado(self):
         return self.tipo_rendimento == LetraCambio.LC_PREFIXADO
     
