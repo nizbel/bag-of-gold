@@ -16,39 +16,39 @@
     <form method="POST" class="horizontal-form">{% csrf_token %}
         <div class="form-body">
             <div class="row">
-                <div class="form-group col-md-6 {% if form.vencimento.errors %} has-error {% endif %}">
-                    <label class="control-label col-md-4"> {{form.vencimento.label}}: </label>
+                <div class="form-group col-md-6 {% if form_historico_vencimento.vencimento.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4"> {{form_historico_vencimento.vencimento.label}}: </label>
                     <div class="col-md-8">
-                        <input id="id_vencimento" type="text" value="{{form.vencimento.value}}" name="vencimento" class="form-control">
-                        {% if form.vencimento.errors %} <span class="help-block"> {{ form.vencimento.errors.as_text }} </span> {% endif %}
+                        <input id="id_vencimento" type="text" value="{{form_historico_vencimento.vencimento.value}}" name="vencimento" class="form-control">
+                        {% if form_historico_vencimento.vencimento.errors %} <span class="help-block"> {{ form_historico_vencimento.vencimento.errors.as_text }} </span> {% endif %}
                     </div>
                 </div>
-                <div class="form-group col-md-6 {% if form.data.errors %} has-error {% endif %}">
-                    <label class="control-label col-md-4" style="text-align: left;"> {{form.data.label}}: </label>
+                <div class="form-group col-md-6 {% if form_historico_vencimento.data.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4" style="text-align: left;"> {{form_historico_vencimento.data.label}}: </label>
                     <div class="col-md-8">
                         <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy">
                             <input type="text" class="form-control" id="id_data" name="data" 
-                            value="{% if form.data.value|date:'d/m/Y'|default:'' == '' %}{{form.data.value|default:''}}{% else %}{{form.data.value|date:'d/m/Y'}}{% endif %}">
+                            value="{% if form_historico_vencimento.data.value|date:'d/m/Y'|default:'' == '' %}{{form_historico_vencimento.data.value|default:''}}{% else %}{{form_historico_vencimento.data.value|date:'d/m/Y'}}{% endif %}">
                             <span class="input-group-btn">
                                 <button class="btn default" type="button">
                                     <i class="fa fa-calendar"></i>
                                 </button>
                             </span>
                         </div>
-                        {% if form.data.errors %} <span class="help-block"> {{ form.data.errors.as_text }} </span>
+                        {% if form_historico_vencimento.data.errors %} <span class="help-block"> {{ form_historico_vencimento.data.errors.as_text }} </span>
                         {% else %} <span class="help-block"> Selecione uma data </span>
                         {% endif %}
                     </div>
                 </div>
             </div>
             <div class="row">
-                <div class="form-group col-md-6 {% if form.cdb_rdb.errors %} has-error {% endif %}">
-                    <label class="control-label col-md-4"> {{form.cdb_rdb.label}}: </label>
+                <div class="form-group col-md-6 {% if form_historico_vencimento.lc.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4"> {{form_historico_vencimento.lc.label}}: </label>
                     <div class="col-md-8">
-                        <select class="selectpicker form-control" disabled id="id_cdb_rdb" name="cdb_rdb">
-                            {% for key, value in form.fields.cdb_rdb.widget.choices %}<option value="{{ key }}" {% if key == form.cdb_rdb.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                        <select class="selectpicker form-control" disabled id="id_lc" name="lc">
+                            {% for key, value in form_historico_vencimento.fields.lc.widget.choices %}<option value="{{ key }}" {% if key == form_historico_vencimento.lc.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
                         </select>
-                        {% if form.cdb_rdb.errors %} <span class="help-block"> {{ form.cdb_rdb.errors.as_text }} </span> {% endif %}
+                        {% if form_historico_vencimento.lc.errors %} <span class="help-block"> {{ form_historico_vencimento.lc.errors.as_text }} </span> {% endif %}
                     </div>
                 </div>
             </div>
@@ -75,7 +75,7 @@
 <script src={% static "assets/global/plugins/moment.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/bootstrap-datepicker/js/bootstrap-datepicker.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/bootstrap-datepicker/locales/bootstrap-datepicker.pt-BR.min.js" %} type="text/javascript"></script>
-{{ form.media }}
+{{ form_historico_vencimento.media }}
 <script type="text/javascript">
 $( document ).ready(function() {    
     $("input[name='vencimento']").TouchSpin({

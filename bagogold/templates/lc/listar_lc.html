@@ -12,11 +12,10 @@
 
 {% block content %}
 <div class="portlet-body">
-	<table id="cdb_rdb" class="table table-striped table-bordered table-hover table-header-fixed">
+	<table id="lc" class="table table-striped table-bordered table-hover table-header-fixed">
 	<thead>
 		<tr>
 			<th>Nome</th>
-			<th>Tipo</th>
 			<th>Tipo de rendimento</th>
 			<th>Carência atual</th>
 			<th>Rendimento atual</th>
@@ -24,10 +23,9 @@
 		</tr>
 	</thead>
 	<tbody>
-	{% for item in cdb_rdb %}
+	{% for item in lc %}
 	<tr>
-		<td><a href="{% url 'cdb_rdb:detalhar_cdb_rdb' item.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar CDB/RDB">{{item.nome}}</a></td>
-		<td>{{item.descricao_tipo}}</td>
+		<td><a href="{% url 'lc:detalhar_lc' item.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar CDB/RDB">{{item.nome}}</a></td>
 		<td>{{item.str_tipo_rendimento}}</td>
 		<td>{{item.carencia_atual}} dia(s)</td>
 		<td>{{item.rendimento_atual}}%{% if not item.eh_prefixado %} do {{item.indice}}{% endif %}</td>

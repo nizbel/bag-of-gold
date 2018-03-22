@@ -42,13 +42,13 @@
                 </div>
             </div>
             <div class="row">
-                <div class="form-group col-md-6 {% if form.cdb_rdb.errors %} has-error {% endif %}">
-                    <label class="control-label col-md-4"> {{form.cdb_rdb.label}}: </label>
+                <div class="form-group col-md-6 {% if form.lc.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4"> {{form.lc.label}}: </label>
                     <div class="col-md-8">
-                        <select class="selectpicker form-control" disabled id="id_cdb_rdb" name="cdb_rdb">
-                        {% for key, value in form.fields.cdb_rdb.widget.choices %}<option value="{{ key }}" {% if key == form.cdb_rdb.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                        <select class="selectpicker form-control" disabled id="id_lc" name="lc">
+                        {% for key, value in form.fields.lc.widget.choices %}<option value="{{ key }}" {% if key == form.lc.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
                         </select>
-                        {% if form.cdb_rdb.errors %} <span class="help-block"> {{ form.cdb_rdb.errors.as_text }} </span> {% endif %}
+                        {% if form.lc.errors %} <span class="help-block"> {{ form.lc.errors.as_text }} </span> {% endif %}
                     </div>
                 </div>
             </div>
