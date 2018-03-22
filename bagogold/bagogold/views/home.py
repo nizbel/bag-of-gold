@@ -14,10 +14,10 @@ from bagogold.bagogold.utils.debenture import calcular_valor_debentures_ate_dia
 from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
     buscar_totais_atuais_investimentos, buscar_proventos_a_receber, \
     buscar_proventos_a_receber_data_ex_futura, buscar_operacoes_no_periodo
-from bagogold.lci_lca.utils import calcular_valor_lci_lca_ate_dia, \
-    calcular_valor_venda_lci_lca
 from bagogold.bagogold.utils.misc import calcular_rendimentos_ate_data, \
     verificar_feriado_bovespa, formatar_zeros_a_direita_apos_2_casas_decimais
+from bagogold.bagogold.utils.taxas_indexacao import \
+    calcular_valor_atualizado_com_taxas_di
 from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia
 from bagogold.blog.models import Post
 from bagogold.cdb_rdb.models import OperacaoCDB_RDB
@@ -35,7 +35,10 @@ from bagogold.fii.models import OperacaoFII, HistoricoFII, ProventoFII, \
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
     HistoricoValorCotas
 from bagogold.lc.models import OperacaoLetraCambio
+from bagogold.lc.utils import calcular_valor_lc_ate_dia, calcular_valor_venda_lc
 from bagogold.lci_lca.models import OperacaoLetraCredito
+from bagogold.lci_lca.utils import calcular_valor_lci_lca_ate_dia, \
+    calcular_valor_venda_lci_lca
 from bagogold.outros_investimentos.models import Rendimento, Amortizacao, \
     Investimento
 from decimal import Decimal, ROUND_DOWN
@@ -340,6 +343,8 @@ def detalhamento_investimentos(request):
     # Adicionar operações de Trading do investidor
     operacoes_t = OperacaoAcao.objects.filter(investidor=investidor, destinacao='T').exclude(data__isnull=True).order_by('data')
     
+    operacoes_lc = OperacaoLetraCambio.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
+    
     # Adicionar operações de LCI/LCA do investidor
     operacoes_lci_lca = OperacaoLetraCredito.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
 
@@ -369,7 +374,7 @@ def detalhamento_investimentos(request):
     
     # Juntar todas as operações
     lista_operacoes = sorted(chain(proventos_fii, operacoes_fii, operacoes_td, proventos_bh,  operacoes_bh, operacoes_t, operacoes_lci_lca, operacoes_cdb_rdb, 
-                                   operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento, operacoes_criptomoedas, 
+                                   operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento, operacoes_criptomoedas, operacoes_lc,
                                    transferencias_criptomoedas, outros_investimentos, amort_outros_investimentos),
                             key=attrgetter('data'))
 
@@ -453,6 +458,11 @@ def detalhamento_investimentos(request):
         ultima_data_calculada_cdb_rdb = operacoes_cdb_rdb[0].data
     else:
         ultima_data_calculada_cdb_rdb = datetime.date.today()
+    letras_cambio = {}
+    if operacoes_lc.exists():
+        ultima_data_calculada_lc = operacoes_lc[0].data
+    else:
+        ultima_data_calculada_lc = datetime.date.today()
     cri_cra = {}
     fundos_investimento = {}
     debentures = {}
@@ -475,6 +485,7 @@ def detalhamento_investimentos(request):
 #     total_fii = datetime.timedelta(hours=0)
 #     total_prov_fii = datetime.timedelta(hours=0)
 #     total_td = datetime.timedelta(hours=0)
+#     total_lc = datetime.timedelta(hours=0)
 #     total_lci_lca = datetime.timedelta(hours=0)
 #     total_cdb_rdb = datetime.timedelta(hours=0)
 #     total_cri_cra = datetime.timedelta(hours=0)
@@ -560,6 +571,16 @@ def detalhamento_investimentos(request):
             item.total = math.floor(fii[item.fii.ticker] * item.valor_unitario * 100) / 100
             total_proventos_fii += item.total
                 
+        elif isinstance(item, OperacaoLetraCambio):
+            if item.tipo_operacao == 'C':
+                letras_cambio[item.id] = item
+                
+            elif item.tipo_operacao == 'V':
+                if item.quantidade == item.operacao_compra_relacionada().qtd_disponivel_venda_na_data(item.data):
+                    del letras_cambio[item.operacao_compra_relacionada().id]
+                else:
+                    letras_cambio[item.operacao_compra_relacionada().id].quantidade -= letras_cambio[item.operacao_compra_relacionada().id].quantidade * item.quantidade / item.operacao_compra_relacionada().quantidade
+               
         elif isinstance(item, OperacaoLetraCredito):
             if item.tipo_operacao == 'C':
                 letras_credito[item.id] = item
@@ -749,6 +770,29 @@ def detalhamento_investimentos(request):
 #             fim_prov_fii = datetime.datetime.now()
 #             total_prov_fii += fim_prov_fii - inicio_prov_fii
             
+            # Letras de Câmbio
+#             inicio_lc = datetime.datetime.now()
+            patrimonio_lc = 0
+            # Rodar calculo com as datas desde o último calculo, com 1 dia de atraso pois a atualização é a do dia anterior
+            dia_anterior = item.data - datetime.timedelta(days=1)
+            if item.data > ultima_data_calculada_lc:
+                # Retira a data limite (item.data) do cálculo
+                taxas = HistoricoTaxaDI.objects.filter(data__range=[ultima_data_calculada_lc, dia_anterior]).values('taxa').annotate(qtd_dias=Count('taxa'))
+                taxas_dos_dias = {}
+                for taxa in taxas:
+                    taxas_dos_dias[taxa['taxa']] = taxa['qtd_dias']
+                for operacao_id, operacao in letras_cambio.items():
+                    if operacao.data < item.data:
+                        operacao.quantidade = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, OperacaoLetraCambio.objects.get(id=operacao_id).porcentagem_di())
+                # Guardar ultima data de calculo
+                ultima_data_calculada_lc = item.data
+            for letra_cambio in letras_cambio.values():
+                patrimonio_lc += letra_cambio.quantidade.quantize(Decimal('.01'), ROUND_DOWN)
+            patrimonio['Letras de Câmbio'] = patrimonio_lc
+            patrimonio['patrimonio_total'] += patrimonio['Letras de Câmbio'] 
+#             fim_lc = datetime.datetime.now()
+#             total_lc += fim_lc - inicio_lc
+            
             # LCI/LCA
 #             inicio_lci_lca = datetime.datetime.now()
             patrimonio_lci_lca = 0
@@ -854,6 +898,7 @@ def detalhamento_investimentos(request):
 #             print 'TD                   ', total_td
 #             print 'FII                  ', total_fii
 #             print 'Prov. FII            ', total_prov_fii
+#             print 'Letras de Câmbio     ', total_lc
 #             print 'LCI/LCA              ', total_lci_lca
 #             print 'CDB/RDB              ', total_cdb_rdb
 #             print 'CRI/CRA              ', total_cri_cra
@@ -901,6 +946,7 @@ def detalhamento_investimentos(request):
 #     print 'FII:              ', total_fii 
 #     print 'Prov. FII:        ', total_prov_fii 
 #     print 'TD:               ', total_td 
+#     print 'Letras de Câmbio: ', total_lc
 #     print 'LCI/LCA:          ', total_lci_lca 
 #     print 'CDB/RDB:          ', total_cdb_rdb
 #     print 'CRI/CRA:          ', total_cri_cra
@@ -960,7 +1006,9 @@ def painel_geral(request):
             investimento.link = 'fii:painel_fii'
         elif chave == 'Fundos de Inv.':
             investimento.link = 'fundo_investimento:painel_fundo_investimento'
-        elif chave == 'Letras de Crédito':
+        elif chave == 'Letras de Câmbio':
+            investimento.link = 'lc:painel_lc'
+        elif chave == 'LCI/LCA':
             investimento.link = 'lci_lca:painel_lci_lca'
         elif chave == 'Outros inv.':
             investimento.link = 'outros_investimentos:painel_outros_invest'
@@ -1031,11 +1079,13 @@ def grafico_renda_fixa_painel_geral(request):
         qtd_ultimos_dias = 22
         # Guardar valores totais
         diario_cdb_rdb = {}
+        diario_cri_cra = {}
+        diario_debentures = {}
+        diario_lc = {}
         diario_lci_lca = {}
         diario_td = {}
-        diario_debentures = {}
-        diario_cri_cra = {}
         
+        total_lc_dia_anterior = float(sum(calcular_valor_lc_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values()))
         total_lci_lca_dia_anterior = float(sum(calcular_valor_lci_lca_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values()))
         total_cdb_rdb_dia_anterior = float(sum(calcular_valor_cdb_rdb_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values()))
         total_td_dia_anterior = float(sum(calcular_valor_td_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values()))
@@ -1043,6 +1093,7 @@ def grafico_renda_fixa_painel_geral(request):
         total_cri_cra_dia_anterior = float(sum(calcular_valor_cri_cra_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values())) \
             + float(calcular_rendimentos_cri_cra_ate_data(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()))
         
+        operacoes_lc_no_periodo = OperacaoLetraCambio.objects.filter(data__range=[data_atual - datetime.timedelta(qtd_ultimos_dias), data_atual], investidor=investidor)
         operacoes_lci_lca_no_periodo = OperacaoLetraCredito.objects.filter(data__range=[data_atual - datetime.timedelta(qtd_ultimos_dias), data_atual], investidor=investidor)
         operacoes_cdb_rdb_no_periodo = OperacaoCDB_RDB.objects.filter(data__range=[data_atual - datetime.timedelta(qtd_ultimos_dias), data_atual], investidor=investidor)
         operacoes_td_no_periodo = OperacaoTitulo.objects.filter(data__range=[data_atual - datetime.timedelta(qtd_ultimos_dias), data_atual], investidor=investidor)
@@ -1052,12 +1103,21 @@ def grafico_renda_fixa_painel_geral(request):
         for dia in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))]:
             dia = dia.date()
             diario_cdb_rdb[dia] = 0
+            diario_lc[dia] = 0
             diario_lci_lca[dia] = 0
             diario_td[dia] = 0
             diario_debentures[dia] = 0
             diario_cri_cra[dia] = 0
             
             if dia.weekday() < 5 and not verificar_feriado_bovespa(dia):
+                # Letra de Câmbio
+                total_lc = float(sum(calcular_valor_lc_ate_dia(investidor, dia).values()))
+    #                     print '(%s) %s - %s =' % (dia, total_lc, total_lc_dia_anterior), total_lc - total_lc_dia_anterior
+                # Removendo operações do dia
+                diario_lc[dia] += total_lc - total_lc_dia_anterior - float(operacoes_lc_no_periodo.filter(data=dia, tipo_operacao='C').aggregate(soma_compras=Sum('quantidade'))['soma_compras'] or Decimal(0)) + \
+                    float(sum([calcular_valor_venda_lc(operacao_venda) for operacao_venda in operacoes_lc_no_periodo.filter(data=dia, tipo_operacao='V')]))
+                total_lc_dia_anterior = total_lc
+                
                 # Letra de Crédito
                 total_lci_lca = float(sum(calcular_valor_lci_lca_ate_dia(investidor, dia).values()))
     #                     print '(%s) %s - %s =' % (dia, total_lci_lca, total_lci_lca_dia_anterior), total_lci_lca - total_lci_lca_dia_anterior
@@ -1111,11 +1171,14 @@ def grafico_renda_fixa_painel_geral(request):
                                    for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ] 
         graf_rendimentos_mensal_cri_cra = [[str(calendar.timegm(data.replace(hour=15).timetuple()) * 1000), diario_cri_cra[data.date()] ] \
                                    for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ]
+        graf_rendimentos_mensal_lc = [[str(calendar.timegm(data.replace(hour=18).timetuple()) * 1000), diario_lc[data.date()] ] \
+                                   for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ]
         
         return HttpResponse(json.dumps({'sucesso': True, 'graf_rendimentos_mensal_cdb_rdb': graf_rendimentos_mensal_cdb_rdb,
                                         'graf_rendimentos_mensal_lci_lca': graf_rendimentos_mensal_lci_lca, 'graf_rendimentos_mensal_td': graf_rendimentos_mensal_td,
                                         'graf_rendimentos_mensal_debentures': graf_rendimentos_mensal_debentures,
-                                        'graf_rendimentos_mensal_cri_cra': graf_rendimentos_mensal_cri_cra}), content_type = "application/json")   
+                                        'graf_rendimentos_mensal_cri_cra': graf_rendimentos_mensal_cri_cra,
+                                        'graf_rendimentos_mensal_lc': graf_rendimentos_mensal_lc}), content_type = "application/json")   
     else:
         return HttpResponse(json.dumps({'sucesso': False}), content_type = "application/json")   
 

@@ -31,6 +31,7 @@ class OperacaoLetraCambioForm(LocalizedModelForm):
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),
                  'tipo_operacao': widgets.Select(choices=ESCOLHAS_TIPO_OPERACAO),}
+        labels = {'lc': u'Letra de Câmbio'}
         
     class Media:
         js = ('js/bagogold/form_operacao_lc.min.js',)

@@ -13,6 +13,7 @@ from bagogold.bagogold.signals.divisao_cdb_rdb import \
     gerar_checkpoint_divisao_cdb_rdb
 from bagogold.bagogold.signals.divisao_fii import gerar_checkpoint_divisao_fii, \
     gerar_checkpoint_divisao_proventos_fii
+from bagogold.bagogold.signals.divisao_lc import gerar_checkpoint_divisao_lc
 from bagogold.bagogold.utils.acoes import quantidade_acoes_ate_dia, \
     calcular_poupanca_prov_acao_ate_dia
 from bagogold.bagogold.utils.debenture import calcular_qtd_debentures_ate_dia
@@ -37,6 +38,7 @@ from bagogold.fundo_investimento.utils import \
     calcular_valor_fundos_investimento_ate_dia
 from bagogold.lc.models import OperacaoLetraCambio, CheckpointLetraCambio
 from bagogold.lc.signals import gerar_checkpoint_lc
+from bagogold.lc.utils import calcular_valor_lc_ate_dia
 from bagogold.lci_lca.models import OperacaoLetraCredito
 from bagogold.lci_lca.utils import calcular_valor_lci_lca_ate_dia
 from bagogold.outros_investimentos.models import Investimento
@@ -227,6 +229,7 @@ def buscar_operacoes_no_periodo(investidor, data_inicial, data_final):
     operacoes_fii = OperacaoFII.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')
     operacoes_td = OperacaoTitulo.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')
     operacoes_acoes = OperacaoAcao.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')
+    operacoes_lc = OperacaoLetraCambio.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')  
     operacoes_lci_lca = OperacaoLetraCredito.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')  
     operacoes_cdb_rdb = OperacaoCDB_RDB.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')  
     operacoes_cri_cra = OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')  
@@ -237,7 +240,7 @@ def buscar_operacoes_no_periodo(investidor, data_inicial, data_final):
     
     lista_operacoes = sorted(chain(operacoes_fii, operacoes_td, operacoes_acoes, operacoes_lci_lca, operacoes_cdb_rdb, 
                                    operacoes_cri_cra, operacoes_criptomoeda, operacoes_debentures, operacoes_fundo_investimento, 
-                                   outros_investimentos),
+                                   operacoes_lc, outros_investimentos),
                             key=attrgetter('data'))
     
     return lista_operacoes
@@ -250,8 +253,8 @@ def buscar_totais_atuais_investimentos(investidor, data_atual=datetime.date.toda
     Retorno: Totais atuais {investimento: total}
     """
     totais_atuais = {'Ações': Decimal(0), 'CDB/RDB': Decimal(0), 'CRI/CRA': Decimal(0), 'Criptomoedas': Decimal(0), 'Debêntures': Decimal(0), 
-                     'FII': Decimal(0), 'Fundos de Inv.': Decimal(0), 'Letras de Crédito': Decimal(0), 'Outros inv.': Decimal(0), 
-                     'Tesouro Direto': Decimal(0), }
+                     'FII': Decimal(0), 'Fundos de Inv.': Decimal(0), 'LCI/LCA': Decimal(0), 'Outros inv.': Decimal(0), 
+                     'Letras de Câmbio': Decimal(0),'Tesouro Direto': Decimal(0), }
     
     # Ações
     acoes_investidor = buscar_acoes_investidor_na_data(investidor)
@@ -307,9 +310,14 @@ def buscar_totais_atuais_investimentos(investidor, data_atual=datetime.date.toda
         totais_atuais['Fundos de Inv.'] += valor
             
     # Letras de crédito
+    letras_cambio = calcular_valor_lc_ate_dia(investidor, data_atual)
+    for total_lc in letras_cambio.values():
+        totais_atuais['Letras de Câmbio'] += total_lc
+            
+    # Letras de crédito
     letras_credito = calcular_valor_lci_lca_ate_dia(investidor, data_atual)
     for total_lci_lca in letras_credito.values():
-        totais_atuais['Letras de Crédito'] += total_lci_lca
+        totais_atuais['LCI/LCA'] += total_lci_lca
     
     # Outros investimentos
     outros_investimentos = calcular_valor_outros_investimentos_ate_data(investidor, data_atual)
@@ -319,9 +327,9 @@ def buscar_totais_atuais_investimentos(investidor, data_atual=datetime.date.toda
     # Tesouro Direto
     titulos = quantidade_titulos_ate_dia(investidor, data_atual)
     for titulo_id in titulos.keys():
-        try:
-            td_valor = ValorDiarioTitulo.objects.filter(titulo__id=titulo_id, data_hora__day=data_atual.day, data_hora__month=data_atual.month).order_by('-data_hora')[0].preco_venda
-        except:
+        if ValorDiarioTitulo.objects.filter(titulo__id=titulo_id, data_hora__date=data_atual).exists():
+            td_valor = ValorDiarioTitulo.objects.filter(titulo__id=titulo_id, data_hora__date=data_atual).order_by('-data_hora')[0].preco_venda
+        else:
             td_valor = HistoricoTitulo.objects.filter(titulo__id=titulo_id).order_by('-data')[0].preco_venda
         totais_atuais['Tesouro Direto'] += (titulos[titulo_id] * td_valor)
     

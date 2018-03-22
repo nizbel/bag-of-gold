@@ -86,7 +86,7 @@
     						<div class="form-group col-md-6 {% if form_divisao.divisao.errors %} has-error {% endif %}">
     							<label class="control-label col-md-4" style="text-align: left;"> {{form_divisao.divisao.label}}: </label>
     							<div class="col-md-8">
-    								<select class="selectpicker form-control" id="id_divisaooperacaolc_set-{{forloop.counter0}}-divisao" name="divisaooperacaolc_set-{{forloop.counter0}}-divisao">
+    								<select class="selectpicker form-control" id="id_divisaooperacaoletracambio_set-{{forloop.counter0}}-divisao" name="divisaooperacaoletracambio_set-{{forloop.counter0}}-divisao">
     									{% for key, value in form_divisao.fields.divisao.widget.choices %}<option value="{{ key }}"
     										{% if key == form_divisao.divisao.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
     								</select>
@@ -96,7 +96,7 @@
     						<div class="form-group col-md-6 {% if form_divisao.quantidade.errors %} has-error {% endif %}">
     							<label class="control-label col-md-4"> {{form_divisao.quantidade.label}}: </label>
     							<div class="col-md-8">
-    								<input id="id_divisaooperacaolc_set-{{forloop.counter0}}-quantidade" type="text" value="{{form_divisao.quantidade.value}}" name="divisaooperacaolc_set-{{forloop.counter0}}-quantidade" class="form-control">
+    								<input id="id_divisaooperacaoletracambio_set-{{forloop.counter0}}-quantidade" type="text" value="{{form_divisao.quantidade.value}}" name="divisaooperacaoletracambio_set-{{forloop.counter0}}-quantidade" class="form-control">
     								{% if form_divisao.quantidade.errors %} <span class="help-block"> {{ form_divisao.quantidade.errors.as_text }} </span> {% endif %}
     							</div>
     						</div>
@@ -104,15 +104,15 @@
                     </div>
                     {% if form_divisao.instance.id %}
                         <div class="md-checkbox col-md-1">
-                            <input type="checkbox" value="1" id="id_divisaooperacaolc_set-{{forloop.counter0}}-DELETE" name="divisaooperacaolc_set-{{forloop.counter0}}-DELETE" class="md-check">
-                            <label for="id_divisaooperacaolc_set-{{forloop.counter0}}-DELETE">
+                            <input type="checkbox" value="1" id="id_divisaooperacaoletracambio_set-{{forloop.counter0}}-DELETE" name="divisaooperacaoletracambio_set-{{forloop.counter0}}-DELETE" class="md-check">
+                            <label for="id_divisaooperacaoletracambio_set-{{forloop.counter0}}-DELETE">
                                 <span></span>
                                 <span class="check"></span>
                                 <span class="box"></span> Excluir </label>
                         </div>
                     {% endif %}
                     {% if form_divisao.instance.id %}
-                        <input id="id_divisaooperacaolc_set-{{forloop.counter0}}-id" name="divisaooperacaolc_set-{{forloop.counter0}}-id" value="{{form_divisao.instance.id}}" type="hidden">
+                        <input id="id_divisaooperacaoletracambio_set-{{forloop.counter0}}-id" name="divisaooperacaoletracambio_set-{{forloop.counter0}}-id" value="{{form_divisao.instance.id}}" type="hidden">
                     {% endif %}
 				    {% endfor %}
                 </div>
