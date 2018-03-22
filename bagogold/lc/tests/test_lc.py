@@ -2,7 +2,7 @@
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoLetraCambio, Divisao
 from bagogold.bagogold.models.investidores import Investidor
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
-from bagogold.bagogold.utils.lc import \
+from bagogold.lci_lca.utils import \
     calcular_valor_atualizado_com_taxa_prefixado
 from bagogold.bagogold.utils.misc import verificar_feriado_bovespa, \
     qtd_dias_uteis_no_periodo, calcular_iof_regressivo, \

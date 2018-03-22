@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoLCI_LCAFormSet
-from bagogold.bagogold.forms.lc import OperacaoLetraCreditoForm, \
+from bagogold.lci_lca.forms import OperacaoLetraCreditoForm, \
     HistoricoPorcentagemLetraCreditoForm, LetraCreditoForm, \
     HistoricoCarenciaLetraCreditoForm
 from bagogold.bagogold.forms.utils import LocalizedModelForm
@@ -11,7 +11,7 @@ from bagogold.lci_lca.models import OperacaoLetraCredito, \
     OperacaoVendaLetraCredito
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 from bagogold.bagogold.models.td import HistoricoIPCA
-from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa_di, \
+from bagogold.lci_lca.utils import calcular_valor_atualizado_com_taxa_di, \
     calcular_valor_lc_ate_dia, simulador_lci_lca, \
     calcular_valor_atualizado_com_taxas_di
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo
