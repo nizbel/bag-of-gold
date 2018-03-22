@@ -380,20 +380,20 @@ def editar_operacao_lc(request, operacao_id):
     return TemplateResponse(request, 'lc/editar_operacao_lc.html', {'form_operacao_lc': form_operacao_lc, 'formset_divisao': formset_divisao, 'varias_divisoes': varias_divisoes})  
 
     
-@adiciona_titulo_descricao('Histórico de Letra de Câmbio', 'Histórico de operações de compra/venda em Letra de Câmbio')
+@adiciona_titulo_descricao('Histórico de Letras de Câmbio', 'Histórico de operações de compra/venda em Letras de Câmbio')
 def historico(request):
     if request.user.is_authenticated():
         investidor = request.user.investidor
     else:
         return TemplateResponse(request, 'lc/historico.html', {'dados': {}, 'operacoes': list(), 
-                                                    'graf_gasto_total': list(), 'graf_patrimonio': list()})
+                                                    'graf_investido_total': list(), 'graf_patrimonio': list()})
      
     # Processa primeiro operações de venda (V), depois compra (C)
     operacoes = OperacaoLetraCambio.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data', '-tipo_operacao') 
     # Verifica se não há operações
     if not operacoes:
         return TemplateResponse(request, 'lc/historico.html', {'dados': {}, 'operacoes': list(), 
-                                                    'graf_gasto_total': list(), 'graf_patrimonio': list()})
+                                                    'graf_investido_total': list(), 'graf_patrimonio': list()})
      
     # Prepara o campo valor atual
     for operacao in operacoes:
@@ -405,11 +405,11 @@ def historico(request):
         else:
             operacao.tipo = 'Venda'
      
-    total_gasto = 0
+    total_investido = 0
     total_patrimonio = 0
      
-    # Gráfico de acompanhamento de gastos vs patrimonio
-    graf_gasto_total = list()
+    # Gráfico de acompanhamento de investidos vs patrimonio
+    graf_investido_total = list()
     graf_patrimonio = list()
      
     # Guarda última data calculada
@@ -418,9 +418,9 @@ def historico(request):
     for indice, operacao in enumerate(operacoes):
         # Alterar total investido
         if operacao.tipo_operacao == 'C':
-            total_gasto += operacao.quantidade
+            total_investido += operacao.quantidade
         else:
-            total_gasto -= operacao.quantidade
+            total_investido -= operacao.quantidade
             # Preparar o valor atual e reiniciar valor da operação de compra
             # Valor atual
             operacao.atual = calcular_valor_venda_lc(operacao, True, True)
@@ -458,7 +458,7 @@ def historico(request):
                     total_patrimonio += operacoes[indice_atualizacao].atual
                          
             # Preencher gráficos
-            graf_gasto_total += [[str(calendar.timegm(operacao.data.timetuple()) * 1000), float(total_gasto)]]
+            graf_investido_total += [[str(calendar.timegm(operacao.data.timetuple()) * 1000), float(total_investido)]]
             graf_patrimonio += [[str(calendar.timegm(operacao.data.timetuple()) * 1000), float(total_patrimonio)]]
              
             # Guardar data como última data usada para calcular valor atualizado
@@ -484,17 +484,17 @@ def historico(request):
                 total_patrimonio += operacao.atual
              
         # Preencher gráficos
-        graf_gasto_total += [[str(calendar.timegm(datetime.date.today().timetuple()) * 1000), float(total_gasto)]]
+        graf_investido_total += [[str(calendar.timegm(datetime.date.today().timetuple()) * 1000), float(total_investido)]]
         graf_patrimonio += [[str(calendar.timegm(datetime.date.today().timetuple()) * 1000), float(total_patrimonio)]]
         
     dados = {}
-    dados['total_gasto'] = total_gasto
+    dados['total_investido'] = total_investido
     dados['patrimonio'] = total_patrimonio
-    dados['lucro'] = total_patrimonio - total_gasto
-    dados['lucro_percentual'] = (total_patrimonio - total_gasto) / total_gasto * 100
+    dados['lucro'] = total_patrimonio - total_investido
+    dados['lucro_percentual'] = (total_patrimonio - total_investido) / total_investido * 100
     
     return TemplateResponse(request, 'lc/historico.html', {'dados': dados, 'operacoes': operacoes, 
-                                                    'graf_gasto_total': graf_gasto_total, 'graf_patrimonio': graf_patrimonio})
+                                                    'graf_investido_total': graf_investido_total, 'graf_patrimonio': graf_patrimonio})
     
 
 @login_required
@@ -724,7 +724,7 @@ def inserir_operacao_lc(request):
     return TemplateResponse(request, 'lc/inserir_operacao_lc.html', {'form_operacao_lc': form_operacao_lc, 'formset_divisao': formset_divisao_lc,
                                                                         'varias_divisoes': varias_divisoes})
 
-@adiciona_titulo_descricao('Listar Letra de Câmbio', 'Lista de Letras de Câmbio cadastrados pelo investidor')
+@adiciona_titulo_descricao('Listar Letras de Câmbio', 'Lista de Letras de Câmbio cadastrados pelo investidor')
 def listar_lc(request):
     if request.user.is_authenticated():
         investidor = request.user.investidor
@@ -746,7 +746,7 @@ def listar_lc(request):
         
     return TemplateResponse(request, 'lc/listar_lc.html', {'lc': lc})
 
-@adiciona_titulo_descricao('Painel de Letra de Câmbio', 'Posição atual do investidor em Letra de Câmbio')
+@adiciona_titulo_descricao('Painel de Letras de Câmbio', 'Posição atual do investidor em Letras de Câmbio')
 def painel(request):
     if request.user.is_authenticated():
         investidor = request.user.investidor
