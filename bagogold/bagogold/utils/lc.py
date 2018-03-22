@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoLC
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoLCI_LCA
 from bagogold.lci_lca.models import OperacaoLetraCredito, \
     OperacaoVendaLetraCredito
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
@@ -115,16 +115,16 @@ def calcular_valor_lc_ate_dia_por_divisao(dia, divisao_id):
                 ID da divisão
     Retorno: Valor de cada letra de crédito da divisão na data escolhida {id_letra: valor_na_data, }
     """
-    if not DivisaoOperacaoLC.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).exists():
+    if not DivisaoOperacaoLCI_LCA.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).exists():
         return {}
     
-    operacoes_divisao_id = DivisaoOperacaoLC.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).values('operacao__id')
+    operacoes_divisao_id = DivisaoOperacaoLCI_LCA.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).values('operacao__id')
     
     operacoes_queryset = OperacaoLetraCredito.objects.exclude(data__isnull=True).filter(id__in=operacoes_divisao_id).order_by('-tipo_operacao', 'data') 
     operacoes = list(operacoes_queryset)
     for operacao in operacoes:
         if operacao.tipo_operacao == 'C':
-            operacao.atual = DivisaoOperacaoLC.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade
+            operacao.atual = DivisaoOperacaoLCI_LCA.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade
             operacao.taxa = operacao.porcentagem_di()
     
     # Pegar data inicial
@@ -142,7 +142,7 @@ def calcular_valor_lc_ate_dia_por_divisao(dia, divisao_id):
             operacao_compra_id = operacao.operacao_compra_relacionada().id
             for operacao_c in operacoes:
                 if (operacao_c.id == operacao_compra_id):
-                    operacao.atual = DivisaoOperacaoLC.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade
+                    operacao.atual = DivisaoOperacaoLCI_LCA.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade
                     operacao_c.atual -= operacao.atual
                     break
                 

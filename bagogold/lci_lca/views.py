@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
-from bagogold.bagogold.forms.divisoes import DivisaoOperacaoLCFormSet
+from bagogold.bagogold.forms.divisoes import DivisaoOperacaoLCI_LCAFormSet
 from bagogold.bagogold.forms.lc import OperacaoLetraCreditoForm, \
     HistoricoPorcentagemLetraCreditoForm, LetraCreditoForm, \
     HistoricoCarenciaLetraCreditoForm
 from bagogold.bagogold.forms.utils import LocalizedModelForm
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoLC, Divisao
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoLCI_LCA, Divisao
 from bagogold.lci_lca.models import OperacaoLetraCredito, \
     HistoricoPorcentagemLetraCredito, LetraCredito, HistoricoCarenciaLetraCredito, \
     OperacaoVendaLetraCredito
@@ -243,8 +243,8 @@ def editar_operacao_lc(request, id):
     varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
     
     # Preparar formset para divisoes
-    DivisaoFormSet = inlineformset_factory(OperacaoLetraCredito, DivisaoOperacaoLC, fields=('divisao', 'quantidade'),
-                                            extra=1, formset=DivisaoOperacaoLCFormSet)
+    DivisaoFormSet = inlineformset_factory(OperacaoLetraCredito, DivisaoOperacaoLCI_LCA, fields=('divisao', 'quantidade'),
+                                            extra=1, formset=DivisaoOperacaoLCI_LCAFormSet)
     
     if request.method == 'POST':
         form_operacao_lc = OperacaoLetraCreditoForm(request.POST, instance=operacao_lc, investidor=investidor)
@@ -282,7 +282,7 @@ def editar_operacao_lc(request, id):
                             if operacao_venda_lc.operacao_compra != operacao_compra:
                                 operacao_venda_lc.operacao_compra = operacao_compra
                                 operacao_venda_lc.save()
-                    divisao_operacao = DivisaoOperacaoLC.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_lc)
+                    divisao_operacao = DivisaoOperacaoLCI_LCA.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_lc)
                     divisao_operacao.quantidade = operacao_lc.quantidade
                     divisao_operacao.save()
                     messages.success(request, 'Operação editada com sucesso')
@@ -295,7 +295,7 @@ def editar_operacao_lc(request, id):
         elif request.POST.get("delete"):
             # Testa se operação a excluir não é uma operação de compra com vendas já registradas
             if not OperacaoVendaLetraCredito.objects.filter(operacao_compra=operacao_lc):
-                divisao_lc = DivisaoOperacaoLC.objects.filter(operacao=operacao_lc)
+                divisao_lc = DivisaoOperacaoLCI_LCA.objects.filter(operacao=operacao_lc)
                 for divisao in divisao_lc:
                     divisao.delete()
                 if operacao_lc.tipo_operacao == 'V':
@@ -523,8 +523,8 @@ def inserir_operacao_lc(request):
     investidor = request.user.investidor
     
     # Preparar formset para divisoes
-    DivisaoFormSet = inlineformset_factory(OperacaoLetraCredito, DivisaoOperacaoLC, fields=('divisao', 'quantidade'), can_delete=False,
-                                            extra=1, formset=DivisaoOperacaoLCFormSet)
+    DivisaoFormSet = inlineformset_factory(OperacaoLetraCredito, DivisaoOperacaoLCI_LCA, fields=('divisao', 'quantidade'), can_delete=False,
+                                            extra=1, formset=DivisaoOperacaoLCI_LCAFormSet)
     
     # Testa se investidor possui mais de uma divisão
     varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
@@ -548,8 +548,8 @@ def inserir_operacao_lc(request):
                     if form_operacao_lc.cleaned_data['quantidade'] == operacao_compra.quantidade:
                         # Desconsiderar divisões inseridas, copiar da operação de compra
                         operacao_lc.save()
-                        for divisao_lc in DivisaoOperacaoLC.objects.filter(operacao=operacao_compra):
-                            divisao_lc_venda = DivisaoOperacaoLC(quantidade=divisao_lc.quantidade, divisao=divisao_lc.divisao, \
+                        for divisao_lc in DivisaoOperacaoLCI_LCA.objects.filter(operacao=operacao_compra):
+                            divisao_lc_venda = DivisaoOperacaoLCI_LCA(quantidade=divisao_lc.quantidade, divisao=divisao_lc.divisao, \
                                                                  operacao=operacao_lc)
                             divisao_lc_venda.save()
                         operacao_venda_lc = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_lc)
@@ -572,7 +572,7 @@ def inserir_operacao_lc(request):
                                 
                         else:
                             operacao_lc.save()
-                            divisao_operacao = DivisaoOperacaoLC(operacao=operacao_lc, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_lc.quantidade)
+                            divisao_operacao = DivisaoOperacaoLCI_LCA(operacao=operacao_lc, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_lc.quantidade)
                             divisao_operacao.save()
                             operacao_venda_lc = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_lc)
                             operacao_venda_lc.save()
@@ -593,7 +593,7 @@ def inserir_operacao_lc(request):
                             
                     else:
                         operacao_lc.save()
-                        divisao_operacao = DivisaoOperacaoLC(operacao=operacao_lc, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_lc.quantidade)
+                        divisao_operacao = DivisaoOperacaoLCI_LCA(operacao=operacao_lc, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_lc.quantidade)
                         divisao_operacao.save()
                         messages.success(request, 'Operação inserida com sucesso')
                         return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))

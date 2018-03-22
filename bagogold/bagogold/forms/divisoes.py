@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.forms.utils import LocalizedModelForm
-from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
+from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLCI_LCA, \
     TransferenciaEntreDivisoes, DivisaoOperacaoAcao, DivisaoOperacaoFII, \
     DivisaoOperacaoCDB_RDB, DivisaoOperacaoTD
 from bagogold.lci_lca.models import OperacaoVendaLetraCredito
@@ -384,11 +384,11 @@ class DivisaoOperacaoFIIFormSet(forms.models.BaseInlineFormSet):
             raise forms.ValidationError('Quantidade total alocada para as divisões é menor que quantidade da operação')
 
 # Inline FormSet para operações em letras de crédito
-class DivisaoOperacaoLCFormSet(forms.models.BaseInlineFormSet):
+class DivisaoOperacaoLCI_LCAFormSet(forms.models.BaseInlineFormSet):
     def __init__(self, *args, **kwargs):
         self.operacao_compra = kwargs.pop('operacao_compra', None)
         self.investidor = kwargs.pop('investidor')
-        super(DivisaoOperacaoLCFormSet, self).__init__(*args, **kwargs)
+        super(DivisaoOperacaoLCI_LCAFormSet, self).__init__(*args, **kwargs)
     
         for form in self.forms:
             form.fields['divisao'].queryset = Divisao.objects.filter(investidor=self.investidor)
@@ -423,9 +423,9 @@ class DivisaoOperacaoLCFormSet(forms.models.BaseInlineFormSet):
                     
                         # Verificar em caso de venda
                         if self.instance.tipo_operacao == 'V':
-                            if not DivisaoOperacaoLC.objects.filter(divisao=form_divisao.cleaned_data['divisao'], operacao=self.operacao_compra).exists():
+                            if not DivisaoOperacaoLCI_LCA.objects.filter(divisao=form_divisao.cleaned_data['divisao'], operacao=self.operacao_compra).exists():
                                 raise forms.ValidationError('Venda para divisão %s não é permitida, não há alocação para a operação de compra selecionada' % (form_divisao.cleaned_data['divisao']))
-                            if DivisaoOperacaoLC.objects.get(divisao=form_divisao.cleaned_data['divisao'], operacao=self.operacao_compra).quantidade < div_qtd:
+                            if DivisaoOperacaoLCI_LCA.objects.get(divisao=form_divisao.cleaned_data['divisao'], operacao=self.operacao_compra).quantidade < div_qtd:
                                 raise forms.ValidationError('Venda de quantidade acima da disponível para divisão %s' % (form_divisao.cleaned_data['divisao']))
                         
                     # Divisão será apagada

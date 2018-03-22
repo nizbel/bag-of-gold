@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import OperacaoAcao, Acao, HistoricoAcao
-from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
+from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLCI_LCA, \
     DivisaoOperacaoFII, DivisaoOperacaoAcao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.investidores import Investidor
@@ -58,10 +58,10 @@ class TelaInicioTestCase(TestCase):
         lc_porcentagem_di = HistoricoPorcentagemLetraCredito.objects.create(letra_credito=lc, porcentagem_di=Decimal(90))
         operacao_lc1 = OperacaoLetraCredito.objects.create(investidor=user.investidor, letra_credito=lc, data=data_atual - datetime.timedelta(days=0), tipo_operacao='C',
                                             quantidade=Decimal(1000))
-        divisao_operacao_lc1 = DivisaoOperacaoLC.objects.create(divisao=divisao1, operacao=operacao_lc1, quantidade=operacao_lc1.quantidade)
+        divisao_operacao_lc1 = DivisaoOperacaoLCI_LCA.objects.create(divisao=divisao1, operacao=operacao_lc1, quantidade=operacao_lc1.quantidade)
         operacao_lc2 = OperacaoLetraCredito.objects.create(investidor=user.investidor, letra_credito=lc, data=data_atual - datetime.timedelta(days=1), tipo_operacao='C',
                                             quantidade=Decimal(2000))
-        divisao_operacao_lc2 = DivisaoOperacaoLC.objects.create(divisao=divisao2, operacao=operacao_lc2, quantidade=operacao_lc2.quantidade)
+        divisao_operacao_lc2 = DivisaoOperacaoLCI_LCA.objects.create(divisao=divisao2, operacao=operacao_lc2, quantidade=operacao_lc2.quantidade)
         
         # Gerar valores históricos
         date_list = [data_atual - datetime.timedelta(days=x) for x in range(0, (data_atual - datetime.date(2016, 1, 1)).days+1)]

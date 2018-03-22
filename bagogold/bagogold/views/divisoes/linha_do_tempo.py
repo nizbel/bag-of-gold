@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoCDB_RDB, \
-    TransferenciaEntreDivisoes, DivisaoOperacaoLC
+    TransferenciaEntreDivisoes, DivisaoOperacaoLCI_LCA
 from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia_por_divisao
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia_por_divisao
 from django.contrib.auth.decorators import login_required
@@ -89,7 +89,7 @@ def linha_do_tempo_lci_lca(divisao):
     class Object(object):
         pass
     
-    operacoes_divisao = DivisaoOperacaoLC.objects.filter(divisao=divisao).annotate(data=F('operacao__data')) \
+    operacoes_divisao = DivisaoOperacaoLCI_LCA.objects.filter(divisao=divisao).annotate(data=F('operacao__data')) \
         .annotate(titulo=Case(When(operacao__tipo_operacao='C', then=Value(u'Operação de compra', CharField())),
                               When(operacao__tipo_operacao='V', then=Value(u'Operação de venda', CharField())), output_field=CharField()))
     for operacao_divisao in operacoes_divisao:

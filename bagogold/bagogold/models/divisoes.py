@@ -25,7 +25,7 @@ class Divisao (models.Model):
 
     def possui_operacoes_registradas(self):
         possui_operacoes = (DivisaoOperacaoAcao.objects.filter(divisao=self).count() + DivisaoOperacaoCDB_RDB.objects.filter(divisao=self).count() + DivisaoOperacaoFII.objects.filter(divisao=self).count() \
-            + DivisaoOperacaoFundoInvestimento.objects.filter(divisao=self).count() + DivisaoOperacaoLC.objects.filter(divisao=self).count() + DivisaoOperacaoTD.objects.filter(divisao=self).count() \
+            + DivisaoOperacaoFundoInvestimento.objects.filter(divisao=self).count() + DivisaoOperacaoLCI_LCA.objects.filter(divisao=self).count() + DivisaoOperacaoTD.objects.filter(divisao=self).count() \
             + DivisaoOperacaoCriptomoeda.objects.filter(divisao=self).count() + DivisaoOperacaoDebenture.objects.filter(divisao=self).count() + DivisaoOperacaoCRI_CRA.objects.filter(divisao=self).count() \
             + DivisaoInvestimento.objects.filter(divisao=self).count()) > 0
         
@@ -43,8 +43,8 @@ class Divisao (models.Model):
             datas_primeira_operacao.append(DivisaoOperacaoCriptomoeda.objects.filter(divisao=self).order_by('operacao__data')[0].operacao.data)
         if DivisaoOperacaoFII.objects.filter(divisao=self).exists():
             datas_primeira_operacao.append(DivisaoOperacaoFII.objects.filter(divisao=self).order_by('operacao__data')[0].operacao.data)
-        if DivisaoOperacaoLC.objects.filter(divisao=self).exists():
-            datas_primeira_operacao.append(DivisaoOperacaoLC.objects.filter(divisao=self).order_by('operacao__data')[0].operacao.data)
+        if DivisaoOperacaoLCI_LCA.objects.filter(divisao=self).exists():
+            datas_primeira_operacao.append(DivisaoOperacaoLCI_LCA.objects.filter(divisao=self).order_by('operacao__data')[0].operacao.data)
         if DivisaoOperacaoDebenture.objects.filter(divisao=self).exists():
             datas_primeira_operacao.append(DivisaoOperacaoDebenture.objects.filter(divisao=self).order_by('operacao__data')[0].operacao.data)
         if DivisaoOperacaoFundoInvestimento.objects.filter(divisao=self).exists():
@@ -270,8 +270,8 @@ class Divisao (models.Model):
         historico_di = HistoricoTaxaDI.objects.all()
         
         # Computar compras
-        saldo -= (DivisaoOperacaoLC.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='C').aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
-        for venda_divisao in DivisaoOperacaoLC.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='V'):
+        saldo -= (DivisaoOperacaoLCI_LCA.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='C').aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
+        for venda_divisao in DivisaoOperacaoLCI_LCA.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='V'):
             # Para venda, calcular valor do cdb/rdb no dia da venda
             valor_venda = venda_divisao.quantidade
             taxa = venda_divisao.operacao.porcentagem_di()
@@ -300,8 +300,8 @@ class Divisao (models.Model):
         historico_di = HistoricoTaxaDI.objects.all()
         
         # Computar compras
-        saldo -= (DivisaoOperacaoLC.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='C').aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
-        for venda_divisao in DivisaoOperacaoLC.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='V'):
+        saldo -= (DivisaoOperacaoLCI_LCA.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='C').aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
+        for venda_divisao in DivisaoOperacaoLCI_LCA.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='V'):
             # Para venda, calcular valor do cdb/rdb no dia da venda
             valor_venda = venda_divisao.quantidade
             taxa = venda_divisao.operacao.porcentagem_di()
@@ -481,7 +481,7 @@ class CheckpointDivisaoLetraCambio (models.Model):
     class Meta:
         unique_together=('divisao_operacao', 'ano')
         
-class DivisaoOperacaoLC (models.Model):
+class DivisaoOperacaoLCI_LCA (models.Model):
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
     operacao = models.ForeignKey('lci_lca.OperacaoLetraCredito')
     """
