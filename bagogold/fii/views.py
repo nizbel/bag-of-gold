@@ -89,7 +89,7 @@ def acompanhamento_fii(request):
                 percentual_retorno_semestral = (total_proventos/valor_atual)
                 preenchido = True
         except:
-            preenchido = False
+            pass
         if (not preenchido):
             # Pegar último dia util com negociação da ação para calculo do patrimonio
             try:
