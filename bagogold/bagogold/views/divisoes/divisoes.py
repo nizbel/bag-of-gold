@@ -3,7 +3,7 @@ from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoForm, \
     TransferenciaEntreDivisoesForm
 from bagogold.bagogold.models.acoes import ValorDiarioAcao, HistoricoAcao, Acao
-from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
+from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLCI_LCA, \
     DivisaoOperacaoFII, DivisaoOperacaoTD, DivisaoOperacaoAcao, \
     TransferenciaEntreDivisoes, DivisaoOperacaoFundoInvestimento, \
     DivisaoOperacaoCDB_RDB
@@ -58,7 +58,7 @@ def criar_transferencias(request):
     for divisao in divisoes:
         print divisao
         # Letra de crédito
-        for divisao_operacao in DivisaoOperacaoLC.objects.filter(divisao=divisao, operacao__tipo_operacao='C').order_by('operacao__data'):
+        for divisao_operacao in DivisaoOperacaoLCI_LCA.objects.filter(divisao=divisao, operacao__tipo_operacao='C').order_by('operacao__data'):
             saldo_no_dia = divisao.saldo_lci_lca(divisao_operacao.operacao.data) + sum([transferencia.quantidade for transferencia in transferencias if transferencia.investimento_destino == 'L'])
 #             print 'Compra na Data:', divisao_operacao.operacao.data, divisao_operacao.quantidade
 #             print 'Saldo:', divisao.saldo_lci_lca(divisao_operacao.operacao.data)
@@ -200,7 +200,7 @@ def detalhar_divisao(request, divisao_id):
         composicao['lc'].composicao[lc_id].patrimonio = valores_letras_credito_dia[lc_id]
         composicao['lc'].composicao[lc_id].composicao = {}
         # Pegar operações dos LCs
-        for operacao_divisao in DivisaoOperacaoLC.objects.filter(divisao=divisao, operacao__letra_credito__id=lc_id):
+        for operacao_divisao in DivisaoOperacaoLCI_LCA.objects.filter(divisao=divisao, operacao__letra_credito__id=lc_id):
             composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id] = Object()
             composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].nome = operacao_divisao.operacao.tipo_operacao
             composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].data = operacao_divisao.operacao.data
