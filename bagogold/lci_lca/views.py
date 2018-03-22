@@ -11,9 +11,8 @@ from bagogold.lci_lca.models import OperacaoLetraCredito, \
     OperacaoVendaLetraCredito
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 from bagogold.bagogold.models.td import HistoricoIPCA
-from bagogold.lci_lca.utils import calcular_valor_atualizado_com_taxa_di, \
-    calcular_valor_lci_lca_ate_dia, simulador_lci_lca, \
-    calcular_valor_atualizado_com_taxas_di
+from bagogold.lci_lca.utils import calcular_valor_lci_lca_ate_dia, \
+    simulador_lci_lca
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo
 from decimal import Decimal
 from django.contrib import messages
