@@ -13,7 +13,7 @@
 {% block extra_titulo %}
 {% if request.user.is_authenticated %}
 <div class="actions">
-    <a href="{% url 'cdb_rdb:editar_cdb_rdb' cdb_rdb.id %}" class="btn btn-small btn-warning">Editar {{cdb_rdb.tipo}}</a>
+    <a href="{% url 'lc:editar_lc' lc.id %}" class="btn btn-small btn-warning">Editar {{lc.tipo}}</a>
 </div>
 {% endif %}
 {% endblock %}
@@ -35,19 +35,17 @@
 					<div class="m-grid m-grid-responsive-xs">
 						<div class="m-grid-row">
                             <div class="m-grid-col m-grid-col-left"><strong>Nome:</strong></div>
-                            <div class="m-grid-col m-grid-col-left">{{cdb_rdb.nome}}</div>
-							<div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
-							<div class="m-grid-col m-grid-col-left">{{cdb_rdb.tipo}}</div>
+                            <div class="m-grid-col m-grid-col-left">{{lc.nome}}</div>
 							<div class="m-grid-col m-grid-col-left"><strong>Rendimento atual:</strong></div>
-							<div class="m-grid-col m-grid-col-left">{{cdb_rdb.porcentagem_atual}}% {% if cdb_rdb.eh_prefixado %}ao ano{% else %}do {{cdb_rdb.indice}}{% endif %}</div>
+							<div class="m-grid-col m-grid-col-left">{{lc.porcentagem_atual}}% {% if lc.eh_prefixado %}ao ano{% else %}do {{lc.indice}}{% endif %}</div>
+                            <div class="m-grid-col m-grid-col-left"><strong>Carência atual:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{lc.carencia_atual}} dia(s)</div>
 						</div>
 						<div class="m-grid-row">
-                            <div class="m-grid-col m-grid-col-left"><strong>Carência atual:</strong></div>
-                            <div class="m-grid-col m-grid-col-left">{{cdb_rdb.carencia_atual}} dia(s)</div>
                             <div class="m-grid-col m-grid-col-left"><strong>Vencimento atual:</strong></div>
-                            <div class="m-grid-col m-grid-col-left">{{cdb_rdb.vencimento_atual}} dia(s)</div>
+                            <div class="m-grid-col m-grid-col-left">{{lc.vencimento_atual}} dia(s)</div>
 							<div class="m-grid-col m-grid-col-left"><strong>Total de operações:</strong></div>
-							<div class="m-grid-col m-grid-col-left">{{cdb_rdb.total_operacoes}}</div>
+							<div class="m-grid-col m-grid-col-left">{{lc.total_operacoes}}</div>
 						</div>
 					</div>
 				</div>
@@ -68,11 +66,11 @@
 					<div class="m-grid m-grid-responsive-xs">
 						<div class="m-grid-row">
 							<div class="m-grid-col m-grid-col-left"><strong>Total investido:</strong></div>
-							<div class="m-grid-col m-grid-col-left">R$ {{cdb_rdb.total_investido|floatformat:2}}</div>
+							<div class="m-grid-col m-grid-col-left">R$ {{lc.total_investido|floatformat:2}}</div>
 							<div class="m-grid-col m-grid-col-left"><strong>Saldo atual:</strong></div>
-							<div class="m-grid-col m-grid-col-left">R$ {{cdb_rdb.saldo_atual|floatformat:2}}</div>
+							<div class="m-grid-col m-grid-col-left">R$ {{lc.saldo_atual|floatformat:2}}</div>
 							<div class="m-grid-col m-grid-col-left"><strong>Lucro:</strong></div>
-							<div class="m-grid-col m-grid-col-left">R$ {{ cdb_rdb.lucro|floatformat:2 }} ({{ cdb_rdb.lucro_percentual|floatformat:2 }}%)</div>
+							<div class="m-grid-col m-grid-col-left">R$ {{ lc.lucro|floatformat:2 }} ({{ lc.lucro_percentual|floatformat:2 }}%)</div>
 						</div>
 						<div class="m-grid-row">
 							<div class="m-grid-col m-grid-col-left">
@@ -80,11 +78,11 @@
                                     <strong>Dias para próx. venc.:</strong>
                                 </span>
                             </div>
-							<div class="m-grid-col m-grid-col-left">{{ cdb_rdb.dias_prox_vencimento }} dia(s)</div>
+							<div class="m-grid-col m-grid-col-left">{{ lc.dias_prox_vencimento }} dia(s)</div>
 							<div class="m-grid-col m-grid-col-left"><strong>IR:</strong></div>
-							<div class="m-grid-col m-grid-col-left">R$ {{cdb_rdb.total_ir|floatformat:2}}</div>
+							<div class="m-grid-col m-grid-col-left">R$ {{lc.total_ir|floatformat:2}}</div>
 							<div class="m-grid-col m-grid-col-left"><strong>IOF:</strong></div>
-							<div class="m-grid-col m-grid-col-left">R$ {{cdb_rdb.total_iof|floatformat:2}}</div>
+							<div class="m-grid-col m-grid-col-left">R$ {{lc.total_iof|floatformat:2}}</div>
 						</div>
 					</div>
 				</div>
@@ -107,7 +105,7 @@
 						<tr>
 							<th>Data</th>
 							<th>Rendimento</th>
-							<th><a href="{% url 'cdb_rdb:inserir_historico_porcentagem_cdb_rdb' cdb_rdb.id %}" class="btn btn-sm green-steel">Inserir</a></th>
+							<th><a href="{% url 'lc:inserir_historico_porcentagem_lc' lc.id %}" class="btn btn-sm green-steel">Inserir</a></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -115,7 +113,7 @@
 					<tr>
 						<td>{{item.data|date:'d/m/Y'|default:"Inicial"}}</td>
 						<td>{{item.porcentagem}}%</td>
-						<td><a href="{% url 'cdb_rdb:editar_historico_porcentagem' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
+						<td><a href="{% url 'lc:editar_historico_porcentagem' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
 					</tr>
 					{% endfor %}
 					</tbody>
@@ -140,7 +138,7 @@
 						<tr>
 							<th>Data</th>
 							<th>Carência (dias)</th>
-							<th><a href="{% url 'cdb_rdb:inserir_historico_carencia_cdb_rdb' cdb_rdb.id %}" class="btn btn-sm green-steel">Inserir</a></th>
+							<th><a href="{% url 'lc:inserir_historico_carencia_lc' lc.id %}" class="btn btn-sm green-steel">Inserir</a></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -148,7 +146,7 @@
 					<tr>
 						<td>{{item.data|date:'d/m/Y'|default:"Inicial"}}</td>
 						<td>{{item.carencia}} dia(s)</td>
-						<td><a href="{% url 'cdb_rdb:editar_historico_carencia' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
+						<td><a href="{% url 'lc:editar_historico_carencia' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
 					</tr>
 					{% endfor %}
 					</tbody>
@@ -173,7 +171,7 @@
                         <tr>
                             <th>Data</th>
                             <th>Vencimento (dias)</th>
-                            <th><a href="{% url 'cdb_rdb:inserir_historico_vencimento_cdb_rdb' cdb_rdb.id %}" class="btn btn-sm green-steel">Inserir</a></th>
+                            <th><a href="{% url 'lc:inserir_historico_vencimento_lc' lc.id %}" class="btn btn-sm green-steel">Inserir</a></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -181,7 +179,7 @@
                     <tr>
                         <td>{{item.data|date:'d/m/Y'|default:"Inicial"}}</td>
                         <td>{{item.vencimento}} dia(s)</td>
-                        <td><a href="{% url 'cdb_rdb:editar_historico_vencimento' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
+                        <td><a href="{% url 'lc:editar_historico_vencimento' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
                     </tr>
                     {% endfor %}
                     </tbody>

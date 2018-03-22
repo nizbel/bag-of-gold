@@ -413,7 +413,7 @@
                                                         </li>
                                                         {% if request.user.is_authenticated %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_lc' %}active{% endif %}">
-                                                            <a href="{% url "lc:inserir_lc" %}" class="nav-link"> Inserir Letra de Crédito </a>
+                                                            <a href="{% url "lc:inserir_lc" %}" class="nav-link"> Inserir Letra de Câmbio </a>
                                                         </li>
                                                         {% endif %}
                                                         {% if request.user.is_authenticated %}
@@ -422,7 +422,7 @@
                                                         </li>
                                                         {% endif %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_lc' %}active{% endif %}">
-                                                            <a href="{% url "lc:listar_lc" %}" class="nav-link"> Listar Letras de Crédito </a>
+                                                            <a href="{% url "lc:listar_lc" %}" class="nav-link"> Listar Letras de Câmbio </a>
                                                         </li>
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_lc' %}active{% endif %}">
                                                             <a href="{% url "lc:painel_lc" %}" class="nav-link"> Painel </a>
