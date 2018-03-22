@@ -58,7 +58,7 @@ def calcular_valor_atualizado_com_taxas_di_e_juros(taxas_dos_dias, valor_atual, 
                                pow((Decimal(1) + juros/100), Decimal(1)/Decimal(252))), taxas_dos_dias[taxa_do_dia])
     return taxa_acumulada * valor_atual
 
-def calcular_valor_venda_lc(operacao_venda):
+def calcular_valor_venda_lci_lca(operacao_venda):
     # Definir período do histórico relevante para a operação
     historico_utilizado = HistoricoTaxaDI.objects.filter(data__range=[operacao_venda.operacao_compra_relacionada().data, operacao_venda.data - datetime.timedelta(days=1)]).values('taxa').annotate(qtd_dias=Count('taxa'))
     taxas_dos_dias = {}
@@ -68,7 +68,7 @@ def calcular_valor_venda_lc(operacao_venda):
     # Calcular
     return calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao_venda.quantidade, operacao_venda.porcentagem_di()).quantize(Decimal('.01'), ROUND_DOWN)
 
-def calcular_valor_lc_ate_dia(investidor, dia=datetime.date.today()):
+def calcular_valor_lci_lca_ate_dia(investidor, dia=datetime.date.today()):
     """ 
     Calcula o valor das letras de crédito no dia determinado
     Parâmetros: Investidor
@@ -109,7 +109,7 @@ def calcular_valor_lc_ate_dia(investidor, dia=datetime.date.today()):
     
     return letras_credito
 
-def calcular_valor_lc_ate_dia_por_divisao(dia, divisao_id):
+def calcular_valor_lci_lca_ate_dia_por_divisao(dia, divisao_id):
     """ 
     Calcula o valor das letras de crédito da divisão no dia determinado
     Parâmetros: Data final

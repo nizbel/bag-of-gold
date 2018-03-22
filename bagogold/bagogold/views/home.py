@@ -34,6 +34,7 @@ from bagogold.fii.models import OperacaoFII, HistoricoFII, ProventoFII, \
     ValorDiarioFII
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
     HistoricoValorCotas
+from bagogold.lc.models import OperacaoLetraCambio
 from bagogold.lci_lca.models import OperacaoLetraCredito
 from bagogold.outros_investimentos.models import Rendimento, Amortizacao, \
     Investimento
@@ -108,6 +109,17 @@ def calendario(request):
         vencimento_cdb_rdb = [operacao for operacao in vencimento_cdb_rdb if operacao.data_vencimento() >= data_inicial and operacao.data_vencimento() <= data_final]
         calendario.extend([{'title': u'Vencimento de operação de R$ %s em %s, feita em %s' % (operacao.quantidade, operacao.cdb_rdb.nome, operacao.data.strftime('%d/%m/%Y')), 
                             'start': operacao.data_vencimento().strftime('%Y-%m-%d')} for operacao in vencimento_cdb_rdb])
+        
+        # Carência e vencimento de Letras de Câmbio
+        operacoes_lc = OperacaoLetraCambio.objects.filter(investidor=investidor, data__lt=data_final, tipo_operacao='C')
+        # Buscar apenas operações com fim da carência no período especificado
+        carencia_lc = [operacao for operacao in operacoes_lc if operacao.data_carencia() >= data_inicial and operacao.data_carencia() <= data_final]
+        calendario.extend([{'title': u'Carência de operação de R$ %s em %s, feita em %s' % (operacao.quantidade, operacao.lc.nome, operacao.data.strftime('%d/%m/%Y')), 
+                            'start': operacao.data_carencia().strftime('%Y-%m-%d')} for operacao in carencia_lc])
+        # Buscar apenas operações que vencem no período especificado
+        vencimento_lc = [operacao for operacao in operacoes_lc if operacao.data_vencimento() >= data_inicial and operacao.data_vencimento() <= data_final]
+        calendario.extend([{'title': u'Vencimento de operação de R$ %s em %s, feita em %s' % (operacao.quantidade, operacao.lc.nome, operacao.data.strftime('%d/%m/%Y')), 
+                            'start': operacao.data_vencimento().strftime('%Y-%m-%d')} for operacao in vencimento_lc])
         
         # Carência de LCI/LCA
         carencia_lci_lca = OperacaoLetraCredito.objects.filter(investidor=investidor, data__lt=data_final, tipo_operacao='C')
@@ -264,6 +276,8 @@ def detalhar_acumulado_mensal(request):
     
     # Preparar nomes completos para cada investimento
     for acumulado_inv in acumulado:
+        if acumulado_inv.investimento == 'A':
+            acumulado_inv.investimento = 'Letras de Câmbio'
         if acumulado_inv.investimento == 'B':
             acumulado_inv.investimento = 'Buy and Hold'
         elif acumulado_inv.investimento == 'C':
