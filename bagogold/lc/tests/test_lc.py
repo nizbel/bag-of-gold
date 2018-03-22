@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoLetraCambio, Divisao
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoLetraCambio, \
+    Divisao
 from bagogold.bagogold.models.investidores import Investidor
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
-from bagogold.lci_lca.utils import \
-    calcular_valor_atualizado_com_taxa_prefixado
 from bagogold.bagogold.utils.misc import verificar_feriado_bovespa, \
     qtd_dias_uteis_no_periodo, calcular_iof_regressivo, \
     calcular_imposto_renda_longo_prazo
-from bagogold.lc.forms import HistoricoVencimentoCDB_RDBForm, \
-    HistoricoCarenciaCDB_RDBForm
-from bagogold.lc.models import CDB_RDB, HistoricoPorcentagemCDB_RDB, \
-    OperacaoCDB_RDB, OperacaoVendaCDB_RDB, HistoricoCarenciaCDB_RDB, \
-    HistoricoVencimentoCDB_RDB
+from bagogold.bagogold.utils.taxas_indexacao import \
+    calcular_valor_atualizado_com_taxa_prefixado
+from bagogold.lc.forms import HistoricoCarenciaLetraCambioForm, \
+    HistoricoVencimentoLetraCambioForm
+from bagogold.lc.models import LetraCambio, HistoricoPorcentagemLetraCambio, \
+    HistoricoVencimentoLetraCambio, OperacaoLetraCambio, OperacaoVendaLetraCambio, \
+    HistoricoCarenciaLetraCambio
 from bagogold.lc.utils import calcular_valor_lc_ate_dia, \
     buscar_operacoes_vigentes_ate_data, calcular_valor_lc_ate_dia_por_divisao, \
     calcular_valor_venda_lc, calcular_valor_operacao_lc_ate_dia
@@ -30,7 +31,7 @@ class ValorLetraCambioAteDiaTestCase(TestCase):
         data_atual = datetime.date(2016, 11, 10)
         
         # Letra de Câmbio
-        lc = LetraCambio.objects.create(nome="LC Teste", investidor=user.investidor, tipo='R', tipo_rendimento=LetraCambio.CDB_RDB_DI)
+        lc = LetraCambio.objects.create(nome="LC Teste", investidor=user.investidor, tipo_rendimento=LetraCambio.LC_DI)
         HistoricoPorcentagemLetraCambio.objects.create(lc=lc, porcentagem=Decimal(110))
         HistoricoVencimentoLetraCambio.objects.create(lc=lc, vencimento=2000)
         OperacaoLetraCambio.objects.create(quantidade=Decimal(3000), data=datetime.date(2016, 10, 14), tipo_operacao='C', \
@@ -77,15 +78,15 @@ class CalcularValorLetraCambioPrefixadoTestCase(TestCase):
         # Usuário
         user = User.objects.create(username='tester')
         
-        # CDB
-        lc = LetraCambio.objects.create(nome="LC Teste", investidor=user.investidor, tipo='C', tipo_rendimento=LetraCambio.CDB_RDB_PREFIXADO)
+        # Letra de Câmbio
+        lc = LetraCambio.objects.create(nome="LC Teste", investidor=user.investidor, tipo_rendimento=LetraCambio.LC_PREFIXADO)
         HistoricoPorcentagemLetraCambio.objects.create(lc=lc, porcentagem=Decimal('11.44'))
         HistoricoVencimentoLetraCambio.objects.create(lc=lc, vencimento=2000)
         OperacaoLetraCambio.objects.create(quantidade=Decimal(2000), data=datetime.date(2017, 5, 23), tipo_operacao='C', \
                                             lc=lc, investidor=user.investidor)
         
     def test_valor_prefixado_no_dia(self):
-        """Testar valor do CDB no dia 16/06/2017, permitindo erro de até 1 centavo"""
+        """Testar valor da Letra de Câmbio no dia 16/06/2017, permitindo erro de até 1 centavo"""
         qtd_dias = qtd_dias_uteis_no_periodo(datetime.date(2017, 5, 23), datetime.date(2017, 6, 16))
         operacao = OperacaoLetraCambio.objects.get(lc=LetraCambio.objects.get(nome="LC Teste"))
         valor = calcular_valor_atualizado_com_taxa_prefixado(operacao.quantidade, operacao.porcentagem(), qtd_dias)
@@ -108,8 +109,8 @@ class CalcularQuantidadesLetraCambioTestCase(TestCase):
         # Usuário
         user = User.objects.create(username='tester')
         
-        # CDB
-        lc = LetraCambio.objects.create(nome='LC Teste', investidor=user.investidor, tipo='C', tipo_rendimento=LetraCambio.CDB_RDB_DI)
+        # Letra de Câmbio
+        lc = LetraCambio.objects.create(nome='LC Teste', investidor=user.investidor, tipo_rendimento=LetraCambio.LC_DI)
         HistoricoPorcentagemLetraCambio.objects.create(lc=lc, porcentagem=Decimal(110))
         HistoricoVencimentoLetraCambio.objects.create(lc=lc, vencimento=2000)
         
@@ -140,7 +141,7 @@ class CalcularQuantidadesLetraCambioTestCase(TestCase):
         divisao_operacao_7 = DivisaoOperacaoLetraCambio.objects.create(divisao=divisao_2, operacao=operacao_5, quantidade=Decimal(500))
         
     def test_buscar_qtd_vigente_ao_fim_das_operacoes(self):
-        """Testa a quantidade vigente de CDB/RDB ao fim das operações"""
+        """Testa a quantidade vigente de Letra de Câmbio ao fim das operações"""
         operacoes_vigentes = buscar_operacoes_vigentes_ate_data(Investidor.objects.get(user__username='tester'), datetime.date(2017, 5, 25))
         self.assertEqual(len(operacoes_vigentes), 2)
         self.assertIn(OperacaoLetraCambio.objects.get(id=1), operacoes_vigentes)
@@ -162,8 +163,8 @@ class FormulariosCarenciaVencimentoTestCase(TestCase):
         # Usuário
         user = User.objects.create(username='tester')
         
-        # CDB
-        lc = LetraCambio.objects.create(nome='LC Teste', investidor=user.investidor, tipo='C', tipo_rendimento=LetraCambio.CDB_RDB_DI)
+        # Letra de Câmbio
+        lc = LetraCambio.objects.create(nome='LC Teste', investidor=user.investidor, tipo_rendimento=LetraCambio.LC_DI)
         carencia_inicial = HistoricoCarenciaLetraCambio.objects.create(lc=lc, data=None, carencia=361)
         vencimento_inicial = HistoricoVencimentoLetraCambio.objects.create(lc=lc, data=None, vencimento=400)
     
