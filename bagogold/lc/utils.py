@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoLetraCambio,\
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoLetraCambio, \
     CheckpointDivisaoLetraCambio
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
-from bagogold.lci_lca.utils import calcular_valor_atualizado_com_taxas_di, \
-    calcular_valor_atualizado_com_taxa_prefixado
 from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo, \
     calcular_iof_e_ir_longo_prazo
-from bagogold.lc.models import OperacaoLetraCambio, LetraCambio, CheckpointLetraCambio, \
-    OperacaoVendaLetraCambio
+from bagogold.bagogold.utils.taxas_indexacao import \
+    calcular_valor_atualizado_com_taxas_di, \
+    calcular_valor_atualizado_com_taxa_prefixado
+from bagogold.lc.models import OperacaoLetraCambio, LetraCambio, \
+    CheckpointLetraCambio, OperacaoVendaLetraCambio
 from decimal import Decimal, ROUND_DOWN
 from django.db.models.aggregates import Sum, Count
 from django.db.models.expressions import F, Case, When

@@ -14,8 +14,8 @@ from bagogold.bagogold.utils.debenture import calcular_valor_debentures_ate_dia
 from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
     buscar_totais_atuais_investimentos, buscar_proventos_a_receber, \
     buscar_proventos_a_receber_data_ex_futura, buscar_operacoes_no_periodo
-from bagogold.lci_lca.utils import calcular_valor_atualizado_com_taxas_di, \
-    calcular_valor_lci_lca_ate_dia, calcular_valor_venda_lci_lca
+from bagogold.lci_lca.utils import calcular_valor_lci_lca_ate_dia, \
+    calcular_valor_venda_lci_lca
 from bagogold.bagogold.utils.misc import calcular_rendimentos_ate_data, \
     verificar_feriado_bovespa, formatar_zeros_a_direita_apos_2_casas_decimais
 from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia

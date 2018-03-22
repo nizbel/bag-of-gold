@@ -105,7 +105,7 @@ class Divisao (models.Model):
         return saldo
     
     def saldo_cdb_rdb(self, data=datetime.date.today()):
-        from bagogold.lci_lca.utils import calcular_valor_atualizado_com_taxas_di, \
+        from bagogold.bagogold.utils.taxas_indexacao import calcular_valor_atualizado_com_taxas_di, \
             calcular_valor_atualizado_com_taxa_prefixado
         from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo, calcular_iof_e_ir_longo_prazo
         from bagogold.cdb_rdb.models import CDB_RDB
@@ -262,7 +262,7 @@ class Divisao (models.Model):
         return saldo
     
     def saldo_lc(self, data=datetime.date.today()):
-        from bagogold.lci_lca.utils import calcular_valor_atualizado_com_taxas_di
+        from bagogold.bagogold.utils.taxas_indexacao import calcular_valor_atualizado_com_taxas_di
         """
         Calcula o saldo de operações de Letra de Câmbio de uma divisão (dinheiro livre)
         """
@@ -292,7 +292,7 @@ class Divisao (models.Model):
         return saldo
     
     def saldo_lci_lca(self, data=datetime.date.today()):
-        from bagogold.lci_lca.utils import calcular_valor_atualizado_com_taxas_di
+        from bagogold.bagogold.utils.taxas_indexacao import calcular_valor_atualizado_com_taxas_di
         """
         Calcula o saldo de operações de Letra de Crédito de uma divisão (dinheiro livre)
         """
