@@ -22,26 +22,17 @@
 						{% if form_lc.nome.errors %} <span class="help-block"> {{ form_lc.nome.errors.as_text }} </span> {% endif %}
 					</div>
 				</div>
-				<div class="form-group col-md-6 {% if form_lc.tipo.errors %} has-error {% endif %}">
-					<label class="control-label col-md-4" style="text-align: left;"> Tipo: </label>
-					<div class="col-md-8">
-						<select class="selectpicker form-control" id="id_tipo" name="tipo">
-							{% for key, value in form_lc.fields.tipo.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
-						</select>
-						{% if form_lc.tipo.errors %} <span class="help-block"> {{ form_lc.tipo.errors.as_text }} </span> {% endif %}
-					</div>
-				</div>
+                <div class="form-group col-md-6 {% if form_lc.tipo_rendimento.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4" style="text-align: left;"> Tipo de rendimento: </label>
+                    <div class="col-md-8">
+                        <select class="selectpicker form-control" id="id_tipo_rendimento" name="tipo_rendimento">
+                            {% for key, value in form_lc.fields.tipo_rendimento.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
+                        </select>
+                        {% if form_lc.tipo_rendimento.errors %} <span class="help-block"> {{ form_lc.tipo_rendimento.errors.as_text }} </span> {% endif %}
+                    </div>
+                </div>
 			</div>
 			<div class="row">
-				<div class="form-group col-md-6 {% if form_lc.tipo_rendimento.errors %} has-error {% endif %}">
-					<label class="control-label col-md-4" style="text-align: left;"> Tipo de rendimento: </label>
-					<div class="col-md-8">
-						<select class="selectpicker form-control" id="id_tipo_rendimento" name="tipo_rendimento">
-							{% for key, value in form_lc.fields.tipo_rendimento.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
-						</select>
-						{% if form_lc.tipo_rendimento.errors %} <span class="help-block"> {{ form_lc.tipo_rendimento.errors.as_text }} </span> {% endif %}
-					</div>
-				</div>
 				{{ formset_porcentagem.management_form }}
 				{% for form_porcentagem in formset_porcentagem %}
 				<div class="form-group col-md-6 {% if form_porcentagem.porcentagem.errors %} has-error {% endif %}">
@@ -52,28 +43,28 @@
 					</div>
 				</div>
 				{% endfor %}
+                {{ formset_carencia.management_form }}
+                {% for form_carencia in formset_carencia %}
+                    <div class="form-group col-md-6 {% if form_carencia.carencia.errors %} has-error {% endif %}">
+                        <label class="control-label col-md-4"> {{ form_carencia.carencia.label }}: </label>
+                        <div class="col-md-8">
+                            <input id="id_historicocarencialc_set-{{forloop.counter0}}-carencia" type="text" value="{{form_carencia.carencia.value}}" name="historicocarencialc_set-{{forloop.counter0}}-carencia" class="form-control">
+                            {% if form_carencia.carencia.errors %} <span class="help-block"> {{ form_carencia.carencia.errors.as_text }} </span> {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
 			</div>
 			<div class="row">
-			{{ formset_carencia.management_form }}
-			{% for form_carencia in formset_carencia %}
-				<div class="form-group col-md-6 {% if form_carencia.carencia.errors %} has-error {% endif %}">
-					<label class="control-label col-md-4"> {{ form_carencia.carencia.label }}: </label>
-					<div class="col-md-8">
-						<input id="id_historicocarencialc_set-{{forloop.counter0}}-carencia" type="text" value="{{form_carencia.carencia.value}}" name="historicocarencialc_set-{{forloop.counter0}}-carencia" class="form-control">
-						{% if form_carencia.carencia.errors %} <span class="help-block"> {{ form_carencia.carencia.errors.as_text }} </span> {% endif %}
-					</div>
-				</div>
-			{% endfor %}
-            {{ formset_vencimento.management_form }}
-            {% for form_vencimento in formset_vencimento %}
-                <div class="form-group col-md-6 {% if form_vencimento.vencimento.errors %} has-error {% endif %}">
-                    <label class="control-label col-md-4"> {{ form_vencimento.vencimento.label }}: </label>
-                    <div class="col-md-8">
-                        <input id="id_historicovencimentolc_set-{{forloop.counter0}}-vencimento" type="text" value="{{form_vencimento.vencimento.value}}" name="historicovencimentolc_set-{{forloop.counter0}}-vencimento" class="form-control">
-                        {% if form_vencimento.vencimento.errors %} <span class="help-block"> {{ form_vencimento.vencimento.errors.as_text }} </span> {% endif %}
+                {{ formset_vencimento.management_form }}
+                {% for form_vencimento in formset_vencimento %}
+                    <div class="form-group col-md-6 {% if form_vencimento.vencimento.errors %} has-error {% endif %}">
+                        <label class="control-label col-md-4"> {{ form_vencimento.vencimento.label }}: </label>
+                        <div class="col-md-8">
+                            <input id="id_historicovencimentolc_set-{{forloop.counter0}}-vencimento" type="text" value="{{form_vencimento.vencimento.value}}" name="historicovencimentolc_set-{{forloop.counter0}}-vencimento" class="form-control">
+                            {% if form_vencimento.vencimento.errors %} <span class="help-block"> {{ form_vencimento.vencimento.errors.as_text }} </span> {% endif %}
+                        </div>
                     </div>
-                </div>
-            {% endfor %}
+                {% endfor %}
             </div>
 			<div class="form-actions">
 				<div class="row">
