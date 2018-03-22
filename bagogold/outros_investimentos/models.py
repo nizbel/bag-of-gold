@@ -62,7 +62,7 @@ class ImpostoRendaRendimento (models.Model):
     TIPO_VALOR_ESPECIFICO = 'P'
     
     rendimento = models.OneToOneField('Rendimento')
-    tipo = models.CharField(u'Tipo de cálculo')
+    tipo = models.CharField(u'Tipo de cálculo', max_length=1)
     
     def percentual_ir(self, qtd_dias):
         if self.tipo == self.TIPO_LONGO_PRAZO:
