@@ -107,9 +107,6 @@ def acompanhamento_fii(request):
         percentual_retorno_semestral = 100*(math.pow(1 + percentual_retorno_semestral, 180) - 1)
         comparativos += [[fii, valor_atual, total_proventos, percentual_retorno_semestral]]
         
-    # Ordenar lista de comparativos
-    comparativos = reversed(sorted(comparativos, key=itemgetter(3)))
-    
     return TemplateResponse(request, 'fii/acompanhamento.html', {'comparativos': comparativos})
     
 @adiciona_titulo_descricao('Cálculo de corretagem', 'Calcular quantidade de dinheiro que o investidor pode juntar para '
