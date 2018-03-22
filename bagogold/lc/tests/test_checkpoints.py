@@ -24,7 +24,7 @@ class CalcularQuantidadesLetraCambioTestCase(TestCase):
          
         lc_1 = LetraCambio.objects.create(nome="LC 1", investidor=user.investidor, tipo_rendimento=LetraCambio.LC_DI)
         # TODO regularizar testes de IPCA
-        lc_2 = LetraCambio.objects.create(nome="LC 2", investidor=user.investidor, tipo_rendimento=LetraCambio.LetraCambio_IPCA)
+        lc_2 = LetraCambio.objects.create(nome="LC 2", investidor=user.investidor, tipo_rendimento=LetraCambio.LC_IPCA)
         lc_3 = LetraCambio.objects.create(nome="LC 3", investidor=user.investidor, tipo_rendimento=LetraCambio.LC_PREFIXADO)
         
         HistoricoPorcentagemLetraCambio.objects.create(lc=lc_1, porcentagem=100)

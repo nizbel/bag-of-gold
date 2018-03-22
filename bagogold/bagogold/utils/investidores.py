@@ -4,24 +4,21 @@ from bagogold.bagogold.models.acoes import OperacaoAcao, ValorDiarioAcao, \
 from bagogold.bagogold.models.debentures import HistoricoValorDebenture, \
     OperacaoDebenture
 from bagogold.bagogold.models.divisoes import CheckpointDivisaoFII, \
-    CheckpointDivisaoProventosFII, Divisao, CheckpointDivisaoCDB_RDB
-from bagogold.fii.models import OperacaoFII, ValorDiarioFII, \
-    HistoricoFII, FII, ProventoFII, CheckpointFII, CheckpointProventosFII
+    CheckpointDivisaoProventosFII, Divisao, CheckpointDivisaoCDB_RDB, \
+    CheckpointDivisaoLetraCambio
 from bagogold.bagogold.models.investidores import LoginIncorreto
-from bagogold.lci_lca.models import OperacaoLetraCredito
 from bagogold.bagogold.models.td import OperacaoTitulo, ValorDiarioTitulo, \
     HistoricoTitulo
-from bagogold.bagogold.signals.divisao_fii import gerar_checkpoint_divisao_fii,\
+from bagogold.bagogold.signals.divisao_cdb_rdb import \
+    gerar_checkpoint_divisao_cdb_rdb
+from bagogold.bagogold.signals.divisao_fii import gerar_checkpoint_divisao_fii, \
     gerar_checkpoint_divisao_proventos_fii
-from bagogold.fii.signals import gerar_checkpoint_fii,\
-    gerar_checkpoint_proventos_fii
 from bagogold.bagogold.utils.acoes import quantidade_acoes_ate_dia, \
     calcular_poupanca_prov_acao_ate_dia
 from bagogold.bagogold.utils.debenture import calcular_qtd_debentures_ate_dia
-from bagogold.fii.utils import calcular_qtd_fiis_ate_dia_por_ticker, \
-    calcular_qtd_fiis_ate_dia, calcular_poupanca_prov_fii_ate_dia
-from bagogold.lci_lca.utils import calcular_valor_lci_lca_ate_dia
 from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia
+from bagogold.cdb_rdb.models import OperacaoCDB_RDB, CheckpointCDB_RDB
+from bagogold.cdb_rdb.signals import gerar_checkpoint_cdb_rdb
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia
 from bagogold.cri_cra.models.cri_cra import CRI_CRA, OperacaoCRI_CRA
 from bagogold.cri_cra.utils.utils import qtd_cri_cra_ate_dia
@@ -29,9 +26,19 @@ from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
 from bagogold.criptomoeda.models import Criptomoeda, OperacaoCriptomoeda, \
     ValorDiarioCriptomoeda
 from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia
+from bagogold.fii.models import OperacaoFII, ValorDiarioFII, HistoricoFII, FII, \
+    ProventoFII, CheckpointFII, CheckpointProventosFII
+from bagogold.fii.signals import gerar_checkpoint_fii, \
+    gerar_checkpoint_proventos_fii
+from bagogold.fii.utils import calcular_qtd_fiis_ate_dia_por_ticker, \
+    calcular_qtd_fiis_ate_dia, calcular_poupanca_prov_fii_ate_dia
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
 from bagogold.fundo_investimento.utils import \
     calcular_valor_fundos_investimento_ate_dia
+from bagogold.lc.models import OperacaoLetraCambio, CheckpointLetraCambio
+from bagogold.lc.signals import gerar_checkpoint_lc
+from bagogold.lci_lca.models import OperacaoLetraCredito
+from bagogold.lci_lca.utils import calcular_valor_lci_lca_ate_dia
 from bagogold.outros_investimentos.models import Investimento
 from bagogold.outros_investimentos.utils import \
     calcular_valor_outros_investimentos_ate_data
@@ -42,9 +49,6 @@ from django.utils import timezone
 from itertools import chain
 from operator import attrgetter
 import datetime
-from bagogold.cdb_rdb.models import OperacaoCDB_RDB, CheckpointCDB_RDB
-from bagogold.cdb_rdb.signals import gerar_checkpoint_cdb_rdb
-from bagogold.bagogold.signals.divisao_cdb_rdb import gerar_checkpoint_divisao_cdb_rdb
 
 
 def is_superuser(user):
@@ -123,6 +127,38 @@ def atualizar_checkpoints(investidor):
             # Para checkpoints no ano mais recente
             for checkpoint in CheckpointDivisaoCDB_RDB.objects.filter(divisao_operacao__operacao__investidor=investidor, ano=ano_mais_recente):
                 gerar_checkpoint_divisao_cdb_rdb(checkpoint.divisao_operacao, ano)
+                
+    # Letra de Câmbio
+    # Verificar se usuário possui operações em Letra de Câmbio
+    if OperacaoLetraCambio.objects.filter(investidor=investidor).exists():
+        # Buscar ano mais recente de checkpoints anterior ao ano atual
+        if CheckpointLetraCambio.objects.filter(operacao__investidor=investidor, ano__lt=datetime.date.today().year).exists():
+            ano_mais_recente = CheckpointLetraCambio.objects.filter(operacao__investidor=investidor, ano__lt=datetime.date.today().year).order_by('-ano')[0].ano
+        # Caso não haja checkpoint, buscar ano da primeira operação em letra de cambio
+        else:
+            ano_mais_recente = OperacaoLetraCambio.objects.filter(investidor=investidor).order_by('-data')[0].data.year
+            
+        # Gerar checkpoints a partir do ano seguinte a esse ano mais recente
+        for ano in xrange(ano_mais_recente, datetime.date.today().year+1):
+            # Para checkpoints no ano mais recente
+            for checkpoint in CheckpointLetraCambio.objects.filter(operacao__investidor=investidor, ano=ano_mais_recente):
+                gerar_checkpoint_lc(checkpoint.operacao, ano)
+        
+#             # Para compras feitas entre o ano mais recente e o atual
+#             for operacao in OperacaoLetraCambio.objects.filter(investidor=investidor, data__year__gte=ano_mais_recente)
+        
+        # Repetir o processo para divisões
+        if CheckpointDivisaoLetraCambio.objects.filter(divisao_operacao__divisao__investidor=investidor, ano__lt=datetime.date.today().year).exists():
+            ano_mais_recente = CheckpointDivisaoLetraCambio.objects.filter(divisao_operacao__divisao__investidor=investidor, ano__lt=datetime.date.today().year).order_by('-ano')[0].ano
+        # Caso não haja checkpoint, buscar ano da primeira operação em letra de cambio
+        else:
+            ano_mais_recente = OperacaoLetraCambio.objects.filter(investidor=investidor).order_by('-data')[0].data.year
+            
+        # Gerar checkpoints a partir do ano seguinte a esse ano mais recente
+        for ano in xrange(ano_mais_recente, datetime.date.today().year+1):
+            # Para checkpoints no ano mais recente
+            for checkpoint in CheckpointDivisaoLetraCambio.objects.filter(divisao_operacao__operacao__investidor=investidor, ano=ano_mais_recente):
+                gerar_checkpoint_divisao_lc(checkpoint.divisao_operacao, ano)
                 
 def buscar_acoes_investidor_na_data(investidor, data=datetime.date.today(), destinacao=''):
     """
