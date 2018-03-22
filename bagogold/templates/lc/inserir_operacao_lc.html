@@ -96,8 +96,8 @@ Adiciona uma nova operação em CDB/RDB
                         <div class="form-group col-md-6 {% if form_divisao.divisao.errors %} has-error {% endif %}">
                             <label class="control-label col-md-4" style="text-align: left;"> {{form_divisao.divisao.label}}: </label>
                             <div class="col-md-8">
-                                {% localize off %}
-                                <select class="selectpicker form-control" id="id_divisaooperacaolc_set-{{forloop.counter0}}-divisao" name="divisaooperacaolc_set-{{forloop.counter0}}-divisao">
+                                {% localize off %}                                                                                                  
+                                <select class="selectpicker form-control" id="id_divisaooperacaoletracambio_set-{{forloop.counter0}}-divisao" name="divisaooperacaoletracambio_set-{{forloop.counter0}}-divisao">
                                     {% for key, value in form_divisao.fields.divisao.widget.choices %}<option value="{{ key }}" 
                                         {% if key == form_divisao.divisao.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
                                 </select>
@@ -108,7 +108,7 @@ Adiciona uma nova operação em CDB/RDB
                         <div class="form-group col-md-6 {% if form_divisao.quantidade.errors %} has-error {% endif %}">
                             <label class="control-label col-md-4"> {{form_divisao.quantidade.label}}: </label>
                             <div class="col-md-8">
-                                <input id="id_divisaooperacaolc_set-{{forloop.counter0}}-quantidade" type="text" value="{{form_divisao.quantidade.value}}" name="divisaooperacaolc_set-{{forloop.counter0}}-quantidade" class="form-control">
+                                <input id="id_divisaooperacaoletracambio_set-{{forloop.counter0}}-quantidade" type="text" value="{{form_divisao.quantidade.value}}" name="divisaooperacaoletracambio_set-{{forloop.counter0}}-quantidade" class="form-control">
                                 {% if form_divisao.quantidade.errors %} <span class="help-block"> {{ form_divisao.quantidade.errors.as_text }} </span> {% endif %}
                             </div>
                         </div>

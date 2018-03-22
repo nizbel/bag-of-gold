@@ -388,7 +388,7 @@ class DivisaoOperacaoLetraCambioFormSet(forms.models.BaseInlineFormSet):
     def __init__(self, *args, **kwargs):
         self.operacao_compra = kwargs.pop('operacao_compra', None)
         self.investidor = kwargs.pop('investidor')
-        super(DivisaoOperacaoLCI_LCAFormSet, self).__init__(*args, **kwargs)
+        super(DivisaoOperacaoLetraCambioFormSet, self).__init__(*args, **kwargs)
     
         for form in self.forms:
             form.fields['divisao'].queryset = Divisao.objects.filter(investidor=self.investidor)

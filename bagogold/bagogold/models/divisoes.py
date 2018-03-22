@@ -27,7 +27,7 @@ class Divisao (models.Model):
         possui_operacoes = (DivisaoOperacaoAcao.objects.filter(divisao=self).count() + DivisaoOperacaoCDB_RDB.objects.filter(divisao=self).count() + DivisaoOperacaoFII.objects.filter(divisao=self).count() \
             + DivisaoOperacaoFundoInvestimento.objects.filter(divisao=self).count() + DivisaoOperacaoLCI_LCA.objects.filter(divisao=self).count() + DivisaoOperacaoTD.objects.filter(divisao=self).count() \
             + DivisaoOperacaoCriptomoeda.objects.filter(divisao=self).count() + DivisaoOperacaoDebenture.objects.filter(divisao=self).count() + DivisaoOperacaoCRI_CRA.objects.filter(divisao=self).count() \
-            + DivisaoInvestimento.objects.filter(divisao=self).count()) > 0
+            + DivisaoInvestimento.objects.filter(divisao=self).count() + DivisaoOperacaoLetraCambio.objects.filter(divisao=self).count()) > 0
         
         return possui_operacoes
     
@@ -270,8 +270,8 @@ class Divisao (models.Model):
         historico_di = HistoricoTaxaDI.objects.all()
         
         # Computar compras
-        saldo -= (DivisaoOperacaoLCI_LCA.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='C').aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
-        for venda_divisao in DivisaoOperacaoLCI_LCA.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='V'):
+        saldo -= (DivisaoOperacaoLetraCambio.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='C').aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
+        for venda_divisao in DivisaoOperacaoLetraCambio.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='V'):
             # Para venda, calcular valor do cdb/rdb no dia da venda
             valor_venda = venda_divisao.quantidade
             taxa = venda_divisao.operacao.porcentagem_di()
@@ -286,8 +286,8 @@ class Divisao (models.Model):
             saldo += valor_venda
         
         # Transferências
-        saldo += -(TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_LCI_LCA, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
-            + (TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_LCI_LCA, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
+        saldo += -(TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_LC, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
+            + (TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_LC, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
         
         return saldo
     
@@ -402,9 +402,11 @@ class Divisao (models.Model):
         saldo += self.saldo_fii(data=data)
         # Fundo de investimento
         saldo += self.saldo_fundo_investimento(data=data)
+        # Letra de Câmbio
+        saldo += self.saldo_lc(data=data)
         # Letra de Crédito
         saldo += self.saldo_lci_lca(data=data)
-        # Outros investimetnos
+        # Outros investimentos
         saldo += self.saldo_outros_invest(data=data)
         # TD
         saldo += self.saldo_td(data=data)
@@ -747,7 +749,7 @@ class TransferenciaEntreDivisoes(models.Model):
                                   (TIPO_INVESTIMENTO_DEBENTURE, 'Debênture'),
                                   (TIPO_INVESTIMENTO_FII, 'Fundo de Inv. Imobiliário'), 
                                   (TIPO_INVESTIMENTO_FUNDO_INV, 'Fundo de Investimento'),
-                                  (TIPO_INVESTIMENTO_LCI_LCA, 'Letra de Câmbio'), 
+                                  (TIPO_INVESTIMENTO_LC, 'Letra de Câmbio'), 
                                   (TIPO_INVESTIMENTO_LCI_LCA, 'LCI/LCA'), 
                                   (TIPO_INVESTIMENTO_CRIPTOMOEDA, 'Criptomoeda'),
                                   (TIPO_INVESTIMENTO_CRI_CRA, 'CRI/CRA'), 
