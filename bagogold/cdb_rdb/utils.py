@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoCDB_RDB,\
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoCDB_RDB, \
     CheckpointDivisaoCDB_RDB
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
-from bagogold.lci_lca.utils import calcular_valor_atualizado_com_taxas_di, \
-    calcular_valor_atualizado_com_taxa_prefixado
 from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo, \
     calcular_iof_e_ir_longo_prazo
+from bagogold.bagogold.utils.taxas_indexacao import \
+    calcular_valor_atualizado_com_taxas_di, \
+    calcular_valor_atualizado_com_taxa_prefixado
 from bagogold.cdb_rdb.models import OperacaoCDB_RDB, CDB_RDB, CheckpointCDB_RDB, \
     OperacaoVendaCDB_RDB
 from decimal import Decimal, ROUND_DOWN
