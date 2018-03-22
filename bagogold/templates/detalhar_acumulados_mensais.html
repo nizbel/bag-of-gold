@@ -74,8 +74,11 @@
 				<div class="portlet-body" id="periodos_mensais">
                     <div class="text-center">
                         <h4>
-                        {% with acumulados_mensais|last as ultimo_acumulado %}
-                            Taxa média entre <strong>{{acumulados_mensais.0.0.0}}</strong> e <strong>{{ultimo_acumulado.0.1}}</strong>
+                        {% comment %} Ordens de acumulados é invertida {% endcomment %}
+                        {% with acumulados_mensais|first as ultimo_acumulado %}
+                        {% with acumulados_mensais|last as primeiro_acumulado %}
+                            Taxa média entre <strong>{{primeiro_acumulado.0.0}}</strong> e <strong>{{ultimo_acumulado.0.1}}</strong>
+                        {% endwith %}
                         {% endwith %}
                         </h4>
                     </div>

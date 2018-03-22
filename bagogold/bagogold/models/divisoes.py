@@ -402,7 +402,7 @@ class Divisao (models.Model):
         saldo += self.saldo_fii(data=data)
         # Fundo de investimento
         saldo += self.saldo_fundo_investimento(data=data)
-        # LC
+        # Letra de Crédito
         saldo += self.saldo_lci_lca(data=data)
         # Outros investimetnos
         saldo += self.saldo_outros_invest(data=data)

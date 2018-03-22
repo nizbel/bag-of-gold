@@ -3,7 +3,7 @@ from bagogold.blog.models import Tag, Post
 from django import forms
 
 class PostForm(forms.ModelForm):
-    tags = forms.MultipleChoiceField(choices=[(tag.id, tag.nome) for tag in Tag.objects.all().order_by('nome')])
+    tags = forms.MultipleChoiceField(choices=[])
     
     class Meta:
         model = Post
@@ -14,6 +14,7 @@ class PostForm(forms.ModelForm):
         
     def __init__(self, *args, **kwargs):
         super(PostForm, self).__init__(*args, **kwargs)
+        self.fields['tags'].choices = [(tag.id, tag.nome) for tag in Tag.objects.all().order_by('nome')]
         if self.instance.id:
             self.fields['chamada_facebook'].disabled = True
         

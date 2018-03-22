@@ -21,11 +21,11 @@
 			</tr>
 		</thead>
 		<tbody>
-		{% for lc in lcs %}
+		{% for lci_lca in letras_credito %}
 		<tr>
-			<td><a href="{% url 'lci_lca:detalhar_lci_lca' lc.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar Letra de Crédito">{{lc.nome}}</a></td>
-			<td>{{lc.carencia_atual}} dia(s)</td>
-			<td>{{lc.rendimento_atual}}%</td>
+			<td><a href="{% url 'lci_lca:detalhar_lci_lca' lci_lca.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar Letra de Crédito">{{lci_lca.nome}}</a></td>
+			<td>{{lci_lca.carencia_atual}} dia(s)</td>
+			<td>{{lci_lca.rendimento_atual}}%</td>
 		</tr>
 		{% endfor %}
 		</tbody>

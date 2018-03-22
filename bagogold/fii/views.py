@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoFIIFormSet
-from bagogold.bagogold.forms.fii import OperacaoFIIForm, ProventoFIIForm, \
+from bagogold.fii.forms import OperacaoFIIForm, ProventoFIIForm, \
     UsoProventosOperacaoFIIForm, CalculoResultadoCorretagemForm
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII, Divisao
 from bagogold.fii.models import OperacaoFII, ProventoFII, HistoricoFII, \
@@ -89,7 +89,7 @@ def acompanhamento_fii(request):
                 percentual_retorno_semestral = (total_proventos/valor_atual)
                 preenchido = True
         except:
-            preenchido = False
+            pass
         if (not preenchido):
             # Pegar último dia util com negociação da ação para calculo do patrimonio
             try:
@@ -107,9 +107,6 @@ def acompanhamento_fii(request):
         percentual_retorno_semestral = 100*(math.pow(1 + percentual_retorno_semestral, 180) - 1)
         comparativos += [[fii, valor_atual, total_proventos, percentual_retorno_semestral]]
         
-    # Ordenar lista de comparativos
-    comparativos = reversed(sorted(comparativos, key=itemgetter(3)))
-    
     return TemplateResponse(request, 'fii/acompanhamento.html', {'comparativos': comparativos})
     
 @adiciona_titulo_descricao('Cálculo de corretagem', 'Calcular quantidade de dinheiro que o investidor pode juntar para '

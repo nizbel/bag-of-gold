@@ -35,7 +35,7 @@ def preencher_operacoes_div_principal(operacao):
         modelo_operacao_div = apps.get_model('bagogold', 'DivisaoOperacaoFII')
         divisoes_operacao = DivisaoOperacaoFII.objects.filter(operacao=operacao)
         div_principal = DivisaoPrincipal.objects.get(investidor=operacao.investidor).divisao
-    # LC
+    # Letra de Crédito
     elif isinstance(operacao, OperacaoLetraCredito):
         modelo_operacao_div = apps.get_model('bagogold', 'DivisaoOperacaoLCI_LCA')
         divisoes_operacao = DivisaoOperacaoLCI_LCA.objects.filter(operacao=operacao)
@@ -122,7 +122,7 @@ def verificar_operacoes_nao_alocadas(investidor):
             operacao.quantidade_nao_alocada = operacao.quantidade - quantidade_alocada
             operacoes_nao_alocadas.append(operacao)
     
-    # LC
+    # Letra de Crédito
     for operacao in OperacaoLetraCredito.objects.filter(investidor=investidor):
         divisoes_operacao = DivisaoOperacaoLCI_LCA.objects.filter(operacao=operacao)
         quantidade_alocada = 0

@@ -368,10 +368,10 @@ $( document ).ready(function() {
                 var graf_rendimentos_mensal_cdb_rdb = resultado.graf_rendimentos_mensal_cdb_rdb;
                 var graf_rendimentos_mensal_cri_cra = resultado.graf_rendimentos_mensal_cri_cra;
                 var graf_rendimentos_mensal_debentures = resultado.graf_rendimentos_mensal_debentures;
-                var graf_rendimentos_mensal_lc = resultado.graf_rendimentos_mensal_lc;
+                var graf_rendimentos_mensal_lci_lca = resultado.graf_rendimentos_mensal_lci_lca;
                 var graf_rendimentos_mensal_td = resultado.graf_rendimentos_mensal_td;
                 
-                $.plot($("#graf_rendimentos_mensal"), [ {color: "#33AA33", label: "Letras de Crédito", bars: {show:true, align:"center", barWidth: 24 * 60 * 60 * 100, lineWidth: 1, stacked: false}, data: graf_rendimentos_mensal_lc }, 
+                $.plot($("#graf_rendimentos_mensal"), [ {color: "#33AA33", label: "Letras de Crédito", bars: {show:true, align:"center", barWidth: 24 * 60 * 60 * 100, lineWidth: 1, stacked: false}, data: graf_rendimentos_mensal_lci_lca }, 
                                                         {color: "#8811AA", label: "CDB/RDB", bars: {show:true, align:"center", barWidth: 24 * 60 * 60 * 100, lineWidth: 1, stacked: false}, data: graf_rendimentos_mensal_cdb_rdb },
                                                         {color: "#AABB33", label: "Tesouro Direto", bars: {show:true, align:"center", barWidth: 24 * 60 * 60 * 100, lineWidth: 1, stacked: false}, data: graf_rendimentos_mensal_td },
                                                         {color: "#FF1100", label: "Debêntures", bars: {show:true, align:"center", barWidth: 24 * 60 * 60 * 100, lineWidth: 1, stacked: false}, data: graf_rendimentos_mensal_debentures },
