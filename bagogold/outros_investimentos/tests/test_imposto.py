@@ -23,5 +23,5 @@ class ImpostoRendaSobreRendimentosTestCase(TestCase):
         """Testa valor do imposto do tipo longo prazo"""
         investidor = Investidor.objects.get(user__username='tester')
         
-        rendimento = Rendimento.objects.filter(investimento__investidor=investidor, valor=Decimal('40.69'))
+        rendimento = Rendimento.objects.get(investimento__investidor=investidor, valor=Decimal('40.69'))
         self.assertAlmostEqual(rendimento.valor_liquido(), Decimal('33.57'), delta=Decimal('0.01'))
