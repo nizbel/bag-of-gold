@@ -93,6 +93,7 @@
                             <th>CRI/CRA</th>
                             <th>Cripto.</th>
                             <th>Debêntures</th>
+                            <th>LC</th>
                             <th>LCI/LCA</th>
                             <th>FII</th>
                             <th>Fundo Inv.</th>
@@ -146,6 +147,13 @@
                             font-blue
                             {% endif %}
                             ">R$ {{divisao.valor_atual_debentures|floatformat:"2"}}</span></td>
+                        <td><span class="
+                            {% if divisao.valor_atual_lc < 0 %}
+                            font-red-thunderbird
+                            {% else %}
+                            font-blue
+                            {% endif %}
+                            ">R$ {{divisao.valor_atual_lc|floatformat:"2"}}</span></td>
 						<td><span class="
 							{% if divisao.valor_atual_lci_lca < 0 %}
 							font-red-thunderbird
@@ -210,6 +218,7 @@
                             <th>CRI/CRA</th>
                             <th>Cripto.</th>
                             <th>Debêntures</th>
+                            <th>LC</th>
 							<th>LCI/LCA</th>
 							<th>FII</th>
 							<th>Fundo Inv.</th>
@@ -263,6 +272,13 @@
                             font-blue
                             {% endif %}
                             ">R$ {{divisao.saldo_debentures|floatformat:"2"}}</span></td>
+                        <td><span class="
+                            {% if divisao.saldo_lc < 0 %}
+                            font-red-thunderbird
+                            {% else %}
+                            font-blue
+                            {% endif %}
+                            ">R$ {{divisao.saldo_lc|floatformat:"2"}}</span></td>
 						<td><span class="
 							{% if divisao.saldo_lci_lca < 0 %}
 							font-red-thunderbird
