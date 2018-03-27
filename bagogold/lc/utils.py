@@ -20,6 +20,7 @@ def calcular_valor_venda_lc(operacao_venda, arredondar=True, valor_liquido=False
     """
     Calcula o valor de venda de uma operação em Letras de Câmbio
     Parâmetros: Operação de venda
+                Deve arredondar?
                 Levar em consideração impostos (IOF e IR)
     Resultado: Valor em reais da venda
     """
@@ -46,6 +47,14 @@ def calcular_valor_venda_lc(operacao_venda, arredondar=True, valor_liquido=False
     
 
 def calcular_valor_operacao_lc_ate_dia(operacao, dia=datetime.date.today(), arredondar=True, valor_liquido=False):
+    """
+    Calcula o valor de uma operação de compra de LC na data
+    Parâmetros: Operação
+                Data
+                Deve arredondar?
+                Deve retornar o valor líquido?
+    Retorno:    Valor
+    """
     if operacao.tipo_operacao != 'C':
         raise ValueError('Apenas para operações de compra')
     # Calcular limitado ao vencimento da Letras de Câmbio
@@ -176,22 +185,13 @@ def calcular_valor_lc_ate_dia_por_divisao(dia, divisao_id):
     # Buscar operações não totalmente vendidas
     operacoes = OperacaoLetraCambio.objects.filter(id__in=operacoes_lc.keys()).order_by('data')
       
-    # Calcular o valor atualizado do patrimonio
-    historico = HistoricoTaxaDI.objects.filter(data__range=[operacoes[0].data, dia])
+#     # Calcular o valor atualizado do patrimonio
+#     historico = HistoricoTaxaDI.objects.filter(data__range=[operacoes[0].data, dia])
         
     for operacao in operacoes:
-        if operacao.lc.tipo_rendimento == LetraCambio.LC_DI:
-            # DI
-            taxas_dos_dias = dict(historico.filter(data__range=[operacao.data, dia]).values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
-            operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacoes_lc[operacao.id], operacao.porcentagem())
-        elif operacao.lc.tipo_rendimento == LetraCambio.LC_PREFIXADO:
-            # Prefixado
-            operacao.atual = calcular_valor_atualizado_com_taxa_prefixado(operacoes_lc[operacao.id], operacao.porcentagem(), qtd_dias_uteis_no_periodo(operacao.data, datetime.date.today()))
-                 
-        # Arredondar valores
-        str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
-        operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-             
+        operacao.taxa = operacao.porcentagem()
+        operacao.atual = calcular_valor_operacao_lc_ate_dia(operacao, dia, arredondar=True)
+        
     lc = {}
     
     # Preencher os valores nas Letras de Câmbio
