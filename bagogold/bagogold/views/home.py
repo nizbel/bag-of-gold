@@ -22,7 +22,8 @@ from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia
 from bagogold.blog.models import Post
 from bagogold.cdb_rdb.models import OperacaoCDB_RDB
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, \
-    calcular_valor_venda_cdb_rdb
+    calcular_valor_venda_cdb_rdb, calcular_valor_atualizado_operacao_ate_dia \
+    as calcular_valor_atualizado_operacao_ate_dia_cdb_rdb
 from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA, \
     DataRemuneracaoCRI_CRA, DataAmortizacaoCRI_CRA, CRI_CRA
 from bagogold.cri_cra.utils.utils import calcular_valor_cri_cra_ate_dia, \
@@ -35,7 +36,8 @@ from bagogold.fii.models import OperacaoFII, HistoricoFII, ProventoFII, \
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
     HistoricoValorCotas
 from bagogold.lc.models import OperacaoLetraCambio
-from bagogold.lc.utils import calcular_valor_lc_ate_dia, calcular_valor_venda_lc
+from bagogold.lc.utils import calcular_valor_lc_ate_dia, calcular_valor_venda_lc, \
+    calcular_valor_atualizado_operacao_ate_dia as calcular_valor_atualizado_operacao_ate_dia_lc
 from bagogold.lci_lca.models import OperacaoLetraCredito
 from bagogold.lci_lca.utils import calcular_valor_lci_lca_ate_dia, \
     calcular_valor_venda_lci_lca
@@ -349,7 +351,7 @@ def detalhamento_investimentos(request):
     operacoes_lci_lca = OperacaoLetraCredito.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
 
     # Adicionar operações de CDB/RDB do investidor    
-    operacoes_cdb_rdb = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
+    operacoes_cdb_rdb = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data') 
     
     # Adicionar operações de CRI/CRA do investidor    
     operacoes_cri_cra = OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor).exclude(data__isnull=True).order_by('data') 
@@ -573,33 +575,48 @@ def detalhamento_investimentos(request):
                 
         elif isinstance(item, OperacaoLetraCambio):
             if item.tipo_operacao == 'C':
+                item.taxa = item.porcentagem()
+                item.qtd_inicial = item.quantidade
                 letras_cambio[item.id] = item
                 
             elif item.tipo_operacao == 'V':
-                if item.quantidade == item.operacao_compra_relacionada().qtd_disponivel_venda_na_data(item.data):
-                    del letras_cambio[item.operacao_compra_relacionada().id]
+                operacao_relacionada_id = item.operacao_compra_relacionada().id
+                if item.quantidade == letras_cambio[operacao_relacionada_id].qtd_inicial:
+                    del letras_cambio[operacao_relacionada_id]
                 else:
-                    letras_cambio[item.operacao_compra_relacionada().id].quantidade -= letras_cambio[item.operacao_compra_relacionada().id].quantidade * item.quantidade / item.operacao_compra_relacionada().quantidade
+                    letras_cambio[operacao_relacionada_id].quantidade -= letras_cambio[operacao_relacionada_id].quantidade \
+                        * item.quantidade / letras_cambio[operacao_relacionada_id].qtd_inicial
+                    letras_cambio[operacao_relacionada_id].qtd_inicial -= item.quantidade
                
         elif isinstance(item, OperacaoLetraCredito):
             if item.tipo_operacao == 'C':
+                item.taxa = item.porcentagem_di()
+                item.qtd_inicial = item.quantidade
                 letras_credito[item.id] = item
                 
             elif item.tipo_operacao == 'V':
-                if item.quantidade == item.operacao_compra_relacionada().qtd_disponivel_venda_na_data(item.data):
-                    del letras_credito[item.operacao_compra_relacionada().id]
+                operacao_relacionada_id = item.operacao_compra_relacionada().id
+                if item.quantidade == letras_credito[operacao_relacionada_id].qtd_inicial:
+                    del letras_credito[operacao_relacionada_id]
                 else:
-                    letras_credito[item.operacao_compra_relacionada().id].quantidade -= letras_credito[item.operacao_compra_relacionada().id].quantidade * item.quantidade / item.operacao_compra_relacionada().quantidade
-                    
+                    letras_credito[operacao_relacionada_id].quantidade -= letras_credito[operacao_relacionada_id].quantidade \
+                        * item.quantidade / letras_credito[operacao_relacionada_id].qtd_inicial
+                    letras_credito[operacao_relacionada_id].qtd_inicial -= item.quantidade
+                
         elif isinstance(item, OperacaoCDB_RDB):
             if item.tipo_operacao == 'C':
+                item.taxa = item.porcentagem()
+                item.qtd_inicial = item.quantidade
                 cdb_rdb[item.id] = item
                 
             elif item.tipo_operacao == 'V':
-                if item.quantidade == item.operacao_compra_relacionada().qtd_disponivel_venda_na_data(item.data, item):
-                    del cdb_rdb[item.operacao_compra_relacionada().id]
+                operacao_relacionada_id = item.operacao_compra_relacionada().id
+                if item.quantidade == cdb_rdb[operacao_relacionada_id].qtd_inicial:
+                    del cdb_rdb[operacao_relacionada_id]
                 else:
-                    cdb_rdb[item.operacao_compra_relacionada().id].quantidade -= cdb_rdb[item.operacao_compra_relacionada().id].quantidade * item.quantidade / item.operacao_compra_relacionada().quantidade
+                    cdb_rdb[operacao_relacionada_id].quantidade -= cdb_rdb[operacao_relacionada_id].quantidade \
+                        * item.quantidade / cdb_rdb[operacao_relacionada_id].qtd_inicial
+                    cdb_rdb[operacao_relacionada_id].qtd_inicial -= item.quantidade
                     
         elif isinstance(item, OperacaoCRI_CRA):
             if item.cri_cra not in cri_cra.keys():
@@ -781,9 +798,12 @@ def detalhamento_investimentos(request):
                 taxas_dos_dias = {}
                 for taxa in taxas:
                     taxas_dos_dias[taxa['taxa']] = taxa['qtd_dias']
-                for operacao_id, operacao in letras_cambio.items():
+                for operacao in letras_cambio.values():
                     if operacao.data < item.data:
-                        operacao.quantidade = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, OperacaoLetraCambio.objects.get(id=operacao_id).porcentagem_di())
+#                         operacao.quantidade = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, operacao.taxa)
+                        operacao.quantidade = calcular_valor_atualizado_operacao_ate_dia_lc(operacao.quantidade, 
+                                                                     ultima_data_calculada_lc, dia_anterior, operacao, 
+                                                                     operacao.qtd_inicial)
                 # Guardar ultima data de calculo
                 ultima_data_calculada_lc = item.data
             for letra_cambio in letras_cambio.values():
@@ -804,9 +824,9 @@ def detalhamento_investimentos(request):
                 taxas_dos_dias = {}
                 for taxa in taxas:
                     taxas_dos_dias[taxa['taxa']] = taxa['qtd_dias']
-                for operacao_id, operacao in letras_credito.items():
+                for operacao in letras_credito.values():
                     if operacao.data < item.data:
-                        operacao.quantidade = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, OperacaoLetraCredito.objects.get(id=operacao_id).porcentagem_di())
+                        operacao.quantidade = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, operacao.taxa)
                 # Guardar ultima data de calculo
                 ultima_data_calculada_lci_lca = item.data
             for letra_credito in letras_credito.values():
@@ -827,9 +847,11 @@ def detalhamento_investimentos(request):
                 taxas_dos_dias = {}
                 for taxa in taxas:
                     taxas_dos_dias[taxa['taxa']] = taxa['qtd_dias']
-                for operacao_id, operacao in cdb_rdb.items():
+                for operacao in cdb_rdb.values():
                     if operacao.data < item.data:
-                        operacao.quantidade = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, OperacaoCDB_RDB.objects.get(id=operacao_id).porcentagem())
+                        operacao.quantidade = calcular_valor_atualizado_operacao_ate_dia_cdb_rdb(operacao.quantidade, 
+                                                                     ultima_data_calculada_cdb_rdb, dia_anterior, operacao, 
+                                                                     operacao.qtd_inicial)
                 # Guardar ultima data de calculo
                 ultima_data_calculada_cdb_rdb = item.data
             for investimento in cdb_rdb.values():
