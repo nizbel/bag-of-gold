@@ -108,7 +108,7 @@
 						<td>{{ item.tipo }}</td>
 						<td>{{ item.data|date:"d/m/Y" }}</td>
 						<td>R$ {{item.quantidade}}</td>
-						<td>{{ item.taxa }}%</td>
+						<td>{{ item.taxa }}% do DI</td>
 						<td>R$ {{item.atual|floatformat:2}}</td>
 					</tr>
 					{% endfor %}
