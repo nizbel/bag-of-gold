@@ -64,7 +64,7 @@ class RendimentoForm(LocalizedModelForm):
                               (ImpostoRendaRendimento.TIPO_PERC_ESPECIFICO, 'Percentual específico'))
     
     imposto_renda = forms.ChoiceField(choices=ESCOLHAS_IMPOSTO_RENDA)
-    percentual_imposto = forms.DecimalField(min_value=Decimal('0.01'), max_digits=4, decimal_places=2, required=False)
+    percentual_imposto = forms.DecimalField(min_value=Decimal('0.01'), max_digits=5, decimal_places=2, required=False)
     
     class Meta:
         model = Rendimento

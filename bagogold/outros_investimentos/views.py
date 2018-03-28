@@ -6,7 +6,7 @@ from bagogold.bagogold.models.divisoes import DivisaoInvestimento, Divisao
 from bagogold.outros_investimentos.forms import InvestimentoForm, RendimentoForm, \
     AmortizacaoForm, EncerramentoForm
 from bagogold.outros_investimentos.models import Investimento, InvestimentoTaxa, \
-    Rendimento, Amortizacao
+    Rendimento, Amortizacao, ImpostoRendaRendimento, ImpostoRendaValorEspecifico
 from bagogold.outros_investimentos.utils import \
     calcular_valor_outros_investimentos_ate_data
 from decimal import Decimal
@@ -570,9 +570,28 @@ def inserir_rendimento(request, investimento_id):
     if request.method == 'POST':
         form_rendimento = RendimentoForm(request.POST, initial={'investimento': investimento.id}, investimento=investimento, investidor=investidor)
         if form_rendimento.is_valid():
-            rendimento = form_rendimento.save()
-            messages.success(request, 'Histórico de porcentagem de rendimento para %s alterado com sucesso' % rendimento.investimento)
-            return HttpResponseRedirect(reverse('outros_investimentos:detalhar_investimento', kwargs={'id_investimento': investimento.id}))
+            try:
+                with transaction.atomic():
+                    rendimento = form_rendimento.save()
+                    # Verificar se deve criar registro de imposto de renda
+                    if form_rendimento.cleaned_data['imposto_renda'] != ImpostoRendaRendimento.TIPO_SEM_IMPOSTO:
+                        imposto_renda = ImpostoRendaRendimento(rendimento=rendimento, tipo=form_rendimento.cleaned_data['imposto_renda'])
+                        imposto_renda.save()
+                        
+                        # Verificar se é percentual específico
+                        if imposto_renda.tipo == ImpostoRendaRendimento.TIPO_PERC_ESPECIFICO:
+                            percentual = ImpostoRendaValorEspecifico(imposto=imposto_renda, percentual=form_rendimento.cleaned_data['percentual_imposto'])
+                            percentual.save()
+                            
+                    
+                    messages.success(request, 'Histórico de porcentagem de rendimento para %s alterado com sucesso' % rendimento.investimento)
+                    return HttpResponseRedirect(reverse('outros_investimentos:detalhar_investimento', kwargs={'id_investimento': investimento.id}))
+            except:
+                messages.error(request, 'Houve um erro ao inserir o rendimento')
+                if settings.ENV == 'DEV':
+                    print traceback.format_exc()
+                elif settings.ENV == 'PROD':
+                    mail_admins(u'Erro ao gerar rendimento para outros investimento', traceback.format_exc().decode('utf-8'))
         
         for erro in [erro for erro in form_rendimento.non_field_errors()]:
             messages.error(request, erro)
