@@ -43,14 +43,6 @@ class OperacaoLetraCreditoForm(LocalizedModelForm):
         # there's a `fields` property now
         self.fields['letra_credito'].required = False
         self.fields['letra_credito'].queryset = LetraCredito.objects.filter(investidor=self.investidor)
-#         self.fields['operacao_compra'].queryset = OperacaoLetraCredito.objects.filter(investidor=self.investidor, tipo_operacao='C')
-#         # Remover operações que já tenham sido totalmente vendidas e a própria operação
-#         operacoes_compra_invalidas = [operacao_compra_invalida.id for operacao_compra_invalida in self.fields['operacao_compra'].queryset if operacao_compra_invalida.qtd_disponivel_venda() <= 0] + \
-#             ([self.instance.id] if self.instance.id != None else [])
-#         # Manter operação de compra atual, caso seja edição de venda
-#         if self.instance.operacao_compra_relacionada():
-#             operacoes_compra_invalidas.remove(self.instance.operacao_compra_relacionada().id)
-#         self.fields['operacao_compra'].queryset = self.fields['operacao_compra'].queryset.exclude(id__in=operacoes_compra_invalidas)
         # Manter operação de compra atual, caso seja edição de venda
         if self.instance.operacao_compra_relacionada():
             query_operacao_compra = OperacaoLetraCredito.objects.filter(investidor=self.investidor, tipo_operacao='C').annotate( \
