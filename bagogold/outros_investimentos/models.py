@@ -44,8 +44,14 @@ class Rendimento (models.Model):
     
     def valor_liquido(self):
         if hasattr(self, 'impostorendarendimento'):
-            return self.valor * (1 - self.impostorendarendimento.percentual_ir((self.data - self.investimento.data).days))
+            return self.valor * (1 - self.impostorendarendimento.percentual_calculo())
         return self.valor
+    
+    def valor_imposto(self):
+        if hasattr(self, 'impostorendarendimento'):
+            return self.valor * self.impostorendarendimento.percentual_calculo()
+        return 0
+        
     
 class PeriodoRendimentos (models.Model):
     investimento = models.ForeignKey('Investimento')
@@ -75,8 +81,23 @@ class ImpostoRendaRendimento (models.Model):
     rendimento = models.OneToOneField('Rendimento')
     tipo = models.CharField(u'Tipo de cálculo', max_length=1, choices=TIPOS_IMPOSTO_RENDA)
     
-    def percentual_ir(self, qtd_dias):
+    def percentual(self):
         if self.tipo == self.TIPO_LONGO_PRAZO:
+            qtd_dias = (self.rendimento.data - self.rendimento.investimento.data).days
+            if qtd_dias <= 180:
+                return Decimal(22.5)
+            elif qtd_dias <= 360:
+                return Decimal(20)
+            elif qtd_dias <= 720:
+                return Decimal(17.5)
+            else: 
+                return Decimal(15)
+        elif self.tipo == self.TIPO_PERC_ESPECIFICO:
+            return self.impostorendavalorespecifico.percentual
+    
+    def percentual_calculo(self):
+        if self.tipo == self.TIPO_LONGO_PRAZO:
+            qtd_dias = (self.rendimento.data - self.rendimento.investimento.data).days
             if qtd_dias <= 180:
                 return Decimal(0.225)
             elif qtd_dias <= 360:
@@ -86,7 +107,7 @@ class ImpostoRendaRendimento (models.Model):
             else: 
                 return Decimal(0.15)
         elif self.tipo == self.TIPO_PERC_ESPECIFICO:
-            return self.impostorendavalorespecifico.percentual
+            return self.impostorendavalorespecifico.percentual / 100
     
 class ImpostoRendaValorEspecifico (models.Model):
     imposto = models.OneToOneField('ImpostoRendaRendimento')
