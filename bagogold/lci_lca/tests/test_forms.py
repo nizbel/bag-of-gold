@@ -15,7 +15,7 @@ class FormulariosCarenciaVencimentoTestCase(TestCase):
         user = User.objects.create(username='tester')
         
         # LCI
-        lci = LetraCredito.objects.create(nome='LCI Teste', investidor=user.investidor, tipo='C', tipo_rendimento=LetraCredito.LetraCredito_DI)
+        lci = LetraCredito.objects.create(nome='LCI Teste', investidor=user.investidor)
         carencia_inicial = HistoricoCarenciaLetraCredito.objects.create(letra_credito=lci, data=None, carencia=361)
         vencimento_inicial = HistoricoVencimentoLetraCredito.objects.create(letra_credito=lci, data=None, vencimento=400)
     

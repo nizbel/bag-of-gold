@@ -1,25 +1,26 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoLCFormSet
-from bagogold.lci_lca.forms import OperacaoLetraCreditoForm, \
-    HistoricoPorcentagemLetraCreditoForm, LetraCreditoForm, \
-    HistoricoCarenciaLetraCreditoForm
 from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoLC, Divisao
-from bagogold.lci_lca.models import OperacaoLetraCredito, \
-    HistoricoPorcentagemLetraCredito, LetraCredito, HistoricoCarenciaLetraCredito, \
-    OperacaoVendaLetraCredito
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 from bagogold.bagogold.models.td import HistoricoIPCA
+from bagogold.bagogold.utils.misc import calcular_iof_regressivo
+from bagogold.lci_lca.forms import OperacaoLetraCreditoForm, \
+    HistoricoPorcentagemLetraCreditoForm, LetraCreditoForm, \
+    HistoricoCarenciaLetraCreditoForm, HistoricoVencimentoLetraCreditoForm
+from bagogold.lci_lca.models import OperacaoLetraCredito, \
+    HistoricoPorcentagemLetraCredito, LetraCredito, HistoricoCarenciaLetraCredito, \
+    OperacaoVendaLetraCredito, HistoricoVencimentoLetraCredito
 from bagogold.lci_lca.utils import calcular_valor_atualizado_com_taxa_di, \
     calcular_valor_lci_lca_ate_dia, simulador_lci_lca, \
     calcular_valor_atualizado_com_taxas_di
-from bagogold.bagogold.utils.misc import calcular_iof_regressivo
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
+from django.db import transaction
 from django.db.models.aggregates import Count, Sum
 from django.db.models.expressions import F
 from django.db.models.functions import Coalesce
@@ -194,6 +195,56 @@ def editar_historico_porcentagem(request, historico_porcentagem_id):
                                                                          investidor=investidor)
             
     return TemplateResponse(request, 'lci_lca/editar_historico_porcentagem.html', {'form_historico_porcentagem': form_historico_porcentagem, 'inicial': inicial}) 
+
+@login_required
+@adiciona_titulo_descricao('Editar registro de carência', 'Alterar registro de porcentagem no histórico de uma Letra de Crédito')
+def editar_historico_vencimento(request, historico_vencimento_id):
+    investidor = request.user.investidor
+    historico_vencimento = get_object_or_404(HistoricoVencimentoLetraCredito, id=historico_vencimento_id)
+    
+    if historico_vencimento.letra_credito.investidor != investidor:
+        raise PermissionDenied
+    
+    if request.method == 'POST':
+        if request.POST.get("save"):
+            if historico_vencimento.data is None:
+                inicial = True
+                form_historico_vencimento = HistoricoVencimentoLetraCreditoForm(request.POST, instance=historico_vencimento, letra_credito=historico_vencimento.letra_credito, \
+                                                                       investidor=investidor, inicial=inicial)
+            else:
+                inicial = False
+                form_historico_vencimento = HistoricoVencimentoLetraCreditoForm(request.POST, instance=historico_vencimento, letra_credito=historico_vencimento.letra_credito, \
+                                                                       investidor=investidor)
+            if form_historico_vencimento.is_valid():
+                historico_vencimento.save()
+                messages.success(request, 'Histórico de vencimento editado com sucesso')
+                return HttpResponseRedirect(reverse('lci_lca:detalhar_lci_lca', kwargs={'lci_lca_id': historico_vencimento.letra_credito.id}))
+            
+            for erro in [erro for erro in form_historico_vencimento.non_field_errors()]:
+                messages.error(request, erro)
+                
+        elif request.POST.get("delete"):
+            if historico_vencimento.data is None:
+                messages.error(request, 'Valor inicial de vencimento não pode ser excluído')
+                return HttpResponseRedirect(reverse('lci_lca:detalhar_lci_lca', kwargs={'lci_lca_id': historico_vencimento.letra_credito.id}))
+            # Pegar investimento para o redirecionamento no caso de exclusão
+            inicial = False
+            lci_lca = historico_vencimento.letra_credito
+            historico_vencimento.delete()
+            messages.success(request, 'Histórico de vencimento excluído com sucesso')
+            return HttpResponseRedirect(reverse('lci_lca:detalhar_lci_lca', kwargs={'lci_lca_id': lci_lca.id}))
+ 
+    else:
+        if historico_vencimento.data is None:
+            inicial = True
+            form_historico_vencimento = HistoricoVencimentoLetraCreditoForm(instance=historico_vencimento, letra_credito=historico_vencimento.letra_credito, \
+                                                                   investidor=investidor, inicial=inicial)
+        else: 
+            inicial = False
+            form_historico_vencimento = HistoricoVencimentoLetraCreditoForm(instance=historico_vencimento, letra_credito=historico_vencimento.letra_credito, \
+                                                                   investidor=investidor)
+            
+    return TemplateResponse(request, 'lci_lca/editar_historico_carencia.html', {'form_historico_carencia': form_historico_vencimento, 'inicial': inicial}) 
 
 @login_required
 @adiciona_titulo_descricao('Editar Letra de Crédito', 'Alterar dados de uma Letra de Crédito')
@@ -467,6 +518,30 @@ def inserir_historico_porcentagem(request, lci_lca_id):
     return TemplateResponse(request, 'lci_lca/inserir_historico_porcentagem_lci_lca.html', {'form': form})
 
 @login_required
+@adiciona_titulo_descricao('Inserir registro de vencimento para uma Letra de Crédito', 'Inserir registro de alteração na vencimento ao histórico de '
+                                                                                     'uma Letra de Crédito')
+def inserir_historico_vencimento(request, lci_lca_id):
+    investidor = request.user.investidor
+    lci_lca = get_object_or_404(LetraCredito, id=lci_lca_id)
+    
+    if lci_lca.investidor != investidor:
+        raise PermissionDenied
+    
+    if request.method == 'POST':
+        form = HistoricoVencimentoLetraCreditoForm(request.POST, initial={'letra_credito': lci_lca.id}, letra_credito=lci_lca, investidor=investidor)
+        if form.is_valid():
+            historico = form.save()
+            messages.success(request, 'Histórico de vencimento para %s alterado com sucesso' % historico.letra_credito)
+            return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))
+        
+        for erro in [erro for erro in form.non_field_errors()]:
+            messages.error(request, erro)
+    else:
+        form = HistoricoVencimentoLetraCreditoForm(initial={'letra_credito': lci_lca.id}, letra_credito=lci_lca, investidor=investidor)
+            
+    return TemplateResponse(request, 'lci_lca/inserir_historico_vencimento_lci_lca.html', {'form': form})
+
+@login_required
 @adiciona_titulo_descricao('Inserir Letra de Crédito', 'Inserir Letra de Crédito às letras cadastradas pelo investidor')
 def inserir_lci_lca(request):
     investidor = request.user.investidor
@@ -476,12 +551,15 @@ def inserir_lci_lca(request):
                                             extra=1, can_delete=False, max_num=1, validate_max=True)
     CarenciaFormSet = inlineformset_factory(LetraCredito, HistoricoCarenciaLetraCredito, fields=('carencia',), form=LocalizedModelForm,
                                             extra=1, can_delete=False, max_num=1, validate_max=True, labels = {'carencia': 'Período de carência (em dias)',})
+    VencimentoFormSet = inlineformset_factory(LetraCredito, HistoricoVencimentoLetraCredito, fields=('vencimento',), form=LocalizedModelForm,
+                                            extra=1, can_delete=False, max_num=1, validate_max=True, labels = {'carencia': 'Período de vencimento (em dias)',})
     
     if request.method == 'POST':
         if request.POST.get("save"):
             form_lci_lca = LetraCreditoForm(request.POST)
             formset_porcentagem = PorcentagemFormSet(request.POST)
             formset_carencia = CarenciaFormSet(request.POST)
+            formset_vencimento = VencimentoFormSet(request.POST)
             if form_lci_lca.is_valid():
                 lci_lca = form_lci_lca.save(commit=False)
                 lci_lca.investidor = investidor
@@ -489,18 +567,22 @@ def inserir_lci_lca(request):
                 formset_porcentagem.forms[0].empty_permitted=False
                 formset_carencia = CarenciaFormSet(request.POST, instance=lci_lca)
                 formset_carencia.forms[0].empty_permitted=False
+                formset_vencimento = VencimentoFormSet(request.POST, instance=lci_lca)
+                formset_vencimento.forms[0].empty_permitted=False
                 
                 if formset_porcentagem.is_valid():
                     if formset_carencia.is_valid():
                         try:
-                            lci_lca.save()
-                            formset_porcentagem.save()
-                            formset_carencia.save()
+                            with transaction.atomic():
+                                lci_lca.save()
+                                formset_porcentagem.save()
+                                formset_carencia.save()
+                                formset_vencimento.save()
                         # Capturar erros oriundos da hora de salvar os objetos
                         except Exception as erro:
                             messages.error(request, erro.message)
                             return TemplateResponse(request, 'lci_lca/inserir_lci_lca.html', {'form_lci_lca': form_lci_lca, 'formset_porcentagem': formset_porcentagem,
-                                                                         'formset_carencia': formset_carencia})
+                                                                         'formset_carencia': formset_carencia, 'formset_vencimento': formset_vencimento})
                         return HttpResponseRedirect(reverse('lci_lca:listar_lci_lca'))
                     
             for erro in [erro for erro in form_lci_lca.non_field_errors()]:
@@ -509,13 +591,16 @@ def inserir_lci_lca(request):
                 messages.error(request, erro)
             for erro in formset_carencia.non_form_errors():
                 messages.error(request, erro)
+            for erro in formset_vencimento.non_form_errors():
+                messages.error(request, erro)
 
     else:
         form_lci_lca = LetraCreditoForm()
         formset_porcentagem = PorcentagemFormSet()
         formset_carencia = CarenciaFormSet()
+        formset_vencimento = VencimentoFormSet()
     return TemplateResponse(request, 'lci_lca/inserir_lci_lca.html', {'form_lci_lca': form_lci_lca, 'formset_porcentagem': formset_porcentagem,
-                                                              'formset_carencia': formset_carencia})
+                                                              'formset_carencia': formset_carencia, 'formset_vencimento': formset_vencimento})
 
 @login_required
 @adiciona_titulo_descricao('Inserir operações em Letras de Crédito', 'Inserir registro de operação de compra/venda em Letras de Crédito ao histórico')
