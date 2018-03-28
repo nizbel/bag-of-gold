@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.outros_investimentos.models import Investimento, Rendimento, \
-    Amortizacao
+    Amortizacao, ImpostoRendaRendimento
 from django import forms
 from django.forms import widgets
 import datetime
@@ -58,11 +58,18 @@ class AmortizacaoForm(LocalizedModelForm):
             raise forms.ValidationError('Já existe uma amortização para essa data')
 
 class RendimentoForm(LocalizedModelForm):
+    ESCOLHAS_IMPOSTO_RENDA = ((ImpostoRendaRendimento.TIPO_LONGO_PRAZO, 'Sem imposto'),
+                              (ImpostoRendaRendimento.TIPO_LONGO_PRAZO, 'Longo prazo'),
+                              (ImpostoRendaRendimento.TIPO_VALOR_ESPECIFICO, 'Percentual específico'))
+    
+    imposto_renda = forms.ChoiceField(choices=ESCOLHAS_IMPOSTO_RENDA)
+    
     class Meta:
         model = Rendimento
-        fields = ('investimento', 'valor', 'data')
+        fields = ('investimento', 'valor', 'data', 'imposto_renda')
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'})}
+        labels={'imposto_renda': u'Imposto de Renda'}
         
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
