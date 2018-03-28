@@ -63,7 +63,7 @@ class Amortizacao (models.Model):
 class ImpostoRendaRendimento (models.Model):
     TIPO_SEM_IMPOSTO = 'S'
     TIPO_LONGO_PRAZO = 'L'
-    TIPO_VALOR_ESPECIFICO = 'P'
+    TIPO_PERC_ESPECIFICO = 'P'
     
     rendimento = models.OneToOneField('Rendimento')
     tipo = models.CharField(u'Tipo de cálculo', max_length=1)
@@ -78,7 +78,7 @@ class ImpostoRendaRendimento (models.Model):
                 return Decimal(0.175)
             else: 
                 return Decimal(0.15)
-        elif self.tipo == self.TIPO_VALOR_ESPECIFICO:
+        elif self.tipo == self.TIPO_PERC_ESPECIFICO:
             return self.impostorendavalorespecifico.percentual
     
 class ImpostoRendaValorEspecifico (models.Model):

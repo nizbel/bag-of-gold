@@ -2,6 +2,7 @@
 from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.outros_investimentos.models import Investimento, Rendimento, \
     Amortizacao, ImpostoRendaRendimento
+from decimal import Decimal
 from django import forms
 from django.forms import widgets
 import datetime
@@ -58,18 +59,19 @@ class AmortizacaoForm(LocalizedModelForm):
             raise forms.ValidationError('Já existe uma amortização para essa data')
 
 class RendimentoForm(LocalizedModelForm):
-    ESCOLHAS_IMPOSTO_RENDA = ((ImpostoRendaRendimento.TIPO_LONGO_PRAZO, 'Sem imposto'),
+    ESCOLHAS_IMPOSTO_RENDA = ((ImpostoRendaRendimento.TIPO_SEM_IMPOSTO, 'Sem imposto'),
                               (ImpostoRendaRendimento.TIPO_LONGO_PRAZO, 'Longo prazo'),
-                              (ImpostoRendaRendimento.TIPO_VALOR_ESPECIFICO, 'Percentual específico'))
+                              (ImpostoRendaRendimento.TIPO_PERC_ESPECIFICO, 'Percentual específico'))
     
     imposto_renda = forms.ChoiceField(choices=ESCOLHAS_IMPOSTO_RENDA)
+    percentual_imposto = forms.DecimalField(min_value=Decimal('0.01'), max_digits=4, decimal_places=2, required=False)
     
     class Meta:
         model = Rendimento
         fields = ('investimento', 'valor', 'data', 'imposto_renda')
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'})}
-        labels={'imposto_renda': u'Imposto de Renda'}
+        labels={'imposto_renda': u'Imposto de Renda', 'percentual_imposto': u'Percentual do IR'}
         
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
@@ -77,7 +79,6 @@ class RendimentoForm(LocalizedModelForm):
         # first call parent's constructor
         super(RendimentoForm, self).__init__(*args, **kwargs)
         self.fields['investimento'].disabled = True
-        
         
     def clean_investimento(self):
         investimento = self.cleaned_data['investimento']
@@ -99,6 +100,14 @@ class RendimentoForm(LocalizedModelForm):
         if Rendimento.objects.filter(investimento=cleaned_data.get('investimento'), data=cleaned_data.get('data')).exists() \
             and Rendimento.objects.get(investimento=cleaned_data.get('investimento'), data=cleaned_data.get('data')).investimento.id != self.investimento.id:
             raise forms.ValidationError('Já existe um rendimento para essa data')
+        
+        # Garantir que percentual foi definido caso tenha sido escolhido IR com percentual específico
+        imposto_renda = cleaned_data.get('imposto_renda')
+        # Garantir que o percentual de imposto 
+        if imposto_renda == ImpostoRendaRendimento.TIPO_PERC_ESPECIFICO:
+            percentual_imposto = cleaned_data.get('percentual_imposto')
+            if percentual_imposto == None or 0:
+                raise forms.ValidationError('É necessário definir o percentual de imposto para o tipo de imposto de renda selecionado')
         
         
 class EncerramentoForm(LocalizedModelForm):
