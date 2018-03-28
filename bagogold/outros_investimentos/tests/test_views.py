@@ -2,7 +2,7 @@
 from bagogold.bagogold.models.divisoes import DivisaoInvestimento, Divisao
 from bagogold.bagogold.models.investidores import Investidor
 from bagogold.outros_investimentos.models import Investimento, Amortizacao, \
-    ImpostoRendaRendimento, Rendimento
+    ImpostoRendaRendimento, Rendimento, ImpostoRendaValorEspecifico
 from decimal import Decimal
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
