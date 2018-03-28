@@ -36,7 +36,7 @@ class FormulariosCarenciaVencimentoTestCase(TestCase):
         self.assertEqual(carencia.carencia, 365)
         
     def test_form_carencia_maior_que_vencimento_vigente(self):
-        """Testa formulário de carencia onde o vencimento vigente está maior do que o carencia inserida"""
+        """Testa formulário de carencia onde o vencimento vigente está menor do que a carencia inserida"""
         investidor = User.objects.get(username='tester').investidor
         lci = LetraCredito.objects.get(nome='LCI Teste')
         form_carencia = HistoricoCarenciaLetraCreditoForm({
@@ -47,7 +47,7 @@ class FormulariosCarenciaVencimentoTestCase(TestCase):
         self.assertFalse(form_carencia.is_valid())
 
     def test_form_carencia_maior_que_vencimento_periodo(self):
-        """Testa formulário de carencia onde o vencimento no período fica maior do que o carencia inserida"""
+        """Testa formulário de carencia onde o vencimento no período fica menor do que a carencia inserida"""
         investidor = User.objects.get(username='tester').investidor
         lci = LetraCredito.objects.get(nome='LCI Teste')
         HistoricoVencimentoLetraCredito.objects.create(letra_credito=lci, data=datetime.date(2017, 9, 12), vencimento=300)
