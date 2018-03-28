@@ -210,3 +210,100 @@ class HistoricoCarenciaLetraCreditoForm(LocalizedModelForm):
         if not self.inicial and cleaned_data.get('data') and HistoricoCarenciaLetraCredito.objects.filter(letra_credito=cleaned_data.get('letra_credito'), data=cleaned_data.get('data')).exists():
             raise forms.ValidationError('Já existe uma alteração de carência para essa data')
         return cleaned_data
+    
+class HistoricoVencimentoLetraCreditoForm(LocalizedModelForm):
+    
+    class Meta:
+        model = HistoricoVencimentoLetraCredito
+        fields = ('vencimento', 'data', 'letra_credito')
+        widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
+                                            'placeholder':'Selecione uma data'}),}
+        labels = {'vencimento': 'Período de vencimento',
+                  'letra_credito': 'LCI/LCA'}
+        
+    def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
+        try:
+            self.inicial = kwargs.pop('inicial')
+        except:
+            self.inicial = False
+        try:
+            self.letra_credito = kwargs.pop('letra_credito')
+        except:
+            self.letra_credito = None
+        super(HistoricoVencimentoLetraCreditoForm, self).__init__(*args, **kwargs)
+        if self.letra_credito:
+            self.fields['letra_credito'].disabled = True
+        if self.inicial:
+            self.fields['data'].disabled = True
+    
+    def clean_vencimento(self):
+        vencimento = self.cleaned_data['vencimento']
+        if vencimento <= 0:
+            raise forms.ValidationError('Período de vencimento deve ser de pelo menos 1 dia')
+        return vencimento
+    
+    def clean_letra_credito(self):
+        letra_credito = self.cleaned_data['letra_credito']
+        if letra_credito.investidor != self.investidor:
+            raise forms.ValidationError('LCI/LCA inválida')
+        if hasattr(self.instance, 'letra_credito') and letra_credito != self.instance.letra_credito:
+            raise forms.ValidationError('LCI/LCA não deve ser alterada')
+        return letra_credito
+    
+    def clean_data(self):
+        data = self.cleaned_data['data']
+        # Verifica se o registro é da data incial, e se foi feita alteração
+        if self.inicial and data:
+            raise forms.ValidationError('Data inicial não pode ser alterada')
+        elif not self.inicial and not data:
+            raise forms.ValidationError('Data é obrigatória')
+        return data
+    
+    def clean(self):
+        cleaned_data = super(HistoricoVencimentoLetraCreditoForm, self).clean()
+        cleaned_data.get('letra_credito')
+        # Testar se já existe algum histórico para o investimento na data
+        if not self.inicial and cleaned_data.get('data') and HistoricoVencimentoLetraCredito.objects.filter(letra_credito=cleaned_data.get('letra_credito'), data=cleaned_data.get('data')).exists():
+            raise forms.ValidationError('Já existe uma alteração de vencimento para essa data')
+        
+        # Testes para datas iniciais
+        if self.inicial:
+            # Verificar carência inicial e todas as carências até próxima alteração de vencimento
+            carencia_inicial = HistoricoCarenciaLetraCredito.objects.get(letra_credito=cleaned_data.get('letra_credito'), data__isnull=True).carencia
+            if carencia_inicial > cleaned_data.get('vencimento'):
+                raise forms.ValidationError('Carência inicial está maior do que período de vencimento inicial')
+            elif HistoricoVencimentoLetraCredito.objects.filter(letra_credito=cleaned_data.get('letra_credito'), data__isnull=False).exists():
+                # Verificar alterações de carência entre o vencimento inicial e a próxima alteração
+                proximo_vencimento = HistoricoVencimentoLetraCredito.objects.filter(letra_credito=cleaned_data.get('letra_credito'), data__isnull=False).order_by('data')[0]
+                for carencia_periodo in HistoricoCarenciaLetraCredito.objects.filter(letra_credito=cleaned_data.get('letra_credito'), data__lt=proximo_vencimento.data):
+                    if carencia_periodo.carencia > cleaned_data.get('vencimento'):
+                        raise forms.ValidationError('Carência vigente em %s está maior do que o período de vencimento' % (carencia_periodo.data.strftime('%d/%m/%Y')))
+            else:
+                # Verificar alterações de carência a partir da data dessa alteração de vencimento
+                for carencia_periodo in HistoricoCarenciaLetraCredito.objects.filter(letra_credito=cleaned_data.get('letra_credito')):
+                    if carencia_periodo.carencia > cleaned_data.get('vencimento'):
+                        raise forms.ValidationError('Carência vigente em %s está maior do que o período de vencimento' % (carencia_periodo.data.strftime('%d/%m/%Y')))
+            
+        # Testes para datas não iniciais
+        else:
+            # Verificar carência vigente, e alterações de carência ao longo do período que esse novo vencimento estiver vigente
+            carencia_vigente = cleaned_data.get('letra_credito').carencia_na_data(cleaned_data.get('data'))
+            if carencia_vigente > cleaned_data.get('vencimento'):
+                raise forms.ValidationError('Carência na data de início está maior do que o período de vencimento')
+            # Testar se período de vencimento será menor que algum período de carência vigente
+            if HistoricoVencimentoLetraCredito.objects.filter(letra_credito=cleaned_data.get('letra_credito'), data__gt=cleaned_data.get('data')).exists():
+                # Verificar alterações de carência entre a data dessa alteração de vencimento e a próxima
+                proximo_vencimento = HistoricoVencimentoLetraCredito.objects.filter(letra_credito=cleaned_data.get('letra_credito'), data__gt=cleaned_data.get('data')).order_by('data')[0]
+                for carencia_periodo in HistoricoCarenciaLetraCredito.objects.filter(letra_credito=cleaned_data.get('letra_credito'), data__range=[cleaned_data.get('data') + datetime.timedelta(days=1), 
+                                                                                                                   proximo_vencimento.data - datetime.timedelta(days=1)]):
+                    if carencia_periodo.carencia > cleaned_data.get('vencimento'):
+                        raise forms.ValidationError('Carência vigente em %s está maior do que o período de vencimento' % (carencia_periodo.data.strftime('%d/%m/%Y')))
+            else:
+                # Verificar alterações de carência a partir da data dessa alteração de vencimento
+                for carencia_periodo in HistoricoCarenciaLetraCredito.objects.filter(letra_credito=cleaned_data.get('letra_credito'), data__gt=cleaned_data.get('data')):
+                    if carencia_periodo.carencia > cleaned_data.get('vencimento'):
+                        raise forms.ValidationError('Carência vigente em %s está maior do que o período de vencimento' % (carencia_periodo.data.strftime('%d/%m/%Y')))
+        
+                
+        return cleaned_data
