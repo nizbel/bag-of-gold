@@ -249,25 +249,62 @@ def editar_rendimento(request, id_rendimento):
      
     if rendimento.investimento.investidor != investidor:
         raise PermissionDenied
-     
+    
     if request.method == 'POST':
         if request.POST.get("save"):
             form_rendimento = RendimentoForm(request.POST, instance=rendimento, investimento=rendimento.investimento, \
                                                                          investidor=investidor)
             if form_rendimento.is_valid():
-                rendimento.save(force_update=True)
-                messages.success(request, 'Rendimento editado com sucesso')
-                return HttpResponseRedirect(reverse('outros_investimentos:detalhar_investimento', kwargs={'id_investimento': rendimento.investimento.id}))
-                 
+                try:
+                    with transaction.atomic():
+                        rendimento.save(force_update=True)
+                        
+                        # Verificar se foi selecionado sem imposto
+                        if form_rendimento.cleaned_data['imposto_renda'] == ImpostoRendaRendimento.TIPO_SEM_IMPOSTO:
+                            if hasattr(rendimento, 'impostorendarendimento'):
+                                rendimento.impostorendarendimento.delete()
+                        else:
+                            if hasattr(rendimento, 'impostorendarendimento'):
+                                rendimento.impostorendarendimento.tipo = form_rendimento.cleaned_data['imposto_renda']
+                                rendimento.impostorendarendimento.save()
+                                imposto = rendimento.impostorendarendimento
+                            else:
+                                imposto = ImpostoRendaRendimento(rendimento=rendimento, tipo=form_rendimento.cleaned_data['imposto_renda'])
+                                imposto.save()
+                                
+                            # Verificar se é percentual específico
+                            if form_rendimento.cleaned_data['imposto_renda'] == ImpostoRendaRendimento.TIPO_PERC_ESPECIFICO:
+                                if ImpostoRendaValorEspecifico.objects.filter(imposto=imposto).exists():
+                                    valor_especifico = ImpostoRendaValorEspecifico.objects.get(imposto=imposto)
+                                    valor_especifico.percentual = form_rendimento.cleaned_data['percentual_imposto']
+                                    valor_especifico.save()
+                                else:
+                                    valor_especifico = ImpostoRendaValorEspecifico(imposto=imposto, percentual=form_rendimento.cleaned_data['percentual_imposto'])
+                                    valor_especifico.save()
+                            else:
+                                ImpostoRendaValorEspecifico.objects.filter(imposto=imposto).delete()
+                                    
+                                
+                        
+                        messages.success(request, 'Rendimento editado com sucesso')
+                        return HttpResponseRedirect(reverse('outros_investimentos:detalhar_investimento', kwargs={'id_investimento': rendimento.investimento.id}))
+                
+                except:
+                    messages.error(request, 'Houve um erro ao editar o rendimento')
+                    if settings.ENV == 'DEV':
+                        print traceback.format_exc()
+                    elif settings.ENV == 'PROD':
+                        mail_admins(u'Erro ao editar rendimento para outros investimento', traceback.format_exc().decode('utf-8'))
+                
             for erro in [erro for erro in form_rendimento.non_field_errors()]:
                 messages.error(request, erro)
-                 
+                
         elif request.POST.get("delete"):
             # Pegar investimento para o redirecionamento no caso de exclusão
-            investimento = rendimento.investimento
+            investimento_id = rendimento.investimento.id
             rendimento.delete()
             messages.success(request, 'Rendimento excluído com sucesso')
-            return HttpResponseRedirect(reverse('outros_investimentos:detalhar_investimento', kwargs={'id_investimento': investimento.id}))
+            return HttpResponseRedirect(reverse('outros_investimentos:detalhar_investimento', kwargs={'id_investimento': investimento_id}))
   
     else:
         form_rendimento = RendimentoForm(instance=rendimento, investimento=rendimento.investimento, investidor=investidor)
@@ -466,9 +503,9 @@ def historico(request):
 @login_required
 @adiciona_titulo_descricao('Inserir amortização para um investimento', 'Inserir registro de amortização '
                                                                     'ao histórico de um investimento')
-def inserir_amortizacao(request, investimento_id):
+def inserir_amortizacao(request, id_investimento):
     investidor = request.user.investidor
-    investimento = get_object_or_404(Investimento, id=investimento_id)
+    investimento = get_object_or_404(Investimento, id=id_investimento)
     
     if investimento.investidor != investidor:
         raise PermissionDenied
@@ -560,9 +597,9 @@ def inserir_investimento(request):
 @login_required
 @adiciona_titulo_descricao('Inserir rendimento para um investimento', 'Inserir registro de rendimento '
                                                                     'ao histórico de um investimento')
-def inserir_rendimento(request, investimento_id):
+def inserir_rendimento(request, id_investimento):
     investidor = request.user.investidor
-    investimento = get_object_or_404(Investimento, id=investimento_id)
+    investimento = get_object_or_404(Investimento, id=id_investimento)
     
     if investimento.investidor != investidor:
         raise PermissionDenied
@@ -583,7 +620,6 @@ def inserir_rendimento(request, investimento_id):
                             percentual = ImpostoRendaValorEspecifico(imposto=imposto_renda, percentual=form_rendimento.cleaned_data['percentual_imposto'])
                             percentual.save()
                             
-                    
                     messages.success(request, 'Histórico de porcentagem de rendimento para %s alterado com sucesso' % rendimento.investimento)
                     return HttpResponseRedirect(reverse('outros_investimentos:detalhar_investimento', kwargs={'id_investimento': investimento.id}))
             except:

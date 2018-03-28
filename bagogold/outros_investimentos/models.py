@@ -65,8 +65,15 @@ class ImpostoRendaRendimento (models.Model):
     TIPO_LONGO_PRAZO = 'L'
     TIPO_PERC_ESPECIFICO = 'P'
     
+    TIPO_SEM_IMPOSTO_DESCRICAO = u'Sem imposto'
+    TIPO_LONGO_PRAZO_DESCRICAO = u'Longo prazo'
+    TIPO_PERC_ESPECIFICO_DESCRICAO = u'Percentual específico'
+    
+    TIPOS_IMPOSTO_RENDA = ((TIPO_LONGO_PRAZO, TIPO_LONGO_PRAZO_DESCRICAO),
+                           (TIPO_PERC_ESPECIFICO, TIPO_PERC_ESPECIFICO_DESCRICAO))
+    
     rendimento = models.OneToOneField('Rendimento')
-    tipo = models.CharField(u'Tipo de cálculo', max_length=1)
+    tipo = models.CharField(u'Tipo de cálculo', max_length=1, choices=TIPOS_IMPOSTO_RENDA)
     
     def percentual_ir(self, qtd_dias):
         if self.tipo == self.TIPO_LONGO_PRAZO:
