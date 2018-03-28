@@ -550,9 +550,9 @@ def inserir_lci_lca(request):
     PorcentagemFormSet = inlineformset_factory(LetraCredito, HistoricoPorcentagemLetraCredito, fields=('porcentagem_di',), form=LocalizedModelForm,
                                             extra=1, can_delete=False, max_num=1, validate_max=True)
     CarenciaFormSet = inlineformset_factory(LetraCredito, HistoricoCarenciaLetraCredito, fields=('carencia',), form=LocalizedModelForm,
-                                            extra=1, can_delete=False, max_num=1, validate_max=True, labels = {'carencia': 'Período de carência (em dias)',})
+                                            extra=1, can_delete=False, max_num=1, validate_max=True, labels = {'carencia': 'Período de carência',})
     VencimentoFormSet = inlineformset_factory(LetraCredito, HistoricoVencimentoLetraCredito, fields=('vencimento',), form=LocalizedModelForm,
-                                            extra=1, can_delete=False, max_num=1, validate_max=True, labels = {'carencia': 'Período de vencimento (em dias)',})
+                                            extra=1, can_delete=False, max_num=1, validate_max=True, labels = {'vencimento': 'Período de vencimento',})
     
     if request.method == 'POST':
         if request.POST.get("save"):
@@ -572,18 +572,21 @@ def inserir_lci_lca(request):
                 
                 if formset_porcentagem.is_valid():
                     if formset_carencia.is_valid():
-                        try:
-                            with transaction.atomic():
-                                lci_lca.save()
-                                formset_porcentagem.save()
-                                formset_carencia.save()
-                                formset_vencimento.save()
-                        # Capturar erros oriundos da hora de salvar os objetos
-                        except Exception as erro:
-                            messages.error(request, erro.message)
-                            return TemplateResponse(request, 'lci_lca/inserir_lci_lca.html', {'form_lci_lca': form_lci_lca, 'formset_porcentagem': formset_porcentagem,
-                                                                         'formset_carencia': formset_carencia, 'formset_vencimento': formset_vencimento})
-                        return HttpResponseRedirect(reverse('lci_lca:listar_lci_lca'))
+                        if formset_vencimento.is_valid():
+                            try:
+                                if formset_vencimento.forms[0].cleaned_data['vencimento'] < formset_carencia.forms[0].cleaned_data['carencia']:
+                                    raise ValidationError('Período de carência não pode ser maior que período de vencimento')
+                                with transaction.atomic():
+                                    lci_lca.save()
+                                    formset_porcentagem.save()
+                                    formset_carencia.save()
+                                    formset_vencimento.save()
+                            # Capturar erros oriundos da hora de salvar os objetos
+                            except Exception as erro:
+                                messages.error(request, erro.message)
+                                return TemplateResponse(request, 'lci_lca/inserir_lci_lca.html', {'form_lci_lca': form_lci_lca, 'formset_porcentagem': formset_porcentagem,
+                                                                             'formset_carencia': formset_carencia, 'formset_vencimento': formset_vencimento})
+                            return HttpResponseRedirect(reverse('lci_lca:listar_lci_lca'))
                     
             for erro in [erro for erro in form_lci_lca.non_field_errors()]:
                 messages.error(request, erro.message)
