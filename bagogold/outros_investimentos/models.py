@@ -39,6 +39,9 @@ class Rendimento (models.Model):
     valor = models.DecimalField(u'Valor do rendimento', max_digits=9, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
     data = models.DateField(u'Data do rendimento')
     
+    def possui_imposto(self):
+        return hasattr(self, 'impostorendarendimento')
+    
     def valor_liquido(self):
         if hasattr(self, 'impostorendarendimento'):
             return self.valor * (1 - self.impostorendarendimento.percentual_ir((self.data - self.investimento.data).days))
@@ -58,6 +61,7 @@ class Amortizacao (models.Model):
     data = models.DateField(u'Data da amortização')
     
 class ImpostoRendaRendimento (models.Model):
+    TIPO_SEM_IMPOSTO = 'S'
     TIPO_LONGO_PRAZO = 'L'
     TIPO_VALOR_ESPECIFICO = 'P'
     

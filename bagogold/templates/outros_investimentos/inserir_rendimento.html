@@ -52,6 +52,25 @@
                         {% if form_rendimento.investimento.errors %} <span class="help-block"> {{ form_rendimento.investimento.errors.as_text }} </span> {% endif %}
                     </div>
                 </div>
+                <div class="form-group col-md-6 {% if form_rendimento.imposto_renda.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4"> {{ form_rendimento.imposto_renda.label}}: </label>
+                    <div class="col-md-8">
+                        <select class="selectpicker form-control" id="id_imposto_renda" name="imposto_renda">
+                        {% for key, value in form_rendimento.fields.imposto_renda.widget.choices %}<option value="{{ key }}" 
+                        {% if key == form_rendimento.imposto_renda.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                        </select>
+                        {% if form_rendimento.imposto_renda.errors %} <span class="help-block"> {{ form_rendimento.imposto_renda.errors.as_text }} </span> {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group col-md-6 {% if form_rendimento.valor.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4"> {{ form_rendimento.valor.label}}: </label>
+                    <div class="col-md-8">
+                        <input id="id_valor" type="text" value="{{form_rendimento.valor.value}}" name="valor" class="form-control">
+                        {% if form_rendimento.valor.errors %} <span class="help-block"> {{ form_rendimento.valor.errors.as_text }} </span> {% endif %}
+                    </div>
+                </div>
             </div>
             <div class="form-actions">
                 <div class="row">
@@ -92,6 +111,9 @@ $( document ).ready(function() {
         todayHighlight: true,
         language: 'pt-BR'
     });
+    
+    // Verificar se imposto de longo prazo foi selecionado
+    
 });
 </script>
 {% endblock %}
