@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao
 from bagogold.fii.models import UsoProventosOperacaoFII
-from bagogold.lci_lca.models import OperacaoLetraCredito
 from bagogold.bagogold.models.td import HistoricoIPCA, OperacaoTitulo
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
 from bagogold.fundo_investimento.utils import \
     calcular_valor_fundos_investimento_ate_dia
 from decimal import Decimal
 from django.db.models.aggregates import Sum
-from django.utils import timezone
 from urllib2 import Request, urlopen, URLError, HTTPError
 import datetime
 import json
@@ -125,6 +123,7 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDEFILO
     from bagogold.bagogold.utils.acoes import calcular_poupanca_prov_acao_ate_dia
     from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, calcular_valor_venda_cdb_rdb
     from bagogold.fii.utils import calcular_poupanca_prov_fii_ate_dia
+    from bagogold.lci_lca.models import OperacaoLetraCredito
     from bagogold.lci_lca.utils import calcular_valor_lci_lca_ate_dia, calcular_valor_venda_lci_lca
     from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia
     from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA

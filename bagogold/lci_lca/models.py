@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
 from django.db import models
 import datetime
 
@@ -45,6 +46,15 @@ class LetraCredito (models.Model):
         else:
             return HistoricoValorMinimoInvestimento.objects.get(data__isnull=True, letra_credito=self).valor_minimo
     
+    def vencimento_atual(self):
+        return self.vencimento_na_data(datetime.date.today())
+        
+    def vencimento_na_data(self, data):
+        if HistoricoVencimentoLetraCredito.objects.filter(data__isnull=False, data__lte=data, letra_credito=self).exists():
+            return HistoricoVencimentoLetraCredito.objects.filter(data__isnull=False, data__lte=data, letra_credito=self).order_by('-data')[0].vencimento
+        else:
+            return HistoricoVencimentoLetraCredito.objects.get(data__isnull=True, letra_credito=self).vencimento
+        
 class OperacaoLetraCredito (models.Model):
     quantidade = models.DecimalField(u'Quantidade investida/resgatada', max_digits=11, decimal_places=2)
     data = models.DateField(u'Data da operação')
@@ -70,6 +80,22 @@ class OperacaoLetraCredito (models.Model):
     def data_carencia(self):
         return self.data + datetime.timedelta(days=self.carencia())
     
+    def data_inicial(self):
+        if self.tipo_operacao == 'V':
+            return OperacaoVendaLetraCredito.objects.get(operacao_venda=self).operacao_compra.data
+        else:
+            return self.data
+    
+    def data_vencimento(self):
+        if self.tipo_operacao == 'C':
+            data_vencimento = self.data + datetime.timedelta(days=self.vencimento())
+        elif self.tipo_operacao == 'V':
+            data_vencimento = self.operacao_compra_relacionada().data + datetime.timedelta(days=self.vencimento())
+        # Verifica se é fim de semana ou feriado
+        while data_vencimento.weekday() > 4 or verificar_feriado_bovespa(data_vencimento):
+            data_vencimento += datetime.timedelta(days=1)
+        return data_vencimento
+        
     def operacao_compra_relacionada(self):
         if self.tipo_operacao == 'V':
             return OperacaoVendaLetraCredito.objects.get(operacao_venda=self).operacao_compra
@@ -99,6 +125,12 @@ class OperacaoLetraCredito (models.Model):
             qtd_vendida += venda.quantidade
         return self.quantidade - qtd_vendida
     
+    def vencimento(self):
+        if HistoricoVencimentoLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito).exists():
+            return HistoricoVencimentoLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito).order_by('-data')[0].vencimento
+        else:
+            return HistoricoVencimentoLetraCredito.objects.get(data__isnull=True, letra_credito=self.letra_credito).vencimento
+        
     def venda_permitida(self, data_venda=datetime.date.today()):
         if self.tipo_operacao == 'C':
             if HistoricoCarenciaLetraCredito.objects.filter(letra_credito=self.letra_credito, data__lte=data_venda).exclude(data=None).exists():
@@ -135,12 +167,11 @@ class HistoricoValorMinimoInvestimento (models.Model):
     valor_minimo = models.DecimalField(u'Valor mínimo para investimento', max_digits=9, decimal_places=2)
     data = models.DateField(u'Data da variação', blank=True, null=True)
     letra_credito = models.ForeignKey('LetraCredito')
-    
-#     def save(self, *args, **kw):
-#         try:
-#             historico = HistoricoValorMinimoInvestimento.objects.get(letra_credito=self.letra_credito, data=self.data)
-#         except HistoricoValorMinimoInvestimento.DoesNotExist:
-#             if self.valor_minimo < 0:
-#                 raise forms.ValidationError('Valor mínimo não pode ser negativo')
-#             super(HistoricoValorMinimoInvestimento, self).save(*args, **kw)
-    
+
+class HistoricoVencimentoLetraCredito (models.Model):
+    """
+    O período de vencimento é medido em dias
+    """
+    vencimento = models.IntegerField(u'Período de vencimento')
+    data = models.DateField(u'Data da variação', blank=True, null=True)
+    letra_credito = models.ForeignKey('LetraCredito')    
