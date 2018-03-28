@@ -188,7 +188,6 @@ def buscar_acoes_investidor_na_data(investidor, data=datetime.date.today(), dest
     return acoes_investidor
 
 def buscar_ultimas_operacoes(investidor, quantidade_operacoes):
-    from bagogold.cdb_rdb.models import OperacaoCDB_RDB
     """
     Busca as últimas operações feitas pelo investidor, ordenadas por data decrescente
     Parâmetros: Investidor
@@ -199,6 +198,7 @@ def buscar_ultimas_operacoes(investidor, quantidade_operacoes):
     operacoes_fii = OperacaoFII.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-data')[:quantidade_operacoes]
     operacoes_td = OperacaoTitulo.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-data')[:quantidade_operacoes]
     operacoes_acoes = OperacaoAcao.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-data')[:quantidade_operacoes]
+    operacoes_lc = OperacaoLetraCambio.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-data')[:quantidade_operacoes]
     operacoes_lci_lca = OperacaoLetraCredito.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-data')[:quantidade_operacoes]
     operacoes_cdb_rdb = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-data')[:quantidade_operacoes]
     operacoes_cri_cra = OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor).exclude(data__isnull=True).order_by('-data')[:quantidade_operacoes]
@@ -209,7 +209,7 @@ def buscar_ultimas_operacoes(investidor, quantidade_operacoes):
     
     lista_operacoes = sorted(chain(operacoes_fii, operacoes_td, operacoes_acoes, operacoes_lci_lca, operacoes_cdb_rdb, 
                                    operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento, operacoes_criptomoedas, 
-                                   outros_investimentos),
+                                   outros_investimentos, operacoes_lc),
                             key=attrgetter('data'), reverse=True)
     
     ultimas_operacoes = lista_operacoes[:min(quantidade_operacoes, len(lista_operacoes))]
