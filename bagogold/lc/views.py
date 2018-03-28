@@ -1,22 +1,24 @@
 # -*- coding: utf-8 -*-
 
+from bagogold import settings
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoLetraCambioFormSet
 from bagogold.bagogold.forms.utils import LocalizedModelForm
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoLetraCambio, Divisao
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoLetraCambio, \
+    Divisao
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 from bagogold.bagogold.models.td import HistoricoIPCA
-from bagogold.bagogold.utils.taxas_indexacao import calcular_valor_atualizado_com_taxa_di, \
-    calcular_valor_atualizado_com_taxas_di, \
-    calcular_valor_atualizado_com_taxa_prefixado
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo, \
     qtd_dias_uteis_no_periodo, calcular_iof_e_ir_longo_prazo
+from bagogold.bagogold.utils.taxas_indexacao import \
+    calcular_valor_atualizado_com_taxa_di, calcular_valor_atualizado_com_taxas_di, \
+    calcular_valor_atualizado_com_taxa_prefixado
 from bagogold.lc.forms import OperacaoLetraCambioForm, \
-    HistoricoPorcentagemLetraCambioForm, LetraCambioForm, HistoricoCarenciaLetraCambioForm, \
-    HistoricoVencimentoLetraCambioForm
-from bagogold.lc.models import OperacaoLetraCambio, HistoricoPorcentagemLetraCambio, \
-    LetraCambio, HistoricoCarenciaLetraCambio, OperacaoVendaLetraCambio, \
-    HistoricoVencimentoLetraCambio
+    HistoricoPorcentagemLetraCambioForm, LetraCambioForm, \
+    HistoricoCarenciaLetraCambioForm, HistoricoVencimentoLetraCambioForm
+from bagogold.lc.models import OperacaoLetraCambio, \
+    HistoricoPorcentagemLetraCambio, LetraCambio, HistoricoCarenciaLetraCambio, \
+    OperacaoVendaLetraCambio, HistoricoVencimentoLetraCambio
 from bagogold.lc.utils import calcular_valor_lc_ate_dia, \
     buscar_operacoes_vigentes_ate_data, calcular_valor_atualizado_operacao_ate_dia, \
     calcular_valor_operacao_lc_ate_dia, calcular_valor_venda_lc
@@ -24,6 +26,7 @@ from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.mail import mail_admins
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.db.models import Count
@@ -33,6 +36,7 @@ from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
 import calendar
 import datetime
+import traceback
 
 @login_required
 @adiciona_titulo_descricao('Detalhar Letra de Câmbio', 'Detalhar Letra de Câmbio, incluindo histórico de carência e '
@@ -317,60 +321,76 @@ def editar_operacao_lc(request, operacao_id):
         
         if request.POST.get("save"):
             if form_operacao_lc.is_valid():
-                operacao_compra = form_operacao_lc.cleaned_data['operacao_compra']
-                formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lc, operacao_compra=operacao_compra, investidor=investidor) if varias_divisoes else None
-                if varias_divisoes:
-                    if formset_divisao.is_valid():
-                        operacao_lc.save()
-                        if operacao_lc.tipo_operacao == 'V':
-                            if not OperacaoVendaLetraCambio.objects.filter(operacao_venda=operacao_lc):
-                                operacao_venda_lc = OperacaoVendaLetraCambio(operacao_compra=operacao_compra, operacao_venda=operacao_lc)
-                                operacao_venda_lc.save()
-                            else: 
-                                operacao_venda_lc = OperacaoVendaLetraCambio.objects.get(operacao_venda=operacao_lc)
-                                if operacao_venda_lc.operacao_compra != operacao_compra:
-                                    operacao_venda_lc.operacao_compra = operacao_compra
+                try:
+                    with transaction.atomic():
+                        operacao_compra = form_operacao_lc.cleaned_data['operacao_compra']
+                        formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lc, operacao_compra=operacao_compra, investidor=investidor) if varias_divisoes else None
+                        if varias_divisoes:
+                            if formset_divisao.is_valid():
+                                operacao_lc.save()
+                                if operacao_lc.tipo_operacao == 'V':
+                                    if not OperacaoVendaLetraCambio.objects.filter(operacao_venda=operacao_lc):
+                                        operacao_venda_lc = OperacaoVendaLetraCambio(operacao_compra=operacao_compra, operacao_venda=operacao_lc)
+                                        operacao_venda_lc.save()
+                                    else: 
+                                        operacao_venda_lc = OperacaoVendaLetraCambio.objects.get(operacao_venda=operacao_lc)
+                                        if operacao_venda_lc.operacao_compra != operacao_compra:
+                                            operacao_venda_lc.operacao_compra = operacao_compra
+                                            operacao_venda_lc.save()
+                                formset_divisao.save()
+                                messages.success(request, 'Operação editada com sucesso')
+                                return HttpResponseRedirect(reverse('lc:historico_lc'))
+                            for erro in formset_divisao.non_form_errors():
+                                messages.error(request, erro)
+                                
+                        else:
+                            operacao_lc.save()
+                            if operacao_lc.tipo_operacao == 'V':
+                                if not OperacaoVendaLetraCambio.objects.filter(operacao_venda=operacao_lc):
+                                    operacao_venda_lc = OperacaoVendaLetraCambio(operacao_compra=operacao_compra, operacao_venda=operacao_lc)
                                     operacao_venda_lc.save()
-                        formset_divisao.save()
-                        messages.success(request, 'Operação editada com sucesso')
-                        return HttpResponseRedirect(reverse('lc:historico_lc'))
-                    for erro in formset_divisao.non_form_errors():
-                        messages.error(request, erro)
-                        
-                else:
-                    operacao_lc.save()
-                    if operacao_lc.tipo_operacao == 'V':
-                        if not OperacaoVendaLetraCambio.objects.filter(operacao_venda=operacao_lc):
-                            operacao_venda_lc = OperacaoVendaLetraCambio(operacao_compra=operacao_compra, operacao_venda=operacao_lc)
-                            operacao_venda_lc.save()
-                        else: 
-                            operacao_venda_lc = OperacaoVendaLetraCambio.objects.get(operacao_venda=operacao_lc)
-                            if operacao_venda_lc.operacao_compra != operacao_compra:
-                                operacao_venda_lc.operacao_compra = operacao_compra
-                                operacao_venda_lc.save()
-                    divisao_operacao = DivisaoOperacaoLetraCambio.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_lc)
-                    divisao_operacao.quantidade = operacao_lc.quantidade
-                    divisao_operacao.save()
-                    messages.success(request, 'Operação editada com sucesso')
-                    return HttpResponseRedirect(reverse('lc:historico_lc'))
+                                else: 
+                                    operacao_venda_lc = OperacaoVendaLetraCambio.objects.get(operacao_venda=operacao_lc)
+                                    if operacao_venda_lc.operacao_compra != operacao_compra:
+                                        operacao_venda_lc.operacao_compra = operacao_compra
+                                        operacao_venda_lc.save()
+                            divisao_operacao = DivisaoOperacaoLetraCambio.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_lc)
+                            divisao_operacao.quantidade = operacao_lc.quantidade
+                            divisao_operacao.save()
+                            messages.success(request, 'Operação editada com sucesso')
+                            return HttpResponseRedirect(reverse('lc:historico_lc'))
+                except:
+                    messages.error(request, 'Houve um erro ao editar a operação')
+                    if settings.ENV == 'DEV':
+                        raise
+                    elif settings.ENV == 'PROD':
+                        mail_admins(u'Erro ao editar operação em LC', traceback.format_exc().decode('utf-8')) 
                 
             for erro in [erro for erro in form_operacao_lc.non_field_errors()]:
                 messages.error(request, erro)
 #                         print '%s %s'  % (divisao_lc.quantidade, divisao_lc.divisao)
                 
         elif request.POST.get("delete"):
-            # Testa se operação a excluir não é uma operação de compra com vendas já registradas
-            if not OperacaoVendaLetraCambio.objects.filter(operacao_compra=operacao_lc):
-                divisao_lc = DivisaoOperacaoLetraCambio.objects.filter(operacao=operacao_lc)
-                for divisao in divisao_lc:
-                    divisao.delete()
-                if operacao_lc.tipo_operacao == 'V':
-                    OperacaoVendaLetraCambio.objects.get(operacao_venda=operacao_lc).delete()
-                operacao_lc.delete()
-                messages.success(request, 'Operação excluída com sucesso')
-                return HttpResponseRedirect(reverse('lc:historico_lc'))
-            else:
-                messages.error(request, 'Não é possível excluir operação de compra que já tenha vendas registradas')
+            try:
+                with transaction.atomic():
+                    # Testa se operação a excluir não é uma operação de compra com vendas já registradas
+                    if not OperacaoVendaLetraCambio.objects.filter(operacao_compra=operacao_lc):
+                        divisao_lc = DivisaoOperacaoLetraCambio.objects.filter(operacao=operacao_lc)
+                        for divisao in divisao_lc:
+                            divisao.delete()
+                        if operacao_lc.tipo_operacao == 'V':
+                            OperacaoVendaLetraCambio.objects.get(operacao_venda=operacao_lc).delete()
+                        operacao_lc.delete()
+                        messages.success(request, 'Operação excluída com sucesso')
+                        return HttpResponseRedirect(reverse('lc:historico_lc'))
+                    else:
+                        messages.error(request, 'Não é possível excluir operação de compra que já tenha vendas registradas')
+            except:
+                messages.error(request, 'Houve um erro ao apagar a operação')
+                if settings.ENV == 'DEV':
+                    raise
+                elif settings.ENV == 'PROD':
+                    mail_admins(u'Erro ao editar apagar em LC', traceback.format_exc().decode('utf-8')) 
  
     else:
         form_operacao_lc = OperacaoLetraCambioForm(instance=operacao_lc, initial={'operacao_compra': operacao_lc.operacao_compra_relacionada(),}, \
@@ -650,69 +670,78 @@ def inserir_operacao_lc(request):
         form_operacao_lc = OperacaoLetraCambioForm(request.POST, investidor=investidor)
         formset_divisao_lc = DivisaoLetraCambioFormSet(request.POST, investidor=investidor) if varias_divisoes else None
         
-        # Validar Letra de Câmbio
-        if form_operacao_lc.is_valid():
-            operacao_lc = form_operacao_lc.save(commit=False)
-            operacao_lc.investidor = investidor
-            operacao_compra = form_operacao_lc.cleaned_data['operacao_compra']
-            formset_divisao_lc = DivisaoLetraCambioFormSet(request.POST, instance=operacao_lc, operacao_compra=operacao_compra, investidor=investidor) if varias_divisoes else None
-                
-            # Validar em caso de venda
-            if form_operacao_lc.cleaned_data['tipo_operacao'] == 'V':
-                operacao_compra = form_operacao_lc.cleaned_data['operacao_compra']
-                # Caso de venda total da letra de cambio
-                if form_operacao_lc.cleaned_data['quantidade'] == operacao_compra.quantidade:
-                    # Desconsiderar divisões inseridas, copiar da operação de compra
-                    operacao_lc.save()
-                    for divisao_lc in DivisaoOperacaoLetraCambio.objects.filter(operacao=operacao_compra):
-                        divisao_lc_venda = DivisaoOperacaoLetraCambio(quantidade=divisao_lc.quantidade, divisao=divisao_lc.divisao, \
-                                                             operacao=operacao_lc)
-                        divisao_lc_venda.save()
-                    operacao_venda_lc = OperacaoVendaLetraCambio(operacao_compra=operacao_compra, operacao_venda=operacao_lc)
-                    operacao_venda_lc.save()
-                    messages.success(request, 'Operação inserida com sucesso')
-                    return HttpResponseRedirect(reverse('lc:historico_lc'))
-                # Vendas parciais
-                else:
-                    # Verificar se varias divisões
-                    if varias_divisoes:
-                        if formset_divisao_lc.is_valid():
+        try:
+            with transaction.atomic():
+                # Validar Letra de Câmbio
+                if form_operacao_lc.is_valid():
+                    operacao_lc = form_operacao_lc.save(commit=False)
+                    operacao_lc.investidor = investidor
+                    operacao_compra = form_operacao_lc.cleaned_data['operacao_compra']
+                    formset_divisao_lc = DivisaoLetraCambioFormSet(request.POST, instance=operacao_lc, operacao_compra=operacao_compra, investidor=investidor) if varias_divisoes else None
+                        
+                    # Validar em caso de venda
+                    if form_operacao_lc.cleaned_data['tipo_operacao'] == 'V':
+                        operacao_compra = form_operacao_lc.cleaned_data['operacao_compra']
+                        # Caso de venda total da letra de cambio
+                        if form_operacao_lc.cleaned_data['quantidade'] == operacao_compra.quantidade:
+                            # Desconsiderar divisões inseridas, copiar da operação de compra
                             operacao_lc.save()
-                            formset_divisao_lc.save()
                             operacao_venda_lc = OperacaoVendaLetraCambio(operacao_compra=operacao_compra, operacao_venda=operacao_lc)
                             operacao_venda_lc.save()
+                            for divisao_lc in DivisaoOperacaoLetraCambio.objects.filter(operacao=operacao_compra):
+                                divisao_lc_venda = DivisaoOperacaoLetraCambio(quantidade=divisao_lc.quantidade, divisao=divisao_lc.divisao, \
+                                                                     operacao=operacao_lc)
+                                divisao_lc_venda.save()
                             messages.success(request, 'Operação inserida com sucesso')
                             return HttpResponseRedirect(reverse('lc:historico_lc'))
-                        for erro in formset_divisao_lc.non_form_errors():
-                            messages.error(request, erro)
-                                
+                        # Vendas parciais
+                        else:
+                            # Verificar se varias divisões
+                            if varias_divisoes:
+                                if formset_divisao_lc.is_valid():
+                                    operacao_lc.save()
+                                    operacao_venda_lc = OperacaoVendaLetraCambio(operacao_compra=operacao_compra, operacao_venda=operacao_lc)
+                                    operacao_venda_lc.save()
+                                    formset_divisao_lc.save()
+                                    messages.success(request, 'Operação inserida com sucesso')
+                                    return HttpResponseRedirect(reverse('lc:historico_lc'))
+                                for erro in formset_divisao_lc.non_form_errors():
+                                    messages.error(request, erro)
+                                        
+                            else:
+                                operacao_lc.save()
+                                operacao_venda_lc = OperacaoVendaLetraCambio(operacao_compra=operacao_compra, operacao_venda=operacao_lc)
+                                operacao_venda_lc.save()
+                                divisao_operacao = DivisaoOperacaoLetraCambio(operacao=operacao_lc, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_lc.quantidade)
+                                divisao_operacao.save()
+                                messages.success(request, 'Operação inserida com sucesso')
+                                return HttpResponseRedirect(reverse('lc:historico_lc'))
+                    
+                    # Compra
                     else:
-                        operacao_lc.save()
-                        divisao_operacao = DivisaoOperacaoLetraCambio(operacao=operacao_lc, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_lc.quantidade)
-                        divisao_operacao.save()
-                        operacao_venda_lc = OperacaoVendaLetraCambio(operacao_compra=operacao_compra, operacao_venda=operacao_lc)
-                        operacao_venda_lc.save()
-                        messages.success(request, 'Operação inserida com sucesso')
-                        return HttpResponseRedirect(reverse('lc:historico_lc'))
-            
-            # Compra
-            else:
-                # Verificar se várias divisões
-                if varias_divisoes:
-                    if formset_divisao_lc.is_valid():
-                        operacao_lc.save()
-                        formset_divisao_lc.save()
-                        messages.success(request, 'Operação inserida com sucesso')
-                        return HttpResponseRedirect(reverse('lc:historico_lc'))
-                    for erro in formset_divisao_lc.non_form_errors():
-                        messages.error(request, erro)
-                                
-                else:
-                    operacao_lc.save()
-                    divisao_operacao = DivisaoOperacaoLetraCambio(operacao=operacao_lc, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_lc.quantidade)
-                    divisao_operacao.save()
-                    messages.success(request, 'Operação inserida com sucesso')
-                    return HttpResponseRedirect(reverse('lc:historico_lc'))
+                        # Verificar se várias divisões
+                        if varias_divisoes:
+                            if formset_divisao_lc.is_valid():
+                                operacao_lc.save()
+                                formset_divisao_lc.save()
+                                messages.success(request, 'Operação inserida com sucesso')
+                                return HttpResponseRedirect(reverse('lc:historico_lc'))
+                            for erro in formset_divisao_lc.non_form_errors():
+                                messages.error(request, erro)
+                                        
+                        else:
+                            operacao_lc.save()
+                            divisao_operacao = DivisaoOperacaoLetraCambio(operacao=operacao_lc, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_lc.quantidade)
+                            divisao_operacao.save()
+                            messages.success(request, 'Operação inserida com sucesso')
+                            return HttpResponseRedirect(reverse('lc:historico_lc'))
+                        
+        except:
+            messages.error(request, 'Houve um erro ao inserir a operação')
+            if settings.ENV == 'DEV':
+                raise
+            elif settings.ENV == 'PROD':
+                mail_admins(u'Erro ao inserir operação em LC', traceback.format_exc().decode('utf-8')) 
                     
         for erro in [erro for erro in form_operacao_lc.non_field_errors()]:
             messages.error(request, erro)
