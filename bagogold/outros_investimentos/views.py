@@ -49,9 +49,9 @@ def detalhar_investimento(request, id_investimento):
     investimento.total_amortizacoes = sum(investimento.amortizacao_set.filter(data__lte=datetime.date.today()).values_list('valor', flat=True))
     investimento.saldo_atual = investimento.quantidade - investimento.total_amortizacoes
     investimento.total_rendimentos = sum(investimento.rendimento_set.filter(data__lte=datetime.date.today()).values_list('valor', flat=True))
-#     cdb_rdb.total_ir = Decimal(0)
-#     cdb_rdb.total_iof = Decimal(0)
-    investimento.lucro = investimento.total_amortizacoes + investimento.total_rendimentos - investimento.total_investido
+    investimento.total_impostos = sum([rendimento.valor_imposto() for rendimento in historico_rendimentos.filter(data__lte=datetime.date.today())])
+
+    investimento.lucro = investimento.total_amortizacoes + investimento.total_rendimentos - investimento.total_investido - investimento.total_impostos
     investimento.lucro_percentual = investimento.lucro / 1 if investimento.total_investido == 0 else 100 * Decimal(investimento.lucro) / Decimal(investimento.total_investido)
     
 #     operacoes = OperacaoCDB_RDB.objects.filter(investimento=cdb_rdb).order_by('data')
@@ -307,9 +307,11 @@ def editar_rendimento(request, id_rendimento):
             return HttpResponseRedirect(reverse('outros_investimentos:detalhar_investimento', kwargs={'id_investimento': investimento_id}))
   
     else:
-        form_rendimento = RendimentoForm(instance=rendimento, investimento=rendimento.investimento, investidor=investidor)
-             
-    return TemplateResponse(request, 'outros_investimentos/editar_rendimento.html', {'form_rendimento': form_rendimento}) 
+        form_rendimento = RendimentoForm(instance=rendimento, investimento=rendimento.investimento, investidor=investidor,
+                                         initial={'percentual_imposto': (0 if not rendimento.possui_imposto() else rendimento.impostorendarendimento.percentual()), 
+                                                  'imposto_renda': ('S' if not rendimento.possui_imposto() else rendimento.impostorendarendimento.tipo)})
+    
+    return TemplateResponse(request, 'outros_investimentos/editar_rendimento.html', {'form_rendimento': form_rendimento, 'data_investimento': rendimento.investimento.data}) 
 
 @login_required
 @adiciona_titulo_descricao('Encerrar investimento', 'Alterar data de encerramento de um investimento')
@@ -634,7 +636,7 @@ def inserir_rendimento(request, id_investimento):
     else:
         form_rendimento = RendimentoForm(initial={'investimento': investimento.id}, investimento=investimento, investidor=investidor)
             
-    return TemplateResponse(request, 'outros_investimentos/inserir_rendimento.html', {'form_rendimento': form_rendimento})
+    return TemplateResponse(request, 'outros_investimentos/inserir_rendimento.html', {'form_rendimento': form_rendimento, 'data_investimento': investimento.data})
 
 @adiciona_titulo_descricao('Listar outros investimentos', 'Lista de investimentos cadastrados pelo investidor')
 def listar_investimentos(request):
