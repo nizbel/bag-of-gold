@@ -306,7 +306,13 @@ def detalhar_imposto_renda(request, ano):
             letras_credito[operacao.letra_credito.nome] += operacao.quantidade
         elif operacao.tipo_operacao == 'V':
             letras_credito[operacao.letra_credito.nome] -= operacao.quantidade
+            
     
+    ############################################################
+    ### Letras de Câmbio ######################################
+    ############################################################
+    
+    letras_cambio = {}
             
     ############################################################
     ### Tesouro Direto #########################################
