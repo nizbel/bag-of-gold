@@ -246,7 +246,7 @@ def editar_historico_vencimento(request, historico_vencimento_id):
             form_historico_vencimento = HistoricoVencimentoLetraCreditoForm(instance=historico_vencimento, letra_credito=historico_vencimento.letra_credito, \
                                                                    investidor=investidor)
             
-    return TemplateResponse(request, 'lci_lca/editar_historico_vencimento.html', {'form_historico_carencia': form_historico_vencimento, 'inicial': inicial}) 
+    return TemplateResponse(request, 'lci_lca/editar_historico_vencimento.html', {'form_historico_vencimento': form_historico_vencimento, 'inicial': inicial}) 
 
 @login_required
 @adiciona_titulo_descricao('Editar Letra de Crédito', 'Alterar dados de uma Letra de Crédito')
@@ -486,7 +486,7 @@ def inserir_historico_carencia(request, lci_lca_id):
         if form.is_valid():
             historico = form.save()
             messages.success(request, 'Histórico de carência para %s alterado com sucesso' % historico.letra_credito)
-            return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))
+            return HttpResponseRedirect(reverse('lci_lca:detalhar_lci_lca', kwargs={'lci_lca_id': lci_lca_id}))
         
         for erro in [erro for erro in form.non_field_errors()]:
             messages.error(request, erro)
@@ -510,7 +510,7 @@ def inserir_historico_porcentagem(request, lci_lca_id):
         if form.is_valid():
             historico = form.save()
             messages.success(request, 'Histórico de porcentagem de rendimento para %s alterado com sucesso' % historico.letra_credito)
-            return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))
+            return HttpResponseRedirect(reverse('lci_lca:detalhar_lci_lca', kwargs={'lci_lca_id': lci_lca_id}))
         
         for erro in [erro for erro in form.non_field_errors()]:
             messages.error(request, erro)
@@ -534,7 +534,7 @@ def inserir_historico_vencimento(request, lci_lca_id):
         if form.is_valid():
             historico = form.save()
             messages.success(request, 'Histórico de vencimento para %s alterado com sucesso' % historico.letra_credito)
-            return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))
+            return HttpResponseRedirect(reverse('lci_lca:detalhar_lci_lca', kwargs={'lci_lca_id': lci_lca_id}))
         
         for erro in [erro for erro in form.non_field_errors()]:
             messages.error(request, erro)
