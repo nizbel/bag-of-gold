@@ -18,6 +18,7 @@
 				<th>Nome</th>
 				<th>Carência atual</th>
 				<th>Rendimento atual (DI)</th>
+                <th>Vencimento atual</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -25,7 +26,8 @@
 		<tr>
 			<td><a href="{% url 'lci_lca:detalhar_lci_lca' lci_lca.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar Letra de Crédito">{{lci_lca.nome}}</a></td>
 			<td>{{lci_lca.carencia_atual}} dia(s)</td>
-			<td>{{lci_lca.rendimento_atual}}%</td>
+			<td>{{lci_lca.porcentagem_di_atual}}%</td>
+            <td>{{lci_lca.vencimento_atual}} dia(s)</td>
 		</tr>
 		{% endfor %}
 		</tbody>

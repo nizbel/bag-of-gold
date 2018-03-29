@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoCDB_RDB, \
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoCDB_RDB, \
     CheckpointDivisaoCDB_RDB
 from bagogold.cdb_rdb.models import HistoricoPorcentagemCDB_RDB
-from bagogold.cdb_rdb.utils import calcular_valor_operacao_cdb_rdb_ate_dia, \
-    calcular_valor_op_cdb_rdb_ate_dia_por_divisao
+from bagogold.cdb_rdb.utils import calcular_valor_op_cdb_rdb_ate_dia_por_divisao
 from django.db.models.signals import post_save, post_delete
 from django.dispatch.dispatcher import receiver
 import datetime

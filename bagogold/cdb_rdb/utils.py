@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoCDB_RDB,\
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoCDB_RDB, \
     CheckpointDivisaoCDB_RDB
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
-from bagogold.lci_lca.utils import calcular_valor_atualizado_com_taxas_di, \
-    calcular_valor_atualizado_com_taxa_prefixado
 from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo, \
     calcular_iof_e_ir_longo_prazo
+from bagogold.bagogold.utils.taxas_indexacao import \
+    calcular_valor_atualizado_com_taxas_di, \
+    calcular_valor_atualizado_com_taxa_prefixado
 from bagogold.cdb_rdb.models import OperacaoCDB_RDB, CDB_RDB, CheckpointCDB_RDB, \
     OperacaoVendaCDB_RDB
 from decimal import Decimal, ROUND_DOWN
@@ -173,30 +174,17 @@ def calcular_valor_cdb_rdb_ate_dia_por_divisao(dia, divisao_id):
         return {}
      
     # Buscar operações não totalmente vendidas
-    operacoes = OperacaoCDB_RDB.objects.filter(id__in=operacoes_cdb_rdb.keys()).order_by('data')
-      
-    # Calcular o valor atualizado do patrimonio
-    historico = HistoricoTaxaDI.objects.filter(data__range=[operacoes[0].data, dia])
-        
+    operacoes = DivisaoOperacaoCDB_RDB.objects.filter(operacao__id__in=operacoes_cdb_rdb.keys(), divisao__id=divisao_id).annotate(cdb_rdb=F('operacao__cdb_rdb')).order_by('operacao__data')
+    
     for operacao in operacoes:
-        if operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
-            # DI
-            taxas_dos_dias = dict(historico.filter(data__range=[operacao.data, dia]).values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
-            operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacoes_cdb_rdb[operacao.id], operacao.porcentagem())
-        elif operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
-            # Prefixado
-            operacao.atual = calcular_valor_atualizado_com_taxa_prefixado(operacoes_cdb_rdb[operacao.id], operacao.porcentagem(), qtd_dias_uteis_no_periodo(operacao.data, datetime.date.today()))
-                 
-        # Arredondar valores
-        str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
-        operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-             
+        operacao.atual = calcular_valor_op_cdb_rdb_ate_dia_por_divisao(operacao, dia, True)
+        
     cdb_rdb = {}
     
     # Preencher os valores nos CDB/RDB
     for investimento in list(set(operacoes.values_list('cdb_rdb', flat=True))):
-        cdb_rdb[investimento] = sum([operacao.atual for operacao in operacoes if operacao.cdb_rdb.id == investimento])
-        
+        cdb_rdb[investimento] = sum([operacao.atual for operacao in operacoes if operacao.cdb_rdb == investimento])
+
     return cdb_rdb
 
 def calcular_valor_um_cdb_rdb_ate_dia_por_divisao(cdb_rdb, divisao_id, dia=datetime.date.today()):

@@ -4,24 +4,22 @@ from bagogold.bagogold.models.acoes import OperacaoAcao, ValorDiarioAcao, \
 from bagogold.bagogold.models.debentures import HistoricoValorDebenture, \
     OperacaoDebenture
 from bagogold.bagogold.models.divisoes import CheckpointDivisaoFII, \
-    CheckpointDivisaoProventosFII, Divisao, CheckpointDivisaoCDB_RDB
-from bagogold.fii.models import OperacaoFII, ValorDiarioFII, \
-    HistoricoFII, FII, ProventoFII, CheckpointFII, CheckpointProventosFII
+    CheckpointDivisaoProventosFII, Divisao, CheckpointDivisaoCDB_RDB, \
+    CheckpointDivisaoLetraCambio
 from bagogold.bagogold.models.investidores import LoginIncorreto
-from bagogold.lci_lca.models import OperacaoLetraCredito
 from bagogold.bagogold.models.td import OperacaoTitulo, ValorDiarioTitulo, \
     HistoricoTitulo
-from bagogold.bagogold.signals.divisao_fii import gerar_checkpoint_divisao_fii,\
+from bagogold.bagogold.signals.divisao_cdb_rdb import \
+    gerar_checkpoint_divisao_cdb_rdb
+from bagogold.bagogold.signals.divisao_fii import gerar_checkpoint_divisao_fii, \
     gerar_checkpoint_divisao_proventos_fii
-from bagogold.fii.signals import gerar_checkpoint_fii,\
-    gerar_checkpoint_proventos_fii
+from bagogold.bagogold.signals.divisao_lc import gerar_checkpoint_divisao_lc
 from bagogold.bagogold.utils.acoes import quantidade_acoes_ate_dia, \
     calcular_poupanca_prov_acao_ate_dia
 from bagogold.bagogold.utils.debenture import calcular_qtd_debentures_ate_dia
-from bagogold.fii.utils import calcular_qtd_fiis_ate_dia_por_ticker, \
-    calcular_qtd_fiis_ate_dia, calcular_poupanca_prov_fii_ate_dia
-from bagogold.lci_lca.utils import calcular_valor_lci_lca_ate_dia
 from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia
+from bagogold.cdb_rdb.models import OperacaoCDB_RDB, CheckpointCDB_RDB
+from bagogold.cdb_rdb.signals import gerar_checkpoint_cdb_rdb
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia
 from bagogold.cri_cra.models.cri_cra import CRI_CRA, OperacaoCRI_CRA
 from bagogold.cri_cra.utils.utils import qtd_cri_cra_ate_dia
@@ -29,9 +27,20 @@ from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
 from bagogold.criptomoeda.models import Criptomoeda, OperacaoCriptomoeda, \
     ValorDiarioCriptomoeda
 from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia
+from bagogold.fii.models import OperacaoFII, ValorDiarioFII, HistoricoFII, FII, \
+    ProventoFII, CheckpointFII, CheckpointProventosFII
+from bagogold.fii.signals import gerar_checkpoint_fii, \
+    gerar_checkpoint_proventos_fii
+from bagogold.fii.utils import calcular_qtd_fiis_ate_dia_por_ticker, \
+    calcular_qtd_fiis_ate_dia, calcular_poupanca_prov_fii_ate_dia
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
 from bagogold.fundo_investimento.utils import \
     calcular_valor_fundos_investimento_ate_dia
+from bagogold.lc.models import OperacaoLetraCambio, CheckpointLetraCambio
+from bagogold.lc.signals import gerar_checkpoint_lc
+from bagogold.lc.utils import calcular_valor_lc_ate_dia
+from bagogold.lci_lca.models import OperacaoLetraCredito
+from bagogold.lci_lca.utils import calcular_valor_lci_lca_ate_dia
 from bagogold.outros_investimentos.models import Investimento
 from bagogold.outros_investimentos.utils import \
     calcular_valor_outros_investimentos_ate_data
@@ -42,9 +51,6 @@ from django.utils import timezone
 from itertools import chain
 from operator import attrgetter
 import datetime
-from bagogold.cdb_rdb.models import OperacaoCDB_RDB, CheckpointCDB_RDB
-from bagogold.cdb_rdb.signals import gerar_checkpoint_cdb_rdb
-from bagogold.bagogold.signals.divisao_cdb_rdb import gerar_checkpoint_divisao_cdb_rdb
 
 
 def is_superuser(user):
@@ -124,6 +130,38 @@ def atualizar_checkpoints(investidor):
             for checkpoint in CheckpointDivisaoCDB_RDB.objects.filter(divisao_operacao__operacao__investidor=investidor, ano=ano_mais_recente):
                 gerar_checkpoint_divisao_cdb_rdb(checkpoint.divisao_operacao, ano)
                 
+    # Letra de Câmbio
+    # Verificar se usuário possui operações em Letra de Câmbio
+    if OperacaoLetraCambio.objects.filter(investidor=investidor).exists():
+        # Buscar ano mais recente de checkpoints anterior ao ano atual
+        if CheckpointLetraCambio.objects.filter(operacao__investidor=investidor, ano__lt=datetime.date.today().year).exists():
+            ano_mais_recente = CheckpointLetraCambio.objects.filter(operacao__investidor=investidor, ano__lt=datetime.date.today().year).order_by('-ano')[0].ano
+        # Caso não haja checkpoint, buscar ano da primeira operação em letra de cambio
+        else:
+            ano_mais_recente = OperacaoLetraCambio.objects.filter(investidor=investidor).order_by('-data')[0].data.year
+            
+        # Gerar checkpoints a partir do ano seguinte a esse ano mais recente
+        for ano in xrange(ano_mais_recente, datetime.date.today().year+1):
+            # Para checkpoints no ano mais recente
+            for checkpoint in CheckpointLetraCambio.objects.filter(operacao__investidor=investidor, ano=ano_mais_recente):
+                gerar_checkpoint_lc(checkpoint.operacao, ano)
+        
+#             # Para compras feitas entre o ano mais recente e o atual
+#             for operacao in OperacaoLetraCambio.objects.filter(investidor=investidor, data__year__gte=ano_mais_recente)
+        
+        # Repetir o processo para divisões
+        if CheckpointDivisaoLetraCambio.objects.filter(divisao_operacao__divisao__investidor=investidor, ano__lt=datetime.date.today().year).exists():
+            ano_mais_recente = CheckpointDivisaoLetraCambio.objects.filter(divisao_operacao__divisao__investidor=investidor, ano__lt=datetime.date.today().year).order_by('-ano')[0].ano
+        # Caso não haja checkpoint, buscar ano da primeira operação em letra de cambio
+        else:
+            ano_mais_recente = OperacaoLetraCambio.objects.filter(investidor=investidor).order_by('-data')[0].data.year
+            
+        # Gerar checkpoints a partir do ano seguinte a esse ano mais recente
+        for ano in xrange(ano_mais_recente, datetime.date.today().year+1):
+            # Para checkpoints no ano mais recente
+            for checkpoint in CheckpointDivisaoLetraCambio.objects.filter(divisao_operacao__operacao__investidor=investidor, ano=ano_mais_recente):
+                gerar_checkpoint_divisao_lc(checkpoint.divisao_operacao, ano)
+                
 def buscar_acoes_investidor_na_data(investidor, data=datetime.date.today(), destinacao=''):
     """
     Busca as ações que o investidor possui na da especificada
@@ -150,7 +188,6 @@ def buscar_acoes_investidor_na_data(investidor, data=datetime.date.today(), dest
     return acoes_investidor
 
 def buscar_ultimas_operacoes(investidor, quantidade_operacoes):
-    from bagogold.cdb_rdb.models import OperacaoCDB_RDB
     """
     Busca as últimas operações feitas pelo investidor, ordenadas por data decrescente
     Parâmetros: Investidor
@@ -161,6 +198,7 @@ def buscar_ultimas_operacoes(investidor, quantidade_operacoes):
     operacoes_fii = OperacaoFII.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-data')[:quantidade_operacoes]
     operacoes_td = OperacaoTitulo.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-data')[:quantidade_operacoes]
     operacoes_acoes = OperacaoAcao.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-data')[:quantidade_operacoes]
+    operacoes_lc = OperacaoLetraCambio.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-data')[:quantidade_operacoes]
     operacoes_lci_lca = OperacaoLetraCredito.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-data')[:quantidade_operacoes]
     operacoes_cdb_rdb = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-data')[:quantidade_operacoes]
     operacoes_cri_cra = OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor).exclude(data__isnull=True).order_by('-data')[:quantidade_operacoes]
@@ -171,7 +209,7 @@ def buscar_ultimas_operacoes(investidor, quantidade_operacoes):
     
     lista_operacoes = sorted(chain(operacoes_fii, operacoes_td, operacoes_acoes, operacoes_lci_lca, operacoes_cdb_rdb, 
                                    operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento, operacoes_criptomoedas, 
-                                   outros_investimentos),
+                                   outros_investimentos, operacoes_lc),
                             key=attrgetter('data'), reverse=True)
     
     ultimas_operacoes = lista_operacoes[:min(quantidade_operacoes, len(lista_operacoes))]
@@ -191,6 +229,7 @@ def buscar_operacoes_no_periodo(investidor, data_inicial, data_final):
     operacoes_fii = OperacaoFII.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')
     operacoes_td = OperacaoTitulo.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')
     operacoes_acoes = OperacaoAcao.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')
+    operacoes_lc = OperacaoLetraCambio.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')  
     operacoes_lci_lca = OperacaoLetraCredito.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')  
     operacoes_cdb_rdb = OperacaoCDB_RDB.objects.filter(investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')  
     operacoes_cri_cra = OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, data__range=[data_inicial, data_final]).order_by('data')  
@@ -201,7 +240,7 @@ def buscar_operacoes_no_periodo(investidor, data_inicial, data_final):
     
     lista_operacoes = sorted(chain(operacoes_fii, operacoes_td, operacoes_acoes, operacoes_lci_lca, operacoes_cdb_rdb, 
                                    operacoes_cri_cra, operacoes_criptomoeda, operacoes_debentures, operacoes_fundo_investimento, 
-                                   outros_investimentos),
+                                   operacoes_lc, outros_investimentos),
                             key=attrgetter('data'))
     
     return lista_operacoes
@@ -214,8 +253,8 @@ def buscar_totais_atuais_investimentos(investidor, data_atual=datetime.date.toda
     Retorno: Totais atuais {investimento: total}
     """
     totais_atuais = {'Ações': Decimal(0), 'CDB/RDB': Decimal(0), 'CRI/CRA': Decimal(0), 'Criptomoedas': Decimal(0), 'Debêntures': Decimal(0), 
-                     'FII': Decimal(0), 'Fundos de Inv.': Decimal(0), 'Letras de Crédito': Decimal(0), 'Outros inv.': Decimal(0), 
-                     'Tesouro Direto': Decimal(0), }
+                     'FII': Decimal(0), 'Fundos de Inv.': Decimal(0), 'LCI/LCA': Decimal(0), 'Outros inv.': Decimal(0), 
+                     'Letras de Câmbio': Decimal(0),'Tesouro Direto': Decimal(0), }
     
     # Ações
     acoes_investidor = buscar_acoes_investidor_na_data(investidor)
@@ -271,9 +310,14 @@ def buscar_totais_atuais_investimentos(investidor, data_atual=datetime.date.toda
         totais_atuais['Fundos de Inv.'] += valor
             
     # Letras de crédito
+    letras_cambio = calcular_valor_lc_ate_dia(investidor, data_atual)
+    for total_lc in letras_cambio.values():
+        totais_atuais['Letras de Câmbio'] += total_lc
+            
+    # Letras de crédito
     letras_credito = calcular_valor_lci_lca_ate_dia(investidor, data_atual)
     for total_lci_lca in letras_credito.values():
-        totais_atuais['Letras de Crédito'] += total_lci_lca
+        totais_atuais['LCI/LCA'] += total_lci_lca
     
     # Outros investimentos
     outros_investimentos = calcular_valor_outros_investimentos_ate_data(investidor, data_atual)
@@ -283,9 +327,9 @@ def buscar_totais_atuais_investimentos(investidor, data_atual=datetime.date.toda
     # Tesouro Direto
     titulos = quantidade_titulos_ate_dia(investidor, data_atual)
     for titulo_id in titulos.keys():
-        try:
-            td_valor = ValorDiarioTitulo.objects.filter(titulo__id=titulo_id, data_hora__day=data_atual.day, data_hora__month=data_atual.month).order_by('-data_hora')[0].preco_venda
-        except:
+        if ValorDiarioTitulo.objects.filter(titulo__id=titulo_id, data_hora__date=data_atual).exists():
+            td_valor = ValorDiarioTitulo.objects.filter(titulo__id=titulo_id, data_hora__date=data_atual).order_by('-data_hora')[0].preco_venda
+        else:
             td_valor = HistoricoTitulo.objects.filter(titulo__id=titulo_id).order_by('-data')[0].preco_venda
         totais_atuais['Tesouro Direto'] += (titulos[titulo_id] * td_valor)
     

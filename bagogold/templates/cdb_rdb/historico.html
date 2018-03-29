@@ -96,7 +96,7 @@
 							<th>Tipo</th>
 							<th>Data</th>
 							<th>Qtde.</th>
-							<th>Taxa (% do DI)</th>
+							<th>Taxa</th>
 							<th>Valor atual</th>
 						</tr>
 					</thead>
@@ -107,7 +107,7 @@
 						<td>{{ item.tipo }}</td>
 						<td>{{ item.data|date:"d/m/Y" }}</td>
 						<td>R$ {{item.quantidade}}</td>
-						<td>{{ item.taxa }}%</td>
+						<td>{{ item.taxa }}%{% if item.cdb_rdb.eh_prefixado %} ao ano{% else %} do {{ item.cdb_rdb.indice }}{% endif %}</td>
 						<td>R$ {{item.atual|floatformat:2}}</td>
 					</tr>
 					{% endfor %}

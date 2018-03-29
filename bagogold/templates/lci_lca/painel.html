@@ -33,7 +33,7 @@
 		<tr>
 			<td>{{item.letra_credito.nome}}</td>
 			<td>{{ item.data|date:"d/m/Y" }}</td>
-			<td>{{ item.taxa }}%</td>
+			<td>{{ item.taxa }}% do DI</td>
 			<td>R${{item.atual|floatformat:2}}</td>
 			<td>{{ item.venda_permitida|yesno:"Sim,Não,Indefinido" }}</td>
 			<td>R${{item.ganho_prox_dia }}</td>

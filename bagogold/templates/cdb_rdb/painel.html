@@ -38,7 +38,7 @@
 		<tr>
 			<td>{{item.cdb_rdb.nome}}</td>
 			<td>{{ item.data|date:"d/m/Y" }}</td>
-			<td>{{ item.taxa }}%{% if item.cdb_rdb.eh_prefixado%} ao ano{% else %} do {{item.cdb_rdb.indice}}{% endif %}</td>
+			<td>{{ item.taxa }}%{% if item.cdb_rdb.eh_prefixado %} ao ano{% else %} do {{item.cdb_rdb.indice}}{% endif %}</td>
 			<td>R$ {{item.atual|floatformat:2}}</td>
 			<td>{{ item.venda_permitida|yesno:"Sim,Não,Indefinido" }}</td>
 			<td>R$ {{ item.imposto_renda|floatformat:2 }}</td>

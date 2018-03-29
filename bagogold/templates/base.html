@@ -312,7 +312,7 @@
                                         </li>
                                         <li aria-haspopup="true" class="menu-dropdown classic-menu-dropdown 
                                             {% if 'cdb_rdb' in request.resolver_match.namespace or 'cri_cra' in request.resolver_match.namespace or 'debentures' in request.resolver_match.namespace %}active{% endif %}
-                                            {% if 'lci_lca' in request.resolver_match.namespace or 'td' in request.resolver_match.namespace %}active{% endif %}">
+                                            {% if 'lci_lca' in request.resolver_match.namespace or 'td' in request.resolver_match.namespace or 'lc' in request.resolver_match.namespace %}active{% endif %}">
                                             <a href="javascript:;"> Renda fixa
                                                 <span class="arrow"></span>
                                             </a>
@@ -399,6 +399,36 @@
                                                         </li>
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'sobre_debenture' %}active{% endif %}">
                                                             <a href="{% url "debentures:sobre_debenture" %}" class="nav-link"> Sobre </a>
+                                                        </li>
+                                                    </ul>
+                                                </li>
+                                                <li aria-haspopup="true" class="dropdown-submenu {% if 'lc' in request.resolver_match.namespace %}active{% endif %}">
+                                                    <a href="javascript:;" class="nav-link nav-toggle ">
+                                                         Letras de Câmbio
+                                                        <span class="arrow"></span>
+                                                    </a>
+                                                    <ul class="dropdown-menu">
+                                                        <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'historico_lc' %}active{% endif %}">
+                                                            <a href="{% url "lc:historico_lc" %}" class="nav-link"> Histórico </a>
+                                                        </li>
+                                                        {% if request.user.is_authenticated %}
+                                                        <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_lc' %}active{% endif %}">
+                                                            <a href="{% url "lc:inserir_lc" %}" class="nav-link"> Inserir Letra de Câmbio </a>
+                                                        </li>
+                                                        {% endif %}
+                                                        {% if request.user.is_authenticated %}
+                                                        <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_lc' %}active{% endif %}">
+                                                            <a href="{% url "lc:inserir_operacao_lc" %}" class="nav-link"> Inserir operação </a>
+                                                        </li>
+                                                        {% endif %}
+                                                        <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_lc' %}active{% endif %}">
+                                                            <a href="{% url "lc:listar_lc" %}" class="nav-link"> Listar Letras de Câmbio </a>
+                                                        </li>
+                                                        <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_lc' %}active{% endif %}">
+                                                            <a href="{% url "lc:painel_lc" %}" class="nav-link"> Painel </a>
+                                                        </li>
+                                                        <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'sobre_lc' %}active{% endif %}">
+                                                            <a href="{% url "lc:sobre_lc" %}" class="nav-link"> Sobre </a>
                                                         </li>
                                                     </ul>
                                                 </li>
