@@ -153,7 +153,7 @@ class RendimentosTestCase(TestCase):
                                    data=data_atual - datetime.timedelta(days=20), tipo_operacao='C', fii=fii, emolumentos=Decimal(0))
         
         # CDB/RDB
-        cdb_rdb = CDB_RDB.objects.create(nome='CDB de teste', investidor=user.investidor, tipo='C', tipo_rendimento='2')
+        cdb_rdb = CDB_RDB.objects.create(nome='CDB de teste', investidor=user.investidor, tipo=CDB_RDB.CDB, tipo_rendimento=CDB_RDB.CDB_RDB_DI)
         HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cdb_rdb, porcentagem=Decimal(90))
         HistoricoVencimentoCDB_RDB.objects.create(cdb_rdb=cdb_rdb, vencimento=2000)
         operacao_cdb_rdb1 = OperacaoCDB_RDB.objects.create(investidor=user.investidor, cdb_rdb=cdb_rdb, data=data_atual + datetime.timedelta(days=1), tipo_operacao='C',
@@ -162,7 +162,7 @@ class RendimentosTestCase(TestCase):
                                            quantidade=Decimal(2000))
         
         # Gerar valores históricos
-        date_list = [data_atual - datetime.timedelta(days=x) for x in range(0, (data_atual - datetime.date(2016, 10, 1)).days+1)]
+        date_list = [data_atual - datetime.timedelta(days=x) for x in xrange(0, (data_atual - datetime.date(2016, 10, 1)).days+1)]
         date_list = [data for data in date_list if data.weekday() < 5 and not verificar_feriado_bovespa(data)]
         
         for data in date_list:
@@ -180,8 +180,6 @@ class RendimentosTestCase(TestCase):
         """Testa se método traz resultado 0 caso não haja investimentos"""
         investidor = User.objects.get(username='tester').investidor
         
-        import pdb;
-        pdb.set_trace()
         self.assertEqual(Decimal(0), sum(calcular_rendimentos_ate_data(investidor, datetime.date(2016, 1, 1)).values()))
         
     def test_deve_trazer_valor_apenas_de_cdb_rdb(self):
