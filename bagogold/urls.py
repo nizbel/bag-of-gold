@@ -21,6 +21,8 @@ urlpatterns = [
     url(r'^cri-cra/', include('bagogold.cri_cra.urls', namespace='cri_cra')),
     # App Criptomoedas
     url(r'^criptomoeda/', include('bagogold.criptomoeda.urls', namespace='criptomoeda')),
+    # App LC
+    url(r'^lc/', include('bagogold.lc.urls', namespace='lc')),
     # App FII
     url(r'^fii/', include('bagogold.fii.urls', namespace='fii')),
     # App Fundos de investimento

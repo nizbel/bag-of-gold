@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
-from bagogold.lci_lca.utils import calcular_valor_atualizado_com_taxas_di, \
-    calcular_valor_atualizado_com_taxa_prefixado, \
-    calcular_valor_atualizado_com_taxas_di_e_juros
 from bagogold.bagogold.utils.misc import verifica_se_dia_util
+from bagogold.bagogold.utils.taxas_indexacao import \
+    calcular_valor_atualizado_com_taxas_di, \
+    calcular_valor_atualizado_com_taxas_di_e_juros, \
+    calcular_valor_atualizado_com_taxa_prefixado
 from bagogold.cri_cra.models.cri_cra import CRI_CRA, DataRemuneracaoCRI_CRA
 from decimal import Decimal
 from django.db.models.aggregates import Count

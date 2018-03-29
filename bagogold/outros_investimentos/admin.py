@@ -1,17 +1,21 @@
 # -*- coding: utf-8 -*-
-# from bagogold.bagogold.models.fundo_investimento import FundoInvestimento, \
-#     OperacaoFundoInvestimento, HistoricoValorCotas, \
-#     HistoricoCarenciaFundoInvestimento, \
-#     HistoricoValorMinimoInvestimentoFundoInvestimento
-# from django.contrib import admin
+from bagogold.outros_investimentos.models import Investimento, InvestimentoTaxa, \
+    Rendimento, PeriodoRendimentos, Amortizacao, ImpostoRendaRendimento, \
+    ImpostoRendaValorEspecifico
+from django.contrib import admin
 
-# admin.site.register(FundoInvestimento)
-#     
-# admin.site.register(OperacaoFundoInvestimento)
-# 
-# admin.site.register(HistoricoValorCotas)
-# 
-# admin.site.register(HistoricoCarenciaFundoInvestimento)
-#             
-# admin.site.register(HistoricoValorMinimoInvestimentoFundoInvestimento)
+
+admin.site.register(Investimento)
+
+admin.site.register(InvestimentoTaxa)
+
+admin.site.register(Rendimento)
+
+admin.site.register(PeriodoRendimentos)
+
+admin.site.register(Amortizacao)
+
+admin.site.register(ImpostoRendaRendimento)
+    
+admin.site.register(ImpostoRendaValorEspecifico)
     

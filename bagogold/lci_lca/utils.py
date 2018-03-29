@@ -1,62 +1,15 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC
-from bagogold.lci_lca.models import OperacaoLetraCredito, \
-    HistoricoPorcentagemLetraCredito, OperacaoVendaLetraCredito
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoLCI_LCA
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo
+from bagogold.bagogold.utils.taxas_indexacao import \
+    calcular_valor_atualizado_com_taxas_di
+from bagogold.lci_lca.models import OperacaoLetraCredito, \
+    OperacaoVendaLetraCredito
 from decimal import Decimal, ROUND_DOWN
 from django.db.models import Q
 from django.db.models.aggregates import Sum, Count
 import datetime
-
-def calcular_valor_atualizado_com_taxa_di(taxa_do_dia, valor_atual, operacao_taxa):
-    """
-    Calcula o valor atualizado de uma operação vinculada ao DI, a partir da taxa DI do dia
-    Parâmetros: Taxa DI do dia
-                Valor atual da operação
-                Taxa da operação
-    Retorno: Valor atualizado com a taxa DI
-    """
-    return ((pow((Decimal(1) + taxa_do_dia/100), Decimal(1)/Decimal(252)) - Decimal(1)) * operacao_taxa/100 + Decimal(1)) * valor_atual
-
-def calcular_valor_atualizado_com_taxa_prefixado(valor_atual, operacao_taxa, qtd_dias=1):
-    """
-    Calcula o valor atualizado de uma operação em renda fixa prefixada, a partir da quantidade de dias do período
-    Parâmetros: Valor atual da operação
-                Taxa da operação
-                Quantidade de dias
-    Retorno: Valor atualizado com a taxa de um dia prefixado
-    """
-    return pow((Decimal(1) + operacao_taxa/100), Decimal(qtd_dias)/Decimal(252)) * valor_atual
-
-def calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor_atual, operacao_taxa):
-    """
-    Calcula o valor atualizado de uma operação vinculada ao DI, a partir das taxa DI dos dias
-    Parâmetros: Taxas DI dos dias {taxa(Decimal): quantidade_de_dias}
-                Valor atual da operação
-                Taxa da operação
-    Retorno: Valor atualizado com a taxa DI
-    """
-    taxa_acumulada = 1
-    for taxa_do_dia in taxas_dos_dias.keys():
-        taxa_acumulada *= pow(((pow((Decimal(1) + taxa_do_dia/100), Decimal(1)/Decimal(252)) - Decimal(1)) * operacao_taxa/100 + Decimal(1)), taxas_dos_dias[taxa_do_dia])
-    return taxa_acumulada * valor_atual
-
-def calcular_valor_atualizado_com_taxas_di_e_juros(taxas_dos_dias, valor_atual, operacao_taxa, juros):
-    """
-    Calcula o valor atualizado de uma operação vinculada ao DI, a partir das taxa DI dos dias
-    Parâmetros: Taxas DI dos dias {taxa(Decimal): quantidade_de_dias}
-                Valor atual da operação
-                Taxa da operação
-                Juros (percentual ao ano)
-    Retorno: Valor atualizado com a taxa DI
-    """
-    taxa_acumulada = 1
-    juros = Decimal(juros)
-    for taxa_do_dia in taxas_dos_dias.keys():
-        taxa_acumulada *= pow((((pow((Decimal(1) + taxa_do_dia/100), Decimal(1)/Decimal(252)) - Decimal(1)) * operacao_taxa/100 + Decimal(1)) * \
-                               pow((Decimal(1) + juros/100), Decimal(1)/Decimal(252))), taxas_dos_dias[taxa_do_dia])
-    return taxa_acumulada * valor_atual
 
 def calcular_valor_venda_lci_lca(operacao_venda):
     # Definir período do histórico relevante para a operação
@@ -116,16 +69,16 @@ def calcular_valor_lci_lca_ate_dia_por_divisao(dia, divisao_id):
                 ID da divisão
     Retorno: Valor de cada letra de crédito da divisão na data escolhida {id_letra: valor_na_data, }
     """
-    if not DivisaoOperacaoLC.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).exists():
+    if not DivisaoOperacaoLCI_LCA.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).exists():
         return {}
     
-    operacoes_divisao_id = DivisaoOperacaoLC.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).values('operacao__id')
+    operacoes_divisao_id = DivisaoOperacaoLCI_LCA.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).values('operacao__id')
     
     operacoes_queryset = OperacaoLetraCredito.objects.exclude(data__isnull=True).filter(id__in=operacoes_divisao_id).order_by('-tipo_operacao', 'data') 
     operacoes = list(operacoes_queryset)
     for operacao in operacoes:
         if operacao.tipo_operacao == 'C':
-            operacao.atual = DivisaoOperacaoLC.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade
+            operacao.atual = DivisaoOperacaoLCI_LCA.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade
             operacao.taxa = operacao.porcentagem_di()
     
     # Pegar data inicial
@@ -143,7 +96,7 @@ def calcular_valor_lci_lca_ate_dia_por_divisao(dia, divisao_id):
             operacao_compra_id = operacao.operacao_compra_relacionada().id
             for operacao_c in operacoes:
                 if (operacao_c.id == operacao_compra_id):
-                    operacao.atual = DivisaoOperacaoLC.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade
+                    operacao.atual = DivisaoOperacaoLCI_LCA.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade
                     operacao_c.atual -= operacao.atual
                     break
                 

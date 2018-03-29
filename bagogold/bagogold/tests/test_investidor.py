@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import OperacaoAcao, Acao, HistoricoAcao
-from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLC, \
+from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLCI_LCA, \
     DivisaoOperacaoFII, DivisaoOperacaoAcao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.investidores import Investidor
@@ -58,10 +58,10 @@ class TelaInicioTestCase(TestCase):
         lci_lca_porcentagem_di = HistoricoPorcentagemLetraCredito.objects.create(letra_credito=lci_lca, porcentagem_di=Decimal(90))
         operacao_lci_lca1 = OperacaoLetraCredito.objects.create(investidor=user.investidor, letra_credito=lci_lca, data=data_atual - datetime.timedelta(days=0), tipo_operacao='C',
                                             quantidade=Decimal(1000))
-        divisao_operacao_lci_lca1 = DivisaoOperacaoLC.objects.create(divisao=divisao1, operacao=operacao_lci_lca1, quantidade=operacao_lci_lca1.quantidade)
+        divisao_operacao_lci_lca1 = DivisaoOperacaoLCI_LCA.objects.create(divisao=divisao1, operacao=operacao_lci_lca1, quantidade=operacao_lci_lca1.quantidade)
         operacao_lci_lca2 = OperacaoLetraCredito.objects.create(investidor=user.investidor, letra_credito=lci_lca, data=data_atual - datetime.timedelta(days=1), tipo_operacao='C',
                                             quantidade=Decimal(2000))
-        divisao_operacao_lci_lca2 = DivisaoOperacaoLC.objects.create(divisao=divisao2, operacao=operacao_lci_lca2, quantidade=operacao_lci_lca2.quantidade)
+        divisao_operacao_lci_lca2 = DivisaoOperacaoLCI_LCA.objects.create(divisao=divisao2, operacao=operacao_lci_lca2, quantidade=operacao_lci_lca2.quantidade)
         
         # Gerar valores históricos
         date_list = [data_atual - datetime.timedelta(days=x) for x in range(0, (data_atual - datetime.date(2016, 1, 1)).days+1)]
@@ -118,7 +118,7 @@ class TelaInicioTestCase(TestCase):
         self.assertIn('CDB/RDB', valores_atuais.keys())
         self.assertIn('FII', valores_atuais.keys())
         self.assertIn('Fundos de Inv.', valores_atuais.keys())
-        self.assertIn('Letras de Crédito', valores_atuais.keys())
+        self.assertIn('LCI/LCA', valores_atuais.keys())
         self.assertIn('Tesouro Direto', valores_atuais.keys())
         
     def test_buscar_valores_atuais_deve_ter_valores_nao_zerados(self):
@@ -129,7 +129,7 @@ class TelaInicioTestCase(TestCase):
         
         self.assertNotEqual(valores_atuais['Ações'], Decimal(0))
         self.assertNotEqual(valores_atuais['FII'], Decimal(0))
-        self.assertNotEqual(valores_atuais['Letras de Crédito'], Decimal(0))  
+        self.assertNotEqual(valores_atuais['LCI/LCA'], Decimal(0))  
         
     def test_buscar_valores_atuais_deve_ter_valores_zerados(self):
         """Testar se traz 0 para os investimentos que o investidor não possui"""

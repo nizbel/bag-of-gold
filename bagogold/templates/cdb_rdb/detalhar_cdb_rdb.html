@@ -43,9 +43,9 @@
 						</div>
 						<div class="m-grid-row">
                             <div class="m-grid-col m-grid-col-left"><strong>Carência atual:</strong></div>
-                            <div class="m-grid-col m-grid-col-left">{{cdb_rdb.carencia_atual}} dia(s)</div>
+                            <div class="m-grid-col m-grid-col-left">{{cdb_rdb.carencia_atual}} dia{{cdb_rdb.carencia_atual|pluralize}}</div>
                             <div class="m-grid-col m-grid-col-left"><strong>Vencimento atual:</strong></div>
-                            <div class="m-grid-col m-grid-col-left">{{cdb_rdb.vencimento_atual}} dia(s)</div>
+                            <div class="m-grid-col m-grid-col-left">{{cdb_rdb.vencimento_atual}} dia{{cdb_rdb.vencimento_atual|pluralize}}</div>
 							<div class="m-grid-col m-grid-col-left"><strong>Total de operações:</strong></div>
 							<div class="m-grid-col m-grid-col-left">{{cdb_rdb.total_operacoes}}</div>
 						</div>
@@ -139,7 +139,7 @@
 					<thead>
 						<tr>
 							<th>Data</th>
-							<th>Carência (dias)</th>
+							<th>Carência</th>
 							<th><a href="{% url 'cdb_rdb:inserir_historico_carencia_cdb_rdb' cdb_rdb.id %}" class="btn btn-sm green-steel">Inserir</a></th>
 						</tr>
 					</thead>
@@ -147,7 +147,7 @@
 					{% for item in historico_carencia %}
 					<tr>
 						<td>{{item.data|date:'d/m/Y'|default:"Inicial"}}</td>
-						<td>{{item.carencia}} dia(s)</td>
+						<td>{{item.carencia}} dia{{item.carencia|pluralize}}</td>
 						<td><a href="{% url 'cdb_rdb:editar_historico_carencia' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
 					</tr>
 					{% endfor %}
@@ -172,7 +172,7 @@
                     <thead>
                         <tr>
                             <th>Data</th>
-                            <th>Vencimento (dias)</th>
+                            <th>Vencimento</th>
                             <th><a href="{% url 'cdb_rdb:inserir_historico_vencimento_cdb_rdb' cdb_rdb.id %}" class="btn btn-sm green-steel">Inserir</a></th>
                         </tr>
                     </thead>
@@ -180,7 +180,7 @@
                     {% for item in historico_vencimento %}
                     <tr>
                         <td>{{item.data|date:'d/m/Y'|default:"Inicial"}}</td>
-                        <td>{{item.vencimento}} dia(s)</td>
+                        <td>{{item.vencimento}} dia{{item.vencimento|pluralize}}</td>
                         <td><a href="{% url 'cdb_rdb:editar_historico_vencimento' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
                     </tr>
                     {% endfor %}
