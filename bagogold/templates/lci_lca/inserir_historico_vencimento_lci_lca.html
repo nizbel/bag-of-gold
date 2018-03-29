@@ -42,13 +42,13 @@
                 </div>
             </div>
             <div class="row">
-                <div class="form-group col-md-6 {% if form.lci_lca.errors %} has-error {% endif %}">
-                    <label class="control-label col-md-4"> {{form.lci_lca.label}}: </label>
+                <div class="form-group col-md-6 {% if form.letra_credito.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4"> {{form.letra_credito.label}}: </label>
                     <div class="col-md-8">
-                        <select class="selectpicker form-control" disabled id="id_lci_lca" name="lci_lca">
-                            {% for key, value in form.fields.lci_lca.widget.choices %}<option value="{{ key }}" {% if key == form.lci_lca.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                        <select class="selectpicker form-control" disabled id="id_letra_credito" name="letra_credito">
+                            {% for key, value in form.fields.letra_credito.widget.choices %}<option value="{{ key }}" {% if key == form.letra_credito.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
                         </select>
-                        {% if form.lci_lca.errors %} <span class="help-block"> {{ form.lci_lca.errors.as_text }} </span> {% endif %}
+                        {% if form.letra_credito.errors %} <span class="help-block"> {{ form.letra_credito.errors.as_text }} </span> {% endif %}
                     </div>
                 </div>
             </div>
