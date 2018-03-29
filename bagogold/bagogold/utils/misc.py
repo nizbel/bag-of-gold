@@ -109,16 +109,18 @@ def buscar_valores_diarios_selic(data_inicial=datetime.date.today() - datetime.t
     else:
         return list()
      
-def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDEFILORT'):
+def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='ABCDEFILORT'):
     """
     Calcula os rendimentos de operações até a data especificada, para os tipos de investimento definidos
     Parâmetros: Investidor
                 Data final (inclusive)
                 Tipo de investimento (seguindo o padrão
-    B = Buy and Hold; C = CDB/RDB; D = Tesouro Direto; E = Debêntures; F = FII; I = Fundo de investimento; L = Letra de Crédito;
+    A = Letras de Câmbio, B = Buy and Hold; C = CDB/RDB; D = Tesouro Direto; E = Debêntures; F = FII; I = Fundo de investimento; L = Letra de Crédito;
     O = Outros investimentos; R = CRI/CRA; T = Trading;)
     Retorno: Valores de rendimentos para cada tipo de investimento {Tipo: Valor}
     """
+    from bagogold.lc.models import OperacaoLetraCambio
+    from bagogold.lc.utils import calcular_valor_lc_ate_dia, calcular_valor_venda_lc
     from bagogold.cdb_rdb.models import OperacaoCDB_RDB
     from bagogold.bagogold.utils.acoes import calcular_poupanca_prov_acao_ate_dia
     from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, calcular_valor_venda_cdb_rdb
@@ -131,6 +133,13 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDEFILO
     from bagogold.outros_investimentos.models import Rendimento
     
     rendimentos = {}
+    
+    # Letras de Câmbio
+    if 'A' in tipo_investimentos:
+        rendimentos['A'] = sum(calcular_valor_lc_ate_dia(investidor, data).values()) \
+            - sum([operacao.quantidade for operacao in OperacaoLetraCambio.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='C')]) \
+            + sum([calcular_valor_venda_lc(operacao) for operacao in OperacaoLetraCambio.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='V')])
+            
     # Ações (Buy and Hold)
     if 'B' in tipo_investimentos:
         rendimentos['B'] = calcular_poupanca_prov_acao_ate_dia(investidor, data) + sum(UsoProventosOperacaoAcao.objects.filter(operacao__investidor=investidor, operacao__data__lte=data).values_list('qtd_utilizada', flat=True))

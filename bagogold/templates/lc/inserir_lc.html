@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block extra_head %}
+<link href={% static "assets/global/plugins/bootstrap-select/css/bootstrap-select.min.css" %} rel="stylesheet" type="text/css" />
+{% endblock %}
+
+{% block pagina_titulo_icone %}
+<i class="icon-plus font-yellow-crusta"></i>
+{% endblock %}
+
+{% block content %}
+<div class="portlet-body form">
+	<!-- BEGIN FORM-->
+	<form method="POST" class="horizontal-form">{% csrf_token %}
+		<div class="form-body">
+			<div class="row">
+				<div class="form-group col-md-6 {% if form_lc.nome.errors %} has-error {% endif %}">
+					<label class="control-label col-md-4" style="text-align: left;"> {{ form_lc.nome.label }}:</label>
+					<div class="col-md-8">
+						<input type="text" class="form-control" maxlength="50" name="nome" id="id_nome" value="{{form_lc.nome.value|default:''}}">
+						{% if form_lc.nome.errors %} <span class="help-block"> {{ form_lc.nome.errors.as_text }} </span> {% endif %}
+					</div>
+				</div>
+                <div class="form-group col-md-6 {% if form_lc.tipo_rendimento.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4" style="text-align: left;"> {{ form_lc.tipo_rendimento.label }}: </label>
+                    <div class="col-md-8">
+                        <select class="selectpicker form-control" id="id_tipo_rendimento" name="tipo_rendimento">
+                            {% for key, value in form_lc.fields.tipo_rendimento.widget.choices %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
+                        </select>
+                        {% if form_lc.tipo_rendimento.errors %} <span class="help-block"> {{ form_lc.tipo_rendimento.errors.as_text }} </span> {% endif %}
+                    </div>
+                </div>
+			</div>
+			<div class="row">
+				{{ formset_porcentagem.management_form }}
+				{% for form_porcentagem in formset_porcentagem %}
+				<div class="form-group col-md-6 {% if form_porcentagem.porcentagem.errors %} has-error {% endif %}">
+					<label class="control-label col-md-4"> {{ form_porcentagem.porcentagem.label }}: </label>
+					<div class="col-md-8">
+						<input id="id_historicoporcentagemletracambio_set-{{forloop.counter0}}-porcentagem" type="text" value="{{form_porcentagem.porcentagem.value}}" name="historicoporcentagemletracambio_set-{{forloop.counter0}}-porcentagem" class="form-control">
+						{% if form_porcentagem.porcentagem.errors %} <span class="help-block"> {{ form_porcentagem.porcentagem.errors.as_text }} </span> {% endif %}
+					</div>
+				</div>
+				{% endfor %}
+                {{ formset_carencia.management_form }}
+                {% for form_carencia in formset_carencia %}
+                    <div class="form-group col-md-6 {% if form_carencia.carencia.errors %} has-error {% endif %}">
+                        <label class="control-label col-md-4"> {{ form_carencia.carencia.label }}: </label>
+                        <div class="col-md-8">
+                            <input id="id_historicocarencialetracambio_set-{{forloop.counter0}}-carencia" type="text" value="{{form_carencia.carencia.value}}" name="historicocarencialetracambio_set-{{forloop.counter0}}-carencia" class="form-control">
+                            {% if form_carencia.carencia.errors %} <span class="help-block"> {{ form_carencia.carencia.errors.as_text }} </span> {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+			</div>
+			<div class="row">
+                {{ formset_vencimento.management_form }}
+                {% for form_vencimento in formset_vencimento %}
+                    <div class="form-group col-md-6 {% if form_vencimento.vencimento.errors %} has-error {% endif %}">
+                        <label class="control-label col-md-4"> {{ form_vencimento.vencimento.label }}: </label>
+                        <div class="col-md-8">
+                            <input id="id_historicovencimentoletracambio_set-{{forloop.counter0}}-vencimento" type="text" value="{{form_vencimento.vencimento.value}}" name="historicovencimentoletracambio_set-{{forloop.counter0}}-vencimento" class="form-control">
+                            {% if form_vencimento.vencimento.errors %} <span class="help-block"> {{ form_vencimento.vencimento.errors.as_text }} </span> {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+			<div class="form-actions">
+				<div class="row">
+					<div class="col-md-offset col-md-3">
+						<button type="submit" name="save" value="1" class="btn green-steel">Salvar</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+	<!-- END FORM-->
+</div>
+
+{% endblock %}
+    
+{% block extra_footer %}
+<script src={% static "assets/global/plugins/bootstrap-maxlength/bootstrap-maxlength.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/fuelux/js/spinner.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-touchspin/bootstrap.touchspin.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/jquery-validation/js/jquery.validate.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/jquery-validation/js/additional-methods.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-select/js/bootstrap-select.min.js" %} type="text/javascript"></script>
+{{ form_lc.media }}
+<script type="text/javascript">
+$(document).ready(function() {
+	var label = $("label[for='id_historicoporcentagemletracambio_set-0-porcentagem']");
+	label.text(label.text().replace(':', '') + ' (ao ano):');
+	
+	$('#id_tipo_rendimento').change( function() {
+		if (String($(this).val()) == '1') {
+			$("input[name='historicoporcentagemletracambio_set-0-porcentagem']").parent().find('.bootstrap-touchspin-postfix').text('% ao ano');
+		} else if (String($(this).val()) == '2') {
+            $("input[name='historicoporcentagemletracambio_set-0-porcentagem']").parent().find('.bootstrap-touchspin-postfix').text('% do CDI');
+		}
+	})
+	$("input[name='historicoporcentagemletracambio_set-0-porcentagem']").TouchSpin({
+		initval: 0.01,
+		min: 0.01,
+		max: 1000000000,
+		step: 0.01,
+		decimals: 2,
+		maxboostedstep: 100,
+		postfix: '% ao ano'
+	});
+	$("input[name='historicocarencialetracambio_set-0-carencia']").TouchSpin({
+		initval: 1,
+		min: 1,
+		max: 1000000000,
+		step: 1,
+		maxboostedstep: 100,
+		postfix: 'dias'
+	});
+	$("input[name='historicovencimentoletracambio_set-0-vencimento']").TouchSpin({
+        initval: 1,
+        min: 1,
+        max: 1000000000,
+        step: 1,
+        maxboostedstep: 100,
+        postfix: 'dias'
+    });
+	$("input[name='nome']").maxlength();
+});
+</script>
+{% endblock %}

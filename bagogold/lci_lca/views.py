@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
-from bagogold.bagogold.forms.divisoes import DivisaoOperacaoLCFormSet
+from bagogold.bagogold.forms.divisoes import DivisaoOperacaoLCI_LCAFormSet
 from bagogold.bagogold.forms.utils import LocalizedModelForm
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoLC, Divisao
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoLCI_LCA, Divisao
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 from bagogold.bagogold.models.td import HistoricoIPCA
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo
+from bagogold.bagogold.utils.taxas_indexacao import \
+    calcular_valor_atualizado_com_taxas_di, calcular_valor_atualizado_com_taxa_di
 from bagogold.lci_lca.forms import OperacaoLetraCreditoForm, \
     HistoricoPorcentagemLetraCreditoForm, LetraCreditoForm, \
     HistoricoCarenciaLetraCreditoForm, HistoricoVencimentoLetraCreditoForm
@@ -99,7 +101,7 @@ def detalhar_lci_lca(request, lci_lca_id):
                                                                        'historico_carencia': historico_carencia, 'historico_vencimento': historico_vencimento})
 
 @login_required
-@adiciona_titulo_descricao('Editar registro de carência', 'Alterar registro de porcentagem no histórico de uma Letra de Crédito')
+@adiciona_titulo_descricao('Editar registro de carência', 'Alterar registro de carência no histórico de uma Letra de Crédito')
 def editar_historico_carencia(request, historico_carencia_id):
     investidor = request.user.investidor
     historico_carencia = get_object_or_404(HistoricoCarenciaLetraCredito, id=historico_carencia_id)
@@ -199,7 +201,7 @@ def editar_historico_porcentagem(request, historico_porcentagem_id):
     return TemplateResponse(request, 'lci_lca/editar_historico_porcentagem.html', {'form_historico_porcentagem': form_historico_porcentagem, 'inicial': inicial}) 
 
 @login_required
-@adiciona_titulo_descricao('Editar registro de carência', 'Alterar registro de porcentagem no histórico de uma Letra de Crédito')
+@adiciona_titulo_descricao('Editar registro de vencimento', 'Alterar registro de vencimento no histórico de uma Letra de Crédito')
 def editar_historico_vencimento(request, historico_vencimento_id):
     investidor = request.user.investidor
     historico_vencimento = get_object_or_404(HistoricoVencimentoLetraCredito, id=historico_vencimento_id)
@@ -613,8 +615,8 @@ def inserir_operacao_lci_lca(request):
     investidor = request.user.investidor
     
     # Preparar formset para divisoes
-    DivisaoFormSet = inlineformset_factory(OperacaoLetraCredito, DivisaoOperacaoLC, fields=('divisao', 'quantidade'), can_delete=False,
-                                            extra=1, formset=DivisaoOperacaoLCFormSet)
+    DivisaoFormSet = inlineformset_factory(OperacaoLetraCredito, DivisaoOperacaoLCI_LCA, fields=('divisao', 'quantidade'), can_delete=False,
+                                            extra=1, formset=DivisaoOperacaoLCI_LCAFormSet)
     
     # Testa se investidor possui mais de uma divisão
     varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
@@ -683,7 +685,7 @@ def inserir_operacao_lci_lca(request):
                             
                     else:
                         operacao_lci_lca.save()
-                        divisao_operacao = DivisaoOperacaoLC(operacao=operacao_lci_lca, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_lci_lca.quantidade)
+                        divisao_operacao = DivisaoOperacaoLCI_LCA(operacao=operacao_lci_lca, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_lci_lca.quantidade)
                         divisao_operacao.save()
                         messages.success(request, 'Operação inserida com sucesso')
                         return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))

@@ -2,7 +2,7 @@
 from bagogold.bagogold.models.acoes import OperacaoAcao
 from bagogold.cdb_rdb.models import OperacaoCDB_RDB
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD, \
-    DivisaoPrincipal, DivisaoOperacaoLC, DivisaoOperacaoFII, DivisaoOperacaoAcao, \
+    DivisaoPrincipal, DivisaoOperacaoLCI_LCA, DivisaoOperacaoFII, DivisaoOperacaoAcao, \
     Divisao, DivisaoOperacaoFundoInvestimento, DivisaoOperacaoCDB_RDB
 from bagogold.fii.models import OperacaoFII
 from bagogold.lci_lca.models import OperacaoLetraCredito
@@ -37,8 +37,8 @@ def preencher_operacoes_div_principal(operacao):
         div_principal = DivisaoPrincipal.objects.get(investidor=operacao.investidor).divisao
     # Letra de Crédito
     elif isinstance(operacao, OperacaoLetraCredito):
-        modelo_operacao_div = apps.get_model('bagogold', 'DivisaoOperacaoLC')
-        divisoes_operacao = DivisaoOperacaoLC.objects.filter(operacao=operacao)
+        modelo_operacao_div = apps.get_model('bagogold', 'DivisaoOperacaoLCI_LCA')
+        divisoes_operacao = DivisaoOperacaoLCI_LCA.objects.filter(operacao=operacao)
         div_principal = DivisaoPrincipal.objects.get(investidor=operacao.investidor).divisao
     # TD
     else:
@@ -124,7 +124,7 @@ def verificar_operacoes_nao_alocadas(investidor):
     
     # Letra de Crédito
     for operacao in OperacaoLetraCredito.objects.filter(investidor=investidor):
-        divisoes_operacao = DivisaoOperacaoLC.objects.filter(operacao=operacao)
+        divisoes_operacao = DivisaoOperacaoLCI_LCA.objects.filter(operacao=operacao)
         quantidade_alocada = 0
         for divisao in divisoes_operacao:
             quantidade_alocada += divisao.quantidade

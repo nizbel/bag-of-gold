@@ -18,11 +18,14 @@ from bagogold.lci_lca.utils import calcular_valor_atualizado_com_taxas_di, \
     calcular_valor_lci_lca_ate_dia, calcular_valor_venda_lci_lca
 from bagogold.bagogold.utils.misc import calcular_rendimentos_ate_data, \
     verificar_feriado_bovespa, formatar_zeros_a_direita_apos_2_casas_decimais
+from bagogold.bagogold.utils.taxas_indexacao import \
+    calcular_valor_atualizado_com_taxas_di
 from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia
 from bagogold.blog.models import Post
 from bagogold.cdb_rdb.models import OperacaoCDB_RDB
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, \
-    calcular_valor_venda_cdb_rdb
+    calcular_valor_venda_cdb_rdb, calcular_valor_atualizado_operacao_ate_dia \
+    as calcular_valor_atualizado_operacao_ate_dia_cdb_rdb
 from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA, \
     DataRemuneracaoCRI_CRA, DataAmortizacaoCRI_CRA, CRI_CRA
 from bagogold.cri_cra.utils.utils import calcular_valor_cri_cra_ate_dia, \
@@ -34,7 +37,12 @@ from bagogold.fii.models import OperacaoFII, HistoricoFII, ProventoFII, \
     ValorDiarioFII
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
     HistoricoValorCotas
+from bagogold.lc.models import OperacaoLetraCambio
+from bagogold.lc.utils import calcular_valor_lc_ate_dia, calcular_valor_venda_lc, \
+    calcular_valor_atualizado_operacao_ate_dia as calcular_valor_atualizado_operacao_ate_dia_lc
 from bagogold.lci_lca.models import OperacaoLetraCredito
+from bagogold.lci_lca.utils import calcular_valor_lci_lca_ate_dia, \
+    calcular_valor_venda_lci_lca
 from bagogold.outros_investimentos.models import Rendimento, Amortizacao, \
     Investimento
 from decimal import Decimal, ROUND_DOWN
@@ -115,11 +123,26 @@ def calendario(request):
                             'start': provento.data_pagamento.strftime('%Y-%m-%d')} for provento in proventos_fiis])
         
         # Vencimento de CDB/RDB
-        vencimento_cdb_rdb = OperacaoCDB_RDB.objects.filter(investidor=investidor, data__lt=data_final, tipo_operacao='C')
+        operacoes_cdb_rdb = OperacaoCDB_RDB.objects.filter(investidor=investidor, data__lt=data_final, tipo_operacao='C')
+        # Buscar apenas operações com fim da carência no período especificado
+        carencia_cdb_rdb = [operacao for operacao in operacoes_cdb_rdb if operacao.data_carencia() >= data_inicial and operacao.data_carencia() <= data_final]
+        calendario.extend([{'title': u'Carência de operação de R$ %s em %s, feita em %s' % (operacao.quantidade, operacao.lc.nome, operacao.data.strftime('%d/%m/%Y')), 
+                            'start': operacao.data_carencia().strftime('%Y-%m-%d')} for operacao in carencia_cdb_rdb])
         # Buscar apenas operações que vencem no período especificado
-        vencimento_cdb_rdb = [operacao for operacao in vencimento_cdb_rdb if operacao.data_vencimento() >= data_inicial and operacao.data_vencimento() <= data_final]
+        vencimento_cdb_rdb = [operacao for operacao in operacoes_cdb_rdb if operacao.data_vencimento() >= data_inicial and operacao.data_vencimento() <= data_final]
         calendario.extend([{'title': u'Vencimento de operação de R$ %s em %s, feita em %s' % (operacao.quantidade, operacao.cdb_rdb.nome, operacao.data.strftime('%d/%m/%Y')), 
                             'start': operacao.data_vencimento().strftime('%Y-%m-%d')} for operacao in vencimento_cdb_rdb])
+        
+        # Carência e vencimento de Letras de Câmbio
+        operacoes_lc = OperacaoLetraCambio.objects.filter(investidor=investidor, data__lt=data_final, tipo_operacao='C')
+        # Buscar apenas operações com fim da carência no período especificado
+        carencia_lc = [operacao for operacao in operacoes_lc if operacao.data_carencia() >= data_inicial and operacao.data_carencia() <= data_final]
+        calendario.extend([{'title': u'Carência de operação de R$ %s em %s, feita em %s' % (operacao.quantidade, operacao.lc.nome, operacao.data.strftime('%d/%m/%Y')), 
+                            'start': operacao.data_carencia().strftime('%Y-%m-%d')} for operacao in carencia_lc])
+        # Buscar apenas operações que vencem no período especificado
+        vencimento_lc = [operacao for operacao in operacoes_lc if operacao.data_vencimento() >= data_inicial and operacao.data_vencimento() <= data_final]
+        calendario.extend([{'title': u'Vencimento de operação de R$ %s em %s, feita em %s' % (operacao.quantidade, operacao.lc.nome, operacao.data.strftime('%d/%m/%Y')), 
+                            'start': operacao.data_vencimento().strftime('%Y-%m-%d')} for operacao in vencimento_lc])
         
         # Carência de LCI/LCA
         carencia_lci_lca = OperacaoLetraCredito.objects.filter(investidor=investidor, data__lt=data_final, tipo_operacao='C')
@@ -276,6 +299,8 @@ def detalhar_acumulado_mensal(request):
     
     # Preparar nomes completos para cada investimento
     for acumulado_inv in acumulado:
+        if acumulado_inv.investimento == 'A':
+            acumulado_inv.investimento = 'Letras de Câmbio'
         if acumulado_inv.investimento == 'B':
             acumulado_inv.investimento = 'Buy and Hold'
         elif acumulado_inv.investimento == 'C':
@@ -334,11 +359,13 @@ def detalhamento_investimentos(request):
     # Adicionar operações de Trading do investidor
     operacoes_t = OperacaoAcao.objects.filter(investidor=investidor, destinacao='T').exclude(data__isnull=True).order_by('data')
     
+    operacoes_lc = OperacaoLetraCambio.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')
+    
     # Adicionar operações de LCI/LCA do investidor
     operacoes_lci_lca = OperacaoLetraCredito.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
 
     # Adicionar operações de CDB/RDB do investidor    
-    operacoes_cdb_rdb = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
+    operacoes_cdb_rdb = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data') 
     
     # Adicionar operações de CRI/CRA do investidor    
     operacoes_cri_cra = OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor).exclude(data__isnull=True).order_by('data') 
@@ -363,7 +390,7 @@ def detalhamento_investimentos(request):
     
     # Juntar todas as operações
     lista_operacoes = sorted(chain(proventos_fii, operacoes_fii, operacoes_td, proventos_bh,  operacoes_bh, operacoes_t, operacoes_lci_lca, operacoes_cdb_rdb, 
-                                   operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento, operacoes_criptomoedas, 
+                                   operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento, operacoes_criptomoedas, operacoes_lc,
                                    transferencias_criptomoedas, outros_investimentos, amort_outros_investimentos),
                             key=attrgetter('data'))
 
@@ -447,6 +474,11 @@ def detalhamento_investimentos(request):
         ultima_data_calculada_cdb_rdb = operacoes_cdb_rdb[0].data
     else:
         ultima_data_calculada_cdb_rdb = datetime.date.today()
+    letras_cambio = {}
+    if operacoes_lc.exists():
+        ultima_data_calculada_lc = operacoes_lc[0].data
+    else:
+        ultima_data_calculada_lc = datetime.date.today()
     cri_cra = {}
     fundos_investimento = {}
     debentures = {}
@@ -469,6 +501,7 @@ def detalhamento_investimentos(request):
 #     total_fii = datetime.timedelta(hours=0)
 #     total_prov_fii = datetime.timedelta(hours=0)
 #     total_td = datetime.timedelta(hours=0)
+#     total_lc = datetime.timedelta(hours=0)
 #     total_lci_lca = datetime.timedelta(hours=0)
 #     total_cdb_rdb = datetime.timedelta(hours=0)
 #     total_cri_cra = datetime.timedelta(hours=0)
@@ -554,25 +587,50 @@ def detalhamento_investimentos(request):
             item.total = math.floor(fii[item.fii.ticker] * item.valor_unitario * 100) / 100
             total_proventos_fii += item.total
                 
+        elif isinstance(item, OperacaoLetraCambio):
+            if item.tipo_operacao == 'C':
+                item.taxa = item.porcentagem()
+                item.qtd_inicial = item.quantidade
+                letras_cambio[item.id] = item
+                
+            elif item.tipo_operacao == 'V':
+                operacao_relacionada_id = item.operacao_compra_relacionada().id
+                if item.quantidade == letras_cambio[operacao_relacionada_id].qtd_inicial:
+                    del letras_cambio[operacao_relacionada_id]
+                else:
+                    letras_cambio[operacao_relacionada_id].quantidade -= letras_cambio[operacao_relacionada_id].quantidade \
+                        * item.quantidade / letras_cambio[operacao_relacionada_id].qtd_inicial
+                    letras_cambio[operacao_relacionada_id].qtd_inicial -= item.quantidade
+               
         elif isinstance(item, OperacaoLetraCredito):
             if item.tipo_operacao == 'C':
+                item.taxa = item.porcentagem_di()
+                item.qtd_inicial = item.quantidade
                 letras_credito[item.id] = item
                 
             elif item.tipo_operacao == 'V':
-                if item.quantidade == item.operacao_compra_relacionada().qtd_disponivel_venda_na_data(item.data):
-                    del letras_credito[item.operacao_compra_relacionada().id]
+                operacao_relacionada_id = item.operacao_compra_relacionada().id
+                if item.quantidade == letras_credito[operacao_relacionada_id].qtd_inicial:
+                    del letras_credito[operacao_relacionada_id]
                 else:
-                    letras_credito[item.operacao_compra_relacionada().id].quantidade -= letras_credito[item.operacao_compra_relacionada().id].quantidade * item.quantidade / item.operacao_compra_relacionada().quantidade
-                    
+                    letras_credito[operacao_relacionada_id].quantidade -= letras_credito[operacao_relacionada_id].quantidade \
+                        * item.quantidade / letras_credito[operacao_relacionada_id].qtd_inicial
+                    letras_credito[operacao_relacionada_id].qtd_inicial -= item.quantidade
+                
         elif isinstance(item, OperacaoCDB_RDB):
             if item.tipo_operacao == 'C':
+                item.taxa = item.porcentagem()
+                item.qtd_inicial = item.quantidade
                 cdb_rdb[item.id] = item
                 
             elif item.tipo_operacao == 'V':
-                if item.quantidade == item.operacao_compra_relacionada().qtd_disponivel_venda_na_data(item.data, item):
-                    del cdb_rdb[item.operacao_compra_relacionada().id]
+                operacao_relacionada_id = item.operacao_compra_relacionada().id
+                if item.quantidade == cdb_rdb[operacao_relacionada_id].qtd_inicial:
+                    del cdb_rdb[operacao_relacionada_id]
                 else:
-                    cdb_rdb[item.operacao_compra_relacionada().id].quantidade -= cdb_rdb[item.operacao_compra_relacionada().id].quantidade * item.quantidade / item.operacao_compra_relacionada().quantidade
+                    cdb_rdb[operacao_relacionada_id].quantidade -= cdb_rdb[operacao_relacionada_id].quantidade \
+                        * item.quantidade / cdb_rdb[operacao_relacionada_id].qtd_inicial
+                    cdb_rdb[operacao_relacionada_id].qtd_inicial -= item.quantidade
                     
         elif isinstance(item, OperacaoCRI_CRA):
             if item.cri_cra not in cri_cra.keys():
@@ -743,6 +801,32 @@ def detalhamento_investimentos(request):
 #             fim_prov_fii = datetime.datetime.now()
 #             total_prov_fii += fim_prov_fii - inicio_prov_fii
             
+            # Letras de Câmbio
+#             inicio_lc = datetime.datetime.now()
+            patrimonio_lc = 0
+            # Rodar calculo com as datas desde o último calculo, com 1 dia de atraso pois a atualização é a do dia anterior
+            dia_anterior = item.data - datetime.timedelta(days=1)
+            if item.data > ultima_data_calculada_lc:
+                # Retira a data limite (item.data) do cálculo
+                taxas = HistoricoTaxaDI.objects.filter(data__range=[ultima_data_calculada_lc, dia_anterior]).values('taxa').annotate(qtd_dias=Count('taxa'))
+                taxas_dos_dias = {}
+                for taxa in taxas:
+                    taxas_dos_dias[taxa['taxa']] = taxa['qtd_dias']
+                for operacao in letras_cambio.values():
+                    if operacao.data < item.data:
+#                         operacao.quantidade = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, operacao.taxa)
+                        operacao.quantidade = calcular_valor_atualizado_operacao_ate_dia_lc(operacao.quantidade, 
+                                                                     ultima_data_calculada_lc, dia_anterior, operacao, 
+                                                                     operacao.qtd_inicial)
+                # Guardar ultima data de calculo
+                ultima_data_calculada_lc = item.data
+            for letra_cambio in letras_cambio.values():
+                patrimonio_lc += letra_cambio.quantidade.quantize(Decimal('.01'), ROUND_DOWN)
+            patrimonio['Letras de Câmbio'] = patrimonio_lc
+            patrimonio['patrimonio_total'] += patrimonio['Letras de Câmbio'] 
+#             fim_lc = datetime.datetime.now()
+#             total_lc += fim_lc - inicio_lc
+            
             # LCI/LCA
 #             inicio_lci_lca = datetime.datetime.now()
             patrimonio_lci_lca = 0
@@ -754,9 +838,9 @@ def detalhamento_investimentos(request):
                 taxas_dos_dias = {}
                 for taxa in taxas:
                     taxas_dos_dias[taxa['taxa']] = taxa['qtd_dias']
-                for operacao_id, operacao in letras_credito.items():
+                for operacao in letras_credito.values():
                     if operacao.data < item.data:
-                        operacao.quantidade = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, OperacaoLetraCredito.objects.get(id=operacao_id).porcentagem_di())
+                        operacao.quantidade = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, operacao.taxa)
                 # Guardar ultima data de calculo
                 ultima_data_calculada_lci_lca = item.data
             for letra_credito in letras_credito.values():
@@ -777,9 +861,11 @@ def detalhamento_investimentos(request):
                 taxas_dos_dias = {}
                 for taxa in taxas:
                     taxas_dos_dias[taxa['taxa']] = taxa['qtd_dias']
-                for operacao_id, operacao in cdb_rdb.items():
+                for operacao in cdb_rdb.values():
                     if operacao.data < item.data:
-                        operacao.quantidade = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, OperacaoCDB_RDB.objects.get(id=operacao_id).porcentagem())
+                        operacao.quantidade = calcular_valor_atualizado_operacao_ate_dia_cdb_rdb(operacao.quantidade, 
+                                                                     ultima_data_calculada_cdb_rdb, dia_anterior, operacao, 
+                                                                     operacao.qtd_inicial)
                 # Guardar ultima data de calculo
                 ultima_data_calculada_cdb_rdb = item.data
             for investimento in cdb_rdb.values():
@@ -848,6 +934,7 @@ def detalhamento_investimentos(request):
 #             print 'TD                   ', total_td
 #             print 'FII                  ', total_fii
 #             print 'Prov. FII            ', total_prov_fii
+#             print 'Letras de Câmbio     ', total_lc
 #             print 'LCI/LCA              ', total_lci_lca
 #             print 'CDB/RDB              ', total_cdb_rdb
 #             print 'CRI/CRA              ', total_cri_cra
@@ -895,6 +982,7 @@ def detalhamento_investimentos(request):
 #     print 'FII:              ', total_fii 
 #     print 'Prov. FII:        ', total_prov_fii 
 #     print 'TD:               ', total_td 
+#     print 'Letras de Câmbio: ', total_lc
 #     print 'LCI/LCA:          ', total_lci_lca 
 #     print 'CDB/RDB:          ', total_cdb_rdb
 #     print 'CRI/CRA:          ', total_cri_cra
@@ -954,7 +1042,9 @@ def painel_geral(request):
             investimento.link = 'fii:painel_fii'
         elif chave == 'Fundos de Inv.':
             investimento.link = 'fundo_investimento:painel_fundo_investimento'
-        elif chave == 'Letras de Crédito':
+        elif chave == 'Letras de Câmbio':
+            investimento.link = 'lc:painel_lc'
+        elif chave == 'LCI/LCA':
             investimento.link = 'lci_lca:painel_lci_lca'
         elif chave == 'Outros inv.':
             investimento.link = 'outros_investimentos:painel_outros_invest'
@@ -1025,11 +1115,13 @@ def grafico_renda_fixa_painel_geral(request):
         qtd_ultimos_dias = 22
         # Guardar valores totais
         diario_cdb_rdb = {}
+        diario_cri_cra = {}
+        diario_debentures = {}
+        diario_lc = {}
         diario_lci_lca = {}
         diario_td = {}
-        diario_debentures = {}
-        diario_cri_cra = {}
         
+        total_lc_dia_anterior = float(sum(calcular_valor_lc_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values()))
         total_lci_lca_dia_anterior = float(sum(calcular_valor_lci_lca_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values()))
         total_cdb_rdb_dia_anterior = float(sum(calcular_valor_cdb_rdb_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values()))
         total_td_dia_anterior = float(sum(calcular_valor_td_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values()))
@@ -1037,6 +1129,7 @@ def grafico_renda_fixa_painel_geral(request):
         total_cri_cra_dia_anterior = float(sum(calcular_valor_cri_cra_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values())) \
             + float(calcular_rendimentos_cri_cra_ate_data(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()))
         
+        operacoes_lc_no_periodo = OperacaoLetraCambio.objects.filter(data__range=[data_atual - datetime.timedelta(qtd_ultimos_dias), data_atual], investidor=investidor)
         operacoes_lci_lca_no_periodo = OperacaoLetraCredito.objects.filter(data__range=[data_atual - datetime.timedelta(qtd_ultimos_dias), data_atual], investidor=investidor)
         operacoes_cdb_rdb_no_periodo = OperacaoCDB_RDB.objects.filter(data__range=[data_atual - datetime.timedelta(qtd_ultimos_dias), data_atual], investidor=investidor)
         operacoes_td_no_periodo = OperacaoTitulo.objects.filter(data__range=[data_atual - datetime.timedelta(qtd_ultimos_dias), data_atual], investidor=investidor)
@@ -1046,12 +1139,21 @@ def grafico_renda_fixa_painel_geral(request):
         for dia in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))]:
             dia = dia.date()
             diario_cdb_rdb[dia] = 0
+            diario_lc[dia] = 0
             diario_lci_lca[dia] = 0
             diario_td[dia] = 0
             diario_debentures[dia] = 0
             diario_cri_cra[dia] = 0
             
             if dia.weekday() < 5 and not verificar_feriado_bovespa(dia):
+                # Letra de Câmbio
+                total_lc = float(sum(calcular_valor_lc_ate_dia(investidor, dia).values()))
+    #                     print '(%s) %s - %s =' % (dia, total_lc, total_lc_dia_anterior), total_lc - total_lc_dia_anterior
+                # Removendo operações do dia
+                diario_lc[dia] += total_lc - total_lc_dia_anterior - float(operacoes_lc_no_periodo.filter(data=dia, tipo_operacao='C').aggregate(soma_compras=Sum('quantidade'))['soma_compras'] or Decimal(0)) + \
+                    float(sum([calcular_valor_venda_lc(operacao_venda) for operacao_venda in operacoes_lc_no_periodo.filter(data=dia, tipo_operacao='V')]))
+                total_lc_dia_anterior = total_lc
+                
                 # Letra de Crédito
                 total_lci_lca = float(sum(calcular_valor_lci_lca_ate_dia(investidor, dia).values()))
     #                     print '(%s) %s - %s =' % (dia, total_lci_lca, total_lci_lca_dia_anterior), total_lci_lca - total_lci_lca_dia_anterior
@@ -1105,11 +1207,14 @@ def grafico_renda_fixa_painel_geral(request):
                                    for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ] 
         graf_rendimentos_mensal_cri_cra = [[str(calendar.timegm(data.replace(hour=15).timetuple()) * 1000), diario_cri_cra[data.date()] ] \
                                    for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ]
+        graf_rendimentos_mensal_lc = [[str(calendar.timegm(data.replace(hour=18).timetuple()) * 1000), diario_lc[data.date()] ] \
+                                   for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ]
         
         return HttpResponse(json.dumps({'sucesso': True, 'graf_rendimentos_mensal_cdb_rdb': graf_rendimentos_mensal_cdb_rdb,
                                         'graf_rendimentos_mensal_lci_lca': graf_rendimentos_mensal_lci_lca, 'graf_rendimentos_mensal_td': graf_rendimentos_mensal_td,
                                         'graf_rendimentos_mensal_debentures': graf_rendimentos_mensal_debentures,
-                                        'graf_rendimentos_mensal_cri_cra': graf_rendimentos_mensal_cri_cra}), content_type = "application/json")   
+                                        'graf_rendimentos_mensal_cri_cra': graf_rendimentos_mensal_cri_cra,
+                                        'graf_rendimentos_mensal_lc': graf_rendimentos_mensal_lc}), content_type = "application/json")   
     else:
         return HttpResponse(json.dumps({'sucesso': False}), content_type = "application/json")   
 
