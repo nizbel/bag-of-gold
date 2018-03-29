@@ -41,6 +41,10 @@
 							<div class="m-grid-col m-grid-col-left"><strong>Carência atual:</strong></div>
 							<div class="m-grid-col m-grid-col-left">{{lci_lca.carencia_atual}} dia(s)</div>
 						</div>
+                        <div class="m-grid-row">
+                            <div class="m-grid-col m-grid-col-left"><strong>Vencimento atual:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{lci_lca.vencimento_atual}} dia(s)</div>
+                        </div>
 					</div>
 				</div>
 			</div>
@@ -79,7 +83,7 @@
 			</div>
 			<!-- END Portlet PORTLET-->
 		</div>
-		<div class="col-md-6">
+		<div class="col-md-4">
 			<!-- BEGIN Portlet PORTLET-->
 			<div class="portlet box yellow-crusta">
 				<div class="portlet-title">
@@ -112,7 +116,7 @@
 			</div>
 			<!-- END Portlet PORTLET-->
 		</div>
-		<div class="col-md-6">
+		<div class="col-md-4">
 			<!-- BEGIN Portlet PORTLET-->
 			<div class="portlet box yellow-crusta">
 				<div class="portlet-title">
@@ -145,6 +149,39 @@
 			</div>
 			<!-- END Portlet PORTLET-->
 		</div>
+        <div class="col-md-4">
+            <!-- BEGIN Portlet PORTLET-->
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-calendar-check-o"></i>Vencimento</div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <table id="historico_vencimento" class="table table-striped table-bordered table-hover table-header-fixed">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Vencimento (dias)</th>
+                            <th><a href="{% url 'lci_lca:inserir_historico_vencimento_lci_lca' lci_lca.id %}" class="btn btn-sm green-steel">Inserir</a></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in historico_vencimento %}
+                    <tr>
+                        <td>{{item.data|date:'d/m/Y'|default:"Inicial"}}</td>
+                        <td>{{item.vencimento}} dia(s)</td>
+                        <td><a href="{% url 'lci_lca:editar_historico_vencimento_lci_lca' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- END Portlet PORTLET-->
+        </div>
 	</div>
 </div>
 
