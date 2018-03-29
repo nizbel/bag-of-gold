@@ -118,7 +118,7 @@ class TelaInicioTestCase(TestCase):
         self.assertIn('CDB/RDB', valores_atuais.keys())
         self.assertIn('FII', valores_atuais.keys())
         self.assertIn('Fundos de Inv.', valores_atuais.keys())
-        self.assertIn('Letras de Crédito', valores_atuais.keys())
+        self.assertIn('LCI/LCA', valores_atuais.keys())
         self.assertIn('Tesouro Direto', valores_atuais.keys())
         
     def test_buscar_valores_atuais_deve_ter_valores_nao_zerados(self):
@@ -129,7 +129,7 @@ class TelaInicioTestCase(TestCase):
         
         self.assertNotEqual(valores_atuais['Ações'], Decimal(0))
         self.assertNotEqual(valores_atuais['FII'], Decimal(0))
-        self.assertNotEqual(valores_atuais['Letras de Crédito'], Decimal(0))  
+        self.assertNotEqual(valores_atuais['LCI/LCA'], Decimal(0))  
         
     def test_buscar_valores_atuais_deve_ter_valores_zerados(self):
         """Testar se traz 0 para os investimentos que o investidor não possui"""

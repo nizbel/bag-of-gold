@@ -179,6 +179,9 @@ class RendimentosTestCase(TestCase):
     def test_deve_trazer_zero_caso_nao_haja_investimentos(self):
         """Testa se método traz resultado 0 caso não haja investimentos"""
         investidor = User.objects.get(username='tester').investidor
+        
+        import pdb;
+        pdb.set_trace()
         self.assertEqual(Decimal(0), sum(calcular_rendimentos_ate_data(investidor, datetime.date(2016, 1, 1)).values()))
         
     def test_deve_trazer_valor_apenas_de_cdb_rdb(self):
