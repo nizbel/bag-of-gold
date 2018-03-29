@@ -76,11 +76,12 @@ def detalhar_lc(request, lc_id):
             lc.total_investido += operacao.qtd_disponivel_venda()
             
             # Saldo atual
-            taxas = historico_di.filter(data__gte=operacao.data).values('taxa').annotate(qtd_dias=Count('taxa'))
-            taxas_dos_dias = {}
-            for taxa in taxas:
-                taxas_dos_dias[taxa['taxa']] = taxa['qtd_dias']
-            operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.qtd_disponivel_venda(), operacao.porcentagem())
+#             taxas = historico_di.filter(data__gte=operacao.data).values('taxa').annotate(qtd_dias=Count('taxa'))
+#             taxas_dos_dias = {}
+#             for taxa in taxas:
+#                 taxas_dos_dias[taxa['taxa']] = taxa['qtd_dias']
+#             operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.qtd_disponivel_venda(), operacao.porcentagem())
+            operacao.atual = calcular_valor_operacao_lc_ate_dia(operacao, datetime.date.today(), arredondar=False, valor_liquido=False)
             lc.saldo_atual += operacao.atual
             
             # Calcular impostos
