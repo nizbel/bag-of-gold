@@ -44,10 +44,12 @@ def detalhar_lci_lca(request, lci_lca_id):
     
     historico_porcentagem = HistoricoPorcentagemLetraCredito.objects.filter(letra_credito=lci_lca)
     historico_carencia = HistoricoCarenciaLetraCredito.objects.filter(letra_credito=lci_lca)
+    historico_vencimento = HistoricoVencimentoLetraCredito.objects.filter(letra_credito=lci_lca)
     
     # Inserir dados do investimento
     lci_lca.carencia_atual = lci_lca.carencia_atual()
     lci_lca.porcentagem_atual = lci_lca.porcentagem_di_atual()
+    lci_lca.vencimento_atual = lci_lca.vencimento_atual()
     
     # Preparar estatísticas zeradas
     lci_lca.total_investido = Decimal(0)
@@ -94,7 +96,7 @@ def detalhar_lci_lca(request, lci_lca_id):
         lci_lca.dias_proxima_retirada = 0
     
     return TemplateResponse(request, 'lci_lca/detalhar_lci_lca.html', {'lci_lca': lci_lca, 'historico_porcentagem': historico_porcentagem,
-                                                                       'historico_carencia': historico_carencia})
+                                                                       'historico_carencia': historico_carencia, 'historico_vencimento': historico_vencimento})
 
 @login_required
 @adiciona_titulo_descricao('Editar registro de carência', 'Alterar registro de porcentagem no histórico de uma Letra de Crédito')
@@ -244,7 +246,7 @@ def editar_historico_vencimento(request, historico_vencimento_id):
             form_historico_vencimento = HistoricoVencimentoLetraCreditoForm(instance=historico_vencimento, letra_credito=historico_vencimento.letra_credito, \
                                                                    investidor=investidor)
             
-    return TemplateResponse(request, 'lci_lca/editar_historico_carencia.html', {'form_historico_carencia': form_historico_vencimento, 'inicial': inicial}) 
+    return TemplateResponse(request, 'lci_lca/editar_historico_vencimento.html', {'form_historico_carencia': form_historico_vencimento, 'inicial': inicial}) 
 
 @login_required
 @adiciona_titulo_descricao('Editar Letra de Crédito', 'Alterar dados de uma Letra de Crédito')
@@ -705,21 +707,6 @@ def listar_lci_lca(request):
         
     letras_credito = LetraCredito.objects.filter(investidor=investidor)
     
-    for letra_credito in letras_credito:
-        # Preparar o valor mais atual para carência
-        historico_carencia = HistoricoCarenciaLetraCredito.objects.filter(letra_credito=letra_credito).exclude(data=None).order_by('-data')
-        if historico_carencia:
-            letra_credito.carencia_atual = historico_carencia[0].carencia
-        else:
-            letra_credito.carencia_atual = HistoricoCarenciaLetraCredito.objects.get(letra_credito=letra_credito).carencia
-        # Preparar o valor mais atual de rendimento
-        historico_rendimento = HistoricoPorcentagemLetraCredito.objects.filter(letra_credito=letra_credito).exclude(data=None).order_by('-data')
-#         print historico_rendimento
-        if historico_rendimento:
-            letra_credito.rendimento_atual = historico_rendimento[0].porcentagem_di
-        else:
-            letra_credito.rendimento_atual = HistoricoPorcentagemLetraCredito.objects.get(letra_credito=letra_credito).porcentagem_di
-
     return TemplateResponse(request, 'lci_lca/listar_lci_lca.html', {'letras_credito': letras_credito})
 
 # Retorna id's das operações que podem ser vendidas na data especificada
