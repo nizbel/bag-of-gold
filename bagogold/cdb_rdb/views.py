@@ -21,9 +21,6 @@ from bagogold.cdb_rdb.models import OperacaoCDB_RDB, HistoricoPorcentagemCDB_RDB
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, \
     buscar_operacoes_vigentes_ate_data, calcular_valor_atualizado_operacao_ate_dia, \
     calcular_valor_operacao_cdb_rdb_ate_dia, calcular_valor_venda_cdb_rdb
-from bagogold.lci_lca.utils import calcular_valor_atualizado_com_taxa_di, \
-    calcular_valor_atualizado_com_taxas_di, \
-    calcular_valor_atualizado_com_taxa_prefixado
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required

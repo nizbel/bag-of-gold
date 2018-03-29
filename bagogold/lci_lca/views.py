@@ -14,9 +14,8 @@ from bagogold.lci_lca.forms import OperacaoLetraCreditoForm, \
 from bagogold.lci_lca.models import OperacaoLetraCredito, \
     HistoricoPorcentagemLetraCredito, LetraCredito, HistoricoCarenciaLetraCredito, \
     OperacaoVendaLetraCredito, HistoricoVencimentoLetraCredito
-from bagogold.lci_lca.utils import calcular_valor_atualizado_com_taxa_di, \
-    calcular_valor_lci_lca_ate_dia, simulador_lci_lca, \
-    calcular_valor_atualizado_com_taxas_di
+from bagogold.lci_lca.utils import simulador_lci_lca, \
+    calcular_valor_lci_lca_ate_dia
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
