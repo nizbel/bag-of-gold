@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.debenture import OperacaoDebentureForm
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoDebentureFormSet
@@ -10,9 +9,10 @@ from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI, \
     HistoricoTaxaSelic
 from bagogold.bagogold.models.td import HistoricoIPCA
 from bagogold.bagogold.utils.debenture import calcular_valor_debentures_ate_dia
-from bagogold.lci_lca.utils import calcular_valor_atualizado_com_taxas_di
 from bagogold.bagogold.utils.misc import \
     formatar_zeros_a_direita_apos_2_casas_decimais, qtd_dias_uteis_no_periodo
+from bagogold.bagogold.utils.taxas_indexacao import \
+    calcular_valor_atualizado_com_taxas_di
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required

@@ -47,7 +47,7 @@
 				<div class="form-group col-md-6 {% if form_porcentagem.porcentagem.errors %} has-error {% endif %}">
 					<label class="control-label col-md-4"> {{ form_porcentagem.porcentagem.label }}: </label>
 					<div class="col-md-8">
-						<input id="id_historicoporcentagemcdb_rdb_set_set-{{forloop.counter0}}-porcentagem" type="text" value="{{form_porcentagem.porcentagem.value}}" name="historicoporcentagemcdb_rdb_set-{{forloop.counter0}}-porcentagem" class="form-control">
+						<input id="id_historicoporcentagemcdb_rdb_set-{{forloop.counter0}}-porcentagem" type="text" value="{{form_porcentagem.porcentagem.value}}" name="historicoporcentagemcdb_rdb_set-{{forloop.counter0}}-porcentagem" class="form-control">
 						{% if form_porcentagem.porcentagem.errors %} <span class="help-block"> {{ form_porcentagem.porcentagem.errors.as_text }} </span> {% endif %}
 					</div>
 				</div>
