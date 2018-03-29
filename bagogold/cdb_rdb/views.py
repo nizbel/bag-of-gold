@@ -6,11 +6,11 @@ from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoCDB_RDB, Divisao
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 from bagogold.bagogold.models.td import HistoricoIPCA
-from bagogold.bagogold.utils.taxas_indexacao import calcular_valor_atualizado_com_taxa_di, \
-    calcular_valor_atualizado_com_taxas_di, \
-    calcular_valor_atualizado_com_taxa_prefixado
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo, \
     qtd_dias_uteis_no_periodo, calcular_iof_e_ir_longo_prazo
+from bagogold.bagogold.utils.taxas_indexacao import \
+    calcular_valor_atualizado_com_taxa_di, calcular_valor_atualizado_com_taxas_di, \
+    calcular_valor_atualizado_com_taxa_prefixado
 from bagogold.cdb_rdb.forms import OperacaoCDB_RDBForm, \
     HistoricoPorcentagemCDB_RDBForm, CDB_RDBForm, HistoricoCarenciaCDB_RDBForm, \
     HistoricoVencimentoCDB_RDBForm
@@ -73,11 +73,12 @@ def detalhar_cdb_rdb(request, cdb_rdb_id):
             cdb_rdb.total_investido += operacao.qtd_disponivel_venda()
             
             # Saldo atual
-            taxas = historico_di.filter(data__gte=operacao.data).values('taxa').annotate(qtd_dias=Count('taxa'))
-            taxas_dos_dias = {}
-            for taxa in taxas:
-                taxas_dos_dias[taxa['taxa']] = taxa['qtd_dias']
-            operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.qtd_disponivel_venda(), operacao.porcentagem())
+#             taxas = historico_di.filter(data__gte=operacao.data).values('taxa').annotate(qtd_dias=Count('taxa'))
+#             taxas_dos_dias = {}
+#             for taxa in taxas:
+#                 taxas_dos_dias[taxa['taxa']] = taxa['qtd_dias']
+#             operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.qtd_disponivel_venda(), operacao.porcentagem())
+            operacao.atual = calcular_valor_operacao_cdb_rdb_ate_dia(operacao, datetime.date.today(), arredondar=False, valor_liquido=False)
             cdb_rdb.saldo_atual += operacao.atual
             
             # Calcular impostos
