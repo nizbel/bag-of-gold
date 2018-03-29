@@ -183,26 +183,22 @@ def calcular_valor_lc_ate_dia_por_divisao(dia, divisao_id):
         return {}
      
     # Buscar operações não totalmente vendidas
-    operacoes = OperacaoLetraCambio.objects.filter(id__in=operacoes_lc.keys()).order_by('data')
+    operacoes = DivisaoOperacaoLetraCambio.objects.filter(operacao__id__in=operacoes_lc.keys(), divisao__id=divisao_id).annotate(lc=F('operacao__lc')).order_by('operacao__data')
       
-#     # Calcular o valor atualizado do patrimonio
-#     historico = HistoricoTaxaDI.objects.filter(data__range=[operacoes[0].data, dia])
-        
     for operacao in operacoes:
-        operacao.taxa = operacao.porcentagem()
-        operacao.atual = calcular_valor_operacao_lc_ate_dia(operacao, dia, arredondar=True)
+        operacao.atual = calcular_valor_op_lc_ate_dia_por_divisao(operacao, dia, arredondar=True)
         
     lc = {}
     
     # Preencher os valores nas Letras de Câmbio
     for investimento in list(set(operacoes.values_list('lc', flat=True))):
-        lc[investimento] = sum([operacao.atual for operacao in operacoes if operacao.lc.id == investimento])
+        lc[investimento] = sum([operacao.atual for operacao in operacoes if operacao.lc == investimento])
         
     return lc
 
 def calcular_valor_um_lc_ate_dia_por_divisao(lc, divisao_id, dia=datetime.date.today()):
     """ 
-    Calcula o valor total de uma Letras de Câmbio da divisão no dia determinado
+    Calcula o valor total de uma Letra de Câmbio da divisão no dia determinado
     Parâmetros: Letras de Câmbio escolhida
                 ID da divisão
                 Data final

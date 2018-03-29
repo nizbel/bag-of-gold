@@ -174,17 +174,16 @@ def calcular_valor_cdb_rdb_ate_dia_por_divisao(dia, divisao_id):
         return {}
      
     # Buscar operações não totalmente vendidas
-    operacoes = OperacaoCDB_RDB.objects.filter(id__in=operacoes_cdb_rdb.keys()).order_by('data')
+    operacoes = DivisaoOperacaoCDB_RDB.objects.filter(operacao__id__in=operacoes_cdb_rdb.keys(), divisao__id=divisao_id).annotate(cdb_rdb=F('operacao__cdb_rdb')).order_by('operacao__data')
     
     for operacao in operacoes:
-        operacao.taxa = operacao.porcentagem()
-        operacao.atual = calcular_valor_operacao_cdb_rdb_ate_dia(operacao, dia, True)
-    
+        operacao.atual = calcular_valor_op_cdb_rdb_ate_dia_por_divisao(operacao, dia, True)
+        
     cdb_rdb = {}
     
     # Preencher os valores nos CDB/RDB
     for investimento in list(set(operacoes.values_list('cdb_rdb', flat=True))):
-        cdb_rdb[investimento] = sum([operacao.atual for operacao in operacoes if operacao.cdb_rdb.id == investimento])
+        cdb_rdb[investimento] = sum([operacao.atual for operacao in operacoes if operacao.cdb_rdb == investimento])
 
     return cdb_rdb
 
