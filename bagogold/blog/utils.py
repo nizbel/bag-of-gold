@@ -37,15 +37,9 @@ def postar_facebook(mensagem, link):
     """
     if settings.ENV == 'DEV':
         return True
-    PAGE_ACCESS_TOKEN = 'EAACavfhohbsBAM9HlUoCyh4MWkBwMDKnnTNXgbgQHe4ESksYzDtR1G26iaGYT2VMuzKkgyyhTRNVPZCG91Yrg5mDPeUw7F9H17MtqchrjZATRhSPfBTZBDkXoyS3g1Qk2e3ijRFisAqg1uRw1aPh6PwFwFPKXqrUUUFoKZCorAZDZD'
+#     PAGE_ACCESS_TOKEN = 'EAACavfhohbsBAM9HlUoCyh4MWkBwMDKnnTNXgbgQHe4ESksYzDtR1G26iaGYT2VMuzKkgyyhTRNVPZCG91Yrg5mDPeUw7F9H17MtqchrjZATRhSPfBTZBDkXoyS3g1Qk2e3ijRFisAqg1uRw1aPh6PwFwFPKXqrUUUFoKZCorAZDZD'
+    PAGE_ACCESS_TOKEN = 'EAACavfhohbsBADjjhfvxZC5Dtw6eQKrJAdBLw0MIZC9a2bx5sr1swKsrBukKmBALaT2a5kC75PC3UOCckdS2lgZAg4eIEhuB99ZAyR8Nsm8Xc0n89ZCWQuOFXNQbt0vbJERcOdQTuwrJfBOHms4ZAuOQr372a0RTimMT5Y97kiqgZDZD'
     PAGE_ID = '792948827546891'
-    
-    # TODO apagar teste
-    if 2 == 2:
-        import pdb;
-        pdb.set_trace()
-        
-        return False
     
     graph = facebook.GraphAPI(PAGE_ACCESS_TOKEN)
     if link:
