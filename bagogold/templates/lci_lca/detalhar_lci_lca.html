@@ -35,12 +35,16 @@
 					<div class="m-grid m-grid-responsive-xs">
 						<div class="m-grid-row">
                             <div class="m-grid-col m-grid-col-left"><strong>Nome:</strong></div>
-                            <div class="m-grid-col m-grid-col-left">{{lci_lca.nome}} dia(s)</div>
+                            <div class="m-grid-col m-grid-col-left">{{lci_lca.nome}}</div>
 							<div class="m-grid-col m-grid-col-left"><strong>Rendimento atual:</strong></div>
 							<div class="m-grid-col m-grid-col-left">{{lci_lca.porcentagem_atual}}% {% if lci_lca.tipo_rendimento == 1 %}ao ano{% elif lci_lca.tipo_rendimento == 2 %}do DI{% endif %}</div>
 							<div class="m-grid-col m-grid-col-left"><strong>Carência atual:</strong></div>
-							<div class="m-grid-col m-grid-col-left">{{lci_lca.carencia_atual}} dia(s)</div>
+							<div class="m-grid-col m-grid-col-left">{{lci_lca.carencia_atual}} dia{{lci_lca.carencia_atual|pluralize}}</div>
 						</div>
+                        <div class="m-grid-row">
+                            <div class="m-grid-col m-grid-col-left"><strong>Vencimento atual:</strong></div>
+                            <div class="m-grid-col m-grid-col-left">{{lci_lca.vencimento_atual}} dia{{lci_lca.vencimento_atual|pluralize}}</div>
+                        </div>
 					</div>
 				</div>
 			</div>
@@ -70,7 +74,7 @@
                             <div class="m-grid-col m-grid-col-left"><strong>Total de operações:</strong></div>
                             <div class="m-grid-col m-grid-col-left">{{lci_lca.total_operacoes}}</div>
 							<div class="m-grid-col m-grid-col-left"><strong>Dias para próx. retirada:</strong></div>
-							<div class="m-grid-col m-grid-col-left">{{ lci_lca.dias_proxima_retirada }} dia(s)</div>
+							<div class="m-grid-col m-grid-col-left">{{ lci_lca.dias_proxima_retirada }} dia{{lci_lca.dias_proxima_retirada|pluralize}}</div>
 							<div class="m-grid-col m-grid-col-left"><strong>IOF:</strong></div>
 							<div class="m-grid-col m-grid-col-left">R$ {{lci_lca.total_iof|floatformat:2}}</div>
 						</div>
@@ -79,7 +83,7 @@
 			</div>
 			<!-- END Portlet PORTLET-->
 		</div>
-		<div class="col-md-6">
+		<div class="col-md-4">
 			<!-- BEGIN Portlet PORTLET-->
 			<div class="portlet box yellow-crusta">
 				<div class="portlet-title">
@@ -101,7 +105,7 @@
 					<tbody>
 					{% for item in historico_porcentagem %}
 					<tr>
-						<td>{{item.data|default:"Inicial"}}</td>
+						<td>{{item.data|date:'d/m/Y'|default:"Inicial"}}</td>
 						<td>{{item.porcentagem_di}}%</td>
 						<td><a href="{% url 'lci_lca:editar_historico_porcentagem_lci_lca' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
 					</tr>
@@ -112,7 +116,7 @@
 			</div>
 			<!-- END Portlet PORTLET-->
 		</div>
-		<div class="col-md-6">
+		<div class="col-md-4">
 			<!-- BEGIN Portlet PORTLET-->
 			<div class="portlet box yellow-crusta">
 				<div class="portlet-title">
@@ -127,15 +131,15 @@
 					<thead>
 						<tr>
 							<th>Data</th>
-							<th>Carência (dias)</th>
+							<th>Carência</th>
 							<th><a href="{% url 'lci_lca:inserir_historico_carencia_lci_lca' lci_lca.id %}" class="btn btn-sm green-steel">Inserir</a></th>
 						</tr>
 					</thead>
 					<tbody>
 					{% for item in historico_carencia %}
 					<tr>
-						<td>{{item.data|default:"Inicial"}}</td>
-						<td>{{item.carencia}} dia(s)</td>
+						<td>{{item.data|date:'d/m/Y'|default:"Inicial"}}</td>
+						<td>{{item.carencia}} dia{{item.carencia|pluralize}}</td>
 						<td><a href="{% url 'lci_lca:editar_historico_carencia_lci_lca' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
 					</tr>
 					{% endfor %}
@@ -145,6 +149,39 @@
 			</div>
 			<!-- END Portlet PORTLET-->
 		</div>
+        <div class="col-md-4">
+            <!-- BEGIN Portlet PORTLET-->
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-calendar-check-o"></i>Vencimento</div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <table id="historico_vencimento" class="table table-striped table-bordered table-hover table-header-fixed">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Vencimento</th>
+                            <th><a href="{% url 'lci_lca:inserir_historico_vencimento_lci_lca' lci_lca.id %}" class="btn btn-sm green-steel">Inserir</a></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in historico_vencimento %}
+                    <tr>
+                        <td>{{item.data|date:'d/m/Y'|default:"Inicial"}}</td>
+                        <td>{{item.vencimento}} dia{{item.vencimento|pluralize}}</td>
+                        <td><a href="{% url 'lci_lca:editar_historico_vencimento_lci_lca' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- END Portlet PORTLET-->
+        </div>
 	</div>
 </div>
 

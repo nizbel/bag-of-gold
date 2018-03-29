@@ -1,24 +1,25 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoFIIFormSet
-from bagogold.fii.forms import OperacaoFIIForm, ProventoFIIForm, \
-    UsoProventosOperacaoFIIForm, CalculoResultadoCorretagemForm
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII, Divisao
-from bagogold.fii.models import OperacaoFII, ProventoFII, HistoricoFII, \
-    FII, UsoProventosOperacaoFII, ValorDiarioFII, EventoAgrupamentoFII, \
-    EventoDesdobramentoFII, EventoIncorporacaoFII
 from bagogold.bagogold.models.gerador_proventos import ProventoFIIDocumento, \
     InvestidorValidacaoDocumento
+from bagogold.bagogold.utils.investidores import is_superuser, \
+    buscar_proventos_a_receber
+from bagogold.fii.forms import OperacaoFIIForm, ProventoFIIForm, \
+    UsoProventosOperacaoFIIForm, CalculoResultadoCorretagemForm
+from bagogold.fii.models import OperacaoFII, ProventoFII, HistoricoFII, FII, \
+    UsoProventosOperacaoFII, ValorDiarioFII, EventoAgrupamentoFII, \
+    EventoDesdobramentoFII, EventoIncorporacaoFII
 from bagogold.fii.utils import calcular_valor_fii_ate_dia, \
     calcular_poupanca_prov_fii_ate_dia, calcular_qtd_fiis_ate_dia_por_ticker, \
     calcular_preco_medio_fiis_ate_dia, calcular_qtd_fiis_ate_dia
-from bagogold.bagogold.utils.investidores import is_superuser, \
-    buscar_proventos_a_receber
 from decimal import Decimal, ROUND_FLOOR
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
+from django.db.models.aggregates import Sum
 from django.db.models.expressions import F, Case, When, Value
 from django.db.models.fields import CharField
 from django.db.models.query_utils import Q
@@ -66,51 +67,79 @@ def acompanhamento_mensal_fii(request):
 def acompanhamento_fii(request):
     fiis = FII.objects.all()
     
-    comparativos = list()
+    filtros = {}
+    
+    if request.method == 'POST':
+        filtros['mes_inicial'] = request.POST.get('mes_inicial')
+        try:
+            filtros['mes_inicial'] = datetime.datetime.strptime('01/%s' % (filtros['mes_inicial']), '%d/%m/%Y')
+        except:
+            messages.error(request, 'Mês inicial enviado é inválido')
+            # Calcular a data de inicio, buscando o primeiro dia do próximo mês, no ano passado, a fim de completar um ciclo de 12 meses
+            mes_inicial = datetime.date.today()
+            filtros['mes_inicial'] = mes_inicial.replace(day=1).replace(year=mes_inicial.year-1).replace(month=mes_inicial.month+1)
+            
+        filtros['ignorar_indisponiveis'] = request.POST.get('ignorar_indisponiveis', False)
+#     comparativos = list()
+    else:
+        # Calcular a data de inicio, buscando o primeiro dia do próximo mês, no ano passado, a fim de completar um ciclo de 12 meses
+        mes_inicial = datetime.date.today()
+        filtros['mes_inicial'] = mes_inicial.replace(day=1).replace(year=mes_inicial.year-1).replace(month=mes_inicial.month+1)
+        filtros['ignorar_indisponiveis'] = True
+    # Verificar o período em meses de diferença (se mesmo mês/ano, deve ser 1)
+    periodo_meses = 1 + datetime.date.today().month - filtros['mes_inicial'].month \
+        + (datetime.date.today().year - filtros['mes_inicial'].year) * 12
     for fii in fiis:
-        total_proventos = 0
+#         total_proventos = 0
         # Calcular media de proventos dos ultimos 6 recebimentos
-        proventos = ProventoFII.objects.filter(fii=fii).order_by('-data_ex')
-        if len(proventos) > 6:
-            proventos = proventos[0:6]
-        if len(proventos) > 0:
-            qtd_dias_periodo = (datetime.date.today() - proventos[len(proventos)-1].data_ex).days
-        else:
-            continue
-        for provento in proventos:
-            total_proventos += provento.valor_unitario
+        proventos = ProventoFII.objects.filter(fii=fii, data_pagamento__range=[filtros['mes_inicial'], datetime.date.today()])
+#         if len(proventos) > 6:
+#             proventos = proventos[0:6]
+#         if len(proventos) > 0:
+#             qtd_dias_periodo = (datetime.date.today() - proventos[len(proventos)-1].data_ex).days
+#         else:
+#             continue
+        fii.total_amortizacoes = proventos.filter(tipo_provento=ProventoFII.TIPO_PROVENTO_AMORTIZACAO).aggregate(total=Sum('valor_unitario'))['total'] or 0
+        fii.total_rendimentos = proventos.filter(tipo_provento=ProventoFII.TIPO_PROVENTO_RENDIMENTO).aggregate(total=Sum('valor_unitario'))['total'] or 0
+        fii.total_proventos = fii.total_amortizacoes + fii.total_rendimentos
             
         # Pegar valor atual dos FIIs
         preenchido = False
         try:
             valor_diario_mais_recente = ValorDiarioFII.objects.filter(fii=fii).order_by('-data_hora')
             if valor_diario_mais_recente and valor_diario_mais_recente[0].data_hora.date() == datetime.date.today():
-                valor_atual = valor_diario_mais_recente[0].preco_unitario
-                percentual_retorno_semestral = (total_proventos/valor_atual)
+                fii.valor_atual = valor_diario_mais_recente[0].preco_unitario
+                fii.data = valor_diario_mais_recente[0].data_hora.date()
+                fii.percentual_retorno = (fii.total_rendimentos/fii.valor_atual) * 100
                 preenchido = True
         except:
-            preenchido = False
+            pass
         if (not preenchido):
             # Pegar último dia util com negociação da ação para calculo do patrimonio
             try:
-                valor_atual = HistoricoFII.objects.filter(fii=fii).order_by('-data')[0].preco_unitario
+                historico = HistoricoFII.objects.filter(fii=fii).order_by('-data')[0]
+                fii.valor_atual = historico.preco_unitario
+                fii.data = historico.data
                 # Percentual do retorno sobre o valor do fundo
-                percentual_retorno_semestral = (total_proventos/valor_atual)
+                fii.percentual_retorno = (fii.total_rendimentos/fii.valor_atual) * 100
             except:
-                valor_atual = 0
+#                 fii.valor_atual = 0
+                fii.data = None
+                continue
                 # Percentual do retorno sobre o valor do fundo
-                percentual_retorno_semestral = 0
+#                 fii.percentual_retorno = 0
         
-        # Taxa diaria pela quantidade de dias
-        percentual_retorno_semestral = math.pow(1 + percentual_retorno_semestral, 1/float(qtd_dias_periodo)) - 1
-        # Taxa semestral (base 180 dias)
-        percentual_retorno_semestral = 100*(math.pow(1 + percentual_retorno_semestral, 180) - 1)
-        comparativos += [[fii, valor_atual, total_proventos, percentual_retorno_semestral]]
-        
-    # Ordenar lista de comparativos
-    comparativos = reversed(sorted(comparativos, key=itemgetter(3)))
+        # Taxa mensal a partir da quantidade de dias
+        fii.percentual_retorno_mensal = 100*(math.pow(1 + fii.percentual_retorno/100, 1/Decimal(periodo_meses)) - 1)
+        # Taxa anual
+        fii.percentual_retorno_anual = 100*(math.pow(1 + fii.percentual_retorno_mensal/100, 12) - 1)
+#         comparativos += [[fii, valor_atual, total_proventos, percentual_retorno_semestral]]
     
-    return TemplateResponse(request, 'fii/acompanhamento.html', {'comparativos': comparativos})
+    # Ignorar os FIIs cujos valores não foram encontrados
+    if filtros['ignorar_indisponiveis']:
+        fiis = [fii for fii in fiis if fii.data != None]
+
+    return TemplateResponse(request, 'fii/acompanhamento.html', {'fiis': fiis, 'filtros': filtros})
     
 @adiciona_titulo_descricao('Cálculo de corretagem', 'Calcular quantidade de dinheiro que o investidor pode juntar para '
     'comprar novas cotasde forma a diluir mais eficientemente a corretagem')
