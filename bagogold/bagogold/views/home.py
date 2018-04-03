@@ -14,12 +14,8 @@ from bagogold.bagogold.utils.debenture import calcular_valor_debentures_ate_dia
 from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
     buscar_totais_atuais_investimentos, buscar_proventos_a_receber, \
     buscar_proventos_a_receber_data_ex_futura, buscar_operacoes_no_periodo
-from bagogold.lci_lca.utils import calcular_valor_atualizado_com_taxas_di, \
-    calcular_valor_lci_lca_ate_dia, calcular_valor_venda_lci_lca
 from bagogold.bagogold.utils.misc import calcular_rendimentos_ate_data, \
     verificar_feriado_bovespa, formatar_zeros_a_direita_apos_2_casas_decimais
-from bagogold.bagogold.utils.taxas_indexacao import \
-    calcular_valor_atualizado_com_taxas_di
 from bagogold.tesouro_direto.utils import calcular_valor_td_ate_dia
 from bagogold.blog.models import Post
 from bagogold.cdb_rdb.models import OperacaoCDB_RDB
@@ -1250,6 +1246,7 @@ def rendimento_medio_painel_geral(request):
             rendimento = 0
             rendimento_medio_mensal = 0
             rendimento_medio_anual = 0
+            data_inicial = data_atual
         return HttpResponse(json.dumps(render_to_string('utils/rendimento_medio_painel_geral.html', {'rendimento': rendimento, 'data_inicial': data_inicial or data_atual, 
                                                      'rendimento_medio_mensal': rendimento_medio_mensal, 'rendimento_medio_anual': rendimento_medio_anual})), 
                             content_type = "application/json")   
