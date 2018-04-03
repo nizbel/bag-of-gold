@@ -25,6 +25,8 @@ def linha_do_tempo(request, divisao_id):
         raise PermissionDenied
     
     if request.is_ajax():
+        if request.GET.get('investimento') == 'A':
+            eventos = linha_do_tempo_lc(divisao)
         if request.GET.get('investimento') == 'C':
             eventos = linha_do_tempo_cdb_rdb(divisao)
         if request.GET.get('investimento') == 'L':
@@ -82,6 +84,52 @@ def linha_do_tempo_cdb_rdb(divisao):
     for evento in eventos:
         evento.saldo = divisao.saldo_cdb_rdb(evento.data)
         evento.investido = sum(calcular_valor_cdb_rdb_ate_dia_por_divisao(evento.data, divisao.id).values())
+        
+    return eventos
+
+def linha_do_tempo_lc(divisao):
+    class Object(object):
+        pass
+    
+    operacoes_divisao = DivisaoOperacaoLetraCambio.objects.filter(divisao=divisao).annotate(data=F('operacao__data')) \
+        .annotate(titulo=Case(When(operacao__tipo_operacao='C', then=Value(u'Operação de compra', CharField())),
+                              When(operacao__tipo_operacao='V', then=Value(u'Operação de venda', CharField())), output_field=CharField()))
+    for operacao_divisao in operacoes_divisao:
+        operacao_divisao.operacao.quantidade = operacao_divisao.quantidade
+        operacao_divisao.texto = [operacao_divisao.operacao]
+    
+    # Transferências
+    transf_cedente = TransferenciaEntreDivisoes.objects.filter(divisao_cedente=divisao, investimento_origem=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_LC)
+    for transferencia in transf_cedente:
+        transferencia.titulo = u'Transferência de recursos da divisão'
+        transferencia.texto = [transferencia]
+        
+    transf_recebedora = TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=divisao, investimento_destino=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_LC)
+    for transferencia in transf_recebedora:
+        transferencia.titulo = u'Transferência de recursos para a divisão'
+        transferencia.texto = [transferencia]
+        
+    eventos = sorted(chain(transf_recebedora, transf_cedente, operacoes_divisao),
+                            key=attrgetter('data'))
+
+    for indice, evento in enumerate(eventos):
+        # Verifica se há próximo evento
+        while indice + 1 < len(eventos) and eventos[indice + 1].data == evento.data:
+            evento_repetido = eventos.pop(indice + 1)
+            evento.titulo = u'Múltiplos eventos'
+            evento.texto.extend(evento_repetido.texto)
+            
+    # Adicionar data atual para garantir que sempre haja pelo menos 1 evento
+    if len(eventos) == 0 or eventos[-1].data < datetime.date.today():
+        evento = Object()
+        evento.titulo = u'Data atual'
+        evento.texto = [u'Situação na data atual']
+        evento.data = datetime.date.today()
+        eventos.append(evento)        
+            
+    for evento in eventos:
+        evento.saldo = divisao.saldo_lc(evento.data)
+        evento.investido = sum(calcular_valor_lc_ate_dia_por_divisao(evento.data, divisao.id).values())
         
     return eventos
 
