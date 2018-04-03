@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao
+from bagogold.bagogold.models.taxas_indexacao import HistoricoIPCA
 from bagogold.fii.models import UsoProventosOperacaoFII
-from bagogold.tesouro_direto.models import HistoricoIPCA, OperacaoTitulo
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
 from bagogold.fundo_investimento.utils import \
     calcular_valor_fundos_investimento_ate_dia
+from bagogold.tesouro_direto.models import OperacaoTitulo
 from decimal import Decimal
 from django.db.models.aggregates import Sum
 from urllib2 import Request, urlopen, URLError, HTTPError

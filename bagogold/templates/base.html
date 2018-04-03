@@ -469,24 +469,24 @@
                                                     </a>
                                                     <ul class="dropdown-menu">
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'acompanhamento_td' %}active{% endif %}">
-                                                            <a href="{% url "td:acompanhamento_td" %}" class="nav-link"> Acompanhamento </a>
+                                                            <a href="{% url "tesouro_direto:acompanhamento_td" %}" class="nav-link"> Acompanhamento </a>
                                                         </li>
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'historico_td' %}active{% endif %}">
-                                                            <a href="{% url "td:historico_td" %}" class="nav-link"> Histórico </a>
+                                                            <a href="{% url "tesouro_direto:historico_td" %}" class="nav-link"> Histórico </a>
                                                         </li>
                                                         {% if request.user.is_authenticated %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_td' %}active{% endif %}">
-                                                            <a href="{% url "td:inserir_operacao_td" %}" class="nav-link"> Inserir operação </a>
+                                                            <a href="{% url "tesouro_direto:inserir_operacao_td" %}" class="nav-link"> Inserir operação </a>
                                                         </li>
                                                         {% endif %}
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'listar_titulos_td' %}active{% endif %}">
-                                                            <a href="{% url "td:listar_titulos_td" %}" class="nav-link"> Listar títulos </a>
+                                                            <a href="{% url "tesouro_direto:listar_titulos_td" %}" class="nav-link"> Listar títulos </a>
                                                         </li>
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'painel_td' %}active{% endif %}">
-                                                            <a href="{% url "td:painel_td" %}" class="nav-link"> Painel </a>
+                                                            <a href="{% url "tesouro_direto:painel_td" %}" class="nav-link"> Painel </a>
                                                         </li>
                                                         <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'sobre_td' %}active{% endif %}">
-                                                            <a href="{% url "td:sobre_td" %}" class="nav-link"> Sobre </a>
+                                                            <a href="{% url "tesouro_direto:sobre_td" %}" class="nav-link"> Sobre </a>
                                                         </li>
                                                     </ul>
                                                 </li>

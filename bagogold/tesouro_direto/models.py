@@ -98,7 +98,7 @@ class OperacaoTitulo (models.Model):
     tipo_operacao = models.CharField(u'Tipo de operação', max_length=1)
     titulo = models.ForeignKey('Titulo')
     consolidada = models.NullBooleanField(u'Consolidada?', blank=True, null=True)
-    investidor = models.ForeignKey('Investidor')
+    investidor = models.ForeignKey('bagogold.Investidor', related_name='tesouro_direto_novo')
     
     def __unicode__(self):
         return '(' + self.tipo_operacao + ') ' +str(self.quantidade) + ' ' + self.titulo.tipo + ' a R$' + str(self.preco_unitario)
@@ -134,17 +134,4 @@ class ValorDiarioTitulo (models.Model):
             ValorDiarioTitulo.objects.get(titulo=self.titulo, data_hora=self.data_hora)
         except ValorDiarioTitulo.DoesNotExist:
             super(ValorDiarioTitulo, self).save(*args, **kw)
-            
-class HistoricoIPCA (models.Model):
-    valor = models.DecimalField(u'Valor IPCA', max_digits=5, decimal_places=2)
-    mes = models.SmallIntegerField(u'Mês')
-    ano = models.SmallIntegerField(u'Ano')
-    
-    def save(self, *args, **kw):
-        try:
-            HistoricoIPCA.objects.get(mes=self.mes, ano=self.ano)
-        except HistoricoIPCA.DoesNotExist:
-            super(HistoricoIPCA, self).save(*args, **kw)
-            
-    def data(self):
-        return datetime.date(self.ano, self.mes, 1)
+        

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.db import models
+import datetime
 
 class HistoricoTaxaDI (models.Model):
     data = models.DateField(u'Data')
@@ -19,3 +20,15 @@ class HistoricoTaxaSelic (models.Model):
     def save(self, *args, **kw):
         if not HistoricoTaxaSelic.objects.filter(taxa_diaria=self.taxa_diaria, data=self.data).exists():
             super(HistoricoTaxaSelic, self).save(*args, **kw)
+            
+class HistoricoIPCA (models.Model):
+    valor = models.DecimalField(u'Valor IPCA', max_digits=5, decimal_places=2)
+    mes = models.SmallIntegerField(u'Mês')
+    ano = models.SmallIntegerField(u'Ano')
+    
+    def save(self, *args, **kw):
+        if not HistoricoIPCA.objects.filter(mes=self.mes, ano=self.ano).exists():
+            super(HistoricoIPCA, self).save(*args, **kw)
+            
+    def data(self):
+        return datetime.date(self.ano, self.mes, 1)

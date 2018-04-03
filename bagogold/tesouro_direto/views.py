@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoTDFormSet
-from bagogold.bagogold.forms.td import OperacaoTituloForm
+from bagogold.tesouro_direto.forms import OperacaoTituloForm
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD, Divisao
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic, \
-    HistoricoTaxaDI
-from bagogold.tesouro_direto.models import OperacaoTitulo, HistoricoTitulo, \
-    ValorDiarioTitulo, Titulo, HistoricoIPCA
+    HistoricoTaxaDI, HistoricoIPCA
 from bagogold.bagogold.utils.taxas_indexacao import \
     calcular_valor_atualizado_com_taxas_di
-from bagogold.tesouro_direto.utils import calcular_imposto_venda_td, \
-    buscar_data_valor_mais_recente, quantidade_titulos_ate_dia, \
-    quantidade_titulos_ate_dia_por_titulo, calcular_valor_td_ate_dia
 from bagogold.fii.models import FII
 from bagogold.fii.utils import calcular_rendimento_proventos_fii_12_meses, \
     calcular_variacao_percentual_fii_por_periodo
 from bagogold.lci_lca.models import LetraCredito
+from bagogold.tesouro_direto.models import OperacaoTitulo, HistoricoTitulo, \
+    ValorDiarioTitulo, Titulo
+from bagogold.tesouro_direto.utils import calcular_imposto_venda_td, \
+    buscar_data_valor_mais_recente, quantidade_titulos_ate_dia, \
+    quantidade_titulos_ate_dia_por_titulo, calcular_valor_td_ate_dia
 from copy import deepcopy
 from decimal import Decimal, ROUND_DOWN
 from django.contrib import messages
