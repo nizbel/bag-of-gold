@@ -145,16 +145,16 @@ imposto_renda_patterns = [
 #     ]
 
 td_patterns = [
-    url(r'^acompanhamento/$', RedirectView.as_view(pattern_name='acompanhamento_td', permanent=True)),
-    url(r'^buscar-titulos-validos-na-data/$', RedirectView.as_view(pattern_name='buscar_titulos_validos_na_data', permanent=True)),
-    url(r'^detalhar-titulo/(?P<titulo_id>\d+)/$', RedirectView.as_view(pattern_name='detalhar_titulo_td', permanent=True)),
-    url(r'^editar-operacao/(?P<operacao_id>\d+)/$', RedirectView.as_view(pattern_name='editar_operacao_td', permanent=True)),
-    url(r'^historico/$', RedirectView.as_view(pattern_name='historico_td', permanent=True)),
-    url(r'^inserir-operacao-td/$', RedirectView.as_view(pattern_name='inserir_operacao_td', permanent=True)),
-    url(r'^listar-historico-titulo/(?P<titulo_id>\d+)/$', RedirectView.as_view(pattern_name='listar_historico_titulo', permanent=True)),
-    url(r'^listar-titulos-td/$', RedirectView.as_view(pattern_name='listar_titulos_td', permanent=True)),
-    url(r'^painel/$', RedirectView.as_view(pattern_name='painel_td', permanent=True)),
-    url(r'^sobre/$', RedirectView.as_view(pattern_name='sobre_td', permanent=True)),
+    url(r'^acompanhamento/$', RedirectView.as_view(pattern_name='tesouro_direto:acompanhamento_td', permanent=True)),
+    url(r'^buscar-titulos-validos-na-data/$', RedirectView.as_view(pattern_name='tesouro_direto:buscar_titulos_validos_na_data', permanent=True)),
+    url(r'^detalhar-titulo/(?P<titulo_id>\d+)/$', RedirectView.as_view(pattern_name='tesouro_direto:detalhar_titulo_td', permanent=True)),
+    url(r'^editar-operacao/(?P<operacao_id>\d+)/$', RedirectView.as_view(pattern_name='tesouro_direto:editar_operacao_td', permanent=True)),
+    url(r'^historico/$', RedirectView.as_view(pattern_name='tesouro_direto:historico_td', permanent=True)),
+    url(r'^inserir-operacao-td/$', RedirectView.as_view(pattern_name='tesouro_direto:inserir_operacao_td', permanent=True)),
+    url(r'^listar-historico-titulo/(?P<titulo_id>\d+)/$', RedirectView.as_view(pattern_name='tesouro_direto:listar_historico_titulo', permanent=True)),
+    url(r'^listar-titulos-td/$', RedirectView.as_view(pattern_name='tesouro_direto:listar_titulos_td', permanent=True)),
+    url(r'^painel/$', RedirectView.as_view(pattern_name='tesouro_direto:painel_td', permanent=True)),
+    url(r'^sobre/$', RedirectView.as_view(pattern_name='tesouro_direto:sobre_td', permanent=True)),
     ]
 
 urlpatterns = [

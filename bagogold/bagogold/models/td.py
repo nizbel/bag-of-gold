@@ -135,16 +135,16 @@ class ValorDiarioTitulo (models.Model):
         except ValorDiarioTitulo.DoesNotExist:
             super(ValorDiarioTitulo, self).save(*args, **kw)
             
-class HistoricoIPCA (models.Model):
-    valor = models.DecimalField(u'Valor IPCA', max_digits=5, decimal_places=2)
-    mes = models.SmallIntegerField(u'Mês')
-    ano = models.SmallIntegerField(u'Ano')
-    
-    def save(self, *args, **kw):
-        try:
-            HistoricoIPCA.objects.get(mes=self.mes, ano=self.ano)
-        except HistoricoIPCA.DoesNotExist:
-            super(HistoricoIPCA, self).save(*args, **kw)
-            
-    def data(self):
-        return datetime.date(self.ano, self.mes, 1)
+# class HistoricoIPCA (models.Model):
+#     valor = models.DecimalField(u'Valor IPCA', max_digits=5, decimal_places=2)
+#     mes = models.SmallIntegerField(u'Mês')
+#     ano = models.SmallIntegerField(u'Ano')
+#     
+#     def save(self, *args, **kw):
+#         try:
+#             HistoricoIPCA.objects.get(mes=self.mes, ano=self.ano)
+#         except HistoricoIPCA.DoesNotExist:
+#             super(HistoricoIPCA, self).save(*args, **kw)
+#             
+#     def data(self):
+#         return datetime.date(self.ano, self.mes, 1)

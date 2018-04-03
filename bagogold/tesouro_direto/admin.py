@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.tesouro_direto.models import OperacaoTitulo, HistoricoTitulo, Titulo, \
-    ValorDiarioTitulo, HistoricoIPCA
+    ValorDiarioTitulo
 from django.contrib import admin
  
 class TituloAdmin(admin.ModelAdmin):
@@ -18,5 +18,3 @@ class HistoricoTituloAdmin(admin.ModelAdmin):
 admin.site.register(HistoricoTitulo, HistoricoTituloAdmin)
             
 admin.site.register(ValorDiarioTitulo)
-            
-admin.site.register(HistoricoIPCA)

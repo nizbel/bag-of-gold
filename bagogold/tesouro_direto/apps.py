@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from django.apps import AppConfig
 
 
-class LetraCambioConfig(AppConfig):
+class TesouroDiretoConfig(AppConfig):
     name = 'bagogold.tesouro_direto'
     def ready(self):
         import signals
