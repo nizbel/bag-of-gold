@@ -112,6 +112,7 @@
 							<th>Emolumentos</th>
 							<th>Corretagem</th>
 							<th>Total</th>
+                            <th>Uso de prov.</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -150,6 +151,7 @@
 							">R$ {{item.total|floatformat:2}}</span>
                             {% endif %}
                             </td>
+                            <td><span class="font-blue">R$ {{item.uso_proventos}}</span></td>
 						</tr>
 					{% endfor %}
 					</tbody>

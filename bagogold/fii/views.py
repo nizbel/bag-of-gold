@@ -357,13 +357,13 @@ def historico_fii(request):
             qtd_papeis[item.fii.ticker] = Decimal(0)       
         # Verificar se se trata de compra, venda ou provento
         if item.tipo == 'Compra':
-            uso_proventos = Decimal(0)
+            item.uso_proventos = Decimal(0)
             if item.utilizou_proventos():
-                uso_proventos += item.qtd_proventos_utilizada()
-                total_proventos -= uso_proventos
+                item.uso_proventos += item.qtd_proventos_utilizada()
+                total_proventos -= item.uso_proventos
             item.total = Decimal(-1) * (item.quantidade * item.preco_unitario + \
-            item.emolumentos + item.corretagem - uso_proventos)
-            total_gasto += item.total
+            item.emolumentos + item.corretagem)
+            total_gasto += item.total - item.uso_proventos
             qtd_papeis[item.fii.ticker] += item.quantidade
             
         elif item.tipo == 'Venda':
