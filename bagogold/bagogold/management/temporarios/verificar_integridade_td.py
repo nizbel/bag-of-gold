@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.td import Titulo, OperacaoTitulo, HistoricoTitulo
+from bagogold.tesouro_direto.models import Titulo, OperacaoTitulo, HistoricoTitulo
 from django.core.management.base import BaseCommand
 
 

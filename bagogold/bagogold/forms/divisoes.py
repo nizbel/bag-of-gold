@@ -4,7 +4,7 @@ from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLCI_LCA, \
     TransferenciaEntreDivisoes, DivisaoOperacaoAcao, DivisaoOperacaoFII, \
     DivisaoOperacaoCDB_RDB, DivisaoOperacaoTD, DivisaoOperacaoLetraCambio
 from bagogold.lci_lca.models import OperacaoVendaLetraCredito
-from bagogold.bagogold.utils.td import calcular_qtd_titulos_ate_dia_por_divisao
+from bagogold.tesouro_direto.utils import calcular_qtd_titulos_ate_dia_por_divisao
 from bagogold.cri_cra.utils.utils import \
     qtd_cri_cra_ate_dia_para_divisao_para_certificado
 from bagogold.fundo_investimento.utils import \

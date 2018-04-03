@@ -4,7 +4,7 @@ from bagogold.bagogold.forms.divisoes import DivisaoOperacaoLCI_LCAFormSet
 from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoLCI_LCA, Divisao
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
-from bagogold.bagogold.models.td import HistoricoIPCA
+from bagogold.tesouro_direto.models import HistoricoIPCA
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo
 from bagogold.bagogold.utils.taxas_indexacao import \
     calcular_valor_atualizado_com_taxas_di, calcular_valor_atualizado_com_taxa_di

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.td import OperacaoTitulo
-from bagogold.bagogold.utils.td import \
+from bagogold.tesouro_direto.models import OperacaoTitulo
+from bagogold.tesouro_direto.utils import \
     calcular_qtd_um_titulo_ate_dia_por_divisao
 from bagogold.pendencias.models.pendencias import \
     PendenciaVencimentoTesouroDireto

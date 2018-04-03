@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.td import Titulo, OperacaoTitulo, HistoricoTitulo
-from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia_por_titulo, \
+from bagogold.tesouro_direto.models import Titulo, OperacaoTitulo, HistoricoTitulo
+from bagogold.tesouro_direto.utils import quantidade_titulos_ate_dia_por_titulo, \
     calcular_valor_td_ate_dia, quantidade_titulos_ate_dia
 from decimal import Decimal
 from django.contrib.auth.models import User

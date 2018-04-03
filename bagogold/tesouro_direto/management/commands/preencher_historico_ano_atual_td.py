@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold import settings
-from bagogold.bagogold.models.td import HistoricoTitulo, Titulo
+from bagogold.tesouro_direto.models import HistoricoTitulo, Titulo
 from bagogold.bagogold.testTD import baixar_historico_td_ano, \
     baixar_historico_td_total
 from django.core.mail import mail_admins

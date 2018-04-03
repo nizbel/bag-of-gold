@@ -6,7 +6,7 @@ from bagogold.bagogold.forms.divisoes import DivisaoOperacaoCDB_RDBFormSet
 from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoCDB_RDB, Divisao
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
-from bagogold.bagogold.models.td import HistoricoIPCA
+from bagogold.tesouro_direto.models import HistoricoIPCA
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo, \
     qtd_dias_uteis_no_periodo, calcular_iof_e_ir_longo_prazo
 from bagogold.bagogold.utils.taxas_indexacao import \
