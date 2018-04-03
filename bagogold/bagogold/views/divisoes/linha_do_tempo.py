@@ -36,7 +36,7 @@ def linha_do_tempo(request, divisao_id):
                                         content_type = "application/json")  
 
     # Preparar tipos de investimentos
-    investimentos = {'C': 'CDB/RDB', 'L': 'LCI/LCA'}
+    investimentos = {'A': u'Letra de Câmbio', 'C': u'CDB/RDB', 'L': u'LCI/LCA'}
         
     return TemplateResponse(request, 'divisoes/linha_do_tempo.html', {'divisao': divisao, 'investimentos': investimentos})
 
