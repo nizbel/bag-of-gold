@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.forms.investidor import ExtendedAuthForm, \
-    ExtendedUserCreationForm, ExtendedPasswordChangeForm,\
-    ExtendedSetPasswordForm
+    ExtendedUserCreationForm, ExtendedPasswordChangeForm, ExtendedSetPasswordForm
 from bagogold.bagogold.views.investidores.investidores import logout
 from django.conf.urls import include, url
-from django.contrib.auth.views import PasswordChangeView, \
-    PasswordChangeDoneView, PasswordResetView, PasswordResetDoneView, \
-    PasswordResetCompleteView, PasswordResetCompleteView, LoginView,\
-    PasswordResetConfirmView
+from django.contrib.auth.views import PasswordChangeView, PasswordChangeDoneView, \
+    PasswordResetView, PasswordResetDoneView, PasswordResetCompleteView, \
+    PasswordResetCompleteView, LoginView, PasswordResetConfirmView
 from django.views.generic.base import RedirectView, TemplateView
 from registration import validators
 from registration.backends.hmac import views as registration_views
@@ -147,16 +145,16 @@ imposto_renda_patterns = [
 #     ]
 
 td_patterns = [
-    url(r'^acompanhamento/$', views.td.td.acompanhamento_td, name='acompanhamento_td'),
-    url(r'^buscar-titulos-validos-na-data/$', views.td.td.buscar_titulos_validos_na_data, name='buscar_titulos_validos_na_data'),
-    url(r'^detalhar-titulo/(?P<titulo_id>\d+)/$', views.td.td.detalhar_titulo_td, name='detalhar_titulo_td'),
-    url(r'^editar-operacao/(?P<operacao_id>\d+)/$', views.td.td.editar_operacao_td, name='editar_operacao_td'),
-    url(r'^historico/$', views.td.td.historico_td, name='historico_td'),
-    url(r'^inserir-operacao-td/$', views.td.td.inserir_operacao_td, name='inserir_operacao_td'),
-    url(r'^listar-historico-titulo/(?P<titulo_id>\d+)/$', views.td.td.listar_historico_titulo, name='listar_historico_titulo'),
-    url(r'^listar-titulos-td/$', views.td.td.listar_titulos_td, name='listar_titulos_td'),
-    url(r'^painel/$', views.td.td.painel, name='painel_td'),
-    url(r'^sobre/$', views.td.td.sobre, name='sobre_td'),
+    url(r'^acompanhamento/$', RedirectView.as_view(pattern_name='acompanhamento_td', permanent=False)),
+    url(r'^buscar-titulos-validos-na-data/$', RedirectView.as_view(pattern_name='buscar_titulos_validos_na_data', permanent=False)),
+    url(r'^detalhar-titulo/(?P<titulo_id>\d+)/$', RedirectView.as_view(pattern_name='detalhar_titulo_td', permanent=False)),
+    url(r'^editar-operacao/(?P<operacao_id>\d+)/$', RedirectView.as_view(pattern_name='editar_operacao_td', permanent=False)),
+    url(r'^historico/$', RedirectView.as_view(pattern_name='historico_td', permanent=False)),
+    url(r'^inserir-operacao-td/$', RedirectView.as_view(pattern_name='inserir_operacao_td', permanent=False)),
+    url(r'^listar-historico-titulo/(?P<titulo_id>\d+)/$', RedirectView.as_view(pattern_name='listar_historico_titulo', permanent=False)),
+    url(r'^listar-titulos-td/$', RedirectView.as_view(pattern_name='listar_titulos_td', permanent=False)),
+    url(r'^painel/$', RedirectView.as_view(pattern_name='painel_td', permanent=False)),
+    url(r'^sobre/$', RedirectView.as_view(pattern_name='sobre_td', permanent=False)),
     ]
 
 urlpatterns = [

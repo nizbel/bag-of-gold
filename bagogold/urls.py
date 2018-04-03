@@ -31,6 +31,8 @@ urlpatterns = [
     url(r'^lci-lca/', include('bagogold.lci_lca.urls', namespace='lci_lca')),
     # App Outros investimentos
     url(r'^outros-investimentos/', include('bagogold.outros_investimentos.urls', namespace='outros_investimentos')),
+    # App Tesouro Direto
+    url(r'^tesouro-direto/', include('bagogold.tesouro_direto.urls', namespace='tesouro_direto')),
     # App pendencias
     url(r'', include('bagogold.pendencias.urls')),
 ]

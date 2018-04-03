@@ -56,6 +56,7 @@ INSTALLED_APPS = (
     'bagogold.lci_lca',
     'bagogold.outros_investimentos',
     'bagogold.lc',
+    'bagogold.tesouro_direto',
 )
 
 MIDDLEWARE_CLASSES = (
