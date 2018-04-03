@@ -166,6 +166,27 @@
                             <div class="row">
                                 <div class="col-md-12">
                                     <span class="col-md-12 hidden" id="erro_simulador"></span>
+                                    <label class="col-md-12 control-label">Tipo de rendimento:</label>
+                                    <div class="col-md-12">
+                                        <div class="md-radio-inline">
+                                            <div class="md-radio">
+                                                <input type="radio" class="md-radiobtn filtro-simulador" name="radioTipoRendimento" id="radioPosDI" value="POS" checked>
+                                                <label for="radioPosDI">
+                                                    <span></span>
+                                                    <span class="check"></span>
+                                                    <span class="box"></span> Pós-fixado (DI) 
+                                                </label>
+                                            </div>
+                                            <div class="md-radio">
+                                                <input type="radio" class="md-radiobtn filtro-simulador" name="radioTipoRendimento" id="radioPre" value="PRE">
+                                                <label for="radioPre">
+                                                    <span></span>
+                                                    <span class="check"></span>
+                                                    <span class="box"></span> Prefixado 
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <label class="col-md-12 control-label">Período:</label>
 <!--                                     <div class="col-md-12"> -->
 <!--                                         <div id="rangePeriodo" class="noUi-primary margin-top-40"></div> -->
@@ -174,7 +195,7 @@
                                     <div class="col-md-12">
                                         <input class="filtro-simulador form-control" id="periodo" type="text" value="filtros_simulador.periodo">
                                     </div>
-                                    <label class="col-md-12 control-label">Rendimento (% do DI):</label>
+                                    <label class="col-md-12 control-label">Rendimento:</label>
                                     <div class="col-md-12">
                                         <input class="filtro-simulador form-control" id="percentualRendimento" type="text" value="{{filtros_simulador.percentual_indice}}">
                                     </div>
@@ -431,7 +452,7 @@ $( document ).ready(function() {
                     url : "{% url 'lci_lca:sobre_lci_lca' %}", // the endpoint
                     type : "GET", // http method
                     data : {periodo: $('#periodo').val(), percentual_indice: $('#percentualRendimento').val(),
-                    	qtd: $('#qtdInvestida').val()},
+                    	qtd: $('#qtdInvestida').val(), tipo: $("input[name='radioTipoRendimento']:checked").val()},
         
                     // handle a successful response
                     success : function(retorno) {
