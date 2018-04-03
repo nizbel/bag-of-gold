@@ -198,6 +198,12 @@ def update(requirements=False, rev=None):
     # Start apache
     sudo('service apache2 start', pty=False)
     
+def reset_pg():
+    if env.config == 'PROD':
+        sudo('/etc/init.d/postgresql stop')
+        sudo('/etc/init.d/postgresql start')
+    
+    
 def verificar_update():
     run('workon %(virtualenv)s' % {'virtualenv': env.virtualenv})
     with cd(env.path):
