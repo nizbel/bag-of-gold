@@ -6,7 +6,7 @@ from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoCRI_CRA
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
-from bagogold.bagogold.models.td import HistoricoIPCA
+from bagogold.tesouro_direto.models import HistoricoIPCA
 from bagogold.bagogold.utils.taxas_indexacao import calcular_valor_atualizado_com_taxas_di
 from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo, \
     formatar_zeros_a_direita_apos_2_casas_decimais

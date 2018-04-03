@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.td import HistoricoTitulo, Titulo, \
+from bagogold.tesouro_direto.models import HistoricoTitulo, Titulo, \
     ValorDiarioTitulo
-from bagogold.bagogold.utils.td import criar_data_inicio_titulos
+from bagogold.tesouro_direto.utils import criar_data_inicio_titulos
 from decimal import Decimal
 from urllib2 import Request, urlopen, URLError, HTTPError
 import cgi

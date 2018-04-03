@@ -8,7 +8,7 @@ from bagogold.bagogold.models.debentures import OperacaoDebenture, \
 from bagogold.bagogold.models.divisoes import TransferenciaEntreDivisoes, \
     Divisao
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
-from bagogold.bagogold.models.td import OperacaoTitulo, HistoricoTitulo, \
+from bagogold.tesouro_direto.models import OperacaoTitulo, HistoricoTitulo, \
     ValorDiarioTitulo, Titulo
 from bagogold.bagogold.utils.debenture import calcular_valor_debentures_ate_dia
 from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
@@ -20,7 +20,7 @@ from bagogold.bagogold.utils.misc import calcular_rendimentos_ate_data, \
     verificar_feriado_bovespa, formatar_zeros_a_direita_apos_2_casas_decimais
 from bagogold.bagogold.utils.taxas_indexacao import \
     calcular_valor_atualizado_com_taxas_di
-from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia
+from bagogold.tesouro_direto.utils import calcular_valor_td_ate_dia
 from bagogold.blog.models import Post
 from bagogold.cdb_rdb.models import OperacaoCDB_RDB
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, \

@@ -6,7 +6,7 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD, \
     Divisao, DivisaoOperacaoFundoInvestimento, DivisaoOperacaoCDB_RDB
 from bagogold.fii.models import OperacaoFII
 from bagogold.lci_lca.models import OperacaoLetraCredito
-from bagogold.bagogold.models.td import OperacaoTitulo
+from bagogold.tesouro_direto.models import OperacaoTitulo
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
 from django.apps import apps
 

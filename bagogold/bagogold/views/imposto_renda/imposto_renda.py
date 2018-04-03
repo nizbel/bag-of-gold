@@ -3,7 +3,7 @@ from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.models.acoes import OperacaoAcao, Provento
 from bagogold.fii.models import OperacaoFII, ProventoFII
 from bagogold.lci_lca.models import OperacaoLetraCredito, LetraCredito
-from bagogold.bagogold.models.td import OperacaoTitulo, Titulo, HistoricoTitulo
+from bagogold.tesouro_direto.models import OperacaoTitulo, Titulo, HistoricoTitulo
 from bagogold.bagogold.utils.misc import trazer_primeiro_registro, \
     verificar_feriado_bovespa
 from bagogold.cdb_rdb.models import OperacaoCDB_RDB

@@ -9,7 +9,7 @@
 #     ValorDiarioTitulo, Titulo, HistoricoIPCA
 # from bagogold.bagogold.utils.taxas_indexacao import \
 #     calcular_valor_atualizado_com_taxas_di
-# from bagogold.bagogold.utils.td import calcular_imposto_venda_td, \
+# from bagogold.tesouro_direto.utils import calcular_imposto_venda_td, \
 #     buscar_data_valor_mais_recente, quantidade_titulos_ate_dia, \
 #     quantidade_titulos_ate_dia_por_titulo, calcular_valor_td_ate_dia
 # from bagogold.fii.models import FII

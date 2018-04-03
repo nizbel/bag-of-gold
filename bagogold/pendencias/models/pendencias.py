@@ -2,8 +2,8 @@
 from bagogold.bagogold.models.gerador_proventos import \
     PendenciaDocumentoProvento
 from bagogold.bagogold.models.investidores import Investidor
-from bagogold.bagogold.models.td import OperacaoTitulo
-from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia_por_titulo
+from bagogold.tesouro_direto.models import OperacaoTitulo
+from bagogold.tesouro_direto.utils import quantidade_titulos_ate_dia_por_titulo
 from django.db import models
 from django.db.models.signals import post_save, post_delete
 from django.dispatch.dispatcher import receiver

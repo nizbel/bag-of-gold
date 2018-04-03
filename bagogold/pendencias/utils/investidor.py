@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.td import OperacaoTitulo
+from bagogold.tesouro_direto.models import OperacaoTitulo
 from bagogold.pendencias.models.pendencias import \
     PendenciaVencimentoTesouroDireto, Pendencia, PendenciaDocumentoGeradorProventos
 from django.db.models.aggregates import Sum
