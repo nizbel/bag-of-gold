@@ -166,16 +166,22 @@
                             <div class="row">
                                 <div class="col-md-12">
                                     <span class="col-md-12 hidden" id="erro_simulador"></span>
-                                    <label class="col-md-12 control-label">Período (em meses de 30 dias):</label>
+                                    <label class="col-md-12 control-label">Período:</label>
+<!--                                     <div class="col-md-12"> -->
+<!--                                         <div id="rangePeriodo" class="noUi-primary margin-top-40"></div> -->
+<!--                                         <input type="hidden" id="rangePeriodoInput" class="filtro-simulador" value="{{filtros_simulador.periodo}}"> -->
+<!--                                     </div> -->
                                     <div class="col-md-12">
-                                        <div id="rangePeriodo" class="noUi-primary margin-top-40"></div>
-                                        <input type="hidden" id="rangePeriodoInput" class="filtro-simulador" value="{{filtros_simulador.periodo}}">
+                                        <input class="filtro-simulador form-control" id="periodo" type="text" value="filtros_simulador.periodo">
                                     </div>
                                     <label class="col-md-12 control-label">Rendimento (% do DI):</label>
                                     <div class="col-md-12">
-                                        <div id="rangePercentual" class="noUi-primary margin-top-40"></div>
-                                        <input type="hidden" id="rangePercentualInput" class="filtro-simulador" value="{{filtros_simulador.percentual_indice}}">
+                                        <input class="filtro-simulador form-control" id="percentualRendimento" type="text" value="{{filtros_simulador.percentual_indice}}">
                                     </div>
+<!--                                     <div class="col-md-12"> -->
+<!--                                         <div id="rangePercentual" class="noUi-primary margin-top-40"></div> -->
+<!--                                         <input type="hidden" id="rangePercentualInput" class="filtro-simulador" value="{{filtros_simulador.percentual_indice}}"> -->
+<!--                                     </div> -->
                                     <label class="col-md-12 control-label">Quantidade investida:</label>
                                     <div class="col-md-12">
                                         <input class="filtro-simulador form-control" id="qtdInvestida" type="text" value="1000">
@@ -307,82 +313,96 @@ $( document ).ready(function() {
     });
     
     // Periodo
-    var periodoSlider = document.getElementById('rangePeriodo');
-    
-    noUiSlider.create(periodoSlider, {
-        start: [{{filtros_simulador.periodo}}],
-        connect: false,
-        format: wNumb({
-            decimals: 0
-        }),
+    $("#periodo").TouchSpin({
+        min: 10,
+        max: 3650,
         step: 1,
-        range: {
-            'min': 2,
-            'max': 36
-        }
+        decimals: 0,
+        maxboostedstep: 100,
+        postfix: 'dias'
     });
+//     var periodoSlider = document.getElementById('rangePeriodo');
     
-    var periodoTipHandles = periodoSlider.getElementsByClassName('noUi-handle'),
-    periodoTooltips = [];
+//     noUiSlider.create(periodoSlider, {
+//         start: [{{filtros_simulador.periodo}}],
+//         connect: false,
+//         format: wNumb({
+//             decimals: 0
+//         }),
+//         step: 1,
+//         range: {
+//             'min': 30,
+//             'max': 36
+//         }
+//     });
+    
+//     var periodoTipHandles = periodoSlider.getElementsByClassName('noUi-handle'),
+//     periodoTooltips = [];
 
-    // Add divs to the slider handles.
-    for ( var i = 0; i < periodoTipHandles.length; i++ ){
-        periodoTooltips[i] = document.createElement('div');
-        periodoTipHandles[i].appendChild(periodoTooltips[i]);
-    }
+//     // Add divs to the slider handles.
+//     for ( var i = 0; i < periodoTipHandles.length; i++ ){
+//         periodoTooltips[i] = document.createElement('div');
+//         periodoTipHandles[i].appendChild(periodoTooltips[i]);
+//     }
     
-    // Add a class for styling
-    periodoTooltips[0].className += 'noUi-tooltip margin-top-20';
-    // Add additional markup
-    periodoTooltips[0].innerHTML = '<strong><span></span></strong>';
-    // Replace the tooltip reference with the span we just added
-    periodoTooltips[0] = periodoTooltips[0].getElementsByTagName('span')[0];
+//     // Add a class for styling
+//     periodoTooltips[0].className += 'noUi-tooltip margin-top-20';
+//     // Add additional markup
+//     periodoTooltips[0].innerHTML = '<strong><span></span></strong>';
+//     // Replace the tooltip reference with the span we just added
+//     periodoTooltips[0] = periodoTooltips[0].getElementsByTagName('span')[0];
     
-    // When the slider changes, write the value to the tooltips.
-    periodoSlider.noUiSlider.on('update', function( values, handle ){
-    	periodoTooltips[handle].innerHTML = values[handle];
-        $('#rangePeriodoInput').val(values[handle]);
-        $('#rangePeriodoInput').change();
-    });
+//     // When the slider changes, write the value to the tooltips.
+//     periodoSlider.noUiSlider.on('update', function( values, handle ){
+//     	periodoTooltips[handle].innerHTML = values[handle];
+//         $('#rangePeriodoInput').val(values[handle]);
+//         $('#rangePeriodoInput').change();
+//     });
 
-    // Percentual do Indice
-    var percentualSlider = document.getElementById('rangePercentual');
-    
-    noUiSlider.create(percentualSlider, {
-        start: [{{filtros_simulador.percentual_indice}}],
-        connect: false,
-        format: wNumb({
-            decimals: 0
-        }),
+    // Percentual de Rendimento
+    $("#percentualRendimento").TouchSpin({
+        min: 10,
+        max: 150,
         step: 1,
-        range: {
-            'min': 10,
-            'max': 110
-        }
+        decimals: 0,
+        maxboostedstep: 100,
+        postfix: '%'
     });
+//     noUiSlider.create(percentualSlider, {
+//         start: [{{filtros_simulador.percentual_indice}}],
+//         connect: false,
+//         format: wNumb({
+//             decimals: 0
+//         }),
+//         step: 1,
+//         range: {
+//             'min': 10,
+//             'max': 110
+//         }
+//     });
     
-    var percentualTipHandles = percentualSlider.getElementsByClassName('noUi-handle'),
-    percentualTooltips = [];
+//     var percentualTipHandles = percentualSlider.getElementsByClassName('noUi-handle'),
+//     percentualTooltips = [];
 
-    // Add divs to the slider handles.
-    for ( var i = 0; i < percentualTipHandles.length; i++ ){
-        percentualTooltips[i] = document.createElement('div');
-        percentualTipHandles[i].appendChild(percentualTooltips[i]);
-    }
+//     // Add divs to the slider handles.
+//     for ( var i = 0; i < percentualTipHandles.length; i++ ){
+//         percentualTooltips[i] = document.createElement('div');
+//         percentualTipHandles[i].appendChild(percentualTooltips[i]);
+//     }
     
-    // Add a class for styling
-    percentualTooltips[0].className += 'noUi-tooltip margin-top-20';
-    // Add additional markup
-    percentualTooltips[0].innerHTML = '<strong><span></span></strong>';
-    // Replace the tooltip reference with the span we just added
-    percentualTooltips[0] = percentualTooltips[0].getElementsByTagName('span')[0];
+//     // Add a class for styling
+//     percentualTooltips[0].className += 'noUi-tooltip margin-top-20';
+//     // Add additional markup
+//     percentualTooltips[0].innerHTML = '<strong><span></span></strong>';
+//     // Replace the tooltip reference with the span we just added
+//     percentualTooltips[0] = percentualTooltips[0].getElementsByTagName('span')[0];
     
     // When the slider changes, write the value to the percentualTooltips.
-    percentualSlider.noUiSlider.on('update', function( values, handle ){
-        percentualTooltips[handle].innerHTML = values[handle];
-        $('#rangePercentualInput').val(values[handle]);
-        $('#rangePercentualInput').change();
-    });
+//     percentualSlider.noUiSlider.on('update', function( values, handle ){
+//         percentualTooltips[handle].innerHTML = values[handle];
+//         $('#rangePercentualInput').val(values[handle]);
+//         $('#rangePercentualInput').change();
+//     });
     
     // Quantidade investida
     $("#qtdInvestida").TouchSpin({
@@ -401,10 +421,16 @@ $( document ).ready(function() {
     	setTimeout(function(){
     		polling.splice(0, 1);
     		if (polling.length == 0) {
+    		    // Bloquear gráfico
+    		    App.blockUI({
+    		        target: '#graf_simulador',
+    		        iconOnly: true,
+    		        overlayColor: 'none'
+    		    });
                 $.ajax({
                     url : "{% url 'lci_lca:sobre_lci_lca' %}", // the endpoint
                     type : "GET", // http method
-                    data : {periodo: $('#rangePeriodoInput').val(), percentual_indice: $('#rangePercentualInput').val(),
+                    data : {periodo: $('#periodo').val(), percentual_indice: $('#percentualRendimento').val(),
                     	qtd: $('#qtdInvestida').val()},
         
                     // handle a successful response
@@ -421,10 +447,12 @@ $( document ).ready(function() {
                             $('#erro_simulador').html('<i class="fa fa-warning"> ' + retorno.mensagem);
                             $('#erro_simulador').removeClass('hidden');
                         }
+                        App.unblockUI('#graf_simulador');
                     },
         
                     // handle a non-successful response
                     error : function(xhr,errmsg,err) {
+                        App.unblockUI('#graf_simulador');
                         console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
                     }
                 });

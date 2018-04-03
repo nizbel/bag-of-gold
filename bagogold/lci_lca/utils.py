@@ -3,7 +3,8 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoLCI_LCA
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo
 from bagogold.bagogold.utils.taxas_indexacao import \
-    calcular_valor_atualizado_com_taxas_di
+    calcular_valor_atualizado_com_taxas_di, \
+    calcular_valor_atualizado_com_taxa_prefixado
 from bagogold.lci_lca.models import OperacaoLetraCredito, \
     OperacaoVendaLetraCredito
 from decimal import Decimal, ROUND_DOWN
@@ -128,25 +129,23 @@ def simulador_lci_lca(filtros):
     Parâmetros: Dicionário com filtros
     Retorno:    Lista de datas (mes a mes) com valores, ex.: [(data, valor),...]
     """
-    qtd_atual = filtros['aplicacao']
+#     qtd_atual = filtros['aplicacao']
     data_atual = datetime.date.today()
-    resultado = [(data_atual, qtd_atual)]
+    resultado = [(data_atual, filtros['aplicacao'])]
     
-    num_dias_grafico = min(filtros['periodo'], 200)
+    num_dias_grafico = min(filtros['periodo'], 64)
     
     # Marcar dias
     qtds_dias = [round(0 + (Decimal(filtros['periodo'])/num_dias_grafico)*parte) for parte in xrange(1, num_dias_grafico+1)]
     if filtros['tipo'] == 'POS':
         ultima_taxa_di = HistoricoTaxaDI.objects.all().order_by('-data')[0].taxa
-        for _ in range(filtros['periodo']):
-            qtd_dias_uteis = qtd_dias_uteis_no_periodo(data_atual, data_atual + datetime.timedelta(days=30))
-            data_atual = data_atual + datetime.timedelta(days=30)
-            qtd_atual = calcular_valor_atualizado_com_taxas_di({ultima_taxa_di: qtd_dias_uteis}, qtd_atual, filtros['percentual_indice'])
-            resultado.append((data_atual, qtd_atual))
+        for qtd_dias in qtds_dias:
+            qtd_dias_uteis = qtd_dias_uteis_no_periodo(data_atual, data_atual + datetime.timedelta(days=qtd_dias))
+            qtd_atual = calcular_valor_atualizado_com_taxas_di({ultima_taxa_di: qtd_dias_uteis}, filtros['aplicacao'], filtros['percentual_indice'])
+            resultado.append((data_atual + datetime.timedelta(days=qtd_dias), qtd_atual))
     elif filtros['tipo'] == 'PRE':
         for qtd_dias in qtds_dias:
             qtd_dias_uteis = qtd_dias_uteis_no_periodo(data_atual, data_atual + datetime.timedelta(days=qtd_dias))
-            #data_atual = data_atual + datetime.timedelta(days=1)
-            qtd_atual = calcular_valor_atualizado_com_taxa_prefixado(taxa, qtd_atual, filtros['percentual_prefixado'], qtd_dias_uteis)
+            qtd_atual = calcular_valor_atualizado_com_taxa_prefixado(filtros['aplicacao'], filtros['percentual_indice'], qtd_dias_uteis)
             resultado.append((data_atual + datetime.timedelta(days=qtd_dias), qtd_atual))
     return resultado
