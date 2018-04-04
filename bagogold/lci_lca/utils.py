@@ -131,6 +131,11 @@ def simulador_lci_lca(filtros):
     qtd_atual = filtros['aplicacao']
     data_atual = datetime.date.today()
     resultado = [(data_atual, qtd_atual)]
+    
+    num_dias_grafico = min(filtros['periodo'], 200)
+    
+    # Marcar dias
+    qtds_dias = [round(0 + (Decimal(filtros['periodo'])/num_dias_grafico)*parte) for parte in xrange(1, num_dias_grafico+1)]
     if filtros['tipo'] == 'POS':
         ultima_taxa_di = HistoricoTaxaDI.objects.all().order_by('-data')[0].taxa
         for _ in range(filtros['periodo']):
@@ -139,9 +144,9 @@ def simulador_lci_lca(filtros):
             qtd_atual = calcular_valor_atualizado_com_taxas_di({ultima_taxa_di: qtd_dias_uteis}, qtd_atual, filtros['percentual_indice'])
             resultado.append((data_atual, qtd_atual))
     elif filtros['tipo'] == 'PRE':
-        for _ in range(filtros['periodo']):
-            qtd_dias_uteis = qtd_dias_uteis_no_periodo(data_atual, data_atual + datetime.timedelta(days=1))
-            data_atual = data_atual + datetime.timedelta(days=1)
-            qtd_atual = calcular_valor_atualizada_com_taxa_prefixado(taxa, qtd_atual, filtros['percentual_prefixado'])
-            resultado.append((data_atual, qtd_atual))
+        for qtd_dias in qtds_dias:
+            qtd_dias_uteis = qtd_dias_uteis_no_periodo(data_atual, data_atual + datetime.timedelta(days=qtd_dias))
+            #data_atual = data_atual + datetime.timedelta(days=1)
+            qtd_atual = calcular_valor_atualizado_com_taxa_prefixado(taxa, qtd_atual, filtros['percentual_prefixado'], qtd_dias_uteis)
+            resultado.append((data_atual + datetime.timedelta(days=qtd_dias), qtd_atual))
     return resultado
