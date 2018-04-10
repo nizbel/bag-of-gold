@@ -13,8 +13,8 @@ from decimal import Decimal, ROUND_DOWN
 from django.db.models.aggregates import Sum, Count
 from django.db.models.expressions import F, Case, When
 from django.db.models.functions import Coalesce
-from django.db.models.query_utils import Q
 import datetime
+
 
 def calcular_valor_venda_cdb_rdb(operacao_venda, arredondar=True, valor_liquido=False):
     """

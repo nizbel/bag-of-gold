@@ -1,4 +1,24 @@
 # -*- coding: utf-8 -*-
+import calendar
+import datetime
+from decimal import Decimal, ROUND_DOWN
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.mail import send_mail
+from django.db.models.expressions import F, Case, When
+from django.template.loader import render_to_string
+from itertools import chain
+import json
+import math
+from operator import attrgetter
+
+from django.db.models import Count
+from django.db.models.aggregates import Sum
+from django.db.models.fields import DecimalField
+from django.http.response import HttpResponse
+from django.template import loader
+from django.template.response import TemplateResponse
+
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.misc import ContatoForm
 from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, Provento, \
@@ -8,15 +28,14 @@ from bagogold.bagogold.models.debentures import OperacaoDebenture, \
 from bagogold.bagogold.models.divisoes import TransferenciaEntreDivisoes, \
     Divisao
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
-from bagogold.tesouro_direto.models import OperacaoTitulo, HistoricoTitulo, \
-    ValorDiarioTitulo, Titulo
 from bagogold.bagogold.utils.debenture import calcular_valor_debentures_ate_dia
 from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
     buscar_totais_atuais_investimentos, buscar_proventos_a_receber, \
     buscar_proventos_a_receber_data_ex_futura, buscar_operacoes_no_periodo
 from bagogold.bagogold.utils.misc import calcular_rendimentos_ate_data, \
     verificar_feriado_bovespa, formatar_zeros_a_direita_apos_2_casas_decimais
-from bagogold.tesouro_direto.utils import calcular_valor_td_ate_dia
+from bagogold.bagogold.utils.taxas_indexacao import \
+    calcular_valor_atualizado_com_taxas_di
 from bagogold.blog.models import Post
 from bagogold.cdb_rdb.models import OperacaoCDB_RDB
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, \
@@ -41,25 +60,10 @@ from bagogold.lci_lca.utils import calcular_valor_lci_lca_ate_dia, \
     calcular_valor_venda_lci_lca
 from bagogold.outros_investimentos.models import Rendimento, Amortizacao, \
     Investimento
-from decimal import Decimal, ROUND_DOWN
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.core.mail import send_mail
-from django.db.models import Count
-from django.db.models.aggregates import Sum
-from django.db.models.expressions import F, Case, When
-from django.db.models.fields import DecimalField
-from django.http.response import HttpResponse
-from django.template import loader
-from django.template.loader import render_to_string
-from django.template.response import TemplateResponse
-from itertools import chain
-from operator import attrgetter
-import calendar
-import datetime
-import json
-import math
-import traceback
+from bagogold.tesouro_direto.models import OperacaoTitulo, HistoricoTitulo, \
+    ValorDiarioTitulo, Titulo
+from bagogold.tesouro_direto.utils import calcular_valor_td_ate_dia
+
 
 @adiciona_titulo_descricao('Cálculos de rendimento', 'Permite calcular tempo necessário para alcançar determinado rendimento')
 def calculo_rendimentos(request):
@@ -659,7 +663,7 @@ def detalhamento_investimentos(request):
             if item.criptomoeda.ticker not in criptomoedas.keys():
                 criptomoedas[item.criptomoeda.ticker] = 0
             if hasattr(item, 'operacaocriptomoedamoeda') and item.operacaocriptomoedamoeda.criptomoeda.ticker not in criptomoedas.keys():
-                criptomoedas[item.operacaocriptomoedamoeda.criptomoeda.ticker]
+                criptomoedas[item.operacaocriptomoedamoeda.criptomoeda.ticker] = 0
             if item.tipo_operacao == 'C':
                 criptomoedas[item.criptomoeda.ticker] += item.quantidade
                 # Alterar quantidade da criptomoeda utilizada na operação
@@ -1099,8 +1103,8 @@ def acumulado_mensal_painel_geral(request):
         
         return HttpResponse(json.dumps(render_to_string('utils/acumulado_mensal_painel_geral.html', {'acumulado_mensal_atual': acumulado_mensal_atual,
                                                      'acumulado_mensal_anterior': acumulado_mensal_anterior})), content_type = "application/json")   
-    else:
-        return HttpResponse(json.dumps({}), content_type = "application/json")   
+
+    return HttpResponse(json.dumps({}), content_type = "application/json")   
 
 @login_required
 def grafico_renda_fixa_painel_geral(request):
@@ -1211,8 +1215,8 @@ def grafico_renda_fixa_painel_geral(request):
                                         'graf_rendimentos_mensal_debentures': graf_rendimentos_mensal_debentures,
                                         'graf_rendimentos_mensal_cri_cra': graf_rendimentos_mensal_cri_cra,
                                         'graf_rendimentos_mensal_lc': graf_rendimentos_mensal_lc}), content_type = "application/json")   
-    else:
-        return HttpResponse(json.dumps({'sucesso': False}), content_type = "application/json")   
+
+    return HttpResponse(json.dumps({'sucesso': False}), content_type = "application/json")   
 
 @login_required
 def rendimento_medio_painel_geral(request):
