@@ -4,7 +4,8 @@ from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 from bagogold.bagogold.utils.misc import verificar_feriado_bovespa, \
     qtd_dias_uteis_no_periodo
 from bagogold.bagogold.utils.taxas_indexacao import \
-    calcular_valor_atualizado_com_taxa_di
+    calcular_valor_atualizado_com_taxa_di,\
+    calcular_valor_atualizado_com_taxa_prefixado
 from bagogold.lci_lca.models import OperacaoLetraCredito, LetraCredito, \
     HistoricoPorcentagemLetraCredito
 from bagogold.lci_lca.utils import calcular_valor_atualizado_com_taxas_di, \
@@ -81,14 +82,14 @@ class SimuladorLCI_LCATestCase(TestCase):
         HistoricoTaxaDI.objects.create(data=datetime.date(2017, 10, 19), taxa=Decimal(12.13))
         HistoricoTaxaDI.objects.create(data=datetime.date(2017, 10, 20), taxa=Decimal(14.13))
         
-    def test_simulador_lci_lca(self):
-        """Testa se simulador está buscando os valores corretamente"""
-        filtros_simulador = {'periodo': Decimal(12), 'percentual_indice': Decimal(88), \
+    def test_simulador_lci_lca_pos_di(self):
+        """Testa se simulador está buscando os valores corretamente para pos-fixado DI"""
+        filtros_simulador = {'periodo': Decimal(365), 'percentual_indice': Decimal(88), \
                              'tipo': 'POS', 'indice': 'DI', 'aplicacao': Decimal(1400)}
         ultimo_valor_simulador = simulador_lci_lca(filtros_simulador)[-1][1]
         
         qtd_dias_uteis = qtd_dias_uteis_no_periodo(datetime.date.today(), datetime.date.today() \
-                                                   + datetime.timedelta(days=30 * int(filtros_simulador['periodo'])))
+                                                   + datetime.timedelta(days=int(filtros_simulador['periodo'])))
         valor_atualizado = calcular_valor_atualizado_com_taxas_di({Decimal(14.13): qtd_dias_uteis}, 
                                                                   filtros_simulador['aplicacao'], filtros_simulador['percentual_indice'])
         self.assertAlmostEqual(ultimo_valor_simulador, valor_atualizado,  delta=0.01)
@@ -99,4 +100,16 @@ class SimuladorLCI_LCATestCase(TestCase):
         
         valor_atualizado = calcular_valor_atualizado_com_taxas_di({Decimal(13.13): qtd_dias_uteis}, 
                                                                   filtros_simulador['aplicacao'], filtros_simulador['percentual_indice'])
+        self.assertAlmostEqual(ultimo_valor_simulador, valor_atualizado,  delta=0.01)
+        
+    def test_simulador_lci_lca_pre(self):
+        """Testa se simulador está buscando os valores corretamente para prefixado"""
+        filtros_simulador = {'periodo': Decimal(721), 'percentual_indice': Decimal('9.5'), \
+                             'tipo': 'PRE', 'indice': 'PRE', 'aplicacao': Decimal(1400)}
+        ultimo_valor_simulador = simulador_lci_lca(filtros_simulador)[-1][1]
+        
+        qtd_dias_uteis = qtd_dias_uteis_no_periodo(datetime.date.today(), datetime.date.today() \
+                                                   + datetime.timedelta(int(filtros_simulador['periodo'])))
+        valor_atualizado = calcular_valor_atualizado_com_taxa_prefixado(filtros_simulador['aplicacao'], filtros_simulador['percentual_indice'],
+                                                                         qtd_dias_uteis)
         self.assertAlmostEqual(ultimo_valor_simulador, valor_atualizado,  delta=0.01)
