@@ -152,7 +152,7 @@ def editar_operacao_criptomoeda(request, id_operacao):
         if OperacaoCriptomoedaTaxa.objects.filter(operacao=operacao_criptomoeda).exists():
             taxa = OperacaoCriptomoedaTaxa.objects.get(operacao=operacao_criptomoeda)
             taxa_valor = taxa.valor
-            taxa_moeda = taxa.moeda.id
+            taxa_moeda = '' if taxa.moeda is None else taxa.moeda.id
         else:
             taxa_valor = 0
             taxa_moeda = None
