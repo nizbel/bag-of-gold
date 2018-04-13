@@ -3,6 +3,7 @@ from bagogold.fii.models import FII, ProventoFII, OperacaoFII, \
     UsoProventosOperacaoFII, HistoricoFII, ValorDiarioFII, EventoIncorporacaoFII, \
     EventoAgrupamentoFII, EventoDesdobramentoFII
 from django.contrib import admin
+from bagogold.bagogold.models.fii import CheckpointFII, CheckpointProventosFII
  
 admin.site.register(FII)
 
@@ -51,3 +52,11 @@ class EventoDesdobramentoFIIAdmin(admin.ModelAdmin):
     list_display = ('fii', 'data', 'proporcao')
     
 admin.site.register(EventoDesdobramentoFII, EventoDesdobramentoFIIAdmin)
+
+class CheckpointFIIAdmin(admin.ModelAdmin):
+    search_fields =['ano', 'fii', 'investidor']
+    list_display = ('ano', 'fii', 'investidor', 'quantidade', 'preco_medio')
+
+admin.site.register(CheckpointFII, CheckpointFIIAdmin)
+
+admin.site.register(CheckpointProventosFII)

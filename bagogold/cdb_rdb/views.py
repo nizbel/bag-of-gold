@@ -28,7 +28,6 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.mail import mail_admins
 from django.core.urlresolvers import reverse
 from django.db import transaction
-from django.db.models import Count
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -70,7 +69,7 @@ def detalhar_cdb_rdb(request, cdb_rdb_id):
     # Remover operacoes totalmente vendidas
     operacoes = [operacao for operacao in operacoes if operacao.tipo_operacao == 'C' and operacao.qtd_disponivel_venda() > 0]
     if operacoes:
-        historico_di = HistoricoTaxaDI.objects.filter(data__range=[operacoes[0].data, datetime.date.today()])
+#         historico_di = HistoricoTaxaDI.objects.filter(data__range=[operacoes[0].data, datetime.date.today()])
         for operacao in operacoes:
             # Total investido
             cdb_rdb.total_investido += operacao.qtd_disponivel_venda()
@@ -90,13 +89,13 @@ def detalhar_cdb_rdb(request, cdb_rdb_id):
             operacao.iof = Decimal(calcular_iof_regressivo(qtd_dias)) * (operacao.atual - operacao.qtd_disponivel_venda())
             # IR
             if qtd_dias <= 180:
-                operacao.imposto_renda =  Decimal(0.225) * (operacao.atual - operacao.qtd_disponivel_venda() - operacao.iof)
+                operacao.imposto_renda = Decimal(0.225) * (operacao.atual - operacao.qtd_disponivel_venda() - operacao.iof)
             elif qtd_dias <= 360:
-                operacao.imposto_renda =  Decimal(0.2) * (operacao.atual - operacao.qtd_disponivel_venda() - operacao.iof)
+                operacao.imposto_renda = Decimal(0.2) * (operacao.atual - operacao.qtd_disponivel_venda() - operacao.iof)
             elif qtd_dias <= 720:
-                operacao.imposto_renda =  Decimal(0.175) * (operacao.atual - operacao.qtd_disponivel_venda() - operacao.iof)
+                operacao.imposto_renda = Decimal(0.175) * (operacao.atual - operacao.qtd_disponivel_venda() - operacao.iof)
             else: 
-                operacao.imposto_renda =  Decimal(0.15) * (operacao.atual - operacao.qtd_disponivel_venda() - operacao.iof)
+                operacao.imposto_renda = Decimal(0.15) * (operacao.atual - operacao.qtd_disponivel_venda() - operacao.iof)
             cdb_rdb.total_ir += operacao.imposto_renda
             cdb_rdb.total_iof += operacao.iof
     
@@ -247,19 +246,19 @@ def editar_historico_porcentagem(request, historico_porcentagem_id):
             inicial = False
             form_historico_porcentagem = HistoricoPorcentagemCDB_RDBForm(instance=historico_porcentagem, cdb_rdb=historico_porcentagem.cdb_rdb, \
                                                                          investidor=investidor)
-            
-    return TemplateResponse(request, 'cdb_rdb/editar_historico_porcentagem.html', {'form_historico_porcentagem': form_historico_porcentagem, 'inicial': inicial}) 
-    
+
+    return TemplateResponse(request, 'cdb_rdb/editar_historico_porcentagem.html', {'form_historico_porcentagem': form_historico_porcentagem, 'inicial': inicial})
+
 @login_required
 @adiciona_titulo_descricao('Editar registro de vencimento de um CDB/RDB', 'Alterar um registro de vencimento no '
                                                                         'histórico do CDB/RDB')
 def editar_historico_vencimento(request, historico_vencimento_id):
     investidor = request.user.investidor
     historico_vencimento = get_object_or_404(HistoricoVencimentoCDB_RDB, id=historico_vencimento_id)
-    
+
     if historico_vencimento.cdb_rdb.investidor != investidor:
         raise PermissionDenied
-    
+
     if request.method == 'POST':
         if request.POST.get("save"):
             if historico_vencimento.data is None:
@@ -367,7 +366,7 @@ def editar_operacao_cdb_rdb(request, operacao_id):
                     elif settings.ENV == 'PROD':
                         mail_admins(u'Erro ao editar operação em CDB/RDB', traceback.format_exc().decode('utf-8'))     
                 
-            for erro in [erro for erro in form_operacao_cdb_rdb.non_field_errors()]:
+            for erro in form_operacao_cdb_rdb.non_field_errors():
                 messages.error(request, erro)
 #                         print '%s %s'  % (divisao_cdb_rdb.quantidade, divisao_cdb_rdb.divisao)
                 
