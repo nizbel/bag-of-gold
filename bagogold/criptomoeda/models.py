@@ -91,7 +91,7 @@ class TransferenciaCriptomoeda (models.Model):
     taxa = models.DecimalField(u'Taxa da transferência', max_digits=21, decimal_places=12, validators=[MinValueValidator(Decimal('0.000000000001'))])
 
     def __unicode__(self):
-        return u'Transferência de %s %s entre %s e %s' % (self.valor, self.criptomoeda.ticker, self.origem, self.destino)
+        return u'Transferência de %s %s entre %s e %s' % (self.quantidade, self.moeda_utilizada(), self.origem, self.destino)
     
     def em_real(self):
         return self.moeda is None
