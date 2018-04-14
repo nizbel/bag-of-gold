@@ -227,7 +227,7 @@ def editar_transferencia(request, id_transferencia):
 #                         print '%s %s'  % (divisao_criptomoeda.quantidade, divisao_criptomoeda.divisao)
                 
         elif request.POST.get("delete"):
-            divisao_criptomoeda = DivisaoOperacaoCriptomoeda.objects.filter(operacao=transferencia_criptomoeda)
+            divisao_criptomoeda = DivisaoTransferenciaCriptomoeda.objects.filter(transferencia=transferencia_criptomoeda)
             for divisao in divisao_criptomoeda:
                 divisao.delete()
             transferencia_criptomoeda.delete()
