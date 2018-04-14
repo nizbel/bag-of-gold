@@ -227,16 +227,12 @@ def editar_transferencia(request, id_transferencia):
 #                         print '%s %s'  % (divisao_criptomoeda.quantidade, divisao_criptomoeda.divisao)
                 
         elif request.POST.get("delete"):
-            # Verifica se, em caso de compra, a quantidade de cotas do investidor não fica negativa
-            if transferencia_criptomoeda.tipo_operacao == 'C' and calcular_qtd_cotas_ate_dia_por_fundo(investidor, transferencia_criptomoeda.criptomoeda.id, datetime.date.today()) - transferencia_criptomoeda.quantidade < 0:
-                messages.error(request, 'Operação de compra não pode ser apagada pois quantidade atual para o fundo %s seria negativa' % (transferencia_criptomoeda.criptomoeda))
-            else:
-                divisao_criptomoeda = DivisaoOperacaoCriptomoeda.objects.filter(operacao=transferencia_criptomoeda)
-                for divisao in divisao_criptomoeda:
-                    divisao.delete()
-                transferencia_criptomoeda.delete()
-                messages.success(request, 'Operação apagada com sucesso')
-                return HttpResponseRedirect(reverse('td:historico_td'))
+            divisao_criptomoeda = DivisaoOperacaoCriptomoeda.objects.filter(operacao=transferencia_criptomoeda)
+            for divisao in divisao_criptomoeda:
+                divisao.delete()
+            transferencia_criptomoeda.delete()
+            messages.success(request, 'Transferência apagada com sucesso')
+            return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
  
     else:
         form_transferencia_criptomoeda = TransferenciaCriptomoedaForm(instance=transferencia_criptomoeda, investidor=investidor)
