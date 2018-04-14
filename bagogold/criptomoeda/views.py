@@ -4,7 +4,7 @@ from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoCriptomoedaFormSet, \
     DivisaoTransferenciaCriptomoedaFormSet
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoCriptomoeda, \
-    Divisao, DivisaoTransferenciaCriptomoeda, DivisaoPrincipal
+    Divisao, DivisaoTransferenciaCriptomoeda
 from bagogold.criptomoeda.forms import OperacaoCriptomoedaForm, \
     TransferenciaCriptomoedaForm, OperacaoCriptomoedaLoteForm, \
     TransferenciaCriptomoedaLoteForm
@@ -32,7 +32,6 @@ from operator import attrgetter
 import calendar
 import datetime
 import json
-import re
 import traceback
 
 @login_required
@@ -127,7 +126,7 @@ def editar_operacao_criptomoeda(request, id_operacao):
                         elif settings.ENV == 'PROD':
                             mail_admins(u'Erro ao editar operação em criptomoeda com uma divisão', traceback.format_exc().decode('utf-8'))
                 
-            for erro in [erro for erro in form_operacao_criptomoeda.non_field_errors()]:
+            for erro in form_operacao_criptomoeda.non_field_errors():
                 messages.error(request, erro)
 #                         print '%s %s'  % (divisao_criptomoeda.quantidade, divisao_criptomoeda.divisao)
                 
@@ -223,7 +222,7 @@ def editar_transferencia(request, id_transferencia):
                         elif settings.ENV == 'PROD':
                             mail_admins(u'Erro ao editar transferência para criptomoeda com uma divisão', traceback.format_exc().decode('utf-8'))
                 
-            for erro in [erro for erro in form_transferencia_criptomoeda.non_field_errors()]:
+            for erro in form_transferencia_criptomoeda.non_field_errors():
                 messages.error(request, erro)
 #                         print '%s %s'  % (divisao_criptomoeda.quantidade, divisao_criptomoeda.divisao)
                 
@@ -453,9 +452,9 @@ def inserir_operacao_criptomoeda(request):
                     with transaction.atomic():
                         operacao_criptomoeda.save()
                         if form_operacao_criptomoeda.cleaned_data['taxa'] > 0:
-                                taxa_moeda = Criptomoeda.objects.get(id=int(form_operacao_criptomoeda.cleaned_data['taxa_moeda'])) \
-                                    if form_operacao_criptomoeda.cleaned_data['taxa_moeda'] != '' else None
-                                OperacaoCriptomoedaTaxa.objects.create(operacao=operacao_criptomoeda, moeda=taxa_moeda, valor=form_operacao_criptomoeda.cleaned_data['taxa'])
+                            taxa_moeda = Criptomoeda.objects.get(id=int(form_operacao_criptomoeda.cleaned_data['taxa_moeda'])) \
+                                if form_operacao_criptomoeda.cleaned_data['taxa_moeda'] != '' else None
+                            OperacaoCriptomoedaTaxa.objects.create(operacao=operacao_criptomoeda, moeda=taxa_moeda, valor=form_operacao_criptomoeda.cleaned_data['taxa'])
                         if moeda_utilizada:
                             OperacaoCriptomoedaMoeda.objects.create(operacao=operacao_criptomoeda, criptomoeda=moeda_utilizada)
                         divisao_operacao = DivisaoOperacaoCriptomoeda(operacao=operacao_criptomoeda, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_criptomoeda.quantidade)
@@ -469,7 +468,7 @@ def inserir_operacao_criptomoeda(request):
                     elif settings.ENV == 'PROD':
                         mail_admins(u'Erro ao gerar operação em criptomoeda com uma divisão', traceback.format_exc().decode('utf-8'))
             
-        for erro in [erro for erro in form_operacao_criptomoeda.non_field_errors()]:
+        for erro in form_operacao_criptomoeda.non_field_errors():
             messages.error(request, erro)
 #                         print '%s %s'  % (divisao_fundo_investimento.quantidade, divisao_fundo_investimento.divisao)
                 
@@ -583,7 +582,7 @@ def inserir_transferencia(request):
                     elif settings.ENV == 'PROD':
                         mail_admins(u'Erro ao gerar transferência para criptomoedas com uma divisão', traceback.format_exc().decode('utf-8'))
             
-        for erro in [erro for erro in form_transferencia_criptomoeda.non_field_errors()]:
+        for erro in form_transferencia_criptomoeda.non_field_errors():
             messages.error(request, erro)
 #                         print '%s %s'  % (divisao_fundo_investimento.quantidade, divisao_fundo_investimento.divisao)
                 
