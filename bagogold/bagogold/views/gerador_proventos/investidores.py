@@ -94,6 +94,7 @@ def detalhar_pendencias_usuario(request, id_usuario):
         usuario.tempo_validado = Decimal((qtd_acao_exclusao_validado + qtd_fii_exclusao_validado) * Decimal('51.43') \
                                          + qtd_acao_proventos_validado * Decimal('122.07') + qtd_fii_proventos_validado * Decimal('79.4')) / 3600
         usuario.tempo_a_validar = tempo_total - usuario.tempo_validado
+        usuario.pagto_tempo_a_validar = (usuario.tempo_a_validar * PagamentoLeitura.VALOR_HORA).quantize(Decimal('0.01'))
         
         # TODO usar novo modelo pagamento leitura
         valor_hora = PagamentoLeitura.VALOR_HORA
