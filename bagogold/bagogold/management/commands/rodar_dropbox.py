@@ -1,4 +1,4 @@
-from bagogold.bagogold.models.metronic_test import CarregamentoMetronic
+# -*- coding: utf-8 -*-
 from django.core.management.base import BaseCommand
 import datetime
 import subprocess32 as subprocess

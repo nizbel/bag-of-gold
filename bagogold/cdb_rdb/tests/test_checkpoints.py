@@ -245,7 +245,7 @@ class CalcularQuantidadesCDB_RDBTestCase(TestCase):
                     self.assertFalse(CheckpointCDB_RDB.objects.filter(operacao=operacao, ano=2017).exists())
                     self.assertFalse(CheckpointDivisaoCDB_RDB.objects.filter(divisao_operacao__operacao=operacao, ano=2017).exists())
                 
-    def test_verificar_qtd_atualizada(self):
+    def test_verificar_valor_venda_por_checkpoint(self):
         """Testa cálculo de valor da venda de CDB utilizando checkpoint"""
         investidor = Investidor.objects.get(user__username='test')
         cdb = CDB_RDB.objects.create(nome="CDB 1", investidor=investidor, tipo='C', tipo_rendimento=CDB_RDB.CDB_RDB_DI)

@@ -246,11 +246,11 @@ def editar_operacao_cri_cra(request, id_operacao):
                         return HttpResponseRedirect(reverse('cri_cra:historico_cri_cra'))
                 except:
                     form_operacao_cri_cra = OperacaoCRI_CRAForm(instance=operacao_cri_cra, investidor=investidor)
-                    formset_divisao = DivisaoFormSet(instance=operacao_cri_cra, investidor=investidor)
+                    formset_divisao = DivisaoCRI_CRAFormSet(instance=operacao_cri_cra, investidor=investidor)
                     messages.error(request, 'Houve um erro na exclusão')
             else:
                 form_operacao_cri_cra = OperacaoCRI_CRAForm(instance=operacao_cri_cra, investidor=investidor)
-                formset_divisao = DivisaoFormSet(instance=operacao_cri_cra, investidor=investidor)
+                formset_divisao = DivisaoCRI_CRAFormSet(instance=operacao_cri_cra, investidor=investidor)
                 messages.error(request, 'Operação não pode ser excluída pois posição do investidor no %s seria negativa' % (operacao_cri_cra.cri_cra.descricao_tipo()))
    
     else:
