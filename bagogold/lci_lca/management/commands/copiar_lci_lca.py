@@ -12,7 +12,7 @@ from django.db import transaction
 
 
 class Command(BaseCommand):
-    help = 'TEMPORÁRIO copia os modelos de CDB/RDB de dentro do app bagogold para os novos modelos'
+    help = 'TEMPORÁRIO copia os modelos de LCI/LCA de dentro do app bagogold para os novos modelos'
 
     def handle(self, *args, **options):
         try:
