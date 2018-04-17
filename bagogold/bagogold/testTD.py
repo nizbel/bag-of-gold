@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.tesouro_direto.models import HistoricoTitulo, Titulo, \
     ValorDiarioTitulo
-from bagogold.tesouro_direto.utils import criar_data_inicio_titulos
 from decimal import Decimal
 from urllib2 import Request, urlopen, URLError, HTTPError
 import cgi
@@ -39,9 +38,8 @@ def baixar_historico_td_total():
     for url in urls:
         url = url_base + url
         response_xls = urlopen(url)
-        _, params = cgi.parse_header(response_xls.headers.get('Content-Disposition', ''))
-        filename = params['filename']
-#         print 'Downloading %s from %s' % (filename, url)
+#         _, params = cgi.parse_header(response_xls.headers.get('Content-Disposition', ''))
+#         print 'Downloading %s from %s' % (params['filename'], url)
         
         xls = response_xls.read()
         
@@ -200,12 +198,13 @@ def buscar_valores_diarios():
             campos = re.findall('<td.*?>.*?</td>', linha)
             tipo_titulo = ''
             valor_diario = ValorDiarioTitulo()
+#             print campos
             for campo in campos:
                 # Parte importante da coluna para o preenchimento dos valores
                 dado = re.sub(r'<.*?>', "", campo).strip()
 #                 print dado
                 if contador == 0:
-                    tipo_titulo = re.findall('\(.*?\)', dado)[0]
+                    tipo_titulo = re.sub(r'\d', '', dado).strip()
 #                     print tipo_titulo
                     tipo_titulo = tipo_titulo.replace('(', '').replace(')', '')
                 elif contador == 1:
@@ -213,9 +212,9 @@ def buscar_valores_diarios():
                     data_formatada = time.strftime('%Y-%m-%d', data_formatada)
                     valor_diario.titulo = Titulo.objects.get(tipo=Titulo.buscar_vinculo_oficial(tipo_titulo), data_vencimento=data_formatada)
                 elif contador == 2:
-                    valor_diario.taxa_compra = Decimal(re.sub(r'[^\d\.]', '', dado.replace('.', '').replace(',', '.')))
+                    valor_diario.taxa_compra = Decimal(re.sub(r'[^\d\.,]', '', dado.replace('.', '').replace(',', '.')))
                 elif contador == 4:
-                    valor_diario.preco_compra = Decimal(re.sub(r'[^\d\.]', '', dado.replace('.', '').replace(',', '.')))
+                    valor_diario.preco_compra = Decimal(re.sub(r'[^\d\.,]', '', dado.replace('.', '').replace(',', '.')))
                     valores_diarios += [valor_diario]
                 # Garante o posicionamento
                 contador += 1
@@ -233,7 +232,7 @@ def buscar_valores_diarios():
                 dado = re.sub(r'<.*?>', "", campo).strip()
 #                 print dado
                 if contador == 0:
-                    tipo_titulo = re.findall('\(.*?\)', dado)[0]
+                    tipo_titulo = re.sub(r'\d', '', dado).strip()
 #                     print tipo_titulo
                     tipo_titulo = tipo_titulo.replace('(', '').replace(')', '')
                 elif contador == 1:
@@ -243,9 +242,9 @@ def buscar_valores_diarios():
                     if valor_diario.titulo in [valor_preenchido.titulo for valor_preenchido in valores_diarios]:
                         valor_diario = [valor_preenchido for valor_preenchido in valores_diarios if valor_preenchido.titulo == valor_diario.titulo][0]
                 elif contador == 2:
-                    valor_diario.taxa_venda = Decimal(re.sub(r'[^\d\.]', '', dado.replace('.', '').replace(',', '.')))
+                    valor_diario.taxa_venda = Decimal(re.sub(r'[^\d\.,]', '', dado.replace('.', '').replace(',', '.')))
                 elif contador == 3:
-                    valor_diario.preco_venda = Decimal(re.sub(r'[^\d\.]', '', dado.replace('.', '').replace(',', '.')))
+                    valor_diario.preco_venda = Decimal(re.sub(r'[^\d\.,]', '', dado.replace('.', '').replace(',', '.')))
                     if valor_diario.titulo not in [valor_preenchido.titulo for valor_preenchido in valores_diarios]:
                         valores_diarios += [valor_diario]
                 # Garante o posicionamento
