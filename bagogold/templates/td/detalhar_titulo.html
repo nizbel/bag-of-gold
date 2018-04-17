@@ -172,7 +172,7 @@ $(document).ready(function() {
     
     $('#buscar_historico').click(function() {
     	$.ajax({
-            url : "{% url 'td:listar_historico_titulo' titulo.id %}",
+            url : "{% url 'tesouro_direto:listar_historico_titulo' titulo.id %}",
             type : "GET",
             data : { dataInicial : $('#dataInicial').val(), dataFinal: $('#dataFinal').val() },
 
