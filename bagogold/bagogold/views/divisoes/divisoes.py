@@ -205,16 +205,16 @@ def detalhar_divisao(request, divisao_id):
         composicao['lc'].composicao[lc_id].patrimonio = valores_letras_credito_dia[lc_id]
         composicao['lc'].composicao[lc_id].composicao = {}
         # Pegar operações dos LCs
-        for operacao_divisao in DivisaoOperacaoLetraCambio.objects.filter(divisao=divisao, operacao__letra_credito__id=lc_id):
+        for operacao_divisao in DivisaoOperacaoLetraCambio.objects.filter(divisao=divisao, operacao__lc__id=lc_id):
             composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id] = Object()
             composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].nome = operacao_divisao.operacao.tipo_operacao
             composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].data = operacao_divisao.operacao.data
             composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].quantidade = operacao_divisao.quantidade
             try:
-                composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].valor_unitario = HistoricoPorcentagemLetraCambio.objects.filter(letra_cambio=operacao_divisao.operacao.letra_cambio, \
-                                                                                                                                        data__lte=operacao_divisao.operacao.data).order_by('-data')[0].porcentagem_di
+                composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].valor_unitario = HistoricoPorcentagemLetraCambio.objects.filter(lc=operacao_divisao.operacao.lc, \
+                                                                                                                                        data__lte=operacao_divisao.operacao.data).order_by('-data')[0].porcentagem
             except:
-                composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].valor_unitario = HistoricoPorcentagemLetraCambio.objects.get(data__isnull=True, letra_cambio=operacao_divisao.operacao.letra_cambio).porcentagem_di
+                composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].valor_unitario = HistoricoPorcentagemLetraCambio.objects.get(data__isnull=True, lc=operacao_divisao.operacao.lc).porcentagem
             
             composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].patrimonio = operacao_divisao.quantidade
     
@@ -257,7 +257,7 @@ def detalhar_divisao(request, divisao_id):
         composicao['cdb-rdb'].composicao[cdb_rdb_id].patrimonio = valores_cdb_rdb_dia[cdb_rdb_id]
         composicao['cdb-rdb'].composicao[cdb_rdb_id].composicao = {}
         # Pegar operações dos cdb-rdbs
-        for operacao_divisao in DivisaoOperacaoCDB_RDB.objects.filter(divisao=divisao, operacao__investimento__id=cdb_rdb_id):
+        for operacao_divisao in DivisaoOperacaoCDB_RDB.objects.filter(divisao=divisao, operacao__cdb_rdb__id=cdb_rdb_id):
             composicao['cdb-rdb'].composicao[cdb_rdb_id].composicao[operacao_divisao.operacao.id] = Object()
             composicao['cdb-rdb'].composicao[cdb_rdb_id].composicao[operacao_divisao.operacao.id].nome = operacao_divisao.operacao.tipo_operacao
             composicao['cdb-rdb'].composicao[cdb_rdb_id].composicao[operacao_divisao.operacao.id].data = operacao_divisao.operacao.data
