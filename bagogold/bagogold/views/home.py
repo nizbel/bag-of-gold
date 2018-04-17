@@ -1049,7 +1049,7 @@ def painel_geral(request):
         elif chave == 'Outros inv.':
             investimento.link = 'outros_investimentos:painel_outros_invest'
         elif chave == 'Tesouro Direto':
-            investimento.link = 'td:painel_td'
+            investimento.link = 'tesouro_direto:painel_td'
             
         investimentos_atuais.append(investimento)
 #         print chave, investimento.link
