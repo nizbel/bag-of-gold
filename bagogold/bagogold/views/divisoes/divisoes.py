@@ -1,4 +1,14 @@
 # -*- coding: utf-8 -*-
+import datetime
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied, ValidationError
+
+from django.core.urlresolvers import reverse
+from django.db.models import Q
+from django.http import HttpResponseRedirect
+from django.template.response import TemplateResponse
+
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoForm, \
     TransferenciaEntreDivisoesForm
@@ -6,13 +16,10 @@ from bagogold.bagogold.models.acoes import ValorDiarioAcao, HistoricoAcao, Acao
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoLCI_LCA, \
     DivisaoOperacaoFII, DivisaoOperacaoTD, DivisaoOperacaoAcao, \
     TransferenciaEntreDivisoes, DivisaoOperacaoFundoInvestimento, \
-    DivisaoOperacaoCDB_RDB
-from bagogold.tesouro_direto.models import ValorDiarioTitulo, HistoricoTitulo, \
-    Titulo
+    DivisaoOperacaoCDB_RDB, DivisaoOperacaoLetraCambio
 from bagogold.bagogold.utils.acoes import calcular_qtd_acoes_ate_dia_por_divisao
 from bagogold.bagogold.utils.debenture import \
     calcular_valor_debentures_ate_dia_por_divisao
-from bagogold.tesouro_direto.utils import calcular_qtd_titulos_ate_dia_por_divisao
 from bagogold.cdb_rdb.models import CDB_RDB, HistoricoPorcentagemCDB_RDB
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia_por_divisao
 from bagogold.cri_cra.utils.utils import \
@@ -25,22 +32,19 @@ from bagogold.fundo_investimento.models import FundoInvestimento, \
     HistoricoValorCotas, OperacaoFundoInvestimento
 from bagogold.fundo_investimento.utils import \
     calcular_qtd_cotas_ate_dia_por_divisao
+from bagogold.lc.models import LetraCambio, HistoricoPorcentagemLetraCambio
 from bagogold.lc.utils import calcular_valor_lc_ate_dia_por_divisao
 from bagogold.lci_lca.models import HistoricoPorcentagemLetraCredito, \
     LetraCredito
 from bagogold.lci_lca.utils import calcular_valor_lci_lca_ate_dia_por_divisao
 from bagogold.outros_investimentos.models import Investimento
 from bagogold.outros_investimentos.utils import \
-    calcular_valor_outros_investimentos_ate_data, \
     calcular_valor_outros_investimentos_ate_data_por_divisao
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied, ValidationError
-from django.core.urlresolvers import reverse
-from django.db.models import Q
-from django.http import HttpResponseRedirect
-from django.template.response import TemplateResponse
-import datetime
+from bagogold.tesouro_direto.models import ValorDiarioTitulo, HistoricoTitulo, \
+    Titulo
+from bagogold.tesouro_direto.utils import \
+    calcular_qtd_titulos_ate_dia_por_divisao
+
 
 @login_required
 @adiciona_titulo_descricao('Gerar transferências', 'Insere transferências no histórico automaticamente '
@@ -197,20 +201,20 @@ def detalhar_divisao(request, divisao_id):
     for lc_id in valores_letras_credito_dia.keys():
         composicao['lc'].patrimonio += valores_letras_credito_dia[lc_id]
         composicao['lc'].composicao[lc_id] = Object()
-        composicao['lc'].composicao[lc_id].nome = LetraCredito.objects.get(id=lc_id).nome
+        composicao['lc'].composicao[lc_id].nome = LetraCambio.objects.get(id=lc_id).nome
         composicao['lc'].composicao[lc_id].patrimonio = valores_letras_credito_dia[lc_id]
         composicao['lc'].composicao[lc_id].composicao = {}
         # Pegar operações dos LCs
-        for operacao_divisao in DivisaoOperacaoLCI_LCA.objects.filter(divisao=divisao, operacao__letra_credito__id=lc_id):
+        for operacao_divisao in DivisaoOperacaoLetraCambio.objects.filter(divisao=divisao, operacao__letra_credito__id=lc_id):
             composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id] = Object()
             composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].nome = operacao_divisao.operacao.tipo_operacao
             composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].data = operacao_divisao.operacao.data
             composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].quantidade = operacao_divisao.quantidade
             try:
-                composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].valor_unitario = HistoricoPorcentagemLetraCredito.objects.filter(letra_credito=operacao_divisao.operacao.letra_credito, \
+                composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].valor_unitario = HistoricoPorcentagemLetraCambio.objects.filter(letra_cambio=operacao_divisao.operacao.letra_cambio, \
                                                                                                                                         data__lte=operacao_divisao.operacao.data).order_by('-data')[0].porcentagem_di
             except:
-                composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].valor_unitario = HistoricoPorcentagemLetraCredito.objects.get(data__isnull=True, letra_credito=operacao_divisao.operacao.letra_credito).porcentagem_di
+                composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].valor_unitario = HistoricoPorcentagemLetraCambio.objects.get(data__isnull=True, letra_cambio=operacao_divisao.operacao.letra_cambio).porcentagem_di
             
             composicao['lc'].composicao[lc_id].composicao[operacao_divisao.operacao.id].patrimonio = operacao_divisao.quantidade
     
@@ -227,7 +231,7 @@ def detalhar_divisao(request, divisao_id):
         composicao['lci-lca'].composicao[lci_lca_id].patrimonio = valores_letras_credito_dia[lci_lca_id]
         composicao['lci-lca'].composicao[lci_lca_id].composicao = {}
         # Pegar operações das Letras de Crédito
-        for operacao_divisao in DivisaoOperacaoLC.objects.filter(divisao=divisao, operacao__letra_credito__id=lci_lca_id):
+        for operacao_divisao in DivisaoOperacaoLCI_LCA.objects.filter(divisao=divisao, operacao__letra_credito__id=lci_lca_id):
             composicao['lci-lca'].composicao[lci_lca_id].composicao[operacao_divisao.operacao.id] = Object()
             composicao['lci-lca'].composicao[lci_lca_id].composicao[operacao_divisao.operacao.id].nome = operacao_divisao.operacao.tipo_operacao
             composicao['lci-lca'].composicao[lci_lca_id].composicao[operacao_divisao.operacao.id].data = operacao_divisao.operacao.data
