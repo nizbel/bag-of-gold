@@ -671,7 +671,7 @@ class DivisaoOperacaoAcao (models.Model):
     
 class DivisaoOperacaoTD (models.Model):
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
-    operacao = models.ForeignKey('OperacaoTitulo')
+    operacao = models.ForeignKey('tesouro_direto.OperacaoTitulo')
     """
     Guarda a quantidade de títulos que pertence a divisão
     """
