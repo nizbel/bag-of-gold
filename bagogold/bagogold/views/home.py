@@ -1251,7 +1251,7 @@ def rendimento_medio_painel_geral(request):
             rendimento_medio_mensal = 0
             rendimento_medio_anual = 0
             data_inicial = data_atual
-        return HttpResponse(json.dumps(render_to_string('utils/rendimento_medio_painel_geral.html', {'rendimento': rendimento, 'data_inicial': data_inicial or data_atual, 
+        return HttpResponse(json.dumps(render_to_string('utils/rendimento_medio_painel_geral.html', {'rendimento': rendimento, 'data_inicial': data_inicial, 
                                                      'rendimento_medio_mensal': rendimento_medio_mensal, 'rendimento_medio_anual': rendimento_medio_anual})), 
                             content_type = "application/json")   
     else:
