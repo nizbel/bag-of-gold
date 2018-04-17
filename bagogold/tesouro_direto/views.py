@@ -270,7 +270,7 @@ def editar_operacao_td(request, operacao_id):
                     divisao_operacao.save()
                     messages.success(request, 'Operação editada com sucesso')
                     return HttpResponseRedirect(reverse('td:historico_td'))
-            for erro in [erro for erro in form_operacao_td.non_field_errors()]:
+            for erro in form_operacao_td.non_field_errors():
                 messages.error(request, erro)
                     
         elif request.POST.get("delete"):
@@ -477,7 +477,7 @@ def inserir_operacao_td(request):
                 messages.success(request, 'Operação inserida com sucesso')
                 return HttpResponseRedirect(reverse('td:historico_td'))
             
-        for erro in [erro for erro in form_operacao_td.non_field_errors()]:
+        for erro in form_operacao_td.non_field_errors():
             messages.error(request, erro)
                     
     else:
@@ -535,7 +535,6 @@ def painel(request):
     # Objeto vazio para preenchimento
     class Object():
         pass
-    
     if request.user.is_authenticated():
         investidor = request.user.investidor
     else:
@@ -550,7 +549,7 @@ def painel(request):
     for operacao in OperacaoTitulo.objects.filter(investidor=investidor).order_by('data'):
         # Verificar se se trata de compra
         if operacao.tipo_operacao == 'C':
-            if operacao.titulo.id not in titulos.keys():
+            if operacao.titulo.id not in titulos:
                 titulos[operacao.titulo.id] = list()
                 titulos_vendidos[operacao.titulo.id] = list()
             compra_titulo = Object()
@@ -599,7 +598,7 @@ def painel(request):
             titulos[operacao.titulo.id] = lista_compras
     
     # Dados de títulos ainda em posse do usuario                
-    for titulo in titulos.keys():
+    for titulo in titulos:
         for operacao in titulos[titulo]:
             try:
                 operacao.valor_atual = ValorDiarioTitulo.objects.filter(titulo__id=titulo, data_hora__date=datetime.date.today()).order_by('-data_hora')[0].preco_venda
@@ -629,7 +628,7 @@ def painel(request):
             
             
     # Dados de títulos vendidos
-    for titulo in titulos_vendidos.keys():
+    for titulo in titulos_vendidos:
         for operacao in titulos_vendidos[titulo]:
 #             print titulo
             operacao.variacao = operacao.valor_atual - operacao.preco_unitario
