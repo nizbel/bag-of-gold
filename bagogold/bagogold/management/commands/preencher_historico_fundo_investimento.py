@@ -118,8 +118,11 @@ def ler_arquivo(libitem, apagar_caso_erro=True):
                 erros += 1
 
         with transaction.atomic():
-            HistoricoValorCotas.objects.bulk_create(historicos)
-        
+            # Limitar tamanho do bulk create para evitar erro de memoria
+            limite_dados = 0
+            while limite_dados < len(historicos):
+                HistoricoValorCotas.objects.bulk_create(historicos[limite_dados:min(limite_dados+2000, len(historicos))])
+                limite_dados += 2000
         os.remove(libitem)                                
     except:
         erros += 1

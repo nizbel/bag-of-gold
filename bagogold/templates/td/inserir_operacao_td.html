@@ -162,7 +162,7 @@ $(document).ready(function() {
         }
         var tipoOperacao = $('#id_tipo_operacao').val();
         $.ajax({
-            url : "{% url 'td:buscar_titulos_validos_na_data' %}", // the endpoint
+            url : "{% url 'tesouro_direto:buscar_titulos_validos_na_data' %}", // the endpoint
             type : "GET", // http method
             data: {dataEscolhida: dataEscolhida, tipoOperacao: tipoOperacao},
             
@@ -192,7 +192,7 @@ $(document).ready(function() {
         }
         var tipoOperacao = $(this).val();
         $.ajax({
-            url : "{% url 'td:buscar_titulos_validos_na_data' %}", // the endpoint
+            url : "{% url 'tesouro_direto:buscar_titulos_validos_na_data' %}", // the endpoint
             type : "GET", // http method
             data: {dataEscolhida: dataEscolhida, tipoOperacao: tipoOperacao},
             

@@ -387,7 +387,7 @@ $( document ).ready(function() {
         step: 1,
         decimals: 0,
         maxboostedstep: 100,
-        postfix: '%'
+        postfix: '% ao ano'
     });
 //     noUiSlider.create(percentualSlider, {
 //         start: [{{filtros_simulador.percentual_indice}}],
@@ -434,6 +434,19 @@ $( document ).ready(function() {
         maxboostedstep: 100,
         prefix: 'R$'
     });
+    
+    if ($("input[name='radioTipoRendimento']:checked").val() == 'PRE') {
+        $("#percentualRendimento").parent().find('.bootstrap-touchspin-postfix').text('% ao ano');
+    } else if ($("input[name='radioTipoRendimento']:checked").val() == 'POS') {
+        $("#percentualRendimento").parent().find('.bootstrap-touchspin-postfix').text('% do CDI');
+    }
+    $('input[name=radioTipoRendimento]').change( function() {
+        if ($("input[name='radioTipoRendimento']:checked").val() == 'PRE') {
+            $("#percentualRendimento").parent().find('.bootstrap-touchspin-postfix').text('% ao ano');
+        } else if ($("input[name='radioTipoRendimento']:checked").val() == 'POS') {
+            $("#percentualRendimento").parent().find('.bootstrap-touchspin-postfix').text('% do CDI');
+        }
+    })
     
     var polling = [];
     // Alterar gráfico
