@@ -336,7 +336,7 @@ def editar_operacao_lci_lca(request, operacao_id):
                             if operacao_venda_lci_lca.operacao_compra != operacao_compra:
                                 operacao_venda_lci_lca.operacao_compra = operacao_compra
                                 operacao_venda_lci_lca.save()
-                    divisao_operacao = .objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_lci_lca)
+                    divisao_operacao = DivisaoOperacaoLCI_LCA.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_lci_lca)
                     divisao_operacao.quantidade = operacao_lci_lca.quantidade
                     divisao_operacao.save()
                     messages.success(request, 'Operação editada com sucesso')
@@ -349,7 +349,7 @@ def editar_operacao_lci_lca(request, operacao_id):
         elif request.POST.get("delete"):
             # Testa se operação a excluir não é uma operação de compra com vendas já registradas
             if not OperacaoVendaLetraCredito.objects.filter(operacao_compra=operacao_lci_lca):
-                divisao_lci_lca = .objects.filter(operacao=operacao_lci_lca)
+                divisao_lci_lca = DivisaoOperacaoLCI_LCA.objects.filter(operacao=operacao_lci_lca)
                 for divisao in divisao_lci_lca:
                     divisao.delete()
                 if operacao_lci_lca.tipo_operacao == 'V':
@@ -639,8 +639,8 @@ def inserir_operacao_lci_lca(request):
                     if form_operacao_lci_lca.cleaned_data['quantidade'] == operacao_compra.quantidade:
                         # Desconsiderar divisões inseridas, copiar da operação de compra
                         operacao_lci_lca.save()
-                        for divisao_lci_lca in .objects.filter(operacao=operacao_compra):
-                            divisao_lci_lca_venda = (quantidade=divisao_lci_lca.quantidade, divisao=divisao_lci_lca.divisao, \
+                        for divisao_lci_lca in DivisaoOperacaoLCI_LCA.objects.filter(operacao=operacao_compra):
+                            divisao_lci_lca_venda = DivisaoOperacaoLCI_LCA(quantidade=divisao_lci_lca.quantidade, divisao=divisao_lci_lca.divisao, \
                                                                  operacao=operacao_lci_lca)
                             divisao_lci_lca_venda.save()
                         operacao_venda_lci_lca = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_lci_lca)
@@ -663,7 +663,7 @@ def inserir_operacao_lci_lca(request):
                                 
                         else:
                             operacao_lci_lca.save()
-                            divisao_operacao = (operacao=operacao_lci_lca, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_lci_lca.quantidade)
+                            divisao_operacao = DivisaoOperacaoLCI_LCA(operacao=operacao_lci_lca, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_lci_lca.quantidade)
                             divisao_operacao.save()
                             operacao_venda_lci_lca = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_lci_lca)
                             operacao_venda_lci_lca.save()
