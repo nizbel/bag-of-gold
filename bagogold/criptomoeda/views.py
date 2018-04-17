@@ -4,7 +4,7 @@ from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoCriptomoedaFormSet, \
     DivisaoTransferenciaCriptomoedaFormSet
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoCriptomoeda, \
-    Divisao, DivisaoTransferenciaCriptomoeda, DivisaoPrincipal
+    Divisao, DivisaoTransferenciaCriptomoeda
 from bagogold.criptomoeda.forms import OperacaoCriptomoedaForm, \
     TransferenciaCriptomoedaForm, OperacaoCriptomoedaLoteForm, \
     TransferenciaCriptomoedaLoteForm
@@ -32,7 +32,6 @@ from operator import attrgetter
 import calendar
 import datetime
 import json
-import re
 import traceback
 
 @login_required
@@ -127,7 +126,7 @@ def editar_operacao_criptomoeda(request, id_operacao):
                         elif settings.ENV == 'PROD':
                             mail_admins(u'Erro ao editar operação em criptomoeda com uma divisão', traceback.format_exc().decode('utf-8'))
                 
-            for erro in [erro for erro in form_operacao_criptomoeda.non_field_errors()]:
+            for erro in form_operacao_criptomoeda.non_field_errors():
                 messages.error(request, erro)
 #                         print '%s %s'  % (divisao_criptomoeda.quantidade, divisao_criptomoeda.divisao)
                 
@@ -223,21 +222,17 @@ def editar_transferencia(request, id_transferencia):
                         elif settings.ENV == 'PROD':
                             mail_admins(u'Erro ao editar transferência para criptomoeda com uma divisão', traceback.format_exc().decode('utf-8'))
                 
-            for erro in [erro for erro in form_transferencia_criptomoeda.non_field_errors()]:
+            for erro in form_transferencia_criptomoeda.non_field_errors():
                 messages.error(request, erro)
 #                         print '%s %s'  % (divisao_criptomoeda.quantidade, divisao_criptomoeda.divisao)
                 
         elif request.POST.get("delete"):
-            # Verifica se, em caso de compra, a quantidade de cotas do investidor não fica negativa
-            if transferencia_criptomoeda.tipo_operacao == 'C' and calcular_qtd_cotas_ate_dia_por_fundo(investidor, transferencia_criptomoeda.criptomoeda.id, datetime.date.today()) - transferencia_criptomoeda.quantidade < 0:
-                messages.error(request, 'Operação de compra não pode ser apagada pois quantidade atual para o fundo %s seria negativa' % (transferencia_criptomoeda.criptomoeda))
-            else:
-                divisao_criptomoeda = DivisaoOperacaoCriptomoeda.objects.filter(operacao=transferencia_criptomoeda)
-                for divisao in divisao_criptomoeda:
-                    divisao.delete()
-                transferencia_criptomoeda.delete()
-                messages.success(request, 'Operação apagada com sucesso')
-                return HttpResponseRedirect(reverse('td:historico_td'))
+            divisao_criptomoeda = DivisaoTransferenciaCriptomoeda.objects.filter(transferencia=transferencia_criptomoeda)
+            for divisao in divisao_criptomoeda:
+                divisao.delete()
+            transferencia_criptomoeda.delete()
+            messages.success(request, 'Transferência apagada com sucesso')
+            return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
  
     else:
         form_transferencia_criptomoeda = TransferenciaCriptomoedaForm(instance=transferencia_criptomoeda, investidor=investidor)
@@ -453,9 +448,9 @@ def inserir_operacao_criptomoeda(request):
                     with transaction.atomic():
                         operacao_criptomoeda.save()
                         if form_operacao_criptomoeda.cleaned_data['taxa'] > 0:
-                                taxa_moeda = Criptomoeda.objects.get(id=int(form_operacao_criptomoeda.cleaned_data['taxa_moeda'])) \
-                                    if form_operacao_criptomoeda.cleaned_data['taxa_moeda'] != '' else None
-                                OperacaoCriptomoedaTaxa.objects.create(operacao=operacao_criptomoeda, moeda=taxa_moeda, valor=form_operacao_criptomoeda.cleaned_data['taxa'])
+                            taxa_moeda = Criptomoeda.objects.get(id=int(form_operacao_criptomoeda.cleaned_data['taxa_moeda'])) \
+                                if form_operacao_criptomoeda.cleaned_data['taxa_moeda'] != '' else None
+                            OperacaoCriptomoedaTaxa.objects.create(operacao=operacao_criptomoeda, moeda=taxa_moeda, valor=form_operacao_criptomoeda.cleaned_data['taxa'])
                         if moeda_utilizada:
                             OperacaoCriptomoedaMoeda.objects.create(operacao=operacao_criptomoeda, criptomoeda=moeda_utilizada)
                         divisao_operacao = DivisaoOperacaoCriptomoeda(operacao=operacao_criptomoeda, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_criptomoeda.quantidade)
@@ -469,7 +464,7 @@ def inserir_operacao_criptomoeda(request):
                     elif settings.ENV == 'PROD':
                         mail_admins(u'Erro ao gerar operação em criptomoeda com uma divisão', traceback.format_exc().decode('utf-8'))
             
-        for erro in [erro for erro in form_operacao_criptomoeda.non_field_errors()]:
+        for erro in form_operacao_criptomoeda.non_field_errors():
             messages.error(request, erro)
 #                         print '%s %s'  % (divisao_fundo_investimento.quantidade, divisao_fundo_investimento.divisao)
                 
@@ -583,7 +578,7 @@ def inserir_transferencia(request):
                     elif settings.ENV == 'PROD':
                         mail_admins(u'Erro ao gerar transferência para criptomoedas com uma divisão', traceback.format_exc().decode('utf-8'))
             
-        for erro in [erro for erro in form_transferencia_criptomoeda.non_field_errors()]:
+        for erro in form_transferencia_criptomoeda.non_field_errors():
             messages.error(request, erro)
 #                         print '%s %s'  % (divisao_fundo_investimento.quantidade, divisao_fundo_investimento.divisao)
                 
