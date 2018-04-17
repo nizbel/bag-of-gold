@@ -116,7 +116,7 @@
 					<tbody>
 					{% for item in operacoes %}
 					<tr>
-						<td><a href="{% url 'td:editar_operacao_td' item.id %}">{{item.titulo}}</a></td>
+						<td><a href="{% url 'tesouro_direto:editar_operacao_td' item.id %}">{{item.titulo}}</a></td>
 						<td>{{item.tipo}}</td>
 						<td>{{ item.data|date:"d/m/Y" }}</td>
 						<td>{{item.quantidade}}</td>
