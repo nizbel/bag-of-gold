@@ -362,7 +362,7 @@ def editar_operacao_acao(request, operacao_id):
                     messages.success(request, 'Operação apagada com sucesso')
                     return HttpResponseRedirect(reverse('acoes:bh:historico_bh'))
             except:
-                messages.error('Houve um erro na exclusão da operação')
+                messages.error(request, 'Houve um erro na exclusão da operação')
 
     else:
         form_operacao_acao = OperacaoAcaoForm(instance=operacao_acao)

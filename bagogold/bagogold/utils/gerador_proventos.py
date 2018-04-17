@@ -446,7 +446,7 @@ def copiar_proventos_acoes(provento, provento_a_copiar):
                     acoes_provento[indice_acao_provento].save()
                 else:
                     # Criar nova ação recebida do provento
-                    nova_acao_provento = ProventoAcao(acao_recebida=acao_provento_a_copiar.acao_recebida, \
+                    nova_acao_provento = AcaoProvento(acao_recebida=acao_provento_a_copiar.acao_recebida, \
                                                       data_pagamento_frac=acao_provento_a_copiar.data_pagamento_frac, \
                                                       valor_calculo_frac=acao_provento_a_copiar.valor_calculo_frac, provento=provento)
                     nova_acao_provento.save()
