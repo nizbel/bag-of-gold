@@ -25,7 +25,7 @@
 		<tbody>
 		{% for titulo in titulos %}
 		<tr>
-			<td><a href="{% url 'td:detalhar_titulo_td' titulo.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar título do Tesouro Direto">{{titulo.nome}}</a></td>
+			<td><a href="{% url 'tesouro_direto:detalhar_titulo_td' titulo.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar título do Tesouro Direto">{{titulo.nome}}</a></td>
 			<td>{{titulo.indexador}}</td>
 			<td>{{titulo.data_vencimento|date:'d/m/Y'}}</td>
             <td>{% if titulo.titulo_vencido %}Título vencido{% else %}R$ {{ titulo.preco_compra}} ({{titulo.taxa_compra}}%){% endif %}</td>

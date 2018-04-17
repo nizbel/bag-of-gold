@@ -129,8 +129,6 @@ def simulador_lci_lca(filtros):
     Parâmetros: Dicionário com filtros
     Retorno:    Lista de datas (mes a mes) com valores, ex.: [(data, valor),...]
     """
-    print filtros
-#     qtd_atual = filtros['aplicacao']
     data_atual = datetime.date.today()
     resultado = [(data_atual, filtros['aplicacao'])]
     

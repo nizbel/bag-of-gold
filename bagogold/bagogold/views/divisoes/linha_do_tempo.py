@@ -1,20 +1,24 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.decorators import adiciona_titulo_descricao
-from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoCDB_RDB, \
-    TransferenciaEntreDivisoes, DivisaoOperacaoLCI_LCA
-from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia_por_divisao
-from bagogold.lci_lca.utils import calcular_valor_lci_lca_ate_dia_por_divisao
+import datetime
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models.expressions import F, Case, When, Value
+from django.template.loader import render_to_string
+from itertools import chain
+import json
+from operator import attrgetter
+
 from django.db.models.fields import CharField
 from django.http import HttpResponse
-from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
-from itertools import chain
-from operator import attrgetter
-import datetime
-import json
+
+from bagogold.bagogold.decorators import adiciona_titulo_descricao
+from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoCDB_RDB, \
+    TransferenciaEntreDivisoes, DivisaoOperacaoLCI_LCA, DivisaoOperacaoLetraCambio
+from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia_por_divisao
+from bagogold.lc.utils import calcular_valor_lc_ate_dia_por_divisao
+from bagogold.lci_lca.utils import calcular_valor_lci_lca_ate_dia_por_divisao
+
 
 @login_required
 @adiciona_titulo_descricao('Linha do tempo de divisão', 'Mostra as transferências e a utilização do dinheiro de uma divisão, ordenadas por data')

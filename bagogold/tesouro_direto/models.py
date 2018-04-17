@@ -10,12 +10,12 @@ class Titulo (models.Model):
     TIPO_OFICIAL_PREFIXADO_COM_JUROS = 'NTN-F'
     TIPO_OFICIAL_IGPM = 'NTN-C'
     
-    TIPO_LETRA_TESOURO = ['LTN']
-    TIPO_SELIC = ['LFT']
-    TIPO_IPCA_COM_JUROS = ['NTN-B', 'NTNB']
-    TIPO_IPCA = ['NTN-B Principal', 'NTNBP', 'NTN-B Princ', 'NTNB Princ']
-    TIPO_PREFIXADO_COM_JUROS = ['NTN-F', 'NTNF']
-    TIPO_IGPM = ['NTN-C','NTNC']
+    TIPO_LETRA_TESOURO = ['LTN', 'Tesouro Prefixado']
+    TIPO_SELIC = ['LFT', 'Tesouro Selic']
+    TIPO_IPCA_COM_JUROS = ['NTN-B', 'NTNB', 'Tesouro IPCA+ com Juros Semestrais']
+    TIPO_IPCA = ['NTN-B Principal', 'NTNBP', 'NTN-B Princ', 'NTNB Princ', 'Tesouro IPCA+']
+    TIPO_PREFIXADO_COM_JUROS = ['NTN-F', 'NTNF', 'Tesouro Prefixado com Juros Semestrais']
+    TIPO_IGPM = ['NTN-C','NTNC', 'Tesouro IGPM+ com Juros Semestrais']
     
     VINCULO_TIPOS_OFICIAL = {TIPO_OFICIAL_LETRA_TESOURO: TIPO_LETRA_TESOURO, TIPO_OFICIAL_SELIC: TIPO_SELIC, TIPO_OFICIAL_IPCA_COM_JUROS: TIPO_IPCA_COM_JUROS, 
                              TIPO_OFICIAL_IPCA: TIPO_IPCA, TIPO_OFICIAL_PREFIXADO_COM_JUROS: TIPO_PREFIXADO_COM_JUROS, TIPO_OFICIAL_IGPM: TIPO_IGPM}
