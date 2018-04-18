@@ -72,3 +72,25 @@ def calcular_valor_atualizado_com_taxas_selic(taxas_dos_dias, valor_atual):
     for taxa_do_dia in taxas_dos_dias.keys():
         taxa_acumulada *= pow(taxa_do_dia, taxas_dos_dias[taxa_do_dia])
     return taxa_acumulada * valor_atual
+
+# TODO trazer busca de valores diários do DI para essa função
+# TODO verificar quais datas ainda não existem na base, remover busca de datas maiores que a última data
+def buscar_valores_diarios_di():
+    ftp = FTP('ftp.cetip.com.br')
+    ftp.login()
+    ftp.cwd('MediaCDI')
+    linhas = []
+    ftp.retrlines('NLST', linhas.append)
+    linhas.sort()
+    for nome in linhas:
+        # Verifica se são os .txt do CDI
+        if '.txt' in nome:
+            # Testa se data do arquivo é maior do que a última data registrada
+            data = datetime.date(int(nome[0:4]), int(nome[4:6]), int(nome[6:8]))
+            data_ultimo_registro = HistoricoTaxaDI.objects.filter().order_by('-data')[0].data
+            if data > data_ultimo_registro:
+                taxa = []
+                ftp.retrlines('RETR ' + nome, taxa.append)
+#                 print '%s: %s' % (data, Decimal(taxa[0]) / 100)
+                historico = HistoricoTaxaDI(data = data, taxa = Decimal(taxa[0]) / 100)
+                historico.save()
