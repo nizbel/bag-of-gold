@@ -37,8 +37,8 @@ disable=all
 
 enable= blacklisted-name,
         #invalid-name,
-#missing-docstring,
-#empty-docstring,
+        missing-docstring,
+        empty-docstring,
         unneeded-not,
         #singleton-comparison,
         misplaced-comparison-constant,
