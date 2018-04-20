@@ -15,8 +15,6 @@ from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia, \
     criar_operacoes_lote, criar_transferencias_lote, \
     calcular_qtd_moedas_ate_dia_por_criptomoeda, formatar_op_lote_confirmacao, \
     formatar_transf_lote_confirmacao
-from bagogold.fundo_investimento.utils import \
-    calcular_qtd_cotas_ate_dia_por_fundo
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -668,10 +666,11 @@ def painel(request):
     dados['total_atual'] = Decimal(0)
     
     moedas = Criptomoeda.objects.filter(id__in=qtd_moedas.keys())
-    valores_atuais = ValorDiarioCriptomoeda.objects.filter(criptomoeda__in=qtd_moedas.keys(), moeda=ValorDiarioCriptomoeda.MOEDA_REAL).values('valor')
+    valores_atuais = ValorDiarioCriptomoeda.objects.filter(criptomoeda__in=qtd_moedas.keys()).values('valor')
     for moeda in moedas:
         moeda.qtd_atual = qtd_moedas[moeda.id]
-        moeda.valor_atual = valores_atuais.get(criptomoeda=moeda)['valor']
+        moeda.valor_atual = valores_atuais.get(criptomoeda=moeda, moeda=ValorDiarioCriptomoeda.MOEDA_REAL)['valor']
+        moeda.valor_atual_dolar = valores_atuais.get(criptomoeda=moeda, moeda=ValorDiarioCriptomoeda.MOEDA_DOLAR)['valor']
         moeda.total_atual = moeda.qtd_atual * moeda.valor_atual
         
         dados['total_atual'] += moeda.total_atual
