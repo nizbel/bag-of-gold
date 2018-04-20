@@ -18,6 +18,7 @@ inicio_patterns = [
 #     url(r'^$', RedirectView.as_view(url='/painel-geral/')),
     url(r'^$', views.home.inicio, name='home'),
     url(r'^acumulado-mensal/$', views.home.acumulado_mensal_painel_geral, name='acumulado_mensal_painel_geral'),
+    url(r'^calcular-renda-futura/$', views.home.calcular_renda_futura, name='calcular_renda_futura'),
     url(r'^calendario/$', views.home.calendario, name='calendario'),
     url(r'^detalhar-acumulados-mensais/$', views.home.detalhar_acumulados_mensais, name='detalhar_acumulados_mensais'),
     url(r'^detalhar-acumulado-mensal/$', views.home.detalhar_acumulado_mensal, name='detalhar_acumulado_mensal'),

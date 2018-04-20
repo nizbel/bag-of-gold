@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block pagina_titulo_icone %}
+<i class="icon-user font-yellow-crusta"></i>
+{% endblock %}
+
+{% block content %}
+<div class="portlet-body">
+	<div class="row">
+		<div class="col-md-12">
+			<!-- BEGIN Portlet PORTLET-->
+			<div class="portlet box yellow-crusta">
+				<div class="portlet-title">
+					<div class="caption">
+						<i class="fa fa-clock-o"></i>Renda futura</div>
+					<div class="tools">
+						<a href="javascript:;" class="collapse"></a>
+					</div>
+				</div>
+				<div class="portlet-body" id="portlet_calculo">
+                    <input type="button" value="Calcular" onclick="calcular_renda_futura()">
+                    <span data-counter="counterup" data-value="0" id="resultado">0</span>
+                    {% comment %}
+<!--                     <span " data-value="{{acumulado_investimento.qtd|template_abs|floatformat:'2'}}"  -->
+<!--                     class="{% if acumulado_investimento.qtd < 0 %}font-red-thunderbird{% else %}font-blue{% endif %}">0</span> -->
+                    {% endcomment %}
+				</div>
+			</div>
+			<!-- END Portlet PORTLET-->
+		</div>
+	</div>
+</div>
+
+{% endblock %}
+
+{% block extra_footer %}
+<script src={% static "assets/global/plugins/counterup/jquery.waypoints.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/counterup/jquery.counterup.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/jquery.pulsate.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/moment.min.js" %} type="text/javascript"></script>
+<script type="text/javascript">
+$( document ).ready(function() {
+	
+});
+
+function calcular_renda_futura() {
+    var data_inicio = $(this).attr('data-inicial');
+    var data_fim = $(this).attr('data-final');
+    App.blockUI({
+        target: '#portlet_calculo',
+        iconOnly: true,
+        overlayColor: 'none'
+    });
+    var aporte_mensal = 1000;
+    var num_meses = 48;
+    var taxa_anual = 7.5;
+    var taxa_mensal = Math.pow((1 + taxa_anual/100), (1.0/12)) - 1;
+    
+    var rendimento_apos_meses = aporte_mensal * ((1 - Math.pow((1 + taxa_mensal), (num_meses+1))) / (1 - (1 + taxa_mensal)) - 1);
+    
+    var rendimento_mensal_desejado = 4000;
+    var tempo_necessario_rendimento_mensal = (-1) * ((((rendimento_mensal_desejado / taxa_mensal) / aporte_mensal) + 1) * (1 - (1 + taxa_mensal)) - 1)
+
+    $('#resultado').attr('data-value', tempo_necessario_rendimento_mensal.toFixed(3).replace('.', ',')).html('0');
+    $('#resultado').counterUp({
+        delay: 10,
+        time: 1000
+    });
+
+    App.unblockUI('#portlet_calculo');
+}
+</script>
+{% endblock %}
