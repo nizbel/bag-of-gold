@@ -31,13 +31,14 @@ import calendar
 import datetime
 import json
 import traceback
+from django.shortcuts import get_object_or_404
 
 @login_required
 @adiciona_titulo_descricao('Editar operação em criptomoeda', 'Alterar valores de uma operação de compra/venda em criptomoeda')
 def editar_operacao_criptomoeda(request, id_operacao):
     investidor = request.user.investidor
     
-    operacao_criptomoeda = OperacaoCriptomoeda.objects.get(pk=id_operacao)
+    operacao_criptomoeda = get_object_or_404(OperacaoCriptomoeda, pk=id_operacao)
     # Verifica se a operação é do investidor, senão, jogar erro de permissão
     if operacao_criptomoeda.investidor != investidor:
         raise PermissionDenied
@@ -169,7 +170,7 @@ def editar_operacao_criptomoeda(request, id_operacao):
 def editar_transferencia(request, id_transferencia):
     investidor = request.user.investidor
     
-    transferencia_criptomoeda = TransferenciaCriptomoeda.objects.get(pk=id_transferencia)
+    transferencia_criptomoeda = get_object_or_404(TransferenciaCriptomoeda, pk=id_transferencia)
     # Verifica se a operação é do investidor, senão, jogar erro de permissão
     if transferencia_criptomoeda.investidor != investidor:
         raise PermissionDenied
