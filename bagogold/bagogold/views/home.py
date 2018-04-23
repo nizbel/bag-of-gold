@@ -65,7 +65,8 @@ from bagogold.tesouro_direto.models import OperacaoTitulo, HistoricoTitulo, \
 from bagogold.tesouro_direto.utils import calcular_valor_td_ate_dia
 
 
-@adiciona_titulo_descricao('Cálculos de rendimento', 'Permite calcular tempo necessário para alcançar determinado rendimento')
+@adiciona_titulo_descricao('Cálculos de patrimônio e rendimento futuros', 'Permite calcular o patrimônio acumulado em um período, o rendimento alcançado e o ' \
+                                                                          'tempo necessário para obtê-los')
 def calcular_renda_futura(request):
     ultima_taxa_di = HistoricoTaxaDI.objects.all().order_by('-data')[0].taxa
     return TemplateResponse(request, 'calcular_renda_futura.html', {'ultima_taxa_di': ultima_taxa_di})
