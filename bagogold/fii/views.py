@@ -295,7 +295,7 @@ def editar_operacao_fii(request, operacao_id):
                         messages.success(request, 'Operação alterada com sucesso')
                         return HttpResponseRedirect(reverse('fii:historico_fii'))
                         
-            for erro in [erro for erro in form_operacao_fii.non_field_errors()]:
+            for erro in form_operacao_fii.non_field_errors():
                 messages.error(request, erro)
                 
         elif request.POST.get("delete"):
