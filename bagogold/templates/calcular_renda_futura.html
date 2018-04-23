@@ -9,24 +9,34 @@
 <div class="portlet-body">
 	<div class="row">
         <div class="col-md-12">
+            <div class="alert alert-warning">
+                Os valores obtidos são aproximados, e é sempre considerado um <strong>rendimento anual fixo por todo o período selecionado</strong>
+            </div>
+        </div>
+        <div class="col-md-12">
             <!-- BEGIN Portlet PORTLET-->
             <div class="portlet box yellow-crusta">
                 <div class="portlet-title">
                     <div class="caption">
-                        <i class="fa fa-clock-o"></i>Calcular patrimônio e rendimento futuros</div>
+                        <i class="fa fa-clock-o"></i>Patrimônio e rendimento futuros</div>
                     <div class="tools">
                         <a href="javascript:;" class="collapse"></a>
                     </div>
                 </div>
                 <div class="portlet-body" id="portlet_patrimonio_futuro">
                     <div class="row">
+                        <div class="col-md-12">
+                            <div class="alert alert-warning">
+                                Os cálculos são feitos considerando um aporte ao início de cada mês
+                            </div>
+                        </div>
                         <div class="form-group col-md-4">
                             <label class="control-label col-md-4" style="text-align: left;"> Aporte mensal: </label>
                             <div class="col-md-8">
                                 <input id="aporte_mensal_patr_fut" type="text" class="form-control" value="1000">
                             </div>
                         </div>
-                        <div class="form-group col-md-4">
+                        <div class="form-group col-md-3">
                             <label class="control-label col-md-4" style="text-align: left;"> Período: </label>
                             <div class="col-md-8">
                                 <input id="num_meses_patr_fut" type="text" class="form-control" value="12">
@@ -38,16 +48,26 @@
                                 <input id="taxa_anual_patr_fut" type="text" class="form-control" value="6">
                             </div>
                         </div>                        
-                        <div class="col-md-2">
+                        <div class="col-md-1">
                             <input type="button" value="Calcular" class="btn btn-warning" onclick="calcular_patrimonio_futuro()">
                         </div>
-                        <div class="col-md-10 hidden" id="div_patr_fut">
-                            <span class="lead col-md-6">
+                        <div class="col-md-6 hidden" id="div_patr_fut">
+                            <span class="col-md-12">Com os valores selecionados, é possível alcançar ao fim do período:</span>
+                            <h4 class="col-md-12">
                                 <strong>Patrimônio acumulado de R$ <span data-counter="counterup" data-value="0,00" id="resultado_patrimonio_futuro"></span></strong>
-                            </span>
-                            <span class="lead col-md-6">
+                            </h4>
+                            <h4 class="col-md-12">
                                 <strong>Rendendo R$ <span data-counter="counterup" data-value="0,00" id="resultado_rendimento_futuro"></span> no próximo mês</strong>
-                            </span>
+                            </h4>
+                        </div>
+                        <div class="col-md-6 hidden" id="div_patr_fut_comp">
+                            <span class="col-md-12">Aumentando os aportes mensais em R$ <span id="valor_patr_fut_comp"></span>, você terá:</span>
+                            <h4 class="col-md-12">
+                                <strong>Patrimônio acumulado de R$ <span data-counter="counterup" data-value="0,00" id="resultado_patrimonio_futuro_comp"></span></strong>
+                            </h4>
+                            <h4 class="col-md-12">
+                                <strong>Rendendo R$ <span data-counter="counterup" data-value="0,00" id="resultado_rendimento_futuro_comp"></span> no próximo mês</strong>
+                            </h4>
                         </div>
                     </div>
                 </div>
@@ -58,7 +78,7 @@
             <div class="portlet box yellow-crusta">
                 <div class="portlet-title">
                     <div class="caption">
-                        <i class="fa fa-clock-o"></i>Calcular tempo necessário para patrimônio</div>
+                        <i class="fa fa-clock-o"></i>Tempo necessário para patrimônio</div>
                     <div class="tools">
                         <a href="javascript:;" class="collapse"></a>
                     </div>
@@ -72,23 +92,23 @@
                             </div>
                         </div>
                         <div class="form-group col-md-4">
-                            <label class="control-label col-md-4" style="text-align: left;"> Patrimônio: </label>
+                            <label class="control-label col-md-4" style="text-align: left;"> Patrimônio desejado: </label>
                             <div class="col-md-8">
                                 <input id="patrimonio_tempo_patr" type="text" class="form-control" value="10000">
                             </div>
                         </div>
-                        <div class="form-group col-md-4">
+                        <div class="form-group col-md-3">
                             <label class="control-label col-md-4" style="text-align: left;"> Rendimento: </label>
                             <div class="col-md-8">
                                 <input id="taxa_anual_tempo_patr" type="text" class="form-control" value="6">
                             </div>
                         </div>                        
-                        <div class="col-md-2">
+                        <div class="col-md-1">
                             <input type="button" value="Calcular" class="btn btn-warning" onclick="calcular_periodo_para_patrimonio()">
                         </div>
                         <div class="col-md-10 hidden" id="div_tempo_patr">
-                            <span class="lead col-md-6">
-                                <strong>Patrimônio alcançado em aproximadamente <span data-counter="counterup" data-value="0,00" id="resultado_tempo_patrimonio"></span> meses</strong>
+                            <span class="lead col-md-12">
+                                <strong>Patrimônio alcançado em aproximadamente <span data-counter="counterup" data-value="0,0" id="resultado_tempo_patrimonio"></span> meses</strong>
                             </span>
                         </div>
                     </div>
@@ -100,14 +120,88 @@
             <div class="portlet box yellow-crusta">
                 <div class="portlet-title">
                     <div class="caption">
-                        <i class="fa fa-clock-o"></i>Calcular tempo necessário para rendimento</div>
+                        <i class="fa fa-clock-o"></i>Tempo necessário para rendimento</div>
                     <div class="tools">
                         <a href="javascript:;" class="collapse"></a>
                     </div>
                 </div>
                 <div class="portlet-body" id="portlet_tempo_rendimento">
-                    <input type="button" value="Calcular" onclick="calcular_periodo_para_rendimento()">
-                    <span data-counter="counterup" data-value="0" id="resultado_tempo_rendimento">0</span>
+                    <div class="row">
+                        <div class="form-group col-md-4">
+                            <label class="control-label col-md-4" style="text-align: left;"> Aporte mensal: </label>
+                            <div class="col-md-8">
+                                <input id="aporte_mensal_tempo_rend" type="text" class="form-control" value="1000">
+                            </div>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label class="control-label col-md-4" style="text-align: left;"> Renda desejada: </label>
+                            <div class="col-md-8">
+                                <input id="rendimento_tempo_rend" type="text" class="form-control" value="1000">
+                            </div>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label class="control-label col-md-4" style="text-align: left;"> Rendimento: </label>
+                            <div class="col-md-8">
+                                <input id="taxa_anual_tempo_rend" type="text" class="form-control" value="6">
+                            </div>
+                        </div>                        
+                        <div class="col-md-1">
+                            <input type="button" value="Calcular" class="btn btn-warning" onclick="calcular_periodo_para_rendimento()">
+                        </div>
+                        <div class="col-md-10 hidden" id="div_tempo_rend">
+                            <span class="lead col-md-12">
+                                <strong>Rendimento mensal alcançado em aproximadamente <span data-counter="counterup" data-value="0,0" id="resultado_tempo_rendimento"></span> meses</strong>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- END Portlet PORTLET-->
+        </div>
+        <div class="col-md-12">
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-clock-o"></i>Tempo necessário para rendimento em percentual do salário</div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+                </div>
+                <div class="portlet-body" id="portlet_tempo_rendimento_perc">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="alert alert-warning">
+                                Calcula o tempo necessário, em meses, para receber uma renda mensal igual a um percentual do salário, com base na quantidade
+                                do salário que é investida mensalmente (aportes), no percentual almejado e na taxa anual de rendimento do dinheiro investido
+                            </div>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label class="control-label col-md-4" style="text-align: left;"> Aporte mensal: </label>
+                            <div class="col-md-8">
+                                <input id="perc_inv_tempo_rend_perc" type="text" class="form-control" value="10">
+                            </div>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label class="control-label col-md-4" style="text-align: left;"> Renda desejada: </label>
+                            <div class="col-md-8">
+                                <input id="perc_tempo_rend_perc" type="text" class="form-control" value="50">
+                            </div>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label class="control-label col-md-4" style="text-align: left;"> Rendimento: </label>
+                            <div class="col-md-8">
+                                <input id="taxa_anual_tempo_rend_perc" type="text" class="form-control" value="6">
+                            </div>
+                        </div>                        
+                        <div class="col-md-1">
+                            <input type="button" value="Calcular" class="btn btn-warning" onclick="calcular_periodo_para_rendimento_perc()">
+                        </div>
+                        <div class="col-md-10 hidden" id="div_tempo_rend_perc">
+                            <span class="lead col-md-12">
+                                <strong>Rendimento mensal alcançado em aproximadamente <span data-counter="counterup" data-value="0,0" id="resultado_tempo_rendimento_perc"></span> meses</strong>
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
             <!-- END Portlet PORTLET-->
@@ -124,58 +218,7 @@
 <script src={% static "js/bagogold/calculo_rendimento_futuro.js" %} type="text/javascript"></script>
 <script type="text/javascript">
 $( document ).ready(function() {
-	$("#aporte_mensal_patr_fut").TouchSpin({
-        min: 0.01,
-        max: 1000000,
-        step: 0.01,
-        decimals: 2,
-        maxboostedstep: 100,
-        prefix: 'R$'
-    });
 
-    $("#num_meses_patr_fut").TouchSpin({
-        min: 1,
-        max: 600,
-        step: 1,
-        maxboostedstep: 100,
-        postfix: 'meses'
-    });
-
-    $("#taxa_anual_patr_fut").TouchSpin({
-        min: 0.01,
-        max: 100,
-        step: 0.01,
-        decimals: 2,
-        maxboostedstep: 100,
-        postfix: '% ao ano'
-    });
-
-    $("#aporte_mensal_tempo_patr").TouchSpin({
-        min: 0.01,
-        max: 1000000,
-        step: 0.01,
-        decimals: 2,
-        maxboostedstep: 100,
-        prefix: 'R$'
-    });
-
-    $("#patrimonio_tempo_patr").TouchSpin({
-        min: 0.01,
-        max: 10000000,
-        step: 0.01,
-        decimals: 2,
-        maxboostedstep: 100,
-        prefix: 'R$'
-    });
-
-    $("#taxa_anual_tempo_patr").TouchSpin({
-        min: 0.01,
-        max: 100,
-        step: 0.01,
-        decimals: 2,
-        maxboostedstep: 100,
-        postfix: '% ao ano'
-    });
 });
 </script>
 {% endblock %}
