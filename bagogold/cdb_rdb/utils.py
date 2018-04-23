@@ -19,8 +19,10 @@ import datetime
 def calcular_valor_venda_cdb_rdb(operacao_venda, arredondar=True, valor_liquido=False):
     """
     Calcula o valor de venda de uma operação em CDB/RDB
+    
     Parâmetros: Operação de venda
-                Levar em consideração impostos (IOF e IR)
+                Arredondar?
+                Levar em consideração impostos (IOF e IR)?
     Resultado: Valor em reais da venda
     """
     if operacao_venda.tipo_operacao != 'V':
@@ -46,6 +48,15 @@ def calcular_valor_venda_cdb_rdb(operacao_venda, arredondar=True, valor_liquido=
     
 
 def calcular_valor_operacao_cdb_rdb_ate_dia(operacao, dia=datetime.date.today(), arredondar=True, valor_liquido=False):
+    """
+    Calcula o valor de uma operação de compra em CDB/RDB até dia especificado
+    
+    Parâmetros: Operação de compra
+                Data
+                Arredondar?
+                Levar em consideração impostos (IOF e IR)?
+    Resultado: Valor em reais da venda
+    """
     if operacao.tipo_operacao != 'C':
         raise ValueError('Apenas para operações de compra')
     # Calcular limitado ao vencimento do CDB/RDB
@@ -80,6 +91,7 @@ def calcular_valor_operacao_cdb_rdb_ate_dia(operacao, dia=datetime.date.today(),
 def calcular_valor_atualizado_operacao_ate_dia(valor, data_inicial, data_final, operacao, qtd_original, valor_liquido=False, data_ultima_valorizacao=None):
     """
     Calcula o valor atualizado de uma operação em CDB/RDB entre um período
+    
     Parâmetros: Valor a atualizar
                 Data inicial da atualização
                 Data final da atualização
@@ -129,9 +141,10 @@ def calcular_valor_atualizado_operacao_ate_dia(valor, data_inicial, data_final, 
 def calcular_valor_cdb_rdb_ate_dia(investidor, dia=datetime.date.today(), valor_liquido=False):
     """ 
     Calcula o valor dos CDB/RDB no dia determinado
+    
     Parâmetros: Investidor
                 Data final
-                Levar em consideração impostos (IOF e IR)
+                Levar em consideração impostos (IOF e IR)?
     Retorno: Valor de cada CDB/RDB na data escolhida {id_letra: valor_na_data, }
     """
     operacoes = buscar_operacoes_vigentes_ate_data(investidor, dia)
@@ -152,6 +165,7 @@ def calcular_valor_cdb_rdb_ate_dia(investidor, dia=datetime.date.today(), valor_
 def calcular_valor_cdb_rdb_ate_dia_por_divisao(dia, divisao_id):
     """ 
     Calcula o valor dos CDB/RDB da divisão no dia determinado
+    
     Parâmetros: Data final
                 ID da divisão
     Retorno: Valor de cada CDB/RDB da divisão na data escolhida {id_cdb_rdb: valor_na_data, }
@@ -190,6 +204,7 @@ def calcular_valor_cdb_rdb_ate_dia_por_divisao(dia, divisao_id):
 def calcular_valor_um_cdb_rdb_ate_dia_por_divisao(cdb_rdb, divisao_id, dia=datetime.date.today()):
     """ 
     Calcula o valor total de um CDB/RDB da divisão no dia determinado
+    
     Parâmetros: CDB/RDB escolhido
                 ID da divisão
                 Data final
@@ -230,6 +245,7 @@ def calcular_valor_um_cdb_rdb_ate_dia_por_divisao(cdb_rdb, divisao_id, dia=datet
 def calcular_valor_op_cdb_rdb_ate_dia_por_divisao(divisao_operacao, dia=datetime.date.today(), arredondar=True):
     """ 
     Calcula o valor de uma operação em CDB/RDB para uma divisão divisão no dia determinado
+    
     Parâmetros: Divisão da operação em CDB/RDB
                 Data final
     Retorno: Valor atualizado da operação na data
@@ -267,6 +283,7 @@ def calcular_valor_op_cdb_rdb_ate_dia_por_divisao(divisao_operacao, dia=datetime
 def buscar_operacoes_vigentes_ate_data(investidor, data=datetime.date.today()):
     """
     Calcula o valor das operações em CDB/RDB vigentes até data especificada
+    
     Parâmetros: Investidor
                 Data
     Retorno: Lista de operações vigentes, adicionando os campos qtd_disponivel_venda e qtd_vendida
@@ -275,10 +292,31 @@ def buscar_operacoes_vigentes_ate_data(investidor, data=datetime.date.today()):
         .annotate(qtd_vendida=Coalesce(Sum(Case(When(operacao_compra__operacao_venda__data__lte=data, then='operacao_compra__operacao_venda__quantidade'))), 0)).exclude(quantidade=F('qtd_vendida')) \
         .annotate(qtd_disponivel_venda=(F('quantidade') - F('qtd_vendida')))
     
-#     operacoes = OperacaoCDB_RDB.objects.filter(Q(investidor=investidor, checkpointcdb_rdb__ano=data.year-1) | \
-#                                                Q(investidor=investidor, tipo_operacao='C', data__range=[data.replace(month=1).replace(day=1), data])) \
-#         .annotate(qtd_restante=Coalesce(F('checkpointcdb_rdb__qtd_restante'), F('quantidade'))) \
-#         .annotate(qtd_vendida=Coalesce(Sum(Case(When(operacao_compra__operacao_venda__data__range=[data.replace(month=1).replace(day=1), data], then='operacao_compra__operacao_venda__quantidade'))), 0)).exclude(qtd_restante=F('qtd_vendida')) \
-#         .annotate(qtd_disponivel_venda=(F('qtd_restante') - F('qtd_vendida')))
-
     return operacoes
+    
+def simulador_cdb_rdb(filtros):
+    """
+    Simula uma aplicação em CDB/RDB para os valores especificados nos filtros
+    
+    Parâmetros: Dicionário com filtros
+    Retorno:    Lista de datas (mes a mes) com valores, ex.: [(data, valor),...]
+    """
+    data_atual = datetime.date.today()
+    resultado = [(data_atual, filtros['aplicacao'])]
+    
+    num_dias_grafico = min(filtros['periodo'], 64)
+    
+    # Marcar dias
+    qtds_dias = [round(0 + (Decimal(filtros['periodo'])/num_dias_grafico)*parte) for parte in xrange(1, num_dias_grafico+1)]
+    if filtros['tipo'] == 'POS':
+        ultima_taxa_di = HistoricoTaxaDI.objects.all().order_by('-data')[0].taxa
+        for qtd_dias in qtds_dias:
+            qtd_dias_uteis = qtd_dias_uteis_no_periodo(data_atual, data_atual + datetime.timedelta(days=qtd_dias))
+            qtd_atual = calcular_valor_atualizado_com_taxas_di({ultima_taxa_di: qtd_dias_uteis}, filtros['aplicacao'], filtros['percentual_indice'])
+            resultado.append((data_atual + datetime.timedelta(days=qtd_dias), qtd_atual))
+    elif filtros['tipo'] == 'PRE':
+        for qtd_dias in qtds_dias:
+            qtd_dias_uteis = qtd_dias_uteis_no_periodo(data_atual, data_atual + datetime.timedelta(days=qtd_dias))
+            qtd_atual = calcular_valor_atualizado_com_taxa_prefixado(filtros['aplicacao'], filtros['percentual_indice'], qtd_dias_uteis)
+            resultado.append((data_atual + datetime.timedelta(days=qtd_dias), qtd_atual))
+    return resultado
