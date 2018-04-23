@@ -1,4 +1,31 @@
 # -*- coding: utf-8 -*-
+import calendar
+import datetime
+from decimal import Decimal, ROUND_FLOOR
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.exceptions import PermissionDenied
+from django.core.mail import mail_admins
+from django.db.models.expressions import F, Case, When, Value
+from django.db.models.query_utils import Q
+from django.shortcuts import get_object_or_404
+from django.template.loader import render_to_string
+from itertools import chain
+import json
+import math
+from operator import attrgetter
+import re
+import traceback
+
+from django.core.urlresolvers import reverse
+from django.db import transaction
+from django.db.models.aggregates import Sum
+from django.db.models.fields import CharField
+from django.forms import inlineformset_factory
+from django.http import HttpResponseRedirect, HttpResponse
+from django.template.response import TemplateResponse
+
+from bagogold import settings
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoFIIFormSet
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII, Divisao
@@ -14,28 +41,6 @@ from bagogold.fii.models import OperacaoFII, ProventoFII, HistoricoFII, FII, \
 from bagogold.fii.utils import calcular_valor_fii_ate_dia, \
     calcular_poupanca_prov_fii_ate_dia, calcular_qtd_fiis_ate_dia_por_ticker, \
     calcular_preco_medio_fiis_ate_dia, calcular_qtd_fiis_ate_dia
-from decimal import Decimal, ROUND_FLOOR
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.core.exceptions import PermissionDenied
-from django.core.urlresolvers import reverse
-from django.db.models.aggregates import Sum
-from django.db.models.expressions import F, Case, When, Value
-from django.db.models.fields import CharField
-from django.db.models.query_utils import Q
-from django.forms import inlineformset_factory
-from django.http import HttpResponseRedirect, HttpResponse
-from django.shortcuts import get_object_or_404
-from django.template.loader import render_to_string
-from django.template.response import TemplateResponse
-from itertools import chain
-from operator import attrgetter, itemgetter
-import calendar
-import datetime
-import json
-import math
-import re
-
 
 
 @login_required
@@ -231,25 +236,34 @@ def editar_operacao_fii(request, operacao_id):
                 # Validar de acordo com a quantidade de divisões
                 if varias_divisoes:
                     if formset_divisao.is_valid():
-                        operacao_fii.save()
-                        formset_divisao.save()
-                        for form_divisao_operacao in [form for form in formset_divisao if form.cleaned_data]:
-                            # Ignorar caso seja apagado
-                            if 'DELETE' in form_divisao_operacao.cleaned_data and form_divisao_operacao.cleaned_data['DELETE']:
-                                pass
-                            else:
-                                divisao_operacao = form_divisao_operacao.save(commit=False)
-                                if hasattr(divisao_operacao, 'usoproventosoperacaofii'):
-                                    if form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] == None or form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] == 0:
-                                        divisao_operacao.usoproventosoperacaofii.delete()
+                        try:
+                            with transaction.atomic():
+                                operacao_fii.save()
+                                formset_divisao.save()
+                                for form_divisao_operacao in [form for form in formset_divisao if form.cleaned_data]:
+                                    # Ignorar caso seja apagado
+                                    if 'DELETE' in form_divisao_operacao.cleaned_data and form_divisao_operacao.cleaned_data['DELETE']:
+                                        pass
                                     else:
-                                        divisao_operacao.usoproventosoperacaofii.qtd_utilizada = form_divisao_operacao.cleaned_data['qtd_proventos_utilizada']
-                                        divisao_operacao.usoproventosoperacaofii.save()
-                                else:
-                                    if form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] != None and form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] > 0:
-                                        # TODO remover operação de uso proventos
-                                        divisao_operacao.usoproventosoperacaofii = UsoProventosOperacaoFII(qtd_utilizada=form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'], operacao=operacao_fii)
-                                        divisao_operacao.usoproventosoperacaofii.save()
+                                        divisao_operacao = form_divisao_operacao.save(commit=False)
+                                        if hasattr(divisao_operacao, 'usoproventosoperacaofii'):
+                                            if form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] == None or form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] == 0:
+                                                divisao_operacao.usoproventosoperacaofii.delete()
+                                            else:
+                                                divisao_operacao.usoproventosoperacaofii.qtd_utilizada = form_divisao_operacao.cleaned_data['qtd_proventos_utilizada']
+                                                divisao_operacao.usoproventosoperacaofii.save()
+                                        else:
+                                            # Criar uso de proventos para divisão
+                                            if form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] != None and form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'] > 0:
+                                                # TODO remover operação de uso proventos
+                                                divisao_operacao.usoproventosoperacaofii = UsoProventosOperacaoFII(qtd_utilizada=form_divisao_operacao.cleaned_data['qtd_proventos_utilizada'], operacao=operacao_fii)
+                                                divisao_operacao.usoproventosoperacaofii.save()
+                        except:
+                            messages.error(request, 'Houve um erro ao editar a operação')
+                            if settings.ENV == 'DEV':
+                                raise
+                            elif settings.ENV == 'PROD':
+                                mail_admins(u'Erro ao editar operação em FII com várias divisões', traceback.format_exc().decode('utf-8'))
                         
                         messages.success(request, 'Operação alterada com sucesso')
                         return HttpResponseRedirect(reverse('fii:historico_fii'))
@@ -258,18 +272,26 @@ def editar_operacao_fii(request, operacao_id):
                     
                 else:    
                     if form_uso_proventos.is_valid():
-                        operacao_fii.save()
-                        divisao_operacao = DivisaoOperacaoFII.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_fii)
-                        divisao_operacao.quantidade = operacao_fii.quantidade
-                        divisao_operacao.save()
-                        uso_proventos = form_uso_proventos.save(commit=False)
-                        if uso_proventos.qtd_utilizada > 0:
-                            uso_proventos.operacao = operacao_fii
-                            uso_proventos.divisao_operacao = DivisaoOperacaoFII.objects.get(operacao=operacao_fii)
-                            uso_proventos.save()
-                        # Se uso proventos for 0 e existir uso proventos atualmente, apagá-lo
-                        elif uso_proventos.qtd_utilizada == 0 and UsoProventosOperacaoFII.objects.filter(divisao_operacao__operacao=operacao_fii):
-                            uso_proventos.delete()
+                        try:
+                            with transaction.atomic():
+                                operacao_fii.save()
+                                divisao_operacao = DivisaoOperacaoFII.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_fii)
+                                divisao_operacao.quantidade = operacao_fii.quantidade
+                                divisao_operacao.save()
+                                uso_proventos = form_uso_proventos.save(commit=False)
+                                if uso_proventos.qtd_utilizada > 0:
+                                    uso_proventos.operacao = operacao_fii
+                                    uso_proventos.divisao_operacao = DivisaoOperacaoFII.objects.get(operacao=operacao_fii)
+                                    uso_proventos.save()
+                                # Se uso proventos for 0 e existir uso proventos atualmente, apagá-lo
+                                elif uso_proventos.qtd_utilizada == 0 and UsoProventosOperacaoFII.objects.filter(divisao_operacao__operacao=operacao_fii):
+                                    uso_proventos.delete()
+                        except:
+                            messages.error(request, 'Houve um erro ao editar a operação')
+                            if settings.ENV == 'DEV':
+                                raise
+                            elif settings.ENV == 'PROD':
+                                mail_admins(u'Erro ao editar operação em FII com uma divisão', traceback.format_exc().decode('utf-8'))
                         messages.success(request, 'Operação alterada com sucesso')
                         return HttpResponseRedirect(reverse('fii:historico_fii'))
                         
