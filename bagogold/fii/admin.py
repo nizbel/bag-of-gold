@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
+from django.contrib import admin
+
 from bagogold.fii.models import FII, ProventoFII, OperacaoFII, \
     UsoProventosOperacaoFII, HistoricoFII, ValorDiarioFII, EventoIncorporacaoFII, \
-    EventoAgrupamentoFII, EventoDesdobramentoFII
-from django.contrib import admin
-from bagogold.bagogold.models.fii import CheckpointFII, CheckpointProventosFII
- 
+    EventoAgrupamentoFII, EventoDesdobramentoFII, CheckpointFII, \
+    CheckpointProventosFII
+
+
 admin.site.register(FII)
 
 class ProventoFIIAdmin(admin.ModelAdmin):
