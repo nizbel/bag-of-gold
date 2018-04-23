@@ -10,7 +10,8 @@
 	<div class="row">
         <div class="col-md-12">
             <div class="alert alert-warning">
-                Os valores obtidos são aproximados, e é sempre considerado um <strong>rendimento anual fixo por todo o período selecionado</strong>
+                Os <strong>valores obtidos são aproximados</strong>, e é sempre considerado um <strong>rendimento anual fixo por todo o período selecionado</strong>.
+                Os cálculos são feitos com <strong>um aporte ao início de cada mês</strong>
             </div>
         </div>
         <div class="col-md-12">
@@ -25,11 +26,6 @@
                 </div>
                 <div class="portlet-body" id="portlet_patrimonio_futuro">
                     <div class="row">
-                        <div class="col-md-12">
-                            <div class="alert alert-warning">
-                                Os cálculos são feitos considerando um aporte ao início de cada mês
-                            </div>
-                        </div>
                         <div class="form-group col-md-4">
                             <label class="control-label col-md-4" style="text-align: left;"> Aporte mensal: </label>
                             <div class="col-md-8">
@@ -45,7 +41,7 @@
                         <div class="form-group col-md-4">
                             <label class="control-label col-md-4" style="text-align: left;"> Rendimento: </label>
                             <div class="col-md-8">
-                                <input id="taxa_anual_patr_fut" type="text" class="form-control" value="6">
+                                <input id="taxa_anual_patr_fut" type="text" class="form-control" value="{{ultima_taxa_di}}">
                             </div>
                         </div>                        
                         <div class="col-md-1">
@@ -100,7 +96,7 @@
                         <div class="form-group col-md-3">
                             <label class="control-label col-md-4" style="text-align: left;"> Rendimento: </label>
                             <div class="col-md-8">
-                                <input id="taxa_anual_tempo_patr" type="text" class="form-control" value="6">
+                                <input id="taxa_anual_tempo_patr" type="text" class="form-control" value="{{ultima_taxa_di}}">
                             </div>
                         </div>                        
                         <div class="col-md-1">
@@ -142,7 +138,7 @@
                         <div class="form-group col-md-3">
                             <label class="control-label col-md-4" style="text-align: left;"> Rendimento: </label>
                             <div class="col-md-8">
-                                <input id="taxa_anual_tempo_rend" type="text" class="form-control" value="6">
+                                <input id="taxa_anual_tempo_rend" type="text" class="form-control" value="{{ultima_taxa_di}}">
                             </div>
                         </div>                        
                         <div class="col-md-1">
@@ -190,7 +186,7 @@
                         <div class="form-group col-md-3">
                             <label class="control-label col-md-4" style="text-align: left;"> Rendimento: </label>
                             <div class="col-md-8">
-                                <input id="taxa_anual_tempo_rend_perc" type="text" class="form-control" value="6">
+                                <input id="taxa_anual_tempo_rend_perc" type="text" class="form-control" value="{{ultima_taxa_di}}">
                             </div>
                         </div>                        
                         <div class="col-md-1">
