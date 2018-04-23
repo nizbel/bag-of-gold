@@ -8,41 +8,53 @@
 {% block content %}
 <div class="portlet-body">
 	<div class="row">
-        <div class="col-md-6">
+        <div class="col-md-12">
             <!-- BEGIN Portlet PORTLET-->
             <div class="portlet box yellow-crusta">
                 <div class="portlet-title">
                     <div class="caption">
-                        <i class="fa fa-clock-o"></i>Calcular patrimônio futuro</div>
+                        <i class="fa fa-clock-o"></i>Calcular patrimônio e rendimento futuros</div>
                     <div class="tools">
                         <a href="javascript:;" class="collapse"></a>
                     </div>
                 </div>
                 <div class="portlet-body" id="portlet_patrimonio_futuro">
-                    <input type="button" value="Calcular" onclick="calcular_patrimonio_futuro()">
-                    <span data-counter="counterup" data-value="0" id="resultado_patrimonio_futuro">0</span>
+                    <div class="row">
+                        <div class="form-group col-md-4">
+                            <label class="control-label col-md-4" style="text-align: left;"> Aporte mensal: </label>
+                            <div class="col-md-8">
+                                <input id="aporte_mensal_patr_fut" type="text" class="form-control" value="1000">
+                            </div>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label class="control-label col-md-4" style="text-align: left;"> Período: </label>
+                            <div class="col-md-8">
+                                <input id="num_meses_patr_fut" type="text" class="form-control" value="12">
+                            </div>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label class="control-label col-md-4" style="text-align: left;"> Rendimento: </label>
+                            <div class="col-md-8">
+                                <input id="taxa_anual_patr_fut" type="text" class="form-control" value="6">
+                            </div>
+                        </div>                        
+                        <div class="col-md-2">
+                            <input type="button" value="Calcular" class="btn btn-warning" onclick="calcular_patrimonio_futuro()">
+                        </div>
+                        <div class="col-md-10 hidden" id="div_patr_fut">
+                            <span class="lead col-md-6">
+                                <strong>Patrimônio acumulado de R$ <span data-counter="counterup" data-value="0,00" id="resultado_patrimonio_futuro"></span></strong>
+                            </span>
+                            <span class="lead col-md-6">
+                                <strong>Rendendo R$ <span data-counter="counterup" data-value="0,00" id="resultado_rendimento_futuro"></span> no próximo mês</strong>
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
             <!-- END Portlet PORTLET-->
         </div>
-		<div class="col-md-6">
-			<!-- BEGIN Portlet PORTLET-->
-			<div class="portlet box yellow-crusta">
-				<div class="portlet-title">
-					<div class="caption">
-						<i class="fa fa-clock-o"></i>Calcular rendimento futuro</div>
-					<div class="tools">
-						<a href="javascript:;" class="collapse"></a>
-					</div>
-				</div>
-				<div class="portlet-body" id="portlet_rendimento_futuro">
-                    <input type="button" value="Calcular" onclick="calcular_renda_futura()">
-                    <span data-counter="counterup" data-value="0" id="resultado_rendimento_futuro">0</span>
-				</div>
-			</div>
-			<!-- END Portlet PORTLET-->
-		</div>
-        <div class="col-md-6">
+        <div class="col-md-12">
             <div class="portlet box yellow-crusta">
                 <div class="portlet-title">
                     <div class="caption">
@@ -52,13 +64,39 @@
                     </div>
                 </div>
                 <div class="portlet-body" id="portlet_tempo_patrimonio">
-                    <input type="button" value="Calcular" onclick="calcular_periodo_para_patrimonio()">
-                    <span data-counter="counterup" data-value="0" id="resultado_tempo_patrimonio">0</span>
+                    <div class="row">
+                        <div class="form-group col-md-4">
+                            <label class="control-label col-md-4" style="text-align: left;"> Aporte mensal: </label>
+                            <div class="col-md-8">
+                                <input id="aporte_mensal_tempo_patr" type="text" class="form-control" value="1000">
+                            </div>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label class="control-label col-md-4" style="text-align: left;"> Patrimônio: </label>
+                            <div class="col-md-8">
+                                <input id="patrimonio_tempo_patr" type="text" class="form-control" value="10000">
+                            </div>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label class="control-label col-md-4" style="text-align: left;"> Rendimento: </label>
+                            <div class="col-md-8">
+                                <input id="taxa_anual_tempo_patr" type="text" class="form-control" value="6">
+                            </div>
+                        </div>                        
+                        <div class="col-md-2">
+                            <input type="button" value="Calcular" class="btn btn-warning" onclick="calcular_periodo_para_patrimonio()">
+                        </div>
+                        <div class="col-md-10 hidden" id="div_tempo_patr">
+                            <span class="lead col-md-6">
+                                <strong>Patrimônio alcançado em aproximadamente <span data-counter="counterup" data-value="0,00" id="resultado_tempo_patrimonio"></span> meses</strong>
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
             <!-- END Portlet PORTLET-->
         </div>
-        <div class="col-md-6">
+        <div class="col-md-12">
             <div class="portlet box yellow-crusta">
                 <div class="portlet-title">
                     <div class="caption">
@@ -82,12 +120,62 @@
 {% block extra_footer %}
 <script src={% static "assets/global/plugins/counterup/jquery.waypoints.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/counterup/jquery.counterup.min.js" %} type="text/javascript"></script>
-<script src={% static "assets/global/plugins/jquery.pulsate.min.js" %} type="text/javascript"></script>
-<script src={% static "assets/global/plugins/moment.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-touchspin/bootstrap.touchspin.min.js" %} type="text/javascript"></script>
 <script src={% static "js/bagogold/calculo_rendimento_futuro.js" %} type="text/javascript"></script>
 <script type="text/javascript">
 $( document ).ready(function() {
-	
+	$("#aporte_mensal_patr_fut").TouchSpin({
+        min: 0.01,
+        max: 1000000,
+        step: 0.01,
+        decimals: 2,
+        maxboostedstep: 100,
+        prefix: 'R$'
+    });
+
+    $("#num_meses_patr_fut").TouchSpin({
+        min: 1,
+        max: 600,
+        step: 1,
+        maxboostedstep: 100,
+        postfix: 'meses'
+    });
+
+    $("#taxa_anual_patr_fut").TouchSpin({
+        min: 0.01,
+        max: 100,
+        step: 0.01,
+        decimals: 2,
+        maxboostedstep: 100,
+        postfix: '% ao ano'
+    });
+
+    $("#aporte_mensal_tempo_patr").TouchSpin({
+        min: 0.01,
+        max: 1000000,
+        step: 0.01,
+        decimals: 2,
+        maxboostedstep: 100,
+        prefix: 'R$'
+    });
+
+    $("#patrimonio_tempo_patr").TouchSpin({
+        min: 0.01,
+        max: 10000000,
+        step: 0.01,
+        decimals: 2,
+        maxboostedstep: 100,
+        prefix: 'R$'
+    });
+
+    $("#taxa_anual_tempo_patr").TouchSpin({
+        min: 0.01,
+        max: 100,
+        step: 0.01,
+        decimals: 2,
+        maxboostedstep: 100,
+        postfix: '% ao ano'
+    });
 });
 </script>
 {% endblock %}
