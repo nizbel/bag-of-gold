@@ -878,17 +878,33 @@ def painel(request):
 
 @adiciona_titulo_descricao('Sobre CDB/RDB', 'Detalha o que são CDB e RDB')
 def sobre(request):
-    data_atual = datetime.date.today()
-    historico_di = HistoricoTaxaDI.objects.filter(data__gte=data_atual.replace(year=data_atual.year-3))
-    graf_historico_di = [[str(calendar.timegm(valor_historico.data.timetuple()) * 1000), float(valor_historico.taxa)] for valor_historico in historico_di]
-    
-    historico_ipca = HistoricoIPCA.objects.filter(ano__gte=(data_atual.year-3)).exclude(mes__lt=data_atual.month, ano=data_atual.year-3)
-    graf_historico_ipca = [[str(calendar.timegm(valor_historico.data().timetuple()) * 1000), float(valor_historico.valor)] for valor_historico in historico_ipca]
-    
-    if request.user.is_authenticated():
-        total_atual = sum(calcular_valor_cdb_rdb_ate_dia(request.user.investidor).values())
+    if request.is_ajax():
+        try:
+            aplicacao = Decimal(request.GET.get('qtd').replace('.', '').replace(',', '.'))
+            filtros_simulador = {'periodo': Decimal(request.GET.get('periodo')), 'percentual_indice': Decimal(request.GET.get('percentual_indice')), \
+                             'tipo': request.GET.get('tipo'), 'aplicacao': aplicacao}
+        except:
+            return HttpResponse(json.dumps({'sucesso': False, 'mensagem': u'Variáveis de entrada inválidas'}), content_type = "application/json") 
+        
+        graf_simulador = [[str(calendar.timegm(data.timetuple()) * 1000), float(valor_cdb_rdb)] for data, valor_cdb_rdb in simulador_cdb_rdb(filtros_simulador)]
+        return HttpResponse(json.dumps({'sucesso': True, 'graf_simulador': graf_simulador}), content_type = "application/json") 
     else:
-        total_atual = 0
+        data_atual = datetime.date.today()
+        historico_di = HistoricoTaxaDI.objects.filter(data__gte=data_atual.replace(year=data_atual.year-3)).order_by('data')
+        graf_historico_di = [[str(calendar.timegm(valor_historico.data.timetuple()) * 1000), float(valor_historico.taxa)] for valor_historico in historico_di]
     
-    return TemplateResponse(request, 'cdb_rdb/sobre.html', {'graf_historico_di': graf_historico_di, 'graf_historico_ipca': graf_historico_ipca,
-                                                            'total_atual': total_atual})
+        historico_ipca = HistoricoIPCA.objects.filter(ano__gte=(data_atual.year-3)).exclude(mes__lt=data_atual.month, ano=data_atual.year-3).order_by('ano', 'mes')
+        graf_historico_ipca = [[str(calendar.timegm(valor_historico.data().timetuple()) * 1000), float(valor_historico.valor)] for valor_historico in historico_ipca]
+    
+        if request.user.is_authenticated():
+            total_atual = sum(calcular_valor_cdb_rdb_ate_dia(request.user.investidor).values())
+        else:
+            total_atual = 0
+        
+        filtros_simulador = {'periodo': Decimal(12), 'percentual_indice': Decimal(85), 'tipo': 'POS', 'aplicacao': Decimal(1000)}
+        
+        graf_simulador = [[str(calendar.timegm(data.timetuple()) * 1000), float(valor_cdb_rdb)] for data, valor_cdb_rdb in simulador_cdb_rdb(filtros_simulador)]
+    
+        return TemplateResponse(request, 'cdb_rdb/sobre.html', {'graf_historico_di': graf_historico_di, 'graf_historico_ipca': graf_historico_ipca,
+                                                                'total_atual': total_atual, 'filtros_simulador': filtros_simulador,
+                                                                'graf_simulador': graf_simulador})
