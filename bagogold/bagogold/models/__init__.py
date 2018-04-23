@@ -1,7 +1,5 @@
 from acoes import *
 from debentures import *
-from fii import *
-from lc import *
 from td import *
 from divisoes import *
 from investidores import *
