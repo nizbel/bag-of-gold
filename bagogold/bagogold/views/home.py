@@ -67,16 +67,8 @@ from bagogold.tesouro_direto.utils import calcular_valor_td_ate_dia
 
 @adiciona_titulo_descricao('Cálculos de rendimento', 'Permite calcular tempo necessário para alcançar determinado rendimento')
 def calcular_renda_futura(request):
-#     aporte_mensal = 1000
-#     num_meses = 48
-#     taxa_anual = Decimal(7.5)
-#     taxa_mensal = (1 + taxa_anual/100)**(Decimal(1)/12) - 1
-#     
-#     rendimento_apos_meses = aporte_mensal * ((1 - (1 + taxa_mensal)**(num_meses+1)) / (1 - (1 + taxa_mensal)) - 1)
-#     
-#     rendimento_mensal_desejado = 4000
-#     tempo_necessario_rendimento_mensal = (-1) * ((((rendimento_mensal_desejado / taxa_mensal) / aporte_mensal) + 1) * (1 - (1 + taxa_mensal)) - 1)
-    return TemplateResponse(request, 'calcular_renda_futura.html', {})
+    ultima_taxa_di = HistoricoTaxaDI.objects.all().order_by('-data')[0].taxa
+    return TemplateResponse(request, 'calcular_renda_futura.html', {'ultima_taxa_di': ultima_taxa_di})
 
 @login_required
 @adiciona_titulo_descricao('Calendário de acompanhamento', 'Detalha as operações e recebimentos do investidor mensalmente')

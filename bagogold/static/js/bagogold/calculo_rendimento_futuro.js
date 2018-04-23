@@ -162,6 +162,12 @@ function calcular_patrimonio_futuro() {
     // Carregar comparativos
     setTimeout(function() {
     	var valor_patr_fut_comp = (aporte_mensal * 0.1).toFixed(2);
+    	
+    	// Verificar se aumento no aporte é de pelo menos 1 centavo
+    	if (valor_patr_fut_comp == '0.00') {
+    		return;
+    	}
+    	
     	$('#valor_patr_fut_comp').html(formatar_mil(valor_patr_fut_comp.replace('.', ',')));
 	    var aporte_mensal_comp = aporte_mensal + parseFloat(valor_patr_fut_comp);
 	    
