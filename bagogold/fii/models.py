@@ -9,7 +9,7 @@ import datetime
  
 class FII (models.Model):
     ticker = models.CharField(u'Ticker do FII', max_length=10, unique=True) 
-    empresa = models.ForeignKey('bagogold.Empresa', blank=True, null=True, related_name='fii_novo') 
+    empresa = models.ForeignKey('bagogold.Empresa', blank=True, null=True) 
     encerrado = models.BooleanField(u'FII encerrado?', default=False)
     
     class Meta:
@@ -72,7 +72,7 @@ class OperacaoFII (models.Model):
     tipo_operacao = models.CharField(u'Tipo de operação', max_length=1)
     fii = models.ForeignKey('FII')
     consolidada = models.NullBooleanField(u'Consolidada?', blank=True)
-    investidor = models.ForeignKey('bagogold.Investidor', related_name='op_fii_novo')
+    investidor = models.ForeignKey('bagogold.Investidor')
      
     def __unicode__(self):
         return '(' + self.tipo_operacao + ') ' + str(self.quantidade) + ' ' + self.fii.ticker + ' a R$' + str(self.preco_unitario) + ' em ' + str(self.data.strftime('%d/%m/%Y'))
@@ -87,7 +87,7 @@ class OperacaoFII (models.Model):
 class UsoProventosOperacaoFII (models.Model):
     operacao = models.ForeignKey('OperacaoFII')
     qtd_utilizada = models.DecimalField(u'Quantidade de proventos utilizada', max_digits=11, decimal_places=2, blank=True)
-    divisao_operacao = models.OneToOneField('bagogold.DivisaoOperacaoFII', related_name='uso_prov_fii_novo')
+    divisao_operacao = models.OneToOneField('bagogold.DivisaoOperacaoFII')
 
     def __unicode__(self):
         return 'R$ ' + str(self.qtd_utilizada) + ' em ' + self.divisao_operacao.divisao.nome + ' para ' + unicode(self.divisao_operacao.operacao)
@@ -151,7 +151,7 @@ class EventoDesdobramentoFII (EventoFII):
 class CheckpointFII(models.Model):
     ano = models.SmallIntegerField(u'Ano')
     fii = models.ForeignKey('FII')
-    investidor = models.ForeignKey('bagogold.Investidor', related_name='chkp_fii_novo')
+    investidor = models.ForeignKey('bagogold.Investidor')
     quantidade = models.IntegerField(u'Quantidade no ano', validators=[MinValueValidator(0)])
     preco_medio = models.DecimalField(u'Preço médio', max_digits=11, decimal_places=4)
     
@@ -160,7 +160,7 @@ class CheckpointFII(models.Model):
         
 class CheckpointProventosFII(models.Model):
     ano = models.SmallIntegerField(u'Ano')
-    investidor = models.ForeignKey('bagogold.Investidor', related_name='chkp_prov_fii_novo')
+    investidor = models.ForeignKey('bagogold.Investidor')
     valor = models.DecimalField(u'Valor da poupança de proventos', max_digits=22, decimal_places=16)
         
     class Meta:
