@@ -27,7 +27,7 @@ def verificar_pendencias_primeiro_acesso_dia(sender, instance, **kwargs):
     verificar_pendencias_investidor(instance)
         
 class PendenciaVencimentoTesouroDireto (Pendencia):   
-    titulo = models.ForeignKey('bagogold.Titulo')
+    titulo = models.ForeignKey('tesouro_direto.Titulo')
     quantidade = models.DecimalField(u'Quantidade', max_digits=7, decimal_places=2)
 
     class Meta:
