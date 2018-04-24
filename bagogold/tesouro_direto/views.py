@@ -161,7 +161,7 @@ def acompanhamento_td(request):
     # Comparativo com letras de crédito
     for lci_lca in letras_credito:
         # Calcular rendimento atual
-        lci_lca.taxa_atual = lci_lca.porcentagem_di_atual()
+        lci_lca.taxa_atual = lci_lca.porcentagem_atual()
         lci_lca.rendimento_atual = calcular_valor_atualizado_com_taxas_di({HistoricoTaxaDI.objects.filter(data__isnull=False).order_by('-data')[0].taxa: 252}, Decimal(100),
                                                                   lci_lca.taxa_atual).quantize(Decimal('.01'), ROUND_DOWN) - 100
         # Calcular rendimento real dos últimos 12 meses

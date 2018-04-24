@@ -16,11 +16,11 @@
 		<form method="POST" class="horizontal-form">{% csrf_token %}
 			<div class="form-body">
 				<div class="row">
-					<div class="form-group col-md-6 {% if form.porcentagem_di.errors %} has-error {% endif %}">
+					<div class="form-group col-md-6 {% if form.porcentagem.errors %} has-error {% endif %}">
 						<label class="control-label col-md-4"> Porcentagem de rendimento: </label>
 						<div class="col-md-8">
-							<input id="id_porcentagem_di" type="text" value="{{form.porcentagem_di.value}}" name="porcentagem_di" class="form-control">
-							{% if form.porcentagem_di.errors %} <span class="help-block"> {{ form.porcentagem_di.errors.as_text }} </span> {% endif %}
+							<input id="id_porcentagem" type="text" value="{{form.porcentagem.value}}" name="porcentagem" class="form-control">
+							{% if form.porcentagem.errors %} <span class="help-block"> {{ form.porcentagem.errors.as_text }} </span> {% endif %}
 						</div>
 					</div>
 					<div class="form-group col-md-6 {% if form.data.errors %} has-error {% endif %}">
@@ -78,7 +78,7 @@
 {{ form_lci_lca.media }}
 <script type="text/javascript">
 $( document ).ready(function() {	
-	$("input[name='porcentagem_di']").TouchSpin({
+	$("input[name='porcentagem']").TouchSpin({
 		initval: 0.01,
 		min: 0.01,
 		max: 1000000000,

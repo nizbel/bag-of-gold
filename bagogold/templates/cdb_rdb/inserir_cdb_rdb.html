@@ -99,8 +99,6 @@
 {{ form_cdb_rdb.media }}
 <script type="text/javascript">
 $(document).ready(function() {
-	var label = $("label[for='id_historicoporcentagemcdb_rdb_set-0-porcentagem']");
-	
 	$('#id_tipo_rendimento').change( function() {
 		if (String($(this).val()) == '1') {
 			$("input[name='historicoporcentagemcdb_rdb_set-0-porcentagem']").parent().find('.bootstrap-touchspin-postfix').text('% ao ano');

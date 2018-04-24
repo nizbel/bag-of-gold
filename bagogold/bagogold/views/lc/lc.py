@@ -46,7 +46,7 @@
 #     
 #     # Inserir dados do investimento
 #     lci_lca.carencia_atual = lci_lca.carencia_atual()
-#     lci_lca.porcentagem_atual = lci_lca.porcentagem_di_atual()
+#     lci_lca.porcentagem_atual = lci_lca.porcentagem_atual()
 #     
 #     # Preparar estatísticas zeradas
 #     lci_lca.total_investido = Decimal(0)
@@ -71,7 +71,7 @@
 #             taxas_dos_dias = {}
 #             for taxa in taxas:
 #                 taxas_dos_dias[taxa['taxa']] = taxa['qtd_dias']
-#             operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.qtd_disponivel_venda(), operacao.porcentagem_di())
+#             operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.qtd_disponivel_venda(), operacao.porcentagem())
 #             lci_lca.saldo_atual += operacao.atual
 #             
 #             # Calcular impostos
@@ -332,7 +332,7 @@
 #     # Prepara o campo valor atual
 #     for operacao in operacoes:
 #         operacao.atual = operacao.quantidade
-#         operacao.taxa = operacao.porcentagem_di()
+#         operacao.taxa = operacao.porcentagem()
 #         if operacao.tipo_operacao == 'C':
 #             operacao.tipo = 'Compra'
 #         else:
@@ -472,7 +472,7 @@
 #     investidor = request.user.investidor
 #     
 #     # Preparar formsets 
-#     PorcentagemFormSet = inlineformset_factory(LetraCredito, HistoricoPorcentagemLetraCredito, fields=('porcentagem_di',), form=LocalizedModelForm,
+#     PorcentagemFormSet = inlineformset_factory(LetraCredito, HistoricoPorcentagemLetraCredito, fields=('porcentagem',), form=LocalizedModelForm,
 #                                             extra=1, can_delete=False, max_num=1, validate_max=True)
 #     CarenciaFormSet = inlineformset_factory(LetraCredito, HistoricoCarenciaLetraCredito, fields=('carencia',), form=LocalizedModelForm,
 #                                             extra=1, can_delete=False, max_num=1, validate_max=True, labels = {'carencia': 'Período de carência (em dias)',})
@@ -628,9 +628,9 @@
 #         historico_rendimento = HistoricoPorcentagemLetraCredito.objects.filter(letra_credito=lc).exclude(data=None).order_by('-data')
 # #         print historico_rendimento
 #         if historico_rendimento:
-#             lc.rendimento_atual = historico_rendimento[0].porcentagem_di
+#             lc.rendimento_atual = historico_rendimento[0].porcentagem
 #         else:
-#             lc.rendimento_atual = HistoricoPorcentagemLetraCredito.objects.get(letra_credito=lc).porcentagem_di
+#             lc.rendimento_atual = HistoricoPorcentagemLetraCredito.objects.get(letra_credito=lc).porcentagem
 # 
 #     return TemplateResponse(request, 'lc/listar_lc.html', {'lcs': lcs})
 # 
@@ -682,7 +682,7 @@
 #         operacao.atual = operacao.quantidade
 #         if operacao.tipo_operacao == 'C':
 #             operacao.tipo = 'Compra'
-#             operacao.taxa = operacao.porcentagem_di()
+#             operacao.taxa = operacao.porcentagem()
 #         else:
 #             operacao.tipo = 'Venda'
 #     
