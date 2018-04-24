@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
-from django.db import models
 import datetime
+from decimal import Decimal
+
+from django.core.validators import MinValueValidator
+from django.db import models
+
+from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
+
 
 class LetraCredito (models.Model):
     nome = models.CharField(u'Nome', max_length=50)  
@@ -175,3 +180,13 @@ class HistoricoVencimentoLetraCredito (models.Model):
     vencimento = models.IntegerField(u'Período de vencimento')
     data = models.DateField(u'Data da variação', blank=True, null=True)
     letra_credito = models.ForeignKey('LetraCredito')    
+    
+    
+class CheckpointLetraCredito (models.Model):
+    ano = models.SmallIntegerField(u'Ano')
+    operacao = models.ForeignKey('OperacaoLetraCredito', limit_choices_to={'tipo_operacao': 'C'})
+    qtd_restante = models.DecimalField(u'Quantidade restante da operação', max_digits=11, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
+    qtd_atualizada = models.DecimalField(u'Quantidade atualizada da operação', max_digits=17, decimal_places=8, validators=[MinValueValidator(Decimal('0.00000001'))])
+    
+    class Meta:
+        unique_together=('operacao', 'ano')
