@@ -26,9 +26,16 @@
     {% for moeda in moedas %}
         <tr>
             <td>{{moeda.nome}}</td>
-            <td id="{{moeda.ticker}}_valor">R$ {{moeda.valor_atual|floatformat:2}}</td>
-            <td id="{{moeda.ticker}}_qtd">{{moeda.qtd_atual|casas_decimais}} {{moeda.ticker}}</td>
-            <td id="{{moeda.ticker}}_total">R$ {{moeda.total_atual|floatformat:2}}</td>
+            <td>
+            {% if moeda.valor_atual %}
+                R$ {{moeda.valor_atual|floatformat:'2'}}
+            {% else %}
+                Indisponível
+            {% endif %}
+            {% if moeda.valor_atual_dolar %} (USD {{moeda.valor_atual_dolar|floatformat:'2'}}){% endif %}
+            </td>
+            <td>{{moeda.qtd_atual|casas_decimais}} {{moeda.ticker}}</td>
+            <td>R$ {{moeda.total_atual|floatformat:2}}</td>
         </tr>
     {% endfor %}
     </tbody>
