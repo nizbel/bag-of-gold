@@ -9,6 +9,7 @@ from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 def calcular_valor_atualizado_com_taxa_di(taxa_do_dia, valor_atual, operacao_taxa):
     """
     Calcula o valor atualizado de uma operação vinculada ao DI, a partir da taxa DI do dia
+    
     Parâmetros: Taxa DI do dia
                 Valor atual da operação
                 Taxa da operação
@@ -19,6 +20,7 @@ def calcular_valor_atualizado_com_taxa_di(taxa_do_dia, valor_atual, operacao_tax
 def calcular_valor_atualizado_com_taxa_prefixado(valor_atual, operacao_taxa, qtd_dias=1):
     """
     Calcula o valor atualizado de uma operação em renda fixa prefixada, a partir da quantidade de dias do período
+    
     Parâmetros: Valor atual da operação
                 Taxa da operação
                 Quantidade de dias
@@ -29,6 +31,7 @@ def calcular_valor_atualizado_com_taxa_prefixado(valor_atual, operacao_taxa, qtd
 def calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor_atual, operacao_taxa):
     """
     Calcula o valor atualizado de uma operação vinculada ao DI, a partir das taxa DI dos dias
+    
     Parâmetros: Taxas DI dos dias {taxa(Decimal): quantidade_de_dias}
                 Valor atual da operação
                 Taxa da operação
@@ -42,6 +45,7 @@ def calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor_atual, operacao
 def calcular_valor_atualizado_com_taxas_di_e_juros(taxas_dos_dias, valor_atual, operacao_taxa, juros):
     """
     Calcula o valor atualizado de uma operação vinculada ao DI, a partir das taxa DI dos dias
+    
     Parâmetros: Taxas DI dos dias {taxa(Decimal): quantidade_de_dias}
                 Valor atual da operação
                 Taxa da operação
@@ -58,6 +62,7 @@ def calcular_valor_atualizado_com_taxas_di_e_juros(taxas_dos_dias, valor_atual, 
 def calcular_valor_atualizado_com_taxa_selic(taxa_do_dia, valor_atual):
     """
     Calcula o valor atualizado de uma operação vinculada ao Selic, a partir da taxa Selic do dia
+    
     Parâmetros: Taxa Selic do dia
                 Valor atual da operação
                 Taxa da operação
@@ -68,6 +73,7 @@ def calcular_valor_atualizado_com_taxa_selic(taxa_do_dia, valor_atual):
 def calcular_valor_atualizado_com_taxas_selic(taxas_dos_dias, valor_atual):
     """
     Calcula o valor atualizado de uma operação vinculada ao Selic, a partir das taxa Selic dos dias
+    
     Parâmetros: Taxas Selic dos dias {taxa(Decimal): quantidade_de_dias}
                 Valor atual da operação
                 Taxa da operação
@@ -79,8 +85,8 @@ def calcular_valor_atualizado_com_taxas_selic(taxas_dos_dias, valor_atual):
     return taxa_acumulada * valor_atual
 
 # TODO trazer busca de valores diários do DI para essa função
-# TODO verificar quais datas ainda não existem na base, remover busca de datas maiores que a última data
 def buscar_valores_diarios_di():
+    """Busca valores históricos do DI no site da CETIP"""
     ftp = FTP('ftp.cetip.com.br')
     ftp.login()
     ftp.cwd('MediaCDI')
