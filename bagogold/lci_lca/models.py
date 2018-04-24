@@ -132,9 +132,9 @@ class OperacaoLetraCredito (models.Model):
         return self.quantidade - qtd_vendida
     
     def qtd_disponivel_venda_na_data(self, data):
-        vendas = OperacaoVendaLetraCredito.objects.filter(operacao_compra=self).values_list('operacao_venda__id', flat=True)
+        vendas = OperacaoVendaLetraCredito.objects.filter(operacao_compra=self, operacao_venda__data__lte=data).values_list('operacao_venda__id', flat=True)
         qtd_vendida = 0
-        for venda in OperacaoLetraCredito.objects.filter(id__in=vendas, data__lt=data):
+        for venda in OperacaoLetraCredito.objects.filter(id__in=vendas):
             qtd_vendida += venda.quantidade
         return self.quantidade - qtd_vendida
     
@@ -162,6 +162,10 @@ class OperacaoVendaLetraCredito (models.Model):
     
     class Meta:
         unique_together=('operacao_compra', 'operacao_venda')
+        
+    @property
+    def data(self):
+        return self.operacao_venda.data
     
 class HistoricoPorcentagemLetraCredito (models.Model):
     porcentagem = models.DecimalField(u'Porcentagem de rendimento', max_digits=5, decimal_places=2)
