@@ -10,7 +10,7 @@ from bagogold.cdb_rdb.models import CDB_RDB, OperacaoVendaCDB_RDB, \
     OperacaoCDB_RDB, HistoricoPorcentagemCDB_RDB, CheckpointCDB_RDB, \
     HistoricoVencimentoCDB_RDB
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, \
-    buscar_operacoes_vigentes_ate_data, calcular_valor_operacao_cdb_rdb_ate_dia, \
+    calcular_valor_operacao_cdb_rdb_ate_dia, \
     calcular_valor_um_cdb_rdb_ate_dia_por_divisao, calcular_valor_venda_cdb_rdb
 from decimal import Decimal
 from django.contrib.auth.models import User
