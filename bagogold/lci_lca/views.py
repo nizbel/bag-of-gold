@@ -49,7 +49,7 @@ def detalhar_lci_lca(request, lci_lca_id):
     
     # Inserir dados do investimento
     lci_lca.carencia_atual = lci_lca.carencia_atual()
-    lci_lca.porcentagem_atual = lci_lca.porcentagem_di_atual()
+    lci_lca.porcentagem_atual = lci_lca.porcentagem_atual()
     lci_lca.vencimento_atual = lci_lca.vencimento_atual()
     
     # Preparar estatísticas zeradas
@@ -75,7 +75,7 @@ def detalhar_lci_lca(request, lci_lca_id):
             taxas_dos_dias = {}
             for taxa in taxas:
                 taxas_dos_dias[taxa['taxa']] = taxa['qtd_dias']
-            operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.qtd_disponivel_venda(), operacao.porcentagem_di())
+            operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.qtd_disponivel_venda(), operacao.porcentagem())
             lci_lca.saldo_atual += operacao.atual
             
             # Calcular impostos
@@ -386,7 +386,7 @@ def historico(request):
     # Prepara o campo valor atual
     for operacao in operacoes:
         operacao.atual = operacao.quantidade
-        operacao.taxa = operacao.porcentagem_di()
+        operacao.taxa = operacao.porcentagem()
         if operacao.tipo_operacao == 'C':
             operacao.tipo = 'Compra'
         else:
@@ -550,7 +550,7 @@ def inserir_lci_lca(request):
     investidor = request.user.investidor
     
     # Preparar formsets 
-    PorcentagemFormSet = inlineformset_factory(LetraCredito, HistoricoPorcentagemLetraCredito, fields=('porcentagem_di',), form=LocalizedModelForm,
+    PorcentagemFormSet = inlineformset_factory(LetraCredito, HistoricoPorcentagemLetraCredito, fields=('porcentagem',), form=LocalizedModelForm,
                                             extra=1, can_delete=False, max_num=1, validate_max=True)
     CarenciaFormSet = inlineformset_factory(LetraCredito, HistoricoCarenciaLetraCredito, fields=('carencia',), form=LocalizedModelForm,
                                             extra=1, can_delete=False, max_num=1, validate_max=True, labels = {'carencia': 'Período de carência',})
@@ -758,7 +758,7 @@ def painel(request):
         operacao.atual = operacao.quantidade
         if operacao.tipo_operacao == 'C':
             operacao.tipo = 'Compra'
-            operacao.taxa = operacao.porcentagem_di()
+            operacao.taxa = operacao.porcentagem()
         else:
             operacao.tipo = 'Venda'
     

@@ -20,7 +20,7 @@ class AtualizarLetraCreditoPorDITestCase(TestCase):
     def setUp(self):
         user = User.objects.create(username='tester')
         
-        LetraCredito.objects.create(nome="LCA Teste", investidor=user.investidor)
+        LetraCredito.objects.create(nome="LCA Teste", investidor=user.investidor, tipo_rendimento=LetraCredito.LCI_LCA_DI)
         OperacaoLetraCredito.objects.create(quantidade=Decimal(2500), data=datetime.date(2016, 5, 23), tipo_operacao='C', \
                                             letra_credito=LetraCredito.objects.get(nome="LCA Teste"), investidor=user.investidor)
 
@@ -45,8 +45,8 @@ class ValorLCAteDiaTestCase(TestCase):
         data_atual = datetime.date(2016, 10, 27)
         
         # Letra de crédito
-        lci_lca = LetraCredito.objects.create(nome="LCA Teste", investidor=user.investidor)
-        lci_lca_porcentagem_di = HistoricoPorcentagemLetraCredito.objects.create(letra_credito=lci_lca, porcentagem_di=Decimal(80))
+        lci_lca = LetraCredito.objects.create(nome="LCA Teste", investidor=user.investidor, tipo_rendimento=LetraCredito.LCI_LCA_DI)
+        lci_lca_porcentagem = HistoricoPorcentagemLetraCredito.objects.create(letra_credito=lci_lca, porcentagem=Decimal(80))
         OperacaoLetraCredito.objects.create(quantidade=Decimal(10000), data=datetime.date(2016, 3, 14), tipo_operacao='C', \
                                             letra_credito=LetraCredito.objects.get(nome="LCA Teste"), investidor=user.investidor)
         OperacaoLetraCredito.objects.create(quantidade=Decimal(2000), data=datetime.date(2016, 5, 20), tipo_operacao='C', \

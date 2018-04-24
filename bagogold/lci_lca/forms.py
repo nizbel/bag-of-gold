@@ -15,11 +15,15 @@ import datetime
 ESCOLHAS_TIPO_OPERACAO=(('C', "Compra"),
                         ('V', "Venda"))
 
+ESCOLHAS_TIPO_RENDIMENTO=((1, 'Prefixado'), 
+                            (2, 'Pós-fixado'))
+
 class LetraCreditoForm(LocalizedModelForm):
     
     class Meta:
         model = LetraCredito
-        fields = ('nome',)
+        fields = ('nome', 'tipo_rendimento')
+        widgets={'tipo_rendimento': widgets.Select(choices=ESCOLHAS_TIPO_RENDIMENTO),}
 
 class OperacaoLetraCreditoForm(LocalizedModelForm):
     # Campo verificado apenas no caso de venda de operação de lci_lca
@@ -99,7 +103,7 @@ class HistoricoPorcentagemLetraCreditoForm(LocalizedModelForm):
     
     class Meta:
         model = HistoricoPorcentagemLetraCredito
-        fields = ('porcentagem_di', 'data',
+        fields = ('porcentagem', 'data',
                   'letra_credito')
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),}
@@ -140,11 +144,11 @@ class HistoricoPorcentagemLetraCreditoForm(LocalizedModelForm):
             raise forms.ValidationError('Letra de Crédito não deve ser alterada')
         return letra_credito
     
-    def clean_porcentagem_di(self):
-        porcentagem_di = self.cleaned_data['porcentagem_di']
-        if porcentagem_di <= 0:
+    def clean_porcentagem(self):
+        porcentagem = self.cleaned_data['porcentagem']
+        if porcentagem <= 0:
             raise forms.ValidationError('Porcentagem deve ser maior que zero')
-        return porcentagem_di
+        return porcentagem
     
     def clean(self):
         cleaned_data = super(HistoricoPorcentagemLetraCreditoForm, self).clean()

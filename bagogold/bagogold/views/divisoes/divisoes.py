@@ -238,9 +238,9 @@ def detalhar_divisao(request, divisao_id):
             composicao['lci-lca'].composicao[lci_lca_id].composicao[operacao_divisao.operacao.id].quantidade = operacao_divisao.quantidade
             try:
                 composicao['lci-lca'].composicao[lci_lca_id].composicao[operacao_divisao.operacao.id].valor_unitario = HistoricoPorcentagemLetraCredito.objects.filter(letra_credito=operacao_divisao.operacao.letra_credito, \
-                                                                                                                                        data__lte=operacao_divisao.operacao.data).order_by('-data')[0].porcentagem_di
+                                                                                                                                        data__lte=operacao_divisao.operacao.data).order_by('-data')[0].porcentagem
             except:
-                composicao['lci-lca'].composicao[lci_lca_id].composicao[operacao_divisao.operacao.id].valor_unitario = HistoricoPorcentagemLetraCredito.objects.get(data__isnull=True, letra_credito=operacao_divisao.operacao.letra_credito).porcentagem_di
+                composicao['lci-lca'].composicao[lci_lca_id].composicao[operacao_divisao.operacao.id].valor_unitario = HistoricoPorcentagemLetraCredito.objects.get(data__isnull=True, letra_credito=operacao_divisao.operacao.letra_credito).porcentagem
             
             composicao['lci-lca'].composicao[lci_lca_id].composicao[operacao_divisao.operacao.id].patrimonio = operacao_divisao.quantidade
             

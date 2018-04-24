@@ -65,7 +65,7 @@
 #         taxas_dos_dias[taxa_quantidade['taxa']] = taxa_quantidade['qtd_dias']
 #     
 #     # Calcular
-#     return calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao_venda.quantidade, operacao_venda.porcentagem_di()).quantize(Decimal('.01'), ROUND_DOWN)
+#     return calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao_venda.quantidade, operacao_venda.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
 # 
 # def calcular_valor_lc_ate_dia(investidor, dia=datetime.date.today()):
 #     """ 
@@ -104,7 +104,7 @@
 #             taxas_dos_dias[taxa_quantidade['taxa']] = taxa_quantidade['qtd_dias']
 #         
 #         # Calcular
-#         letras_credito[operacao.letra_credito.id] += calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, operacao.porcentagem_di()).quantize(Decimal('.01'), ROUND_DOWN)
+#         letras_credito[operacao.letra_credito.id] += calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, operacao.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
 #     
 #     return letras_credito
 # 
@@ -125,7 +125,7 @@
 #     for operacao in operacoes:
 #         if operacao.tipo_operacao == 'C':
 #             operacao.atual = DivisaoOperacaoLCI_LCA.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade
-#             operacao.taxa = operacao.porcentagem_di()
+#             operacao.taxa = operacao.porcentagem()
 #     
 #     # Pegar data inicial
 #     data_inicial = operacoes_queryset.order_by('data')[0].data

@@ -55,7 +55,7 @@ class TelaInicioTestCase(TestCase):
         
         # Letra de Crédito
         lci_lca = LetraCredito.objects.create(nome='Letra de teste', investidor=user.investidor)
-        lci_lca_porcentagem_di = HistoricoPorcentagemLetraCredito.objects.create(letra_credito=lci_lca, porcentagem_di=Decimal(90))
+        lci_lca_porcentagem = HistoricoPorcentagemLetraCredito.objects.create(letra_credito=lci_lca, porcentagem=Decimal(90))
         operacao_lci_lca1 = OperacaoLetraCredito.objects.create(investidor=user.investidor, letra_credito=lci_lca, data=data_atual - datetime.timedelta(days=0), tipo_operacao='C',
                                             quantidade=Decimal(1000))
         divisao_operacao_lci_lca1 = DivisaoOperacaoLCI_LCA.objects.create(divisao=divisao1, operacao=operacao_lci_lca1, quantidade=operacao_lci_lca1.quantidade)

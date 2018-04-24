@@ -35,17 +35,17 @@ class LetraCredito (models.Model):
         else:
             return HistoricoCarenciaLetraCredito.objects.get(data__isnull=True, letra_credito=self).carencia
     
-    def porcentagem_di_atual(self):
+    def porcentagem_atual(self):
         if HistoricoPorcentagemLetraCredito.objects.filter(data__isnull=False, letra_credito=self).exists():
-            return HistoricoPorcentagemLetraCredito.objects.filter(data__isnull=False, letra_credito=self).order_by('-data')[0].porcentagem_di
+            return HistoricoPorcentagemLetraCredito.objects.filter(data__isnull=False, letra_credito=self).order_by('-data')[0].porcentagem
         else:
-            return HistoricoPorcentagemLetraCredito.objects.get(data__isnull=True, letra_credito=self).porcentagem_di
+            return HistoricoPorcentagemLetraCredito.objects.get(data__isnull=True, letra_credito=self).porcentagem
         
     def porcentagem_na_data(self, data):
         if HistoricoPorcentagemLetraCredito.objects.filter(data__isnull=False, letra_credito=self, data__lte=data).exists():
-            return HistoricoPorcentagemLetraCredito.objects.filter(data__isnull=False, letra_credito=self, data__lte=data).order_by('-data')[0].porcentagem_di
+            return HistoricoPorcentagemLetraCredito.objects.filter(data__isnull=False, letra_credito=self, data__lte=data).order_by('-data')[0].porcentagem
         else:
-            return HistoricoPorcentagemLetraCredito.objects.get(data__isnull=True, letra_credito=self).porcentagem_di
+            return HistoricoPorcentagemLetraCredito.objects.get(data__isnull=True, letra_credito=self).porcentagem
         
     def valor_minimo_atual(self):
         if HistoricoValorMinimoInvestimento.objects.filter(data__isnull=False, letra_credito=self).exists():
@@ -115,14 +115,14 @@ class OperacaoLetraCredito (models.Model):
         else:
             return None
     
-    def porcentagem_di(self):
+    def porcentagem(self):
         if self.tipo_operacao == 'C':
             if HistoricoPorcentagemLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito).order_by('-data').exists():
-                return HistoricoPorcentagemLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito).order_by('-data')[0].porcentagem_di
+                return HistoricoPorcentagemLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito).order_by('-data')[0].porcentagem
             else:
-                return HistoricoPorcentagemLetraCredito.objects.get(data__isnull=True, letra_credito=self.letra_credito).porcentagem_di
+                return HistoricoPorcentagemLetraCredito.objects.get(data__isnull=True, letra_credito=self.letra_credito).porcentagem
         elif self.tipo_operacao == 'V':
-            return self.operacao_compra_relacionada().porcentagem_di()
+            return self.operacao_compra_relacionada().porcentagem()
     
     def qtd_disponivel_venda(self, desconsiderar_vendas=list()):
         vendas = OperacaoVendaLetraCredito.objects.filter(operacao_compra=self).exclude(operacao_venda__in=desconsiderar_vendas).values_list('operacao_venda__id', flat=True)
@@ -164,7 +164,7 @@ class OperacaoVendaLetraCredito (models.Model):
         unique_together=('operacao_compra', 'operacao_venda')
     
 class HistoricoPorcentagemLetraCredito (models.Model):
-    porcentagem_di = models.DecimalField(u'Porcentagem do DI', max_digits=5, decimal_places=2)
+    porcentagem = models.DecimalField(u'Porcentagem de rendimento', max_digits=5, decimal_places=2)
     data = models.DateField(u'Data da variação', blank=True, null=True)
     letra_credito = models.ForeignKey('LetraCredito')
     

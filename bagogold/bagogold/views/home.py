@@ -597,7 +597,7 @@ def detalhamento_investimentos(request):
                
         elif isinstance(item, OperacaoLetraCredito):
             if item.tipo_operacao == 'C':
-                item.taxa = item.porcentagem_di()
+                item.taxa = item.porcentagem()
                 item.qtd_inicial = item.quantidade
                 letras_credito[item.id] = item
                 

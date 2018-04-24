@@ -277,7 +277,7 @@ class Divisao (models.Model):
         for venda_divisao in DivisaoOperacaoLetraCambio.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='V'):
             # Para venda, calcular valor do cdb/rdb no dia da venda
             valor_venda = venda_divisao.quantidade
-            taxa = venda_divisao.operacao.porcentagem_di()
+            taxa = venda_divisao.operacao.porcentagem()
              
             # Calcular o valor atualizado
             dias_de_rendimento = historico_di.filter(data__gte=venda_divisao.operacao.operacao_compra_relacionada().data, data__lt=venda_divisao.operacao.data)
@@ -307,7 +307,7 @@ class Divisao (models.Model):
         for venda_divisao in DivisaoOperacaoLCI_LCA.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='V'):
             # Para venda, calcular valor do cdb/rdb no dia da venda
             valor_venda = venda_divisao.quantidade
-            taxa = venda_divisao.operacao.porcentagem_di()
+            taxa = venda_divisao.operacao.porcentagem()
              
             # Calcular o valor atualizado
             dias_de_rendimento = historico_di.filter(data__gte=venda_divisao.operacao.operacao_compra_relacionada().data, data__lt=venda_divisao.operacao.data)

@@ -106,7 +106,7 @@
 					{% for item in historico_porcentagem %}
 					<tr>
 						<td>{{item.data|date:'d/m/Y'|default:"Inicial"}}</td>
-						<td>{{item.porcentagem_di}}%</td>
+						<td>{{item.porcentagem}}%</td>
 						<td><a href="{% url 'lci_lca:editar_historico_porcentagem_lci_lca' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
 					</tr>
 					{% endfor %}
