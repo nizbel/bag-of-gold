@@ -19,6 +19,7 @@ import datetime
 def calcular_valor_venda_lc(operacao_venda, arredondar=True, valor_liquido=False):
     """
     Calcula o valor de venda de uma operação em Letras de Câmbio
+    
     Parâmetros: Operação de venda
                 Deve arredondar?
                 Levar em consideração impostos (IOF e IR)
@@ -49,6 +50,7 @@ def calcular_valor_venda_lc(operacao_venda, arredondar=True, valor_liquido=False
 def calcular_valor_operacao_lc_ate_dia(operacao, dia=datetime.date.today(), arredondar=True, valor_liquido=False):
     """
     Calcula o valor de uma operação de compra de LC na data
+    
     Parâmetros: Operação
                 Data
                 Deve arredondar?
@@ -89,6 +91,7 @@ def calcular_valor_operacao_lc_ate_dia(operacao, dia=datetime.date.today(), arre
 def calcular_valor_atualizado_operacao_ate_dia(valor, data_inicial, data_final, operacao, qtd_original, valor_liquido=False, data_ultima_valorizacao=None):
     """
     Calcula o valor atualizado de uma operação em Letras de Câmbio entre um período
+    
     Parâmetros: Valor a atualizar
                 Data inicial da atualização
                 Data final da atualização
@@ -138,6 +141,7 @@ def calcular_valor_atualizado_operacao_ate_dia(valor, data_inicial, data_final, 
 def calcular_valor_lc_ate_dia(investidor, dia=datetime.date.today(), valor_liquido=False):
     """ 
     Calcula o valor das Letras de Câmbio no dia determinado
+    
     Parâmetros: Investidor
                 Data final
                 Levar em consideração impostos (IOF e IR)
@@ -161,6 +165,7 @@ def calcular_valor_lc_ate_dia(investidor, dia=datetime.date.today(), valor_liqui
 def calcular_valor_lc_ate_dia_por_divisao(dia, divisao_id):
     """ 
     Calcula o valor das Letras de Câmbio da divisão no dia determinado
+    
     Parâmetros: Data final
                 ID da divisão
     Retorno: Valor de cada Letra de Câmbio da divisão na data escolhida {id_lc: valor_na_data, }
@@ -199,6 +204,7 @@ def calcular_valor_lc_ate_dia_por_divisao(dia, divisao_id):
 def calcular_valor_um_lc_ate_dia_por_divisao(lc, divisao_id, dia=datetime.date.today()):
     """ 
     Calcula o valor total de uma Letra de Câmbio da divisão no dia determinado
+    
     Parâmetros: Letras de Câmbio escolhida
                 ID da divisão
                 Data final
@@ -239,6 +245,7 @@ def calcular_valor_um_lc_ate_dia_por_divisao(lc, divisao_id, dia=datetime.date.t
 def calcular_valor_op_lc_ate_dia_por_divisao(divisao_operacao, dia=datetime.date.today(), arredondar=True):
     """ 
     Calcula o valor de uma operação em Letras de Câmbio para uma divisão divisão no dia determinado
+    
     Parâmetros: Divisão da operação em Letras de Câmbio
                 Data final
     Retorno: Valor atualizado da operação na data
@@ -276,6 +283,7 @@ def calcular_valor_op_lc_ate_dia_por_divisao(divisao_operacao, dia=datetime.date
 def buscar_operacoes_vigentes_ate_data(investidor, data=datetime.date.today()):
     """
     Calcula o valor das operações em Letras de Câmbio vigentes até data especificada
+    
     Parâmetros: Investidor
                 Data
     Retorno: Lista de operações vigentes, adicionando os campos qtd_disponivel_venda e qtd_vendida
@@ -284,10 +292,31 @@ def buscar_operacoes_vigentes_ate_data(investidor, data=datetime.date.today()):
         .annotate(qtd_vendida=Coalesce(Sum(Case(When(operacao_compra__operacao_venda__data__lte=data, then='operacao_compra__operacao_venda__quantidade'))), 0)).exclude(quantidade=F('qtd_vendida')) \
         .annotate(qtd_disponivel_venda=(F('quantidade') - F('qtd_vendida')))
     
-#     operacoes = OperacaoLetraCambio.objects.filter(Q(investidor=investidor, checkpointlc__ano=data.year-1) | \
-#                                                Q(investidor=investidor, tipo_operacao='C', data__range=[data.replace(month=1).replace(day=1), data])) \
-#         .annotate(qtd_restante=Coalesce(F('checkpointlc__qtd_restante'), F('quantidade'))) \
-#         .annotate(qtd_vendida=Coalesce(Sum(Case(When(operacao_compra__operacao_venda__data__range=[data.replace(month=1).replace(day=1), data], then='operacao_compra__operacao_venda__quantidade'))), 0)).exclude(qtd_restante=F('qtd_vendida')) \
-#         .annotate(qtd_disponivel_venda=(F('qtd_restante') - F('qtd_vendida')))
-
     return operacoes
+    
+def simulador_lc(filtros):
+    """
+    Simula uma aplicação em Letras de Câmbio para os valores especificados nos filtros
+    
+    Parâmetros: Dicionário com filtros
+    Retorno:    Lista de datas (mes a mes) com valores, ex.: [(data, valor),...]
+    """
+    data_atual = datetime.date.today()
+    resultado = [(data_atual, filtros['aplicacao'])]
+    
+    num_dias_grafico = min(filtros['periodo'], 64)
+    
+    # Marcar dias
+    qtds_dias = [round(0 + (Decimal(filtros['periodo'])/num_dias_grafico)*parte) for parte in xrange(1, num_dias_grafico+1)]
+    if filtros['tipo'] == 'POS':
+        ultima_taxa_di = HistoricoTaxaDI.objects.all().order_by('-data')[0].taxa
+        for qtd_dias in qtds_dias:
+            qtd_dias_uteis = qtd_dias_uteis_no_periodo(data_atual, data_atual + datetime.timedelta(days=qtd_dias))
+            qtd_atual = calcular_valor_atualizado_com_taxas_di({ultima_taxa_di: qtd_dias_uteis}, filtros['aplicacao'], filtros['percentual_indice'])
+            resultado.append((data_atual + datetime.timedelta(days=qtd_dias), qtd_atual))
+    elif filtros['tipo'] == 'PRE':
+        for qtd_dias in qtds_dias:
+            qtd_dias_uteis = qtd_dias_uteis_no_periodo(data_atual, data_atual + datetime.timedelta(days=qtd_dias))
+            qtd_atual = calcular_valor_atualizado_com_taxa_prefixado(filtros['aplicacao'], filtros['percentual_indice'], qtd_dias_uteis)
+            resultado.append((data_atual + datetime.timedelta(days=qtd_dias), qtd_atual))
+    return resultado
