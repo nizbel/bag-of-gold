@@ -70,7 +70,7 @@ def preparar_checkpoint_lci_lca_historico(sender, instance, created, **kwargs):
     Cria novo checkpoint ou altera existente para as operações afetadas
     """
     # Todas podem ser afetadas
-    for operacao in OperacaoLetraCredito.objects.filter(lci_lca=instance.lci_lca, tipo_operacao='C'):
+    for operacao in OperacaoLetraCredito.objects.filter(letra_credito=instance.letra_credito, tipo_operacao='C'):
         ano = operacao.data.year
         gerar_checkpoint_lci_lca(operacao, ano)
 
@@ -88,7 +88,7 @@ def preparar_checkpoint_lci_lca_historico_delete(sender, instance, **kwargs):
     Altera checkpoints para as operações afetadas
     """
     # Todas podem ser afetadas
-    for operacao in OperacaoLetraCredito.objects.filter(lci_lca=instance.lci_lca, tipo_operacao='C'):
+    for operacao in OperacaoLetraCredito.objects.filter(letra_credito=instance.letra_credito, tipo_operacao='C'):
         ano = operacao.data.year
         gerar_checkpoint_lci_lca(operacao, ano)
 

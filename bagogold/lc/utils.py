@@ -151,13 +151,10 @@ def calcular_valor_lc_ate_dia(investidor, dia=datetime.date.today(), valor_liqui
     
     lc = {}
     for operacao in operacoes:
-        # TODO consertar verificação de todas vendidas
-#         operacao.quantidade = operacao.qtd_disponivel_venda
 
         if operacao.lc.id not in lc.keys():
             lc[operacao.lc.id] = 0
         
-#         lc[operacao.lc.id] += calcular_valor_atualizado_operacao_ate_dia(operacao.quantidade, operacao.data, dia, operacao, valor_liquido)
         lc[operacao.lc.id] += calcular_valor_operacao_lc_ate_dia(operacao, dia, True, valor_liquido)
     
     return lc
