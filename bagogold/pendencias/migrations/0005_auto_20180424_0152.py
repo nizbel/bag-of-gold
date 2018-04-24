@@ -10,6 +10,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('pendencias', '0004_auto_20170303_1311'),
+        ('tesouro_direto', '0001_initial')
     ]
 
     operations = [
