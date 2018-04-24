@@ -7,7 +7,7 @@ from bagogold.bagogold.utils.taxas_indexacao import \
     calcular_valor_atualizado_com_taxa_di,\
     calcular_valor_atualizado_com_taxa_prefixado
 from bagogold.lci_lca.models import OperacaoLetraCredito, LetraCredito, \
-    HistoricoPorcentagemLetraCredito
+    HistoricoPorcentagemLetraCredito, HistoricoVencimentoLetraCredito
 from bagogold.lci_lca.utils import calcular_valor_atualizado_com_taxas_di, \
     calcular_valor_lci_lca_ate_dia, simulador_lci_lca
 from decimal import Decimal, ROUND_DOWN
@@ -20,16 +20,18 @@ class AtualizarLetraCreditoPorDITestCase(TestCase):
     def setUp(self):
         user = User.objects.create(username='tester')
         
-        LetraCredito.objects.create(nome="LCA Teste", investidor=user.investidor, tipo_rendimento=LetraCredito.LCI_LCA_DI)
+        lci_lca = LetraCredito.objects.create(nome="LCA Teste", investidor=user.investidor, tipo_rendimento=LetraCredito.LCI_LCA_DI)
+        HistoricoPorcentagemLetraCredito.objects.create(letra_credito=lci_lca, porcentagem=Decimal(80))
+        HistoricoVencimentoLetraCredito.objects.create(letra_credito=lci_lca, vencimento=2000)
         OperacaoLetraCredito.objects.create(quantidade=Decimal(2500), data=datetime.date(2016, 5, 23), tipo_operacao='C', \
-                                            letra_credito=LetraCredito.objects.get(nome="LCA Teste"), investidor=user.investidor)
+                                            letra_credito=lci_lca, investidor=user.investidor)
 
     def test_calculo_valor_atualizado_taxa_di(self):
         """Testar de acordo com o pego no extrato da conta"""
         # 2506,30 em 1 de Junho (6 dias após, todos com taxa DI 14,13%)
         operacao = OperacaoLetraCredito.objects.get(quantidade=(Decimal(2500)))
         for i in range(0,6):
-            operacao.quantidade = calcular_valor_atualizado_com_taxa_di(Decimal(14.13), operacao.quantidade, Decimal(80))
+            operacao.quantidade = calcular_valor_atualizado_com_taxa_di(Decimal(14.13), operacao.quantidade, operacao.porcentagem())
         operacao.quantidade = operacao.quantidade.quantize(Decimal('0.01'))
 #         str_auxiliar = str(operacao.quantidade.quantize(Decimal('.0001')))
 #         operacao.quantidade = Decimal(str_auxiliar[:len(str_auxiliar)-2])
@@ -46,6 +48,7 @@ class ValorLCAteDiaTestCase(TestCase):
         
         # Letra de crédito
         lci_lca = LetraCredito.objects.create(nome="LCA Teste", investidor=user.investidor, tipo_rendimento=LetraCredito.LCI_LCA_DI)
+        HistoricoVencimentoLetraCredito.objects.create(letra_credito=lci_lca, vencimento=2000)
         lci_lca_porcentagem = HistoricoPorcentagemLetraCredito.objects.create(letra_credito=lci_lca, porcentagem=Decimal(80))
         OperacaoLetraCredito.objects.create(quantidade=Decimal(10000), data=datetime.date(2016, 3, 14), tipo_operacao='C', \
                                             letra_credito=LetraCredito.objects.get(nome="LCA Teste"), investidor=user.investidor)

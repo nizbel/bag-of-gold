@@ -27,13 +27,13 @@ class CalcularQuantidadesLetraCreditoTestCase(TestCase):
         lci_2 = LetraCredito.objects.create(nome="LCI 2", investidor=user.investidor, tipo_rendimento=LetraCredito.LCI_LCA_IPCA)
         lci_3 = LetraCredito.objects.create(nome="LCI 3", investidor=user.investidor, tipo_rendimento=LetraCredito.LCI_LCA_PREFIXADO)
         
-        HistoricoPorcentagemLetraCredito.objects.create(lci_lca=lci_1, porcentagem=100)
-        HistoricoPorcentagemLetraCredito.objects.create(lci_lca=lci_2, porcentagem=5)
-        HistoricoPorcentagemLetraCredito.objects.create(lci_lca=lci_3, porcentagem=10)
+        HistoricoPorcentagemLetraCredito.objects.create(letra_credito=lci_1, porcentagem=100)
+        HistoricoPorcentagemLetraCredito.objects.create(letra_credito=lci_2, porcentagem=5)
+        HistoricoPorcentagemLetraCredito.objects.create(letra_credito=lci_3, porcentagem=10)
         
-        HistoricoVencimentoLetraCredito.objects.create(lci_lca=lci_1, vencimento=1080)
-        HistoricoVencimentoLetraCredito.objects.create(lci_lca=lci_2, vencimento=1080)
-        HistoricoVencimentoLetraCredito.objects.create(lci_lca=lci_3, vencimento=1080)
+        HistoricoVencimentoLetraCredito.objects.create(letra_credito=lci_1, vencimento=1080)
+        HistoricoVencimentoLetraCredito.objects.create(letra_credito=lci_2, vencimento=1080)
+        HistoricoVencimentoLetraCredito.objects.create(letra_credito=lci_3, vencimento=1080)
          
         # Históricos DI e IPCA
         # Data final é 14/02/2018 mas atualizações só contam até data anterior para manter DI e prefixado pareados
@@ -60,22 +60,22 @@ class CalcularQuantidadesLetraCreditoTestCase(TestCase):
                 HistoricoTaxaDI.objects.create(data=data, taxa=Decimal(12.13))
         
         # Operações de compra
-        compra_1 = OperacaoLetraCredito.objects.create(lci_lca=lci_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=2000)
-        compra_2 = OperacaoLetraCredito.objects.create(lci_lca=lci_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=1000)
-        compra_3 = OperacaoLetraCredito.objects.create(lci_lca=lci_2, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=2000)
-        compra_4 = OperacaoLetraCredito.objects.create(lci_lca=lci_2, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=1000)
-        compra_5 = OperacaoLetraCredito.objects.create(lci_lca=lci_3, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=2000)
-        compra_6 = OperacaoLetraCredito.objects.create(lci_lca=lci_3, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=1000)
-        compra_7 = OperacaoLetraCredito.objects.create(lci_lca=lci_3, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=3000)
+        compra_1 = OperacaoLetraCredito.objects.create(letra_credito=lci_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=2000)
+        compra_2 = OperacaoLetraCredito.objects.create(letra_credito=lci_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=1000)
+        compra_3 = OperacaoLetraCredito.objects.create(letra_credito=lci_2, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=2000)
+        compra_4 = OperacaoLetraCredito.objects.create(letra_credito=lci_2, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=1000)
+        compra_5 = OperacaoLetraCredito.objects.create(letra_credito=lci_3, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=2000)
+        compra_6 = OperacaoLetraCredito.objects.create(letra_credito=lci_3, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=1000)
+        compra_7 = OperacaoLetraCredito.objects.create(letra_credito=lci_3, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=3000)
          
         # Operações de venda
-        venda_1 = OperacaoLetraCredito.objects.create(lci_lca=lci_1, investidor=user.investidor, tipo_operacao='V', data=datetime.date(2017, 6, 15), quantidade=500)
+        venda_1 = OperacaoLetraCredito.objects.create(letra_credito=lci_1, investidor=user.investidor, tipo_operacao='V', data=datetime.date(2017, 6, 15), quantidade=500)
         OperacaoVendaLetraCredito.objects.create(operacao_compra=compra_2, operacao_venda=venda_1)
-        venda_2 = OperacaoLetraCredito.objects.create(lci_lca=lci_2, investidor=user.investidor, tipo_operacao='V', data=datetime.date(2017, 6, 15), quantidade=500)
+        venda_2 = OperacaoLetraCredito.objects.create(letra_credito=lci_2, investidor=user.investidor, tipo_operacao='V', data=datetime.date(2017, 6, 15), quantidade=500)
         OperacaoVendaLetraCredito.objects.create(operacao_compra=compra_4, operacao_venda=venda_2)
-        venda_3 = OperacaoLetraCredito.objects.create(lci_lca=lci_3, investidor=user.investidor, tipo_operacao='V', data=datetime.date(2017, 6, 15), quantidade=500)
+        venda_3 = OperacaoLetraCredito.objects.create(letra_credito=lci_3, investidor=user.investidor, tipo_operacao='V', data=datetime.date(2017, 6, 15), quantidade=500)
         OperacaoVendaLetraCredito.objects.create(operacao_compra=compra_6, operacao_venda=venda_3)
-        venda_4 = OperacaoLetraCredito.objects.create(lci_lca=lci_3, investidor=user.investidor, tipo_operacao='V', data=datetime.date(2017, 6, 15), quantidade=3000)
+        venda_4 = OperacaoLetraCredito.objects.create(letra_credito=lci_3, investidor=user.investidor, tipo_operacao='V', data=datetime.date(2017, 6, 15), quantidade=3000)
         OperacaoVendaLetraCredito.objects.create(operacao_compra=compra_7, operacao_venda=venda_4)
          
         # Criar operação na divisão geral
@@ -84,20 +84,20 @@ class CalcularQuantidadesLetraCreditoTestCase(TestCase):
             DivisaoOperacaoLCI_LCA.objects.create(divisao=divisao_geral, operacao=operacao, quantidade=operacao.quantidade)
          
         # Operação extra para testes de divisão
-        operacao_divisao = OperacaoLetraCredito.objects.create(lci_lca=lci_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=3000)
+        operacao_divisao = OperacaoLetraCredito.objects.create(letra_credito=lci_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=3000)
         divisao_teste = Divisao.objects.create(investidor=user.investidor, nome=u'Divisão de teste')
         DivisaoOperacaoLCI_LCA.objects.create(divisao=divisao_teste, operacao=operacao_divisao, quantidade=2000)
         DivisaoOperacaoLCI_LCA.objects.create(divisao=divisao_geral, operacao=operacao_divisao, quantidade=1000)
          
          
-    def test_calculo_qtd_cdb_por_operacao(self):
+    def test_calculo_qtd_lci_por_operacao(self):
         """Calcula quantidade de Letras de Crédito do usuário individualmente"""
         investidor = Investidor.objects.get(user__username='test')
         lci_1 = LetraCredito.objects.get(nome="LCI 1")
         lci_3 = LetraCredito.objects.get(nome="LCI 3")
         
-        for operacao in OperacaoLetraCredito.objects.filter(investidor=investidor, tipo_operacao='C').exclude(lci_lca=LetraCredito.objects.get(nome="CDB 2")):
-            if operacao.lci_lca == lci_1:
+        for operacao in OperacaoLetraCredito.objects.filter(investidor=investidor, tipo_operacao='C').exclude(letra_credito=LetraCredito.objects.get(nome="LCI 2")):
+            if operacao.letra_credito == lci_1:
                 data = datetime.date(2017, 5, 11)
                 self.assertAlmostEqual(calcular_valor_operacao_lci_lca_ate_dia(operacao, data), operacao.quantidade * Decimal('1.00042'), delta=Decimal('0.01'))
                 data = datetime.date(2017, 6, 15)
@@ -106,7 +106,7 @@ class CalcularQuantidadesLetraCreditoTestCase(TestCase):
                 data = datetime.date(2018, 2, 13)
                 self.assertAlmostEqual(calcular_valor_operacao_lci_lca_ate_dia(operacao, data), operacao.qtd_disponivel_venda_na_data(data) \
                                        * Decimal('1.06363295'), delta=Decimal('0.01'))
-            elif operacao.lci_lca == lci_3:
+            elif operacao.letra_credito == lci_3:
                 data = datetime.date(2017, 5, 11)
                 self.assertAlmostEqual(calcular_valor_operacao_lci_lca_ate_dia(operacao, data), operacao.quantidade \
                                        * pow((1+Decimal('0.1')), (Decimal(1)/252)), delta=Decimal('0.01'))
@@ -119,24 +119,24 @@ class CalcularQuantidadesLetraCreditoTestCase(TestCase):
                 self.assertAlmostEqual(calcular_valor_operacao_lci_lca_ate_dia(operacao, data), operacao.qtd_disponivel_venda_na_data(data) \
                                   * pow((1+Decimal('0.1')), (qtd_dias_uteis/252)), delta=Decimal('0.01'))
          
-    def test_calculo_qtd_cdbs(self):
+    def test_calculo_qtd_lcis(self):
         """Calcula quantidade de LCI/LCAs do usuário"""
         investidor = Investidor.objects.get(user__username='test')
        
         data = datetime.date(2017, 5, 11)
         lci_lca = calcular_valor_lci_lca_ate_dia(investidor, data)
         for lci_lca_id in lci_lca:
-            self.assertEqual(lci_lca[lci_lca_id], sum([calcular_valor_operacao_lci_lca_ate_dia(operacao, data) for operacao in OperacaoLetraCredito.objects.filter(tipo_operacao='C', lci_lca__id=lci_lca_id)]))
+            self.assertEqual(lci_lca[lci_lca_id], sum([calcular_valor_operacao_lci_lca_ate_dia(operacao, data) for operacao in OperacaoLetraCredito.objects.filter(tipo_operacao='C', letra_credito__id=lci_lca_id)]))
        
         data = datetime.date(2017, 6, 15)
         lci_lca = calcular_valor_lci_lca_ate_dia(investidor, data)
         for lci_lca_id in lci_lca:
-            self.assertEqual(lci_lca[lci_lca_id], sum([calcular_valor_operacao_lci_lca_ate_dia(operacao, data) for operacao in OperacaoLetraCredito.objects.filter(tipo_operacao='C', lci_lca__id=lci_lca_id)]))
+            self.assertEqual(lci_lca[lci_lca_id], sum([calcular_valor_operacao_lci_lca_ate_dia(operacao, data) for operacao in OperacaoLetraCredito.objects.filter(tipo_operacao='C', letra_credito__id=lci_lca_id)]))
         
         data = datetime.date(2018, 2, 13)
         lci_lca = calcular_valor_lci_lca_ate_dia(investidor, data)
         for lci_lca_id in lci_lca:
-            self.assertEqual(lci_lca[lci_lca_id], sum([calcular_valor_operacao_lci_lca_ate_dia(operacao, data) for operacao in OperacaoLetraCredito.objects.filter(tipo_operacao='C', lci_lca__id=lci_lca_id)]))
+            self.assertEqual(lci_lca[lci_lca_id], sum([calcular_valor_operacao_lci_lca_ate_dia(operacao, data) for operacao in OperacaoLetraCredito.objects.filter(tipo_operacao='C', letra_credito__id=lci_lca_id)]))
       
     def test_verificar_qtd_divisao(self):
         """Testa se a quantidade de LCI/LCA por divisão está correta"""
@@ -178,13 +178,13 @@ class CalcularQuantidadesLetraCreditoTestCase(TestCase):
         lci = LetraCredito.objects.get(nome='LCI 1')
         divisao_geral = Divisao.objects.get(nome='Geral', investidor=investidor)
         
-        compra = OperacaoLetraCredito.objects.create(lci_lca=lci, investidor=investidor, tipo_operacao='C', data=datetime.date(2017, 8, 11), quantidade=3000)
+        compra = OperacaoLetraCredito.objects.create(letra_credito=lci, investidor=investidor, tipo_operacao='C', data=datetime.date(2017, 8, 11), quantidade=3000)
         divisao_compra = DivisaoOperacaoLCI_LCA.objects.create(divisao=divisao_geral, operacao=compra, quantidade=compra.quantidade)
         self.assertTrue(CheckpointLetraCredito.objects.filter(operacao=compra).exists())
         self.assertTrue(CheckpointDivisaoLCI_LCA.objects.filter(divisao_operacao__operacao=compra).exists())
          
         # Apagar checkpoint por venda
-        venda = OperacaoLetraCredito.objects.create(lci_lca=lci, investidor=investidor, tipo_operacao='V', data=datetime.date(2017, 8, 15), quantidade=3000)
+        venda = OperacaoLetraCredito.objects.create(letra_credito=lci, investidor=investidor, tipo_operacao='V', data=datetime.date(2017, 8, 15), quantidade=3000)
         OperacaoVendaLetraCredito.objects.create(operacao_compra=compra, operacao_venda=venda)
         divisao_venda = DivisaoOperacaoLCI_LCA.objects.create(divisao=divisao_geral, operacao=venda, quantidade=venda.quantidade)
         self.assertFalse(CheckpointLetraCredito.objects.filter(operacao=compra).exists())
@@ -209,8 +209,8 @@ class CalcularQuantidadesLetraCreditoTestCase(TestCase):
         lci_1 = LetraCredito.objects.get(nome="LCI 1")
         lci_3 = LetraCredito.objects.get(nome="LCI 3")
         
-        for operacao in OperacaoLetraCredito.objects.filter(investidor=investidor, tipo_operacao='C').exclude(lci_lca=LetraCredito.objects.get(nome="CDB 2")):
-            if operacao.lci_lca == lci_1:
+        for operacao in OperacaoLetraCredito.objects.filter(investidor=investidor, tipo_operacao='C').exclude(letra_credito=LetraCredito.objects.get(nome="LCI 2")):
+            if operacao.letra_credito == lci_1:
                 data = datetime.date(2017, 12, 31)
                 valor_operacao_fim_2017 = calcular_valor_operacao_lci_lca_ate_dia(operacao, data)
                 if valor_operacao_fim_2017 > 0:
@@ -226,7 +226,7 @@ class CalcularQuantidadesLetraCreditoTestCase(TestCase):
                 else:
                     self.assertFalse(CheckpointLetraCredito.objects.filter(operacao=operacao, ano=2017).exists())
                     self.assertFalse(CheckpointDivisaoLCI_LCA.objects.filter(divisao_operacao__operacao=operacao, ano=2017).exists())
-            elif operacao.lci_lca == lci_3:
+            elif operacao.letra_credito == lci_3:
                 data = datetime.date(2017, 12, 31)
                 qtd_dias_uteis = Decimal(qtd_dias_uteis_no_periodo(operacao.data, data))
                 valor_operacao_fim_2017 = calcular_valor_operacao_lci_lca_ate_dia(operacao, data)
@@ -248,12 +248,12 @@ class CalcularQuantidadesLetraCreditoTestCase(TestCase):
     def test_verificar_valor_venda_por_checkpoint(self):
         """Testa cálculo de valor da venda de Letra de Crédito utilizando checkpoint"""
         investidor = Investidor.objects.get(user__username='test')
-        lci = LetraCredito.objects.create(nome="LCI 1", investidor=investidor, tipo='C', tipo_rendimento=LetraCredito.LCI_LCA_DI)
-        HistoricoPorcentagemLetraCredito.objects.create(lci_lca=lci, porcentagem=110)
-        HistoricoVencimentoLetraCredito.objects.create(lci_lca=lci, vencimento=361)
+        lci = LetraCredito.objects.create(nome="LCI 1", investidor=investidor, tipo_rendimento=LetraCredito.LCI_LCA_DI)
+        HistoricoPorcentagemLetraCredito.objects.create(letra_credito=lci, porcentagem=110)
+        HistoricoVencimentoLetraCredito.objects.create(letra_credito=lci, vencimento=361)
         
-        operacao_compra = OperacaoLetraCredito.objects.create(lci_lca=lci, quantidade=1250, data=datetime.date(2017, 3, 13), investidor=investidor, tipo_operacao='C')
-        operacao_venda = OperacaoLetraCredito.objects.create(lci_lca=lci, quantidade=1250, data=datetime.date(2018, 3, 9), investidor=investidor, tipo_operacao='V')
+        operacao_compra = OperacaoLetraCredito.objects.create(letra_credito=lci, quantidade=1250, data=datetime.date(2017, 3, 13), investidor=investidor, tipo_operacao='C')
+        operacao_venda = OperacaoLetraCredito.objects.create(letra_credito=lci, quantidade=1250, data=datetime.date(2018, 3, 9), investidor=investidor, tipo_operacao='V')
         OperacaoVendaLetraCredito.objects.create(operacao_compra=operacao_compra, operacao_venda=operacao_venda)
         
         self.assertAlmostEqual(Decimal('1349.33'), calcular_valor_venda_lci_lca(operacao_venda, True, True), delta=Decimal('0.01'))
@@ -267,11 +267,11 @@ class CalcularQuantidadesLetraCreditoTestCase(TestCase):
 #     def setUp(self):
 #         user = User.objects.create(username='test', password='test')
 #            
-#         cdb_1 = LetraCredito.objects.create(nome="CDB 1", investidor=user.investidor, tipo='C', tipo_rendimento=LetraCredito.LCI_LCA_DI)
-#         cdb_3 = LetraCredito.objects.create(nome="CDB 3", investidor=user.investidor, tipo='C', tipo_rendimento=LetraCredito.LCI_LCA_PREFIXADO)
+#         lci_1 = LetraCredito.objects.create(nome="LCI 1", investidor=user.investidor, tipo_rendimento=LetraCredito.LCI_LCA_DI)
+#         lci_3 = LetraCredito.objects.create(nome="LCI 3", investidor=user.investidor, tipo_rendimento=LetraCredito.LCI_LCA_PREFIXADO)
 #            
-#         HistoricoPorcentagemLetraCredito.objects.create(lci_lca=cdb_1, porcentagem=100)
-#         HistoricoPorcentagemLetraCredito.objects.create(lci_lca=cdb_3, porcentagem=10)
+#         HistoricoPorcentagemLetraCredito.objects.create(letra_credito=lci_1, porcentagem=100)
+#         HistoricoPorcentagemLetraCredito.objects.create(letra_credito=lci_3, porcentagem=10)
 #         
 #         # Históricos DI e IPCA
 #         # Data final é 14/02/2018 mas atualizações só contam até data anterior para manter DI e prefixado pareados
@@ -285,18 +285,18 @@ class CalcularQuantidadesLetraCreditoTestCase(TestCase):
 #         # Gerar operações mensalmente de 2012 a 2017
 #         for ano in range(2012, 2018):
 #             for mes in range(1, 13):
-#                 compra_1 = OperacaoLetraCredito.objects.create(lci_lca=cdb_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(ano, mes, 11), quantidade=2000)
-#                 compra_2 = OperacaoLetraCredito.objects.create(lci_lca=cdb_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(ano, mes, 11), quantidade=1000)
-#                 compra_5 = OperacaoLetraCredito.objects.create(lci_lca=cdb_3, investidor=user.investidor, tipo_operacao='C', data=datetime.date(ano, mes, 11), quantidade=2000)
-#                 compra_6 = OperacaoLetraCredito.objects.create(lci_lca=cdb_3, investidor=user.investidor, tipo_operacao='C', data=datetime.date(ano, mes, 11), quantidade=1000)
-#                 compra_7 = OperacaoLetraCredito.objects.create(lci_lca=cdb_3, investidor=user.investidor, tipo_operacao='C', data=datetime.date(ano, mes, 11), quantidade=3000)
+#                 compra_1 = OperacaoLetraCredito.objects.create(letra_credito=lci_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(ano, mes, 11), quantidade=2000)
+#                 compra_2 = OperacaoLetraCredito.objects.create(letra_credito=lci_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(ano, mes, 11), quantidade=1000)
+#                 compra_5 = OperacaoLetraCredito.objects.create(letra_credito=lci_3, investidor=user.investidor, tipo_operacao='C', data=datetime.date(ano, mes, 11), quantidade=2000)
+#                 compra_6 = OperacaoLetraCredito.objects.create(letra_credito=lci_3, investidor=user.investidor, tipo_operacao='C', data=datetime.date(ano, mes, 11), quantidade=1000)
+#                 compra_7 = OperacaoLetraCredito.objects.create(letra_credito=lci_3, investidor=user.investidor, tipo_operacao='C', data=datetime.date(ano, mes, 11), quantidade=3000)
 #                  
 #                 # Operações de venda
-#                 venda_1 = OperacaoLetraCredito.objects.create(lci_lca=cdb_1, investidor=user.investidor, tipo_operacao='V', data=datetime.date(ano, mes, 15), quantidade=500)
+#                 venda_1 = OperacaoLetraCredito.objects.create(letra_credito=lci_1, investidor=user.investidor, tipo_operacao='V', data=datetime.date(ano, mes, 15), quantidade=500)
 #                 OperacaoVendaLetraCredito.objects.create(operacao_compra=compra_2, operacao_venda=venda_1)
-#                 venda_3 = OperacaoLetraCredito.objects.create(lci_lca=cdb_3, investidor=user.investidor, tipo_operacao='V', data=datetime.date(ano, mes, 15), quantidade=500)
+#                 venda_3 = OperacaoLetraCredito.objects.create(letra_credito=lci_3, investidor=user.investidor, tipo_operacao='V', data=datetime.date(ano, mes, 15), quantidade=500)
 #                 OperacaoVendaLetraCredito.objects.create(operacao_compra=compra_6, operacao_venda=venda_3)
-#                 venda_4 = OperacaoLetraCredito.objects.create(lci_lca=cdb_3, investidor=user.investidor, tipo_operacao='V', data=datetime.date(ano, mes, 15), quantidade=3000)
+#                 venda_4 = OperacaoLetraCredito.objects.create(letra_credito=lci_3, investidor=user.investidor, tipo_operacao='V', data=datetime.date(ano, mes, 15), quantidade=3000)
 #                 OperacaoVendaLetraCredito.objects.create(operacao_compra=compra_7, operacao_venda=venda_4)
 #         
 #     def calcular_valor_lci_lca_ate_dia_antigo(self, investidor, dia=datetime.date.today(), considerar_impostos=False):
@@ -316,10 +316,10 @@ class CalcularQuantidadesLetraCreditoTestCase(TestCase):
 #             # TODO consertar verificação de todas vendidas
 #             operacao.quantidade = operacao.qtd_disponivel_venda
 #     
-#             if operacao.lci_lca.id not in lci_lca.keys():
-#                 lci_lca[operacao.lci_lca.id] = 0
+#             if operacao.letra_credito.id not in lci_lca.keys():
+#                 lci_lca[operacao.letra_credito.id] = 0
 #             
-#             if operacao.lci_lca.tipo_rendimento == LetraCredito.LCI_LCA_DI:
+#             if operacao.letra_credito.tipo_rendimento == LetraCredito.LCI_LCA_DI:
 #                 # DI
 #                 # Definir período do histórico relevante para a operação
 #                 historico_utilizado = historico.filter(data__range=[operacao.data, dia]).values('taxa').annotate(qtd_dias=Count('taxa'))
@@ -330,19 +330,19 @@ class CalcularQuantidadesLetraCreditoTestCase(TestCase):
 #                 # Calcular
 #                 if considerar_impostos:
 #                     valor_final = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, operacao.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
-#                     lci_lca[operacao.lci_lca.id] += valor_final - sum(calcular_iof_e_ir_longo_prazo(valor_final - operacao.quantidade, 
+#                     lci_lca[operacao.letra_credito.id] += valor_final - sum(calcular_iof_e_ir_longo_prazo(valor_final - operacao.quantidade, 
 #                                                      (dia - operacao.data).days))
 #                 else:
-#                     lci_lca[operacao.lci_lca.id] += calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, operacao.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
-#             elif operacao.lci_lca.tipo_rendimento == LetraCredito.LCI_LCA_PREFIXADO:
+#                     lci_lca[operacao.letra_credito.id] += calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.quantidade, operacao.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
+#             elif operacao.letra_credito.tipo_rendimento == LetraCredito.LCI_LCA_PREFIXADO:
 #                 # Prefixado
 #                 if considerar_impostos:
 #                     valor_final = calcular_valor_atualizado_com_taxa_prefixado(operacao.quantidade, operacao.porcentagem(), qtd_dias_uteis_no_periodo(operacao.data, dia)) \
 #                         .quantize(Decimal('.01'), ROUND_DOWN)
-#                     lci_lca[operacao.lci_lca.id] += valor_final - sum(calcular_iof_e_ir_longo_prazo(valor_final - operacao.quantidade, 
+#                     lci_lca[operacao.letra_credito.id] += valor_final - sum(calcular_iof_e_ir_longo_prazo(valor_final - operacao.quantidade, 
 #                                                      (dia - operacao.data).days))
 #                 else:
-#                     lci_lca[operacao.lci_lca.id] += calcular_valor_atualizado_com_taxa_prefixado(operacao.quantidade, operacao.porcentagem(), 
+#                     lci_lca[operacao.letra_credito.id] += calcular_valor_atualizado_com_taxa_prefixado(operacao.quantidade, operacao.porcentagem(), 
 #                                                                                                       qtd_dias_uteis_no_periodo(operacao.data, dia)).quantize(Decimal('.01'), ROUND_DOWN)
 #         
 #         return lci_lca
@@ -381,8 +381,8 @@ class AtualizarCheckpointAnualTestCase(TestCase):
           
         lci_1 = LetraCredito.objects.create(nome="LCI 1", investidor=user.investidor, tipo_rendimento=LetraCredito.LCI_LCA_DI)
         
-        HistoricoPorcentagemLetraCredito.objects.create(lci_lca=lci_1, porcentagem=100)
-        HistoricoVencimentoLetraCredito.objects.create(lci_lca=lci_1, vencimento=1080)
+        HistoricoPorcentagemLetraCredito.objects.create(letra_credito=lci_1, porcentagem=100)
+        HistoricoVencimentoLetraCredito.objects.create(letra_credito=lci_1, vencimento=1080)
          
         # Históricos DI e IPCA
         # Data final é 14/02/2018 mas atualizações só contam até data anterior para manter DI e prefixado pareados
@@ -406,9 +406,9 @@ class AtualizarCheckpointAnualTestCase(TestCase):
             else:
                 HistoricoTaxaDI.objects.create(data=data, taxa=Decimal(11.13))
           
-        OperacaoLetraCredito.objects.create(lci_lca=lci_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2016, 5, 11), quantidade=2000)
+        OperacaoLetraCredito.objects.create(letra_credito=lci_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2016, 5, 11), quantidade=2000)
         # Gera operação no futuro para depois trazer para ano atual
-        OperacaoLetraCredito.objects.create(lci_lca=lci_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(datetime.date.today().year+1, 5, 11), quantidade=2000)
+        OperacaoLetraCredito.objects.create(letra_credito=lci_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(datetime.date.today().year+1, 5, 11), quantidade=2000)
         
         # Apagar checkpoint gerado
         CheckpointLetraCredito.objects.filter(ano__gt=datetime.date.today().year).delete()
@@ -472,6 +472,6 @@ class AtualizarCheckpointAnualTestCase(TestCase):
         investidor = Investidor.objects.get(user__username='test')
         compra = OperacaoLetraCredito.objects.get(investidor=investidor, data=datetime.date(2016, 5, 11))
           
-        venda = OperacaoLetraCredito.objects.create(lci_lca=compra.lci_lca, tipo_operacao='V', data=datetime.date(2016, 6, 15), quantidade=2000, investidor=investidor)
+        venda = OperacaoLetraCredito.objects.create(letra_credito=compra.letra_credito, tipo_operacao='V', data=datetime.date(2016, 6, 15), quantidade=2000, investidor=investidor)
         OperacaoVendaLetraCredito.objects.create(operacao_compra=compra, operacao_venda=venda)
         self.assertFalse(CheckpointLetraCredito.objects.filter(operacao=compra).exists())

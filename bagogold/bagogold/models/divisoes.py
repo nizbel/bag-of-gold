@@ -507,14 +507,14 @@ class DivisaoOperacaoLCI_LCA (models.Model):
         return self.quantidade / self.operacao.quantidade
     
     def divisao_operacao_compra_relacionada(self):
-        from bagogold.cdb_rdb.models import OperacaoVendaLetraCredito
+        from bagogold.lci_lca.models import OperacaoVendaLetraCredito
         if self.operacao.tipo_operacao == 'V':
-            return DivisaoOperacaoCDB_RDB.objects.get(operacao=OperacaoVendaLetraCredito.objects.get(operacao_venda=self.operacao).operacao_compra, divisao=self.divisao)
+            return DivisaoOperacaoLCI_LCA.objects.get(operacao=OperacaoVendaLetraCredito.objects.get(operacao_venda=self.operacao).operacao_compra, divisao=self.divisao)
         else:
             return None
     
     def qtd_disponivel_venda_na_data(self, data, desconsiderar_operacao=None):
-        from bagogold.cdb_rdb.models import OperacaoVendaLetraCredito
+        from bagogold.lci_lca.models import OperacaoVendaLetraCredito
         if self.operacao.tipo_operacao != 'C':
             raise ValueError('Operação deve ser de compra')
         vendas = OperacaoVendaLetraCredito.objects.filter(operacao_compra=self.operacao, operacao_venda__data__lte=data).exclude(operacao_venda=desconsiderar_operacao).values_list('operacao_venda__id', flat=True)
