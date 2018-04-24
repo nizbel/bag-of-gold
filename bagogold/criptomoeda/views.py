@@ -15,8 +15,6 @@ from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia, \
     criar_operacoes_lote, criar_transferencias_lote, \
     calcular_qtd_moedas_ate_dia_por_criptomoeda, formatar_op_lote_confirmacao, \
     formatar_transf_lote_confirmacao
-from bagogold.fundo_investimento.utils import \
-    calcular_qtd_cotas_ate_dia_por_fundo
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -33,13 +31,14 @@ import calendar
 import datetime
 import json
 import traceback
+from django.shortcuts import get_object_or_404
 
 @login_required
 @adiciona_titulo_descricao('Editar operação em criptomoeda', 'Alterar valores de uma operação de compra/venda em criptomoeda')
 def editar_operacao_criptomoeda(request, id_operacao):
     investidor = request.user.investidor
     
-    operacao_criptomoeda = OperacaoCriptomoeda.objects.get(pk=id_operacao)
+    operacao_criptomoeda = get_object_or_404(OperacaoCriptomoeda, pk=id_operacao)
     # Verifica se a operação é do investidor, senão, jogar erro de permissão
     if operacao_criptomoeda.investidor != investidor:
         raise PermissionDenied
@@ -171,7 +170,7 @@ def editar_operacao_criptomoeda(request, id_operacao):
 def editar_transferencia(request, id_transferencia):
     investidor = request.user.investidor
     
-    transferencia_criptomoeda = TransferenciaCriptomoeda.objects.get(pk=id_transferencia)
+    transferencia_criptomoeda = get_object_or_404(TransferenciaCriptomoeda, pk=id_transferencia)
     # Verifica se a operação é do investidor, senão, jogar erro de permissão
     if transferencia_criptomoeda.investidor != investidor:
         raise PermissionDenied
@@ -668,10 +667,11 @@ def painel(request):
     dados['total_atual'] = Decimal(0)
     
     moedas = Criptomoeda.objects.filter(id__in=qtd_moedas.keys())
-    valores_atuais = ValorDiarioCriptomoeda.objects.filter(criptomoeda__in=qtd_moedas.keys(), moeda=ValorDiarioCriptomoeda.MOEDA_REAL).values('valor')
+    valores_atuais = ValorDiarioCriptomoeda.objects.filter(criptomoeda__in=qtd_moedas.keys()).values('valor')
     for moeda in moedas:
         moeda.qtd_atual = qtd_moedas[moeda.id]
-        moeda.valor_atual = valores_atuais.get(criptomoeda=moeda)['valor']
+        moeda.valor_atual = valores_atuais.get(criptomoeda=moeda, moeda=ValorDiarioCriptomoeda.MOEDA_REAL)['valor']
+        moeda.valor_atual_dolar = valores_atuais.get(criptomoeda=moeda, moeda=ValorDiarioCriptomoeda.MOEDA_DOLAR)['valor']
         moeda.total_atual = moeda.qtd_atual * moeda.valor_atual
         
         dados['total_atual'] += moeda.total_atual
