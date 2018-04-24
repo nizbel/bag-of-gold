@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
-from bagogold.outros_investimentos.models import Amortizacao, Rendimento
+import datetime
 from decimal import Decimal
+from django.db.models.expressions import Case, When, F
+
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models.aggregates import Sum, Count
-from django.db.models.expressions import Case, When, F
 from django.db.models.fields import DecimalField
-import datetime
+
+from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
+from bagogold.outros_investimentos.models import Amortizacao, Rendimento
+
 
 class Divisao (models.Model):
     nome = models.CharField(u'Nome da divisão', max_length=50)
@@ -502,6 +505,32 @@ class DivisaoOperacaoLCI_LCA (models.Model):
     """
     def percentual_divisao(self):
         return self.quantidade / self.operacao.quantidade
+    
+    def divisao_operacao_compra_relacionada(self):
+        from bagogold.cdb_rdb.models import OperacaoVendaLetraCredito
+        if self.operacao.tipo_operacao == 'V':
+            return DivisaoOperacaoCDB_RDB.objects.get(operacao=OperacaoVendaLetraCredito.objects.get(operacao_venda=self.operacao).operacao_compra, divisao=self.divisao)
+        else:
+            return None
+    
+    def qtd_disponivel_venda_na_data(self, data, desconsiderar_operacao=None):
+        from bagogold.cdb_rdb.models import OperacaoVendaLetraCredito
+        if self.operacao.tipo_operacao != 'C':
+            raise ValueError('Operação deve ser de compra')
+        vendas = OperacaoVendaLetraCredito.objects.filter(operacao_compra=self.operacao, operacao_venda__data__lte=data).exclude(operacao_venda=desconsiderar_operacao).values_list('operacao_venda__id', flat=True)
+        qtd_vendida = 0
+        for venda in DivisaoOperacaoLCI_LCA.objects.filter(operacao__id__in=vendas, divisao=self.divisao):
+            qtd_vendida += venda.quantidade
+        return self.quantidade - qtd_vendida
+    
+class CheckpointDivisaoLCI_LCA (models.Model):
+    ano = models.SmallIntegerField(u'Ano')
+    divisao_operacao = models.ForeignKey('DivisaoOperacaoLCI_LCA', limit_choices_to={'operacao__tipo_operacao': 'C'})
+    qtd_restante = models.DecimalField(u'Quantidade restante da operação', max_digits=11, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
+    qtd_atualizada = models.DecimalField(u'Quantidade atualizada da operação', max_digits=17, decimal_places=8, validators=[MinValueValidator(Decimal('0.00000001'))])
+    
+    class Meta:
+        unique_together=('divisao_operacao', 'ano')
     
 class DivisaoOperacaoCDB_RDB (models.Model):
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')

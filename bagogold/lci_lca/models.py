@@ -9,6 +9,10 @@ from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
 
 
 class LetraCredito (models.Model):
+    LCI_LCA_PREFIXADO = 1
+    LCI_LCA_DI = 2
+    LCI_LCA_IPCA = 3
+    
     nome = models.CharField(u'Nome', max_length=50)  
     investidor = models.ForeignKey('bagogold.Investidor', related_name='lci_lca_novo')
     
