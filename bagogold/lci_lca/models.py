@@ -15,6 +15,10 @@ class LetraCredito (models.Model):
     
     nome = models.CharField(u'Nome', max_length=50)  
     investidor = models.ForeignKey('bagogold.Investidor', related_name='lci_lca_novo')
+    """
+    Tipo de rendimento, 1 = Prefixado, 2 = Pós-fixado, 3 = IPCA
+    """    
+    tipo_rendimento = models.PositiveSmallIntegerField(u'Tipo de rendimento')
     
     def __unicode__(self):
         return self.nome
