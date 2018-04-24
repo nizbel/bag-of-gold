@@ -149,6 +149,64 @@
                 </div>
             </div>
         </div>
+        <div class="col-md-12">
+            <div class="portlet box yellow-crusta">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-money"></i>Simulador</div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <div class="row">
+                        <div class="col-md-9">
+                            <div class="chart" id="graf_simulador" style="width:100%;height:400px"></div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <span class="col-md-12 hidden" id="erro_simulador"></span>
+                                    <label class="col-md-12 control-label">Tipo de rendimento:</label>
+                                    <div class="col-md-12">
+                                        <div class="md-radio-inline">
+                                            <div class="md-radio">
+                                                <input type="radio" class="md-radiobtn filtro-simulador" name="radioTipoRendimento" id="radioPosDI" value="POS" checked>
+                                                <label for="radioPosDI">
+                                                    <span></span>
+                                                    <span class="check"></span>
+                                                    <span class="box"></span> Pós-fixado (DI) 
+                                                </label>
+                                            </div>
+                                            <div class="md-radio">
+                                                <input type="radio" class="md-radiobtn filtro-simulador" name="radioTipoRendimento" id="radioPre" value="PRE">
+                                                <label for="radioPre">
+                                                    <span></span>
+                                                    <span class="check"></span>
+                                                    <span class="box"></span> Prefixado 
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <label class="col-md-12 control-label">Período:</label>
+                                    <div class="col-md-12">
+                                        <input class="filtro-simulador form-control" id="periodo" type="text" value="{{filtros_simulador.periodo}}">
+                                    </div>
+                                    <label class="col-md-12 control-label">Rendimento:</label>
+                                    <div class="col-md-12">
+                                        <input class="filtro-simulador form-control" id="percentualRendimento" type="text" value="{{filtros_simulador.percentual_indice}}">
+                                    </div>
+                                    <label class="col-md-12 control-label">Quantidade investida:</label>
+                                    <div class="col-md-12">
+                                        <input class="filtro-simulador form-control" id="qtdInvestida" type="text" value="{{filtros_simulador.aplicacao}}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -165,6 +223,7 @@
 <script src={% static "assets/global/plugins/flot/jquery.flot.resize.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.stack.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.time.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/bootstrap-touchspin/bootstrap.touchspin.min.js" %} type="text/javascript"></script>
 <script type="text/javascript">
 $( document ).ready(function() {    
     $.plot($("#graf_historico_di"), [ {color: "#33AA33", lines: {show:true}, data: {{ graf_historico_di|safe }} } 
@@ -175,6 +234,11 @@ $( document ).ready(function() {
     $.plot($("#graf_historico_ipca"), [ {color: "#33AA33", lines: {show:true}, data: {{ graf_historico_ipca|safe }} } 
     ],
     {grid: { hoverable: true, clickable: true}, xaxis: {mode: "time", timeformat: "%d/%m/%Y", tickSize: [6, "month"]} }  
+    );
+
+    var graf_simulador = $.plot($("#graf_simulador"), [ {color: "#33AA33", lines: {show:true}, data: {{ graf_simulador|safe }} } 
+    ],
+    {grid: { hoverable: true, clickable: true}, xaxis: {mode: "time", timeformat: "%d/%m/%Y"} }  
     );
     
     function showTooltip(x, y, contents) {
@@ -236,6 +300,121 @@ $( document ).ready(function() {
             clicksYet = false;
             previousPoint = null;            
         }
+    });
+    $("#graf_simulador").bind("plothover", function (event, pos, item) {
+        $("#x").text(pos.x.toFixed(2));
+        $("#y").text(pos.y.toFixed(2));
+
+        if (item) {
+            if (previousPoint != item.datapoint) {
+                previousPoint = item.datapoint;
+                
+                $("#tooltip").remove();
+                var x = item.datapoint[0].toFixed(2),
+                    y = item.datapoint[1].toFixed(2).toString().replace('.', ',');
+                
+                var date = new Date(parseInt(x));
+                showTooltip(item.pageX, item.pageY, moment.utc(date).format('DD/MM/YYYY') +"</br>Valor: R$ " + y);
+            }
+        }
+        else {
+            $("#tooltip").remove();
+            clicksYet = false;
+            previousPoint = null;            
+        }
+    });
+    
+    // Periodo
+    $("#periodo").TouchSpin({
+        min: 10,
+        max: 3650,
+        step: 1,
+        decimals: 0,
+        maxboostedstep: 100,
+        postfix: 'dias'
+    });
+
+    // Quantidade investida
+    $("#qtdInvestida").TouchSpin({
+        min: 100,
+        max: 1000000,
+        step: 0.01,
+        decimals: 2,
+        maxboostedstep: 100,
+        prefix: 'R$'
+    });
+    
+    // Percentual de rendimento
+    if ($("input[name='radioTipoRendimento']:checked").val() == 'PRE') {
+        $("#percentualRendimento").TouchSpin({
+            min: 3,
+            max: 100,
+            step: 0.01,
+            decimals: 2,
+            maxboostedstep: 100,
+            postfix: '% ao ano'
+        });
+    } else if ($("input[name='radioTipoRendimento']:checked").val() == 'POS') {
+        $("#percentualRendimento").TouchSpin({
+            min: 10,
+            max: 150,
+            step: 1,
+            maxboostedstep: 100,
+            postfix: '% do CDI'
+        });
+    }
+    $('input[name=radioTipoRendimento]').change( function() {
+        if ($("input[name='radioTipoRendimento']:checked").val() == 'PRE') {
+            $('#percentualRendimento').trigger('touchspin.updatesettings', {max: 100, min: 3, decimals: 2, step: 0.01, postfix: '% ao ano'});
+        } else if ($("input[name='radioTipoRendimento']:checked").val() == 'POS') {
+            $('#percentualRendimento').trigger('touchspin.updatesettings', {max: 150, min: 10, decimals: 0, step: 1, postfix: '% do CDI'});
+        }
+    })
+    
+    var polling = [];
+    // Alterar gráfico
+    $('.filtro-simulador').change(function() {
+        polling.push(1);
+        setTimeout(function(){
+            polling.splice(0, 1);
+            if (polling.length == 0) {
+                // Bloquear gráfico
+                App.blockUI({
+                    target: '#graf_simulador',
+                    iconOnly: true,
+                    overlayColor: 'none'
+                });
+                $.ajax({
+                    url : "{% url 'lci_lca:sobre_lci_lca' %}", // the endpoint
+                    type : "GET", // http method
+                    data : {periodo: $('#periodo').val(), percentual_indice: $('#percentualRendimento').val(),
+                        qtd: $('#qtdInvestida').val(), tipo: $("input[name='radioTipoRendimento']:checked").val()},
+        
+                    // handle a successful response
+                    success : function(retorno) {
+                        if (retorno.sucesso) {
+                            $('#erro_simulador').html('');
+                            $('#erro_simulador').addClass('hidden');
+                            $('#graf_simulador').empty();
+                            $.plot($("#graf_simulador"), [ {color: "#33AA33", lines: {show:true}, data: retorno.graf_simulador } 
+                            ],
+                            {grid: { hoverable: true, clickable: true}, xaxis: {mode: "time", timeformat: "%d/%m/%Y"} }  
+                            );
+                        } else {
+                            $('#erro_simulador').html('<i class="fa fa-warning"> ' + retorno.mensagem);
+                            $('#erro_simulador').removeClass('hidden');
+                        }
+                        App.unblockUI('#graf_simulador');
+                    },
+        
+                    // handle a non-successful response
+                    error : function(xhr,errmsg,err) {
+                        App.unblockUI('#graf_simulador');
+                        console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+                    }
+                });
+            }
+        }, 500);
     });
 });
 </script>
