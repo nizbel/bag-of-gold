@@ -63,7 +63,7 @@ def preparar_checkpoint_lci_lca_historico(sender, instance, created, **kwargs):
     Altera checkpoints para as operações afetadas
     """
     # Todas podem ser afetadas
-    for divisao_operacao in DivisaoOperacaoLCI_LCA.objects.filter(operacao__lci_lca=instance.lci_lca, operacao__tipo_operacao='C'):
+    for divisao_operacao in DivisaoOperacaoLCI_LCA.objects.filter(operacao__letra_credito=instance.letra_credito, operacao__tipo_operacao='C'):
         ano = divisao_operacao.operacao.data.year
         gerar_checkpoint_divisao_lci_lca(divisao_operacao, ano)
 
@@ -92,7 +92,7 @@ def preparar_checkpoint_lci_lca_historico_delete(sender, instance, **kwargs):
     Verifica ano do evento apagado
     """
     # Todas podem ser afetadas
-    for divisao_operacao in DivisaoOperacaoLCI_LCA.objects.filter(operacao__lci_lca=instance.lci_lca, operacao__tipo_operacao='C'):
+    for divisao_operacao in DivisaoOperacaoLCI_LCA.objects.filter(operacao__letra_credito=instance.letra_credito, operacao__tipo_operacao='C'):
         ano = divisao_operacao.operacao.data.year
         gerar_checkpoint_divisao_lci_lca(divisao_operacao, ano)
 

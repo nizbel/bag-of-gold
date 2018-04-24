@@ -151,13 +151,10 @@ def calcular_valor_cdb_rdb_ate_dia(investidor, dia=datetime.date.today(), valor_
     
     cdb_rdb = {}
     for operacao in operacoes:
-        # TODO consertar verificação de todas vendidas
-#         operacao.quantidade = operacao.qtd_disponivel_venda
 
         if operacao.cdb_rdb.id not in cdb_rdb.keys():
             cdb_rdb[operacao.cdb_rdb.id] = 0
         
-#         cdb_rdb[operacao.cdb_rdb.id] += calcular_valor_atualizado_operacao_ate_dia(operacao.quantidade, operacao.data, dia, operacao, valor_liquido)
         cdb_rdb[operacao.cdb_rdb.id] += calcular_valor_operacao_cdb_rdb_ate_dia(operacao, dia, True, valor_liquido)
     
     return cdb_rdb

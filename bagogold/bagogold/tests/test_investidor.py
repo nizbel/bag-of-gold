@@ -10,7 +10,7 @@ from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
 from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
 from bagogold.fii.models import OperacaoFII, FII, HistoricoFII
 from bagogold.lci_lca.models import LetraCredito, OperacaoLetraCredito, \
-    HistoricoPorcentagemLetraCredito
+    HistoricoPorcentagemLetraCredito, HistoricoVencimentoLetraCredito
 from decimal import Decimal
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -54,7 +54,8 @@ class TelaInicioTestCase(TestCase):
         divisao_operacao_fii2 = DivisaoOperacaoFII.objects.create(divisao=divisao1, operacao=operacao_fii2, quantidade=operacao_fii2.quantidade)
         
         # Letra de Crédito
-        lci_lca = LetraCredito.objects.create(nome='Letra de teste', investidor=user.investidor)
+        lci_lca = LetraCredito.objects.create(nome='Letra de teste', investidor=user.investidor, tipo_rendimento=LetraCredito.LCI_LCA_DI)
+        HistoricoVencimentoLetraCredito.objects.create(letra_credito=lci_lca, vencimento=1080)
         lci_lca_porcentagem = HistoricoPorcentagemLetraCredito.objects.create(letra_credito=lci_lca, porcentagem=Decimal(90))
         operacao_lci_lca1 = OperacaoLetraCredito.objects.create(investidor=user.investidor, letra_credito=lci_lca, data=data_atual - datetime.timedelta(days=0), tipo_operacao='C',
                                             quantidade=Decimal(1000))
