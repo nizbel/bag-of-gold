@@ -1,5 +1,22 @@
 # -*- coding: utf-8 -*-
 
+import calendar
+import datetime
+from decimal import Decimal
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.mail import mail_admins
+from django.shortcuts import get_object_or_404
+import json
+import traceback
+
+from django.core.urlresolvers import reverse
+from django.db import transaction
+from django.forms import inlineformset_factory
+from django.http import HttpResponseRedirect, HttpResponse
+from django.template.response import TemplateResponse
+
 from bagogold import settings
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoLetraCambioFormSet
@@ -21,22 +38,8 @@ from bagogold.lc.models import OperacaoLetraCambio, \
     OperacaoVendaLetraCambio, HistoricoVencimentoLetraCambio
 from bagogold.lc.utils import calcular_valor_lc_ate_dia, \
     buscar_operacoes_vigentes_ate_data, calcular_valor_atualizado_operacao_ate_dia, \
-    calcular_valor_operacao_lc_ate_dia, calcular_valor_venda_lc
-from decimal import Decimal
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied, ValidationError
-from django.core.mail import mail_admins
-from django.core.urlresolvers import reverse
-from django.db import transaction
-from django.db.models import Count
-from django.forms import inlineformset_factory
-from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404
-from django.template.response import TemplateResponse
-import calendar
-import datetime
-import traceback
+    calcular_valor_operacao_lc_ate_dia, calcular_valor_venda_lc, simulador_lc
+
 
 @login_required
 @adiciona_titulo_descricao('Detalhar Letra de Câmbio', 'Detalhar Letra de Câmbio, incluindo histórico de carência e '
@@ -879,7 +882,7 @@ def sobre(request):
     if request.is_ajax():
         try:
             aplicacao = Decimal(request.GET.get('qtd').replace('.', '').replace(',', '.'))
-            filtros_simulador = {'periodo': Decimal(request.GET.get('periodo')), 'percentual_indice': Decimal(request.GET.get('percentual_indice')), \
+            filtros_simulador = {'periodo': Decimal(request.GET.get('periodo')), 'percentual_indice': Decimal(request.GET.get('percentual_indice').replace('.', '').replace(',', '.')), \
                              'tipo': request.GET.get('tipo'), 'aplicacao': aplicacao}
         except:
             return HttpResponse(json.dumps({'sucesso': False, 'mensagem': u'Variáveis de entrada inválidas'}), content_type = "application/json") 
@@ -899,7 +902,7 @@ def sobre(request):
         else:
             total_atual = 0
     
-        filtros_simulador = {'periodo': Decimal(12), 'percentual_indice': Decimal(100), 'tipo': 'POS', 'aplicacao': Decimal(1000)}
+        filtros_simulador = {'periodo': Decimal(365), 'percentual_indice': Decimal(100), 'tipo': 'POS', 'aplicacao': Decimal(1000)}
         
         graf_simulador = [[str(calendar.timegm(data.timetuple()) * 1000), float(valor_lc)] for data, valor_lc in simulador_lc(filtros_simulador)]
         

@@ -839,7 +839,7 @@ def sobre(request):
     if request.is_ajax():
         try:
             aplicacao = Decimal(request.GET.get('qtd').replace('.', '').replace(',', '.'))
-            filtros_simulador = {'periodo': Decimal(request.GET.get('periodo')), 'percentual_indice': Decimal(request.GET.get('percentual_indice')), \
+            filtros_simulador = {'periodo': Decimal(request.GET.get('periodo')), 'percentual_indice': Decimal(request.GET.get('percentual_indice').replace('.', '').replace(',', '.')), \
                              'tipo': request.GET.get('tipo'), 'aplicacao': aplicacao}
         except:
             return HttpResponse(json.dumps({'sucesso': False, 'mensagem': u'Variáveis de entrada inválidas'}), content_type = "application/json") 
@@ -859,7 +859,7 @@ def sobre(request):
         else:
             total_atual = 0
         
-        filtros_simulador = {'periodo': Decimal(12), 'percentual_indice': Decimal(85), 'tipo': 'POS', 'aplicacao': Decimal(1000)}
+        filtros_simulador = {'periodo': Decimal(365), 'percentual_indice': Decimal(85), 'tipo': 'POS', 'aplicacao': Decimal(1000)}
         
         graf_simulador = [[str(calendar.timegm(data.timetuple()) * 1000), float(valor_lci_lca)] for data, valor_lci_lca in simulador_lci_lca(filtros_simulador)]
         
