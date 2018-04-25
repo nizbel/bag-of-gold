@@ -92,8 +92,7 @@ def buscar_valores_diarios_di():
         if '.txt' in nome:
             # Testa se data do arquivo é maior do que a última data registrada
             data = datetime.date(int(nome[0:4]), int(nome[4:6]), int(nome[6:8]))
-            data_ultimo_registro = HistoricoTaxaDI.objects.filter().order_by('-data')[0].data
-            if data > data_ultimo_registro:
+            if not HistoricoTaxaDI.objects.filter(data=data).exists():
                 taxa = []
                 ftp.retrlines('RETR ' + nome, taxa.append)
 #                 print '%s: %s' % (data, Decimal(taxa[0]) / 100)
