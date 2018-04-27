@@ -184,6 +184,32 @@ def calcular_resultado_corretagem(request):
     
     return TemplateResponse(request, 'fii/calcular_resultado_corretagem.html', {'ranking': ranking, 'form_calcular': form_calcular})
     
+@adiciona_titulo_descricao('Detalhar FII', 'Detalhamento de um FII')
+def detalhar_fii(request, fii_id):
+    fii = get_object_or_404(FII, pk=fii_id)
+    
+    proventos = ProventoFII.objects.filter(fii=fii).order_by('data_ex')
+    
+    # Se usuário autenticado, mostrar operações e proventos recebidos
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+        # Buscar operações
+        operacoes = OperacaoFII.objects.filter(investidor=investidor, fii=fii).order_by('data')
+        
+        if operacoes.exists():
+            for provento in proventos.filter(data_ex > operacoes[0].data:
+                provento.pago = datetime.date.today() > provento.data_pagamento
+                provento.qtd_na_data_ex = calcular_qtd_fiis_ate_dia_por_ticker(request.user.investidor, provento.data_ex, provento.fii.ticker)
+                provento.valor_recebido = (provento.qtd_na_data_ex * provento.valor_unitario).quantize(Decimal('0.01'), rounding=ROUND_FLOOR)
+    else:
+        operacoes = list()
+    
+    # Preparar gráfico histórico
+    historico = HistoricoFII.objects.filter(fii=fii)
+    # TODO Dependendo do período, pegar apenas 100 pontos no gráfico histórico
+    
+    return TemplateResponse(request, 'fii/detalhar_provento.html', {'historico': historico, 'operacoes': operacoes, 'proventos': proventos})
+    
 @adiciona_titulo_descricao('Detalhar provento', 'Detalhamento de proventos em FIIs')
 def detalhar_provento(request, provento_id):
     provento = get_object_or_404(ProventoFII, pk=provento_id)
