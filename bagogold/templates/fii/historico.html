@@ -152,6 +152,7 @@
                             {% endif %}
                             </td>
                             <td><span class="font-blue">R$ {{item.uso_proventos}}</span></td>
+							<td>{% if item.uso_proventos != None %}<span class="font-blue">R$ {{item.uso_proventos|floatformat:"2"}}</span>{% else %}Não há{% endif %}</td>
 						</tr>
 					{% endfor %}
 					</tbody>
