@@ -64,3 +64,25 @@ class ComandoPreencherHistoricoAnoAtualTDTestCase(TestCase):
 
         self.assertTrue(Titulo.objects.filter().exists())
         self.assertTrue(HistoricoTitulo.objects.filter().exists())
+        
+class CalculoImpostoRendaTDTestCase(TestCase):
+    def setUp(self):
+         user = User.objects.create(username='tester')
+        
+        titulo_1 = Titulo.objects.create(tipo='LTN', data_vencimento=datetime.date(2017, 1, 1), data_inicio=datetime.date(2013, 1, 1))
+        
+        titulo_2 = Titulo.objects.create(tipo='LTN', data_vencimento=datetime.date(2018, 1, 1), data_inicio=datetime.date(2014, 1, 1))
+        
+        # TODO Criar operações
+        
+        # TODO Verificar valores que devem ser testados
+        
+    def test_imposto_renda_2017(self):
+        """Testar valor de imposto de renda para 2017"""
+        pass
+        
+    def test_imposto_renda_2018(self):
+        """Testar valor de imposto de renda para 2018"""
+        pass
+        
+    
