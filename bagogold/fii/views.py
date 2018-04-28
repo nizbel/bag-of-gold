@@ -197,7 +197,7 @@ def detalhar_fii(request, fii_id):
         operacoes = OperacaoFII.objects.filter(investidor=investidor, fii=fii).order_by('data')
         
         if operacoes.exists():
-            for provento in proventos.filter(data_ex > operacoes[0].data:
+            for provento in proventos.filter(data_ex__gt=operacoes[0].data):
                 provento.pago = datetime.date.today() > provento.data_pagamento
                 provento.qtd_na_data_ex = calcular_qtd_fiis_ate_dia_por_ticker(request.user.investidor, provento.data_ex, provento.fii.ticker)
                 provento.valor_recebido = (provento.qtd_na_data_ex * provento.valor_unitario).quantize(Decimal('0.01'), rounding=ROUND_FLOOR)
