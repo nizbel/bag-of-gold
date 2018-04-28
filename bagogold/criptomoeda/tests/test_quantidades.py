@@ -179,3 +179,25 @@ class QuantidadesCriptomoedaTestCase(TestCase):
         for data, valor in historico:
             self.assertTrue(isinstance(data, datetime.date))
             self.assertGreater(valor, 0)
+            
+def ForkTestCase(TestCase):
+    def setUp(self):
+        user = User.objects.create(username='tester')
+        
+        bitcoin = Criptomoeda.objects.create(nome='Bitcoin', ticker='BTC')
+        bcash = Criptomoeda.objects.create(nome='Bitcoin Cash', ticker='BCH')
+        
+        compra_1 = OperacaoCriptomoeda.objects.create(quantidade=Decimal('0.9662'), preco_unitario=Decimal('10000'), data=datetime.date(2017, 6, 6), 
+                                                      tipo_operacao='C', criptomoeda=bitcoin, investidor=user.investidor)
+    
+    def test_quantidade_apos_fork(self):
+        """Testa se as operações de quantidade consideram a existência de moedas criadas por fork"""
+        pass
+        
+    def test_formulario_fork_sucesso(self):
+        """Testa formulário de criação de fork"""
+        pass
+        
+    def test_formulario_fork_qtd_moeda_origem_insuficiente(self):
+        """Testa erro de quantidade insuficiente na moeda de origem na data especificada"""
+        pass
