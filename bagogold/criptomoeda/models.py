@@ -101,14 +101,14 @@ class TransferenciaCriptomoeda (models.Model):
             return self.moeda.ticker
         return 'BRL'
         
-# class Fork (models.Model):
-#     moeda_origem = models.ForeignKey('Criptomoeda', related_name='moeda_origem_fork')
-#     moeda_recebida = models.ForeignKey('Criptomoeda', related_name='moeda_recebida_fork')
-#     data = models.DateField(u'Data')
-#     quantidade = models.DecimalField(u'Quantidade recebida', max_digits=21, decimal_places=12, validators=[MinValueValidator(Decimal('0.000000000001'))])
-#     
-#     def __unicode__(self):
-#         return u'Fork de %s em %s %s no dia %s' % (self.moeda_origem, self.quantidade, self.moeda_recebida, self.data.strftime('%d/%m/%Y'))
+class Fork (models.Model):
+    moeda_origem = models.ForeignKey('Criptomoeda', related_name='moeda_origem_fork')
+    moeda_recebida = models.ForeignKey('Criptomoeda', related_name='moeda_recebida_fork')
+    data = models.DateField(u'Data')
+    quantidade = models.DecimalField(u'Quantidade recebida', max_digits=21, decimal_places=12, validators=[MinValueValidator(Decimal('0.000000000001'))])
+     
+    def __unicode__(self):
+        return u'Fork de %s em %s %s no dia %s' % (self.moeda_origem, self.quantidade, self.moeda_recebida, self.data.strftime('%d/%m/%Y'))
     
 class TelegramInvestidor (models.Model):
     chat_id = models.IntegerField(u'ID do Telegram')

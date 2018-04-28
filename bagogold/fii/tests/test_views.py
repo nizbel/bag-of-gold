@@ -108,3 +108,9 @@ class DetalharFIITestCase (TestCase):
         self.assertEqual(len(response.context_data['proventos']), 6)
         self.assertEqual(response.context_data['fii'], FII.objects.get(ticker='TSTE11'))
         self.assertEqual(response.context_data['fii'].qtd_cotas, 0)
+        
+    def test_fii_nao_encontrado(self):
+        """Testa o retorno caso o FII não seja encontrado"""
+        response = self.client.get(reverse('fii:detalhar_fii', kwargs={'fii_ticker': 'TSTS11'}))      
+        self.assertEqual(response.status_code, 404)
+        
