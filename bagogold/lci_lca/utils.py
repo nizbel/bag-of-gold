@@ -256,7 +256,7 @@ def calcular_valor_lci_lca_ate_dia_por_divisao(dia, divisao_id):
         operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
             
     # Preencher os valores nas letras de crédito
-    for letra_credito_id in letras_credito:
+    for letra_credito_id in letras_credito.keys():
         letras_credito[letra_credito_id] += sum([operacao.atual for operacao in operacoes if operacao.letra_credito.id == letra_credito_id])
         
         if letras_credito[letra_credito_id] == 0:
