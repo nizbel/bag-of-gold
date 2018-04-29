@@ -1,17 +1,20 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoCriptomoeda, \
-    DivisaoTransferenciaCriptomoeda, Divisao
-from bagogold.criptomoeda.models import OperacaoCriptomoeda, \
-    TransferenciaCriptomoeda, Criptomoeda, OperacaoCriptomoedaTaxa, \
-    OperacaoCriptomoedaMoeda
+import datetime
 from decimal import Decimal
+from django.db.models.expressions import F, Case, When
+import json
+from urllib2 import urlopen
+
 from django.db import transaction
 from django.db.models.aggregates import Sum
-from django.db.models.expressions import F, Case, When
 from django.db.models.fields import DecimalField
-from urllib2 import urlopen
-import datetime
-import json
+
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoCriptomoeda, \
+    DivisaoTransferenciaCriptomoeda, Divisao, DivisaoForkCriptomoeda
+from bagogold.criptomoeda.models import OperacaoCriptomoeda, \
+    TransferenciaCriptomoeda, Criptomoeda, OperacaoCriptomoedaTaxa, \
+    OperacaoCriptomoedaMoeda, Fork
+
 
 def calcular_qtd_moedas_ate_dia(investidor, dia=datetime.date.today()):
     """ 
@@ -57,8 +60,13 @@ def calcular_qtd_moedas_ate_dia(investidor, dia=datetime.date.today()):
     qtd_moedas4 = dict(TransferenciaCriptomoeda.objects.filter(investidor=investidor, data__lte=dia, moeda__isnull=False).values('moeda') \
         .annotate(total=Sum(F('taxa')*-1)).values_list('moeda', 'total').exclude(total=0))
     
+    # Forks
+    qtd_moedas5 = dict(Fork.objects.filter(investidor=investidor, data__lte=dia).values_list('moeda_recebida', 'quantidade'))
+    
     qtd_moedas = { k: qtd_moedas1.get(k, 0) + qtd_moedas2.get(k, 0) + qtd_moedas3.get(k, 0) + qtd_moedas4.get(k, 0) \
-                   for k in set(qtd_moedas1) | set(qtd_moedas2) | set(qtd_moedas3) | set(qtd_moedas4) }
+                  + qtd_moedas5.get(k, 0) \
+                   for k in set(qtd_moedas1) | set(qtd_moedas2) | set(qtd_moedas3) | set(qtd_moedas4) | set(qtd_moedas5)}
+    
     
     return qtd_moedas
 
@@ -105,6 +113,9 @@ def calcular_qtd_moedas_ate_dia_por_criptomoeda(investidor, moeda_id, dia=dateti
     qtd_moedas += TransferenciaCriptomoeda.objects.filter(investidor=investidor, data__lte=dia, moeda__id=moeda_id) \
         .aggregate(total=Sum(F('taxa')*-1))['total'] or 0
         
+    # Fork
+    qtd_moedas += Fork.objects.filter(investidor=investidor, data__lte=dia, moeda_recebida__id=moeda_id).aggregate(total=Sum('quantidade'))['total'] or 0
+    
     return qtd_moedas
 
 def calcular_qtd_moedas_ate_dia_por_divisao(divisao_id, dia=datetime.date.today()):
@@ -155,8 +166,12 @@ def calcular_qtd_moedas_ate_dia_por_divisao(divisao_id, dia=datetime.date.today(
                                                                       transferencia__moeda__isnull=False).values('transferencia__moeda') \
         .annotate(total=Sum(F('transferencia__taxa')*-1)).values_list('transferencia__moeda', 'total').exclude(total=0))
      
+    # Forks
+    qtd_moedas5 = dict(DivisaoForkCriptomoeda.objects.filter(divisao__id=divisao_id, fork__data__lte=dia).values_list('fork__moeda_recebida', 'quantidade'))
+    
     qtd_moedas = { k: qtd_moedas1.get(k, 0) + qtd_moedas2.get(k, 0) + qtd_moedas3.get(k, 0) + qtd_moedas4.get(k, 0) \
-                   for k in set(qtd_moedas1) | set(qtd_moedas2) | set(qtd_moedas3) | set(qtd_moedas4) }
+                  + qtd_moedas5.get(k, 0)
+                   for k in set(qtd_moedas1) | set(qtd_moedas2) | set(qtd_moedas3) | set(qtd_moedas4) | set(qtd_moedas5) }
 
     return qtd_moedas
 
