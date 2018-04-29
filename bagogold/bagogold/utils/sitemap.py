@@ -1,12 +1,49 @@
 # -*- coding: utf-8 -*-
-from bagogold import settings
+import datetime
 from decimal import Decimal
-from django.core.urlresolvers import reverse
 import re
+from threading import Thread
+import time
 import urllib2
+
+from django.core.urlresolvers import reverse
+
+from bagogold import settings
+
 
 HOST_DEV = 'http://localhost:8000'
 HOST_PROD = 'https://bagofgold.com.br'
+
+lista_urls = list()
+paginas_encontradas = list()
+# A thread 'Principal' indica se ainda está rodando a thread principal
+threads_rodando = {'Principal': 1}
+
+class BuscaPaginaThread(Thread):
+    def __init__(self, identificador):
+        self.identificador = identificador 
+        super(BuscaPaginaThread, self).__init__()
+
+    def run(self):
+        inicio = datetime.datetime.now()
+        try:
+            while len(lista_urls) > 0 or len(paginas_encontradas) > 0 or (datetime.datetime.now() - inicio) < datetime.timedelta(seconds=10):
+                if len(lista_urls) > 0:
+                    url = lista_urls.pop(0)
+                    print url
+                    req = urllib2.Request(url)
+                    response = urllib2.urlopen(req)
+                    page = response.read()
+                    # Interessam apenas links mostrados antes dos scripts (evitar ajax)
+                    paginas_encontradas.append(page[page.find('<body') : page.find('<script')])
+        except Exception as e:
+            template = "An exception of type {0} occured. Arguments:\n{1!r}"
+            message = template.format(type(e).__name__, e.args)
+            print self.identificador, "Thread:", message
+#             pass
+        # Tenta remover seu código da listagem de threads até conseguir
+        while self.identificador in threads_rodando:
+            del threads_rodando[self.identificador]
 
 def gerar_sitemap():
     if settings.ENV == 'DEV':
@@ -14,29 +51,42 @@ def gerar_sitemap():
     elif settings.ENV == 'PROD':
         host = HOST_PROD
     url_inicial = '%s%s' % (host, reverse('inicio:home'))
-    lista_urls = [url_inicial]
-    
+    lista_urls.append(url_inicial)
     # Trabalhar sempre com (url, qtd_vezes_encontrada)
-    lista_urls_encontradas = {url_inicial: 0}
-    while len(lista_urls) > 0:
-        url = lista_urls.pop(0)
-        print len(lista_urls), url
-        req = urllib2.Request(url)
-        response = urllib2.urlopen(req)
-        page = response.read()
-        
-#         urls_page = re.findall('(http|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?', page)
-        urls_page = re.findall('"/[-\d\w_/]*"', page)
-        urls_page = ['%s%s' % (host, url_page.replace('"', '')) for url_page in urls_page]
-        for url_encontrada in [url_page for url_page in urls_page if 'static' not in url_page and '?' not in url_page]:
-            # Se URL encontrada já havia sido encontrada antes, apenas incrementa quantidade de vezes vista
-            if url_encontrada in lista_urls_encontradas.keys():
-                lista_urls_encontradas[url_encontrada] += 1
-            # Caso contrário, adicionar a lista de encontradas com 1 encontro e preparar para verificá-la
-            else:
-                lista_urls.append(url_encontrada)
-                lista_urls_encontradas[url_encontrada] = 1
-                
+    lista_urls_encontradas = {}
+    
+    count = 1
+    try:
+        while len(lista_urls) > 0 or len(threads_rodando.keys()) > 1 or len(paginas_encontradas) > 0:
+            if len(lista_urls) > 0 and len(threads_rodando.keys()) <= 2:
+                t = BuscaPaginaThread(count)
+                threads_rodando[count] = 1
+                t.start()
+                count += 1
+            while len(paginas_encontradas) > 0:
+        #         urls_page = re.findall('(http|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?', page)
+                page = paginas_encontradas.pop(0)
+                urls_page = re.findall('"/[-\d\w_/]*"', page)
+                urls_page = ['%s%s' % (host, url_page.replace('"', '')) for url_page in urls_page]
+                for url_encontrada in [url_page for url_page in urls_page if 'static' not in url_page and '?' not in url_page]:
+                    # Se URL encontrada já havia sido encontrada antes, apenas incrementa quantidade de vezes vista
+                    if url_encontrada in lista_urls_encontradas.keys():
+                        lista_urls_encontradas[url_encontrada] += 1
+                    # Caso contrário, adicionar a lista de encontradas com 1 encontro e preparar para verificá-la
+                    else:
+                        lista_urls.append(url_encontrada)
+                        lista_urls_encontradas[url_encontrada] = 1
+            print len(lista_urls), len(lista_urls_encontradas.keys())
+            time.sleep(5)
+        while 'Principal' in threads_rodando.keys():
+            del threads_rodando['Principal']
+        time.sleep(3)
+    except KeyboardInterrupt:
+#             print 'FIIs para verificar:', len(fiis_para_verificar), '... Threads:', len(threads_rodando), contador
+        while 'Principal' in threads_rodando.keys():
+            del threads_rodando['Principal']
+            time.sleep(3)
+    
     # Gerar arquivo
     sitemap = file('sitemap.xml', 'w+')
     sitemap.write('<?xml version="1.0" encoding="UTF-8"?>')
@@ -44,8 +94,8 @@ def gerar_sitemap():
                   'xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">')
     qtd_maxima_encontrada = max(lista_urls_encontradas.values())
     for url, qtd in lista_urls_encontradas.items():
-        sitemap.write('\n<url><loc>%s</loc><changefreq>weekly</changefreq><priority>%s</priority></url>' % (url, 
-                                                  (Decimal(qtd)/qtd_maxima_encontrada).quantize(Decimal('0.01'))))
+        prioridade = max((Decimal(qtd)/qtd_maxima_encontrada).quantize(Decimal('0.01')), Decimal('0.1'))
+        sitemap.write('\n<url><loc>%s</loc><changefreq>weekly</changefreq><priority>%s</priority></url>' % (url, prioridade))
     sitemap.write('\n</urlset>')
         
         
