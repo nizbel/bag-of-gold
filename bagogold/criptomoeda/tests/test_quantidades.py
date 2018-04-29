@@ -3,7 +3,7 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoCriptomoeda, \
     Divisao, DivisaoTransferenciaCriptomoeda
 from bagogold.criptomoeda.models import TransferenciaCriptomoeda, Criptomoeda, \
     OperacaoCriptomoeda, OperacaoCriptomoedaMoeda, OperacaoCriptomoedaTaxa,\
-    ValorDiarioCriptomoeda
+    ValorDiarioCriptomoeda, Fork
 from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia, \
     calcular_qtd_moedas_ate_dia_por_criptomoeda, \
     calcular_qtd_moedas_ate_dia_por_divisao, buscar_valor_criptomoeda_atual, \
@@ -180,7 +180,7 @@ class QuantidadesCriptomoedaTestCase(TestCase):
             self.assertTrue(isinstance(data, datetime.date))
             self.assertGreater(valor, 0)
             
-def ForkTestCase(TestCase):
+class ForkTestCase(TestCase):
     def setUp(self):
         user = User.objects.create(username='tester')
         
@@ -192,7 +192,20 @@ def ForkTestCase(TestCase):
     
     def test_quantidade_apos_fork(self):
         """Testa se as operações de quantidade consideram a existência de moedas criadas por fork"""
-        pass
+        investidor = Investidor.objects.get(user__username='tester')
+        
+        bitcoin = Criptomoeda.objects.get(ticker='BTC')
+        bcash = Criptomoeda.objects.get(ticker='BCH')
+        
+        # Fork
+        Fork.objects.create(data=datetime.date(2017, 7, 1), moeda_origem=bitcoin, moeda_recebida=bcash, quantidade=Decimal('0.9662'))
+        
+        data_teste = datetime.date(2017, 8, 12)
+        
+        qtd_moedas = calcular_qtd_moedas_ate_dia(investidor, data_teste)
+        self.assertDictEqual(qtd_moedas, {bitcoin.id: Decimal('0.9662'), bcash.id: Decimal('0.9662')})
+        self.assertEqual(calcular_qtd_moedas_ate_dia_por_criptomoeda(investidor, bcash.id, data_teste), Decimal('0.9662'))
+#         qtd_moedas_div = calcular_qtd_moedas_ate_dia_por_divisao(Divisao.objects, dia)
         
     def test_formulario_fork_sucesso(self):
         """Testa formulário de criação de fork"""
