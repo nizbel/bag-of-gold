@@ -83,8 +83,9 @@ class Titulo (models.Model):
         elif self.tipo in self.TIPO_IPCA:
             return (1 + calcular_valor_acumulado_ipca(datetime.date(2000, 7, 15), data_final=data)) * 1000
         elif self.tipo in self.TIPO_PREFIXADO_COM_JUROS:
-            return 1000
+            return (1 + calcular_valor_acumulado_selic(datetime.date(2000, 7, 1), data_final=data)) * 1000
         elif self.tipo in self.TIPO_IGPM:
+            # TODO adicionar calculo, data base é 15/07/2000
             return 1000
         else:
             return 0
