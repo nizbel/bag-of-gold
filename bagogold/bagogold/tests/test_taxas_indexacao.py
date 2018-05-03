@@ -61,10 +61,10 @@ class AtualizacaoTaxasTestCase(TestCase):
         taxas_di = dict(HistoricoTaxaDI.objects.filter(data__range=[datetime.date(2018, 3, 1), datetime.date(2018, 3, 30)]).values_list('data', 'taxa'))
         
         # Atualizar vários dias pela taxa integral
-        self.assertEqual(calcular_valor_atualizado_com_taxas_di(, 1000, 100), 1000 * Decimal('1.00531564'))
+        self.assertEqual(calcular_valor_atualizado_com_taxas_di(taxas_di, 1000, 100), 1000 * Decimal('1.00531564'))
         
         # Atualizar vários dias por metade da taxa
-        self.assertEqual(calcular_valor_atualizado_com_taxas_di(, 1000, 50), 1000 * Decimal('1.00265446'))
+        self.assertEqual(calcular_valor_atualizado_com_taxas_di(taxas_di, 1000, 50), 1000 * Decimal('1.00265446'))
         
     def test_atualizar_valor_taxa_ipca(self):
         """Testa atualizar valor pelo IPCA"""
@@ -76,4 +76,20 @@ class AtualizacaoTaxasTestCase(TestCase):
         
     def test_atualizar_valor_taxa_selic(self):
         """Testa atualizar valor pela taxa Selic"""
-        pass
+        # Buscar última taxa DI
+        ultima_taxa = HistoricoTaxaSelic.objects.all().order_by('-data')[0].taxa_diaria
+        
+        # Atualizar 1 dia pela taxa integral
+        self.assertEqual(calcular_valor_atualizado_com_taxa_selic(taxa, 1000, 100), 1000 * ultima_taxa)
+        
+        # Atualizar 1 dia por metade da taxa
+        self.assertEqual(calcular_valor_atualizado_com_taxa_di(taxa, 1000, 50), 1000 * ultima_taxa / 2)
+        
+        # Buscar taxas DI em um período
+        taxas_selic = dict(HistoricoTaxaSelic.objects.filter(data__range=[datetime.date(2018, 3, 1), datetime.date(2018, 3, 30)]).values_list('data', 'taxa'))
+        
+        # Atualizar vários dias pela taxa integral
+        self.assertEqual(calcular_valor_atualizado_com_taxas_di(taxas_selic, 1000, 100), 1000 * Decimal('1.005323448053666'))
+        
+        # Atualizar vários dias por metade da taxa
+        self.assertEqual(calcular_valor_atualizado_com_taxas_di(taxas_selic, 1000, 50), 1000 * Decimal('1.00265446'))
