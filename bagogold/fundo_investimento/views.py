@@ -69,6 +69,10 @@ def detalhar_fundo(request, slug_fundo):
     else:
         historico_data_inicial = datetime.date.today()
         historico_data_final = datetime.date.today()
+        
+    # Preparar gráfico histórico
+    graf_historico = [[str(calendar.timegm(data.timetuple()) * 1000), float(valor_cota)] for \
+        (data, valor_cota) in HistoricoValorCotas.objects.filter(fundo=fundo).values_list('data', 'valor_cota').order_by('data')]
     
     dados = {'total_operacoes': 0, 'qtd_cotas_atual': Decimal(0), 'total_atual': Decimal(0), 'total_lucro': Decimal(0), 'lucro_percentual': Decimal(0)}
     if request.user.is_authenticated():
@@ -86,7 +90,7 @@ def detalhar_fundo(request, slug_fundo):
         dados['lucro_percentual'] = (fundo.valor_cota - preco_medio) / (preco_medio or 1) if dados['qtd_cotas_atual'] > 0 else 0    
     
     return TemplateResponse(request, 'fundo_investimento/detalhar_fundo_investimento.html', {'fundo': fundo, 'dados': dados, 'historico': historico, 'historico_data_inicial': historico_data_inicial,
-                                                                 'historico_data_final': historico_data_final})
+                                                                 'historico_data_final': historico_data_final, 'graf_historico': graf_historico})
 
 @login_required
 @adiciona_titulo_descricao('Editar operação em Fundo de Investimento', 'Alterar valores de uma operação de compra/venda em Fundo de Investimento')
@@ -413,8 +417,8 @@ def listar_historico_fundo_investimento(request, id_fundo):
     data_final = data_final.date()
     if data_final < data_inicial:
         return HttpResponse(json.dumps({'sucesso': False, 'erro':'Data final deve ser maior ou igual a data inicial'}), content_type = "application/json")  
-    if data_final > data_inicial.replace(year=data_inicial.year+1):
-        return HttpResponse(json.dumps({'sucesso': False, 'erro':'O período limite para a escolha é de 1 ano'}), content_type = "application/json")  
+    if data_final > data_inicial.replace(year=data_inicial.year+3):
+        return HttpResponse(json.dumps({'sucesso': False, 'erro':'O período limite para a escolha é de 3 anos'}), content_type = "application/json")  
     # Retorno OK
     historico = HistoricoValorCotas.objects.filter(data__range=[data_inicial, data_final], fundo_investimento__id=id_fundo)
     for registro in historico:
