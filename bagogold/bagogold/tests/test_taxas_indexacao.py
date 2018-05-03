@@ -36,3 +36,44 @@ class BuscaDITestCase(TestCase):
         qtd_historico = HistoricoTaxaDI.objects.count()
         buscar_valores_diarios_di()
         self.assertTrue(HistoricoTaxaDI.objects.count() > qtd_historico)
+        
+class AtualizacaoTaxasTestCase(TestCase):
+    """Testa atualização de valores pelas taxas"""
+    def setUp(self):
+        # Preencher valores DI
+        
+        # Preencher valores IPCA
+        
+        # Preencher valores Selic
+        
+    def test_atualizar_valor_taxa_di(self):
+        """Testa atualizar valor pela taxa DI"""
+        # Buscar última taxa DI
+        ultimo_di = HistoricoTaxaDI.objects.all().order_by('-data')[0].taxa
+        
+        # Atualizar 1 dia pela taxa integral
+        self.assertEqual(calcular_valor_atualizado_com_taxa_di(taxa, 1000, 100), 1000 * (1 + ultimo_di/100)**(Decimal(1)/252))
+        
+        # Atualizar 1 dia por metade da taxa
+        self.assertEqual(calcular_valor_atualizado_com_taxa_di(taxa, 1000, 50), 1000 * (1 + ultimo_di/100 / 2)**(Decimal(1)/252))
+        
+        # Buscar taxas DI em um período
+        taxas_di = dict(HistoricoTaxaDI.objects.filter(data__range=[datetime.date(2018, 3, 1), datetime.date(2018, 3, 30)]).values_list('data', 'taxa'))
+        
+        # Atualizar vários dias pela taxa integral
+        self.assertEqual(calcular_valor_atualizado_com_taxas_di(, 1000, 100), 1000 * Decimal('1.00531564'))
+        
+        # Atualizar vários dias por metade da taxa
+        self.assertEqual(calcular_valor_atualizado_com_taxas_di(, 1000, 50), 1000 * Decimal('1.00265446'))
+        
+    def test_atualizar_valor_taxa_ipca(self):
+        """Testa atualizar valor pelo IPCA"""
+        pass
+        
+    def test_atualizar_valor_taxa_prefixado(self):
+        """Testa atualizar valor por taxa prefixada"""
+        pass
+        
+    def test_atualizar_valor_taxa_selic(self):
+        """Testa atualizar valor pela taxa Selic"""
+        pass
