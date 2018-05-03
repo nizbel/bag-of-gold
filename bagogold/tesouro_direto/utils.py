@@ -16,6 +16,7 @@ import datetime
 def calcular_valor_acumulado_ipca(data_base, data_final=datetime.date.today()):
     """
     Calcula o valor acumulado do IPCA desde a data base, até uma data final
+    
     Parâmetros: Data base
                 Data final
     Retorno: Taxa total acumulada
@@ -36,10 +37,24 @@ def calcular_valor_acumulado_ipca(data_base, data_final=datetime.date.today()):
 #             print mes_historico.ano, '/', mes_historico.mes, '->', ipca_periodo, (1 + mes_historico.valor/Decimal(100))
             ipca_periodo = (1 + ipca_periodo) * (1 + mes_historico.valor/Decimal(100)) - 1
     return ipca_periodo
+    
+def calcular_valor_acumulado_selic(data_base, data_final=datetime.date.today()):
+    """
+    Calcula o valor acumulado da Selic desde a data base, até uma data final
+    
+    Parâmetros: Data base
+                Data final
+    Retorno: Taxa total acumulada
+    """
+    selic_periodo = 1
+    taxas_selic = dict(HistoricoTaxaSelic.objects.filter(data__range=[data_base, data_final]).order_by('taxa_diaria').annotate(qtd_dias=Count('taxa_diaria')).values_list('taxa_diaria', 'qtd_dias'))
+    selic_periodo *= [taxa for (taxa, qtd_dias) in taxas_selic.items()]
+    return selic_periodo
 
 def calcular_imposto_venda_td(dias, valor_venda, rendimento):
     """
     Calcula a quantidade de imposto (IR + IOF) devida de acordo com a quantidade de dias
+    
     Parâmetros: Quantidade de dias corridos
                 Valor total da venda
                 Rendimento
@@ -58,10 +73,7 @@ def calcular_imposto_venda_td(dias, valor_venda, rendimento):
         return Decimal(0.15) * rendimento
 
 def criar_data_inicio_titulos():
-    """
-    Percorre todos os títulos disponíveis para configurar sua data de início como a primeira data em que
-    há informação de histórico
-    """
+    """Percorre todos os títulos disponíveis para configurar sua data de início como a primeira data em que há informação de histórico"""
     for titulo in Titulo.objects.all():
         titulo.data_inicio = HistoricoTitulo.objects.filter(titulo=titulo).order_by('data')[0].data
         titulo.save()
@@ -69,6 +81,7 @@ def criar_data_inicio_titulos():
 def quantidade_titulos_ate_dia(investidor, dia):
     """ 
     Calcula a quantidade de títulos do investidor até dia determinado
+    
     Parâmetros: Investidor
                 Dia final
     Retorno: Quantidade de títulos {titulo_id: qtd}
@@ -83,6 +96,7 @@ def quantidade_titulos_ate_dia(investidor, dia):
 def quantidade_titulos_ate_dia_por_titulo(investidor, titulo_id, dia=datetime.date.today()):
     """ 
     Calcula a quantidade de títulos do investidor até dia determinado
+    
     Parâmetros: ID do título
                 Dia final
     Retorno: Quantidade de títulos
@@ -97,6 +111,7 @@ def quantidade_titulos_ate_dia_por_titulo(investidor, titulo_id, dia=datetime.da
 def calcular_qtd_titulos_ate_dia_por_divisao(dia, divisao_id):
     """ 
     Calcula a quantidade de títulos até dia determinado para uma divisão
+    
     Parâmetros: Dia final
                 ID da divisão
     Retorno: Quantidade de títulos {titulo_id: qtd}
@@ -112,6 +127,7 @@ def calcular_qtd_titulos_ate_dia_por_divisao(dia, divisao_id):
 def calcular_qtd_um_titulo_ate_dia_por_divisao(investidor, dia, titulo_id):
     """ 
     Calcula a quantidade de um título específico até dia determinado para cada divisão
+    
     Parâmetros: Dia final
                 ID da divisão
                 ID do título
@@ -139,6 +155,7 @@ def calcular_qtd_um_titulo_ate_dia_por_divisao(investidor, dia, titulo_id):
 def calcular_valor_td_ate_dia(investidor, dia=datetime.date.today()):
     """ 
     Calcula o valor dos títulos do investidor até dia determinado
+    
     Parâmetros: Investidor
                 Dia final
     Retorno: Valor dos títulos {titulo_id: valor_da_data}
@@ -154,6 +171,7 @@ def calcular_valor_td_ate_dia(investidor, dia=datetime.date.today()):
 def buscar_data_valor_mais_recente():
     """
     Traz a data para o valor mais recente registrado na base
+    
     Retorno: Data ou Data e Hora mais recente
     """
     try:
