@@ -72,7 +72,7 @@ def detalhar_fundo(request, slug_fundo):
         
     # Preparar gráfico histórico
     graf_historico = [[str(calendar.timegm(data.timetuple()) * 1000), float(valor_cota)] for \
-        (data, valor_cota) in HistoricoValorCotas.objects.filter(fundo=fundo).values_list('data', 'valor_cota').order_by('data')]
+        (data, valor_cota) in HistoricoValorCotas.objects.filter(fundo_investimento=fundo).values_list('data', 'valor_cota').order_by('data')]
     
     dados = {'total_operacoes': 0, 'qtd_cotas_atual': Decimal(0), 'total_atual': Decimal(0), 'total_lucro': Decimal(0), 'lucro_percentual': Decimal(0)}
     if request.user.is_authenticated():

@@ -30,7 +30,7 @@
 	<tbody>
 	{% for ticker, fii in fiis.items %}
 		<tr>
-			<td>{{ticker}}</a></td>
+			<td><a href="{% url 'fii:detalhar_fii' ticker %}">{{ticker}}</a></td>
 			<td>{{fii.quantidade}} ({{fii.quantidade_percentual|floatformat:"2"}}%)</td>
 			<td>R${{fii.valor}}</td>
 			<td>R${{fii.preco_medio|floatformat:"2"}}</td>
