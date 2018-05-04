@@ -1036,7 +1036,7 @@ def painel_geral(request):
         elif chave == 'Fundos de Inv.':
             investimento.link = 'fundo_investimento:painel_fundo_investimento'
         elif chave == 'Letras de Câmbio':
-            investimento.link = 'lc:painel_lc'
+            investimento.link = 'lcambio:painel_lc'
         elif chave == 'LCI/LCA':
             investimento.link = 'lci_lca:painel_lci_lca'
         elif chave == 'Outros inv.':
