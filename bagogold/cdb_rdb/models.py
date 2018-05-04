@@ -130,7 +130,9 @@ class OperacaoCDB_RDB (models.Model):
     
     def operacao_compra_relacionada(self):
         if self.tipo_operacao == 'V':
-            return OperacaoVendaCDB_RDB.objects.get(operacao_venda=self).operacao_compra
+            if not hasattr(self, 'guarda_operacao_compra_relacionada'):
+                self.guarda_operacao_compra_relacionada = OperacaoVendaCDB_RDB.objects.get(operacao_venda=self).operacao_compra
+            return self.guarda_operacao_compra_relacionada
         else:
             return None
     
@@ -162,6 +164,12 @@ class OperacaoCDB_RDB (models.Model):
         for venda in OperacaoCDB_RDB.objects.filter(id__in=vendas):
             qtd_vendida += venda.quantidade
         return self.quantidade - qtd_vendida
+    
+    @property
+    def tipo_rendimento_cdb_rdb(self):
+        if not hasattr(self,'guarda_tipo_rendimento_cdb_rdb'):
+            self.guarda_tipo_rendimento_cdb_rdb = self.cdb_rdb.tipo_rendimento
+        return self.guarda_tipo_rendimento_cdb_rdb
     
     def vencimento(self):
         if not hasattr(self, 'guarda_vencimento'):
