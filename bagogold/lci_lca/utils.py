@@ -229,8 +229,8 @@ def calcular_valor_lci_lca_ate_dia_por_divisao(dia, divisao_id):
     letras_credito = {}
     for operacao in operacoes:
         # Processar operações
-        if operacao.letra_credito.id not in letras_credito.keys():
-            letras_credito[operacao.letra_credito.id] = 0
+        if operacao.letra_credito_id not in letras_credito.keys():
+            letras_credito[operacao.letra_credito_id] = 0
                 
         # Vendas
         if operacao.tipo_operacao == 'V':
@@ -257,7 +257,7 @@ def calcular_valor_lci_lca_ate_dia_por_divisao(dia, divisao_id):
             
     # Preencher os valores nas letras de crédito
     for letra_credito_id in letras_credito.keys():
-        letras_credito[letra_credito_id] += sum([operacao.atual for operacao in operacoes if operacao.letra_credito.id == letra_credito_id])
+        letras_credito[letra_credito_id] += sum([operacao.atual for operacao in operacoes if operacao.letra_credito_id == letra_credito_id])
         
         if letras_credito[letra_credito_id] == 0:
             del letras_credito[letra_credito_id]
