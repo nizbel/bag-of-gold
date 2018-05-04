@@ -90,7 +90,7 @@
             <!-- END Portlet PORTLET-->
         </div>
         {% endif %}
-        <div class="col-md-6">
+        <div class="col-md-4">
             <!-- BEGIN Portlet PORTLET-->
             <div class="portlet box yellow-crusta">
                 <div class="portlet-title">
@@ -105,8 +105,8 @@
                         <div class="col-md-12">
                             <label class="control-label">Selecione datas para visualização do histórico do título, o período máximo é de 3 anos.</label>
                         </div>
-                        <div class="form-group col-md-5">
-                            <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy">
+                        <div class="form-group col-md-4">
+                            <div class="input-group input-small date date-picker" data-date-format="dd/mm/yyyy">
                                 <input type="text" class="form-control" id="dataInicial" name="dataInicial" value="{{historico_data_inicial|date:'d/m/Y'}}">
                                 <span class="input-group-btn">
                                     <button class="btn default" type="button">
@@ -115,8 +115,8 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="form-group col-md-5">
-                            <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy">
+                        <div class="form-group col-md-4">
+                            <div class="input-group input-small date date-picker" data-date-format="dd/mm/yyyy">
                                 <input type="text" class="form-control" id="dataFinal" name="dataFinal" value="{{historico_data_final|date:'d/m/Y'}}">
                                 <span class="input-group-btn">
                                     <button class="btn default" type="button">
@@ -125,7 +125,7 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-4">
                             <input type="button" class="btn purple-plum" value="buscar" id="buscar_historico">
                         </div>
                         <div class="col-md-12">
@@ -154,7 +154,7 @@
             </div>
             <!-- END Portlet PORTLET-->
         </div>
-        <div class="col-md-6">
+        <div class="col-md-8">
             <!-- BEGIN Portlet PORTLET-->
             <div class="portlet box yellow-crusta">
                 <div class="portlet-title">
@@ -199,6 +199,7 @@ $(document).ready(function() {
     });
     
     $.plot($("#graf_historico"), [{lines: {show:true}, label: "Valor da cota", data: {{ graf_historico|safe }}},
+                                  {lines: {show:true}, label: "Comparativo DI", data: {{ graf_di|safe }}},
 	                              ],
 	                                {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%d/%m/%y"} }  
 	    );
