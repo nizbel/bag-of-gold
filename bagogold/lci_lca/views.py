@@ -1,4 +1,23 @@
 # -*- coding: utf-8 -*-
+import calendar
+import datetime
+from decimal import Decimal
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.db.models.expressions import F, Case, When, Value
+from django.shortcuts import get_object_or_404
+import json
+
+from django.core.urlresolvers import reverse
+from django.db import transaction
+from django.db.models.aggregates import Count, Sum
+from django.db.models.fields import CharField, DecimalField
+from django.db.models.functions import Coalesce
+from django.forms import inlineformset_factory
+from django.http import HttpResponseRedirect, HttpResponse
+from django.template.response import TemplateResponse
+
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoLCI_LCAFormSet
 from bagogold.bagogold.forms.utils import LocalizedModelForm
@@ -16,22 +35,7 @@ from bagogold.lci_lca.models import OperacaoLetraCredito, \
     OperacaoVendaLetraCredito, HistoricoVencimentoLetraCredito
 from bagogold.lci_lca.utils import simulador_lci_lca, \
     calcular_valor_lci_lca_ate_dia
-from decimal import Decimal
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied, ValidationError
-from django.core.urlresolvers import reverse
-from django.db import transaction
-from django.db.models.aggregates import Count, Sum
-from django.db.models.expressions import F
-from django.db.models.functions import Coalesce
-from django.forms import inlineformset_factory
-from django.http import HttpResponseRedirect, HttpResponse
-from django.shortcuts import get_object_or_404
-from django.template.response import TemplateResponse
-import calendar
-import datetime
-import json
+
 
 @login_required
 @adiciona_titulo_descricao('Detalhar Letra de Crédito', 'Detalhar Letra de Crédito, incluindo histórico de carência e '
@@ -376,21 +380,23 @@ def historico(request):
                                                     'graf_gasto_total': list(), 'graf_patrimonio': list()})
     
     # Processa primeiro operações de venda (V), depois compra (C)
-    operacoes = OperacaoLetraCredito.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
+    operacoes = OperacaoLetraCredito.objects.filter(investidor=investidor).exclude(data__isnull=True).annotate(tipo=Case(When(tipo_operacao='C', then=Value(u'Compra')),
+                                                            When(tipo_operacao='V', then=Value(u'Venda')), output_field=CharField())) \
+                                        .annotate(atual=Case(When(tipo_operacao='C', then=F('quantidade')), output_field=DecimalField())).order_by('-tipo_operacao', 'data') 
     
     # Se investidor não fez operações, retornar
     if not operacoes:
         return TemplateResponse(request, 'lci_lca/historico.html', {'dados': {}})
     
-    historico_porcentagem = HistoricoPorcentagemLetraCredito.objects.all() 
+#     historico_porcentagem = HistoricoPorcentagemLetraCredito.objects.all() 
     # Prepara o campo valor atual
-    for operacao in operacoes:
-        operacao.atual = operacao.quantidade
-        operacao.taxa = operacao.porcentagem()
-        if operacao.tipo_operacao == 'C':
-            operacao.tipo = 'Compra'
-        else:
-            operacao.tipo = 'Venda'
+#     for operacao in operacoes:
+#         operacao.atual = operacao.quantidade
+#         operacao.taxa = operacao.porcentagem()
+#         if operacao.tipo_operacao == 'C':
+#             operacao.tipo = 'Compra'
+#         else:
+#             operacao.tipo = 'Venda'
     
     # Pegar data inicial
     data_inicial = operacoes.order_by('data')[0].data
@@ -428,7 +434,7 @@ def historico(request):
                         total_gasto += operacao.total
                     if taxa_do_dia > 0:
                         # Calcular o valor atualizado para cada operacao
-                        operacao.atual = calcular_valor_atualizado_com_taxa_di(taxa_do_dia, operacao.atual, operacao.taxa)
+                        operacao.atual = calcular_valor_atualizado_com_taxa_di(taxa_do_dia, operacao.atual, operacao.porcentagem())
                     # Arredondar na última iteração
                     if (data_iteracao == data_final):
                         str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
