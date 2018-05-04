@@ -138,9 +138,9 @@ class ForkForm(LocalizedModelForm):
         self.investidor = kwargs.pop('investidor')
         # first call parent's constructor
         super(ForkForm, self).__init__(*args, **kwargs)
-        escolhas_moeda = Criptomoeda.objects.all()
-        self.fields['moeda_origem'].queryset = escolhas_moeda
-        self.fields['moeda_recebida'].queryset = escolhas_moeda
+        escolhas_moeda = Criptomoeda.objects.all().order_by('nome')
+        self.fields['moeda_origem'].choices = [(moeda.id, '%s (%s)' % (moeda.ticker, moeda.nome)) for moeda in escolhas_moeda]
+        self.fields['moeda_recebida'].choices = [(moeda.id, '%s (%s)' % (moeda.ticker, moeda.nome)) for moeda in escolhas_moeda]
         
     def clean(self):
         data = super(ForkForm, self).clean()
