@@ -248,6 +248,7 @@ def calcular_media_proventos_6_meses(investidor, proventos, operacoes, data_inic
 def calcular_lucro_trade_ate_data(investidor, data):
     """
     Calcula o lucro acumulado em trades até a data especificada
+    
     Parâmetros: Investidor
 				Data
     Retorno: Lucro/Prejuízo
@@ -278,6 +279,7 @@ def calcular_lucro_trade_ate_data(investidor, data):
 def quantidade_acoes_ate_dia(investidor, ticker, dia, considerar_trade=False):
     """ 
     Calcula a quantidade de ações até dia determinado
+    
     Parâmetros: Investidor
                 Ticker da ação
                 Dia final
@@ -317,16 +319,19 @@ def quantidade_acoes_ate_dia(investidor, ticker, dia, considerar_trade=False):
 def calcular_qtd_acoes_ate_dia_por_divisao(dia, divisao_id, destinacao='B'):
     """ 
     Calcula a quantidade de ações até dia determinado por divisão
+    
     Parâmetros: Dia final
                 ID da divisão
+                Destinação das operações
     Retorno: Quantidade de ações {ticker: qtd}
     """
-    operacoes_divisao_id = DivisaoOperacaoAcao.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).values('operacao__id')
-    if len(operacoes_divisao_id) == 0:
+    operacoes = DivisaoOperacaoAcao.objects.filter(operacao__destinacao=destinacao, operacao__data__lte=dia, divisao__id=divisao_id).annotate(acao_ticker=F('operacao__acao__ticker')) \
+        .annotate(tipo_operacao=F('operacao__tipo_operacao')).annotate(data=F('operacao__data')).order_by('data')
+    if len(operacoes) == 0:
         return {}
-    operacoes = OperacaoAcao.objects.filter(destinacao=destinacao, id__in=operacoes_divisao_id).exclude(data__isnull=True).annotate(acao_ticker=F('acao__ticker')).order_by('data')
+#     operacoes = OperacaoAcao.objects.filter(destinacao=destinacao, id__in=operacoes_divisao_id).exclude(data__isnull=True).annotate(acao_ticker=F('acao__ticker')).order_by('data')
     # Pega os proventos em ações recebidos por outras ações
-    proventos_em_acoes = AcaoProvento.objects.filter(provento__acao__in=operacoes.values_list('acao', flat=True), provento__data_ex__lte=dia).exclude(provento__data_ex__isnull=True) \
+    proventos_em_acoes = AcaoProvento.objects.filter(provento__acao__ticker__in=operacoes.values_list('acao_ticker', flat=True), provento__data_ex__lte=dia).exclude(provento__data_ex__isnull=True) \
         .annotate(provento_acao_ticker=F('provento__acao__ticker')).annotate(acao_ticker=F('acao_recebida__ticker')).annotate(data=F('provento__data_ex')).order_by('data')
     
     lista_conjunta = sorted(chain(operacoes, proventos_em_acoes), key=attrgetter('data'))
@@ -337,9 +342,9 @@ def calcular_qtd_acoes_ate_dia_por_divisao(dia, divisao_id, destinacao='B'):
         if item.acao_ticker not in qtd_acoes:
             qtd_acoes[item.acao_ticker] = 0
                 
-        if isinstance(item, OperacaoAcao): 
+        if isinstance(item, DivisaoOperacaoAcao): 
             # Preparar a quantidade da operação pela quantidade que foi destinada a essa divisão
-            item.quantidade = DivisaoOperacaoAcao.objects.get(divisao__id=divisao_id, operacao=item).quantidade
+#             item.quantidade = DivisaoOperacaoAcao.objects.get(divisao__id=divisao_id, operacao=item).quantidade
             
             # Verificar se se trata de compra ou venda
             if item.tipo_operacao == 'C':
@@ -503,9 +508,7 @@ def verificar_tipo_acao(ticker):
     raise ValueError('Tipo de ação inválido')
 
 def preencher_codigos_cvm():
-    """
-    Preenche códigos bvmf para as empresas a partir das urls na listagem de empresas
-    """
+    """Preenche códigos bvmf para as empresas a partir das urls na listagem de empresas"""
     acao_url = 'http://bvmf.bmfbovespa.com.br/cias-listadas/empresas-listadas/BuscaEmpresaListada.aspx?idioma=pt-br'
     req = Request(acao_url)
     try:
