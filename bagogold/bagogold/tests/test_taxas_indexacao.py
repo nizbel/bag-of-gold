@@ -2,6 +2,7 @@
 import datetime
 from decimal import Decimal
 
+from django.db.models.aggregates import Count
 from django.test import TestCase
 
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI, \
@@ -64,20 +65,25 @@ class AtualizacaoTaxasTestCase(TestCase):
         ultimo_di = HistoricoTaxaDI.objects.all().order_by('-data')[0].taxa
         
         # Atualizar 1 dia pela taxa integral
-        self.assertEqual(calcular_valor_atualizado_com_taxa_di(ultimo_di, 1000, 100), 1000 * (1 + ultimo_di/100)**(Decimal(1)/252))
+        self.assertAlmostEqual(calcular_valor_atualizado_com_taxa_di(ultimo_di, 1000, 100), 1000 * (1 + ultimo_di/100)**(Decimal(1)/252), 
+                               delta=Decimal('0.001'))
         
         # Atualizar 1 dia por metade da taxa
-        self.assertEqual(calcular_valor_atualizado_com_taxa_di(ultimo_di, 1000, 50), 1000 * ((1 + ultimo_di/100)**(Decimal(1)/252) - 1) / 2 + 1)
+        self.assertAlmostEqual(calcular_valor_atualizado_com_taxa_di(ultimo_di, 1000, 50), 1000 * (((1 + ultimo_di/100)**(Decimal(1)/252) - 1) / 2 + 1), 
+                               delta=Decimal('0.001'))
         
+#         print dict(HistoricoTaxaDI.objects.filter(data__range=[datetime.date(2018, 3, 1), datetime.date(2018, 3, 30)]).values('taxa').distinct().order_by('taxa') \
+#                         .annotate(qtd_dias=Count('data')).values_list('taxa', 'qtd_dias'))
+                        
         # Buscar taxas DI em um período
-        taxas_di = dict(HistoricoTaxaDI.objects.filter(data__range=[datetime.date(2018, 3, 1), datetime.date(2018, 3, 30)]).order_by('taxa') \
-                        .aggregate(qtd_dias=Count('data')).values_list('taxa', 'qtd_dias'))
+        taxas_di = dict(HistoricoTaxaDI.objects.filter(data__range=[datetime.date(2018, 3, 1), datetime.date(2018, 3, 30)]).values('taxa').distinct().order_by('taxa') \
+                        .annotate(qtd_dias=Count('data')).values_list('taxa', 'qtd_dias'))
         
         # Atualizar vários dias pela taxa integral
-        self.assertEqual(calcular_valor_atualizado_com_taxas_di(taxas_di, 1000, 100), 1000 * Decimal('1.00531564'))
+        self.assertAlmostEqual(calcular_valor_atualizado_com_taxas_di(taxas_di, 1000, 100), 1000 * Decimal('1.00531564'), delta=Decimal('0.001'))
         
         # Atualizar vários dias por metade da taxa
-        self.assertEqual(calcular_valor_atualizado_com_taxas_di(taxas_di, 1000, 50), 1000 * Decimal('1.00265446'))
+        self.assertAlmostEqual(calcular_valor_atualizado_com_taxas_di(taxas_di, 1000, 50), 1000 * Decimal('1.00265446'), delta=Decimal('0.001'))
         
     def test_atualizar_valor_taxa_ipca(self):
         """Testa atualizar valor pelo IPCA"""
@@ -93,16 +99,13 @@ class AtualizacaoTaxasTestCase(TestCase):
         ultima_taxa = HistoricoTaxaSelic.objects.all().order_by('-data')[0].taxa_diaria
         
         # Atualizar 1 dia pela taxa integral
-        self.assertEqual(calcular_valor_atualizado_com_taxa_selic(taxa, 1000, 100), 1000 * ultima_taxa)
-        
-        # Atualizar 1 dia por metade da taxa
-        self.assertEqual(calcular_valor_atualizado_com_taxa_di(taxa, 1000, 50), 1000 * ultima_taxa / 2)
+        self.assertAlmostEqual(calcular_valor_atualizado_com_taxa_selic(ultima_taxa, 1000), 1000 * ultima_taxa, delta=Decimal('0.001'))
         
         # Buscar taxas DI em um período
         taxas_selic = dict(HistoricoTaxaSelic.objects.filter(data__range=[datetime.date(2018, 3, 1), datetime.date(2018, 3, 30)]).values_list('data', 'taxa'))
         
         # Atualizar vários dias pela taxa integral
-        self.assertEqual(calcular_valor_atualizado_com_taxas_di(taxas_selic, 1000, 100), 1000 * Decimal('1.005323448053666'))
+        self.assertAlmostEqual(calcular_valor_atualizado_com_taxas_di(taxas_selic, 1000, 100), 1000 * Decimal('1.005323448053666'), delta=Decimal('0.001'))
         
         # Atualizar vários dias por metade da taxa
-        self.assertEqual(calcular_valor_atualizado_com_taxas_di(taxas_selic, 1000, 50), 1000 * Decimal('1.00265446'))
+        self.assertAlmostEqual(calcular_valor_atualizado_com_taxas_di(taxas_selic, 1000, 50), 1000 * Decimal('1.00265446'), delta=Decimal('0.001'))
