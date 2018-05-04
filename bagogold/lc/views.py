@@ -7,12 +7,14 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.mail import mail_admins
+from django.db.models.expressions import Case, When, Value, F
 from django.shortcuts import get_object_or_404
 import json
 import traceback
 
 from django.core.urlresolvers import reverse
 from django.db import transaction
+from django.db.models.fields import CharField, DecimalField
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect, HttpResponse
 from django.template.response import TemplateResponse
@@ -413,21 +415,25 @@ def historico(request):
                                                     'graf_investido_total': list(), 'graf_patrimonio': list()})
      
     # Processa primeiro operações de venda (V), depois compra (C)
-    operacoes = OperacaoLetraCambio.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data', '-tipo_operacao') 
+    operacoes = OperacaoLetraCambio.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data', '-tipo_operacao') \
+                                        .annotate(tipo=Case(When(tipo_operacao='C', then=Value(u'Compra')),
+                                                            When(tipo_operacao='V', then=Value(u'Venda')), output_field=CharField())) \
+                                        .annotate(qtd_vendida=Case(When(tipo_operacao='C', then=Value(0)), output_field=DecimalField())) \
+                                        .annotate(atual=Case(When(tipo_operacao='C', then=F('quantidade')), output_field=DecimalField())) 
     # Verifica se não há operações
     if not operacoes:
         return TemplateResponse(request, 'lc/historico.html', {'dados': {}, 'operacoes': list(), 
                                                     'graf_investido_total': list(), 'graf_patrimonio': list()})
      
     # Prepara o campo valor atual
-    for operacao in operacoes:
-        operacao.taxa = operacao.porcentagem()
-        operacao.atual = operacao.quantidade
-        if operacao.tipo_operacao == 'C':
-            operacao.qtd_vendida = 0
-            operacao.tipo = 'Compra'
-        else:
-            operacao.tipo = 'Venda'
+#     for operacao in operacoes:
+#         operacao.taxa = operacao.porcentagem()
+#         operacao.atual = operacao.quantidade
+#         if operacao.tipo_operacao == 'C':
+#             operacao.qtd_vendida = 0
+#             operacao.tipo = 'Compra'
+#         else:
+#             operacao.tipo = 'Venda'
      
     total_investido = 0
     total_patrimonio = 0
