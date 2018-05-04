@@ -137,7 +137,7 @@ def calcular_valor_atualizado_operacao_ate_dia(valor, data_inicial, data_final, 
             return Decimal(valor)
         else:
             return Decimal(valor)
-
+        
 def calcular_valor_cdb_rdb_ate_dia(investidor, dia=datetime.date.today(), valor_liquido=False):
     """ 
     Calcula o valor dos CDB/RDB no dia determinado

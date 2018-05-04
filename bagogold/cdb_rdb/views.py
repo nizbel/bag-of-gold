@@ -14,6 +14,7 @@ import traceback
 
 from django.core.urlresolvers import reverse
 from django.db import transaction
+from django.db.models.aggregates import Count
 from django.db.models.fields import CharField, DecimalField
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect, HttpResponse
@@ -475,6 +476,10 @@ def historico(request):
             # Calcular o valor atualizado do patrimonio
             total_patrimonio = 0
             
+            # Preparar taxas do DI no período
+            historico_di = HistoricoTaxaDI.objects.filter(data__range=[ultima_data, operacao.data])
+            taxas_dos_dias_di = dict(historico_di.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
+            
             for indice_atualizacao in xrange(indice+1):
                 if operacoes[indice_atualizacao].tipo_operacao == 'C' and operacoes[indice_atualizacao].atual > 0:
                     # Pegar primeira data de valorização para a operação feita na data
@@ -482,10 +487,20 @@ def historico(request):
                     # Pegar última data de valorização
                     ultima_data_valorizacao = min(operacoes[indice_atualizacao].data_vencimento() - datetime.timedelta(days=1), operacao.data)
                     if ultima_data_valorizacao >= ultima_data:
-                        # Calcular o valor atualizado para cada operacao
-                        operacoes[indice_atualizacao].atual = calcular_valor_atualizado_operacao_ate_dia(operacoes[indice_atualizacao].atual, 
-                                                                     primeira_data_valorizacao, ultima_data_valorizacao, operacoes[indice_atualizacao], 
-                                                                     operacoes[indice_atualizacao].atual)
+                        # Indexado pelo DI usa as taxas já definidas
+                        if operacoes[indice_atualizacao].tipo_rendimento_cdb_rdb == CDB_RDB.CDB_RDB_DI:
+                            if primeira_data_valorizacao == ultima_data and ultima_data_valorizacao == operacao.data:
+                                taxas_dos_dias = taxas_dos_dias_di
+                            else:
+                                taxas_dos_dias = dict(historico_di.filter(data__range=[primeira_data_valorizacao, ultima_data_valorizacao]) \
+                                                      .values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
+                            operacoes[indice_atualizacao].atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacoes[indice_atualizacao].atual, operacoes[indice_atualizacao].porcentagem())
+                        else:
+                            # Calcular o valor atualizado para cada operacao
+                            operacoes[indice_atualizacao].atual = calcular_valor_atualizado_operacao_ate_dia(operacoes[indice_atualizacao].atual, 
+                                                                         primeira_data_valorizacao, ultima_data_valorizacao, operacoes[indice_atualizacao], 
+                                                                         operacoes[indice_atualizacao].atual)
+                            print operacoes[indice_atualizacao], operacoes[indice_atualizacao].atual
                  
                     total_patrimonio += operacoes[indice_atualizacao].atual
                          
@@ -502,13 +517,27 @@ def historico(request):
     if data_final > ultima_data:
         # Adicionar o restante de período (última operação até data atual)
         total_patrimonio = 0
+
+        # Preparar taxas do DI no período
+        historico_di = HistoricoTaxaDI.objects.filter(data__range=[ultima_data, data_final])
+        taxas_dos_dias_di = dict(historico_di.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
+        
         for operacao in operacoes:
             if operacao.tipo_operacao == 'C' and operacao.atual > 0:
                 ultima_data_valorizacao = min(operacao.data_vencimento() - datetime.timedelta(days=1), data_final)
                 if ultima_data_valorizacao >= ultima_data:
-                    # Calcular o valor atualizado para cada operacao
-                    operacao.atual = calcular_valor_atualizado_operacao_ate_dia(operacao.atual, ultima_data, ultima_data_valorizacao, operacao, 
-                                                                                operacao.quantidade)
+                    # Indexado pelo DI usa as taxas já definidas
+                    if operacao.tipo_rendimento_cdb_rdb == CDB_RDB.CDB_RDB_DI:
+                        if ultima_data_valorizacao == data_final:
+                            taxas_dos_dias = taxas_dos_dias_di
+                        else:
+                            taxas_dos_dias = dict(historico_di.filter(data__lte=ultima_data_valorizacao).values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
+                        operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.atual, operacao.porcentagem())
+                    else:
+                        # Calcular o valor atualizado para cada operacao
+                        operacao.atual = calcular_valor_atualizado_operacao_ate_dia(operacao.atual, ultima_data, ultima_data_valorizacao, operacao, 
+                                                                                    operacao.quantidade)
+                        print operacao, operacao.atual
                 # Formatar
                 str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
                 operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
