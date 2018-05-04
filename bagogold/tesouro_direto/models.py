@@ -40,8 +40,8 @@ class Titulo (models.Model):
             return u'Tesouro Prefixado com Juros Semestrais %s' % (self.data_vencimento.year)
         elif self.tipo in self.TIPO_IGPM:
             return u'Tesouro IGP-M com Juros Semestrais %s' % (self.data_vencimento.year)
-        else:
-            return u'Título não encontrado'
+        # Se não encontrou
+        return u'Título não encontrado'
     
     def __unicode__(self):
         return u'%s (%s)' % (self.nome(), self.tipo)
@@ -62,17 +62,17 @@ class Titulo (models.Model):
             return u'IPCA'
         elif self.tipo in self.TIPO_IGPM:
             return u'IGP-M'
-        else:
-            return u'Indefinido'
+        # Se não encontrou
+        return u'Indefinido'
     
     def titulo_vencido(self):
         if datetime.date.today() >= self.data_vencimento:
             return True
-        else:
-            return False
+        return False
         
     def valor_vencimento(self, data=datetime.date.today()):
-        from bagogold.tesouro_direto.utils import calcular_valor_acumulado_ipca
+        from bagogold.bagogold.utils.taxas_indexacao import calcular_valor_acumulado_ipca, \
+            calcular_valor_acumulado_selic
         
         if self.tipo in self.TIPO_LETRA_TESOURO:
             return 1000
@@ -87,8 +87,8 @@ class Titulo (models.Model):
         elif self.tipo in self.TIPO_IGPM:
             # TODO adicionar calculo, data base é 15/07/2000
             return 1000
-        else:
-            return 0
+        # Se não encontrou
+        return 0
     
 class OperacaoTitulo (models.Model):
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)  
@@ -127,12 +127,13 @@ class ValorDiarioTitulo (models.Model):
     preco_compra = models.DecimalField(u'Preço de compra', max_digits=11, decimal_places=2)
     preco_venda = models.DecimalField(u'Preço de venda', max_digits=11, decimal_places=2)
     
+    class Meta:
+        unique_together=('titulo', 'data_hora')
+        
     def __unicode__(self):
         return u'%s, C/V: R$ %s (%s%%) / R$ %s (%s%%)' % (self.titulo, self.preco_compra, self.taxa_compra, self.preco_venda, self.taxa_venda)
     
     def save(self, *args, **kw):
-        try:
-            ValorDiarioTitulo.objects.get(titulo=self.titulo, data_hora=self.data_hora)
-        except ValorDiarioTitulo.DoesNotExist:
+        if not ValorDiarioTitulo.objects.filter(titulo=self.titulo, data_hora=self.data_hora).exists():
             super(ValorDiarioTitulo, self).save(*args, **kw)
         
