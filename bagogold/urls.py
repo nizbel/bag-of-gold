@@ -2,6 +2,9 @@
 from django.conf.urls import include, url
 from django.contrib import admin
 
+from bagogold import settings
+
+
 admin.autodiscover()
 
 urlpatterns = [
@@ -36,3 +39,9 @@ urlpatterns = [
     # App pendencias
     url(r'', include('bagogold.pendencias.urls')),
 ]
+
+if settings.DEBUG:
+    import debug_toolbar
+    urlpatterns = [
+        url(r'^__debug__/', include(debug_toolbar.urls)),
+    ] + urlpatterns
