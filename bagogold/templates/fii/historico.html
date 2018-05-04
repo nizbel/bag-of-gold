@@ -118,7 +118,7 @@
 					<tbody>
 					{% for item in lista_conjunta %}
 						<tr>
-							<td><a href="{% url 'fii:detalhar_fii' item.fii.ticker %}">{{item.fii.ticker}}</a></td>
+							<td><a href="{% url 'fii:detalhar_fii' item.fii_ticker %}">{{item.fii_ticker}}</a></td>
 							<td>{% if item.tipo in lista_eventos or item.tipo == 'Provento'%}
                                     {{item.tipo}}
                                 {% else %}

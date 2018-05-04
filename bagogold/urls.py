@@ -2,7 +2,7 @@
 from django.conf.urls import include, url
 from django.contrib import admin
 
-from bagogold import settings
+import settings
 
 
 admin.autodiscover()

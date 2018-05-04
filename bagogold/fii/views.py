@@ -413,6 +413,7 @@ def historico_fii(request):
                                         .annotate(total=Case(When(tipo_operacao='C', then=-1 * (F('quantidade') * F('preco_unitario') + F('emolumentos') + F('corretagem'))),
                                                             When(tipo_operacao='V', then=F('quantidade') * F('preco_unitario') - F('emolumentos') - F('corretagem')),
                                                             output_field=DecimalField())) \
+                                        .annotate(fii_ticker=F('fii__ticker')) \
                                         .order_by('data') 
     
     # Se investidor não tiver feito operações
@@ -422,18 +423,21 @@ def historico_fii(request):
     
     # Proventos
     proventos = ProventoFII.objects.exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).filter(data_ex__gt=operacoes[0].data, fii__in=operacoes.values_list('fii', flat=True)) \
-        .annotate(tipo=Value(u'Provento', output_field=CharField())).annotate(data=F('data_ex')).order_by('data_ex')  
+        .annotate(tipo=Value(u'Provento', output_field=CharField())).annotate(data=F('data_ex')).annotate(fii_ticker=F('fii__ticker')).order_by('data_ex')  
     
     # Eventos
     agrupamentos = EventoAgrupamentoFII.objects.filter(fii__in=operacoes.values_list('fii', flat=True), data__lte=datetime.date.today()) \
-        .annotate(tipo=Value(u'Agrupamento', output_field=CharField())).annotate(valor_unitario=F('proporcao')).order_by('data') 
+        .annotate(tipo=Value(u'Agrupamento', output_field=CharField())).annotate(valor_unitario=F('proporcao')) \
+        .annotate(fii_ticker=F('fii__ticker')).order_by('data') 
 
     desdobramentos = EventoDesdobramentoFII.objects.filter(fii__in=operacoes.values_list('fii', flat=True), data__lte=datetime.date.today()) \
-        .annotate(tipo=Value(u'Desdobramento', output_field=CharField())).annotate(valor_unitario=F('proporcao')).order_by('data')
+        .annotate(tipo=Value(u'Desdobramento', output_field=CharField())).annotate(valor_unitario=F('proporcao')) \
+        .annotate(fii_ticker=F('fii__ticker')).order_by('data')
     
     incorporacoes = EventoIncorporacaoFII.objects.filter(Q(fii__in=operacoes.values_list('fii', flat=True), data__lte=datetime.date.today()) \
                                                          | Q(novo_fii__in=operacoes.values_list('fii', flat=True), data__lte=datetime.date.today())).annotate(tipo=Value(u'Incorporação', output_field=CharField())) \
-                                                         .annotate(valor_unitario=F('novo_fii__ticker')).order_by('data')
+                                                         .annotate(valor_unitario=F('novo_fii__ticker')) \
+                                                         .annotate(fii_ticker=F('fii__ticker')).order_by('data')
 
     
     # Proventos devem ser computados primeiro na data EX
@@ -455,8 +459,8 @@ def historico_fii(request):
     houve_operacao_hoje = False
     
     for indice, item in enumerate(lista_conjunta):   
-        if item.fii.ticker not in qtd_papeis.keys():
-            qtd_papeis[item.fii.ticker] = Decimal(0)       
+        if item.fii_ticker not in qtd_papeis.keys():
+            qtd_papeis[item.fii_ticker] = Decimal(0)       
         # Verificar se se trata de compra, venda ou provento
         if item.tipo == 'Compra':
             item.uso_proventos = Decimal(0)
@@ -466,46 +470,46 @@ def historico_fii(request):
 #             item.total = Decimal(-1) * (item.quantidade * item.preco_unitario + \
 #             item.emolumentos + item.corretagem)
             total_gasto += item.total - item.uso_proventos
-            qtd_papeis[item.fii.ticker] += item.quantidade
+            qtd_papeis[item.fii_ticker] += item.quantidade
             
         elif item.tipo == 'Venda':
 #             item.total = (item.quantidade * item.preco_unitario - \
 #             item.emolumentos - item.corretagem)
             total_gasto += item.total
-            qtd_papeis[item.fii.ticker] -= item.quantidade
+            qtd_papeis[item.fii_ticker] -= item.quantidade
                 
         elif item.tipo == 'Provento':
-            if qtd_papeis[item.fii.ticker] == 0:
+            if qtd_papeis[item.fii_ticker] == 0:
                 item.quantidade = 0
                 continue
-            item.total = (qtd_papeis[item.fii.ticker] * item.valor_unitario).quantize(Decimal('0.01'), rounding=ROUND_FLOOR)
-            item.quantidade = qtd_papeis[item.fii.ticker]
+            item.total = (qtd_papeis[item.fii_ticker] * item.valor_unitario).quantize(Decimal('0.01'), rounding=ROUND_FLOOR)
+            item.quantidade = qtd_papeis[item.fii_ticker]
             total_proventos += item.total
             
         elif item.tipo == 'Agrupamento':
-            if qtd_papeis[item.fii.ticker] == 0:
+            if qtd_papeis[item.fii_ticker] == 0:
                 item.quantidade = 0
                 continue
-            item.quantidade = qtd_papeis[item.fii.ticker]
-            qtd_papeis[item.fii.ticker] = item.qtd_apos(item.quantidade)
-            item.total = qtd_papeis[item.fii.ticker]
+            item.quantidade = qtd_papeis[item.fii_ticker]
+            qtd_papeis[item.fii_ticker] = item.qtd_apos(item.quantidade)
+            item.total = qtd_papeis[item.fii_ticker]
                         
         elif item.tipo == 'Desdobramento':
-            if qtd_papeis[item.fii.ticker] == 0:
+            if qtd_papeis[item.fii_ticker] == 0:
                 item.quantidade = 0
                 continue
-            item.quantidade = qtd_papeis[item.fii.ticker]
-            qtd_papeis[item.fii.ticker] = item.qtd_apos(item.quantidade)
-            item.total = qtd_papeis[item.fii.ticker]
+            item.quantidade = qtd_papeis[item.fii_ticker]
+            qtd_papeis[item.fii_ticker] = item.qtd_apos(item.quantidade)
+            item.total = qtd_papeis[item.fii_ticker]
             
         elif item.tipo == 'Incorporação':
-            if qtd_papeis[item.fii.ticker] == 0:
+            if qtd_papeis[item.fii_ticker] == 0:
                 item.quantidade = 0
                 continue
-            item.quantidade = qtd_papeis[item.fii.ticker]
-            item.total = qtd_papeis[item.fii.ticker]
-            qtd_papeis[item.novo_fii.ticker] += qtd_papeis[item.fii.ticker]
-            qtd_papeis[item.fii.ticker] = 0
+            item.quantidade = qtd_papeis[item.fii_ticker]
+            item.total = qtd_papeis[item.fii_ticker]
+            qtd_papeis[item.novo_fii.ticker] += qtd_papeis[item.fii_ticker]
+            qtd_papeis[item.fii_ticker] = 0
             
         # Verifica se próximo elemento possui a mesma data
         if indice == len(lista_conjunta) - 1 or item.data != lista_conjunta[indice+1].data:
