@@ -407,9 +407,9 @@ def historico_fii(request):
         return TemplateResponse(request, 'fii/historico.html', {'dados': {}, 'lista_conjunta': list(), 'graf_poupanca_proventos': list(), 
                                                      'graf_gasto_total': list(), 'graf_patrimonio': list(), 'lista_eventos': list()})
         
-    operacoes = OperacaoFII.objects.filter(investidor=investidor).exclude(data__isnull=True).annotate(valor_unitario=F('preco_unitario')).annotate(tipo=Case(When(tipo_operacao='C', then=Value(u'Compra')),
-                                                                                                                                                            When(tipo_operacao='V', then=Value(u'Venda')),
-                                                                                                                                                            output_field=CharField())) \
+    operacoes = OperacaoFII.objects.filter(investidor=investidor).exclude(data__isnull=True).annotate(valor_unitario=F('preco_unitario')) \
+                                        .annotate(tipo=Case(When(tipo_operacao='C', then=Value(u'Compra')),
+                                                            When(tipo_operacao='V', then=Value(u'Venda')), output_field=CharField())) \
                                         .annotate(total=Case(When(tipo_operacao='C', then=-1 * (F('quantidade') * F('preco_unitario') + F('emolumentos') + F('corretagem'))),
                                                             When(tipo_operacao='V', then=F('quantidade') * F('preco_unitario') - F('emolumentos') - F('corretagem')),
                                                             output_field=DecimalField())) \
@@ -758,10 +758,10 @@ def painel(request):
     dados = {}
     dados['total_papeis'] = total_papeis
     dados['total_valor'] = total_valor
-    if ValorDiarioFII.objects.exists():
-        dados['valor_diario_mais_recente'] = ValorDiarioFII.objects.order_by('-data_hora').values('data_hora')[0]
+    if ValorDiarioFII.objects.filter(data_hora__date=datetime.date.today()).exists():
+        dados['valor_diario_mais_recente'] = ValorDiarioFII.objects.order_by('-data_hora').values_list('data_hora')[0][0]
     else:
-        dados['valor_diario_mais_recente'] = HistoricoFII.objects.order_by('-data').values('data')[0]
+        dados['valor_diario_mais_recente'] = HistoricoFII.objects.order_by('-data').values_list('data')[0][0]
     
     return TemplateResponse(request, 'fii/painel.html', {'fiis': fiis, 'dados': dados, 'graf_composicao': graf_composicao, 'graf_valorizacao': graf_valorizacao})
 
