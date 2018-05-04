@@ -30,7 +30,7 @@ $(document).ready(function() {
         row.find('.bootstrap-select').replaceWith(function() { return $('select', this); });
         row.find('select').selectpicker('refresh');
         row.find('.bootstrap-touchspin').find('*').not('input').remove();
-    	var escolhida = $('#id_moeda option:selected').text().split(' ')[0];
+    	var escolhida = $('#id_moeda_recebida option:selected').text().split(' ')[0];
         row.find("input[name$='-quantidade']").TouchSpin({
        	 	initval: 0,
     		min: 0,
@@ -43,7 +43,7 @@ $(document).ready(function() {
     });
     
     // Pegar criptomoeda escolhida atualmente
-    var escolhida = $('#id_moeda option:selected').text().split(' ')[0];
+    var escolhida = $('#id_moeda_recebida option:selected').text().split(' ')[0];
     
 	$("input[name='quantidade']").TouchSpin({
 		min: 0.000000000001,
@@ -67,8 +67,8 @@ $(document).ready(function() {
         language: 'pt-BR'
     });
 	
-    $('#id_moeda').change(function() {
-    	var escolhida = $('#id_moeda option:selected').text().split(' ')[0];
+    $('#id_moeda_recebida').change(function() {
+    	var escolhida = $('#id_moeda_recebida option:selected').text().split(' ')[0];
     	$("input[name='quantidade']").parent().find('.bootstrap-touchspin-postfix').text(escolhida);
     	$("input[name$='-quantidade']").parent().find('.bootstrap-touchspin-postfix').text(escolhida);
     });

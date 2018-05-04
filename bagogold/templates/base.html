@@ -501,14 +501,15 @@
                                                     <a href="{% url "criptomoeda:historico_criptomoeda" %}" class="nav-link"> Histórico </a>
                                                 </li>
                                                 {% if request.user.is_authenticated %}
+                                                <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_fork' %}active{% endif %}">
+                                                    <a href="{% url "criptomoeda:inserir_fork" %}" class="nav-link"> Inserir fork </a>
+                                                </li>
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_criptomoeda' %}active{% endif %}">
                                                     <a href="{% url "criptomoeda:inserir_operacao_criptomoeda" %}" class="nav-link"> Inserir operação </a>
                                                 </li>
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_operacao_criptomoeda_lote' %}active{% endif %}">
                                                     <a href="{% url "criptomoeda:inserir_operacao_criptomoeda_lote" %}" class="nav-link"> Inserir operação em lote </a>
                                                 </li>
-                                                {% endif %}
-                                                {% if request.user.is_authenticated %}
                                                 <li aria-haspopup="true" class="{% if request.resolver_match.url_name == 'inserir_transferencia_criptomoeda' %}active{% endif %}">
                                                     <a href="{% url "criptomoeda:inserir_transferencia_criptomoeda" %}" class="nav-link"> Inserir transferência </a>
                                                 </li>

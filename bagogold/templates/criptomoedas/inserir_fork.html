@@ -47,14 +47,20 @@
                 <div class="form-group col-md-6 {% if form_fork.moeda_origem.errors %} has-error {% endif %}">
                     <label class="control-label col-md-4" style="text-align: left;"> {{form_fork.moeda_origem.label}}: </label>
                     <div class="col-md-8">
-                        <input type="text" class="form-control" maxlength="150" name="moeda_origem" id="id_moeda_origem" value="{{form_fork.moeda_origem.value|default:''}}">
+                        <select class="selectpicker form-control" id="id_moeda_origem" name="moeda_origem">
+                            {% for key, value in form_fork.fields.moeda_origem.widget.choices %}<option value="{{ key }}"
+                            {% if key == form_fork.moeda_origem.value|add:"0" %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                        </select>
                         {% if form_fork.moeda_origem.errors %} <span class="help-block"> {{ form_fork.moeda_origem.errors.as_text }} </span> {% endif %}
                     </div>
                 </div>
                 <div class="form-group col-md-6 {% if form_fork.moeda_recebida.errors %} has-error {% endif %}">
                     <label class="control-label col-md-4" style="text-align: left;"> {{form_fork.moeda_recebida.label}}: </label>
                     <div class="col-md-8">
-                        <input type="text" class="form-control" maxlength="150" name="moeda_recebida" id="id_moeda_recebida" value="{{form_fork.moeda_recebida.value|default:''}}">
+                        <select class="selectpicker form-control" id="id_moeda_recebida" name="moeda_recebida">
+                            {% for key, value in form_fork.fields.moeda_recebida.widget.choices %}<option value="{{ key }}"
+                            {% if key == form_fork.moeda_recebida.value|add:"0" %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                        </select>
                         {% if form_fork.moeda_recebida.errors %} <span class="help-block"> {{ form_fork.moeda_recebida.errors.as_text }} </span> {% endif %}
                     </div>
                 </div>
@@ -74,7 +80,7 @@
                             <label class="control-label col-md-4" style="text-align: left;"> {{form_divisao.divisao.label}}: </label>
                             <div class="col-md-8">
                                 {% localize off %}
-                                <select class="selectpicker form-control" id="id_divisaotransferenciacriptomoeda_set-{{forloop.counter0}}-divisao" name="divisaotransferenciacriptomoeda_set-{{forloop.counter0}}-divisao">
+                                <select class="selectpicker form-control" id="id_divisaoforkcriptomoeda_set-{{forloop.counter0}}-divisao" name="divisaoforkcriptomoeda_set-{{forloop.counter0}}-divisao">
                                     {% for key, value in form_divisao.fields.divisao.widget.choices %}<option value="{{ key }}"
                                     {% if key == form_divisao.divisao.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
                                 </select>
@@ -85,7 +91,7 @@
                         <div class="form-group col-md-6 {% if form_divisao.quantidade.errors %} has-error {% endif %}">
                             <label class="control-label col-md-4"> {{form_divisao.quantidade.label}}: </label>
                             <div class="col-md-8">
-                                <input id="id_divisaotransferenciacriptomoeda_set-{{forloop.counter0}}-quantidade" type="text" value="{{form_divisao.quantidade.value}}" name="divisaotransferenciacriptomoeda_set-{{forloop.counter0}}-quantidade" class="form-control">
+                                <input id="id_divisaoforkcriptomoeda_set-{{forloop.counter0}}-quantidade" type="text" value="{{form_divisao.quantidade.value}}" name="divisaoforkcriptomoeda_set-{{forloop.counter0}}-quantidade" class="form-control">
                                 {% if form_divisao.quantidade.errors %} <span class="help-block"> {{ form_divisao.quantidade.errors.as_text }} </span> {% endif %}
                             </div>
                         </div>
