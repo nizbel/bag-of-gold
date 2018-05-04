@@ -136,17 +136,17 @@ def editar_lc(request, lc_id):
             if form_lc.is_valid():
                 lc.save()
                 messages.success(request, 'Letra de Câmbio editada com sucesso')
-                return HttpResponseRedirect(reverse('lc:detalhar_lc', kwargs={'lc_id': lc.id}))
+                return HttpResponseRedirect(reverse('lcambio:detalhar_lc', kwargs={'lc_id': lc.id}))
                 
         # TODO verificar o que pode acontecer na exclusão
         elif request.POST.get("delete"):
             if OperacaoLetraCambio.objects.filter(investimento=lc).exists():
                 messages.error(request, 'Não é possível excluir o %s pois existem operações cadastradas' % (lc.descricao_tipo()))
-                return HttpResponseRedirect(reverse('lc:detalhar_lc', kwargs={'lc_id': lc.id}))
+                return HttpResponseRedirect(reverse('lcambio:detalhar_lc', kwargs={'lc_id': lc.id}))
             else:
                 lc.delete()
                 messages.success(request, 'Letra de Câmbio excluída com sucesso')
-                return HttpResponseRedirect(reverse('lc:listar_lc'))
+                return HttpResponseRedirect(reverse('lcambio:listar_lc'))
  
     else:
         form_lc = LetraCambioForm(instance=lc)
@@ -176,7 +176,7 @@ def editar_historico_carencia(request, historico_carencia_id):
             if form_historico_carencia.is_valid():
                 historico_carencia.save()
                 messages.success(request, 'Histórico de carência editado com sucesso')
-                return HttpResponseRedirect(reverse('lc:detalhar_lc', kwargs={'lc_id': historico_carencia.lc.id}))
+                return HttpResponseRedirect(reverse('lcambio:detalhar_lc', kwargs={'lc_id': historico_carencia.lc.id}))
             
             for erro in [erro for erro in form_historico_carencia.non_field_errors()]:
                 messages.error(request, erro)
@@ -184,12 +184,12 @@ def editar_historico_carencia(request, historico_carencia_id):
         elif request.POST.get("delete"):
             if historico_carencia.data is None:
                 messages.error(request, 'Valor inicial de carência não pode ser excluído')
-                return HttpResponseRedirect(reverse('lc:detalhar_lc', kwargs={'lc_id': historico_carencia.lc.id}))
+                return HttpResponseRedirect(reverse('lcambio:detalhar_lc', kwargs={'lc_id': historico_carencia.lc.id}))
             # Pegar investimento para o redirecionamento no caso de exclusão
             lc = historico_carencia.lc
             historico_carencia.delete()
             messages.success(request, 'Histórico de carência excluído com sucesso')
-            return HttpResponseRedirect(reverse('lc:detalhar_lc', kwargs={'lc_id': lc.id}))
+            return HttpResponseRedirect(reverse('lcambio:detalhar_lc', kwargs={'lc_id': lc.id}))
  
     else:
         if historico_carencia.data is None:
@@ -226,7 +226,7 @@ def editar_historico_porcentagem(request, historico_porcentagem_id):
             if form_historico_porcentagem.is_valid():
                 historico_porcentagem.save(force_update=True)
                 messages.success(request, 'Histórico de porcentagem editado com sucesso')
-                return HttpResponseRedirect(reverse('lc:detalhar_lc', kwargs={'lc_id': historico_porcentagem.lc.id}))
+                return HttpResponseRedirect(reverse('lcambio:detalhar_lc', kwargs={'lc_id': historico_porcentagem.lc.id}))
                 
             for erro in [erro for erro in form_historico_porcentagem.non_field_errors()]:
                 messages.error(request, erro)
@@ -234,12 +234,12 @@ def editar_historico_porcentagem(request, historico_porcentagem_id):
         elif request.POST.get("delete"):
             if historico_porcentagem.data is None:
                 messages.error(request, 'Valor inicial de porcentagem não pode ser excluído')
-                return HttpResponseRedirect(reverse('lc:detalhar_lc', kwargs={'lc_id': historico_porcentagem.lc.id}))
+                return HttpResponseRedirect(reverse('lcambio:detalhar_lc', kwargs={'lc_id': historico_porcentagem.lc.id}))
             # Pegar investimento para o redirecionamento no caso de exclusão
             lc = historico_porcentagem.lc
             historico_porcentagem.delete()
             messages.success(request, 'Histórico de porcentagem excluído com sucesso')
-            return HttpResponseRedirect(reverse('lc:detalhar_lc', kwargs={'lc_id': lc.id}))
+            return HttpResponseRedirect(reverse('lcambio:detalhar_lc', kwargs={'lc_id': lc.id}))
  
     else:
         if historico_porcentagem.data is None:
@@ -276,7 +276,7 @@ def editar_historico_vencimento(request, historico_vencimento_id):
             if form_historico_vencimento.is_valid():
                 historico_vencimento.save()
                 messages.success(request, 'Histórico de vencimento editado com sucesso')
-                return HttpResponseRedirect(reverse('lc:detalhar_lc', kwargs={'lc_id': historico_vencimento.lc.id}))
+                return HttpResponseRedirect(reverse('lcambio:detalhar_lc', kwargs={'lc_id': historico_vencimento.lc.id}))
             
             for erro in [erro for erro in form_historico_vencimento.non_field_errors()]:
                 messages.error(request, erro)
@@ -284,12 +284,12 @@ def editar_historico_vencimento(request, historico_vencimento_id):
         elif request.POST.get("delete"):
             if historico_vencimento.data is None:
                 messages.error(request, 'Valor inicial de vencimento não pode ser excluído')
-                return HttpResponseRedirect(reverse('lc:detalhar_lc', kwargs={'lc_id': historico_vencimento.lc.id}))
+                return HttpResponseRedirect(reverse('lcambio:detalhar_lc', kwargs={'lc_id': historico_vencimento.lc.id}))
             # Pegar investimento para o redirecionamento no caso de exclusão
             lc = historico_vencimento.lc
             historico_vencimento.delete()
             messages.success(request, 'Histórico de vencimento excluído com sucesso')
-            return HttpResponseRedirect(reverse('lc:detalhar_lc', kwargs={'lc_id': lc.id}))
+            return HttpResponseRedirect(reverse('lcambio:detalhar_lc', kwargs={'lc_id': lc.id}))
  
     else:
         if historico_vencimento.data is None:
@@ -343,7 +343,7 @@ def editar_operacao_lc(request, operacao_id):
                                             operacao_venda_lc.save()
                                 formset_divisao.save()
                                 messages.success(request, 'Operação editada com sucesso')
-                                return HttpResponseRedirect(reverse('lc:historico_lc'))
+                                return HttpResponseRedirect(reverse('lcambio:historico_lc'))
                             for erro in formset_divisao.non_form_errors():
                                 messages.error(request, erro)
                                 
@@ -362,7 +362,7 @@ def editar_operacao_lc(request, operacao_id):
                             divisao_operacao.quantidade = operacao_lc.quantidade
                             divisao_operacao.save()
                             messages.success(request, 'Operação editada com sucesso')
-                            return HttpResponseRedirect(reverse('lc:historico_lc'))
+                            return HttpResponseRedirect(reverse('lcambio:historico_lc'))
                 except:
                     messages.error(request, 'Houve um erro ao editar a operação')
                     if settings.ENV == 'DEV':
@@ -386,7 +386,7 @@ def editar_operacao_lc(request, operacao_id):
                             OperacaoVendaLetraCambio.objects.get(operacao_venda=operacao_lc).delete()
                         operacao_lc.delete()
                         messages.success(request, 'Operação excluída com sucesso')
-                        return HttpResponseRedirect(reverse('lc:historico_lc'))
+                        return HttpResponseRedirect(reverse('lcambio:historico_lc'))
                     else:
                         messages.error(request, 'Não é possível excluir operação de compra que já tenha vendas registradas')
             except:
@@ -561,7 +561,7 @@ def inserir_lc(request):
                                 formset_porcentagem.save()
                                 formset_vencimento.save()
                             messages.success(request, 'Letra de Câmbio incluída com sucesso')
-                            return HttpResponseRedirect(reverse('lc:listar_lc'))
+                            return HttpResponseRedirect(reverse('lcambio:listar_lc'))
                         # Capturar erros oriundos da hora de salvar os objetos
                         except Exception as erro:
                             messages.error(request, erro.message)
@@ -601,7 +601,7 @@ def inserir_historico_carencia_lc(request, lc_id):
         if form.is_valid():
             historico = form.save()
             messages.success(request, 'Histórico de carência para %s alterado com sucesso' % historico.lc)
-            return HttpResponseRedirect(reverse('lc:detalhar_lc', kwargs={'lc_id': lc.id}))
+            return HttpResponseRedirect(reverse('lcambio:detalhar_lc', kwargs={'lc_id': lc.id}))
         
         for erro in [erro for erro in form.non_field_errors()]:
             messages.error(request, erro)
@@ -625,7 +625,7 @@ def inserir_historico_porcentagem_lc(request, lc_id):
         if form.is_valid():
             historico = form.save()
             messages.success(request, 'Histórico de porcentagem de rendimento para %s alterado com sucesso' % historico.lc)
-            return HttpResponseRedirect(reverse('lc:detalhar_lc', kwargs={'lc_id': lc.id}))
+            return HttpResponseRedirect(reverse('lcambio:detalhar_lc', kwargs={'lc_id': lc.id}))
         
         for erro in [erro for erro in form.non_field_errors()]:
             messages.error(request, erro)
@@ -649,7 +649,7 @@ def inserir_historico_vencimento_lc(request, lc_id):
         if form.is_valid():
             historico = form.save()
             messages.success(request, 'Histórico de período de vencimento para %s alterado com sucesso' % historico.lc)
-            return HttpResponseRedirect(reverse('lc:detalhar_lc', kwargs={'lc_id': lc.id}))
+            return HttpResponseRedirect(reverse('lcambio:detalhar_lc', kwargs={'lc_id': lc.id}))
         
         for erro in [erro for erro in form.non_field_errors()]:
             messages.error(request, erro)
@@ -697,7 +697,7 @@ def inserir_operacao_lc(request):
                                                                      operacao=operacao_lc)
                                 divisao_lc_venda.save()
                             messages.success(request, 'Operação inserida com sucesso')
-                            return HttpResponseRedirect(reverse('lc:historico_lc'))
+                            return HttpResponseRedirect(reverse('lcambio:historico_lc'))
                         # Vendas parciais
                         else:
                             # Verificar se varias divisões
@@ -708,7 +708,7 @@ def inserir_operacao_lc(request):
                                     operacao_venda_lc.save()
                                     formset_divisao_lc.save()
                                     messages.success(request, 'Operação inserida com sucesso')
-                                    return HttpResponseRedirect(reverse('lc:historico_lc'))
+                                    return HttpResponseRedirect(reverse('lcambio:historico_lc'))
                                 for erro in formset_divisao_lc.non_form_errors():
                                     messages.error(request, erro)
                                         
@@ -719,7 +719,7 @@ def inserir_operacao_lc(request):
                                 divisao_operacao = DivisaoOperacaoLetraCambio(operacao=operacao_lc, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_lc.quantidade)
                                 divisao_operacao.save()
                                 messages.success(request, 'Operação inserida com sucesso')
-                                return HttpResponseRedirect(reverse('lc:historico_lc'))
+                                return HttpResponseRedirect(reverse('lcambio:historico_lc'))
                     
                     # Compra
                     else:
@@ -729,7 +729,7 @@ def inserir_operacao_lc(request):
                                 operacao_lc.save()
                                 formset_divisao_lc.save()
                                 messages.success(request, 'Operação inserida com sucesso')
-                                return HttpResponseRedirect(reverse('lc:historico_lc'))
+                                return HttpResponseRedirect(reverse('lcambio:historico_lc'))
                             for erro in formset_divisao_lc.non_form_errors():
                                 messages.error(request, erro)
                                         
@@ -738,7 +738,7 @@ def inserir_operacao_lc(request):
                             divisao_operacao = DivisaoOperacaoLetraCambio(operacao=operacao_lc, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_lc.quantidade)
                             divisao_operacao.save()
                             messages.success(request, 'Operação inserida com sucesso')
-                            return HttpResponseRedirect(reverse('lc:historico_lc'))
+                            return HttpResponseRedirect(reverse('lcambio:historico_lc'))
                         
         except:
             messages.error(request, 'Houve um erro ao inserir a operação')

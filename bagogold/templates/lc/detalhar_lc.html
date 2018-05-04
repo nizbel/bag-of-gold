@@ -13,7 +13,7 @@
 {% block extra_titulo %}
 {% if request.user.is_authenticated %}
 <div class="actions">
-    <a href="{% url 'lc:editar_lc' lc.id %}" class="btn btn-small btn-warning">Editar {{lc.tipo}}</a>
+    <a href="{% url 'lcambio:editar_lc' lc.id %}" class="btn btn-small btn-warning">Editar {{lc.tipo}}</a>
 </div>
 {% endif %}
 {% endblock %}
@@ -105,7 +105,7 @@
 						<tr>
 							<th>Data</th>
 							<th>Rendimento</th>
-							<th><a href="{% url 'lc:inserir_historico_porcentagem_lc' lc.id %}" class="btn btn-sm green-steel">Inserir</a></th>
+							<th><a href="{% url 'lcambio:inserir_historico_porcentagem_lc' lc.id %}" class="btn btn-sm green-steel">Inserir</a></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -113,7 +113,7 @@
 					<tr>
 						<td>{{item.data|date:'d/m/Y'|default:"Inicial"}}</td>
 						<td>{{item.porcentagem}}%</td>
-						<td><a href="{% url 'lc:editar_historico_porcentagem' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
+						<td><a href="{% url 'lcambio:editar_historico_porcentagem' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
 					</tr>
 					{% endfor %}
 					</tbody>
@@ -138,7 +138,7 @@
 						<tr>
 							<th>Data</th>
 							<th>Carência (dias)</th>
-							<th><a href="{% url 'lc:inserir_historico_carencia_lc' lc.id %}" class="btn btn-sm green-steel">Inserir</a></th>
+							<th><a href="{% url 'lcambio:inserir_historico_carencia_lc' lc.id %}" class="btn btn-sm green-steel">Inserir</a></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -146,7 +146,7 @@
 					<tr>
 						<td>{{item.data|date:'d/m/Y'|default:"Inicial"}}</td>
 						<td>{{item.carencia}} dia(s)</td>
-						<td><a href="{% url 'lc:editar_historico_carencia' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
+						<td><a href="{% url 'lcambio:editar_historico_carencia' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
 					</tr>
 					{% endfor %}
 					</tbody>
@@ -171,7 +171,7 @@
                         <tr>
                             <th>Data</th>
                             <th>Vencimento (dias)</th>
-                            <th><a href="{% url 'lc:inserir_historico_vencimento_lc' lc.id %}" class="btn btn-sm green-steel">Inserir</a></th>
+                            <th><a href="{% url 'lcambio:inserir_historico_vencimento_lc' lc.id %}" class="btn btn-sm green-steel">Inserir</a></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -179,7 +179,7 @@
                     <tr>
                         <td>{{item.data|date:'d/m/Y'|default:"Inicial"}}</td>
                         <td>{{item.vencimento}} dia(s)</td>
-                        <td><a href="{% url 'lc:editar_historico_vencimento' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
+                        <td><a href="{% url 'lcambio:editar_historico_vencimento' item.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
                     </tr>
                     {% endfor %}
                     </tbody>
