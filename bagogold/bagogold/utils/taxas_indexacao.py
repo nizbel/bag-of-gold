@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
+import calendar
 import datetime
 from decimal import Decimal
+from django.db.models.query_utils import Q
 from ftplib import FTP
 
-from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
+from django.db.models.aggregates import Count
+
+from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI, \
+    HistoricoIPCA, HistoricoTaxaSelic
 
 
 def calcular_valor_atualizado_com_taxa_di(taxa_do_dia, valor_atual, operacao_taxa):

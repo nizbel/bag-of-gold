@@ -376,7 +376,7 @@ $( document ).ready(function() {
         } else if ($("input[name='radioTipoRendimento']:checked").val() == 'POS') {
             $('#percentualRendimento').trigger('touchspin.updatesettings', {max: 150, min: 10, decimals: 0, step: 1, postfix: '% do CDI'});
         }
-    })
+    });
     
     var polling = [];
     // Alterar gráfico

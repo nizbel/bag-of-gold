@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD
-from bagogold.bagogold.models.taxas_indexacao import HistoricoIPCA
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo
 from bagogold.tesouro_direto.models import OperacaoTitulo, Titulo, \
     HistoricoTitulo, ValorDiarioTitulo
 from decimal import Decimal
-from django.db.models import Q
 from django.db.models.aggregates import Sum
 from django.db.models.expressions import Case, When, F
 from django.db.models.fields import DecimalField
-import calendar
 import datetime
 
 
