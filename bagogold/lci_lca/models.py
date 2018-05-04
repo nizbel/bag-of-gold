@@ -85,10 +85,12 @@ class OperacaoLetraCredito (models.Model):
         super(OperacaoLetraCredito, self).save(*args, **kw)
     
     def carencia(self):
-        if HistoricoCarenciaLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito).order_by('-data').exists():
-            return HistoricoCarenciaLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito).order_by('-data')[0].carencia
-        else:
-            return HistoricoCarenciaLetraCredito.objects.get(data__isnull=True, letra_credito=self.letra_credito).carencia
+        if not hasattr(self, 'guarda_carencia'):
+            if HistoricoCarenciaLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito).order_by('-data').exists():
+                self.guarda_carencia = HistoricoCarenciaLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito).order_by('-data')[0].carencia
+            else:
+                self.guarda_carencia = HistoricoCarenciaLetraCredito.objects.get(data__isnull=True, letra_credito=self.letra_credito).carencia
+        return self.guarda_carencia
         
     def data_carencia(self):
         return self.data + datetime.timedelta(days=self.carencia())
@@ -116,13 +118,15 @@ class OperacaoLetraCredito (models.Model):
             return None
     
     def porcentagem(self):
-        if self.tipo_operacao == 'C':
-            if HistoricoPorcentagemLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito).order_by('-data').exists():
-                return HistoricoPorcentagemLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito).order_by('-data')[0].porcentagem
-            else:
-                return HistoricoPorcentagemLetraCredito.objects.get(data__isnull=True, letra_credito=self.letra_credito).porcentagem
-        elif self.tipo_operacao == 'V':
-            return self.operacao_compra_relacionada().porcentagem()
+        if not hasattr(self, 'guarda_porcentagem'):
+            if self.tipo_operacao == 'C':
+                if HistoricoPorcentagemLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito).order_by('-data').exists():
+                    self.guarda_porcentagem = HistoricoPorcentagemLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito).order_by('-data')[0].porcentagem
+                else:
+                    self.guarda_porcentagem = HistoricoPorcentagemLetraCredito.objects.get(data__isnull=True, letra_credito=self.letra_credito).porcentagem
+            elif self.tipo_operacao == 'V':
+                self.guarda_porcentagem = self.operacao_compra_relacionada().porcentagem()
+        return self.guarda_porcentagem
     
     def qtd_disponivel_venda(self, desconsiderar_vendas=list()):
         vendas = OperacaoVendaLetraCredito.objects.filter(operacao_compra=self).exclude(operacao_venda__in=desconsiderar_vendas).values_list('operacao_venda__id', flat=True)
@@ -139,10 +143,12 @@ class OperacaoLetraCredito (models.Model):
         return self.quantidade - qtd_vendida
     
     def vencimento(self):
-        if HistoricoVencimentoLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito).exists():
-            return HistoricoVencimentoLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito).order_by('-data')[0].vencimento
-        else:
-            return HistoricoVencimentoLetraCredito.objects.get(data__isnull=True, letra_credito=self.letra_credito).vencimento
+        if not hasattr(self, 'guarda_vencimento'):
+            if HistoricoVencimentoLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito).exists():
+                self.guarda_vencimento = HistoricoVencimentoLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito).order_by('-data')[0].vencimento
+            else:
+                self.guarda_vencimento = HistoricoVencimentoLetraCredito.objects.get(data__isnull=True, letra_credito=self.letra_credito).vencimento
+        return self.guarda_vencimento
         
     def venda_permitida(self, data_venda=datetime.date.today()):
         if self.tipo_operacao == 'C':

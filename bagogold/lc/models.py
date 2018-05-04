@@ -79,10 +79,12 @@ class OperacaoLetraCambio (models.Model):
         return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.lc, self.data)
     
     def carencia(self):
-        if HistoricoCarenciaLetraCambio.objects.filter(data__lte=self.data, lc=self.lc).exists():
-            return HistoricoCarenciaLetraCambio.objects.filter(data__lte=self.data, lc=self.lc).order_by('-data')[0].carencia
-        else:
-            return HistoricoCarenciaLetraCambio.objects.get(data__isnull=True, lc=self.lc).carencia
+        if not hasattr(self, 'guarda_carencia'):
+            if HistoricoCarenciaLetraCambio.objects.filter(data__lte=self.data, lc=self.lc).exists():
+                self.guarda_carencia = HistoricoCarenciaLetraCambio.objects.filter(data__lte=self.data, lc=self.lc).order_by('-data')[0].carencia
+            else:
+                self.guarda_carencia = HistoricoCarenciaLetraCambio.objects.get(data__isnull=True, lc=self.lc).carencia
+        return self.guarda_carencia
         
     def data_carencia(self):
         if self.tipo_operacao == 'C':
@@ -117,13 +119,15 @@ class OperacaoLetraCambio (models.Model):
             return None
     
     def porcentagem(self):
-        if self.tipo_operacao == 'C':
-            if HistoricoPorcentagemLetraCambio.objects.filter(data__lte=self.data, lc=self.lc).exists():
-                return HistoricoPorcentagemLetraCambio.objects.filter(data__lte=self.data, lc=self.lc).order_by('-data')[0].porcentagem
-            else:
-                return HistoricoPorcentagemLetraCambio.objects.get(data__isnull=True, lc=self.lc).porcentagem
-        elif self.tipo_operacao == 'V':
-            return self.operacao_compra_relacionada().porcentagem()
+        if not hasattr(self, 'guarda_porcentagem'):
+            if self.tipo_operacao == 'C':
+                if HistoricoPorcentagemLetraCambio.objects.filter(data__lte=self.data, lc=self.lc).exists():
+                    self.guarda_porcentagem = HistoricoPorcentagemLetraCambio.objects.filter(data__lte=self.data, lc=self.lc).order_by('-data')[0].porcentagem
+                else:
+                    self.guarda_porcentagem = HistoricoPorcentagemLetraCambio.objects.get(data__isnull=True, lc=self.lc).porcentagem
+            elif self.tipo_operacao == 'V':
+                self.guarda_porcentagem = self.operacao_compra_relacionada().porcentagem()
+        return self.guarda_porcentagem
     
     def qtd_disponivel_venda(self, desconsiderar_vendas=list()):
         if self.tipo_operacao != 'C':
@@ -144,10 +148,12 @@ class OperacaoLetraCambio (models.Model):
         return self.quantidade - qtd_vendida
     
     def vencimento(self):
-        if HistoricoVencimentoLetraCambio.objects.filter(data__lte=self.data, lc=self.lc).exists():
-            return HistoricoVencimentoLetraCambio.objects.filter(data__lte=self.data, lc=self.lc).order_by('-data')[0].vencimento
-        else:
-            return HistoricoVencimentoLetraCambio.objects.get(data__isnull=True, lc=self.lc).vencimento
+        if not hasattr(self, 'guarda_vencimento'):
+            if HistoricoVencimentoLetraCambio.objects.filter(data__lte=self.data, lc=self.lc).exists():
+                self.guarda_vencimento = HistoricoVencimentoLetraCambio.objects.filter(data__lte=self.data, lc=self.lc).order_by('-data')[0].vencimento
+            else:
+                self.guarda_vencimento = HistoricoVencimentoLetraCambio.objects.get(data__isnull=True, lc=self.lc).vencimento
+        return self.guarda_vencimento
     
     def venda_permitida(self, data_venda=None):
         if data_venda == None:
