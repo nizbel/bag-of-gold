@@ -743,7 +743,7 @@ def painel(request):
         fiis[fii].valor_total = fiis[fii].valor * fiis[fii].quantidade
         total_valor += fiis[fii].valor_total
          
-    # Calcular percentagens
+    # Calcular porcentagens
     for fii in fiis:
         fiis[fii].quantidade_percentual = fiis[fii].quantidade / total_papeis * 100
         fiis[fii].valor_total_percentual = fiis[fii].valor_total / total_valor * 100
@@ -758,8 +758,10 @@ def painel(request):
     dados = {}
     dados['total_papeis'] = total_papeis
     dados['total_valor'] = total_valor
-    dados['valor_diario_mais_recente'] = ValorDiarioFII.objects.latest('data_hora').data_hora if ValorDiarioFII.objects.exists() else \
-        HistoricoFII.objects.latest('data').data
+    if ValorDiarioFII.objects.exists():
+        dados['valor_diario_mais_recente'] = ValorDiarioFII.objects.order_by('-data_hora').values('data_hora')[0]
+    else:
+        dados['valor_diario_mais_recente'] = HistoricoFII.objects.order_by('-data').values('data')[0]
     
     return TemplateResponse(request, 'fii/painel.html', {'fiis': fiis, 'dados': dados, 'graf_composicao': graf_composicao, 'graf_valorizacao': graf_valorizacao})
 
