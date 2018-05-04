@@ -93,10 +93,12 @@ class OperacaoCDB_RDB (models.Model):
         return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.cdb_rdb, self.data)
     
     def carencia(self):
-        if HistoricoCarenciaCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb).exists():
-            return HistoricoCarenciaCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb).order_by('-data')[0].carencia
-        else:
-            return HistoricoCarenciaCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.cdb_rdb).carencia
+        if not hasattr(self, 'guarda_carencia'):
+            if HistoricoCarenciaCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb).exists():
+                self.guarda_carencia = HistoricoCarenciaCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb).order_by('-data')[0].carencia
+            else:
+                self.guarda_carencia = HistoricoCarenciaCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.cdb_rdb).carencia
+        return self.guarda_carencia
         
     def data_carencia(self):
         if self.tipo_operacao == 'C':
@@ -109,10 +111,12 @@ class OperacaoCDB_RDB (models.Model):
         return data_carencia
         
     def data_inicial(self):
-        if self.tipo_operacao == 'V':
-            return OperacaoVendaCDB_RDB.objects.get(operacao_venda=self).operacao_compra.data
-        else:
-            return self.data
+        if not hasattr(self, 'guarda_data_inicial'):
+            if self.tipo_operacao == 'V':
+                self.guarda_data_inicial = OperacaoVendaCDB_RDB.objects.get(operacao_venda=self).operacao_compra.data
+            else:
+                self.guarda_data_inicial = self.data
+        return self.guarda_data_inicial
         
     def data_vencimento(self):
         if self.tipo_operacao == 'C':
@@ -131,13 +135,15 @@ class OperacaoCDB_RDB (models.Model):
             return None
     
     def porcentagem(self):
-        if self.tipo_operacao == 'C':
-            if HistoricoPorcentagemCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb).exists():
-                return HistoricoPorcentagemCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb).order_by('-data')[0].porcentagem
-            else:
-                return HistoricoPorcentagemCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.cdb_rdb).porcentagem
-        elif self.tipo_operacao == 'V':
-            return self.operacao_compra_relacionada().porcentagem()
+        if not hasattr(self, 'guarda_porcentagem'):
+            if self.tipo_operacao == 'C':
+                if HistoricoPorcentagemCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb).exists():
+                    self.guarda_porcentagem = HistoricoPorcentagemCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb).order_by('-data')[0].porcentagem
+                else:
+                    self.guarda_porcentagem = HistoricoPorcentagemCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.cdb_rdb).porcentagem
+            elif self.tipo_operacao == 'V':
+                self.guarda_porcentagem = self.operacao_compra_relacionada().porcentagem()
+        return self.guarda_porcentagem
     
     def qtd_disponivel_venda(self, desconsiderar_vendas=list()):
         if self.tipo_operacao != 'C':
@@ -158,10 +164,12 @@ class OperacaoCDB_RDB (models.Model):
         return self.quantidade - qtd_vendida
     
     def vencimento(self):
-        if HistoricoVencimentoCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb).exists():
-            return HistoricoVencimentoCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb).order_by('-data')[0].vencimento
-        else:
-            return HistoricoVencimentoCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.cdb_rdb).vencimento
+        if not hasattr(self, 'guarda_vencimento'):
+            if HistoricoVencimentoCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb).exists():
+                self.guarda_vencimento = HistoricoVencimentoCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb).order_by('-data')[0].vencimento
+            else:
+                self.guarda_vencimento = HistoricoVencimentoCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.cdb_rdb).vencimento
+        return self.guarda_vencimento
     
     def venda_permitida(self, data_venda=None):
         if data_venda == None:

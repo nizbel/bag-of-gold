@@ -7,12 +7,14 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.mail import mail_admins
+from django.db.models.expressions import F, Case, When, Value
 from django.shortcuts import get_object_or_404
 import json
 import traceback
 
 from django.core.urlresolvers import reverse
 from django.db import transaction
+from django.db.models.fields import CharField, DecimalField
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect, HttpResponse
 from django.template.response import TemplateResponse
@@ -37,7 +39,7 @@ from bagogold.cdb_rdb.models import OperacaoCDB_RDB, HistoricoPorcentagemCDB_RDB
     HistoricoVencimentoCDB_RDB
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, \
     buscar_operacoes_vigentes_ate_data, calcular_valor_atualizado_operacao_ate_dia, \
-    calcular_valor_operacao_cdb_rdb_ate_dia, calcular_valor_venda_cdb_rdb,\
+    calcular_valor_operacao_cdb_rdb_ate_dia, calcular_valor_venda_cdb_rdb, \
     simulador_cdb_rdb
 
 
@@ -414,22 +416,27 @@ def historico(request):
                                                     'graf_gasto_total': list(), 'graf_patrimonio': list()})
      
     # Processa primeiro operações de venda (V), depois compra (C)
-    operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data', '-tipo_operacao') 
+    operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data', '-tipo_operacao') \
+                                        .annotate(tipo=Case(When(tipo_operacao='C', then=Value(u'Compra')),
+                                                            When(tipo_operacao='V', then=Value(u'Venda')), output_field=CharField())) \
+                                        .annotate(qtd_vendida=Case(When(tipo_operacao='C', then=Value(0)), output_field=DecimalField())) \
+                                        .annotate(atual=Case(When(tipo_operacao='C', then=F('quantidade')), output_field=DecimalField()))
     # Verifica se não há operações
     if not operacoes:
         return TemplateResponse(request, 'cdb_rdb/historico.html', {'dados': {}, 'operacoes': list(), 
                                                     'graf_gasto_total': list(), 'graf_patrimonio': list()})
      
     # Prepara o campo valor atual
-    for operacao in operacoes:
-        operacao.taxa = operacao.porcentagem()
-        operacao.atual = operacao.quantidade
-        if operacao.tipo_operacao == 'C':
-            operacao.qtd_vendida = 0
-            operacao.tipo = 'Compra'
-        else:
-            operacao.tipo = 'Venda'
-     
+#     for operacao in operacoes:
+#         if operacao.tipo_operacao == 'C':
+#             operacao.atual = operacao.quantidade
+#             operacao.qtd_vendida = 0
+#         if operacao.tipo_operacao == 'C':
+#             operacao.qtd_vendida = 0
+#             operacao.tipo = 'Compra'
+#         else:
+#             operacao.tipo = 'Venda'
+
     total_gasto = 0
     total_patrimonio = 0
      
