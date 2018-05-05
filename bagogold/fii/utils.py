@@ -675,6 +675,7 @@ def calcular_variacao_percentual_fii_por_periodo(fii, periodo_inicio, periodo_fi
 def calcular_valor_fii_ate_dia(investidor, dia=datetime.date.today()):
     """ 
     Calcula o valor das cotas do investidor até dia determinado
+    
     Parâmetros: Investidor
                 Dia final
     Retorno: Valor das cotas {ticker: valor_da_data}
@@ -693,6 +694,7 @@ def calcular_valor_fii_ate_dia(investidor, dia=datetime.date.today()):
 def verificar_se_existe_evento_para_fii(fii, data_limite=datetime.date.today()):
     """
     Verifica se existe evento para fii até data (data inclusive)
+    
     Parâmetros: FII
                 Data
     Retorno: True caso exista, senão False
@@ -704,6 +706,7 @@ def verificar_se_existe_evento_para_fii(fii, data_limite=datetime.date.today()):
 def verificar_se_existe_evento_para_fii_periodo(fii, data_inicio, data_fim):
     """
     Verifica se existe evento para fii no período (datas inclusive)
+    
     Parâmetros: FII
                 Data de início
                 Data de fim
