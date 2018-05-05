@@ -209,8 +209,8 @@
 					<tbody>
 					{% for operacao in operacoes %}
 					<tr>
-						<td><a href="{% url 'acoes:geral:estatisticas_acao_bh' operacao.acao.ticker %}" data-original-title="Estatísticas ação"
-							class="tooltips" data-placement="top">{{operacao.acao.ticker}}</a></td>
+						<td><a href="{% url 'acoes:geral:estatisticas_acao_bh' operacao.acao_ticker %}" data-original-title="Estatísticas ação"
+							class="tooltips" data-placement="top">{{operacao.acao_ticker}}</a></td>
 						<td>
                             {% if operacao.tipo == 'Compra' or operacao.tipo == 'Venda' %}
                                 <a href="{% url 'acoes:bh:editar_operacao_bh' operacao.id %}" data-original-title="Editar operação" 
