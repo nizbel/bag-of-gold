@@ -296,11 +296,12 @@ def quantidade_acoes_ate_dia(investidor, ticker, dia, considerar_trade=False):
     else:
         operacoes = OperacaoAcao.objects.filter(investidor=investidor, destinacao='B', acao__ticker=ticker, data__lte=dia).exclude(data__isnull=True).order_by('data')
     # Pega os proventos em ações recebidos por outras ações
-    proventos_em_acoes = AcaoProvento.objects.filter(provento__oficial_bovespa=True, acao_recebida__ticker=ticker, provento__data_ex__lte=dia).exclude(provento__data_ex__isnull=True).order_by('provento__data_ex')
-    for provento in proventos_em_acoes:
-        provento.data = provento.provento.data_ex
+    proventos_em_acoes = AcaoProvento.objects.filter(provento__oficial_bovespa=True, acao_recebida__ticker=ticker, provento__data_ex__lte=dia).exclude(provento__data_ex__isnull=True) \
+        .annotate(acao_ticker=F('provento__acao__ticker')).annotate(data=F('provento__data_ex')).order_by('data')
+#     for provento in proventos_em_acoes:
+#         provento.data = provento.provento.data_ex
     
-    lista_conjunta = sorted(chain(operacoes, proventos_em_acoes), key=attrgetter('data'))
+    lista_conjunta = sorted(chain(proventos_em_acoes, operacoes), key=attrgetter('data'))
     
     qtd_acoes = 0
     
@@ -314,10 +315,10 @@ def quantidade_acoes_ate_dia(investidor, ticker, dia, considerar_trade=False):
                 qtd_acoes -= item.quantidade
         
         elif isinstance(item, AcaoProvento): 
-            if item.provento.acao.ticker == ticker:
+            if item.acao_ticker == ticker:
                 qtd_acoes += int(item.provento.valor_unitario * qtd_acoes / 100)
             else:
-                qtd_acoes += int(item.provento.valor_unitario * quantidade_acoes_ate_dia(investidor, item.provento.acao.ticker, item.data, considerar_trade) / 100)
+                qtd_acoes += int(item.provento.valor_unitario * quantidade_acoes_ate_dia(investidor, item.acao_ticker, item.data, considerar_trade) / 100)
     
     return qtd_acoes
 
