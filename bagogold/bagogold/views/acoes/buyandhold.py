@@ -10,7 +10,8 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao, Divisao
 from bagogold.bagogold.utils.acoes import calcular_provento_por_mes, \
     calcular_media_proventos_6_meses, calcular_operacoes_sem_proventos_por_mes, \
     calcular_uso_proventos_por_mes, quantidade_acoes_ate_dia, \
-    calcular_poupanca_prov_acao_ate_dia
+    calcular_poupanca_prov_acao_ate_dia,\
+    calcular_poupanca_prov_acao_ate_dia_por_divisao
 from bagogold.bagogold.utils.divisoes import calcular_saldo_geral_acoes_bh
 from bagogold.bagogold.utils.investidores import buscar_acoes_investidor_na_data
 from decimal import Decimal

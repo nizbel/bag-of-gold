@@ -16,6 +16,7 @@ import re
 def calcular_operacoes_sem_proventos_por_mes(investidor, operacoes, data_inicio=None, data_fim=None):
     """ 
     Calcula a quantidade investida em compras de ações sem usar proventos por mes
+    
     Parâmetros: Investidor
                 Queryset de operações ordenadas por data
                 Data de início do período
@@ -58,6 +59,7 @@ def calcular_operacoes_sem_proventos_por_mes(investidor, operacoes, data_inicio=
 def calcular_uso_proventos_por_mes(investidor, data_inicio=None, data_fim=None):
     """ 
     Calcula a quantidade de uso de proventos em operações por mes
+    
     Parâmetros: Investidor
                 Data de início do período
                 Data de fim do período
@@ -94,6 +96,7 @@ def calcular_uso_proventos_por_mes(investidor, data_inicio=None, data_fim=None):
 def calcular_media_uso_proventos_6_meses(investidor, data_inicio=None, data_fim=None):
     """ 
     Calcula a média de uso de proventos em operações nos últimos 6 meses
+    
     Parâmetros: Investidor
     Retorno: Lista de tuplas (data, quantidade)
     """
@@ -133,6 +136,7 @@ def calcular_media_uso_proventos_6_meses(investidor, data_inicio=None, data_fim=
 def calcular_provento_por_mes(investidor, proventos, operacoes, data_inicio=None, data_fim=None):
     """ 
     Calcula a quantidade de proventos em dinheiro recebido por mes
+    
     Parâmetros: Investidor
                 Queryset de proventos ordenados por data
                 Queryset de operações ordenadas por data
@@ -182,6 +186,7 @@ def calcular_provento_por_mes(investidor, proventos, operacoes, data_inicio=None
 def calcular_media_proventos_6_meses(investidor, proventos, operacoes, data_inicio=None, data_fim=None):
     """ 
     Calcula a média de proventos recebida nos últimos 6 meses
+    
     Parâmetros: Investidor
                 Queryset de proventos ordenados por data
                 Queryset de operações ordenadas por data
@@ -331,7 +336,7 @@ def calcular_qtd_acoes_ate_dia_por_divisao(dia, divisao_id, destinacao='B'):
         return {}
 #     operacoes = OperacaoAcao.objects.filter(destinacao=destinacao, id__in=operacoes_divisao_id).exclude(data__isnull=True).annotate(acao_ticker=F('acao__ticker')).order_by('data')
     # Pega os proventos em ações recebidos por outras ações
-    proventos_em_acoes = AcaoProvento.objects.filter(provento__acao__ticker__in=operacoes.values_list('acao_ticker', flat=True), provento__data_ex__lte=dia).exclude(provento__data_ex__isnull=True) \
+    proventos_em_acoes = AcaoProvento.objects.filter(provento__acao__ticker__in=list(set(operacoes.values_list('acao_ticker', flat=True))), provento__data_ex__lte=dia).exclude(provento__data_ex__isnull=True) \
         .annotate(provento_acao_ticker=F('provento__acao__ticker')).annotate(acao_ticker=F('acao_recebida__ticker')).annotate(data=F('provento__data_ex')).order_by('data')
     
     lista_conjunta = sorted(chain(operacoes, proventos_em_acoes), key=attrgetter('data'))
@@ -371,17 +376,19 @@ def calcular_qtd_acoes_ate_dia_por_divisao(dia, divisao_id, destinacao='B'):
 def calcular_poupanca_prov_acao_ate_dia(investidor, dia, destinacao='B'):
     """
     Calcula a quantidade de proventos provisionada até dia determinado para ações
+    
     Parâmetros: Investidor
 				Dia da posição de proventos
 				Destinação ('B' ou 'T')
     Retorno: Quantidade provisionada no dia
     """
-    operacoes = OperacaoAcao.objects.filter(investidor=investidor, destinacao=destinacao, data__lte=dia).order_by('data')
+    operacoes = OperacaoAcao.objects.filter(investidor=investidor, destinacao=destinacao, data__lte=dia).annotate(acao_ticker=F('acao__ticker')).order_by('data')
     
     # Remover valores repetidos
-    acoes = list(set(operacoes.values_list('acao', flat=True)))
+#     acoes = list(set(operacoes.values_list('acao', flat=True)))
 
-    proventos = Provento.objects.filter(data_pagamento__lte=dia, acao__in=acoes).annotate(data=F('data_ex')).order_by('data')
+    proventos = Provento.objects.filter(acao__in=list(set(operacoes.values_list('acao', flat=True))), data_pagamento__lte=dia).annotate(acao_ticker=F('acao__ticker')) \
+        .annotate(data=F('data_ex')).order_by('data')
      
     lista_conjunta = sorted(chain(proventos, operacoes),
                             key=attrgetter('data'))
@@ -392,66 +399,7 @@ def calcular_poupanca_prov_acao_ate_dia(investidor, dia, destinacao='B'):
     acoes = {}
     # Calculos de patrimonio e gasto total
     for item_lista in lista_conjunta:      
-        if item_lista.acao.ticker not in acoes.keys():
-            acoes[item_lista.acao.ticker] = 0
-            
-        # Verifica se é uma compra/venda
-        if isinstance(item_lista, OperacaoAcao):   
-            # Verificar se se trata de compra ou venda
-            if item_lista.tipo_operacao == 'C':
-                if item_lista.utilizou_proventos():
-                    total_proventos -= item_lista.qtd_proventos_utilizada()
-                acoes[item_lista.acao.ticker] += item_lista.quantidade
-                
-            elif item_lista.tipo_operacao == 'V':
-                acoes[item_lista.acao.ticker] -= item_lista.quantidade
-        
-        # Verifica se é recebimento de proventos
-        elif isinstance(item_lista, Provento):
-            if acoes[item_lista.acao.ticker] > 0:
-                if item_lista.tipo_provento in ['D', 'J']:
-                    total_recebido = acoes[item_lista.acao.ticker] * item_lista.valor_unitario
-                    if item_lista.tipo_provento == 'J':
-                        total_recebido = total_recebido * Decimal(0.85)
-                    total_proventos += total_recebido
-                    
-                elif item_lista.tipo_provento == 'A':
-                    provento_acao = item_lista.acaoprovento_set.all()[0]
-                    if provento_acao.acao_recebida.ticker not in acoes.keys():
-                        acoes[provento_acao.acao_recebida.ticker] = 0
-                    acoes_recebidas = int((acoes[item_lista.acao.ticker] * item_lista.valor_unitario ) / 100 )
-                    item_lista.total_gasto = acoes_recebidas
-                    acoes[provento_acao.acao_recebida.ticker] += acoes_recebidas
-                    if provento_acao.valor_calculo_frac > 0:
-                        if provento_acao.data_pagamento_frac <= datetime.date.today():
-                            total_proventos += (((acoes[item_lista.acao.ticker] * item_lista.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
-    
-    return total_proventos.quantize(Decimal('0.01'))
-
-def calcular_poupanca_prov_acao_ate_dia_por_divisao(dia, divisao, destinacao='B'):
-    """
-    Calcula a quantidade de proventos provisionada até dia determinado para uma divisão para ações
-    Parâmetros: Dia da posição de proventos, divisão escolhida, destinação ('B' ou 'T')
-    Retorno: Quantidade provisionada no dia
-    """
-    operacoes_divisao = DivisaoOperacaoAcao.objects.filter(divisao=divisao, operacao__destinacao=destinacao, operacao__data__lte=dia).values_list('operacao__id', flat=True)
-    
-    operacoes = OperacaoAcao.objects.filter(id__in=operacoes_divisao).annotate(acao_ticker=F('acao__ticker')).order_by('data')
-
-    # Remover valores repetidos
-    acoes = list(set(operacoes.values_list('acao', flat=True)))
-    
-    proventos = Provento.objects.filter(data_pagamento__lte=dia, acao__in=acoes).annotate(data=F('data_ex')).annotate(acao_ticker=F('acao__ticker')).order_by('data')
-     
-    lista_conjunta = sorted(chain(operacoes, proventos),
-                            key=attrgetter('data'))
-    
-    total_proventos = Decimal(0)
-    
-    # Guarda as ações correntes para o calculo do patrimonio
-    acoes = {}
-    # Calculos de patrimonio e gasto total
-    for item_lista in lista_conjunta:      
+#         print acoes, total_proventos
         if item_lista.acao_ticker not in acoes.keys():
             acoes[item_lista.acao_ticker] = 0
             
@@ -461,6 +409,72 @@ def calcular_poupanca_prov_acao_ate_dia_por_divisao(dia, divisao, destinacao='B'
             if item_lista.tipo_operacao == 'C':
                 if item_lista.utilizou_proventos():
                     total_proventos -= item_lista.qtd_proventos_utilizada()
+                acoes[item_lista.acao_ticker] += item_lista.quantidade
+                
+            elif item_lista.tipo_operacao == 'V':
+                acoes[item_lista.acao_ticker] -= item_lista.quantidade
+        
+        # Verifica se é recebimento de proventos
+        elif isinstance(item_lista, Provento):
+            if acoes[item_lista.acao_ticker] > 0:
+                if item_lista.tipo_provento in ['D', 'J']:
+                    total_recebido = acoes[item_lista.acao_ticker] * item_lista.valor_unitario
+                    if item_lista.tipo_provento == 'J':
+                        total_recebido = total_recebido * Decimal(0.85)
+                    total_proventos += total_recebido
+                    
+                elif item_lista.tipo_provento == 'A':
+                    provento_acao = item_lista.acaoprovento_set.all()[0]
+                    if provento_acao.acao_recebida.ticker not in acoes.keys():
+                        acoes[provento_acao.acao_recebida.ticker] = 0
+                    acoes_recebidas = int((acoes[item_lista.acao_ticker] * item_lista.valor_unitario ) / 100 )
+                    item_lista.total_gasto = acoes_recebidas
+                    acoes[provento_acao.acao_recebida.ticker] += acoes_recebidas
+                    if provento_acao.valor_calculo_frac > 0:
+                        if provento_acao.data_pagamento_frac <= datetime.date.today():
+                            total_proventos += (((acoes[item_lista.acao_ticker] * item_lista.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
+    
+    return total_proventos.quantize(Decimal('0.01'))
+
+def calcular_poupanca_prov_acao_ate_dia_por_divisao(dia, divisao, destinacao='B'):
+    """
+    Calcula a quantidade de proventos provisionada até dia determinado para uma divisão para ações
+    
+    Parâmetros: Dia da posição de proventos, divisão escolhida, destinação ('B' ou 'T')
+    Retorno: Quantidade provisionada no dia
+    """
+    operacoes = DivisaoOperacaoAcao.objects.filter(divisao=divisao, operacao__destinacao=destinacao, operacao__data__lte=dia).annotate(acao_ticker=F('operacao__acao__ticker')) \
+        .annotate(tipo_operacao=F('operacao__tipo_operacao')).annotate(data=F('operacao__data')).order_by('data')
+    if len(operacoes) == 0:
+        return 0
+    
+#     operacoes = OperacaoAcao.objects.filter(id__in=operacoes_divisao).annotate(acao_ticker=F('acao__ticker')).order_by('data')
+
+    # Remover valores repetidos
+#     acoes = list(set(operacoes.values_list('acao', flat=True)))
+    
+    proventos = Provento.objects.filter(acao__ticker__in=list(set(operacoes.values_list('acao_ticker', flat=True))), data_pagamento__lte=dia) \
+        .annotate(data=F('data_ex')).annotate(acao_ticker=F('acao__ticker')).order_by('data')
+     
+    lista_conjunta = sorted(chain(proventos, operacoes),
+                            key=attrgetter('data'))
+    
+    total_proventos = Decimal(0)
+    
+    # Guarda as ações correntes para o calculo do patrimonio
+    acoes = {}
+    # Calculos de patrimonio e gasto total
+    for item_lista in lista_conjunta:          
+#         print acoes, total_proventos 
+        if item_lista.acao_ticker not in acoes.keys():
+            acoes[item_lista.acao_ticker] = 0
+            
+        # Verifica se é uma compra/venda
+        if isinstance(item_lista, DivisaoOperacaoAcao):  
+            # Verificar se se trata de compra ou venda
+            if item_lista.tipo_operacao == 'C':
+                if item_lista.operacao.utilizou_proventos():
+                    total_proventos -= item_lista.operacao.qtd_proventos_utilizada() * item_lista.percentual_divisao()
                 acoes[item_lista.acao_ticker] += item_lista.quantidade
                 
             elif item_lista.tipo_operacao == 'V':
