@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.db.models.expressions import F, Case, When
+from django.template import loader
 from django.template.loader import render_to_string
 from itertools import chain
 import json
@@ -16,7 +17,6 @@ from django.db.models import Count
 from django.db.models.aggregates import Sum
 from django.db.models.fields import DecimalField
 from django.http.response import HttpResponse
-from django.template import loader
 from django.template.response import TemplateResponse
 
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
@@ -38,9 +38,11 @@ from bagogold.bagogold.utils.taxas_indexacao import \
     calcular_valor_atualizado_com_taxas_di
 from bagogold.blog.models import Post
 from bagogold.cdb_rdb.models import OperacaoCDB_RDB
-from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, \
-    calcular_valor_venda_cdb_rdb, calcular_valor_atualizado_operacao_ate_dia \
-    as calcular_valor_atualizado_operacao_ate_dia_cdb_rdb
+from bagogold.cdb_rdb.utils import calcular_valor_atualizado_operacao_ate_dia \
+    as calcular_valor_atualizado_operacao_ate_dia_cdb_rdb, \
+    buscar_operacoes_vigentes_ate_data, calcular_valor_operacao_cdb_rdb_ate_dia, \
+    atualizar_operacoes_cdb_rdb_no_periodo, calcular_valor_cdb_rdb_ate_dia, \
+    calcular_valor_venda_cdb_rdb
 from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA, \
     DataRemuneracaoCRI_CRA, DataAmortizacaoCRI_CRA, CRI_CRA
 from bagogold.cri_cra.utils.utils import calcular_valor_cri_cra_ate_dia, \
@@ -1117,6 +1119,10 @@ def grafico_renda_fixa_painel_geral(request):
         total_lc_dia_anterior = float(sum(calcular_valor_lc_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values()))
         total_lci_lca_dia_anterior = float(sum(calcular_valor_lci_lca_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values()))
         total_cdb_rdb_dia_anterior = float(sum(calcular_valor_cdb_rdb_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values()))
+        operacoes_vigentes_cdb_rdb = list(buscar_operacoes_vigentes_ate_data(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()))
+        for operacao in operacoes_vigentes_cdb_rdb:
+            operacao.atual = calcular_valor_operacao_cdb_rdb_ate_dia(operacao, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date(), False, False)
+        total_cdb_rdb_dia_anterior = float(sum([operacao.atual.quantize(Decimal('0.01'), ROUND_DOWN) for operacao in operacoes_vigentes_cdb_rdb]))
         total_td_dia_anterior = float(sum(calcular_valor_td_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values()))
         total_debentures_dia_anterior = float(sum(calcular_valor_debentures_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values()))
         total_cri_cra_dia_anterior = float(sum(calcular_valor_cri_cra_ate_dia(investidor, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date()).values())) \
@@ -1156,11 +1162,34 @@ def grafico_renda_fixa_painel_geral(request):
                 total_lci_lca_dia_anterior = total_lci_lca
                 
                 # CDB / RDB
-                total_cdb_rdb = float(sum(calcular_valor_cdb_rdb_ate_dia(investidor, dia).values()))
+#                 total_cdb_rdb = float(sum(calcular_valor_cdb_rdb_ate_dia(investidor, dia).values()))
+                valor_compra_no_dia = 0
+                valor_venda_no_dia = 0
+                if operacoes_cdb_rdb_no_periodo.filter(data=dia, tipo_operacao='C').exists():
+                    # Adicionar operações de compra e calcular o valor total das compras
+                    operacoes_vigentes_cdb_rdb.extend(list(operacoes_cdb_rdb_no_periodo.filter(data=dia, tipo_operacao='C')))
+                    valor_compra_no_dia += float(operacoes_cdb_rdb_no_periodo.filter(data=dia, tipo_operacao='C').aggregate(soma_compras=Sum('quantidade'))['soma_compras'] or Decimal(0))
+                if operacoes_cdb_rdb_no_periodo.filter(data=dia, tipo_operacao='V').exists():
+                    for operacao in operacoes_cdb_rdb_no_periodo.filter(data=dia, tipo_operacao='V'):
+                        for operacao_compra in operacoes_vigentes_cdb_rdb:
+                            if operacao_compra.id == operacao.operacao_compra_relacionada().id:
+                                # Calcular valor da venda arredondado no dia
+                                valor_venda = operacao_compra.atual * (operacao.quantidade / operacao_compra.quantidade)
+                                valor_venda_no_dia += float(valor_venda.quantize(Decimal('0.01'), ROUND_DOWN))
+                                # Subtrair valores da operação de compra
+                                operacao_compra.quantidade -= operacao.quantidade
+                                operacao_compra.atual -= valor_venda
+                                if operacao_compra.quantidade == 0:
+                                    operacoes_vigentes_cdb_rdb.remove(operacao_compra)
+                                break
+                        
+                operacoes_vigentes_cdb_rdb = atualizar_operacoes_cdb_rdb_no_periodo(operacoes_vigentes_cdb_rdb, dia, dia)
+                total_cdb_rdb = float(sum([operacao.atual.quantize(Decimal('0.01'), ROUND_DOWN) for operacao in operacoes_vigentes_cdb_rdb]))
     #                     print '(%s) %s - %s =' % (dia, total_cdb_rdb, total_cdb_rdb_dia_anterior), total_cdb_rdb - total_cdb_rdb_dia_anterior
                 # Removendo operações do dia
-                diario_cdb_rdb[dia] += total_cdb_rdb - total_cdb_rdb_dia_anterior - float(operacoes_cdb_rdb_no_periodo.filter(data=dia, tipo_operacao='C').aggregate(soma_compras=Sum('quantidade'))['soma_compras'] or Decimal(0)) + \
-                    float(sum([calcular_valor_venda_cdb_rdb(operacao_venda) for operacao_venda in operacoes_cdb_rdb_no_periodo.filter(data=dia, tipo_operacao='V')]))
+#                 diario_cdb_rdb[dia] += total_cdb_rdb - total_cdb_rdb_dia_anterior - float(operacoes_cdb_rdb_no_periodo.filter(data=dia, tipo_operacao='C').aggregate(soma_compras=Sum('quantidade'))['soma_compras'] or Decimal(0)) + \
+#                     float(sum([calcular_valor_venda_cdb_rdb(operacao_venda) for operacao_venda in operacoes_cdb_rdb_no_periodo.filter(data=dia, tipo_operacao='V')]))
+                diario_cdb_rdb[dia] += total_cdb_rdb - total_cdb_rdb_dia_anterior - valor_compra_no_dia + valor_venda_no_dia
                 total_cdb_rdb_dia_anterior = total_cdb_rdb
                 
                 # Tesouro Direto
@@ -1202,7 +1231,7 @@ def grafico_renda_fixa_painel_geral(request):
                                    for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ]
         graf_rendimentos_mensal_lc = [[str(calendar.timegm(data.replace(hour=18).timetuple()) * 1000), diario_lc[data.date()] ] \
                                    for data in [(data_atual - datetime.timedelta(dias_subtrair)) for dias_subtrair in reversed(range(qtd_ultimos_dias))] ]
-        
+
         return HttpResponse(json.dumps({'sucesso': True, 'graf_rendimentos_mensal_cdb_rdb': graf_rendimentos_mensal_cdb_rdb,
                                         'graf_rendimentos_mensal_lci_lca': graf_rendimentos_mensal_lci_lca, 'graf_rendimentos_mensal_td': graf_rendimentos_mensal_td,
                                         'graf_rendimentos_mensal_debentures': graf_rendimentos_mensal_debentures,
