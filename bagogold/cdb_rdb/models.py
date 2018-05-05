@@ -173,10 +173,10 @@ class OperacaoCDB_RDB (models.Model):
     
     def vencimento(self):
         if not hasattr(self, 'guarda_vencimento'):
-            if HistoricoVencimentoCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb).exists():
-                self.guarda_vencimento = HistoricoVencimentoCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb).order_by('-data')[0].vencimento
+            if HistoricoVencimentoCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb_id).exists():
+                self.guarda_vencimento = HistoricoVencimentoCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb_id).order_by('-data')[0].vencimento
             else:
-                self.guarda_vencimento = HistoricoVencimentoCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.cdb_rdb).vencimento
+                self.guarda_vencimento = HistoricoVencimentoCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.cdb_rdb_id).vencimento
         return self.guarda_vencimento
     
     def venda_permitida(self, data_venda=None):

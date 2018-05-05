@@ -152,10 +152,10 @@ def calcular_valor_cdb_rdb_ate_dia(investidor, dia=datetime.date.today(), valor_
     cdb_rdb = {}
     for operacao in operacoes:
 
-        if operacao.cdb_rdb.id not in cdb_rdb.keys():
-            cdb_rdb[operacao.cdb_rdb.id] = 0
+        if operacao.cdb_rdb_id not in cdb_rdb.keys():
+            cdb_rdb[operacao.cdb_rdb_id] = 0
         
-        cdb_rdb[operacao.cdb_rdb.id] += calcular_valor_operacao_cdb_rdb_ate_dia(operacao, dia, True, valor_liquido)
+        cdb_rdb[operacao.cdb_rdb_id] += calcular_valor_operacao_cdb_rdb_ate_dia(operacao, dia, True, valor_liquido)
     
     return cdb_rdb
 
@@ -287,10 +287,46 @@ def buscar_operacoes_vigentes_ate_data(investidor, data=datetime.date.today()):
     """
     operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor, tipo_operacao='C', data__lte=data).exclude(data__isnull=True) \
         .annotate(qtd_vendida=Coalesce(Sum(Case(When(operacao_compra__operacao_venda__data__lte=data, then='operacao_compra__operacao_venda__quantidade'))), 0)).exclude(quantidade=F('qtd_vendida')) \
-        .annotate(qtd_disponivel_venda=(F('quantidade') - F('qtd_vendida')))
+        .annotate(qtd_disponivel_venda=(F('quantidade') - F('qtd_vendida'))).select_related('cdb_rdb')
     
     return operacoes
     
+def atualizar_operacoes_cdb_rdb_no_periodo(operacoes, data_inicial, data_final):
+    """
+    Atualiza o atributo 'atual' para cada operação em CDB/RDB enviada, em um período (incluindo data final)
+    
+    Parâmetros: Operações
+                Data inicial
+                Data final
+    Retorno: Operações com o atributo atual atualizado
+    """
+    # Buscar taxa DI
+    historico_di = HistoricoTaxaDI.objects.filter(data__range=[data_inicial, data_final])
+    taxas_dos_dias = dict(historico_di.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
+    
+    for operacao in operacoes:
+        # Verificar data de vencimento da operação, não atualizar além dela
+        data_final_operacao = min(data_final, operacao.data_vencimento() - datetime.timedelta(days=1))
+        if data_final_operacao < data_inicial:
+            continue
+        
+        if operacao.tipo_rendimento_cdb_rdb == CDB_RDB.CDB_RDB_DI:
+            # DI
+            # Definir período do histórico relevante
+            if data_final == data_final_operacao:
+                taxas_dos_dias_operacao = taxas_dos_dias
+            else:
+                taxas_dos_dias_operacao = dict(historico_di.filter(data__lte=data_final_operacao).values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
+            
+            operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias_operacao, operacao.atual, operacao.porcentagem())
+        elif operacao.tipo_rendimento_cdb_rdb == CDB_RDB.CDB_RDB_PREFIXADO:
+            # Prefixado
+            operacao.atual = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.porcentagem(), qtd_dias_uteis_no_periodo(data_inicial, data_final_operacao + datetime.timedelta(days=1)))
+        elif operacao.tipo_rendimento_cdb_rdb == CDB_RDB.CDB_RDB_IPCA:
+            # IPCA
+            operacao.atual = Decimal(operacao.atual)
+    return operacoes
+
 def simulador_cdb_rdb(filtros):
     """
     Simula uma aplicação em CDB/RDB para os valores especificados nos filtros
