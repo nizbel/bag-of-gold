@@ -214,51 +214,46 @@ def calcular_valor_lci_lca_ate_dia_por_divisao(dia, divisao_id):
     if not DivisaoOperacaoLCI_LCA.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).exists():
         return {}
     
-    operacoes_divisao_id = DivisaoOperacaoLCI_LCA.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).values('operacao__id')
-    
-    operacoes_queryset = OperacaoLetraCredito.objects.exclude(data__isnull=True).filter(id__in=operacoes_divisao_id).order_by('-tipo_operacao', 'data') 
-    operacoes = list(operacoes_queryset)
-    for operacao in operacoes:
-        if operacao.tipo_operacao == 'C':
-            operacao.atual = DivisaoOperacaoLCI_LCA.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade
-            operacao.taxa = operacao.porcentagem()
-    
+    operacoes = list(DivisaoOperacaoLCI_LCA.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).annotate(data=F('operacao__data')).exclude(data__isnull=True) \
+                     .annotate(atual=F('quantidade')).annotate(tipo_operacao=F('operacao__tipo_operacao')).annotate(letra_credito_id=F('operacao__letra_credito')) \
+                     .select_related('operacao').order_by('-tipo_operacao', 'data'))
+     
     # Pegar data inicial
-    data_inicial = operacoes_queryset.order_by('data')[0].data
-    
+    data_inicial = operacoes[0].data
+     
     letras_credito = {}
     for operacao in operacoes:
         # Processar operações
         if operacao.letra_credito_id not in letras_credito.keys():
             letras_credito[operacao.letra_credito_id] = 0
-                
+                 
         # Vendas
         if operacao.tipo_operacao == 'V':
             # Remover quantidade da operação de compra
-            operacao_compra_id = operacao.operacao_compra_relacionada().id
+            operacao_compra_id = operacao.operacao.operacao_compra_relacionada().id
             for operacao_c in operacoes:
-                if (operacao_c.id == operacao_compra_id):
-                    operacao.atual = DivisaoOperacaoLCI_LCA.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade
+                if (operacao_c.operacao_id == operacao_compra_id):
+#                     operacao.atual = DivisaoOperacaoLCI_LCA.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade
                     operacao_c.atual -= operacao.atual
                     break
-                
+#                 
     # Remover operações de venda e operações de compra totalmente vendidas
     operacoes = [operacao for operacao in operacoes if operacao.tipo_operacao == 'C' and operacao.atual > 0]
-    
+     
     # Calcular o valor atualizado do patrimonio
     historico = HistoricoTaxaDI.objects.filter(data__range=[data_inicial, dia])
-    
+     
     for operacao in operacoes:
         taxas_dos_dias = dict(historico.filter(data__range=[operacao.data, dia]).values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
-        operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.atual, operacao.taxa)
+        operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.atual, operacao.operacao.porcentagem())
         # Arredondar valores
         str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
         operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-            
+             
     # Preencher os valores nas letras de crédito
     for letra_credito_id in letras_credito.keys():
         letras_credito[letra_credito_id] += sum([operacao.atual for operacao in operacoes if operacao.letra_credito_id == letra_credito_id])
-        
+         
         if letras_credito[letra_credito_id] == 0:
             del letras_credito[letra_credito_id]
     
