@@ -97,7 +97,7 @@ class OperacaoLetraCredito (models.Model):
     
     def data_inicial(self):
         if self.tipo_operacao == 'V':
-            return OperacaoVendaLetraCredito.objects.get(operacao_venda=self).operacao_compra.data
+            return self.operacao_compra_relacionada().data
         else:
             return self.data
     
@@ -113,7 +113,9 @@ class OperacaoLetraCredito (models.Model):
         
     def operacao_compra_relacionada(self):
         if self.tipo_operacao == 'V':
-            return OperacaoVendaLetraCredito.objects.get(operacao_venda=self).operacao_compra
+            if not hasattr(self, 'guarda_operacao_compra_relacionada'):
+                self.guarda_operacao_compra_relacionada = OperacaoVendaLetraCredito.objects.get(operacao_venda=self).operacao_compra
+            return self.guarda_operacao_compra_relacionada
         else:
             return None
     
@@ -158,9 +160,9 @@ class OperacaoLetraCredito (models.Model):
         
     def venda_permitida(self, data_venda=datetime.date.today()):
         if self.tipo_operacao == 'C':
-            if HistoricoCarenciaLetraCredito.objects.filter(letra_credito=self.letra_credito_id, data__lte=data_venda).exclude(data=None).exists():
+            if HistoricoCarenciaLetraCredito.objects.filter(letra_credito=self.letra_credito_id, data__lte=data_venda).exists():
                 # Verifica o período de carência pegando a data mais recente antes da operação de compra
-                historico = HistoricoCarenciaLetraCredito.objects.filter(letra_credito=self.letra_credito_id, data__lte=data_venda).exclude(data=None).order_by('-data')
+                historico = HistoricoCarenciaLetraCredito.objects.filter(letra_credito=self.letra_credito_id, data__lte=data_venda).order_by('-data')
                 return (historico[0].carencia <= (data_venda - self.data).days)
             else:
                 carencia = HistoricoCarenciaLetraCredito.objects.get(letra_credito=self.letra_credito_id, data__isnull=True).carencia
