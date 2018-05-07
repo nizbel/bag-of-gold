@@ -77,6 +77,15 @@ class CalculoImpostoRendaTDTestCase(TestCase):
         
         # TODO Verificar valores que devem ser testados
         
+        # 02/01/2015 Tesouro D. Taxa Semestral 18,81 D
+        # 01/07/2015 Tesouro D. Taxa Semestral 13,69 D
+	    # 04/01/2016 Tesouro D. Taxa Semestral 18,18 D
+        # 01/07/2016 Tesouro D. Taxa Semestral 1,89 D
+        # 02/01/2017 Tesouro Direto-Resgate 5.756,60 C
+        # 02/01/2017 Tesouro D. Taxa Semestral 26,69 D
+
+
+        
     def test_imposto_renda_2017(self):
         """Testar valor de imposto de renda para 2017"""
         pass
