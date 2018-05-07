@@ -351,6 +351,42 @@ def buscar_operacoes_vigentes_ate_data(investidor, data=datetime.date.today()):
     
     return operacoes
 
+def atualizar_operacoes_lci_lca_no_periodo(operacoes, data_inicial, data_final):
+    """
+    Atualiza o atributo 'atual' para cada operação em LCI/LCA enviada, em um período (incluindo data final)
+    
+    Parâmetros: Operações
+                Data inicial
+                Data final
+    Retorno: Operações com o atributo atual atualizado
+    """
+    # Buscar taxa DI
+    historico_di = HistoricoTaxaDI.objects.filter(data__range=[data_inicial, data_final])
+    taxas_dos_dias = dict(historico_di.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
+    
+    for operacao in operacoes:
+        # Verificar data de vencimento da operação, não atualizar além dela
+        data_final_operacao = min(data_final, operacao.data_vencimento() - datetime.timedelta(days=1))
+        if data_final_operacao < data_inicial:
+            continue
+        
+        if operacao.tipo_rendimento_lci_lca == LetraCredito.LCI_LCA_DI:
+            # DI
+            # Definir período do histórico relevante
+            if data_final == data_final_operacao:
+                taxas_dos_dias_operacao = taxas_dos_dias
+            else:
+                taxas_dos_dias_operacao = dict(historico_di.filter(data__lte=data_final_operacao).values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
+            
+            operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias_operacao, operacao.atual, operacao.porcentagem())
+        elif operacao.tipo_rendimento_lci_lca == LetraCredito.LCI_LCA_PREFIXADO:
+            # Prefixado
+            operacao.atual = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.porcentagem(), qtd_dias_uteis_no_periodo(data_inicial, data_final_operacao + datetime.timedelta(days=1)))
+        elif operacao.tipo_rendimento_lci_lca == LetraCredito.LCI_LCA_IPCA:
+            # IPCA
+            operacao.atual = Decimal(operacao.atual)
+    return operacoes
+
 def simulador_lci_lca(filtros):
     """
     Simula uma aplicação em LCI/LCA para os valores especificados nos filtros

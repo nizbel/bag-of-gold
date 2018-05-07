@@ -142,6 +142,12 @@ class OperacaoLetraCredito (models.Model):
             qtd_vendida += venda.quantidade
         return self.quantidade - qtd_vendida
     
+    @property
+    def tipo_rendimento_lci_lca(self):
+        if not hasattr(self,'guarda_tipo_rendimento_lci_lca'):
+            self.guarda_tipo_rendimento_lci_lca = self.letra_credito.tipo_rendimento
+        return self.guarda_tipo_rendimento_lci_lca
+    
     def vencimento(self):
         if not hasattr(self, 'guarda_vencimento'):
             if HistoricoVencimentoLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito_id).exists():
