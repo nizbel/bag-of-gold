@@ -66,16 +66,16 @@ acoes_patterns = [
     url(r'^trading/', include(acoes_trading_patterns, namespace='trading')),
     ]
 
-debentures_patterns = [
-    url(r'^detalhar-debenture/(?P<debenture_id>\d+)/$', views.debentures.debentures.detalhar_debenture, name='detalhar_debenture'),
-    url(r'^editar-operacao/(?P<operacao_id>\d+)/$', views.debentures.debentures.editar_operacao_debenture, name='editar_operacao_debenture'),
-    url(r'^historico/$', views.debentures.debentures.historico, name='historico_debenture'),
-    url(r'^inserir-operacao-debenture/$', views.debentures.debentures.inserir_operacao_debenture, name='inserir_operacao_debenture'),
-    url(r'^listar-debentures/$', views.debentures.debentures.listar_debentures, name='listar_debentures'),
-    url(r'^listar-debentures-validas-na-data/$', views.debentures.debentures.listar_debentures_validas_na_data, name='listar_debentures_validas_na_data'),
-    url(r'^painel/$', views.debentures.debentures.painel, name='painel_debenture'),
-    url(r'^sobre/$', views.debentures.debentures.sobre, name='sobre_debenture'),
-    ]
+# debentures_patterns = [
+#     url(r'^detalhar-debenture/(?P<debenture_id>\d+)/$', views.debentures.debentures.detalhar_debenture, name='detalhar_debenture'),
+#     url(r'^editar-operacao/(?P<operacao_id>\d+)/$', views.debentures.debentures.editar_operacao_debenture, name='editar_operacao_debenture'),
+#     url(r'^historico/$', views.debentures.debentures.historico, name='historico_debenture'),
+#     url(r'^inserir-operacao-debenture/$', views.debentures.debentures.inserir_operacao_debenture, name='inserir_operacao_debenture'),
+#     url(r'^listar-debentures/$', views.debentures.debentures.listar_debentures, name='listar_debentures'),
+#     url(r'^listar-debentures-validas-na-data/$', views.debentures.debentures.listar_debentures_validas_na_data, name='listar_debentures_validas_na_data'),
+#     url(r'^painel/$', views.debentures.debentures.painel, name='painel_debenture'),
+#     url(r'^sobre/$', views.debentures.debentures.sobre, name='sobre_debenture'),
+#     ]
 
 divisoes_patterns = [
     url(r'^criar-transferencias/$', views.divisoes.divisoes.criar_transferencias, name='criar_transferencias'),
@@ -211,7 +211,7 @@ urlpatterns = [
 #     url(r'^cdb-rdb/', include(cdb_rdb_patterns, namespace='cdb_rdb')),
     
     # Debêntures
-    url(r'^debentures/', include(debentures_patterns, namespace='debentures')),
+#     url(r'^debentures/', include(debentures_patterns, namespace='debentures')),
     
     # Imposto de renda
     url(r'^imposto-renda/', include(imposto_renda_patterns, namespace='imposto_renda')),
