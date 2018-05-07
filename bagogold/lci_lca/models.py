@@ -97,7 +97,9 @@ class OperacaoLetraCredito (models.Model):
     
     def data_inicial(self):
         if self.tipo_operacao == 'V':
-            return self.operacao_compra_relacionada().data
+            if not hasattr(self, 'guarda_data_inicial'):
+                self.guarda_data_inicial = self.operacao_compra_relacionada().data
+            return self.guarda_data_inicial
         else:
             return self.data
     
