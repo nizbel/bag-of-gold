@@ -203,6 +203,11 @@ def reset_pg():
         sudo('/etc/init.d/postgresql stop')
         sudo('/etc/init.d/postgresql start')
     
+def verificar_cron():
+    require('path')
+    require('virtualenv')
+    
+    run('pstree -ap `pidof cron`')
     
 def verificar_update():
     run('workon %(virtualenv)s' % {'virtualenv': env.virtualenv})
