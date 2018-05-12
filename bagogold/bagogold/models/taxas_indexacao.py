@@ -22,7 +22,7 @@ class HistoricoTaxaSelic (models.Model):
             super(HistoricoTaxaSelic, self).save(*args, **kw)
             
 class HistoricoIPCA (models.Model):
-    valor = models.DecimalField(u'Valor IPCA', max_digits=5, decimal_places=2)
+    valor = models.DecimalField(u'Valor IPCA', max_digits=12, decimal_places=9)
     mes = models.SmallIntegerField(u'Mês')
     ano = models.SmallIntegerField(u'Ano')
     
