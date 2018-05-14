@@ -109,3 +109,22 @@ class AtualizacaoTaxasTestCase(TestCase):
         
         # Atualizar vários dias por metade da taxa
         self.assertAlmostEqual(calcular_valor_atualizado_com_taxas_di(taxas_selic, 1000, 50), 1000 * Decimal('1.00265446'), delta=Decimal('0.001'))
+        
+class BuscarTaxasIPCATesteCase(TestCase):
+    def setUp(self):
+        
+    def test_buscar_historico_ipca(self):
+        """Testa se a busca por histórico de IPCA está funcionando"""
+        pass
+    
+    def test_buscar_ipca_projetado(self):
+        """Testa se a busca por IPCA projetado está funcionando"""
+        pass
+    
+    def test_ipca_projetado_antes_do_oficial(self):
+        """Testa se nunca é criado IPCA projetado com data de início anterior a IPCA oficial"""
+        pass
+    
+    def test_ipca_oficial_deve_pagar_ipca_projetado(self):
+        """Testa se IPCA oficial ao ser criado apaga IPCA projetado anterior"""
+        pass

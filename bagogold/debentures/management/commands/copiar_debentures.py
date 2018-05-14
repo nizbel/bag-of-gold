@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from bagogold.debentures.models import Debenture as Debenture_old, \
+from bagogold.bagogold.models.debentures import Debenture as Debenture_old, \
     AmortizacaoDebenture as AmortizacaoDebenture_old, \
     JurosDebenture as JurosDebenture_old, PremioDebenture as PremioDebenture_old, \
     OperacaoDebenture as OperacaoDebenture_old, HistoricoValorDebenture as HistoricoValorDebenture_old
@@ -24,7 +24,7 @@ class Command(BaseCommand):
                   
                 for debenture in Debenture_old.objects.all().values():
                     print debenture
-                    Debenture.objects.create(**lci_lca)
+                    Debenture.objects.create(**debenture)
                       
                 for operacao in OperacaoDebenture_old.objects.all().values():
                     print operacao

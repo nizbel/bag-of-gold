@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
-from bagogold.bagogold.forms.debenture import OperacaoDebentureForm
+from bagogold.debentures.forms import OperacaoDebentureForm
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoDebentureFormSet
 from bagogold.bagogold.models.debentures import OperacaoDebenture, Debenture, \
     HistoricoValorDebenture
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoDebenture
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI, \
     HistoricoTaxaSelic, HistoricoIPCA
-from bagogold.bagogold.utils.debenture import calcular_valor_debentures_ate_dia
+from bagogold.debentures.utils import calcular_valor_debentures_ate_dia
 from bagogold.bagogold.utils.misc import \
     formatar_zeros_a_direita_apos_2_casas_decimais, qtd_dias_uteis_no_periodo
 from bagogold.bagogold.utils.taxas_indexacao import \
