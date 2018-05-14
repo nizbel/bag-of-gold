@@ -231,9 +231,6 @@ urlpatterns = [
     # LCA e LCI
     url(r'^lci_lca/', include(lci_lca_patterns, namespace='lci_lca_redirect')),
     
-    # CDB e RDB
-    url(r'^cdb_rdb/', include(cdb_rdb_patterns, namespace='cdb_rdb')),
-    
     # Debêntures
     url(r'^debentures/', include(debentures_patterns, namespace='debentures_redirect')),
     
