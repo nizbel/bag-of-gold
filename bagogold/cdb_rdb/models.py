@@ -116,7 +116,7 @@ class OperacaoCDB_RDB (models.Model):
                 self.guarda_data_inicial = self.operacao_compra_relacionada().data
             return self.guarda_data_inicial
         else:
-            self.guarda_data_inicial = self.data
+            return self.data
         
     def data_vencimento(self):
         if self.tipo_operacao == 'C':
