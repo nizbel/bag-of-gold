@@ -32,6 +32,8 @@ urlpatterns = [
     url(r'^fii/', include('bagogold.fii.urls', namespace='fii')),
     # App Fundos de investimento
     url(r'^fundo-investimento/', include('bagogold.fundo_investimento.urls', namespace='fundo_investimento')),
+    # Redirecionamento
+    url(r'^fundo_investimento/', include('bagogold.fundo_investimento.urls_redirect', namespace='fundo_investimento_redirect')),
     # App LCI/LCA
     url(r'^lci-lca/', include('bagogold.lci_lca.urls', namespace='lci_lca')),
     # App Outros investimentos
