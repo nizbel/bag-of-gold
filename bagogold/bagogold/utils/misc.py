@@ -36,38 +36,38 @@ def calcular_iof_e_ir_longo_prazo(lucro_bruto, qtd_dias):
     imposto_renda = calcular_imposto_renda_longo_prazo(lucro_bruto - iof, qtd_dias)
     return iof, imposto_renda
 
-def buscar_historico_ipca():
-    td_url = 'http://www.portalbrasil.net/ipca.htm'
-    req = Request(td_url)
-    try:
-        response = urlopen(req)
-    except HTTPError as e:
-        print 'The server couldn\'t fulfill the request.'
-        print 'Error code: ', e.code
-    except URLError as e:
-        print 'We failed to reach a server.'
-        print 'Reason: ', e.reason
-    else:
-#         print 'Host: %s' % (req.get_host())
-        data = response.read()
-#         print data
-        string_importante = (data[data.find('simplificada'):
-                                 data.find('FONTES')])
-#         print string_importante
-        linhas = re.findall('<tr.*?>.*?</tr>', string_importante, re.MULTILINE|re.DOTALL|re.IGNORECASE)
-        for linha in linhas[1:]:
-            linha = re.sub('<.*?>', '', linha, flags=re.MULTILINE|re.DOTALL|re.IGNORECASE)
-            linha = linha.replace(' ', '').replace('&nbsp;', '')
-            campos = re.findall('([\S]*)', linha, re.MULTILINE|re.DOTALL|re.IGNORECASE)
-            campos = filter(bool, campos)
-#             print campos
-            for mes in range(1,13):
-                try:
-#                     print 'Ano:', campos[0], 'Mes:', mes, 'Valor:', Decimal(campos[mes].replace(',', '.'))
-                    historico_ipca = HistoricoIPCA(ano=int(campos[0]), mes=mes, valor=Decimal(campos[mes].replace(',', '.')))
-                    historico_ipca.save()
-                except:
-                    print 'Não foi possível converter', campos[mes]
+# def buscar_historico_ipca():
+#     td_url = 'http://www.portalbrasil.net/ipca.htm'
+#     req = Request(td_url)
+#     try:
+#         response = urlopen(req)
+#     except HTTPError as e:
+#         print 'The server couldn\'t fulfill the request.'
+#         print 'Error code: ', e.code
+#     except URLError as e:
+#         print 'We failed to reach a server.'
+#         print 'Reason: ', e.reason
+#     else:
+# #         print 'Host: %s' % (req.get_host())
+#         data = response.read()
+# #         print data
+#         string_importante = (data[data.find('simplificada'):
+#                                  data.find('FONTES')])
+# #         print string_importante
+#         linhas = re.findall('<tr.*?>.*?</tr>', string_importante, re.MULTILINE|re.DOTALL|re.IGNORECASE)
+#         for linha in linhas[1:]:
+#             linha = re.sub('<.*?>', '', linha, flags=re.MULTILINE|re.DOTALL|re.IGNORECASE)
+#             linha = linha.replace(' ', '').replace('&nbsp;', '')
+#             campos = re.findall('([\S]*)', linha, re.MULTILINE|re.DOTALL|re.IGNORECASE)
+#             campos = filter(bool, campos)
+# #             print campos
+#             for mes in range(1,13):
+#                 try:
+# #                     print 'Ano:', campos[0], 'Mes:', mes, 'Valor:', Decimal(campos[mes].replace(',', '.'))
+#                     historico_ipca = HistoricoIPCA(ano=int(campos[0]), mes=mes, valor=Decimal(campos[mes].replace(',', '.')))
+#                     historico_ipca.save()
+#                 except:
+#                     print 'Não foi possível converter', campos[mes]
                
 def buscar_valores_diarios_selic(data_inicial=datetime.date.today() - datetime.timedelta(days=30), data_final=datetime.date.today()):
     """

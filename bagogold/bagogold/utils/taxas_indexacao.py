@@ -1,14 +1,25 @@
 # -*- coding: utf-8 -*-
+from StringIO import StringIO
 import calendar
 import datetime
 from decimal import Decimal
+from django.db.models.expressions import Value, F
 from django.db.models.query_utils import Q
 from ftplib import FTP
+import re
+from urllib2 import Request, urlopen
+import zipfile
 
+from django.db import transaction
 from django.db.models.aggregates import Count
+from django.db.models.fields import DateField, IntegerField
+import pyexcel
 
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI, \
-    HistoricoIPCA, HistoricoTaxaSelic
+    HistoricoIPCA, HistoricoTaxaSelic, IPCAProjetado
+from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo, \
+    verifica_se_dia_util
+import pyexcel.ext.xls
 
 
 def calcular_valor_atualizado_com_taxa_di(taxa_do_dia, valor_atual, operacao_taxa):
@@ -98,21 +109,46 @@ def calcular_valor_acumulado_ipca(data_base, data_final=datetime.date.today()):
     Retorno: Taxa total acumulada
     """
     # COTACAO = 1000 / (1 + TAXA)**(DIAS_UTEIS/252)
-    ipca_inicial = HistoricoIPCA.objects.get(mes=data_base.month, ano=data_base.year)
-    # Calcular quantidade de dias em que a taxa inicial foi aplicada
-    ultimo_dia_mes_inicial = datetime.date(data_base.year, data_base.month, calendar.monthrange(data_base.year, data_base.month)[1])
-    qtd_dias = (min(data_final, ultimo_dia_mes_inicial) - data_base).days
-    # Transformar taxa mensal em diaria
-    ipca_inicial_diario = pow(1 + ipca_inicial.valor/Decimal(100), Decimal(1)/30) - 1
-    # Iniciar IPCA do periodo com o acumulado nos dias
-    ipca_periodo = pow(1 + ipca_inicial_diario, qtd_dias) - 1
-#     print 'IPCA inicial:', ipca_periodo
-    # TODO melhorar isso
-    for mes_historico in HistoricoIPCA.objects.filter((Q(mes__gt=ipca_inicial.mes) & Q(ano=ipca_inicial.ano)) | \
-                                                      Q(ano__gt=ipca_inicial.ano)).filter(ano__lte=data_final.year).order_by('ano', 'mes'):
-        if datetime.date(mes_historico.ano, mes_historico.mes, calendar.monthrange(mes_historico.ano, mes_historico.mes)[1]) <= data_final:
-#             print mes_historico.ano, '/', mes_historico.mes, '->', ipca_periodo, (1 + mes_historico.valor/Decimal(100))
-            ipca_periodo = (1 + ipca_periodo) * (1 + mes_historico.valor/Decimal(100)) - 1
+    # Se data base for dia 16 em diante, pegar mes/ano
+    if data_base.day >= 16:
+        ipca_inicial = HistoricoIPCA.objects.filter(data_inicio__lte=data_base).order_by('-data_inicio')[0]
+        if data_base.day > 16:
+            # Cálculo de dias úteis proporcional
+            pass
+        else:
+            ipca_periodo = ipca_inicial.valor
+    
+    # Se data base for dia 15 ou anterior, pegar mes anterior como base
+    else:
+        ano = data_base.year
+        mes = data_base.month - 1
+        if mes == 0:
+            mes = 12
+            ano = ano - 1
+        ipca_inicial = HistoricoIPCA.objects.get(mes=mes, ano=ano)
+        ipca_periodo = ipca_inicial.valor
+    
+    # Preparar último registro de IPCA
+    ipca_final = HistoricoIPCA.objects.filter(data_inicio__lte=data_final).order_by('-data_inicio')[0]
+    # Adicionar ao cálculo todos os meses cujo dia 15 do mês posterior for menor ou igual a data final
+    for mes_historico in HistoricoIPCA.objects.filter(Q(data_inicio__gt=ipca_inicial.data_inicio, data_inicio__year=data_base.year) | \
+                                                      Q(data_inicio__year__gt=data_base.year, data_inicio__lt=ipca_final.data_inicio)) \
+                                                      .order_by('data_inicio'):
+        ipca_periodo = (1 + ipca_periodo) * (1 + mes_historico.valor) - 1
+        print (1 + ipca_periodo) * 1000
+    # Caso a última data seja diferente de 15, pegar último mês e calcular a proporção de dias úteis
+    if data_final.day == 15:
+        ipca_periodo = (1 + ipca_periodo) * (1 + ipca_final.valor) - 1
+    else:
+        qtd_dias_uteis_passados = qtd_dias_uteis_no_periodo(ipca_final.data_inicio, data_final + datetime.timedelta(days=1))
+        ultimo_dia_util = calendar.monthrange(ipca_final.data_inicio.year, ipca_final.data_inicio.month)[1]
+        ultima_data_periodo_ipca = (ipca_final.data_inicio.replace(day=ultimo_dia_util) + datetime.timedelta(days=1)) \
+            .replace(day=15)
+        qtd_dias_uteis_total = qtd_dias_uteis_no_periodo(ipca_final.data_inicio, ultima_data_periodo_ipca + datetime.timedelta(days=1))
+        print ((1 + ipca_final.valor)**(Decimal(qtd_dias_uteis_passados)/qtd_dias_uteis_total))
+        ipca_periodo = (1 + ipca_periodo) * ((1 + ipca_final.valor)**(Decimal(qtd_dias_uteis_passados)/qtd_dias_uteis_total)) - 1
+    
+    print (1 + ipca_periodo) * 1000
     return ipca_periodo
     
 def calcular_valor_acumulado_selic(data_base, data_final=datetime.date.today()):
@@ -128,7 +164,6 @@ def calcular_valor_acumulado_selic(data_base, data_final=datetime.date.today()):
     selic_periodo *= [taxa for (taxa, qtd_dias) in taxas_selic.items()]
     return selic_periodo
 
-# TODO trazer busca de valores diários do DI para essa função
 def buscar_valores_diarios_di():
     """Busca valores históricos do DI no site da CETIP"""
     ftp = FTP('ftp.cetip.com.br')
@@ -148,3 +183,81 @@ def buscar_valores_diarios_di():
 #                 print '%s: %s' % (data, Decimal(taxa[0]) / 100)
                 historico = HistoricoTaxaDI(data = data, taxa = Decimal(taxa[0]) / 100)
                 historico.save()
+                
+def buscar_valores_mensal_ipca():
+    """Busca valores históricos do IPCA no site do IBGE"""
+    meses = {'JAN': 1, 'FEV': 2, 'MAR': 3, 'ABR': 4, 'MAI': 5, 'JUN': 6, 'JUL': 7, 'AGO': 8, 'SET': 9, 'OUT': 10, 'NOV': 11, 'DEZ': 12}
+    req = Request('ftp://ftp.ibge.gov.br/Precos_Indices_de_Precos_ao_Consumidor/IPCA/Serie_Historica/ipca_SerieHist.zip')
+    response = urlopen(req)
+#     doc_zip = response.read()
+    zipdata = StringIO()
+    zipdata.write(response.read())
+    
+    if zipfile.is_zipfile(zipdata):
+        # Abrir e ler
+        unzipped = zipfile.ZipFile(zipdata)
+        for libitem in unzipped.namelist():
+            doc_xls = unzipped.read(libitem)
+    
+            book = pyexcel.get_book(file_type="xls", file_content=doc_xls, name_columns_by_row=0)
+            sheets = book.to_dict()
+            
+            # Guardar ano atual
+            ano_atual = 0
+            valor_mes_anterior = 0
+            valor_mes_atual = 0
+            for linha in sheets[u'Série Histórica IPCA']:
+                if isinstance(linha[0], float):
+                    ano_atual = int(linha[0])
+                # Se mês não está definido, pular linha
+                if linha[1] in meses:
+                    mes = meses[linha[1]]
+                else:
+                    continue
+                valor_mes_atual = Decimal(linha[2])
+                if valor_mes_anterior > 0 and not HistoricoIPCA.objects.filter(data_inicio=datetime.date(ano_atual, mes, 16), ipcaprojetado__isnull=True).exists():
+                    indice_mes_atual = (valor_mes_atual / valor_mes_anterior) - 1
+                    data_inicio = datetime.date(ano_atual, mes, 16)
+                    novo = HistoricoIPCA(valor=indice_mes_atual, data_inicio=data_inicio)
+                    
+                    # Apagar valores projetados anteriores
+                    if HistoricoIPCA.objects.filter(ipcaprojetado__isnull=False, data_inicio__lte=data_inicio).exists():
+                        HistoricoIPCA.objects.filter(ipcaprojetado__isnull=False, data_inicio__lte=data_inicio).delete()
+                    
+                    # Salvar novo valor
+                    novo.save()
+#                     print HistoricoIPCA.objects.all().count(), novo.valor, novo.data_inicio
+                valor_mes_anterior = valor_mes_atual
+                
+def buscar_ipca_projetado():
+    """Busca valores de IPCA projetado no site da Anbima"""
+    req = Request('http://www.anbima.com.br/pt_br/informar/estatisticas/precos-e-indices/projecao-de-inflacao-gp-m.htm')
+    response = urlopen(req)
+    data = response.read()
+    
+    # Delimitar parte a ser tratada
+    inicio = data.find('IPCA-15')
+    fim = data.find('Fonte', inicio)
+    string_importante = data[inicio:fim]
+    
+    # Buscar informações de projeções na página
+    projecoes = string_importante.split('<div class="both">')[1:]
+    for projecao in projecoes:
+        projecao = projecao[projecao.find('strong'):]
+        valor = re.sub(r'.*?>', '', projecao[:projecao.find('</strong>')])
+        # Valores indefinidos são mostrados como '-'
+        if valor != '-':
+            valor = Decimal(valor.replace(',', '.'))/100
+            data_inicio = datetime.datetime.strptime(re.findall(r'\d+/\d+/\d+', projecao)[0], '%d/%m/%Y')
+            if not HistoricoIPCA.objects.filter(data_inicio=data_inicio).exists():
+                try:
+                    with transaction.atomic():
+                        ipca_projetado = HistoricoIPCA(valor=valor, data_inicio=data_inicio)
+                        ipca_projetado.save()
+                        marcar_projetado = IPCAProjetado(ipca=ipca_projetado)
+                        marcar_projetado.save()
+                except:
+                    raise
+            else:
+                print HistoricoIPCA.objects.filter(data_inicio=data_inicio, ipcaprojetado__isnull=False).exists()
+                
