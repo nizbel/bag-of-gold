@@ -16,6 +16,7 @@ import zipfile
 def preencher_empresa_fii_nao_listado(ticker, num_tentativas=0):
     """
     Preenche a empresa para um FII que não está mais listado na Bovespa
+    
     Parâmetros: Ticker do FII
     """
 #     print ticker
@@ -37,6 +38,7 @@ def preencher_empresa_fii_nao_listado(ticker, num_tentativas=0):
 def buscar_historico_recente_bovespa(data):
     """
     Busca o relatório de negociação do dia atual
+    
     Retorno: Nome do arquivo com o histórico gerado
     """
     url = 'http://www.bmf.com.br/arquivos1/lum-arquivos_ipn.asp?idioma=pt-BR&status=ativo'
@@ -76,6 +78,7 @@ def buscar_historico_recente_bovespa(data):
 def processar_historico_recente_bovespa(nome_arquivo_hist):
     """
     Processa o arquivo com o histórico recente da bovespa
+    
     Parâmetros: Nome do arquivo
     """
     try:
