@@ -32,9 +32,17 @@ inicio_patterns = [
 acoes_geral_patterns = [
     url(r'^detalhar-provento/(?P<provento_id>\d+)/$', views.acoes.acoes.detalhar_provento, name='detalhar_provento_acao'),
     url(r'^estatisticas-acao/(?P<ticker>\w+)/$', views.acoes.acoes.estatisticas_acao, name='estatisticas_acao_bh'),
+    # Redirecionamento
+    url(r'^estatisticas_acao/(?P<ticker>\w+)/$', RedirectView.as_view(pattern_name='acoes:geral:estatisticas_acao_bh', permanent=True)),
+    # Redirecionamento
+    url(r'^buyandhold/estatisticas_acao/(?P<ticker>\w+)/$', RedirectView.as_view(pattern_name='acoes:geral:estatisticas_acao_bh', permanent=True)),
     url(r'^listar-acoes/$', views.acoes.acoes.listar_acoes, name='listar_acoes'),
+    # Redirecionamento
+    url(r'^listar_acoes/$',  RedirectView.as_view(pattern_name='acoes:geral:listar_acoes', permanent=True)),
     url(r'^listar-tickers-acoes/$', views.acoes.acoes.listar_tickers_acoes, name='listar_tickers_acoes'),
     url(r'^listar-proventos/$', views.acoes.acoes.listar_proventos, name='listar_proventos_acao'),
+    # Redirecionamento
+    url(r'^listar_proventos/$',  RedirectView.as_view(pattern_name='acoes:geral:listar_proventos_acao', permanent=True)),
     url(r'^sobre/$', views.acoes.acoes.sobre, name='sobre_acoes'),
     ]
 
@@ -52,10 +60,16 @@ acoes_bh_patterns = [
 
 acoes_trading_patterns = [
     url(r'^acompanhamento-mensal/$', views.acoes.trade.acompanhamento_mensal, name='acompanhamento_mensal'),
+    # Redirecionamento
+    url(r'^acompanhamento_mensal/$',  RedirectView.as_view(pattern_name='acoes:trading:acompanhamento_mensal', permanent=True)),
     url(r'^editar-operacao/(?P<operacao_id>\d+)/$', views.acoes.trade.editar_operacao, name='editar_operacao_t'),
     url(r'^editar-operacao-acao/(?P<operacao_id>\d+)/$', views.acoes.trade.editar_operacao_acao, name='editar_operacao_acao_t'),
     url(r'^historico-operacoes/$', views.acoes.trade.historico_operacoes, name='historico_operacoes'),
+    # Redirecionamento
+    url(r'^historico_operacoes/$',  RedirectView.as_view(pattern_name='acoes:trading:historico_operacoes', permanent=True)),
     url(r'^historico-operacoes-cv/$', views.acoes.trade.historico_operacoes_cv, name='historico_operacoes_cv'),
+    # Redirecionamento
+    url(r'^historico_operacoes_cv/$',  RedirectView.as_view(pattern_name='acoes:trading:historico_operacoes_cv', permanent=True)),
     url(r'^inserir-operacao/$', views.acoes.trade.inserir_operacao, name='inserir_operacao_t'),
     url(r'^inserir-operacao-acao/$', views.acoes.trade.inserir_operacao_acao, name='inserir_operacao_acao_t'),
     ]
@@ -66,16 +80,17 @@ acoes_patterns = [
     url(r'^trading/', include(acoes_trading_patterns, namespace='trading')),
     ]
 
-# debentures_patterns = [
-#     url(r'^detalhar-debenture/(?P<debenture_id>\d+)/$', views.debentures.debentures.detalhar_debenture, name='detalhar_debenture'),
-#     url(r'^editar-operacao/(?P<operacao_id>\d+)/$', views.debentures.debentures.editar_operacao_debenture, name='editar_operacao_debenture'),
+# Redirecionamento
+debentures_patterns = [
+    url(r'^detalhar_debenture/(?P<debenture_id>\d+)/$', RedirectView.as_view(pattern_name='debentures:detalhar_debenture', permanent=True)),
+    url(r'^editar_operacao/(?P<operacao_id>\d+)/$', RedirectView.as_view(pattern_name='debentures:editar_operacao_debenture', permanent=True)),
 #     url(r'^historico/$', views.debentures.debentures.historico, name='historico_debenture'),
-#     url(r'^inserir-operacao-debenture/$', views.debentures.debentures.inserir_operacao_debenture, name='inserir_operacao_debenture'),
-#     url(r'^listar-debentures/$', views.debentures.debentures.listar_debentures, name='listar_debentures'),
-#     url(r'^listar-debentures-validas-na-data/$', views.debentures.debentures.listar_debentures_validas_na_data, name='listar_debentures_validas_na_data'),
+    url(r'^inserir_operacao_debenture/$', RedirectView.as_view(pattern_name='debentures:inserir_operacao_debenture', permanent=True)),
+    url(r'^listar_debentures/$', RedirectView.as_view(pattern_name='debentures:listar_debentures', permanent=True)),
+    url(r'^listar_debentures_validas_na_data/$', RedirectView.as_view(pattern_name='debentures:listar_debentures_validas_na_data', permanent=True)),
 #     url(r'^painel/$', views.debentures.debentures.painel, name='painel_debenture'),
 #     url(r'^sobre/$', views.debentures.debentures.sobre, name='sobre_debenture'),
-#     ]
+    ]
 
 divisoes_patterns = [
     url(r'^criar-transferencias/$', views.divisoes.divisoes.criar_transferencias, name='criar_transferencias'),
@@ -89,19 +104,20 @@ divisoes_patterns = [
     url(r'^listar-transferencias/$', views.divisoes.divisoes.listar_transferencias, name='listar_transferencias'),
     ]
 
-# fiis_patterns = [
-# #     url(r'^acompanhamento-mensal/$', views.fii.fii.acompanhamento_mensal_fii, name='acompanhamento_mensal_fii'),
+# Redirecionamento
+fiis_patterns = [
+#     url(r'^acompanhamento-mensal/$', views.fii.fii.acompanhamento_mensal_fii, name='acompanhamento_mensal_fii'),
 #     url(r'^acompanhamento/$', views.fii.fii.acompanhamento_fii, name='acompanhamento_fii'),
-#     url(r'^calcular-resultado-corretagem/$', views.fii.fii.calcular_resultado_corretagem, name='calcular_resultado_corretagem'),
-#     url(r'^detalhar-provento/(?P<provento_id>\d+)/$', views.fii.fii.detalhar_provento, name='detalhar_provento_fii'),
-#     url(r'^editar-operacao/(?P<operacao_id>\d+)/$', views.fii.fii.editar_operacao_fii, name='editar_operacao_fii'),
+    url(r'^calcular_resultado_corretagem/$', RedirectView.as_view(pattern_name='fii:calcular_resultado_corretagem', permanent=True)),
+    url(r'^detalhar_provento/(?P<provento_id>\d+)/$', RedirectView.as_view(pattern_name='fii:detalhar_provento_fii', permanent=True)),
+    url(r'^editar_operacao/(?P<operacao_id>\d+)/$', RedirectView.as_view(pattern_name='fii:editar_operacao_fii', permanent=True)),
 #     url(r'^historico/$', views.fii.fii.historico_fii, name='historico_fii'),
-#     url(r'^inserir-operacao-fii/$', views.fii.fii.inserir_operacao_fii, name='inserir_operacao_fii'),
-#     url(r'^listar-proventos/$', views.fii.fii.listar_proventos, name='listar_proventos_fii'),
-#     url(r'^listar-tickers-fiis/$', views.fii.fii.listar_tickers_fiis, name='listar_tickers_fii'),
+    url(r'^inserir_operacao_fii/$', RedirectView.as_view(pattern_name='fii:inserir_operacao_fii', permanent=True)),
+    url(r'^listar_proventos/$', RedirectView.as_view(pattern_name='fii:listar_proventos_fii', permanent=True)),
+    url(r'^listar_tickers_fiis/$', RedirectView.as_view(pattern_name='fii:listar_tickers_fii', permanent=True)),
 #     url(r'^painel/$', views.fii.fii.painel, name='painel_fii'),
 #     url(r'^sobre/$', views.fii.fii.sobre, name='sobre_fii'),
-#     ]
+    ]
 
 gerador_proventos_patterns = [
     url(r'^baixar-documento-provento/(?P<id_documento>\d+)/$', views.gerador_proventos.gerador_proventos.baixar_documento_provento, name='baixar_documento_provento'),
@@ -128,32 +144,40 @@ imposto_renda_patterns = [
     url(r'^listar-anos/$', views.imposto_renda.imposto_renda.listar_anos, name='listar_anos_imposto_renda'),
     ]
 
-# lci_lca_patterns = [
-#     url(r'^detalhar-lci-lca/(?P<lci_lca_id>\d+)/$', views.lc.lc.detalhar_lci_lca, name='detalhar_lci_lca'),
-#     url(r'^editar-historico-carencia/(?P<historico_carencia_id>\d+)/$', views.lc.lc.editar_historico_carencia, name='editar_historico_carencia_lci_lca'),
-#     url(r'^editar-historico-porcentagem/(?P<historico_porcentagem_id>\d+)/$', views.lc.lc.editar_historico_porcentagem, name='editar_historico_porcentagem_lci_lca'),
-#     url(r'^editar-lci-lca/(?P<lci_lca_id>\d+)/$', views.lc.lc.editar_lci_lca, name='editar_lci_lca'),
-#     url(r'^editar-operacao/(?P<id>\d+)/$', views.lc.lc.editar_operacao_lc, name='editar_operacao_lci_lca'),
-#     url(r'^historico/$', views.lc.lc.historico, name='historico_lci_lca'),
-#     url(r'^inserir-letra-credito/$', views.lc.lc.inserir_lc, name='inserir_lci_lca'),
-#     url(r'^inserir-operacao-lc/$', views.lc.lc.inserir_operacao_lc, name='inserir_operacao_lci_lca'),
-#     url(r'^listar-letras-credito/$', views.lc.lc.listar_lc, name='listar_lci_lca'),
-#     url(r'^listar-operacoes-passada-carencia/$', views.lc.lc.listar_operacoes_passada_carencia, name='listar_operacoes_passada_carencia'),
-#     url(r'^inserir-historico-carencia-lci-lca/(?P<lci_lca_id>\d+)/$', views.lc.lc.inserir_historico_carencia, name='inserir_historico_carencia_lci_lca'),
-#     url(r'^inserir-historico-porcentagem-lci-lca/(?P<lci_lca_id>\d+)/$', views.lc.lc.inserir_historico_porcentagem, name='inserir_historico_porcentagem_lci_lca'),
-#     url(r'^painel/$', views.lc.lc.painel, name='painel_lci_lca'),
-#     url(r'^sobre/$', views.lc.lc.sobre, name='sobre_lci_lca'),
-#     ]
+# Redirecionamento
+lci_lca_patterns = [
+    url(r'^detalhar_lci_lca/(?P<lci_lca_id>\d+)/$', RedirectView.as_view(pattern_name='lci_lca:detalhar_lci_lca', permanent=True)),
+    url(r'^editar_historico_carencia/(?P<historico_carencia_id>\d+)/$', RedirectView.as_view(pattern_name='lci_lca:editar_historico_carencia_lci_lca', permanent=True)),
+    url(r'^editar_historico_porcentagem/(?P<historico_porcentagem_id>\d+)/$', RedirectView.as_view(pattern_name='lci_lca:editar_historico_porcentagem_lci_lca', permanent=True)),
+    url(r'^editar_lci_lca/(?P<lci_lca_id>\d+)/$', RedirectView.as_view(pattern_name='lci_lca:editar_lci_lca', permanent=True)),
+    url(r'^editar_operacao/(?P<id>\d+)/$', RedirectView.as_view(pattern_name='lci_lca:editar_operacao_lci_lca', permanent=True)),
+    url(r'^historico/$', RedirectView.as_view(pattern_name='lci_lca:historico_lci_lca', permanent=True)),
+    url(r'^inserir_letra_credito/$', RedirectView.as_view(pattern_name='lci_lca:inserir_lci_lca', permanent=True)),
+    url(r'^inserir_operacao_lc/$', RedirectView.as_view(pattern_name='lci_lca:inserir_operacao_lci_lca', permanent=True)),
+    url(r'^listar_letras_credito/$', RedirectView.as_view(pattern_name='lci_lca:listar_lci_lca', permanent=True)),
+    url(r'^listar_operacoes_passada_carencia/$', RedirectView.as_view(pattern_name='lci_lca:listar_operacoes_passada_carencia', permanent=True)),
+    url(r'^inserir_historico_carencia_lci_lca/(?P<lci_lca_id>\d+)/$', RedirectView.as_view(pattern_name='lci_lca:inserir_historico_carencia_lci_lca', permanent=True)),
+    url(r'^inserir_historico_porcentagem_lci_lca/(?P<lci_lca_id>\d+)/$', RedirectView.as_view(pattern_name='lci_lca:inserir_historico_porcentagem_lci_lca', permanent=True)),
+    url(r'^painel/$', RedirectView.as_view(pattern_name='lci_lca:painel_lci_lca', permanent=True)),
+    url(r'^sobre/$', RedirectView.as_view(pattern_name='lci_lca:sobre_lci_lca', permanent=True)),
+    ]
 
+# Redirecionamento
 td_patterns = [
     url(r'^acompanhamento/$', RedirectView.as_view(pattern_name='tesouro_direto:acompanhamento_td', permanent=True)),
     url(r'^buscar-titulos-validos-na-data/$', RedirectView.as_view(pattern_name='tesouro_direto:buscar_titulos_validos_na_data', permanent=True)),
+    url(r'^buscar_titulos_validos_na_data/$', RedirectView.as_view(pattern_name='tesouro_direto:buscar_titulos_validos_na_data', permanent=True)),
     url(r'^detalhar-titulo/(?P<titulo_id>\d+)/$', RedirectView.as_view(pattern_name='tesouro_direto:detalhar_titulo_td', permanent=True)),
+    url(r'^detalhar_titulo/(?P<titulo_id>\d+)/$', RedirectView.as_view(pattern_name='tesouro_direto:detalhar_titulo_td', permanent=True)),
     url(r'^editar-operacao/(?P<operacao_id>\d+)/$', RedirectView.as_view(pattern_name='tesouro_direto:editar_operacao_td', permanent=True)),
+    url(r'^editar_operacao/(?P<operacao_id>\d+)/$', RedirectView.as_view(pattern_name='tesouro_direto:editar_operacao_td', permanent=True)),
     url(r'^historico/$', RedirectView.as_view(pattern_name='tesouro_direto:historico_td', permanent=True)),
     url(r'^inserir-operacao-td/$', RedirectView.as_view(pattern_name='tesouro_direto:inserir_operacao_td', permanent=True)),
+    url(r'^inserir_operacao_td/$', RedirectView.as_view(pattern_name='tesouro_direto:inserir_operacao_td', permanent=True)),
     url(r'^listar-historico-titulo/(?P<titulo_id>\d+)/$', RedirectView.as_view(pattern_name='tesouro_direto:listar_historico_titulo', permanent=True)),
+    url(r'^listar_historico_titulo/(?P<titulo_id>\d+)/$', RedirectView.as_view(pattern_name='tesouro_direto:listar_historico_titulo', permanent=True)),
     url(r'^listar-titulos-td/$', RedirectView.as_view(pattern_name='tesouro_direto:listar_titulos_td', permanent=True)),
+    url(r'^listar_titulos_td/$', RedirectView.as_view(pattern_name='tesouro_direto:listar_titulos_td', permanent=True)),
     url(r'^painel/$', RedirectView.as_view(pattern_name='tesouro_direto:painel_td', permanent=True)),
     url(r'^sobre/$', RedirectView.as_view(pattern_name='tesouro_direto:sobre_td', permanent=True)),
     ]
@@ -197,21 +221,18 @@ urlpatterns = [
     url(r'^divisoes/', include(divisoes_patterns, namespace='divisoes')),
     
     # FII
-#     url(r'^fii/', include(fiis_patterns, namespace='fii')),
+    url(r'^fii/', include(fiis_patterns, namespace='fii_redirect')),
 
     # Tesouro direto
-    url(r'^td/', include(td_patterns, namespace='td')),
+    url(r'^td/', include(td_patterns, namespace='td_redirect')),
 
     # Poupança
     
     # LCA e LCI
-#     url(r'^lci-lca/', include(lci_lca_patterns, namespace='lci_lca')),
-    
-    # CDB e RDB
-#     url(r'^cdb-rdb/', include(cdb_rdb_patterns, namespace='cdb_rdb')),
+    url(r'^lci_lca/', include(lci_lca_patterns, namespace='lci_lca_redirect')),
     
     # Debêntures
-#     url(r'^debentures/', include(debentures_patterns, namespace='debentures')),
+    url(r'^debentures/', include(debentures_patterns, namespace='debentures_redirect')),
     
     # Imposto de renda
     url(r'^imposto-renda/', include(imposto_renda_patterns, namespace='imposto_renda')),
