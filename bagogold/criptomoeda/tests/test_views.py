@@ -112,10 +112,11 @@ class EditarForkTestCase(TestCase):
         response = self.client.post(reverse('criptomoeda:editar_fork', kwargs={'id_fork': fork_id}), {
             'moeda_origem': bitcoin.id, 'moeda_recebida': bcash.id, 'save': 1,
             'data': datetime.date(2017, 7, 1), 'quantidade': Decimal('0.9661'),
-            'divisaoforkcriptomoeda_set-1-divisao': div_geral.id, 'divisaoforkcriptomoeda_set-1-quantidade': Decimal('0.9'),
-            'divisaoforkcriptomoeda_set-1-id': DivisaoForkCriptomoeda.objects.get(fork__id=fork_id, divisao=div_geral).id,
-            'divisaoforkcriptomoeda_set-0-divisao': nova_div.id, 'divisaoforkcriptomoeda_set-0-quantidade': Decimal('0.0661'),
-            'divisaoforkcriptomoeda_set-0-id': DivisaoForkCriptomoeda.objects.get(fork__id=fork_id, divisao=nova_div).id,
+            'divisaoforkcriptomoeda_set-INITIAL_FORMS': '2', 'divisaoforkcriptomoeda_set-TOTAL_FORMS': '2',
+            'divisaoforkcriptomoeda_set-0-divisao': div_geral.id, 'divisaoforkcriptomoeda_set-0-quantidade': Decimal('0.9'),
+            'divisaoforkcriptomoeda_set-0-id': DivisaoForkCriptomoeda.objects.get(fork__id=fork_id, divisao=div_geral).id,
+            'divisaoforkcriptomoeda_set-1-divisao': nova_div.id, 'divisaoforkcriptomoeda_set-1-quantidade': Decimal('0.0661'),
+            'divisaoforkcriptomoeda_set-1-id': DivisaoForkCriptomoeda.objects.get(fork__id=fork_id, divisao=nova_div).id,
         })
         
         self.assertEqual(response.status_code, 302)
@@ -131,8 +132,11 @@ class EditarForkTestCase(TestCase):
         response = self.client.post(reverse('criptomoeda:editar_fork', kwargs={'id_fork': fork_id}), {
             'moeda_origem': bitcoin.id, 'moeda_recebida': bcash.id, 'save': 1,
             'data': datetime.date(2017, 7, 1), 'quantidade': Decimal('0.9661'),
+            'divisaoforkcriptomoeda_set-INITIAL_FORMS': '2', 'divisaoforkcriptomoeda_set-TOTAL_FORMS': '2',
             'divisaoforkcriptomoeda_set-0-divisao': div_geral.id, 'divisaoforkcriptomoeda_set-0-quantidade': Decimal('0.9661'),
             'divisaoforkcriptomoeda_set-0-id': DivisaoForkCriptomoeda.objects.get(fork__id=fork_id, divisao=div_geral).id,
+            'divisaoforkcriptomoeda_set-1-divisao': nova_div.id, 'divisaoforkcriptomoeda_set-1-quantidade': Decimal('0.0661'),
+            'divisaoforkcriptomoeda_set-1-id': DivisaoForkCriptomoeda.objects.get(fork__id=fork_id, divisao=nova_div).id,
             'divisaoforkcriptomoeda_set-1-DELETE': 1,
         })
         
@@ -146,6 +150,7 @@ class EditarForkTestCase(TestCase):
         response = self.client.post(reverse('criptomoeda:editar_fork', kwargs={'id_fork': fork_id}), {
             'moeda_origem': bitcoin.id, 'moeda_recebida': bcash.id, 'save': 1,
             'data': datetime.date(2017, 7, 1), 'quantidade': Decimal('0.9661'),
+            'divisaoforkcriptomoeda_set-INITIAL_FORMS': '1', 'divisaoforkcriptomoeda_set-TOTAL_FORMS': '2',
             'divisaoforkcriptomoeda_set-0-divisao': div_geral.id, 'divisaoforkcriptomoeda_set-0-quantidade': Decimal('0.9'),
             'divisaoforkcriptomoeda_set-0-id': DivisaoForkCriptomoeda.objects.get(fork__id=fork_id, divisao=div_geral).id,
             'divisaoforkcriptomoeda_set-1-divisao': nova_div.id, 'divisaoforkcriptomoeda_set-1-quantidade': Decimal('0.0661'),
