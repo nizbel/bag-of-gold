@@ -20,8 +20,12 @@ urlpatterns = [
     url(r'^blog/', include('bagogold.blog.urls', namespace='blog')),
     # App CDB/RDB
     url(r'^cdb-rdb/', include('bagogold.cdb_rdb.urls', namespace='cdb_rdb')),
+    # Redirecionamento
+    url(r'^cdb_rdb/', include('bagogold.cdb_rdb.urls_redirect', namespace='cdb_rdb_redirect')),
     # App CRI/CRA
     url(r'^cri-cra/', include('bagogold.cri_cra.urls', namespace='cri_cra')),
+    # Redirecionamento
+    url(r'^cri_cra/', include('bagogold.cri_cra.urls_redirect', namespace='cri_cra_redirect')),
     # App Criptomoedas
     url(r'^criptomoeda/', include('bagogold.criptomoeda.urls', namespace='criptomoeda')),
     # App Debentures
