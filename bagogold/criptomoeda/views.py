@@ -41,14 +41,14 @@ from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia, \
 def editar_fork(request, id_fork):
     investidor = request.user.investidor
     
-    fork_criptomoeda = get_object_or_404(TransferenciaCriptomoeda, pk=id_fork)
+    fork_criptomoeda = get_object_or_404(Fork, pk=id_fork)
     # Verifica se a operação é do investidor, senão, jogar erro de permissão
     if fork_criptomoeda.investidor != investidor:
         raise PermissionDenied
     
     # Preparar formset para divisoes
-    DivisaoFormSet = inlineformset_factory(TransferenciaCriptomoeda, DivisaoTransferenciaCriptomoeda, fields=('divisao', 'quantidade'),
-                                            extra=1, formset=DivisaoTransferenciaCriptomoedaFormSet)
+    DivisaoFormSet = inlineformset_factory(Fork, DivisaoForkCriptomoeda, fields=('divisao', 'quantidade'),
+                                            extra=1, formset=DivisaoForkCriptomoedaFormSet)
     
     # Testa se investidor possui mais de uma divisão
     varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
