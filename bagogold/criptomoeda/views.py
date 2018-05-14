@@ -37,7 +37,7 @@ from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia, \
 
 
 @login_required
-@adiciona_titulo_descricao('Editar fork', 'Alterar valores de um recebimento de criptomoedas por fork')
+@adiciona_titulo_descricao('Editar Fork', 'Alterar valores de um recebimento de criptomoedas por Fork')
 def editar_fork(request, id_fork):
     investidor = request.user.investidor
     
@@ -55,24 +55,24 @@ def editar_fork(request, id_fork):
     
     if request.method == 'POST':
         if request.POST.get("save"):
-            form_fork_criptomoeda = TransferenciaCriptomoedaForm(request.POST, instance=fork_criptomoeda, investidor=investidor)
+            form_fork = ForkForm(request.POST, instance=fork_criptomoeda, investidor=investidor)
             formset_divisao = DivisaoFormSet(request.POST, instance=fork_criptomoeda, investidor=investidor) if varias_divisoes else None
                 
-            if form_fork_criptomoeda.is_valid():
+            if form_fork.is_valid():
                 if varias_divisoes:
                     if formset_divisao.is_valid():
                         try:
                             with transaction.atomic():
                                 fork_criptomoeda.save()
                                 formset_divisao.save()
-                                messages.success(request, 'Transferência editada com sucesso')
+                                messages.success(request, 'Fork editado com sucesso')
                                 return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
                         except:
-                            messages.error(request, 'Houve um erro ao editar a transferência')
+                            messages.error(request, 'Houve um erro ao editar o Fork')
                             if settings.ENV == 'DEV':
                                 raise
                             elif settings.ENV == 'PROD':
-                                mail_admins(u'Erro ao editar transferência para criptomoeda com várias divisões', traceback.format_exc().decode('utf-8'))
+                                mail_admins(u'Erro ao editar Fork para criptomoeda com várias divisões', traceback.format_exc().decode('utf-8'))
                     for erro in formset_divisao.non_form_errors():
                         messages.error(request, erro)
                         
@@ -80,35 +80,35 @@ def editar_fork(request, id_fork):
                     try:
                         with transaction.atomic():
                             fork_criptomoeda.save()
-                            divisao_operacao = DivisaoOperacaoCriptomoeda.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=fork_criptomoeda)
-                            divisao_operacao.quantidade = fork_criptomoeda.quantidade
-                            divisao_operacao.save()
-                            messages.success(request, 'Transferência editada com sucesso')
+                            divisao_fork = DivisaoForkCriptomoeda.objects.get(divisao=investidor.divisaoprincipal.divisao, fork=fork_criptomoeda)
+                            divisao_fork.quantidade = fork_criptomoeda.quantidade
+                            divisao_fork.save()
+                            messages.success(request, 'Fork editado com sucesso')
                             return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
                     except:
-                        messages.error(request, 'Houve um erro ao editar a transferência')
+                        messages.error(request, 'Houve um erro ao editar o Fork')
                         if settings.ENV == 'DEV':
                             raise
                         elif settings.ENV == 'PROD':
-                            mail_admins(u'Erro ao editar transferência para criptomoeda com uma divisão', traceback.format_exc().decode('utf-8'))
+                            mail_admins(u'Erro ao editar Fork para criptomoeda com uma divisão', traceback.format_exc().decode('utf-8'))
                 
-            for erro in form_fork_criptomoeda.non_field_errors():
+            for erro in form_fork.non_field_errors():
                 messages.error(request, erro)
 #                         print '%s %s'  % (divisao_criptomoeda.quantidade, divisao_criptomoeda.divisao)
                 
         elif request.POST.get("delete"):
-            divisao_criptomoeda = DivisaoTransferenciaCriptomoeda.objects.filter(fork=fork_criptomoeda)
-            for divisao in divisao_criptomoeda:
+            divisao_fork = DivisaoForkCriptomoeda.objects.filter(fork=fork_criptomoeda)
+            for divisao in divisao_fork:
                 divisao.delete()
             fork_criptomoeda.delete()
-            messages.success(request, 'Transferência apagada com sucesso')
+            messages.success(request, 'Fork apagado com sucesso')
             return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
  
     else:
-        form_fork_criptomoeda = TransferenciaCriptomoedaForm(instance=fork_criptomoeda, investidor=investidor)
+        form_fork = ForkForm(instance=fork_criptomoeda, investidor=investidor)
         formset_divisao = DivisaoFormSet(instance=fork_criptomoeda, investidor=investidor)
         
-    return TemplateResponse(request, 'criptomoedas/editar_fork.html', {'form_fork_criptomoeda': form_fork_criptomoeda, 'formset_divisao': formset_divisao, \
+    return TemplateResponse(request, 'criptomoedas/editar_fork.html', {'form_fork': form_fork, 'formset_divisao': formset_divisao, \
                                                                                              'varias_divisoes': varias_divisoes})  
     
 
@@ -289,9 +289,9 @@ def editar_transferencia(request, id_transferencia):
                     try:
                         with transaction.atomic():
                             transferencia_criptomoeda.save()
-                            divisao_operacao = DivisaoOperacaoCriptomoeda.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=transferencia_criptomoeda)
-                            divisao_operacao.quantidade = transferencia_criptomoeda.quantidade
-                            divisao_operacao.save()
+                            divisao_transferencia = DivisaoOperacaoCriptomoeda.objects.get(divisao=investidor.divisaoprincipal.divisao, transferencia=transferencia_criptomoeda)
+                            divisao_transferencia.quantidade = transferencia_criptomoeda.quantidade
+                            divisao_transferencia.save()
                             messages.success(request, 'Transferência editada com sucesso')
                             return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
                     except:
