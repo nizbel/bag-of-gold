@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.conf.urls import url
-import views
+from django.views.generic.base import RedirectView
 
 urlpatterns = [
     url(r'^detalhar_cdb_rdb/(?P<cdb_rdb_id>\d+)/$', RedirectView.as_view(pattern_name='cdb_rdb:detalhar_cdb_rdb', permanent=True)),
