@@ -68,11 +68,11 @@
             {% if varias_divisoes %}
             <div class="row" id="forms">
                 <h2 class="font-yellow-crusta" align="center">
-                    <strong>Divisıes</strong> <button id="add-another" class="btn btn-icon-only green-steel" type="button"><i class="fa fa-plus"></i></button>
+                    <strong>Divis√µes</strong> <button id="add-another" class="btn btn-icon-only green-steel" type="button"><i class="fa fa-plus"></i></button>
                 </h2>
                 {{ formset_divisao.management_form }}
                 {% for form_divisao in formset_divisao %}
-                <div class="col-md-12"><h3 class="font-yellow-crusta" align="center"><strong>Divis„o {{ forloop.counter }}</strong></h3><br/></div>
+                <div class="col-md-12"><h3 class="font-yellow-crusta" align="center"><strong>Divis√£o {{ forloop.counter }}</strong></h3><br/></div>
                 <div class="col-md-11" id="divisao-{{forloop.counter0}}">
                     <div class="row">
                         <div class="form-group col-md-6 {% if form_divisao.divisao.errors %} has-error {% endif %}">
@@ -120,14 +120,14 @@
                 </div>
             </div>
         </div>
-        <div class="modal fade" id="exclusao" tabindex="-1" role="basic" aria-hidden="true" data-backdrop="static" data-keyboard="false"  style="display: none;">
+        <div class="modal fade" id="exclusao" tabindex="-1" role="basic" aria-hidden="true" data-backdrop="static" data-keyboard="false" style="display: none;">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
-                        <h4 class="modal-title">Confirmar exclus„o de Fork</h4>
+                        <h4 class="modal-title">Confirmar exclus√£o de Fork</h4>
                     </div>
-                    <div class="modal-body">Confirma a exclus„o do Fork?</div>
+                    <div class="modal-body">Confirma a exclus√£o do Fork?</div>
                     <div class="modal-footer">
                         <a class="btn dark btn-outline" data-dismiss="modal">Cancelar</a>
                         <button type="submit" name="delete" value="1" class="btn red-thunderbird">Confirmar</button>
