@@ -4,18 +4,18 @@ from django.core.management.base import BaseCommand
 import traceback
 
 from bagogold import settings
-from bagogold.bagogold.utils.taxas_indexacao import buscar_valores_mensal_ipca
+from bagogold.bagogold.utils.taxas_indexacao import buscar_ipca_projetado
 
 
 class Command(BaseCommand):
-    help = 'Preenche valores para o IPCA'
+    help = 'Busca valores para o IPCA Projetado'
 
     def handle(self, *args, **options):
         try:
-            buscar_valores_mensal_ipca()
+            buscar_ipca_projetado()
         except:
             if settings.ENV == 'DEV':
                 print traceback.format_exc()
             elif settings.ENV == 'PROD':
-                mail_admins(u'Erro em Preencher histórico do IPCA', traceback.format_exc().decode('utf-8'))
+                mail_admins(u'Erro em Buscar IPCA projetado', traceback.format_exc().decode('utf-8'))
 
