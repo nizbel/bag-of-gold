@@ -24,6 +24,7 @@ class HistoricoTaxaSelic (models.Model):
 class HistoricoIPCA (models.Model):
     valor = models.DecimalField(u'Valor IPCA', max_digits=12, decimal_places=9)
     data_inicio = models.DateField(u'Data de início')
+    data_fim = models.DateField(u'Data de fim')
     
     class Meta():
         unique_together = (('data_inicio', ),)

@@ -218,7 +218,9 @@ def buscar_valores_mensal_ipca():
                 if valor_mes_anterior > 0 and not HistoricoIPCA.objects.filter(data_inicio=datetime.date(ano_atual, mes, 16), ipcaprojetado__isnull=True).exists():
                     indice_mes_atual = (valor_mes_atual / valor_mes_anterior) - 1
                     data_inicio = datetime.date(ano_atual, mes, 16)
-                    novo = HistoricoIPCA(valor=indice_mes_atual, data_inicio=data_inicio)
+                    ultimo_dia_util = calendar.monthrange(data_inicio.year, data_inicio.month)[1]
+                    data_fim = (data_inicio.replace(day=ultimo_dia_util) + datetime.timedelta(days=1)).replace(day=15)
+                    novo = HistoricoIPCA(valor=indice_mes_atual, data_inicio=data_inicio, data_fim=data_fim)
                     
                     # Apagar valores projetados anteriores
                     if HistoricoIPCA.objects.filter(ipcaprojetado__isnull=False, data_inicio__lte=data_inicio).exists():
