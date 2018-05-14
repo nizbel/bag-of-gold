@@ -89,19 +89,20 @@ divisoes_patterns = [
     url(r'^listar-transferencias/$', views.divisoes.divisoes.listar_transferencias, name='listar_transferencias'),
     ]
 
-# fiis_patterns = [
-# #     url(r'^acompanhamento-mensal/$', views.fii.fii.acompanhamento_mensal_fii, name='acompanhamento_mensal_fii'),
+# Redirecionamento
+fiis_patterns = [
+#     url(r'^acompanhamento-mensal/$', views.fii.fii.acompanhamento_mensal_fii, name='acompanhamento_mensal_fii'),
 #     url(r'^acompanhamento/$', views.fii.fii.acompanhamento_fii, name='acompanhamento_fii'),
-#     url(r'^calcular-resultado-corretagem/$', views.fii.fii.calcular_resultado_corretagem, name='calcular_resultado_corretagem'),
-#     url(r'^detalhar-provento/(?P<provento_id>\d+)/$', views.fii.fii.detalhar_provento, name='detalhar_provento_fii'),
-#     url(r'^editar-operacao/(?P<operacao_id>\d+)/$', views.fii.fii.editar_operacao_fii, name='editar_operacao_fii'),
+    url(r'^calcular_resultado_corretagem/$', views.fii.fii.calcular_resultado_corretagem, name='calcular_resultado_corretagem'),
+    url(r'^detalhar_provento/(?P<provento_id>\d+)/$', views.fii.fii.detalhar_provento, name='detalhar_provento_fii'),
+    url(r'^editar_operacao/(?P<operacao_id>\d+)/$', views.fii.fii.editar_operacao_fii, name='editar_operacao_fii'),
 #     url(r'^historico/$', views.fii.fii.historico_fii, name='historico_fii'),
-#     url(r'^inserir-operacao-fii/$', views.fii.fii.inserir_operacao_fii, name='inserir_operacao_fii'),
-#     url(r'^listar-proventos/$', views.fii.fii.listar_proventos, name='listar_proventos_fii'),
-#     url(r'^listar-tickers-fiis/$', views.fii.fii.listar_tickers_fiis, name='listar_tickers_fii'),
+    url(r'^inserir_operacao_fii/$', views.fii.fii.inserir_operacao_fii, name='inserir_operacao_fii'),
+    url(r'^listar_proventos/$', views.fii.fii.listar_proventos, name='listar_proventos_fii'),
+    url(r'^listar_tickers_fiis/$', views.fii.fii.listar_tickers_fiis, name='listar_tickers_fii'),
 #     url(r'^painel/$', views.fii.fii.painel, name='painel_fii'),
 #     url(r'^sobre/$', views.fii.fii.sobre, name='sobre_fii'),
-#     ]
+    ]
 
 gerador_proventos_patterns = [
     url(r'^baixar-documento-provento/(?P<id_documento>\d+)/$', views.gerador_proventos.gerador_proventos.baixar_documento_provento, name='baixar_documento_provento'),
@@ -128,6 +129,7 @@ imposto_renda_patterns = [
     url(r'^listar-anos/$', views.imposto_renda.imposto_renda.listar_anos, name='listar_anos_imposto_renda'),
     ]
 
+# Redirecionamento
 lci_lca_patterns = [
     url(r'^detalhar_lci_lca/(?P<lci_lca_id>\d+)/$', RedirectView.as_view(pattern_name='lci_lca:detalhar_lci_lca', permanent=True)),
     url(r'^editar_historico_carencia/(?P<historico_carencia_id>\d+)/$', RedirectView.as_view(pattern_name='lci_lca:editar_historico_carencia_lci_lca', permanent=True)),
@@ -145,15 +147,22 @@ lci_lca_patterns = [
     url(r'^sobre/$', RedirectView.as_view(pattern_name='lci_lca:sobre_lci_lca', permanent=True)),
     ]
 
+# Redirecionamento
 td_patterns = [
     url(r'^acompanhamento/$', RedirectView.as_view(pattern_name='tesouro_direto:acompanhamento_td', permanent=True)),
     url(r'^buscar-titulos-validos-na-data/$', RedirectView.as_view(pattern_name='tesouro_direto:buscar_titulos_validos_na_data', permanent=True)),
+    url(r'^buscar_titulos_validos_na_data/$', RedirectView.as_view(pattern_name='tesouro_direto:buscar_titulos_validos_na_data', permanent=True)),
     url(r'^detalhar-titulo/(?P<titulo_id>\d+)/$', RedirectView.as_view(pattern_name='tesouro_direto:detalhar_titulo_td', permanent=True)),
+    url(r'^detalhar_titulo/(?P<titulo_id>\d+)/$', RedirectView.as_view(pattern_name='tesouro_direto:detalhar_titulo_td', permanent=True)),
     url(r'^editar-operacao/(?P<operacao_id>\d+)/$', RedirectView.as_view(pattern_name='tesouro_direto:editar_operacao_td', permanent=True)),
+    url(r'^editar_operacao/(?P<operacao_id>\d+)/$', RedirectView.as_view(pattern_name='tesouro_direto:editar_operacao_td', permanent=True)),
     url(r'^historico/$', RedirectView.as_view(pattern_name='tesouro_direto:historico_td', permanent=True)),
     url(r'^inserir-operacao-td/$', RedirectView.as_view(pattern_name='tesouro_direto:inserir_operacao_td', permanent=True)),
+    url(r'^inserir_operacao_td/$', RedirectView.as_view(pattern_name='tesouro_direto:inserir_operacao_td', permanent=True)),
     url(r'^listar-historico-titulo/(?P<titulo_id>\d+)/$', RedirectView.as_view(pattern_name='tesouro_direto:listar_historico_titulo', permanent=True)),
+    url(r'^listar_historico_titulo/(?P<titulo_id>\d+)/$', RedirectView.as_view(pattern_name='tesouro_direto:listar_historico_titulo', permanent=True)),
     url(r'^listar-titulos-td/$', RedirectView.as_view(pattern_name='tesouro_direto:listar_titulos_td', permanent=True)),
+    url(r'^listar_titulos_td/$', RedirectView.as_view(pattern_name='tesouro_direto:listar_titulos_td', permanent=True)),
     url(r'^painel/$', RedirectView.as_view(pattern_name='tesouro_direto:painel_td', permanent=True)),
     url(r'^sobre/$', RedirectView.as_view(pattern_name='tesouro_direto:sobre_td', permanent=True)),
     ]
@@ -197,7 +206,7 @@ urlpatterns = [
     url(r'^divisoes/', include(divisoes_patterns, namespace='divisoes')),
     
     # FII
-#     url(r'^fii/', include(fiis_patterns, namespace='fii')),
+    url(r'^fii/', include(fiis_patterns, namespace='fii')),
 
     # Tesouro direto
     url(r'^td/', include(td_patterns, namespace='td')),
