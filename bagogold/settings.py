@@ -42,7 +42,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
-    'yahoo_finance',
+#     'yahoo_finance',
     
     #Bag-O-Gold
     'bagogold.bagogold',
@@ -57,6 +57,7 @@ INSTALLED_APPS = (
     'bagogold.outros_investimentos',
     'bagogold.lc',
     'bagogold.tesouro_direto',
+    'bagogold.debentures',
 )
 
 MIDDLEWARE_CLASSES = (
