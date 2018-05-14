@@ -1,2 +1,2 @@
 # -*- coding: utf-8 -*-
-default_app_config = 'bagogold.lc.apps.DebenturesConfig'
+default_app_config = 'bagogold.debentures.apps.DebenturesConfig'
