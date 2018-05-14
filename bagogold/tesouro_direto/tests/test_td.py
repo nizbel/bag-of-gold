@@ -67,7 +67,7 @@ class ComandoPreencherHistoricoAnoAtualTDTestCase(TestCase):
         
 class CalculoImpostoRendaTDTestCase(TestCase):
     def setUp(self):
-         user = User.objects.create(username='tester')
+        user = User.objects.create(username='tester')
         
         titulo_1 = Titulo.objects.create(tipo='LTN', data_vencimento=datetime.date(2017, 1, 1), data_inicio=datetime.date(2013, 1, 1))
         
@@ -85,4 +85,10 @@ class CalculoImpostoRendaTDTestCase(TestCase):
         """Testar valor de imposto de renda para 2018"""
         pass
         
-    
+class CalcularValorAcumuladoIPCATestCase(TestCase):
+    def setUp(self):
+        # Preparar título IPCA
+        
+    def test_acumulado_no_dia_9_5_2018(self):
+        """Testa o valor acumulado do IPCA para 09/05/2018"""
+        pass

@@ -3,7 +3,6 @@ from StringIO import StringIO
 import calendar
 import datetime
 from decimal import Decimal
-from django.db.models.expressions import Value, F
 from django.db.models.query_utils import Q
 from ftplib import FTP
 import re
@@ -12,13 +11,11 @@ import zipfile
 
 from django.db import transaction
 from django.db.models.aggregates import Count
-from django.db.models.fields import DateField, IntegerField
 import pyexcel
 
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI, \
     HistoricoIPCA, HistoricoTaxaSelic, IPCAProjetado
-from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo, \
-    verifica_se_dia_util
+from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo
 import pyexcel.ext.xls
 
 
@@ -235,19 +232,29 @@ def buscar_valores_mensal_ipca():
                 if valor_mes_anterior > 0 and not HistoricoIPCA.objects.filter(data_inicio=datetime.date(ano_atual, mes, 16), ipcaprojetado__isnull=True).exists():
                     indice_mes_atual = (valor_mes_atual / valor_mes_anterior) - 1
                     data_inicio = datetime.date(ano_atual, mes, 16)
-                    ultimo_dia_util = calendar.monthrange(data_inicio.year, data_inicio.month)[1]
-                    data_fim = (data_inicio.replace(day=ultimo_dia_util) + datetime.timedelta(days=1)).replace(day=15)
-                    novo = HistoricoIPCA(valor=indice_mes_atual, data_inicio=data_inicio, data_fim=data_fim)
                     
-                    # Apagar valores projetados anteriores
-                    if HistoricoIPCA.objects.filter(ipcaprojetado__isnull=False, data_inicio__lte=data_inicio).exists():
-                        HistoricoIPCA.objects.filter(ipcaprojetado__isnull=False, data_inicio__lte=data_inicio).delete()
-                    
-                    # Salvar novo valor
-                    novo.save()
+                    gerar_ipca_oficial(indice_mes_atual, data_inicio)
 #                     print HistoricoIPCA.objects.all().count(), novo.valor, novo.data_inicio
                 valor_mes_anterior = valor_mes_atual
-                
+
+def gerar_ipca_oficial(valor, data_inicio):
+    """
+    Gera valor de IPCA oficial
+    
+    Parâmetros: Valor do IPCA no mês
+                Data de início
+    """
+    ultimo_dia_util = calendar.monthrange(data_inicio.year, data_inicio.month)[1]
+    data_fim = (data_inicio.replace(day=ultimo_dia_util) + datetime.timedelta(days=1)).replace(day=15)
+    novo = HistoricoIPCA(valor=valor, data_inicio=data_inicio, data_fim=data_fim)
+    
+    # Apagar valores projetados anteriores
+    if HistoricoIPCA.objects.filter(ipcaprojetado__isnull=False, data_inicio__lte=data_inicio).exists():
+        HistoricoIPCA.objects.filter(ipcaprojetado__isnull=False, data_inicio__lte=data_inicio).delete()
+    
+    # Salvar novo valor
+    novo.save()
+    
 def buscar_ipca_projetado():
     """Busca valores de IPCA projetado no site da Anbima"""
     req = Request('http://www.anbima.com.br/pt_br/informar/estatisticas/precos-e-indices/projecao-de-inflacao-gp-m.htm')
@@ -295,3 +302,6 @@ def buscar_ipca_projetado():
             else:
                 print HistoricoIPCA.objects.filter(data_inicio=data_inicio, ipcaprojetado__isnull=False).exists()
                 
+def gerar_ipca_projetado():
+    """Gera valor de IPCA projetado"""
+    pass

@@ -28,7 +28,7 @@ from bagogold.bagogold.models.debentures import OperacaoDebenture, \
 from bagogold.bagogold.models.divisoes import TransferenciaEntreDivisoes, \
     Divisao
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
-from bagogold.bagogold.utils.debenture import calcular_valor_debentures_ate_dia
+from bagogold.debentures.utils import calcular_valor_debentures_ate_dia
 from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
     buscar_totais_atuais_investimentos, buscar_proventos_a_receber, \
     buscar_proventos_a_receber_data_ex_futura, buscar_operacoes_no_periodo
