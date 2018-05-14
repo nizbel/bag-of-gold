@@ -66,16 +66,17 @@ acoes_patterns = [
     url(r'^trading/', include(acoes_trading_patterns, namespace='trading')),
     ]
 
-# debentures_patterns = [
-#     url(r'^detalhar-debenture/(?P<debenture_id>\d+)/$', views.debentures.debentures.detalhar_debenture, name='detalhar_debenture'),
-#     url(r'^editar-operacao/(?P<operacao_id>\d+)/$', views.debentures.debentures.editar_operacao_debenture, name='editar_operacao_debenture'),
+# Redirecionamento
+debentures_patterns = [
+    url(r'^detalhar_debenture/(?P<debenture_id>\d+)/$', RedirectView.as_view(pattern_name='debentures:detalhar_debenture', permanent=True)),
+    url(r'^editar_operacao/(?P<operacao_id>\d+)/$', RedirectView.as_view(pattern_name='debentures:editar_operacao_debenture', permanent=True)),
 #     url(r'^historico/$', views.debentures.debentures.historico, name='historico_debenture'),
-#     url(r'^inserir-operacao-debenture/$', views.debentures.debentures.inserir_operacao_debenture, name='inserir_operacao_debenture'),
-#     url(r'^listar-debentures/$', views.debentures.debentures.listar_debentures, name='listar_debentures'),
-#     url(r'^listar-debentures-validas-na-data/$', views.debentures.debentures.listar_debentures_validas_na_data, name='listar_debentures_validas_na_data'),
+    url(r'^inserir_operacao_debenture/$', RedirectView.as_view(pattern_name='debentures:inserir_operacao_debenture', permanent=True)),
+    url(r'^listar_debentures/$', RedirectView.as_view(pattern_name='debentures:listar_debentures', permanent=True)),
+    url(r'^listar_debentures_validas_na_data/$', RedirectView.as_view(pattern_name='debentures:listar_debentures_validas_na_data', permanent=True)),
 #     url(r'^painel/$', views.debentures.debentures.painel, name='painel_debenture'),
 #     url(r'^sobre/$', views.debentures.debentures.sobre, name='sobre_debenture'),
-#     ]
+    ]
 
 divisoes_patterns = [
     url(r'^criar-transferencias/$', views.divisoes.divisoes.criar_transferencias, name='criar_transferencias'),
@@ -93,13 +94,13 @@ divisoes_patterns = [
 fiis_patterns = [
 #     url(r'^acompanhamento-mensal/$', views.fii.fii.acompanhamento_mensal_fii, name='acompanhamento_mensal_fii'),
 #     url(r'^acompanhamento/$', views.fii.fii.acompanhamento_fii, name='acompanhamento_fii'),
-    url(r'^calcular_resultado_corretagem/$', views.fii.fii.calcular_resultado_corretagem, name='calcular_resultado_corretagem'),
-    url(r'^detalhar_provento/(?P<provento_id>\d+)/$', views.fii.fii.detalhar_provento, name='detalhar_provento_fii'),
-    url(r'^editar_operacao/(?P<operacao_id>\d+)/$', views.fii.fii.editar_operacao_fii, name='editar_operacao_fii'),
+    url(r'^calcular_resultado_corretagem/$', RedirectView.as_view(pattern_name='fii:calcular_resultado_corretagem', permanent=True)),
+    url(r'^detalhar_provento/(?P<provento_id>\d+)/$', RedirectView.as_view(pattern_name='fii:detalhar_provento_fii', permanent=True)),
+    url(r'^editar_operacao/(?P<operacao_id>\d+)/$', RedirectView.as_view(pattern_name='fii:editar_operacao_fii', permanent=True)),
 #     url(r'^historico/$', views.fii.fii.historico_fii, name='historico_fii'),
-    url(r'^inserir_operacao_fii/$', views.fii.fii.inserir_operacao_fii, name='inserir_operacao_fii'),
-    url(r'^listar_proventos/$', views.fii.fii.listar_proventos, name='listar_proventos_fii'),
-    url(r'^listar_tickers_fiis/$', views.fii.fii.listar_tickers_fiis, name='listar_tickers_fii'),
+    url(r'^inserir_operacao_fii/$', RedirectView.as_view(pattern_name='fii:inserir_operacao_fii', permanent=True)),
+    url(r'^listar_proventos/$', RedirectView.as_view(pattern_name='fii:listar_proventos_fii', permanent=True)),
+    url(r'^listar_tickers_fiis/$', RedirectView.as_view(pattern_name='fii:listar_tickers_fii', permanent=True)),
 #     url(r'^painel/$', views.fii.fii.painel, name='painel_fii'),
 #     url(r'^sobre/$', views.fii.fii.sobre, name='sobre_fii'),
     ]
@@ -206,21 +207,21 @@ urlpatterns = [
     url(r'^divisoes/', include(divisoes_patterns, namespace='divisoes')),
     
     # FII
-    url(r'^fii/', include(fiis_patterns, namespace='fii')),
+    url(r'^fii/', include(fiis_patterns, namespace='fii_redirect')),
 
     # Tesouro direto
-    url(r'^td/', include(td_patterns, namespace='td')),
+    url(r'^td/', include(td_patterns, namespace='td_redirect')),
 
     # Poupança
     
     # LCA e LCI
-    url(r'^lci_lca/', include(lci_lca_patterns, namespace='lci_lca')),
+    url(r'^lci_lca/', include(lci_lca_patterns, namespace='lci_lca_redirect')),
     
     # CDB e RDB
 #     url(r'^cdb-rdb/', include(cdb_rdb_patterns, namespace='cdb_rdb')),
     
     # Debêntures
-#     url(r'^debentures/', include(debentures_patterns, namespace='debentures')),
+    url(r'^debentures/', include(debentures_patterns, namespace='debentures_redirect')),
     
     # Imposto de renda
     url(r'^imposto-renda/', include(imposto_renda_patterns, namespace='imposto_renda')),
