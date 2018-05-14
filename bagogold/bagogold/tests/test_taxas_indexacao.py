@@ -112,7 +112,8 @@ class AtualizacaoTaxasTestCase(TestCase):
         
 class BuscarTaxasIPCATesteCase(TestCase):
     def setUp(self):
-        
+        pass
+    
     def test_buscar_historico_ipca(self):
         """Testa se a busca por histórico de IPCA está funcionando"""
         pass
