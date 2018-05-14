@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.conf.urls import url
-import views
+from django.views.generic.base import RedirectView
 
 urlpatterns = [
     url(r'^detalhar_fundo/(?P<id_fundo>\d+)/$', RedirectView.as_view(pattern_name='fundo_investimento:detalhar_fundo_id', permanent=True)),
