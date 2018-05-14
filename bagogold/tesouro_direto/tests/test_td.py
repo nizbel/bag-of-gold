@@ -1,13 +1,19 @@
 # -*- coding: utf-8 -*-
-from bagogold.tesouro_direto.models import Titulo, OperacaoTitulo, HistoricoTitulo
-from bagogold.tesouro_direto.utils import quantidade_titulos_ate_dia_por_titulo, \
-    calcular_valor_td_ate_dia, quantidade_titulos_ate_dia
+import datetime
 from decimal import Decimal
 from django.contrib.auth.models import User
+
 from django.core.management import call_command
 from django.db.models.aggregates import Sum
 from django.test import TestCase
-import datetime
+
+from bagogold.bagogold.management.commands import buscar_historico_ipca
+from bagogold.bagogold.models.taxas_indexacao import HistoricoIPCA
+from bagogold.tesouro_direto.models import Titulo, OperacaoTitulo, \
+    HistoricoTitulo
+from bagogold.tesouro_direto.utils import quantidade_titulos_ate_dia_por_titulo, \
+    calcular_valor_td_ate_dia, quantidade_titulos_ate_dia
+
 
 class TesouroDiretoTestCase(TestCase):
     
@@ -134,7 +140,7 @@ class CalcularValorVencimentoSelicTestCase(TestCase):
         Titulo.objects.create(tipo=Titulo.TIPO_OFICIAL_SELIC, data_vencimento=datetime.date(2024, 8, 1), data_inicio=datetime.date(2008, 8, 1))
         
         # Preparar histórico de Selic
-        buscar_historico_selic()
+#         buscar_historico_selic()
         
     def test_vencimento_no_dia_9_5_2018(self):
         """Testa o valor de vencimento do IPCA para 09/05/2018"""
