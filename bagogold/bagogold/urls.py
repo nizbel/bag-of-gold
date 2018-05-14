@@ -32,9 +32,17 @@ inicio_patterns = [
 acoes_geral_patterns = [
     url(r'^detalhar-provento/(?P<provento_id>\d+)/$', views.acoes.acoes.detalhar_provento, name='detalhar_provento_acao'),
     url(r'^estatisticas-acao/(?P<ticker>\w+)/$', views.acoes.acoes.estatisticas_acao, name='estatisticas_acao_bh'),
+    # Redirecionamento
+    url(r'^estatisticas_acao/(?P<ticker>\w+)/$', RedirectView.as_view(pattern_name='acoes:geral:estatisticas_acao_bh', permanent=True)),
+    # Redirecionamento
+    url(r'^buyandhold/estatisticas_acao/(?P<ticker>\w+)/$', RedirectView.as_view(pattern_name='acoes:geral:estatisticas_acao_bh', permanent=True)),
     url(r'^listar-acoes/$', views.acoes.acoes.listar_acoes, name='listar_acoes'),
+    # Redirecionamento
+    url(r'^listar_acoes/$',  RedirectView.as_view(pattern_name='acoes:geral:listar_acoes', permanent=True)),
     url(r'^listar-tickers-acoes/$', views.acoes.acoes.listar_tickers_acoes, name='listar_tickers_acoes'),
     url(r'^listar-proventos/$', views.acoes.acoes.listar_proventos, name='listar_proventos_acao'),
+    # Redirecionamento
+    url(r'^listar_proventos/$',  RedirectView.as_view(pattern_name='acoes:geral:listar_proventos_acao', permanent=True)),
     url(r'^sobre/$', views.acoes.acoes.sobre, name='sobre_acoes'),
     ]
 
@@ -52,10 +60,16 @@ acoes_bh_patterns = [
 
 acoes_trading_patterns = [
     url(r'^acompanhamento-mensal/$', views.acoes.trade.acompanhamento_mensal, name='acompanhamento_mensal'),
+    # Redirecionamento
+    url(r'^acompanhamento_mensal/$',  RedirectView.as_view(pattern_name='acoes:trading:acompanhamento_mensal', permanent=True)),
     url(r'^editar-operacao/(?P<operacao_id>\d+)/$', views.acoes.trade.editar_operacao, name='editar_operacao_t'),
     url(r'^editar-operacao-acao/(?P<operacao_id>\d+)/$', views.acoes.trade.editar_operacao_acao, name='editar_operacao_acao_t'),
     url(r'^historico-operacoes/$', views.acoes.trade.historico_operacoes, name='historico_operacoes'),
+    # Redirecionamento
+    url(r'^historico_operacoes/$',  RedirectView.as_view(pattern_name='acoes:trading:historico_operacoes', permanent=True)),
     url(r'^historico-operacoes-cv/$', views.acoes.trade.historico_operacoes_cv, name='historico_operacoes_cv'),
+    # Redirecionamento
+    url(r'^historico_operacoes_cv/$',  RedirectView.as_view(pattern_name='acoes:trading:historico_operacoes_cv', permanent=True)),
     url(r'^inserir-operacao/$', views.acoes.trade.inserir_operacao, name='inserir_operacao_t'),
     url(r'^inserir-operacao-acao/$', views.acoes.trade.inserir_operacao_acao, name='inserir_operacao_acao_t'),
     ]
@@ -218,7 +232,7 @@ urlpatterns = [
     url(r'^lci_lca/', include(lci_lca_patterns, namespace='lci_lca_redirect')),
     
     # CDB e RDB
-#     url(r'^cdb-rdb/', include(cdb_rdb_patterns, namespace='cdb_rdb')),
+    url(r'^cdb_rdb/', include(cdb_rdb_patterns, namespace='cdb_rdb')),
     
     # Debêntures
     url(r'^debentures/', include(debentures_patterns, namespace='debentures_redirect')),
