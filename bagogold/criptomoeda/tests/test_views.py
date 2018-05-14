@@ -22,23 +22,26 @@ class EditarForkTestCase(TestCase):
         compra_1 = OperacaoCriptomoeda.objects.create(quantidade=Decimal('0.9662'), preco_unitario=Decimal('10000'), data=datetime.date(2017, 6, 6), 
                                                       tipo_operacao='C', criptomoeda=bitcoin, investidor=nizbel.investidor)
         DivisaoOperacaoCriptomoeda.objects.create(operacao=compra_1, divisao=Divisao.objects.get(investidor=nizbel.investidor), quantidade=compra_1.quantidade)
+        Fork.objects.create(moeda_origem=bitcoin, moeda_recebida=bcash, quantidade=Decimal('0.9662'), data=datetime.date(2017, 7, 2), investidor=nizbel.investidor)
         
     def test_usuario_deslogado(self):
         """Testa se redireciona ao receber usuário deslogado"""
-        response = self.client.get(reverse('criptomoeda:editar_fork'))
+        fork_id = Fork.objects.get(moeda_origem__ticker='BTC').id
+        response = self.client.get(reverse('criptomoeda:editar_fork', kwargs={'id_fork': fork_id}))
         self.assertEqual(response.status_code, 302)
-        # TODO Verificar se resposta foi para tela de login
         self.assertTrue('/login/' in response.url)
         
     def test_usuario_logado(self):
         """Testa se resposta da página está OK"""
+        fork_id = Fork.objects.get(moeda_origem__ticker='BTC').id
         self.client.login(username='nizbel', password='nizbel')
-        response = self.client.get(reverse('criptomoeda:editar_fork'))
+        response = self.client.get(reverse('criptomoeda:editar_fork', kwargs={'id_fork': fork_id}))
         self.assertEqual(response.status_code, 200)
     
     def test_editar_fork_sucesso(self):
         """Testa a inserção de fork com sucesso"""
         investidor = Investidor.objects.get(user__username='nizbel')
+        fork_id = Fork.objects.get(moeda_origem__ticker='BTC').id
         self.client.login(username='nizbel', password='nizbel')
         
         bitcoin = Criptomoeda.objects.get(ticker='BTC')
@@ -50,7 +53,7 @@ class EditarForkTestCase(TestCase):
         self.assertFalse(DivisaoForkCriptomoeda.objects.filter(divisao=Divisao.objects.get(investidor=investidor), quantidade=Decimal('0.9662'), 
                                                               fork=Fork.objects.get(investidor=investidor)).exists())
         
-        response = self.client.post(reverse('criptomoeda:editar_fork'), {
+        response = self.client.post(reverse('criptomoeda:editar_fork', kwargs={'id_fork': fork_id}), {
             'moeda_origem': bitcoin.id, 'moeda_recebida': bcash.id,
             'data': datetime.date(2017, 7, 1), 'quantidade': Decimal('0.9662'),
         })
@@ -65,12 +68,13 @@ class EditarForkTestCase(TestCase):
     def test_editar_fork_qtd_insuficiente(self):
         """Testa editar fork com quantidade insuficiente de moeda de origem"""
         investidor = Investidor.objects.get(user__username='nizbel')
+        fork_id = Fork.objects.get(moeda_origem__ticker='BTC').id
         self.client.login(username='nizbel', password='nizbel')
         
         bitcoin = Criptomoeda.objects.get(ticker='BTC')
         bcash = Criptomoeda.objects.get(ticker='BCH')
         
-        response = self.client.post(reverse('criptomoeda:editar_fork'), {
+        response = self.client.post(reverse('criptomoeda:editar_fork', kwargs={'id_fork': fork_id}), {
             'moeda_origem': bitcoin.id, 'moeda_recebida': bcash.id,
             'data': datetime.date(2017, 7, 1), 'quantidade': Decimal('0.9663'),
         })
@@ -80,12 +84,12 @@ class EditarForkTestCase(TestCase):
     def test_editar_fork_mesma_moeda(self):
         """Testa editar fork inserindo a mesma moeda para origem e recebida"""
         investidor = Investidor.objects.get(user__username='nizbel')
+        fork_id = Fork.objects.get(moeda_origem__ticker='BTC').id
         self.client.login(username='nizbel', password='nizbel')
         
         bitcoin = Criptomoeda.objects.get(ticker='BTC')
-        bcash = Criptomoeda.objects.get(ticker='BCH') 
         
-        response = self.client.post(reverse('criptomoeda:editar_fork'), {
+        response = self.client.post(reverse('criptomoeda:editar_fork', kwargs={'id_fork': fork_id}), {
             'moeda_origem': bitcoin.id, 'moeda_recebida': bitcoin.id,
             'data': datetime.date(2017, 7, 1), 'quantidade': Decimal('0.9662'),
         })
