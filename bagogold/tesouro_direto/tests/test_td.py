@@ -97,6 +97,7 @@ class CalculoImpostoRendaTDTestCase(TestCase):
 class CalcularValorAcumuladoIPCATestCase(TestCase):
     def setUp(self):
         # Preparar título IPCA
+        pass
         
     def test_acumulado_no_dia_9_5_2018(self):
         """Testa o valor acumulado do IPCA para 09/05/2018"""
