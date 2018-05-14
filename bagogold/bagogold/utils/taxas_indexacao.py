@@ -134,21 +134,38 @@ def calcular_valor_acumulado_ipca(data_base, data_final=datetime.date.today()):
     for mes_historico in HistoricoIPCA.objects.filter(Q(data_inicio__gt=ipca_inicial.data_inicio, data_inicio__year=data_base.year) | \
                                                       Q(data_inicio__year__gt=data_base.year, data_inicio__lt=ipca_final.data_inicio)) \
                                                       .order_by('data_inicio'):
-        ipca_periodo = (1 + ipca_periodo) * (1 + mes_historico.valor) - 1
-        print (1 + ipca_periodo) * 1000
+        # IPCA não-projetado
+        if not hasattr(mes_historico, 'ipcaprojetado'):
+            ipca_periodo = (1 + ipca_periodo) * (1 + mes_historico.valor) - 1
+#             print (1 + ipca_periodo) * 1000
+        # IPCA projetado
+        else:
+            qtd_dias_uteis_passados = qtd_dias_uteis_no_periodo(mes_historico.data_inicio, mes_historico.data_fim + datetime.timedelta(days=1))
+            ultimo_dia_util = calendar.monthrange(mes_historico.data_inicio.year, mes_historico.data_inicio.month)[1]
+            ultima_data_periodo_ipca = (ipca_final.data_inicio.replace(day=ultimo_dia_util) + datetime.timedelta(days=1)) \
+                .replace(day=15)
+            qtd_dias_uteis_total = qtd_dias_uteis_no_periodo(mes_historico.data_inicio.replace(day=16), ultima_data_periodo_ipca + datetime.timedelta(days=1))
+            ipca_periodo = (1 + ipca_periodo) * ((1 + mes_historico.valor)**(Decimal(qtd_dias_uteis_passados)/qtd_dias_uteis_total)) - 1
     # Caso a última data seja diferente de 15, pegar último mês e calcular a proporção de dias úteis
     if data_final.day == 15:
-        ipca_periodo = (1 + ipca_periodo) * (1 + ipca_final.valor) - 1
+        if not hasattr(ipca_final, 'ipcaprojetado'):
+            ipca_periodo = (1 + ipca_periodo) * (1 + ipca_final.valor) - 1
+        else:
+            qtd_dias_uteis_passados = qtd_dias_uteis_no_periodo(ipca_final.data_inicio, ipca_final.data_fim + datetime.timedelta(days=1))
+            ultimo_dia_util = calendar.monthrange(ipca_final.data_inicio.year, ipca_final.data_inicio.month)[1]
+            ultima_data_periodo_ipca = (ipca_final.data_inicio.replace(day=ultimo_dia_util) + datetime.timedelta(days=1)) \
+                .replace(day=15)
+            qtd_dias_uteis_total = qtd_dias_uteis_no_periodo(ipca_final.data_inicio.replace(day=16), ultima_data_periodo_ipca + datetime.timedelta(days=1))
+            ipca_periodo = (1 + ipca_periodo) * ((1 + ipca_final.valor)**(Decimal(qtd_dias_uteis_passados)/qtd_dias_uteis_total)) - 1
     else:
         qtd_dias_uteis_passados = qtd_dias_uteis_no_periodo(ipca_final.data_inicio, data_final + datetime.timedelta(days=1))
         ultimo_dia_util = calendar.monthrange(ipca_final.data_inicio.year, ipca_final.data_inicio.month)[1]
         ultima_data_periodo_ipca = (ipca_final.data_inicio.replace(day=ultimo_dia_util) + datetime.timedelta(days=1)) \
             .replace(day=15)
-        qtd_dias_uteis_total = qtd_dias_uteis_no_periodo(ipca_final.data_inicio, ultima_data_periodo_ipca + datetime.timedelta(days=1))
-        print ((1 + ipca_final.valor)**(Decimal(qtd_dias_uteis_passados)/qtd_dias_uteis_total))
+        qtd_dias_uteis_total = qtd_dias_uteis_no_periodo(ipca_final.data_inicio.replace(day=16), ultima_data_periodo_ipca + datetime.timedelta(days=1))
         ipca_periodo = (1 + ipca_periodo) * ((1 + ipca_final.valor)**(Decimal(qtd_dias_uteis_passados)/qtd_dias_uteis_total)) - 1
     
-    print (1 + ipca_periodo) * 1000
+#     print (1 + ipca_periodo) * 1000
     return ipca_periodo
     
 def calcular_valor_acumulado_selic(data_base, data_final=datetime.date.today()):
