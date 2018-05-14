@@ -244,17 +244,32 @@ def buscar_ipca_projetado():
     
     # Buscar informações de projeções na página
     projecoes = string_importante.split('<div class="both">')[1:]
+    valores = []
+    datas_inicio = []
     for projecao in projecoes:
         projecao = projecao[projecao.find('strong'):]
         valor = re.sub(r'.*?>', '', projecao[:projecao.find('</strong>')])
+        valores.append(valor)
+        data_inicio = datetime.datetime.strptime(re.findall(r'\d+/\d+/\d+', projecao)[0], '%d/%m/%Y')
+        datas_inicio.append(data_inicio)
+    for indice in range(len(valores)):
+        valor = valores[indice]
         # Valores indefinidos são mostrados como '-'
         if valor != '-':
             valor = Decimal(valor.replace(',', '.'))/100
-            data_inicio = datetime.datetime.strptime(re.findall(r'\d+/\d+/\d+', projecao)[0], '%d/%m/%Y')
+            data_inicio = datas_inicio[indice]
+            # Verifica se chegou ao último registro
+            if indice == len(valores) - 1:
+                # Se sim, adicionar data padrão de fim (dia 15 do próximo mês)
+                ultimo_dia_util = calendar.monthrange(data_inicio.year, data_inicio.month)[1]
+                data_fim = (data_inicio.replace(day=ultimo_dia_util) + datetime.timedelta(days=1)).replace(day=15)
+            else:
+                # Se não, um dia antes da próxima data de início
+                data_fim = datas_inicio[indice+1] - datetime.timedelta(days=1)
             if not HistoricoIPCA.objects.filter(data_inicio=data_inicio).exists():
                 try:
                     with transaction.atomic():
-                        ipca_projetado = HistoricoIPCA(valor=valor, data_inicio=data_inicio)
+                        ipca_projetado = HistoricoIPCA(valor=valor, data_inicio=data_inicio, data_fim=data_fim)
                         ipca_projetado.save()
                         marcar_projetado = IPCAProjetado(ipca=ipca_projetado)
                         marcar_projetado.save()
