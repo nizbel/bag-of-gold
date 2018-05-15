@@ -94,11 +94,31 @@ class CalculoImpostoRendaTDTestCase(TestCase):
         """Testar valor de imposto de renda para 2018"""
         pass
         
-class CalcularValorAcumuladoIPCATestCase(TestCase):
+class CalcularValorVencimentoIPCATestCase(TestCase):
     def setUp(self):
         # Preparar título IPCA
-        pass
+        Titulo.objects.create(tipo=Titulo.TIPO_OFICIAL_IPCA, data_vencimento=datetime.date(2024, 8, 15), data_inicio=datetime.date(2008, 8, 15))
         
-    def test_acumulado_no_dia_9_5_2018(self):
-        """Testa o valor acumulado do IPCA para 09/05/2018"""
-        pass
+        # Preparar histórico de IPCA
+        buscar_historico_ipca()
+        
+    def test_vencimento_no_dia_9_5_2018(self):
+        """Testa o valor de vencimento do IPCA para 09/05/2018"""
+        self.assertAlmostEqual(titulo.valor_vencimento(datetime.date(2018, 5, 9), Decimal('3073.191850'), delta=Decimal('0.000001'))
+
+    def test_vencimento_no_dia_8_5_2018(self):
+        """Testa o valor de vencimento do IPCA para 08/05/2018"""
+        self.assertAlmostEqual(titulo.valor_vencimento(datetime.date(2018, 5, 8), Decimal('3072.762234'), delta=Decimal('0.000001'))
+        
+    def test_vencimento_no_dia_15_5_2018(self):
+        """Testa o valor de vencimento do IPCA para 15/05/2018"""
+        self.assertAlmostEqual(titulo.valor_vencimento(datetime.date(2018, 5, 15), Decimal('3073.069824'), delta=Decimal('0.000001'))
+        
+    def test_vencimento_com_valor_projetado(self):
+        """Testa o valor de vencimento do IPCA com valor projetado"""
+        # Apagar valores oficiais do IPCA após 15 de Maio de 2018
+        HistoricoIPCA.objects.filter(data_inicio__gt=datetime.date(2018, 5, 15)).delete()
+        
+        # Adicionar projetados
+        HistoricoIPCA.objects.create(data_inicio=datetime.date(2018, 5, 16), data_fim=datetime.date(2018, 6, 15), valor=Decimal('0.0037')
+    
