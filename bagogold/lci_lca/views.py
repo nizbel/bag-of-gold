@@ -291,7 +291,7 @@ def editar_lci_lca(request, lci_lca_id):
 def editar_operacao_lci_lca(request, operacao_id):
     investidor = request.user.investidor
     
-    operacao_lci_lca = OperacaoLetraCredito.objects.get(pk=id)
+    operacao_lci_lca = OperacaoLetraCredito.objects.get(pk=operacao_id)
     
     # Verifica se a operação é do investidor, senão, jogar erro de permissão
     if operacao_lci_lca.investidor != investidor:
@@ -302,7 +302,7 @@ def editar_operacao_lci_lca(request, operacao_id):
     
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoLetraCredito, DivisaoOperacaoLCI_LCA, fields=('divisao', 'quantidade'),
-                                            extra=1, formset=FormSet)
+                                            extra=1, formset=DivisaoOperacaoLCI_LCAFormSet)
     
     if request.method == 'POST':
         form_operacao_lci_lca = OperacaoLetraCreditoForm(request.POST, instance=operacao_lci_lca, investidor=investidor)
