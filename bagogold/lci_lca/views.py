@@ -5,9 +5,11 @@ from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.mail import mail_admins
 from django.db.models.expressions import F, Case, When, Value
 from django.shortcuts import get_object_or_404
 import json
+import traceback
 
 from django.core.urlresolvers import reverse
 from django.db import transaction
@@ -18,6 +20,7 @@ from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect, HttpResponse
 from django.template.response import TemplateResponse
 
+from bagogold import settings
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoLCI_LCAFormSet
 from bagogold.bagogold.forms.utils import LocalizedModelForm
@@ -597,7 +600,7 @@ def inserir_lci_lca(request):
                                                                              'formset_carencia': formset_carencia, 'formset_vencimento': formset_vencimento})
                             return HttpResponseRedirect(reverse('lci_lca:listar_lci_lca'))
                     
-            for erro in [erro for erro in form_lci_lca.non_field_errors()]:
+            for erro in form_lci_lca.non_field_errors():
                 messages.error(request, erro.message)
             for erro in formset_porcentagem.non_form_errors():
                 messages.error(request, erro)
@@ -631,74 +634,85 @@ def inserir_operacao_lci_lca(request):
             form_operacao_lci_lca = OperacaoLetraCreditoForm(request.POST, investidor=investidor)
             formset_divisao = DivisaoFormSet(request.POST, investidor=investidor) if varias_divisoes else None
             
-            # Validar Letra de Crédito
-            if form_operacao_lci_lca.is_valid():
-                operacao_lci_lca = form_operacao_lci_lca.save(commit=False)
-                operacao_lci_lca.investidor = investidor
-                operacao_compra = form_operacao_lci_lca.cleaned_data['operacao_compra']
-                formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lci_lca, operacao_compra=operacao_compra, investidor=investidor) if varias_divisoes else None
-                    
-                # Validar em caso de venda
-                if form_operacao_lci_lca.cleaned_data['tipo_operacao'] == 'V':
-                    operacao_compra = form_operacao_lci_lca.cleaned_data['operacao_compra']
-                    # Caso de venda total da letra de crédito
-                    if form_operacao_lci_lca.cleaned_data['quantidade'] == operacao_compra.quantidade:
-                        # Desconsiderar divisões inseridas, copiar da operação de compra
-                        operacao_lci_lca.save()
-                        for divisao_lci_lca in DivisaoOperacaoLCI_LCA.objects.filter(operacao=operacao_compra):
-                            divisao_lci_lca_venda = DivisaoOperacaoLCI_LCA(quantidade=divisao_lci_lca.quantidade, divisao=divisao_lci_lca.divisao, \
-                                                                 operacao=operacao_lci_lca)
-                            divisao_lci_lca_venda.save()
-                        operacao_venda_lci_lca = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_lci_lca)
-                        operacao_venda_lci_lca.save()
-                        messages.success(request, 'Operação inserida com sucesso')
-                        return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))
-                    # Vendas parciais
-                    else:
-                        # Verificar se varias divisões
-                        if varias_divisoes:
-                            if formset_divisao.is_valid():
+            try:
+                with transaction.atomic():
+                    # Validar Letra de Crédito
+                    if form_operacao_lci_lca.is_valid():
+                        operacao_lci_lca = form_operacao_lci_lca.save(commit=False)
+                        operacao_lci_lca.investidor = investidor
+                        operacao_compra = form_operacao_lci_lca.cleaned_data['operacao_compra']
+                        formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lci_lca, operacao_compra=operacao_compra, investidor=investidor) if varias_divisoes else None
+                            
+                        # Validar em caso de venda
+                        if form_operacao_lci_lca.cleaned_data['tipo_operacao'] == 'V':
+                            operacao_compra = form_operacao_lci_lca.cleaned_data['operacao_compra']
+                            # Caso de venda total da letra de crédito
+                            if form_operacao_lci_lca.cleaned_data['quantidade'] == operacao_compra.quantidade:
+                                # Desconsiderar divisões inseridas, copiar da operação de compra
                                 operacao_lci_lca.save()
-                                formset_divisao.save()
                                 operacao_venda_lci_lca = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_lci_lca)
                                 operacao_venda_lci_lca.save()
+                                for divisao_lci_lca in DivisaoOperacaoLCI_LCA.objects.filter(operacao=operacao_compra):
+                                    divisao_lci_lca_venda = DivisaoOperacaoLCI_LCA(quantidade=divisao_lci_lca.quantidade, divisao=divisao_lci_lca.divisao, \
+                                                                         operacao=operacao_lci_lca)
+                                    divisao_lci_lca_venda.save()
                                 messages.success(request, 'Operação inserida com sucesso')
                                 return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))
-                            for erro in formset_divisao.non_form_errors():
-                                messages.error(request, erro)
+                            # Vendas parciais
+                            else:
+                                # Verificar se varias divisões
+                                if varias_divisoes:
+                                    if formset_divisao.is_valid():
+                                        operacao_lci_lca.save()
+                                        formset_divisao.save()
+                                        operacao_venda_lci_lca = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_lci_lca)
+                                        operacao_venda_lci_lca.save()
+                                        messages.success(request, 'Operação inserida com sucesso')
+                                        return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))
+                                    for erro in formset_divisao.non_form_errors():
+                                        messages.error(request, erro)
+                                        
+                                else:
+                                    operacao_lci_lca.save()
+                                    divisao_operacao = DivisaoOperacaoLCI_LCA(operacao=operacao_lci_lca, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_lci_lca.quantidade)
+                                    divisao_operacao.save()
+                                    operacao_venda_lci_lca = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_lci_lca)
+                                    operacao_venda_lci_lca.save()
+                                    messages.success(request, 'Operação inserida com sucesso')
+                                    return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))
                                 
+                        # Compra
                         else:
-                            operacao_lci_lca.save()
-                            divisao_operacao = DivisaoOperacaoLCI_LCA(operacao=operacao_lci_lca, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_lci_lca.quantidade)
-                            divisao_operacao.save()
-                            operacao_venda_lci_lca = OperacaoVendaLetraCredito(operacao_compra=operacao_compra, operacao_venda=operacao_lci_lca)
-                            operacao_venda_lci_lca.save()
-                            messages.success(request, 'Operação inserida com sucesso')
-                            return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))
-                        
-                # Compra
-                else:
-                    # Verificar se várias divisões
-                    if varias_divisoes:
-                        if formset_divisao.is_valid():
-                            operacao_lci_lca.save()
-                            formset_divisao.save()
-                            messages.success(request, 'Operação inserida com sucesso')
-                            return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))
-                        for erro in formset_divisao.non_form_errors():
-                            messages.error(request, erro)
-                            
-                    else:
-                        operacao_lci_lca.save()
-                        divisao_operacao = DivisaoOperacaoLCI_LCA(operacao=operacao_lci_lca, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_lci_lca.quantidade)
-                        divisao_operacao.save()
-                        messages.success(request, 'Operação inserida com sucesso')
-                        return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))
-                        
-            for erros in form_operacao_lci_lca.errors.values():
-                for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
-                    messages.error(request, erro.message)
-#                         print '%s %s'  % (divisao_lci_lca.quantidade, divisao_lci_lca.divisao)
+                            # Verificar se várias divisões
+                            if varias_divisoes:
+                                if formset_divisao.is_valid():
+                                    operacao_lci_lca.save()
+                                    formset_divisao.save()
+                                    messages.success(request, 'Operação inserida com sucesso')
+                                    return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))
+                                for erro in formset_divisao.non_form_errors():
+                                    messages.error(request, erro)
+                                    
+                            else:
+                                operacao_lci_lca.save()
+                                divisao_operacao = DivisaoOperacaoLCI_LCA(operacao=operacao_lci_lca, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_lci_lca.quantidade)
+                                divisao_operacao.save()
+                                messages.success(request, 'Operação inserida com sucesso')
+                                return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))
+
+            except:
+                messages.error(request, 'Houve um erro ao inserir a operação')
+                if settings.ENV == 'DEV':
+                    raise
+                elif settings.ENV == 'PROD':
+                    mail_admins(u'Erro ao inserir operação em LCI/LCA', traceback.format_exc().decode('utf-8')) 
+                    
+        for erro in [erro for erro in form_operacao_lci_lca.non_field_errors()]:
+            messages.error(request, erro)
+#             for erros in form_operacao_lci_lca.errors.values():
+#                 for erro in [erro for erro in erros.data if not isinstance(erro, ValidationError)]:
+#                     messages.error(request, erro.message)
+# #                         print '%s %s'  % (divisao_lci_lca.quantidade, divisao_lci_lca.divisao)
                 
     else:
         form_operacao_lci_lca = OperacaoLetraCreditoForm(investidor=investidor)
@@ -784,14 +798,14 @@ def painel(request):
             if (operacao.data <= data_iteracao):     
                 # Verificar se se trata de compra ou venda
                 if operacao.tipo_operacao == 'C':
-                        if (operacao.data == data_iteracao):
-                            operacao.total = operacao.quantidade
-                        # Calcular o valor atualizado para cada operacao
-                        operacao.atual = calcular_valor_atualizado_com_taxa_di(taxa_do_dia, operacao.atual, operacao.taxa)
-                        # Arredondar na última iteração
-                        if (data_iteracao == data_final):
-                            str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
-                            operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+                    if (operacao.data == data_iteracao):
+                        operacao.total = operacao.quantidade
+                    # Calcular o valor atualizado para cada operacao
+                    operacao.atual = calcular_valor_atualizado_com_taxa_di(taxa_do_dia, operacao.atual, operacao.taxa)
+                    # Arredondar na última iteração
+                    if (data_iteracao == data_final):
+                        str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
+                        operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
                         
                 elif operacao.tipo_operacao == 'V':
                     if (operacao.data == data_iteracao):
