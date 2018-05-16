@@ -104,14 +104,17 @@ class CalcularValorVencimentoIPCATestCase(TestCase):
         
     def test_vencimento_no_dia_9_5_2018(self):
         """Testa o valor de vencimento do IPCA para 09/05/2018"""
+        titulo = Titulo.objects.get(tipo=Titulo.TIPO_OFICIAL_IPCA)
         self.assertAlmostEqual(titulo.valor_vencimento(datetime.date(2018, 5, 9), Decimal('3073.191850'), delta=Decimal('0.000001'))
 
     def test_vencimento_no_dia_8_5_2018(self):
         """Testa o valor de vencimento do IPCA para 08/05/2018"""
+        titulo = Titulo.objects.get(tipo=Titulo.TIPO_OFICIAL_IPCA)
         self.assertAlmostEqual(titulo.valor_vencimento(datetime.date(2018, 5, 8), Decimal('3072.762234'), delta=Decimal('0.000001'))
         
     def test_vencimento_no_dia_15_5_2018(self):
         """Testa o valor de vencimento do IPCA para 15/05/2018"""
+        titulo = Titulo.objects.get(tipo=Titulo.TIPO_OFICIAL_IPCA)
         self.assertAlmostEqual(titulo.valor_vencimento(datetime.date(2018, 5, 15), Decimal('3073.069824'), delta=Decimal('0.000001'))
         
     def test_vencimento_com_valor_projetado(self):
@@ -121,4 +124,19 @@ class CalcularValorVencimentoIPCATestCase(TestCase):
         
         # Adicionar projetados
         HistoricoIPCA.objects.create(data_inicio=datetime.date(2018, 5, 16), data_fim=datetime.date(2018, 6, 15), valor=Decimal('0.0037')
-    
+        
+        titulo = Titulo.objects.get(tipo=Titulo.TIPO_OFICIAL_IPCA)
+        self.assertAlmostEqual(titulo.valor_vencimento(datetime.date(2018, 5, 16), Decimal(''), delta=Decimal('0.000001'))
+
+class CalcularValorVencimentoSelicTestCase(TestCase):
+    def setUp(self):
+        # Preparar título Selic
+        Titulo.objects.create(tipo=Titulo.TIPO_OFICIAL_SELIC, data_vencimento=datetime.date(2024, 8, 1), data_inicio=datetime.date(2008, 8, 1))
+        
+        # Preparar histórico de Selic
+        buscar_historico_selic()
+        
+    def test_vencimento_no_dia_9_5_2018(self):
+        """Testa o valor de vencimento do IPCA para 09/05/2018"""
+        titulo = Titulo.objects.get(tipo=Titulo.TIPO_OFICIAL_SELIC)
+        self.assertAlmostEqual(titulo.valor_vencimento(datetime.date(2018, 5, 15), Decimal('9503.531384'), delta=Decimal('0.000001'))
