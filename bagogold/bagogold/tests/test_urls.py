@@ -62,7 +62,7 @@ class UrlsTestCase(TestCase):
         
     def test_responses_deslogado(self):
         """Testa respostas das páginas, deslogado"""
-        url_list = [(url, '') for url in urlpatterns if url.app_name != 'admin']
+        url_list = [(url, '') for url in urlpatterns if url.app_name not in ['admin', 'djdt']]
         while len(url_list) > 0:
             tupla_atual = url_list.pop(0)
             url_atual = tupla_atual[0]
@@ -74,14 +74,14 @@ class UrlsTestCase(TestCase):
             elif isinstance(url_atual, RegexURLPattern):
                 try:
                     response = self.client.get(reverse('%s%s' % (namespace_atual, url_atual.name)))
-                    self.assertIn(response.status_code, [200, 302])
+                    self.assertIn(response.status_code, [200, 302], msg=u'Erro na página %s%s' % (namespace_atual, url_atual.name))
                 except NoReverseMatch:
                     pass
 
     def test_responses_logado(self):
         """Testa respostas das páginas, logado"""
         self.client.login(username='teste', password='teste')
-        url_list = [(url, '') for url in urlpatterns if url.app_name != 'admin']
+        url_list = [(url, '') for url in urlpatterns if url.app_name not in ['admin', 'djdt']]
         while len(url_list) > 0:
             tupla_atual = url_list.pop(0)
             url_atual = tupla_atual[0]
@@ -94,17 +94,17 @@ class UrlsTestCase(TestCase):
                 try:
                     response = self.client.get(reverse('%s%s' % (namespace_atual, url_atual.name)))
                     if url_atual.name == 'logout':
-                        self.assertEqual(response.status_code, 302)
+                        self.assertEqual(response.status_code, 302, msg=u'Erro na página %s%s' % (namespace_atual, url_atual.name))
                         self.client.login(username='teste', password='teste')
                     else:
-                        self.assertIn(response.status_code, [200, 403])
+                        self.assertIn(response.status_code, [200, 403], msg=u'Erro na página %s%s' % (namespace_atual, url_atual.name))
                 except NoReverseMatch:
                     pass
                 
     def test_responses_logado_superuser(self):
         """Testa respostas das páginas, logado como super usuário"""
         self.client.login(username='nizbel', password='nizbel')
-        url_list = [(url, '') for url in urlpatterns if url.app_name != 'admin']
+        url_list = [(url, '') for url in urlpatterns if url.app_name not in ['admin', 'djdt']]
         while len(url_list) > 0:
             tupla_atual = url_list.pop(0)
             url_atual = tupla_atual[0]
@@ -117,9 +117,9 @@ class UrlsTestCase(TestCase):
                 try:
                     response = self.client.get(reverse('%s%s' % (namespace_atual, url_atual.name)))
                     if url_atual.name == 'logout':
-                        self.assertEqual(response.status_code, 302)
+                        self.assertEqual(response.status_code, 302, msg=u'Erro na página %s%s' % (namespace_atual, url_atual.name))
                         self.client.login(username='nizbel', password='nizbel')
                     else:
-                        self.assertEqual(response.status_code, 200)
+                        self.assertEqual(response.status_code, 200, msg=u'Erro na página %s%s' % (namespace_atual, url_atual.name))
                 except NoReverseMatch:
                     pass
