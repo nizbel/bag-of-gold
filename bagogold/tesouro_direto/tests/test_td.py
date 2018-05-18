@@ -132,7 +132,7 @@ class CalcularValorVencimentoIPCATestCase(TestCase):
         HistoricoIPCA.objects.create(data_inicio=datetime.date(2018, 5, 16), data_fim=datetime.date(2018, 6, 15), valor=Decimal('0.0037')
         
         titulo = Titulo.objects.get(tipo=Titulo.TIPO_OFICIAL_IPCA)
-        self.assertAlmostEqual(titulo.valor_vencimento(datetime.date(2018, 5, 16), Decimal(''), delta=Decimal('0.000001'))
+        self.assertAlmostEqual(titulo.valor_vencimento(datetime.date(2018, 5, 16), Decimal('3073.585747'), delta=Decimal('0.000001'))
 
 class CalcularValorVencimentoSelicTestCase(TestCase):
     def setUp(self):
