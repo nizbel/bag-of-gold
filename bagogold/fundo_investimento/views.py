@@ -82,13 +82,15 @@ def detalhar_fundo(request, slug_fundo):
     historico_graf = HistoricoValorCotas.objects.filter(fundo_investimento=fundo).values_list('data', 'valor_cota').order_by('data')
     graf_historico = [[str(calendar.timegm(data.timetuple()) * 1000), float(valor_cota)] for \
         (data, valor_cota) in historico_graf]
-#     primeiro_valor_historico = historico
-#     ultimo_valor_historico = 
-    taxas_dos_dias = dict(HistoricoTaxaDI.objects.filter(data__range=[historico_graf[0][0], historico_graf[len(historico_graf)-1][0]]) \
-                          .values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
-    graf_di = [[str(calendar.timegm(historico_graf[0][0].timetuple()) * 1000), float(historico_graf[0][1])],
-               [str(calendar.timegm(historico_graf[len(historico_graf)-1][0].timetuple()) * 1000), 
-                float(calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, historico_graf[0][1], 100))]]
+    
+    if len(historico_graf) > 0:
+        taxas_dos_dias = dict(HistoricoTaxaDI.objects.filter(data__range=[historico_graf[0][0], historico_graf[len(historico_graf)-1][0]]) \
+                              .values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
+        graf_di = [[str(calendar.timegm(historico_graf[0][0].timetuple()) * 1000), float(historico_graf[0][1])],
+                   [str(calendar.timegm(historico_graf[len(historico_graf)-1][0].timetuple()) * 1000), 
+                    float(calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, historico_graf[0][1], 100))]]
+    else:
+        graf_di = list()
     
     dados = {'total_operacoes': 0, 'qtd_cotas_atual': Decimal(0), 'total_atual': Decimal(0), 'total_lucro': Decimal(0), 'lucro_percentual': Decimal(0)}
     if request.user.is_authenticated():
