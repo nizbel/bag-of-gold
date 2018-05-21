@@ -103,11 +103,11 @@
 					<tbody>
 					{% for item in operacoes %}
 					<tr>
-						<td><a href="{% url 'lc:editar_operacao_lc' item.id %}">{{item.lc.nome}}</a></td>
+						<td><a href="{% url 'lcambio:editar_operacao_lc' item.id %}">{{item.lc.nome}}</a></td>
 						<td>{{ item.tipo }}</td>
 						<td>{{ item.data|date:"d/m/Y" }}</td>
 						<td>R$ {{item.quantidade}}</td>
-                        <td>{{ item.taxa }}%{% if item.lc.eh_prefixado %} ao ano{% else %} do {{ item.lc.indice }}{% endif %}</td>
+                        <td>{{ item.porcentagem }}%{% if item.lc.eh_prefixado %} ao ano{% else %} do {{ item.lc.indice }}{% endif %}</td>
 						<td>R$ {{item.atual|floatformat:2}}</td>
 					</tr>
 					{% endfor %}

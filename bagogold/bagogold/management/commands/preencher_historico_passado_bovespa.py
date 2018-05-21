@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
-from bagogold.fii.models import HistoricoFII, FII
 from bagogold.bagogold.tfs import ler_serie_historica_anual_bovespa
 from django.core.management.base import BaseCommand
-from django.db.models.aggregates import Count
 from threading import Thread
 import datetime
 

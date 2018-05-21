@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-from bagogold import settings
-from bagogold.bagogold.testLC import buscar_valores_diarios
 from django.core.mail import mail_admins
 from django.core.management.base import BaseCommand
 import traceback
+
+from bagogold import settings
+from bagogold.bagogold.utils.taxas_indexacao import buscar_valores_diarios_di
 
 
 class Command(BaseCommand):
@@ -11,7 +12,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         try:
-            buscar_valores_diarios()
+            buscar_valores_diarios_di()
         except:
             if settings.ENV == 'DEV':
                 print traceback.format_exc()

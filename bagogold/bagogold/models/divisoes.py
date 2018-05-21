@@ -71,7 +71,7 @@ class Divisao (models.Model):
         Calcula o saldo de operações de ações Buy and Hold de uma divisão (dinheiro livre)
         """
         saldo = Decimal(0)
-        for operacao_divisao in DivisaoOperacaoAcao.objects.filter(divisao=self, operacao__destinacao='B', operacao__data__lte=data):
+        for operacao_divisao in DivisaoOperacaoAcao.objects.filter(divisao=self, operacao__destinacao='B', operacao__data__lte=data).select_related('operacao'):
             operacao = operacao_divisao.operacao
             if operacao.tipo_operacao == 'C':
                 saldo -= (operacao_divisao.quantidade * operacao.preco_unitario + (operacao.corretagem + operacao.emolumentos - operacao.qtd_proventos_utilizada()) * operacao_divisao.percentual_divisao())
@@ -93,7 +93,7 @@ class Divisao (models.Model):
         Calcula o saldo de operações de ações para trade de uma divisão (dinheiro livre)
         """
         saldo = Decimal(0)
-        for operacao_divisao in DivisaoOperacaoAcao.objects.filter(divisao=self, operacao__destinacao='T', operacao__data__lte=data):
+        for operacao_divisao in DivisaoOperacaoAcao.objects.filter(divisao=self, operacao__destinacao='T', operacao__data__lte=data).select_related('operacao'):
             operacao = operacao_divisao.operacao
             if operacao.tipo_operacao == 'C':
                 saldo -= (operacao_divisao.quantidade * operacao.preco_unitario + (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
@@ -119,24 +119,24 @@ class Divisao (models.Model):
         historico_di = HistoricoTaxaDI.objects.all()
         # Computar compras
         saldo -= (DivisaoOperacaoCDB_RDB.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='C').aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
-        for venda_divisao in DivisaoOperacaoCDB_RDB.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='V'):
+        for venda_divisao in DivisaoOperacaoCDB_RDB.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='V') \
+            .annotate(tipo_rendimento=F('operacao__cdb_rdb__tipo_rendimento')).select_related('operacao'):
             # Para venda, calcular valor do cdb/rdb no dia da venda
             valor_venda = venda_divisao.quantidade
-            taxa = venda_divisao.operacao.porcentagem()
              
             # Calcular o valor atualizado
             if venda_divisao.operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
                 # DI
                 dias_de_rendimento = historico_di.filter(data__gte=venda_divisao.operacao.operacao_compra_relacionada().data, data__lt=venda_divisao.operacao.data)
                 taxas_dos_dias = dict(dias_de_rendimento.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
-                valor_venda = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor_venda, taxa)
+                valor_venda = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor_venda, venda_divisao.operacao.porcentagem())
                 valor_venda -= sum(calcular_iof_e_ir_longo_prazo(valor_venda - venda_divisao.quantidade, 
                                                               (venda_divisao.operacao.data - venda_divisao.operacao.operacao_compra_relacionada().data).days))
             elif venda_divisao.operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
                 # Prefixado
                 # Calcular quantidade dias para valorização
                 qtd_dias = qtd_dias_uteis_no_periodo(venda_divisao.operacao.operacao_compra_relacionada().data, venda_divisao.operacao.data)
-                valor_venda = calcular_valor_atualizado_com_taxa_prefixado(valor_venda, taxa, qtd_dias)
+                valor_venda = calcular_valor_atualizado_com_taxa_prefixado(valor_venda, venda_divisao.operacao.porcentagem(), qtd_dias)
                 valor_venda -= sum(calcular_iof_e_ir_longo_prazo(valor_venda - venda_divisao.quantidade, 
                                                               (venda_divisao.operacao.data - venda_divisao.operacao.operacao_compra_relacionada().data).days))
             # Arredondar
@@ -230,7 +230,7 @@ class Divisao (models.Model):
         Calcula o saldo de operações de FII de uma divisão (dinheiro livre)
         """
         saldo = Decimal(0)
-        for operacao_divisao in DivisaoOperacaoFII.objects.filter(divisao=self, operacao__data__lte=data):
+        for operacao_divisao in DivisaoOperacaoFII.objects.filter(divisao=self, operacao__data__lte=data).select_related('operacao'):
             operacao = operacao_divisao.operacao
             if operacao.tipo_operacao == 'C':
                 saldo -= (operacao_divisao.quantidade * operacao.preco_unitario + (operacao.corretagem + operacao.emolumentos - operacao.qtd_proventos_utilizada()) * operacao_divisao.percentual_divisao())
@@ -251,11 +251,10 @@ class Divisao (models.Model):
         Calcula o saldo de operações de fundo de investimento de uma divisão (dinheiro livre)
         """
         saldo = Decimal(0)
-        for operacao_divisao in DivisaoOperacaoFundoInvestimento.objects.filter(divisao=self, operacao__data__lte=data):
-            operacao = operacao_divisao.operacao
-            if operacao.tipo_operacao == 'C':
+        for operacao_divisao in DivisaoOperacaoFundoInvestimento.objects.filter(divisao=self, operacao__data__lte=data).annotate(tipo_operacao=F('operacao__tipo_operacao')):
+            if operacao_divisao.tipo_operacao == 'C':
                 saldo -= operacao_divisao.quantidade 
-            elif operacao.tipo_operacao == 'V':
+            elif operacao_divisao.tipo_operacao == 'V':
                 saldo += operacao_divisao.quantidade
                 
         # Transferências
@@ -265,7 +264,11 @@ class Divisao (models.Model):
         return saldo
     
     def saldo_lc(self, data=datetime.date.today()):
-        from bagogold.bagogold.utils.taxas_indexacao import calcular_valor_atualizado_com_taxas_di
+        from bagogold.bagogold.utils.taxas_indexacao import calcular_valor_atualizado_com_taxas_di, \
+            calcular_valor_atualizado_com_taxa_prefixado
+        from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo, calcular_iof_e_ir_longo_prazo
+        
+        from bagogold.lc.models import LetraCambio
         """
         Calcula o saldo de operações de Letra de Câmbio de uma divisão (dinheiro livre)
         """
@@ -274,15 +277,27 @@ class Divisao (models.Model):
         
         # Computar compras
         saldo -= (DivisaoOperacaoLetraCambio.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='C').aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
-        for venda_divisao in DivisaoOperacaoLetraCambio.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='V'):
+        for venda_divisao in DivisaoOperacaoLetraCambio.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='V') \
+            .annotate(tipo_rendimento=F('operacao__lc__tipo_rendimento')).select_related('operacao'):
             # Para venda, calcular valor do cdb/rdb no dia da venda
             valor_venda = venda_divisao.quantidade
-            taxa = venda_divisao.operacao.porcentagem()
              
             # Calcular o valor atualizado
-            dias_de_rendimento = historico_di.filter(data__gte=venda_divisao.operacao.operacao_compra_relacionada().data, data__lt=venda_divisao.operacao.data)
-            taxas_dos_dias = dict(dias_de_rendimento.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
-            valor_venda = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor_venda, taxa)
+            if venda_divisao.tipo_rendimento == LetraCambio.LC_DI:
+                # DI
+                dias_de_rendimento = historico_di.filter(data__gte=venda_divisao.operacao.operacao_compra_relacionada().data, data__lt=venda_divisao.operacao.data)
+                taxas_dos_dias = dict(dias_de_rendimento.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
+                valor_venda = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor_venda, venda_divisao.operacao.porcentagem())
+                valor_venda -= sum(calcular_iof_e_ir_longo_prazo(valor_venda - venda_divisao.quantidade, 
+                                                              (venda_divisao.operacao.data - venda_divisao.operacao.operacao_compra_relacionada().data).days))
+            elif venda_divisao.tipo_rendimento == LetraCambio.LC_PREFIXADO:
+                # Prefixado
+                # Calcular quantidade dias para valorização
+                qtd_dias = qtd_dias_uteis_no_periodo(venda_divisao.operacao.operacao_compra_relacionada().data, venda_divisao.operacao.data)
+                valor_venda = calcular_valor_atualizado_com_taxa_prefixado(valor_venda, venda_divisao.operacao.porcentagem(), qtd_dias)
+                valor_venda -= sum(calcular_iof_e_ir_longo_prazo(valor_venda - venda_divisao.quantidade, 
+                                                              (venda_divisao.operacao.data - venda_divisao.operacao.operacao_compra_relacionada().data).days))
+            
             # Arredondar
             str_auxiliar = str(valor_venda.quantize(Decimal('.0001')))
             valor_venda = Decimal(str_auxiliar[:len(str_auxiliar)-2])
@@ -304,15 +319,14 @@ class Divisao (models.Model):
         
         # Computar compras
         saldo -= (DivisaoOperacaoLCI_LCA.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='C').aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
-        for venda_divisao in DivisaoOperacaoLCI_LCA.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='V'):
+        for venda_divisao in DivisaoOperacaoLCI_LCA.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='V').select_related('operacao'):
             # Para venda, calcular valor do cdb/rdb no dia da venda
             valor_venda = venda_divisao.quantidade
-            taxa = venda_divisao.operacao.porcentagem()
              
             # Calcular o valor atualizado
             dias_de_rendimento = historico_di.filter(data__gte=venda_divisao.operacao.operacao_compra_relacionada().data, data__lt=venda_divisao.operacao.data)
             taxas_dos_dias = dict(dias_de_rendimento.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
-            valor_venda = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor_venda, taxa)
+            valor_venda = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor_venda, venda_divisao.operacao.porcentagem())
             # Arredondar
             str_auxiliar = str(valor_venda.quantize(Decimal('.0001')))
             valor_venda = Decimal(str_auxiliar[:len(str_auxiliar)-2])
@@ -368,7 +382,7 @@ class Divisao (models.Model):
         Calcula o saldo de operações de Tesouro Direto de uma divisão (dinheiro livre)
         """
         saldo = Decimal(0)
-        for operacao_divisao in DivisaoOperacaoTD.objects.filter(divisao=self, operacao__data__lte=data):
+        for operacao_divisao in DivisaoOperacaoTD.objects.filter(divisao=self, operacao__data__lte=data).select_related('operacao'):
             operacao = operacao_divisao.operacao
             if operacao.tipo_operacao == 'C':
                 saldo -= (operacao_divisao.quantidade * operacao.preco_unitario + (operacao.taxa_custodia + operacao.taxa_bvmf) * operacao_divisao.percentual_divisao())
@@ -617,6 +631,20 @@ class DivisaoTransferenciaCriptomoeda (models.Model):
     """
     def percentual_divisao(self):
         return self.quantidade / self.operacao.quantidade
+    
+class DivisaoForkCriptomoeda (models.Model):
+    divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
+    fork = models.ForeignKey('criptomoeda.Fork')
+    """
+    Guarda a quantidade do fork que pertence a divisão
+    """
+    quantidade = models.DecimalField('Quantidade', max_digits=21, decimal_places=12)
+    
+    class Meta:
+        unique_together=('divisao', 'fork')
+        
+    def __unicode__(self):
+        return self.divisao.nome + ': %s %s de fork de %s' % (str(self.quantidade), self.fork.moeda_recebida.ticker, self.fork.moeda_origem.ticker)
     
 class DivisaoOperacaoCRI_CRA (models.Model):
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')

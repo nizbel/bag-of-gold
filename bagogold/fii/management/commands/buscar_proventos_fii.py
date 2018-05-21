@@ -33,8 +33,8 @@ class CriarDocumentoThread(Thread):
                 
                 time.sleep(5)
         except Exception as e:
-                template = "An exception of type {0} occured. Arguments:\n{1!r}"
-                message = template.format(type(e).__name__, e.args)
+                template = "An exception of type {0} occured. Arguments:\n{1!r}\nURL: {2}, Empresa: {3}"
+                message = template.format(type(e).__name__, e.args, documento.url, documento.empresa)
                 if settings.ENV == 'PROD':
                     mail_admins(u'Erro na thread de criar documento de fiis', message.decode('utf-8'))
                 elif settings.ENV == 'DEV':

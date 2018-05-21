@@ -196,10 +196,10 @@ def calcular_valor_lci_lca_ate_dia(investidor, dia=datetime.date.today(), valor_
     lci_lca = {}
     for operacao in operacoes:
 
-        if operacao.letra_credito.id not in lci_lca.keys():
-            lci_lca[operacao.letra_credito.id] = 0
+        if operacao.letra_credito_id not in lci_lca.keys():
+            lci_lca[operacao.letra_credito_id] = 0
         
-        lci_lca[operacao.letra_credito.id] += calcular_valor_operacao_lci_lca_ate_dia(operacao, dia, True, valor_liquido)
+        lci_lca[operacao.letra_credito_id] += calcular_valor_operacao_lci_lca_ate_dia(operacao, dia, True, valor_liquido)
     
     return lci_lca
 
@@ -214,51 +214,46 @@ def calcular_valor_lci_lca_ate_dia_por_divisao(dia, divisao_id):
     if not DivisaoOperacaoLCI_LCA.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).exists():
         return {}
     
-    operacoes_divisao_id = DivisaoOperacaoLCI_LCA.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).values('operacao__id')
-    
-    operacoes_queryset = OperacaoLetraCredito.objects.exclude(data__isnull=True).filter(id__in=operacoes_divisao_id).order_by('-tipo_operacao', 'data') 
-    operacoes = list(operacoes_queryset)
-    for operacao in operacoes:
-        if operacao.tipo_operacao == 'C':
-            operacao.atual = DivisaoOperacaoLCI_LCA.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade
-            operacao.taxa = operacao.porcentagem()
-    
+    operacoes = list(DivisaoOperacaoLCI_LCA.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).annotate(data=F('operacao__data')).exclude(data__isnull=True) \
+                     .annotate(atual=F('quantidade')).annotate(tipo_operacao=F('operacao__tipo_operacao')).annotate(letra_credito_id=F('operacao__letra_credito')) \
+                     .select_related('operacao').order_by('-tipo_operacao', 'data'))
+     
     # Pegar data inicial
-    data_inicial = operacoes_queryset.order_by('data')[0].data
-    
+    data_inicial = operacoes[0].data
+     
     letras_credito = {}
     for operacao in operacoes:
         # Processar operações
-        if operacao.letra_credito.id not in letras_credito.keys():
-            letras_credito[operacao.letra_credito.id] = 0
-                
+        if operacao.letra_credito_id not in letras_credito.keys():
+            letras_credito[operacao.letra_credito_id] = 0
+                 
         # Vendas
         if operacao.tipo_operacao == 'V':
             # Remover quantidade da operação de compra
-            operacao_compra_id = operacao.operacao_compra_relacionada().id
+            operacao_compra_id = operacao.operacao.operacao_compra_relacionada().id
             for operacao_c in operacoes:
-                if (operacao_c.id == operacao_compra_id):
-                    operacao.atual = DivisaoOperacaoLCI_LCA.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade
+                if (operacao_c.operacao_id == operacao_compra_id):
+#                     operacao.atual = DivisaoOperacaoLCI_LCA.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade
                     operacao_c.atual -= operacao.atual
                     break
-                
+#                 
     # Remover operações de venda e operações de compra totalmente vendidas
     operacoes = [operacao for operacao in operacoes if operacao.tipo_operacao == 'C' and operacao.atual > 0]
-    
+     
     # Calcular o valor atualizado do patrimonio
     historico = HistoricoTaxaDI.objects.filter(data__range=[data_inicial, dia])
-    
+     
     for operacao in operacoes:
         taxas_dos_dias = dict(historico.filter(data__range=[operacao.data, dia]).values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
-        operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.atual, operacao.taxa)
+        operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.atual, operacao.operacao.porcentagem())
         # Arredondar valores
         str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
         operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-            
+             
     # Preencher os valores nas letras de crédito
-    for letra_credito_id in letras_credito:
-        letras_credito[letra_credito_id] += sum([operacao.atual for operacao in operacoes if operacao.letra_credito.id == letra_credito_id])
-        
+    for letra_credito_id in letras_credito.keys():
+        letras_credito[letra_credito_id] += sum([operacao.atual for operacao in operacoes if operacao.letra_credito_id == letra_credito_id])
+         
         if letras_credito[letra_credito_id] == 0:
             del letras_credito[letra_credito_id]
     
@@ -352,8 +347,44 @@ def buscar_operacoes_vigentes_ate_data(investidor, data=datetime.date.today()):
     """
     operacoes = OperacaoLetraCredito.objects.filter(investidor=investidor, tipo_operacao='C', data__lte=data).exclude(data__isnull=True) \
         .annotate(qtd_vendida=Coalesce(Sum(Case(When(operacao_compra__operacao_venda__data__lte=data, then='operacao_compra__operacao_venda__quantidade'))), 0)).exclude(quantidade=F('qtd_vendida')) \
-        .annotate(qtd_disponivel_venda=(F('quantidade') - F('qtd_vendida')))
+        .annotate(qtd_disponivel_venda=(F('quantidade') - F('qtd_vendida'))).select_related('letra_credito')
     
+    return operacoes
+
+def atualizar_operacoes_lci_lca_no_periodo(operacoes, data_inicial, data_final):
+    """
+    Atualiza o atributo 'atual' para cada operação em LCI/LCA enviada, em um período (incluindo data final)
+    
+    Parâmetros: Operações
+                Data inicial
+                Data final
+    Retorno: Operações com o atributo atual atualizado
+    """
+    # Buscar taxa DI
+    historico_di = HistoricoTaxaDI.objects.filter(data__range=[data_inicial, data_final])
+    taxas_dos_dias = dict(historico_di.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
+    
+    for operacao in operacoes:
+        # Verificar data de vencimento da operação, não atualizar além dela
+        data_final_operacao = min(data_final, operacao.data_vencimento() - datetime.timedelta(days=1))
+        if data_final_operacao < data_inicial:
+            continue
+        
+        if operacao.tipo_rendimento_lci_lca == LetraCredito.LCI_LCA_DI:
+            # DI
+            # Definir período do histórico relevante
+            if data_final == data_final_operacao:
+                taxas_dos_dias_operacao = taxas_dos_dias
+            else:
+                taxas_dos_dias_operacao = dict(historico_di.filter(data__lte=data_final_operacao).values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
+            
+            operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias_operacao, operacao.atual, operacao.porcentagem())
+        elif operacao.tipo_rendimento_lci_lca == LetraCredito.LCI_LCA_PREFIXADO:
+            # Prefixado
+            operacao.atual = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.porcentagem(), qtd_dias_uteis_no_periodo(data_inicial, data_final_operacao + datetime.timedelta(days=1)))
+        elif operacao.tipo_rendimento_lci_lca == LetraCredito.LCI_LCA_IPCA:
+            # IPCA
+            operacao.atual = Decimal(operacao.atual)
     return operacoes
 
 def simulador_lci_lca(filtros):

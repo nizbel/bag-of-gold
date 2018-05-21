@@ -20,7 +20,7 @@ import traceback
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.db.models.aggregates import Sum
-from django.db.models.fields import CharField
+from django.db.models.fields import CharField, DecimalField
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect, HttpResponse
 from django.template.response import TemplateResponse
@@ -40,7 +40,8 @@ from bagogold.fii.models import OperacaoFII, ProventoFII, HistoricoFII, FII, \
     EventoDesdobramentoFII, EventoIncorporacaoFII
 from bagogold.fii.utils import calcular_valor_fii_ate_dia, \
     calcular_poupanca_prov_fii_ate_dia, calcular_qtd_fiis_ate_dia_por_ticker, \
-    calcular_preco_medio_fiis_ate_dia, calcular_qtd_fiis_ate_dia
+    calcular_preco_medio_fiis_ate_dia, calcular_qtd_fiis_ate_dia,\
+    calcular_preco_medio_fiis_ate_dia_por_ticker
 
 
 @login_required
@@ -183,6 +184,81 @@ def calcular_resultado_corretagem(request):
         form_calcular = CalculoResultadoCorretagemForm()
     
     return TemplateResponse(request, 'fii/calcular_resultado_corretagem.html', {'ranking': ranking, 'form_calcular': form_calcular})
+    
+@adiciona_titulo_descricao('Detalhar FII', 'Detalhamento de um FII')
+def detalhar_fii(request, fii_ticker):
+    fii = get_object_or_404(FII, ticker=fii_ticker)
+    
+    if HistoricoFII.objects.filter(fii=fii).exists():
+        registro_historico_atual = HistoricoFII.objects.filter(fii=fii).order_by('-data')[0]
+        fii.valor_atual = registro_historico_atual.preco_unitario
+        fii.data_valor_atual = registro_historico_atual.data
+    else:
+        fii.valor_atual = None
+        fii.data_valor_atual = None
+        
+    
+    proventos = ProventoFII.objects.filter(fii=fii).annotate(tipo=Case(When(tipo_provento=ProventoFII.TIPO_PROVENTO_AMORTIZACAO, then=Value(u'Amortização')),
+                                                                       When(tipo_provento=ProventoFII.TIPO_PROVENTO_RENDIMENTO, then=Value(u'Rendimento')), output_field=CharField())) \
+                                                   .order_by('data_ex')
+    
+    if proventos.exists():
+        rendimentos = proventos.filter(tipo_provento=ProventoFII.TIPO_PROVENTO_RENDIMENTO)
+        if rendimentos.exists():
+            ultimo_rendimento = rendimentos.order_by('-data_ex')[0]
+            fii.ultimo_provento = ultimo_rendimento.valor_unitario
+            fii.data_ultimo_provento = ultimo_rendimento.data_pagamento
+        else:
+            fii.ultimo_provento = None
+            fii.data_ultimo_provento = None
+    else:
+        fii.ultimo_provento = None
+        fii.data_ultimo_provento = None
+
+    # Calcular percentual de rendimento do ultimo provento
+    if fii.valor_atual and fii.ultimo_provento:
+        fii.percentual_rendimento_ult_prov = 100 * fii.ultimo_provento / fii.valor_atual
+    else:
+        fii.percentual_rendimento_ult_prov = 0
+    
+    # Se usuário autenticado, mostrar operações e proventos recebidos
+    if request.user.is_authenticated():
+        investidor = request.user.investidor
+        # Buscar operações
+        operacoes = OperacaoFII.objects.filter(investidor=investidor, fii=fii).annotate(tipo=Case(When(tipo_operacao='C', then=Value(u'Compra')),
+                                                                                                  When(tipo_operacao='V', then=Value(u'Venda')), output_field=CharField())) \
+                                      .annotate(taxas=F('emolumentos') + F('corretagem')) \
+                                      .annotate(total=Case(When(tipo_operacao='C', then=-1 * (F('quantidade') * F('preco_unitario') + F('emolumentos') + F('corretagem'))),
+                                                           When(tipo_operacao='V', then=F('quantidade') * F('preco_unitario') - F('emolumentos') - F('corretagem')),
+                                                           output_field=DecimalField())) \
+                                      .order_by('data')
+        
+        fii.qtd_cotas = calcular_qtd_fiis_ate_dia_por_ticker(investidor, datetime.date.today(), fii.ticker)
+        fii.preco_medio = calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, datetime.date.today(), fii.ticker)
+        
+        fii.total_provento_recebido = 0
+        
+        if operacoes.exists():
+            # Adicionar utilização de proventos
+            for operacao in operacoes:
+                operacao.uso_proventos = Decimal(0)
+                if operacao.utilizou_proventos():
+                    operacao.uso_proventos += operacao.qtd_proventos_utilizada()
+                    
+            proventos = list(proventos)
+#             for provento in proventos.filter(data_ex__gt=operacoes[0].data):
+            for provento in [provento for provento in proventos if provento.data_ex > operacoes[0].data]:
+                provento.pago = datetime.date.today() >= provento.data_pagamento
+                provento.qtd_na_data_base = calcular_qtd_fiis_ate_dia_por_ticker(request.user.investidor, provento.data_ex-datetime.timedelta(days=1), provento.fii.ticker)
+                provento.valor_recebido = (provento.qtd_na_data_base * provento.valor_unitario).quantize(Decimal('0.01'), rounding=ROUND_FLOOR)
+                fii.total_provento_recebido += provento.valor_recebido
+    else:
+        operacoes = list()
+        
+    # Preparar gráfico histórico
+    historico = [[str(calendar.timegm(data.timetuple()) * 1000), float(preco_unitario)] for (data, preco_unitario) in HistoricoFII.objects.filter(fii=fii).values_list('data', 'preco_unitario').order_by('data')]
+
+    return TemplateResponse(request, 'fii/detalhar_fii.html', {'fii': fii, 'historico': historico, 'operacoes': operacoes, 'proventos': proventos})
     
 @adiciona_titulo_descricao('Detalhar provento', 'Detalhamento de proventos em FIIs')
 def detalhar_provento(request, provento_id):
@@ -331,9 +407,14 @@ def historico_fii(request):
         return TemplateResponse(request, 'fii/historico.html', {'dados': {}, 'lista_conjunta': list(), 'graf_poupanca_proventos': list(), 
                                                      'graf_gasto_total': list(), 'graf_patrimonio': list(), 'lista_eventos': list()})
         
-    operacoes = OperacaoFII.objects.filter(investidor=investidor).exclude(data__isnull=True).annotate(valor_unitario=F('preco_unitario')).annotate(tipo=Case(When(tipo_operacao='C', then=Value(u'Compra')),
-                                                                                                                                                            When(tipo_operacao='V', then=Value(u'Venda')),
-                                                                                                                                                            output_field=CharField())).order_by('data') 
+    operacoes = OperacaoFII.objects.filter(investidor=investidor).exclude(data__isnull=True).annotate(valor_unitario=F('preco_unitario')) \
+                                        .annotate(tipo=Case(When(tipo_operacao='C', then=Value(u'Compra')),
+                                                            When(tipo_operacao='V', then=Value(u'Venda')), output_field=CharField())) \
+                                        .annotate(total=Case(When(tipo_operacao='C', then=-1 * (F('quantidade') * F('preco_unitario') + F('emolumentos') + F('corretagem'))),
+                                                            When(tipo_operacao='V', then=F('quantidade') * F('preco_unitario') - F('emolumentos') - F('corretagem')),
+                                                            output_field=DecimalField())) \
+                                        .annotate(fii_ticker=F('fii__ticker')) \
+                                        .order_by('data') 
     
     # Se investidor não tiver feito operações
     if not operacoes:
@@ -342,18 +423,21 @@ def historico_fii(request):
     
     # Proventos
     proventos = ProventoFII.objects.exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).filter(data_ex__gt=operacoes[0].data, fii__in=operacoes.values_list('fii', flat=True)) \
-        .annotate(tipo=Value(u'Provento', output_field=CharField())).annotate(data=F('data_ex')).order_by('data_ex')  
+        .annotate(tipo=Value(u'Provento', output_field=CharField())).annotate(data=F('data_ex')).annotate(fii_ticker=F('fii__ticker')).order_by('data_ex')  
     
     # Eventos
     agrupamentos = EventoAgrupamentoFII.objects.filter(fii__in=operacoes.values_list('fii', flat=True), data__lte=datetime.date.today()) \
-        .annotate(tipo=Value(u'Agrupamento', output_field=CharField())).annotate(valor_unitario=F('proporcao')).order_by('data') 
+        .annotate(tipo=Value(u'Agrupamento', output_field=CharField())).annotate(valor_unitario=F('proporcao')) \
+        .annotate(fii_ticker=F('fii__ticker')).order_by('data') 
 
     desdobramentos = EventoDesdobramentoFII.objects.filter(fii__in=operacoes.values_list('fii', flat=True), data__lte=datetime.date.today()) \
-        .annotate(tipo=Value(u'Desdobramento', output_field=CharField())).annotate(valor_unitario=F('proporcao')).order_by('data')
+        .annotate(tipo=Value(u'Desdobramento', output_field=CharField())).annotate(valor_unitario=F('proporcao')) \
+        .annotate(fii_ticker=F('fii__ticker')).order_by('data')
     
     incorporacoes = EventoIncorporacaoFII.objects.filter(Q(fii__in=operacoes.values_list('fii', flat=True), data__lte=datetime.date.today()) \
                                                          | Q(novo_fii__in=operacoes.values_list('fii', flat=True), data__lte=datetime.date.today())).annotate(tipo=Value(u'Incorporação', output_field=CharField())) \
-                                                         .annotate(valor_unitario=F('novo_fii__ticker')).order_by('data')
+                                                         .annotate(valor_unitario=F('novo_fii__ticker')) \
+                                                         .annotate(fii_ticker=F('fii__ticker')).order_by('data')
 
     
     # Proventos devem ser computados primeiro na data EX
@@ -375,57 +459,57 @@ def historico_fii(request):
     houve_operacao_hoje = False
     
     for indice, item in enumerate(lista_conjunta):   
-        if item.fii.ticker not in qtd_papeis.keys():
-            qtd_papeis[item.fii.ticker] = Decimal(0)       
+        if item.fii_ticker not in qtd_papeis.keys():
+            qtd_papeis[item.fii_ticker] = Decimal(0)       
         # Verificar se se trata de compra, venda ou provento
         if item.tipo == 'Compra':
             item.uso_proventos = Decimal(0)
             if item.utilizou_proventos():
                 item.uso_proventos += item.qtd_proventos_utilizada()
                 total_proventos -= item.uso_proventos
-            item.total = Decimal(-1) * (item.quantidade * item.preco_unitario + \
-            item.emolumentos + item.corretagem)
+#             item.total = Decimal(-1) * (item.quantidade * item.preco_unitario + \
+#             item.emolumentos + item.corretagem)
             total_gasto += item.total - item.uso_proventos
-            qtd_papeis[item.fii.ticker] += item.quantidade
+            qtd_papeis[item.fii_ticker] += item.quantidade
             
         elif item.tipo == 'Venda':
-            item.total = (item.quantidade * item.preco_unitario - \
-            item.emolumentos - item.corretagem)
+#             item.total = (item.quantidade * item.preco_unitario - \
+#             item.emolumentos - item.corretagem)
             total_gasto += item.total
-            qtd_papeis[item.fii.ticker] -= item.quantidade
+            qtd_papeis[item.fii_ticker] -= item.quantidade
                 
         elif item.tipo == 'Provento':
-            if qtd_papeis[item.fii.ticker] == 0:
+            if qtd_papeis[item.fii_ticker] == 0:
                 item.quantidade = 0
                 continue
-            item.total = (qtd_papeis[item.fii.ticker] * item.valor_unitario).quantize(Decimal('0.01'), rounding=ROUND_FLOOR)
-            item.quantidade = qtd_papeis[item.fii.ticker]
+            item.total = (qtd_papeis[item.fii_ticker] * item.valor_unitario).quantize(Decimal('0.01'), rounding=ROUND_FLOOR)
+            item.quantidade = qtd_papeis[item.fii_ticker]
             total_proventos += item.total
             
         elif item.tipo == 'Agrupamento':
-            if qtd_papeis[item.fii.ticker] == 0:
+            if qtd_papeis[item.fii_ticker] == 0:
                 item.quantidade = 0
                 continue
-            item.quantidade = qtd_papeis[item.fii.ticker]
-            qtd_papeis[item.fii.ticker] = item.qtd_apos(item.quantidade)
-            item.total = qtd_papeis[item.fii.ticker]
+            item.quantidade = qtd_papeis[item.fii_ticker]
+            qtd_papeis[item.fii_ticker] = item.qtd_apos(item.quantidade)
+            item.total = qtd_papeis[item.fii_ticker]
                         
         elif item.tipo == 'Desdobramento':
-            if qtd_papeis[item.fii.ticker] == 0:
+            if qtd_papeis[item.fii_ticker] == 0:
                 item.quantidade = 0
                 continue
-            item.quantidade = qtd_papeis[item.fii.ticker]
-            qtd_papeis[item.fii.ticker] = item.qtd_apos(item.quantidade)
-            item.total = qtd_papeis[item.fii.ticker]
+            item.quantidade = qtd_papeis[item.fii_ticker]
+            qtd_papeis[item.fii_ticker] = item.qtd_apos(item.quantidade)
+            item.total = qtd_papeis[item.fii_ticker]
             
         elif item.tipo == 'Incorporação':
-            if qtd_papeis[item.fii.ticker] == 0:
+            if qtd_papeis[item.fii_ticker] == 0:
                 item.quantidade = 0
                 continue
-            item.quantidade = qtd_papeis[item.fii.ticker]
-            item.total = qtd_papeis[item.fii.ticker]
-            qtd_papeis[item.novo_fii.ticker] += qtd_papeis[item.fii.ticker]
-            qtd_papeis[item.fii.ticker] = 0
+            item.quantidade = qtd_papeis[item.fii_ticker]
+            item.total = qtd_papeis[item.fii_ticker]
+            qtd_papeis[item.novo_fii.ticker] += qtd_papeis[item.fii_ticker]
+            qtd_papeis[item.fii_ticker] = 0
             
         # Verifica se próximo elemento possui a mesma data
         if indice == len(lista_conjunta) - 1 or item.data != lista_conjunta[indice+1].data:
@@ -438,12 +522,12 @@ def historico_fii(request):
             patrimonio = 0
             # Verifica se houve operacao hoje
             if item.data != datetime.date.today():
-                for fii in qtd_papeis.keys():
+                for fii in qtd_papeis:
                     # Pegar último dia util com negociação do fii para calculo do patrimonio
                     patrimonio += (qtd_papeis[fii] * HistoricoFII.objects.filter(data__lte=item.data, fii__ticker=fii).order_by('-data')[0].preco_unitario)
             else:
                 houve_operacao_hoje = True
-                for fii in qtd_papeis.keys():
+                for fii in qtd_papeis:
                     # Tenta pegar valor diario, se nao houver, pegar historico do ultimo dia util
                     if ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__date=datetime.date.today()).exists():
                         patrimonio += (Decimal(qtd_papeis[fii]) * ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__date=datetime.date.today()).order_by('-data_hora')[0].preco_unitario)
@@ -458,7 +542,7 @@ def historico_fii(request):
         graf_gasto_total += [[str(calendar.timegm(data_mais_atual.timetuple()) * 1000), float(-total_gasto)]]
         
         patrimonio = 0
-        for fii in qtd_papeis.keys():
+        for fii in qtd_papeis:
             if qtd_papeis[fii] > 0:
                 if ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__date=data_mais_atual).exists():
                     patrimonio += (qtd_papeis[fii] * ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__date=data_mais_atual) \
@@ -476,6 +560,7 @@ def historico_fii(request):
     dados['patrimonio'] = patrimonio
     dados['lucro'] = patrimonio + total_proventos + total_gasto
     dados['lucro_percentual'] = (patrimonio + total_proventos + total_gasto) / -total_gasto * 100
+    
     return TemplateResponse(request, 'fii/historico.html', {'dados': dados, 'lista_conjunta': lista_conjunta, 'graf_poupanca_proventos': graf_poupanca_proventos, 
                                                      'graf_gasto_total': graf_gasto_total, 'graf_patrimonio': graf_patrimonio, 'lista_eventos': ['Agrupamento', 'Desdobramento', 'Incorporação']})
     
@@ -529,7 +614,7 @@ def inserir_operacao_fii(request):
                         uso_proventos.save()
                     messages.success(request, 'Operação inserida com sucesso')
                     return HttpResponseRedirect(reverse('fii:historico_fii'))
-        for erro in [erro for erro in form_operacao_fii.non_field_errors()]:
+        for erro in form_operacao_fii.non_field_errors():
             messages.error(request, erro)    
                     
     else:
@@ -566,7 +651,7 @@ def listar_proventos(request):
         else:
             query_proventos = ProventoFII.objects.filter(tipo_provento=filtros['tipo_provento'])
             
-        filtros['fiis'] = re.sub('[^,\d]', '', request.GET.get('fiis', ''))
+        filtros['fiis'] = re.sub(r'[^,\d]', '', request.GET.get('fiis', ''))
         if filtros['fiis'] != '':
             query_proventos = query_proventos.filter(fii__id__in=filtros['fiis'].split(','))
             
@@ -649,7 +734,7 @@ def painel(request):
     total_papeis = 0      
     total_valor = 0
     # Preencher totais
-    for fii in fiis.keys():
+    for fii in fiis:
         total_papeis += fiis[fii].quantidade
         if ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__date=datetime.date.today()).exists():
             fiis[fii].valor = ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__date=datetime.date.today()).order_by('-data_hora')[0].preco_unitario
@@ -658,13 +743,13 @@ def painel(request):
         fiis[fii].valor_total = fiis[fii].valor * fiis[fii].quantidade
         total_valor += fiis[fii].valor_total
          
-    # Calcular percentagens
-    for fii in fiis.keys():
+    # Calcular porcentagens
+    for fii in fiis:
         fiis[fii].quantidade_percentual = fiis[fii].quantidade / total_papeis * 100
         fiis[fii].valor_total_percentual = fiis[fii].valor_total / total_valor * 100
      
     # Gráfico de composição
-    graf_composicao = [{'label': str(fii), 'data': float(fiis[fii].valor_total_percentual)} for fii in fiis.keys()]
+    graf_composicao = [{'label': str(fii), 'data': float(fiis[fii].valor_total_percentual)} for fii in fiis]
     
     # Gráfico de valorização
     graf_valorizacao = [{'label': str(fii), 'data': float(((fiis[fii].valor - fiis[fii].preco_medio)/fiis[fii].preco_medio * 100).quantize(Decimal('0.01')))} for fii in sorted(fiis.keys())]
@@ -673,8 +758,10 @@ def painel(request):
     dados = {}
     dados['total_papeis'] = total_papeis
     dados['total_valor'] = total_valor
-    dados['valor_diario_mais_recente'] = ValorDiarioFII.objects.latest('data_hora').data_hora if ValorDiarioFII.objects.exists() else \
-        HistoricoFII.objects.latest('data').data
+    if ValorDiarioFII.objects.filter(data_hora__date=datetime.date.today()).exists():
+        dados['valor_diario_mais_recente'] = ValorDiarioFII.objects.order_by('-data_hora').values_list('data_hora', flat=True)[0]
+    else:
+        dados['valor_diario_mais_recente'] = HistoricoFII.objects.order_by('-data').values_list('data', flat=True)[0]
     
     return TemplateResponse(request, 'fii/painel.html', {'fiis': fiis, 'dados': dados, 'graf_composicao': graf_composicao, 'graf_valorizacao': graf_valorizacao})
 

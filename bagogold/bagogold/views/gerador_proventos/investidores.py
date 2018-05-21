@@ -180,20 +180,25 @@ def listar_usuarios(request):
     estatisticas['previsao_percentual_validado_progress'] = str(estatisticas['previsao_percentual_validado']).replace(',', '.')
     estatisticas['previsao_percentual_validado_progress'] = estatisticas['previsao_percentual_validado_progress'][: min(len(estatisticas['previsao_percentual_validado_progress']),
                                                                                                       estatisticas['previsao_percentual_validado_progress'].find('.') + 4)]
-    dias_para_validacao_completa = (estatisticas['total_documentos'] - estatisticas['total_validado'])/ \
-        ((estatisticas['taxa_validacao_diaria'] - Decimal(estatisticas['total_ref_30_dias'])/30) or 1)
-    anos_validacao_completa = int(floor(dias_para_validacao_completa/365))
-    dias_validacao_completa = int(floor(dias_para_validacao_completa % 365))
-    horas_validacao_completa = int(floor((Decimal(dias_para_validacao_completa) - Decimal(floor(dias_para_validacao_completa))) * 24))
-    estatisticas['previsao_tempo_validacao_completa'] = ''
-    if anos_validacao_completa > 0:
-        estatisticas['previsao_tempo_validacao_completa'] += '%s anos' % (anos_validacao_completa)
-    if dias_validacao_completa > 0:
-        estatisticas['previsao_tempo_validacao_completa'] += ', %s dias' % (dias_validacao_completa) if len(estatisticas['previsao_tempo_validacao_completa']) > 0 else \
-            '%s dias' % (dias_validacao_completa)
-    if horas_validacao_completa > 0:
-        estatisticas['previsao_tempo_validacao_completa'] += ', %s horas' % (horas_validacao_completa) if len(estatisticas['previsao_tempo_validacao_completa']) > 0 else \
-            '%s horas' % (horas_validacao_completa)
+    
+    # Verifica se taxa validações está maior que taxa de geração de documentos
+    if estatisticas['taxa_validacao_diaria'] > Decimal(estatisticas['total_ref_30_dias'])/30:
+        dias_para_validacao_completa = (estatisticas['total_documentos'] - estatisticas['total_validado'])/ \
+            ((estatisticas['taxa_validacao_diaria'] - Decimal(estatisticas['total_ref_30_dias'])/30) or 1)
+        anos_validacao_completa = int(floor(dias_para_validacao_completa/365))
+        dias_validacao_completa = int(floor(dias_para_validacao_completa % 365))
+        horas_validacao_completa = int(floor((Decimal(dias_para_validacao_completa) - Decimal(floor(dias_para_validacao_completa))) * 24))
+        estatisticas['previsao_tempo_validacao_completa'] = ''
+        if anos_validacao_completa > 0:
+            estatisticas['previsao_tempo_validacao_completa'] += '%s anos' % (anos_validacao_completa)
+        if dias_validacao_completa > 0:
+            estatisticas['previsao_tempo_validacao_completa'] += ', %s dias' % (dias_validacao_completa) if len(estatisticas['previsao_tempo_validacao_completa']) > 0 else \
+                '%s dias' % (dias_validacao_completa)
+        if horas_validacao_completa > 0:
+            estatisticas['previsao_tempo_validacao_completa'] += ', %s horas' % (horas_validacao_completa) if len(estatisticas['previsao_tempo_validacao_completa']) > 0 else \
+                '%s horas' % (horas_validacao_completa)
+    else:
+        estatisticas['previsao_tempo_validacao_completa'] = 'Indefinido'
     
     return TemplateResponse(request, 'gerador_proventos/listar_usuarios.html', {'usuarios': usuarios, 'estatisticas': estatisticas})
 

@@ -34,6 +34,7 @@ import calendar
 import datetime
 import json
 import math
+from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo
 
 @login_required
 def buscar_titulos_validos_na_data(request):
@@ -191,6 +192,12 @@ def acompanhamento_td(request):
 def detalhar_titulo_td(request, titulo_id):
     titulo = get_object_or_404(Titulo, id=titulo_id)
     
+    print titulo.valor_vencimento()
+#     print titulo.valor_vencimento() / ((1 + Decimal('0.0466'))**(Decimal(qtd_dias_uteis_no_periodo(datetime.date.today()+datetime.timedelta(days=1), titulo.data_vencimento))/252))
+#     print qtd_dias_uteis_no_periodo(datetime.date(2018, 1, 1), datetime.date(2018, 12, 31))
+
+#     print qtd_dias_uteis_no_periodo(datetime.date.today(), titulo.data_vencimento), \
+#         qtd_dias_uteis_no_periodo(datetime.date.today() + datetime.timedelta(days=1), titulo.data_vencimento)
     # TODO pegar valores e taxas atuais do título, se não estiver fechado
     if not titulo.titulo_vencido():
         if ValorDiarioTitulo.objects.filter(titulo=titulo).exists():
@@ -665,8 +672,8 @@ def painel(request):
 @adiciona_titulo_descricao('Sobre Tesouro Direto', 'Detalha o que são títulos do Tesouro Direto')
 def sobre(request):
     data_atual = datetime.date.today()
-    historico_ipca = HistoricoIPCA.objects.filter(ano__gte=(data_atual.year-3)).exclude(mes__lt=data_atual.month, ano=data_atual.year-3).order_by('ano', 'mes')
-    graf_historico_ipca = [[str(calendar.timegm(valor_historico.data().timetuple()) * 1000), float(valor_historico.valor)] for valor_historico in historico_ipca]
+    historico_ipca = HistoricoIPCA.objects.filter(data_inicio__year__gte=(data_atual.year-3)).order_by('data_inicio')
+    graf_historico_ipca = [[str(calendar.timegm(valor_historico.data_inicio.timetuple()) * 1000), float(valor_historico.valor)] for valor_historico in historico_ipca]
     
     historico_selic = HistoricoTaxaSelic.objects.filter(data__gte=data_atual.replace(year=data_atual.year-3)).order_by('data')
     graf_historico_selic = [[str(calendar.timegm(valor_historico.data.timetuple()) * 1000), float(pow(valor_historico.taxa_diaria, 252) - 1)*100] for valor_historico in historico_selic]

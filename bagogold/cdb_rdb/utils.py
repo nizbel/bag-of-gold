@@ -28,7 +28,7 @@ def calcular_valor_venda_cdb_rdb(operacao_venda, arredondar=True, valor_liquido=
     if operacao_venda.tipo_operacao != 'V':
         raise ValueError('Apenas para operações de venda')
     # Adicionar informação de taxa para evitar buscas excessivas na base
-    operacao_venda.taxa = operacao_venda.porcentagem()
+#     operacao_venda.taxa = operacao_venda.porcentagem()
     
     # Verificar se há checkpoints para a operação de compra
     if CheckpointCDB_RDB.objects.filter(operacao=operacao_venda.operacao_compra_relacionada(), ano=operacao_venda.data.year-1).exists():
@@ -64,7 +64,7 @@ def calcular_valor_operacao_cdb_rdb_ate_dia(operacao, dia=datetime.date.today(),
     data_ultima_valorizacao = min(operacao.data_vencimento() - datetime.timedelta(days=1), dia)
     
     # Adicionar informação de taxa para evitar buscas excessivas na base
-    operacao.taxa = operacao.porcentagem()
+#     operacao.taxa = operacao.porcentagem()
     
     if CheckpointCDB_RDB.objects.filter(operacao=operacao, ano=dia.year-1).exists():
         # Verificar se há vendas
@@ -111,33 +111,33 @@ def calcular_valor_atualizado_operacao_ate_dia(valor, data_inicial, data_final, 
     if not data_ultima_valorizacao:
         data_ultima_valorizacao = data_final
         
-    if operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
+    if operacao.tipo_rendimento_cdb_rdb == CDB_RDB.CDB_RDB_DI:
         # Definir período do histórico relevante para a operação
         taxas_dos_dias = dict(HistoricoTaxaDI.objects.filter(data__range=[data_inicial, data_ultima_valorizacao]).values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
             
         # Calcular
         if valor_liquido:
-            valor_final = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor, operacao.taxa)
+            valor_final = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor, operacao.porcentagem())
             return valor_final - sum(calcular_iof_e_ir_longo_prazo(valor_final - qtd_original, 
                                                  (data_final - operacao.data_inicial()).days))
         else:
-            return calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor, operacao.taxa)
-    elif operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
+            return calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor, operacao.porcentagem())
+    elif operacao.tipo_rendimento_cdb_rdb == CDB_RDB.CDB_RDB_PREFIXADO:
         # Prefixado
         if valor_liquido:
-            valor_final = calcular_valor_atualizado_com_taxa_prefixado(valor, operacao.taxa, qtd_dias_uteis_no_periodo(data_inicial, 
+            valor_final = calcular_valor_atualizado_com_taxa_prefixado(valor, operacao.porcentagem(), qtd_dias_uteis_no_periodo(data_inicial, 
                                                                                                                         data_ultima_valorizacao + datetime.timedelta(days=1)))
             return valor_final - sum(calcular_iof_e_ir_longo_prazo(valor_final - qtd_original, 
                                                  (data_final - operacao.data_inicial()).days))
         else:
-            return calcular_valor_atualizado_com_taxa_prefixado(valor, operacao.taxa, qtd_dias_uteis_no_periodo(data_inicial, data_ultima_valorizacao + datetime.timedelta(days=1)))
-    elif operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_IPCA:
+            return calcular_valor_atualizado_com_taxa_prefixado(valor, operacao.porcentagem(), qtd_dias_uteis_no_periodo(data_inicial, data_ultima_valorizacao + datetime.timedelta(days=1)))
+    elif operacao.tipo_rendimento_cdb_rdb == CDB_RDB.CDB_RDB_IPCA:
         # IPCA
         if valor_liquido:
             return Decimal(valor)
         else:
             return Decimal(valor)
-
+        
 def calcular_valor_cdb_rdb_ate_dia(investidor, dia=datetime.date.today(), valor_liquido=False):
     """ 
     Calcula o valor dos CDB/RDB no dia determinado
@@ -152,10 +152,10 @@ def calcular_valor_cdb_rdb_ate_dia(investidor, dia=datetime.date.today(), valor_
     cdb_rdb = {}
     for operacao in operacoes:
 
-        if operacao.cdb_rdb.id not in cdb_rdb.keys():
-            cdb_rdb[operacao.cdb_rdb.id] = 0
+        if operacao.cdb_rdb_id not in cdb_rdb.keys():
+            cdb_rdb[operacao.cdb_rdb_id] = 0
         
-        cdb_rdb[operacao.cdb_rdb.id] += calcular_valor_operacao_cdb_rdb_ate_dia(operacao, dia, True, valor_liquido)
+        cdb_rdb[operacao.cdb_rdb_id] += calcular_valor_operacao_cdb_rdb_ate_dia(operacao, dia, True, valor_liquido)
     
     return cdb_rdb
 
@@ -211,7 +211,7 @@ def calcular_valor_um_cdb_rdb_ate_dia_por_divisao(cdb_rdb, divisao_id, dia=datet
     # Buscar checkpoints de divisão para o CDB/RDB
     for checkpoint in CheckpointDivisaoCDB_RDB.objects.filter(divisao_operacao__operacao__cdb_rdb=cdb_rdb, ano=dia.year-1, divisao_operacao__divisao__id=divisao_id):
         # Adicionar informação de taxa para evitar buscas excessivas na base
-        checkpoint.divisao_operacao.operacao.taxa = checkpoint.divisao_operacao.operacao.porcentagem()
+#         checkpoint.divisao_operacao.operacao.taxa = checkpoint.divisao_operacao.operacao.porcentagem()
         
         # Verificar se há vendas
         if OperacaoVendaCDB_RDB.objects.filter(operacao_compra=checkpoint.divisao_operacao.operacao, operacao_venda__data__range=[dia.replace(month=1).replace(day=1), dia]).exists():
@@ -232,7 +232,7 @@ def calcular_valor_um_cdb_rdb_ate_dia_por_divisao(cdb_rdb, divisao_id, dia=datet
     for divisao_operacao in DivisaoOperacaoCDB_RDB.objects.filter(divisao__id=divisao_id, operacao__data__range=[dia.replace(day=1).replace(month=1), dia], operacao__cdb_rdb=cdb_rdb,
                                                                   operacao__tipo_operacao='C'):
         # Adicionar informação de taxa para evitar buscas excessivas na base
-        divisao_operacao.operacao.taxa = divisao_operacao.operacao.porcentagem()
+#         divisao_operacao.operacao.taxa = divisao_operacao.operacao.porcentagem()
         
         valor_restante = divisao_operacao.qtd_disponivel_venda_na_data(dia)
         valor_atualizado += calcular_valor_atualizado_operacao_ate_dia(valor_restante, divisao_operacao.operacao.data, dia, divisao_operacao.operacao, valor_restante).quantize(Decimal('.01'), ROUND_DOWN)
@@ -248,7 +248,7 @@ def calcular_valor_op_cdb_rdb_ate_dia_por_divisao(divisao_operacao, dia=datetime
     Retorno: Valor atualizado da operação na data
     """
     # Adicionar informação de taxa para evitar buscas excessivas na base
-    divisao_operacao.operacao.taxa = divisao_operacao.operacao.porcentagem()
+#     divisao_operacao.operacao.taxa = divisao_operacao.operacao.porcentagem()
     
     # Verificar existência de checkpoint
     if CheckpointDivisaoCDB_RDB.objects.filter(divisao_operacao=divisao_operacao, ano=dia.year-1).exists():
@@ -287,10 +287,46 @@ def buscar_operacoes_vigentes_ate_data(investidor, data=datetime.date.today()):
     """
     operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor, tipo_operacao='C', data__lte=data).exclude(data__isnull=True) \
         .annotate(qtd_vendida=Coalesce(Sum(Case(When(operacao_compra__operacao_venda__data__lte=data, then='operacao_compra__operacao_venda__quantidade'))), 0)).exclude(quantidade=F('qtd_vendida')) \
-        .annotate(qtd_disponivel_venda=(F('quantidade') - F('qtd_vendida')))
+        .annotate(qtd_disponivel_venda=(F('quantidade') - F('qtd_vendida'))).select_related('cdb_rdb')
     
     return operacoes
     
+def atualizar_operacoes_cdb_rdb_no_periodo(operacoes, data_inicial, data_final):
+    """
+    Atualiza o atributo 'atual' para cada operação em CDB/RDB enviada, em um período (incluindo data final)
+    
+    Parâmetros: Operações
+                Data inicial
+                Data final
+    Retorno: Operações com o atributo atual atualizado
+    """
+    # Buscar taxa DI
+    historico_di = HistoricoTaxaDI.objects.filter(data__range=[data_inicial, data_final])
+    taxas_dos_dias = dict(historico_di.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
+    
+    for operacao in operacoes:
+        # Verificar data de vencimento da operação, não atualizar além dela
+        data_final_operacao = min(data_final, operacao.data_vencimento() - datetime.timedelta(days=1))
+        if data_final_operacao < data_inicial:
+            continue
+        
+        if operacao.tipo_rendimento_cdb_rdb == CDB_RDB.CDB_RDB_DI:
+            # DI
+            # Definir período do histórico relevante
+            if data_final == data_final_operacao:
+                taxas_dos_dias_operacao = taxas_dos_dias
+            else:
+                taxas_dos_dias_operacao = dict(historico_di.filter(data__lte=data_final_operacao).values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
+            
+            operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias_operacao, operacao.atual, operacao.porcentagem())
+        elif operacao.tipo_rendimento_cdb_rdb == CDB_RDB.CDB_RDB_PREFIXADO:
+            # Prefixado
+            operacao.atual = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.porcentagem(), qtd_dias_uteis_no_periodo(data_inicial, data_final_operacao + datetime.timedelta(days=1)))
+        elif operacao.tipo_rendimento_cdb_rdb == CDB_RDB.CDB_RDB_IPCA:
+            # IPCA
+            operacao.atual = Decimal(operacao.atual)
+    return operacoes
+
 def simulador_cdb_rdb(filtros):
     """
     Simula uma aplicação em CDB/RDB para os valores especificados nos filtros

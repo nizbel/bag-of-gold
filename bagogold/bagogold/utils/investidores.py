@@ -23,7 +23,7 @@ from bagogold.bagogold.signals.divisao_fii import gerar_checkpoint_divisao_fii, 
 from bagogold.bagogold.signals.divisao_lc import gerar_checkpoint_divisao_lc
 from bagogold.bagogold.utils.acoes import quantidade_acoes_ate_dia, \
     calcular_poupanca_prov_acao_ate_dia
-from bagogold.bagogold.utils.debenture import calcular_qtd_debentures_ate_dia
+from bagogold.debentures.utils import calcular_qtd_debentures_ate_dia
 from bagogold.cdb_rdb.models import OperacaoCDB_RDB, CheckpointCDB_RDB
 from bagogold.cdb_rdb.signals import gerar_checkpoint_cdb_rdb
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia

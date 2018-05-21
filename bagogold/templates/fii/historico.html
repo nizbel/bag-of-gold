@@ -118,14 +118,13 @@
 					<tbody>
 					{% for item in lista_conjunta %}
 						<tr>
-							<td>
-                                {% if item.tipo in lista_eventos or item.tipo == 'Provento'%}
-                                    {{item.fii.ticker}}
+							<td><a href="{% url 'fii:detalhar_fii' item.fii_ticker %}">{{item.fii_ticker}}</a></td>
+							<td>{% if item.tipo in lista_eventos or item.tipo == 'Provento'%}
+                                    {{item.tipo}}
                                 {% else %}
-                                    <a href="{% url 'fii:editar_operacao_fii' item.id %}">{{item.fii.ticker}}</a>
+                                    <a href="{% url 'fii:editar_operacao_fii' item.id %}">{{item.tipo}}</a>
                                 {% endif %}
                             </td>
-							<td>{{item.tipo}}</td>
 							<td>{{ item.data|date:"d/m/Y" }}</td>
 							<td>{{item.quantidade}}</td>
                             {% if item.tipo in lista_eventos %}
@@ -151,7 +150,7 @@
 							">R$ {{item.total|floatformat:2}}</span>
                             {% endif %}
                             </td>
-                            <td><span class="font-blue">R$ {{item.uso_proventos}}</span></td>
+							<td>{% if item.uso_proventos != None %}<span class="font-blue">R$ {{item.uso_proventos|floatformat:"2"}}</span>{% else %}Não há{% endif %}</td>
 						</tr>
 					{% endfor %}
 					</tbody>

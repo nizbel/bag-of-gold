@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
+from django import forms
+from django.forms import widgets
+
 from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.divisoes import Divisao
 from bagogold.criptomoeda.models import OperacaoCriptomoeda, Criptomoeda, \
-    TransferenciaCriptomoeda
+    TransferenciaCriptomoeda, Fork
 from bagogold.criptomoeda.utils import \
     calcular_qtd_moedas_ate_dia_por_criptomoeda
-from django import forms
-from django.forms import widgets
+
 
 ESCOLHAS_TIPO_OPERACAO=(('C', "Compra"),
                         ('V', "Venda"))
@@ -120,4 +122,31 @@ class TransferenciaCriptomoedaLoteForm(forms.Form):
         self.fields['divisao'].queryset = Divisao.objects.filter(investidor=self.investidor)
 
     def clean(self):
-        data = super(TransferenciaCriptomoedaLoteForm, self).clean()        
+        data = super(TransferenciaCriptomoedaLoteForm, self).clean()       
+         
+class ForkForm(LocalizedModelForm):
+    class Meta:
+        model = Fork
+        fields = ('moeda_origem', 'moeda_recebida', 'data', 'quantidade',)
+        widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
+                                            'placeholder':'Selecione uma data'}),}
+        
+    class Media:
+        js = ('js/bagogold/form_fork_criptomoeda.js',)
+        
+    def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
+        # first call parent's constructor
+        super(ForkForm, self).__init__(*args, **kwargs)
+        escolhas_moeda = Criptomoeda.objects.all().order_by('nome')
+        self.fields['moeda_origem'].choices = [(moeda.id, '%s (%s)' % (moeda.ticker, moeda.nome)) for moeda in escolhas_moeda]
+        self.fields['moeda_recebida'].choices = [(moeda.id, '%s (%s)' % (moeda.ticker, moeda.nome)) for moeda in escolhas_moeda]
+        
+    def clean(self):
+        data = super(ForkForm, self).clean()
+        if data.get('moeda_origem') == data.get('moeda_recebida'):
+            raise forms.ValidationError('Moeda de origem deve ser diferente de moeda recebida')
+        
+        # Testar se investidor possuía quantidade de moedas de origem igual a quantidade recebida
+        if calcular_qtd_moedas_ate_dia_por_criptomoeda(self.investidor, data.get('moeda_origem').id, data.get('data')) < data.get('quantidade'):
+            raise forms.ValidationError('Investidor deve possuir a moeda de origem informada em quantidade pelo menos igual a informada para o fork')
