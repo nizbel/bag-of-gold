@@ -24,6 +24,8 @@ class VerificarFIIThread(Thread):
                     if not Empresa.objects.filter(codigo_cvm=sigla).exists():
                         empresa = Empresa(nome=empresa_nome, codigo_cvm=sigla, nome_pregao=empresa_nome_pregao)
                         empresa.save()
+                    else:
+                        empresa = Empresa.objects.get(codigo_cvm=sigla)
                     
                     # FII existia
                     if FII.objects.filter(ticker=ticker).exists():
