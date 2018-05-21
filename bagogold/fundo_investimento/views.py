@@ -1,37 +1,45 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+
+import calendar
+import datetime
+from decimal import Decimal
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
+from django.core.mail import mail_admins
+from django.shortcuts import get_object_or_404
+from django.template.loader import render_to_string
+import json
+import re
+import traceback
+
+from django.core.paginator import Paginator
+from django.core.urlresolvers import reverse
+from django.db import transaction
+from django.db.models.aggregates import Count
+from django.forms.models import inlineformset_factory
+from django.http.response import HttpResponseRedirect, HttpResponse, \
+    HttpResponsePermanentRedirect
+from django.template.response import TemplateResponse
+
 from bagogold import settings
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import \
     DivisaoOperacaoFundoInvestimentoFormSet
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFundoInvestimento, \
     Divisao
+from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 from bagogold.bagogold.utils.misc import \
     formatar_zeros_a_direita_apos_2_casas_decimais, calcular_iof_regressivo
+from bagogold.bagogold.utils.taxas_indexacao import \
+    calcular_valor_atualizado_com_taxas_di
 from bagogold.fundo_investimento.forms import OperacaoFundoInvestimentoForm
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
     HistoricoValorCotas, FundoInvestimento
 from bagogold.fundo_investimento.utils import \
     calcular_qtd_cotas_ate_dia_por_fundo, calcular_valor_fundos_investimento_ate_dia
-from decimal import Decimal
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
-from django.core.mail import mail_admins
-from django.core.paginator import Paginator
-from django.core.urlresolvers import reverse
-from django.db import transaction
-from django.forms.models import inlineformset_factory
-from django.http.response import HttpResponseRedirect, HttpResponse, \
-    HttpResponsePermanentRedirect
-from django.shortcuts import get_object_or_404
-from django.template.loader import render_to_string
-from django.template.response import TemplateResponse
-import calendar
-import datetime
-import json
-import re
-import traceback
+
 
 # Mantendo versão anterior com redirecionamento
 @adiciona_titulo_descricao('Detalhar fundo de investimento', 'Traz características do fundo, posição do investidor e histórico de cotações')
@@ -69,6 +77,18 @@ def detalhar_fundo(request, slug_fundo):
     else:
         historico_data_inicial = datetime.date.today()
         historico_data_final = datetime.date.today()
+        
+    # Preparar gráfico histórico
+    historico_graf = HistoricoValorCotas.objects.filter(fundo_investimento=fundo).values_list('data', 'valor_cota').order_by('data')
+    graf_historico = [[str(calendar.timegm(data.timetuple()) * 1000), float(valor_cota)] for \
+        (data, valor_cota) in historico_graf]
+#     primeiro_valor_historico = historico
+#     ultimo_valor_historico = 
+    taxas_dos_dias = dict(HistoricoTaxaDI.objects.filter(data__range=[historico_graf[0][0], historico_graf[len(historico_graf)-1][0]]) \
+                          .values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
+    graf_di = [[str(calendar.timegm(historico_graf[0][0].timetuple()) * 1000), float(historico_graf[0][1])],
+               [str(calendar.timegm(historico_graf[len(historico_graf)-1][0].timetuple()) * 1000), 
+                float(calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, historico_graf[0][1], 100))]]
     
     dados = {'total_operacoes': 0, 'qtd_cotas_atual': Decimal(0), 'total_atual': Decimal(0), 'total_lucro': Decimal(0), 'lucro_percentual': Decimal(0)}
     if request.user.is_authenticated():
@@ -86,7 +106,8 @@ def detalhar_fundo(request, slug_fundo):
         dados['lucro_percentual'] = (fundo.valor_cota - preco_medio) / (preco_medio or 1) if dados['qtd_cotas_atual'] > 0 else 0    
     
     return TemplateResponse(request, 'fundo_investimento/detalhar_fundo_investimento.html', {'fundo': fundo, 'dados': dados, 'historico': historico, 'historico_data_inicial': historico_data_inicial,
-                                                                 'historico_data_final': historico_data_final})
+                                                                 'historico_data_final': historico_data_final, 'graf_historico': graf_historico,
+                                                                 'graf_di': graf_di})
 
 @login_required
 @adiciona_titulo_descricao('Editar operação em Fundo de Investimento', 'Alterar valores de uma operação de compra/venda em Fundo de Investimento')
@@ -413,8 +434,8 @@ def listar_historico_fundo_investimento(request, id_fundo):
     data_final = data_final.date()
     if data_final < data_inicial:
         return HttpResponse(json.dumps({'sucesso': False, 'erro':'Data final deve ser maior ou igual a data inicial'}), content_type = "application/json")  
-    if data_final > data_inicial.replace(year=data_inicial.year+1):
-        return HttpResponse(json.dumps({'sucesso': False, 'erro':'O período limite para a escolha é de 1 ano'}), content_type = "application/json")  
+    if data_final > data_inicial.replace(year=data_inicial.year+3):
+        return HttpResponse(json.dumps({'sucesso': False, 'erro':'O período limite para a escolha é de 3 anos'}), content_type = "application/json")  
     # Retorno OK
     historico = HistoricoValorCotas.objects.filter(data__range=[data_inicial, data_final], fundo_investimento__id=id_fundo)
     for registro in historico:

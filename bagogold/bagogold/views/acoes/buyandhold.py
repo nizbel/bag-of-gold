@@ -1,4 +1,23 @@
 # -*- coding: utf-8 -*-
+import calendar
+import datetime
+from decimal import Decimal
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
+from django.db.models.expressions import F
+from django.shortcuts import get_object_or_404
+from itertools import chain
+import json
+from operator import attrgetter
+
+from django.core.urlresolvers import reverse
+from django.db import transaction
+from django.db.models import Q
+from django.forms import inlineformset_factory
+from django.http import HttpResponse, HttpResponseRedirect
+from django.template.response import TemplateResponse
+
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoAcaoFormSet
 from bagogold.bagogold.forms.operacao_acao import OperacaoAcaoForm, \
@@ -10,26 +29,11 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao, Divisao
 from bagogold.bagogold.utils.acoes import calcular_provento_por_mes, \
     calcular_media_proventos_6_meses, calcular_operacoes_sem_proventos_por_mes, \
     calcular_uso_proventos_por_mes, quantidade_acoes_ate_dia, \
-    calcular_poupanca_prov_acao_ate_dia
+    calcular_poupanca_prov_acao_ate_dia, \
+    calcular_poupanca_prov_acao_ate_dia_por_divisao
 from bagogold.bagogold.utils.divisoes import calcular_saldo_geral_acoes_bh
 from bagogold.bagogold.utils.investidores import buscar_acoes_investidor_na_data
-from decimal import Decimal
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
-from django.core.urlresolvers import reverse
-from django.db import transaction
-from django.db.models import Q
-from django.db.models.expressions import F
-from django.forms import inlineformset_factory
-from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import get_object_or_404
-from django.template.response import TemplateResponse
-from itertools import chain
-from operator import attrgetter
-import calendar
-import datetime
-import json
+
 
 @login_required
 def calcular_poupanca_proventos_na_data(request):
@@ -193,7 +197,7 @@ def historico(request):
                                'graf_gasto_op_sem_prov_mes': list(), 'graf_uso_proventos_mes': list(),
                                 'graf_dividendos_mensal': list(), 'graf_jscp_mensal': list(), 'dados': {}})
     
-    operacoes = OperacaoAcao.objects.filter(destinacao='B', investidor=investidor).exclude(data__isnull=True).order_by('data')
+    operacoes = OperacaoAcao.objects.filter(destinacao='B', investidor=investidor).exclude(data__isnull=True).annotate(acao_ticker=F('acao__ticker')).order_by('data')
     
     if not operacoes:
         return TemplateResponse(request, 'acoes/buyandhold/historico.html', {'operacoes': list(), 'graf_total_gasto': list(), 'graf_patrimonio': list(),
@@ -204,7 +208,7 @@ def historico(request):
     acoes = list(set(operacoes.values_list('acao', flat=True)))
 
     proventos = Provento.objects.filter(acao__in=acoes).exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).order_by('data_ex') \
-        .annotate(data=F('data_ex'))
+        .annotate(data=F('data_ex')).annotate(acao_ticker=F('acao__ticker'))
     for acao_id in operacoes.values_list('acao', flat=True):
         proventos = proventos.filter((Q(acao__id=acao_id) & Q(data_ex__gt=operacoes.filter(acao__id=acao_id)[0].data)) | ~Q(acao__id=acao_id))
      
@@ -233,7 +237,7 @@ def historico(request):
                 data_custodia = Object()
                 data_custodia.data = datetime.date(ano, mes_inicial, 1)
                 data_custodia.valor = taxa_custodia_atual.valor_mensal
-                data_custodia.acao = operacoes[0].acao
+                data_custodia.acao_ticker = operacoes[0].acao_ticker
                 datas_custodia.add(data_custodia)
                 
                 # Parar caso esteja no ano atual
@@ -287,8 +291,8 @@ def historico(request):
     
     # Calculos de patrimonio e gasto total
     for item_lista in lista_conjunta:      
-        if item_lista.acao.ticker not in acoes.keys():
-            acoes[item_lista.acao.ticker] = 0
+        if item_lista.acao_ticker not in acoes.keys():
+            acoes[item_lista.acao_ticker] = 0
         # Verifica se é uma compra/venda
         if isinstance(item_lista, OperacaoAcao):   
             # Verificar se se trata de compra ou venda
@@ -302,7 +306,7 @@ def historico(request):
                     # Remover proventos gastos do total gasto
                     item_lista.total_gasto += qtd_utilizada
                 total_gasto += item_lista.total_gasto
-                acoes[item_lista.acao.ticker] += item_lista.quantidade
+                acoes[item_lista.acao_ticker] += item_lista.quantidade
                 
             elif item_lista.tipo_operacao == 'V':
                 item_lista.tipo = 'Venda'
@@ -310,13 +314,13 @@ def historico(request):
                 item_lista.emolumentos - item_lista.corretagem)
 #                     total_proventos += item_lista.total_gasto
                 total_gasto += item_lista.total_gasto
-                acoes[item_lista.acao.ticker] -= item_lista.quantidade
+                acoes[item_lista.acao_ticker] -= item_lista.quantidade
         
         # Verifica se é recebimento de proventos
         elif isinstance(item_lista, Provento):
             if item_lista.data_pagamento <= datetime.date.today():
                 if item_lista.tipo_provento in ['D', 'J']:
-                    total_recebido = acoes[item_lista.acao.ticker] * item_lista.valor_unitario
+                    total_recebido = acoes[item_lista.acao_ticker] * item_lista.valor_unitario
                     if item_lista.tipo_provento == 'J':
                         item_lista.tipo = 'JSCP'
                         total_recebido = total_recebido * Decimal(0.85)
@@ -325,7 +329,7 @@ def historico(request):
 #                         total_gasto += total_recebido
                     total_proventos += total_recebido
                     item_lista.total_gasto = total_recebido
-                    item_lista.quantidade = acoes[item_lista.acao.ticker]
+                    item_lista.quantidade = acoes[item_lista.acao_ticker]
                     item_lista.preco_unitario = item_lista.valor_unitario
                     
                 elif item_lista.tipo_provento == 'A':
@@ -335,14 +339,14 @@ def historico(request):
                     provento_acao = item_lista.acaoprovento_set.all()[0]
                     if provento_acao.acao_recebida.ticker not in acoes.keys():
                         acoes[provento_acao.acao_recebida.ticker] = 0
-                    acoes_recebidas = int((acoes[item_lista.acao.ticker] * item_lista.valor_unitario ) / 100 )
+                    acoes_recebidas = int((acoes[item_lista.acao_ticker] * item_lista.valor_unitario ) / 100 )
                     item_lista.total_gasto = acoes_recebidas
                     acoes[provento_acao.acao_recebida.ticker] += acoes_recebidas
                     if provento_acao.valor_calculo_frac > 0:
                         if provento_acao.data_pagamento_frac <= datetime.date.today():
-#                                 print u'recebido fracionado %s, %s ações de %s a %s' % (total_recebido, acoes[item_lista.acao.ticker], item_lista.acao.ticker, item_lista.valor_unitario)
-#                                 total_gasto += (((acoes[item_lista.acao.ticker] * item_lista.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
-                            total_proventos += (((acoes[item_lista.acao.ticker] * item_lista.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
+#                                 print u'recebido fracionado %s, %s ações de %s a %s' % (total_recebido, acoes[item_lista.acao_ticker], item_lista.acao_ticker, item_lista.valor_unitario)
+#                                 total_gasto += (((acoes[item_lista.acao_ticker] * item_lista.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
+                            total_proventos += (((acoes[item_lista.acao_ticker] * item_lista.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
                             
         # Verifica se é pagamento de custódia
         elif isinstance(item_lista, Object):
@@ -355,11 +359,7 @@ def historico(request):
         # Rodar calculo de patrimonio
         for acao in acoes.keys():
             # Pegar último dia util com negociação da ação para calculo do patrimonio
-            ultimo_dia_util = item_lista.data
-            while not HistoricoAcao.objects.filter(data=ultimo_dia_util, acao__ticker=acao):
-                ultimo_dia_util -= datetime.timedelta(days=1)
-        
-            valor_acao = HistoricoAcao.objects.get(acao__ticker=acao, data=ultimo_dia_util).preco_unitario
+            valor_acao = HistoricoAcao.objects.filter(acao__ticker=acao, data__lte=item_lista.data).order_by('-data')[0].preco_unitario
             patrimonio += (valor_acao * acoes[acao])
         
         data_formatada = str(calendar.timegm(item_lista.data.timetuple()) * 1000)
@@ -381,16 +381,14 @@ def historico(request):
                 
     # Adicionar dia mais atual
     patrimonio = 0
-    for acao in acoes.keys():
+    for acao in acoes:
         if acoes[acao] > 0:
 #             print '%s %s' % (acao, acoes[acao])
-            valor_diario_mais_recente = ValorDiarioAcao.objects.filter(acao__ticker=acao).order_by('-data_hora')
-            historico_mais_recente = HistoricoAcao.objects.filter(acao__ticker=acao).order_by('-data')
-            data_formatada = ''
-            if valor_diario_mais_recente and valor_diario_mais_recente[0].data_hora.date() >= historico_mais_recente[0].data:
-                patrimonio += (valor_diario_mais_recente[0].preco_unitario * acoes[acao])
+            if ValorDiarioAcao.objects.filter(data_hora__date=datetime.date.today(), acao__ticker=acao).exists():
+                patrimonio += (ValorDiarioAcao.objects.filter(acao__ticker=acao).order_by('-data_hora')[0].preco_unitario * acoes[acao])
             else:
-                patrimonio += (historico_mais_recente[0].preco_unitario * acoes[acao])
+                patrimonio += (HistoricoAcao.objects.filter(acao__ticker=acao).order_by('-data')[0].preco_unitario * acoes[acao])
+                
     data_formatada = str(calendar.timegm(datetime.date.today().timetuple()) * 1000)
     # Verifica se altera ultima posicao do grafico ou adiciona novo registro
     if not(len(graf_total_gasto) > 0 and graf_total_gasto[-1][0] == data_formatada):
@@ -412,7 +410,7 @@ def historico(request):
     dados['lucro_percentual'] = (patrimonio + total_gasto) / -total_gasto * 100
     dados['dividendos_mensal'] = graf_dividendos_mensal[-1][1]
     dados['jscp_mensal'] = graf_jscp_mensal[-1][1]
-    dados['saldo_geral'] = calcular_saldo_geral_acoes_bh()
+#     dados['saldo_geral'] = calcular_saldo_geral_acoes_bh()
     
     # Remover taxas de custódia da lista conjunta de operações e proventos
     lista_conjunta = [value for value in lista_conjunta if not isinstance(value, Object)]

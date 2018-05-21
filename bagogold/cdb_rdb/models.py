@@ -93,10 +93,12 @@ class OperacaoCDB_RDB (models.Model):
         return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.cdb_rdb, self.data)
     
     def carencia(self):
-        if HistoricoCarenciaCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb).exists():
-            return HistoricoCarenciaCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb).order_by('-data')[0].carencia
-        else:
-            return HistoricoCarenciaCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.cdb_rdb).carencia
+        if not hasattr(self, 'guarda_carencia'):
+            if HistoricoCarenciaCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb_id).exists():
+                self.guarda_carencia = HistoricoCarenciaCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb_id).order_by('-data')[0].carencia
+            else:
+                self.guarda_carencia = HistoricoCarenciaCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.cdb_rdb_id).carencia
+        return self.guarda_carencia
         
     def data_carencia(self):
         if self.tipo_operacao == 'C':
@@ -110,7 +112,9 @@ class OperacaoCDB_RDB (models.Model):
         
     def data_inicial(self):
         if self.tipo_operacao == 'V':
-            return OperacaoVendaCDB_RDB.objects.get(operacao_venda=self).operacao_compra.data
+            if not hasattr(self, 'guarda_data_inicial'):
+                self.guarda_data_inicial = self.operacao_compra_relacionada().data
+            return self.guarda_data_inicial
         else:
             return self.data
         
@@ -126,18 +130,22 @@ class OperacaoCDB_RDB (models.Model):
     
     def operacao_compra_relacionada(self):
         if self.tipo_operacao == 'V':
-            return OperacaoVendaCDB_RDB.objects.get(operacao_venda=self).operacao_compra
+            if not hasattr(self, 'guarda_operacao_compra_relacionada'):
+                self.guarda_operacao_compra_relacionada = OperacaoVendaCDB_RDB.objects.get(operacao_venda=self).operacao_compra
+            return self.guarda_operacao_compra_relacionada
         else:
             return None
     
     def porcentagem(self):
-        if self.tipo_operacao == 'C':
-            if HistoricoPorcentagemCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb).exists():
-                return HistoricoPorcentagemCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb).order_by('-data')[0].porcentagem
-            else:
-                return HistoricoPorcentagemCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.cdb_rdb).porcentagem
-        elif self.tipo_operacao == 'V':
-            return self.operacao_compra_relacionada().porcentagem()
+        if not hasattr(self, 'guarda_porcentagem'):
+            if self.tipo_operacao == 'C':
+                if HistoricoPorcentagemCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb_id).exists():
+                    self.guarda_porcentagem = HistoricoPorcentagemCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb_id).order_by('-data')[0].porcentagem
+                else:
+                    self.guarda_porcentagem = HistoricoPorcentagemCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.cdb_rdb_id).porcentagem
+            elif self.tipo_operacao == 'V':
+                self.guarda_porcentagem = self.operacao_compra_relacionada().porcentagem()
+        return self.guarda_porcentagem
     
     def qtd_disponivel_venda(self, desconsiderar_vendas=list()):
         if self.tipo_operacao != 'C':
@@ -157,22 +165,31 @@ class OperacaoCDB_RDB (models.Model):
             qtd_vendida += venda.quantidade
         return self.quantidade - qtd_vendida
     
+    @property
+    def tipo_rendimento_cdb_rdb(self):
+        if not hasattr(self,'guarda_tipo_rendimento_cdb_rdb'):
+            self.guarda_tipo_rendimento_cdb_rdb = self.cdb_rdb.tipo_rendimento
+        return self.guarda_tipo_rendimento_cdb_rdb
+    
     def vencimento(self):
-        if HistoricoVencimentoCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb).exists():
-            return HistoricoVencimentoCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb).order_by('-data')[0].vencimento
-        else:
-            return HistoricoVencimentoCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.cdb_rdb).vencimento
+        if not hasattr(self, 'guarda_vencimento'):
+            if HistoricoVencimentoCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb_id).exists():
+                self.guarda_vencimento = HistoricoVencimentoCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb_id).order_by('-data')[0].vencimento
+            else:
+                self.guarda_vencimento = HistoricoVencimentoCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.cdb_rdb_id).vencimento
+        return self.guarda_vencimento
     
     def venda_permitida(self, data_venda=None):
         if data_venda == None:
             data_venda = datetime.date.today()
         if self.tipo_operacao == 'C':
-            historico = HistoricoCarenciaCDB_RDB.objects.exclude(data=None).filter(data__lte=data_venda).order_by('-data')
-            if historico:
+            if HistoricoCarenciaCDB_RDB.objects.filter(data__lte=data_venda).exists():
+#             historico = HistoricoCarenciaCDB_RDB.objects.exclude(data=None).filter(data__lte=data_venda).order_by('-data')
+#             if historico:
                 # Verifica o período de carência pegando a data mais recente antes da operação de compra
-                return (historico[0].carencia <= (data_venda - self.data).days)
+                return (HistoricoCarenciaCDB_RDB.objects.filter(data__lte=data_venda).order_by('-data')[0].carencia <= (data_venda - self.data).days)
             else:
-                carencia = HistoricoCarenciaCDB_RDB.objects.get(cdb_rdb=self.cdb_rdb).carencia
+                carencia = HistoricoCarenciaCDB_RDB.objects.get(cdb_rdb=self.cdb_rdb_id).carencia
                 return (carencia <= (data_venda - self.data).days)
         else:
             return False

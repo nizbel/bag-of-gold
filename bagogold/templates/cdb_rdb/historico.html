@@ -107,7 +107,7 @@
 						<td>{{ item.tipo }}</td>
 						<td>{{ item.data|date:"d/m/Y" }}</td>
 						<td>R$ {{item.quantidade}}</td>
-						<td>{{ item.taxa }}%{% if item.cdb_rdb.eh_prefixado %} ao ano{% else %} do {{ item.cdb_rdb.indice }}{% endif %}</td>
+						<td>{{ item.porcentagem }}%{% if item.cdb_rdb.eh_prefixado %} ao ano{% else %} do {{ item.cdb_rdb.indice }}{% endif %}</td>
 						<td>R$ {{item.atual|floatformat:2}}</td>
 					</tr>
 					{% endfor %}

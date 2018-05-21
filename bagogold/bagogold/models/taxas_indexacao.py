@@ -22,13 +22,12 @@ class HistoricoTaxaSelic (models.Model):
             super(HistoricoTaxaSelic, self).save(*args, **kw)
             
 class HistoricoIPCA (models.Model):
-    valor = models.DecimalField(u'Valor IPCA', max_digits=5, decimal_places=2)
-    mes = models.SmallIntegerField(u'Mês')
-    ano = models.SmallIntegerField(u'Ano')
+    valor = models.DecimalField(u'Valor IPCA', max_digits=12, decimal_places=9)
+    data_inicio = models.DateField(u'Data de início')
+    data_fim = models.DateField(u'Data de fim')
     
-    def save(self, *args, **kw):
-        if not HistoricoIPCA.objects.filter(mes=self.mes, ano=self.ano).exists():
-            super(HistoricoIPCA, self).save(*args, **kw)
-            
-    def data(self):
-        return datetime.date(self.ano, self.mes, 1)
+    class Meta():
+        unique_together = (('data_inicio', ),)
+
+class IPCAProjetado (models.Model):
+    ipca = models.OneToOneField('HistoricoIPCA')

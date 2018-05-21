@@ -1,6 +1,5 @@
 from acoes import *
 from debentures import *
-from td import *
 from divisoes import *
 from investidores import *
 from taxas_indexacao import *

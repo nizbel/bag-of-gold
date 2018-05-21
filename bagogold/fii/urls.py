@@ -6,6 +6,7 @@ urlpatterns = [
 #     url(r'^acompanhamento-mensal/$', views.acompanhamento_mensal_fii, name='acompanhamento_mensal_fii'),
     url(r'^acompanhamento/$', views.acompanhamento_fii, name='acompanhamento_fii'),
     url(r'^calcular-resultado-corretagem/$', views.calcular_resultado_corretagem, name='calcular_resultado_corretagem'),
+    url(r'^detalhar-fii/(?P<fii_ticker>[\w\d]+)/$', views.detalhar_fii, name='detalhar_fii'),
     url(r'^detalhar-provento/(?P<provento_id>\d+)/$', views.detalhar_provento, name='detalhar_provento_fii'),
     url(r'^editar-operacao/(?P<operacao_id>\d+)/$', views.editar_operacao_fii, name='editar_operacao_fii'),
     url(r'^historico/$', views.historico_fii, name='historico_fii'),

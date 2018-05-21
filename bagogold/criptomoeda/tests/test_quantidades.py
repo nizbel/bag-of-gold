@@ -1,20 +1,25 @@
 # -*- coding: utf-8 -*-
+import datetime
+from decimal import Decimal
+from django.contrib.auth.models import User
+import json
+from urllib2 import urlopen
+
+from django.test import TestCase
+
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoCriptomoeda, \
-    Divisao, DivisaoTransferenciaCriptomoeda
+    Divisao, DivisaoTransferenciaCriptomoeda, DivisaoForkCriptomoeda
+from bagogold.bagogold.models.investidores import Investidor
+from bagogold.criptomoeda.forms import ForkForm
 from bagogold.criptomoeda.models import TransferenciaCriptomoeda, Criptomoeda, \
-    OperacaoCriptomoeda, OperacaoCriptomoedaMoeda, OperacaoCriptomoedaTaxa,\
-    ValorDiarioCriptomoeda
+    OperacaoCriptomoeda, OperacaoCriptomoedaMoeda, OperacaoCriptomoedaTaxa, \
+    ValorDiarioCriptomoeda, Fork
 from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia, \
     calcular_qtd_moedas_ate_dia_por_criptomoeda, \
     calcular_qtd_moedas_ate_dia_por_divisao, buscar_valor_criptomoeda_atual, \
     buscar_valor_criptomoedas_atual, buscar_historico_criptomoeda, \
     buscar_valor_criptomoedas_atual_varias_moedas
-from decimal import Decimal
-from django.contrib.auth.models import User
-from django.test import TestCase
-from urllib2 import urlopen
-import datetime
-import json
+
 
 class QuantidadesCriptomoedaTestCase(TestCase):
     
@@ -179,3 +184,72 @@ class QuantidadesCriptomoedaTestCase(TestCase):
         for data, valor in historico:
             self.assertTrue(isinstance(data, datetime.date))
             self.assertGreater(valor, 0)
+            
+class ForkTestCase(TestCase):
+    def setUp(self):
+        user = User.objects.create(username='tester')
+        
+        bitcoin = Criptomoeda.objects.create(nome='Bitcoin', ticker='BTC')
+        bcash = Criptomoeda.objects.create(nome='Bitcoin Cash', ticker='BCH')
+        
+        compra_1 = OperacaoCriptomoeda.objects.create(quantidade=Decimal('0.9662'), preco_unitario=Decimal('10000'), data=datetime.date(2017, 6, 6), 
+                                                      tipo_operacao='C', criptomoeda=bitcoin, investidor=user.investidor)
+        DivisaoOperacaoCriptomoeda.objects.create(operacao=compra_1, divisao=Divisao.objects.get(investidor=user.investidor), quantidade=compra_1.quantidade)
+    
+    def test_quantidade_apos_fork(self):
+        """Testa se as operações de quantidade consideram a existência de moedas criadas por fork"""
+        investidor = Investidor.objects.get(user__username='tester')
+        
+        bitcoin = Criptomoeda.objects.get(ticker='BTC')
+        bcash = Criptomoeda.objects.get(ticker='BCH')
+        
+        # Fork
+        fork = Fork.objects.create(data=datetime.date(2017, 7, 1), moeda_origem=bitcoin, moeda_recebida=bcash, quantidade=Decimal('0.9662'),
+                                   investidor=investidor)
+        DivisaoForkCriptomoeda.objects.create(divisao=Divisao.objects.get(investidor=investidor), quantidade=Decimal('0.9662'), fork=fork)
+        
+        data_teste = datetime.date(2017, 8, 12)
+        
+        qtd_moedas = calcular_qtd_moedas_ate_dia(investidor, data_teste)
+        self.assertDictEqual(qtd_moedas, {bitcoin.id: Decimal('0.9662'), bcash.id: Decimal('0.9662')})
+        self.assertEqual(calcular_qtd_moedas_ate_dia_por_criptomoeda(investidor, bcash.id, data_teste), Decimal('0.9662'))
+        qtd_moedas_div = calcular_qtd_moedas_ate_dia_por_divisao(Divisao.objects.get(investidor=investidor).id, data_teste)
+        self.assertEqual(qtd_moedas_div, {bitcoin.id: Decimal('0.9662'), bcash.id: Decimal('0.9662')})
+        
+    def test_formulario_fork_sucesso(self):
+        """Testa formulário de criação de fork para caso com sucesso"""
+        investidor = Investidor.objects.get(user__username='tester')
+        
+        bitcoin = Criptomoeda.objects.get(ticker='BTC')
+        bcash = Criptomoeda.objects.get(ticker='BCH')
+        
+        form_fork = ForkForm({
+            'moeda_origem': bitcoin.id,
+            'moeda_recebida': bcash.id,
+            'data': datetime.date(2017, 7, 1),
+            'quantidade': Decimal('0.9662'),
+        }, investidor=investidor)
+        self.assertTrue(form_fork.is_valid())
+        fork = form_fork.save(commit=False)
+        fork.investidor = investidor
+        fork.save()
+        self.assertEqual(fork.moeda_origem, bitcoin)
+        self.assertEqual(fork.moeda_recebida, bcash)
+        self.assertEqual(fork.data, datetime.date(2017, 7, 1))
+        self.assertEqual(fork.quantidade, Decimal('0.9662'))
+        
+    def test_formulario_fork_qtd_moeda_origem_insuficiente(self):
+        """Testa erro de quantidade insuficiente na moeda de origem na data especificada"""
+        investidor = Investidor.objects.get(user__username='tester')
+        
+        bitcoin = Criptomoeda.objects.get(ticker='BTC')
+        bcash = Criptomoeda.objects.get(ticker='BCH')
+        
+        form_fork = ForkForm({
+            'moeda_origem': bitcoin.id,
+            'moeda_recebida': bcash.id,
+            'data': datetime.date(2017, 7, 1),
+            'quantidade': Decimal('0.9663'),
+        }, investidor=investidor)
+        self.assertFalse(form_fork.is_valid())
+        self.assertEqual(form_fork.non_field_errors(), [u'Investidor deve possuir a moeda de origem informada em quantidade pelo menos igual a informada para o fork'])

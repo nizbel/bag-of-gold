@@ -1,21 +1,25 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoCriptomoeda, \
-    DivisaoTransferenciaCriptomoeda, Divisao
-from bagogold.criptomoeda.models import OperacaoCriptomoeda, \
-    TransferenciaCriptomoeda, Criptomoeda, OperacaoCriptomoedaTaxa, \
-    OperacaoCriptomoedaMoeda
+import datetime
 from decimal import Decimal
+from django.db.models.expressions import F, Case, When
+import json
+from urllib2 import urlopen
+
 from django.db import transaction
 from django.db.models.aggregates import Sum
-from django.db.models.expressions import F, Case, When
 from django.db.models.fields import DecimalField
-from urllib2 import urlopen
-import datetime
-import json
+
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoCriptomoeda, \
+    DivisaoTransferenciaCriptomoeda, Divisao, DivisaoForkCriptomoeda
+from bagogold.criptomoeda.models import OperacaoCriptomoeda, \
+    TransferenciaCriptomoeda, Criptomoeda, OperacaoCriptomoedaTaxa, \
+    OperacaoCriptomoedaMoeda, Fork
+
 
 def calcular_qtd_moedas_ate_dia(investidor, dia=datetime.date.today()):
     """ 
     Calcula a quantidade de moedas até dia determinado
+    
     Parâmetros: Investidor
                 Dia final
     Retorno: Quantidade de moedas por fundo {moeda_id: qtd}
@@ -56,14 +60,20 @@ def calcular_qtd_moedas_ate_dia(investidor, dia=datetime.date.today()):
     qtd_moedas4 = dict(TransferenciaCriptomoeda.objects.filter(investidor=investidor, data__lte=dia, moeda__isnull=False).values('moeda') \
         .annotate(total=Sum(F('taxa')*-1)).values_list('moeda', 'total').exclude(total=0))
     
+    # Forks
+    qtd_moedas5 = dict(Fork.objects.filter(investidor=investidor, data__lte=dia).values_list('moeda_recebida', 'quantidade'))
+    
     qtd_moedas = { k: qtd_moedas1.get(k, 0) + qtd_moedas2.get(k, 0) + qtd_moedas3.get(k, 0) + qtd_moedas4.get(k, 0) \
-                   for k in set(qtd_moedas1) | set(qtd_moedas2) | set(qtd_moedas3) | set(qtd_moedas4) }
+                  + qtd_moedas5.get(k, 0) \
+                   for k in set(qtd_moedas1) | set(qtd_moedas2) | set(qtd_moedas3) | set(qtd_moedas4) | set(qtd_moedas5)}
+    
     
     return qtd_moedas
 
 def calcular_qtd_moedas_ate_dia_por_criptomoeda(investidor, moeda_id, dia=datetime.date.today()):
     """ 
     Calcula a quantidade de moedas até dia determinado para uma criptomoeda
+    
     Parâmetros: Investidor
                 ID da Criptomoeda
                 Dia final
@@ -103,11 +113,15 @@ def calcular_qtd_moedas_ate_dia_por_criptomoeda(investidor, moeda_id, dia=dateti
     qtd_moedas += TransferenciaCriptomoeda.objects.filter(investidor=investidor, data__lte=dia, moeda__id=moeda_id) \
         .aggregate(total=Sum(F('taxa')*-1))['total'] or 0
         
+    # Fork
+    qtd_moedas += Fork.objects.filter(investidor=investidor, data__lte=dia, moeda_recebida__id=moeda_id).aggregate(total=Sum('quantidade'))['total'] or 0
+    
     return qtd_moedas
 
 def calcular_qtd_moedas_ate_dia_por_divisao(divisao_id, dia=datetime.date.today()):
     """ 
     Calcula a quantidade de moedas até dia determinado para uma divisão
+    
     Parâmetros: Id da divisão
                 Dia final
     Retorno: Quantidade de moedas {moeda_id: qtd}
@@ -152,14 +166,19 @@ def calcular_qtd_moedas_ate_dia_por_divisao(divisao_id, dia=datetime.date.today(
                                                                       transferencia__moeda__isnull=False).values('transferencia__moeda') \
         .annotate(total=Sum(F('transferencia__taxa')*-1)).values_list('transferencia__moeda', 'total').exclude(total=0))
      
+    # Forks
+    qtd_moedas5 = dict(DivisaoForkCriptomoeda.objects.filter(divisao__id=divisao_id, fork__data__lte=dia).values_list('fork__moeda_recebida', 'quantidade'))
+    
     qtd_moedas = { k: qtd_moedas1.get(k, 0) + qtd_moedas2.get(k, 0) + qtd_moedas3.get(k, 0) + qtd_moedas4.get(k, 0) \
-                   for k in set(qtd_moedas1) | set(qtd_moedas2) | set(qtd_moedas3) | set(qtd_moedas4) }
+                  + qtd_moedas5.get(k, 0)
+                   for k in set(qtd_moedas1) | set(qtd_moedas2) | set(qtd_moedas3) | set(qtd_moedas4) | set(qtd_moedas5) }
 
     return qtd_moedas
 
 def buscar_valor_criptomoeda_atual(criptomoeda_ticker):
     """ 
     Busca o valor atual de uma criptomoeda pela API do CryptoCompare
+    
     Parâmetros: Ticker da criptomoeda
     Retorno: Valor atual
     """
@@ -171,6 +190,7 @@ def buscar_valor_criptomoeda_atual(criptomoeda_ticker):
 def buscar_valor_criptomoedas_atual(lista_tickers):
     """ 
     Busca o valor atual de várias criptomoedas pela API do CryptoCompare
+    
     Parâmetros: Lista com os tickers das criptomoedas
     Retorno: Valores atuais {ticker: valor_atual}
     """
@@ -182,6 +202,7 @@ def buscar_valor_criptomoedas_atual(lista_tickers):
 def buscar_valor_criptomoedas_atual_varias_moedas(lista_tickers, lista_moedas):
     """ 
     Busca o valor atual de várias criptomoedas pela API do CryptoCompare
+    
     Parâmetros: Lista com os tickers das criptomoedas
                 Lista com as moedas utilizadas
     Retorno: Valores atuais {ticker: {moeda: valor, }, }
@@ -194,6 +215,7 @@ def buscar_valor_criptomoedas_atual_varias_moedas(lista_tickers, lista_moedas):
 def buscar_historico_criptomoeda(criptomoeda_ticker):
     """ 
     Busca os valores históricos de uma criptomoeda pela API do CryptoCompare
+    
     Parâmetros: Ticker da criptomoeda
     Retorno: Tuplas com data e valor [(data, valor_na_data)]
     """
@@ -210,8 +232,8 @@ def buscar_historico_criptomoeda(criptomoeda_ticker):
 
 def criar_operacoes_lote(lista_operacoes, investidor, divisao_id, salvar=False):
     """
-    Cria várias operações com base em uma lista de strings com ponto e vírgula como separador, 
-    vinculando a uma única divisão. Retorna os objetos criados
+    Cria várias operações com base em uma lista de strings com ponto e vírgula como separador, vinculando a uma única divisão. Retorna os objetos criados
+    
     Parâmetros: Lista de strings
                 Investidor
                 ID da divisão
@@ -289,6 +311,7 @@ def criar_operacoes_lote(lista_operacoes, investidor, divisao_id, salvar=False):
         return objetos_operacoes
 
 def verificar_operacao_string_lote(operacao_string):
+    """Verifica formatação de string contendo informações de operação"""
     info_formatada = {}
     infos = operacao_string.split(';')
     if len(infos) != 7:
@@ -320,6 +343,7 @@ def verificar_operacao_string_lote(operacao_string):
 def formatar_op_lote_confirmacao(lista_operacoes_lote):
     """
     Formata operações geradas em lote para confirmação
+    
     Parâmetros: Lista de operações geradas no lote
     Retorno: Operações formatadas para mostrar na página
     """
@@ -339,8 +363,8 @@ def formatar_op_lote_confirmacao(lista_operacoes_lote):
 
 def criar_transferencias_lote(lista_transferencias, investidor, divisao_id, salvar=False):
     """
-    Cria várias transferências com base em uma lista de strings com ponto e vírgula como separador, 
-    vinculando a uma única divisão. Retorna os objetos criados
+    Cria várias transferências com base em uma lista de strings com ponto e vírgula como separador, vinculando a uma única divisão. Retorna os objetos criados
+    
     Parâmetros: Lista de strings
                 Investidor
                 ID da divisão
@@ -400,6 +424,7 @@ def criar_transferencias_lote(lista_transferencias, investidor, divisao_id, salv
         return objetos_transferencias
                          
 def verificar_transferencia_string_lote(transferencia_string):
+    """Verifica formatação de string contendo informações de transferência"""
     info_formatada = {}
     infos = transferencia_string.split(';')
     if len(infos) != 6:
@@ -429,6 +454,7 @@ def verificar_transferencia_string_lote(transferencia_string):
 def formatar_transf_lote_confirmacao(lista_transferencias_lote):
     """
     Formata transferências geradas em lote para confirmação
+    
     Parâmetros: Lista de transferências geradas no lote
     Retorno: Transferências formatadas para mostrar na página
     """

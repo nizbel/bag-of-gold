@@ -1,37 +1,117 @@
 # -*- coding: utf-8 -*-
-from bagogold import settings
-from bagogold.bagogold.decorators import adiciona_titulo_descricao
-from bagogold.bagogold.forms.divisoes import DivisaoOperacaoCriptomoedaFormSet, \
-    DivisaoTransferenciaCriptomoedaFormSet
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoCriptomoeda, \
-    Divisao, DivisaoTransferenciaCriptomoeda
-from bagogold.criptomoeda.forms import OperacaoCriptomoedaForm, \
-    TransferenciaCriptomoedaForm, OperacaoCriptomoedaLoteForm, \
-    TransferenciaCriptomoedaLoteForm
-from bagogold.criptomoeda.models import Criptomoeda, OperacaoCriptomoeda, \
-    OperacaoCriptomoedaMoeda, OperacaoCriptomoedaTaxa, TransferenciaCriptomoeda, \
-    ValorDiarioCriptomoeda
-from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia, \
-    criar_operacoes_lote, criar_transferencias_lote, \
-    calcular_qtd_moedas_ate_dia_por_criptomoeda, formatar_op_lote_confirmacao, \
-    formatar_transf_lote_confirmacao
+import calendar
+import datetime
 from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.mail import mail_admins
+from django.shortcuts import get_object_or_404
+from itertools import chain
+import json
+from operator import attrgetter
+import traceback
+
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.forms.models import inlineformset_factory
 from django.http.response import HttpResponseRedirect
 from django.template.response import TemplateResponse
-from itertools import chain
-from operator import attrgetter
-import calendar
-import datetime
-import json
-import traceback
-from django.shortcuts import get_object_or_404
+
+from bagogold import settings
+from bagogold.bagogold.decorators import adiciona_titulo_descricao
+from bagogold.bagogold.forms.divisoes import DivisaoOperacaoCriptomoedaFormSet, \
+    DivisaoTransferenciaCriptomoedaFormSet, DivisaoForkCriptomoedaFormSet
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoCriptomoeda, \
+    Divisao, DivisaoTransferenciaCriptomoeda, DivisaoForkCriptomoeda
+from bagogold.criptomoeda.forms import OperacaoCriptomoedaForm, \
+    TransferenciaCriptomoedaForm, OperacaoCriptomoedaLoteForm, \
+    TransferenciaCriptomoedaLoteForm, ForkForm
+from bagogold.criptomoeda.models import Criptomoeda, OperacaoCriptomoeda, \
+    OperacaoCriptomoedaMoeda, OperacaoCriptomoedaTaxa, TransferenciaCriptomoeda, \
+    ValorDiarioCriptomoeda, Fork
+from bagogold.criptomoeda.utils import calcular_qtd_moedas_ate_dia, \
+    criar_operacoes_lote, criar_transferencias_lote, \
+    calcular_qtd_moedas_ate_dia_por_criptomoeda, formatar_op_lote_confirmacao, \
+    formatar_transf_lote_confirmacao
+
+
+@login_required
+@adiciona_titulo_descricao('Editar Fork', 'Alterar valores de um recebimento de criptomoedas por Fork')
+def editar_fork(request, id_fork):
+    investidor = request.user.investidor
+    
+    fork_criptomoeda = get_object_or_404(Fork, pk=id_fork)
+    # Verifica se a operação é do investidor, senão, jogar erro de permissão
+    if fork_criptomoeda.investidor != investidor:
+        raise PermissionDenied
+    
+    # Preparar formset para divisoes
+    DivisaoFormSet = inlineformset_factory(Fork, DivisaoForkCriptomoeda, fields=('divisao', 'quantidade'),
+                                            extra=1, formset=DivisaoForkCriptomoedaFormSet)
+    
+    # Testa se investidor possui mais de uma divisão
+    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    
+    if request.method == 'POST':
+        if request.POST.get("save"):
+            form_fork = ForkForm(request.POST, instance=fork_criptomoeda, investidor=investidor)
+            formset_divisao = DivisaoFormSet(request.POST, instance=fork_criptomoeda, investidor=investidor) if varias_divisoes else None
+                
+            if form_fork.is_valid():
+                if varias_divisoes:
+                    if formset_divisao.is_valid():
+                        try:
+                            with transaction.atomic():
+                                fork_criptomoeda.save()
+                                formset_divisao.save()
+                                messages.success(request, 'Fork editado com sucesso')
+                                return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
+                        except:
+                            messages.error(request, 'Houve um erro ao editar o Fork')
+                            if settings.ENV == 'DEV':
+                                raise
+                            elif settings.ENV == 'PROD':
+                                mail_admins(u'Erro ao editar Fork para criptomoeda com várias divisões', traceback.format_exc().decode('utf-8'))
+                    for erro in formset_divisao.non_form_errors():
+                        messages.error(request, erro)
+                        
+                else:
+                    try:
+                        with transaction.atomic():
+                            fork_criptomoeda.save()
+                            divisao_fork = DivisaoForkCriptomoeda.objects.get(divisao=investidor.divisaoprincipal.divisao, fork=fork_criptomoeda)
+                            divisao_fork.quantidade = fork_criptomoeda.quantidade
+                            divisao_fork.save()
+                            messages.success(request, 'Fork editado com sucesso')
+                            return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
+                    except:
+                        messages.error(request, 'Houve um erro ao editar o Fork')
+                        if settings.ENV == 'DEV':
+                            raise
+                        elif settings.ENV == 'PROD':
+                            mail_admins(u'Erro ao editar Fork para criptomoeda com uma divisão', traceback.format_exc().decode('utf-8'))
+                
+            for erro in form_fork.non_field_errors():
+                messages.error(request, erro)
+#                         print '%s %s'  % (divisao_criptomoeda.quantidade, divisao_criptomoeda.divisao)
+                
+        elif request.POST.get("delete"):
+            divisao_fork = DivisaoForkCriptomoeda.objects.filter(fork=fork_criptomoeda)
+            for divisao in divisao_fork:
+                divisao.delete()
+            fork_criptomoeda.delete()
+            messages.success(request, 'Fork apagado com sucesso')
+            return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
+ 
+    else:
+        form_fork = ForkForm(instance=fork_criptomoeda, investidor=investidor)
+        formset_divisao = DivisaoFormSet(instance=fork_criptomoeda, investidor=investidor)
+        
+    return TemplateResponse(request, 'criptomoedas/editar_fork.html', {'form_fork': form_fork, 'formset_divisao': formset_divisao, \
+                                                                                             'varias_divisoes': varias_divisoes})  
+    
+
 
 @login_required
 @adiciona_titulo_descricao('Editar operação em criptomoeda', 'Alterar valores de uma operação de compra/venda em criptomoeda')
@@ -209,9 +289,9 @@ def editar_transferencia(request, id_transferencia):
                     try:
                         with transaction.atomic():
                             transferencia_criptomoeda.save()
-                            divisao_operacao = DivisaoOperacaoCriptomoeda.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=transferencia_criptomoeda)
-                            divisao_operacao.quantidade = transferencia_criptomoeda.quantidade
-                            divisao_operacao.save()
+                            divisao_transferencia = DivisaoOperacaoCriptomoeda.objects.get(divisao=investidor.divisaoprincipal.divisao, transferencia=transferencia_criptomoeda)
+                            divisao_transferencia.quantidade = transferencia_criptomoeda.quantidade
+                            divisao_transferencia.save()
                             messages.success(request, 'Transferência editada com sucesso')
                             return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
                     except:
@@ -394,6 +474,71 @@ def historico(request):
     
     return TemplateResponse(request, 'criptomoedas/historico.html', {'dados': dados, 'movimentacoes': lista_movimentacoes, 
                                                     'graf_investido_total': graf_investido_total, 'graf_patrimonio': json.dumps(graf_patrimonio)})
+
+@login_required
+@adiciona_titulo_descricao('Inserir fork', 'Inserir registro de criptomoedas recebidas por fork')
+def inserir_fork(request):
+    investidor = request.user.investidor
+    
+    # Preparar formset para divisoes
+    DivisaoCriptomoedaFormSet = inlineformset_factory(Fork, DivisaoForkCriptomoeda, fields=('divisao', 'quantidade'), can_delete=False,
+                                            extra=1, formset=DivisaoForkCriptomoedaFormSet)
+    
+    # Testa se investidor possui mais de uma divisão
+    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    
+    if request.method == 'POST':
+        form_fork = ForkForm(request.POST, investidor=investidor)
+        formset_divisao = DivisaoCriptomoedaFormSet(request.POST, investidor=investidor) if varias_divisoes else None
+        
+        # Validar Fundo de Investimento
+        if form_fork.is_valid():
+            fork = form_fork.save(commit=False)
+            fork.investidor = investidor
+                
+            # Testar se várias divisões
+            if varias_divisoes:
+                formset_divisao = DivisaoCriptomoedaFormSet(request.POST, instance=fork, investidor=investidor)
+                if formset_divisao.is_valid():
+                    try:
+                        with transaction.atomic():
+                            fork.save()
+                            formset_divisao.save()
+                            messages.success(request, 'Fork inserido com sucesso')
+                            return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
+                    except:
+                        messages.error(request, 'Houve um erro ao inserir o fork')
+                        if settings.ENV == 'DEV':
+                            raise
+                        elif settings.ENV == 'PROD':
+                            mail_admins(u'Erro ao gerar fork para criptomoedas com várias divisões', traceback.format_exc().decode('utf-8'))
+                for erro in formset_divisao.non_form_errors():
+                    messages.error(request, erro)
+            else:
+                try:
+                    with transaction.atomic():
+                        fork.save()
+                        divisao_operacao = DivisaoForkCriptomoeda(fork=fork, divisao=investidor.divisaoprincipal.divisao, quantidade=fork.quantidade)
+                        divisao_operacao.save()
+                        messages.success(request, 'Fork inserido com sucesso')
+                        return HttpResponseRedirect(reverse('criptomoeda:historico_criptomoeda'))
+                except:
+                    messages.error(request, 'Houve um erro ao inserir o fork')
+                    if settings.ENV == 'DEV':
+                        raise
+                    elif settings.ENV == 'PROD':
+                        mail_admins(u'Erro ao gerar fork para criptomoedas com uma divisão', traceback.format_exc().decode('utf-8'))
+            
+        for erro in form_fork.non_field_errors():
+            messages.error(request, erro)
+#                         print '%s %s'  % (divisao_fundo_investimento.quantidade, divisao_fundo_investimento.divisao)
+    
+    else:
+        form_fork = ForkForm(investidor=investidor)
+        formset_divisao = DivisaoCriptomoedaFormSet(investidor=investidor)
+    
+    return TemplateResponse(request, 'criptomoedas/inserir_fork.html', {'form_fork': form_fork, 'formset_divisao': formset_divisao, \
+                                                                        'varias_divisoes': varias_divisoes})
 
 @login_required
 @adiciona_titulo_descricao('Inserir operação em criptomoedas', 'Inserir registro de operação de compra/venda em criptomoeda')

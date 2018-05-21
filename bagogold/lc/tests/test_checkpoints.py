@@ -245,7 +245,7 @@ class CalcularQuantidadesLetraCambioTestCase(TestCase):
                     self.assertFalse(CheckpointLetraCambio.objects.filter(operacao=operacao, ano=2017).exists())
                     self.assertFalse(CheckpointDivisaoLetraCambio.objects.filter(divisao_operacao__operacao=operacao, ano=2017).exists())
                 
-    def test_verificar_qtd_atualizada(self):
+    def test_verificar_qtd_atualizada_venda(self):
         """Testa cálculo de valor da venda de Letra de Câmbio utilizando checkpoint"""
         investidor = Investidor.objects.get(user__username='test')
         lc = LetraCambio.objects.create(nome="LC 1", investidor=investidor, tipo_rendimento=LetraCambio.LC_DI)

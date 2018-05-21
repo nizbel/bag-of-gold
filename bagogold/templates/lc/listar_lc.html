@@ -25,7 +25,7 @@
 	<tbody>
 	{% for item in lc %}
 	<tr>
-		<td><a href="{% url 'lc:detalhar_lc' item.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar CDB/RDB">{{item.nome}}</a></td>
+		<td><a href="{% url 'lcambio:detalhar_lc' item.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar CDB/RDB">{{item.nome}}</a></td>
 		<td>{{item.str_tipo_rendimento}}</td>
 		<td>{{item.carencia_atual}} dia(s)</td>
 		<td>{{item.rendimento_atual}}%{% if not item.eh_prefixado %} do {{item.indice}}{% endif %}</td>
