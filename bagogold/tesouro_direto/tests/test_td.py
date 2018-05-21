@@ -7,8 +7,10 @@ from django.core.management import call_command
 from django.db.models.aggregates import Sum
 from django.test import TestCase
 
-from bagogold.bagogold.management.commands import buscar_historico_ipca
-from bagogold.bagogold.models.taxas_indexacao import HistoricoIPCA
+from bagogold.bagogold.models.taxas_indexacao import HistoricoIPCA, \
+    HistoricoTaxaSelic
+from bagogold.bagogold.utils.misc import buscar_valores_diarios_selic
+from bagogold.bagogold.utils.taxas_indexacao import buscar_valores_mensal_ipca
 from bagogold.tesouro_direto.models import Titulo, OperacaoTitulo, \
     HistoricoTitulo
 from bagogold.tesouro_direto.utils import quantidade_titulos_ate_dia_por_titulo, \
@@ -106,22 +108,22 @@ class CalcularValorVencimentoIPCATestCase(TestCase):
         Titulo.objects.create(tipo=Titulo.TIPO_OFICIAL_IPCA, data_vencimento=datetime.date(2024, 8, 15), data_inicio=datetime.date(2008, 8, 15))
         
         # Preparar histórico de IPCA
-        buscar_historico_ipca()
+        buscar_valores_mensal_ipca()
         
     def test_vencimento_no_dia_9_5_2018(self):
         """Testa o valor de vencimento do IPCA para 09/05/2018"""
         titulo = Titulo.objects.get(tipo=Titulo.TIPO_OFICIAL_IPCA)
-        self.assertAlmostEqual(titulo.valor_vencimento(datetime.date(2018, 5, 9), Decimal('3073.191850'), delta=Decimal('0.000001'))
+        self.assertAlmostEqual(titulo.valor_vencimento(datetime.date(2018, 5, 9)), Decimal('3073.191850'), delta=Decimal('0.000001'))
 
     def test_vencimento_no_dia_8_5_2018(self):
         """Testa o valor de vencimento do IPCA para 08/05/2018"""
         titulo = Titulo.objects.get(tipo=Titulo.TIPO_OFICIAL_IPCA)
-        self.assertAlmostEqual(titulo.valor_vencimento(datetime.date(2018, 5, 8), Decimal('3072.762234'), delta=Decimal('0.000001'))
+        self.assertAlmostEqual(titulo.valor_vencimento(datetime.date(2018, 5, 8)), Decimal('3072.762234'), delta=Decimal('0.000001'))
         
     def test_vencimento_no_dia_15_5_2018(self):
         """Testa o valor de vencimento do IPCA para 15/05/2018"""
         titulo = Titulo.objects.get(tipo=Titulo.TIPO_OFICIAL_IPCA)
-        self.assertAlmostEqual(titulo.valor_vencimento(datetime.date(2018, 5, 15), Decimal('3073.069824'), delta=Decimal('0.000001'))
+        self.assertAlmostEqual(titulo.valor_vencimento(datetime.date(2018, 5, 15)), Decimal('3073.069824'), delta=Decimal('0.000001'))
         
     def test_vencimento_com_valor_projetado(self):
         """Testa o valor de vencimento do IPCA com valor projetado"""
@@ -129,10 +131,10 @@ class CalcularValorVencimentoIPCATestCase(TestCase):
         HistoricoIPCA.objects.filter(data_inicio__gt=datetime.date(2018, 5, 15)).delete()
         
         # Adicionar projetados
-        HistoricoIPCA.objects.create(data_inicio=datetime.date(2018, 5, 16), data_fim=datetime.date(2018, 6, 15), valor=Decimal('0.0037')
+        HistoricoIPCA.objects.create(data_inicio=datetime.date(2018, 5, 16), data_fim=datetime.date(2018, 6, 15), valor=Decimal('0.0037'))
         
         titulo = Titulo.objects.get(tipo=Titulo.TIPO_OFICIAL_IPCA)
-        self.assertAlmostEqual(titulo.valor_vencimento(datetime.date(2018, 5, 16), Decimal('3073.585747'), delta=Decimal('0.000001'))
+        self.assertAlmostEqual(titulo.valor_vencimento(datetime.date(2018, 5, 16)), Decimal('3073.585747'), delta=Decimal('0.000001'))
 
 class CalcularValorVencimentoSelicTestCase(TestCase):
     def setUp(self):
@@ -140,9 +142,24 @@ class CalcularValorVencimentoSelicTestCase(TestCase):
         Titulo.objects.create(tipo=Titulo.TIPO_OFICIAL_SELIC, data_vencimento=datetime.date(2024, 8, 1), data_inicio=datetime.date(2008, 8, 1))
         
         # Preparar histórico de Selic
-#         buscar_historico_selic()
+        # TODO melhorar isso
+        
+        # Data inicial é 01-01-2000
+        data_inicial = datetime.date(2000, 1, 1)
+        while data_inicial <= datetime.date.today():
+        
+            # Data final máxima é a data atual
+            data_final = datetime.date(data_inicial.year+10, data_inicial.month, data_inicial.day)
+            if data_final > datetime.date.today():
+                data_final = datetime.date.today()
+        
+            dados = buscar_valores_diarios_selic(data_inicial, data_final)
+            for data, valor in dados:
+                HistoricoTaxaSelic.objects.create(data=data, taxa_diaria=valor)
+            data_inicial = data_final + datetime.timedelta(days=1)
         
     def test_vencimento_no_dia_9_5_2018(self):
-        """Testa o valor de vencimento do IPCA para 09/05/2018"""
+        """Testa o valor de vencimento da Selic para 09/05/2018"""
         titulo = Titulo.objects.get(tipo=Titulo.TIPO_OFICIAL_SELIC)
-        self.assertAlmostEqual(titulo.valor_vencimento(datetime.date(2018, 5, 15), Decimal('9503.531384'), delta=Decimal('0.000001'))
+        self.assertAlmostEqual(titulo.valor_vencimento(datetime.date(2018, 5, 15)), Decimal('9503.531384'), delta=Decimal('0.000001'))
+                               

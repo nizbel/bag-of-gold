@@ -174,9 +174,10 @@ def calcular_valor_acumulado_selic(data_base, data_final=datetime.date.today()):
     Retorno: Taxa total acumulada
     """
     selic_periodo = 1
-    taxas_selic = dict(HistoricoTaxaSelic.objects.filter(data__range=[data_base, data_final]).order_by('taxa_diaria').annotate(qtd_dias=Count('taxa_diaria')).values_list('taxa_diaria', 'qtd_dias'))
-    selic_periodo *= [taxa for (taxa, qtd_dias) in taxas_selic.items()]
-    return selic_periodo
+    taxas_selic = dict(HistoricoTaxaSelic.objects.filter(data__range=[data_base, data_final - datetime.timedelta(days=1)]).values('taxa_diaria').distinct().order_by('taxa_diaria').annotate(qtd_dias=Count('taxa_diaria')).values_list('taxa_diaria', 'qtd_dias'))
+    for (taxa, qtd_dias) in taxas_selic.items():
+        selic_periodo *= (taxa**qtd_dias)
+    return selic_periodo - 1
 
 def buscar_valores_diarios_di():
     """Busca valores históricos do DI no site da CETIP"""
