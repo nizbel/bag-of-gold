@@ -90,6 +90,65 @@ def linha_do_tempo_cdb_rdb(divisao):
         evento.investido = sum(calcular_valor_cdb_rdb_ate_dia_por_divisao(evento.data, divisao.id).values())
         
     return eventos
+    
+def linha_do_tempo_criptomoedas(divisao):
+    class Object(object):
+        pass
+    
+    # Operações, transferências e forks de criptomoedas
+    operacoes_divisao = DivisaoOperacaoCriptomoeda.objects.filter(divisao=divisao).annotate(data=F('operacao__data')) \
+        .annotate(titulo=Case(When(operacao__tipo_operacao='C', then=Value(u'Operação de compra', CharField())),
+                              When(operacao__tipo_operacao='V', then=Value(u'Operação de venda', CharField())), output_field=CharField()))
+    for operacao_divisao in operacoes_divisao:
+        operacao_divisao.operacao.quantidade = operacao_divisao.quantidade
+        operacao_divisao.texto = [operacao_divisao.operacao]
+    
+    transferencias_divisao = DivisaoTransferenciaCriptomoeda.objects.filter(divisao=divisao).annotate(data=F('transfererencia__data')) \
+        .annotate(titulo=Value(u'Transferência de criptomoedas', CharField()), output_field=CharField())
+    for transferencia_divisao in transferencias_divisao:
+        transferencia_divisao.transferencia.quantidade = transferencia_divisao.quantidade
+        transferencia_divisao.texto = [transferencia_divisao.transferencia]
+        
+    forks_divisao = DivisaoForkCriptomoeda.objects.filter(divisao=divisao).annotate(data=F('fork__data')) \
+        .annotate(titulo=Value(u'Fork', CharField()), output_field=CharField())
+    for fork_divisao in forks_divisao:
+        fork_divisao.fork.quantidade = fork_divisao.quantidade
+        fork_divisao.texto = [fork_divisao.fork]
+    
+    # Transferências de saldo
+    transf_cedente = TransferenciaEntreDivisoes.objects.filter(divisao_cedente=divisao, investimento_origem=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_CRIPTOMOEDA)
+    for transferencia in transf_cedente:
+        transferencia.titulo = u'Transferência de recursos da divisão'
+        transferencia.texto = [transferencia]
+        
+    transf_recebedora = TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=divisao, investimento_destino=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_CRIPTOMOEDA)
+    for transferencia in transf_recebedora:
+        transferencia.titulo = u'Transferência de recursos para a divisão'
+        transferencia.texto = [transferencia]
+        
+    eventos = sorted(chain(transf_recebedora, transf_cedente, transferencias_divisao, forks_divisao, operacoes_divisao),
+                            key=attrgetter('data'))
+
+    for indice, evento in enumerate(eventos):
+        # Verifica se há próximo evento
+        while indice + 1 < len(eventos) and eventos[indice + 1].data == evento.data:
+            evento_repetido = eventos.pop(indice + 1)
+            evento.titulo = u'Múltiplos eventos'
+            evento.texto.extend(evento_repetido.texto)
+            
+    # Adicionar data atual para garantir que sempre haja pelo menos 1 evento
+    if len(eventos) == 0 or eventos[-1].data < datetime.date.today():
+        evento = Object()
+        evento.titulo = u'Data atual'
+        evento.texto = [u'Situação na data atual']
+        evento.data = datetime.date.today()
+        eventos.append(evento)        
+            
+    for evento in eventos:
+        evento.saldo = divisao.saldo_criptomoedas(evento.data)
+        evento.investido = sum(calcular_valor_criptomoedas_ate_dia_por_divisao(evento.data, divisao.id).values())
+        
+    return eventos
 
 def linha_do_tempo_lc(divisao):
     class Object(object):
