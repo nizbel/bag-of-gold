@@ -52,8 +52,15 @@ def gerar_sitemap():
         host = HOST_PROD
     url_inicial = '%s%s' % (host, reverse('inicio:home'))
     lista_urls.append(url_inicial)
+    
     # Trabalhar sempre com (url, qtd_vezes_encontrada)
     lista_urls_encontradas = {}
+    
+    # Buscar URLs que possuem detalhamento
+    for url in listar_urls_de_detalhamento():
+        url_host = '%s%s' % (host, url)
+        lista_urls.append(url_host)
+        lista_urls_encontradas[url_host] = -1
     
     count = 1
     try:
@@ -98,4 +105,27 @@ def gerar_sitemap():
         sitemap.write('\n<url><loc>%s</loc><changefreq>weekly</changefreq><priority>%s</priority></url>' % (url, prioridade))
     sitemap.write('\n</urlset>')
         
+def listar_urls_de_detalhamento():
+    lista_urls = list()
+    
+    # Ações
+    for acao in Acao.objects.all():
+        lista_urls.append(reverse('acao:geral:detalhar_acao', kwargs={'ticker': acao.ticker}))
         
+    # Debêntures
+    for debenture in Debenture.objects.all():
+        lista_urls.append(reverse('debenture:detalhar_debenture', kwargs={'id_debenture': debenture.id}))
+        
+    # FII
+    for fii in FII.objects.all():
+        lista_urls.append(reverse('fii:detalhar_fii', kwargs={'ticker': fii.ticker}))
+        
+    # Fundos de investimento
+    for fundo in FundoInvestimento.objects.all():
+        lista_urls.append(reverse('fundo_investimento:detalhar_fundo_investimento', kwargs={'fundo_slug': fundo.slug}))
+        
+#    # Tesouro Direto
+#    for titulo in Titulo.objects.all():
+#        lista_urls.append(reverse('tesouro_direto:detalhar_titulo_td', kwargs={'titulo_slug': titulo.slug}))
+        
+    return lista_urls
