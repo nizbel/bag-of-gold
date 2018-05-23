@@ -189,10 +189,15 @@ def acompanhamento_td(request):
     return TemplateResponse(request, 'td/acompanhamento.html', {'titulos': titulos, 'letras_credito': letras_credito, 'fiis': fiis})
 
 @adiciona_titulo_descricao('Detalhar título do Tesouro Direto', 'Informações sobre um título do Tesouro Direto')
-def detalhar_titulo_td(request, titulo_id):
+def detalhar_titulo_td_id(request, titulo_id):
     titulo = get_object_or_404(Titulo, id=titulo_id)
+    return HttpResponsePermanentRedirect(reverse('tesouro_direto:detalhar_titulo_td', kwargs={'titulo_tipo': Titulo.codificar_slug(titulo.tipo), 'titulo_ano': titulo.data_vencimento.year}))
+
+@adiciona_titulo_descricao('Detalhar título do Tesouro Direto', 'Informações sobre um título do Tesouro Direto')
+def detalhar_titulo_td(request, titulo_tipo, titulo_ano):
+    titulo = get_object_or_404(Titulo, tipo=Titulo.decodificar_slug(titulo_tipo), data_vencimento__year=titulo_ano)
     
-    print titulo.valor_vencimento()
+#     print titulo.valor_vencimento()
 #     print titulo.valor_vencimento() / ((1 + Decimal('0.0466'))**(Decimal(qtd_dias_uteis_no_periodo(datetime.date.today()+datetime.timedelta(days=1), titulo.data_vencimento))/252))
 #     print qtd_dias_uteis_no_periodo(datetime.date(2018, 1, 1), datetime.date(2018, 12, 31))
 
