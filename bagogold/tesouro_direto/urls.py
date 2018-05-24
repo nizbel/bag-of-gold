@@ -5,7 +5,8 @@ import views
 urlpatterns = [
     url(r'^acompanhamento/$', views.acompanhamento_td, name='acompanhamento_td'),
     url(r'^buscar-titulos-validos-na-data/$', views.buscar_titulos_validos_na_data, name='buscar_titulos_validos_na_data'),
-    url(r'^detalhar-titulo/(?P<titulo_id>\d+)/$', views.detalhar_titulo_td, name='detalhar_titulo_td'),
+    url(r'^detalhar-titulo/(?P<titulo_id>\d+)/$', views.detalhar_titulo_td_id, name='detalhar_titulo_td_id'),
+    url(r'^detalhar-titulo/(?P<titulo_tipo>[-\w]+)-(?P<titulo_ano>\d+)/$', views.detalhar_titulo_td_id, name='detalhar_titulo_td'),
     url(r'^editar-operacao/(?P<operacao_id>\d+)/$', views.editar_operacao_td, name='editar_operacao_td'),
     url(r'^historico/$', views.historico_td, name='historico_td'),
     url(r'^inserir-operacao-td/$', views.inserir_operacao_td, name='inserir_operacao_td'),
