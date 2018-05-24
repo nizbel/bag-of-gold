@@ -194,12 +194,12 @@ def acompanhamento_td(request):
 @adiciona_titulo_descricao('Detalhar título do Tesouro Direto', 'Informações sobre um título do Tesouro Direto')
 def detalhar_titulo_td_id(request, titulo_id):
     titulo = get_object_or_404(Titulo, id=titulo_id)
-    return HttpResponsePermanentRedirect(reverse('tesouro_direto:detalhar_titulo_td', kwargs={'titulo_tipo': Titulo.codificar_slug(titulo.tipo), 
+    return HttpResponsePermanentRedirect(reverse('tesouro_direto:detalhar_titulo_td', kwargs={'titulo_tipo': Titulo.codificar_slug(titulo.tipo).upper(), 
                                                                                               'titulo_data': titulo.data_vencimento.strftime('%d-%m-%Y')}))
 
 @adiciona_titulo_descricao('Detalhar título do Tesouro Direto', 'Informações sobre um título do Tesouro Direto')
 def detalhar_titulo_td(request, titulo_tipo, titulo_data):
-    titulo = get_object_or_404(Titulo, tipo=Titulo.decodificar_slug(titulo_tipo).upper(), data_vencimento=datetime.datetime.strptime(titulo_data, '%d-%m-%Y'))
+    titulo = get_object_or_404(Titulo, tipo=Titulo.decodificar_slug(titulo_tipo.upper()), data_vencimento=datetime.datetime.strptime(titulo_data, '%d-%m-%Y'))
     
 #     print titulo.valor_vencimento()
 #     print titulo.valor_vencimento() / ((1 + Decimal('0.0466'))**(Decimal(qtd_dias_uteis_no_periodo(datetime.date.today()+datetime.timedelta(days=1), titulo.data_vencimento))/252))
