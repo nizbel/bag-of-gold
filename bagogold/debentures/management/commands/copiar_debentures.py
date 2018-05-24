@@ -41,9 +41,16 @@ class Command(BaseCommand):
                 for premio in PremioDebenture_old.objects.all().values():
                     print premio
                     PremioDebenture.objects.create(**premio)
-                      
-                for historico in HistoricoValorDebenture_old.objects.all().values():
-                    print historico
-                    HistoricoValorDebenture.objects.create(**historico)
+                
+                data = datetime.date.today()
+                while HistoricoValorDebenture.objects.all().count() < HistoricoValorDebenture_old.objects.all().count():
+                    for historico in HistoricoValorDebenture_old.objects.filter(data=data).values():
+                        print historico
+                        HistoricoValorDebenture.objects.create(**historico)
+                    data = data - datetime.timedelta(days=1)
+                    
+#                 for historico in HistoricoValorDebenture_old.objects.all().values():
+#                     print historico
+#                     HistoricoValorDebenture.objects.create(**historico)
         except Exception as e:
             print e
