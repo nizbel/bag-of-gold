@@ -31,8 +31,10 @@ class DetalharTituloTestCase(TestCase):
         for titulo in Titulo.objects.all():
             titulo.slug = Titulo.codificar_slug(titulo.tipo)
             response = self.client.get(reverse('tesouro_direto:detalhar_titulo_td', kwargs={'titulo_tipo': titulo.slug,
-                                                                                            'titulo_ano': titulo.data_vencimento.year}))
-            self.assertEqual(response.status_code, 200)
+                                                                                            'titulo_data': titulo.data_vencimento.strftime('%d-%m-%Y')}))
+            self.assertEqual(response.status_code, 200, msg=u'Falhou para %s na URL %s' % \
+                             (titulo, reverse('tesouro_direto:detalhar_titulo_td', kwargs={'titulo_tipo': titulo.slug,
+                                                                                           'titulo_data': titulo.data_vencimento.strftime('%d-%m-%Y')})))
     
 def criar_titulos_teste():
     Titulo.objects.create(data_vencimento=datetime.date(2015, 3, 7), tipo=u'LFT', data_inicio=datetime.date(2010, 3, 10))
