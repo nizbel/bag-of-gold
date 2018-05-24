@@ -23,7 +23,7 @@
                     <div class="m-grid m-grid-responsive-xs">
                         <div class="m-grid-row">
                             <div class="m-grid-col m-grid-col-left"><strong>FII:</strong></div>
-                            <div class="m-grid-col m-grid-col-left"><a href="{% url 'fii:detalhar_fii' provento.fii_id %}"{{provento.fii}}</a></div>
+                            <div class="m-grid-col m-grid-col-left"><a href="{% url 'fii:detalhar_fii' provento.fii_id %}">{{provento.fii}}</a></div>
                             <div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
                             <div class="m-grid-col m-grid-col-left">{{provento.descricao_tipo_provento}}</div>
                             <div class="m-grid-col m-grid-col-left"><strong>Valor unit.:</strong></div>
@@ -34,7 +34,7 @@
                             <div class="m-grid-col m-grid-col-left">{{provento.data_ex|date:'d/m/Y'}}</div>
                             <div class="m-grid-col m-grid-col-left"><strong>Pagamento:</strong></div>
                             <div class="m-grid-col m-grid-col-left">{{provento.data_pagamento|date:'d/m/Y'}}</div>
-                            <div class="m-grid-col m-grid-col-left"><strong>Vers„o:</strong></div>
+                            <div class="m-grid-col m-grid-col-left"><strong>Vers√£o:</strong></div>
                             <div class="m-grid-col m-grid-col-left">{{provento.ultima_versao}}</div>
                         </div>
                         {% if request.user.is_authenticated and provento.valor_recebido > 0 %}
@@ -53,7 +53,7 @@
             <div class="portlet box yellow-crusta">
                 <div class="portlet-title">
                     <div class="caption">
-                        <i class="fa fa-folder-open-o"></i>Versıes
+                        <i class="fa fa-folder-open-o"></i>Vers√µes
                     </div>
                     <div class="tools">
                         <a href="javascript:;" class="collapse"></a>
@@ -76,14 +76,14 @@
                                 <div class="m-grid-col m-grid-col-left">{{descricao.data_ex|date:'d/m/Y'}}</div>
                                 <div class="m-grid-col m-grid-col-left"><strong>Pagamento:</strong></div>
                                 <div class="m-grid-col m-grid-col-left">{{descricao.data_pagamento|date:'d/m/Y'}}</div>
-                                <div class="m-grid-col m-grid-col-left"><strong>Vers„o:</strong></div>
+                                <div class="m-grid-col m-grid-col-left"><strong>Vers√£o:</strong></div>
                                 <div class="m-grid-col m-grid-col-left">{{provento_documento.versao}}</div>
                             </div>
                         {% endwith %}
                         <div class="m-grid-row">
                             <div class="m-grid-col m-grid-col-left"><strong>Protocolo do documento:</strong></div>
                             <div class="m-grid-col m-grid-col-left">{{provento_documento.documento.protocolo}}</div>
-                            <div class="m-grid-col m-grid-col-left"><strong>Data de referÍncia:</strong></div>
+                            <div class="m-grid-col m-grid-col-left"><strong>Data de refer√™ncia:</strong></div>
                             <div class="m-grid-col m-grid-col-left">{{provento_documento.documento.data_referencia|date:'d/m/Y'}}</div>
                             {% if request.user.is_authenticated %}
                                 <div class="m-grid-col m-grid-col-left">
