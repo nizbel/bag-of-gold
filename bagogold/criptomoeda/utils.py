@@ -13,7 +13,7 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoCriptomoeda, \
     DivisaoTransferenciaCriptomoeda, Divisao, DivisaoForkCriptomoeda
 from bagogold.criptomoeda.models import OperacaoCriptomoeda, \
     TransferenciaCriptomoeda, Criptomoeda, OperacaoCriptomoedaTaxa, \
-    OperacaoCriptomoedaMoeda, Fork
+    OperacaoCriptomoedaMoeda, Fork, ValorDiarioCriptomoeda
 
 
 def calcular_qtd_moedas_ate_dia(investidor, dia=datetime.date.today()):
@@ -174,6 +174,23 @@ def calcular_qtd_moedas_ate_dia_por_divisao(divisao_id, dia=datetime.date.today(
                    for k in set(qtd_moedas1) | set(qtd_moedas2) | set(qtd_moedas3) | set(qtd_moedas4) | set(qtd_moedas5) }
 
     return qtd_moedas
+
+def calcular_valor_moedas_ate_dia_por_divisao(divisao_id, dia=datetime.date.today()):
+    """
+    Calcula o valor das criptomoedas da divisão até data definida
+    
+    Parâmetros: ID da divisão
+                Data do valor
+    Retorno: Valor das moedas {id_moeda: valor em reais}
+    """
+    qtd_moedas = calcular_qtd_moedas_ate_dia_por_divisao(divisao_id, dia)
+    
+    valor_moedas = {}
+    # TODO achar uma forma de usar o histórico
+    for moeda_id, qtd in qtd_moedas.items():
+        valor_moedas[moeda_id] = qtd * ValorDiarioCriptomoeda.objects.get(moeda='BRL', criptomoeda__id=moeda_id).valor
+    
+    return valor_moedas
 
 def buscar_valor_criptomoeda_atual(criptomoeda_ticker):
     """ 
