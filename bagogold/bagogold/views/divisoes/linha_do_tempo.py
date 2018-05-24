@@ -14,10 +14,13 @@ from django.template.response import TemplateResponse
 
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoCDB_RDB, \
-    TransferenciaEntreDivisoes, DivisaoOperacaoLCI_LCA, DivisaoOperacaoLetraCambio
+    TransferenciaEntreDivisoes, DivisaoOperacaoLCI_LCA, DivisaoOperacaoLetraCambio, \
+    DivisaoOperacaoCriptomoeda, DivisaoTransferenciaCriptomoeda, \
+    DivisaoForkCriptomoeda
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia_por_divisao
 from bagogold.lc.utils import calcular_valor_lc_ate_dia_por_divisao
 from bagogold.lci_lca.utils import calcular_valor_lci_lca_ate_dia_por_divisao
+from bagogold.criptomoeda.utils import calcular_valor_moedas_ate_dia_por_divisao
 
 
 @login_required
@@ -31,16 +34,18 @@ def linha_do_tempo(request, divisao_id):
     if request.is_ajax():
         if request.GET.get('investimento') == 'A':
             eventos = linha_do_tempo_lc(divisao)
-        if request.GET.get('investimento') == 'C':
+        elif request.GET.get('investimento') == 'C':
             eventos = linha_do_tempo_cdb_rdb(divisao)
-        if request.GET.get('investimento') == 'L':
+        elif request.GET.get('investimento') == 'L':
             eventos = linha_do_tempo_lci_lca(divisao)
+        elif request.GET.get('investimento') == 'M':
+            eventos = linha_do_tempo_criptomoedas(divisao)
             
         return HttpResponse(json.dumps({'sucesso': True, 'linha': render_to_string('divisoes/utils/linha_do_tempo.html', {'eventos': eventos})}), 
                                         content_type = "application/json")  
 
     # Preparar tipos de investimentos
-    investimentos = {'A': u'Letra de Câmbio', 'C': u'CDB/RDB', 'L': u'LCI/LCA'}
+    investimentos = {'A': u'Letra de Câmbio', 'C': u'CDB/RDB', 'L': u'LCI/LCA', 'M': u'Criptomoeda'}
         
     return TemplateResponse(request, 'divisoes/linha_do_tempo.html', {'divisao': divisao, 'investimentos': investimentos})
 
@@ -103,14 +108,14 @@ def linha_do_tempo_criptomoedas(divisao):
         operacao_divisao.operacao.quantidade = operacao_divisao.quantidade
         operacao_divisao.texto = [operacao_divisao.operacao]
     
-    transferencias_divisao = DivisaoTransferenciaCriptomoeda.objects.filter(divisao=divisao).annotate(data=F('transfererencia__data')) \
-        .annotate(titulo=Value(u'Transferência de criptomoedas', CharField()), output_field=CharField())
+    transferencias_divisao = DivisaoTransferenciaCriptomoeda.objects.filter(divisao=divisao).annotate(data=F('transferencia__data')) \
+        .annotate(titulo=Value(u'Transferência de criptomoedas', output_field=CharField()))
     for transferencia_divisao in transferencias_divisao:
         transferencia_divisao.transferencia.quantidade = transferencia_divisao.quantidade
         transferencia_divisao.texto = [transferencia_divisao.transferencia]
         
     forks_divisao = DivisaoForkCriptomoeda.objects.filter(divisao=divisao).annotate(data=F('fork__data')) \
-        .annotate(titulo=Value(u'Fork', CharField()), output_field=CharField())
+        .annotate(titulo=Value(u'Fork', output_field=CharField()))
     for fork_divisao in forks_divisao:
         fork_divisao.fork.quantidade = fork_divisao.quantidade
         fork_divisao.texto = [fork_divisao.fork]
@@ -145,8 +150,8 @@ def linha_do_tempo_criptomoedas(divisao):
         eventos.append(evento)        
             
     for evento in eventos:
-        evento.saldo = divisao.saldo_criptomoedas(evento.data)
-        evento.investido = sum(calcular_valor_criptomoedas_ate_dia_por_divisao(evento.data, divisao.id).values())
+        evento.saldo = divisao.saldo_criptomoeda(evento.data)
+        evento.investido = sum(calcular_valor_moedas_ate_dia_por_divisao(divisao.id, evento.data).values())
         
     return eventos
 
