@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.debentures import Debenture, \
+from bagogold.debentures.models import Debenture, \
     HistoricoValorDebenture
 from decimal import Decimal
 from django.core.management.base import BaseCommand

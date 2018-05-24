@@ -10,7 +10,7 @@ from django.db.models.aggregates import Max
 
 from bagogold.bagogold.models.acoes import OperacaoAcao, ValorDiarioAcao, \
     HistoricoAcao, AcaoProvento, Acao, Provento
-from bagogold.bagogold.models.debentures import HistoricoValorDebenture, \
+from bagogold.debentures.models import HistoricoValorDebenture, \
     OperacaoDebenture
 from bagogold.bagogold.models.divisoes import CheckpointDivisaoFII, \
     CheckpointDivisaoProventosFII, Divisao, CheckpointDivisaoCDB_RDB, \
