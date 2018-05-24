@@ -90,6 +90,36 @@ class Titulo (models.Model):
         # Se não encontrou
         return 0
     
+    @staticmethod
+    def codificar_slug(tipo):
+        if tipo in Titulo.TIPO_LETRA_TESOURO:
+            return 'LTN'
+        elif tipo in Titulo.TIPO_SELIC:
+            return 'LFT'
+        elif tipo in Titulo.TIPO_IPCA_COM_JUROS:
+            return 'NTNB'
+        elif tipo in Titulo.TIPO_IPCA:
+            return 'NTNBP'
+        elif tipo in Titulo.TIPO_PREFIXADO_COM_JUROS:
+            return 'NTNF'
+        elif tipo in Titulo.TIPO_IGPM:
+            return 'NTNC'
+    
+    @staticmethod
+    def decodificar_slug(slug):
+        if slug == 'LTN':
+            return Titulo.TIPO_OFICIAL_LETRA_TESOURO
+        elif slug == 'LFT':
+            return Titulo.TIPO_OFICIAL_SELIC
+        elif slug == 'NTNB':
+            return Titulo.TIPO_OFICIAL_IPCA_COM_JUROS
+        elif slug == 'NTNBP':
+            return Titulo.TIPO_OFICIAL_IPCA
+        elif slug == 'NTNF':
+            return Titulo.TIPO_OFICIAL_PREFIXADO_COM_JUROS
+        elif slug == 'NTNC':
+            return Titulo.TIPO_OFICIAL_IGPM
+    
 class OperacaoTitulo (models.Model):
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)  
     quantidade = models.DecimalField(u'Quantidade', max_digits=7, decimal_places=2) 
