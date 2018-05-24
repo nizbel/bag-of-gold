@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold import settings
-from bagogold.bagogold.models.debentures import Debenture, JurosDebenture, \
+from bagogold.debentures.models import Debenture, JurosDebenture, \
     PremioDebenture, AmortizacaoDebenture
 from decimal import Decimal
 from django.core.mail import mail_admins

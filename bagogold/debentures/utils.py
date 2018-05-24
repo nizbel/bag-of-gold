@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.debentures import OperacaoDebenture, \
+from bagogold.debentures.models import OperacaoDebenture, \
     HistoricoValorDebenture
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoDebenture
 from django.db.models.aggregates import Sum

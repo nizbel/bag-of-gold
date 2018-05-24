@@ -23,7 +23,7 @@ from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.misc import ContatoForm
 from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, Provento, \
     ValorDiarioAcao
-from bagogold.bagogold.models.debentures import OperacaoDebenture, \
+from bagogold.debentures.models import OperacaoDebenture, \
     HistoricoValorDebenture
 from bagogold.bagogold.models.divisoes import TransferenciaEntreDivisoes, \
     Divisao
