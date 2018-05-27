@@ -12,12 +12,13 @@ cryptography==2.0.3
 cssselect==0.9.1
 defusedxml==0.5.0
 Django==1.11.1
+django-debug-toolbar==1.9.1
 django-registration==2.1.2
 ecdsa==0.13
 enum34==1.1.6
 Fabric==1.12.0
 facebook-sdk==2.0.0
-future==0.15.2
+future==0.16.0
 futures==3.2.0
 idna==2.5
 ipaddress==1.0.14
@@ -48,6 +49,7 @@ service-identity==14.0.0
 simplejson==3.8.2
 singledispatch==3.4.0.3
 six==1.10.0
+sqlparse==0.2.4
 subprocess32==3.2.7
 texttable==0.8.3
 twx.botapi==3.1.1
