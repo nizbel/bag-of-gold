@@ -113,7 +113,7 @@ class Command(BaseCommand):
         
         # Prepara threads de busca
         acoes = Acao.objects.filter(empresa__codigo_cvm__isnull=False).order_by('empresa__codigo_cvm').distinct('empresa__codigo_cvm')
-#         acoes = Acao.objects.filter(ticker__in=['CIEL3'])
+#         acoes = Acao.objects.filter(ticker__in=['BBAS3'])
         contador = 0
         try:
             while contador < len(acoes):
@@ -171,7 +171,7 @@ def buscar_proventos_acao(codigo_cvm, ano, num_tentativas):
         divisoes = re.findall('<div class="large-12 columns">(.*?)(?=<div class="large-12 columns">|$)', data, flags=re.IGNORECASE|re.DOTALL)
         for divisao in divisoes:
             # Pega as informações necessárias dentro da divisão, não há como existir mais de uma tupla (data, protocolo)
-            informacao_divisao = re.findall('Data Referência.*?(\d+/\d+/\d+).*?Assunto.*?(?:juro|dividendo|provento|capital social|remuneraç|agrupamento|desdobramento|orçamento de capital|bonus|bônus|bonificaç).*?<a href=".*?protocolo=(\d+).*?" target="_blank">(.*?)</a>', divisao, flags=re.IGNORECASE|re.DOTALL)
+            informacao_divisao = re.findall('Data Referência.*?(\d+/\d+/\d+).*?Assunto.*?(?:juro|jcp|jscp|dividendo|provento|capital social|remuneraç|agrupamento|desdobramento|orçamento de capital|bonus|bônus|bonificaç).*?<a href=".*?protocolo=(\d+).*?" target="_blank">(.*?)</a>', divisao, flags=re.IGNORECASE|re.DOTALL)
             if informacao_divisao:
                 informacoes_rendimentos.append({'info_doc': informacao_divisao[0], 'codigo_cvm': codigo_cvm})
 #         print 'Buscou', Empresa.objects.get(codigo_cvm=codigo_cvm), ano
