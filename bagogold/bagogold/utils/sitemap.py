@@ -110,7 +110,7 @@ def listar_urls_de_detalhamento():
     
     # Ações
     for acao in Acao.objects.all():
-        lista_urls.append(reverse('acao:geral:detalhar_acao', kwargs={'ticker': acao.ticker}))
+        lista_urls.append(reverse('acoes:geral:estatisticas_acao_bh', kwargs={'ticker': acao.ticker}))
         
     # Debêntures
     for debenture in Debenture.objects.all():
