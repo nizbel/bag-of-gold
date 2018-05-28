@@ -124,8 +124,9 @@ def listar_urls_de_detalhamento():
     for fundo in FundoInvestimento.objects.all():
         lista_urls.append(reverse('fundo_investimento:detalhar_fundo_investimento', kwargs={'fundo_slug': fundo.slug}))
         
-#    # Tesouro Direto
-#    for titulo in Titulo.objects.all():
-#        lista_urls.append(reverse('tesouro_direto:detalhar_titulo_td', kwargs={'titulo_slug': titulo.slug}))
+    # Tesouro Direto
+    for titulo in Titulo.objects.all():
+        lista_urls.append(reverse('tesouro_direto:detalhar_titulo_td', kwargs={'titulo_slug': Titulo.codificar_slug(titulo.tipo).upper(), 
+                                                                               'titulo_data': titulo.data_vencimento.strftime('%d-%m-%Y')}))
         
     return lista_urls
