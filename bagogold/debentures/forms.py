@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.forms.utils import LocalizedModelForm
-from bagogold.bagogold.models.debentures import OperacaoDebenture
+from bagogold.debentures.models import OperacaoDebenture
 from django import forms
 from django.forms import widgets
 

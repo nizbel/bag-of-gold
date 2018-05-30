@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import OperacaoAcao
-from bagogold.bagogold.models.debentures import OperacaoDebenture
+from bagogold.debentures.models import OperacaoDebenture
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoPrincipal
 from bagogold.fii.models import OperacaoFII
 from bagogold.lci_lca.models import OperacaoLetraCredito

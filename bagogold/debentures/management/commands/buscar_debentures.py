@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold import settings
-from bagogold.bagogold.models.debentures import Debenture, JurosDebenture, \
+from bagogold.debentures.models import Debenture, JurosDebenture, \
     PremioDebenture, AmortizacaoDebenture
 from decimal import Decimal
 from django.core.mail import mail_admins
@@ -162,11 +162,11 @@ class ProcessaDebentureThread(Thread):
                         pass
                 
                 time.sleep(1)
-        except Exception as e:
-#             template = "An exception of type {0} occured. Arguments:\n{1!r}"
-#             message = template.format(type(e).__name__, e.args)
-#             print codigo, 'processamento', message
-            pass
+        except:
+            if settings.ENV == 'DEV':
+                print traceback.format_exc()
+            elif settings.ENV == 'PROD':
+                mail_admins(u'Erro em Processar debêntures encontradas na busca', traceback.format_exc().decode('utf-8'))
 
 class Command(BaseCommand):
     help = 'Busca as Debêntures'

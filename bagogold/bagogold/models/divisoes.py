@@ -668,7 +668,7 @@ class DivisaoOperacaoCRI_CRA (models.Model):
     
 class DivisaoOperacaoDebenture (models.Model):
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
-    operacao = models.ForeignKey('OperacaoDebenture')
+    operacao = models.ForeignKey('debentures.OperacaoDebenture')
     """
     Guarda a quantidade da operação que pertence a divisão
     """
