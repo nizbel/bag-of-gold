@@ -13,4 +13,8 @@ admin.site.register(PremioDebenture)
          
 admin.site.register(OperacaoDebenture)
      
-admin.site.register(HistoricoValorDebenture)
+class HistoricoValorDebentureAdmin(admin.ModelAdmin):
+    search_fields = ['debenture__codigo']
+    list_display = ('debenture', 'valor_nominal', 'juros', 'premio', 'data')
+    
+admin.site.register(HistoricoValorDebenture, HistoricoValorDebentureAdmin)
