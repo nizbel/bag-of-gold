@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.debentures import Debenture, AmortizacaoDebenture, \
+from bagogold.debentures.models import Debenture, AmortizacaoDebenture, \
     JurosDebenture, PremioDebenture, OperacaoDebenture, HistoricoValorDebenture
 from django.contrib import admin
   
