@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 from cStringIO import StringIO
-from pdfminer.converter import TextConverter
-from pdfminer.layout import LAParams
-from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
-from pdfminer.pdfpage import PDFPage, PDFTextExtractionNotAllowed
-from subprocess import call
+# from pdfminer.converter import TextConverter
+# from pdfminer.layout import LAParams
+# from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
+# from pdfminer.pdfpage import PDFPage, PDFTextExtractionNotAllowed
+# from subprocess import call
 from urllib2 import Request, urlopen, URLError, HTTPError
-import os
+# import os
 
 def baixar_demonstrativo_rendimentos(arquivo_url):
     req = Request(arquivo_url)
