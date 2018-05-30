@@ -2,7 +2,7 @@
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.debentures.forms import OperacaoDebentureForm
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoDebentureFormSet
-from bagogold.bagogold.models.debentures import OperacaoDebenture, Debenture, \
+from bagogold.debentures.models import OperacaoDebenture, Debenture, \
     HistoricoValorDebenture
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoDebenture
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI, \
