@@ -1,19 +1,23 @@
 # -*- coding: utf-8 -*-
-from bagogold import settings
-from bagogold.fundo_investimento.models import FundoInvestimento, \
-    HistoricoValorCotas
+import datetime
 from decimal import Decimal
 from django.core.mail import mail_admins
 from django.core.management.base import BaseCommand
-from django.db import transaction
-from lxml import etree
-from urllib2 import urlopen
-import datetime
 import os
 import re
 import traceback
-import zeep
+from urllib2 import urlopen
 import zipfile
+
+from django.db import transaction
+from lxml import etree
+import zeep
+
+from bagogold import settings
+from bagogold.fundo_investimento.models import FundoInvestimento, \
+    HistoricoValorCotas
+from conf.conf import FI_LOGIN, FI_PASSWORD
+
 
 class Command(BaseCommand):
     help = 'Preencher historico de fundos de investimento'
@@ -29,11 +33,10 @@ class Command(BaseCommand):
         try:
             wsdl = 'http://sistemas.cvm.gov.br/webservices/Sistemas/SCW/CDocs/WsDownloadInfs.asmx?WSDL'
             client = zeep.Client(wsdl=wsdl)
-            resposta = client.service.Login(2377, '16335')
+            resposta = client.service.Login(FI_LOGIN, FI_PASSWORD)
             headerSessao = resposta['header']
 #             print headerSessao
 
-            dias_uteis = list()
             if options['anual']:
                 # Buscar arquivo anual
                 try:
