@@ -19,18 +19,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '3$z^a73@q+n$h@v)j-$vo0j5k((s6u#jebu5t9qhcl+k!@zg=s'
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 # ALLOWED_HOSTS = ['bagofgold.com.br']
-
-ADMINS = [('Guilherme', 'kingbowserii@gmail.com'), ]
-MANAGERS = [('Guilherme', 'kingbowserii@gmail.com'), ]
-SERVER_EMAIL = 'django@bagofgold.com.br'
-
 
 # Application definition
 
@@ -95,19 +87,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'bagogold.wsgi.application'
 
-# Database
-# https://docs.djangoproject.com/en/1.8/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'bagogold',
-        'USER': 'bagogold',
-        'PASSWORD': 'bagogold',
-        'HOST': 'localhost',
-    }
-}
-
 LOGIN_REDIRECT_URL = 'inicio:painel_geral'
 
 # Internationalization
@@ -134,14 +113,8 @@ USE_THOUSAND_SEPARATOR = True
 
 LOGIN_URL= '/login/'
 
-# Django-registration
-DEFAULT_FROM_EMAIL = 'Bag of Gold <do-not-reply@bagofgold.com.br>'
-ACCOUNT_ACTIVATION_DAYS = 3
-EMAIL_USE_TLS = True
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = 'bagofgold@bagofgold.com.br'
-EMAIL_HOST_PASSWORD = '9jU3IU8hse'
-EMAIL_PORT = 587
+# Configurações extras
+from conf.conf import *
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/

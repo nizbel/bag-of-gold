@@ -20,3 +20,4 @@ backups.tar.gz
 bagogold/static/package.json
 bagogold/static/gulpfile.js
 bagogold/static/testcss.py
+conf/conf.py
