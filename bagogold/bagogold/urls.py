@@ -23,6 +23,7 @@ inicio_patterns = [
     url(r'^detalhar-acumulados-mensais/$', views.home.detalhar_acumulados_mensais, name='detalhar_acumulados_mensais'),
     url(r'^detalhar-acumulado-mensal/$', views.home.detalhar_acumulado_mensal, name='detalhar_acumulado_mensal'),
     url(r'^detalhamento-investimentos/$', views.home.detalhamento_investimentos, name='detalhamento_investimentos'),
+    url(r'^listar-operacoes/$', views.home.listar_operacoes, name='listar_operacoes'),
     url(r'^renda-fixa/$', views.home.grafico_renda_fixa_painel_geral, name='grafico_renda_fixa_painel_geral'),
     url(r'^rendimento-medio/$', views.home.rendimento_medio_painel_geral, name='rendimento_medio_painel_geral'),
     url(r'^painel-geral/$', views.home.painel_geral, name='painel_geral'),
