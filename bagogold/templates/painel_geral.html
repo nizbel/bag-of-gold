@@ -96,6 +96,11 @@
                                 {% empty %}
                                 <a href="#" class="list-group-item">Não há operações</a>
                                 {% endfor %}
+                                {% if ultimas_operacoes %}
+                                <div class="row">
+                                    <div class="col-md-12 text-center"><a href="{% url 'inicio:listar_operacoes' %}">Ver todas as operações</a></div>
+                                </div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
