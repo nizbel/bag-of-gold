@@ -21,3 +21,5 @@ bagogold/static/package.json
 bagogold/static/gulpfile.js
 bagogold/static/testcss.py
 conf/conf.py
+conf/settings_prod.py
+conf/settings_dev.py
