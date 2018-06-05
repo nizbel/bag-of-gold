@@ -35,6 +35,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     
 #     'yahoo_finance',
+    'storages',
     
     #Bag-O-Gold
     'bagogold.bagogold',
@@ -113,12 +114,11 @@ USE_THOUSAND_SEPARATOR = True
 
 LOGIN_URL= '/login/'
 
-# Configurações extras
+# Configuracoes extras
 from conf.conf import *
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
-
 STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
