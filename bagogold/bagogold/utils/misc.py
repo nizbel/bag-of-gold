@@ -101,7 +101,7 @@ def buscar_valores_diarios_selic(data_inicial=datetime.date.today() - datetime.t
         # Ler registros do JSON
         
         for item in retorno['registros']:
-            data = datetime.datetime.strptime(item['dataCotacaoStr'], '%d/%m/%Y').date()
+            data = datetime.datetime.strptime(item['dataCotacao'], '%d/%m/%Y').date()
             fator_diario = Decimal(item['fatorDiario']).quantize(Decimal('0.000000000001'))
             if fator_diario.is_zero():
                 continue
