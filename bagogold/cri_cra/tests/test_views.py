@@ -1,4 +1,12 @@
+# -*- coding: utf-8 -*-
+import datetime
+from decimal import Decimal
+from django.contrib.auth.models import User
+from django.test.testcases import TestCase
 
+from django.core.urlresolvers import reverse
+
+from bagogold.cri_cra.models.cri_cra import CRI_CRA, OperacaoCRI_CRA
 
 
 class PainelTestCase(TestCase):
@@ -25,7 +33,7 @@ class PainelTestCase(TestCase):
         response = self.client.get(reverse('cri_cra:painel_cri_cra'))
         
         self.assertEqual(response.status_code, 200)
-        self.assertDictEqual(response.context, {'cri_cra': list(), 'dados': {}}
+        self.assertDictEqual(response.context, {'cri_cra': list(), 'dados': {}})
         
     def test_usuario_logado_sem_operacoes(self):
         """Testa usuário logado sem operações"""
@@ -33,7 +41,7 @@ class PainelTestCase(TestCase):
         response = self.client.get(reverse('cri_cra:painel_cri_cra'))
         
         self.assertEqual(response.status_code, 200)
-        self.assertDictEqual(response.context, {'cri_cra': list(), 'dados': {}}
+        self.assertDictEqual(response.context, {'cri_cra': list(), 'dados': {}})
         
     def test_usuario_logado_com_operacoes(self):
         """Testa usuário logado com operações"""
@@ -41,7 +49,7 @@ class PainelTestCase(TestCase):
         response = self.client.get(reverse('cri_cra:painel_cri_cra'))
         
         self.assertEqual(response.status_code, 200)
-        self.assertDictEqual(response.context, {'cri_cra': list(), 'dados': {}}
+        self.assertDictEqual(response.context, {'cri_cra': list(), 'dados': {}})
         
     def test_usuario_logado_com_operacoes_vendidas(self):
         """Testa usuário logado com operações vendidas"""
@@ -49,4 +57,4 @@ class PainelTestCase(TestCase):
         response = self.client.get(reverse('cri_cra:painel_cri_cra'))
         
         self.assertEqual(response.status_code, 200)
-        self.assertDictEqual(response.context, {'cri_cra': list(), 'dados': {}}
+        self.assertDictEqual(response.context, {'cri_cra': list(), 'dados': {}})
