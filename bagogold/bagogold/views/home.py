@@ -1003,6 +1003,10 @@ def listar_operacoes(request):
     operacoes = buscar_operacoes_no_periodo(investidor, investidor.buscar_data_primeira_operacao(), datetime.date.today())
     
     for operacao in operacoes:
+        if operacao.tipo_operacao == 'C':
+            operacao.tipo_operacao = 'Compra'
+        elif operacao.tipo_operacao == 'V':
+            operacao.tipo_operacao = 'Venda'
         if isinstance(operacao, OperacaoFII):
             operacao.tipo_investimento = 'FII'
             operacao.valor_total = operacao.quantidade * operacao.preco_unitario
