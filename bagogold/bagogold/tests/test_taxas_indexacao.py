@@ -8,7 +8,8 @@ from django.test import TestCase
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI, \
     HistoricoTaxaSelic
 from bagogold.bagogold.utils.misc import verifica_se_dia_util, \
-    verificar_feriado_bovespa
+    verificar_feriado_bovespa, buscar_valores_diarios_selic,\
+    qtd_dias_uteis_no_periodo
 from bagogold.bagogold.utils.taxas_indexacao import buscar_valores_diarios_di, \
     calcular_valor_atualizado_com_taxa_di, calcular_valor_atualizado_com_taxas_di, \
     calcular_valor_atualizado_com_taxa_selic
@@ -130,3 +131,19 @@ class BuscarTaxasIPCATesteCase(TestCase):
     def test_ipca_oficial_deve_pagar_ipca_projetado(self):
         """Testa se IPCA oficial ao ser criado apaga IPCA projetado anterior"""
         pass
+    
+class BuscaSelicTestCase(TestCase):
+    def setUp(self):
+        pass
+    
+    def test_buscar_selic_dia_6_6_2018(self):
+        """Testa a busca pela taxa Selic para 06/06/2018"""
+        resultado = buscar_valores_diarios_selic(datetime.date(2018, 6, 6), datetime.date(2018, 6, 6))
+        self.assertEqual(resultado[0][0], datetime.date(2018, 6, 6))
+        self.assertTrue(resultado[0][1], Decimal('1.0002462'))
+    
+    def test_buscar_selic_10_anos(self):
+        """Testa a busca pela taxa Selic para os últimos 10 anos"""
+        resultado = buscar_valores_diarios_selic(datetime.date.today().replace(year=datetime.date.today().year - 10), datetime.date.today())
+        self.assertTrue(len(resultado) <= 2513)
+        self.assertTrue(len(resultado) >= qtd_dias_uteis_no_periodo(datetime.date.today().replace(year=datetime.date.today().year - 10), datetime.date.today()))
