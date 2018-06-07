@@ -1,9 +1,12 @@
+# -*- coding: utf-8 -*-
+from django.contrib.auth.models import User
+from django.test.testcases import TestCase
 
-
+from django.core.urlresolvers import reverse
 
 
 class AcessarTimelineTestCase(TestCase):
-    def setUp:
+    def setUp(self):
         User.objects.create(username='test', password='test')
         nizbel = User.objects.create(username='nizbel', password='nizbel')
         
@@ -11,7 +14,7 @@ class AcessarTimelineTestCase(TestCase):
         
     def test_acesso_usuario_deslogado(self):
         """Testa acesso de usuário deslogado, deve ser redirecionado a tela de login"""
-        response = self.client.get(reverse('home:timeline', kwargs={id_divisao=1})
+        response = self.client.get(reverse('home:timeline', kwargs={'id_divisao': 1}))
         
         self.assertEqual(response.status_code, 302)
         self.assertIn('login', response.url)
