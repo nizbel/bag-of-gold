@@ -116,6 +116,21 @@ class DocumentoProventoBovespa (models.Model):
             return 'FII'
         return 'Tipo indefinido'
     
+    def tamanho_arquivo(self):
+        try:
+            nome_documento = '%s/%s' % (AWS_MEDIA_LOCATION, self.documento.name)
+            resposta = boto3.client('s3').head_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=nome_documento)
+            return resposta['ContentLength']
+        except ClientError as exc:
+            if exc.response['Error']['Code'] != '404':
+                raise
+            else:
+                raise ValueError('Documento não encontrado')
+        
+#         s3 = boto3.client('s3')
+#         response = s3.head_object(Bucket='bucketname', Key='keyname')
+#         size = response['ContentLength']
+    
     def ultima_recusa(self):
         if InvestidorRecusaDocumento.objects.filter(documento=self).exists():
             return InvestidorRecusaDocumento.objects.filter(documento=self).order_by('-data_recusa')[0]
