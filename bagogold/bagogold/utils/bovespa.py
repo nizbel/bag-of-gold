@@ -12,6 +12,7 @@ import datetime
 import mechanize
 import re
 import zipfile
+from bagogold.settings import CAMINHO_HISTORICO_RECENTE_ACOES_FIIS
 
 def preencher_empresa_fii_nao_listado(ticker, num_tentativas=0):
     """
@@ -68,9 +69,10 @@ def buscar_historico_recente_bovespa(data):
             
         # Ler arquivo mais recente
         ult_arq_zip = max(unzipped.namelist())
-        file(ult_arq_zip,'wb').write(unzipped.read(ult_arq_zip))
+        caminho_arquivo = CAMINHO_HISTORICO_RECENTE_ACOES_FIIS + ult_arq_zip
+        open(caminho_arquivo,'wb').write(unzipped.read(ult_arq_zip))
         
-        return ult_arq_zip
+        return caminho_arquivo
             
     except ControlNotFoundError:
         raise ValueError(u'Não encontrou os controles')
