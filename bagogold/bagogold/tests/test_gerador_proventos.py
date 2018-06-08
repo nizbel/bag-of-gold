@@ -873,7 +873,20 @@ class LeitorProventosEstruturadosTestCase(TestCase):
         self.assertTrue(ProventoFIIDocumento.objects.filter(documento=documento_original, versao=1))
         self.assertTrue(ProventoFIIDocumento.objects.filter(documento=documento, versao=2))
         self.assertEqual(len(ProventoFII.objects.all()), 1)
-    
+        
+    def test_nao_ler_documento_se_empresas_doc_prov_diferentes(self):
+        """Testa se leitura é terminada caso seja detectado que provento no documento é de FII diferente da empresa do documento"""
+        empresa = Empresa.objects.create(nome='Fundo BBBB', nome_pregao='BBBB')
+        fii = FII.objects.create(empresa=empresa, ticker='BBBB11')
+        
+        # Documento da empresa, já existe em media
+        documento = DocumentoProventoBovespa.objects.filter(empresa__nome_pregao='BBPO')[0]
+        documento.empresa = empresa
+        documento.save()
+        
+        with self.assertRaises(ValueError):
+            ler_provento_estruturado_fii(documento)
+        
 class ReiniciarDocumentosTestCase(TestCase):
 
     def setUp(self):

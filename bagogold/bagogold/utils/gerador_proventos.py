@@ -1,18 +1,23 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.acoes import Provento, AcaoProvento,\
+import datetime
+from decimal import Decimal
+from itertools import chain
+import traceback
+
+from django.db import transaction
+from lxml import etree
+
+from bagogold import settings
+from bagogold.bagogold.models.acoes import Provento, AcaoProvento, \
     AtualizacaoSelicProvento
-from bagogold.fii.models import ProventoFII, FII
 from bagogold.bagogold.models.gerador_proventos import \
     InvestidorResponsavelPendencia, InvestidorLeituraDocumento, \
     PendenciaDocumentoProvento, ProventoAcaoDocumento, \
     ProventoAcaoDescritoDocumentoBovespa, AcaoProventoAcaoDescritoDocumentoBovespa, \
     InvestidorValidacaoDocumento, InvestidorRecusaDocumento, ProventoFIIDocumento, \
     ProventoFIIDescritoDocumentoBovespa, DocumentoProventoBovespa
-from decimal import Decimal
-from django.db import transaction
-from itertools import chain
-from lxml import etree
-import datetime
+from bagogold.fii.models import ProventoFII, FII
+
 
 def alocar_pendencia_para_investidor(pendencia, investidor):
     """
@@ -649,6 +654,11 @@ def ler_provento_estruturado_fii(documento_fii):
             tree = etree.parse(documento_fii.documento)
             # Pega o último (maior ID) FII que contenha o código de negociação em seu ticker
             fii = FII.objects.filter(ticker__icontains=list(tree.getroot().iter('CodNegociacaoCota'))[0].text.strip()).order_by('-id')[0]
+            
+            # Verificar se documento é da empresa do FII
+            if fii.empresa_id != documento_fii.empresa_id:
+                raise ValueError('FII indicado para provento não corresponde a empresa do documento')
+            
             for element in tree.getroot().iter('Rendimento', 'Amortizacao'):
                 descricao_provento = ProventoFIIDescritoDocumentoBovespa()
                 # Se há pelo menos 5 campos, o provento pode ser prenchido
@@ -694,7 +704,9 @@ def ler_provento_estruturado_fii(documento_fii):
             for pendencia_provento in PendenciaDocumentoProvento.objects.filter(documento=documento_fii):
                 pendencia_provento.delete()
     except:
-        pass
+        # Fechar documento e jogar erro
+        documento_fii.documento.close()
+        raise
     
     # Fechar arquivo
     documento_fii.documento.close()
