@@ -58,7 +58,7 @@ def baixar_documento_provento(request, id_documento):
         else:
             response = HttpResponse(documento_provento.documento, content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename=%s' % filename
-        response['Content-Length'] = os.path.getsize(settings.MEDIA_ROOT + documento_provento.documento.name)
+        response['Content-Length'] = documento_provento.tamanho_arquivo()
     
         return response
     else:
