@@ -136,6 +136,12 @@ CAMINHO_FUNDO_INVESTIMENTO = MEDIA_ROOT + 'fundo investimento/'
 CAMINHO_FUNDO_INVESTIMENTO_CADASTRO = CAMINHO_FUNDO_INVESTIMENTO + 'cadastro/' 
 CAMINHO_FUNDO_INVESTIMENTO_HISTORICO = CAMINHO_FUNDO_INVESTIMENTO + 'historico/' 
 
+# Caminho para arquivos de historico recente acoes/fiis
+CAMINHO_HISTORICO_RECENTE_ACOES_FIIS = MEDIA_ROOT + 'historico recente/'
+
+# Caminho para backups
+CAMINHO_BACKUPS = BASE_DIR + '/backups'
+
 # Configurar precisao de decimais
 from decimal import getcontext
 getcontext().prec = 18

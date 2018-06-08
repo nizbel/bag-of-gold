@@ -9,7 +9,7 @@ import os
 import subprocess
 import time
 
-TABELAS_SEM_CONTEUDO = ['bagogold_valordiarioacao', 'bagogold_valordiariofii', 'bagogold_valordiariotitulo', 'criptomoeda_valordiariocriptomoeda', 
+TABELAS_SEM_CONTEUDO = ['bagogold_valordiarioacao', 'fii_valordiariofii', 'tesouro_direto_valordiariotitulo', 'criptomoeda_valordiariocriptomoeda', 
                       'django_session']
 
 class Command(BaseCommand):
