@@ -129,8 +129,6 @@ STATICFILES_DIRS = [
 
 MEDIA_ROOT = PROJECT_ROOT + '/media/'
 
-# Caminho para doc proventos
-
 # Caminho para arquivos de fundos de investimento
 CAMINHO_FUNDO_INVESTIMENTO = MEDIA_ROOT + 'fundo investimento/'
 CAMINHO_FUNDO_INVESTIMENTO_CADASTRO = CAMINHO_FUNDO_INVESTIMENTO + 'cadastro/' 
