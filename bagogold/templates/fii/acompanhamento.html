@@ -82,7 +82,7 @@
                     {% for fii in fiis %}
                         <tr>
                             {% if fii.data %}
-                            <td>{{fii}}</td>
+                            <td><a href="{% url 'fii:detalhar_fii' fii.ticker %}">{{fii}}</a></td>
                             <td>R$ {{ fii.valor_atual|floatformat:"2" }}</td>
                             <td>{{ fii.data|date:'d/m/Y' }}</td>
                             <td>R$ {{ fii.total_amortizacoes|floatformat:"2" }}</td>
@@ -91,7 +91,7 @@
                             {{ fii.percentual_retorno_anual|floatformat:"4" }}% ao ano</td>
                             <td>R$ {{ fii.total_proventos|floatformat:"2" }}</td>
                             {% else %}
-                            <td>{{fii}}</td>
+                            <td><a href="{% url 'fii:detalhar_fii' fii.ticker %}">{{fii}}</a></td>
                             <td>Indisponível</td>
                             <td>01/01/0001</td>
                             <td>Indisponível</td>
