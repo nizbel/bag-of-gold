@@ -144,7 +144,7 @@ def editar_cdb_rdb(request, cdb_rdb_id):
                 
         # TODO verificar o que pode acontecer na exclusão
         elif request.POST.get("delete"):
-            if OperacaoCDB_RDB.objects.filter(investimento=cdb_rdb).exists():
+            if OperacaoCDB_RDB.objects.filter(cdb_rdb=cdb_rdb).exists():
                 messages.error(request, 'Não é possível excluir o %s pois existem operações cadastradas' % (cdb_rdb.descricao_tipo()))
                 return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': cdb_rdb.id}))
             else:

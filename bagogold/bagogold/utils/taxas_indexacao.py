@@ -139,7 +139,7 @@ def calcular_valor_acumulado_ipca(data_base, data_final=datetime.date.today()):
         else:
             qtd_dias_uteis_passados = qtd_dias_uteis_no_periodo(mes_historico.data_inicio, mes_historico.data_fim + datetime.timedelta(days=1))
             ultimo_dia_util = calendar.monthrange(mes_historico.data_inicio.year, mes_historico.data_inicio.month)[1]
-            ultima_data_periodo_ipca = (ipca_final.data_inicio.replace(day=ultimo_dia_util) + datetime.timedelta(days=1)) \
+            ultima_data_periodo_ipca = (mes_historico.data_inicio.replace(day=ultimo_dia_util) + datetime.timedelta(days=1)) \
                 .replace(day=15)
             qtd_dias_uteis_total = qtd_dias_uteis_no_periodo(mes_historico.data_inicio.replace(day=16), ultima_data_periodo_ipca + datetime.timedelta(days=1))
             ipca_periodo = (1 + ipca_periodo) * ((1 + mes_historico.valor)**(Decimal(qtd_dias_uteis_passados)/qtd_dias_uteis_total)) - 1
