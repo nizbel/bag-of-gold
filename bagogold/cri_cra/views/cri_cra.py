@@ -519,7 +519,7 @@ def painel(request):
     
     ultima_taxa_di = HistoricoTaxaDI.objects.all().order_by('-data')[0]
     ultima_taxa_selic = HistoricoTaxaSelic.objects.all().order_by('-data')[0]
-    ultima_taxa_ipca = HistoricoIPCA.objects.all().order_by('-ano', '-mes')[0]
+    ultima_taxa_ipca = HistoricoIPCA.objects.all().order_by('-data_inicio')[0]
     
     for cri_cra_id in cri_cra.keys():
         cri_cra[cri_cra_id].total_investido = cri_cra[cri_cra_id].quantidade * cri_cra[cri_cra_id].preco_medio
