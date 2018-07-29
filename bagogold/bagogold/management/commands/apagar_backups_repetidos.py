@@ -32,6 +32,10 @@ def apagar_backups_repetidos():
         elif backup.startswith('ultimo_backup-'):
             ultimo_backup = backup
     
+    # Verifica se há backups na pasta para apagar
+    if len(backups_ord) == 0 and ultimo_backup == None:
+        return
+    
     # Ordenar
     backups_ord.sort(key=lambda x: x.split('-')[4] + x.split('-')[3] + x.split('-')[2] + x.split('-')[1])
         

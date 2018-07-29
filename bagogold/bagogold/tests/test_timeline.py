@@ -14,7 +14,7 @@ class AcessarTimelineTestCase(TestCase):
         
     def test_acesso_usuario_deslogado(self):
         """Testa acesso de usuário deslogado, deve ser redirecionado a tela de login"""
-        response = self.client.get(reverse('home:timeline', kwargs={'id_divisao': 1}))
+        response = self.client.get(reverse('divisoes:linha_do_tempo', kwargs={'divisao_id': 1}))
         
         self.assertEqual(response.status_code, 302)
         self.assertIn('login', response.url)

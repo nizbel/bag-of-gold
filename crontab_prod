@@ -31,3 +31,4 @@
 
 # Apenas prod
 # * * * * * /home/bagofgold/.virtualenvs/bagogold/bin/python /home/bagofgold/bagogold/manage.py rodar_dropbox
+

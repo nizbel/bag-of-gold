@@ -308,10 +308,10 @@ def editar_operacao_lci_lca(request, operacao_id):
                                             extra=1, formset=DivisaoOperacaoLCI_LCAFormSet)
     
     if request.method == 'POST':
-        form_operacao_lci_lca = OperacaoLetraCreditoForm(request.POST, instance=operacao_lci_lca, investidor=investidor)
-        formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lci_lca, investidor=investidor) if varias_divisoes else None
-        
         if request.POST.get("save"):
+            form_operacao_lci_lca = OperacaoLetraCreditoForm(request.POST, instance=operacao_lci_lca, investidor=investidor)
+            formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lci_lca, investidor=investidor) if varias_divisoes else None
+        
             if form_operacao_lci_lca.is_valid():
                 operacao_compra = form_operacao_lci_lca.cleaned_data['operacao_compra']
                 formset_divisao = DivisaoFormSet(request.POST, instance=operacao_lci_lca, operacao_compra=operacao_compra, investidor=investidor) if varias_divisoes else None
@@ -366,6 +366,10 @@ def editar_operacao_lci_lca(request, operacao_id):
                 return HttpResponseRedirect(reverse('lci_lca:historico_lci_lca'))
             else:
                 messages.error(request, 'Não é possível excluir operação de compra que já tenha vendas registradas')
+                
+                # Montar form de resposta
+                form_operacao_lci_lca = OperacaoLetraCreditoForm(instance=operacao_lci_lca, investidor=investidor, initial={'operacao_compra': operacao_lci_lca.operacao_compra_relacionada(),})
+                formset_divisao = DivisaoFormSet(instance=operacao_lci_lca, investidor=investidor)
  
     else:
         form_operacao_lci_lca = OperacaoLetraCreditoForm(instance=operacao_lci_lca, investidor=investidor, initial={'operacao_compra': operacao_lci_lca.operacao_compra_relacionada(),})

@@ -114,8 +114,6 @@ USE_THOUSAND_SEPARATOR = True
 
 LOGIN_URL= '/login/'
 
-AWS_TEST_BUCKET_NAME = 'bagofgold-test'
-
 # Configuracoes extras
 from conf.conf import *
 

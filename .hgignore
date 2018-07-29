@@ -5,6 +5,8 @@ syntax: regexp
 doc proventos/*
 backups/teste-*
 templates/teste/*
+apache-conf/*
+node_modules/*
 syntax: glob
 .project
 .pydevproject
@@ -13,11 +15,8 @@ README.md
 *.pyc
 *.orig
 COTAHIST_A.tar.gz
-conf/settings_local.py
+conf/*
 *~
 backups.tar.gz
-conf/conf.py
-conf/settings_prod.py
-conf/settings_dev.py
 output_pylint.txt
 output_test.txt
