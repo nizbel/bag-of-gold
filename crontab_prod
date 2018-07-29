@@ -14,10 +14,10 @@
 0 4 * * 1-5 /home/bagofgold/.virtualenvs/bagogold/bin/python /home/bagofgold/bagogold/manage.py preencher_historico_debenture 0
 
 # Fundos de investimento
-40 23 * * * /home/bagofgold/.virtualenvs/bagogold/bin/python /home/bagofgold/bagogold/manage.py buscar_fundos_investimento --aleatorio
-50 23 * * * /home/bagofgold/.virtualenvs/bagogold/bin/python /home/bagofgold/bagogold/manage.py buscar_fundos_investimento
-55 23 * * * /home/bagofgold/.virtualenvs/bagogold/bin/python /home/bagofgold/bagogold/manage.py preencher_historico_fundo_investimento
-0 5 1 * * /home/bagofgold/.virtualenvs/bagogold/bin/python /home/bagofgold/bagogold/manage.py preencher_historico_fundo_investimento --anual
+#40 23 * * * /home/bagofgold/.virtualenvs/bagogold/bin/python /home/bagofgold/bagogold/manage.py buscar_fundos_investimento --aleatorio
+#50 23 * * * /home/bagofgold/.virtualenvs/bagogold/bin/python /home/bagofgold/bagogold/manage.py buscar_fundos_investimento
+#55 23 * * * /home/bagofgold/.virtualenvs/bagogold/bin/python /home/bagofgold/bagogold/manage.py preencher_historico_fundo_investimento
+#0 5 1 * * /home/bagofgold/.virtualenvs/bagogold/bin/python /home/bagofgold/bagogold/manage.py preencher_historico_fundo_investimento --anual
 
 # Criptomoedas
 # */3 * * * * /home/bagofgold/.virtualenvs/bagogold/bin/python /home/bagofgold/bagogold/manage.py verifica_msgs
