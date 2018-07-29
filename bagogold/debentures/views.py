@@ -35,7 +35,7 @@ def detalhar_debenture(request, debenture_id):
     try:
         debenture = Debenture.objects.get(id=debenture_id)
     except Debenture.DoesNotExist:
-        messages.error(request, 'Debênture selecionado é inválido')
+        messages.error(request, 'Debênture selecionado não foi encontrado')
         return HttpResponseRedirect(reverse('debentures:listar_debentures'))
     
     debenture.valor_emissao = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(debenture.valor_emissao))
@@ -48,7 +48,13 @@ def detalhar_debenture(request, debenture_id):
     else:
         debenture.valor_atual = Decimal('0.00') 
     
-    return TemplateResponse(request, 'debentures/detalhar_debenture.html', {'debenture': debenture})
+    if request.user.is_authenticated():
+        operacoes = OperacaoDebenture.objects.filter(debenture=debenture, investidor=request.user.investidor)
+    else:
+        operacoes = list()
+    
+    return TemplateResponse(request, 'debentures/detalhar_debenture.html', {'debenture': debenture, 'operacoes': operacoes,
+                                                                            'juros': [], 'amortizacoes': [], 'premios': []})
 
 @login_required
 @adiciona_titulo_descricao('Editar operação em Debêntures', 'Alterar valores de uma operação de compra/venda em Debêntures')

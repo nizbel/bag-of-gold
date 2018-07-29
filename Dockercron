@@ -1,0 +1,39 @@
+# Use an official Python runtime as a parent image
+FROM python:2.7
+
+COPY . /home/bagofgold/bagogold
+
+COPY conf/settings_prod.py /home/bagofgold/bagogold/conf/settings_local.py
+
+# Apagar arquivos de settings
+RUN rm /home/bagofgold/bagogold/conf/settings_dev.py
+RUN rm /home/bagofgold/bagogold/conf/settings_prod.py
+
+COPY conf/.pgpass /root/.pgpass
+RUN chmod 0600 /root/.pgpass
+
+RUN rm /home/bagofgold/bagogold/conf/.pgpass
+
+# Apagar arquivos pyc
+RUN find /home/bagofgold/bagogold -name "*.pyc" | xargs rm
+
+WORKDIR /home/bagofgold/bagogold
+
+# Install any needed packages specified in requirements.txt
+RUN pip install --trusted-host pypi.python.org -r requirements.txt
+
+# Preparar html e static
+RUN python manage.py minificar_html
+RUN python manage.py remover_static_minificado -r
+
+RUN apt-get update
+RUN apt-get install -y postgresql-client
+RUN apt-get install nano
+
+# Remover pastas nao utilizadas
+RUN rm -rf /home/bagofgold/bagogold/apache-conf
+RUN rm -rf /home/bagofgold/bagogold/backups
+RUN mkdir /home/bagofgold/bagogold/backups
+
+# Roda servidor em localhost mas deve receber comando externo
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

@@ -53,6 +53,10 @@ def buscar_historico_recente_bovespa(data):
     try:
         br.select_form(nr=0)
         br.form.set_all_readonly(False)
+        for control in br.find_control("chkArquivoDownload_ativo").items:
+            print control['__label']
+        if 2 == 2:
+            return
         text_control = [control for control in br.form.controls if control.type == 'text'][27]
         text_control.disabled = False
         text_control.value = data.strftime('%d/%m/%Y')
@@ -72,6 +76,7 @@ def buscar_historico_recente_bovespa(data):
         caminho_arquivo = CAMINHO_HISTORICO_RECENTE_ACOES_FIIS + ult_arq_zip
         open(caminho_arquivo,'wb').write(unzipped.read(ult_arq_zip))
         
+        print caminho_arquivo
         return caminho_arquivo
             
     except ControlNotFoundError:

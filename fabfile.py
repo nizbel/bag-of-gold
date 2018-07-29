@@ -26,6 +26,17 @@ def prod():
     env.forward_agent = True
 #     env.procs = ['nginx', 'site', 'winfinity']
 
+def prod_ec2():
+    env.config = 'PROD_EC2'
+    env.hosts = ['18.221.194.175'] # 18.221.194.175    bagofgold.com.br
+#     env.path = 'bagogold'
+#     env.repository = 'https://bitbucket.org/nizbel/bag-of-gold'
+    env.user = 'ubuntu'
+#     env.virtualenv = 'bagogold'
+#     env.virtualenv_path = '/home/bagofgold/.virtualenvs/bagogold'
+    env.forward_agent = True
+#     env.procs = ['nginx', 'site', 'winfinity']
+    
 def dev():
     env.run = lrun
     env.config = 'DEV'
@@ -35,6 +46,8 @@ def dev():
     env.user = 'nizbel'
     env.virtualenv = 'bagogold'
     env.virtualenv_path = '/home/nizbel/.virtualenvs/bagogold'
+    env.password = 'nizbaal'
+    env.key_filename = '/home/nizbel/.ssh/id_rsa'
 
 # Actions
 def setup():
@@ -66,6 +79,24 @@ def alterar_cron():
         run('crontab ~/%s/crontab_prod' % env.path)
     elif env.config == 'DEV':
         run('crontab ~/%s/crontab_copy' % env.path)
+    elif env.config == 'PROD_EC2':
+        # Verificar se já não existe container com nome teste
+        info_container_teste = run('docker container ls -f name=teste')
+        if 'teste' in info_container_teste:
+            run('docker container stop teste')
+            run('docker container rm teste')
+        
+        run('docker run --add-host=database:172.17.0.1 --name teste -d nizbel/bagofgold:cron')
+        try:
+            # Copiar arquivo, setar crontab e apagá-lo
+            run('docker cp teste:/home/bagofgold/bagogold/crontab_ec2 ~/crontab_ec2')
+            run('crontab ~/crontab_ec2')
+            run('rm ~/crontab_ec2')
+        except Exception as e:
+            print e
+        # Finalizar container
+        run('docker container stop teste')
+        run('docker container rm teste')
 
 def gerar_css_def():
     require('config')
@@ -76,8 +107,7 @@ def gerar_css_def():
         return
     
     with cd(env.path):
-        with cd('bagogold/static'):
-            run('gulp minify')
+        run('gulp minify')
             
         # CSS base do Metronic
         texto = ''
@@ -197,15 +227,105 @@ def update(requirements=False, rev=None):
     
     # Start apache
     sudo('service apache2 start', pty=False)
+
+def update_ec2(requirements=False, rev=None):
+#     require('path')
+#     require('virtualenv')
+    require('config')
+# 
+    if env.config != 'PROD_EC2':
+        print u'Comando deve ser usado apenas para PROD_EC2'
+        return
+    
+    # Apagar cronjobs por enquanto
+#     run('crontab -r')
+    
+    # Dar tempo para verificar cronjobs
+    time.sleep(5)
+    
+    # Verificar se há cronjobs rodando
+    cron_running = run('pstree -ap `pidof cron`')
+
+    if 'bagofgold' in cron_running:
+        print u'Há cronjob rodando, esperar 10 segundos'
+        time.sleep(10)
+        
+        # Se ainda estiver rodando, voltar cronjobs e desistir
+        cron_running = run('pstree -ap `pidof cron`')
+        if 'bagofgold' in cron_running:
+            print u'Update cancelado pois há cronjob ainda executando'
+            alterar_cron()
+            return
+    
+    # Pegar revisão
+    #rev = rev
+    # Se não há revisão, verificar se há update a ser feito
+    #if not rev:
+    #    branch = verificar_update()
+ 
+    # Stop apache
+    #sudo('service apache2 stop')
+#     run('docker stack rm bagofgold')
+#     run('docker swarm leave --force')    
+
+    #run('workon %(virtualenv)s' % {'virtualenv': env.virtualenv})
+    
+    # Backup first... always!
+    run('docker run --add-host=database:172.17.0.1 nizbel/bagofgold:cron python manage.py preparar_backup')
+    #run('%s/bin/python ~/%s/manage.py preparar_backup' % (env.virtualenv_path, env.path))
+      
+    # Stop postgres
+#     sudo('/etc/init.d/postgresql stop')
+         
+    # Update the code
+    #run('workon %(virtualenv)s' % {'virtualenv': env.virtualenv})
+    #run('find . -name "*.pyc" | xargs rm')
+    #if rev:
+        #run('hg pull; hg update -r %(rev)s -C' % {'rev': rev})
+    #else:
+        #run('hg update %(branch)s -C' % {'branch': branch})
+    # Atualizar requirements
+    #sudo('pip install -U -r requirements.txt')
+#     run('docker login')
+    run('docker pull nizbel/bagofgold:cron')
+    run('docker pull nizbel/bagofgold:prod')
+        
+    # Start postgres
+#     sudo('/etc/init.d/postgresql start')
+          
+    # Migrações
+    #run('python manage.py migrate --noinput')
+    run('docker run --add-host=database:172.17.0.1 nizbel/bagofgold:cron python manage.py migrate --noinput')
+         
+    # Collect static files
+    #sudo('python manage.py collectstatic --noinput')
+    run('docker run --add-host=database:172.17.0.1 nizbel/bagofgold:cron python manage.py collectstatic --noinput -i admin')
+    
+    # Minificar usa o manage.py porém o cd já ocorre dentro de seu código
+    # "Minificar" html
+    #minificar_html()
+    
+    # Alterar cronjob
+    alterar_cron()
+    
+    # Start apache
+    #sudo('service apache2 start', pty=False)
+#     run('docker swarm init')
+    run('docker stack deploy -c docker-compose.yml --with-registry-auth bagofgold')
+    
+    # Apagar imagens nao utilizadas mais
+    run('docker image prune -f')
     
 def reset_pg():
+    require('config')
+    
     if env.config == 'PROD':
         sudo('/etc/init.d/postgresql stop')
         sudo('/etc/init.d/postgresql start')
     
 def verificar_cron():
     require('path')
-    require('virtualenv')
+#     require('virtualenv')
     
     run('pstree -ap `pidof cron`')
     

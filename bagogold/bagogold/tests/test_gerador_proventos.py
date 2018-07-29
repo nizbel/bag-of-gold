@@ -9,7 +9,6 @@ from urllib2 import URLError
 import boto3
 from django.test import TestCase
 
-from bagogold import settings
 from bagogold.bagogold.models.acoes import Acao, Provento, AcaoProvento, \
     AtualizacaoSelicProvento
 from bagogold.bagogold.models.empresa import Empresa
@@ -29,7 +28,7 @@ from bagogold.bagogold.utils.gerador_proventos import \
     ler_provento_estruturado_fii, criar_descricoes_provento_acoes, \
     relacionar_proventos_lidos_sistema, reiniciar_documento
 from bagogold.fii.models import FII, ProventoFII
-from bagogold.settings import AWS_TEST_BUCKET_NAME
+from conf.settings_local import AWS_STORAGE_BUCKET_NAME as AWS_TEST_BUCKET_NAME
 
 
 # import os

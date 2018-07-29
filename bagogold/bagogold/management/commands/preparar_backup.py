@@ -1,13 +1,23 @@
 # -*- coding: utf-8 -*-
-from bagogold import settings
-from bagogold.bagogold.management.commands.apagar_backups_repetidos import \
-    apagar_backups_repetidos
+import os
+import re
+import subprocess
+import sys
+import time
+
+from django.core.mail import mail_admins
 from django.core.management.base import BaseCommand
 from django.db import connection
 from django.template.loader import render_to_string
-import os
-import subprocess
-import time
+
+from bagogold import settings
+from bagogold.bagogold.management.commands.apagar_backups_repetidos import \
+    apagar_backups_repetidos
+from conf.conf import DROPBOX_OAUTH2_TOKEN, DROPBOX_ROOT_PATH
+import dropbox
+from dropbox.exceptions import ApiError
+from dropbox.files import WriteMode
+
 
 TABELAS_SEM_CONTEUDO = ['bagogold_valordiarioacao', 'fii_valordiariofii', 'tesouro_direto_valordiariotitulo', 'criptomoeda_valordiariocriptomoeda', 
                       'django_session']
@@ -47,19 +57,25 @@ def preparar_backup():
 
     # Se produção, enviar backups para pasta do dropbox
     if settings.ENV == 'PROD':
-        arquivo = file(arquivo_dump, 'w+')
-        arquivo.write('#!/bin/sh\n')
-        arquivo.write('mv /home/bagofgold/bagogold/backups/backup-*?-*?-*?-* /home/bagofgold/Dropbox/BKP\ BOG/')
-        arquivo.close()
+        pattern = re.compile('backup-\d+-\d+-\d+-\d+')
 
-        subprocess.call(['sh', arquivo_dump])
-        os.remove(arquivo_dump)
-
-        # Rodar dropbox
-        subprocess.call(['/home/bagofgold/bin/dropbox.py', 'start'])
-        while 'Up to date' not in subprocess.check_output(['/home/bagofgold/bin/dropbox.py', 'status']):
-            time.sleep(5)
-        subprocess.call(['/home/bagofgold/bin/dropbox.py', 'stop'])
+        for (_, _, nomes_arquivo) in os.walk(DROPBOX_ROOT_PATH):
+            for nome_arquivo in [nome for nome in nomes_arquivo if pattern.match(nome)]:
+                backup(nome_arquivo)
+                
+#         arquivo = file(arquivo_dump, 'w+')
+#         arquivo.write('#!/bin/sh\n')
+#         arquivo.write('mv /home/bagofgold/bagogold/backups/backup-*?-*?-*?-* /home/bagofgold/Dropbox/BKP\ BOG/')
+#         arquivo.close()
+# 
+#         subprocess.call(['sh', arquivo_dump])
+#         os.remove(arquivo_dump)
+# 
+#         # Rodar dropbox
+#         subprocess.call(['/home/bagofgold/bin/dropbox.py', 'start'])
+#         while 'Up to date' not in subprocess.check_output(['/home/bagofgold/bin/dropbox.py', 'status']):
+#             time.sleep(5)
+#         subprocess.call(['/home/bagofgold/bin/dropbox.py', 'stop'])
 
 def buscar_tabelas_string():
     cursor = connection.cursor()
@@ -69,3 +85,64 @@ def buscar_tabelas_string():
     str_lista.extend(['--exclude-table-data "public.%s"' % (tabela) for tabela in TABELAS_SEM_CONTEUDO])
     str_lista = ' '.join(str_lista)
     return str_lista
+
+def backup(file_name):
+    """Envia para o Dropbox"""
+    dbx = dropbox.Dropbox(DROPBOX_OAUTH2_TOKEN)
+    file_path = DROPBOX_ROOT_PATH + file_name
+    
+    f = open(file_path)
+    file_size = os.path.getsize(file_path)
+    
+    CHUNK_SIZE = 4 * 1024 * 1024
+    
+    try:
+        if file_size <= CHUNK_SIZE:
+        
+            print dbx.files_upload(f, '/' + file_path, mode=WriteMode('overwrite'))
+        
+        else:
+        
+            upload_session_start_result = dbx.files_upload_session_start(f.read(CHUNK_SIZE))
+            cursor = dropbox.files.UploadSessionCursor(session_id=upload_session_start_result.session_id,
+                                                       offset=f.tell())
+            commit = dropbox.files.CommitInfo(path=('/' + file_path), autorename=True)
+        
+            while f.tell() < file_size:
+                if ((file_size - f.tell()) <= CHUNK_SIZE):
+                    print dbx.files_upload_session_finish(f.read(CHUNK_SIZE),
+                                                    cursor,
+                                                    commit)
+                else:
+                    dbx.files_upload_session_append(f.read(CHUNK_SIZE),
+                                                    cursor.session_id,
+                                                    cursor.offset)
+                    cursor.offset = f.tell()
+    
+    except ApiError as err:
+        # This checks for the specific error where a user doesn't have
+        # enough Dropbox space quota to upload this file
+        if (err.error.is_path() and
+                err.error.get_path().reason.is_insufficient_space()):
+            if settings.ENV == 'DEV':
+                print err
+            elif settings.ENV == 'PROD':
+                mail_admins(u'Erro em Preparar backup', 'ERROR: Cannot back up; insufficient space.')
+            return
+        elif err.user_message_text:
+            if settings.ENV == 'DEV':
+                print err.user_message_text
+            elif settings.ENV == 'PROD':
+                mail_admins(u'Erro em Preparar backup', err.user_message_text)
+            return
+        else:
+            if settings.ENV == 'DEV':
+                print err
+            elif settings.ENV == 'PROD':
+                mail_admins(u'Erro em Preparar backup', err)
+            return
+    
+    
+    f.close()
+    # Apagar arquivo
+    os.remove(file_path)
