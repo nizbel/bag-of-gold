@@ -21,4 +21,4 @@ class Command(BaseCommand):
             if settings.ENV == 'DEV':
                 print traceback.format_exc()
             elif settings.ENV == 'PROD':
-                mail_admins(u'Erro em Preencher histórico para TD no ano atual', traceback.format_exc().decode('utf-8'))
+                mail_admins(u'Erro em Preencher valores diários de Tesouro Direto', traceback.format_exc().decode('utf-8'))

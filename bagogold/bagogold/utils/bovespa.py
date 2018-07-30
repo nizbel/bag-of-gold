@@ -57,11 +57,11 @@ def buscar_historico_recente_bovespa(data):
             print control['__label']
         if 2 == 2:
             return
-        text_control = [control for control in br.form.controls if control.type == 'text'][27]
+        text_control = [control for control in br.form.controls if control.type == 'text'][25]
         text_control.disabled = False
         text_control.value = data.strftime('%d/%m/%Y')
         br.find_control("chkArquivoDownload_ativo").disabled = False
-        br.find_control("chkArquivoDownload_ativo").items[27].selected = True
+        br.find_control("chkArquivoDownload_ativo").items[25].selected = True
         response = br.submit()
         
 #         fileobj = open("teste.ex_","w+")

@@ -256,6 +256,7 @@ def buscar_operacoes_no_periodo(investidor, data_inicial, data_final):
     from bagogold.cdb_rdb.models import OperacaoCDB_RDB
     """
     Busca as operações feitas pelo investidor, ordenadas por data crescente, no período especificado
+    
     Parâmetros: Investidor
                 Data inicial
                 Data final
