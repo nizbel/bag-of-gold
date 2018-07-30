@@ -392,7 +392,7 @@ $( document ).ready(function() {
                     overlayColor: 'none'
                 });
                 $.ajax({
-                    url : "{% url 'lci_lca:sobre_lci_lca' %}", // the endpoint
+                    url : "{% url 'cdb_rdb:sobre_cdb_rdb' %}", // the endpoint
                     type : "GET", // http method
                     data : {periodo: $('#periodo').val(), percentual_indice: $('#percentualRendimento').val(),
                         qtd: $('#qtdInvestida').val(), tipo: $("input[name='radioTipoRendimento']:checked").val()},

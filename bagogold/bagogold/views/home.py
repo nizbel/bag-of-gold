@@ -995,6 +995,54 @@ def inicio(request):
     
     return TemplateResponse(request, 'inicio.html', {'posts': posts})
 
+@login_required
+@adiciona_titulo_descricao('Listar operações', 'Lista todas as operações do investidor')
+def listar_operacoes(request):
+    investidor = request.user.investidor
+    
+    operacoes = buscar_operacoes_no_periodo(investidor, investidor.buscar_data_primeira_operacao(), datetime.date.today())
+    
+    for operacao in operacoes:
+        if operacao.tipo_operacao == 'C':
+            operacao.tipo_operacao = 'Compra'
+        elif operacao.tipo_operacao == 'V':
+            operacao.tipo_operacao = 'Venda'
+        if isinstance(operacao, OperacaoFII):
+            operacao.tipo_investimento = 'FII'
+            operacao.valor_total = operacao.quantidade * operacao.preco_unitario
+        if isinstance(operacao, OperacaoTitulo):
+            operacao.tipo_investimento = 'Tesouro Direto'
+            operacao.valor_total = operacao.quantidade * operacao.preco_unitario
+        if isinstance(operacao, OperacaoAcao):
+            operacao.tipo_investimento = u'Ações'
+            operacao.valor_total = operacao.quantidade * operacao.preco_unitario
+        if isinstance(operacao, OperacaoLetraCambio):
+            operacao.tipo_investimento = 'Letra de Câmbio'
+            operacao.valor_total = operacao.quantidade 
+        if isinstance(operacao, OperacaoLetraCredito):
+            operacao.tipo_investimento = 'LCI/LCA'
+            operacao.valor_total = operacao.quantidade
+        if isinstance(operacao, OperacaoCDB_RDB):
+            operacao.tipo_investimento = 'CDB/RDB'
+            operacao.valor_total = operacao.quantidade 
+        if isinstance(operacao, OperacaoCRI_CRA):
+            operacao.tipo_investimento = 'CRI/CRA'
+            operacao.valor_total = operacao.quantidade * operacao.preco_unitario
+        if isinstance(operacao, OperacaoCriptomoeda):
+            operacao.tipo_investimento = 'Criptomoeda'
+            operacao.valor_total = operacao.quantidade * operacao.preco_unitario
+        if isinstance(operacao, OperacaoDebenture):
+            operacao.tipo_investimento = u'Debênture'
+            operacao.valor_total = operacao.quantidade * operacao.preco_unitario
+        if isinstance(operacao, OperacaoFundoInvestimento):
+            operacao.tipo_investimento = 'Fundo de investimento'
+            operacao.valor_total = operacao.valor
+        if isinstance(operacao, Investimento):
+            operacao.tipo_investimento = 'Outros investimentos'
+            operacao.valor_total = operacao.quantidade
+    
+    return TemplateResponse(request, 'listar_operacoes.html', {'operacoes': operacoes})
+
 @adiciona_titulo_descricao('Painel geral', 'Traz informações gerais sobre a posição atual em cada tipo de investimento')
 def painel_geral(request):
     # Usado para criar objetos vazios

@@ -110,9 +110,9 @@
                     {% endif %}
                     <h4>Investimentos</h4>
                     <ul class="list-unstyled">
-                        <li><a href="{% url "lc:inserir_operacao_lc" %}">Inserir operação</a></li>
-                        <li><a href="{% url "lc:historico_lc" %}">Histórico de operações</a></li>
-                        <li><a href="{% url "lc:painel_lc" %}">Painel de Letras de Câmbio</a></li>
+                        <li><a href="{% url "lcambio:inserir_operacao_lc" %}">Inserir operação</a></li>
+                        <li><a href="{% url "lcambio:historico_lc" %}">Histórico de operações</a></li>
+                        <li><a href="{% url "lcambio:painel_lc" %}">Painel de Letras de Câmbio</a></li>
                     </ul>
                 </div>
             </div>
@@ -385,7 +385,7 @@ $( document ).ready(function() {
                     overlayColor: 'none'
                 });
                 $.ajax({
-                    url : "{% url 'lci_lca:sobre_lci_lca' %}", // the endpoint
+                    url : "{% url 'lcambio:sobre_lc' %}", // the endpoint
                     type : "GET", // http method
                     data : {periodo: $('#periodo').val(), percentual_indice: $('#percentualRendimento').val(),
                         qtd: $('#qtdInvestida').val(), tipo: $("input[name='radioTipoRendimento']:checked").val()},

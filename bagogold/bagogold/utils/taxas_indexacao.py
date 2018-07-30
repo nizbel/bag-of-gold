@@ -161,6 +161,7 @@ def calcular_valor_acumulado_ipca(data_base, data_final=datetime.date.today()):
             .replace(day=15)
         qtd_dias_uteis_total = qtd_dias_uteis_no_periodo(ipca_final.data_inicio.replace(day=16), ultima_data_periodo_ipca + datetime.timedelta(days=1))
         ipca_periodo = (1 + ipca_periodo) * ((1 + ipca_final.valor)**(Decimal(qtd_dias_uteis_passados)/qtd_dias_uteis_total)) - 1
+    
 #     print (1 + ipca_periodo) * 1000
     return ipca_periodo
     
