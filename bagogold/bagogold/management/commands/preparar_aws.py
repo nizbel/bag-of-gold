@@ -11,7 +11,7 @@ class Command(BaseCommand):
         arquivo = file('credentials', 'w+')
 
         arquivo.write('[default]')
-        arquivo.write('aws_access_key_id=' + AWS_ACCESS_KEY_ID)
-        arquivo.write('aws_secret_access_key=' + AWS_SECRET_ACCESS_KEY)
+        arquivo.write('\naws_access_key_id=' + AWS_ACCESS_KEY_ID)
+        arquivo.write('\naws_secret_access_key=' + AWS_SECRET_ACCESS_KEY)
     
         arquivo.close()
