@@ -33,5 +33,5 @@
 # * * * * * docker run --add-host=database:172.17.0.1 nizbel/bagofgold:cron python manage.py rodar_dropbox
 
 # Docker
-*/10 * * * * docker container prune -f
+* * * * * docker container ls -f status=exited -f exited=0 -q | xargs docker container rm
 0 6 * * * docker image prune -f
