@@ -11,6 +11,7 @@ syntax: glob
 .project
 .pydevproject
 .settings/org.eclipse.core.resources.prefs
+.vscode*
 README.md
 *.pyc
 *.orig
