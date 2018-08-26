@@ -13,6 +13,7 @@ from django.db import transaction
 from itertools import chain
 from lxml import etree
 import datetime
+from docutils.nodes import document
 
 def alocar_pendencia_para_investidor(pendencia, investidor):
     """
@@ -638,10 +639,18 @@ def buscar_proventos_proximos_fii(descricao_provento):
                     key= lambda x: abs((x.data_ex - descricao_provento.data_ex).days))
     
 def ler_provento_estruturado_fii(documento_fii):
+    """
+    Lê XML estruturado da Bovespa para gerar descrição de provento de FII
+    Parâmetros: Documento de FII
+    """
     if documento_fii.tipo != 'F':
         raise ValueError('Documento deve ser de um FII')
     if documento_fii.tipo_documento != DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO:
         raise ValueError('Documento deve ser do %s' % (DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO))
+    
+    # Documento deve estar pendente de leitura
+    if not PendenciaDocumentoProvento.objects.filter(documento=documento_fii).exists():
+        raise ValueError('Documento deve estar pendente de leitura')
     
     documento_fii.documento.open()
     try:
@@ -649,6 +658,9 @@ def ler_provento_estruturado_fii(documento_fii):
             tree = etree.parse(documento_fii.documento)
             # Pega o último (maior ID) FII que contenha o código de negociação em seu ticker
             fii = FII.objects.filter(ticker__icontains=list(tree.getroot().iter('CodNegociacaoCota'))[0].text.strip()).order_by('-id')[0]
+            # Verificar se FII tem empresa igual a do documento
+            if fii not in documento_fii.empresa.fii_set.all():
+                raise ValueError('Documento cita FII de outra empresa')
             for element in tree.getroot().iter('Rendimento', 'Amortizacao'):
                 descricao_provento = ProventoFIIDescritoDocumentoBovespa()
                 # Se há pelo menos 5 campos, o provento pode ser prenchido
@@ -693,6 +705,14 @@ def ler_provento_estruturado_fii(documento_fii):
             # Apagar pendência
             for pendencia_provento in PendenciaDocumentoProvento.objects.filter(documento=documento_fii):
                 pendencia_provento.delete()
+                
+            # Apagar outros documentos com mesmo protocolo
+            for doc_mesmo_protocolo in DocumentoProventoBovespa.objects.filter(tipo='F', protocolo=documento_fii.protocolo).exclude(id=documento_fii.id):
+                # Verificar se não possuem leitura, validacao ou recusas
+                if not InvestidorRecusaDocumento.objects.filter(documento=doc_mesmo_protocolo).exists() and not InvestidorLeituraDocumento.objects.filter(documento=doc_mesmo_protocolo).exists() \
+                    and not InvestidorValidacaoDocumento.objects.filter(documento=doc_mesmo_protocolo).exists():
+                    reiniciar_documento(doc_mesmo_protocolo)
+                    doc_mesmo_protocolo.delete()
     except:
         pass
     

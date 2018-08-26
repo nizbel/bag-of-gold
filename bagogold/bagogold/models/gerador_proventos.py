@@ -26,7 +26,7 @@ class DocumentoProventoBovespa (models.Model):
     """
     Define se é provento de ação ou FII, A = Ação, F = FII
     """
-    tipo = models.CharField(u'Tipo de provento', max_length=1)
+    tipo = models.CharField(u'Tipo de investimento', max_length=1)
     documento = models.FileField(upload_to=ticker_path, blank=True, null=True)
     data_referencia = models.DateField(u'Data de referência')
     tipo_documento = models.CharField(u'Tipo de documento', max_length=100)
@@ -50,7 +50,7 @@ class DocumentoProventoBovespa (models.Model):
         diretorio_path = '{0}doc proventos/{1}/'.format(settings.MEDIA_ROOT, self.ticker_empresa())
         for (_, _, nomes_arquivo) in os.walk(diretorio_path):
             for indice, nome_arquivo in enumerate(nomes_arquivo):
-                if '%s-%s' % (self.ticker_empresa(), self.protocolo) in nome_arquivo.split('.')[0]:
+                if '%s-%s' % (self.ticker_empresa(), self.protocolo) == nome_arquivo.split('.')[0]:
                     extensao = nomes_arquivo[indice].split('.')[1]
                     documento_existe = True
                     break
@@ -103,6 +103,14 @@ class DocumentoProventoBovespa (models.Model):
             return InvestidorRecusaDocumento.objects.filter(documento=self).order_by('-data_recusa')[0]
         return None
 
+    def verificar_arquivo_existe(self):
+        diretorio_path = '{0}doc proventos/{1}/'.format(settings.MEDIA_ROOT, self.ticker_empresa())
+        for (_, _, nomes_arquivo) in os.walk(diretorio_path):
+            for _, nome_arquivo in enumerate(nomes_arquivo):
+                if '%s-%s' % (self.ticker_empresa(), self.protocolo) == nome_arquivo.split('.')[0]:
+                    return True
+        return False
+    
 @receiver(post_save, sender=DocumentoProventoBovespa, dispatch_uid="documento_provento_bovespa_criado")
 def criar_pendencia_on_save(sender, instance, created, **kwargs):
     if created:
@@ -136,6 +144,24 @@ class InvestidorLeituraDocumento (models.Model):
         
     def __unicode__(self):
         return unicode(self.investidor)
+    
+class HistoricoInvestidorLeituraDocumento (models.Model):
+    """
+    Guarda informação de leitura de documento que já foi apagado
+    """
+    empresa = models.ForeignKey('Empresa')
+    protocolo = models.CharField(u'Protocolo do documento', max_length=15)
+    tipo_investimento = models.CharField(u'Tipo de investimento', max_length=1)
+    investidor = models.ForeignKey('Investidor', related_name='leituras_apagadas')
+    decisao = models.CharField(u'Decisão', max_length=1)
+    proventos_criados = models.SmallIntegerField(u'Proventos criados')
+    data_leitura = models.DateTimeField(u'Data da leitura')
+    
+    class Meta:
+        unique_together=('empresa', 'investidor', 'protocolo')
+        
+    def __unicode__(self):
+        return unicode(self.investidor)
 
 class InvestidorRecusaDocumento (models.Model):
     documento = models.ForeignKey('DocumentoProventoBovespa')
@@ -143,6 +169,18 @@ class InvestidorRecusaDocumento (models.Model):
     motivo = models.CharField(u'Motivo da recusa', max_length=500, validators=[MinLengthValidator(10)])
     data_recusa = models.DateTimeField(u'Data da recusa', auto_now_add=True)
     responsavel_leitura = models.ForeignKey('Investidor', related_name='leituras_recusadas')
+    
+class HistoricoInvestidorRecusaDocumento (models.Model):
+    """
+    Guarda informação de recusa de documento que já foi apagado
+    """
+    empresa = models.ForeignKey('Empresa')
+    protocolo = models.CharField(u'Protocolo do documento', max_length=15)
+    tipo_investimento = models.CharField(u'Tipo de investimento', max_length=1)
+    investidor = models.ForeignKey('Investidor', related_name='leituras_apagadas_que_recusou')
+    motivo = models.CharField(u'Motivo da recusa', max_length=500, validators=[MinLengthValidator(10)])
+    data_recusa = models.DateTimeField(u'Data da recusa')
+    responsavel_leitura = models.ForeignKey('Investidor', related_name='leituras_apagadas_recusadas')
     
 class InvestidorResponsavelPendencia (models.Model):
     pendencia = models.OneToOneField('PendenciaDocumentoProvento')
@@ -159,6 +197,22 @@ class InvestidorValidacaoDocumento (models.Model):
     
     class Meta:
         unique_together=('documento', 'investidor')
+        
+    def __unicode__(self):
+        return unicode(self.investidor)
+    
+class HistoricoInvestidorValidacaoDocumento (models.Model):
+    """
+    Guarda informação de validação de documento que já foi apagado
+    """
+    empresa = models.ForeignKey('Empresa')
+    protocolo = models.CharField(u'Protocolo do documento', max_length=15)
+    tipo_investimento = models.CharField(u'Tipo de investimento', max_length=1)
+    investidor = models.ForeignKey('Investidor', related_name='validacoes_apagadas')
+    data_validacao = models.DateTimeField(u'Data da validação')
+    
+    class Meta:
+        unique_together=('empresa', 'investidor', 'protocolo')
         
     def __unicode__(self):
         return unicode(self.investidor)
