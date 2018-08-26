@@ -33,10 +33,12 @@
                         <div class="m-grid-row">
                             <div class="m-grid-col m-grid-col-left"><strong>Validado:</strong></div>
                             <div class="m-grid-col m-grid-col-left">{{documento.pendente|yesno:"Não,Sim,Indefinido"}}</div>
+                            {% with leitor_padrao=documento.pendente|yesno:"N/A,Sistema,N/A" %}
                             <div class="m-grid-col m-grid-col-left"><strong>Responsável por ler:</strong></div>
-                            <div class="m-grid-col m-grid-col-left">{{documento.responsavel_leitura|default:'Sistema'}}</div>
+                            <div class="m-grid-col m-grid-col-left">{{documento.responsavel_leitura|default:leitor_padrao}}</div>
                             <div class="m-grid-col m-grid-col-left"><strong>Responsável por validar:</strong></div>
-                            <div class="m-grid-col m-grid-col-left">{{documento.responsavel_validacao|default:'Sistema'}}</div>
+                            <div class="m-grid-col m-grid-col-left">{{documento.responsavel_validacao|default:leitor_padrao}}</div>
+                            {% endwith %}
                             <div class="m-grid-col m-grid-col-left"><strong>Pendências:</strong></div>
                             <div class="m-grid-col m-grid-col-left">
                                 {% for pendencia in documento.pendencias %}
