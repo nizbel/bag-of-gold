@@ -14,7 +14,9 @@ README.md
 *.pyc
 *.orig
 COTAHIST_A.tar.gz
-conf/settings_local.py
+conf/*.py
+apache-conf/*
+.vscode/*
 *~
 backups.tar.gz
 bagogold/static/package.json
