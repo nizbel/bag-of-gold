@@ -70,7 +70,7 @@ class Command(BaseCommand):
                 docs_repetidos = DocumentoProventoBovespa.objects.filter(tipo='F', protocolo__in=lista_prot_repetidos).order_by('protocolo') # .filter(protocolo='27551')
                 print docs_repetidos.count()
                 
-                for doc in docs_repetidos.filter(protocolo='27551'):
+                for doc in docs_repetidos:
                     print doc
                     # Verificar se foi lido e validado pelo sistema
                     if not doc.pendente() and not InvestidorLeituraDocumento.objects.filter(documento=doc).exists() and not InvestidorValidacaoDocumento.objects.filter(documento=doc).exists():
