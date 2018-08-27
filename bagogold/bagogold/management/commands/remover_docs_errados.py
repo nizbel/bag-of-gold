@@ -80,6 +80,7 @@ class Command(BaseCommand):
                                 print 'Empresa do documento e do provento nao batem', doc.empresa.ticker_empresa(), provento_documento.provento.fii.empresa.ticker_empresa()
                                 
                                 reiniciar_documento(doc)
+                                break
 
 #                 ler_provento_estruturado_fii(docs_repetidos.filter(protocolo='27551').get(empresa=Empresa.objects.get(codigo_cvm='ANCR')))
 #                 ler_provento_estruturado_fii(docs_repetidos.filter(protocolo='27551').get(empresa=Empresa.objects.get(codigo_cvm='KNRE')))
