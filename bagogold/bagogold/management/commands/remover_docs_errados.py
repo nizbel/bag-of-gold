@@ -197,8 +197,8 @@ class Command(BaseCommand):
 
                 for pendencia in PendenciaDocumentoProvento.objects.filter(documento__tipo_documento=DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO,
                                                                    documento__tipo='F').order_by('documento__protocolo'):
-                    print 'ler', pendencia.documento
                     try:
+                        print 'ler', pendencia.documento
                         if not doc.verificar_arquivo_existe():
                             pendencia.documento.baixar_e_salvar_documento()
                         ler_provento_estruturado_fii(pendencia.documento)
