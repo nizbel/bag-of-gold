@@ -387,9 +387,9 @@ def reiniciar_documento(documento):
                         documento_provento.delete()
                         
                         # Atualizar versões posteriores
-                        for documento_provento in ProventoAcaoDocumento.objects.filter(provento=documento_provento.provento, versao__gt=versao).order_by('versao'):
-                            documento_provento.versao -= 1
-                            documento_provento.save()
+                        for doc_prov_versao_posterior in ProventoAcaoDocumento.objects.filter(provento=documento_provento.provento, versao__gt=versao).order_by('versao'):
+                            doc_prov_versao_posterior.versao -= 1
+                            doc_prov_versao_posterior.save()
                             
             elif documento.tipo == 'F':
                 for documento_provento in ProventoFIIDocumento.objects.filter(documento=documento):
@@ -409,9 +409,9 @@ def reiniciar_documento(documento):
                         documento_provento.delete()
                         
                         # Atualizar versões posteriores
-                        for documento_provento in ProventoFIIDocumento.objects.filter(provento=provento, versao__gt=versao).order_by('versao'):
-                            documento_provento.versao -= 1
-                            documento_provento.save()
+                        for doc_prov_versao_posterior in ProventoFIIDocumento.objects.filter(provento=provento, versao__gt=versao).order_by('versao'):
+                            doc_prov_versao_posterior.versao -= 1
+                            doc_prov_versao_posterior.save()
             
             # Baixar documento se tiver sido apagado
             if not documento.documento:
