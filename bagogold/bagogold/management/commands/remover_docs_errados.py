@@ -194,15 +194,15 @@ class Command(BaseCommand):
 #                 nizbel 1639
 #                 nizbel 1469
 
-#                 for pendencia in PendenciaDocumentoProvento.objects.filter(documento__tipo_documento=DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO,
-#                                                                    documento__tipo='F').order_by('documento__protocolo'):
-#                     print 'ler', pendencia.documento
-#                     try:
-#                         if not doc.verificar_arquivo_existe():
-#                             pendencia.documento.baixar_e_salvar_documento()
-#                         ler_provento_estruturado_fii(pendencia.documento)
-#                     except:
-#                         pass
+                for pendencia in PendenciaDocumentoProvento.objects.filter(documento__tipo_documento=DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO,
+                                                                   documento__tipo='F').order_by('documento__protocolo'):
+                    print 'ler', pendencia.documento
+                    try:
+                        if not doc.verificar_arquivo_existe():
+                            pendencia.documento.baixar_e_salvar_documento()
+                        ler_provento_estruturado_fii(pendencia.documento)
+                    except:
+                        pass
                 
                 print 'Proventos criados:', HistoricoInvestidorLeituraDocumento.objects.all().aggregate(total_proventos=Sum('proventos_criados'))['total_proventos']
                 
