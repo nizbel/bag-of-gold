@@ -13,7 +13,6 @@ from django.db import transaction
 from itertools import chain
 from lxml import etree
 import datetime
-from docutils.nodes import document
 
 def alocar_pendencia_para_investidor(pendencia, investidor):
     """
