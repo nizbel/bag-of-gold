@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
+from django.contrib import admin
+
 from bagogold.lci_lca.models import LetraCredito, OperacaoLetraCredito, \
     OperacaoVendaLetraCredito, HistoricoPorcentagemLetraCredito, \
-    HistoricoCarenciaLetraCredito, HistoricoValorMinimoInvestimento
-from django.contrib import admin
+    HistoricoCarenciaLetraCredito, HistoricoValorMinimoInvestimento, \
+    HistoricoVencimentoLetraCredito
+
 
 admin.site.register(LetraCredito)
     
@@ -13,8 +16,19 @@ class OperacaoVendaLetraCreditoAdmin(admin.ModelAdmin):
     
 admin.site.register(OperacaoVendaLetraCredito, OperacaoVendaLetraCreditoAdmin)
     
-admin.site.register(HistoricoPorcentagemLetraCredito)
+class HistoricoPorcentagemLetraCreditoAdmin(admin.ModelAdmin):
+    list_display = ('letra_credito', 'data', 'porcentagem')
     
-admin.site.register(HistoricoCarenciaLetraCredito)
+admin.site.register(HistoricoPorcentagemLetraCredito, HistoricoPorcentagemLetraCreditoAdmin)
+    
+class HistoricoCarenciaLetraCreditoAdmin(admin.ModelAdmin):
+    list_display = ('letra_credito', 'data', 'carencia')
+    
+admin.site.register(HistoricoCarenciaLetraCredito, HistoricoCarenciaLetraCreditoAdmin)
             
 admin.site.register(HistoricoValorMinimoInvestimento)
+
+class HistoricoVencimentoLetraCreditoAdmin(admin.ModelAdmin):
+    list_display = ('letra_credito', 'data', 'vencimento')
+    
+admin.site.register(HistoricoVencimentoLetraCredito, HistoricoVencimentoLetraCreditoAdmin)
