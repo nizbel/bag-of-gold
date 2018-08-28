@@ -107,6 +107,7 @@ class HistoricoPorcentagemLetraCreditoForm(LocalizedModelForm):
                   'letra_credito')
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),}
+        labels = {'letra_credito': 'LCI/LCA',}
         
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
@@ -165,7 +166,8 @@ class HistoricoCarenciaLetraCreditoForm(LocalizedModelForm):
                   'letra_credito')
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),}
-        labels = {'carencia': 'Período de carência',}
+        labels = {'carencia': 'Período de carência',
+                  'letra_credito': 'LCI/LCA',}
     
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
@@ -262,7 +264,7 @@ class HistoricoVencimentoLetraCreditoForm(LocalizedModelForm):
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),}
         labels = {'vencimento': 'Período de vencimento',
-                  'letra_credito': 'LCI/LCA'}
+                  'letra_credito': 'LCI/LCA',}
         
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
