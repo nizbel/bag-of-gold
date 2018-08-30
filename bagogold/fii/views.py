@@ -2,14 +2,6 @@
 import calendar
 import datetime
 from decimal import Decimal, ROUND_FLOOR
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.core.exceptions import PermissionDenied
-from django.core.mail import mail_admins
-from django.db.models.expressions import F, Case, When, Value
-from django.db.models.query_utils import Q
-from django.shortcuts import get_object_or_404
-from django.template.loader import render_to_string
 from itertools import chain
 import json
 import math
@@ -17,12 +9,21 @@ from operator import attrgetter
 import re
 import traceback
 
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.exceptions import PermissionDenied
+from django.core.mail import mail_admins
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.db.models.aggregates import Sum
+from django.db.models.expressions import F, Case, When, Value
 from django.db.models.fields import CharField, DecimalField
+from django.db.models.query_utils import Q
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect, HttpResponse
+from django.http.response import HttpResponsePermanentRedirect
+from django.shortcuts import get_object_or_404
+from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 
 from bagogold import settings
@@ -40,7 +41,7 @@ from bagogold.fii.models import OperacaoFII, ProventoFII, HistoricoFII, FII, \
     EventoDesdobramentoFII, EventoIncorporacaoFII
 from bagogold.fii.utils import calcular_valor_fii_ate_dia, \
     calcular_poupanca_prov_fii_ate_dia, calcular_qtd_fiis_ate_dia_por_ticker, \
-    calcular_preco_medio_fiis_ate_dia, calcular_qtd_fiis_ate_dia,\
+    calcular_preco_medio_fiis_ate_dia, calcular_qtd_fiis_ate_dia, \
     calcular_preco_medio_fiis_ate_dia_por_ticker
 
 
@@ -184,6 +185,11 @@ def calcular_resultado_corretagem(request):
         form_calcular = CalculoResultadoCorretagemForm()
     
     return TemplateResponse(request, 'fii/calcular_resultado_corretagem.html', {'ranking': ranking, 'form_calcular': form_calcular})
+    
+def detalhar_fii_id(request, fii_id):
+    fii = get_object_or_404(FII, id=fii_id)
+    return HttpResponsePermanentRedirect(reverse('fii:detalhar_fii', kwargs={'fii_ticker': fii.ticker}))
+    
     
 @adiciona_titulo_descricao('Detalhar FII', 'Detalhamento de um FII')
 def detalhar_fii(request, fii_ticker):
