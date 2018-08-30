@@ -307,9 +307,8 @@ def historico_td(request):
         return TemplateResponse(request, 'td/historico.html', {'dados': {}, 'operacoes': list(), 'graf_total_venc': list(),
                                                      'graf_gasto_total': list(), 'graf_patrimonio': list()})
     
-    operacoes = OperacaoTitulo.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data')  
-    for operacao in operacoes:
-        operacao.valor_unitario = operacao.preco_unitario
+    operacoes = OperacaoTitulo.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data').annotate(valor_unitario=F('preco_unitario')) \
+        .select_related('titulo')
     
     qtd_titulos = {}
     total_gasto = 0
@@ -553,19 +552,19 @@ def painel(request):
     total_atual = 0
     total_lucro = 0
     
-    for operacao in OperacaoTitulo.objects.filter(investidor=investidor).order_by('data'):
+    for operacao in OperacaoTitulo.objects.filter(investidor=investidor).order_by('data').select_related('titulo'):
         # Verificar se se trata de compra
         if operacao.tipo_operacao == 'C':
-            if operacao.titulo.id not in titulos:
-                titulos[operacao.titulo.id] = list()
-                titulos_vendidos[operacao.titulo.id] = list()
+            if operacao.titulo_id not in titulos:
+                titulos[operacao.titulo_id] = list()
+                titulos_vendidos[operacao.titulo_id] = list()
             compra_titulo = Object()
             compra_titulo.nome = operacao.titulo.nome()
             compra_titulo.quantidade = operacao.quantidade
             compra_titulo.data = operacao.data
             compra_titulo.preco_unitario = operacao.preco_unitario 
             compra_titulo.total_gasto = operacao.quantidade * operacao.preco_unitario
-            titulos[operacao.titulo.id].append(compra_titulo)
+            titulos[operacao.titulo_id].append(compra_titulo)
 #             valor_atual = ValorDiarioTitulo.objects.filter(titulo__id=operacao.titulo.id).order_by('-data_hora')[0].preco_venda
 #             print '%s comprado a %s valendo %s (%s (%s%%) de lucro)' % (operacao.titulo.nome(), operacao.preco_unitario, valor_atual, \
 #                                                                       valor_atual - operacao.preco_unitario, (valor_atual - operacao.preco_unitario) / operacao.preco_unitario * 100)
@@ -573,7 +572,7 @@ def painel(request):
         # Verificar se se trata de venda
         elif operacao.tipo_operacao == 'V':
 #             print '%s vendido a %s' % (operacao.titulo.nome(), operacao.preco_unitario)
-            lista_compras = titulos[operacao.titulo.id]
+            lista_compras = titulos[operacao.titulo_id]
             lista_compras.sort(key=lambda x: x.preco_unitario)
             indice_operacao = 0
             while operacao.quantidade > 0:
@@ -585,7 +584,7 @@ def painel(request):
                     venda_objeto.data_venda = operacao.data
                     venda_objeto.valor_atual = operacao.preco_unitario
                     venda_objeto.valor_taxas = operacao.taxa_bvmf + operacao.taxa_custodia
-                    titulos_vendidos[operacao.titulo.id].append(venda_objeto)
+                    titulos_vendidos[operacao.titulo_id].append(venda_objeto)
                     break
                 else:
                     operacao.quantidade -= lista_compras[indice_operacao].quantidade
@@ -596,13 +595,13 @@ def painel(request):
                     venda_objeto.valor_atual = operacao.preco_unitario
                     # Apenas soma o valor da taxa na última venda
                     venda_objeto.valor_taxas = 0
-                    titulos_vendidos[operacao.titulo.id].append(venda_objeto)
+                    titulos_vendidos[operacao.titulo_id].append(venda_objeto)
                     # Remover quantidade do título nas operações vigentes
                     lista_compras[indice_operacao].quantidade = 0
                     indice_operacao += 1
             # Remover aqueles que foram completamente vendidos
             lista_compras = [x for x in lista_compras if x.quantidade > 0]
-            titulos[operacao.titulo.id] = lista_compras
+            titulos[operacao.titulo_id] = lista_compras
     
     # Dados de títulos ainda em posse do usuario                
     for titulo in titulos:

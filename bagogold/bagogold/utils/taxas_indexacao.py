@@ -130,7 +130,7 @@ def calcular_valor_acumulado_ipca(data_base, data_final=datetime.date.today()):
     # Adicionar ao cálculo todos os meses cujo dia 15 do mês posterior for menor ou igual a data final
     for mes_historico in HistoricoIPCA.objects.filter(Q(data_inicio__gt=ipca_inicial.data_inicio, data_inicio__year=data_base.year) | \
                                                       Q(data_inicio__year__gt=data_base.year, data_inicio__lt=ipca_final.data_inicio)) \
-                                                      .order_by('data_inicio'):
+                                                      .order_by('data_inicio').select_related('ipcaprojetado'):
         # IPCA não-projetado
         if not hasattr(mes_historico, 'ipcaprojetado'):
             ipca_periodo = (1 + ipca_periodo) * (1 + mes_historico.valor) - 1
