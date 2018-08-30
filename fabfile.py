@@ -81,22 +81,22 @@ def alterar_cron():
         run('crontab ~/%s/crontab_copy' % env.path)
     elif env.config == 'PROD_EC2':
         # Verificar se já não existe container com nome teste
-        info_container_teste = run('docker container ls -f name=teste')
-        if 'teste' in info_container_teste:
-            run('docker container stop teste')
-            run('docker container rm teste')
+        info_container_teste = run('docker container ls -f name=altera_cron')
+        if 'altera_cron' in info_container_teste:
+            run('docker container stop altera_cron')
+            run('docker container rm altera_cron')
         
-        run('docker run --add-host=database:172.17.0.1 --name teste -d nizbel/bagofgold:cron')
+        run('docker run --add-host=database:172.17.0.1 --name altera_cron -d nizbel/bagofgold:cron')
         try:
             # Copiar arquivo, setar crontab e apagá-lo
-            run('docker cp teste:/home/bagofgold/bagogold/crontab_ec2 ~/crontab_ec2')
+            run('docker cp altera_cron:/home/bagofgold/bagogold/crontab_ec2 ~/crontab_ec2')
             run('crontab ~/crontab_ec2')
             run('rm ~/crontab_ec2')
         except Exception as e:
             print e
         # Finalizar container
-        run('docker container stop teste')
-        run('docker container rm teste')
+        run('docker container stop altera_cron')
+        run('docker container rm altera_cron')
 
 def gerar_css_def():
     require('config')

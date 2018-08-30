@@ -35,3 +35,4 @@
 # Docker
 * * * * * docker container ls -f status=exited -f exited=0 -q | xargs docker container rm
 0 6 * * * docker image prune -f
+*/5 * * * * docker container prune -f
