@@ -4,23 +4,25 @@ from __future__ import unicode_literals
 import calendar
 import datetime
 from decimal import Decimal
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
-from django.core.mail import mail_admins
-from django.shortcuts import get_object_or_404
-from django.template.loader import render_to_string
 import json
 import re
 import traceback
 
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
+from django.core.mail import mail_admins
 from django.core.paginator import Paginator
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.db.models.aggregates import Count
+from django.db.models.expressions import Case, When, Value
+from django.db.models.fields import CharField
 from django.forms.models import inlineformset_factory
 from django.http.response import HttpResponseRedirect, HttpResponse, \
     HttpResponsePermanentRedirect
+from django.shortcuts import get_object_or_404
+from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 
 from bagogold import settings
@@ -389,15 +391,11 @@ def listar_fundos(request):
         filtro['iq'] = 1
         filtro_iq = [False]
         filtro_nome = ''
-    fundos_investimento = FundoInvestimento.objects.filter(situacao__in=filtro_situacao, classe__in=filtro_classe, exclusivo_qualificados__in=filtro_iq, nome__icontains=filtro_nome)
+    fundos_investimento = FundoInvestimento.objects.filter(situacao__in=filtro_situacao, classe__in=filtro_classe, 
+                                                           exclusivo_qualificados__in=filtro_iq, nome__icontains=filtro_nome) \
+                                                           .annotate(descricao_prazo=Case(When(tipo_prazo='C', then=Value(u'Curto')),
+                                                            When(tipo_prazo='L', then=Value(u'Longo')), output_field=CharField()))
     
-    for fundo in fundos_investimento:
-        # Prazo
-        if fundo.tipo_prazo == 'C':
-            fundo.tipo_prazo = 'Curto'
-        elif fundo.tipo_prazo == 'L':
-            fundo.tipo_prazo = 'Longo'
-
     return TemplateResponse(request, 'fundo_investimento/listar_fundo_investimento.html', {'fundos_investimento': fundos_investimento, 'filtro': filtro})
 
 def listar_fundos_por_nome(request):
@@ -449,7 +447,8 @@ def listar_historico_fundo_investimento(request, id_fundo):
 def painel(request):
     investidor = request.user.investidor
     # Processa primeiro operações de venda (V), depois compra (C)
-    operacoes = OperacaoFundoInvestimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
+    operacoes = OperacaoFundoInvestimento.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') \
+        .select_related('fundo_investimento')
     # Se não há operações, retornar
     if not operacoes:
         return TemplateResponse(request, 'fundo_investimento/painel.html', {'operacoes': operacoes, 'dados': {}})

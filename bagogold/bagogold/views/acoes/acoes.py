@@ -217,7 +217,7 @@ def estatisticas_acao(request, ticker=None):
 
 @adiciona_titulo_descricao('Lista de ações', 'Lista as ações da Bovespa')
 def listar_acoes(request):
-    acoes = Acao.objects.all()
+    acoes = Acao.objects.all().select_related('empresa')
     
     return TemplateResponse(request, 'acoes/listar_acoes.html', {'acoes': acoes})
 
@@ -236,7 +236,7 @@ def listar_proventos(request):
         else:
             query_proventos = Provento.objects.filter(tipo_provento=filtros['tipo_provento'])
             
-        filtros['acoes'] = re.sub('[^,\d]', '', request.GET.get('acoes', ''))
+        filtros['acoes'] = re.sub(r'[^,\d]', '', request.GET.get('acoes', ''))
         if filtros['acoes'] != '':
             query_proventos = query_proventos.filter(acao__id__in=filtros['acoes'].split(','))
             
@@ -278,7 +278,7 @@ def listar_proventos(request):
     # Buscar últimas atualizações
     ultimas_validacoes = InvestidorValidacaoDocumento.objects.filter(documento__tipo='A').order_by('-data_validacao')[:10] \
         .annotate(provento=F('documento__proventoacaodocumento__provento')).values('provento', 'data_validacao')
-    ultimas_atualizacoes = Provento.objects.filter(id__in=[validacao['provento'] for validacao in ultimas_validacoes])
+    ultimas_atualizacoes = Provento.objects.filter(id__in=[validacao['provento'] for validacao in ultimas_validacoes]).select_related('acao')
     for atualizacao in ultimas_atualizacoes:
         atualizacao.data_insercao = next(validacao['data_validacao'].date() for validacao in ultimas_validacoes if validacao['provento'] == atualizacao.id)
     
