@@ -92,7 +92,7 @@
                 <td><a href="{% url "fundo_investimento:detalhar_fundo" item.slug %}" class="tooltips" data-placement="bottom" data-original-title="Detalhar fundo">{{item.nome}}</a></td>
                 <td>{{item.data_constituicao|date:'d/m/Y'}}</td>
                 <td>{{item.descricao_classe}}</td>
-                <td>{{item.tipo_prazo}}</td>
+                <td>{{item.descricao_prazo}}</td>
                 <td>{{item.descricao_situacao}}</td>
                 <td>{{item.exclusivo_qualificados|yesno:'Sim,Não,Não'}}</td>
             </tr>
