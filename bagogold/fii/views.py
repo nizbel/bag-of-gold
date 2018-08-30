@@ -691,7 +691,7 @@ def listar_proventos(request):
             except:
                 filtros['fim_data_pagamento'] = ''
                 
-        proventos = list(query_proventos)
+        proventos = list(query_proventos.select_related('fii'))
         return HttpResponse(json.dumps(render_to_string('fii/utils/lista_proventos.html', {'proventos': proventos})), content_type = "application/json")  
     else:
         filtros = {'tipo_provento': 'T', 'inicio_data_ex': '', 'fim_data_ex': '', 'inicio_data_pagamento': '', 'fim_data_pagamento': '', 'fiis': ''}
@@ -699,7 +699,7 @@ def listar_proventos(request):
     # Buscar últimas atualizações
     ultimas_validacoes = InvestidorValidacaoDocumento.objects.filter(documento__tipo='F').order_by('-data_validacao')[:10] \
         .annotate(provento=F('documento__proventofiidocumento__provento')).values('provento', 'data_validacao')
-    ultimas_atualizacoes = ProventoFII.objects.filter(id__in=[validacao['provento'] for validacao in ultimas_validacoes])
+    ultimas_atualizacoes = ProventoFII.objects.filter(id__in=[validacao['provento'] for validacao in ultimas_validacoes]).select_related('fii')
     for atualizacao in ultimas_atualizacoes:
         atualizacao.data_insercao = next(validacao['data_validacao'].date() for validacao in ultimas_validacoes if validacao['provento'] == atualizacao.id)
     
