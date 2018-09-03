@@ -766,21 +766,17 @@ def painel(request):
         return TemplateResponse(request, 'lci_lca/painel.html', {'operacoes': list(), 'dados': {}})
     
     # Processa primeiro operações de venda (V), depois compra (C)
-    operacoes = OperacaoLetraCredito.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
+    operacoes = OperacaoLetraCredito.objects.filter(investidor=investidor).exclude(data__isnull=True).select_related('letra_credito').order_by('-tipo_operacao', 'data') 
     
     # Se não há operações, retornar
     if not operacoes:
         return TemplateResponse(request, 'lci_lca/painel.html', {'operacoes': operacoes, 'dados': {}})
     
-    historico_porcentagem = HistoricoPorcentagemLetraCredito.objects.all() 
     # Prepara o campo valor atual
     for operacao in operacoes:
         operacao.atual = operacao.quantidade
         if operacao.tipo_operacao == 'C':
-            operacao.tipo = 'Compra'
             operacao.taxa = operacao.porcentagem()
-        else:
-            operacao.tipo = 'Venda'
     
     # Pegar data inicial
     data_inicial = operacoes.order_by('data')[0].data
@@ -790,25 +786,26 @@ def painel(request):
     
     data_iteracao = data_inicial
     
-    while data_iteracao <= data_final:
-        taxa_do_dia = HistoricoTaxaDI.objects.get(data=data_iteracao).taxa
-        
+    for data_iteracao in HistoricoTaxaDI.objects.filter(data__range=[data_inicial, data_final]).order_by('data'):
+        taxa_do_dia = data_iteracao.taxa
+          
         # Processar operações
         for operacao in operacoes:     
-            if (operacao.data <= data_iteracao):     
+            if (operacao.data <= data_iteracao.data):     
                 # Verificar se se trata de compra ou venda
                 if operacao.tipo_operacao == 'C':
-                    if (operacao.data == data_iteracao):
+                    if (operacao.data == data_iteracao.data):
                         operacao.total = operacao.quantidade
                     # Calcular o valor atualizado para cada operacao
                     operacao.atual = calcular_valor_atualizado_com_taxa_di(taxa_do_dia, operacao.atual, operacao.taxa)
                     # Arredondar na última iteração
-                    if (data_iteracao == data_final):
+                    if (data_iteracao.data == data_final):
                         str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
                         operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-                        
+                          
                 elif operacao.tipo_operacao == 'V':
-                    if (operacao.data == data_iteracao):
+                    if (operacao.data == data_iteracao.data):
+                        print operacao
                         operacao.total = operacao.quantidade
                         # Remover quantidade da operação de compra
                         operacao_compra_id = operacao.operacao_compra_relacionada().id
@@ -821,13 +818,6 @@ def painel(request):
                                 str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
                                 operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
                                 break
-                
-        # Proximo dia útil
-        proximas_datas = HistoricoTaxaDI.objects.filter(data__gt=data_iteracao).order_by('data')
-        if len(proximas_datas) > 0:
-            data_iteracao = proximas_datas[0].data
-        else:
-            break
         
     # Preencher última taxa do dia caso não tenha sido preenchida no loop das operações
     taxa_do_dia = HistoricoTaxaDI.objects.all().order_by('-data')[0].taxa
