@@ -503,7 +503,8 @@ def listar_divisoes(request):
         moedas = Criptomoeda.objects.filter(id__in=criptomoedas_divisao.keys())
         # Busca valores apenas se existem criptomoedas na divisão
         if moedas:
-            valores_criptomoedas = {valor_diario.criptomoeda.ticker: valor_diario.valor for valor_diario in ValorDiarioCriptomoeda.objects.filter(criptomoeda__in=moedas, moeda='BRL')}
+            valores_criptomoedas = {valor_diario.criptomoeda.ticker: valor_diario.valor for valor_diario in \
+                                    ValorDiarioCriptomoeda.objects.filter(criptomoeda__in=moedas, moeda='BRL').select_related('criptomoeda')}
             divisao.valor_atual_criptomoeda += sum([(criptomoedas_divisao[moeda.id] * valores_criptomoedas[moeda.ticker]) for moeda in moedas])
         divisao.valor_atual += divisao.valor_atual_criptomoeda
         
@@ -599,7 +600,8 @@ def listar_transferencias(request):
     else:
         return TemplateResponse(request, 'divisoes/listar_transferencias.html', {'transferencias': list()})
     
-    transferencias = TransferenciaEntreDivisoes.objects.filter(Q(divisao_cedente__investidor=investidor) | Q(divisao_recebedora__investidor=investidor))
+    transferencias = TransferenciaEntreDivisoes.objects.filter(Q(divisao_cedente__investidor=investidor) | Q(divisao_recebedora__investidor=investidor)) \
+        .select_related('divisao_cedente', 'divisao_recebedora')
     
     for transferencia in transferencias:
         transferencia.investimento_origem = transferencia.investimento_origem_completo()

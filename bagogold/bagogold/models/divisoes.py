@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import datetime
 from decimal import Decimal
-from django.db.models.expressions import Case, When, F
 
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models.aggregates import Sum, Count
+from django.db.models.expressions import Case, When, F
 from django.db.models.fields import DecimalField
 
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
@@ -65,6 +65,7 @@ class Divisao (models.Model):
         return min(datas_primeira_operacao)
     
     def saldo_acoes_bh(self, data=datetime.date.today()):
+        from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao
         from bagogold.bagogold.utils.acoes import \
             calcular_poupanca_prov_acao_ate_dia_por_divisao
         """
@@ -74,9 +75,11 @@ class Divisao (models.Model):
         for operacao_divisao in DivisaoOperacaoAcao.objects.filter(divisao=self, operacao__destinacao='B', operacao__data__lte=data).select_related('operacao'):
             operacao = operacao_divisao.operacao
             if operacao.tipo_operacao == 'C':
-                saldo -= (operacao_divisao.quantidade * operacao.preco_unitario + (operacao.corretagem + operacao.emolumentos - operacao.qtd_proventos_utilizada()) * operacao_divisao.percentual_divisao())
+                saldo -= (operacao_divisao.quantidade * operacao.preco_unitario + (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
             elif operacao.tipo_operacao == 'V':
                 saldo += (operacao_divisao.quantidade * operacao.preco_unitario - (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
+        
+        saldo += UsoProventosOperacaoAcao.objects.filter(divisao_operacao__divisao=self).aggregate(qtd_total=Sum('qtd_utilizada'))['qtd_total'] or 0
         
         # Proventos
         saldo += calcular_poupanca_prov_acao_ate_dia_por_divisao(data, self)        
@@ -120,19 +123,19 @@ class Divisao (models.Model):
         # Computar compras
         saldo -= (DivisaoOperacaoCDB_RDB.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='C').aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
         for venda_divisao in DivisaoOperacaoCDB_RDB.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='V') \
-            .annotate(tipo_rendimento=F('operacao__cdb_rdb__tipo_rendimento')).select_related('operacao'):
+            .annotate(tipo_rendimento=F('operacao__cdb_rdb__tipo_rendimento')).select_related('operacao', 'operacao__cdb_rdb'):
             # Para venda, calcular valor do cdb/rdb no dia da venda
             valor_venda = venda_divisao.quantidade
              
             # Calcular o valor atualizado
-            if venda_divisao.operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
+            if venda_divisao.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
                 # DI
                 dias_de_rendimento = historico_di.filter(data__gte=venda_divisao.operacao.operacao_compra_relacionada().data, data__lt=venda_divisao.operacao.data)
                 taxas_dos_dias = dict(dias_de_rendimento.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
                 valor_venda = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor_venda, venda_divisao.operacao.porcentagem())
                 valor_venda -= sum(calcular_iof_e_ir_longo_prazo(valor_venda - venda_divisao.quantidade, 
                                                               (venda_divisao.operacao.data - venda_divisao.operacao.operacao_compra_relacionada().data).days))
-            elif venda_divisao.operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
+            elif venda_divisao.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
                 # Prefixado
                 # Calcular quantidade dias para valorização
                 qtd_dias = qtd_dias_uteis_no_periodo(venda_divisao.operacao.operacao_compra_relacionada().data, venda_divisao.operacao.data)
@@ -278,7 +281,7 @@ class Divisao (models.Model):
         # Computar compras
         saldo -= (DivisaoOperacaoLetraCambio.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='C').aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
         for venda_divisao in DivisaoOperacaoLetraCambio.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='V') \
-            .annotate(tipo_rendimento=F('operacao__lc__tipo_rendimento')).select_related('operacao'):
+            .annotate(tipo_rendimento=F('operacao__lc__tipo_rendimento')).select_related('operacao', 'operacao__lc'):
             # Para venda, calcular valor do cdb/rdb no dia da venda
             valor_venda = venda_divisao.quantidade
              
@@ -319,7 +322,7 @@ class Divisao (models.Model):
         
         # Computar compras
         saldo -= (DivisaoOperacaoLCI_LCA.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='C').aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
-        for venda_divisao in DivisaoOperacaoLCI_LCA.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='V').select_related('operacao'):
+        for venda_divisao in DivisaoOperacaoLCI_LCA.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='V').select_related('operacao', 'operacao__letra_credito'):
             # Para venda, calcular valor do cdb/rdb no dia da venda
             valor_venda = venda_divisao.quantidade
              
@@ -477,7 +480,7 @@ class DivisaoOperacaoLetraCambio (models.Model):
     def divisao_operacao_compra_relacionada(self):
         from bagogold.lc.models import OperacaoVendaLetraCambio
         if self.operacao.tipo_operacao == 'V':
-            return DivisaoOperacaoLetraCambio.objects.get(operacao=OperacaoVendaLetraCambio.objects.get(operacao_venda=self.operacao).operacao_compra, divisao=self.divisao)
+            return DivisaoOperacaoLetraCambio.objects.get(operacao=OperacaoVendaLetraCambio.objects.get(operacao_venda=self.operacao).operacao_compra, divisao_id=self.divisao_id)
         else:
             return None
     
@@ -485,9 +488,9 @@ class DivisaoOperacaoLetraCambio (models.Model):
         from bagogold.lc.models import OperacaoVendaLetraCambio
         if self.operacao.tipo_operacao != 'C':
             raise ValueError('Operação deve ser de compra')
-        vendas = OperacaoVendaLetraCambio.objects.filter(operacao_compra=self.operacao, operacao_venda__data__lte=data).exclude(operacao_venda=desconsiderar_operacao).values_list('operacao_venda__id', flat=True)
+        vendas = OperacaoVendaLetraCambio.objects.filter(operacao_compra=self.operacao_id, operacao_venda__data__lte=data).exclude(operacao_venda=desconsiderar_operacao).values_list('operacao_venda__id', flat=True)
         qtd_vendida = 0
-        for venda in DivisaoOperacaoLetraCambio.objects.filter(operacao__id__in=vendas, divisao=self.divisao):
+        for venda in DivisaoOperacaoLetraCambio.objects.filter(operacao__id__in=vendas, divisao_id=self.divisao_id):
             qtd_vendida += venda.quantidade
         return self.quantidade - qtd_vendida
     
@@ -523,7 +526,7 @@ class DivisaoOperacaoLCI_LCA (models.Model):
     def divisao_operacao_compra_relacionada(self):
         from bagogold.lci_lca.models import OperacaoVendaLetraCredito
         if self.operacao.tipo_operacao == 'V':
-            return DivisaoOperacaoLCI_LCA.objects.get(operacao=OperacaoVendaLetraCredito.objects.get(operacao_venda=self.operacao).operacao_compra, divisao=self.divisao)
+            return DivisaoOperacaoLCI_LCA.objects.get(operacao=OperacaoVendaLetraCredito.objects.get(operacao_venda=self.operacao).operacao_compra, divisao_id=self.divisao_id)
         else:
             return None
     
@@ -533,7 +536,7 @@ class DivisaoOperacaoLCI_LCA (models.Model):
             raise ValueError('Operação deve ser de compra')
         vendas = OperacaoVendaLetraCredito.objects.filter(operacao_compra=self.operacao, operacao_venda__data__lte=data).exclude(operacao_venda=desconsiderar_operacao).values_list('operacao_venda__id', flat=True)
         qtd_vendida = 0
-        for venda in DivisaoOperacaoLCI_LCA.objects.filter(operacao__id__in=vendas, divisao=self.divisao):
+        for venda in DivisaoOperacaoLCI_LCA.objects.filter(operacao__id__in=vendas, divisao_id=self.divisao_id):
             qtd_vendida += venda.quantidade
         return self.quantidade - qtd_vendida
     
@@ -569,7 +572,7 @@ class DivisaoOperacaoCDB_RDB (models.Model):
     def divisao_operacao_compra_relacionada(self):
         from bagogold.cdb_rdb.models import OperacaoVendaCDB_RDB
         if self.operacao.tipo_operacao == 'V':
-            return DivisaoOperacaoCDB_RDB.objects.get(operacao=OperacaoVendaCDB_RDB.objects.get(operacao_venda=self.operacao).operacao_compra, divisao=self.divisao)
+            return DivisaoOperacaoCDB_RDB.objects.get(operacao=OperacaoVendaCDB_RDB.objects.get(operacao_venda=self.operacao).operacao_compra, divisao_id=self.divisao_id)
         else:
             return None
     
@@ -579,7 +582,7 @@ class DivisaoOperacaoCDB_RDB (models.Model):
             raise ValueError('Operação deve ser de compra')
         vendas = OperacaoVendaCDB_RDB.objects.filter(operacao_compra=self.operacao, operacao_venda__data__lte=data).exclude(operacao_venda=desconsiderar_operacao).values_list('operacao_venda__id', flat=True)
         qtd_vendida = 0
-        for venda in DivisaoOperacaoCDB_RDB.objects.filter(operacao__id__in=vendas, divisao=self.divisao):
+        for venda in DivisaoOperacaoCDB_RDB.objects.filter(operacao__id__in=vendas, divisao_id=self.divisao_id):
             qtd_vendida += venda.quantidade
         return self.quantidade - qtd_vendida
     
