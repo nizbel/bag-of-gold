@@ -315,8 +315,8 @@ class PerformanceCheckpointFIITestCase(TestCase):
         EventoIncorporacaoFII.objects.create(fii=fii_3, data=datetime.date(2017, 6, 3), novo_fii=fii_4)
          
     def calculo_forma_antiga(self, investidor, dia):
-        if not all([verificar_se_existe_evento_para_fii(fii, dia) for fii in FII.objects.filter(id__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True) \
-                                                                                                .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True))]):
+        if not all([verificar_se_existe_evento_para_fii(fii_ticker, dia) for fii_ticker in OperacaoFII.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True) \
+                                                                                                .order_by('fii__id').distinct('fii__id').values_list('fii__ticker', flat=True)]):
             qtd_fii = dict(OperacaoFII.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True).annotate(ticker=F('fii__ticker')).values('ticker') \
                 .annotate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
                                     When(tipo_operacao='V', then=F('quantidade')*-1),
@@ -332,7 +332,7 @@ class PerformanceCheckpointFIITestCase(TestCase):
         return qtd_fii
      
     def calculo_forma_antiga_por_ticker(self, investidor, dia, ticker, ignorar_incorporacao_id=None):
-        if not verificar_se_existe_evento_para_fii(FII.objects.get(ticker=ticker), dia):
+        if not verificar_se_existe_evento_para_fii(ticker, dia):
             qtd_fii = OperacaoFII.objects.filter(fii__ticker=ticker, data__lte=dia, investidor=investidor).exclude(data__isnull=True) \
                 .aggregate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
                                           When(tipo_operacao='V', then=F('quantidade')*-1),
