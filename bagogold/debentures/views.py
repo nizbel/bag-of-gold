@@ -1,33 +1,37 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.decorators import adiciona_titulo_descricao
-from bagogold.debentures.forms import OperacaoDebentureForm
-from bagogold.bagogold.forms.divisoes import DivisaoOperacaoDebentureFormSet
-from bagogold.debentures.models import OperacaoDebenture, Debenture, \
-    HistoricoValorDebenture
-from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoDebenture
-from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI, \
-    HistoricoTaxaSelic, HistoricoIPCA
-from bagogold.debentures.utils import calcular_valor_debentures_ate_dia
-from bagogold.bagogold.utils.misc import \
-    formatar_zeros_a_direita_apos_2_casas_decimais, qtd_dias_uteis_no_periodo
-from bagogold.bagogold.utils.taxas_indexacao import \
-    calcular_valor_atualizado_com_taxas_di
+import calendar
+import datetime
 from decimal import Decimal
+from itertools import chain
+import json
+from operator import attrgetter
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
+from django.db.models.aggregates import Max, Count
+from django.db.models.expressions import F
 from django.db.models.query_utils import Q
 from django.forms import inlineformset_factory
 from django.http import HttpResponseRedirect
 from django.http.response import HttpResponse
 from django.template.response import TemplateResponse
-from itertools import chain
-from operator import attrgetter
-import calendar
-import datetime
-import json
 
+from bagogold.bagogold.decorators import adiciona_titulo_descricao
+from bagogold.bagogold.forms.divisoes import DivisaoOperacaoDebentureFormSet
+from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoDebenture
+from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI, \
+    HistoricoTaxaSelic, HistoricoIPCA
+from bagogold.bagogold.utils.misc import \
+    formatar_zeros_a_direita_apos_2_casas_decimais, qtd_dias_uteis_no_periodo
+from bagogold.bagogold.utils.taxas_indexacao import \
+    calcular_valor_atualizado_com_taxas_di
+from bagogold.debentures.forms import OperacaoDebentureForm
+from bagogold.debentures.models import OperacaoDebenture, Debenture, \
+    HistoricoValorDebenture, PremioDebenture, JurosDebenture, \
+    AmortizacaoDebenture
+from bagogold.debentures.utils import calcular_valor_debentures_ate_dia
 
 
 @adiciona_titulo_descricao('Detalhar Debênture', 'Detalha os valores de uma Debênture')
@@ -286,9 +290,30 @@ def inserir_operacao_debenture(request):
 def listar_debentures(request):
     debentures = Debenture.objects.all()
     
+#     Chapters.objects.annotate(last_chapter_pk=Max('novel__chapter__pk')
+#             ).filter(pk=F('last_chapter_pk'))
+    juros = JurosDebenture.objects.annotate(data_juros_mais_recente=Max('debenture__jurosdebenture__data')).filter(data=F('data_juros_mais_recente'))
+    amortizacoes = AmortizacaoDebenture.objects.annotate(data_amortizacao_mais_recente=Max('debenture__amortizacaodebenture__data')).filter(data=F('data_amortizacao_mais_recente'))
+    premios = PremioDebenture.objects.annotate(data_premio_mais_recente=Max('debenture__premiodebenture__data')).filter(data=F('data_premio_mais_recente'))
+    
     for debenture in debentures:
         debenture.porcentagem = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(debenture.porcentagem))
         
+        for juro in juros:
+            if debenture.id == juro.debenture_id:
+                debenture.juros_descricao = juro.descricao()
+                break
+            
+        for amortizacao in amortizacoes:
+            if debenture.id == amortizacao.debenture_id:
+                debenture.amortizacao_descricao = amortizacao.descricao()
+                break
+            
+        for premio in premios:
+            if debenture.id == premio.debenture_id:
+                debenture.premio_descricao = premio.descricao()
+                break
+         
     return TemplateResponse(request, 'debentures/listar_debentures.html', {'debentures': debentures})
 
 @login_required
