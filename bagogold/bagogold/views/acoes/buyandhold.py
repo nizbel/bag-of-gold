@@ -29,9 +29,8 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao, Divisao
 from bagogold.bagogold.utils.acoes import calcular_provento_por_mes, \
     calcular_media_proventos_6_meses, calcular_operacoes_sem_proventos_por_mes, \
     calcular_uso_proventos_por_mes, quantidade_acoes_ate_dia, \
-    calcular_poupanca_prov_acao_ate_dia, \
-    calcular_poupanca_prov_acao_ate_dia_por_divisao
-from bagogold.bagogold.utils.divisoes import calcular_saldo_geral_acoes_bh
+    calcular_poupanca_prov_acao_ate_dia
+# from bagogold.bagogold.utils.divisoes import calcular_saldo_geral_acoes_bh
 from bagogold.bagogold.utils.investidores import buscar_acoes_investidor_na_data
 
 
@@ -208,7 +207,7 @@ def historico(request):
     acoes = list(set(operacoes.values_list('acao', flat=True)))
 
     proventos = Provento.objects.filter(acao__in=acoes).exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).order_by('data_ex') \
-        .annotate(data=F('data_ex')).annotate(acao_ticker=F('acao__ticker'))
+        .annotate(data=F('data_ex')).annotate(acao_ticker=F('acao__ticker')).select_related('acao')
     for acao_id in operacoes.values_list('acao', flat=True):
         proventos = proventos.filter((Q(acao__id=acao_id) & Q(data_ex__gt=operacoes.filter(acao__id=acao_id)[0].data)) | ~Q(acao__id=acao_id))
      
@@ -221,7 +220,7 @@ def historico(request):
                             key=attrgetter('data'))
     
     # Adicionar dias de pagamento de taxa de custodia
-    datas_custodia = set()
+    datas_custodia = list()
     
     ano_inicial = lista_conjunta[0].data.year
     mes_inicial = lista_conjunta[0].data.month
@@ -233,19 +232,75 @@ def historico(request):
             for mes_inicial in range(mes_inicial, 13):
                 # Verificar se há nova taxa de custodia vigente
                 taxa_custodia_atual = taxas_custodia.filter(Q(ano_vigencia__lt=ano) | Q(ano_vigencia=ano, mes_vigencia__lte=mes_inicial) ).order_by('-ano_vigencia', '-mes_vigencia')[0]
-                
+                 
                 data_custodia = Object()
                 data_custodia.data = datetime.date(ano, mes_inicial, 1)
                 data_custodia.valor = taxa_custodia_atual.valor_mensal
                 data_custodia.acao_ticker = operacoes[0].acao_ticker
-                datas_custodia.add(data_custodia)
-                
+                datas_custodia.append(data_custodia)
+                 
                 # Parar caso esteja no ano atual
                 if ano == datetime.date.today().year:
                     if mes_inicial == datetime.date.today().month:
                         break
             mes_inicial = 1
-        
+
+
+#     # Se houver registro de taxas de custódia, adicionar ao histórico
+#     if taxas_custodia.exists():
+#         for taxa_custodia in taxas_custodia:
+#             data_custodia = Object()
+#             data_custodia.data = datetime.date(taxa_custodia.ano_vigencia, taxa_custodia.mes_vigencia, 1)
+#             data_custodia.valor = taxa_custodia.valor_mensal
+#             data_custodia.acao_ticker = operacoes[0].acao_ticker
+#             datas_custodia.append(data_custodia)
+#         
+#         for indice, data_custodia in reversed(list(enumerate(datas_custodia))):
+#             novas_datas_custodia = list()
+#             # Verificar se último registro
+#             if indice == len(datas_custodia) - 1:
+#                 ano_custodia = data_custodia.data.year
+#                 mes_custodia = data_custodia.data.month
+#                 while ano_custodia <= datetime.date.today().year:
+#                     mes_custodia += 1
+#                     if mes_custodia == 13:
+#                         mes_custodia = 1
+#                         ano_custodia += 1
+#                     
+#                     if ano_custodia == datetime.date.today().year and mes_custodia > datetime.date.today().month:
+#                         break
+#                     
+#                     nova_data_custodia = Object()
+#                     nova_data_custodia.data = datetime.date(ano_custodia, mes_custodia, 1)
+#                     nova_data_custodia.valor = data_custodia.valor
+#                     nova_data_custodia.acao_ticker = data_custodia.acao_ticker
+#                     novas_datas_custodia.append(nova_data_custodia)
+#                 
+#             else:
+#                 ano_custodia = data_custodia.data.year
+#                 mes_custodia = data_custodia.data.month
+#                 while ano_custodia <= datas_custodia[indice+1].data.year:
+#                     mes_custodia += 1
+#                     if mes_custodia == 13:
+#                         mes_custodia = 1
+#                         ano_custodia += 1
+#                     
+#                     if ano_custodia == datas_custodia[indice+1].data.year and mes_custodia == datas_custodia[indice+1].data.month:
+#                         break
+#                     
+#                     nova_data_custodia = Object()
+#                     nova_data_custodia.data = datetime.date(ano_custodia, mes_custodia, 1)
+#                     nova_data_custodia.valor = data_custodia.valor
+#                     nova_data_custodia.acao_ticker = data_custodia.acao_ticker
+#                     novas_datas_custodia.append(nova_data_custodia)
+#                     
+#             for nova_data_custodia in reversed(novas_datas_custodia):
+#                 datas_custodia.insert(indice+1, nova_data_custodia)
+#                 
+#     # Remover datas de custódia anteriores a primeira operação em ações
+#     datas_custodia = [data_custodia for data_custodia in datas_custodia if data_custodia.data.year > ano_inicial \
+#                       or (data_custodia.data.year == ano_inicial and data_custodia.data.month >= mes_inicial)]
+                
     lista_conjunta = sorted(chain(lista_conjunta, datas_custodia),
                             key=attrgetter('data'))
     
@@ -539,10 +594,7 @@ def painel(request):
         if acoes[acao.ticker].quantidade == 0:
             del acoes[acao.ticker]
         else:
-            ultimo_dia_util = (datetime.date.today() + datetime.timedelta(days=-1))
-            while not HistoricoAcao.objects.filter(data=ultimo_dia_util, acao=acao):
-                ultimo_dia_util -= datetime.timedelta(days=1)
-            acoes[acao.ticker].valor_dia_anterior = HistoricoAcao.objects.get(acao=acao, data=ultimo_dia_util).preco_unitario
+            acoes[acao.ticker].valor_dia_anterior = HistoricoAcao.objects.filter(acao=acao, data__lt=datetime.date.today()).order_by('-data')[0].preco_unitario
                      
     # Pegar totais de ações  
     total_acoes = 0      
