@@ -385,11 +385,11 @@ def historico(request):
         return TemplateResponse(request, 'outros_investimentos/historico.html', {'dados': {}, 'graf_rendimentos': list(), 'graf_investido_total': list(), 
                                                                                  'graf_amortizacoes': list(), 'lista_eventos': list()})
     
-    investimentos = Investimento.objects.filter(investidor=investidor).order_by('data')
+    investimentos = Investimento.objects.filter(investidor=investidor).order_by('data').select_related('investimentotaxa')
     
-    rendimentos = Rendimento.objects.filter(investimento__investidor=investidor).order_by('data')
+    rendimentos = Rendimento.objects.filter(investimento__investidor=investidor).order_by('data').select_related('investimento')
     
-    amortizacoes = Amortizacao.objects.filter(investimento__investidor=investidor).order_by('data')
+    amortizacoes = Amortizacao.objects.filter(investimento__investidor=investidor).order_by('data').select_related('investimento')
     
     if not investimentos:
         return TemplateResponse(request, 'outros_investimentos/historico.html', {'dados': {}, 'graf_rendimentos': list(), 'graf_investido_total': list(),
@@ -654,7 +654,7 @@ def listar_investimentos(request):
 def painel(request):
     investidor = request.user.investidor
     
-    investimentos = Investimento.objects.filter(investidor=investidor, data_encerramento__isnull=True)
+    investimentos = Investimento.objects.filter(investidor=investidor, data_encerramento__isnull=True).select_related('investimentotaxa')
     
     if not investimentos:
         return TemplateResponse(request, 'outros_investimentos/historico.html', {'dados': {}, 'investimentos': list()})
