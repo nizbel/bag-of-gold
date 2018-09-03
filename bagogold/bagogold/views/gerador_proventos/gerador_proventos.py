@@ -175,7 +175,7 @@ def ler_documento_provento(request, id_pendencia):
         pass
     
     try:
-        pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
+        pendencia = PendenciaDocumentoProvento.objects.select_related('documento', 'documento__empresa').get(id=id_pendencia)
         # Verificar se pendência é de leitura
         if pendencia.tipo != 'L':
             messages.success(request, 'Pendência não é de leitura')
