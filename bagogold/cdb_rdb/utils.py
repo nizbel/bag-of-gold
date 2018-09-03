@@ -185,7 +185,8 @@ def calcular_valor_cdb_rdb_ate_dia_por_divisao(dia, divisao_id):
         return {}
      
     # Buscar operações não totalmente vendidas
-    operacoes = DivisaoOperacaoCDB_RDB.objects.filter(operacao__id__in=operacoes_cdb_rdb.keys(), divisao__id=divisao_id).annotate(cdb_rdb=F('operacao__cdb_rdb')).order_by('operacao__data')
+    operacoes = DivisaoOperacaoCDB_RDB.objects.filter(operacao__id__in=operacoes_cdb_rdb.keys(), divisao__id=divisao_id).annotate(cdb_rdb=F('operacao__cdb_rdb')) \
+        .select_related('operacao').order_by('operacao__data')
     
     for operacao in operacoes:
         operacao.atual = calcular_valor_op_cdb_rdb_ate_dia_por_divisao(operacao, dia, True)

@@ -111,7 +111,7 @@ def calcular_valor_atualizado_operacao_ate_dia(valor, data_inicial, data_final, 
     if not data_ultima_valorizacao:
         data_ultima_valorizacao = data_final
         
-    if operacao.lc.tipo_rendimento == LetraCambio.LC_DI:
+    if operacao.tipo_rendimento_lc == LetraCambio.LC_DI:
         # Definir período do histórico relevante para a operação
         taxas_dos_dias = dict(HistoricoTaxaDI.objects.filter(data__range=[data_inicial, data_ultima_valorizacao]).values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
             
@@ -122,7 +122,7 @@ def calcular_valor_atualizado_operacao_ate_dia(valor, data_inicial, data_final, 
                                                  (data_final - operacao.data_inicial()).days))
         else:
             return calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor, operacao.porcentagem())
-    elif operacao.lc.tipo_rendimento == LetraCambio.LC_PREFIXADO:
+    elif operacao.tipo_rendimento_lc == LetraCambio.LC_PREFIXADO:
         # Prefixado
         if valor_liquido:
             valor_final = calcular_valor_atualizado_com_taxa_prefixado(valor, operacao.porcentagem(), qtd_dias_uteis_no_periodo(data_inicial, 
@@ -131,7 +131,7 @@ def calcular_valor_atualizado_operacao_ate_dia(valor, data_inicial, data_final, 
                                                  (data_final - operacao.data_inicial()).days))
         else:
             return calcular_valor_atualizado_com_taxa_prefixado(valor, operacao.porcentagem(), qtd_dias_uteis_no_periodo(data_inicial, data_ultima_valorizacao + datetime.timedelta(days=1)))
-    elif operacao.lc.tipo_rendimento == LetraCambio.LC_IPCA:
+    elif operacao.tipo_rendimento_lc == LetraCambio.LC_IPCA:
         # IPCA
         if valor_liquido:
             return Decimal(valor)
@@ -185,7 +185,8 @@ def calcular_valor_lc_ate_dia_por_divisao(dia, divisao_id):
         return {}
      
     # Buscar operações não totalmente vendidas
-    operacoes = DivisaoOperacaoLetraCambio.objects.filter(operacao__id__in=operacoes_lc.keys(), divisao__id=divisao_id).annotate(lc=F('operacao__lc')).order_by('operacao__data')
+    operacoes = DivisaoOperacaoLetraCambio.objects.filter(operacao__id__in=operacoes_lc.keys(), divisao__id=divisao_id).annotate(lc=F('operacao__lc')) \
+        .select_related('operacao').order_by('operacao__data')
       
     for operacao in operacoes:
         operacao.atual = calcular_valor_op_lc_ate_dia_por_divisao(operacao, dia, arredondar=True)

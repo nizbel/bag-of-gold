@@ -116,7 +116,7 @@ class OperacaoLetraCredito (models.Model):
     def operacao_compra_relacionada(self):
         if self.tipo_operacao == 'V':
             if not hasattr(self, 'guarda_operacao_compra_relacionada'):
-                self.guarda_operacao_compra_relacionada = OperacaoVendaLetraCredito.objects.get(operacao_venda=self).operacao_compra
+                self.guarda_operacao_compra_relacionada = OperacaoVendaLetraCredito.objects.filter(operacao_venda=self).select_related('operacao_compra')[0].operacao_compra
             return self.guarda_operacao_compra_relacionada
         else:
             return None
