@@ -334,10 +334,12 @@ def historico(request):
                                                     'graf_investido_total': list(), 'graf_patrimonio': list()})
     
     # Transferências do investidor
-    transferencias = TransferenciaCriptomoeda.objects.filter(investidor=investidor, data__lte=datetime.date.today()).order_by('data')
+    transferencias = TransferenciaCriptomoeda.objects.filter(investidor=investidor, data__lte=datetime.date.today()).order_by('data') \
+        .select_related('moeda')
         
     # Processa primeiro operações de venda (V), depois compra (C)
-    operacoes = OperacaoCriptomoeda.objects.filter(investidor=investidor, data__lte=datetime.date.today()).order_by('data', '-tipo_operacao') 
+    operacoes = OperacaoCriptomoeda.objects.filter(investidor=investidor, data__lte=datetime.date.today()).order_by('data', '-tipo_operacao') \
+        .select_related('criptomoeda', 'operacaocriptomoedataxa', 'operacaocriptomoedataxa__moeda', 'operacaocriptomoedamoeda', 'operacaocriptomoedamoeda__criptomoeda')
     
     # Juntar transferências e operações em uma lista
     lista_movimentacoes = sorted(chain(transferencias, operacoes), key=attrgetter('data'))
