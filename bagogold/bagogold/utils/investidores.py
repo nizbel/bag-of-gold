@@ -321,7 +321,7 @@ def buscar_totais_atuais_investimentos(investidor, data_atual=datetime.date.toda
     qtd_criptomoedas = calcular_qtd_moedas_ate_dia(investidor, data_atual)
     moedas = Criptomoeda.objects.filter(id__in=qtd_criptomoedas.keys())
     # Buscar valor das criptomoedas em posse do investidor
-    valores_criptomoedas = {valor_diario.criptomoeda.ticker: valor_diario.valor for valor_diario in ValorDiarioCriptomoeda.objects.filter(criptomoeda__in=moedas, moeda='BRL')}
+    valores_criptomoedas = {valor_diario.criptomoeda.ticker: valor_diario.valor for valor_diario in ValorDiarioCriptomoeda.objects.filter(criptomoeda__in=moedas, moeda='BRL').select_related('criptomoeda')}
     for moeda in moedas:
         totais_atuais['Criptomoedas'] += qtd_criptomoedas[moeda.id] * valores_criptomoedas[moeda.ticker]
     
