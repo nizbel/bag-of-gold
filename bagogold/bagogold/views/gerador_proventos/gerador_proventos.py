@@ -1,4 +1,25 @@
 # -*- coding: utf-8 -*-
+import datetime
+from decimal import Decimal
+import json
+import os
+import traceback
+
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required, permission_required, \
+    user_passes_test
+from django.core.mail import mail_admins
+from django.core.urlresolvers import reverse
+from django.db import transaction
+from django.db.models.expressions import Case, When, Value
+from django.db.models.fields import CharField, Field
+from django.forms.formsets import formset_factory
+from django.forms.models import model_to_dict
+from django.http.response import HttpResponseRedirect, HttpResponse, Http404
+from django.shortcuts import get_object_or_404
+from django.template.loader import render_to_string
+from django.template.response import TemplateResponse
+
 from bagogold import settings
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.gerador_proventos import \
@@ -8,7 +29,6 @@ from bagogold.bagogold.forms.gerador_proventos import \
 from bagogold.bagogold.models.acoes import Acao, Provento, AcaoProvento, \
     AtualizacaoSelicProvento, HistoricoAcao
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.fii.models import ProventoFII, FII
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
     PendenciaDocumentoProvento, ProventoAcaoDescritoDocumentoBovespa, \
     ProventoAcaoDocumento, InvestidorResponsavelPendencia, \
@@ -27,23 +47,8 @@ from bagogold.bagogold.utils.gerador_proventos import \
 from bagogold.bagogold.utils.investidores import is_superuser
 from bagogold.bagogold.utils.misc import \
     formatar_zeros_a_direita_apos_2_casas_decimais
-from decimal import Decimal
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required, permission_required, \
-    user_passes_test
-from django.core.mail import mail_admins
-from django.core.urlresolvers import reverse
-from django.db import transaction
-from django.forms.formsets import formset_factory
-from django.forms.models import model_to_dict
-from django.http.response import HttpResponseRedirect, HttpResponse, Http404
-from django.shortcuts import get_object_or_404
-from django.template.loader import render_to_string
-from django.template.response import TemplateResponse
-import datetime
-import json
-import os
-import traceback
+from bagogold.fii.models import ProventoFII, FII
+
 
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
@@ -522,25 +527,63 @@ def listar_documentos(request):
     if not Empresa.objects.exists():
         return TemplateResponse(request, 'gerador_proventos/listar_documentos.html', {'documentos': list(), 'empresas': list(), 'empresa_atual': None})
     
-    empresa_id = Empresa.objects.all().order_by('id').values_list('id', flat=True)[0]
-    if request.method == 'POST':
-        if request.POST.get("busca_empresa"):
-            empresa_id = Empresa.objects.get(id=request.POST['busca_empresa'].replace('.', '')).id
-    
     # Mostrar empresa atual
-    empresa_atual = Empresa.objects.get(id=empresa_id)
+    if request.method == 'POST' and request.POST.get("busca_empresa"):
+        empresa_atual = Empresa.objects.get(id=request.POST['busca_empresa'].replace('.', ''))
+    else:
+        empresa_atual = Empresa.objects.all().order_by('id')[0]
     
     empresas = Empresa.objects.all().order_by('nome')
 
-    documentos = DocumentoProventoBovespa.objects.filter(empresa__id=empresa_id).order_by('data_referencia')
+    documentos = DocumentoProventoBovespa.objects.filter(empresa__id=empresa_atual.id).annotate(tipo_investimento=Case(When(tipo='A', then=Value(u'Ação')),
+                                When(tipo='F', then=Value('FII')), output_field=CharField())) \
+        .select_related('empresa').order_by('data_referencia')
+    
+    # Preencher pendências e proventos vinculados    
+    pendencias = PendenciaDocumentoProvento.objects.filter(documento__id__in=[documento.id for documento in documentos]) \
+        .order_by('documento').values_list('documento', flat=True).distinct()
+        
+    proventos_vinculados = list(ProventoAcaoDocumento.objects.filter(documento__id__in=[documento.id for documento in documentos]) \
+        .order_by('documento').values_list('documento', flat=True).distinct())
+    proventos_vinculados.extend(list(ProventoFIIDocumento.objects.filter(documento__id__in=[documento.id for documento in documentos]) \
+        .order_by('documento').values_list('documento', flat=True).distinct()))
+    
+    # Buscar ticker de ações para preencher ticker de empresa
+    ticker_acoes = Acao.objects.all().order_by('empresa').values('empresa').values_list('empresa', 'ticker')
+    
+    # Preencher ticker de empresa para lista de empresas
+    for empresa in empresas:
+        if empresa.codigo_cvm == None or any([char.isdigit() for char in empresa.codigo_cvm]):
+            for empresa_id, ticker in ticker_acoes:
+                if empresa.id == empresa_id:
+                    empresa.ticker_empresa = ticker
+                    break
+        else:
+            empresa.ticker_empresa = empresa.codigo_cvm
+            
+    # Preencher ticker de empresa para empresa atual
+    if empresa_atual.codigo_cvm == None or any([char.isdigit() for char in empresa_atual.codigo_cvm]):
+        for empresa_id, ticker in ticker_acoes:
+            if empresa_atual.id == empresa_id:
+                empresa_atual.ticker_empresa = ticker
+                break
+    else:
+        empresa_atual.ticker_empresa = empresa_atual.codigo_cvm
+            
     
     for documento in documentos:
-        if documento.tipo == 'A':
-            documento.ha_proventos_vinculados = documento.proventoacaodocumento_set.count() > 0
-            documento.tipo = 'Ação'
+        documento.ha_proventos_vinculados = documento.id in proventos_vinculados
+        
+        documento.pendente = documento.id in pendencias
+        
+        # Preencher ticker de empresa
+        if documento.empresa.codigo_cvm == None or any([char.isdigit() for char in documento.empresa.codigo_cvm]):
+            for empresa_id, ticker in ticker_acoes:
+                if documento.empresa.id == empresa_id:
+                    documento.nome = u'%s-%s' % (''.join(char for char in ticker if not char.isdigit()), documento.protocolo)
+                    break
         else:
-            documento.ha_proventos_vinculados = documento.proventofiidocumento_set.count() > 0
-            documento.tipo = 'FII'
+            documento.nome = u'%s-%s' % (documento.empresa.codigo_cvm, documento.protocolo)
             
     return TemplateResponse(request, 'gerador_proventos/listar_documentos.html', {'documentos': documentos, 'empresas': empresas, 'empresa_atual': empresa_atual})
 
@@ -558,7 +601,10 @@ def listar_pendencias(request):
     # Valor padrão para o filtro de quantidade
     filtros = Object()
     # Prepara a busca
-    query_pendencias = PendenciaDocumentoProvento.objects.all() 
+    query_pendencias = PendenciaDocumentoProvento.objects.all().annotate(tipo_pendencia=Case(When(tipo='L', then=Value(u'Leitura')), 
+                                                                                             When(tipo='V', then=Value(u'Validação')), output_field=CharField())) \
+        .annotate(tipo_documento=Case(When(documento__tipo='A', then=Value(u'Ação')), When(documento__tipo='F', then=Value('FII')), output_field=CharField())) \
+        .select_related('documento', 'documento__empresa', 'investidorresponsavelpendencia')
     # Verifica a quantidade de pendências escolhida para filtrar
     if request.method == 'POST':
         # Preparar filtro por quantidade
@@ -602,11 +648,23 @@ def listar_pendencias(request):
     # Calcular quantidade de pendências reservadas
     qtd_pendencias_reservadas = InvestidorResponsavelPendencia.objects.filter(investidor=investidor).count()
     
+    # Buscar ticker de ações para preencher ticker de empresa
+    ticker_acoes = Acao.objects.all().order_by('empresa').values('empresa').values_list('empresa', 'ticker')
+    
     for pendencia in pendencias:
-        pendencia.nome = pendencia.documento.documento.name.split('/')[-1]
-        pendencia.tipo_documento = 'Ação' if pendencia.documento.tipo == 'A' else 'FII'
-        pendencia.tipo_pendencia = 'Leitura' if pendencia.tipo == 'L' else 'Validação'
+#         pendencia.nome = pendencia.documento.documento.name.split('/')[-1]
+#         pendencia.tipo_documento = 'Ação' if pendencia.documento.tipo == 'A' else 'FII'
+#         pendencia.tipo_pendencia = 'Leitura' if pendencia.tipo == 'L' else 'Validação'
         pendencia.responsavel = pendencia.responsavel()
+        
+        # Preencher ticker de empresa
+        if pendencia.documento.empresa.codigo_cvm == None or any([char.isdigit() for char in pendencia.documento.empresa.codigo_cvm]):
+            for empresa_id, ticker in ticker_acoes:
+                if pendencia.documento.empresa.id == empresa_id:
+                    pendencia.documento.nome = u'%s-%s' % (''.join(char for char in ticker if not char.isdigit()), pendencia.documento.protocolo)
+                    break
+        else:
+            pendencia.documento.nome = u'%s-%s' % (pendencia.documento.empresa.codigo_cvm, pendencia.documento.protocolo)
         
     return TemplateResponse(request, 'gerador_proventos/listar_pendencias.html', {'pendencias_doc_bovespa': pendencias, 'qtd_pendencias_reservadas': qtd_pendencias_reservadas,'filtros': filtros})
 
@@ -677,16 +735,27 @@ def listar_proventos(request):
         
         query_proventos = Provento.gerador_objects.filter(data_ex__gte=data_ex_inicial)
     
+    # Buscando ações e fiis relacionados
+    if filtros.filtro_investimento == 'A':
+        query_proventos = query_proventos.select_related('acao')
+    elif filtros.filtro_investimento == 'F':
+        query_proventos = query_proventos.select_related('fii')
+    
     proventos = list(query_proventos)
     
+    if filtros.filtro_investimento == 'A':
+        lista_documentos = ProventoAcaoDocumento.objects.filter(provento__in=proventos).select_related('documento')
+    elif filtros.filtro_investimento == 'F':
+        lista_documentos = ProventoFIIDocumento.objects.filter(provento__in=proventos).select_related('documento')
+        
     for provento in proventos:
-        if isinstance(provento, Provento):
-            provento.documentos = DocumentoProventoBovespa.objects.filter(id__in=provento.proventoacaodocumento_set.values_list('documento', flat=True))
-        elif isinstance(provento, ProventoFII):
-            provento.documentos = DocumentoProventoBovespa.objects.filter(id__in=provento.proventofiidocumento_set.values_list('documento', flat=True))
+        if filtros.filtro_investimento == 'A':
+            provento.documentos = [documento_acao.documento for documento_acao in lista_documentos if provento.id == documento_acao.provento_id]
+        elif filtros.filtro_investimento == 'F':
+            provento.documentos = [documento_fii.documento for documento_fii in lista_documentos if provento.id == documento_fii.provento_id]
         for documento in provento.documentos:
             documento.nome = documento.documento.name.split('/')[-1]
-        
+            
     return TemplateResponse(request, 'gerador_proventos/listar_proventos.html', {'proventos': proventos, 'filtros': filtros})
         
 @login_required
