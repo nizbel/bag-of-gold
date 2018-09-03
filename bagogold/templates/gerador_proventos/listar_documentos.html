@@ -31,8 +31,8 @@
             <tbody>
             {% for documento in documentos %}
             <tr>
-                <td><a href="{% url "gerador_proventos:detalhar_documento" documento.id %}">{{documento}}</a></td>
-                <td>{{documento.tipo}}</td>
+                <td><a href="{% url "gerador_proventos:detalhar_documento" documento.id %}">{{documento.nome}}</a></td>
+                <td>{{documento.tipo_investimento}}</td>
                 <td>{{documento.protocolo}}</td>
                 <td>{{documento.data_referencia|date:'d/m/Y'}}</td>
                 <td>{{documento.empresa}}</td>

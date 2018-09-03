@@ -2,22 +2,24 @@
 import calendar
 import datetime
 from decimal import Decimal
+import itertools
 from math import floor
 
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import Permission, User
 from django.db.models.aggregates import Count, Sum
-from django.db.models.expressions import Case, When, F
-from django.db.models.fields import BooleanField, DecimalField
+from django.db.models.expressions import Case, When, F, Value
+from django.db.models.fields import BooleanField, DecimalField, CharField
 from django.db.models.query_utils import Q
 from django.template.response import TemplateResponse
 
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
+from bagogold.bagogold.models.acoes import Acao
 from bagogold.bagogold.models.gerador_proventos import \
     InvestidorResponsavelPendencia, InvestidorLeituraDocumento, \
     InvestidorValidacaoDocumento, PendenciaDocumentoProvento, \
     InvestidorRecusaDocumento, DocumentoProventoBovespa, PagamentoLeitura, \
-    HistoricoInvestidorLeituraDocumento, HistoricoInvestidorValidacaoDocumento,\
+    HistoricoInvestidorLeituraDocumento, HistoricoInvestidorValidacaoDocumento, \
     HistoricoInvestidorRecusaDocumento
 
 
@@ -27,18 +29,17 @@ from bagogold.bagogold.models.gerador_proventos import \
 def detalhar_pendencias_usuario(request, id_usuario):
     usuario = User.objects.get(id=id_usuario)
     
-    usuario.pendencias_alocadas = PendenciaDocumentoProvento.objects.filter(investidorresponsavelpendencia__investidor=usuario.investidor)
-    usuario.leituras = InvestidorLeituraDocumento.objects.filter(investidor=usuario.investidor)
+    usuario.pendencias_alocadas = PendenciaDocumentoProvento.objects.filter(investidorresponsavelpendencia__investidor=usuario.investidor) \
+        .annotate(tipo_pendencia=Case(When(tipo='L', then=Value(u'Leitura')), When(tipo='V', then=Value(u'Validação')), output_field=CharField())) \
+        .select_related('investidorresponsavelpendencia', 'documento', 'documento__empresa')
+    usuario.leituras = InvestidorLeituraDocumento.objects.filter(investidor=usuario.investidor).select_related('documento', 'documento__empresa')
     usuario.historico_leituras = HistoricoInvestidorLeituraDocumento.objects.filter(investidor=usuario.investidor)
-    usuario.validacoes = InvestidorValidacaoDocumento.objects.filter(investidor=usuario.investidor)
+    usuario.validacoes = InvestidorValidacaoDocumento.objects.filter(investidor=usuario.investidor).select_related('documento', 'documento__empresa')
     usuario.historico_validacoes = HistoricoInvestidorValidacaoDocumento.objects.filter(investidor=usuario.investidor)
-    usuario.leituras_que_recusou = InvestidorRecusaDocumento.objects.filter(investidor=usuario.investidor)
+    usuario.leituras_que_recusou = InvestidorRecusaDocumento.objects.filter(investidor=usuario.investidor).select_related('documento', 'documento__empresa')
     usuario.historico_leituras_que_recusou = HistoricoInvestidorRecusaDocumento.objects.filter(investidor=usuario.investidor)
-    usuario.leituras_recusadas = InvestidorRecusaDocumento.objects.filter(responsavel_leitura=usuario.investidor)
+    usuario.leituras_recusadas = InvestidorRecusaDocumento.objects.filter(responsavel_leitura=usuario.investidor).select_related('documento', 'documento__empresa')
     usuario.historico_leituras_recusadas = HistoricoInvestidorRecusaDocumento.objects.filter(responsavel_leitura=usuario.investidor)
-    
-    for pendencia in usuario.pendencias_alocadas:
-        pendencia.tipo_pendencia = 'Leitura' if pendencia.tipo == 'L' else 'Validação'
     
     # Preparar gráficos de acompanhamento
     graf_leituras = list()
@@ -51,17 +52,29 @@ def detalhar_pendencias_usuario(request, id_usuario):
     while data_2_anos_atras <= datetime.date.today().replace(day=1):
         # Preparar data
         graf_leituras += [[str(calendar.timegm(data_2_anos_atras.replace(day=7).timetuple()) * 1000), 
-                           usuario.leituras.filter(data_leitura__month=data_2_anos_atras.month, data_leitura__year=data_2_anos_atras.year).count() \
-                           + usuario.historico_leituras.filter(data_leitura__month=data_2_anos_atras.month, data_leitura__year=data_2_anos_atras.year).count()]]
+                           len([leitura for leitura in usuario.leituras if leitura.data_leitura.month == data_2_anos_atras.month \
+                                and leitura.data_leitura.year == data_2_anos_atras.year]) \
+                           + len([historico_leitura for historico_leitura in usuario.historico_leituras if historico_leitura.data_leitura.month == data_2_anos_atras.month \
+                                and historico_leitura.data_leitura.year == data_2_anos_atras.year])]]
         graf_validacoes += [[str(calendar.timegm(data_2_anos_atras.replace(day=13).timetuple()) * 1000), 
-                             usuario.validacoes.filter(data_validacao__month=data_2_anos_atras.month, data_validacao__year=data_2_anos_atras.year).count() \
-                             + usuario.historico_validacoes.filter(data_validacao__month=data_2_anos_atras.month, data_validacao__year=data_2_anos_atras.year).count()]]
+                             len([validacao for validacao in usuario.validacoes if validacao.data_validacao.month == data_2_anos_atras.month \
+                                  and validacao.data_validacao.year == data_2_anos_atras.year]) \
+                             + len([historico_validacao for historico_validacao in usuario.historico_validacoes if historico_validacao.data_validacao.month == data_2_anos_atras.month \
+                                  and historico_validacao.data_validacao.year == data_2_anos_atras.year])]]
         graf_leituras_que_recusou += [[str(calendar.timegm(data_2_anos_atras.replace(day=19).timetuple()) * 1000), 
-                                       usuario.leituras_que_recusou.filter(data_recusa__month=data_2_anos_atras.month, data_recusa__year=data_2_anos_atras.year).count() \
-                                       + usuario.historico_leituras_que_recusou.filter(data_recusa__month=data_2_anos_atras.month, data_recusa__year=data_2_anos_atras.year).count()]]
+                                   len([recusa for recusa in usuario.leituras_que_recusou if recusa.data_recusa.month == data_2_anos_atras.month \
+                                        and recusa.data_recusa.year == data_2_anos_atras.year]) \
+                                   + len([historico_recusa for historico_recusa in usuario.historico_leituras_que_recusou if historico_recusa.data_recusa.month == data_2_anos_atras.month \
+                                        and historico_recusa.data_recusa.year == data_2_anos_atras.year])]]
+#                                        usuario.leituras_que_recusou.filter(data_recusa__month=data_2_anos_atras.month, data_recusa__year=data_2_anos_atras.year).count() \
+#                                        + usuario.historico_leituras_que_recusou.filter(data_recusa__month=data_2_anos_atras.month, data_recusa__year=data_2_anos_atras.year).count()]]
         graf_leituras_recusadas += [[str(calendar.timegm(data_2_anos_atras.replace(day=25).timetuple()) * 1000), 
-                                     usuario.leituras_recusadas.filter(data_recusa__month=data_2_anos_atras.month, data_recusa__year=data_2_anos_atras.year).count() \
-                                     + usuario.historico_leituras_recusadas.filter(data_recusa__month=data_2_anos_atras.month, data_recusa__year=data_2_anos_atras.year).count()]]
+                                   len([recusada for recusada in usuario.leituras_recusadas if recusada.data_recusa.month == data_2_anos_atras.month \
+                                        and recusada.data_recusa.year == data_2_anos_atras.year]) \
+                                   + len([historico_recusada for historico_recusada in usuario.historico_leituras_recusadas if historico_recusada.data_recusa.month == data_2_anos_atras.month \
+                                        and historico_recusada.data_recusa.year == data_2_anos_atras.year])]]
+#                                      usuario.leituras_recusadas.filter(data_recusa__month=data_2_anos_atras.month, data_recusa__year=data_2_anos_atras.year).count() \
+#                                      + usuario.historico_leituras_recusadas.filter(data_recusa__month=data_2_anos_atras.month, data_recusa__year=data_2_anos_atras.year).count()]]
         if data_2_anos_atras.month < 12:
             data_2_anos_atras = data_2_anos_atras.replace(month=data_2_anos_atras.month+1)
         else:
@@ -72,6 +85,19 @@ def detalhar_pendencias_usuario(request, id_usuario):
     usuario.validacoes = usuario.validacoes.order_by('-data_validacao')[:200]
     usuario.leituras_que_recusou = usuario.leituras_que_recusou.order_by('-data_recusa')[:200]
     usuario.leituras_recusadas = usuario.leituras_recusadas.order_by('-data_recusa')[:200]
+    
+    # Buscar ticker de ações para preencher nome de documento
+    ticker_acoes = Acao.objects.all().order_by('empresa').values('empresa').values_list('empresa', 'ticker')
+     
+    for item in itertools.chain(usuario.leituras, usuario.validacoes, usuario.pendencias_alocadas, usuario.leituras_que_recusou, usuario.leituras_recusadas):
+        # Preencher ticker de empresa
+        if item.documento.empresa.codigo_cvm == None or any([char.isdigit() for char in item.documento.empresa.codigo_cvm]):
+            for empresa_id, ticker in ticker_acoes:
+                if item.documento.empresa.id == empresa_id:
+                    item.documento.nome = u'%s-%s' % (''.join(char for char in ticker if not char.isdigit()), item.documento.protocolo)
+                    break
+        else:
+            item.documento.nome = u'%s-%s' % (item.documento.empresa.codigo_cvm, item.documento.protocolo)
 
     # Se usuário for do grupo da nova equipe de leituras, mostrar dados
     if usuario.groups.filter(name='Equipe de leitura').exists():

@@ -44,7 +44,7 @@
                         {% endif %}
                             ">{{pendencia.tipo_pendencia}}</a></td>
                         <td>{{pendencia.data_criacao|date:'d/m/Y'}}</td>
-                        <td><a href="{% url 'gerador_proventos:detalhar_documento' pendencia.documento.id %}">{{pendencia.documento}}</a></td>
+                        <td><a href="{% url 'gerador_proventos:detalhar_documento' pendencia.documento.id %}">{{pendencia.documento.nome}}</a></td>
                         <td>{{pendencia.tipo_documento}}</td>
                         <td>
                             <span id="responsavel_{{pendencia.id|floatformat:'f'}}" {% if not pendencia.responsavel or pendencia.responsavel.id == request.user.investidor.id %}style="display: none"{% endif %}>{{pendencia.responsavel}}</span>
