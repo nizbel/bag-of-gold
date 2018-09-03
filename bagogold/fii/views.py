@@ -87,12 +87,12 @@ def acompanhamento_fii(request):
             filtros['mes_inicial'] = mes_inicial.replace(day=1).replace(year=mes_inicial.year-1).replace(month=mes_inicial.month+1)
             
         filtros['ignorar_indisponiveis'] = request.POST.get('ignorar_indisponiveis', False)
-#     comparativos = list()
     else:
         # Calcular a data de inicio, buscando o primeiro dia do próximo mês, no ano passado, a fim de completar um ciclo de 12 meses
         mes_inicial = datetime.date.today()
         filtros['mes_inicial'] = mes_inicial.replace(day=1).replace(year=mes_inicial.year-1).replace(month=mes_inicial.month+1)
         filtros['ignorar_indisponiveis'] = True
+        
     # Verificar o período em meses de diferença (se mesmo mês/ano, deve ser 1)
     periodo_meses = 1 + datetime.date.today().month - filtros['mes_inicial'].month \
         + (datetime.date.today().year - filtros['mes_inicial'].year) * 12
