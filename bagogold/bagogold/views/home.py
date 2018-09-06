@@ -1210,8 +1210,11 @@ def grafico_renda_fixa_painel_geral(request):
                 valor_compra_no_dia = 0
                 valor_venda_no_dia = 0
                 if operacoes_lci_lca_no_periodo.filter(data=dia, tipo_operacao='C').exists():
+                    operacoes_no_periodo = operacoes_lci_lca_no_periodo.filter(data=dia, tipo_operacao='C')
+                    for operacao_no_periodo in operacoes_no_periodo:
+                        operacao_no_periodo.atual = calcular_valor_operacao_lci_lca_ate_dia(operacao_no_periodo, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date(), False, False)
                     # Adicionar operações de compra e calcular o valor total das compras
-                    operacoes_vigentes_lci_lca.extend(list(operacoes_lci_lca_no_periodo.filter(data=dia, tipo_operacao='C')))
+                    operacoes_vigentes_lci_lca.extend(list(operacoes_no_periodo))
                     valor_compra_no_dia += float(operacoes_lci_lca_no_periodo.filter(data=dia, tipo_operacao='C').aggregate(soma_compras=Sum('quantidade'))['soma_compras'] or Decimal(0))
                 if operacoes_lci_lca_no_periodo.filter(data=dia, tipo_operacao='V').exists():
                     for operacao in operacoes_lci_lca_no_periodo.filter(data=dia, tipo_operacao='V'):
@@ -1241,8 +1244,11 @@ def grafico_renda_fixa_painel_geral(request):
                 valor_compra_no_dia = 0
                 valor_venda_no_dia = 0
                 if operacoes_cdb_rdb_no_periodo.filter(data=dia, tipo_operacao='C').exists():
+                    operacoes_no_periodo = operacoes_cdb_rdb_no_periodo.filter(data=dia, tipo_operacao='C')
+                    for operacao_no_periodo in operacoes_no_periodo:
+                        operacao_no_periodo.atual = calcular_valor_operacao_cdb_rdb_ate_dia(operacao_no_periodo, (data_atual - datetime.timedelta(days=qtd_ultimos_dias)).date(), False, False)
                     # Adicionar operações de compra e calcular o valor total das compras
-                    operacoes_vigentes_cdb_rdb.extend(list(operacoes_cdb_rdb_no_periodo.filter(data=dia, tipo_operacao='C')))
+                    operacoes_vigentes_cdb_rdb.extend(list(operacoes_no_periodo))
                     valor_compra_no_dia += float(operacoes_cdb_rdb_no_periodo.filter(data=dia, tipo_operacao='C').aggregate(soma_compras=Sum('quantidade'))['soma_compras'] or Decimal(0))
                 if operacoes_cdb_rdb_no_periodo.filter(data=dia, tipo_operacao='V').exists():
                     for operacao in operacoes_cdb_rdb_no_periodo.filter(data=dia, tipo_operacao='V'):
