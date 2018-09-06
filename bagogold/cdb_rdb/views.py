@@ -500,7 +500,7 @@ def historico(request):
                             operacoes[indice_atualizacao].atual = calcular_valor_atualizado_operacao_ate_dia(operacoes[indice_atualizacao].atual, 
                                                                          primeira_data_valorizacao, ultima_data_valorizacao, operacoes[indice_atualizacao], 
                                                                          operacoes[indice_atualizacao].atual)
-                            print operacoes[indice_atualizacao], operacoes[indice_atualizacao].atual
+#                             print operacoes[indice_atualizacao], operacoes[indice_atualizacao].atual
                  
                     total_patrimonio += operacoes[indice_atualizacao].atual
                          
