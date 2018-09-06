@@ -360,9 +360,11 @@ $( document ).ready(function() {
     }
     $('input[name=radioTipoRendimento]').change( function() {
         if ($("input[name='radioTipoRendimento']:checked").val() == 'PRE') {
-            $('#percentualRendimento').trigger('touchspin.updatesettings', {max: 100, min: 3, decimals: 2, step: 0.01, postfix: '% ao ano'});
+            $('#percentualRendimento').trigger('touchspin.updatesettings', {max: 100, min: 3, decimals: 2, step: 0.01});
+            $('#percentualRendimento').parent().find('.bootstrap-touchspin-postfix').text('% ao ano');
         } else if ($("input[name='radioTipoRendimento']:checked").val() == 'POS') {
-        	$('#percentualRendimento').trigger('touchspin.updatesettings', {max: 150, min: 10, decimals: 0, step: 1, postfix: '% do CDI'});
+            $('#percentualRendimento').trigger('touchspin.updatesettings', {max: 150, min: 10, decimals: 0, step: 1});
+            $('#percentualRendimento').parent().find('.bootstrap-touchspin-postfix').text('% do CDI');
         }
     });
     
