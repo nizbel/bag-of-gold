@@ -52,9 +52,13 @@ def detalhar_debenture(request, debenture_id):
         operacoes = OperacaoDebenture.objects.filter(debenture=debenture, investidor=request.user.investidor)
     else:
         operacoes = list()
+        
+    amortizacoes = AmortizacaoDebenture.objects.filter(debenture=debenture)
+    juros = JurosDebenture.objects.filter(debenture=debenture)
+    premios = PremioDebenture.objects.filter(debenture=debenture)
     
     return TemplateResponse(request, 'debentures/detalhar_debenture.html', {'debenture': debenture, 'operacoes': operacoes,
-                                                                            'juros': [], 'amortizacoes': [], 'premios': []})
+                                                                            'juros': juros, 'amortizacoes': amortizacoes, 'premios': premios})
 
 @login_required
 @adiciona_titulo_descricao('Editar operação em Debêntures', 'Alterar valores de uma operação de compra/venda em Debêntures')
