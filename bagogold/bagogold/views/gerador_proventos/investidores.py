@@ -103,6 +103,7 @@ def detalhar_pendencias_usuario(request, id_usuario):
     if usuario.groups.filter(name='Equipe de leitura').exists():
         # Tempo médio por exclusão: 51.43 Tempo médio por provento ação: 122.07 Tempo médio por provento fii: 79.4
         # Considerar leituras feitas a partir de 21/10/2017
+        # TODO a partir de 24/09/2018, aumentar valor da hora para 28 reais
         usuario.equipe_leitura = True
         
         leituras = InvestidorLeituraDocumento.objects.filter(data_leitura__gt=datetime.date(2017, 10, 21), investidor=usuario.investidor) \
