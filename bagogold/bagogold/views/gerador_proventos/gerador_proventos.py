@@ -69,6 +69,24 @@ def baixar_documento_provento(request, id_documento):
     else:
         messages.error(request, 'Documento não foi encontrado para download')
         return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
+    
+def baixar_documento_provento_aws(request, id_documento):
+    if DocumentoProventoBovespa.objects.filter(id=id_documento).exists():
+        documento_provento = DocumentoProventoBovespa.objects.get(id=id_documento)
+        filename = documento_provento.documento.name.split('/')[-1]
+        if documento_provento.extensao_documento() == 'doc':
+            response = HttpResponse(documento_provento.documento, content_type='application/msword')
+        elif documento_provento.extensao_documento() == 'xml':
+            response = HttpResponse(documento_provento.documento, content_type='application/xml')
+        else:
+            response = HttpResponse(documento_provento.documento, content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename=%s' % filename
+        response['Content-Length'] = os.path.getsize(settings.MEDIA_ROOT + documento_provento.documento.name)
+    
+        return response
+    else:
+        messages.error(request, 'Documento não foi encontrado para download')
+        return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
 
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
