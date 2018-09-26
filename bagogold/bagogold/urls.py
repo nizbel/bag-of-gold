@@ -122,6 +122,7 @@ fiis_patterns = [
 
 gerador_proventos_patterns = [
     url(r'^baixar-documento-provento/(?P<id_documento>\d+)/$', views.gerador_proventos.gerador_proventos.baixar_documento_provento, name='baixar_documento_provento'),
+    url(r'^baixar-documento-provento-aws/(?P<id_documento>\d+)/$', views.gerador_proventos.gerador_proventos.baixar_documento_provento_aws, name='baixar_documento_provento-aws'),
     url(r'^detalhar-documento/(?P<id_documento>\d+)/$', views.gerador_proventos.gerador_proventos.detalhar_documento, name='detalhar_documento'),
     url(r'^detalhar-pendencias-usuario/(?P<id_usuario>\d+)/$', views.gerador_proventos.investidores.detalhar_pendencias_usuario, name='detalhar_pendencias_usuario'),
     url(r'^detalhar-provento-acao/(?P<id_provento>\d+)/$', views.gerador_proventos.gerador_proventos.detalhar_provento_acao, name='detalhar_provento_acao'),
