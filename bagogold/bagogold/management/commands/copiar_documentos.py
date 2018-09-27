@@ -13,12 +13,10 @@ class Command(BaseCommand):
     help = 'Copia documentos do site original para o site da AWS'
 
     def handle(documento, *args, **options):
-        # TODO filtrar documentos que tenham sido validados como sem proventos
+        # Filtrar documentos que tenham sido validados como sem proventos
         for documento in DocumentoProventoBovespa.objects.all().exclude(investidorleituradocumento__decisao='E', investidorvalidacaodocumento__isnull=False):
             # Verifica se documento existe na AWS
-            if documento.verificar_se_doc_existe():
-                print 'documento existe'
-            else:
+            if not documento.verificar_se_doc_existe():
                 # Se não, buscar do bag of gold no rackspace
                 url_documento = 'https://bagofgold.com.br' + reverse('gerador_proventos:baixar_documento_provento', kwargs={'id_documento': documento.id})
                 print url_documento
@@ -35,11 +33,8 @@ class Command(BaseCommand):
                     data = response.read()
                     
                     meta = response.info()
-                    print meta
+                    nome_documento = meta['Content-Disposition'].split('=')[1]
+                    print nome_documento
                     
-                    extensao = ''
                     arquivo_rendimentos = StringIO(data)
-                    documento.documento.save('%s-%s.%s' % (documento.ticker_empresa(), documento.protocolo, extensao), File(arquivo_rendimentos))
-            
-            if 2 == 2:
-                raise ValueError('TESTE')
+                    documento.documento.save('%s' % (nome_documento), File(arquivo_rendimentos))
