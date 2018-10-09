@@ -19,7 +19,7 @@ class Command(BaseCommand):
             if not documento.verificar_se_doc_existe():
                 # Se não, buscar do bag of gold no rackspace
                 url_documento = 'https://bagofgold.com.br' + reverse('gerador_proventos:baixar_documento_provento', kwargs={'id_documento': documento.id})
-                print url_documento
+#                 print url_documento
                 req = Request(url_documento)
                 try:
                     response = urlopen(req, timeout=30)
@@ -34,7 +34,7 @@ class Command(BaseCommand):
                     
                     meta = response.info()
                     nome_documento = meta['Content-Disposition'].split('=')[1]
-                    print nome_documento
+#                     print nome_documento
                     
                     arquivo_rendimentos = StringIO(data)
                     documento.documento.save('%s' % (nome_documento), File(arquivo_rendimentos))
