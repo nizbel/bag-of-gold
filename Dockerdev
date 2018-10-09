@@ -5,13 +5,23 @@ COPY . /home/bagofgold/bagogold
 
 COPY conf/settings_dev.py /home/bagofgold/bagogold/conf/settings_local.py
 
+# Apagar arquivos de settings
+RUN rm /home/bagofgold/bagogold/conf/settings_dev.py
+RUN rm /home/bagofgold/bagogold/conf/settings_prod.py
+
+RUN rm /home/bagofgold/bagogold/conf/.pgpass
+
+# Apagar arquivos pyc
+RUN find /home/bagofgold/bagogold -name "*.pyc" | xargs rm
+
 WORKDIR /home/bagofgold/bagogold
 
 # Install any needed packages specified in requirements.txt
 RUN pip install --trusted-host pypi.python.org -r requirements.txt
 
-# Static files
-RUN python manage.py collectstatic --no-input
+RUN python manage.py preparar_aws
+RUN mkdir /home/bagofgold/.aws
+RUN mv /home/bagofgold/bagogold/credentials /home/bagofgold/.aws/credentials
 
 EXPOSE 8000
 
