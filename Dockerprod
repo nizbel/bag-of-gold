@@ -22,8 +22,8 @@ RUN pip install --trusted-host pypi.python.org -r requirements.txt
 RUN python manage.py minificar_html
 
 RUN python manage.py preparar_aws
-RUN mkdir /home/bagofgold/.aws
-RUN mv /home/bagofgold/bagogold/credentials /home/bagofgold/.aws/credentials
+RUN mkdir /root/.aws
+RUN mv /home/bagofgold/bagogold/credentials /root/.aws/credentials
 
 # Remover static
 RUN rm -rf /home/bagofgold/bagogold/bagogold/static

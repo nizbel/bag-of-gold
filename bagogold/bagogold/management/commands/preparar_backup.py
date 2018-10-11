@@ -99,7 +99,7 @@ def backup(file_name):
     try:
         if file_size <= CHUNK_SIZE:
         
-            print dbx.files_upload(f, '/' + file_path, mode=WriteMode('overwrite'))
+            print dbx.files_upload(f.read(), '/' + file_path, mode=WriteMode('overwrite'))
         
         else:
         
