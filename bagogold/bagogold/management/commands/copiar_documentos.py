@@ -15,10 +15,11 @@ class Command(BaseCommand):
     def handle(documento, *args, **options):
         # Filtrar documentos que tenham sido validados como sem proventos
         for documento in DocumentoProventoBovespa.objects.all().exclude(investidorleituradocumento__decisao='E', investidorvalidacaodocumento__isnull=False):
+#             print documento
             # Verifica se documento existe na AWS
             if not documento.verificar_se_doc_existe():
                 # Se não, buscar do bag of gold no rackspace
-                url_documento = 'https://bagofgold.com.br' + reverse('gerador_proventos:baixar_documento_provento', kwargs={'id_documento': documento.id})
+                url_documento = 'https://bagofgold.com.br' + reverse('gerador_proventos:baixar_documento_provento', kwargs={'id_documento': 6000000})
 #                 print url_documento
                 req = Request(url_documento)
                 try:
