@@ -14,6 +14,9 @@ CSS_MET_LAYOUT_FOLDER = STATIC_FOLDER + '/assets/layouts/layout3/css'
 CSS_MET_ICONS_FOLDER = ''
 CSS_JANGO_THEME_FOLDER = STATIC_FOLDER + '/assets_jango/demos/default/css'
 
+IP_MAIN = '18.221.194.175'
+IP_SUPPORT = '18.219.213.179'
+
 # Servers
 def prod():
     env.config = 'PROD'
@@ -28,7 +31,7 @@ def prod():
 
 def prod_ec2():
     env.config = 'PROD_EC2'
-    env.hosts = ['18.221.194.175'] # 18.221.194.175    bagofgold.com.br
+    env.hosts = [IP_MAIN] # 18.221.194.175    bagofgold.com.br
 #     env.path = 'bagogold'
 #     env.repository = 'https://bitbucket.org/nizbel/bag-of-gold'
     env.user = 'ubuntu'
@@ -37,6 +40,12 @@ def prod_ec2():
     env.forward_agent = True
 #     env.procs = ['nginx', 'site', 'winfinity']
     
+def prod_ec2_support():
+    env.config = 'PROD_EC2_SUPPORT'
+    env.hosts = [IP_SUPPORT]
+    env.user = 'ubuntu'
+    env.forward_agent = True
+
 def dev():
     env.run = lrun
     env.config = 'DEV'
@@ -79,7 +88,7 @@ def alterar_cron():
         run('crontab ~/%s/crontab_prod' % env.path)
     elif env.config == 'DEV':
         run('crontab ~/%s/crontab_copy' % env.path)
-    elif env.config == 'PROD_EC2':
+    elif env.config == 'PROD_EC2_SUPPORT':
         # Verificar se já não existe container com nome teste
         info_container_teste = run('docker container ls -f name=altera_cron')
         if 'altera_cron' in info_container_teste:
@@ -233,29 +242,30 @@ def update_ec2(requirements=False, rev=None):
 #     require('virtualenv')
     require('config')
 # 
-    if env.config != 'PROD_EC2':
+    if env.config != 'PROD_EC2' or env.config != 'PROD_EC2_SUPPORT':
         print u'Comando deve ser usado apenas para PROD_EC2'
         return
     
-    # Apagar cronjobs por enquanto
-#     run('crontab -r')
-    
-    # Dar tempo para verificar cronjobs
-    time.sleep(5)
-    
-    # Verificar se há cronjobs rodando
-    cron_running = run('pstree -ap `pidof cron`')
-
-    if 'bagofgold' in cron_running:
-        print u'Há cronjob rodando, esperar 10 segundos'
-        time.sleep(10)
+    if env.config == 'PROD_EC2_SUPPORT':
+        # Apagar cronjobs por enquanto
+        run('crontab -r')
         
-        # Se ainda estiver rodando, voltar cronjobs e desistir
+        # Dar tempo para verificar cronjobs
+        time.sleep(5)
+        
+        # Verificar se há cronjobs rodando
         cron_running = run('pstree -ap `pidof cron`')
+    
         if 'bagofgold' in cron_running:
-            print u'Update cancelado pois há cronjob ainda executando'
-            alterar_cron()
-            return
+            print u'Há cronjob rodando, esperar 10 segundos'
+            time.sleep(10)
+            
+            # Se ainda estiver rodando, voltar cronjobs e desistir
+            cron_running = run('pstree -ap `pidof cron`')
+            if 'bagofgold' in cron_running:
+                print u'Update cancelado pois há cronjob ainda executando'
+                alterar_cron()
+                return
     
     # Pegar revisão
     #rev = rev
@@ -287,31 +297,37 @@ def update_ec2(requirements=False, rev=None):
     # Atualizar requirements
     #sudo('pip install -U -r requirements.txt')
 #     run('docker login')
-    run('docker pull nizbel/bagofgold:cron')
-    run('docker pull nizbel/bagofgold:prod')
+    if env.config == 'PROD_EC2_SUPPORT':
+        run('docker pull nizbel/bagofgold:cron')
+    elif env.config == 'PROD_EC2':
+        run('docker pull nizbel/bagofgold:prod')
         
     # Start postgres
 #     sudo('/etc/init.d/postgresql start')
           
-    # Migrações
-    #run('python manage.py migrate --noinput')
-    run('docker run --add-host=database:172.17.0.1 nizbel/bagofgold:cron python manage.py migrate --noinput')
+    if env.config == 'PROD_EC2_SUPPORT':
+        # Migrações
+        #run('python manage.py migrate --noinput')
+        run('docker run --add-host=database:%s nizbel/bagofgold:cron python manage.py migrate --noinput' % (IP_MAIN))
          
-    # Collect static files
-    #sudo('python manage.py collectstatic --noinput')
-    run('docker run --add-host=database:172.17.0.1 nizbel/bagofgold:cron python manage.py collectstatic --noinput -i admin')
+    if env.config == 'PROD_EC2_SUPPORT':
+        # "Minificar" html
+        run('docker run --add-host=database:%s nizbel/bagofgold:cron python manage.py minificar_html' % (IP_MAIN))
+        
+    if env.config == 'PROD_EC2_SUPPORT':
+        # Collect static files
+        #sudo('python manage.py collectstatic --noinput')
+        run('docker run --add-host=database:%s nizbel/bagofgold:cron python manage.py collectstatic --noinput -i admin' % (IP_MAIN))
     
-    # Minificar usa o manage.py porém o cd já ocorre dentro de seu código
-    # "Minificar" html
-    #minificar_html()
-    
-    # Alterar cronjob
-    alterar_cron()
+    if env.config == 'PROD_EC2_SUPPORT':
+        # Alterar cronjob
+        alterar_cron()
     
     # Start apache
     #sudo('service apache2 start', pty=False)
 #     run('docker swarm init')
-    run('docker stack deploy -c docker-compose.yml --with-registry-auth bagofgold')
+    if env.config == 'PROD_EC2':
+        run('docker stack deploy -c docker-compose.yml --with-registry-auth bagofgold')
     
     # Apagar imagens nao utilizadas mais
     run('docker image prune -f')
@@ -320,6 +336,10 @@ def reset_pg():
     require('config')
     
     if env.config == 'PROD':
+        sudo('/etc/init.d/postgresql stop')
+        sudo('/etc/init.d/postgresql start')
+        
+    elif env.config == 'PROD_EC2':
         sudo('/etc/init.d/postgresql stop')
         sudo('/etc/init.d/postgresql start')
     

@@ -23,4 +23,4 @@ class Command(BaseCommand):
                 arquivo.write(text)
                 arquivo.truncate()
         
-        print u'%s arquivo(s) minificados' % (len(arqs))
+#         print u'%s arquivo(s) minificados' % (len(arqs))
