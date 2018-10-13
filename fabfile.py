@@ -242,13 +242,13 @@ def update_ec2(requirements=False, rev=None):
 #     require('virtualenv')
     require('config')
 # 
-    if env.config != 'PROD_EC2' or env.config != 'PROD_EC2_SUPPORT':
+    if env.config != 'PROD_EC2' and env.config != 'PROD_EC2_SUPPORT':
         print u'Comando deve ser usado apenas para PROD_EC2'
         return
     
     if env.config == 'PROD_EC2_SUPPORT':
         # Apagar cronjobs por enquanto
-        run('crontab -r')
+#         run('crontab -r')
         
         # Dar tempo para verificar cronjobs
         time.sleep(5)
@@ -280,9 +280,10 @@ def update_ec2(requirements=False, rev=None):
 
     #run('workon %(virtualenv)s' % {'virtualenv': env.virtualenv})
     
-    # Backup first... always!
-    run('docker run --add-host=database:172.17.0.1 nizbel/bagofgold:cron python manage.py preparar_backup')
-    #run('%s/bin/python ~/%s/manage.py preparar_backup' % (env.virtualenv_path, env.path))
+    if env.config == 'PROD_EC2_SUPPORT':
+        # Backup first... always!
+        run('docker run --add-host=database:%s nizbel/bagofgold:cron python manage.py preparar_backup' % (IP_MAIN))
+        #run('%s/bin/python ~/%s/manage.py preparar_backup' % (env.virtualenv_path, env.path))
       
     # Stop postgres
 #     sudo('/etc/init.d/postgresql stop')
@@ -310,10 +311,6 @@ def update_ec2(requirements=False, rev=None):
         #run('python manage.py migrate --noinput')
         run('docker run --add-host=database:%s nizbel/bagofgold:cron python manage.py migrate --noinput' % (IP_MAIN))
          
-    if env.config == 'PROD_EC2_SUPPORT':
-        # "Minificar" html
-        run('docker run --add-host=database:%s nizbel/bagofgold:cron python manage.py minificar_html' % (IP_MAIN))
-        
     if env.config == 'PROD_EC2_SUPPORT':
         # Collect static files
         #sudo('python manage.py collectstatic --noinput')
@@ -345,7 +342,6 @@ def reset_pg():
     
 def verificar_cron():
     require('path')
-#     require('virtualenv')
     
     run('pstree -ap `pidof cron`')
     
