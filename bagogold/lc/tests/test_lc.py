@@ -144,10 +144,10 @@ class CalcularQuantidadesLetraCambioTestCase(TestCase):
         """Testa a quantidade vigente de Letra de Câmbio ao fim das operações"""
         operacoes_vigentes = buscar_operacoes_vigentes_ate_data(Investidor.objects.get(user__username='tester'), datetime.date(2017, 5, 25))
         self.assertEqual(len(operacoes_vigentes), 2)
-        self.assertIn(OperacaoLetraCambio.objects.get(id=1), operacoes_vigentes)
-        self.assertEqual(operacoes_vigentes.get(id=1).qtd_disponivel_venda, Decimal(2000))
-        self.assertIn(OperacaoLetraCambio.objects.get(id=4), operacoes_vigentes)
-        self.assertEqual(operacoes_vigentes.get(id=4).qtd_disponivel_venda, Decimal(2000))
+        self.assertIn(OperacaoLetraCambio.objects.get(quantidade=Decimal(2000), tipo_operacao='C'), operacoes_vigentes)
+        self.assertEqual(operacoes_vigentes.get(quantidade=Decimal(2000), tipo_operacao='C').qtd_disponivel_venda, Decimal(2000))
+        self.assertIn(OperacaoLetraCambio.objects.get(quantidade=Decimal(3000), tipo_operacao='C'), operacoes_vigentes)
+        self.assertEqual(operacoes_vigentes.get(quantidade=Decimal(3000), tipo_operacao='C').qtd_disponivel_venda, Decimal(2000))
         
     def test_verificar_qtds_por_divisao(self):
         """Testa a quantidade em cada divisão"""

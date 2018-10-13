@@ -1,18 +1,23 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.acoes import Provento, AcaoProvento,\
+import datetime
+from decimal import Decimal
+from itertools import chain
+import traceback
+
+from django.db import transaction
+from lxml import etree
+
+from bagogold import settings
+from bagogold.bagogold.models.acoes import Provento, AcaoProvento, \
     AtualizacaoSelicProvento
-from bagogold.fii.models import ProventoFII, FII
 from bagogold.bagogold.models.gerador_proventos import \
     InvestidorResponsavelPendencia, InvestidorLeituraDocumento, \
     PendenciaDocumentoProvento, ProventoAcaoDocumento, \
     ProventoAcaoDescritoDocumentoBovespa, AcaoProventoAcaoDescritoDocumentoBovespa, \
     InvestidorValidacaoDocumento, InvestidorRecusaDocumento, ProventoFIIDocumento, \
     ProventoFIIDescritoDocumentoBovespa, DocumentoProventoBovespa
-from decimal import Decimal
-from django.db import transaction
-from itertools import chain
-from lxml import etree
-import datetime
+from bagogold.fii.models import ProventoFII, FII
+
 
 def alocar_pendencia_para_investidor(pendencia, investidor):
     """
@@ -713,7 +718,9 @@ def ler_provento_estruturado_fii(documento_fii):
                     reiniciar_documento(doc_mesmo_protocolo)
                     doc_mesmo_protocolo.delete()
     except:
-        pass
+        # Fechar documento e jogar erro
+        documento_fii.documento.close()
+        raise
     
     # Fechar arquivo
     documento_fii.documento.close()

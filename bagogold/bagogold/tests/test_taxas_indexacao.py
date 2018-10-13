@@ -8,7 +8,8 @@ from django.test import TestCase
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI, \
     HistoricoTaxaSelic
 from bagogold.bagogold.utils.misc import verifica_se_dia_util, \
-    verificar_feriado_bovespa
+    verificar_feriado_bovespa, buscar_valores_diarios_selic,\
+    qtd_dias_uteis_no_periodo
 from bagogold.bagogold.utils.taxas_indexacao import buscar_valores_diarios_di, \
     calcular_valor_atualizado_com_taxa_di, calcular_valor_atualizado_com_taxas_di, \
     calcular_valor_atualizado_com_taxa_selic
@@ -130,3 +131,34 @@ class BuscarTaxasIPCATesteCase(TestCase):
     def test_ipca_oficial_deve_pagar_ipca_projetado(self):
         """Testa se IPCA oficial ao ser criado apaga IPCA projetado anterior"""
         pass
+    
+class BuscarTaxaSelicTestCase(TestCase):
+    """Testa busca de taxas Selic"""
+    
+    def test_nao_buscar_se_periodo_maior_10_anos(self):
+        """Testa se há erro caso o período escolhido seja superior a 10 anos"""
+        with self.assertRaises(ValueError):
+            buscar_valores_diarios_selic(datetime.date(2006,11,16), datetime.date(2016,11,17))
+        
+    def test_buscar_se_periodo_igual_10_anos(self):
+        """Testa se busca funciona para período igual a 10 anos"""
+        dados = buscar_valores_diarios_selic(datetime.date(2006,11,17), datetime.date(2016,11,17))
+        self.assertEqual(len(dados), 2513)
+
+    def test_buscar_unico_dia(self):
+        """Testa se função retorna resultado para um dia"""
+        dados = buscar_valores_diarios_selic(datetime.date(2016,11,17), datetime.date(2016,11,17))
+        self.assertTrue(len(dados) == 1)
+        self.assertEqual(dados[0], (datetime.date(2016,11,17), Decimal('1.00051660')))
+    
+    def test_buscar_selic_dia_6_6_2018(self):
+        """Testa a busca pela taxa Selic para 06/06/2018"""
+        resultado = buscar_valores_diarios_selic(datetime.date(2018, 6, 6), datetime.date(2018, 6, 6))
+        self.assertEqual(resultado[0][0], datetime.date(2018, 6, 6))
+        self.assertTrue(resultado[0][1], Decimal('1.0002462'))
+    
+    def test_buscar_selic_10_anos(self):
+        """Testa a busca pela taxa Selic para os últimos 10 anos"""
+        resultado = buscar_valores_diarios_selic(datetime.date.today().replace(year=datetime.date.today().year - 10), datetime.date.today())
+        self.assertTrue(len(resultado) <= 2513)
+        self.assertTrue(len(resultado) >= qtd_dias_uteis_no_periodo(datetime.date.today().replace(year=datetime.date.today().year - 10), datetime.date.today()))

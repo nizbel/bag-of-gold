@@ -26,6 +26,9 @@ class HistoricoIPCA (models.Model):
     data_inicio = models.DateField(u'Data de início')
     data_fim = models.DateField(u'Data de fim')
     
+    def __unicode__(self):
+        return u'%s%% de %s a %s' % (str(self.valor), self.data_inicio.strftime('%d/%m/%Y'), self.data_fim.strftime('%d/%m/%Y'))
+    
     class Meta():
         unique_together = (('data_inicio', ),)
 

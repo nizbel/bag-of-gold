@@ -1,0 +1,52 @@
+# Use an official Python runtime as a parent image
+FROM python:2.7
+
+COPY . /home/bagofgold/bagogold
+
+COPY conf/settings_prod.py /home/bagofgold/bagogold/conf/settings_local.py
+
+# Apagar arquivos de settings
+RUN rm /home/bagofgold/bagogold/conf/settings_dev.py
+RUN rm /home/bagofgold/bagogold/conf/settings_prod.py
+RUN rm /home/bagofgold/bagogold/conf/.pgpass
+
+# Apagar arquivos pyc
+RUN find /home/bagofgold/bagogold -name "*.pyc" | xargs rm
+
+WORKDIR /home/bagofgold/bagogold
+
+# Install any needed packages specified in requirements.txt
+RUN pip install --trusted-host pypi.python.org -r requirements.txt
+
+# Preparar html
+RUN python manage.py minificar_html
+
+RUN python manage.py preparar_aws
+RUN mkdir /root/.aws
+RUN mv /home/bagofgold/bagogold/credentials /root/.aws/credentials
+
+# Remover static
+RUN rm -rf /home/bagofgold/bagogold/bagogold/static
+
+EXPOSE 80
+EXPOSE 443
+
+# Instalar apache
+RUN apt-get update
+RUN apt-get install -y apache2 apache2-utils libexpat1 ssl-cert && apt-get clean
+
+RUN apt-get install -y libapache2-mod-wsgi
+
+WORKDIR /home/bagofgold/bagogold/apache-conf
+RUN . /home/bagofgold/bagogold/apache-conf/set-apache.sh
+
+WORKDIR /home/bagofgold/bagogold
+
+# Remover pastas nao utilizadas
+RUN rm -rf /home/bagofgold/bagogold/apache-conf
+RUN rm -rf /home/bagofgold/bagogold/backups
+
+RUN apt-get install nano
+
+# Run app.py when the container launches
+CMD apachectl -D FOREGROUND

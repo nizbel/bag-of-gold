@@ -1,9 +1,17 @@
 # -*- coding: utf-8 -*-
-from bagogold import settings
+from cStringIO import StringIO
+import datetime
+from decimal import Decimal
+from django.contrib.auth.models import User
+from django.core.files import File
+from urllib2 import URLError
+
+import boto3
+from django.test import TestCase
+
 from bagogold.bagogold.models.acoes import Acao, Provento, AcaoProvento, \
     AtualizacaoSelicProvento
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.fii.models import FII, ProventoFII
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
     PendenciaDocumentoProvento, InvestidorLeituraDocumento, \
     InvestidorResponsavelPendencia, ProventoAcaoDescritoDocumentoBovespa, \
@@ -19,15 +27,11 @@ from bagogold.bagogold.utils.gerador_proventos import \
     versionar_descricoes_relacionadas_acoes, versionar_descricoes_relacionadas_fiis, \
     ler_provento_estruturado_fii, criar_descricoes_provento_acoes, \
     relacionar_proventos_lidos_sistema, reiniciar_documento
-from cStringIO import StringIO
-from decimal import Decimal
-from django.contrib.auth.models import User
-from django.core.files import File
-from django.test import TestCase
-from urllib2 import URLError
-import datetime
-import os
+from bagogold.fii.models import FII, ProventoFII
+from conf.settings_local import AWS_STORAGE_BUCKET_NAME as AWS_TEST_BUCKET_NAME
 
+
+# import os
 class GeradorProventosTestCase(TestCase):
 
     def setUp(self):
@@ -67,6 +71,9 @@ class GeradorProventosTestCase(TestCase):
         # Empresa para FII
         empresa3 = Empresa.objects.create(nome='Fundo BBPO', nome_pregao='BBPO')
         fii1 = FII.objects.create(empresa=empresa3, ticker='BBPO11')
+        
+    def tearDown(self):
+        DocumentoProventoBovespa.objects.all().delete()
 
     def test_baixar_arquivo(self):
         """Testa se o arquivo baixado realmente é um arquivo"""
@@ -83,6 +90,9 @@ class GeradorProventosTestCase(TestCase):
     
     def test_nao_baixar_se_ja_existir_arquivo_em_media(self):
         """Testa se criação do documento na base recusa download devido a documento já existir em Media"""
+        # Criar arquivo em Media
+        boto3.client('s3').put_object(Body='Test', Bucket=AWS_TEST_BUCKET_NAME, Key='media/doc proventos/BBAS/BBAS-507317.pdf')
+        
         documento = DocumentoProventoBovespa()
         documento.empresa = Empresa.objects.get(codigo_cvm='1023')
         documento.url = 'http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=507317'
@@ -101,11 +111,11 @@ class GeradorProventosTestCase(TestCase):
         documento.protocolo = '507317'
         documento.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
         self.assertTrue(documento.baixar_e_salvar_documento())
-        # Apagar documento criado após teste
-        documento.apagar_documento()
-        # Apagar pasta após teste
-        if os.listdir('%sdoc proventos/%s' % (settings.MEDIA_ROOT, empresa.nome_pregao)) == []:
-            os.rmdir('%sdoc proventos/%s' % (settings.MEDIA_ROOT, empresa.nome_pregao))
+#         # Apagar documento criado após teste
+#         documento.apagar_documento()
+#         # Apagar pasta após teste
+# #         if os.listdir('%sdoc proventos/%s' % (settings.MEDIA_ROOT, empresa.nome_pregao)) == []:
+# #             os.rmdir('%sdoc proventos/%s' % (settings.MEDIA_ROOT, empresa.nome_pregao))
         
     def test_pendencia_gerada_ao_criar_documento_provento_bovespa(self):
         """Testa se foi gerada pendência ao criar um documento de proventos da Bovespa"""
@@ -673,6 +683,8 @@ class LeitorProventosEstruturadosTestCase(TestCase):
 </DadosEconomicoFinanceiros>')
         documento.documento.save('%s-%s.%s' % (documento.ticker_empresa(), documento.protocolo, 'xml'), File(conteudo))
         
+    def tearDown(self):
+        DocumentoProventoBovespa.objects.all().delete()
 
     def test_falhar_por_tipo_fii(self):
         """Testa se a função joga erro para arquivo que não seja de FII"""
@@ -881,6 +893,19 @@ class LeitorProventosEstruturadosTestCase(TestCase):
         self.assertTrue(ProventoFIIDocumento.objects.filter(documento=documento_original, versao=1))
         self.assertTrue(ProventoFIIDocumento.objects.filter(documento=documento, versao=2))
         self.assertEqual(len(ProventoFII.objects.all()), 1)
+
+    def test_nao_ler_documento_se_empresas_doc_prov_diferentes(self):
+        """Testa se leitura é terminada caso seja detectado que provento no documento é de FII diferente da empresa do documento"""
+        empresa = Empresa.objects.create(nome='Fundo BBBB', nome_pregao='BBBB')
+        fii = FII.objects.create(empresa=empresa, ticker='BBBB11')
+        
+        # Documento da empresa, já existe em media
+        documento = DocumentoProventoBovespa.objects.filter(empresa__nome_pregao='BBPO')[0]
+        documento.empresa = empresa
+        documento.save()
+        
+        with self.assertRaises(ValueError):
+            ler_provento_estruturado_fii(documento)
         
     def test_apagar_outros_docs_mesmo_protocolo(self):
         """Testa se após leitura outros documentos com outro protocolo são apagados (documentos errados)"""
@@ -933,7 +958,7 @@ class LeitorProventosEstruturadosTestCase(TestCase):
         
         self.assertTrue(DocumentoProventoBovespa.objects.filter(protocolo='8679').count() == 1)
         self.assertTrue(ProventoFIIDocumento.objects.all().count() == 1)
-    
+
 class ReiniciarDocumentosTestCase(TestCase):
 
     def setUp(self):
@@ -1219,6 +1244,9 @@ class ReiniciarDocumentosTestCase(TestCase):
                                                                                             data_fim=atualizacao_selic_4.data_fim)
         ProventoAcaoDocumento.objects.create(provento=provento_selic_4, descricao_provento=descricao_2_provento_selic_4, documento=documento_acao_2, versao=2)
 
+    def tearDown(self):
+        DocumentoProventoBovespa.objects.all().delete()
+        
     def test_reiniciar_documento_fii_estruturado(self):
         """Testa o resultado de reiniciar um FII lido automaticamente como xml"""
         documento = DocumentoProventoBovespa.objects.get(protocolo='8679')

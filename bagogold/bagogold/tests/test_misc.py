@@ -39,24 +39,6 @@ class IOFTestCase(TestCase):
         self.assertEqual(calcular_iof_regressivo(15), 0.50)
         self.assertEqual(calcular_iof_regressivo(29), 0.03)
 
-class BuscarTaxaSELICTestCase(TestCase):
-    
-    def test_nao_buscar_se_periodo_maior_10_anos(self):
-        """Testa se há erro caso o período escolhido seja superior a 10 anos"""
-        with self.assertRaises(ValueError):
-            buscar_valores_diarios_selic(datetime.date(2006,11,16), datetime.date(2016,11,17))
-        
-    def test_buscar_se_periodo_igual_10_anos(self):
-        """Testa se busca funciona para período igual a 10 anos"""
-        dados = buscar_valores_diarios_selic(datetime.date(2006,11,17), datetime.date(2016,11,17))
-        self.assertEqual(len(dados), 2513)
-
-    def test_buscar_unico_dia(self):
-        """Testa se função retorna resultado para um dia"""
-        dados = buscar_valores_diarios_selic(datetime.date(2016,11,17), datetime.date(2016,11,17))
-        self.assertTrue(len(dados) == 1)
-        self.assertEqual(dados[0], (datetime.date(2016,11,17), Decimal('1.00051660')))
-        
 class VerificarFeriadoBovespaTestCase(TestCase):
     
     def test_domingo_pascoa(self):

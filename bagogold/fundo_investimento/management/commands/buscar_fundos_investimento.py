@@ -1,23 +1,28 @@
 # -*- coding: utf-8 -*-
 from StringIO import StringIO
+import datetime
+from django.core.mail import mail_admins
+from django.core.management.base import BaseCommand
+import os
+import random
+import time
+import traceback
+from urllib2 import urlopen
+import zipfile
+
+from django.db import transaction
+from lxml import etree
+import zeep
+
 from bagogold import settings
 from bagogold.bagogold.utils.misc import ultimo_dia_util, \
     buscar_dia_util_aleatorio, verifica_se_dia_util
 from bagogold.fundo_investimento.models import FundoInvestimento, Administrador, \
     DocumentoCadastro, LinkDocumentoCadastro
-from django.core.mail import mail_admins
-from django.core.management.base import BaseCommand
-from django.db import transaction
-from lxml import etree
-from urllib2 import urlopen
-import datetime
-import os
-import random
-import time
-import traceback
-import zeep
-import zipfile
-from bagogold.fundo_investimento.utils import criar_slug_fundo_investimento_valido
+from bagogold.fundo_investimento.utils import \
+    criar_slug_fundo_investimento_valido
+from conf.conf import FI_LOGIN, FI_PASSWORD
+
 
 class Command(BaseCommand):
     help = 'Buscar fundos de investimento na CVM'
@@ -29,7 +34,7 @@ class Command(BaseCommand):
         try:
             wsdl = 'http://sistemas.cvm.gov.br/webservices/Sistemas/SCW/CDocs/WsDownloadInfs.asmx?WSDL'
             client = zeep.Client(wsdl=wsdl)
-            resposta = client.service.Login(2377, '16335')
+            resposta = client.service.Login(FI_LOGIN, FI_PASSWORD)
             headerSessao = resposta['header']
     #         print headerSessao
         

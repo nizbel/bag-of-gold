@@ -10,6 +10,54 @@ from bagogold.bagogold.models.empresa import Empresa
 from bagogold.fii.models import FII, HistoricoFII, ProventoFII, \
     EventoAgrupamentoFII, OperacaoFII
 
+class AcompanhamentoFIITestCase (TestCase):
+    def setUp(self):
+        nizbel = User.objects.create_user('nizbel', 'nizbel@teste.com', 'nizbel')
+        
+        empresa = Empresa.objects.create(nome='Teste', nome_pregao='TEST')
+        
+        # FII sem histórico sem proventos
+        fii_1 = FII.objects.create(ticker='TEST11', empresa=empresa)
+        # FII com histórico com proventos
+        fii_2 = FII.objects.create(ticker='TSTE11', empresa=empresa)
+        # FII sem histórico com proventos
+        fii_3 = FII.objects.create(ticker='TSTT11', empresa=empresa)
+        # FII com histórico sem proventos
+        fii_4 = FII.objects.create(ticker='TSST11', empresa=empresa)
+        
+        for data in [datetime.date.today() - datetime.timedelta(days=x) for x in range(365)]:
+            if data >= datetime.date.today() - datetime.timedelta(days=3):
+                HistoricoFII.objects.create(fii=fii_2, preco_unitario=1200, data=data)
+                HistoricoFII.objects.create(fii=fii_4, preco_unitario=1200, data=data)
+            else:
+                HistoricoFII.objects.create(fii=fii_2, preco_unitario=120, data=data)
+                HistoricoFII.objects.create(fii=fii_4, preco_unitario=120, data=data)
+                
+        for data in [datetime.date.today() - datetime.timedelta(days=30*x) for x in range(1, 7)]:
+            ProventoFII.objects.create(fii=fii_2, valor_unitario=Decimal('0.9'), data_ex=data, data_pagamento=data+datetime.timedelta(days=7),
+                                       oficial_bovespa=True)
+            ProventoFII.objects.create(fii=fii_3, valor_unitario=Decimal('0.9'), data_ex=data, data_pagamento=data+datetime.timedelta(days=7),
+                                       oficial_bovespa=True)
+                                       
+    def test_usuario_deslogado(self):
+        """Testa o acesso de usuário deslogado"""
+        response = self.client.get(reverse('fii:acompanhamento_fii'))
+        self.assertEqual(response.status_code, 200)
+        
+        # TODO testar contexto
+        
+    def test_usuario_logado(self):
+        """Testa o acesso de usuário logado"""
+        self.client.login(username='nizbel', password='nizbel')
+        
+        response = self.client.get(reverse('fii:acompanhamento_fii'))
+        self.assertEqual(response.status_code, 200)
+        
+        # TODO testar contexto
+        
+    def test_filtros(self):
+        """Testa os filtros da pesquisa"""
+        pass
 
 class DetalharFIITestCase (TestCase):
     def setUp(self):

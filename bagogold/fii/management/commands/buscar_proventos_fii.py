@@ -1,20 +1,24 @@
 # -*- coding: utf-8 -*-
+import datetime
+from django.core.mail import mail_admins
+from django.core.management.base import BaseCommand
+import re
+from threading import Thread
+import time
+import traceback
+from urllib2 import Request, urlopen, HTTPError, URLError
+
+import mechanize
+from mechanize._form import ControlNotFoundError
+
 from bagogold import settings
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.fii.models import FII
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa, \
     PendenciaDocumentoProvento
 from bagogold.bagogold.utils.gerador_proventos import \
     ler_provento_estruturado_fii
-from django.core.mail import mail_admins
-from django.core.management.base import BaseCommand
-from mechanize._form import ControlNotFoundError
-from threading import Thread
-from urllib2 import Request, urlopen, HTTPError, URLError
-import datetime
-import mechanize
-import re
-import time
+from bagogold.fii.models import FII
+
 
 # A thread 'Principal' indica se ainda está rodando a thread principal
 threads_rodando = {'Principal': 1}
@@ -134,7 +138,8 @@ class Command(BaseCommand):
             
         # Quantas threads correrão por vez
         qtd_threads = 8
-#         fiis = Empresa.objects.filter(codigo_cvm__in=[fii.ticker[:4] for fii in FII.objects.filter(ticker='RBVO11')]).values_list('codigo_cvm', flat=True)
+        
+#         fiis = Empresa.objects.filter(codigo_cvm__in=[fii.ticker[:4] for fii in FII.objects.filter(ticker='RBRF11')]).values_list('codigo_cvm', flat=True)
         fiis = Empresa.objects.filter(codigo_cvm__in=[fii.ticker[:4] for fii in FII.objects.all()]).values_list('codigo_cvm', flat=True)
         contador = 0
         try:
@@ -159,7 +164,8 @@ class Command(BaseCommand):
                 try:
                     ler_provento_estruturado_fii(pendencia.documento)
                 except:
-                    pass
+                    if settings.ENV == 'DEV':
+                        print traceback.format_exc()
         except KeyboardInterrupt:
 #             print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
             while 'Principal' in threads_rodando.keys():

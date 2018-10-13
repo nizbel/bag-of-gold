@@ -1,15 +1,18 @@
 # -*- coding: utf-8 -*-
+import datetime
+from django.core.mail import mail_admins
+from django.core.management.base import BaseCommand
+import re
+from threading import Thread
+import time
+# import traceback
+from urllib2 import Request, urlopen, HTTPError, URLError
+
 from bagogold import settings
 from bagogold.bagogold.models.acoes import Acao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa
-from django.core.mail import mail_admins
-from django.core.management.base import BaseCommand
-from threading import Thread
-from urllib2 import Request, urlopen, HTTPError, URLError
-import datetime
-import re
-import time
+
 
 # A thread 'Principal' indica se ainda está rodando a thread principal
 threads_rodando = {'Principal': 1}
@@ -44,7 +47,7 @@ class GeraInfoDocumentoProtocoloThread(Thread):
                     codigo_cvm = info['codigo_cvm']
                     data_referencia, protocolo, tipo_documento = info['info_doc']
 
-        #             print protocolo, Empresa.objects.get(codigo_cvm=codigo_cvm), ano
+#                     print protocolo, Empresa.objects.get(codigo_cvm=codigo_cvm)
                     # Apenas adiciona caso seja dos tipos válidos, decodificando de utf-8
                     if not DocumentoProventoBovespa.objects.filter(empresa__codigo_cvm=codigo_cvm, protocolo=protocolo).exists() \
                         and tipo_documento.decode('utf-8') in DocumentoProventoBovespa.TIPOS_DOCUMENTO_VALIDOS:
@@ -59,12 +62,12 @@ class GeraInfoDocumentoProtocoloThread(Thread):
                 
                 time.sleep(10)
         except Exception as e:
-                template = "An exception of type {0} occured. Arguments:\n{1!r}"
-                message = template.format(type(e).__name__, e.args)
-                if settings.ENV == 'PROD':
-                    mail_admins(u'Erro na thread de gerar infos do documento de ação', message.decode('utf-8'))
-                elif settings.ENV == 'DEV':
-                    print message
+            template = "An exception of type {0} occured. Arguments:\n{1!r}"
+            message = template.format(type(e).__name__, e.args)
+            if settings.ENV == 'PROD':
+                mail_admins(u'Erro na thread de gerar infos do documento de ação', message.decode('utf-8'))
+            elif settings.ENV == 'DEV':
+                print message
 
 class BuscaProventosAcaoThread(Thread):
     def __init__(self, codigo_cvm, ticker, ano_inicial):
@@ -80,6 +83,7 @@ class BuscaProventosAcaoThread(Thread):
         except Exception as e:
 #             template = "An exception of type {0} occured. Arguments:\n{1!r}"
 #             message = template.format(type(e).__name__, e.args)
+#             print message
             pass
         # Tenta remover seu código da listagem de threads até conseguir
         while self.codigo_cvm in threads_rodando:
