@@ -143,10 +143,10 @@ class CalcularQuantidadesCDB_RDBTestCase(TestCase):
         """Testa a quantidade vigente de CDB/RDB ao fim das operações"""
         operacoes_vigentes = buscar_operacoes_vigentes_ate_data(Investidor.objects.get(user__username='tester'), datetime.date(2017, 5, 25))
         self.assertEqual(len(operacoes_vigentes), 2)
-        self.assertIn(OperacaoCDB_RDB.objects.get(id=1), operacoes_vigentes)
-        self.assertEqual(operacoes_vigentes.get(id=1).qtd_disponivel_venda, Decimal(2000))
-        self.assertIn(OperacaoCDB_RDB.objects.get(id=4), operacoes_vigentes)
-        self.assertEqual(operacoes_vigentes.get(id=4).qtd_disponivel_venda, Decimal(2000))
+        self.assertIn(OperacaoCDB_RDB.objects.get(quantidade=2000), operacoes_vigentes)
+        self.assertEqual(operacoes_vigentes.get(quantidade=2000).qtd_disponivel_venda, Decimal(2000))
+        self.assertIn(OperacaoCDB_RDB.objects.get(quantidade=3000), operacoes_vigentes)
+        self.assertEqual(operacoes_vigentes.get(quantidade=3000).qtd_disponivel_venda, Decimal(2000))
         
     def test_verificar_qtds_por_divisao(self):
         """Testa a quantidade em cada divisão"""

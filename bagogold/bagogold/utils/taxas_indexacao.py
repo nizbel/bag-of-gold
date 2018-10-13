@@ -301,7 +301,8 @@ def buscar_ipca_projetado():
                 except:
                     raise
             else:
-                print HistoricoIPCA.objects.filter(data_inicio=data_inicio, ipcaprojetado__isnull=False).exists()
+#                 print HistoricoIPCA.objects.filter(data_inicio=data_inicio, ipcaprojetado__isnull=False).exists()
+                pass
                 
 def gerar_ipca_projetado():
     """Gera valor de IPCA projetado"""

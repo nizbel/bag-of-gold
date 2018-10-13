@@ -1,0 +1,24 @@
+<!-- BEGIN Portlet PORTLET-->
+<div class="portlet box yellow-crusta">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="fa fa-clock-o"></i>Próx. vencimentos renda fixa</div>
+        <div class="tools">
+            <a href="javascript:;" class="collapse"></a>
+        </div>
+    </div>
+    <div class="portlet-body">
+        <div class="list-group">
+            {% for prox_vencimento in prox_vencimentos %}
+            <a href="javascript:;" class="list-group-item">
+                <span class="col-md-4">{{prox_vencimento.area_investimento}}</span>
+                <span class="col-md-4">R$ {{prox_vencimento.valor_vencimento|floatformat:2}}</span>
+                <span class="col-md-4">{{prox_vencimento.data|date:'d/m/Y'}}</span>
+            </a>
+            {% empty %}
+            <a href="javascript:;" class="list-group-item">Não há vencimentos</a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+<!-- END Portlet PORTLET-->

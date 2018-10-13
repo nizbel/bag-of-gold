@@ -11,7 +11,7 @@ from urllib2 import Request, urlopen, URLError, HTTPError
 def baixar_demonstrativo_rendimentos(arquivo_url):
     req = Request(arquivo_url)
     try:
-        response = urlopen(req, timeout=30)
+        response = urlopen(req, timeout=45)
     except HTTPError as e:
         print 'The server couldn\'t fulfill the request.'
         print 'Error code: ', e.code
