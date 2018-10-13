@@ -19,7 +19,7 @@ class Command(BaseCommand):
             # Verifica se documento existe na AWS
             if not documento.verificar_se_doc_existe():
                 # Se não, buscar do bag of gold no rackspace
-                url_documento = 'https://bagofgold.com.br' + reverse('gerador_proventos:baixar_documento_provento', kwargs={'id_documento': 6000000})
+                url_documento = 'https://bagofgold.com.br' + reverse('gerador_proventos:baixar_documento_provento', kwargs={'id_documento': documento.id})
 #                 print url_documento
                 req = Request(url_documento)
                 try:
