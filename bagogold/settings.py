@@ -125,7 +125,7 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR + '/bagogold', "static"),
 ]
 
-MEDIA_ROOT = PROJECT_ROOT + '/media/'
+MEDIA_ROOT = 'media/'
 
 # Caminho para arquivos de fundos de investimento
 CAMINHO_FUNDO_INVESTIMENTO = MEDIA_ROOT + 'fundo investimento/'
