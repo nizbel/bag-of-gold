@@ -179,13 +179,10 @@ def apagar_documento_on_delete(sender, instance, **kwargs):
     """
     Apaga o documento no disco quando o arquivo é deletado da base
     """
-#     print 'deletar', instance.documento
     if instance.documento:
-#         if os.path.isfile(instance.documento.path):
-#             os.remove(instance.documento.path)
         if instance.verificar_se_doc_existe():
-            instance.documento.delete()
-#             print 'apagou'
+            caminho = '%s/%s' % (AWS_MEDIA_LOCATION, instance.documento.name)
+            boto3.client('s3').delete_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho)
 
 class InvestidorLeituraDocumento (models.Model):
     documento = models.OneToOneField('DocumentoProventoBovespa')
