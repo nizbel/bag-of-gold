@@ -1,18 +1,22 @@
 # -*- coding: utf-8 -*-
 from StringIO import StringIO
+from decimal import Decimal
+import re
+from urllib2 import urlopen
+import zipfile
+
+import boto3
+from django.db import transaction
+from lxml import etree
+import mechanize
+from mechanize._form import ControlNotFoundError
+
 from bagogold.bagogold.models.acoes import HistoricoAcao, Acao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.fii.models import FII, HistoricoFII
-from decimal import Decimal
-from django.db import transaction
-from lxml import etree
-from mechanize._form import ControlNotFoundError
-from urllib2 import urlopen
-import datetime
-import mechanize
-import re
-import zipfile
 from bagogold.settings import CAMINHO_HISTORICO_RECENTE_ACOES_FIIS
+from conf.settings_local import AWS_STORAGE_BUCKET_NAME
+
 
 def preencher_empresa_fii_nao_listado(ticker, num_tentativas=0):
     """
@@ -70,7 +74,8 @@ def buscar_historico_recente_bovespa(data):
         # Ler arquivo mais recente
         ult_arq_zip = max(unzipped.namelist())
         caminho_arquivo = CAMINHO_HISTORICO_RECENTE_ACOES_FIIS + ult_arq_zip
-        open(caminho_arquivo,'wb').write(unzipped.read(ult_arq_zip))
+        boto3.client('s3').put_object(Body=unzipped.read(ult_arq_zip), Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho_arquivo)
+#         open(caminho_arquivo,'wb').write(unzipped.read(ult_arq_zip))
         
 #         print caminho_arquivo
         return caminho_arquivo
@@ -78,14 +83,15 @@ def buscar_historico_recente_bovespa(data):
     except ControlNotFoundError:
         raise ValueError(u'Não encontrou os controles')
 
-def processar_historico_recente_bovespa(nome_arquivo_hist):
+def processar_historico_recente_bovespa(arquivo):
     """
     Processa o arquivo com o histórico recente da bovespa
     
-    Parâmetros: Nome do arquivo
+    Parâmetros: Arquivo a ser analisado
     """
     try:
-        tree = etree.parse(open(nome_arquivo_hist))
+        dados_arquivo = arquivo['Body']
+        tree = etree.parse(dados_arquivo)
         with transaction.atomic():
             namespace = '{urn:bvmf.217.01.xsd}'
             if len(tree.findall('.//%sPricRpt' % namespace)) == 0:
