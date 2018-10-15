@@ -479,10 +479,14 @@ def painel(request):
     if request.user.is_authenticated():
         investidor = request.user.investidor
     else:
-        return TemplateResponse(request, 'cri_cra/painel.html', {'cri_cra': list(), 'dados': {}})
+        dados = {}
+        dados['total_investido'] = Decimal(0)
+        dados['total_valor_atual'] = Decimal(0)
+        dados['total_rendimento_ate_vencimento'] = Decimal(0)
+        return TemplateResponse(request, 'cri_cra/painel.html', {'cri_cra': {}, 'dados': dados})
                                                                          
     # Processa primeiro operações de venda (V), depois compra (C)
-    operacoes = OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor).exclude(data__isnull=True).order_by('-tipo_operacao', 'data') 
+    operacoes = OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor).exclude(data__isnull=True).select_related('cri_cra').order_by( 'data', '-tipo_operacao')
     if not operacoes:
         dados = {}
         dados['total_investido'] = Decimal(0)
