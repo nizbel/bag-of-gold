@@ -156,13 +156,13 @@ class DocumentoProventoBovespa (models.Model):
                 
             
 
-    def verificar_arquivo_existe(self):
-        diretorio_path = '{0}doc proventos/{1}/'.format(settings.MEDIA_ROOT, self.ticker_empresa())
-        for (_, _, nomes_arquivo) in os.walk(diretorio_path):
-            for _, nome_arquivo in enumerate(nomes_arquivo):
-                if '%s-%s' % (self.ticker_empresa(), self.protocolo) == nome_arquivo.split('.')[0]:
-                    return True
-        return False
+#     def verificar_arquivo_existe(self):
+#         diretorio_path = '{0}doc proventos/{1}/'.format(settings.MEDIA_ROOT, self.ticker_empresa())
+#         for (_, _, nomes_arquivo) in os.walk(diretorio_path):
+#             for _, nome_arquivo in enumerate(nomes_arquivo):
+#                 if '%s-%s' % (self.ticker_empresa(), self.protocolo) == nome_arquivo.split('.')[0]:
+#                     return True
+#         return False
     
 @receiver(post_save, sender=DocumentoProventoBovespa, dispatch_uid="documento_provento_bovespa_criado")
 def criar_pendencia_on_save(sender, instance, created, **kwargs):
