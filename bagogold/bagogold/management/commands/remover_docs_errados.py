@@ -199,7 +199,7 @@ class Command(BaseCommand):
                                                                    documento__tipo='F').order_by('documento__protocolo'):
                     try:
                         print 'ler', pendencia.documento
-                        if not doc.verificar_arquivo_existe():
+                        if not doc.verificar_se_doc_existe():
                             pendencia.documento.baixar_e_salvar_documento()
                         ler_provento_estruturado_fii(pendencia.documento)
                     except:
