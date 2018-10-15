@@ -135,6 +135,9 @@ CAMINHO_FUNDO_INVESTIMENTO_HISTORICO = CAMINHO_FUNDO_INVESTIMENTO + 'historico/'
 # Caminho para arquivos de historico recente acoes/fiis
 CAMINHO_HISTORICO_RECENTE_ACOES_FIIS = MEDIA_ROOT + 'historico recente/'
 
+# Caminho para arquivos de proventos
+CAMINHO_DOCUMENTO_PROVENTOS = MEDIA_ROOT + 'doc proventos/'
+
 # Caminho para backups
 CAMINHO_BACKUPS = BASE_DIR + '/backups'
 

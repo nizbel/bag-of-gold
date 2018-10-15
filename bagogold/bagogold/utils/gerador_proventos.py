@@ -2,12 +2,10 @@
 import datetime
 from decimal import Decimal
 from itertools import chain
-import traceback
 
 from django.db import transaction
 from lxml import etree
 
-from bagogold import settings
 from bagogold.bagogold.models.acoes import Provento, AcaoProvento, \
     AtualizacaoSelicProvento
 from bagogold.bagogold.models.gerador_proventos import \
@@ -662,9 +660,11 @@ def ler_provento_estruturado_fii(documento_fii):
             tree = etree.parse(documento_fii.documento)
             # Pega o último (maior ID) FII que contenha o código de negociação em seu ticker
             fii = FII.objects.filter(ticker__icontains=list(tree.getroot().iter('CodNegociacaoCota'))[0].text.strip()).order_by('-id')[0]
+            
             # Verificar se FII tem empresa igual a do documento
             if fii not in documento_fii.empresa.fii_set.all():
                 raise ValueError('Documento cita FII de outra empresa')
+            
             for element in tree.getroot().iter('Rendimento', 'Amortizacao'):
                 descricao_provento = ProventoFIIDescritoDocumentoBovespa()
                 # Se há pelo menos 5 campos, o provento pode ser prenchido
