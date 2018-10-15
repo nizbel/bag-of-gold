@@ -8,6 +8,7 @@ from django.urls.base import reverse
 from bagogold.bagogold.models.divisoes import Divisao, \
     DivisaoOperacaoLCI_LCA
 from bagogold.bagogold.models.investidores import Investidor
+from bagogold.lci_lca.forms import OperacaoLetraCreditoForm
 from bagogold.lci_lca.models import LetraCredito, HistoricoCarenciaLetraCredito, \
     HistoricoPorcentagemLetraCredito, HistoricoVencimentoLetraCredito, \
     OperacaoLetraCredito, OperacaoVendaLetraCredito
@@ -216,8 +217,16 @@ class EditarOperacaoLetraCreditoTestCase(TestCase):
         self.assertTrue(OperacaoLetraCredito.objects.filter(id=operacao_id, investidor=investidor).exists())
         self.assertTrue(DivisaoOperacaoLCI_LCA.objects.filter(operacao__id=operacao_id).count() > 0)
         
+        # Buscar dados das divisões para o formset
+        div_geral = Divisao.objects.get(investidor=investidor, nome='Geral')
+        div_nova = Divisao.objects.get(investidor=investidor, nome='Nova')
+        
         response = self.client.post(reverse('lci_lca:editar_operacao_lci_lca', kwargs={'operacao_id': operacao_id}), 
-                                    {'delete': 1})
+                                    {'delete': 1, 'divisaooperacaolci_lca_set-INITIAL_FORMS': '2', 'divisaooperacaolci_lca_set-TOTAL_FORMS': '3',
+                                     'divisaooperacaolci_lca_set-0-id': div_geral.id, 'divisaooperacaolci_lca_set-0-divisao': DivisaoOperacaoLCI_LCA.objects.get(operacao__id=operacao_id, divisao=div_geral), 
+                                     'divisaooperacaolci_lca_set-0-quantidade': 600,
+                                     'divisaooperacaolci_lca_set-1-id': div_nova.id, 'divisaooperacaolci_lca_set-1-divisao': DivisaoOperacaoLCI_LCA.objects.get(operacao__id=operacao_id, divisao=div_nova), 
+                                     'divisaooperacaolci_lca_set-1-quantidade': 400,})
         
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse('lci_lca:historico_lci_lca'))
@@ -234,10 +243,15 @@ class EditarOperacaoLetraCreditoTestCase(TestCase):
         # Cadastrar venda
         venda = OperacaoLetraCredito.objects.create(investidor=investidor, data=datetime.date(2018, 5, 10), quantidade=500,
             tipo_operacao='V', letra_credito=operacao.letra_credito)
+        
+        # Preparando campos do form e adicionando flag para exclusão
+        form_operacao = OperacaoLetraCreditoForm(instance=operacao, investidor=investidor, initial={'operacao_compra': operacao.operacao_compra_relacionada(),})
+        form_operacao.initial.update({'delete': 1})
+        
         OperacaoVendaLetraCredito.objects.create(operacao_compra=operacao, operacao_venda=venda)
         
         response = self.client.post(reverse('lci_lca:editar_operacao_lci_lca', kwargs={'operacao_id': operacao.id}),
-                                    {'delete': 1})
+                                    form_operacao.initial)
         
         self.assertEqual(response.status_code, 200)
         messages = list(response.context['messages'])
