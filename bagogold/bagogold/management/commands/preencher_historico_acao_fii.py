@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import datetime
-import os
 import traceback
 
 import boto3
@@ -18,6 +17,7 @@ class Command(BaseCommand):
     help = 'Preenche histórico para ações e FIIs'
 
     def handle(self, *args, **options):
+        nome_arquivo_hist = ''
         try:
             # Pesquisar sempre último dia útil
             data_pesquisa = ultimo_dia_util()
