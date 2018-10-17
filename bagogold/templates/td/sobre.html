@@ -201,7 +201,7 @@
                     <tbody>
                     {% for valores in ultimos_valores %}
                     <tr>
-                        <td><a href="{% url 'tesouro_direto:detalhar_titulo_td' valores.titulo_id %}" class="tooltips" data-placement="top" data-original-title="Detalhar título do Tesouro Direto">{{valores.titulo}}</a></td>
+                        <td><a href="{% url 'tesouro_direto:detalhar_titulo_td_id' valores.titulo_id %}" class="tooltips" data-placement="top" data-original-title="Detalhar título do Tesouro Direto">{{valores.titulo}}</a></td>
                         <td>R$ {{valores.preco_compra}}</td>
                         <td>{{valores.taxa_compra}}%</td>
                         <td>R$ {{valores.preco_venda}}</td>
