@@ -17,6 +17,7 @@ CSS_JANGO_THEME_FOLDER = STATIC_FOLDER + '/assets_jango/demos/default/css'
 IP_MAIN = '18.221.194.175'
 IP_SUPPORT = '18.219.213.179'
 
+# 23.253.149.64
 # Servers
 def prod():
     env.config = 'PROD'
