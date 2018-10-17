@@ -235,7 +235,7 @@ def detalhar_titulo_td(request, titulo_tipo, titulo_data):
         # TODO Considerar vendas parciais de titulos
         dados['total_operacoes'] = OperacaoTitulo.objects.filter(titulo=titulo, investidor=investidor).count()
         if not titulo.titulo_vencido():
-            dados['qtd_titulos_atual'] = quantidade_titulos_ate_dia_por_titulo(investidor, titulo.id)
+            dados['qtd_titulos_atual'] = quantidade_titulos_ate_dia_por_titulo(investidor, titulo_id)
             dados['total_atual'] = dados['qtd_titulos_atual'] * titulo.preco_venda
             preco_medio = (OperacaoTitulo.objects.filter(titulo=titulo, investidor=investidor, tipo_operacao='C').annotate(valor_investido=F('quantidade') * F('preco_unitario')) \
                 .aggregate(total_investido=Sum('valor_investido'))['total_investido'] or Decimal(0)) / (OperacaoTitulo.objects.filter(titulo=titulo, investidor=investidor, tipo_operacao='C') \
