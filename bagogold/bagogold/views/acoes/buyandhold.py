@@ -63,7 +63,7 @@ def editar_operacao_acao(request, operacao_id):
                                             extra=1, formset=DivisaoOperacaoAcaoFormSet)
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
 
     if request.method == 'POST':
         if request.POST.get("save"):
