@@ -274,7 +274,7 @@ def editar_operacao_acao(request, operacao_id):
                                             extra=1, formset=DivisaoOperacaoAcaoFormSet)
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     # Busca as operações de compra/venda relativas a essa operação, se alguma envolver daytrade, marcar como daytrade
     # TODO preparar para muitas execuções em uma mesma operação
@@ -529,7 +529,7 @@ def inserir_operacao_acao(request):
     investidor = request.user.investidor
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'), can_delete=False,

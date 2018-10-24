@@ -51,7 +51,7 @@ def editar_fork(request, id_fork):
                                             extra=1, formset=DivisaoForkCriptomoedaFormSet)
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     if request.method == 'POST':
         if request.POST.get("save"):
@@ -128,7 +128,7 @@ def editar_operacao_criptomoeda(request, id_operacao):
                                             extra=1, formset=DivisaoOperacaoCriptomoedaFormSet)
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     if request.method == 'POST':
         if request.POST.get("save"):
@@ -260,7 +260,7 @@ def editar_transferencia(request, id_transferencia):
                                             extra=1, formset=DivisaoTransferenciaCriptomoedaFormSet)
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     if request.method == 'POST':
         if request.POST.get("save"):
@@ -487,7 +487,7 @@ def inserir_fork(request):
                                             extra=1, formset=DivisaoForkCriptomoedaFormSet)
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     if request.method == 'POST':
         form_fork = ForkForm(request.POST, investidor=investidor)
@@ -552,7 +552,7 @@ def inserir_operacao_criptomoeda(request):
                                             extra=1, formset=DivisaoOperacaoCriptomoedaFormSet)
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     if request.method == 'POST':
         form_operacao_criptomoeda = OperacaoCriptomoedaForm(request.POST, investidor=investidor)
@@ -680,7 +680,7 @@ def inserir_transferencia(request):
                                             extra=1, formset=DivisaoTransferenciaCriptomoedaFormSet)
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     if request.method == 'POST':
         form_transferencia_criptomoeda = TransferenciaCriptomoedaForm(request.POST, investidor=investidor)

@@ -317,7 +317,7 @@ def editar_operacao_cdb_rdb(request, operacao_id):
         raise PermissionDenied
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoCDB_RDB, DivisaoOperacaoCDB_RDB, fields=('divisao', 'quantidade'),
@@ -705,7 +705,7 @@ def inserir_operacao_cdb_rdb(request):
                                             extra=1, formset=DivisaoOperacaoCDB_RDBFormSet)
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     if request.method == 'POST':
         form_operacao_cdb_rdb = OperacaoCDB_RDBForm(request.POST, investidor=investidor)

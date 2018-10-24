@@ -191,7 +191,7 @@ def editar_operacao_cri_cra(request, id_operacao):
         raise PermissionDenied
       
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
       
     # Preparar formset para divisoes
     DivisaoCRI_CRAFormSet = inlineformset_factory(OperacaoCRI_CRA, DivisaoOperacaoCRI_CRA, form=LocalizedModelForm, fields=('divisao', 'quantidade'),
@@ -414,7 +414,7 @@ def inserir_operacao_cri_cra(request):
                                             extra=1, formset=DivisaoOperacaoCRI_CRAFormSet)
      
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
      
     if request.method == 'POST':
         form_operacao_cri_cra = OperacaoCRI_CRAForm(request.POST, investidor=investidor)
