@@ -290,7 +290,7 @@ def inserir_operacao_fundo_investimento(request):
                                             extra=1, formset=DivisaoOperacaoFundoInvestimentoFormSet)
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     if request.method == 'POST':
         form_operacao_fundo_investimento = OperacaoFundoInvestimentoForm(request.POST, investidor=investidor)

@@ -158,7 +158,7 @@ def editar_investimento(request, id_investimento):
                                             extra=1, formset=DivisaoInvestimentoFormSet)
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     if request.method == 'POST':
         if request.POST.get("save"):
@@ -536,7 +536,7 @@ def inserir_investimento(request):
                                             extra=1, formset=DivisaoInvestimentoFormSet)
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     if request.method == 'POST':
         form_outros_invest = InvestimentoForm(request.POST, investidor=investidor)

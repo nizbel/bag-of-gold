@@ -315,7 +315,7 @@ def editar_operacao_lc(request, operacao_id):
         raise PermissionDenied
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoLetraCambio, DivisaoOperacaoLetraCambio, fields=('divisao', 'quantidade'),
@@ -674,7 +674,7 @@ def inserir_operacao_lc(request):
                                             extra=1, formset=DivisaoOperacaoLetraCambioFormSet)
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     if request.method == 'POST':
         form_operacao_lc = OperacaoLetraCambioForm(request.POST, investidor=investidor)
