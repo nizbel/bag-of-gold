@@ -152,10 +152,10 @@ def calcular_valor_lc_ate_dia(investidor, dia=datetime.date.today(), valor_liqui
     lc = {}
     for operacao in operacoes:
 
-        if operacao.lc.id not in lc.keys():
-            lc[operacao.lc.id] = 0
+        if operacao.lc_id not in lc.keys():
+            lc[operacao.lc_id] = 0
         
-        lc[operacao.lc.id] += calcular_valor_operacao_lc_ate_dia(operacao, dia, True, valor_liquido)
+        lc[operacao.lc_id] += calcular_valor_operacao_lc_ate_dia(operacao, dia, True, valor_liquido)
     
     return lc
 
@@ -288,7 +288,7 @@ def buscar_operacoes_vigentes_ate_data(investidor, data=datetime.date.today()):
     """
     operacoes = OperacaoLetraCambio.objects.filter(investidor=investidor, tipo_operacao='C', data__lte=data).exclude(data__isnull=True) \
         .annotate(qtd_vendida=Coalesce(Sum(Case(When(operacao_compra__operacao_venda__data__lte=data, then='operacao_compra__operacao_venda__quantidade'))), 0)).exclude(quantidade=F('qtd_vendida')) \
-        .annotate(qtd_disponivel_venda=(F('quantidade') - F('qtd_vendida')))
+        .annotate(qtd_disponivel_venda=(F('quantidade') - F('qtd_vendida'))).select_related('lc')
     
     return operacoes
     
