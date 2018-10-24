@@ -21,10 +21,6 @@ RUN pip install --trusted-host pypi.python.org -r requirements.txt
 # Preparar html
 RUN python manage.py minificar_html
 
-RUN python manage.py preparar_aws
-RUN mkdir /root/.aws
-RUN mv /home/bagofgold/bagogold/credentials /root/.aws/credentials
-
 # Remover static
 RUN rm -rf /home/bagofgold/bagogold/bagogold/static
 
@@ -41,6 +37,10 @@ WORKDIR /home/bagofgold/bagogold/apache-conf
 RUN . /home/bagofgold/bagogold/apache-conf/set-apache.sh
 
 WORKDIR /home/bagofgold/bagogold
+
+RUN python manage.py preparar_aws
+RUN mkdir /var/www/.aws
+RUN mv /home/bagofgold/bagogold/credentials /var/www/.aws/credentials
 
 # Remover pastas nao utilizadas
 RUN rm -rf /home/bagofgold/bagogold/apache-conf
