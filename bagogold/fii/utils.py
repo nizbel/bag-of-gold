@@ -681,6 +681,9 @@ def calcular_variacao_percentual_fii_por_periodo(fii, periodo_inicio, periodo_fi
                 Data final do período
     Retorno: Variação percentual
     """
+    if periodo_fim <= periodo_inicio:
+        raise ValueError('Data final do período deve ser maior que data inicial')
+    
     try:
         valor_inicial = HistoricoFII.objects.filter(fii=fii, data__lte=periodo_inicio).order_by('-data')[0].preco_unitario
         valor_final = HistoricoFII.objects.filter(fii=fii, data__lte=periodo_fim).order_by('-data')[0].preco_unitario
