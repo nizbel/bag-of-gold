@@ -23,7 +23,7 @@ from django.db.models.query import Prefetch
 
 @adiciona_titulo_descricao('Detalhar post', '')
 def detalhar_post(request, post_slug):
-    post = get_object_or_404(Post, slug=post_slug)
+    post = get_object_or_404(Post.objects.prefetch_related('tagpost_set__tag'), slug=post_slug)
 
     # Preparar preview para o facebook
     post.conteudo_fb = post.conteudo[:post.conteudo.find('</p>')]
