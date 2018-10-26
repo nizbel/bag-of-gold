@@ -22,7 +22,8 @@ def calcular_poupanca_prov_fii_ate_dia(investidor, dia=datetime.date.today()):
     Retorno: Quantidade provisionada no dia
     """
     fiis = dict(CheckpointFII.objects.filter(investidor=investidor, ano=dia.year-1).values_list('fii__ticker', 'quantidade'))
-    operacoes = OperacaoFII.objects.filter(investidor=investidor, data__range=[dia.replace(month=1).replace(day=1), dia]).order_by('data').annotate(fii_ticker=F('fii__ticker'))
+    operacoes = OperacaoFII.objects.filter(investidor=investidor, data__range=[dia.replace(month=1).replace(day=1), dia]).order_by('data').annotate(fii_ticker=F('fii__ticker')) \
+        .prefetch_related('usoproventosoperacaofii_set')
     
     # Remover valores repetidos
     fiis_proventos = list(set(fiis.keys() + list(operacoes.values_list('fii__ticker', flat=True))))

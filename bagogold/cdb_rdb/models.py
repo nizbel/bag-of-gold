@@ -74,7 +74,7 @@ class CDB_RDB (models.Model):
         
     def vencimento_atual(self):
         return self.vencimento_na_data(datetime.date.today())
-        
+    
     def vencimento_na_data(self, data):
         if HistoricoVencimentoCDB_RDB.objects.filter(data__isnull=False, data__lte=data, cdb_rdb=self).exists():
             return HistoricoVencimentoCDB_RDB.objects.filter(data__isnull=False, data__lte=data, cdb_rdb=self).order_by('-data')[0].vencimento
