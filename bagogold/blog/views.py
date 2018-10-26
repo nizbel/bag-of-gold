@@ -19,6 +19,7 @@ from django.template.response import TemplateResponse
 import json
 import re
 import traceback
+from django.db.models.query import Prefetch
 
 @adiciona_titulo_descricao('Detalhar post', '')
 def detalhar_post(request, post_slug):
@@ -116,7 +117,7 @@ def listar_posts(request):
         pagina = 1
 
     # Buscar posts
-    posts = Post.objects.all().order_by('-data')
+    posts = Post.objects.all().order_by('-data').prefetch_related(Prefetch('tagpost_set__tag', queryset=Tag.objects.order_by('nome')))
     # Paginar posts
     paginador_posts = Paginator(posts, 9)
     if pagina > paginador_posts.num_pages:
