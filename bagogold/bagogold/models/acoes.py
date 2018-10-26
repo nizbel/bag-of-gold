@@ -160,11 +160,12 @@ class OperacaoAcao (models.Model):
         return '(' + self.tipo_operacao + ') ' +str(self.quantidade) + ' ' + self.acao.ticker + ' a R$' + str(self.preco_unitario) + ' em ' + str(self.data.strftime('%d/%m/%Y'))
 
     def qtd_proventos_utilizada(self):
-        qtd_total = UsoProventosOperacaoAcao.objects.filter(operacao=self).aggregate(qtd_total=Sum('qtd_utilizada'))['qtd_total'] or 0
+        qtd_total = sum([uso_proventos.qtd_utilizada for uso_proventos in self.usoproventosoperacaoacao_set.all()])
         return qtd_total
         
     def utilizou_proventos(self):
-        return UsoProventosOperacaoAcao.objects.filter(operacao=self).exists()
+#         return UsoProventosOperacaoAcao.objects.filter(operacao=self).exists()
+        return self.usoproventosoperacaoacao_set.exists()
 
 class UsoProventosOperacaoAcao (models.Model):
     operacao = models.ForeignKey('OperacaoAcao', verbose_name='Operação')

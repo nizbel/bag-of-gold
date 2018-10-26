@@ -78,11 +78,14 @@ class OperacaoFII (models.Model):
         return '(' + self.tipo_operacao + ') ' + str(self.quantidade) + ' ' + self.fii.ticker + ' a R$' + str(self.preco_unitario) + ' em ' + str(self.data.strftime('%d/%m/%Y'))
     
     def qtd_proventos_utilizada(self):
-        qtd_total = UsoProventosOperacaoFII.objects.filter(operacao=self).aggregate(qtd_total=Sum('qtd_utilizada'))['qtd_total'] or 0
+#         qtd_total = UsoProventosOperacaoFII.objects.filter(operacao=self).aggregate(qtd_total=Sum('qtd_utilizada'))['qtd_total'] or 0
+#         qtd_total = self.usoproventosoperacaofii_set.aggregate(qtd_total=Sum('qtd_utilizada'))['qtd_total'] or 0
+        qtd_total = sum([uso_proventos.qtd_utilizada for uso_proventos in self.usoproventosoperacaofii_set.all()])
         return qtd_total
         
     def utilizou_proventos(self):
-        return UsoProventosOperacaoFII.objects.filter(operacao=self).exists()
+#         return UsoProventosOperacaoFII.objects.filter(operacao=self).exists()
+        return self.usoproventosoperacaofii_set.exists()
 
 class UsoProventosOperacaoFII (models.Model):
     operacao = models.ForeignKey('OperacaoFII')
