@@ -686,7 +686,7 @@ def calcular_variacao_percentual_fii_por_periodo(fii, periodo_inicio, periodo_fi
     except:
         return 0
     
-    return (valor_final - valor_inicial) / valor_final * 100
+    return (valor_final - valor_inicial) / valor_inicial * 100
 
 def calcular_valor_fii_ate_dia(investidor, dia=datetime.date.today()):
     """ 
