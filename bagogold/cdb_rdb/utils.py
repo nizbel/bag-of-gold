@@ -288,7 +288,8 @@ def buscar_operacoes_vigentes_ate_data(investidor, data=datetime.date.today()):
     """
     operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor, tipo_operacao='C', data__lte=data).exclude(data__isnull=True) \
         .annotate(qtd_vendida=Coalesce(Sum(Case(When(operacao_compra__operacao_venda__data__lte=data, then='operacao_compra__operacao_venda__quantidade'))), 0)).exclude(quantidade=F('qtd_vendida')) \
-        .annotate(qtd_disponivel_venda=(F('quantidade') - F('qtd_vendida'))).select_related('cdb_rdb')
+        .annotate(qtd_disponivel_venda=(F('quantidade') - F('qtd_vendida'))).select_related('cdb_rdb') \
+        .prefetch_related('cdb_rdb__historicovencimentocdb_rdb_set', 'cdb_rdb__historicoporcentagemcdb_rdb_set')
     
     return operacoes
     
