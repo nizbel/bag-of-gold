@@ -420,7 +420,7 @@ def historico_fii(request):
                                                             When(tipo_operacao='V', then=F('quantidade') * F('preco_unitario') - F('emolumentos') - F('corretagem')),
                                                             output_field=DecimalField())) \
                                         .annotate(fii_ticker=F('fii__ticker')) \
-                                        .order_by('data') 
+                                        .order_by('data').prefetch_related('usoproventosoperacaofii_set')
     
     # Se investidor não tiver feito operações
     if not operacoes:

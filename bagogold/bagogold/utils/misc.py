@@ -140,7 +140,7 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='ABCDEFIL
     if 'A' in tipo_investimentos:
         rendimentos['A'] = sum(calcular_valor_lc_ate_dia(investidor, data).values()) \
             - sum([operacao.quantidade for operacao in OperacaoLetraCambio.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='C')]) \
-            + sum([calcular_valor_venda_lc(operacao) for operacao in OperacaoLetraCambio.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='V')])
+            + sum([calcular_valor_venda_lc(operacao) for operacao in OperacaoLetraCambio.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='V').select_related('lc')])
             
     # Ações (Buy and Hold)
     if 'B' in tipo_investimentos:
@@ -150,7 +150,7 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='ABCDEFIL
     if 'C' in tipo_investimentos:
         rendimentos['C'] = sum(calcular_valor_cdb_rdb_ate_dia(investidor, data).values()) \
             - sum([operacao.quantidade for operacao in OperacaoCDB_RDB.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='C')]) \
-            + sum([calcular_valor_venda_cdb_rdb(operacao) for operacao in OperacaoCDB_RDB.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='V')])
+            + sum([calcular_valor_venda_cdb_rdb(operacao) for operacao in OperacaoCDB_RDB.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='V').select_related('cdb_rdb')])
     
     # Tesouro Direto
     if 'D' in tipo_investimentos:
@@ -172,7 +172,7 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='ABCDEFIL
     if 'L' in tipo_investimentos:
         rendimentos['L'] = sum(calcular_valor_lci_lca_ate_dia(investidor, data).values()) \
             - sum([operacao.quantidade for operacao in OperacaoLetraCredito.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='C')]) \
-            + sum([calcular_valor_venda_lci_lca(operacao) for operacao in OperacaoLetraCredito.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='V')])
+            + sum([calcular_valor_venda_lci_lca(operacao) for operacao in OperacaoLetraCredito.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='V').select_related('letra_credito')])
     
     # CRI/CRA
     if 'R' in tipo_investimentos:
