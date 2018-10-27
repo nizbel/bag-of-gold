@@ -296,14 +296,23 @@ def buscar_totais_atuais_investimentos(investidor, data_atual=datetime.date.toda
     # Ações
     acoes_investidor = buscar_acoes_investidor_na_data(investidor)
     # Cálculo de quantidade
-    for acao in Acao.objects.filter(id__in=acoes_investidor):
-        acao_qtd = quantidade_acoes_ate_dia(investidor, acao.ticker, data_atual, considerar_trade=True)
-        if acao_qtd > 0:
-            if ValorDiarioAcao.objects.filter(acao__ticker=acao.ticker, data_hora__day=data_atual.day, data_hora__month=data_atual.month).exists():
-                acao_valor = ValorDiarioAcao.objects.filter(acao__ticker=acao.ticker, data_hora__day=data_atual.day, data_hora__month=data_atual.month).order_by('-data_hora')[0].preco_unitario
-            else:
-                acao_valor = HistoricoAcao.objects.filter(acao__ticker=acao.ticker).order_by('-data')[0].preco_unitario
-            totais_atuais['Ações'] += (acao_qtd * acao_valor)
+#     for acao in Acao.objects.filter(id__in=acoes_investidor):
+#         acao_qtd = quantidade_acoes_ate_dia(investidor, acao.ticker, data_atual, considerar_trade=True)
+#         if acao_qtd > 0:
+#             if ValorDiarioAcao.objects.filter(acao__ticker=acao.ticker, data_hora__day=data_atual.day, data_hora__month=data_atual.month).exists():
+#                 acao_valor = ValorDiarioAcao.objects.filter(acao__ticker=acao.ticker, data_hora__day=data_atual.day, data_hora__month=data_atual.month).order_by('-data_hora')[0].preco_unitario
+#             else:
+#                 acao_valor = HistoricoAcao.objects.filter(acao__ticker=acao.ticker).order_by('-data')[0].preco_unitario
+#             totais_atuais['Ações'] += (acao_qtd * acao_valor)
+    lista_acoes = list(Acao.objects.filter(id__in=acoes_investidor))
+    qtd_acoes = {acao.id: quantidade_acoes_ate_dia(investidor, acao.ticker, data_atual, considerar_trade=True) for acao in lista_acoes}
+    lista_valores_diarios = ValorDiarioAcao.objects.filter(acao__in=lista_acoes, data_hora__day=data_atual.day, data_hora__month=data_atual.month).order_by('acao__id', '-data_hora').distinct('acao__id')
+    lista_historicos = HistoricoAcao.objects.filter(acao__in=lista_acoes,).order_by('acao__id', '-data').distinct('acao__id')
+    lista_valores = {valor.acao_id: valor.preco_unitario for valor in lista_valores_diarios}
+    for historico in lista_historicos:
+        if historico.acao_id not in lista_valores.keys():
+            lista_valores[historico.acao_id] = historico.preco_unitario
+    totais_atuais['Ações'] += sum([qtd_acoes[acao_id] * lista_valores[acao_id] for acao_id in qtd_acoes.keys() if qtd_acoes[acao_id] > 0])
     totais_atuais['Ações'] += calcular_poupanca_prov_acao_ate_dia(investidor, data_atual)
 
     # CDB / RDB
