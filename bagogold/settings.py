@@ -114,6 +114,9 @@ USE_THOUSAND_SEPARATOR = True
 
 LOGIN_URL= '/login/'
 
+# Testes
+TEST_RUNNER = 'bagogold.bagogold.tests.runner.TimeLoggingTestRunner'
+
 # Configuracoes extras
 from conf.conf import *
 
