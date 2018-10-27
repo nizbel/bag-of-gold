@@ -419,7 +419,8 @@ def historico(request):
                                         .annotate(tipo=Case(When(tipo_operacao='C', then=Value(u'Compra')),
                                                             When(tipo_operacao='V', then=Value(u'Venda')), output_field=CharField())) \
                                         .annotate(qtd_vendida=Case(When(tipo_operacao='C', then=Value(0)), output_field=DecimalField())) \
-                                        .annotate(atual=Case(When(tipo_operacao='C', then=F('quantidade')), output_field=DecimalField())) 
+                                        .annotate(atual=Case(When(tipo_operacao='C', then=F('quantidade')), output_field=DecimalField())) \
+                                        .prefetch_related('lc__historicovencimentoletracambio_set', 'lc__historicoporcentagemletracambio_set')
     # Verifica se não há operações
     if not operacoes:
         return TemplateResponse(request, 'lc/historico.html', {'dados': {}, 'operacoes': list(), 
@@ -806,7 +807,7 @@ def painel(request):
         return TemplateResponse(request, 'lc/painel.html', {'operacoes': {}, 'dados': dados})
      
     # Pegar data final, nivelar todas as operações para essa data
-    data_final = HistoricoTaxaDI.objects.filter().order_by('-data')[0].data
+    data_final, taxa_final = HistoricoTaxaDI.objects.all().values_list('data', 'taxa').order_by('-data')[0]
      
     # Prepara o campo valor atual
     for operacao in operacoes:
@@ -826,8 +827,6 @@ def painel(request):
     total_ganho_prox_dia = 0
     total_vencimento = 0
      
-    ultima_taxa_di = HistoricoTaxaDI.objects.filter().order_by('-data')[0].taxa
-     
     for operacao in operacoes:
         # Calcular o ganho no dia seguinte
         if data_final < operacao.data_vencimento():
@@ -836,7 +835,7 @@ def painel(request):
                 operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa) - operacao.atual
             elif operacao.lc.tipo_rendimento == LetraCambio.LC_DI:
                 # Considerar rendimento do dia anterior
-                operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa_di(ultima_taxa_di, operacao.atual, operacao.taxa) - operacao.atual
+                operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa_di(taxa_final, operacao.atual, operacao.taxa) - operacao.atual
             # Formatar
             str_auxiliar = str(operacao.ganho_prox_dia.quantize(Decimal('.0001')))
             operacao.ganho_prox_dia = Decimal(str_auxiliar[:len(str_auxiliar)-2])
@@ -859,7 +858,7 @@ def painel(request):
                 operacao.valor_vencimento = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa, qtd_dias_uteis_ate_vencimento)
             elif operacao.lc.tipo_rendimento == LetraCambio.LC_DI:
                 # Considerar rendimento do dia anterior
-                operacao.valor_vencimento = calcular_valor_atualizado_com_taxas_di({HistoricoTaxaDI.objects.get(data=data_final).taxa: qtd_dias_uteis_ate_vencimento},
+                operacao.valor_vencimento = calcular_valor_atualizado_com_taxas_di({taxa_final: qtd_dias_uteis_ate_vencimento},
                                                      operacao.atual, operacao.taxa)
             str_auxiliar = str(operacao.valor_vencimento.quantize(Decimal('.0001')))
             operacao.valor_vencimento = Decimal(str_auxiliar[:len(str_auxiliar)-2])
