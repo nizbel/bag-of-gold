@@ -747,4 +747,4 @@ def verificar_se_existe_evento_para_fiis_periodo(fii_tickers, data_inicio, data_
     """
     # Verificar se há evento ou se outro FII foi incorporado a este
     return any([classe.objects.filter(fii__ticker__in=fii_tickers, data__range=[data_inicio, data_fim]).exists() for classe in EventoFII.__subclasses__()]) \
-        or EventoIncorporacaoFII.objects.filter(novo_fii__tickers=fii_tickers, data__range=[data_inicio, data_fim]).exists()
+        or EventoIncorporacaoFII.objects.filter(novo_fii__ticker__in=fii_tickers, data__range=[data_inicio, data_fim]).exists()
