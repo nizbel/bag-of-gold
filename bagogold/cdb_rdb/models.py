@@ -141,7 +141,9 @@ class OperacaoCDB_RDB (models.Model):
             if self.tipo_operacao == 'C':
 #                 if HistoricoPorcentagemCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb_id).exists():
                 if len([historico for historico in self.cdb_rdb.historicoporcentagemcdb_rdb_set.all() if historico.data != None and historico.data <= self.data]) > 0:
-                    self.guarda_porcentagem = self.cdb_rdb.historicoporcentagemcdb_rdb_set.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb_id).order_by('-data')[0].porcentagem
+#                     self.guarda_porcentagem = self.cdb_rdb.historicoporcentagemcdb_rdb_set.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb_id).order_by('-data')[0].porcentagem
+                    self.guarda_porcentagem = sorted([historico for historico in self.cdb_rdb.historicoporcentagemcdb_rdb_set.all() if historico.data != None and historico.data <= self.data],
+                                                     key=lambda x: x.data, reverse=True)[0].porcentagem
                 else:
 #                     self.guarda_porcentagem = HistoricoPorcentagemCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.cdb_rdb_id).porcentagem
                     self.guarda_porcentagem = [historico for historico in self.cdb_rdb.historicoporcentagemcdb_rdb_set.all() if historico.data == None][0].porcentagem
@@ -177,7 +179,9 @@ class OperacaoCDB_RDB (models.Model):
         if not hasattr(self, 'guarda_vencimento'):
 #             if HistoricoVencimentoCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb_id).exists():
             if len([historico for historico in self.cdb_rdb.historicovencimentocdb_rdb_set.all() if historico.data != None and historico.data <= self.data]) > 0:
-                self.guarda_vencimento = self.cdb_rdb.historicovencimentocdb_rdb_set.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb_id).order_by('-data')[0].vencimento
+#                 self.guarda_vencimento = self.cdb_rdb.historicovencimentocdb_rdb_set.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb_id).order_by('-data')[0].vencimento
+                self.guarda_vencimento = sorted([historico for historico in self.cdb_rdb.historicovencimentocdb_rdb_set.all() if historico.data != None and historico.data <= self.data],
+                                                 key=lambda x: x.data, reverse=True)[0].vencimento
             else:
 #                 self.guarda_vencimento = HistoricoVencimentoCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.cdb_rdb_id).vencimento
                 self.guarda_vencimento = [historico for historico in self.cdb_rdb.historicovencimentocdb_rdb_set.all() if historico.data == None][0].vencimento

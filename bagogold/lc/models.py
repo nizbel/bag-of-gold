@@ -127,7 +127,9 @@ class OperacaoLetraCambio (models.Model):
             if self.tipo_operacao == 'C':
 #                 if HistoricoPorcentagemLetraCambio.objects.filter(data__lte=self.data, lc=self.lc_id).exists():
                 if len([historico for historico in self.lc.historicoporcentagemletracambio_set.all() if historico.data != None and historico.data <= self.data]) > 0:
-                    self.guarda_porcentagem = self.lc.historicoporcentagemletracambio_set.filter(data__lte=self.data, lc=self.lc_id).order_by('-data')[0].porcentagem
+#                     self.guarda_porcentagem = self.lc.historicoporcentagemletracambio_set.filter(data__lte=self.data, lc=self.lc_id).order_by('-data')[0].porcentagem
+                    self.guarda_porcentagem = sorted([historico for historico in self.lc.historicoporcentagemletracambio_set.all() if historico.data != None and historico.data <= self.data],
+                                 key=lambda x: x.data, reverse=True)[0].porcentagem
                 else:
 #                     self.guarda_porcentagem = HistoricoPorcentagemLetraCambio.objects.get(data__isnull=True, lc=self.lc_id).porcentagem
                     self.guarda_porcentagem = [historico for historico in self.lc.historicoporcentagemletracambio_set.all() if historico.data == None][0].porcentagem
@@ -170,7 +172,9 @@ class OperacaoLetraCambio (models.Model):
     def vencimento(self):
         if not hasattr(self, 'guarda_vencimento'):
             if len([historico for historico in self.lc.historicovencimentoletracambio_set.all() if historico.data != None and historico.data <= self.data]) > 0:
-                self.guarda_vencimento = self.lc.historicovencimentoletracambio_set.filter(data__lte=self.data, lc=self.lc_id).order_by('-data')[0].vencimento
+#                 self.guarda_vencimento = self.lc.historicovencimentoletracambio_set.filter(data__lte=self.data, lc=self.lc_id).order_by('-data')[0].vencimento
+                self.guarda_vencimento = sorted([historico for historico in self.lc.historicovencimentoletracambio_set.all() if historico.data != None and historico.data <= self.data],
+                                 key=lambda x: x.data, reverse=True)[0].vencimento
             else:
                 self.guarda_vencimento = [historico for historico in self.lc.historicovencimentoletracambio_set.all() if historico.data == None][0].vencimento
         return self.guarda_vencimento
