@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 from StringIO import StringIO
 import datetime
-from django.core.mail import mail_admins
-from django.core.management.base import BaseCommand
 import os
 import random
 import time
 import traceback
-from urllib2 import urlopen
+from urllib2 import urlopen, Request, HTTPError, URLError
 import zipfile
 
+from django.core.mail import mail_admins
+from django.core.management.base import BaseCommand
 from django.db import transaction
 from lxml import etree
 import zeep
@@ -28,9 +28,35 @@ class Command(BaseCommand):
     help = 'Buscar fundos de investimento na CVM'
 
     def add_arguments(self, parser):
-        parser.add_argument('--aleatorio', action='store_true')
+#         parser.add_argument('--aleatorio', action='store_true')
+        parser.add_argument('-d', '--data', type=str, help='Informa uma data no formato YYYYMMDD')
 
-    def handle(self, *args, **options):        
+    def handle(self, *args, **options):
+        try:
+            # Buscar arquivo CSV
+            if options['data']:
+                data_pesquisa = datetime.datetime.strptime(options['data'], '%Y%m%d')
+            else:
+                data_pesquisa = datetime.date.today()
+            buscar_arquivo_csv_cadastro(data_pesquisa)
+            
+            # Salvar arquivo em media no bucket
+            
+            # Ler arquivo
+            
+            # Sem erros, apagar arquivo
+            
+        except:
+            if settings.ENV == 'DEV':
+                print traceback.format_exc()
+            elif settings.ENV == 'PROD':
+                mail_admins(u'Erro em Buscar fundos investimento', traceback.format_exc().decode('utf-8'))
+        
+        if 2 == 2: 
+            return
+            
+
+#     def handle(self, *args, **options):        
         try:
             wsdl = 'http://sistemas.cvm.gov.br/webservices/Sistemas/SCW/CDocs/WsDownloadInfs.asmx?WSDL'
             client = zeep.Client(wsdl=wsdl)
@@ -202,6 +228,24 @@ class Command(BaseCommand):
                 print traceback.format_exc()
             elif settings.ENV == 'PROD':
                 mail_admins(u'Erro em Buscar fundos investimento', traceback.format_exc().decode('utf-8'))
+
+def buscar_arquivo_csv_cadastro(data):
+    """
+    Busca o arquivo CSV de cadastro de fundos de investimento com base em uma data
+    Parâmetros: Data
+    Retorno: Arquivo CSV
+    """
+    # FORMATO: http://dados.cvm.gov.br/dados/FI/CAD/DADOS/inf_cadastral_fi_YYYYMMDD.csv
+    url_csv = 'http://dados.cvm.gov.br/dados/FI/CAD/DADOS/inf_cadastral_fi_%s.csv' % (data.strftime('%Y%m%d'))
+    req = Request(url_csv)
+    try:
+        response = urlopen(req, timeout=45)
+    except HTTPError as e:
+        raise ValueError('%s na url %s' % (e.code, url_csv))
+    
+    dados = response.read()
+    
+    return dados
 
 def definir_prazo__pelo_cadastro(str_tributacao_documento):
     if str_tributacao_documento == None:
