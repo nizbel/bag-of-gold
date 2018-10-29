@@ -19,6 +19,7 @@ import zeep
 from bagogold import settings
 from bagogold.bagogold.utils.misc import ultimo_dia_util, \
     buscar_dia_util_aleatorio, verifica_se_dia_util
+from bagogold.fundo_investimento.management.commands.preencher_historico_fundo_investimento import formatar_cnpj
 from bagogold.fundo_investimento.models import FundoInvestimento, Administrador, \
     DocumentoCadastro, LinkDocumentoCadastro
 from bagogold.fundo_investimento.utils import \
@@ -289,8 +290,7 @@ def processar_arquivo_csv(documento, dados_arquivo, data_documento):
         with transaction.atomic():
             csv_reader = csv.reader(dados_arquivo, delimiter=';')
             
-            qtd_linhas_por_vez = 50
-            linhas_atuais = list()
+            fundos = list()
             
             for linha, row in enumerate(csv_reader):
                 if linha == 0:
@@ -307,15 +307,20 @@ def processar_arquivo_csv(documento, dados_arquivo, data_documento):
                         print linha
                         
                     row = [campo.decode('latin-1').strip() for campo in row]
-                    linhas_atuais += row
-                    if len(linhas_atuais) == 50:
-                        
                     
+                    # Se CNPJ não estiver preenchido, pular
+                    if row[campos['CNPJ_FUNDO']] == '':
+                        continue
+                    
+                    # Formatar CNPJ
+                    if len(row[campos['CNPJ_FUNDO']]) < 18:
+                        row[campos['CNPJ_FUNDO']] = formatar_cnpj(row[campos['CNPJ_FUNDO']])
+                                            
                     # Verificar se administrador já existe
                     if not Administrador.objects.filter(cnpj=row[campos['CNPJ_ADMIN']]).exists():
                         novo_administrador = Administrador(nome=row[campos['ADMIN']], cnpj=row[campos['CNPJ_ADMIN']])
                         novo_administrador.save()
-                       
+                         
                     # Verificar se fundo já existe
                     if not FundoInvestimento.objects.filter(cnpj=row[campos['CNPJ_FUNDO']]).exists():
                         novo_fundo = FundoInvestimento(cnpj=row[campos['CNPJ_FUNDO']], nome=row[campos['DENOM_SOCIAL']], 
@@ -327,31 +332,36 @@ def processar_arquivo_csv(documento, dados_arquivo, data_documento):
                         novo_fundo.save()
                     else:
                         # Verificar se houve alteração no fundo
-                        fundo = FundoInvestimento.objects.get(cnpj=row[campos['CNPJ_FUNDO']])
+                        fundo = FundoInvestimento.objects.filter(cnpj=row[campos['CNPJ_FUNDO']]).select_related('administrador')[0]
                         if fundo.ultimo_registro < data_documento:
                             fundo.ultimo_registro = data_documento
                             # Verificar alteração de administrador
-                            if row[campos['CNPJ_ADMIN']] != fundo.administrador.cnpj:
+                            if row[campos['CNPJ_ADMIN']] != '' and row[campos['CNPJ_ADMIN']] != fundo.administrador.cnpj:
                                 fundo.administrador = Administrador.objects.get(cnpj=row[campos['CNPJ_ADMIN']])
-                            if row[campos['SIT']] != None and row[campos['SIT']] != fundo.descricao_situacao():
+                            if row[campos['SIT']] != '' and row[campos['SIT']] != fundo.descricao_situacao():
                                 fundo.situacao = FundoInvestimento.buscar_tipo_situacao(row[campos['SIT']])
-                            if row[campos['CLASSE']] != None and row[campos['CLASSE']] != fundo.descricao_classe():
+                            if row[campos['CLASSE']] != '' and row[campos['CLASSE']] != fundo.descricao_classe():
                                 fundo.classe = FundoInvestimento.buscar_tipo_classe(row[campos['CLASSE']])
-                            if row[campos['DENOM_SOCIAL']] != None and row[campos['DENOM_SOCIAL']] != fundo.nome:
+                            if row[campos['DENOM_SOCIAL']] != '' and row[campos['DENOM_SOCIAL']] != fundo.nome:
                                 fundo.nome = row[campos['DENOM_SOCIAL']]
                             fundo.save()
-                         
+                          
                     # Adicionar a lista de fundos para comparar posteriormente
-#                     if not options['aleatorio']:
-#                         fundos.append(campos['CNPJ'])       
-    
-            if 2 == 2:
-                raise ValueError('TESTE')
-            
+                    fundos.append(campos['CNPJ_FUNDO'])       
+             
+            # Verificar fundos que existem porém não foram listados, ou seja, estão terminados
+            # Verificar fundos não encontrados no cadastro para terminar
+            for fundo in FundoInvestimento.objects.filter(ultimo_registro__lt=data_documento).exclude(situacao=FundoInvestimento.SITUACAO_TERMINADO):
+                if fundo.cnpj not in fundos:
+                    fundo.situacao = FundoInvestimento.SITUACAO_TERMINADO
+                    fundo.save()
+                         
 #             documento = DocumentoCadastro.objects.get(data_referencia=data_documento)  
             documento.leitura_realizada = True
             documento.save() 
             
+            if 2 == 2:
+                raise ValueError('TESTE')
     except:
         print 'Linha', linha
         raise 
