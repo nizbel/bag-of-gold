@@ -26,7 +26,7 @@ class FundoInvestimento (models.Model):
     SITUACAO_PRE_OPERACIONAL = 2
     SITUACAO_PRE_OPERACIONAL_DESCRICAO = u'Fase pré-operacional'
     SITUACAO_TERMINADO = 3
-    SITUACAO_TERMINADO_DESCRICAO = u'Terminado'
+    SITUACAO_TERMINADO_DESCRICAO = u'Cancelada'
     SITUACAO_ESPECIAL = 4
     SITUACAO_ESPECIAL_DESCRICAO = u'Em situação especial'
     TIPOS_SITUACAO = [(SITUACAO_FUNCIONAMENTO_NORMAL, SITUACAO_FUNCIONAMENTO_NORMAL_DESCRICAO),
@@ -110,17 +110,17 @@ class FundoInvestimento (models.Model):
     @staticmethod
     def buscar_tipo_classe(descricao_classe):
         # Se nulo, retornar classe indefinida
-        if descricao_classe == None:
+        if descricao_classe == '':
             return FundoInvestimento.CLASSE_FUNDO_INDEFINIDA
         for tipo in FundoInvestimento.TIPOS_CLASSE:
-            if descricao_classe.strip().lower() == tipo[1].strip().lower():
+            if descricao_classe.strip().upper() == tipo[1].strip().upper():
                 return tipo[0]
         raise ValueError(u'Classe não encontrada: %s' % (descricao_classe))
     
     @staticmethod
     def buscar_tipo_situacao(descricao_situacao):
         # Se nulo, retornar situação de funcionamento normal
-        if descricao_situacao == None:
+        if descricao_situacao == '':
             return FundoInvestimento.SITUACAO_FUNCIONAMENTO_NORMAL
         for tipo in FundoInvestimento.TIPOS_SITUACAO:
 #             print descricao_situacao.lower(), tipo[1].lower(), [i for i in xrange(len(descricao_situacao.lower())) if descricao_situacao.lower()[i] != tipo[1].lower()[i]]
