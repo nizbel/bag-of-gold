@@ -179,20 +179,29 @@ def calcular_valor_acumulado_selic(data_base, data_final=datetime.date.today()):
         selic_periodo *= (taxa**qtd_dias)
     return selic_periodo - 1
 
-def buscar_valores_diarios_di():
-    """Busca valores históricos do DI no site da CETIP"""
+def buscar_valores_diarios_di(data_inicial=None):
+    """
+    Busca valores históricos do DI no site da CETIP
+    
+    Parâmetros: Data inicial
+    """
     ftp = FTP('ftp.cetip.com.br')
     ftp.login()
     ftp.cwd('MediaCDI')
     linhas = []
     ftp.retrlines('NLST', linhas.append)
-    linhas.sort()
-    for nome in linhas:
+    if data_inicial == None:
+        linhas = [(datetime.date(int(nome[0:4]), int(nome[4:6]), int(nome[6:8])), nome) for nome in linhas]
+        historico_atual = HistoricoTaxaDI.objects.all().values_list('data', flat=True)
+    else:
+        linhas = [(datetime.date(int(nome[0:4]), int(nome[4:6]), int(nome[6:8])), nome) for nome in linhas if \
+                  datetime.date(int(nome[0:4]), int(nome[4:6]), int(nome[6:8])) >= data_inicial]
+        historico_atual = HistoricoTaxaDI.objects.filter(data__gte=data_inicial).values_list('data', flat=True)
+    for data, nome in linhas:
         # Verifica se são os .txt do CDI
         if '.txt' in nome:
-            # Testa se data do arquivo é maior do que a última data registrada
-            data = datetime.date(int(nome[0:4]), int(nome[4:6]), int(nome[6:8]))
-            if not HistoricoTaxaDI.objects.filter(data=data).exists():
+#             if not HistoricoTaxaDI.objects.filter(data=data).exists():
+            if data not in historico_atual:
                 taxa = []
                 ftp.retrlines('RETR ' + nome, taxa.append)
 #                 print '%s: %s' % (data, Decimal(taxa[0]) / 100)
