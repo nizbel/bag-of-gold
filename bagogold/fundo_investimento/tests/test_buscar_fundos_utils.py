@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
+import datetime
+
 from django.test import TestCase
+
+from bagogold.fundo_investimento.management.commands.buscar_fundos_investimento import buscar_arquivo_csv_cadastro, \
+    processar_arquivo_csv
+
 
 class BuscarFundoInvestimentoTestCase(TestCase):
     """
@@ -27,8 +33,8 @@ class BuscarFundoInvestimentoTestCase(TestCase):
         # Gerar fundos pré-existentes para teste
         
         # Abrir arquivo de teste
-        with open('test_documento_cadastro.csv') as f:
-            processar_arquivo_csv(novo_documento, f, data_pesquisa)
+#         with open('test_documento_cadastro.csv') as f:
+#             processar_arquivo_csv(novo_documento, f, data_pesquisa)
                 
         # Processar
         pass
