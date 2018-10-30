@@ -703,21 +703,18 @@ class GeradorProventosCopiarProventosTestCase(TestCase):
 class LeitorProventosEstruturadosTestCase(TestCase):
 
     def setUp(self):
-        # Investidor
-        user = User.objects.create(username='tester')
-        
         # Empresa para FII
-        empresa1 = Empresa.objects.create(nome='Fundo BBPO', nome_pregao='BBPO')
-        fii1 = FII.objects.create(empresa=empresa1, ticker='BBPO11')
+        self.empresa_bbpo = Empresa.objects.create(nome='Fundo BBPO', nome_pregao='BBPO')
+        self.fii_bbpo = FII.objects.create(empresa=self.empresa_bbpo, ticker='BBPO11')
         
         # Documento da empresa, já existe em media
-        documento = DocumentoProventoBovespa()
-        documento.empresa = empresa1
-        documento.url = 'https://fnet.bmfbovespa.com.br/fnet/publico/visualizarDocumento?id=8679'
-        documento.tipo = 'F'
-        documento.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO
-        documento.protocolo = '8679'
-        documento.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
+        self.documento = DocumentoProventoBovespa()
+        self.documento.empresa = self.empresa_bbpo
+        self.documento.url = 'https://fnet.bmfbovespa.com.br/fnet/publico/visualizarDocumento?id=8679'
+        self.documento.tipo = 'F'
+        self.documento.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO
+        self.documento.protocolo = '8679'
+        self.documento.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
         conteudo = StringIO('<?xml version="1.0" encoding="UTF-8" standalone="yes"?> \
 <DadosEconomicoFinanceiros xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"> \
     <DadosGerais> \
@@ -743,7 +740,7 @@ class LeitorProventosEstruturadosTestCase(TestCase):
         <Amortizacao tipo=""/> \
     </InformeRendimentos> \
 </DadosEconomicoFinanceiros>')
-        documento.documento.save('%s-%s.%s' % (documento.ticker_empresa(), documento.protocolo, 'xml'), File(conteudo))
+        self.documento.documento.save('%s-%s.%s' % (self.documento.ticker_empresa(), self.documento.protocolo, 'xml'), File(conteudo))
         
     def tearDown(self):
         DocumentoProventoBovespa.objects.all().delete()
@@ -751,23 +748,23 @@ class LeitorProventosEstruturadosTestCase(TestCase):
     def test_falhar_por_tipo_fii(self):
         """Testa se a função joga erro para arquivo que não seja de FII"""
         with self.assertRaises(ValueError):
-            documento = DocumentoProventoBovespa.objects.get(protocolo='8679')
-            documento.tipo = 'A'
-            ler_provento_estruturado_fii(documento)
+#             documento = DocumentoProventoBovespa.objects.get(protocolo='8679')
+            self.documento.tipo = 'A'
+            ler_provento_estruturado_fii(self.documento)
              
     def test_falhar_por_tipo_documento_fii(self):
         """Testa se a função joga erro para arquivo que não seja de FII"""
         with self.assertRaises(ValueError):
-            documento = DocumentoProventoBovespa.objects.get(protocolo='8679')
-            documento.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS
-            ler_provento_estruturado_fii(documento)
+#             documento = DocumentoProventoBovespa.objects.get(protocolo='8679')
+            self.documento.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS
+            ler_provento_estruturado_fii(self.documento)
              
     def test_falhar_por_nao_pendente(self):
         """Testa se a função joga erro para arquivo que não esteja pendente"""
         with self.assertRaises(ValueError):
-            documento = DocumentoProventoBovespa.objects.get(protocolo='8679')
-            PendenciaDocumentoProvento.objects.filter(documento=documento).delete()
-            ler_provento_estruturado_fii(documento)
+#             documento = DocumentoProventoBovespa.objects.get(protocolo='8679')
+            PendenciaDocumentoProvento.objects.filter(documento=self.documento).delete()
+            ler_provento_estruturado_fii(self.documento)
              
     def test_falhar_por_documento_de_outra_empresa(self):
         """Testa se a função joga erro ao ler documento de empresa que não possui o FII citado"""
@@ -776,31 +773,31 @@ class LeitorProventosEstruturadosTestCase(TestCase):
         outro_fii = FII.objects.create(empresa=outra_empresa, ticker='BRCR11')
          
         with self.assertRaises(ValueError):
-            documento = DocumentoProventoBovespa.objects.get(protocolo='8679')
+#             documento = DocumentoProventoBovespa.objects.get(protocolo='8679')
              
-            documento.empresa = outra_empresa
+            self.documento.empresa = outra_empresa
              
-            ler_provento_estruturado_fii(documento)
+            ler_provento_estruturado_fii(self.documento)
              
     def test_leitura_com_sucesso_fii(self):
         """Testa se provento e descrição de provento são criados"""
-        documento = DocumentoProventoBovespa.objects.get(protocolo='8679')
-        ler_provento_estruturado_fii(documento)
-        provento_fii_documento = ProventoFIIDocumento.objects.get(documento=documento)
+#         documento = DocumentoProventoBovespa.objects.get(protocolo='8679')
+        ler_provento_estruturado_fii(self.documento)
+        provento_fii_documento = ProventoFIIDocumento.objects.get(documento=self.documento)
         self.assertEqual(provento_fii_documento.descricao_provento.valor_unitario, provento_fii_documento.provento.valor_unitario)
         self.assertEqual(provento_fii_documento.descricao_provento.data_ex, provento_fii_documento.provento.data_ex)
         self.assertEqual(provento_fii_documento.descricao_provento.data_pagamento, provento_fii_documento.provento.data_pagamento)
         self.assertEqual(provento_fii_documento.descricao_provento.tipo_provento, provento_fii_documento.provento.tipo_provento)
         self.assertEqual(ProventoFII.objects.filter(id=provento_fii_documento.provento.id).count(), 1)
         self.assertEqual(ProventoFIIDescritoDocumentoBovespa.objects.filter(id=provento_fii_documento.descricao_provento.id).count(), 1)
-        self.assertFalse(documento.pendente())
+        self.assertFalse(self.documento.pendente())
          
  
     def test_relacionar_a_outro_provento(self):
         """Testa operação de relacionar proventos gerados pelo sistema"""
         # Ler documento original
-        documento = DocumentoProventoBovespa.objects.get(protocolo='8679')
-        ler_provento_estruturado_fii(documento)
+#         documento = DocumentoProventoBovespa.objects.get(protocolo='8679')
+        ler_provento_estruturado_fii(self.documento)
          
         # Preparar documento
         documento = DocumentoProventoBovespa()
@@ -853,15 +850,15 @@ class LeitorProventosEstruturadosTestCase(TestCase):
         # 2 descrições
         self.assertEqual(ProventoFIIDescritoDocumentoBovespa.objects.all().count(), 2)
         # 2 versões
-        self.assertEqual(ProventoFII.objects.get(fii=FII.objects.get(ticker='BBPO11')).proventofiidocumento_set.count(), 2)
+        self.assertEqual(ProventoFII.objects.get(fii=self.fii_bbpo).proventofiidocumento_set.count(), 2)
         # Data de pagamento 15/03/2017
         self.assertEqual(ProventoFII.objects.all()[0].data_pagamento, datetime.date(2017, 3, 15))
          
     def test_erro_ao_relacionar_por_tipo_documento(self):
         """Testa se função joga erro ao tentar relacionar documentos que não foram adicionados pelo sistema"""
         # Ler documento original
-        documento = DocumentoProventoBovespa.objects.get(protocolo='8679')
-        ler_provento_estruturado_fii(documento)
+#         documento = DocumentoProventoBovespa.objects.get(protocolo='8679')
+        ler_provento_estruturado_fii(self.documento)
          
         # Preparar documento
         documento = DocumentoProventoBovespa()
@@ -910,8 +907,8 @@ class LeitorProventosEstruturadosTestCase(TestCase):
     def test_versionar_documento_para_proventos_iguais(self):
         """Testa se documento é versionado para proventos iguais"""
         # Ler documento original
-        documento_original = DocumentoProventoBovespa.objects.get(protocolo='8679')
-        ler_provento_estruturado_fii(documento_original)
+#         documento_original = DocumentoProventoBovespa.objects.get(protocolo='8679')
+        ler_provento_estruturado_fii(self.documento)
          
         # Preparar documento para provento igual
         documento = DocumentoProventoBovespa()
@@ -952,7 +949,7 @@ class LeitorProventosEstruturadosTestCase(TestCase):
         ler_provento_estruturado_fii(documento)
          
         # Testar se foram criados duas versões para o mesmo provento  
-        self.assertTrue(ProventoFIIDocumento.objects.filter(documento=documento_original, versao=1))
+        self.assertTrue(ProventoFIIDocumento.objects.filter(documento=self.documento, versao=1))
         self.assertTrue(ProventoFIIDocumento.objects.filter(documento=documento, versao=2))
         self.assertEqual(len(ProventoFII.objects.all()), 1)
  
@@ -976,7 +973,7 @@ class LeitorProventosEstruturadosTestCase(TestCase):
 #         outro_fii = FII.objects.create(empresa=outra_empresa, ticker='BRCR11')
         
         # Ler documento original
-        documento_original = DocumentoProventoBovespa.objects.get(protocolo='8679')
+#         documento_original = DocumentoProventoBovespa.objects.get(protocolo='8679')
         
         # Preparar documento para provento igual
         documento = DocumentoProventoBovespa()
@@ -1016,7 +1013,7 @@ class LeitorProventosEstruturadosTestCase(TestCase):
         self.assertEqual(DocumentoProventoBovespa.objects.filter(protocolo='8679').count(), 2)
         self.assertTrue(ProventoFIIDocumento.objects.all().count() == 0)
         
-        ler_provento_estruturado_fii(documento_original)
+        ler_provento_estruturado_fii(self.documento)
         
         self.assertEqual(DocumentoProventoBovespa.objects.filter(protocolo='8679').count(), 1)
         self.assertTrue(ProventoFIIDocumento.objects.all().count() == 1)
