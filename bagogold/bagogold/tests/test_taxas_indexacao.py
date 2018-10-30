@@ -17,10 +17,9 @@ from bagogold.bagogold.utils.taxas_indexacao import buscar_valores_diarios_di, \
 
 class BuscaDITestCase(TestCase):
     """Testa busca de valores históricos para o DI"""
-
     def test_buscar_datas(self):
         """Testa se a busca funciona"""
-        buscar_valores_diarios_di()
+        buscar_valores_diarios_di(datetime.date.today() - datetime.timedelta(days=7))
         self.assertTrue(HistoricoTaxaDI.objects.exists())
         
     def test_buscar_datas_anterior_a_ultima(self):
@@ -30,7 +29,7 @@ class BuscaDITestCase(TestCase):
         while not verifica_se_dia_util(ultimo_dia_util):
             ultimo_dia_util = ultimo_dia_util - datetime.timedelta(days=1)
         HistoricoTaxaDI.objects.create(data=ultimo_dia_util, taxa=Decimal(10))
-        buscar_valores_diarios_di()
+        buscar_valores_diarios_di(datetime.date.today() - datetime.timedelta(days=7))
         self.assertTrue(HistoricoTaxaDI.objects.filter(data__lt=ultimo_dia_util).exists())
         
     def test_buscar_datas_com_datas_registradas(self):
@@ -40,7 +39,7 @@ class BuscaDITestCase(TestCase):
             if verifica_se_dia_util(data):
                 HistoricoTaxaDI.objects.create(data=data, taxa=Decimal(10))
         qtd_historico = HistoricoTaxaDI.objects.count()
-        buscar_valores_diarios_di()
+        buscar_valores_diarios_di(datetime.date.today() - datetime.timedelta(days=365))
         self.assertTrue(HistoricoTaxaDI.objects.count() > qtd_historico)
         
 class AtualizacaoTaxasTestCase(TestCase):
