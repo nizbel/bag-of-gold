@@ -32,49 +32,15 @@ from conf.settings_local import AWS_STORAGE_BUCKET_NAME as AWS_TEST_BUCKET_NAME
 
 
 # import os
-class GeradorProventosTestCase(TestCase):
+class GeradorProventosDownloadTestCase(TestCase):
 
     def setUp(self):
-        # Investidor
-        tester = User.objects.create(username='tester')
-        # Guardar investidor
-        self.investidor_tester = tester.investidor
-        
-        validator = User.objects.create(username='validator')
-        # Guardar investidor
-        self.investidor_validator = validator.investidor
-        
         # Empresa existente
         self.empresa_bbas = Empresa.objects.create(nome='Banco do Brasil', nome_pregao='BBAS', codigo_cvm='1023')
         self.acao_bbas = Acao.objects.create(empresa=self.empresa_bbas, ticker="BBAS3")
         
-        # Documento da empresa, já existe em media
-        self.documento = DocumentoProventoBovespa()
-        self.documento.empresa = Empresa.objects.get(codigo_cvm=self.empresa_bbas.codigo_cvm)
-        self.documento.url = 'http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=508232'
-        self.documento.tipo = 'A'
-        self.documento.protocolo = '508232'
-        self.documento.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_ACIONISTAS
-        self.documento.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
-        self.documento.baixar_e_salvar_documento()
-        
-        # Criando proventos para teste
-        Provento.objects.create(acao=self.acao_bbas, data_ex=datetime.date(2016, 11, 12), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(8), oficial_bovespa=True)
-        Provento.objects.create(acao=self.acao_bbas, data_ex=datetime.date(2016, 11, 10), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(7), oficial_bovespa=True)
-        Provento.objects.create(acao=self.acao_bbas, data_ex=datetime.date(2016, 11, 14), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(6), oficial_bovespa=True)
-        Provento.objects.create(acao=self.acao_bbas, data_ex=datetime.date(2016, 11, 8), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(5), oficial_bovespa=True)
-        Provento.objects.create(acao=self.acao_bbas, data_ex=datetime.date(2016, 11, 6), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(4), oficial_bovespa=True)
-        Provento.objects.create(acao=self.acao_bbas, data_ex=datetime.date(2016, 11, 16), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(3), oficial_bovespa=True)
-        Provento.objects.create(acao=self.acao_bbas, data_ex=datetime.date(2016, 11, 13), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(2), oficial_bovespa=True)
-        Provento.objects.create(acao=self.acao_bbas, data_ex=datetime.date(2016, 11, 11), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(1), oficial_bovespa=True)
-        
         # Empresa inexistente
         self.empresa_tttt = Empresa.objects.create(nome='Teste', nome_pregao='TTTT', codigo_cvm='1024')
-        acao2 = Acao.objects.create(empresa=self.empresa_tttt, ticker="TTTT3")
-        
-        # Empresa para FII
-        self.empresa_bbpo = Empresa.objects.create(nome='Fundo BBPO', nome_pregao='BBPO')
-        self.fii_bbpo = FII.objects.create(empresa=self.empresa_bbpo, ticker='BBPO11')
         
     def tearDown(self):
         DocumentoProventoBovespa.objects.all().delete()
@@ -119,21 +85,53 @@ class GeradorProventosTestCase(TestCase):
 #         # Apagar pasta após teste
 # #         if os.listdir('%sdoc proventos/%s' % (settings.MEDIA_ROOT, empresa.nome_pregao)) == []:
 # #             os.rmdir('%sdoc proventos/%s' % (settings.MEDIA_ROOT, empresa.nome_pregao))
+
+
+
+class GeradorProventosPendenciasTestCase(TestCase):
+
+    def setUp(self):
+        # Investidor
+        tester = User.objects.create(username='tester')
+        # Guardar investidor
+        self.investidor_tester = tester.investidor
         
+        validator = User.objects.create(username='validator')
+        # Guardar investidor
+        self.investidor_validator = validator.investidor
+        
+        # Empresa existente
+        self.empresa_bbas = Empresa.objects.create(nome='Banco do Brasil', nome_pregao='BBAS', codigo_cvm='1023')
+        self.acao_bbas = Acao.objects.create(empresa=self.empresa_bbas, ticker="BBAS3")
+        
+        # Documento da empresa, já existe em media
+        self.documento = DocumentoProventoBovespa()
+        self.documento.empresa = Empresa.objects.get(codigo_cvm=self.empresa_bbas.codigo_cvm)
+        self.documento.url = 'http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=508232'
+        self.documento.tipo = 'A'
+        self.documento.protocolo = '508232'
+        self.documento.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_ACIONISTAS
+        self.documento.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
+        self.documento.baixar_e_salvar_documento()
+        
+    def tearDown(self):
+        DocumentoProventoBovespa.objects.all().delete()
+
+
     def test_pendencia_gerada_ao_criar_documento_provento_bovespa(self):
         """Testa se foi gerada pendência ao criar um documento de proventos da Bovespa"""
-        documento = DocumentoProventoBovespa()
-        documento.empresa = self.empresa_bbas
-        documento.url = 'http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=507317'
-        documento.tipo = 'A'
-        documento.protocolo = '507317'
-        documento.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
-        documento.baixar_e_salvar_documento()
-        self.assertTrue(documento.pendente())
+#         documento = DocumentoProventoBovespa()
+#         documento.empresa = self.empresa_bbas
+#         documento.url = 'http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=507317'
+#         documento.tipo = 'A'
+#         documento.protocolo = '507317'
+#         documento.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
+#         documento.baixar_e_salvar_documento()
+        self.assertTrue(self.documento.pendente())
         # Quantidade de pendências deve ser 1
-        self.assertTrue(len(PendenciaDocumentoProvento.objects.filter(documento=documento)) == 1)
+        self.assertTrue(len(PendenciaDocumentoProvento.objects.filter(documento=self.documento)) == 1)
         # Tipo de pendência deve ser 'L'
-        self.assertTrue(PendenciaDocumentoProvento.objects.filter(documento=documento)[0].tipo == 'L')
+        self.assertTrue(PendenciaDocumentoProvento.objects.filter(documento=self.documento)[0].tipo == 'L')
     
     def test_salvar_investidor_responsavel_por_leitura(self):
         """Testa se é possível salvar o investidor responsável pela leitura do documento"""
@@ -160,19 +158,6 @@ class GeradorProventosTestCase(TestCase):
         with self.assertRaises(ValueError):
             salvar_investidor_responsavel_por_leitura(pendencia, self.investidor_tester, 'C')
     
-    def test_buscar_proventos_proximos_acao(self):
-        """Testa busca de proventos com data EX próxima"""
-        descricao_provento = ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=self.acao_bbas, data_ex=datetime.date(2016, 11, 12), data_pagamento=datetime.date(2016, 11, 20),
-                                                                                 tipo_provento='D', valor_unitario=Decimal(10))
-        provento = converter_descricao_provento_para_provento_acoes(descricao_provento)[0]
-        provento.save()
-        documento_provento = ProventoAcaoDocumento.objects.create(documento=self.documento, descricao_provento=descricao_provento, provento=provento, versao=1)
-        
-        proventos_proximos = buscar_proventos_proximos_acao(descricao_provento)
-        self.assertEqual(len(proventos_proximos), 8)
-        for provento in proventos_proximos:
-            self.assertLessEqual(abs((provento.data_ex - descricao_provento.data_ex).days), 6)
-    
     def test_excluir_arquivo_sem_info(self):
         """Testa exclusão de arquivo por um investidor do site"""
         pass
@@ -185,6 +170,60 @@ class GeradorProventosTestCase(TestCase):
     def test_nao_permitir_gerar_prov_repetido(self):
         """Testa erro caso um provento seja gerado novamente"""
         pass
+    
+    def test_evitar_puxar_pendencia_com_responsavel_para_investidor(self):
+        """Testa situação de falha com investidor puxando para si uma pendência que já tenha responsável"""
+        alocar_pendencia_para_investidor(PendenciaDocumentoProvento.objects.get(documento=self.documento), self.investidor_tester)
+        resultado, mensagem = alocar_pendencia_para_investidor(PendenciaDocumentoProvento.objects.get(documento=self.documento), self.investidor_validator)
+        self.assertFalse(resultado)
+        self.assertEqual(mensagem, u'Pendência já possui responsável')
+    
+    def test_evitar_mesmo_investidor_ler_e_validar(self):
+        """Testa situação de falha com investidor puxando para si uma pendência de validação que tenha lido"""
+        pendencia = PendenciaDocumentoProvento.objects.get(documento=self.documento)
+        # Alocar leitura
+        alocar_pendencia_para_investidor(pendencia, self.investidor_tester)
+        # Decidir
+        salvar_investidor_responsavel_por_leitura(pendencia, self.investidor_tester, 'C')
+        # Recarregar pendência
+        pendencia = PendenciaDocumentoProvento.objects.get(documento=self.documento)
+        # Tentar alocar validação
+        resultado, mensagem = alocar_pendencia_para_investidor(pendencia, self.investidor_tester)
+        self.assertFalse(resultado)
+        self.assertEqual(mensagem, u'Investidor já fez a leitura do documento, não pode validar')
+    
+    def test_alocar_pendencia_para_investidor(self):
+        """Testa situação de sucesso com investidor puxando para si uma pendência"""
+        resultado, mensagem = alocar_pendencia_para_investidor(PendenciaDocumentoProvento.objects.get(documento=self.documento), self.investidor_tester)
+        self.assertTrue(resultado)
+        
+    def test_desalocar_pendencia_de_investidor(self):
+        """Testa situação de sucesso para desalocar pendência de investidor"""
+        alocar_pendencia_para_investidor(PendenciaDocumentoProvento.objects.get(documento=self.documento), self.investidor_tester)
+        resultado, mensagem = desalocar_pendencia_de_investidor(PendenciaDocumentoProvento.objects.get(documento=self.documento), self.investidor_tester)
+        self.assertTrue(resultado)
+        
+    def test_nao_desalocar_pendencia_nao_alocada_para_investidor(self):
+        """Testa situação em que é tentado desalocar sem prévia alocação de pendência"""
+        resultado, mensagem = desalocar_pendencia_de_investidor(PendenciaDocumentoProvento.objects.get(documento=self.documento), self.investidor_tester)
+        self.assertFalse(resultado)
+        self.assertEqual(mensagem, u'A pendência não estava alocada para o investidor')
+    
+    
+class GeradorProventosConversaoTestCase(TestCase):
+
+    def setUp(self):
+        # Empresa existente
+        self.empresa_bbas = Empresa.objects.create(nome='Banco do Brasil', nome_pregao='BBAS', codigo_cvm='1023')
+        self.acao_bbas = Acao.objects.create(empresa=self.empresa_bbas, ticker="BBAS3")
+        
+        # Empresa para FII
+        self.empresa_bbpo = Empresa.objects.create(nome='Fundo BBPO', nome_pregao='BBPO')
+        self.fii_bbpo = FII.objects.create(empresa=self.empresa_bbpo, ticker='BBPO11')
+        
+    def tearDown(self):
+        DocumentoProventoBovespa.objects.all().delete()
+    
     
     def test_converter_descricao_jscp_atualizado_selic_acoes_para_provento(self):
         """Testa criação de provento de JSCP atualizado pela Selic a partir de descrição de provento em documento"""
@@ -283,6 +322,33 @@ class GeradorProventosTestCase(TestCase):
         self.assertEqual(provento_convertido.tipo_provento, provento.tipo_provento)
         self.assertEqual(provento_convertido.valor_unitario, provento.valor_unitario)
         
+        
+        
+class GeradorProventosCriacaoVersionamentoTestCase(TestCase):
+
+    def setUp(self):
+        # Empresa existente
+        self.empresa_bbas = Empresa.objects.create(nome='Banco do Brasil', nome_pregao='BBAS', codigo_cvm='1023')
+        self.acao_bbas = Acao.objects.create(empresa=self.empresa_bbas, ticker="BBAS3")
+        
+        # Criando proventos para teste
+        Provento.objects.create(acao=self.acao_bbas, data_ex=datetime.date(2016, 11, 12), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(8), oficial_bovespa=True)
+        Provento.objects.create(acao=self.acao_bbas, data_ex=datetime.date(2016, 11, 10), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(7), oficial_bovespa=True)
+        Provento.objects.create(acao=self.acao_bbas, data_ex=datetime.date(2016, 11, 14), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(6), oficial_bovespa=True)
+        Provento.objects.create(acao=self.acao_bbas, data_ex=datetime.date(2016, 11, 8), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(5), oficial_bovespa=True)
+        Provento.objects.create(acao=self.acao_bbas, data_ex=datetime.date(2016, 11, 6), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(4), oficial_bovespa=True)
+        Provento.objects.create(acao=self.acao_bbas, data_ex=datetime.date(2016, 11, 16), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(3), oficial_bovespa=True)
+        Provento.objects.create(acao=self.acao_bbas, data_ex=datetime.date(2016, 11, 13), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(2), oficial_bovespa=True)
+        Provento.objects.create(acao=self.acao_bbas, data_ex=datetime.date(2016, 11, 11), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(1), oficial_bovespa=True)
+        
+        # Empresa para FII
+        self.empresa_bbpo = Empresa.objects.create(nome='Fundo BBPO', nome_pregao='BBPO')
+        self.fii_bbpo = FII.objects.create(empresa=self.empresa_bbpo, ticker='BBPO11')
+        
+    def tearDown(self):
+        DocumentoProventoBovespa.objects.all().delete()
+        
+        
     def test_criacao_descricao_provento_acoes_atualizado_selic(self):
         """Testa criação de descrição de JSCP atualizado pela Selic"""
         descricao = ProventoAcaoDescritoDocumentoBovespa(acao=self.acao_bbas, data_ex=datetime.date(2007, 3, 22), data_pagamento=datetime.date(2007, 5, 29),
@@ -331,6 +397,24 @@ class GeradorProventosTestCase(TestCase):
         
         # Testar criação de novo provento não oficial com base na descrição 3
         self.assertTrue(ProventoAcaoDocumento.objects.filter(descricao_provento=descricao_provento_3, versao=1, documento=documento_2).exists())
+        
+    def test_buscar_proventos_proximos_acao(self):
+        """Testa busca de proventos com data EX próxima"""
+        descricao_provento = ProventoAcaoDescritoDocumentoBovespa.objects.create(acao=self.acao_bbas, data_ex=datetime.date(2016, 11, 12), data_pagamento=datetime.date(2016, 11, 20),
+                                                                                 tipo_provento='D', valor_unitario=Decimal(10))
+        provento = converter_descricao_provento_para_provento_acoes(descricao_provento)[0]
+        provento.save()
+        
+        # Gerar documento
+        documento = DocumentoProventoBovespa.objects.create(empresa=self.empresa_bbas, protocolo='113962', tipo='A', \
+                                                            url='http://www2.bmfbovespa.com.br/empresas/consbov/ArquivosExibe.asp?site=B&protocolo=199999', \
+                                                            data_referencia=datetime.datetime.strptime('03/03/2016', '%d/%m/%Y'))
+        documento_provento = ProventoAcaoDocumento.objects.create(documento=documento, descricao_provento=descricao_provento, provento=provento, versao=1)
+        
+        proventos_proximos = buscar_proventos_proximos_acao(descricao_provento)
+        self.assertEqual(len(proventos_proximos), 8)
+        for provento in proventos_proximos:
+            self.assertLessEqual(abs((provento.data_ex - descricao_provento.data_ex).days), 6)
     
     def test_versionamento_automatico_versao_nao_final_acoes(self):
         """Testa criação automática de versão a partir de um documento de provento de ações, sendo uma versão que não é a final"""
@@ -491,44 +575,31 @@ class GeradorProventosTestCase(TestCase):
         self.assertEqual(documento_provento_1.versao, 1)
         self.assertEqual(documento_provento_2.versao, 2)
         self.assertEqual(documento_provento_3.versao, 3)
-    
-    def test_evitar_puxar_pendencia_com_responsavel_para_investidor(self):
-        """Testa situação de falha com investidor puxando para si uma pendência que já tenha responsável"""
-        alocar_pendencia_para_investidor(PendenciaDocumentoProvento.objects.get(documento=self.documento), self.investidor_tester)
-        resultado, mensagem = alocar_pendencia_para_investidor(PendenciaDocumentoProvento.objects.get(documento=self.documento), self.investidor_validator)
-        self.assertFalse(resultado)
-        self.assertEqual(mensagem, u'Pendência já possui responsável')
-    
-    def test_evitar_mesmo_investidor_ler_e_validar(self):
-        """Testa situação de falha com investidor puxando para si uma pendência de validação que tenha lido"""
-        pendencia = PendenciaDocumentoProvento.objects.get(documento=self.documento)
-        # Alocar leitura
-        alocar_pendencia_para_investidor(pendencia, self.investidor_tester)
-        # Decidir
-        salvar_investidor_responsavel_por_leitura(pendencia, self.investidor_tester, 'C')
-        # Recarregar pendência
-        pendencia = PendenciaDocumentoProvento.objects.get(documento=self.documento)
-        # Tentar alocar validação
-        resultado, mensagem = alocar_pendencia_para_investidor(pendencia, self.investidor_tester)
-        self.assertFalse(resultado)
-        self.assertEqual(mensagem, u'Investidor já fez a leitura do documento, não pode validar')
-    
-    def test_alocar_pendencia_para_investidor(self):
-        """Testa situação de sucesso com investidor puxando para si uma pendência"""
-        resultado, mensagem = alocar_pendencia_para_investidor(PendenciaDocumentoProvento.objects.get(documento=self.documento), self.investidor_tester)
-        self.assertTrue(resultado)
         
-    def test_desalocar_pendencia_de_investidor(self):
-        """Testa situação de sucesso para desalocar pendência de investidor"""
-        alocar_pendencia_para_investidor(PendenciaDocumentoProvento.objects.get(documento=self.documento), self.investidor_tester)
-        resultado, mensagem = desalocar_pendencia_de_investidor(PendenciaDocumentoProvento.objects.get(documento=self.documento), self.investidor_tester)
-        self.assertTrue(resultado)
         
-    def test_nao_desalocar_pendencia_nao_alocada_para_investidor(self):
-        """Testa situação em que é tentado desalocar sem prévia alocação de pendência"""
-        resultado, mensagem = desalocar_pendencia_de_investidor(PendenciaDocumentoProvento.objects.get(documento=self.documento), self.investidor_tester)
-        self.assertFalse(resultado)
-        self.assertEqual(mensagem, u'A pendência não estava alocada para o investidor')
+class GeradorProventosCopiarProventosTestCase(TestCase):
+
+    def setUp(self):
+        # Empresa existente
+        self.empresa_bbas = Empresa.objects.create(nome='Banco do Brasil', nome_pregao='BBAS', codigo_cvm='1023')
+        self.acao_bbas = Acao.objects.create(empresa=self.empresa_bbas, ticker="BBAS3")
+        
+        # Criando proventos para teste
+        Provento.objects.create(acao=self.acao_bbas, data_ex=datetime.date(2016, 11, 12), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(8), oficial_bovespa=True)
+        Provento.objects.create(acao=self.acao_bbas, data_ex=datetime.date(2016, 11, 10), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(7), oficial_bovespa=True)
+        Provento.objects.create(acao=self.acao_bbas, data_ex=datetime.date(2016, 11, 14), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(6), oficial_bovespa=True)
+        Provento.objects.create(acao=self.acao_bbas, data_ex=datetime.date(2016, 11, 8), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(5), oficial_bovespa=True)
+        Provento.objects.create(acao=self.acao_bbas, data_ex=datetime.date(2016, 11, 6), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(4), oficial_bovespa=True)
+        Provento.objects.create(acao=self.acao_bbas, data_ex=datetime.date(2016, 11, 16), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(3), oficial_bovespa=True)
+        Provento.objects.create(acao=self.acao_bbas, data_ex=datetime.date(2016, 11, 13), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(2), oficial_bovespa=True)
+        Provento.objects.create(acao=self.acao_bbas, data_ex=datetime.date(2016, 11, 11), data_pagamento=datetime.date(2016, 11, 20), tipo_provento='D', valor_unitario=Decimal(1), oficial_bovespa=True)
+        
+        # Empresa para FII
+        self.empresa_bbpo = Empresa.objects.create(nome='Fundo BBPO', nome_pregao='BBPO')
+        self.fii_bbpo = FII.objects.create(empresa=self.empresa_bbpo, ticker='BBPO11')
+        
+    def tearDown(self):
+        DocumentoProventoBovespa.objects.all().delete()
         
     def test_copiar_proventos_atualizados_pela_selic(self):
         """Testa cópia de um provento de JSCP atualizado pela Selic"""
