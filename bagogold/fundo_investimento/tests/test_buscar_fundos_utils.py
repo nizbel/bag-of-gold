@@ -12,7 +12,7 @@ class BuscarFundoInvestimentoTestCase(TestCase):
     Testa os utilitários usados na busca de fundos de investimento
     """
     def setUp(self):
-        # Definir quais passos todos os utilitários têm em comum 
+        # TODO Definir quais passos todos os utilitários têm em comum 
         pass
         
     def test_buscar_documento_cvm_sucesso(self):
@@ -21,7 +21,7 @@ class BuscarFundoInvestimentoTestCase(TestCase):
         self.assertEquals(len(retorno), 3)
         self.assertEquals(retorno[0], 'http://dados.cvm.gov.br/dados/FI/CAD/DADOS/inf_cadastral_fi_20181026.csv')
         self.assertEquals(retorno[1], 'inf_cadastral_fi_20181026.csv')
-        self.assertTrue(retorno[2].isfile())
+        self.assertTrue(hasattr(retorno[2], 'read'))
         
     def test_buscar_documento_cvm_data_nao_util(self):
         """Testa busca de documento de cadastro de fundos em data não útil"""
