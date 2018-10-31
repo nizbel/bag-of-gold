@@ -103,7 +103,7 @@ def detalhar_pendencias_usuario(request, id_usuario):
     if usuario.groups.filter(name='Equipe de leitura').exists():
         # Tempo médio por exclusão: 51.43 Tempo médio por provento ação: 122.07 Tempo médio por provento fii: 79.4
         # Considerar leituras feitas a partir de 21/10/2017
-        # TODO a partir de 24/09/2018, aumentar valor da hora para 28 reais
+        # TODO a partir de 21/09/2018, aumentar valor da hora para 30 reais
         usuario.equipe_leitura = True
         
         leituras = InvestidorLeituraDocumento.objects.filter(data_leitura__gt=datetime.date(2017, 10, 21), investidor=usuario.investidor) \
@@ -115,61 +115,88 @@ def detalhar_pendencias_usuario(request, id_usuario):
             
         # Separar leituras e adicionar tempos
         leituras_fii = leituras.filter(documento__tipo='F').annotate(proventos_criados=Count('documento__proventofiidocumento')) \
-            .annotate(tempo=Case(When(decisao='C', then=(Decimal('79.4') * F('proventos_criados'))), 
-                                 When(decisao='E', then=Decimal('51.43')), output_field=DecimalField()))
+            .annotate(tempo=Case(When(decisao='C', then=(PagamentoLeitura.TEMPO_LEITURA_PROVENTO_FII * F('proventos_criados'))), 
+                                 When(decisao='E', then=PagamentoLeitura.TEMPO_EXCLUSAO_DOCUMENTO), output_field=DecimalField())) \
+            .annotate(valor_pagamento=Case(When(data_leitura__gte=datetime.date(2018, 9, 21), then=Value(Decimal(30))),
+                                           When(data_leitura__lt=datetime.date(2018, 9, 21), then=Value(Decimal(25))), output_field=DecimalField())) \
+            .values('tempo', 'valor_pagamento', 'data_leitura')
         leituras_acao = leituras.filter(documento__tipo='A').annotate(proventos_criados=Count('documento__proventoacaodocumento')) \
-            .annotate(tempo=Case(When(decisao='C', then=(Decimal('122.07') * F('proventos_criados'))), 
-                                 When(decisao='E', then=Decimal('51.43')), output_field=DecimalField()))
+            .annotate(tempo=Case(When(decisao='C', then=(PagamentoLeitura.TEMPO_LEITURA_PROVENTO_ACAO * F('proventos_criados'))), 
+                                 When(decisao='E', then=PagamentoLeitura.TEMPO_EXCLUSAO_DOCUMENTO), output_field=DecimalField())) \
+            .annotate(valor_pagamento=Case(When(data_leitura__gte=datetime.date(2018, 9, 21), then=Value(Decimal(30))),
+                                           When(data_leitura__lt=datetime.date(2018, 9, 21), then=Value(Decimal(25))), output_field=DecimalField())) \
+            .values('tempo', 'valor_pagamento', 'data_leitura')
             
         # Separar de leituras apagadas
         historico_leituras_fii = historico_leituras.filter(tipo_investimento='F') \
-            .annotate(tempo=Case(When(decisao='C', then=(Decimal('79.4') * F('proventos_criados'))), 
-                                 When(decisao='E', then=Decimal('51.43')), output_field=DecimalField()))
+            .annotate(tempo=Case(When(decisao='C', then=(PagamentoLeitura.TEMPO_LEITURA_PROVENTO_FII * F('proventos_criados'))), 
+                                 When(decisao='E', then=PagamentoLeitura.TEMPO_EXCLUSAO_DOCUMENTO), output_field=DecimalField())) \
+            .annotate(valor_pagamento=Case(When(data_leitura__gte=datetime.date(2018, 9, 21), then=Value(Decimal(30))),
+                                           When(data_leitura__lt=datetime.date(2018, 9, 21), then=Value(Decimal(25))), output_field=DecimalField())) \
+            .values('tempo', 'valor_pagamento', 'data_leitura')
         historico_leituras_acao = historico_leituras.filter(tipo_investimento='A') \
-            .annotate(tempo=Case(When(decisao='C', then=(Decimal('122.07') * F('proventos_criados'))), 
-                                 When(decisao='E', then=Decimal('51.43')), output_field=DecimalField()))
+            .annotate(tempo=Case(When(decisao='C', then=(PagamentoLeitura.TEMPO_LEITURA_PROVENTO_ACAO * F('proventos_criados'))), 
+                                 When(decisao='E', then=PagamentoLeitura.TEMPO_EXCLUSAO_DOCUMENTO), output_field=DecimalField())) \
+            .annotate(valor_pagamento=Case(When(data_leitura__gte=datetime.date(2018, 9, 21), then=Value(Decimal(30))),
+                                           When(data_leitura__lt=datetime.date(2018, 9, 21), then=Value(Decimal(25))), output_field=DecimalField())) \
+            .values('tempo', 'valor_pagamento', 'data_leitura')
         
         # Totais
-        qtd_acao_exclusao = leituras_acao.filter(decisao='E').count() + historico_leituras_acao.filter(decisao='E').count()
-        qtd_acao_proventos = (leituras_acao.filter(decisao='C').aggregate(total_proventos=Sum('proventos_criados'))['total_proventos'] or 0) \
-            + (historico_leituras_acao.filter(decisao='C').aggregate(total_proventos=Sum('proventos_criados'))['total_proventos'] or 0)
-        
-        qtd_fii_exclusao = leituras_fii.filter(decisao='E').count() + historico_leituras_fii.filter(decisao='E').count()
-        qtd_fii_proventos = (leituras_fii.filter(decisao='C').aggregate(total_proventos=Sum('proventos_criados'))['total_proventos'] or 0) \
-            + (historico_leituras_fii.filter(decisao='C').aggregate(total_proventos=Sum('proventos_criados'))['total_proventos'] or 0)
+#         qtd_acao_exclusao = leituras_acao.filter(decisao='E').count() + historico_leituras_acao.filter(decisao='E').count()
+#         qtd_acao_proventos = (leituras_acao.filter(decisao='C').aggregate(total_proventos=Sum('proventos_criados'))['total_proventos'] or 0) \
+#             + (historico_leituras_acao.filter(decisao='C').aggregate(total_proventos=Sum('proventos_criados'))['total_proventos'] or 0)
+#         
+#         qtd_fii_exclusao = leituras_fii.filter(decisao='E').count() + historico_leituras_fii.filter(decisao='E').count()
+#         qtd_fii_proventos = (leituras_fii.filter(decisao='C').aggregate(total_proventos=Sum('proventos_criados'))['total_proventos'] or 0) \
+#             + (historico_leituras_fii.filter(decisao='C').aggregate(total_proventos=Sum('proventos_criados'))['total_proventos'] or 0)
         
         # Validado
         # Históricos de leitura contam como validados sempre
-        qtd_acao_exclusao_validado = leituras_acao.filter(decisao='E', validado=True).count() + historico_leituras_acao.filter(decisao='E').count()
-        qtd_acao_proventos_validado = (leituras_acao.filter(decisao='C', validado=True).aggregate(total_proventos=Sum('proventos_criados'))['total_proventos'] or 0) \
-            + (historico_leituras_acao.filter(decisao='C').aggregate(total_proventos=Sum('proventos_criados'))['total_proventos'] or 0)
+#         qtd_acao_exclusao_validado = leituras_acao.filter(decisao='E', validado=True).count() + historico_leituras_acao.filter(decisao='E').count()
+#         qtd_acao_proventos_validado = (leituras_acao.filter(decisao='C', validado=True).aggregate(total_proventos=Sum('proventos_criados'))['total_proventos'] or 0) \
+#             + (historico_leituras_acao.filter(decisao='C').aggregate(total_proventos=Sum('proventos_criados'))['total_proventos'] or 0)
+#         
+#         qtd_fii_exclusao_validado = leituras_fii.filter(decisao='E', validado=True).count() + historico_leituras_fii.filter(decisao='E').count()
+#         qtd_fii_proventos_validado = (leituras_fii.filter(decisao='C', validado=True).aggregate(total_proventos=Sum('proventos_criados'))['total_proventos'] or 0) \
+#             + (historico_leituras_fii.filter(decisao='C').aggregate(total_proventos=Sum('proventos_criados'))['total_proventos'] or 0)
         
-        qtd_fii_exclusao_validado = leituras_fii.filter(decisao='E', validado=True).count() + historico_leituras_fii.filter(decisao='E').count()
-        qtd_fii_proventos_validado = (leituras_fii.filter(decisao='C', validado=True).aggregate(total_proventos=Sum('proventos_criados'))['total_proventos'] or 0) \
-            + (historico_leituras_fii.filter(decisao='C').aggregate(total_proventos=Sum('proventos_criados'))['total_proventos'] or 0)
-        
-        tempo_total = Decimal((qtd_acao_exclusao + qtd_fii_exclusao) * Decimal('51.43') + qtd_acao_proventos * Decimal('122.07') \
-                                      + qtd_fii_proventos * Decimal('79.4')) / 3600
-        usuario.tempo_validado = Decimal((qtd_acao_exclusao_validado + qtd_fii_exclusao_validado) * Decimal('51.43') \
-                                         + qtd_acao_proventos_validado * Decimal('122.07') + qtd_fii_proventos_validado * Decimal('79.4')) / 3600
+#         tempo_total = Decimal((qtd_acao_exclusao + qtd_fii_exclusao) * PagamentoLeitura.TEMPO_EXCLUSAO_DOCUMENTO + qtd_acao_proventos * PagamentoLeitura.TEMPO_LEITURA_PROVENTO_ACAO \
+#                                       + qtd_fii_proventos * PagamentoLeitura.TEMPO_LEITURA_PROVENTO_FII) / 3600
+        tempo_total = Decimal(sum([leitura['tempo'] for leitura in leituras_acao] + [leitura['tempo'] for leitura in leituras_fii] + [historico_leitura['tempo'] for historico_leitura in historico_leituras_acao] \
+                                  + [historico_leitura['tempo'] for historico_leitura in historico_leituras_fii])) / 3600
+        pagamento_total = Decimal(sum([leitura['tempo'] * leitura['valor_pagamento'] for leitura in leituras_acao] \
+                                      + [leitura['tempo'] * leitura['valor_pagamento'] for leitura in leituras_fii] \
+                                      + [historico_leitura['tempo'] * historico_leitura['valor_pagamento'] for historico_leitura in historico_leituras_acao] \
+                                      + [historico_leitura['tempo'] * historico_leitura['valor_pagamento'] for historico_leitura in historico_leituras_fii])) / 3600
+#         usuario['tempo']_validado = Decimal((qtd_acao_exclusao_validado + qtd_fii_exclusao_validado) * PagamentoLeitura['tempo']_EXCLUSAO_DOCUMENTO \
+#                                          + qtd_acao_proventos_validado * PagamentoLeitura['tempo']_LEITURA_PROVENTO_ACAO + qtd_fii_proventos_validado * PagamentoLeitura['tempo']_LEITURA_PROVENTO_FII) / 3600
+        usuario.tempo_validado = Decimal(sum([leitura['tempo'] for leitura in leituras_acao.filter(validado=True)] + [leitura['tempo'] for leitura in leituras_fii.filter(validado=True)] \
+                                             + [historico_leitura['tempo'] for historico_leitura in historico_leituras_acao] \
+                                             + [historico_leitura['tempo'] for historico_leitura in historico_leituras_fii])) / 3600
+        pagamento_validado = Decimal(sum([leitura['tempo'] * leitura['valor_pagamento'] for leitura in leituras_acao.filter(validado=True)] \
+                                                 + [leitura['tempo'] * leitura['valor_pagamento'] for leitura in leituras_fii.filter(validado=True)] \
+                                                 + [historico_leitura['tempo'] * historico_leitura['valor_pagamento'] for historico_leitura in historico_leituras_acao] \
+                                                 + [historico_leitura['tempo'] * historico_leitura['valor_pagamento'] for historico_leitura in historico_leituras_fii])) / 3600
         usuario.tempo_a_validar = tempo_total - usuario.tempo_validado
-        usuario.pagto_tempo_a_validar = (usuario.tempo_a_validar * PagamentoLeitura.VALOR_HORA).quantize(Decimal('0.01'))
+        usuario.pagto_tempo_a_validar = (pagamento_total - pagamento_validado).quantize(Decimal('0.01'))
+#         usuario.pagto_tempo_a_validar = (usuario.tempo_a_validar * PagamentoLeitura.VALOR_HORA).quantize(Decimal('0.01'))
         
         # Usar novo modelo pagamento leitura
-        valor_hora = PagamentoLeitura.VALOR_HORA
+#         valor_hora = PagamentoLeitura.VALOR_HORA
         usuario.pago = PagamentoLeitura.objects.filter(investidor=usuario.investidor).aggregate(total_pago=Sum('valor'))['total_pago'] or 0
         # Valor a pagar deve ser 0 para casos em que pagamentos foram feitos antes das validações
-        usuario.a_pagar = max(Decimal(floor(usuario.tempo_validado)) * valor_hora - usuario.pago, 0)
+        
+        usuario.a_pagar = max(Decimal(floor(pagamento_validado)) - usuario.pago, 0)
         
         # Parar popular a barra de acompanhamento
         # Tempo total deve ser 1 para casos em que pagamentos foram feitos antes das validações, excedendo tempo
-        usuario.progresso_tempo_total = max(tempo_total * valor_hora - usuario.pago, 1)
+        usuario.progresso_tempo_total = max(pagamento_total - usuario.pago, 1)
 #         usuario.progresso_pago = usuario.pago
 #         usuario.percentual_progresso_pago = usuario.progresso_pago / usuario.progresso_tempo_total * 100
         usuario.progresso_a_pagar = usuario.a_pagar
         usuario.percentual_progresso_a_pagar = usuario.progresso_a_pagar / usuario.progresso_tempo_total * 100
         # Tempo validado deve ser 0 para casos em que pagamentos foram feitos antes das validações, excedendo tempo
-        usuario.progresso_validado = max(usuario.tempo_validado * valor_hora - usuario.a_pagar - usuario.pago, 0)
+        usuario.progresso_validado = max(pagamento_validado - usuario.a_pagar - usuario.pago, 0)
         usuario.percentual_progresso_validado = usuario.progresso_validado / usuario.progresso_tempo_total * 100
         
         # Adicionar lista de pagamentos feitos
