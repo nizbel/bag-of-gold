@@ -384,6 +384,10 @@ class ProventoFIIDescritoDocumentoBovespa (models.Model):
             
 class PagamentoLeitura (models.Model):
     VALOR_HORA = Decimal(25)
+    
+    TEMPO_EXCLUSAO_DOCUMENTO = Decimal('51.43')
+    TEMPO_LEITURA_PROVENTO_ACAO = Decimal('122.07')
+    TEMPO_LEITURA_PROVENTO_FII = Decimal('79.4')
 
     investidor = models.ForeignKey('Investidor')
     data = models.DateField(u'Data do pagamento')
