@@ -177,27 +177,31 @@ def calcular_qtd_fiis_ate_dia(investidor, dia=datetime.date.today()):
                 Dia final
     Retorno: Quantidade de FIIs {ticker: qtd}
     """
-    if not verificar_se_existe_evento_para_fiis_periodo(list(OperacaoFII.objects.filter(investidor=investidor, data__lte=dia) \
-            .order_by('fii__id').distinct('fii__id').values_list('fii__ticker', flat=True)), dia.replace(month=1).replace(day=1), dia):
-        posicao_anterior = dict(CheckpointFII.objects.filter(investidor=investidor, ano=dia.year-1, quantidade__gt=0).values_list('fii__ticker', 'quantidade'))
-        novas_operacoes = dict(OperacaoFII.objects.filter(investidor=investidor, data__range=[dia.replace(month=1).replace(day=1), dia]).annotate(ticker=F('fii__ticker')).values('ticker') \
-            .annotate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
-                                When(tipo_operacao='V', then=F('quantidade')*-1),
-                                output_field=DecimalField()))).values_list('ticker', 'total').exclude(total=0))
-        
-        qtd_fii = { k: posicao_anterior.get(k, 0) + novas_operacoes.get(k, 0) for k in set(posicao_anterior) | set(novas_operacoes) \
-                   if posicao_anterior.get(k, 0) + novas_operacoes.get(k, 0) != 0}
-    
-    else:
-        qtd_fii = {}
-        fiis_operacoes = list(OperacaoFII.objects.filter(investidor=investidor, data__lte=dia).order_by('fii__id').distinct('fii__id').values_list('fii__ticker', flat=True))
-        fiis_incorporados = list(EventoIncorporacaoFII.objects.filter(fii__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia) \
-                                    .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True)) \
-                                        .order_by('novo_fii__id').distinct('novo_fii__id').values_list('novo_fii__ticker', flat=True))
-        for ticker in list(set(fiis_operacoes + fiis_incorporados)):
-            qtd_fii_na_data = calcular_qtd_fiis_ate_dia_por_ticker(investidor, dia, ticker)
-            if qtd_fii_na_data > 0:
-                qtd_fii[ticker] = qtd_fii_na_data
+    fiis_operacoes = list(OperacaoFII.objects.filter(investidor=investidor, data__lte=dia).order_by('fii__id').distinct('fii__id').values_list('fii__ticker', flat=True))
+    fiis_incorporados = list(EventoIncorporacaoFII.objects.filter(fii__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia) \
+                                .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True)) \
+                                    .order_by('novo_fii__id').distinct('novo_fii__id').values_list('novo_fii__ticker', flat=True))
+    tickers_sem_evento = list(set(fiis_operacoes + fiis_incorporados))
+    tickers_com_evento = listar_fiis_com_evento_periodo(tickers_sem_evento, dia.replace(month=1).replace(day=1), dia)
+    for ticker_com_evento in tickers_com_evento:
+        tickers_sem_evento.remove(ticker_com_evento)
+     
+    posicao_anterior = dict(CheckpointFII.objects.filter(investidor=investidor, ano=dia.year-1, quantidade__gt=0, 
+                                                         fii__ticker__in=tickers_sem_evento).values_list('fii__ticker', 'quantidade'))
+    novas_operacoes = dict(OperacaoFII.objects.filter(investidor=investidor, data__range=[dia.replace(month=1).replace(day=1), dia], 
+                                                      fii__ticker__in=tickers_sem_evento).annotate(ticker=F('fii__ticker')).values('ticker') \
+        .annotate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
+                            When(tipo_operacao='V', then=F('quantidade')*-1),
+                            output_field=DecimalField()))).values_list('ticker', 'total').exclude(total=0))
+       
+    qtd_fii = { k: posicao_anterior.get(k, 0) + novas_operacoes.get(k, 0) for k in set(posicao_anterior) | set(novas_operacoes) \
+               if posicao_anterior.get(k, 0) + novas_operacoes.get(k, 0) != 0}
+      
+    for ticker in tickers_com_evento:
+        qtd_fii_na_data = calcular_qtd_fiis_ate_dia_por_ticker(investidor, dia, ticker)
+        if qtd_fii_na_data > 0:
+            qtd_fii[ticker] = qtd_fii_na_data
+             
     return qtd_fii
 
 def calcular_qtd_fiis_ate_dia_por_ticker(investidor, dia, ticker, ignorar_incorporacao_id=None):
@@ -763,5 +767,5 @@ def listar_fiis_com_evento_periodo(fii_tickers, data_inicio, data_fim):
         lista_tickers.extend(classe.objects.filter(fii__ticker__in=fii_tickers, data__range=[data_inicio, data_fim]).values_list('fii__ticker', flat=True))
     # Adicionar recebimentos por incorporação
     lista_tickers.extend(EventoIncorporacaoFII.objects.filter(novo_fii__ticker__in=fii_tickers, data__range=[data_inicio, data_fim]).values_list('novo_fii__ticker', flat=True))
-    return lista_tickers
+    return list(set(lista_tickers))
         
