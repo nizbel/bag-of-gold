@@ -56,7 +56,7 @@ class Command(BaseCommand):
                 print 'QTD POSTERIOR', admins_formatados, Administrador.objects.all().count(), \
                     FundoInvestimento.objects.all().count()
                 
-                raise ValueError('TESTE')
+#                 raise ValueError('TESTE')
         
         except:
             raise
