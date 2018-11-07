@@ -198,13 +198,13 @@ def calcular_qtd_fiis_ate_dia(investidor, dia=datetime.date.today()):
                if posicao_anterior.get(k, 0) + novas_operacoes.get(k, 0) != 0}
       
     for ticker in tickers_com_evento:
-        qtd_fii_na_data = calcular_qtd_fiis_ate_dia_por_ticker(investidor, dia, ticker)
+        qtd_fii_na_data = calcular_qtd_fiis_ate_dia_por_ticker(investidor, dia, ticker, None, False)
         if qtd_fii_na_data > 0:
             qtd_fii[ticker] = qtd_fii_na_data
              
     return qtd_fii
 
-def calcular_qtd_fiis_ate_dia_por_ticker(investidor, dia, ticker, ignorar_incorporacao_id=None):
+def calcular_qtd_fiis_ate_dia_por_ticker(investidor, dia, ticker, ignorar_incorporacao_id=None, verificar_evento=True):
     """ 
     Calcula a quantidade de FIIs até dia determinado para um ticker determinado
     
@@ -214,7 +214,7 @@ def calcular_qtd_fiis_ate_dia_por_ticker(investidor, dia, ticker, ignorar_incorp
                 Id da incorporação a ser ignorada
     Retorno: Quantidade de FIIs para o ticker determinado
     """
-    if not verificar_se_existe_evento_para_fii_periodo(ticker, dia.replace(month=1).replace(day=1), dia):
+    if verificar_evento and not verificar_se_existe_evento_para_fii_periodo(ticker, dia.replace(month=1).replace(day=1), dia):
         if CheckpointFII.objects.filter(investidor=investidor, ano=dia.year-1, fii__ticker=ticker, quantidade__gt=0).exists():
             qtd_fii = CheckpointFII.objects.get(investidor=investidor, ano=dia.year-1, fii__ticker=ticker, quantidade__gt=0).quantidade
         else:
@@ -737,8 +737,12 @@ def verificar_se_existe_evento_para_fii_periodo(fii_ticker, data_inicio, data_fi
     Retorno: True caso exista, senão False
     """
     # Verificar se há evento ou se outro FII foi incorporado a este
-    return any([classe.objects.filter(fii__ticker=fii_ticker, data__range=[data_inicio, data_fim]).exists() for classe in EventoFII.__subclasses__()]) \
-        or EventoIncorporacaoFII.objects.filter(novo_fii__ticker=fii_ticker, data__range=[data_inicio, data_fim]).exists()
+#     return any([classe.objects.filter(fii__ticker=fii_ticker, data__range=[data_inicio, data_fim]).exists() for classe in EventoFII.__subclasses__()]) \
+#         or EventoIncorporacaoFII.objects.filter(novo_fii__ticker=fii_ticker, data__range=[data_inicio, data_fim]).exists()
+    for classe in EventoFII.__subclasses__():
+        if classe.objects.filter(fii__ticker=fii_ticker, data__range=[data_inicio, data_fim]).exists():
+            return True
+    return EventoIncorporacaoFII.objects.filter(novo_fii__ticker=fii_ticker, data__range=[data_inicio, data_fim]).exists()
         
 def verificar_se_existe_evento_para_fiis_periodo(fii_tickers, data_inicio, data_fim):
     """
@@ -750,8 +754,12 @@ def verificar_se_existe_evento_para_fiis_periodo(fii_tickers, data_inicio, data_
     Retorno: True caso exista, senão False
     """
     # Verificar se há evento ou se outro FII foi incorporado a este
-    return any([classe.objects.filter(fii__ticker__in=fii_tickers, data__range=[data_inicio, data_fim]).exists() for classe in EventoFII.__subclasses__()]) \
-        or EventoIncorporacaoFII.objects.filter(novo_fii__ticker__in=fii_tickers, data__range=[data_inicio, data_fim]).exists()
+#     return any([classe.objects.filter(fii__ticker__in=fii_tickers, data__range=[data_inicio, data_fim]).exists() for classe in EventoFII.__subclasses__()]) \
+#         or EventoIncorporacaoFII.objects.filter(novo_fii__ticker__in=fii_tickers, data__range=[data_inicio, data_fim]).exists()
+    for classe in EventoFII.__subclasses__():
+        if classe.objects.filter(fii__ticker__in=fii_tickers, data__range=[data_inicio, data_fim]).exists():
+            return True
+    return EventoIncorporacaoFII.objects.filter(novo_fii__ticker__in=fii_tickers, data__range=[data_inicio, data_fim]).exists()
 
 def listar_fiis_com_evento_periodo(fii_tickers, data_inicio, data_fim):
     """
