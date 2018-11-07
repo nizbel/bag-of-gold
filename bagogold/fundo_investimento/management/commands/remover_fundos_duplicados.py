@@ -64,7 +64,7 @@ class Command(BaseCommand):
                 print 'QTD POSTERIOR', fundos_formatados, FundoInvestimento.objects.all().count(), \
                     HistoricoValorCotas.objects.all().count(), OperacaoFundoInvestimento.objects.all().count()
         
-                raise ValueError('TESTE')
+#                 raise ValueError('TESTE')
         
         except:
             raise
