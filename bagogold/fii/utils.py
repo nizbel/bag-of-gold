@@ -748,3 +748,20 @@ def verificar_se_existe_evento_para_fiis_periodo(fii_tickers, data_inicio, data_
     # Verificar se há evento ou se outro FII foi incorporado a este
     return any([classe.objects.filter(fii__ticker__in=fii_tickers, data__range=[data_inicio, data_fim]).exists() for classe in EventoFII.__subclasses__()]) \
         or EventoIncorporacaoFII.objects.filter(novo_fii__ticker__in=fii_tickers, data__range=[data_inicio, data_fim]).exists()
+
+def listar_fiis_com_evento_periodo(fii_tickers, data_inicio, data_fim):
+    """
+    Lista os tickers de FIIs que possuem algum evento no período informado
+    
+    Parâmetros: Lista de tickers de FIIs
+                Data de início
+                Data de fim
+    Retorno: Lista com os tickers de FIIs
+    """
+    lista_tickers = list()
+    for classe in EventoFII.__subclasses__():
+        lista_tickers.extend(classe.objects.filter(fii__ticker__in=fii_tickers, data__range=[data_inicio, data_fim]).values_list('fii__ticker', flat=True))
+    # Adicionar recebimentos por incorporação
+    lista_tickers.extend(EventoIncorporacaoFII.objects.filter(novo_fii__ticker__in=fii_tickers, data__range=[data_inicio, data_fim]).values_list('novo_fii__ticker', flat=True))
+    return lista_tickers
+        

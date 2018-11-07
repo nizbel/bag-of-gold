@@ -143,7 +143,7 @@
                     <div class="m-grid m-grid-responsive-xs">
                         <div class="m-grid-row">
                             <div class="m-grid-col m-grid-col-left"><strong>FII:</strong></div>
-                            <div class="m-grid-col m-grid-col-left">{{provento.fii}}</div>
+                            <div class="m-grid-col m-grid-col-left"><a href="{% url 'fii:detalhar_fii' provento.fii.ticker %}">{{provento.fii}}</a></div>
                             <div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
                             <div class="m-grid-col m-grid-col-left">{{provento.descricao_tipo_provento}}</div>
                             <div class="m-grid-col m-grid-col-left"><strong>Valor unit.:</strong></div>

@@ -475,7 +475,7 @@ def historico_fii(request):
                 total_proventos -= item.uso_proventos
 #             item.total = Decimal(-1) * (item.quantidade * item.preco_unitario + \
 #             item.emolumentos + item.corretagem)
-            total_gasto += item.total - item.uso_proventos
+            total_gasto += item.total + item.uso_proventos
             qtd_papeis[item.fii_ticker] += item.quantidade
             
         elif item.tipo == 'Venda':
