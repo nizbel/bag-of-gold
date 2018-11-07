@@ -22,6 +22,11 @@ from bagogold.bagogold.models.gerador_proventos import \
     HistoricoInvestidorLeituraDocumento, HistoricoInvestidorValidacaoDocumento, \
     HistoricoInvestidorRecusaDocumento
 
+@login_required
+@permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
+@adiciona_titulo_descricao('Detalhar pendências do usuário', 'Detalha informações sobre leituras, pendências, recusas e validações de um usuário do gerador de proventos')
+def central_pagamentos(request, id_usuario):
+    pass
 
 @login_required
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
