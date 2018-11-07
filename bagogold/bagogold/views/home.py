@@ -140,11 +140,15 @@ def calendario(request):
                             'start': operacao.data_vencimento().strftime('%Y-%m-%d')} for operacao in vencimento_lc])
         
         # Carência de LCI/LCA
-        carencia_lci_lca = OperacaoLetraCredito.objects.filter(investidor=investidor, data__lt=data_final, tipo_operacao='C')
+        operacoes_lci_lca = OperacaoLetraCredito.objects.filter(investidor=investidor, data__lt=data_final, tipo_operacao='C')
         # Buscar apenas operações com fim da carência no período especificado
-        carencia_lci_lca = [operacao for operacao in carencia_lci_lca if operacao.data_carencia() >= data_inicial and operacao.data_carencia() <= data_final]
+        carencia_lci_lca = [operacao for operacao in operacoes_lci_lca if operacao.data_carencia() >= data_inicial and operacao.data_carencia() <= data_final]
         calendario.extend([{'title': u'Carência de operação de R$ %s em %s, feita em %s' % (operacao.quantidade, operacao.letra_credito.nome, operacao.data.strftime('%d/%m/%Y')), 
                             'start': operacao.data_carencia().strftime('%Y-%m-%d')} for operacao in carencia_lci_lca])
+        # Buscar apenas operações que vencem no período especificado
+        vencimento_lci_lca = [operacao for operacao in operacoes_lci_lca if operacao.data_vencimento() >= data_inicial and operacao.data_vencimento() <= data_final]
+        calendario.extend([{'title': u'Vencimento de operação de R$ %s em %s, feita em %s' % (operacao.quantidade, operacao.letra_credito.nome, operacao.data.strftime('%d/%m/%Y')), 
+                            'start': operacao.data_vencimento().strftime('%Y-%m-%d')} for operacao in vencimento_lci_lca])
         
         # Vencimento, amortizações e remunerações de CRI/CRA
         remuneracoes_cri_cra = DataRemuneracaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, data__range=[data_inicial, data_final])
