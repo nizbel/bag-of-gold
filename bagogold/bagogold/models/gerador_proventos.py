@@ -94,10 +94,11 @@ class DocumentoProventoBovespa (models.Model):
         return self.empresa.ticker_empresa()
     
     def pendente(self):
-        return PendenciaDocumentoProvento.objects.filter(documento=self).exists()
+        return self.pendenciadocumentoprovento_set.exists()
     
     def pendencias(self):
-        return PendenciaDocumentoProvento.objects.filter(documento=self)
+#         return PendenciaDocumentoProvento.objects.filter(documento=self)
+        return self.pendenciadocumentoprovento_set.all()
     
     def responsavel_leitura(self):
         if hasattr(self, 'investidorleituradocumento'):
