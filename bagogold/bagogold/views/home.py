@@ -995,7 +995,7 @@ def detalhamento_investimentos(request):
 
 @adiciona_titulo_descricao('', 'O Bag of Gold permite que o usuário acompanhe seus investimentos em um único lugar')
 def inicio(request):
-    posts = Post.objects.all().order_by('-data')[:6]
+    posts = Post.objects.all().order_by('-data').prefetch_related('tagpost_set__tag')[:6]
     
     return TemplateResponse(request, 'inicio.html', {'posts': posts})
 
