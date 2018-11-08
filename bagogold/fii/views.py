@@ -73,6 +73,11 @@ def acompanhamento_mensal_fii(request):
     'comparar com os potenciais ganhos em outros investimentos')
 def acompanhamento_fii(request):
     fiis = FII.objects.all()
+
+    ultimos_valores_diarios = {fii_id: (data_hora, valor) for fii_id, data_hora, valor in ValorDiarioFII.objects.all().order_by('fii__id', '-data_hora') \
+                               .distinct('fii__id').values_list('fii', 'data_hora', 'preco_unitario')}    
+    ultimos_historicos = {fii_id: (data, valor) for fii_id, data, valor in HistoricoFII.objects.all().order_by('fii__id', '-data') \
+                          .distinct('fii__id').values_list('fii', 'data', 'preco_unitario')}
     
     filtros = {}
     
@@ -106,30 +111,33 @@ def acompanhamento_fii(request):
 #             qtd_dias_periodo = (datetime.date.today() - proventos[len(proventos)-1].data_ex).days
 #         else:
 #             continue
-        fii.total_amortizacoes = proventos.filter(tipo_provento=ProventoFII.TIPO_PROVENTO_AMORTIZACAO).aggregate(total=Sum('valor_unitario'))['total'] or 0
-        fii.total_rendimentos = proventos.filter(tipo_provento=ProventoFII.TIPO_PROVENTO_RENDIMENTO).aggregate(total=Sum('valor_unitario'))['total'] or 0
+        totais_tipos_provento = proventos.values('tipo_provento').annotate(total=Sum('valor_unitario'))
+        fii.total_amortizacoes = 0
+        fii.total_rendimentos = 0
+        for total_tipo_provento in totais_tipos_provento:
+            if total_tipo_provento['tipo_provento'] == ProventoFII.TIPO_PROVENTO_AMORTIZACAO:
+                fii.total_amortizacoes = total_tipo_provento['total']
+            elif total_tipo_provento['tipo_provento'] == ProventoFII.TIPO_PROVENTO_RENDIMENTO:
+                fii.total_rendimentos = total_tipo_provento['total']
         fii.total_proventos = fii.total_amortizacoes + fii.total_rendimentos
             
         # Pegar valor atual dos FIIs
-        preenchido = False
-        try:
-            valor_diario_mais_recente = ValorDiarioFII.objects.filter(fii=fii).order_by('-data_hora')
-            if valor_diario_mais_recente and valor_diario_mais_recente[0].data_hora.date() == datetime.date.today():
-                fii.valor_atual = valor_diario_mais_recente[0].preco_unitario
-                fii.data = valor_diario_mais_recente[0].data_hora.date()
+        if fii.id in ultimos_valores_diarios.keys():
+            preco_unitario = ultimos_valores_diarios[fii.id][1]
+            data_hora = ultimos_valores_diarios[fii.id][0].date()
+            if data_hora == datetime.date.today():
+                fii.valor_atual = preco_unitario
+                fii.data = data_hora
                 fii.percentual_retorno = (fii.total_rendimentos/fii.valor_atual) * 100
-                preenchido = True
-        except:
-            pass
-        if (not preenchido):
+                
+        else:
             # Pegar último dia util com negociação da ação para calculo do patrimonio
-            try:
-                historico = HistoricoFII.objects.filter(fii=fii).order_by('-data')[0]
-                fii.valor_atual = historico.preco_unitario
-                fii.data = historico.data
+            if fii.id in ultimos_historicos.keys():
+                fii.valor_atual = ultimos_historicos[fii.id][1]
+                fii.data = ultimos_historicos[fii.id][0]
                 # Percentual do retorno sobre o valor do fundo
                 fii.percentual_retorno = (fii.total_rendimentos/fii.valor_atual) * 100
-            except:
+            else:
 #                 fii.valor_atual = 0
                 fii.data = None
                 continue
