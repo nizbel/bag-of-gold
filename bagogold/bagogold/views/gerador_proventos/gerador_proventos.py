@@ -12,7 +12,7 @@ from django.core.mail import mail_admins
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.db.models.expressions import Case, When, Value
-from django.db.models.fields import CharField, Field
+from django.db.models.fields import CharField
 from django.forms.formsets import formset_factory
 from django.forms.models import model_to_dict
 from django.http.response import HttpResponseRedirect, HttpResponse, Http404
@@ -604,7 +604,7 @@ def listar_pendencias(request):
     query_pendencias = PendenciaDocumentoProvento.objects.all().annotate(tipo_pendencia=Case(When(tipo='L', then=Value(u'Leitura')), 
                                                                                              When(tipo='V', then=Value(u'Validação')), output_field=CharField())) \
         .annotate(tipo_documento=Case(When(documento__tipo='A', then=Value(u'Ação')), When(documento__tipo='F', then=Value('FII')), output_field=CharField())) \
-        .select_related('documento', 'documento__empresa', 'investidorresponsavelpendencia')
+        .select_related('documento__empresa', 'investidorresponsavelpendencia__investidor__user')
     # Verifica a quantidade de pendências escolhida para filtrar
     if request.method == 'POST':
         # Preparar filtro por quantidade
