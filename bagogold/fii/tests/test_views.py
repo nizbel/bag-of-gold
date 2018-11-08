@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 import datetime
 from decimal import Decimal
+
 from django.contrib.auth.models import User
+from django.core.urlresolvers import reverse
 from django.test.testcases import TestCase
 
-from django.core.urlresolvers import reverse
-
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.fii.models import FII, HistoricoFII, ProventoFII, \
-    EventoAgrupamentoFII, OperacaoFII
+    EventoAgrupamentoFII, OperacaoFII, UsoProventosOperacaoFII
+
 
 class AcompanhamentoFIITestCase (TestCase):
     def setUp(self):
@@ -138,7 +140,7 @@ class DetalharFIITestCase (TestCase):
         self.assertEqual(len(response.context_data['operacoes']), 2)
         self.assertEqual(len(response.context_data['historico']), 365)
         self.assertEqual(len(response.context_data['proventos']), 6)
-        self.assertEqual(response.context_data['fii'], self.fii_2))
+        self.assertEqual(response.context_data['fii'], self.fii_2)
         # Quantidade de cotas atual é 1 devido ao agrupamento
         self.assertEqual(response.context_data['fii'].qtd_cotas, 1)
         
@@ -154,7 +156,7 @@ class DetalharFIITestCase (TestCase):
         self.assertEqual(len(response.context_data['operacoes']), 2)
         self.assertEqual(len(response.context_data['historico']), 365)
         self.assertEqual(len(response.context_data['proventos']), 6)
-        self.assertEqual(response.context_data['fii'], self.fii_2))
+        self.assertEqual(response.context_data['fii'], self.fii_2)
         self.assertEqual(response.context_data['fii'].qtd_cotas, 0)
         
     def test_fii_nao_encontrado(self):
@@ -190,7 +192,8 @@ class HistoricoFIITestCase (TestCase):
                                    quantidade=10, preco_unitario=100, corretagem=10, emolumentos=Decimal('0.1'), tipo_operacao='C')
         operacao_uso_prov = OperacaoFII.objects.create(fii=fii_2, investidor=nizbel.investidor, data=datetime.date.today() - datetime.timedelta(days=10),
                                    quantidade=10, preco_unitario=100, corretagem=10, emolumentos=Decimal('0.1'), tipo_operacao='C')
-        UsoProventosOperacaoFII.objects.create(operacao=operacao_uso_prov, qtd_utilizada=Decimal(1), divisao=self.investidor_nizbel.divisaoprincipal)
+        divisao_op_uso_prov = DivisaoOperacaoFII.objects.create(divisao=self.investidor_nizbel.divisaoprincipal.divisao, quantidade=operacao_uso_prov.quantidade, operacao=operacao_uso_prov)
+        UsoProventosOperacaoFII.objects.create(operacao=operacao_uso_prov, qtd_utilizada=Decimal(1), divisao_operacao=divisao_op_uso_prov)
         
     
     def test_usuario_logado_sem_operacoes(self):
@@ -202,14 +205,10 @@ class HistoricoFIITestCase (TestCase):
         
         # Verificar contexto
         self.assertEqual(len(response.context_data['lista_conjunta']), 0)
-        self.assertEqual(len(response.context_data['graf_poupanca_proventos']), 1)
-        self.assertEqual(len(response.context_data['graf_gasto_total']), 1)
-        self.assertEqual(len(response.context_data['graf_patrimonio']), 1)
-        self.assertEqual(dados['total_proventos'], 0)
-        self.assertEqual(dados['total_gasto'], 0)
-        self.assertEqual(dados['patrimonio'], 0)
-        self.assertEqual(dados['lucro'], 0)
-        self.assertEqual(dados['lucro_percentual'], 0)
+        self.assertEqual(len(response.context_data['graf_poupanca_proventos']), 0)
+        self.assertEqual(len(response.context_data['graf_gasto_total']), 0)
+        self.assertEqual(len(response.context_data['graf_patrimonio']), 0)
+        self.assertEqual(response.context_data['dados'], {})
         
     def test_usuario_logado_com_operacoes(self):
         """Testa o acesso de um usuário logado com operações cadastradas"""
@@ -223,8 +222,9 @@ class HistoricoFIITestCase (TestCase):
         #self.assertEqual(len(response.context_data['graf_poupanca_proventos']), 1)
         #self.assertEqual(len(response.context_data['graf_gasto_total']), 1)
         #self.assertEqual(len(response.context_data['graf_patrimonio']), 1)
-        self.assertEqual(dados['total_proventos'], Decimal(1))
+        dados = response.context_data['dados']
+        self.assertEqual(dados['total_proventos'], 0)
         self.assertEqual(dados['total_gasto'], Decimal('2019.2'))
         self.assertEqual(dados['patrimonio'], Decimal(2000))
-        self.assertEqual(dados['lucro'], 0)
-        self.assertEqual(dados['lucro_percentual'], 0)
+        self.assertEqual(dados['lucro'], Decimal('-19.2'))
+        self.assertEqual(dados['lucro_percentual'], Decimal('-19.2') / dados['total_gasto'] * 100)
