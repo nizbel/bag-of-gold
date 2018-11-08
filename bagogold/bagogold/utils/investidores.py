@@ -342,11 +342,18 @@ def buscar_totais_atuais_investimentos(investidor, data_atual=datetime.date.toda
         
     # Fundos de investimento imobiliário
     fiis = calcular_qtd_fiis_ate_dia(investidor, data_atual)
+    # Buscar valores diários e históricos
+    ultimos_valores_diarios = {ticker: valor for ticker, valor in \
+                               ValorDiarioFII.objects.filter(fii__ticker__in=fiis.keys(), data_hora__date=datetime.date.today()).order_by('fii__id', '-data_hora') \
+                               .distinct('fii__id').values_list('fii__ticker', 'preco_unitario')}    
+    ultimos_historicos = {ticker: valor for ticker, valor in HistoricoFII.objects.filter(fii__ticker__in=fiis.keys()).order_by('fii__ticker', '-data') \
+                          .distinct('fii__ticker').values_list('fii__ticker', 'preco_unitario')}
+    
     for ticker in fiis.keys():
-        if ValorDiarioFII.objects.filter(fii__ticker=ticker, data_hora__day=data_atual.day, data_hora__month=data_atual.month).exists():
-            fii_valor = ValorDiarioFII.objects.filter(fii__ticker=ticker, data_hora__day=data_atual.day, data_hora__month=data_atual.month).order_by('-data_hora')[0].preco_unitario
+        if ticker in ultimos_valores_diarios:
+            fii_valor = ultimos_valores_diarios[ticker]
         else:
-            fii_valor = HistoricoFII.objects.filter(fii__ticker=ticker).order_by('-data')[0].preco_unitario
+            fii_valor = ultimos_historicos[ticker]
         totais_atuais['FII'] += (fiis[ticker] * fii_valor)
     totais_atuais['FII'] += calcular_poupanca_prov_fii_ate_dia(investidor, data_atual)
         
