@@ -11,125 +11,125 @@ from bagogold.bagogold.models.gerador_proventos import InvestidorLeituraDocument
     DocumentoProventoBovespa
 
 
-class UsuarioDeslogadoTestCase (TestCase):
-    """Caso de teste para usuário deslogado"""
-    def test_usuario_deslogado(self):
-        """Testa o acesso de usuário deslogado"""
-        response = self.client.get(reverse('gerador_proventos:central_pagamentos', kwargs={'id_usuario': 1}))
-        self.assertEqual(response.status_code, 302)
-        self.assertTrue('/login/' in response.url)
-
-class UsuarioInexistenteTestCase (TestCase):
-    """Caso de teste para acesso a usuário inexistente"""
-    def setUp(self):
-        self.user_test = User.objects.create_user('teste', 'teste@teste.com', 'teste')
-        
-        equipe_leitura = Group.objects.create(name='Equipe de leitura')
-        equipe_leitura.user_set.add(self.user_test)
-        
-        permissao = Permission.objects.create(codename='bagogold.pode_gerar_proventos')
-        self.user_test.user_permissions.add(permissao)
-        
-    def test_usuario_inexistente(self):
-        """Testa o acesso a usuário inexistente"""
-        self.client.login(username='teste', password='teste')
-        response = self.client.get(reverse('gerador_proventos:central_pagamentos', kwargs={'id_usuario': self.user_test.id+1}))
-        self.assertEqual(response.status_code, 404)
-
-class UsuarioSemPermissaoTestCase (TestCase):
-    """Caso de teste para acesso de usuários sem as permissões necessárias"""
-    def setUp(self):
-        self.user_test = User.objects.create_user('teste', 'teste@teste.com', 'teste')
-    
-    def test_usuario_sem_permissao_gerar_proventos(self):
-        """Testa situação de usuário que não possui permissão para gerar proventos"""
-        equipe_leitura = Group.objects.create(name='Equipe de leitura')
-        equipe_leitura.user_set.add(self.user_test)
-        
-        self.client.login(username='teste', password='teste')
-        response = self.client.get(reverse('gerador_proventos:central_pagamentos', kwargs={'id_usuario': self.user_test.id}))
-        self.assertEqual(response.status_code, 403)
-    
-    def test_usuario_sem_grupo_equipe_leitura(self):
-        """Testa situação de usuário que não está no grupo Equipe de leitura"""
-        permissao = Permission.objects.create(codename='bagogold.pode_gerar_proventos')
-        self.user_test.user_permissions.add(permissao)
-        
-        self.client.login(username='teste', password='teste')
-        response = self.client.get(reverse('gerador_proventos:central_pagamentos', kwargs={'id_usuario': self.user_test.id}))
-        self.assertEqual(response.status_code, 403)
-    
-class UsuarioSuperUserTestCase (TestCase):
-    """Testa situações de visualização de super usuário"""
-    def setUp(self):
-        self.nizbel = User.objects.create_superuser('nizbel', 'nizbel@teste.com', 'nizbel')
-        
-        # Criar dados outro usuário
-        self.user_test = User.objects.create_user('teste', 'teste@teste.com', 'teste')
-        
-        equipe_leitura = Group.objects.create(name='Equipe de leitura')
-        equipe_leitura.user_set.add(self.user_test)
-        
-        permissao = Permission.objects.create(codename='bagogold.pode_gerar_proventos')
-        self.user_test.user_permissions.add(permissao)
-    
-    def test_acessar_propria_central(self):
-        """Testa super usuário acessando própria página"""
-        self.client.login(username='nizbel', password='nizbel')
-        response = self.client.get(reverse('gerador_proventos:central_pagamentos', kwargs={'id_usuario': self.nizbel.id}))
-        self.assertEqual(response.status_code, 404)
-        
-    def test_acessar_central_de_outro_usuario(self):
-        """Testa super usuário acessando página de outro usuário"""
-        self.client.login(username='nizbel', password='nizbel')
-        response = self.client.get(reverse('gerador_proventos:central_pagamentos', kwargs={'id_usuario': self.user_test.id}))
-        self.assertEqual(response.status_code, 200)
-        
-class UsuarioSemLeiturasTestCase (TestCase):
-    """Testa situações de usuários sem leituras cadastradas"""
-    def setUp(self):
-        self.user_test = User.objects.create_user('teste', 'teste@teste.com', 'teste')
-        
-        equipe_leitura = Group.objects.create(name='Equipe de leitura')
-        equipe_leitura.user_set.add(self.user_test)
-        
-        permissao = Permission.objects.create(codename='bagogold.pode_gerar_proventos')
-        self.user_test.user_permissions.add(permissao)
-    
-    def test_usuario_sem_leituras(self):
-        """Testa o acesso de usuário sem leituras"""
-        self.client.login(username='teste', password='teste')
-        response = self.client.get(reverse('gerador_proventos:central_pagamentos', kwargs={'id_usuario': self.user_test.id}))
-        self.assertEqual(response.status_code, 200)
-        
-    def test_usuario_fez_1_leitura(self):
-        """Testa o acesso de usuário sem leituras"""
-        self.client.login(username='teste', password='teste')
-        
-        # Adicionar leitura
-        empresa = Empresa.objects.create()
-        documento = DocumentoProventoBovespa.objects.create()
-        InvestidorLeituraDocumento.objects.create(documento=documento, investidor=self.user_test.investidor, data_leitura=datetime.date.today(), decisao='E')
-        
-        response = self.client.get(reverse('gerador_proventos:central_pagamentos', kwargs={'id_usuario': self.user_test.id}))
-        self.assertEqual(response.status_code, 200)
-        
-class UsuarioComLeiturasTestCase (TestCase):
-    """Testa situações de usuários com leituras cadastradas"""
-    def setUp(self):
-        self.user_test = User.objects.create_user('teste', 'teste@teste.com', 'teste')
-        
-        equipe_leitura = Group.objects.create(name='Equipe de leitura')
-        equipe_leitura.user_set.add(self.user_test)
-        
-        permissao = Permission.objects.create(codename='bagogold.pode_gerar_proventos')
-        self.user_test.user_permissions.add(permissao)
-        
-    def test_usuario_com_leituras(self):
-        """Testa o acesso de usuário com leituras"""
-        self.client.login(username='teste', password='teste')
-        response = self.client.get(reverse('gerador_proventos:central_pagamentos', kwargs={'id_usuario': self.user_test.id}))
-        self.assertEqual(response.status_code, 200)
+# class UsuarioDeslogadoTestCase (TestCase):
+#     """Caso de teste para usuário deslogado"""
+#     def test_usuario_deslogado(self):
+#         """Testa o acesso de usuário deslogado"""
+#         response = self.client.get(reverse('gerador_proventos:central_pagamentos', kwargs={'id_usuario': 1}))
+#         self.assertEqual(response.status_code, 302)
+#         self.assertTrue('/login/' in response.url)
+# 
+# class UsuarioInexistenteTestCase (TestCase):
+#     """Caso de teste para acesso a usuário inexistente"""
+#     def setUp(self):
+#         self.user_test = User.objects.create_user('teste', 'teste@teste.com', 'teste')
+#         
+#         equipe_leitura = Group.objects.create(name='Equipe de leitura')
+#         equipe_leitura.user_set.add(self.user_test)
+#         
+#         permissao = Permission.objects.create(codename='bagogold.pode_gerar_proventos')
+#         self.user_test.user_permissions.add(permissao)
+#         
+#     def test_usuario_inexistente(self):
+#         """Testa o acesso a usuário inexistente"""
+#         self.client.login(username='teste', password='teste')
+#         response = self.client.get(reverse('gerador_proventos:central_pagamentos', kwargs={'id_usuario': self.user_test.id+1}))
+#         self.assertEqual(response.status_code, 404)
+# 
+# class UsuarioSemPermissaoTestCase (TestCase):
+#     """Caso de teste para acesso de usuários sem as permissões necessárias"""
+#     def setUp(self):
+#         self.user_test = User.objects.create_user('teste', 'teste@teste.com', 'teste')
+#     
+#     def test_usuario_sem_permissao_gerar_proventos(self):
+#         """Testa situação de usuário que não possui permissão para gerar proventos"""
+#         equipe_leitura = Group.objects.create(name='Equipe de leitura')
+#         equipe_leitura.user_set.add(self.user_test)
+#         
+#         self.client.login(username='teste', password='teste')
+#         response = self.client.get(reverse('gerador_proventos:central_pagamentos', kwargs={'id_usuario': self.user_test.id}))
+#         self.assertEqual(response.status_code, 403)
+#     
+#     def test_usuario_sem_grupo_equipe_leitura(self):
+#         """Testa situação de usuário que não está no grupo Equipe de leitura"""
+#         permissao = Permission.objects.create(codename='bagogold.pode_gerar_proventos')
+#         self.user_test.user_permissions.add(permissao)
+#         
+#         self.client.login(username='teste', password='teste')
+#         response = self.client.get(reverse('gerador_proventos:central_pagamentos', kwargs={'id_usuario': self.user_test.id}))
+#         self.assertEqual(response.status_code, 403)
+#     
+# class UsuarioSuperUserTestCase (TestCase):
+#     """Testa situações de visualização de super usuário"""
+#     def setUp(self):
+#         self.nizbel = User.objects.create_superuser('nizbel', 'nizbel@teste.com', 'nizbel')
+#         
+#         # Criar dados outro usuário
+#         self.user_test = User.objects.create_user('teste', 'teste@teste.com', 'teste')
+#         
+#         equipe_leitura = Group.objects.create(name='Equipe de leitura')
+#         equipe_leitura.user_set.add(self.user_test)
+#         
+#         permissao = Permission.objects.create(codename='bagogold.pode_gerar_proventos')
+#         self.user_test.user_permissions.add(permissao)
+#     
+#     def test_acessar_propria_central(self):
+#         """Testa super usuário acessando própria página"""
+#         self.client.login(username='nizbel', password='nizbel')
+#         response = self.client.get(reverse('gerador_proventos:central_pagamentos', kwargs={'id_usuario': self.nizbel.id}))
+#         self.assertEqual(response.status_code, 404)
+#         
+#     def test_acessar_central_de_outro_usuario(self):
+#         """Testa super usuário acessando página de outro usuário"""
+#         self.client.login(username='nizbel', password='nizbel')
+#         response = self.client.get(reverse('gerador_proventos:central_pagamentos', kwargs={'id_usuario': self.user_test.id}))
+#         self.assertEqual(response.status_code, 200)
+#         
+# class UsuarioSemLeiturasTestCase (TestCase):
+#     """Testa situações de usuários sem leituras cadastradas"""
+#     def setUp(self):
+#         self.user_test = User.objects.create_user('teste', 'teste@teste.com', 'teste')
+#         
+#         equipe_leitura = Group.objects.create(name='Equipe de leitura')
+#         equipe_leitura.user_set.add(self.user_test)
+#         
+#         permissao = Permission.objects.create(codename='bagogold.pode_gerar_proventos')
+#         self.user_test.user_permissions.add(permissao)
+#     
+#     def test_usuario_sem_leituras(self):
+#         """Testa o acesso de usuário sem leituras"""
+#         self.client.login(username='teste', password='teste')
+#         response = self.client.get(reverse('gerador_proventos:central_pagamentos', kwargs={'id_usuario': self.user_test.id}))
+#         self.assertEqual(response.status_code, 200)
+#         
+#     def test_usuario_fez_1_leitura(self):
+#         """Testa o acesso de usuário sem leituras"""
+#         self.client.login(username='teste', password='teste')
+#         
+#         # Adicionar leitura
+#         empresa = Empresa.objects.create()
+#         documento = DocumentoProventoBovespa.objects.create()
+#         InvestidorLeituraDocumento.objects.create(documento=documento, investidor=self.user_test.investidor, data_leitura=datetime.date.today(), decisao='E')
+#         
+#         response = self.client.get(reverse('gerador_proventos:central_pagamentos', kwargs={'id_usuario': self.user_test.id}))
+#         self.assertEqual(response.status_code, 200)
+#         
+# class UsuarioComLeiturasTestCase (TestCase):
+#     """Testa situações de usuários com leituras cadastradas"""
+#     def setUp(self):
+#         self.user_test = User.objects.create_user('teste', 'teste@teste.com', 'teste')
+#         
+#         equipe_leitura = Group.objects.create(name='Equipe de leitura')
+#         equipe_leitura.user_set.add(self.user_test)
+#         
+#         permissao = Permission.objects.create(codename='bagogold.pode_gerar_proventos')
+#         self.user_test.user_permissions.add(permissao)
+#         
+#     def test_usuario_com_leituras(self):
+#         """Testa o acesso de usuário com leituras"""
+#         self.client.login(username='teste', password='teste')
+#         response = self.client.get(reverse('gerador_proventos:central_pagamentos', kwargs={'id_usuario': self.user_test.id}))
+#         self.assertEqual(response.status_code, 200)
 
 # class AcompanhamentoFIITestCase (TestCase):
 #     def setUp(self):

@@ -131,7 +131,7 @@ class OperacaoCDB_RDB (models.Model):
     def operacao_compra_relacionada(self):
         if self.tipo_operacao == 'V':
             if not hasattr(self, 'guarda_operacao_compra_relacionada'):
-                self.guarda_operacao_compra_relacionada = OperacaoVendaCDB_RDB.objects.filter(operacao_venda=self).select_related('operacao_compra').select_related('operacao_compra__cdb_rdb')[0].operacao_compra
+                self.guarda_operacao_compra_relacionada = OperacaoVendaCDB_RDB.objects.filter(operacao_venda=self).select_related('operacao_compra__cdb_rdb')[0].operacao_compra
             return self.guarda_operacao_compra_relacionada
         else:
             return None
