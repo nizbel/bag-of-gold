@@ -109,7 +109,7 @@ def detalhar_documento(request, id_documento):
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 @adiciona_titulo_descricao('Detalhar provento de uma Ação', 'Mostra valores e histórico de versionamento de um provento recebido por uma Ação')
 def detalhar_provento_acao(request, id_provento):
-    provento = Provento.gerador_objects.get(id=id_provento)
+    provento = Provento.gerador_objects.filter(id=id_provento).select_related('acao', 'atualizacaoselicprovento')[0]
     
     # Remover 0s a direita para valores
     provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario))
@@ -122,7 +122,8 @@ def detalhar_provento_acao(request, id_provento):
     # Adicionar informação de versão
     try:
         provento.versao = ProventoAcaoDocumento.objects.filter(provento=provento).order_by('-versao')[0].versao
-        versoes = ProventoAcaoDescritoDocumentoBovespa.objects.filter(proventoacaodocumento__provento=provento).order_by('proventoacaodocumento__versao')
+        versoes = ProventoAcaoDescritoDocumentoBovespa.objects.filter(proventoacaodocumento__provento=provento).order_by('proventoacaodocumento__versao') \
+            .select_related('acao', 'proventoacaodocumento__documento', 'selicproventoacaodescritodocbovespa')
         for versao in versoes:
             # Remover 0s a direita para valores
             versao.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(versao.valor_unitario))
