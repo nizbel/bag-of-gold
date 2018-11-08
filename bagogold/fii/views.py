@@ -451,7 +451,7 @@ def historico_fii(request):
     incorporacoes = EventoIncorporacaoFII.objects.filter(Q(fii__in=operacoes.values_list('fii', flat=True), data__lte=datetime.date.today()) \
                                                          | Q(novo_fii__in=operacoes.values_list('fii', flat=True), data__lte=datetime.date.today())).annotate(tipo=Value(u'Incorporação', output_field=CharField())) \
                                                          .annotate(valor_unitario=F('novo_fii__ticker')) \
-                                                         .annotate(fii_ticker=F('fii__ticker')).order_by('data')
+                                                         .annotate(fii_ticker=F('fii__ticker')).select_related('novo_fii').order_by('data')
 
     
     # Proventos devem ser computados primeiro na data EX
@@ -524,6 +524,8 @@ def historico_fii(request):
             item.total = qtd_papeis[item.fii_ticker]
             qtd_papeis[item.novo_fii.ticker] += qtd_papeis[item.fii_ticker]
             qtd_papeis[item.fii_ticker] = 0
+            # Remover do dict qtd_papeis
+            del qtd_papeis[item.fii_ticker]
             
         # Verifica se próximo elemento possui a mesma data
         if indice == len(lista_conjunta) - 1 or item.data != lista_conjunta[indice+1].data:
@@ -536,9 +538,11 @@ def historico_fii(request):
             patrimonio = 0
             # Verifica se houve operacao hoje
             if item.data != datetime.date.today():
+                # Pegar último dia util com negociação do fii para calculo do patrimonio
+                ultimos_historicos = {ticker: valor for ticker, valor in HistoricoFII.objects.filter(fii__ticker__in=qtd_papeis, data__lte=item.data).order_by('fii__ticker', '-data') \
+                          .distinct('fii__ticker').values_list('fii__ticker', 'preco_unitario')}
                 for fii in qtd_papeis:
-                    # Pegar último dia util com negociação do fii para calculo do patrimonio
-                    patrimonio += (qtd_papeis[fii] * HistoricoFII.objects.filter(data__lte=item.data, fii__ticker=fii).order_by('-data')[0].preco_unitario)
+                    patrimonio += qtd_papeis[fii] * ultimos_historicos[fii]
             else:
                 houve_operacao_hoje = True
                 for fii in qtd_papeis:
@@ -551,20 +555,26 @@ def historico_fii(request):
         
     # Adicionar valor mais atual para todos os gráficos
     if not houve_operacao_hoje:
-        data_mais_atual = datetime.date.today()
-        graf_poupanca_proventos += [[str(calendar.timegm(data_mais_atual.timetuple()) * 1000), float(total_proventos)]]
-        graf_gasto_total += [[str(calendar.timegm(data_mais_atual.timetuple()) * 1000), float(-total_gasto)]]
+        data_atual = datetime.date.today()
+        graf_poupanca_proventos += [[str(calendar.timegm(data_atual.timetuple()) * 1000), float(total_proventos)]]
+        graf_gasto_total += [[str(calendar.timegm(data_atual.timetuple()) * 1000), float(-total_gasto)]]
+        
+        # Buscar valores diários e históricos
+        ultimos_valores_diarios = {ticker: valor for ticker, valor in \
+                                   ValorDiarioFII.objects.filter(fii__ticker__in=qtd_papeis, data_hora__date=data_atual).order_by('fii__id', '-data_hora') \
+                                   .distinct('fii__id').values_list('fii__ticker', 'preco_unitario')}    
+        ultimos_historicos = {ticker: valor for ticker, valor in HistoricoFII.objects.filter(fii__ticker__in=qtd_papeis, data__lte=data_atual).order_by('fii__ticker', '-data') \
+                              .distinct('fii__ticker').values_list('fii__ticker', 'preco_unitario')}
         
         patrimonio = 0
         for fii in qtd_papeis:
             if qtd_papeis[fii] > 0:
-                if ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__date=data_mais_atual).exists():
-                    patrimonio += (qtd_papeis[fii] * ValorDiarioFII.objects.filter(fii__ticker=fii, data_hora__date=data_mais_atual) \
-                                   .order_by('-data_hora')[0].preco_unitario)
+                if fii in ultimos_valores_diarios:
+                    patrimonio += (qtd_papeis[fii] * ultimos_valores_diarios[fii])
                 else:
-                    patrimonio += (qtd_papeis[fii] * HistoricoFII.objects.filter(fii__ticker=fii).order_by('-data')[0].preco_unitario)
+                    patrimonio += (qtd_papeis[fii] * ultimos_historicos[fii])
                 
-        graf_patrimonio += [[str(calendar.timegm(data_mais_atual.timetuple()) * 1000), float(patrimonio)]]
+        graf_patrimonio += [[str(calendar.timegm(data_atual.timetuple()) * 1000), float(patrimonio)]]
     
     lista_conjunta = [item for item in lista_conjunta if item.quantidade != 0]
     
