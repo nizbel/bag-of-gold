@@ -74,7 +74,8 @@ def baixar_documento_provento(request, id_documento):
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 @adiciona_titulo_descricao('Detalhar documento da Bovespa', 'Detalha informações de documento de proventos da Bovespa')
 def detalhar_documento(request, id_documento):
-    documento = DocumentoProventoBovespa.objects.get(id=id_documento)
+    documento = DocumentoProventoBovespa.objects.filter(id=id_documento).prefetch_related('pendenciadocumentoprovento_set') \
+        .select_related('investidorleituradocumento__investidor__user', 'investidorvalidacaodocumento__investidor__user')[0]
     documento.nome = documento.documento.name.split('/')[-1]
     
     # Se documento for ação
