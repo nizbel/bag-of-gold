@@ -294,7 +294,7 @@ def buscar_totais_atuais_investimentos(investidor, data_atual=datetime.date.toda
                      'Letras de Câmbio': Decimal(0),'Tesouro Direto': Decimal(0), }
     
     # Ações
-    acoes_investidor = buscar_acoes_investidor_na_data(investidor)
+    acoes_investidor = buscar_acoes_investidor_na_data(investidor, data_atual)
     # Cálculo de quantidade
 #     for acao in Acao.objects.filter(id__in=acoes_investidor):
 #         acao_qtd = quantidade_acoes_ate_dia(investidor, acao.ticker, data_atual, considerar_trade=True)
@@ -307,7 +307,7 @@ def buscar_totais_atuais_investimentos(investidor, data_atual=datetime.date.toda
     lista_acoes = list(Acao.objects.filter(id__in=acoes_investidor))
     qtd_acoes = {acao.id: quantidade_acoes_ate_dia(investidor, acao.ticker, data_atual, considerar_trade=True) for acao in lista_acoes}
     lista_valores_diarios = ValorDiarioAcao.objects.filter(acao__in=lista_acoes, data_hora__day=data_atual.day, data_hora__month=data_atual.month).order_by('acao__id', '-data_hora').distinct('acao__id')
-    lista_historicos = HistoricoAcao.objects.filter(acao__in=lista_acoes,).order_by('acao__id', '-data').distinct('acao__id')
+    lista_historicos = HistoricoAcao.objects.filter(acao__in=lista_acoes, data__lte=data_atual).order_by('acao__id', '-data').distinct('acao__id')
     lista_valores = {valor.acao_id: valor.preco_unitario for valor in lista_valores_diarios}
     for historico in lista_historicos:
         if historico.acao_id not in lista_valores.keys():
@@ -344,17 +344,16 @@ def buscar_totais_atuais_investimentos(investidor, data_atual=datetime.date.toda
     fiis = calcular_qtd_fiis_ate_dia(investidor, data_atual)
     # Buscar valores diários e históricos
     ultimos_valores_diarios = {ticker: valor for ticker, valor in \
-                               ValorDiarioFII.objects.filter(fii__ticker__in=fiis.keys(), data_hora__date=datetime.date.today()).order_by('fii__id', '-data_hora') \
+                               ValorDiarioFII.objects.filter(fii__ticker__in=fiis, data_hora__date=datetime.date.today()).order_by('fii__id', '-data_hora') \
                                .distinct('fii__id').values_list('fii__ticker', 'preco_unitario')}    
-    ultimos_historicos = {ticker: valor for ticker, valor in HistoricoFII.objects.filter(fii__ticker__in=fiis.keys()).order_by('fii__ticker', '-data') \
+    ultimos_historicos = {ticker: valor for ticker, valor in HistoricoFII.objects.filter(fii__ticker__in=fiis, data__lte=data_atual).order_by('fii__ticker', '-data') \
                           .distinct('fii__ticker').values_list('fii__ticker', 'preco_unitario')}
     
-    for ticker in fiis.keys():
+    for ticker in fiis:
         if ticker in ultimos_valores_diarios:
-            fii_valor = ultimos_valores_diarios[ticker]
+            totais_atuais['FII'] += (fiis[ticker] * ultimos_valores_diarios[ticker])
         else:
-            fii_valor = ultimos_historicos[ticker]
-        totais_atuais['FII'] += (fiis[ticker] * fii_valor)
+            totais_atuais['FII'] += (fiis[ticker] * ultimos_historicos[ticker])
     totais_atuais['FII'] += calcular_poupanca_prov_fii_ate_dia(investidor, data_atual)
         
     # Fundos de investimento
