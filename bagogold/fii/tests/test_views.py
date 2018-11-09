@@ -228,3 +228,151 @@ class HistoricoFIITestCase (TestCase):
         self.assertEqual(dados['patrimonio'], Decimal(2000))
         self.assertEqual(dados['lucro'], Decimal('-19.2'))
         self.assertEqual(dados['lucro_percentual'], Decimal('-19.2') / dados['total_gasto'] * 100)
+        
+class ViewInserirOperacaoTestCase(TestCase):
+    def setUp(self):
+        user = User.objects.create_user('teste', 'teste@teste.com', 'teste')
+        self.investidor = user.investidor
+        
+        empresa = Empresa.objects.create(nome='BB Progressivo', nome_pregao='BBPO')
+        self.fii = FII.objects.create(ticker='BBPO11', empresa=empresa)
+        
+        self.divisao_geral = Divisao.objects.get(investidor=self.investidor)
+        
+    def test_acesso(self):
+        """Testa acesso a tela de inserir rendimentos"""
+        #investidor = Investidor.objects.get(user__username='teste')
+        #investimento = Investimento.objects.get(nome='Investimento 1', investidor=investidor)
+        
+        # Sem logar resposta deve ser redirecionamento para login
+        response = self.client.get(reverse('fii:inserir_operacao_fii'))
+        self.assertEquals(response.status_code, 302)
+        
+        self.client.login(username='teste', password='teste')
+        response = self.client.get(reverse('fii:inserir_operacao_fii'))
+        self.assertEquals(response.status_code, 200)
+        
+    def test_inserir_operacao_uma_divisao(self):
+        """Testa inserir operação com apenas com uma divisão cadastrada"""
+        #investidor = Investidor.objects.get(user__username='teste')
+        #investimento = Investimento.objects.get(nome='Investimento 1', investidor=investidor)
+        self.assertEquals(OperacaoFII.objects.filter(investidor=self.investidor).count(), 0)
+        self.assertEquals(DivisaoOperacaoFII.objects.filter(divisao=self.divisao_geral).count(), 0)
+        
+        self.client.login(username='teste', password='teste')
+        response = self.client.post(reverse('fii:inserir_operacao_fii', 
+                                    {'preco_unitario': 100, 'quantidade': 10, 'data': datetime.date(2018, 11, 9), 'corretagem': 10, 
+                                     'emolumentos': Decimal('0.1'), 'tipo_operacao': 'C', 'fii': self.fii, 'consolidada': True})
+        
+        # Testar que houve redirecionamento
+        self.assertEquals(response.status_code, 302)
+        self.assertEquals(OperacaoFII.objects.filter(investidor=self.investidor).count(), 1)
+        self.assertEquals(DivisaoOperacaoFII.objects.filter(divisao=self.divisao_geral).count(), 1)
+        
+    def test_inserir_operacao_multi_divisao_1_div(self):
+        """Testa inserir operação com mais de uma divisão cadastrada, mas usando apenas 1"""
+        #investidor = Investidor.objects.get(user__username='teste')
+        #investimento = Investimento.objects.get(nome='Investimento 1', investidor=investidor)
+        nova_divisao = Divisao.objects.create(investidor=self.investidor, nome='Teste')
+        
+        self.assertEquals(OperacaoFII.objects.filter(investidor=self.investidor).count(), 0)
+        self.assertEquals(DivisaoOperacaoFII.objects.filter(divisao=self.divisao_geral).count(), 0)
+        
+        self.client.login(username='teste', password='teste')
+        response = self.client.post(reverse('fii:inserir_operacao_fii', 
+                                    {'preco_unitario': 100, 'quantidade': 10, 'data': datetime.date(2018, 11, 9), 'corretagem': 10, 
+                                     'emolumentos': Decimal('0.1'), 'tipo_operacao': 'C', 'fii': self.fii, 'consolidada': True,
+                                     'divisaooperacaofii_set-INITIAL_FORMS': '1', 'divisaooperacaofii_set-TOTAL_FORMS': '2',
+                                     'divisaooperacaofii_set-0-divisao': self.divisao_geral.id, 'divisaooperacaofii_set-0-quantidade': 10,
+                                     'divisaooperacaofii_set-0-qtd_proventos_utilizada': Decimal(0)})
+        
+        # Testar que houve redirecionamento
+        self.assertEquals(response.status_code, 302)
+        self.assertEquals(OperacaoFII.objects.filter(investidor=self.investidor).count(), 1)
+        self.assertEquals(DivisaoOperacaoFII.objects.filter(divisao=self.divisao_geral).count(), 1)
+        self.assertEquals(UsoProventosOperacaoFII.objects.filter(divisao_operacao__divisao=self.divisao_geral).count(), 0)
+        
+    def test_inserir_operacao_multi_divisao_2_div(self):
+        """Testa inserir operação com mais de uma divisão cadastrada, usando 2 divisões"""
+        nova_divisao = Divisao.objects.create(investidor=self.investidor, nome='Teste')
+        
+        self.assertEquals(OperacaoFII.objects.filter(investidor=self.investidor).count(), 0)
+        self.assertEquals(DivisaoOperacaoFII.objects.filter(divisao=self.divisao_geral).count(), 0)
+        
+        self.client.login(username='teste', password='teste')
+        response = self.client.post(reverse('fii:inserir_operacao_fii', 
+                                    {'preco_unitario': 100, 'quantidade': 10, 'data': datetime.date(2018, 11, 9), 'corretagem': 10, 
+                                     'emolumentos': Decimal('0.1'), 'tipo_operacao': 'C', 'fii': self.fii, 'consolidada': True,
+                                     'divisaooperacaofii_set-INITIAL_FORMS': '1', 'divisaooperacaofii_set-TOTAL_FORMS': '2',
+                                     'divisaooperacaofii_set-0-divisao': self.divisao_geral.id, 'divisaooperacaofii_set-0-quantidade': 5,
+                                     'divisaooperacaofii_set-0-qtd_proventos_utilizada': Decimal(0),
+                                     'divisaooperacaofii_set-1-divisao': nova_divisao.id, 'divisaooperacaofii_set-1-quantidade': 5,
+                                     'divisaooperacaofii_set-1-qtd_proventos_utilizada': Decimal(40)})
+        
+        # Testar que houve redirecionamento
+        self.assertEquals(response.status_code, 302)
+        self.assertEquals(OperacaoFII.objects.filter(investidor=self.investidor).count(), 1)
+        self.assertEquals(DivisaoOperacaoFII.objects.filter(divisao=self.divisao_geral).count(), 2)
+        self.assertEquals(UsoProventosOperacaoFII.objects.filter(divisao_operacao__divisao=self.divisao_geral).count(), 1)
+        
+    def test_inserir_operacao_form_invalido_qtd_div_diferente(self):
+        """Testa envio de formulário com mais de uma divisão cadastrada e quantidade das divisões diferente da operação"""
+        nova_divisao = Divisao.objects.create(investidor=self.investidor, nome='Teste')
+        
+        # 2 divisões, quantidade abaixo
+        self.client.login(username='teste', password='teste')
+        response = self.client.post(reverse('fii:inserir_operacao_fii', 
+                                    {'preco_unitario': 100, 'quantidade': 10, 'data': datetime.date(2018, 11, 9), 'corretagem': 10, 
+                                     'emolumentos': Decimal('0.1'), 'tipo_operacao': 'C', 'fii': self.fii, 'consolidada': True,
+                                     'divisaooperacaofii_set-INITIAL_FORMS': '1', 'divisaooperacaofii_set-TOTAL_FORMS': '2',
+                                     'divisaooperacaofii_set-0-divisao': self.divisao_geral.id, 'divisaooperacaofii_set-0-quantidade': 5,
+                                     'divisaooperacaofii_set-0-qtd_proventos_utilizada': Decimal(0),
+                                     'divisaooperacaofii_set-1-divisao': nova_divisao.id, 'divisaooperacaofii_set-1-quantidade': 4,
+                                     'divisaooperacaofii_set-1-qtd_proventos_utilizada': Decimal(40)})
+        
+        # Testar que não houve redirecionamento
+        self.assertEquals(response.status_code, 200)
+        self.assertTrue(len(response.context_data['form_rendimento'].errors) > 0)
+        
+        # 2 divisões, quantidade acima
+        self.client.login(username='teste', password='teste')
+        response = self.client.post(reverse('fii:inserir_operacao_fii', 
+                                    {'preco_unitario': 100, 'quantidade': 10, 'data': datetime.date(2018, 11, 9), 'corretagem': 10, 
+                                     'emolumentos': Decimal('0.1'), 'tipo_operacao': 'C', 'fii': self.fii, 'consolidada': True,
+                                     'divisaooperacaofii_set-INITIAL_FORMS': '1', 'divisaooperacaofii_set-TOTAL_FORMS': '2',
+                                     'divisaooperacaofii_set-0-divisao': self.divisao_geral.id, 'divisaooperacaofii_set-0-quantidade': 5,
+                                     'divisaooperacaofii_set-0-qtd_proventos_utilizada': Decimal(0),
+                                     'divisaooperacaofii_set-1-divisao': nova_divisao.id, 'divisaooperacaofii_set-1-quantidade': 14,
+                                     'divisaooperacaofii_set-1-qtd_proventos_utilizada': Decimal(40)})
+        
+        # Testar que não houve redirecionamento
+        self.assertEquals(response.status_code, 200)
+        self.assertTrue(len(response.context_data['form_rendimento'].errors) > 0)
+        
+        # 1 divisão, quantidade abaixo
+        self.client.login(username='teste', password='teste')
+        response = self.client.post(reverse('fii:inserir_operacao_fii', 
+                                    {'preco_unitario': 100, 'quantidade': 10, 'data': datetime.date(2018, 11, 9), 'corretagem': 10, 
+                                     'emolumentos': Decimal('0.1'), 'tipo_operacao': 'C', 'fii': self.fii, 'consolidada': True,
+                                     'divisaooperacaofii_set-INITIAL_FORMS': '1', 'divisaooperacaofii_set-TOTAL_FORMS': '2',
+                                     'divisaooperacaofii_set-0-divisao': self.divisao_geral.id, 'divisaooperacaofii_set-0-quantidade': 4,
+                                     'divisaooperacaofii_set-0-qtd_proventos_utilizada': Decimal(0)})
+        
+        # Testar que não houve redirecionamento
+        self.assertEquals(response.status_code, 200)
+        self.assertTrue(len(response.context_data['form_rendimento'].errors) > 0)
+        
+        # 1 divisão, quantidade acima
+        self.client.login(username='teste', password='teste')
+        response = self.client.post(reverse('fii:inserir_operacao_fii', 
+                                    {'preco_unitario': 100, 'quantidade': 10, 'data': datetime.date(2018, 11, 9), 'corretagem': 10, 
+                                     'emolumentos': Decimal('0.1'), 'tipo_operacao': 'C', 'fii': self.fii, 'consolidada': True,
+                                     'divisaooperacaofii_set-INITIAL_FORMS': '1', 'divisaooperacaofii_set-TOTAL_FORMS': '2',
+                                     'divisaooperacaofii_set-0-divisao': self.divisao_geral.id, 'divisaooperacaofii_set-0-quantidade': 12,
+                                     'divisaooperacaofii_set-0-qtd_proventos_utilizada': Decimal(0)})
+        
+        # Testar que não houve redirecionamento
+        self.assertEquals(response.status_code, 200)
+        self.assertTrue(len(response.context_data['form_rendimento'].errors) > 0)
+        
+        
