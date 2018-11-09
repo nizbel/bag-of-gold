@@ -16,13 +16,7 @@ from bagogold.fii.utils import calcular_qtd_fiis_ate_dia, \
 from bagogold.bagogold.utils.investidores import atualizar_checkpoints
 from decimal import Decimal
 from django.contrib.auth.models import User
-from django.db.models.aggregates import Sum
-from django.db.models.expressions import F, Case, When, Value
-from django.db.models.fields import DecimalField, CharField
-from django.db.models.query_utils import Q
 from django.test import TestCase
-from itertools import chain
-from operator import attrgetter
 import datetime
 
 class CalcularQuantidadesFIITestCase(TestCase):
@@ -102,10 +96,10 @@ class CalcularQuantidadesFIITestCase(TestCase):
         self.assertEqual(calcular_qtd_fiis_ate_dia_por_ticker(self.investidor, datetime.date(2017, 5, 12), 'BFPO11'), 20)
         
     def test_calculo_qtd_fiis(self):
-       """Calcula quantidade de FIIs do usuário"""
-       self.assertDictEqual(calcular_qtd_fiis_ate_dia(self.investidor, datetime.date(2017, 5, 12)), 
+        """Calcula quantidade de FIIs do usuário"""
+        self.assertDictEqual(calcular_qtd_fiis_ate_dia(self.investidor, datetime.date(2017, 5, 12)), 
                             {'BAPO11': 43, 'BBPO11': 430, 'BCPO11': 37, 'BDPO11': 271, 'BEPO11': 50, 'BFPO11': 20}) 
-       self.assertDictEqual(calcular_qtd_fiis_ate_dia(self.investidor, datetime.date(2017, 11, 13)),
+        self.assertDictEqual(calcular_qtd_fiis_ate_dia(self.investidor, datetime.date(2017, 11, 13)),
                             {'BAPO11': 430, 'BBPO11': 43, 'BDPO11': 707, 'BEPO11': 500})
     
     def test_calculo_qtd_apos_agrupamento(self):
@@ -131,7 +125,6 @@ class CalcularQuantidadesFIITestCase(TestCase):
 
     def test_verificar_qtd_divisao_antes_eventos(self):
         """Testa se a quantidade de cotas por divisão está correta antes dos eventos"""
-        investidor = Investidor.objects.get(user__username='test')
         self.assertDictEqual(calcular_qtd_fiis_ate_dia_por_divisao(datetime.date(2017, 5, 12), self.divisao_geral.id), 
                              {'BAPO11': 43, 'BBPO11': 430, 'BCPO11': 37, 'BDPO11': 271, 'BFPO11': 20})
         self.assertDictEqual(calcular_qtd_fiis_ate_dia_por_divisao(datetime.date(2017, 5, 12), self.divisao_teste.id), 
