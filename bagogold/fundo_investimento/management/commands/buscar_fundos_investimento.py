@@ -50,7 +50,6 @@ class Command(BaseCommand):
 #                 link_arquivo_csv, nome_arquivo, arquivo_csv = buscar_arquivo_csv_cadastro(data_pesquisa)
 #                    
 #                 # Gerar documento
-#                 DocumentoCadastro.objects.get(data_referencia=data_pesquisa).delete()
 #                 novo_documento = DocumentoCadastro.objects.create(data_referencia=data_pesquisa, data_pedido_cvm=datetime.date.today())
 #                 LinkDocumentoCadastro.objects.create(url=link_arquivo_csv, documento=novo_documento)
 #                  
@@ -292,6 +291,8 @@ def processar_arquivo_csv(documento, dados_arquivo, data_documento):
             
             fundos = list()
             
+            inicio_geral = datetime.datetime.now()
+            rows = list()
             for linha, row in enumerate(csv_reader):
                 if linha == 0:
                     # Preparar dicionário com os campos disponíveis
@@ -309,52 +310,159 @@ def processar_arquivo_csv(documento, dados_arquivo, data_documento):
                     row = [campo.decode('latin-1').strip() for campo in row]
                     
                     # Se CNPJ não estiver preenchido, pular
-                    if row[campos['CNPJ_FUNDO']] == '':
+                    if row[campos['CNPJ_FUNDO']] == '' or row[campos['CNPJ_ADMIN']] == '':
+#                         print 'CNPJ NAO PREENCHIDO'
                         continue
                     
                     # Formatar CNPJ
                     if len(row[campos['CNPJ_FUNDO']]) < 18:
                         row[campos['CNPJ_FUNDO']] = formatar_cnpj(row[campos['CNPJ_FUNDO']])
-                                            
-                    # Verificar se administrador já existe
-                    if not Administrador.objects.filter(cnpj=row[campos['CNPJ_ADMIN']]).exists():
-                        novo_administrador = Administrador(nome=row[campos['ADMIN']], cnpj=row[campos['CNPJ_ADMIN']])
-                        novo_administrador.save()
-                         
-                    # Verificar se fundo já existe
-                    if not FundoInvestimento.objects.filter(cnpj=row[campos['CNPJ_FUNDO']]).exists():
-                        novo_fundo = FundoInvestimento(cnpj=row[campos['CNPJ_FUNDO']], nome=row[campos['DENOM_SOCIAL']], 
-                                                       administrador=Administrador.objects.get(cnpj=row[campos['CNPJ_ADMIN']]),
-                                                       data_constituicao=row[campos['DT_CONST']], situacao=FundoInvestimento.buscar_tipo_situacao(row[campos['SIT']]), 
-                                                       tipo_prazo=definir_prazo__pelo_cadastro(row[campos['TRIB_LPRAZO']]),
-                                                       classe=FundoInvestimento.buscar_tipo_classe(row[campos['CLASSE']]), exclusivo_qualificados=(row[campos['INVEST_QUALIF']].upper() == 'S'),
-                                                       ultimo_registro=data_documento, slug=criar_slug_fundo_investimento_valido(row[campos['DENOM_SOCIAL']]))
-                        novo_fundo.save()
-                    else:
-                        # Verificar se houve alteração no fundo
-                        fundo = FundoInvestimento.objects.filter(cnpj=row[campos['CNPJ_FUNDO']]).select_related('administrador')[0]
-                        if fundo.ultimo_registro < data_documento:
-                            fundo.ultimo_registro = data_documento
-                            # Verificar alteração de administrador
-                            if row[campos['CNPJ_ADMIN']] != '' and row[campos['CNPJ_ADMIN']] != fundo.administrador.cnpj:
-                                fundo.administrador = Administrador.objects.get(cnpj=row[campos['CNPJ_ADMIN']])
-                            if row[campos['SIT']] != '' and row[campos['SIT']] != fundo.descricao_situacao():
-                                fundo.situacao = FundoInvestimento.buscar_tipo_situacao(row[campos['SIT']])
-                            if row[campos['CLASSE']] != '' and row[campos['CLASSE']] != fundo.descricao_classe():
-                                fundo.classe = FundoInvestimento.buscar_tipo_classe(row[campos['CLASSE']])
-                            if row[campos['DENOM_SOCIAL']] != '' and row[campos['DENOM_SOCIAL']] != fundo.nome:
-                                fundo.nome = row[campos['DENOM_SOCIAL']]
-                            fundo.save()
-                          
-                    # Adicionar a lista de fundos para comparar posteriormente
-                    fundos.append(campos['CNPJ_FUNDO'])       
+                        
+                    # Formatar CNPJ de administrador
+                    if len(row[campos['CNPJ_ADMIN']]) < 18:
+                        row[campos['CNPJ_ADMIN']] = formatar_cnpj(row[campos['CNPJ_ADMIN']])
+                            
+                    rows.append(row)
+                    
+                    if linha % 100 == 0:
+                        # Guardar administradores únicos válidos
+                        lista_administradores = [{'ADMIN': row_atual[campos['ADMIN']], 'CNPJ_ADMIN': row_atual[campos['CNPJ_ADMIN']]} for row_atual in rows \
+                                                 if row_atual[campos['CNPJ_ADMIN']] != '']
+                        lista_administradores = [administrador for indice, administrador in enumerate(lista_administradores) \
+                                                 if administrador not in lista_administradores[indice + 1:]]
+                            
+                        lista_administradores_existentes = Administrador.objects.filter(
+                            cnpj__in=[administrador['CNPJ_ADMIN'] for administrador in lista_administradores]).values_list('cnpj', flat=True)
+                        
+                        # Verificar se administradores já existem
+#                         inicio = datetime.datetime.now()
+                        for administrador in [novo_admin for novo_admin in lista_administradores if novo_admin['CNPJ_ADMIN'] not in lista_administradores_existentes]:
+#                         for administrador in lista_administradores:
+#                             if administrador['CNPJ_ADMIN'] not in lista_administradores_existentes:
+                                novo_administrador = Administrador(nome=administrador['ADMIN'], cnpj=administrador['CNPJ_ADMIN'])
+                                novo_administrador.save()
+#                         print datetime.datetime.now() - inicio
+                                
+#                         # Verificar se administrador já existe
+#                         if not Administrador.objects.filter(cnpj=row[campos['CNPJ_ADMIN']]).exists():
+#                             novo_administrador = Administrador(nome=row[campos['ADMIN']], cnpj=row[campos['CNPJ_ADMIN']])
+#                             novo_administrador.save()
+                             
+                        # Verificar fundos existentes
+                        lista_fundos_existentes = list(FundoInvestimento.objects.filter(
+                            cnpj__in=[row_atual[campos['CNPJ_FUNDO']] for row_atual in rows]).select_related('administrador'))
+#                         lista_cnpjs_existentes = [fundo_existente.cnpj for fundo_existente in lista_fundos_existentes]
+                        
+#                         fundos_criados = list()
+                        
+#                         inicio = datetime.datetime.now()
+#                         for row_atual in [row_dados for row_dados in rows if row_dados[campos['CNPJ_ADMIN']] != '']:
+                        for row_atual in rows:
+                            encontrado = False
+                            for fundo_existente in lista_fundos_existentes:
+                                if row_atual[campos['CNPJ_FUNDO']] == fundo_existente.cnpj:
+                                    # Verificar se houve alteração no fundo
+                                    fundo = fundo_existente
+                                    if fundo.ultimo_registro < data_documento:
+                                        fundo.ultimo_registro = data_documento
+                                        # Verificar alteração de administrador
+                                        if row[campos['CNPJ_ADMIN']] != '' and row[campos['CNPJ_ADMIN']] != fundo.administrador.cnpj:
+                                            fundo.administrador = Administrador.objects.get(cnpj=row[campos['CNPJ_ADMIN']])
+                                        if row[campos['SIT']] != '' and row[campos['SIT']] != fundo.descricao_situacao():
+                                            fundo.situacao = FundoInvestimento.buscar_tipo_situacao(row[campos['SIT']])
+                                        if row[campos['CLASSE']] != '' and row[campos['CLASSE']] != fundo.descricao_classe():
+                                            fundo.classe = FundoInvestimento.buscar_tipo_classe(row[campos['CLASSE']])
+                                        if row[campos['DENOM_SOCIAL']] != '' and row[campos['DENOM_SOCIAL']] != fundo.nome:
+                                            fundo.nome = row[campos['DENOM_SOCIAL']]
+                                        fundo.save()
+                                    encontrado = True
+                                    break
+                            
+                            if not encontrado:
+                                novo_fundo = FundoInvestimento(cnpj=row_atual[campos['CNPJ_FUNDO']], nome=row_atual[campos['DENOM_SOCIAL']], 
+                                                           administrador=Administrador.objects.get(cnpj=row_atual[campos['CNPJ_ADMIN']]),
+                                                           data_constituicao=row_atual[campos['DT_CONST']], situacao=FundoInvestimento.buscar_tipo_situacao(row_atual[campos['SIT']]), 
+                                                           tipo_prazo=definir_prazo__pelo_cadastro(row_atual[campos['TRIB_LPRAZO']]),
+                                                           classe=FundoInvestimento.buscar_tipo_classe(row_atual[campos['CLASSE']]), exclusivo_qualificados=(row_atual[campos['INVEST_QUALIF']].upper() == 'S'),
+                                                           ultimo_registro=data_documento, slug=criar_slug_fundo_investimento_valido(row_atual[campos['DENOM_SOCIAL']]))
+                                novo_fundo.save()
+                                lista_fundos_existentes.append(novo_fundo)
+#                         print datetime.datetime.now() - inicio
+                                        
+                                        
+                            ### VERSAO FUNCIONAL
+# #                             if row_atual[campos['CNPJ_FUNDO']] not in [fundo_existente.cnpj for fundo_existente in lista_fundos_existentes] and row_atual[campos['CNPJ_FUNDO']] not in fundos_criados:
+# #                             if row_atual[campos['CNPJ_FUNDO']] not in [fundo_existente.cnpj for fundo_existente in lista_fundos_existentes]:
+#                             if row_atual[campos['CNPJ_FUNDO']] not in lista_cnpjs_existentes:
+#                                 novo_fundo = FundoInvestimento(cnpj=row_atual[campos['CNPJ_FUNDO']], nome=row_atual[campos['DENOM_SOCIAL']], 
+#                                                            administrador=Administrador.objects.get(cnpj=row_atual[campos['CNPJ_ADMIN']]),
+#                                                            data_constituicao=row_atual[campos['DT_CONST']], situacao=FundoInvestimento.buscar_tipo_situacao(row_atual[campos['SIT']]), 
+#                                                            tipo_prazo=definir_prazo__pelo_cadastro(row_atual[campos['TRIB_LPRAZO']]),
+#                                                            classe=FundoInvestimento.buscar_tipo_classe(row_atual[campos['CLASSE']]), exclusivo_qualificados=(row_atual[campos['INVEST_QUALIF']].upper() == 'S'),
+#                                                            ultimo_registro=data_documento, slug=criar_slug_fundo_investimento_valido(row_atual[campos['DENOM_SOCIAL']]))
+#                                 novo_fundo.save()
+# #                                 fundos_criados.append(novo_fundo.cnpj)
+#                                 lista_fundos_existentes.append(novo_fundo)
+#                                 lista_cnpjs_existentes.append(novo_fundo.cnpj)
+# #                             elif row_atual[campos['CNPJ_FUNDO']] not in fundos_criados:
+#                             else:
+#                                 # Verificar se houve alteração no fundo
+#                                 fundo = [fundo_existente for fundo_existente in lista_fundos_existentes if fundo_existente.cnpj == row_atual[campos['CNPJ_FUNDO']]][0]
+#                                 if fundo.ultimo_registro < data_documento:
+#                                     fundo.ultimo_registro = data_documento
+#                                     # Verificar alteração de administrador
+#                                     if row[campos['CNPJ_ADMIN']] != '' and row[campos['CNPJ_ADMIN']] != fundo.administrador.cnpj:
+#                                         fundo.administrador = Administrador.objects.get(cnpj=row[campos['CNPJ_ADMIN']])
+#                                     if row[campos['SIT']] != '' and row[campos['SIT']] != fundo.descricao_situacao():
+#                                         fundo.situacao = FundoInvestimento.buscar_tipo_situacao(row[campos['SIT']])
+#                                     if row[campos['CLASSE']] != '' and row[campos['CLASSE']] != fundo.descricao_classe():
+#                                         fundo.classe = FundoInvestimento.buscar_tipo_classe(row[campos['CLASSE']])
+#                                     if row[campos['DENOM_SOCIAL']] != '' and row[campos['DENOM_SOCIAL']] != fundo.nome:
+#                                         fundo.nome = row[campos['DENOM_SOCIAL']]
+#                                     fundo.save()
+                            ### FIM VERSAO FUNCIONAL
+                                
+#                         # Verificar se fundo já existe
+#                         if not FundoInvestimento.objects.filter(cnpj=row[campos['CNPJ_FUNDO']]).exists():
+#                             novo_fundo = FundoInvestimento(cnpj=row[campos['CNPJ_FUNDO']], nome=row[campos['DENOM_SOCIAL']], 
+#                                                            administrador=Administrador.objects.get(cnpj=row[campos['CNPJ_ADMIN']]),
+#                                                            data_constituicao=row[campos['DT_CONST']], situacao=FundoInvestimento.buscar_tipo_situacao(row[campos['SIT']]), 
+#                                                            tipo_prazo=definir_prazo__pelo_cadastro(row[campos['TRIB_LPRAZO']]),
+#                                                            classe=FundoInvestimento.buscar_tipo_classe(row[campos['CLASSE']]), exclusivo_qualificados=(row[campos['INVEST_QUALIF']].upper() == 'S'),
+#                                                            ultimo_registro=data_documento, slug=criar_slug_fundo_investimento_valido(row[campos['DENOM_SOCIAL']]))
+#                             novo_fundo.save()
+#                         else:
+#                             # Verificar se houve alteração no fundo
+#                             fundo = FundoInvestimento.objects.filter(cnpj=row[campos['CNPJ_FUNDO']]).select_related('administrador')[0]
+#                             if fundo.ultimo_registro < data_documento:
+#                                 fundo.ultimo_registro = data_documento
+#                                 # Verificar alteração de administrador
+#                                 if row[campos['CNPJ_ADMIN']] != '' and row[campos['CNPJ_ADMIN']] != fundo.administrador.cnpj:
+#                                     fundo.administrador = Administrador.objects.get(cnpj=row[campos['CNPJ_ADMIN']])
+#                                 if row[campos['SIT']] != '' and row[campos['SIT']] != fundo.descricao_situacao():
+#                                     fundo.situacao = FundoInvestimento.buscar_tipo_situacao(row[campos['SIT']])
+#                                 if row[campos['CLASSE']] != '' and row[campos['CLASSE']] != fundo.descricao_classe():
+#                                     fundo.classe = FundoInvestimento.buscar_tipo_classe(row[campos['CLASSE']])
+#                                 if row[campos['DENOM_SOCIAL']] != '' and row[campos['DENOM_SOCIAL']] != fundo.nome:
+#                                     fundo.nome = row[campos['DENOM_SOCIAL']]
+#                                 fundo.save()
+                              
+                        # Adicionar a lista de fundos para comparar posteriormente
+                        for row_atual in rows:
+                            fundos.append(row_atual[campos['CNPJ_FUNDO']])   
+                        
+                        rows = list()    
              
+            print datetime.datetime.now() - inicio_geral
             # Verificar fundos que existem porém não foram listados, ou seja, estão terminados
             # Verificar fundos não encontrados no cadastro para terminar
+            qtd_terminados = 0
             for fundo in FundoInvestimento.objects.filter(ultimo_registro__lt=data_documento).exclude(situacao=FundoInvestimento.SITUACAO_TERMINADO):
                 if fundo.cnpj not in fundos:
                     fundo.situacao = FundoInvestimento.SITUACAO_TERMINADO
                     fundo.save()
+                    qtd_terminados += 1
+            print 'TERMINADOS', qtd_terminados
                          
 #             documento = DocumentoCadastro.objects.get(data_referencia=data_documento)  
             documento.leitura_realizada = True
