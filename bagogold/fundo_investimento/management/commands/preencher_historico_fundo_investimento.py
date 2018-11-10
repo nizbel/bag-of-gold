@@ -139,7 +139,7 @@ def ler_arquivo(libitem, apagar_caso_erro=True):
     return erros
 
 def formatar_cnpj(string):
-    string = re.sub('\D', '', string)
+    string = re.sub(r'\D', '', string)
     while len(string) < 14:
         string = '0' + string
     return string[0:2] + '.' + string[2:5] + '.' + string[5:8] + '/' + string[8:12] + '-' + string[12:14]
