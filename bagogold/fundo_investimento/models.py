@@ -14,6 +14,33 @@ class Administrador (models.Model):
     def __unicode__(self):
         return self.nome
 
+class Auditor (models.Model):
+    nome = models.CharField(u'Nome', max_length=100)
+    cnpj = models.CharField(u'CNPJ', max_length=20)
+    
+    class Meta:
+        unique_together=('cnpj',)
+        
+    def __unicode__(self):
+        return self.nome
+    
+class Gestor (models.Model):
+    nome = models.CharField(u'Nome', max_length=100)
+    cnpj = models.CharField(u'CNPJ', max_length=20)
+    
+    class Meta:
+        unique_together=('cnpj',)
+        
+    def __unicode__(self):
+        return self.nome
+    
+class GestorFundoInvestimento (models.Model):
+    gestor = models.ForeignKey('Gestor')
+    fundo_investimento = models.ForeignKey('FundoInvestimento')
+    
+    class Meta:
+        unique_together=('gestor', 'fundo_investimento')
+
 class FundoInvestimento (models.Model):
     PRAZO_CURTO = 'C'
     PRAZO_LONGO = 'L'
@@ -63,8 +90,11 @@ class FundoInvestimento (models.Model):
     
     nome = models.CharField(u'Nome', max_length=100)
     cnpj = models.CharField(u'CNPJ', max_length=20)
-    administrador = models.ForeignKey('Administrador')
+    administrador = models.ForeignKey('Administrador', blank=True, null=True)
+    auditor = models.ForeignKey('Auditor', blank=True, null=True)
     data_constituicao = models.DateField('Data de constituição')
+    data_registro = models.DateField('Data de registro')
+    data_cancelamento = models.DateField('Data de cancelamento', blank=True, null=True, default=None)
     situacao = models.PositiveSmallIntegerField(u'Situação', choices=TIPOS_SITUACAO)
     """
     L = longo prazo, C = curto prazo; para fins de IR
@@ -75,11 +105,11 @@ class FundoInvestimento (models.Model):
     """
     Última data de documento de cadastro que conteve registro do fundo
     """
-    ultimo_registro = models.DateField(u'Último registro')
+#     ultimo_registro = models.DateField(u'Último registro')
     slug = models.SlugField(u'Slug', max_length=100)
     
     class Meta:
-        unique_together=(('cnpj',), ('slug',))
+        unique_together=(('cnpj', 'data_registro'), ('slug',))
     
     def __unicode__(self):
         return self.nome
@@ -124,7 +154,7 @@ class FundoInvestimento (models.Model):
             return FundoInvestimento.SITUACAO_FUNCIONAMENTO_NORMAL
         for tipo in FundoInvestimento.TIPOS_SITUACAO:
 #             print descricao_situacao.lower(), tipo[1].lower(), [i for i in xrange(len(descricao_situacao.lower())) if descricao_situacao.lower()[i] != tipo[1].lower()[i]]
-            if descricao_situacao.strip().lower() == tipo[1].strip().lower():
+            if descricao_situacao.strip().upper() == tipo[1].strip().upper():
                 return tipo[0]
         raise ValueError(u'Situação não encontrada: %s' % (descricao_situacao))
     
