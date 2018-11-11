@@ -26,11 +26,12 @@ class Command(BaseCommand):
                     HistoricoValorCotas.objects.all().count(), OperacaoFundoInvestimento.objects.all().count()
         
                 for fundo_desformatado in fundos_desformatados:
-                    if FundoInvestimento.objects.filter(cnpj=formatar_cnpj(fundo_desformatado.cnpj)).exists():
+                    if FundoInvestimento.objects.filter(cnpj=formatar_cnpj(fundo_desformatado.cnpj), data_registro=fundo_desformatado.data_registro).exists():
                         if HistoricoValorCotas.objects.filter(fundo_investimento=fundo_desformatado).exists() or \
                             OperacaoFundoInvestimento.objects.filter(fundo_investimento=fundo_desformatado).exists():
                             # Buscar fundo formatado e apontar para ele
-                            fundo_formatado = FundoInvestimento.objects.get(cnpj=formatar_cnpj(fundo_desformatado.cnpj))
+                            fundo_formatado = FundoInvestimento.objects.get(cnpj=formatar_cnpj(fundo_desformatado.cnpj), 
+                                                                            data_registro=fundo_desformatado.data_registro)
                              
                             for historico in HistoricoValorCotas.objects.filter(fundo_investimento=fundo_desformatado):
                                 historico.fundo_investimento = fundo_formatado
