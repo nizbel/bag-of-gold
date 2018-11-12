@@ -67,12 +67,12 @@ class OperacaoCDB_RDBForm(LocalizedModelForm):
             if 'data' not in self.cleaned_data or self.cleaned_data['data'] == None:
                 return None
             else:
-                if self.cleaned_data['data'] < operacao_compra.data + datetime.timedelta(days=operacao_compra.carencia()):
+                if self.cleaned_data['data'] < operacao_compra.data_carencia():
                     raise forms.ValidationError('Data da venda deve ser posterior ao período de carência (%s)' % 
-                                                ((operacao_compra.data + datetime.timedelta(days=operacao_compra.carencia())).strftime("%d/%m/%Y")))
-                elif self.cleaned_data['data'] > operacao_compra.data + datetime.timedelta(days=operacao_compra.vencimento()):
+                                                (operacao_compra.data_carencia().strftime("%d/%m/%Y")))
+                elif self.cleaned_data['data'] > .data_vencimento():
                     raise forms.ValidationError('Data da venda não pode ser após o período de vencimento (%s)' %
-                                                ((operacao_compra.data + datetime.timedelta(days=operacao_compra.vencimento())).strftime("%d/%m/%Y")))
+                                                (operacao_compra.data_vencimento().strftime("%d/%m/%Y")))
             # Testar quantidade
             quantidade = self.cleaned_data['quantidade']
             registros_desconsiderar = list()
