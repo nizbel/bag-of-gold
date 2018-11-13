@@ -42,12 +42,57 @@ class BuscarFundoInvestimentoTestCase(TestCase):
     def test_processar_registro_fundo_novo(self):
         """Testa processar uma linha no documento que descreve um fundo ainda não existente"""
         #10.705.335/0001-69;CLARITAS INSTITUCIONAL FUNDO DE INVESTIMENTO MULTIMERCADO;2009-06-22;2009-06-22;;EM FUNCIONAMENTO NORMAL;2009-06-22;2009-06-22;2018-07-01;2019-06-30;Fundo Multimercado;2009-06-22;DI de um dia;Aberto;N;N;S;N;20.000000000000;859853807.90;2018-10-24;CARLOS ALBERTO SARAIVA;02.201.501/0001-61;BNY MELLON SERVICOS FINANCEIROS DTVM S.A.;PJ;03.987.891/0001-00;CLARITAS ADMINISTRAÇÃO DE RECURSOS LTDA;57.755.217/0001-29;KPMG AUDITORES INDEPENDENTES
-        pass
-    
+        self.assertTrue(FundoInvestimento.objects.all().count() == 0)
+        with open('') as f:
+            processar_arquivo_csv(novo_documento, f, data_pesquisa)
+            
+        # Verificações
+        self.assertTrue(FundoInvestimento.objects.all().count() == 1)
+        self.assertTrue(Administrador.objects.all().count() == 1)
+        self.assertTrue(Auditor.objects.all().count() == 1)
+        self.assertTrue(Gestor.objects.all().count() == 1)
+
+        fundo = FundoInvestimento.objects.filter(cnpj='10.705.335/0001-69').select_related('administrador', 'auditor').prefetch_related('gestor_fundo')[0]
+        self.assertEqual(fundo.nome, 'CLARITAS INSTITUCIONAL FUNDO DE INVESTIMENTO MULTIMERCADO')
+        self.assertEqual(fundo.data_registro, datetime.date(2009, 6, 22))
+        self.assertEqual(fundo.data_constituicao, datetime.date(2009, 6, 22))
+        self.assertEqual(fundo.situacao, FundoInvestimento.SITUACAO_FUNCIONAMENTO_NORMAL)
+        self.assertEqual(fundo.classe, FundoInvestimento.CLASSE_FUNDO_MULTIMERCADO)
+        self.assertEqual(fundo.data_cancelamento, None)
+        # Administrador
+        self.assertEqual(fundo.administrador.nome, 'BNY MELLON SERVICOS FINANCEIROS DTVM S.A.')
+        self.assertEqual(fundo.administrador.cnpj, '02.201.501/0001-61')
+        # Auditor
+        self.assertEqual(fundo.auditor.nome, 'KPMG AUDITORES INDEPENDENTES')
+        self.assertEqual(fundo.auditor.cnpj, '57.755.217/0001-29')
+        # TODO Gestor
+        
     def test_processar_registro_fundo_novo_sem_admin(self):
         """Testa processar uma linha do documento que descreve um fundo ainda não existente, porém sem administrador"""
         #06.047.283/0001-03;5 ESTRELAS FUNDO DE INVESTIMENTO EM COTAS DE FUNDOS DE INVESTIMENTO MULTIMERCADO;2005-03-24;2003-12-30;2005-07-21;CANCELADA;2005-07-21;2003-12-30;2005-03-14;2005-12-31;Fundo Multimercado;2005-03-14;OUTROS;Aberto;S;N;N;S;;0.00;2005-08-03;;;;;;;;
-        pass
+        self.assertTrue(FundoInvestimento.objects.all().count() == 0)
+        with open('') as f:
+            processar_arquivo_csv(novo_documento, f, data_pesquisa)
+            
+        # Verificações
+        self.assertTrue(FundoInvestimento.objects.all().count() == 1)
+        self.assertTrue(Administrador.objects.all().count() == 1)
+        self.assertTrue(Auditor.objects.all().count() == 1)
+        self.assertTrue(Gestor.objects.all().count() == 1)
+
+        fundo = FundoInvestimento.objects.filter(cnpj='10.705.335/0001-69').select_related('administrador', 'auditor').prefetch_related('gestor_fundo')[0]
+        self.assertEqual(fundo.nome, 'CLARITAS INSTITUCIONAL FUNDO DE INVESTIMENTO MULTIMERCADO')
+        self.assertEqual(fundo.data_registro, datetime.date(2009, 6, 22))
+        self.assertEqual(fundo.data_constituicao, datetime.date(2009, 6, 22))
+        self.assertEqual(fundo.situacao, FundoInvestimento.SITUACAO_FUNCIONAMENTO_NORMAL)
+        self.assertEqual(fundo.classe, FundoInvestimento.CLASSE_FUNDO_MULTIMERCADO)
+        self.assertEqual(fundo.data_cancelamento, None)
+        # Administrador
+        self.assertEqual(fundo.administrador, None)
+        # Auditor
+        self.assertEqual(fundo.auditor.nome, 'KPMG AUDITORES INDEPENDENTES')
+        self.assertEqual(fundo.auditor.cnpj, '57.755.217/0001-29')
+        # TODO Gestor
     
     def test_processar_registro_fundo_existente(self):
         """Testa processar uma linha no documento que descreve um fundo já existente"""
