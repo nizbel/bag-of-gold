@@ -70,7 +70,7 @@ class OperacaoCDB_RDBForm(LocalizedModelForm):
                 if self.cleaned_data['data'] < operacao_compra.data_carencia():
                     raise forms.ValidationError('Data da venda deve ser posterior ao período de carência (%s)' % 
                                                 (operacao_compra.data_carencia().strftime("%d/%m/%Y")))
-                elif self.cleaned_data['data'] > .data_vencimento():
+                elif self.cleaned_data['data'] > operacao_compra.data_vencimento():
                     raise forms.ValidationError('Data da venda não pode ser após o período de vencimento (%s)' %
                                                 (operacao_compra.data_vencimento().strftime("%d/%m/%Y")))
             # Testar quantidade
