@@ -125,7 +125,7 @@ def processar_datas_registro_linhas_documento_cadastro(rows, campos):
     alterados = 0
     for fundo_existente in lista_fundos_existentes:
         # Verificar se o primeiro registro é menor que o cnpj atual, removê-lo para diminuir iterações
-        while fundo_existente.cnpj > rows[0][campos['CNPJ_FUNDO']]:
+        while len(rows) > 0 and fundo_existente.cnpj > rows[0][campos['CNPJ_FUNDO']]:
             rows.pop(0)
                 
         for row_atual in rows:
