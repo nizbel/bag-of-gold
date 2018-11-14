@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
+
 import datetime
 
 from django.test import TestCase
 
 from bagogold.fundo_investimento.management.commands.buscar_fundos_investimento import buscar_arquivo_csv_cadastro, \
     processar_arquivo_csv
+from bagogold.fundo_investimento.models import DocumentoCadastro, \
+    FundoInvestimento, Administrador, Auditor, Gestor
 
 
 class BuscarFundoInvestimentoTestCase(TestCase):
@@ -44,7 +47,7 @@ class BuscarFundoInvestimentoTestCase(TestCase):
         #10.705.335/0001-69;CLARITAS INSTITUCIONAL FUNDO DE INVESTIMENTO MULTIMERCADO;2009-06-22;2009-06-22;;EM FUNCIONAMENTO NORMAL;2009-06-22;2009-06-22;2018-07-01;2019-06-30;Fundo Multimercado;2009-06-22;DI de um dia;Aberto;N;N;S;N;20.000000000000;859853807.90;2018-10-24;CARLOS ALBERTO SARAIVA;02.201.501/0001-61;BNY MELLON SERVICOS FINANCEIROS DTVM S.A.;PJ;03.987.891/0001-00;CLARITAS ADMINISTRAÇÃO DE RECURSOS LTDA;57.755.217/0001-29;KPMG AUDITORES INDEPENDENTES
         self.assertTrue(FundoInvestimento.objects.all().count() == 0)
         with open('') as f:
-            processar_arquivo_csv(novo_documento, f, data_pesquisa)
+            processar_arquivo_csv(novo_documento, f)
             
         # Verificações
         self.assertTrue(FundoInvestimento.objects.all().count() == 1)
