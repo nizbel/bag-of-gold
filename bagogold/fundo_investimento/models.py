@@ -143,9 +143,9 @@ class FundoInvestimento (models.Model):
         if descricao_classe == '':
             return FundoInvestimento.CLASSE_FUNDO_INDEFINIDA
         for tipo in FundoInvestimento.TIPOS_CLASSE:
-            if descricao_classe.strip().upper() == tipo[1].strip().upper():
+            if descricao_classe.strip().lower() == tipo[1].strip().lower():
                 return tipo[0]
-        raise ValueError(u'Classe não encontrada: %s' % (descricao_classe))
+        raise ValueError('Classe não encontrada: %s' % (descricao_classe))
     
     @staticmethod
     def buscar_tipo_situacao(descricao_situacao):
@@ -154,7 +154,7 @@ class FundoInvestimento (models.Model):
             return FundoInvestimento.SITUACAO_FUNCIONAMENTO_NORMAL
         for tipo in FundoInvestimento.TIPOS_SITUACAO:
 #             print descricao_situacao.lower(), tipo[1].lower(), [i for i in xrange(len(descricao_situacao.lower())) if descricao_situacao.lower()[i] != tipo[1].lower()[i]]
-            if descricao_situacao.strip().upper() == tipo[1].strip().upper():
+            if descricao_situacao.strip().lower() == tipo[1].strip().lower():
                 return tipo[0]
         raise ValueError(u'Situação não encontrada: %s' % (descricao_situacao))
     
