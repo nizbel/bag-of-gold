@@ -21,7 +21,8 @@ from bagogold.bagogold.utils.misc import ultimo_dia_util, \
     buscar_dia_util_aleatorio, verifica_se_dia_util
 from bagogold.fundo_investimento.management.commands.preencher_historico_fundo_investimento import formatar_cnpj
 from bagogold.fundo_investimento.models import FundoInvestimento, Administrador, \
-    DocumentoCadastro, LinkDocumentoCadastro, Auditor
+    DocumentoCadastro, LinkDocumentoCadastro, Auditor, Gestor,\
+    GestorFundoInvestimento
 from bagogold.fundo_investimento.utils import \
     criar_slug_fundo_investimento_valido
 from bagogold.settings import CAMINHO_FUNDO_INVESTIMENTO_CADASTRO
@@ -308,12 +309,12 @@ def processar_arquivo_csv(documento, dados_arquivo):
                     #'FUNDO_EXCLUSIVO', 'TRIB_LPRAZO', 'INVEST_QUALIF', 'TAXA_PERFM', 'VL_PATRIM_LIQ', 'DT_PATRIM_LIQ', 
                     #'DIRETOR', 'CNPJ_ADMIN', 'ADMIN', 'PF_PJ_GESTOR', 'CPF_CNPJ_GESTOR', 'GESTOR', 'CNPJ_AUDITOR', 'AUDITOR'
                     campos = {nome_campo: indice for (indice, nome_campo) in enumerate(row)}
-                    print row
+#                     print row
                 else:
                     if linha % 1000 == 0:
                         print linha
                         
-                    row = [campo.decode('latin-1').strip() for campo in row]
+                    row = [campo.strip().decode('utf-8') for campo in row]
                     
                     # Se CNPJ não estiver preenchido, pular
                     if row[campos['CNPJ_FUNDO']] == '':
@@ -516,9 +517,28 @@ def processar_linhas_documento_cadastro(rows, campos):
         lista_auditores_existentes.append(novo_auditor)
 #     print 'audit', datetime.datetime.now() - inicio
 
+    # Adicionar gestores
+    # Guardar gestores únicos válidos
+    lista_gestores = [{'GESTOR': row_atual[campos['GESTOR']], 'CPF_CNPJ_GESTOR': row_atual[campos['CPF_CNPJ_GESTOR']]} for row_atual in rows \
+                             if row_atual[campos['CPF_CNPJ_GESTOR']] != '']
+    lista_gestores = [gestor for indice, gestor in enumerate(lista_gestores) \
+                             if gestor not in lista_gestores[indice + 1:]]
+
+    lista_gestores_existentes = list(Gestor.objects.filter(
+        cnpj__in=[gestor['CPF_CNPJ_GESTOR'] for gestor in lista_gestores]))
+    
+    # Verificar se auditores já existem
+#     inicio = datetime.datetime.now()
+    for gestor in [novo_gest for novo_gest in lista_gestores if novo_gest['CPF_CNPJ_GESTOR'] not in \
+                          [gestor_existente.cnpj for gestor_existente in lista_gestores_existentes]]:
+        novo_gestor = Gestor(nome=gestor['GESTOR'], cnpj=gestor['CPF_CNPJ_GESTOR'])
+        novo_gestor.save()
+        lista_gestores_existentes.append(novo_gestor)
+#     print 'audit', datetime.datetime.now() - inicio
+
     # Verificar fundos existentes
     lista_fundos_existentes = list(FundoInvestimento.objects.filter(
-        cnpj__in=[row_atual[campos['CNPJ_FUNDO']] for row_atual in rows]).select_related('administrador', 'auditor'))
+        cnpj__in=[row_atual[campos['CNPJ_FUNDO']] for row_atual in rows]).select_related('administrador', 'auditor').prefetch_related('gestorfundoinvestimento_set'))
     
     # Ordenar fundos existentes
     lista_fundos_existentes.sort(key=lambda fundo: fundo.cnpj)
@@ -576,6 +596,16 @@ def processar_linhas_documento_cadastro(rows, campos):
                     alterado = True
                 if alterado:
                     fundo.save()
+                    
+                # Procurar gestores
+                if row_atual[campos['CPF_CNPJ_GESTOR']] != '' \
+                and row_atual[campos['CPF_CNPJ_GESTOR']] not in fundo.gestorfundoinvestimento_set.all().values_list('gestor__cnpj', flat=True):
+                    for gestor in lista_gestores_existentes:
+                        if gestor.cnpj == row_atual[campos['CPF_CNPJ_GESTOR']]:
+                            gestor_fundo_investimento = GestorFundoInvestimento(fundo_investimento=fundo, gestor=gestor)
+                            gestor_fundo_investimento.save()
+                            break
+                        
                 encontrado = True
                 break
             
@@ -605,6 +635,14 @@ def processar_linhas_documento_cadastro(rows, campos):
             if row_atual[campos['DT_CANCEL']] != '':
                 novo_fundo.data_cancelamento=row_atual[campos['DT_CANCEL']]
             novo_fundo.save()
+            
+            # Adicionar gestor
+            for gestor in lista_gestores_existentes:
+                if gestor.cnpj == row_atual[campos['CPF_CNPJ_GESTOR']]:
+                    gestor_fundo_investimento = GestorFundoInvestimento(fundo_investimento=novo_fundo, gestor=gestor)
+                    gestor_fundo_investimento.save()
+                    break
+            
 #             lista_fundos_existentes.append(novo_fundo)
             lista_fundos_existentes.insert(0, novo_fundo) 
     print 'fundo', datetime.datetime.now() - inicio
