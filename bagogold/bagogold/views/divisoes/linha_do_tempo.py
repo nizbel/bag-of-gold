@@ -56,18 +56,21 @@ def linha_do_tempo_cdb_rdb(divisao):
     
     operacoes_divisao = DivisaoOperacaoCDB_RDB.objects.filter(divisao=divisao).annotate(data=F('operacao__data')) \
         .annotate(titulo=Case(When(operacao__tipo_operacao='C', then=Value(u'Operação de compra', CharField())),
-                              When(operacao__tipo_operacao='V', then=Value(u'Operação de venda', CharField())), output_field=CharField()))
+                              When(operacao__tipo_operacao='V', then=Value(u'Operação de venda', CharField())), output_field=CharField())) \
+        .select_related('operacao__cdb_rdb')
     for operacao_divisao in operacoes_divisao:
         operacao_divisao.operacao.quantidade = operacao_divisao.quantidade
         operacao_divisao.texto = [operacao_divisao.operacao]
     
     # Transferências
-    transf_cedente = TransferenciaEntreDivisoes.objects.filter(divisao_cedente=divisao, investimento_origem=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_CDB_RDB)
+    transf_cedente = TransferenciaEntreDivisoes.objects.filter(divisao_cedente=divisao, investimento_origem=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_CDB_RDB) \
+        .select_related('divisao_cedente', 'divisao_recebedora')
     for transferencia in transf_cedente:
         transferencia.titulo = u'Transferência de recursos da divisão'
         transferencia.texto = [transferencia]
         
-    transf_recebedora = TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=divisao, investimento_destino=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_CDB_RDB)
+    transf_recebedora = TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=divisao, investimento_destino=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_CDB_RDB) \
+        .select_related('divisao_cedente', 'divisao_recebedora')
     for transferencia in transf_recebedora:
         transferencia.titulo = u'Transferência de recursos para a divisão'
         transferencia.texto = [transferencia]
