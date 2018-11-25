@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 import datetime
 
 from django.test import TestCase
@@ -16,7 +15,6 @@ class BuscarFundoInvestimentoTestCase(TestCase):
     Testa os utilitários usados na busca de fundos de investimento
     """
     def setUp(self):
-        # TODO Definir quais passos todos os utilitários têm em comum 
         self.novo_documento = DocumentoCadastro.objects.create(data_referencia=datetime.date.today(), data_pedido_cvm=datetime.date.today())
         LinkDocumentoCadastro.objects.create(url='teste.com.br', documento=self.novo_documento)
         
@@ -33,17 +31,6 @@ class BuscarFundoInvestimentoTestCase(TestCase):
         with self.assertRaises(ValueError):
             buscar_arquivo_csv_cadastro(datetime.date(2018, 10, 27))
             
-    def test_processar_documento_cvm_sucesso(self):
-        """Testa processar documento de cadastro de fundos, com sucesso"""
-        # Gerar fundos pré-existentes para teste
-        
-        # Abrir arquivo de teste
-#         with open('test_documento_cadastro.csv') as f:
-#             processar_arquivo_csv(novo_documento, f, data_pesquisa)
-                
-        # Processar
-        pass
-    
     def test_processar_registro_fundo_novo(self):
         """Testa processar uma linha no documento que descreve um fundo ainda não existente"""
         #10.705.335/0001-69;CLARITAS INSTITUCIONAL FUNDO DE INVESTIMENTO MULTIMERCADO;2009-06-22;2009-06-22;;EM FUNCIONAMENTO NORMAL;2009-06-22;2009-06-22;2018-07-01;2019-06-30;Fundo Multimercado;2009-06-22;DI de um dia;Aberto;N;N;S;N;20.000000000000;859853807.90;2018-10-24;CARLOS ALBERTO SARAIVA;02.201.501/0001-61;BNY MELLON SERVICOS FINANCEIROS DTVM S.A.;PJ;03.987.891/0001-00;CLARITAS ADMINISTRAÇÃO DE RECURSOS LTDA;57.755.217/0001-29;KPMG AUDITORES INDEPENDENTES
@@ -296,10 +283,68 @@ class BuscarFundoInvestimentoTestCase(TestCase):
     def test_processar_registro_sem_admin_para_fundo_com_admin(self):
         """Testa processar linha do documento que descreva um fundo já existente, porém sem informação sobre administrador"""
         #10.705.335/0001-69;CLARITAS INSTITUCIONAL FUNDO DE INVESTIMENTO MULTIMERCADO;2009-06-22;2009-06-22;;EM FUNCIONAMENTO NORMAL;2009-06-22;2009-06-22;2018-07-01;2019-06-30;Fundo Multimercado;2009-06-22;DI de um dia;Aberto;N;N;S;N;20.000000000000;859853807.90;2018-10-24;CARLOS ALBERTO SARAIVA;;;PJ;03.987.891/0001-00;CLARITAS ADMINISTRAÇÃO DE RECURSOS LTDA;57.755.217/0001-29;KPMG AUDITORES INDEPENDENTES
-        pass
+        with open('bagogold/fundo_investimento/tests/documentos_historico_cadastro/fundo_com_admin_auditor.csv') as f:
+            processar_arquivo_csv(self.novo_documento, f, 'utf-8')
+        
+        self.assertEqual(FundoInvestimento.objects.all().count(), 1)
+        with open('bagogold/fundo_investimento/tests/documentos_historico_cadastro/fundo_sem_admin_com_auditor.csv') as f:
+            processar_arquivo_csv(self.novo_documento, f, 'utf-8')
+            
+        # Verificações
+        self.assertEqual(FundoInvestimento.objects.all().count(), 1)
+        self.assertTrue(Administrador.objects.all().count() == 1)
+        self.assertTrue(Auditor.objects.all().count() == 1)
+        self.assertTrue(Gestor.objects.all().count() == 1)
+
+        fundo = FundoInvestimento.objects.filter(cnpj='10.705.335/0001-69').select_related('administrador', 'auditor').prefetch_related('gestorfundoinvestimento_set')[0]
+        self.assertEqual(fundo.nome, u'CLARITAS INSTITUCIONAL FUNDO DE INVESTIMENTO MULTIMERCADO')
+        self.assertEqual(fundo.data_registro, datetime.date(2009, 6, 22))
+        self.assertEqual(fundo.data_constituicao, datetime.date(2009, 6, 22))
+        self.assertEqual(fundo.situacao, FundoInvestimento.SITUACAO_FUNCIONAMENTO_NORMAL)
+        self.assertEqual(fundo.classe, FundoInvestimento.CLASSE_FUNDO_MULTIMERCADO)
+        self.assertEqual(fundo.data_cancelamento, None)
+        # Administrador
+        self.assertEqual(fundo.administrador.nome, 'BNY MELLON SERVICOS FINANCEIROS DTVM S.A.')
+        self.assertEqual(fundo.administrador.cnpj, '02.201.501/0001-61')
+        # Auditor
+        self.assertEqual(fundo.auditor.nome, 'KPMG AUDITORES INDEPENDENTES')
+        self.assertEqual(fundo.auditor.cnpj, '57.755.217/0001-29')
+        # Gestor
+        self.assertEqual(fundo.gestorfundoinvestimento_set.count(), 1)
+        gestor_teste = Gestor(cnpj='03.987.891/0001-00', nome='CLARITAS ADMINISTRAÇÃO DE RECURSOS LTDA')
+        self.assertIn(gestor_teste.cnpj, fundo.gestorfundoinvestimento_set.all().values_list('gestor__cnpj', flat=True))
     
     def test_processar_registro_sem_auditor_para_fundo_com_auditor(self):
         """Testa processar linha do documento que descreva um fundo já existente, porém sem informação sobre auditor"""
-        #10.705.335/0001-69;CLARITAS INSTITUCIONAL FUNDO DE INVESTIMENTO MULTIMERCADO;2009-06-22;2009-06-22;;EM FUNCIONAMENTO NORMAL;2009-06-22;2009-06-22;2018-07-01;2019-06-30;Fundo Multimercado;2009-06-22;DI de um dia;Aberto;N;N;S;N;20.000000000000;859853807.90;2018-10-24;CARLOS ALBERTO SARAIVA;;;PJ;03.987.891/0001-00;CLARITAS ADMINISTRAÇÃO DE RECURSOS LTDA;57.755.217/0001-29;KPMG AUDITORES INDEPENDENTES
-        pass
+        #10.705.335/0001-69;CLARITAS INSTITUCIONAL FUNDO DE INVESTIMENTO MULTIMERCADO;2009-06-22;2009-06-22;;EM FUNCIONAMENTO NORMAL;2009-06-22;2009-06-22;2018-07-01;2019-06-30;Fundo Multimercado;2009-06-22;DI de um dia;Aberto;N;N;S;N;20.000000000000;859853807.90;2018-10-24;CARLOS ALBERTO SARAIVA;02.201.501/0001-61;BNY MELLON SERVICOS FINANCEIROS DTVM S.A.;PJ;03.987.891/0001-00;CLARITAS ADMINISTRAÇÃO DE RECURSOS LTDA;;
+        with open('bagogold/fundo_investimento/tests/documentos_historico_cadastro/fundo_com_admin_auditor.csv') as f:
+            processar_arquivo_csv(self.novo_documento, f, 'utf-8')
+        
+        self.assertEqual(FundoInvestimento.objects.all().count(), 1)
+        with open('bagogold/fundo_investimento/tests/documentos_historico_cadastro/fundo_com_admin_sem_auditor.csv') as f:
+            processar_arquivo_csv(self.novo_documento, f, 'utf-8')
+            
+        # Verificações
+        self.assertEqual(FundoInvestimento.objects.all().count(), 1)
+        self.assertTrue(Administrador.objects.all().count() == 1)
+        self.assertTrue(Auditor.objects.all().count() == 1)
+        self.assertTrue(Gestor.objects.all().count() == 1)
+
+        fundo = FundoInvestimento.objects.filter(cnpj='10.705.335/0001-69').select_related('administrador', 'auditor').prefetch_related('gestorfundoinvestimento_set')[0]
+        self.assertEqual(fundo.nome, u'CLARITAS INSTITUCIONAL FUNDO DE INVESTIMENTO MULTIMERCADO')
+        self.assertEqual(fundo.data_registro, datetime.date(2009, 6, 22))
+        self.assertEqual(fundo.data_constituicao, datetime.date(2009, 6, 22))
+        self.assertEqual(fundo.situacao, FundoInvestimento.SITUACAO_FUNCIONAMENTO_NORMAL)
+        self.assertEqual(fundo.classe, FundoInvestimento.CLASSE_FUNDO_MULTIMERCADO)
+        self.assertEqual(fundo.data_cancelamento, None)
+        # Administrador
+        self.assertEqual(fundo.administrador.nome, 'BNY MELLON SERVICOS FINANCEIROS DTVM S.A.')
+        self.assertEqual(fundo.administrador.cnpj, '02.201.501/0001-61')
+        # Auditor
+        self.assertEqual(fundo.auditor.nome, 'KPMG AUDITORES INDEPENDENTES')
+        self.assertEqual(fundo.auditor.cnpj, '57.755.217/0001-29')
+        # Gestor
+        self.assertEqual(fundo.gestorfundoinvestimento_set.count(), 1)
+        gestor_teste = Gestor(cnpj='03.987.891/0001-00', nome='CLARITAS ADMINISTRAÇÃO DE RECURSOS LTDA')
+        self.assertIn(gestor_teste.cnpj, fundo.gestorfundoinvestimento_set.all().values_list('gestor__cnpj', flat=True))
     
