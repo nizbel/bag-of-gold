@@ -589,6 +589,8 @@ def processar_linhas_documento_cadastro(rows, campos):
                 if row_atual[campos['DENOM_SOCIAL']] != '' and row_atual[campos['DENOM_SOCIAL']] != fundo.nome:
 #                     print row_atual[campos['DENOM_SOCIAL']], '<-', fundo.nome
                     fundo.nome = row_atual[campos['DENOM_SOCIAL']]
+                    # Alterar slug
+                    fundo.slug = criar_slug_fundo_investimento_valido(fundo.nome)
                     alterado = True
                 if row_atual[campos['DT_CANCEL']] != '' and fundo.data_cancelamento == None:
 #                     print row_atual[campos['CLASSE']].upper(), fundo.descricao_classe().upper()

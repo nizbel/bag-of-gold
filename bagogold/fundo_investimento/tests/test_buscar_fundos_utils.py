@@ -161,6 +161,11 @@ class BuscarFundoInvestimentoTestCase(TestCase):
         #19.959.754/0001-00;AB CAPITAL II FUNDO DE INVESTIMENTO IMOBILIÁRIO;2014-10-15;2014-10-10;2017-12-29;CANCELADA;2017-12-29;2014-10-21;2018-01-01;2018-12-31;Fundo Multimercado;2014-10-10;DI de um dia;Fechado;N;S;S;S;;37650897.53;2018-01-05;;;;;;;;
         pass
     
+    def test_processar_registro_cancelado_situacao_incorreta(self):
+        """Testa processar registro de um fundo cancelado, porém cuja situação esteja como funcionamento normal"""
+        #19.959.754/0001-00;AB CAPITAL II FUNDO DE INVESTIMENTO IMOBILIÁRIO;2014-10-15;2014-10-10;2017-12-29;EM FUNCIONAMENTO NORMAL;2014-10-21;2014-10-21;2018-01-01;2018-12-31;Fundo Multimercado;2014-10-10;DI de um dia;Fechado;N;S;S;S;;37650897.53;2018-01-05;;;;;;;;
+        pass
+    
     def test_processar_registros_mesmo_fundo_gestor_diferente(self):
         """Testa processar múltiplas linhas para o mesmo fundo, porém com gestores diferentes"""
         #05.526.548/0001-93;OPPORTUNITY SOP FUNDO DE INVESTIMENTO EM COTAS DE FUNDOS DE INVESTIMENTO EM AÇÕES;2005-02-01;2003-02-19;2013-11-18;CANCELADA;2013-11-18;2003-03-21;2013-07-01;2014-06-30;Fundo de Ações;2005-01-31;;Fechado;S;N;;S;20.000000000000;0.00;2013-11-29;MARCUS VINICIUS MATHIAS PEREIRA;02.201.501/0001-61;BNY MELLON SERVICOS FINANCEIROS DTVM S.A.;PJ;01.608.570/0001-21;OPPORTUNITY GESTORA DE RECURSOS LTDA;57.755.217/0001-29;KPMG AUDITORES INDEPENDENTES
@@ -206,6 +211,11 @@ class BuscarFundoInvestimentoTestCase(TestCase):
     
     def test_processar_registro_sem_admin_para_fundo_com_admin(self):
         """Testa processar linha do documento que descreva um fundo já existente, porém sem informação sobre administrador"""
+        #10.705.335/0001-69;CLARITAS INSTITUCIONAL FUNDO DE INVESTIMENTO MULTIMERCADO;2009-06-22;2009-06-22;;EM FUNCIONAMENTO NORMAL;2009-06-22;2009-06-22;2018-07-01;2019-06-30;Fundo Multimercado;2009-06-22;DI de um dia;Aberto;N;N;S;N;20.000000000000;859853807.90;2018-10-24;CARLOS ALBERTO SARAIVA;;;PJ;03.987.891/0001-00;CLARITAS ADMINISTRAÇÃO DE RECURSOS LTDA;57.755.217/0001-29;KPMG AUDITORES INDEPENDENTES
+        pass
+    
+    def test_processar_registro_sem_auditor_para_fundo_com_auditor(self):
+        """Testa processar linha do documento que descreva um fundo já existente, porém sem informação sobre auditor"""
         #10.705.335/0001-69;CLARITAS INSTITUCIONAL FUNDO DE INVESTIMENTO MULTIMERCADO;2009-06-22;2009-06-22;;EM FUNCIONAMENTO NORMAL;2009-06-22;2009-06-22;2018-07-01;2019-06-30;Fundo Multimercado;2009-06-22;DI de um dia;Aberto;N;N;S;N;20.000000000000;859853807.90;2018-10-24;CARLOS ALBERTO SARAIVA;;;PJ;03.987.891/0001-00;CLARITAS ADMINISTRAÇÃO DE RECURSOS LTDA;57.755.217/0001-29;KPMG AUDITORES INDEPENDENTES
         pass
     
