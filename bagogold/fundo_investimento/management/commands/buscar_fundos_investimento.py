@@ -61,7 +61,7 @@ class Command(BaseCommand):
             
             with transaction.atomic():
                 # Processar arquivo
-#                 processar_arquivo_csv(arquivo_csv)
+#                 processar_arquivo_csv(novo_documento, arquivo_csv)
                 with open('../Downloads/inf_cadastral_fi_20181026.csv') as f:
                     processar_arquivo_csv(novo_documento, f)
                     
@@ -272,7 +272,7 @@ def buscar_arquivo_csv_cadastro(data):
     
     return (url_csv, nome_csv, dados)
 
-def processar_arquivo_csv(documento, dados_arquivo):
+def processar_arquivo_csv(documento, dados_arquivo, codificacao='latin-1'):
     """
     Ler o arquivo CSV com dados do cadastro de fundos de investimento
     
@@ -313,8 +313,8 @@ def processar_arquivo_csv(documento, dados_arquivo):
                 else:
                     if linha % 1000 == 0:
                         print linha
-                        
-                    row = [campo.strip().decode('utf-8') for campo in row]
+                    
+                    row = [campo.strip().decode(codificacao) for campo in row]
                     
                     # Se CNPJ não estiver preenchido, pular
                     if row[campos['CNPJ_FUNDO']] == '':
@@ -546,7 +546,7 @@ def processar_linhas_documento_cadastro(rows, campos):
     # Ordenar rows
     rows.sort(key=lambda row: row[campos['CNPJ_FUNDO']])
     
-    inicio = datetime.datetime.now()
+#     inicio = datetime.datetime.now()
 #     for row_atual in [row_dados for row_dados in rows if row_dados[campos['CNPJ_ADMIN']] != '']:
     for row_atual in rows:
         
@@ -568,6 +568,7 @@ def processar_linhas_documento_cadastro(rows, campos):
                     for administrador in lista_administradores_existentes:
                         if administrador.cnpj == row_atual[campos['CNPJ_ADMIN']]:
                             fundo.administrador = administrador
+                            
                             alterado = True
                             break
 #                     fundo.administrador = Administrador.objects.get(cnpj=row_atual[campos['CNPJ_ADMIN']])
@@ -575,6 +576,7 @@ def processar_linhas_documento_cadastro(rows, campos):
                     for auditor in lista_auditores_existentes:
                         if auditor.cnpj == row_atual[campos['CNPJ_AUDITOR']]:
                             fundo.auditor = auditor
+                            
                             alterado = True
                             break
 #                     fundo.auditor = Auditor.objects.get(cnpj=row_atual[campos['CNPJ_AUDITOR']])
@@ -582,20 +584,26 @@ def processar_linhas_documento_cadastro(rows, campos):
 #                     print row_atual[campos['SIT']].upper(), fundo.descricao_situacao().upper(), fundo.cnpj
                     fundo.situacao = FundoInvestimento.buscar_tipo_situacao(row_atual[campos['SIT']])
                     alterado = True
+                    
                 if row_atual[campos['CLASSE']] != '' and row_atual[campos['CLASSE']].upper() != fundo.descricao_classe().upper():
 #                     print row_atual[campos['CLASSE']].upper(), fundo.descricao_classe().upper()
                     fundo.classe = FundoInvestimento.buscar_tipo_classe(row_atual[campos['CLASSE']])
                     alterado = True
+                    
                 if row_atual[campos['DENOM_SOCIAL']] != '' and row_atual[campos['DENOM_SOCIAL']] != fundo.nome:
 #                     print row_atual[campos['DENOM_SOCIAL']], '<-', fundo.nome
                     fundo.nome = row_atual[campos['DENOM_SOCIAL']]
                     # Alterar slug
                     fundo.slug = criar_slug_fundo_investimento_valido(fundo.nome)
                     alterado = True
+                    
                 if row_atual[campos['DT_CANCEL']] != '' and fundo.data_cancelamento == None:
 #                     print row_atual[campos['CLASSE']].upper(), fundo.descricao_classe().upper()
                     fundo.data_cancelamento = row_atual[campos['DT_CANCEL']]
+                    # Se possui data de cancelamento, situação deve ser TERMINADO
+                    fundo.situacao = FundoInvestimento.SITUACAO_TERMINADO
                     alterado = True
+                
                 if alterado:
                     fundo.save()
                     
@@ -636,6 +644,9 @@ def processar_linhas_documento_cadastro(rows, campos):
 #                 novo_fundo.auditor=Auditor.objects.get(cnpj=row_atual[campos['CNPJ_AUDITOR']])
             if row_atual[campos['DT_CANCEL']] != '':
                 novo_fundo.data_cancelamento=row_atual[campos['DT_CANCEL']]
+                # Se possui data de cancelamento, situação deve ser TERMINADO
+                novo_fundo.situacao = FundoInvestimento.SITUACAO_TERMINADO
+            
             novo_fundo.save()
             
             # Adicionar gestor
@@ -647,7 +658,7 @@ def processar_linhas_documento_cadastro(rows, campos):
             
 #             lista_fundos_existentes.append(novo_fundo)
             lista_fundos_existentes.insert(0, novo_fundo) 
-    print 'fundo', datetime.datetime.now() - inicio
+#     print 'fundo', datetime.datetime.now() - inicio
   
 #     # Adicionar a lista de fundos para comparar posteriormente
 #     for row_atual in rows:
