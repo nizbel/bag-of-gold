@@ -1,24 +1,16 @@
 # -*- coding: utf-8 -*-
-from StringIO import StringIO
 import csv
 import datetime
-import os
-import random
-import time
 import traceback
-from urllib2 import urlopen, Request, HTTPError, URLError
-import zipfile
+from urllib2 import urlopen, Request, HTTPError
 
 import boto3
 from django.core.mail import mail_admins
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from lxml import etree
-import zeep
 
 from bagogold import settings
-from bagogold.bagogold.utils.misc import ultimo_dia_util, \
-    buscar_dia_util_aleatorio, verifica_se_dia_util
+from bagogold.bagogold.utils.misc import ultimo_dia_util
 from bagogold.fundo_investimento.management.commands.preencher_historico_fundo_investimento import formatar_cnpj
 from bagogold.fundo_investimento.models import FundoInvestimento, Administrador, \
     DocumentoCadastro, LinkDocumentoCadastro, Auditor, Gestor,\
@@ -26,7 +18,6 @@ from bagogold.fundo_investimento.models import FundoInvestimento, Administrador,
 from bagogold.fundo_investimento.utils import \
     criar_slug_fundo_investimento_valido
 from bagogold.settings import CAMINHO_FUNDO_INVESTIMENTO_CADASTRO
-from conf.conf import FI_LOGIN, FI_PASSWORD
 from conf.settings_local import AWS_STORAGE_BUCKET_NAME
 
 
@@ -39,223 +30,58 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         try:
-            data_pesquisa = datetime.date(2018, 10, 26)
-            novo_documento = DocumentoCadastro.objects.get(data_referencia=data_pesquisa)
-            
-#             with transaction.atomic():
-#                 # Buscar arquivo CSV
-#                 if options['data']:
-#                     data_pesquisa = datetime.datetime.strptime(options['data'], '%Y%m%d')
-#                 else:
-#                     # Busca data do último dia útil
-#                     data_pesquisa = ultimo_dia_util()
-#                 link_arquivo_csv, nome_arquivo, arquivo_csv = buscar_arquivo_csv_cadastro(data_pesquisa)
-#                    
-#                 # Gerar documento
-#                 novo_documento = DocumentoCadastro.objects.create(data_referencia=data_pesquisa, data_pedido_cvm=datetime.date.today())
-#                 LinkDocumentoCadastro.objects.create(url=link_arquivo_csv, documento=novo_documento)
-#                  
-#                 # Salvar arquivo em media no bucket
-#                 caminho_arquivo = CAMINHO_FUNDO_INVESTIMENTO_CADASTRO + nome_arquivo
-#                 boto3.client('s3').put_object(Body=arquivo_csv.read(), Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho_arquivo)
+            with transaction.atomic():
+                # Buscar arquivo CSV
+                if options['data']:
+                    data_pesquisa = datetime.datetime.strptime(options['data'], '%Y%m%d')
+                else:
+                    # Busca data do último dia útil
+                    data_pesquisa = ultimo_dia_util()
+                    
+                # Verifica se o documento existe
+                if DocumentoCadastro.objects.filter(data_referencia=data_pesquisa).exists():
+                    documento = DocumentoCadastro.objects.get(data_referencia=data_pesquisa)
+                    
+                    # Verificar se já foi lido
+                    if documento.leitura_realizada:
+                        raise ValueError('Leitura para o dia %s já realizada' % (data_pesquisa.strftime('%d/%m/%Y')))
+                    
+                    else:
+                        # Ler
+                        nome_arquivo = documento.linkcadastrodocumento.url.split('/')[-1]
+                        caminho_arquivo = CAMINHO_FUNDO_INVESTIMENTO_CADASTRO + nome_arquivo
+                        boto3.client('s3').get(Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho_arquivo)
+                    
+                else:
+                    # Caso o documento ainda não exista, baixar
+                    link_arquivo_csv, nome_arquivo, arquivo_csv = buscar_arquivo_csv_cadastro(data_pesquisa)
+                        
+                    # Gerar documento
+                    documento = DocumentoCadastro.objects.create(data_referencia=data_pesquisa, data_pedido_cvm=datetime.date.today())
+                    LinkDocumentoCadastro.objects.create(url=link_arquivo_csv, documento=documento)
+                      
+                    # Salvar arquivo em media no bucket
+                    caminho_arquivo = CAMINHO_FUNDO_INVESTIMENTO_CADASTRO + nome_arquivo
+                    boto3.client('s3').put_object(Body=arquivo_csv.read(), Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho_arquivo)
             
             with transaction.atomic():
                 # Processar arquivo
-#                 processar_arquivo_csv(novo_documento, arquivo_csv)
-                with open('../Downloads/inf_cadastral_fi_20181026.csv') as f:
-                    processar_arquivo_csv(novo_documento, f)
+                processar_arquivo_csv(documento, arquivo_csv)
                     
-                if 2 == 2:
-                    raise ValueError('TESTE')
-            
             # Sem erros, apagar arquivo
-#             boto3.client('s3').delete_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho_arquivo)
+            boto3.client('s3').delete_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho_arquivo)
         except:
             if settings.ENV == 'DEV':
                 print traceback.format_exc()
             elif settings.ENV == 'PROD':
                 mail_admins(u'Erro em Buscar fundos investimento', traceback.format_exc().decode('utf-8'))
         
-        if 2 == 2: 
-            return
-            
 
-#     def handle(self, *args, **options):        
-        try:
-            wsdl = 'http://sistemas.cvm.gov.br/webservices/Sistemas/SCW/CDocs/WsDownloadInfs.asmx?WSDL'
-            client = zeep.Client(wsdl=wsdl)
-            resposta = client.service.Login(FI_LOGIN, FI_PASSWORD)
-            headerSessao = resposta['header']
-    #         print headerSessao
-        
-            dias_uteis = list()
-            if not options['aleatorio']:
-                # Buscar último dia útil
-                dias_uteis.append(ultimo_dia_util())
-            else:
-                # Buscar dias úteis que não tenham sido inseridos previamente
-                for _ in range(3):
-                    dia_util = buscar_dia_util_aleatorio(datetime.date(2002, 1 ,1), ultimo_dia_util())
-                    while DocumentoCadastro.objects.filter(data_referencia=dia_util, leitura_realizada=True).exists():
-                        dia_util = buscar_dia_util_aleatorio(datetime.date(2002, 1 ,1), ultimo_dia_util())
-                    dias_uteis.append(dia_util)
-                
-                
-            # Busca de competencias
-            for dia_util in dias_uteis:
-                # Testa se já não foi criado o link para o documento (apenas para não aleatório pois o aleatório evita datas já cadastradas)
-                if not DocumentoCadastro.objects.filter(data_referencia=dia_util).exists():
-                    try:
-                        with transaction.atomic():
-                            respostaCompetencias = client.service.solicAutorizDownloadCadastro(dia_util, 'Teste', _soapheaders=[headerSessao])
-                            # Criar documento
-                            novo_documento = DocumentoCadastro.objects.create(data_referencia=dia_util, data_pedido_cvm=datetime.date.today())
-                            url = respostaCompetencias['body']['solicAutorizDownloadCadastroResult']
-                            # Criar link
-                            LinkDocumentoCadastro.objects.create(url=url, documento=novo_documento)
-                    except zeep.exceptions.Fault as erro_wsdl:
-                        # Verifica se não encontrou arquivo para os parâmetros
-                        if u'Arquivo para download não encontrado para os parâmetros especificados' in erro_wsdl:
-                            # Nesse caso, verificar se é a busca aleatoria para adicionar mais uma data para dias_uteis 
-                            if options['aleatorio']:
-                                dia_util = buscar_dia_util_aleatorio(datetime.date(2002, 1 ,1), ultimo_dia_util())
-                                while DocumentoCadastro.objects.filter(data_referencia=dia_util).exists():
-                                    dia_util = buscar_dia_util_aleatorio(datetime.date(2002, 1 ,1), ultimo_dia_util())
-                                dias_uteis.append(dia_util)
-                            # Se busca do último dia útil, procurar ultimo dia util antes do dia apontado que não tenha documentos lidos
-                            else:
-                                while DocumentoCadastro.objects.filter(data_referencia=dia_util, leitura_realizada=True).exists() or not verifica_se_dia_util(dia_util):
-                                    dia_util -= datetime.timedelta(days=1)
-                                dias_uteis.append(dia_util)
-                        else:
-                            if settings.ENV == 'DEV':
-                                print traceback.format_exc()
-                            elif settings.ENV == 'PROD':
-                                mail_admins(u'Erro em Buscar fundos investimento', u'%s aconteceu para dia %s' % (erro_wsdl, dia_util.strftime('%d/%m/%Y')))
-                        continue
-                else:
-                    documento_cadastro = DocumentoCadastro.objects.get(data_referencia=dia_util)
-                    if not documento_cadastro.leitura_realizada:
-                        # Se não for do mesmo dia, gerar novo
-                        if (datetime.date.today() - documento_cadastro.data_pedido_cvm).days > 0:
-                            try:
-                                respostaCompetencias = client.service.solicAutorizDownloadCadastro(dia_util, 'Teste', _soapheaders=[headerSessao])
-                                url = respostaCompetencias['body']['solicAutorizDownloadCadastroResult']
-                                # Atualizar link
-                                link = LinkDocumentoCadastro.objects.get(documento=novo_documento)
-                                link.url = url
-                                link.save()
-                            except zeep.exceptions.Fault as erro_wsdl:
-                                # Verifica se não encontrou arquivo para os parâmetros
-                                if u'Arquivo para download não encontrado para os parâmetros especificados' in erro_wsdl:
-                                    # Nesse caso, verificar se é a busca aleatoria para adicionar mais uma data para dias_uteis 
-                                    if options['aleatorio']:
-                                        dia_util = buscar_dia_util_aleatorio(datetime.date(2002, 1 ,1), ultimo_dia_util())
-                                        while DocumentoCadastro.objects.filter(data_referencia=dia_util).exists():
-                                            dia_util = buscar_dia_util_aleatorio(datetime.date(2002, 1 ,1), ultimo_dia_util())
-                                        dias_uteis.append(dia_util)
-                                else:
-                                    if settings.ENV == 'DEV':
-                                        print traceback.format_exc()
-                                    elif settings.ENV == 'PROD':
-                                        mail_admins(u'Erro em Buscar fundos investimento', u'%s aconteceu para dia %s' % (erro_wsdl, dia_util.strftime('%d/%m/%Y')))
-                                continue
-                        else:
-                            # Mesmo dia, pegar link cadastrado
-                            url = LinkDocumentoCadastro.objects.get(documento__data_referencia=dia_util).url
-                    else:
-                        url = LinkDocumentoCadastro.objects.get(documento__data_referencia=dia_util).url
-#                 url = 'http://cvmweb.cvm.gov.br/swb/sistemas/scw/DownloadArqs/LeDownloadArqs.aspx?VL_GUID=8fc00daf-4fc8-4d83-bc4c-3e45cc79576c&PK_SESSAO=963322175&PK_ARQ_INFORM_DLOAD=196451'
-                # Tenta extrair arquivo, se não conseguir, continua com o próximo
-                try:
-                    download = urlopen(url)
-                    arquivo_zipado = StringIO(download.read())
-                    unzipped = zipfile.ZipFile(arquivo_zipado)
-                except:
-                    if settings.ENV == 'DEV':
-                        print traceback.format_exc()
-                    elif settings.ENV == 'PROD':
-                        mail_admins(u'Erro em Buscar fundos investimento na data %s' % (dia_util.strftime('%d/%m/%Y')), traceback.format_exc().decode('utf-8'))
-                    continue
-                for libitem in unzipped.namelist():
-                    try:
-                        nome_arquivo = settings.CAMINHO_FUNDO_INVESTIMENTO_CADASTRO + libitem
-                        # Ler arquivo
-                        file(nome_arquivo,'wb').write(unzipped.read(libitem))
-                        arquivo_cadastro = file(nome_arquivo, 'r')
-                        tree = etree.parse(arquivo_cadastro)
-                        if not options['aleatorio']:
-                            fundos = list()
-                        # Definir campos para traceback
-                        campos = None
-                        with transaction.atomic():
-                            # Lê o arquivo procurando nós CADASTRO (1 para cada fundo)
-                            for element in tree.getroot().iter('CADASTRO'):
-                                campos = {key: value for (key, value) in [(elemento.tag, elemento.text) for elemento in element.iter()]}
-                                # Verificar se administrador já existe
-                                if not Administrador.objects.filter(cnpj=campos['CNPJ_ADMINISTRADOR']).exists():
-                                    novo_administrador = Administrador(nome=campos['NOME_ADMINISTRADOR'].strip(), cnpj=campos['CNPJ_ADMINISTRADOR'].strip())
-                                    novo_administrador.save()
-                                 
-                                # Verificar se fundo já existe
-                                if not FundoInvestimento.objects.filter(cnpj=campos['CNPJ']).exists():
-                                    novo_fundo = FundoInvestimento(cnpj=campos['CNPJ'].strip(), nome=campos['NOME'].strip(), administrador=Administrador.objects.get(cnpj=campos['CNPJ_ADMINISTRADOR']),
-                                                                   data_constituicao=campos['DT_CONSTITUICAO'].strip(), situacao=FundoInvestimento.buscar_tipo_situacao(campos['SITUACAO']), 
-                                                                   tipo_prazo=definir_prazo__pelo_cadastro(campos['TRATAMENTO_TRIBUTARIO']),
-                                                                   classe=FundoInvestimento.buscar_tipo_classe(campos['CLASSE']), exclusivo_qualificados=(campos['INVESTIDORES_QUALIFICADOS'].strip().upper() == 'SIM'),
-                                                                   ultimo_registro=dia_util, slug=criar_slug_fundo_investimento_valido(campos['NOME'].strip()))
-                                    novo_fundo.save()
-                                else:
-                                    # Verificar se houve alteração no fundo
-                                    fundo = FundoInvestimento.objects.get(cnpj=campos['CNPJ'])
-                                    if fundo.ultimo_registro < dia_util:
-                                        fundo.ultimo_registro = dia_util
-                                        # Verificar alteração de administrador
-                                        if campos['CNPJ_ADMINISTRADOR'] != fundo.administrador.cnpj:
-                                            fundo.administrador = Administrador.objects.get(cnpj=campos['CNPJ_ADMINISTRADOR'])
-                                        if campos['SITUACAO'] != None and campos['SITUACAO'] != fundo.descricao_situacao():
-                                            fundo.situacao = FundoInvestimento.buscar_tipo_situacao(campos['SITUACAO'])
-                                        if campos['CLASSE'] != None and campos['CLASSE'] != fundo.descricao_classe():
-                                            fundo.classe = FundoInvestimento.buscar_tipo_classe(campos['CLASSE'])
-                                        if campos['NOME'] != None and campos['NOME'].strip() != fundo.nome:
-                                            fundo.nome = campos['NOME'].strip()
-                                        fundo.save()
-                                    
-                                # Adicionar a lista de fundos para comparar posteriormente
-                                if not options['aleatorio']:
-                                    fundos.append(campos['CNPJ'])
-                                
-#                                 print novo_fundo             
-                            documento = DocumentoCadastro.objects.get(data_referencia=dia_util)  
-                            documento.leitura_realizada = True
-                            documento.save()             
-                        os.remove(nome_arquivo)                                
-                    except:
-                        # Apagar arquivo caso haja erro, enviar mensagem para email
-                        try:
-                            os.remove(nome_arquivo)
-                        except OSError:
-                            pass
-                        if settings.ENV == 'DEV':
-                            print traceback.format_exc()
-                        elif settings.ENV == 'PROD':
-                            mail_admins(u'Erro em Buscar fundos investimento na data %s' % (dia_util.strftime('%d/%m/%Y')), traceback.format_exc().decode('utf-8'))
-                # Verificar fundos que existem porém não foram listados, ou seja, estão terminados
-                if not options['aleatorio']:
-                    # Verificar fundos não encontrados no cadastro para terminar
-                    for fundo in FundoInvestimento.objects.all().exclude(situacao=FundoInvestimento.SITUACAO_TERMINADO):
-                        if fundo.cnpj not in fundos:
-                            fundo.situacao = FundoInvestimento.SITUACAO_TERMINADO
-                            fundo.save()
-        except:
-            if settings.ENV == 'DEV':
-                print traceback.format_exc()
-            elif settings.ENV == 'PROD':
-                mail_admins(u'Erro em Buscar fundos investimento', traceback.format_exc().decode('utf-8'))
 
 def buscar_arquivo_csv_cadastro(data):
     """
     Busca o arquivo CSV de cadastro de fundos de investimento com base em uma data
+    
     Parâmetros: Data
     Retorno: (Link para arquivo, Arquivo CSV)
     """
@@ -280,18 +106,6 @@ def processar_arquivo_csv(documento, dados_arquivo, codificacao='latin-1'):
                 Dados do arquivo CSV
                 Data do documento
     """
-#     try:
-#     nome_arquivo = settings.CAMINHO_FUNDO_INVESTIMENTO_CADASTRO + libitem
-#     # Ler arquivo
-#     file(nome_arquivo,'wb').write(unzipped.read(libitem))
-#     arquivo_cadastro = file(nome_arquivo, 'r')
-#     tree = etree.parse(arquivo_cadastro)
-#     if not options['aleatorio']:
-#         fundos = list()
-#     # Definir campos para traceback
-#     campos = None
-
-#     with open("data1.txt") as f:
     try:
         with transaction.atomic():
             csv_reader = csv.reader(dados_arquivo, delimiter=';')
@@ -409,76 +223,19 @@ def processar_arquivo_csv(documento, dados_arquivo, codificacao='latin-1'):
             documento.leitura_realizada = True
             documento.save() 
             
-#             if 2 == 2:
-#                 raise ValueError('TESTE')
+            if 2 == 2:
+                raise ValueError('TESTE')
     except:
         print 'Linha', linha
         raise 
-#     with transaction.atomic():
-#         # Lê o arquivo procurando nós CADASTRO (1 para cada fundo)
-#         for element in tree.getroot().iter('CADASTRO'):
-#             campos = {key: value for (key, value) in [(elemento.tag, elemento.text) for elemento in element.iter()]}
-#             # Verificar se administrador já existe
-#             if not Administrador.objects.filter(cnpj=campos['CNPJ_ADMINISTRADOR']).exists():
-#                 novo_administrador = Administrador(nome=campos['NOME_ADMINISTRADOR'].strip(), cnpj=campos['CNPJ_ADMINISTRADOR'].strip())
-#                 novo_administrador.save()
-#              
-#             # Verificar se fundo já existe
-#             if not FundoInvestimento.objects.filter(cnpj=campos['CNPJ']).exists():
-#                 novo_fundo = FundoInvestimento(cnpj=campos['CNPJ'].strip(), nome=campos['NOME'].strip(), administrador=Administrador.objects.get(cnpj=campos['CNPJ_ADMINISTRADOR']),
-#                                                data_constituicao=campos['DT_CONSTITUICAO'].strip(), situacao=FundoInvestimento.buscar_tipo_situacao(campos['SITUACAO']), 
-#                                                tipo_prazo=definir_prazo__pelo_cadastro(campos['TRATAMENTO_TRIBUTARIO']),
-#                                                classe=FundoInvestimento.buscar_tipo_classe(campos['CLASSE']), exclusivo_qualificados=(campos['INVESTIDORES_QUALIFICADOS'].strip().upper() == 'SIM'),
-#                                                ultimo_registro=dia_util, slug=criar_slug_fundo_investimento_valido(campos['NOME'].strip()))
-#                 novo_fundo.save()
-#             else:
-#                 # Verificar se houve alteração no fundo
-#                 fundo = FundoInvestimento.objects.get(cnpj=campos['CNPJ'])
-#                 if fundo.ultimo_registro < dia_util:
-#                     fundo.ultimo_registro = dia_util
-#                     # Verificar alteração de administrador
-#                     if campos['CNPJ_ADMINISTRADOR'] != fundo.administrador.cnpj:
-#                         fundo.administrador = Administrador.objects.get(cnpj=campos['CNPJ_ADMINISTRADOR'])
-#                     if campos['SITUACAO'] != None and campos['SITUACAO'] != fundo.descricao_situacao():
-#                         fundo.situacao = FundoInvestimento.buscar_tipo_situacao(campos['SITUACAO'])
-#                     if campos['CLASSE'] != None and campos['CLASSE'] != fundo.descricao_classe():
-#                         fundo.classe = FundoInvestimento.buscar_tipo_classe(campos['CLASSE'])
-#                     if campos['NOME'] != None and campos['NOME'].strip() != fundo.nome:
-#                         fundo.nome = campos['NOME'].strip()
-#                     fundo.save()
-#                 
-#             # Adicionar a lista de fundos para comparar posteriormente
-# #             if not options['aleatorio']:
-# #                 fundos.append(campos['CNPJ'])
-#             
-#             print novo_fundo             
-#         documento = DocumentoCadastro.objects.get(data_referencia=dia_util)  
-#         documento.leitura_realizada = True
-#         documento.save()             
-#     except:
-#         # Apagar arquivo caso haja erro, enviar mensagem para email
-#         try:
-#             os.remove(nome_arquivo)
-#         except OSError:
-#             pass
-#         if settings.ENV == 'DEV':
-#             print traceback.format_exc()
-#         elif settings.ENV == 'PROD':
-#             mail_admins(u'Erro em Buscar fundos investimento na data %s' % (dia_util.strftime('%d/%m/%Y')), traceback.format_exc().decode('utf-8'))
-#     # Verificar fundos que existem porém não foram listados, ou seja, estão terminados
-#     if not options['aleatorio']:
-#         # Verificar fundos não encontrados no cadastro para terminar
-#         for fundo in FundoInvestimento.objects.all().exclude(situacao=FundoInvestimento.SITUACAO_TERMINADO):
-#             if fundo.cnpj not in fundos:
-#                 fundo.situacao = FundoInvestimento.SITUACAO_TERMINADO
-#                 fundo.save()
-    
 
 def processar_linhas_documento_cadastro(rows, campos):
-#     if 2 == 2:
-#         rows = list()
-#         continue
+    """
+    Processa linhas de um documento de cadastro de fundos de investimento em CSV
     
+    Parâmetros: Linhas do documento
+                Dicionário de campos
+    """
     # Adicionar administradores
     # Guardar administradores únicos válidos
     lista_administradores = [{'ADMIN': row_atual[campos['ADMIN']], 'CNPJ_ADMIN': row_atual[campos['CNPJ_ADMIN']]} for row_atual in rows \
@@ -547,7 +304,6 @@ def processar_linhas_documento_cadastro(rows, campos):
     rows.sort(key=lambda row: row[campos['CNPJ_FUNDO']])
     
 #     inicio = datetime.datetime.now()
-#     for row_atual in [row_dados for row_dados in rows if row_dados[campos['CNPJ_ADMIN']] != '']:
     for row_atual in rows:
         
         # Verificar se o primeiro registro é menor que o cnpj atual, removê-lo para diminuir iterações
@@ -560,8 +316,6 @@ def processar_linhas_documento_cadastro(rows, campos):
 #                 print 'Existente'
                 # Verificar se houve alteração no fundo
                 fundo = fundo_existente
-#                 if fundo.ultimo_registro < data_documento:
-#                     fundo.ultimo_registro = data_documento
                 # Verificar alterações
                 alterado = False
                 if row_atual[campos['CNPJ_ADMIN']] != '' and (fundo.administrador == None or row_atual[campos['CNPJ_ADMIN']] != fundo.administrador.cnpj):
@@ -571,7 +325,7 @@ def processar_linhas_documento_cadastro(rows, campos):
                             
                             alterado = True
                             break
-#                     fundo.administrador = Administrador.objects.get(cnpj=row_atual[campos['CNPJ_ADMIN']])
+
                 if row_atual[campos['CNPJ_AUDITOR']] != '' and (fundo.auditor == None or row_atual[campos['CNPJ_AUDITOR']] != fundo.auditor.cnpj):
                     for auditor in lista_auditores_existentes:
                         if auditor.cnpj == row_atual[campos['CNPJ_AUDITOR']]:
@@ -579,26 +333,22 @@ def processar_linhas_documento_cadastro(rows, campos):
                             
                             alterado = True
                             break
-#                     fundo.auditor = Auditor.objects.get(cnpj=row_atual[campos['CNPJ_AUDITOR']])
+
                 if row_atual[campos['SIT']] != '' and row_atual[campos['SIT']].upper() != fundo.descricao_situacao().upper():
-#                     print row_atual[campos['SIT']].upper(), fundo.descricao_situacao().upper(), fundo.cnpj
                     fundo.situacao = FundoInvestimento.buscar_tipo_situacao(row_atual[campos['SIT']])
                     alterado = True
                     
                 if row_atual[campos['CLASSE']] != '' and row_atual[campos['CLASSE']].upper() != fundo.descricao_classe().upper():
-#                     print row_atual[campos['CLASSE']].upper(), fundo.descricao_classe().upper()
                     fundo.classe = FundoInvestimento.buscar_tipo_classe(row_atual[campos['CLASSE']])
                     alterado = True
                     
                 if row_atual[campos['DENOM_SOCIAL']] != '' and row_atual[campos['DENOM_SOCIAL']] != fundo.nome:
-#                     print row_atual[campos['DENOM_SOCIAL']], '<-', fundo.nome
                     fundo.nome = row_atual[campos['DENOM_SOCIAL']]
                     # Alterar slug
                     fundo.slug = criar_slug_fundo_investimento_valido(fundo.nome)
                     alterado = True
                     
                 if row_atual[campos['DT_CANCEL']] != '' and fundo.data_cancelamento == None:
-#                     print row_atual[campos['CLASSE']].upper(), fundo.descricao_classe().upper()
                     fundo.data_cancelamento = row_atual[campos['DT_CANCEL']]
                     # Se possui data de cancelamento, situação deve ser TERMINADO
                     fundo.situacao = FundoInvestimento.SITUACAO_TERMINADO
@@ -626,7 +376,7 @@ def processar_linhas_documento_cadastro(rows, campos):
         if not encontrado:
             novo_fundo = FundoInvestimento(cnpj=row_atual[campos['CNPJ_FUNDO']], nome=row_atual[campos['DENOM_SOCIAL']], 
                                        data_constituicao=row_atual[campos['DT_CONST']], situacao=FundoInvestimento.buscar_tipo_situacao(row_atual[campos['SIT']]), 
-                                       tipo_prazo=definir_prazo__pelo_cadastro(row_atual[campos['TRIB_LPRAZO']]),
+                                       tipo_prazo=definir_prazo_pelo_cadastro(row_atual[campos['TRIB_LPRAZO']]),
                                        classe=FundoInvestimento.buscar_tipo_classe(row_atual[campos['CLASSE']]), exclusivo_qualificados=(row_atual[campos['INVEST_QUALIF']].upper() == 'S'),
                                        data_registro=datetime.datetime.strptime(row_atual[campos['DT_REG']], '%Y-%m-%d'),
                                        slug=criar_slug_fundo_investimento_valido(row_atual[campos['DENOM_SOCIAL']]))
@@ -635,13 +385,13 @@ def processar_linhas_documento_cadastro(rows, campos):
                     if administrador.cnpj == row_atual[campos['CNPJ_ADMIN']]:
                         novo_fundo.administrador = administrador
                         break
-#                 novo_fundo.administrador=Administrador.objects.get(cnpj=row_atual[campos['CNPJ_ADMIN']])
+
             if row_atual[campos['CNPJ_AUDITOR']] != '':
                 for auditor in lista_auditores_existentes:
                     if auditor.cnpj == row_atual[campos['CNPJ_AUDITOR']]:
                         novo_fundo.auditor = auditor
                         break
-#                 novo_fundo.auditor=Auditor.objects.get(cnpj=row_atual[campos['CNPJ_AUDITOR']])
+                    
             if row_atual[campos['DT_CANCEL']] != '':
                 novo_fundo.data_cancelamento=row_atual[campos['DT_CANCEL']]
                 # Se possui data de cancelamento, situação deve ser TERMINADO
@@ -656,13 +406,10 @@ def processar_linhas_documento_cadastro(rows, campos):
                     gestor_fundo_investimento.save()
                     break
             
-#             lista_fundos_existentes.append(novo_fundo)
             lista_fundos_existentes.insert(0, novo_fundo) 
 #     print 'fundo', datetime.datetime.now() - inicio
   
-#     # Adicionar a lista de fundos para comparar posteriormente
-#     for row_atual in rows:
-#         fundos.append(row_atual[campos['CNPJ_FUNDO']])   
 
-def definir_prazo__pelo_cadastro(str_tributacao_documento):
+def definir_prazo_pelo_cadastro(str_tributacao_documento):
+    """Busca prazo do fundo de investimento"""
     return FundoInvestimento.PRAZO_CURTO if str_tributacao_documento.strip().upper() == 'N' else FundoInvestimento.PRAZO_LONGO
