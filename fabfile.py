@@ -368,6 +368,7 @@ def atualizar_fundos_investimento():
         print u'Ambiente incorreto'
         return
     
+    run('docker run --add-host=database:%s nizbel/bagofgold:cron python manage.py corrigir_datas_registro -d 20181026' % (IP_MAIN))
     run('docker run --add-host=database:%s nizbel/bagofgold:cron python manage.py remover_fundos_duplicados' % (IP_MAIN))
     run('docker run --add-host=database:%s nizbel/bagofgold:cron python manage.py remover_admin_fundos_duplicados' % (IP_MAIN))
     run('docker run --add-host=database:%s nizbel/bagofgold:cron python manage.py preencher_slugs_fundo_inv' % (IP_MAIN))
