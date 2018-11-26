@@ -24,7 +24,7 @@ class TestSlugTest(TestCase):
                 FundoInvestimento.objects.create(nome=nome, cnpj=cnpj, administrador=administrador, data_constituicao=datetime.date(2018, 2, 9),
                                                  situacao=FundoInvestimento.SITUACAO_FUNCIONAMENTO_NORMAL, tipo_prazo=FundoInvestimento.PRAZO_LONGO,
                                                  classe=FundoInvestimento.CLASSE_FUNDO_ACOES, exclusivo_qualificados=False, 
-                                                 ultimo_registro=datetime.date(2018, 2, 9), slug=slug)
+                                                 data_registro=datetime.date(2018, 2, 9), slug=slug)
                 
                 line = lista_nomes.readline()
                 cnt += 1

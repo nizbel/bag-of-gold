@@ -15,7 +15,7 @@ class DetalharFundoTestCase(TestCase):
         fundo = FundoInvestimento.objects.create(nome='Fundo Teste', administrador=administrador, data_constituicao=datetime.date(2018, 5, 22),
                                                  situacao=FundoInvestimento.SITUACAO_FUNCIONAMENTO_NORMAL, tipo_prazo=FundoInvestimento.PRAZO_LONGO,
                                                  classe=FundoInvestimento.CLASSE_FUNDO_MULTIMERCADO, exclusivo_qualificados=False,
-                                                 ultimo_registro=datetime.date.today(), slug='fundo-teste')
+                                                 data_registro=datetime.date(2018, 5, 22), slug='fundo-teste')
         
         response = self.client.get(reverse('fundo_investimento:detalhar_fundo', kwargs={'slug_fundo': fundo.slug}))
         self.assertEqual(response.status_code, 200)
