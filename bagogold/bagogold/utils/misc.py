@@ -311,6 +311,7 @@ def ultimo_dia_util():
 def verifica_se_dia_util(data):
     """
     Verifica se data passa é dia útil
+    
     Parâmetros: Data
     Retorno:    Se é ou não dia útil
     """
