@@ -5,6 +5,7 @@ import traceback
 from urllib2 import urlopen, Request, HTTPError
 
 import boto3
+from botocore.exceptions import ClientError
 from django.core.mail import mail_admins
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -13,7 +14,7 @@ from bagogold import settings
 from bagogold.bagogold.utils.misc import ultimo_dia_util
 from bagogold.fundo_investimento.management.commands.preencher_historico_fundo_investimento import formatar_cnpj
 from bagogold.fundo_investimento.models import FundoInvestimento, Administrador, \
-    DocumentoCadastro, LinkDocumentoCadastro, Auditor, Gestor,\
+    DocumentoCadastro, LinkDocumentoCadastro, Auditor, Gestor, \
     GestorFundoInvestimento
 from bagogold.fundo_investimento.utils import \
     criar_slug_fundo_investimento_valido
@@ -25,15 +26,16 @@ class Command(BaseCommand):
     help = 'Buscar fundos de investimento na CVM'
 
     def add_arguments(self, parser):
-#         parser.add_argument('--aleatorio', action='store_true')
-        parser.add_argument('-d', '--data', type=str, help='Informa uma data no formato YYYYMMDD')
+        parser.add_argument('-d', '--data', type=str, help='Data no formato DDMMAAAA')
 
     def handle(self, *args, **options):
         try:
             with transaction.atomic():
                 # Buscar arquivo CSV
                 if options['data']:
-                    data_pesquisa = datetime.datetime.strptime(options['data'], '%Y%m%d')
+                    data_pesquisa = datetime.datetime.strptime(options['data'], '%d%m%Y').date()
+                    if data_pesquisa < datetime.date(2017, 7, 3):
+                        raise ValueError('Data deve ser a partir de 03/07/2017')
                 else:
                     # Busca data do último dia útil
                     data_pesquisa = ultimo_dia_util()
@@ -45,12 +47,20 @@ class Command(BaseCommand):
                     # Verificar se já foi lido
                     if documento.leitura_realizada:
                         raise ValueError('Leitura para o dia %s já realizada' % (data_pesquisa.strftime('%d/%m/%Y')))
-                    
                     else:
-                        # Ler
-                        nome_arquivo = documento.linkcadastrodocumento.url.split('/')[-1]
+                        # Verificar se arquivo existe na AWS
+                        nome_arquivo = documento.linkdocumentocadastro.url.split('/')[-1]
                         caminho_arquivo = CAMINHO_FUNDO_INVESTIMENTO_CADASTRO + nome_arquivo
-                        boto3.client('s3').get(Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho_arquivo)
+                        if not verificar_arquivo_s3(caminho_arquivo):
+                            # Salvar arquivo no bucket
+                            _, nome_arquivo, arquivo_csv = buscar_arquivo_csv_cadastro(data_pesquisa)
+                            
+                            # Salvar arquivo em media no bucket
+                            caminho_arquivo = CAMINHO_FUNDO_INVESTIMENTO_CADASTRO + nome_arquivo
+                            boto3.client('s3').put_object(Body=arquivo_csv.read(), Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho_arquivo)
+                    
+                        # Preparar arquivo para processamento
+                        arquivo_csv = boto3.client('s3').get_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho_arquivo)['Body'].read().splitlines(True)
                     
                 else:
                     # Caso o documento ainda não exista, baixar
@@ -62,8 +72,11 @@ class Command(BaseCommand):
                       
                     # Salvar arquivo em media no bucket
                     caminho_arquivo = CAMINHO_FUNDO_INVESTIMENTO_CADASTRO + nome_arquivo
-                    boto3.client('s3').put_object(Body=arquivo_csv.read(), Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho_arquivo)
-            
+                    boto3.client('s3').put_object(Body=arquivo_csv.fp.read(), Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho_arquivo)
+                    
+                    # Preparar arquivo para processamento
+                    arquivo_csv = boto3.client('s3').get_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho_arquivo)['Body'].read().splitlines(True)
+                    
             with transaction.atomic():
                 # Processar arquivo
                 processar_arquivo_csv(documento, arquivo_csv)
@@ -112,7 +125,7 @@ def processar_arquivo_csv(documento, dados_arquivo, codificacao='latin-1'):
             
 #             fundos = list()
             
-            inicio_geral = datetime.datetime.now()
+#             inicio_geral = datetime.datetime.now()
             rows = list()
             for linha, row in enumerate(csv_reader):
                 if linha == 0:
@@ -125,9 +138,9 @@ def processar_arquivo_csv(documento, dados_arquivo, codificacao='latin-1'):
                     campos = {nome_campo: indice for (indice, nome_campo) in enumerate(row)}
 #                     print row
                 else:
-                    if linha % 1000 == 0:
-                        print linha
-                    
+#                     if linha % 1000 == 0:
+#                         print linha
+                                        
                     row = [campo.strip().decode(codificacao) for campo in row]
                     
                     # Se CNPJ não estiver preenchido, pular
@@ -162,7 +175,7 @@ def processar_arquivo_csv(documento, dados_arquivo, codificacao='latin-1'):
                 processar_linhas_documento_cadastro(rows, campos)
                 rows = list()  
             
-            print datetime.datetime.now() - inicio_geral
+#             print datetime.datetime.now() - inicio_geral
             
 #             # Verificar se fundos possuem multiplos administradores/gestores/auditores
 #             fundos_repetidos = {}
@@ -223,8 +236,8 @@ def processar_arquivo_csv(documento, dados_arquivo, codificacao='latin-1'):
             documento.leitura_realizada = True
             documento.save() 
             
-            if 2 == 2:
-                raise ValueError('TESTE')
+#             if 2 == 2:
+#                 raise ValueError('TESTE')
     except:
         print 'Linha', linha
         raise 
@@ -413,3 +426,19 @@ def processar_linhas_documento_cadastro(rows, campos):
 def definir_prazo_pelo_cadastro(str_tributacao_documento):
     """Busca prazo do fundo de investimento"""
     return FundoInvestimento.PRAZO_CURTO if str_tributacao_documento.strip().upper() == 'N' else FundoInvestimento.PRAZO_LONGO
+
+def verificar_arquivo_s3(caminho_arquivo):
+    """
+    Verifica se arquivo com o caminho especificado existe no bucket do S3
+    
+    Parâmetros: Caminho do arquivo
+    Retorno: True ou False
+    """
+    try:
+        _ = boto3.client('s3').head_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho_arquivo)
+        return True
+    except ClientError as exc:
+        if exc.response['Error']['Code'] != '404':
+            raise
+        else:
+            return False
