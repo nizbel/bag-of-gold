@@ -7,6 +7,7 @@ from fabric.contrib.files import append, contains, exists
 import datetime
 import re
 import time
+from bagogold.bagogold.utils.misc import verifica_se_dia_util
 
 STATIC_FOLDER = settings.STATICFILES_DIRS[0]
 CSS_MET_BASE_FOLDER = STATIC_FOLDER + '/assets/global/css'
@@ -370,4 +371,13 @@ def atualizar_fundos_investimento():
     run('docker run --add-host=database:%s nizbel/bagofgold:cron python manage.py remover_fundos_duplicados' % (IP_MAIN))
     run('docker run --add-host=database:%s nizbel/bagofgold:cron python manage.py remover_admin_fundos_duplicados' % (IP_MAIN))
     run('docker run --add-host=database:%s nizbel/bagofgold:cron python manage.py preencher_slugs_fundo_inv' % (IP_MAIN))
+    
+    data_atual = datetime.date.today()
+    while data_atual >= datetime.date(2017, 7, 3):
+        if verifica_se_dia_util(data_atual):
+            try:
+                run('docker run --add-host=database:%s nizbel/bagofgold:cron python manage.py buscar_fundos_investimento -d %s' % \
+                    (IP_MAIN, data_atual.strftime('%d%m%Y')))
+            except:
+                pass
     
