@@ -47,6 +47,8 @@ class AcompanhamentoFIITestCase (TestCase):
         self.assertEqual(response.status_code, 200)
         
         # TODO testar contexto
+        # self.assertEqual(response.context_data['fiis'], self.fii_1)
+        # self.assertEqual(response.context_data['filtros'], self.fii_1)
         
     def test_usuario_logado(self):
         """Testa o acesso de usuário logado"""
