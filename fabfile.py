@@ -360,3 +360,14 @@ def verificar_update():
             return 'hotfix'
         else:
             return 'prod'
+
+def atualizar_fundos_investimento():
+    require('config')
+    if env.config != 'PROD_EC2':
+        print u'Ambiente incorreto'
+        return
+    
+    run('docker run --add-host=database:%s nizbel/bagofgold:cron python manage.py remover_fundos_duplicados' % (IP_MAIN))
+    run('docker run --add-host=database:%s nizbel/bagofgold:cron python manage.py remover_admin_fundos_duplicados' % (IP_MAIN))
+    run('docker run --add-host=database:%s nizbel/bagofgold:cron python manage.py preencher_slugs_fundo_inv' % (IP_MAIN))
+    
