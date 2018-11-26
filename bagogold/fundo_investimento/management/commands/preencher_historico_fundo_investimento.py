@@ -16,7 +16,6 @@ import zeep
 from bagogold import settings
 from bagogold.fundo_investimento.models import FundoInvestimento, \
     HistoricoValorCotas
-from conf.conf import FI_LOGIN, FI_PASSWORD
 
 
 class Command(BaseCommand):
@@ -33,7 +32,8 @@ class Command(BaseCommand):
         try:
             wsdl = 'http://sistemas.cvm.gov.br/webservices/Sistemas/SCW/CDocs/WsDownloadInfs.asmx?WSDL'
             client = zeep.Client(wsdl=wsdl)
-            resposta = client.service.Login(FI_LOGIN, FI_PASSWORD)
+#             resposta = client.service.Login(FI_LOGIN, FI_PASSWORD)
+            resposta = client.service.Login('FI_LOGIN', 'FI_PASSWORD')
             headerSessao = resposta['header']
 #             print headerSessao
 
