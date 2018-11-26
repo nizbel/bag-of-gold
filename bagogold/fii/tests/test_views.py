@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.test.testcases import TestCase
 
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII, Divisao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.fii.models import FII, HistoricoFII, ProventoFII, \
     EventoAgrupamentoFII, OperacaoFII, UsoProventosOperacaoFII
@@ -262,7 +262,7 @@ class ViewInserirOperacaoTestCase(TestCase):
         self.client.login(username='teste', password='teste')
         response = self.client.post(reverse('fii:inserir_operacao_fii', 
                                     {'preco_unitario': 100, 'quantidade': 10, 'data': datetime.date(2018, 11, 9), 'corretagem': 10, 
-                                     'emolumentos': Decimal('0.1'), 'tipo_operacao': 'C', 'fii': self.fii, 'consolidada': True})
+                                     'emolumentos': Decimal('0.1'), 'tipo_operacao': 'C', 'fii': self.fii, 'consolidada': True}))
         
         # Testar que houve redirecionamento
         self.assertEquals(response.status_code, 302)
@@ -279,7 +279,7 @@ class ViewInserirOperacaoTestCase(TestCase):
         self.assertEquals(DivisaoOperacaoFII.objects.filter(divisao=self.divisao_geral).count(), 0)
         
         self.client.login(username='teste', password='teste')
-        response = self.client.post(reverse('fii:inserir_operacao_fii', 
+        response = self.client.post(reverse('fii:inserir_operacao_fii'),
                                     {'preco_unitario': 100, 'quantidade': 10, 'data': datetime.date(2018, 11, 9), 'corretagem': 10, 
                                      'emolumentos': Decimal('0.1'), 'tipo_operacao': 'C', 'fii': self.fii, 'consolidada': True,
                                      'divisaooperacaofii_set-INITIAL_FORMS': '1', 'divisaooperacaofii_set-TOTAL_FORMS': '2',
@@ -300,7 +300,7 @@ class ViewInserirOperacaoTestCase(TestCase):
         self.assertEquals(DivisaoOperacaoFII.objects.filter(divisao=self.divisao_geral).count(), 0)
         
         self.client.login(username='teste', password='teste')
-        response = self.client.post(reverse('fii:inserir_operacao_fii', 
+        response = self.client.post(reverse('fii:inserir_operacao_fii'), 
                                     {'preco_unitario': 100, 'quantidade': 10, 'data': datetime.date(2018, 11, 9), 'corretagem': 10, 
                                      'emolumentos': Decimal('0.1'), 'tipo_operacao': 'C', 'fii': self.fii, 'consolidada': True,
                                      'divisaooperacaofii_set-INITIAL_FORMS': '1', 'divisaooperacaofii_set-TOTAL_FORMS': '2',
@@ -321,7 +321,7 @@ class ViewInserirOperacaoTestCase(TestCase):
         
         # 2 divisões, quantidade abaixo
         self.client.login(username='teste', password='teste')
-        response = self.client.post(reverse('fii:inserir_operacao_fii', 
+        response = self.client.post(reverse('fii:inserir_operacao_fii'), 
                                     {'preco_unitario': 100, 'quantidade': 10, 'data': datetime.date(2018, 11, 9), 'corretagem': 10, 
                                      'emolumentos': Decimal('0.1'), 'tipo_operacao': 'C', 'fii': self.fii, 'consolidada': True,
                                      'divisaooperacaofii_set-INITIAL_FORMS': '1', 'divisaooperacaofii_set-TOTAL_FORMS': '2',
@@ -336,7 +336,7 @@ class ViewInserirOperacaoTestCase(TestCase):
         
         # 2 divisões, quantidade acima
         self.client.login(username='teste', password='teste')
-        response = self.client.post(reverse('fii:inserir_operacao_fii', 
+        response = self.client.post(reverse('fii:inserir_operacao_fii'), 
                                     {'preco_unitario': 100, 'quantidade': 10, 'data': datetime.date(2018, 11, 9), 'corretagem': 10, 
                                      'emolumentos': Decimal('0.1'), 'tipo_operacao': 'C', 'fii': self.fii, 'consolidada': True,
                                      'divisaooperacaofii_set-INITIAL_FORMS': '1', 'divisaooperacaofii_set-TOTAL_FORMS': '2',
@@ -351,7 +351,7 @@ class ViewInserirOperacaoTestCase(TestCase):
         
         # 1 divisão, quantidade abaixo
         self.client.login(username='teste', password='teste')
-        response = self.client.post(reverse('fii:inserir_operacao_fii', 
+        response = self.client.post(reverse('fii:inserir_operacao_fii'), 
                                     {'preco_unitario': 100, 'quantidade': 10, 'data': datetime.date(2018, 11, 9), 'corretagem': 10, 
                                      'emolumentos': Decimal('0.1'), 'tipo_operacao': 'C', 'fii': self.fii, 'consolidada': True,
                                      'divisaooperacaofii_set-INITIAL_FORMS': '1', 'divisaooperacaofii_set-TOTAL_FORMS': '2',
@@ -364,7 +364,7 @@ class ViewInserirOperacaoTestCase(TestCase):
         
         # 1 divisão, quantidade acima
         self.client.login(username='teste', password='teste')
-        response = self.client.post(reverse('fii:inserir_operacao_fii', 
+        response = self.client.post(reverse('fii:inserir_operacao_fii'), 
                                     {'preco_unitario': 100, 'quantidade': 10, 'data': datetime.date(2018, 11, 9), 'corretagem': 10, 
                                      'emolumentos': Decimal('0.1'), 'tipo_operacao': 'C', 'fii': self.fii, 'consolidada': True,
                                      'divisaooperacaofii_set-INITIAL_FORMS': '1', 'divisaooperacaofii_set-TOTAL_FORMS': '2',
