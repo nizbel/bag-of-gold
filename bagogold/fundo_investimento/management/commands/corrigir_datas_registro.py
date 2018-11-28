@@ -42,9 +42,6 @@ class Command(BaseCommand):
             elif settings.ENV == 'PROD':
                 mail_admins(u'Erro em Buscar fundos investimento', traceback.format_exc().decode('utf-8'))
         
-        if 2 == 2: 
-            return
-
 def processar_datas_registro_arquivo_csv(dados_arquivo):
     """
     Ler o arquivo CSV com dados do cadastro de fundos de investimento para processar datas de registro
