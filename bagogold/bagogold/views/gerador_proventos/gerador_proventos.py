@@ -872,7 +872,7 @@ def validar_documento_provento(request, id_pendencia):
     investidor = request.user.investidor
     
     try:
-        pendencia = PendenciaDocumentoProvento.objects.filter(id=id_pendencia).select_related('documento__investidorleituradocumento')[0]
+        pendencia = PendenciaDocumentoProvento.objects.select_related('documento__investidorleituradocumento').get(id=id_pendencia)
         # Verificar se pendência é de validação
         if pendencia.tipo != 'V':
             messages.error(request, 'Pendência não é de validação')
