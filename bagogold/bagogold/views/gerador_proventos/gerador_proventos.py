@@ -872,7 +872,7 @@ def validar_documento_provento(request, id_pendencia):
     investidor = request.user.investidor
     
     try:
-        pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
+        pendencia = PendenciaDocumentoProvento.objects.filter(id=id_pendencia).select_related('documento__investidorleituradocumento')[0]
         # Verificar se pendência é de validação
         if pendencia.tipo != 'V':
             messages.error(request, 'Pendência não é de validação')
@@ -1056,7 +1056,7 @@ def validar_documento_provento(request, id_pendencia):
     if pendencia.documento.investidorleituradocumento.decisao == 'C':
         if pendencia.documento.tipo == 'A':
             proventos_documento = ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)
-            descricoes_proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento)
+            descricoes_proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento).select_related('proventoacaodocumento__provento')
             for descricao_provento in descricoes_proventos:
                 # Definir tipo de provento
                 if descricao_provento.tipo_provento == 'A':
@@ -1085,7 +1085,7 @@ def validar_documento_provento(request, id_pendencia):
             pendencia.decisao = 'Criar %s provento(s)' % (ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).count())
         elif pendencia.documento.tipo == 'F':
             proventos_documento = ProventoFIIDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)
-            descricoes_proventos = ProventoFIIDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento)
+            descricoes_proventos = ProventoFIIDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento).select_related('proventofiidocumento__provento')
             for descricao_provento in descricoes_proventos:
                 # Remover 0s a direita para valores
                 descricao_provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(descricao_provento.valor_unitario))
