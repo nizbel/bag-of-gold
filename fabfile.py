@@ -1,13 +1,17 @@
 # -*- encoding: utf-8 -*-
 from __future__ import with_statement
-from bagogold import settings
-from fabric.api import env, require, run, sudo, local as lrun
-from fabric.context_managers import cd
-from fabric.contrib.files import append, contains, exists
+
 import datetime
 import re
 import time
-from bagogold.bagogold.utils.misc import verifica_se_dia_util
+
+from fabric.api import env, require, run, sudo, local as lrun
+from fabric.context_managers import cd
+from fabric.contrib.files import append, contains, exists
+from fabric.utils import abort
+
+from bagogold import settings
+
 
 STATIC_FOLDER = settings.STATICFILES_DIRS[0]
 CSS_MET_BASE_FOLDER = STATIC_FOLDER + '/assets/global/css'
@@ -267,7 +271,7 @@ def update_ec2(requirements=False, rev=None):
             if 'bagofgold' in cron_running:
                 print u'Update cancelado pois há cronjob ainda executando'
                 alterar_cron()
-                return
+                abort('Terminando update')
     
     # Pegar revisão
     #rev = rev
@@ -364,21 +368,21 @@ def verificar_update():
 
 def atualizar_fundos_investimento():
     require('config')
-    if env.config != 'PROD_EC2':
+    if env.config != 'PROD_EC2_SUPPORT':
         print u'Ambiente incorreto'
         return
     
-    run('docker run --add-host=database:%s nizbel/bagofgold:cron python manage.py corrigir_datas_registro -d 20181026' % (IP_MAIN))
     run('docker run --add-host=database:%s nizbel/bagofgold:cron python manage.py remover_fundos_duplicados' % (IP_MAIN))
     run('docker run --add-host=database:%s nizbel/bagofgold:cron python manage.py remover_admin_fundos_duplicados' % (IP_MAIN))
+    run('docker run --add-host=database:%s nizbel/bagofgold:cron python manage.py corrigir_datas_registro -d 20181026' % (IP_MAIN))
     run('docker run --add-host=database:%s nizbel/bagofgold:cron python manage.py preencher_slugs_fundo_inv' % (IP_MAIN))
     
     data_atual = datetime.date.today()
     while data_atual >= datetime.date(2017, 7, 3):
-        if verifica_se_dia_util(data_atual):
-            try:
-                run('docker run --add-host=database:%s nizbel/bagofgold:cron python manage.py buscar_fundos_investimento -d %s' % \
-                    (IP_MAIN, data_atual.strftime('%d%m%Y')))
-            except:
-                pass
+        try:
+            run('docker run --add-host=database:%s nizbel/bagofgold:cron python manage.py buscar_fundos_investimento -d %s' % \
+                (IP_MAIN, data_atual.strftime('%d%m%Y')))
+            data_atual -= datetime.timedelta(days=1)
+        except:
+            pass
     
