@@ -612,11 +612,11 @@ def buscar_proventos_proximos_acao(descricao_provento):
     """
     range_ant = [descricao_provento.data_ex - datetime.timedelta(days=365), descricao_provento.data_ex]
     proventos_proximos_ant = Provento.objects.filter(acao__id=descricao_provento.acao_id, data_ex__range=range_ant) \
-        .exclude(id=descricao_provento.proventoacaodocumento.provento.id).order_by('-data_ex')[:5]
+        .exclude(id=descricao_provento.proventoacaodocumento.provento.id).order_by('-data_ex').select_related('acao')[:5]
         
     range_post = [descricao_provento.data_ex + datetime.timedelta(days=1), descricao_provento.data_ex + datetime.timedelta(days=365)]
     proventos_proximos_post = Provento.objects.filter(acao__id=descricao_provento.acao_id, data_ex__range=range_post) \
-        .exclude(id=descricao_provento.proventoacaodocumento.provento.id).order_by('data_ex')[:5]
+        .exclude(id=descricao_provento.proventoacaodocumento.provento.id).order_by('data_ex').select_related('acao')[:5]
     
     # Ordenar pela diferença com a data da descrição de provento
     return sorted(chain(proventos_proximos_ant, proventos_proximos_post),
@@ -630,11 +630,11 @@ def buscar_proventos_proximos_fii(descricao_provento):
     """
     range_ant = [descricao_provento.data_ex - datetime.timedelta(days=365), descricao_provento.data_ex]
     proventos_proximos_ant = ProventoFII.objects.filter(fii__id=descricao_provento.fii_id, data_ex__range=range_ant) \
-        .exclude(id=descricao_provento.proventofiidocumento.provento.id).order_by('-data_ex')[:5]
+        .exclude(id=descricao_provento.proventofiidocumento.provento.id).order_by('-data_ex').select_related('fii')[:5]
         
     range_post = [descricao_provento.data_ex + datetime.timedelta(days=1), descricao_provento.data_ex + datetime.timedelta(days=365)]
     proventos_proximos_post = ProventoFII.objects.filter(fii__id=descricao_provento.fii_id, data_ex__range=range_post) \
-        .exclude(id=descricao_provento.proventofiidocumento.provento.id).order_by('data_ex')[:5]
+        .exclude(id=descricao_provento.proventofiidocumento.provento.id).order_by('data_ex').select_related('fii')[:5]
     
     # Ordenar pela diferença com a data da descrição de provento
     return sorted(chain(proventos_proximos_ant, proventos_proximos_post),
