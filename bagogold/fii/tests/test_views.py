@@ -19,27 +19,27 @@ class AcompanhamentoFIITestCase (TestCase):
         empresa = Empresa.objects.create(nome='Teste', nome_pregao='TEST')
         
         # FII sem histórico sem proventos
-        fii_1 = FII.objects.create(ticker='TEST11', empresa=empresa)
+        self.fii_1 = FII.objects.create(ticker='TEST11', empresa=empresa)
         # FII com histórico com proventos
-        fii_2 = FII.objects.create(ticker='TSTE11', empresa=empresa)
+        self.fii_2 = FII.objects.create(ticker='TSTE11', empresa=empresa)
         # FII sem histórico com proventos
-        fii_3 = FII.objects.create(ticker='TSTT11', empresa=empresa)
+        self.fii_3 = FII.objects.create(ticker='TSTT11', empresa=empresa)
         # FII com histórico sem proventos
-        fii_4 = FII.objects.create(ticker='TSST11', empresa=empresa)
+        self.fii_4 = FII.objects.create(ticker='TSST11', empresa=empresa)
         
         for data in [datetime.date.today() - datetime.timedelta(days=x) for x in range(365)]:
             if data >= datetime.date.today() - datetime.timedelta(days=3):
-                HistoricoFII.objects.create(fii=fii_2, preco_unitario=1200, data=data)
-                HistoricoFII.objects.create(fii=fii_4, preco_unitario=1200, data=data)
+                HistoricoFII.objects.create(fii=self.fii_2, preco_unitario=1200, data=data)
+                HistoricoFII.objects.create(fii=self.fii_4, preco_unitario=1200, data=data)
             else:
-                HistoricoFII.objects.create(fii=fii_2, preco_unitario=120, data=data)
-                HistoricoFII.objects.create(fii=fii_4, preco_unitario=120, data=data)
+                HistoricoFII.objects.create(fii=self.fii_2, preco_unitario=120, data=data)
+                HistoricoFII.objects.create(fii=self.fii_4, preco_unitario=120, data=data)
                 
         for data in [datetime.date.today() - datetime.timedelta(days=30*x) for x in range(1, 7)]:
-            ProventoFII.objects.create(fii=fii_2, valor_unitario=Decimal('0.9'), data_ex=data, data_pagamento=data+datetime.timedelta(days=7),
-                                       oficial_bovespa=True)
-            ProventoFII.objects.create(fii=fii_3, valor_unitario=Decimal('0.9'), data_ex=data, data_pagamento=data+datetime.timedelta(days=7),
-                                       oficial_bovespa=True)
+            ProventoFII.objects.create(fii=self.fii_2, valor_unitario=Decimal('0.9'), data_ex=data, data_pagamento=data+datetime.timedelta(days=7),
+                                       oficial_bovespa=True, tipo_provento=ProventoFII.TIPO_PROVENTO_RENDIMENTO)
+            ProventoFII.objects.create(fii=self.fii_3, valor_unitario=Decimal('0.9'), data_ex=data, data_pagamento=data+datetime.timedelta(days=7),
+                                       oficial_bovespa=True, tipo_provento=ProventoFII.TIPO_PROVENTO_RENDIMENTO)
                                        
     def test_usuario_deslogado(self):
         """Testa o acesso de usuário deslogado"""
@@ -47,8 +47,60 @@ class AcompanhamentoFIITestCase (TestCase):
         self.assertEqual(response.status_code, 200)
         
         # TODO testar contexto
-        # self.assertEqual(response.context_data['fiis'], self.fii_1)
-        # self.assertEqual(response.context_data['filtros'], self.fii_1)
+        # Testar filtros
+        self.assertIn('filtros', response.context_data.keys())
+        self.assertTrue(response.context_data['filtros']['ignorar_indisponiveis'])
+        self.assertEqual(response.context_data['filtros']['mes_inicial'], datetime.date.today().replace(day=1).replace(year=mes_inicial.year-1).replace(month=mes_inicial.month+1))
+        
+        # Quantidade de meses verificado
+        qtd_meses =  1 + datetime.date.today().month - response.context_data['filtros']['mes_inicial'].month \
+        + (datetime.date.today().year - response.context_data['filtros']['mes_inicial'].year) * 12
+        
+        # Testar fiis
+        self.assertEqual(len(response.context_data['fiis']), 2)
+        self.assertIn(self.fii_2.ticker, [fii.ticker for fii in response.context_data['fiis']])
+        self.assertIn(self.fii_4.ticker, [fii.ticker for fii in response.context_data['fiis']])
+        
+        fii_2 = [fii for fii in response.context_data['fiis'] if fii.ticker == self.fii_2.ticker][0]
+        self.assertEqual(fii_2.valor_atual, 120)
+        self.assertEqual(fii_2.data, datetime.date.today())
+        self.assertEqual(fii_2.total_amortizacoes, 0)
+        self.assertEqual(fii_2.total_rendimentos, Decimal('6.30'))
+        self.assertEqual(fii_2.percentual_retorno, fii_2.total_rendimentos / fii_2.valor_atual)
+        self.assertEqual(fii_2.percentual_retorno_mensal, )
+        self.assertEqual(fii_2.percentual_retorno_anual, )
+        self.assertEqual(fii_2.total_proventos, fii_2.total_amortizacoes + fii_2.total_rendimentos)
+        
+        fii_4 = [fii for fii in response.context_data['fiis'] if fii.ticker == self.fii_4.ticker][0]
+        self.assertEqual(fii_4.valor_atual, 120)
+        self.assertEqual(fii_4.data, datetime.date.today())
+        self.assertEqual(fii_4.total_amortizacoes, 0)
+        self.assertEqual(fii_4.total_rendimentos, Decimal('6.30'))
+        self.assertEqual(fii_4.percentual_retorno, fii_4.total_rendimentos / fii_4.valor_atual)
+        self.assertEqual(fii_4.percentual_retorno_mensal, )
+        self.assertEqual(fii_4.percentual_retorno_anual, )
+        self.assertEqual(fii_4.total_proventos, fii_4.total_amortizacoes + fii_4.total_rendimentos)
+        
+        # Testar alterar filtros
+        response = self.client.post(reverse('fii:acompanhamento_fii'), {'ignorar_indisponiveis': False, 'mes_inicial': '%s/%s' % ((datetime.date.today().replace(day=1) - datetime.timedelta(days=1)).month, 
+            datetime.date.today().year)})
+        
+        # TODO Testar contexto
+        # Testar filtros
+        self.assertIn('filtros', response.context_data.keys())
+        self.assertFalse(response.context_data['filtros']['ignorar_indisponiveis'])
+        self.assertEqual(response.context_data['filtros']['mes_inicial'], '01/%s/%s' % ((datetime.date.today().replace(day=1) - datetime.timedelta(days=1)).month, 
+            datetime.date.today().year))
+        
+        # Quantidade de meses verificado
+        qtd_meses =  2
+        
+        # Testar fiis
+        self.assertEqual(len(response.context_data['fiis']), 4)
+        self.assertIn(self.fii_1.ticker, [fii.ticker for fii in response.context_data['fiis']])
+        self.assertIn(self.fii_2.ticker, [fii.ticker for fii in response.context_data['fiis']])
+        self.assertIn(self.fii_3.ticker, [fii.ticker for fii in response.context_data['fiis']])
+        self.assertIn(self.fii_4.ticker, [fii.ticker for fii in response.context_data['fiis']])
         
     def test_usuario_logado(self):
         """Testa o acesso de usuário logado"""
