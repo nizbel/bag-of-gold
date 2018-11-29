@@ -31,6 +31,7 @@ inicio_patterns = [
     ]
 
 acoes_geral_patterns = [
+    url(r'^detalhar-acao/(?P<ticker>\w+)/$', views.acoes.acoes.estatisticas_acao, name='detalhar_acao'),
     url(r'^detalhar-provento/(?P<provento_id>\d+)/$', views.acoes.acoes.detalhar_provento, name='detalhar_provento_acao'),
     url(r'^estatisticas-acao/(?P<ticker>\w+)/$', views.acoes.acoes.estatisticas_acao, name='estatisticas_acao_bh'),
     # Redirecionamento
