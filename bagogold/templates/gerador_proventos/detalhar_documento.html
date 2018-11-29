@@ -92,6 +92,7 @@
                         <div class="m-grid-row">
                             <div class="m-grid-col m-grid-col-left"><strong>Ação:</strong></div>
                             <div class="m-grid-col m-grid-col-left">{{provento.acao}}</div>
+                            <div class="m-grid-col m-grid-col-left"><a href="{% url 'acoes:geral:detalhar_acao' provento.acao.ticker %}">{{provento.acao}}</a></div>
                             <div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
                             <div class="m-grid-col m-grid-col-left">{{provento.descricao_tipo_provento}}</div>
                             <div class="m-grid-col m-grid-col-left"><strong>Valor unit.:</strong></div>
