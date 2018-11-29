@@ -38,7 +38,7 @@ class ProventoFII (models.Model):
     """
     A = amortização, R = rendimentos
     """
-    tipo_provento = models.CharField(u'Tipo de provento', max_length=1)
+    tipo_provento = models.CharField(u'Tipo de provento', max_length=1, choices=ESCOLHAS_TIPO_PROVENTO_FII)
     data_ex = models.DateField(u'Data EX')
     data_pagamento = models.DateField(u'Data do pagamento')
     oficial_bovespa = models.BooleanField(u'Oficial Bovespa?', default=False)
