@@ -1326,6 +1326,33 @@ def grafico_renda_fixa_painel_geral(request):
     return HttpResponse(json.dumps({'sucesso': False}), content_type = "application/json")   
 
 @login_required
+def prox_vencimentos_painel_geral(request):
+    if request.is_ajax():
+        investidor = request.user.investidor
+        data_atual = datetime.date.today()
+        
+        # Verificar próximos vencimentos de renda fixa
+        prox_vencimentos = list()
+        
+        # CDB/RDB
+        # TODO buscar cdbs vigentes
+        operacoes_atuais = buscar_operacoes_vigentes_ate_data()
+        # TODO verificar datas de vencimento, pegar nos próximos 7 dias
+        for operacao_atual in operacoes_atuais:
+            if operacao_atual.data_vencimento() < data_atual + datetime.timedelta(days=7):
+                operacao_atual.link = reverse('cdb_rdb:detalhar_operacao_cdb_rdb', kwargs={'operacao_id': operacao_atual.id})
+                prox_vencimentos.append(operacao_atual)
+                
+        # Ordenar pela data de vencimento
+        prox_vencimentos.sort(key=lambda x: x.data_vencimento)
+
+        return HttpResponse(json.dumps(render_to_string('utils/prox_vencimentos_painel_geral.html', {'proximos_vencimentos': proximos_vencimentos})), 
+                            content_type = "application/json")   
+    else:
+        return HttpResponse(json.dumps({}), content_type = "application/json")  
+        
+
+@login_required
 def rendimento_medio_painel_geral(request):
     if request.is_ajax():
         investidor = request.user.investidor

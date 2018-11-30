@@ -27,6 +27,7 @@ inicio_patterns = [
     url(r'^renda-fixa/$', views.home.grafico_renda_fixa_painel_geral, name='grafico_renda_fixa_painel_geral'),
     url(r'^rendimento-medio/$', views.home.rendimento_medio_painel_geral, name='rendimento_medio_painel_geral'),
     url(r'^painel-geral/$', views.home.painel_geral, name='painel_geral'),
+    url(r'^proximos-vencimentos/$', views.home.prox_vencimentos_painel_geral, name='proximos_vencimentos'),
     url(r'^sobre/$', views.home.sobre, name='sobre'),
     ]
 
