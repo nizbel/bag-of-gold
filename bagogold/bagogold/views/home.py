@@ -56,7 +56,8 @@ from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
     HistoricoValorCotas
 from bagogold.lc.models import OperacaoLetraCambio
 from bagogold.lc.utils import calcular_valor_lc_ate_dia, calcular_valor_venda_lc, \
-    calcular_valor_atualizado_operacao_ate_dia as calcular_valor_atualizado_operacao_ate_dia_lc
+    calcular_valor_atualizado_operacao_ate_dia as calcular_valor_atualizado_operacao_ate_dia_lc,\
+    buscar_operacoes_vigentes_ate_data as buscar_operacoes_vigentes_ate_data_lc
 from bagogold.lci_lca.models import OperacaoLetraCredito
 from bagogold.lci_lca.utils import calcular_valor_operacao_lci_lca_ate_dia, \
     buscar_operacoes_vigentes_ate_data as buscar_operacoes_vigentes_ate_data_lci_lca, \
@@ -394,7 +395,7 @@ def detalhamento_investimentos(request):
                                    transferencias_criptomoedas, outros_investimentos, amort_outros_investimentos),
                             key=attrgetter('data'))
 
-	# Se não houver operações, retornar vazio
+    # Se não houver operações, retornar vazio
     if not lista_operacoes:
         data_anterior = str(calendar.timegm((datetime.date.today() - datetime.timedelta(days=365)).timetuple()) * 1000)
         data_atual = str(calendar.timegm(datetime.date.today().timetuple()) * 1000)
@@ -1336,19 +1337,55 @@ def prox_vencimentos_painel_geral(request):
         prox_vencimentos = list()
         
         # CDB/RDB
-        # TODO buscar cdbs vigentes
+        # Buscar cdbs vigentes
         operacoes_atuais = buscar_operacoes_vigentes_ate_data_cdb_rdb(investidor)
-        # TODO verificar datas de vencimento, pegar nos próximos 30 dias
-        for operacao_atual in operacoes_atuais:
-            if operacao_atual.data_vencimento() < data_atual + datetime.timedelta(days=30):
-                operacao_atual.link = reverse('cdb_rdb:editar_operacao_cdb_rdb', kwargs={'operacao_id': operacao_atual.id})
-                prox_vencimentos.append(operacao_atual)
+        # Verificar datas de vencimento, pegar nos próximos 30 dias
+        for operacao in operacoes_atuais:
+            if operacao.data_vencimento() < data_atual + datetime.timedelta(days=30):
+                operacao.link = reverse('cdb_rdb:editar_operacao_cdb_rdb', kwargs={'operacao_id': operacao.id})
+                prox_vencimentos.append(operacao)
+                
+        # CRI/CRA
+        for operacao in OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor).select_related('cri_cra'):
+            if operacao.cri_cra.data_vencimento < data_atual + datetime.timedelta(days=30):
+                operacao.link = reverse('cri_cra:editar_operacao_cri_cra', kwargs={'id_operacao': operacao.id})
+                prox_vencimentos.append(operacao)
+                
+        # Debênture
+        for operacao in OperacaoDebenture.objects.filter(investidor=investidor).select_related('debenture'):
+            if operacao.debenture.data_vencimento < data_atual + datetime.timedelta(days=30):
+                operacao.link = reverse('debentures:editar_operacao_debenture', kwargs={'operacao_id': operacao.id})
+                prox_vencimentos.append(operacao)
+                
+        # LC
+        # Buscar lcs vigentes
+        operacoes_atuais = buscar_operacoes_vigentes_ate_data_lc(investidor)
+        # Verificar datas de vencimento, pegar nos próximos 30 dias
+        for operacao in operacoes_atuais:
+            if operacao.data_vencimento() < data_atual + datetime.timedelta(days=30):
+                operacao.link = reverse('lcambio:editar_operacao_lc', kwargs={'operacao_id': operacao.id})
+                prox_vencimentos.append(operacao)
+                
+        # LCI/LCA
+        # Buscar lcis vigentes
+        operacoes_atuais = buscar_operacoes_vigentes_ate_data_lci_lca(investidor)
+        # Verificar datas de vencimento, pegar nos próximos 30 dias
+        for operacao in operacoes_atuais:
+            if operacao.data_vencimento() < data_atual + datetime.timedelta(days=30):
+                operacao.link = reverse('lci_lca:editar_operacao_lci_lca', kwargs={'operacao_id': operacao.id})
+                prox_vencimentos.append(operacao)
+                
+        # Título
+        for operacao in OperacaoTitulo.objects.filter(investidor=investidor).select_related('titulo'):
+            if operacao.titulo.data_vencimento < data_atual + datetime.timedelta(days=30):
+                operacao.link = reverse('tesouro_direto:editar_operacao_td', kwargs={'operacao_id': operacao.id})
+                prox_vencimentos.append(operacao)
                 
         # Ordenar pela data de vencimento
-        prox_vencimentos.sort(key=lambda x: x.data_vencimento)
+        prox_vencimentos.sort(key=lambda x: x.data_vencimento())
         
         # Filtrar apenas os 5 próximos
-        prox_vencimentos = prox_vencimentos[:5]
+        prox_vencimentos = prox_vencimentos[:10]
         
 
         return HttpResponse(json.dumps(render_to_string('utils/prox_vencimentos_rf_painel_geral.html', {'prox_vencimentos': prox_vencimentos})), 

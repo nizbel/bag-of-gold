@@ -190,6 +190,9 @@ class OperacaoDebenture (models.Model):
     def __unicode__(self):
         return u'(%s) R$ %s da debênture %s em %s' % (self.tipo_operacao, (self.quantidade*self.preco_unitario), self.debenture, self.data)
     
+    def data_vencimento(self):
+        return self.debenture.data_vencimento
+    
 class HistoricoValorDebenture (models.Model):
     debenture = models.ForeignKey('Debenture')
     valor_nominal = models.DecimalField(u'Valor nominal', max_digits=15, decimal_places=6)

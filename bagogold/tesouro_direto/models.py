@@ -134,6 +134,9 @@ class OperacaoTitulo (models.Model):
     def __unicode__(self):
         return '(' + self.tipo_operacao + ') ' +str(self.quantidade) + ' ' + self.titulo.tipo + ' a R$' + str(self.preco_unitario)
     
+    def data_vencimento(self):
+        return self.titulo.data_vencimento
+    
 class HistoricoTitulo (models.Model):
     titulo = models.ForeignKey('Titulo', unique_for_date='data')
     data = models.DateField(u'Data')
