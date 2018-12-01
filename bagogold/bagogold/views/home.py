@@ -2,33 +2,31 @@
 import calendar
 import datetime
 from decimal import Decimal, ROUND_DOWN
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.core.mail import send_mail
-from django.db.models.expressions import F, Case, When
-from django.template import loader
-from django.template.loader import render_to_string
 from itertools import chain
 import json
 import math
 from operator import attrgetter
 
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.mail import send_mail
 from django.db.models import Count
 from django.db.models.aggregates import Sum
+from django.db.models.expressions import F, Case, When
 from django.db.models.fields import DecimalField
 from django.http.response import HttpResponse
+from django.template import loader
+from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
+from django.urls.base import reverse
 
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.misc import ContatoForm
 from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, Provento, \
     ValorDiarioAcao
-from bagogold.debentures.models import OperacaoDebenture, \
-    HistoricoValorDebenture
 from bagogold.bagogold.models.divisoes import TransferenciaEntreDivisoes, \
     Divisao
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
-from bagogold.debentures.utils import calcular_valor_debentures_ate_dia
 from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
     buscar_totais_atuais_investimentos, buscar_proventos_a_receber, \
     buscar_proventos_a_receber_data_ex_futura, buscar_operacoes_no_periodo
@@ -49,6 +47,9 @@ from bagogold.cri_cra.utils.utils import calcular_valor_cri_cra_ate_dia, \
 from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
 from bagogold.criptomoeda.models import OperacaoCriptomoeda, \
     TransferenciaCriptomoeda, ValorDiarioCriptomoeda
+from bagogold.debentures.models import OperacaoDebenture, \
+    HistoricoValorDebenture
+from bagogold.debentures.utils import calcular_valor_debentures_ate_dia
 from bagogold.fii.models import OperacaoFII, HistoricoFII, ProventoFII, \
     ValorDiarioFII
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
@@ -1336,17 +1337,21 @@ def prox_vencimentos_painel_geral(request):
         
         # CDB/RDB
         # TODO buscar cdbs vigentes
-        operacoes_atuais = buscar_operacoes_vigentes_ate_data()
-        # TODO verificar datas de vencimento, pegar nos próximos 7 dias
+        operacoes_atuais = buscar_operacoes_vigentes_ate_data_cdb_rdb(investidor)
+        # TODO verificar datas de vencimento, pegar nos próximos 30 dias
         for operacao_atual in operacoes_atuais:
-            if operacao_atual.data_vencimento() < data_atual + datetime.timedelta(days=7):
-                operacao_atual.link = reverse('cdb_rdb:detalhar_operacao_cdb_rdb', kwargs={'operacao_id': operacao_atual.id})
+            if operacao_atual.data_vencimento() < data_atual + datetime.timedelta(days=30):
+                operacao_atual.link = reverse('cdb_rdb:editar_operacao_cdb_rdb', kwargs={'operacao_id': operacao_atual.id})
                 prox_vencimentos.append(operacao_atual)
                 
         # Ordenar pela data de vencimento
         prox_vencimentos.sort(key=lambda x: x.data_vencimento)
+        
+        # Filtrar apenas os 5 próximos
+        prox_vencimentos = prox_vencimentos[:5]
+        
 
-        return HttpResponse(json.dumps(render_to_string('utils/prox_vencimentos_painel_geral.html', {'proximos_vencimentos': proximos_vencimentos})), 
+        return HttpResponse(json.dumps(render_to_string('utils/prox_vencimentos_rf_painel_geral.html', {'prox_vencimentos': prox_vencimentos})), 
                             content_type = "application/json")   
     else:
         return HttpResponse(json.dumps({}), content_type = "application/json")  
