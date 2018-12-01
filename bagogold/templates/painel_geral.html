@@ -323,6 +323,28 @@
 			</div>
 			<!-- END Portlet PORTLET-->
 		</div>
+		<div class="col-md-3">
+			<!-- BEGIN Portlet PORTLET-->
+			<div class="portlet box yellow-crusta">
+			    <div class="portlet-title">
+			        <div class="caption">
+			            <i class="fa fa-clock-o"></i>Próx. vencimentos renda fixa</div>
+			        <div class="tools">
+			            <a href="javascript:;" class="collapse"></a>
+			        </div>
+			    </div>
+			    <div class="portlet-body text-center" id="proximos_vencimentos">
+			    	{% if not request.user.is_authenticated %}
+                    <div class="row">
+                        <div class="col-md-12">
+                            <span>Não há vencimentos</span>
+                        </div>
+                    </div>
+                    {% endif %}
+			    </div>
+			</div>
+			<!-- END Portlet PORTLET-->
+		</div>
 		<div class="col-md-12">
 			<div class="portlet box yellow-crusta">
 				<div class="portlet-title">
@@ -493,6 +515,30 @@ $( document ).ready(function() {
         // handle a non-successful response
         error : function(xhr,errmsg,err) {
             App.unblockUI('#rendimento_medio');
+            console.log(xhr.status + ": " + xhr.responseText);
+        }
+    });
+    
+    // Próximos vencimentos
+    App.blockUI({
+        target: '#proximos_vencimentos',
+        iconOnly: true,
+        overlayColor: 'none'
+    });
+    
+    $.ajax({
+        url : "{% url 'inicio:proximos_vencimentos' %}",
+        type : "GET",
+
+        // handle a successful response
+        success : function(resultado) {
+            $('#proximos_vencimentos').html(resultado);
+            App.unblockUI('#proximos_vencimentos');
+        },
+
+        // handle a non-successful response
+        error : function(xhr,errmsg,err) {
+            App.unblockUI('#proximos_vencimentos');
             console.log(xhr.status + ": " + xhr.responseText);
         }
     });
