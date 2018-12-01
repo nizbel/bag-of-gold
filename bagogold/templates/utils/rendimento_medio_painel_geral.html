@@ -9,5 +9,7 @@
     <div class="col-md-12">
         <span>Rendimento médio anual: <strong>{% if rendimento_medio_anual < 0 %}-{% endif %}<span data-counter="counterup" data-value="{{ rendimento_medio_anual|template_abs|floatformat:'2' }}">0</span>%</strong></span>
     </div>
-    <div class="col-md-12 text-center"><a href="{% url 'inicio:calcular_renda_futura' %}">Cálculos de renda média</a></div>
+</div>
+<div class="row">
+    <div class="col-md-12 text-center"><a href="{% url 'inicio:calendario' %}">Cálculos de renda média</a></div>
 </div>

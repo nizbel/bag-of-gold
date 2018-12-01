@@ -1330,8 +1330,10 @@ def grafico_renda_fixa_painel_geral(request):
 @login_required
 def prox_vencimentos_painel_geral(request):
     if request.is_ajax():
+        inicio = datetime.datetime.now()
         investidor = request.user.investidor
         data_atual = datetime.date.today()
+        data_30_dias = data_atual + datetime.timedelta(days=30)
         
         # Verificar próximos vencimentos de renda fixa
         prox_vencimentos = list()
@@ -1341,19 +1343,18 @@ def prox_vencimentos_painel_geral(request):
         operacoes_atuais = buscar_operacoes_vigentes_ate_data_cdb_rdb(investidor)
         # Verificar datas de vencimento, pegar nos próximos 30 dias
         for operacao in operacoes_atuais:
-            if operacao.data_vencimento() < data_atual + datetime.timedelta(days=30):
+            if operacao.data_vencimento() <= data_30_dias:
                 operacao.link = reverse('cdb_rdb:editar_operacao_cdb_rdb', kwargs={'operacao_id': operacao.id})
                 prox_vencimentos.append(operacao)
                 
         # CRI/CRA
-        for operacao in OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor).select_related('cri_cra'):
-            if operacao.cri_cra.data_vencimento < data_atual + datetime.timedelta(days=30):
+        for operacao in OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, cri_cra__data_vencimento__range=[data_atual, data_30_dias]) \
+        .select_related('cri_cra'):
                 operacao.link = reverse('cri_cra:editar_operacao_cri_cra', kwargs={'id_operacao': operacao.id})
                 prox_vencimentos.append(operacao)
                 
         # Debênture
-        for operacao in OperacaoDebenture.objects.filter(investidor=investidor).select_related('debenture'):
-            if operacao.debenture.data_vencimento < data_atual + datetime.timedelta(days=30):
+        for operacao in OperacaoDebenture.objects.filter(investidor=investidor, debenture__data_vencimento__range=[data_atual, data_30_dias]).select_related('debenture'):
                 operacao.link = reverse('debentures:editar_operacao_debenture', kwargs={'operacao_id': operacao.id})
                 prox_vencimentos.append(operacao)
                 
@@ -1362,7 +1363,7 @@ def prox_vencimentos_painel_geral(request):
         operacoes_atuais = buscar_operacoes_vigentes_ate_data_lc(investidor)
         # Verificar datas de vencimento, pegar nos próximos 30 dias
         for operacao in operacoes_atuais:
-            if operacao.data_vencimento() < data_atual + datetime.timedelta(days=30):
+            if operacao.data_vencimento() <= data_30_dias:
                 operacao.link = reverse('lcambio:editar_operacao_lc', kwargs={'operacao_id': operacao.id})
                 prox_vencimentos.append(operacao)
                 
@@ -1371,13 +1372,12 @@ def prox_vencimentos_painel_geral(request):
         operacoes_atuais = buscar_operacoes_vigentes_ate_data_lci_lca(investidor)
         # Verificar datas de vencimento, pegar nos próximos 30 dias
         for operacao in operacoes_atuais:
-            if operacao.data_vencimento() < data_atual + datetime.timedelta(days=30):
+            if operacao.data_vencimento() <= data_30_dias:
                 operacao.link = reverse('lci_lca:editar_operacao_lci_lca', kwargs={'operacao_id': operacao.id})
                 prox_vencimentos.append(operacao)
                 
         # Título
-        for operacao in OperacaoTitulo.objects.filter(investidor=investidor).select_related('titulo'):
-            if operacao.titulo.data_vencimento < data_atual + datetime.timedelta(days=30):
+        for operacao in OperacaoTitulo.objects.filter(investidor=investidor, titulo__data_vencimento__range=[data_atual, data_30_dias]).select_related('titulo'):
                 operacao.link = reverse('tesouro_direto:editar_operacao_td', kwargs={'operacao_id': operacao.id})
                 prox_vencimentos.append(operacao)
                 
@@ -1387,7 +1387,7 @@ def prox_vencimentos_painel_geral(request):
         # Filtrar apenas os 5 próximos
         prox_vencimentos = prox_vencimentos[:10]
         
-
+        print datetime.datetime.now() - inicio
         return HttpResponse(json.dumps(render_to_string('utils/prox_vencimentos_rf_painel_geral.html', {'prox_vencimentos': prox_vencimentos})), 
                             content_type = "application/json")   
     else:
