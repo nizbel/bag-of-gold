@@ -381,6 +381,7 @@
 <script type="text/javascript">
 $( document ).ready(function() {
 	{% if request.user.is_authenticated %}
+	{% comment %}
 	// Gráfico renda fixa
 	App.blockUI({
         target: '#portlet_body_graf_rendimentos_mensal',
@@ -518,6 +519,7 @@ $( document ).ready(function() {
             console.log(xhr.status + ": " + xhr.responseText);
         }
     });
+    {% endcomment %}
     
     // Próximos vencimentos
     App.blockUI({

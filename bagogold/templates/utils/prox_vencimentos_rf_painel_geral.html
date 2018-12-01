@@ -1,5 +1,4 @@
 <div class="list-group">
-	<div class="row">
 	    {% for prox_vencimento in prox_vencimentos %}
 	    <a href="{{prox_vencimento.link}}" class="list-group-item col-md-12">
 	        <span class="col-md-4">{{prox_vencimento.area_investimento}}</span>
@@ -9,9 +8,9 @@
 	    {% empty %}
 	    <a href="javascript:;" class="list-group-item">Não há vencimentos</a>
 	    {% endfor %}
-	    
-	    {% if prox_vencimentos %}
-	    <div class="col-md-12 text-center"><a href="{% url 'inicio:calcular_renda_futura' %}">Ver todos</a></div>
-	    {% endif %}
-    </div>
 </div>
+{% if prox_vencimentos %}
+	<div class="row">
+    	<div class="col-md-12 text-center"><a href="{% url 'inicio:calcular_renda_futura' %}">Ver calendário</a></div>
+	</div>
+{% endif %}

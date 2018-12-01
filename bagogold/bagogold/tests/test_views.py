@@ -20,9 +20,6 @@ from bagogold.debentures.models import Debenture, OperacaoDebenture
 
 
 class ProxVencimentosPainelGeralTestCase(TestCase):
-    def setUp(self):
-        pass
-        
     def test_investidor_deslogado(self):
         """Testa investidor deslogado"""
         response = self.client.get(reverse('inicio:proximos_vencimentos'), {}, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
@@ -229,3 +226,51 @@ class ProxVencimentosPainelGeralTestCase(TestCase):
         self.assertIn(self.operacao_lci_lca_1, response.context['prox_vencimentos'])
         self.assertIn(self.operacao_lci_lca_5, response.context['prox_vencimentos'])
         self.assertIn(self.operacao_titulo_1, response.context['prox_vencimentos'])
+        
+        
+    def test_investidor_logado_com_investimentos_vencidos(self):
+        """Testa investidor logado com investimentos vencidos"""
+        vencido = User.objects.create_user('vencido', 'vencido@teste.com', 'vencido')
+        self.vencido = vencido.investidor 
+        
+        # Cadastrar investimentos
+        # CRI/CRA
+        cri_cra_1 = CRI_CRA.objects.create(nome='CRI teste 1', codigo_isin='BRCRITESTE1', tipo=CRI_CRA.TIPO_CRI, tipo_indexacao=CRI_CRA.TIPO_INDEXACAO_DI,
+                                           porcentagem=Decimal(98), juros_adicional=0, data_emissao=(datetime.date.today() - datetime.timedelta(days=470)),
+                                           valor_emissao=Decimal(1000), data_inicio_rendimento=(datetime.date.today() - datetime.timedelta(days=460)),
+                                           data_vencimento=(datetime.date.today() - datetime.timedelta(days=95)), investidor=self.vencido)
+        
+        # CRI 1
+        self.operacao_cri_cra_1 = OperacaoCRI_CRA.objects.create(cri_cra=cri_cra_1, preco_unitario=Decimal(1200), quantidade=1, 
+                                                                 data=(datetime.date.today() - datetime.timedelta(days=160)), tipo_operacao='C',
+                                                                 taxa=0)
+        
+        # Debentures
+        debenture_1 = Debenture.objects.create(codigo='TESTE91', indice=Debenture.PREFIXADO, porcentagem=Decimal('6.5'), 
+                                               data_emissao=(datetime.date.today() - datetime.timedelta(days=470)), valor_emissao=Decimal(1000),
+                                               data_inicio_rendimento=(datetime.date.today() - datetime.timedelta(days=460)), 
+                                               data_vencimento=(datetime.date.today() - datetime.timedelta(days=95)), incentivada=True, 
+                                               padrao_snd=True)
+        
+        # Debenture 1
+        self.operacao_deb_1 = OperacaoDebenture.objects.create(investidor=self.vencido, debenture=debenture_1, preco_unitario=Decimal(1200),
+                                                               quantidade=1, data=(datetime.date.today() - datetime.timedelta(days=160)), taxa=0,
+                                                               tipo_operacao='C')
+        
+        # Tesouro direto
+        titulo_1 = Titulo.objects.create(tipo='LTN', data_vencimento=(datetime.date.today() - datetime.timedelta(days=95)), 
+                                         data_inicio=(datetime.date.today() - datetime.timedelta(days=725)))
+        
+        # Título 1
+        self.operacao_titulo_1 = OperacaoTitulo.objects.create(investidor=self.vencido, preco_unitario=Decimal(700), quantidade=1, 
+                                                               data=(datetime.date.today() - datetime.timedelta(days=150)), taxa_bvmf=0,
+                                                               taxa_custodia=0, tipo_operacao='C', titulo=titulo_1, consolidada=True)
+        
+        
+        self.client.login(username='vencido', password='vencido')
+        response = self.client.get(reverse('inicio:proximos_vencimentos'), {}, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(response.status_code, 200)
+        
+        # Contexto
+        self.assertIn('prox_vencimentos', response.context)
+        self.assertEqual(response.context['prox_vencimentos'], [])
