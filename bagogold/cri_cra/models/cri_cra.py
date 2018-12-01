@@ -75,6 +75,9 @@ class OperacaoCRI_CRA (models.Model):
     def __unicode__(self):
         return u'(%s) %s certificado(s) de %s a R$ %s' % (self.tipo_operacao, self.quantidade, self.cri_cra.nome, self.preco_unitario)
     
+    def data_vencimento(self):
+        return self.cri_cra.data_vencimento
+    
 class DataRemuneracaoCRI_CRA (models.Model):
     data = models.DateField(u'Data de remuneração')
     cri_cra = models.ForeignKey('CRI_CRA')
