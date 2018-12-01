@@ -1344,19 +1344,23 @@ def prox_vencimentos_painel_geral(request):
         # Verificar datas de vencimento, pegar nos próximos 30 dias
         for operacao in operacoes_atuais:
             if operacao.data_vencimento() <= data_30_dias:
+                operacao.tipo_investimento = 'CDB'
                 operacao.link = reverse('cdb_rdb:editar_operacao_cdb_rdb', kwargs={'operacao_id': operacao.id})
                 prox_vencimentos.append(operacao)
                 
         # CRI/CRA
         for operacao in OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, cri_cra__data_vencimento__range=[data_atual, data_30_dias]) \
         .select_related('cri_cra'):
-                operacao.link = reverse('cri_cra:editar_operacao_cri_cra', kwargs={'id_operacao': operacao.id})
-                prox_vencimentos.append(operacao)
+            operacao.tipo_investimento = 'CRI/CRA'
+            operacao.link = reverse('cri_cra:editar_operacao_cri_cra', kwargs={'id_operacao': operacao.id})
+            prox_vencimentos.append(operacao)
                 
         # Debênture
-        for operacao in OperacaoDebenture.objects.filter(investidor=investidor, debenture__data_vencimento__range=[data_atual, data_30_dias]).select_related('debenture'):
-                operacao.link = reverse('debentures:editar_operacao_debenture', kwargs={'operacao_id': operacao.id})
-                prox_vencimentos.append(operacao)
+        for operacao in OperacaoDebenture.objects.filter(investidor=investidor, debenture__data_vencimento__range=[data_atual, data_30_dias]) \
+        .select_related('debenture'):
+            operacao.tipo_investimento = 'Debênture'
+            operacao.link = reverse('debentures:editar_operacao_debenture', kwargs={'operacao_id': operacao.id})
+            prox_vencimentos.append(operacao)
                 
         # LC
         # Buscar lcs vigentes
@@ -1364,6 +1368,7 @@ def prox_vencimentos_painel_geral(request):
         # Verificar datas de vencimento, pegar nos próximos 30 dias
         for operacao in operacoes_atuais:
             if operacao.data_vencimento() <= data_30_dias:
+                operacao.tipo_investimento = 'Letra de Câmbio'
                 operacao.link = reverse('lcambio:editar_operacao_lc', kwargs={'operacao_id': operacao.id})
                 prox_vencimentos.append(operacao)
                 
@@ -1373,13 +1378,16 @@ def prox_vencimentos_painel_geral(request):
         # Verificar datas de vencimento, pegar nos próximos 30 dias
         for operacao in operacoes_atuais:
             if operacao.data_vencimento() <= data_30_dias:
+                operacao.tipo_investimento = 'LCI/LCA'
                 operacao.link = reverse('lci_lca:editar_operacao_lci_lca', kwargs={'operacao_id': operacao.id})
                 prox_vencimentos.append(operacao)
                 
         # Título
-        for operacao in OperacaoTitulo.objects.filter(investidor=investidor, titulo__data_vencimento__range=[data_atual, data_30_dias]).select_related('titulo'):
-                operacao.link = reverse('tesouro_direto:editar_operacao_td', kwargs={'operacao_id': operacao.id})
-                prox_vencimentos.append(operacao)
+        for operacao in OperacaoTitulo.objects.filter(investidor=investidor, titulo__data_vencimento__range=[data_atual, data_30_dias]) \
+        .select_related('titulo'):
+            operacao.tipo_investimento = 'Tesouro Direto'
+            operacao.link = reverse('tesouro_direto:editar_operacao_td', kwargs={'operacao_id': operacao.id})
+            prox_vencimentos.append(operacao)
                 
         # Ordenar pela data de vencimento
         prox_vencimentos.sort(key=lambda x: x.data_vencimento())
