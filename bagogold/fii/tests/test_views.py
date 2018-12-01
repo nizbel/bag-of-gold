@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import calendar
 import datetime
 from decimal import Decimal
 
@@ -10,6 +11,7 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII, Divisao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.fii.models import FII, HistoricoFII, ProventoFII, \
     EventoAgrupamentoFII, OperacaoFII, UsoProventosOperacaoFII
+from django.test.utils import freeze_time
 
 
 class AcompanhamentoFIITestCase (TestCase):
@@ -50,7 +52,9 @@ class AcompanhamentoFIITestCase (TestCase):
         # Testar filtros
         self.assertIn('filtros', response.context_data.keys())
         self.assertTrue(response.context_data['filtros']['ignorar_indisponiveis'])
-        self.assertEqual(response.context_data['filtros']['mes_inicial'], datetime.date.today().replace(day=1).replace(year=mes_inicial.year-1).replace(month=mes_inicial.month+1))
+        ultimo_dia_mes = calendar.monthrange(datetime.date.today().year, datetime.date.today().month)[1]
+        self.assertEqual(response.context_data['filtros']['mes_inicial'], datetime.date.today().replace(day=ultimo_dia_mes) \
+                         .replace(year=datetime.date.today().year-1) + datetime.timedelta(days=1))
         
         # Quantidade de meses verificado
         qtd_meses =  1 + datetime.date.today().month - response.context_data['filtros']['mes_inicial'].month \
@@ -62,36 +66,35 @@ class AcompanhamentoFIITestCase (TestCase):
         self.assertIn(self.fii_4.ticker, [fii.ticker for fii in response.context_data['fiis']])
         
         fii_2 = [fii for fii in response.context_data['fiis'] if fii.ticker == self.fii_2.ticker][0]
-        self.assertEqual(fii_2.valor_atual, 120)
+        self.assertEqual(fii_2.valor_atual, 1200)
         self.assertEqual(fii_2.data, datetime.date.today())
         self.assertEqual(fii_2.total_amortizacoes, 0)
-        self.assertEqual(fii_2.total_rendimentos, Decimal('6.30'))
-        self.assertEqual(fii_2.percentual_retorno, fii_2.total_rendimentos / fii_2.valor_atual)
-        self.assertEqual(fii_2.percentual_retorno_mensal, )
-        self.assertEqual(fii_2.percentual_retorno_anual, )
+        self.assertEqual(fii_2.total_rendimentos, Decimal('5.40'))
+        self.assertEqual(fii_2.percentual_retorno, fii_2.total_rendimentos / fii_2.valor_atual * 100)
+#         self.assertEqual(fii_2.percentual_retorno_mensal, )
+#         self.assertEqual(fii_2.percentual_retorno_anual, )
         self.assertEqual(fii_2.total_proventos, fii_2.total_amortizacoes + fii_2.total_rendimentos)
         
         fii_4 = [fii for fii in response.context_data['fiis'] if fii.ticker == self.fii_4.ticker][0]
-        self.assertEqual(fii_4.valor_atual, 120)
+        self.assertEqual(fii_4.valor_atual, 1200)
         self.assertEqual(fii_4.data, datetime.date.today())
         self.assertEqual(fii_4.total_amortizacoes, 0)
-        self.assertEqual(fii_4.total_rendimentos, Decimal('6.30'))
-        self.assertEqual(fii_4.percentual_retorno, fii_4.total_rendimentos / fii_4.valor_atual)
-        self.assertEqual(fii_4.percentual_retorno_mensal, )
-        self.assertEqual(fii_4.percentual_retorno_anual, )
+        self.assertEqual(fii_4.total_rendimentos, 0)
+        self.assertEqual(fii_4.percentual_retorno, fii_4.total_rendimentos / fii_4.valor_atual * 100)
+#         self.assertEqual(fii_4.percentual_retorno_mensal, )
+#         self.assertEqual(fii_4.percentual_retorno_anual, )
         self.assertEqual(fii_4.total_proventos, fii_4.total_amortizacoes + fii_4.total_rendimentos)
         
         # Testar alterar filtros
-        response = self.client.post(reverse('fii:acompanhamento_fii'), {'ignorar_indisponiveis': False, 'mes_inicial': '%s/%s' % ((datetime.date.today().replace(day=1) - datetime.timedelta(days=1)).month, 
+        response = self.client.post(reverse('fii:acompanhamento_fii'), {'mes_inicial': '%s/%s' % ((datetime.date.today().replace(day=1) - datetime.timedelta(days=1)).month, 
             datetime.date.today().year)})
         
         # TODO Testar contexto
         # Testar filtros
         self.assertIn('filtros', response.context_data.keys())
         self.assertFalse(response.context_data['filtros']['ignorar_indisponiveis'])
-        self.assertEqual(response.context_data['filtros']['mes_inicial'], '01/%s/%s' % ((datetime.date.today().replace(day=1) - datetime.timedelta(days=1)).month, 
-            datetime.date.today().year))
-        
+        self.assertEqual(response.context_data['filtros']['mes_inicial'], (datetime.date.today().replace(day=1) - datetime.timedelta(days=1)).replace(day=1))
+                         
         # Quantidade de meses verificado
         qtd_meses =  2
         
@@ -114,6 +117,16 @@ class AcompanhamentoFIITestCase (TestCase):
     def test_filtros(self):
         """Testa os filtros da pesquisa"""
         pass
+    
+    def test_acessar_em_dezembro(self):
+        """Testa o acesso no mês de Dezembro, erro encontrado em 01/12/2018, tentava criar data com mês 13"""
+        with freeze_time(float(1543699932)):
+            response = self.client.get(reverse('fii:acompanhamento_fii'))
+            self.assertEqual(response.status_code, 200)
+
+            response = self.client.post(reverse('fii:acompanhamento_fii'), {'mes_inicial': '13/2018'})
+            self.assertEqual(response.status_code, 200)
+        
 
 class DetalharFIITestCase (TestCase):
     def setUp(self):
