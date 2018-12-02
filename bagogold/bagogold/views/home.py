@@ -31,11 +31,13 @@ from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
     buscar_totais_atuais_investimentos, buscar_proventos_a_receber, \
     buscar_proventos_a_receber_data_ex_futura, buscar_operacoes_no_periodo
 from bagogold.bagogold.utils.misc import calcular_rendimentos_ate_data, \
-    verificar_feriado_bovespa, formatar_zeros_a_direita_apos_2_casas_decimais
+    verificar_feriado_bovespa, formatar_zeros_a_direita_apos_2_casas_decimais, \
+    qtd_dias_uteis_no_periodo
 from bagogold.bagogold.utils.taxas_indexacao import \
-    calcular_valor_atualizado_com_taxas_di
+    calcular_valor_atualizado_com_taxas_di, \
+    calcular_valor_atualizado_com_taxa_prefixado
 from bagogold.blog.models import Post
-from bagogold.cdb_rdb.models import OperacaoCDB_RDB
+from bagogold.cdb_rdb.models import OperacaoCDB_RDB, CDB_RDB
 from bagogold.cdb_rdb.utils import calcular_valor_atualizado_operacao_ate_dia \
     as calcular_valor_atualizado_operacao_ate_dia_cdb_rdb, \
     buscar_operacoes_vigentes_ate_data as buscar_operacoes_vigentes_ate_data_cdb_rdb, \
@@ -56,7 +58,7 @@ from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
     HistoricoValorCotas
 from bagogold.lc.models import OperacaoLetraCambio
 from bagogold.lc.utils import calcular_valor_lc_ate_dia, calcular_valor_venda_lc, \
-    calcular_valor_atualizado_operacao_ate_dia as calcular_valor_atualizado_operacao_ate_dia_lc,\
+    calcular_valor_atualizado_operacao_ate_dia as calcular_valor_atualizado_operacao_ate_dia_lc, \
     buscar_operacoes_vigentes_ate_data as buscar_operacoes_vigentes_ate_data_lc
 from bagogold.lci_lca.models import OperacaoLetraCredito
 from bagogold.lci_lca.utils import calcular_valor_operacao_lci_lca_ate_dia, \
@@ -1338,27 +1340,49 @@ def prox_vencimentos_painel_geral(request):
         # Verificar próximos vencimentos de renda fixa
         prox_vencimentos = list()
         
+        # Taxa DI final
+        data_final, taxa_final = HistoricoTaxaDI.objects.all().values_list('data', 'taxa').order_by('-data')[0]
+        
         # CDB/RDB
         # Buscar cdbs vigentes
         operacoes_atuais = buscar_operacoes_vigentes_ate_data_cdb_rdb(investidor)
         # Verificar datas de vencimento, pegar nos próximos 30 dias
         for operacao in operacoes_atuais:
-            if operacao.data_vencimento() <= data_30_dias:
-                operacao.tipo_investimento = 'CDB'
+            if operacao.data_vencimento() >= data_atual and operacao.data_vencimento() <= data_30_dias:
+                operacao.tipo_investimento = u'CDB/RDB'
+                operacao.nome = operacao.cdb_rdb.nome
                 operacao.link = reverse('cdb_rdb:editar_operacao_cdb_rdb', kwargs={'operacao_id': operacao.id})
+                
+                # Calcular valor vencimento
+                operacao.quantidade = operacao.qtd_disponivel_venda
+                operacao.taxa = operacao.porcentagem()
+                operacao.atual = calcular_valor_operacao_cdb_rdb_ate_dia(operacao, data_atual)
+                qtd_dias_uteis_ate_vencimento = qtd_dias_uteis_no_periodo(data_final + datetime.timedelta(days=1), operacao.data_vencimento())
+                # Se prefixado apenas pegar rendimento de 1 dia
+                if operacao.cdb_rdb.eh_prefixado():
+                    operacao.valor_vencimento = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa, qtd_dias_uteis_ate_vencimento)
+                elif operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
+                    # Considerar rendimento do dia anterior
+                    operacao.valor_vencimento = calcular_valor_atualizado_com_taxas_di({taxa_final: qtd_dias_uteis_ate_vencimento},
+                                                         operacao.atual, operacao.taxa)
+                str_auxiliar = str(operacao.valor_vencimento.quantize(Decimal('.0001')))
+                operacao.valor_vencimento = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+                
                 prox_vencimentos.append(operacao)
                 
         # CRI/CRA
         for operacao in OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, cri_cra__data_vencimento__range=[data_atual, data_30_dias]) \
         .select_related('cri_cra'):
-            operacao.tipo_investimento = 'CRI/CRA'
+            operacao.tipo_investimento = u'CRI/CRA'
+            operacao.nome = operacao.cri_cra.nome
             operacao.link = reverse('cri_cra:editar_operacao_cri_cra', kwargs={'id_operacao': operacao.id})
             prox_vencimentos.append(operacao)
                 
         # Debênture
         for operacao in OperacaoDebenture.objects.filter(investidor=investidor, debenture__data_vencimento__range=[data_atual, data_30_dias]) \
         .select_related('debenture'):
-            operacao.tipo_investimento = 'Debênture'
+            operacao.tipo_investimento = u'Debênture'
+            operacao.nome = operacao.debenture.nome
             operacao.link = reverse('debentures:editar_operacao_debenture', kwargs={'operacao_id': operacao.id})
             prox_vencimentos.append(operacao)
                 
@@ -1367,8 +1391,9 @@ def prox_vencimentos_painel_geral(request):
         operacoes_atuais = buscar_operacoes_vigentes_ate_data_lc(investidor)
         # Verificar datas de vencimento, pegar nos próximos 30 dias
         for operacao in operacoes_atuais:
-            if operacao.data_vencimento() <= data_30_dias:
-                operacao.tipo_investimento = 'Letra de Câmbio'
+            if operacao.data_vencimento() >= data_atual and operacao.data_vencimento() <= data_30_dias:
+                operacao.tipo_investimento = u'Letra de Câmbio'
+                operacao.nome = operacao.letra_cambio.nome
                 operacao.link = reverse('lcambio:editar_operacao_lc', kwargs={'operacao_id': operacao.id})
                 prox_vencimentos.append(operacao)
                 
@@ -1377,16 +1402,19 @@ def prox_vencimentos_painel_geral(request):
         operacoes_atuais = buscar_operacoes_vigentes_ate_data_lci_lca(investidor)
         # Verificar datas de vencimento, pegar nos próximos 30 dias
         for operacao in operacoes_atuais:
-            if operacao.data_vencimento() <= data_30_dias:
-                operacao.tipo_investimento = 'LCI/LCA'
+            if operacao.data_vencimento() >= data_atual and operacao.data_vencimento() <= data_30_dias:
+                operacao.tipo_investimento = u'LCI/LCA'
+                operacao.nome = operacao.letra_credito.nome
                 operacao.link = reverse('lci_lca:editar_operacao_lci_lca', kwargs={'operacao_id': operacao.id})
                 prox_vencimentos.append(operacao)
                 
         # Título
         for operacao in OperacaoTitulo.objects.filter(investidor=investidor, titulo__data_vencimento__range=[data_atual, data_30_dias]) \
         .select_related('titulo'):
-            operacao.tipo_investimento = 'Tesouro Direto'
+            operacao.tipo_investimento = u'Tesouro Direto'
+            operacao.nome = operacao.titulo.nome
             operacao.link = reverse('tesouro_direto:editar_operacao_td', kwargs={'operacao_id': operacao.id})
+            operacao.valor_vencimento = operacao.titulo.valor_vencimento()
             prox_vencimentos.append(operacao)
                 
         # Ordenar pela data de vencimento
@@ -1394,6 +1422,10 @@ def prox_vencimentos_painel_geral(request):
         
         # Filtrar apenas os 5 próximos
         prox_vencimentos = prox_vencimentos[:10]
+
+        # Preencher dados gerais para operações a serem mostradas        
+        for operacao in prox_vencimentos:
+            operacao.decorrido_percentual = (float((data_atual - operacao.data).days) / (operacao.data_vencimento() - operacao.data).days) * 100
         
         print datetime.datetime.now() - inicio
         return HttpResponse(json.dumps(render_to_string('utils/prox_vencimentos_rf_painel_geral.html', {'prox_vencimentos': prox_vencimentos})), 

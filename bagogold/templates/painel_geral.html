@@ -536,6 +536,12 @@ $( document ).ready(function() {
         success : function(resultado) {
             $('#proximos_vencimentos').html(resultado);
             App.unblockUI('#proximos_vencimentos');
+            
+            // Animar barras de progresso
+            if ($('.progress-bar:not(.progress-done)').length > 0) {
+			    fill();
+			}
+			
         },
 
         // handle a non-successful response
@@ -546,6 +552,7 @@ $( document ).ready(function() {
     });
 	{% endif %}
 	
+	// Pulsar para proventos na data
     if ($('#pulsate_acao_hoje').length) {
         $('#pulsate_acao_hoje').pulsate({
             color: "#D91E18",
@@ -562,6 +569,34 @@ $( document ).ready(function() {
             speed: 1000
         });
     }
+    
+    // Animar barras de progresso
+    if (!window.requestAnimationFrame) {
+	    window.requestAnimationFrame = function(fn){
+	        setTimeout(fn,16.66);
+	    }
+	}
+	function fill() {
+	  var start = null;
+	  function timer(timestamp) {
+		if (!start) start = timestamp + 50;
+		var progress = Math.max(timestamp - start, 0);
+		elem = $('.progress-bar:not(.progress-done)').first();
+		var limit = Math.min(100, parseFloat(elem.attr('aria-valuenow'))); 
+	    elem.css('width', Math.min(progress*limit/5, limit) + '%'); 
+	    if (parseFloat(elem.css('width')) >= limit) {
+	      elem.css('width', limit + '%').addClass('progress-done');
+	      start = null;
+	    }
+	    if ($('.progress-bar:not(.progress-done)').length > 0) {
+	    	requestAnimationFrame(timer);
+	    } else {
+	    	$('.progress-done').removeClass('progress-done');
+	    	requestAnimationFrame(function(){});
+	    }
+	  }
+	  requestAnimationFrame(timer);
+	}
 });
 </script>
 {% endblock %}
