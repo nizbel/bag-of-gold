@@ -76,7 +76,7 @@ class OperacaoLetraCambio (models.Model):
     investidor = models.ForeignKey('bagogold.Investidor')
     
     def __unicode__(self):
-        return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.lc, self.data)
+        return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.lc, self.data.strftime('%d/%m/%Y'))
     
     def carencia(self):
         if not hasattr(self, 'guarda_carencia'):

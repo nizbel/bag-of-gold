@@ -90,7 +90,7 @@ class OperacaoCDB_RDB (models.Model):
     investidor = models.ForeignKey('bagogold.Investidor', related_name='op_cdb_rdb_novo')
     
     def __unicode__(self):
-        return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.cdb_rdb, self.data)
+        return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.cdb_rdb, self.data.strftime('%d/%m/%Y'))
     
     def carencia(self):
         if not hasattr(self, 'guarda_carencia'):
