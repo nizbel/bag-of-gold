@@ -35,10 +35,10 @@
 						<div class="row">
 							{% for investimento in investimentos_atuais %}
 							<div class="col-md-2">
-								<div class="mt-overlay-6" style="background: none;">
+								<div class="mt-overlay-6" style="background: none; width: 75%;">
 									<img src={% static "assets/global/img/bag-logo-overlay.png" %} alt="{{investimento.descricao}}">
-									<div class="mt-overlay">
-										<h2 class="font-dark"><strong>{{investimento.descricao}}<br/>R$<span data-counter="counterup" data-value="{{investimento.valor}}">0</span></strong></h2>
+									<div class="mt-overlay" style="padding: 50px 0;">
+										<h2 class="font-dark"><strong>{{investimento.descricao}}<br/>R$ <span data-counter="counterup" data-value="{{investimento.valor}}">0</span></strong></h2>
 										<a class="mt-info uppercase btn dark btn-outline" href="{% url investimento.link %}">Detalhar</a>
 									</div>
 								</div>
@@ -54,85 +54,99 @@
 			</div>
 			<!-- END Portlet PORTLET-->
 		</div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="row">
                 <div class="col-md-12">
                     <!-- BEGIN Portlet PORTLET-->
                     <div class="portlet box yellow-crusta">
                         <div class="portlet-title">
                             <div class="caption">
-                                <i class="fa fa-money"></i>Rendimento médio atual</div>
-                            <div class="tools">
-                                <a href="javascript:;" class="collapse"></a>
-                            </div>
-                        </div>
-                        <div class="portlet-body" id="rendimento_medio" style="min-height: 50px;">
-                            {% if not request.user.is_authenticated %}
-                            <div class="row">
-                                <div class="col-md-12">
-                                    <span>Não há dados</span>
-                                </div>
-                                <div class="col-md-12 text-center"><a href="{% url 'inicio:calcular_renda_futura' %}">Cálculos de renda média</a></div>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <!-- END Portlet PORTLET-->
-                </div>
-                <div class="col-md-12">
-                    <!-- BEGIN Portlet PORTLET-->
-                    <div class="portlet box yellow-crusta">
-                        <div class="portlet-title">
-                            <div class="caption">
-                                <i class="fa fa-clock-o"></i>Últimas operações</div>
+                                <i class="fa fa-money"></i>Rendimento</div>
                             <div class="tools">
                                 <a href="javascript:;" class="collapse"></a>
                             </div>
                         </div>
                         <div class="portlet-body">
-                            <div class="list-group">
-                                {% for operacao in ultimas_operacoes %}
-                                <a href="#" class="list-group-item">{{operacao}}</a>
-                                {% empty %}
-                                <a href="#" class="list-group-item">Não há operações</a>
-                                {% endfor %}
-                                {% comment %}
-                                {% if ultimas_operacoes %}
-                                <div class="row">
-                                    <div class="col-md-12 text-center"><a href="{% url 'inicio:listar_operacoes' %}">Ver todas as operações</a></div>
-                                </div>
-                                {% endif %}
-                                {% endcomment %}
+                        	<div class="row" id="rendimento_medio" style="min-height: 50px;">
+	                            {% if not request.user.is_authenticated %}
+	                            <div class="row">
+	                                <div class="col-md-12">
+	                                    <span>Não há dados</span>
+	                                </div>
+	                                <div class="col-md-12 text-center"><a href="{% url 'inicio:calcular_renda_futura' %}">Cálculos de renda média</a></div>
+	                            </div>
+	                            {% endif %}
                             </div>
+                            <hr>
+                            <div class="row" id="acumulado_mensal" style="min-height: 50px;">
+                            	{% if not request.user.is_authenticated %}
+			                    <div class="row">
+			                        <div class="col-md-12">
+			                            <span>Não há dados</span>
+			                        </div>
+			                    </div>
+			                    {% endif %}
+		                    </div>
                         </div>
                     </div>
                     <!-- END Portlet PORTLET-->
                 </div>
+                {% comment %}
+		        <div class="col-md-12">
+		            <!-- BEGIN Portlet PORTLET-->
+		            <div class="portlet box yellow-crusta">
+		                <div class="portlet-title">
+		                    <div class="caption">
+		                        <i class="fa fa-money"></i>Acum. mensal</div>
+		                    <div class="tools">
+		                        <a href="javascript:;" class="collapse"></a>
+		                    </div>
+		                </div>
+		                <div class="portlet-body text-center" id="acumulado_mensal" style="min-height: 50px;">
+		                    {% if not request.user.is_authenticated %}
+		                    <div class="row">
+		                        <div class="col-md-12">
+		                            <span>Não há dados</span>
+		                        </div>
+		                    </div>
+		                    {% endif %}
+		                </div>
+		            </div>
+		            <!-- END Portlet PORTLET-->
+		        </div>
+		        {% endcomment %}
             </div>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
             <!-- BEGIN Portlet PORTLET-->
             <div class="portlet box yellow-crusta">
                 <div class="portlet-title">
                     <div class="caption">
-                        <i class="fa fa-money"></i>Acum. mensal</div>
+                        <i class="fa fa-clock-o"></i>Últimas operações</div>
                     <div class="tools">
                         <a href="javascript:;" class="collapse"></a>
                     </div>
                 </div>
-                <div class="portlet-body text-center" id="acumulado_mensal" style="min-height: 50px;">
-                    {% if not request.user.is_authenticated %}
-                    <div class="row">
-                        <div class="col-md-12">
-                            <span>Não há dados</span>
+                <div class="portlet-body">
+                    <div class="list-group">
+                        {% for operacao in ultimas_operacoes %}
+                        <a href="#" class="list-group-item">{{operacao}}</a>
+                        {% empty %}
+                        <a href="#" class="list-group-item">Não há operações</a>
+                        {% endfor %}
+                        {% comment %}
+                        {% if ultimas_operacoes %}
+                        <div class="row">
+                            <div class="col-md-12 text-center"><a href="{% url 'inicio:listar_operacoes' %}">Ver todas as operações</a></div>
                         </div>
+                        {% endif %}
+                        {% endcomment %}
                     </div>
-                    {% endif %}
                 </div>
             </div>
             <!-- END Portlet PORTLET-->
         </div>
-		<div class="col-md-6">
+		<div class="col-md-5">
 			<!-- BEGIN Portlet PORTLET-->
 			<div class="portlet box yellow-crusta">
 				<div class="portlet-title">
@@ -323,17 +337,19 @@
 			</div>
 			<!-- END Portlet PORTLET-->
 		</div>
+	</div>
+	<div class="row">
 		<div class="col-md-4">
 			<!-- BEGIN Portlet PORTLET-->
 			<div class="portlet box yellow-crusta">
 			    <div class="portlet-title">
 			        <div class="caption">
-			            <i class="fa fa-clock-o"></i>Próx. vencimentos renda fixa</div>
+			            <i class="fa fa-clock-o"></i>Próximos vencimentos renda fixa</div>
 			        <div class="tools">
 			            <a href="javascript:;" class="collapse"></a>
 			        </div>
 			    </div>
-			    <div class="portlet-body text-center" id="proximos_vencimentos">
+			    <div class="portlet-body text-center" id="proximos_vencimentos" style="min-height: 50px;">
 			    	{% if not request.user.is_authenticated %}
                     <div class="row">
                         <div class="col-md-12">
@@ -345,7 +361,7 @@
 			</div>
 			<!-- END Portlet PORTLET-->
 		</div>
-		<div class="col-md-12">
+		<div class="col-md-8">
 			<div class="portlet box yellow-crusta">
 				<div class="portlet-title">
 					<div class="caption">
@@ -381,7 +397,6 @@
 <script type="text/javascript">
 $( document ).ready(function() {
 	{% if request.user.is_authenticated %}
-	{% comment %}
 	// Gráfico renda fixa
 	App.blockUI({
         target: '#portlet_body_graf_rendimentos_mensal',
@@ -519,7 +534,6 @@ $( document ).ready(function() {
             console.log(xhr.status + ": " + xhr.responseText);
         }
     });
-    {% endcomment %}
     
     // Próximos vencimentos
     App.blockUI({

@@ -1,28 +1,28 @@
-<div class="list-group" style="max-height: 380px; overflow-y: scroll;">
+<div class="list-group" {% comment %}style="max-height: 380px; overflow-y: scroll;"{% endcomment %}>
     {% for prox_vencimento in prox_vencimentos %}
-    <a href="{{prox_vencimento.link}}" class="list-group-item col-md-12">
-        <span class="col-md-9 text-left">
+    <a href="{{prox_vencimento.link}}" class="list-group-item col-xs-12 col-md-12">
+        <span class="col-xs-12 col-md-10 no-space text-left">
         	<span class="label label-sm bg-grey-gallery margin-right-10">
         		<strong>{{prox_vencimento.tipo_investimento}}</strong>
         	</span>
-        	{{prox_vencimento.nome}}
+        	{{prox_vencimento.nome|truncatechars:40}}
     	</span>
-        <span class="col-md-3 text-right"><strong>{{prox_vencimento.data_vencimento|date:'d/m/Y'}}</strong></span>
+        <span class="col-xs-12 col-md-2 no-space text-right"><strong>{{prox_vencimento.data_vencimento|date:'d/m/Y'}}</strong></span>
         
-        <span class="col-md-4 text-right"><strong>R$ {{prox_vencimento.quantidade|floatformat:2}}</strong></span>
-        <span class="col-md-4 no-space">
+        <span class="hidden-480 col-md-4 text-right"><strong>R$ {{prox_vencimento.quantidade|floatformat:2}}</strong></span>
+        <span class="hidden-480 col-md-4 no-space">
         	<div class="progress progress-striped active" style="background: rgba(68, 77, 88, 1); height: 10px; width: 100%; margin-bottom: 0px; margin-top: 5px;">
                 <div id="progresso_{{prox_vencimento.tipo_investimento}}_{{prox_vencimento.id}}" class="progress-bar" role="progressbar" aria-valuenow="{{prox_vencimento.decorrido_percentual|stringformat:'s'}}"
                 aria-valuemin="0" aria-valuemax="100" style="width: 0%; background-color: {% if prox_vencimento.decorrido_percentual >= 100 %}#f3c200{% else %}#cc8718{% endif %};">
                 </div>
             </div>
         </span>
-        <span class="col-md-4 text-left"><strong>R$ {{prox_vencimento.valor_vencimento|floatformat:2}}</strong></span>
+        <span class="col-xs-12 col-md-4 text-left"><strong>R$ {{prox_vencimento.valor_vencimento|floatformat:2}}</strong></span>
     </a>
     {% empty %}
     <a href="javascript:;" class="list-group-item">Não há vencimentos</a>
     {% endfor %}
 </div>
 <div class="row">
-	<div class="col-md-12 text-center"><a href="{% url 'inicio:calendario' %}">Ver calendário</a></div>
+	<div class="col-md-12 margin-top-10 text-center"><a href="{% url 'inicio:calendario' %}">Ir para calendário</a></div>
 </div>
