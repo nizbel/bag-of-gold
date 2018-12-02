@@ -14,6 +14,12 @@
 {% endif %}
 {% endblock %}
 
+{% block extra_head %}
+<style>
+@media (min-width: 991px) {.col-md-especial {width: 9.08%; float: left; position: relative; min-height: 1px; padding-left: 0; padding-right: 0;}}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="portlet-body">
 	<div class="row">
@@ -32,12 +38,12 @@
 				</div>
 				<div class="portlet-body">
 					<div class="mt-element-overlay">
-						<div class="row">
+						<div class="row" style="padding: 0 8px;">
 							{% for investimento in investimentos_atuais %}
-							<div class="col-md-2">
-								<div class="mt-overlay-6" style="background: none; width: 75%;">
+							<div class="col-xs-12 col-md-especial">
+								<div class="mt-overlay-6" style="background: none;">
 									<img src={% static "assets/global/img/bag-logo-overlay.png" %} alt="{{investimento.descricao}}">
-									<div class="mt-overlay" style="padding: 50px 0;">
+									<div class="mt-overlay" style="padding: 10px 0;">
 										<h2 class="font-dark"><strong>{{investimento.descricao}}<br/>R$ <span data-counter="counterup" data-value="{{investimento.valor}}">0</span></strong></h2>
 										<a class="mt-info uppercase btn dark btn-outline" href="{% url investimento.link %}">Detalhar</a>
 									</div>
@@ -396,6 +402,13 @@
 {% endif %}
 <script type="text/javascript">
 $( document ).ready(function() {
+	$('.mt-overlay-6').hover(function() {
+		$('.mt-overlay-6').not(this).find('.mt-overlay').css({'opacity': 0.5}).find('h2').css({'font-size': '16px'});
+	}, function() {
+		$('.mt-overlay-6').not(this).find('.mt-overlay').css({'opacity': 1}).find('h2').css({'font-size': '17px'});
+		//$('.mt-overlay-6').not(this).find('.mt-overlay').animate({'opacity': 1}, 500).find('h2').animate({'font-size': '17px'}, 500);
+	});
+	
 	{% if request.user.is_authenticated %}
 	// Gráfico renda fixa
 	App.blockUI({
