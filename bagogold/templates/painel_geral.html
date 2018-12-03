@@ -97,30 +97,6 @@
                     </div>
                     <!-- END Portlet PORTLET-->
                 </div>
-                {% comment %}
-		        <div class="col-md-12">
-		            <!-- BEGIN Portlet PORTLET-->
-		            <div class="portlet box yellow-crusta">
-		                <div class="portlet-title">
-		                    <div class="caption">
-		                        <i class="fa fa-money"></i>Acum. mensal</div>
-		                    <div class="tools">
-		                        <a href="javascript:;" class="collapse"></a>
-		                    </div>
-		                </div>
-		                <div class="portlet-body text-center" id="acumulado_mensal" style="min-height: 50px;">
-		                    {% if not request.user.is_authenticated %}
-		                    <div class="row">
-		                        <div class="col-md-12">
-		                            <span>Não há dados</span>
-		                        </div>
-		                    </div>
-		                    {% endif %}
-		                </div>
-		            </div>
-		            <!-- END Portlet PORTLET-->
-		        </div>
-		        {% endcomment %}
             </div>
         </div>
         <div class="col-md-4">
@@ -136,9 +112,9 @@
                 <div class="portlet-body">
                     <div class="list-group">
                         {% for operacao in ultimas_operacoes %}
-                        <a href="#" class="list-group-item">{{operacao}}</a>
+                        <a href="{{operacao.link}}" class="list-group-item">{{operacao}}</a>
                         {% empty %}
-                        <a href="#" class="list-group-item">Não há operações</a>
+                        <a href="javascript:;" class="list-group-item">Não há operações cadastradas</a>
                         {% endfor %}
                         {% comment %}
                         {% if ultimas_operacoes %}
