@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
-from django.db import models
 import datetime
- 
+
+from django.db import models
+from django.urls.base import reverse
+
+
 class Titulo (models.Model):
     TIPO_OFICIAL_LETRA_TESOURO = 'LTN'
     TIPO_OFICIAL_SELIC = 'LFT'
@@ -136,6 +139,10 @@ class OperacaoTitulo (models.Model):
     
     def data_vencimento(self):
         return self.titulo.data_vencimento
+    
+    @property
+    def link(self):
+        return reverse('tesouro_direto:editar_operacao_td', kwargs={'operacao_id': self.id})
     
 class HistoricoTitulo (models.Model):
     titulo = models.ForeignKey('Titulo', unique_for_date='data')
