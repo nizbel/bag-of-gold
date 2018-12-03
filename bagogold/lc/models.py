@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
+import datetime
 from decimal import Decimal
+
 from django.core.validators import MinValueValidator
 from django.db import models
-import datetime
+from django.urls.base import reverse
+
+from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
+
 
 class LetraCambio (models.Model):
     LC_PREFIXADO = 1
@@ -113,6 +117,10 @@ class OperacaoLetraCambio (models.Model):
         while data_vencimento.weekday() > 4 or verificar_feriado_bovespa(data_vencimento):
             data_vencimento += datetime.timedelta(days=1)
         return data_vencimento
+    
+    @property
+    def link(self):
+        return reverse('lcambio:editar_operacao_lc', kwargs={'operacao_id': self.id})
     
     def operacao_compra_relacionada(self):
         if self.tipo_operacao == 'V':

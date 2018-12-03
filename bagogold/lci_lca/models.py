@@ -4,6 +4,7 @@ from decimal import Decimal
 
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.urls.base import reverse
 
 from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
 
@@ -94,6 +95,10 @@ class OperacaoLetraCredito (models.Model):
         
     def data_carencia(self):
         return self.data + datetime.timedelta(days=self.carencia())
+    
+    @property
+    def link(self):
+        return reverse('lci_lca:editar_operacao_lci_lca', kwargs={'operacao_id': self.id})
     
     def data_inicial(self):
         if self.tipo_operacao == 'V':
