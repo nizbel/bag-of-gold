@@ -9,7 +9,7 @@
     	</span>
         <span class="col-xs-12 col-md-2 no-space text-right"><strong>{{prox_vencimento.data_vencimento|date:'d/m/Y'}}</strong></span>
         
-        <span class="hidden-480 col-md-4 text-right"><strong>R$ {{prox_vencimento.quantidade|floatformat:2}}</strong></span>
+        <span class="hidden-480 col-md-4 text-right"><strong>R$ {{prox_vencimento.valor_inicial|floatformat:2}}</strong></span>
         <span class="hidden-480 col-md-4 no-space">
         	<div class="progress progress-striped active" style="background: rgba(68, 77, 88, 1); height: 10px; width: 100%; margin-bottom: 0px; margin-top: 5px;">
                 <div id="progresso_{{prox_vencimento.tipo_investimento}}_{{prox_vencimento.id}}" class="progress-bar" role="progressbar" aria-valuenow="{{prox_vencimento.decorrido_percentual|stringformat:'s'}}"
