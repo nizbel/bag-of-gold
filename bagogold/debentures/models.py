@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.utils.misc import \
-    formatar_zeros_a_direita_apos_2_casas_decimais
 from decimal import Decimal
+
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.urls.base import reverse
+
+from bagogold.bagogold.utils.misc import \
+    formatar_zeros_a_direita_apos_2_casas_decimais
+
 
 class Debenture (models.Model):
     PREFIXADO = 1
@@ -192,6 +196,10 @@ class OperacaoDebenture (models.Model):
     
     def data_vencimento(self):
         return self.debenture.data_vencimento
+    
+    @property
+    def link(self):
+        return reverse('debentures:editar_operacao_debenture', kwargs={'operacao_id': self.id})
     
 class HistoricoValorDebenture (models.Model):
     debenture = models.ForeignKey('Debenture')
