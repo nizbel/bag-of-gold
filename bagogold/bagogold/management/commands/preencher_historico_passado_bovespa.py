@@ -49,4 +49,7 @@ class Command(BaseCommand):
                 t.join()
             contador += incremento
         
-            
+        # TODO Novo fluxo
+        # Listar documentos no S3
+        # Para cada documento, lançar um try atomic com a leitura de série histórica
+        # Ao final, sem erro, apagar documento no S3
