@@ -46,7 +46,7 @@ class Command(BaseCommand):
                     
                     # Verificar se já foi lido
                     if documento.leitura_realizada:
-                        raise ValueError('Leitura para o dia %s já realizada' % (data_pesquisa.strftime('%d/%m/%Y')))
+                        return
                     else:
                         # Verificar se arquivo existe na AWS
                         nome_arquivo = documento.linkdocumentocadastro.url.split('/')[-1]
