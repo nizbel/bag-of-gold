@@ -1,7 +1,6 @@
 # * 10-18 * * 1-5 docker run --add-host=database:18.221.194.175 nizbel/bagofgold:cron python manage.py preencher_valores_diarios_acao_fii 0
 # * 10-18 * * 1-5 docker run --add-host=database:18.221.194.175 nizbel/bagofgold:cron python manage.py preencher_valores_diarios_acao_fii 30
 59 8,22 * * 1-5 docker run --add-host=database:18.221.194.175 nizbel/bagofgold:cron python manage.py apagar_valores_diarios
-# 20 9,23 * * 1-5 docker run --add-host=database:18.221.194.175 nizbel/bagofgold:cron python manage.py preencher_historico
 20 9,23 * * 1-5 docker run --add-host=database:18.221.194.175 nizbel/bagofgold:cron python manage.py preencher_historico_acao_fii
 */15 9-18 * * 1-5 docker run --add-host=database:18.221.194.175 nizbel/bagofgold:cron python manage.py preencher_valores_diarios_td
 50 8,20 * * 1-5 docker run --add-host=database:18.221.194.175 nizbel/bagofgold:cron python manage.py  preencher_historico_ano_atual_td
