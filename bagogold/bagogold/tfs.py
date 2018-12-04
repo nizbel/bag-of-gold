@@ -8,7 +8,6 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from threading import Thread
 from urllib2 import Request, urlopen
-from yahoo_finance import Share
 import datetime
 import pyexcel
 import simplejson
