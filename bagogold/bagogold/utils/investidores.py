@@ -65,6 +65,7 @@ def is_superuser(user):
 def atualizar_checkpoints(investidor):
     """
     Atualiza os checkpoints para um investidor, buscando os últimos checkpoints registrados
+    
     Parâmetros: Investidor
     """
     # FII
@@ -201,6 +202,7 @@ def atualizar_checkpoints(investidor):
 def buscar_acoes_investidor_na_data(investidor, data=datetime.date.today(), destinacao=''):
     """
     Busca as ações que o investidor possui na da especificada
+    
     Parâmetros: Investidor
                 Data da posição
                 DestinaçãO (Buy and Hold, Trading ou ambos)
@@ -226,6 +228,7 @@ def buscar_acoes_investidor_na_data(investidor, data=datetime.date.today(), dest
 def buscar_ultimas_operacoes(investidor, quantidade_operacoes):
     """
     Busca as últimas operações feitas pelo investidor, ordenadas por data decrescente
+    
     Parâmetros: Investidor
                 Quantidade de operações a ser retornada
     Retorno: Lista com as operações ordenadas por data
@@ -253,7 +256,6 @@ def buscar_ultimas_operacoes(investidor, quantidade_operacoes):
     return ultimas_operacoes
 
 def buscar_operacoes_no_periodo(investidor, data_inicial, data_final):
-    from bagogold.cdb_rdb.models import OperacaoCDB_RDB
     """
     Busca as operações feitas pelo investidor, ordenadas por data crescente, no período especificado
     
@@ -285,6 +287,7 @@ def buscar_operacoes_no_periodo(investidor, data_inicial, data_final):
 def buscar_totais_atuais_investimentos(investidor, data_atual=datetime.date.today()):
     """
     Traz os totais de investimento do investidor em data especificada
+    
     Parâmetros: Investidor
                 Data
     Retorno: Totais atuais {investimento: total}
@@ -394,6 +397,7 @@ def buscar_totais_atuais_investimentos(investidor, data_atual=datetime.date.toda
 def buscar_proventos_a_receber(investidor, fonte_provento=''):
     """
     Retorna proventos que o investidor irá receber futuramente, já passada a data EX
+    
     Parâmetros: Investidor
                 Fonte do provento ('F' = FII, 'A' = Ações, '' = Ambos)
     Retorno:    Lista de proventos
@@ -438,6 +442,7 @@ def buscar_proventos_a_receber(investidor, fonte_provento=''):
 def buscar_proventos_a_receber_data_ex_futura(investidor):
     """
     Retorna proventos que o investidor irá receber futuramente, não passada a data EX
+    
     Parâmetros: Investidor
     Retorno:    Lista de proventos
     """
