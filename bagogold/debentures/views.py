@@ -56,10 +56,25 @@ def detalhar_debenture(request, debenture_id):
         operacoes = OperacaoDebenture.objects.filter(debenture=debenture, investidor=request.user.investidor)
     else:
         operacoes = list()
-        
-    amortizacoes = AmortizacaoDebenture.objects.filter(debenture=debenture)
-    juros = JurosDebenture.objects.filter(debenture=debenture)
-    premios = PremioDebenture.objects.filter(debenture=debenture)
+    
+    lista_historico = HistoricoValorDebenture.objects.filter(debenture=debenture).order_by('data')
+    
+    amortizacoes = [{'data': historico.data, 'valor': historico.valor_nominal} for historico in lista_historico]
+    for indice, amortizacao in enumerate(amortizacoes):
+        # Marcar primeira para remoção
+        if indice == 0:
+            amortizacao['remover'] = True
+        # Se valor não foi alterado. não houve amortização
+        elif amortizacao['valor'] == amortizacoes[indice-1]['valor']:
+            amortizacao['remover'] = True
+        # Guardar valor amortização
+        else:
+            amortizacao['novo_valor'] = amortizacoes[indice-1]['valor'] - amortizacao['valor']
+            amortizacao['remover'] = False
+    amortizacoes = [{'data': amortizacao['data'], 'valor': amortizacao['novo_valor']} for amortizacao in amortizacoes if not amortizacao['remover']]
+    
+    juros = [{'data': historico.data, 'valor': historico.juros} for historico in lista_historico]
+    premios = [{'data': historico.data, 'valor': historico.premio} for historico in lista_historico if historico.premio != 0]
     
     return TemplateResponse(request, 'debentures/detalhar_debenture.html', {'debenture': debenture, 'operacoes': operacoes,
                                                                             'juros': juros, 'amortizacoes': amortizacoes, 'premios': premios})
