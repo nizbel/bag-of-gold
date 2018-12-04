@@ -16,7 +16,7 @@
 
 {% block extra_head %}
 <style>
-@media (min-width: 991px) {.col-md-especial {width: 9.08%; float: left; position: relative; min-height: 1px; padding-left: 0; padding-right: 0;}}
+@media (min-width: 1400px) {.col-md-especial {width: 9.08%; float: left; position: relative; min-height: 1px; padding-left: 0; padding-right: 0;}}
 </style>
 {% endblock %}
 
@@ -40,7 +40,7 @@
 					<div class="mt-element-overlay">
 						<div class="row" style="padding: 0 8px;">
 							{% for investimento in investimentos_atuais %}
-							<div class="col-xs-12 col-md-especial">
+							<div class="col-xs-12 col-md-2 col-md-especial">
 								<div class="mt-overlay-6" style="background: none;">
 									<img src={% static "assets/global/img/bag-logo-overlay.png" %} alt="{{investimento.descricao}}">
 									<div class="mt-overlay" style="padding: 10px 0;">
@@ -141,176 +141,152 @@
 				<div class="portlet-body">
 					<div class="row">
 						<div class="mt-element-list col-md-6">
-							<div class="mt-list-head list-simple ext-1 font-white bg-grey-gallery">
-								<div class="list-head-title-container">
-									<div class="list-date">{% now "d \d\e N" %}</div>
-									<h5 class="list-title">Ações</h5>
-								</div>
-							</div>
 							<div class="mt-list-container list-simple ext-1 group">
 								{% if proventos_acoes_recebidos_hoje %}
 								<a class="list-toggle-container" data-toggle="collapse" href="#acao_hoje" aria-expanded="false">
-									<div id="pulsate_acao_hoje" class="list-toggle uppercase"> Recebidos hoje
+									<div id="pulsate_acao_hoje" class="list-toggle uppercase bg-yellow-crusta"> Ações - Recebidos hoje
+										<span class="badge badge-default pull-right bg-white font-grey-gallery bold">{{proventos_acoes_recebidos_hoje|length}}</span>
 									</div>
 								</a>
 								<div class="panel-collapse collapse in" id="acao_hoje">
-									<ul>
-										{% for provento in proventos_acoes_recebidos_hoje %}
-										<li class="mt-list-item">
-											<div class="list-datetime">{{provento.data_pagamento|date:"d \d\e N"}}</div>
-											<div class="list-item-content">
-												<h3 class="uppercase">
-													<a href="{% url 'acoes:geral:detalhar_provento_acao' provento.id %}">{{provento.acao.ticker}}</a>
-													<br/>R$ {{provento.quantia_a_receber}}  
-												</h3>
-											</div>
-										</li>
-										{% endfor %}
-									</ul>
+									{% if proventos_acoes_recebidos_hoje %}
+									<div class="panel-body">
+										<div class="list-group no-space">
+											{% for provento in proventos_acoes_recebidos_hoje %}
+											<a href="{% url 'acoes:geral:detalhar_provento_acao' provento.id %}" class="list-group-item">
+												<div class="row">
+													<span class="col-md-4">{{provento.acao.ticker}}</span>
+													<span class="col-md-5">R$ {{provento.quantia_a_receber}}</span>
+													<span class="col-md-3 text-right">{{provento.data_ex|date:"d/m"}}
+												</div>
+											</a>
+											{% endfor %}
+										</div>
+									</div>
+									{% endif %}
 								</div>
 								{% endif %}
 								<a class="list-toggle-container" data-toggle="collapse" href="#acao_ex_passado" aria-expanded="false">
-									<div class="list-toggle uppercase"> Passada data EX
+									<div class="list-toggle uppercase bg-yellow-crusta"> Ações - Passada data EX
 										{% if proventos_acoes_a_receber %}
 										<span class="badge badge-default pull-right bg-white font-grey-gallery bold">{{proventos_acoes_a_receber|length}}</span>
 										{% endif %}
 									</div>
 								</a>
 								<div class="panel-collapse collapse in" id="acao_ex_passado">
-									<ul>
-										{% for provento in proventos_acoes_a_receber %}
-										<li class="mt-list-item">
-											<div class="list-datetime">{{provento.data_pagamento|date:"d \d\e N"}}</div>
-											<div class="list-item-content">
-												<h3 class="uppercase">
-													<a href="{% url 'acoes:geral:detalhar_provento_acao' provento.id %}">{{provento.acao.ticker}}</a>
-													<br/>R$ {{provento.quantia_a_receber}}	
-												</h3>
-											</div>
-										</li>
-										{% empty %}
-										<li class="mt-list-item">
-											<div class="list-item-content">
-												<h3 class="uppercase">Sem proventos</h3>
-											</div>
-										</li>
-										{% endfor %}
-									</ul>
+									{% if proventos_acoes_a_receber %}
+									<div class="panel-body">
+										<div class="list-group no-space">
+											{% for provento in proventos_acoes_a_receber %}
+											<a href="{% url 'acoes:geral:detalhar_provento_acao' provento.id %}" class="list-group-item">
+												<div class="row">
+													<span class="col-md-4">{{provento.acao.ticker}}</span>
+													<span class="col-md-5">R$ {{provento.quantia_a_receber}}</span>
+													<span class="col-md-3 text-right">{{provento.data_ex|date:"d/m"}}
+												</div>
+											</a>
+											{% endfor %}
+										</div>
+									</div>
+									{% endif %}
 								</div>
 								<a class="list-toggle-container" data-toggle="collapse" href="#acao_ex_futuro" aria-expanded="false">
-									<div class="list-toggle uppercase"> Data EX por vir
+									<div class="list-toggle uppercase bg-yellow-crusta"> Ações - Data EX por vir
 										{% if proventos_acoes_futuros %}
 										<span class="badge badge-default pull-right bg-white font-grey-gallery bold">{{proventos_acoes_futuros|length}}</span>
 										{% endif %}
 									</div>
 								</a>
 								<div class="panel-collapse collapse" id="acao_ex_futuro">
-									<ul>
-										{% for provento in proventos_acoes_futuros %}
-										<li class="mt-list-item">
-											<div class="list-datetime">{{provento.data_ex|date:"d \d\e N"}}</div>
-											<div class="list-item-content">
-												<h3 class="uppercase">
-													<a href="{% url 'acoes:geral:detalhar_provento_acao' provento.id %}">{{provento.acao.ticker}}</a>
-													<br/>R$ {{provento.quantia_a_receber}}
-												</h3>
-											</div>
-										</li>
-										{% empty %}
-										<li class="mt-list-item">
-											<div class="list-item-content">
-												<h3 class="uppercase">Sem proventos</h3>
-											</div>
-										</li>
-										{% endfor %}
-									</ul>
+									{% if proventos_acoes_futuros %}
+									<div class="panel-body">
+										<div class="list-group no-space">
+											{% for provento in proventos_acoes_futuros %}
+											<a href="{% url 'acoes:geral:detalhar_provento_acao' provento.id %}" class="list-group-item">
+												<div class="row">
+													<span class="col-md-4">{{provento.acao.ticker}}</span>
+													<span class="col-md-5">R$ {{provento.quantia_a_receber}}</span>
+													<span class="col-md-3 text-right">{{provento.data_ex|date:"d/m"}}
+												</div>
+											</a>
+											{% endfor %}
+										</div>
+									</div>
+									{% endif %}
 								</div>
 							</div>
 						</div>
 						<div class="mt-element-list col-md-6">
-							<div class="mt-list-head list-simple ext-1 font-white bg-grey-gallery">
-								<div class="list-head-title-container">
-									<div class="list-date">{% now "d \d\e N" %}</div>
-									<h5 class="list-title">FII</h5>
-								</div>
-							</div>
 							<div class="mt-list-container list-simple ext-1 group">
 								{% if proventos_fiis_recebidos_hoje %}
 								<a class="list-toggle-container" data-toggle="collapse" href="#fii_hoje" aria-expanded="false">
-									<div id="pulsate_fii_hoje" class="list-toggle uppercase"> Recebidos hoje
+									<div id="pulsate_fii_hoje" class="list-toggle uppercase bg-yellow-crusta"> FII - Recebidos hoje
+										<span class="badge badge-default pull-right bg-white font-grey-gallery bold">{{proventos_fiis_recebidos_hoje|length}}</span>
 									</div>
 								</a>
 								<div class="panel-collapse collapse in" id="fii_hoje">
-									<ul>
-										{% for provento in proventos_fiis_recebidos_hoje %}
-										<li class="mt-list-item">
-											<div class="list-datetime">{{provento.data_pagamento|date:"d \d\e N"}}</div>
-											<div class="list-item-content">
-												<h3 class="uppercase">
-													<a href="{% url 'fii:detalhar_provento_fii' provento.id %}">{{provento.fii.ticker}}</a>
-													<br/>R$ {{provento.quantia_a_receber}}  
-												</h3>
-											</div>
-										</li>
-										{% endfor %}
-									</ul>
+									<div class="panel-body">
+										<div class="list-group no-space">
+											{% for provento in proventos_fiis_recebidos_hoje %}
+											<a href="{% url 'fii:detalhar_provento_fii' provento.id %}" class="list-group-item">
+												<div class="row">
+													<span class="col-md-4">{{provento.fii.ticker}}</span>
+													<span class="col-md-5">R$ {{provento.quantia_a_receber}}</span>
+													<span class="col-md-3 text-right">{{provento.data_ex|date:"d/m"}}
+												</div>
+											</a>
+											{% endfor %}
+										</div>
+									</div>
 								</div>
 								{% endif %}
 								<a class="list-toggle-container" data-toggle="collapse" href="#fii_ex_passado" aria-expanded="false">
-									<div class="list-toggle uppercase"> Passada data EX
+									<div class="list-toggle uppercase bg-yellow-crusta"> FII - Passada data EX
 										{% if proventos_fiis_a_receber %}
 										<span class="badge badge-default pull-right bg-white font-grey-gallery bold">{{proventos_fiis_a_receber|length}}</span>
 										{% endif %}
 									</div>
 								</a>
 								<div class="panel-collapse collapse in" id="fii_ex_passado">
-									<ul>
-										{% for provento in proventos_fiis_a_receber %}
-										<li class="mt-list-item">
-											<div class="list-datetime">{{provento.data_pagamento|date:"d \d\e N"}}</div>
-											<div class="list-item-content">
-												<h3 class="uppercase">
-													<a href="{% url 'fii:detalhar_provento_fii' provento.id %}">{{provento.fii.ticker}}</a>
-													<br/>R$ {{provento.quantia_a_receber}}
-												</h3>
-											</div>
-										</li>
-										{% empty %}
-										<li class="mt-list-item">
-											<div class="list-item-content">
-												<h3 class="uppercase">Sem proventos</h3>
-											</div>
-										</li>
-										{% endfor %}
-									</ul>
+									{% if proventos_fiis_a_receber %}
+									<div class="panel-body">
+										<div class="list-group no-space">
+											{% for provento in proventos_fiis_a_receber %}
+											<a href="{% url 'fii:detalhar_provento_fii' provento.id %}" class="list-group-item">
+												<div class="row">
+													<span class="col-md-4">{{provento.fii.ticker}}</span>
+													<span class="col-md-5">R$ {{provento.quantia_a_receber}}</span>
+													<span class="col-md-3 text-right">{{provento.data_ex|date:"d/m"}}
+												</div>
+											</a>
+											{% endfor %}
+										</div>
+									</div>
+									{% endif %}
 								</div>
 								<a class="list-toggle-container" data-toggle="collapse" href="#fii_ex_futuro" aria-expanded="false">
-									<div class="list-toggle uppercase"> Data EX por vir
+									<div class="list-toggle uppercase bg-yellow-crusta"> FII - Data EX por vir
 										{% if proventos_fiis_futuros %}
 										<span class="badge badge-default pull-right bg-white font-grey-gallery bold">{{proventos_fiis_futuros|length}}</span>
 										{% endif %}
 									</div>
 								</a>
 								<div class="panel-collapse collapse" id="fii_ex_futuro">
-									<ul>
-										{% for provento in proventos_fiis_futuros %}
-										<li class="mt-list-item">
-											<div class="list-datetime">{{provento.data_ex|date:"d \d\e N"}}</div>
-											<div class="list-item-content">
-												<h3 class="uppercase">
-													<a href="{% url 'fii:detalhar_provento_fii' provento.id %}">{{provento.fii.ticker}}</a>
-													<br/>R$ {{provento.quantia_a_receber}}
-												</h3>
-											</div>
-										</li>
-										{% empty %}
-										<li class="mt-list-item">
-											<div class="list-item-content">
-												<h3 class="uppercase">Sem proventos</h3>
-											</div>
-										</li>
-										{% endfor %}
-									</ul>
+									{% if proventos_fiis_futuros %}
+									<div class="panel-body">
+										<div class="list-group no-space">
+											{% for provento in proventos_fiis_futuros %}
+											<a href="{% url 'fii:detalhar_provento_fii' provento.id %}" class="list-group-item">
+												<div class="row">
+													<span class="col-md-4">{{provento.fii.ticker}}</span>
+													<span class="col-md-5">R$ {{provento.quantia_a_receber}}</span>
+													<span class="col-md-3 text-right">{{provento.data_ex|date:"d/m"}}
+												</div>
+											</a>
+											{% endfor %}
+										</div>
+									</div>
+									{% endif %}
 								</div>
 							</div>
 						</div>

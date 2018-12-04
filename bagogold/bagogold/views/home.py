@@ -1352,10 +1352,13 @@ def prox_vencimentos_painel_geral(request):
             if operacao.data_vencimento() >= data_atual:
                 operacao.tipo_investimento = u'CDB/RDB'
                 operacao.nome = operacao.cdb_rdb.nome
-                operacao.link = reverse('cdb_rdb:editar_operacao_cdb_rdb', kwargs={'operacao_id': operacao.id})
+#                 operacao.link = reverse('cdb_rdb:editar_operacao_cdb_rdb', kwargs={'operacao_id': operacao.id})
+                
+                # Valor inicial
+                operacao.valor_inicial = operacao.qtd_disponivel_venda 
                  
-                # Calcular valor vencimento
-                operacao.quantidade = operacao.qtd_disponivel_venda
+                # Valor vencimento
+                operacao.quantidade = operacao.valor_inicial
                 operacao.taxa = operacao.porcentagem()
                 operacao.atual = calcular_valor_operacao_cdb_rdb_ate_dia(operacao, data_atual)
                 qtd_dias_uteis_ate_vencimento = qtd_dias_uteis_no_periodo(data_final + datetime.timedelta(days=1), operacao.data_vencimento())
@@ -1378,6 +1381,13 @@ def prox_vencimentos_painel_geral(request):
             operacao.tipo_investimento = u'CRI/CRA'
             operacao.nome = operacao.cri_cra.nome
             operacao.link = reverse('cri_cra:editar_operacao_cri_cra', kwargs={'id_operacao': operacao.id})
+            
+            # Valor inicial
+            operacao.valor_inicial = operacao.quantidade * operacao.preco_unitario
+            
+            # TODO Valor vencimento
+            operacao.valor_vencimento = calcular_valor_um_cri_cra_na_data(operacao.cri_cra, operacao.cri_cra.data_vencimento)
+            
             prox_vencimentos.append(operacao)
                 
         # Debênture
@@ -1386,7 +1396,13 @@ def prox_vencimentos_painel_geral(request):
         .select_related('debenture'):
             operacao.tipo_investimento = u'Debênture'
             operacao.nome = operacao.debenture.nome
-            operacao.link = reverse('debentures:editar_operacao_debenture', kwargs={'operacao_id': operacao.id})
+#             operacao.link = reverse('debentures:editar_operacao_debenture', kwargs={'operacao_id': operacao.id})
+            
+            # Valor inicial
+            operacao.valor_inicial = operacao.quantidade * operacao.preco_unitario
+            
+            # TODO Valor vencimento
+            
             prox_vencimentos.append(operacao)
                 
         # LC
@@ -1398,10 +1414,13 @@ def prox_vencimentos_painel_geral(request):
             if operacao.data_vencimento() >= data_atual:
                 operacao.tipo_investimento = u'Letra de Câmbio'
                 operacao.nome = operacao.lc.nome
-                operacao.link = reverse('lcambio:editar_operacao_lc', kwargs={'operacao_id': operacao.id})
+#                 operacao.link = reverse('lcambio:editar_operacao_lc', kwargs={'operacao_id': operacao.id})
+                
+                # Valor inicial
+                operacao.valor_inicial = operacao.qtd_disponivel_venda 
                 
                 # Calcular valor vencimento
-                operacao.quantidade = operacao.qtd_disponivel_venda
+                operacao.quantidade = operacao.valor_inicial
                 operacao.taxa = operacao.porcentagem()
                 operacao.atual = calcular_valor_operacao_lc_ate_dia(operacao, data_atual)
                 qtd_dias_uteis_ate_vencimento = qtd_dias_uteis_no_periodo(data_final + datetime.timedelta(days=1), operacao.data_vencimento())
@@ -1426,10 +1445,13 @@ def prox_vencimentos_painel_geral(request):
             if operacao.data_vencimento() >= data_atual:
                 operacao.tipo_investimento = u'LCI/LCA'
                 operacao.nome = operacao.letra_credito.nome
-                operacao.link = reverse('lci_lca:editar_operacao_lci_lca', kwargs={'operacao_id': operacao.id})
+#                 operacao.link = reverse('lci_lca:editar_operacao_lci_lca', kwargs={'operacao_id': operacao.id})
+                
+                # Valor inicial
+                operacao.valor_inicial = operacao.qtd_disponivel_venda 
                 
                 # Calcular valor vencimento
-                operacao.quantidade = operacao.qtd_disponivel_venda
+                operacao.quantidade = operacao.valor_inicial
                 operacao.taxa = operacao.porcentagem()
                 operacao.atual = calcular_valor_operacao_lci_lca_ate_dia(operacao, data_atual)
                 qtd_dias_uteis_ate_vencimento = qtd_dias_uteis_no_periodo(data_final + datetime.timedelta(days=1), operacao.data_vencimento())
@@ -1451,8 +1473,14 @@ def prox_vencimentos_painel_geral(request):
         .select_related('titulo'):
             operacao.tipo_investimento = u'Tesouro Direto'
             operacao.nome = operacao.titulo.nome()
-            operacao.link = reverse('tesouro_direto:editar_operacao_td', kwargs={'operacao_id': operacao.id})
+#             operacao.link = reverse('tesouro_direto:editar_operacao_td', kwargs={'operacao_id': operacao.id})
+            
+            # Valor inicial
+            operacao.valor_inicial = operacao.quantidade * operacao.preco_unitario
+            
+            # Valor vencimento
             operacao.valor_vencimento = operacao.titulo.valor_vencimento()
+            
             prox_vencimentos.append(operacao)
                 
         # Ordenar pela data de vencimento
