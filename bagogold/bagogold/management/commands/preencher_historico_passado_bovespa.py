@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.tfs import ler_serie_historica_anual_bovespa
-from django.core.management.base import BaseCommand
-from threading import Thread
 import datetime
+from threading import Thread
+
+from django.core.management.base import BaseCommand
+
+from bagogold.bagogold.utils.bovespa import ler_serie_historica_anual_bovespa
+
 
 class BuscaHistoricoBovespaThread(Thread):
     def __init__(self, ano):
