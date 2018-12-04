@@ -34,7 +34,6 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
-#     'yahoo_finance',
     'storages',
     
     #Bag-O-Gold
