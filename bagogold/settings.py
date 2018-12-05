@@ -134,6 +134,9 @@ CAMINHO_FUNDO_INVESTIMENTO = MEDIA_ROOT + 'fundo investimento/'
 CAMINHO_FUNDO_INVESTIMENTO_CADASTRO = CAMINHO_FUNDO_INVESTIMENTO + 'cadastro/' 
 CAMINHO_FUNDO_INVESTIMENTO_HISTORICO = CAMINHO_FUNDO_INVESTIMENTO + 'historico/' 
 
+# Caminho para historico de acoes/FIIs
+CAMINHO_HISTORICO_ACOES_FIIS = MEDIA_ROOT + 'historico passado/'
+
 # Caminho para arquivos de historico recente acoes/fiis
 CAMINHO_HISTORICO_RECENTE_ACOES_FIIS = MEDIA_ROOT + 'historico recente/'
 

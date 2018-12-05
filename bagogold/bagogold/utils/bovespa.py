@@ -14,6 +14,7 @@ from mechanize._form import ControlNotFoundError
 
 from bagogold.bagogold.models.acoes import HistoricoAcao, Acao
 from bagogold.bagogold.models.empresa import Empresa
+from bagogold.bagogold.utils.acoes import verificar_tipo_acao
 from bagogold.fii.models import FII, HistoricoFII
 from bagogold.settings import CAMINHO_HISTORICO_RECENTE_ACOES_FIIS
 from conf.settings_local import AWS_STORAGE_BUCKET_NAME
@@ -114,72 +115,81 @@ def processar_historico_recente_bovespa(arquivo):
     except:
         raise
     
-def ler_serie_historica_anual_bovespa(nome_arquivo):
+def ler_serie_historica_anual_bovespa(nome_arquivo, mostrar_log=True):
     """
     Lê série histórica anual de documento da Bovespa
     
     Parâmetros: Nome do arquivo
+                Deve mostrar log?
     """
     # Carregar FIIs disponíveis
     fiis = FII.objects.all()
     acoes = Acao.objects.all()
     fiis_lista = fiis.values_list('ticker', flat=True)
-    acoes_lista = acoes.values_list('ticker', flat=True)
-    with open(nome_arquivo) as f:
-        content = f.readlines()
-        for line in content[1:len(content)-1]:
+#     acoes_lista = acoes.values_list('ticker', flat=True)
+    acoes_lista = list(acoes.values_list('ticker', flat=True))
+#     with open(nome_arquivo) as f:
+    content = nome_arquivo.readlines()
+    for line in content[1:len(content)-1]:
 #             if line[2:10] == '20160215':
-            data = datetime.date(int(line[2:6]), int(line[6:8]), int(line[8:10]))
-            valor = Decimal(line[108:119] + '.' + line[119:121])
-            ticker = line[12:24].strip()
-            if ticker in fiis_lista:
-                _, criado = HistoricoFII.objects.update_or_create(fii=fiis.get(ticker=ticker), data=data, defaults={'preco_unitario':valor, 'oficial_bovespa': True})
-                if criado:
-                    print ticker, 'em', data, 'criado'
-            elif line[39:41] == 'ON' or (line[39:41] == 'PN'):
-                if len(ticker) == 5 and int(ticker[4]) in [3,4,5,6,7,8]:
+        data = datetime.date(int(line[2:6]), int(line[6:8]), int(line[8:10]))
+        valor = Decimal(line[108:119] + '.' + line[119:121])
+        ticker = line[12:24].strip()
+        if ticker in fiis_lista:
+            _, criado = HistoricoFII.objects.update_or_create(fii=fiis.get(ticker=ticker), data=data, defaults={'preco_unitario':valor, 'oficial_bovespa': True})
+            if criado and mostrar_log:
+                print ticker, 'em', data, 'criado'
+        elif line[39:41] == 'ON' or (line[39:41] == 'PN'):
+            if len(ticker) == 5 and int(ticker[4]) in [3,4,5,6,7,8]:
 #                     print line[12:24], line[39:49]
-                    if ticker in acoes_lista:
-                        _, criado = HistoricoAcao.objects.update_or_create(acao=acoes.get(ticker=ticker), data=data, defaults={'preco_unitario':valor, 'oficial_bovespa': True})
-                        if criado:
-                            print ticker, 'em', data, 'criado (Histórico)'
-                    else:
-                        empresa_existe = False
-                        for acao_listada in acoes_lista:
-                            if ticker[0:4] in acao_listada:
+                if ticker in acoes_lista:
+                    _, criado = HistoricoAcao.objects.update_or_create(acao=acoes.get(ticker=ticker), data=data, defaults={'preco_unitario':valor, 'oficial_bovespa': True})
+                    if criado and mostrar_log:
+                        print ticker, 'em', data, 'criado (Histórico)'
+                else:
+                    empresa_existe = False
+                    for acao_listada in acoes_lista:
+                        if ticker[0:4] in acao_listada:
 #                                 print 'Inserido'
-                                empresa_existe = True
-                                empresa = Acao.objects.get(ticker=acao_listada).empresa
-                                break
-                        if not empresa_existe:
-                            empresa = Empresa(nome=line[27:39].strip(), nome_pregao=line[27:39].strip())
-                            empresa.save()
-                        acao = Acao(ticker=ticker, empresa=empresa, tipo=verificar_tipo_acao(ticker))
-                        acao.save()
-                        _, criado = HistoricoAcao.objects.update_or_create(acao=acao, data=data, defaults={'preco_unitario':valor, 'oficial_bovespa': True})
+                            empresa_existe = True
+                            empresa = Acao.objects.get(ticker=acao_listada).empresa
+                            break
+                    if not empresa_existe:
+                        empresa = Empresa(nome=line[27:39].strip(), nome_pregao=line[27:39].strip())
+                        empresa.save()
+                    acao = Acao(ticker=ticker, empresa=empresa, tipo=verificar_tipo_acao(ticker))
+                    acao.save()
+                    _, criado = HistoricoAcao.objects.update_or_create(acao=acao, data=data, defaults={'preco_unitario':valor, 'oficial_bovespa': True})
+                    if mostrar_log:
                         print ticker, 'em', data, 'criado (TICKER)'
-                        acoes = Acao.objects.all()
-                        acoes_lista = acoes.values_list('ticker', flat=True)
-            elif line[39:42] == 'UNT':
-                if len(ticker) == 6 and ticker[4:6] == '11':
-                    if ticker in acoes_lista:
-                        _, criado = HistoricoAcao.objects.update_or_create(acao=acoes.get(ticker=ticker), data=data, defaults={'preco_unitario':valor, 'oficial_bovespa': True})
-                        if criado:
-                            print ticker, 'em', data, 'criado (Histórico)'
-                    else:
-                        empresa_existe = False
-                        for acao_listada in acoes_lista:
-                            if ticker[0:4] in acao_listada:
+                        
+#                     acoes = Acao.objects.all()
+#                     acoes_lista = acoes.values_list('ticker', flat=True)
+                    acoes_lista.append(ticker)
+        elif line[39:42] == 'UNT':
+            if len(ticker) == 6 and ticker[4:6] == '11':
+                if ticker in acoes_lista:
+                    _, criado = HistoricoAcao.objects.update_or_create(acao=acoes.get(ticker=ticker), data=data, defaults={'preco_unitario':valor, 'oficial_bovespa': True})
+                    if criado and mostrar_log:
+                        print ticker, 'em', data, 'criado (Histórico)'
+                else:
+                    empresa_existe = False
+                    for acao_listada in acoes_lista:
+                        if ticker[0:4] in acao_listada:
 #                                 print 'Inserido'
-                                empresa_existe = True
-                                empresa = Acao.objects.get(ticker=acao_listada).empresa
-                                break
-                        if not empresa_existe:
-                            empresa = Empresa(nome=line[27:39].strip(), nome_pregao=line[27:39].strip())
-                            empresa.save()
-                        acao = Acao(ticker=ticker, empresa=empresa, tipo=verificar_tipo_acao(ticker))
-                        acao.save()
-                        _, criado = HistoricoAcao.objects.update_or_create(acao=acao, data=data, defaults={'preco_unitario':valor, 'oficial_bovespa': True})
+                            empresa_existe = True
+                            empresa = Acao.objects.get(ticker=acao_listada).empresa
+                            break
+                    if not empresa_existe:
+                        empresa = Empresa(nome=line[27:39].strip(), nome_pregao=line[27:39].strip())
+                        empresa.save()
+                    acao = Acao(ticker=ticker, empresa=empresa, tipo=verificar_tipo_acao(ticker))
+                    acao.save()
+                    _, criado = HistoricoAcao.objects.update_or_create(acao=acao, data=data, defaults={'preco_unitario':valor, 'oficial_bovespa': True})
+                    if mostrar_log:
                         print ticker, 'em', data, 'criado (TICKER)'
-                        acoes = Acao.objects.all()
-                        acoes_lista = acoes.values_list('ticker', flat=True)
+
+#                     acoes = Acao.objects.all()
+#                     acoes_lista = acoes.values_list('ticker', flat=True)
+                    acoes_lista.append(ticker)
+    
