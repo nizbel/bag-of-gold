@@ -136,14 +136,16 @@ def ler_serie_historica_anual_bovespa(nome_arquivo, mostrar_log=True):
         valor = Decimal(line[108:119] + '.' + line[119:121])
         ticker = line[12:24].strip()
         if ticker in fiis_lista:
-            _, criado = HistoricoFII.objects.update_or_create(fii=fiis.get(ticker=ticker), data=data, defaults={'preco_unitario':valor, 'oficial_bovespa': True})
+#             _, criado = HistoricoFII.objects.update_or_create(fii=fiis.get(ticker=ticker), data=data, defaults={'preco_unitario':valor, 'oficial_bovespa': True})
+            _, criado = HistoricoFII.objects.update_or_create(fii__ticker=ticker, data=data, defaults={'preco_unitario':valor, 'oficial_bovespa': True})
             if criado and mostrar_log:
                 print ticker, 'em', data, 'criado'
         elif line[39:41] == 'ON' or (line[39:41] == 'PN'):
             if len(ticker) == 5 and int(ticker[4]) in [3,4,5,6,7,8]:
 #                     print line[12:24], line[39:49]
                 if ticker in acoes_lista:
-                    _, criado = HistoricoAcao.objects.update_or_create(acao=acoes.get(ticker=ticker), data=data, defaults={'preco_unitario':valor, 'oficial_bovespa': True})
+#                     _, criado = HistoricoAcao.objects.update_or_create(acao=acoes.get(ticker=ticker), data=data, defaults={'preco_unitario':valor, 'oficial_bovespa': True})
+                    _, criado = HistoricoAcao.objects.update_or_create(acao__ticker=ticker, data=data, defaults={'preco_unitario':valor, 'oficial_bovespa': True})
                     if criado and mostrar_log:
                         print ticker, 'em', data, 'criado (Histórico)'
                 else:
@@ -169,7 +171,8 @@ def ler_serie_historica_anual_bovespa(nome_arquivo, mostrar_log=True):
         elif line[39:42] == 'UNT':
             if len(ticker) == 6 and ticker[4:6] == '11':
                 if ticker in acoes_lista:
-                    _, criado = HistoricoAcao.objects.update_or_create(acao=acoes.get(ticker=ticker), data=data, defaults={'preco_unitario':valor, 'oficial_bovespa': True})
+#                     _, criado = HistoricoAcao.objects.update_or_create(acao=acoes.get(ticker=ticker), data=data, defaults={'preco_unitario':valor, 'oficial_bovespa': True})
+                    _, criado = HistoricoAcao.objects.update_or_create(acao__ticker=ticker, data=data, defaults={'preco_unitario':valor, 'oficial_bovespa': True})
                     if criado and mostrar_log:
                         print ticker, 'em', data, 'criado (Histórico)'
                 else:
