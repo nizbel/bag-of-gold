@@ -5,7 +5,8 @@ from bagogold.bagogold.utils.taxas_indexacao import \
     calcular_valor_atualizado_com_taxas_di, \
     calcular_valor_atualizado_com_taxas_di_e_juros, \
     calcular_valor_atualizado_com_taxa_prefixado
-from bagogold.cri_cra.models.cri_cra import CRI_CRA, DataRemuneracaoCRI_CRA
+from bagogold.cri_cra.models.cri_cra import CRI_CRA, DataRemuneracaoCRI_CRA,\
+    DataAmortizacaoCRI_CRA
 from decimal import Decimal
 from django.db.models.aggregates import Count
 import datetime
@@ -13,6 +14,7 @@ import datetime
 def calcular_valor_um_cri_cra_na_data(certificado, data=datetime.date.today()):
     """
     Calcula o valor de um certificado na data apontada
+    
     Parâmetros: Certificado (CRI/CRA)
                 Data
     Retorno:    Valor na data
@@ -37,6 +39,8 @@ def calcular_valor_um_cri_cra_na_data(certificado, data=datetime.date.today()):
     
     # TODO incluir amortizações
     valor_inicial = certificado.valor_emissao
+    valor_inicial -= (certificado.valor_emissao \
+                      * (DataAmortizacaoCRI_CRA.objects.filter(cri_cra=certificado, data__lte=data).aggregate(soma=Sum('percentual'))['soma'] or 0) / 100)
     
     # TODO incluir outros cálculos
     if certificado.tipo_indexacao == CRI_CRA.TIPO_INDEXACAO_DI:
@@ -47,6 +51,7 @@ def calcular_valor_um_cri_cra_na_data(certificado, data=datetime.date.today()):
 def calcular_valor_cri_cra_di(valor_inicial, percentual_di, data_inicial, data_final, juros_adicional):
     """
     Calcula o valor de um certificado atualizado pelo DI
+    
     Parâmetros: Valor inicial a ser atualizado
                 Percentual do DI
                 Data de início da atualização
@@ -80,6 +85,7 @@ def calcular_valor_cri_cra_di(valor_inicial, percentual_di, data_inicial, data_f
 def calcular_valor_cri_cra_prefixado(valor_inicial, percentual, data_inicial, data_final):
     """
     Calcula o valor de um certificado atualizada por taxa prefixada
+    
     Parâmetros: Valor inicial a ser atualizado
                 Taxa prefixada
                 Data de início da atualização
