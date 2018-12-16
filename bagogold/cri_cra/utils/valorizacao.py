@@ -10,13 +10,18 @@ from decimal import Decimal
 from django.db.models.aggregates import Count
 import datetime
 
-def calcular_valor_um_cri_cra_na_data(certificado, data=datetime.date.today()):
+def calcular_valor_um_cri_cra_na_data(certificado, data=None):
     """
     Calcula o valor de um certificado na data apontada
+    
     Parâmetros: Certificado (CRI/CRA)
                 Data
     Retorno:    Valor na data
     """
+    # Preparar data
+    if data == None:
+        data = datetime.date.today()
+        
     # Pegar último dia útil da data caso não seja útil
     while not verifica_se_dia_util(data):
         data = data - datetime.timedelta(days=1)

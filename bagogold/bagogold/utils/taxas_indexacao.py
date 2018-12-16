@@ -97,7 +97,7 @@ def calcular_valor_atualizado_com_taxas_selic(taxas_dos_dias, valor_atual):
         taxa_acumulada *= pow(taxa_do_dia, taxas_dos_dias[taxa_do_dia])
     return taxa_acumulada * valor_atual
 
-def calcular_valor_acumulado_ipca(data_base, data_final=datetime.date.today()):
+def calcular_valor_acumulado_ipca(data_base, data_final=None):
     """
     Calcula o valor acumulado do IPCA desde a data base, até uma data final
     
@@ -105,6 +105,10 @@ def calcular_valor_acumulado_ipca(data_base, data_final=datetime.date.today()):
                 Data final
     Retorno: Taxa total acumulada
     """
+    # Preparar data
+    if data_final == None:
+        data_final = datetime.date.today()
+        
     # COTACAO = 1000 / (1 + TAXA)**(DIAS_UTEIS/252)
     # Se data base for dia 16 em diante, pegar mes/ano
     if data_base.day >= 16:
@@ -165,7 +169,7 @@ def calcular_valor_acumulado_ipca(data_base, data_final=datetime.date.today()):
 #     print (1 + ipca_periodo) * 1000
     return ipca_periodo
     
-def calcular_valor_acumulado_selic(data_base, data_final=datetime.date.today()):
+def calcular_valor_acumulado_selic(data_base, data_final=None):
     """
     Calcula o valor acumulado da Selic desde a data base, até uma data final
     
@@ -173,6 +177,10 @@ def calcular_valor_acumulado_selic(data_base, data_final=datetime.date.today()):
                 Data final
     Retorno: Taxa total acumulada
     """
+    # Preparar datas
+    if data_final == None:
+        data_final = datetime.date.today()
+        
     selic_periodo = 1
     taxas_selic = dict(HistoricoTaxaSelic.objects.filter(data__range=[data_base, data_final - datetime.timedelta(days=1)]).values('taxa_diaria').distinct().order_by('taxa_diaria').annotate(qtd_dias=Count('taxa_diaria')).values_list('taxa_diaria', 'qtd_dias'))
     for (taxa, qtd_dias) in taxas_selic.items():

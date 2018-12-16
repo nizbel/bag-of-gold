@@ -65,6 +65,7 @@ def is_superuser(user):
 def atualizar_checkpoints(investidor):
     """
     Atualiza os checkpoints para um investidor, buscando os últimos checkpoints registrados
+    
     Parâmetros: Investidor
     """
     # FII
@@ -198,14 +199,19 @@ def atualizar_checkpoints(investidor):
             for checkpoint in CheckpointDivisaoLCI_LCA.objects.filter(divisao_operacao__operacao__investidor=investidor, ano=ano_mais_recente):
                 gerar_checkpoint_divisao_lci_lca(checkpoint.divisao_operacao, ano)
                 
-def buscar_acoes_investidor_na_data(investidor, data=datetime.date.today(), destinacao=''):
+def buscar_acoes_investidor_na_data(investidor, data=None, destinacao=''):
     """
     Busca as ações que o investidor possui na da especificada
+    
     Parâmetros: Investidor
                 Data da posição
-                DestinaçãO (Buy and Hold, Trading ou ambos)
+                Destinação (Buy and Hold, Trading ou ambos)
     Retorno: Lista com as ações que o investidor possui posição
     """
+    # Preparar data
+    if data == None:
+        data = datetime.date.today()
+        
     if destinacao not in ['', 'B', 'T']:
         raise ValueError
     # Buscar proventos em ações
@@ -226,6 +232,7 @@ def buscar_acoes_investidor_na_data(investidor, data=datetime.date.today(), dest
 def buscar_ultimas_operacoes(investidor, quantidade_operacoes):
     """
     Busca as últimas operações feitas pelo investidor, ordenadas por data decrescente
+    
     Parâmetros: Investidor
                 Quantidade de operações a ser retornada
     Retorno: Lista com as operações ordenadas por data
@@ -246,14 +253,14 @@ def buscar_ultimas_operacoes(investidor, quantidade_operacoes):
     lista_operacoes = sorted(chain(operacoes_fii, operacoes_td, operacoes_acoes, operacoes_lci_lca, operacoes_cdb_rdb, 
                                    operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento, operacoes_criptomoedas, 
                                    outros_investimentos, operacoes_lc),
-                            key=attrgetter('data'), reverse=True)
+                             key=attrgetter('data'), reverse=True)
     
     ultimas_operacoes = lista_operacoes[:min(quantidade_operacoes, len(lista_operacoes))]
     
     return ultimas_operacoes
 
-def buscar_operacoes_no_periodo(investidor, data_inicial, data_final):
-    from bagogold.cdb_rdb.models import OperacaoCDB_RDB
+def buscar_operacoes_no_periodo(investidor, data_inicial, data_final=datetime.date.today()):
+#     from bagogold.cdb_rdb.models import OperacaoCDB_RDB
     """
     Busca as operações feitas pelo investidor, ordenadas por data crescente, no período especificado
     
@@ -282,13 +289,17 @@ def buscar_operacoes_no_periodo(investidor, data_inicial, data_final):
     
     return lista_operacoes
 
-def buscar_totais_atuais_investimentos(investidor, data_atual=datetime.date.today()):
+def buscar_totais_atuais_investimentos(investidor, data_atual=None):
     """
     Traz os totais de investimento do investidor em data especificada
     Parâmetros: Investidor
                 Data
     Retorno: Totais atuais {investimento: total}
     """
+    # Preparar data
+    if data_atual == None:
+        data_atual = datetime.date.today()
+        
     totais_atuais = {'Ações': Decimal(0), 'CDB/RDB': Decimal(0), 'CRI/CRA': Decimal(0), 'Criptomoedas': Decimal(0), 'Debêntures': Decimal(0), 
                      'FII': Decimal(0), 'Fundos de Inv.': Decimal(0), 'LCI/LCA': Decimal(0), 'Outros inv.': Decimal(0), 
                      'Letras de Câmbio': Decimal(0),'Tesouro Direto': Decimal(0), }
@@ -481,3 +492,4 @@ def user_blocked(user):
     # Verifica se última tentativa foi feita a no máximo 10 minutos
     return (LoginIncorreto.objects.filter(user=user).count() >= 6 and 
         (timezone.now() - LoginIncorreto.objects.filter(user=user).order_by('-horario')[0].horario).total_seconds() < 10 * 60)
+    
