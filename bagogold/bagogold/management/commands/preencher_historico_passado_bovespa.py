@@ -8,11 +8,20 @@ from django.db import transaction
 from bagogold.bagogold.utils.bovespa import ler_serie_historica_anual_bovespa
 from bagogold.settings import CAMINHO_HISTORICO_ACOES_FIIS
 from conf.settings_local import AWS_STORAGE_BUCKET_NAME
+from bagogold.bagogold.models.acoes import HistoricoAcao
+from bagogold.fii.models import HistoricoFII
 
 class Command(BaseCommand):
     help = 'Preenche histórico para ações e FIIs com dados da bovespa'
 
     def handle(self, *args, **options):
+        # Resultado deve ser 112721 26328
+        print HistoricoAcao.objects.filter(data__year=2017).count(), HistoricoFII.objects.filter(data__year=2017).count()
+        
+        if 2 == 2:
+            return
+        
+        print HistoricoAcao.objects.filter(data__year=2017).count(), HistoricoFII.objects.filter(data__year=2017).count()
         # Listar documentos no S3
         nomes_documentos = listar_documentos_historico_acoes_fiis()
         
