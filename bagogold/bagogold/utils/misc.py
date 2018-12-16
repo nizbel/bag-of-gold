@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao
-from bagogold.bagogold.models.taxas_indexacao import HistoricoIPCA
 from bagogold.fii.models import UsoProventosOperacaoFII
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
 from bagogold.fundo_investimento.utils import \
@@ -8,12 +7,10 @@ from bagogold.fundo_investimento.utils import \
 from bagogold.tesouro_direto.models import OperacaoTitulo
 from decimal import Decimal
 from django.db.models.aggregates import Sum
-from urllib2 import Request, urlopen, URLError, HTTPError
 import datetime
 import json
 import math
 import random
-import re
 import requests
 import time
 
@@ -69,13 +66,19 @@ def calcular_iof_e_ir_longo_prazo(lucro_bruto, qtd_dias):
 #                 except:
 #                     print 'Não foi possível converter', campos[mes]
                
-def buscar_valores_diarios_selic(data_inicial=datetime.date.today() - datetime.timedelta(days=30), data_final=datetime.date.today()):
+def buscar_valores_diarios_selic(data_inicial=None, data_final=None):
     """
     Retorna os valores da taxa SELIC pelo site do Banco Central
     Parâmetros: Data inicial
                 Data final
     Retorno: Lista com tuplas (data, fator diário)
     """
+    # Preparar datas
+    if data_inicial == None:
+        data_inicial = datetime.date.today() - datetime.timedelta(days=30)
+    if data_final == None:
+        data_final = datetime.date.today()
+        
     if data_final < data_inicial:
         raise ValueError('Data final deve ser igual ou posterior a data inicial')
     # Verifica se o intervalo entre as datas inicial e final é menor do que 10 anos
