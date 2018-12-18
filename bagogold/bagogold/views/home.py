@@ -1385,8 +1385,8 @@ def prox_vencimentos_painel_geral(request):
             # Valor inicial
             operacao.valor_inicial = operacao.quantidade * operacao.preco_unitario
             
-            # TODO Valor vencimento
-            operacao.valor_vencimento = calcular_valor_um_cri_cra_na_data(operacao.cri_cra, operacao.cri_cra.data_vencimento)
+            # Valor vencimento
+            operacao.valor_vencimento = operacao.quantidade * calcular_valor_um_cri_cra_na_data(operacao.cri_cra, operacao.cri_cra.data_vencimento, True)
             
             prox_vencimentos.append(operacao)
                 
