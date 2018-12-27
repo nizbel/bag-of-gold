@@ -500,7 +500,8 @@ def historico_fii(request):
                 continue
             item.total = (qtd_papeis[item.fii_ticker] * item.valor_unitario).quantize(Decimal('0.01'), rounding=ROUND_FLOOR)
             item.quantidade = qtd_papeis[item.fii_ticker]
-            total_proventos += item.total
+            if item.data_pagamento <= datetime.date.today():
+                total_proventos += item.total
             
         elif item.tipo == 'Agrupamento':
             if qtd_papeis[item.fii_ticker] == 0:
