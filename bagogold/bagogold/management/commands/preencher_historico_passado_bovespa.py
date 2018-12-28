@@ -15,13 +15,6 @@ class Command(BaseCommand):
     help = 'Preenche histórico para ações e FIIs com dados da bovespa'
 
     def handle(self, *args, **options):
-        # Resultado deve ser 112721 26328
-        print HistoricoAcao.objects.filter(data__year=2017).count(), HistoricoFII.objects.filter(data__year=2017).count()
-        
-        if 2 == 2:
-            return
-        
-        print HistoricoAcao.objects.filter(data__year=2017).count(), HistoricoFII.objects.filter(data__year=2017).count()
         # Listar documentos no S3
         nomes_documentos = listar_documentos_historico_acoes_fiis()
         
