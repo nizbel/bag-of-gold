@@ -371,10 +371,11 @@ def editar_operacao_fii(request, operacao_id):
                                 uso_proventos = form_uso_proventos.save(commit=False)
                                 if uso_proventos.qtd_utilizada > 0:
                                     uso_proventos.operacao = operacao_fii
-                                    uso_proventos.divisao_operacao = DivisaoOperacaoFII.objects.get(operacao=operacao_fii)
+#                                     uso_proventos.divisao_operacao = DivisaoOperacaoFII.objects.get(operacao=operacao_fii)
+                                    uso_proventos.divisao_operacao = divisao_operacao
                                     uso_proventos.save()
                                 # Se uso proventos for 0 e existir uso proventos atualmente, apagá-lo
-                                elif uso_proventos.qtd_utilizada == 0 and UsoProventosOperacaoFII.objects.filter(divisao_operacao__operacao=operacao_fii):
+                                elif uso_proventos.qtd_utilizada == 0 and UsoProventosOperacaoFII.objects.filter(divisao_operacao__operacao=operacao_fii).exists():
                                     uso_proventos.delete()
                         except:
                             messages.error(request, 'Houve um erro ao editar a operação')
