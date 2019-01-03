@@ -26,8 +26,12 @@ class ProventoFIIAdmin(admin.ModelAdmin):
 admin.site.register(ProventoFII, ProventoFIIAdmin)
     
 admin.site.register(OperacaoFII)
+
+class UsoProventosOperacaoFIIAdmin(admin.ModelAdmin):
+    search_fields = ['operacao__investidor__user__username']
+    list_display = ('operacao', 'qtd_utilizada')
     
-admin.site.register(UsoProventosOperacaoFII)
+admin.site.register(UsoProventosOperacaoFII, UsoProventosOperacaoFIIAdmin)
 
 class HistoricoFIIAdmin(admin.ModelAdmin):
     search_fields = ['fii__ticker']
@@ -61,4 +65,8 @@ class CheckpointFIIAdmin(admin.ModelAdmin):
 
 admin.site.register(CheckpointFII, CheckpointFIIAdmin)
 
-admin.site.register(CheckpointProventosFII)
+class CheckpointProventosFIIAdmin(admin.ModelAdmin):
+    search_fields =['ano', 'investidor']
+    list_display = ('ano', 'investidor', 'valor')
+    
+admin.site.register(CheckpointProventosFII, CheckpointProventosFIIAdmin)
