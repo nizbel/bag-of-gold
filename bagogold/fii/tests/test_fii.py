@@ -4,7 +4,7 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII, Divisao, \
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.fii.models import FII, OperacaoFII, \
     EventoDesdobramentoFII, EventoAgrupamentoFII, EventoIncorporacaoFII, \
-    CheckpointFII, ProventoFII, CheckpointProventosFII
+    CheckpointFII, ProventoFII, CheckpointProventosFII, UsoProventosOperacaoFII
 from bagogold.bagogold.models.investidores import Investidor
 from bagogold.fii.utils import calcular_qtd_fiis_ate_dia, \
     calcular_qtd_fiis_ate_dia_por_ticker, calcular_qtd_fiis_ate_dia_por_divisao, \
@@ -156,7 +156,13 @@ class CalcularQuantidadesFIITestCase(TestCase):
         operacao.save()
         self.assertEqual(calcular_poupanca_prov_fii_ate_dia(self.investidor, datetime.date(2017, 10, 1)), Decimal('4957.40'))
         self.assertEqual(CheckpointProventosFII.objects.get(investidor=self.investidor, ano=2017).valor, Decimal('4957.40'))
-        calcular_poupanca_prov_fii_ate_dia(self.investidor, datetime.date(2018, 8, 12))
+#         calcular_poupanca_prov_fii_ate_dia(self.investidor, datetime.date(2018, 8, 12))
+        
+        # Testar situação adicionando uso de proventos
+        UsoProventosOperacaoFII.objects.create(operacao=operacao, divisao_operacao=DivisaoOperacaoFII.objects.get(operacao=operacao), qtd_utilizada=100)
+        self.assertEqual(calcular_poupanca_prov_fii_ate_dia(self.investidor, datetime.date(2017, 10, 1)), Decimal('4857.40'))
+        self.assertEqual(CheckpointProventosFII.objects.get(investidor=self.investidor, ano=2017).valor, Decimal('4857.40'))
+        
         
     def test_verificar_poupanca_proventos_por_divisao(self):
         """Testa se poupança de proventos está com os valores corretos para cada divisão"""
@@ -178,6 +184,12 @@ class CalcularQuantidadesFIITestCase(TestCase):
         self.assertEqual(calcular_poupanca_prov_fii_ate_dia_por_divisao(self.divisao_geral, datetime.date(2017, 10, 1)), Decimal('4957.40'))
         self.assertEqual(calcular_poupanca_prov_fii_ate_dia_por_divisao(self.divisao_teste, datetime.date(2017, 10, 1)), 0)
         self.assertEqual(CheckpointDivisaoProventosFII.objects.get(divisao=self.divisao_geral, ano=2017).valor, Decimal('4957.40'))
+        
+        # Testar situação adicionando uso de proventos
+        UsoProventosOperacaoFII.objects.create(operacao=operacao, divisao_operacao=divisao_operacao, qtd_utilizada=100)
+        self.assertEqual(calcular_poupanca_prov_fii_ate_dia_por_divisao(self.divisao_geral, datetime.date(2017, 10, 1)), Decimal('4857.40'))
+        self.assertEqual(calcular_poupanca_prov_fii_ate_dia_por_divisao(self.divisao_teste, datetime.date(2017, 10, 1)), 0)
+        self.assertEqual(CheckpointDivisaoProventosFII.objects.get(divisao=self.divisao_geral, ano=2017).valor, Decimal('4857.40'))
         
     def test_verificar_preco_medio(self):
         """Testa cálculos de preço médio"""
