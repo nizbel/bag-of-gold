@@ -770,7 +770,7 @@ def painel(request):
          
     # Calcular porcentagens
     for fii in fiis:
-        fiis[fii].quantidade_percentual = fiis[fii].quantidade / total_papeis * 100
+        fiis[fii].quantidade_percentual = Decimal(fiis[fii].quantidade) / total_papeis * 100
         fiis[fii].valor_total_percentual = fiis[fii].valor_total / total_valor * 100
      
     # Gráfico de composição
