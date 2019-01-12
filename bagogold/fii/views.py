@@ -744,7 +744,7 @@ def painel(request):
     if request.user.is_authenticated():
         investidor = request.user.investidor
     else:
-        return TemplateResponse(request, 'fii/painel.html', {'fiis': list(), 'dados': {}, 'graf_composicao': list(), 'graf_valorizacao': list()})
+        return TemplateResponse(request, 'fii/painel.html', {'fiis': {}, 'dados': {}, 'graf_composicao': list(), 'graf_valorizacao': list()})
         
     fiis = {}
      
@@ -772,7 +772,7 @@ def painel(request):
          
     # Calcular porcentagens
     for fii in fiis:
-        fiis[fii].quantidade_percentual = fiis[fii].quantidade / total_papeis * 100
+        fiis[fii].quantidade_percentual = Decimal(fiis[fii].quantidade) / total_papeis * 100
         fiis[fii].valor_total_percentual = fiis[fii].valor_total / total_valor * 100
      
     # Gráfico de composição
