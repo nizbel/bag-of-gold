@@ -4,7 +4,7 @@ from unittest.runner import TextTestResult
 
 from django.test.runner import DiscoverRunner
 
-SLOW_TEST_THRESHOLD = 1
+SLOW_TEST_THRESHOLD = 3
 
 class TimeLoggingTestResult(TextTestResult):
 
