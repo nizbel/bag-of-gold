@@ -86,8 +86,9 @@ class ViewAcompanhamentoFIITestCase (TestCase):
         self.assertEqual(fii_4.total_proventos, fii_4.total_amortizacoes + fii_4.total_rendimentos)
         
         # Testar alterar filtros
-        response = self.client.post(reverse('fii:acompanhamento_fii'), {'mes_inicial': '%s/%s' % ((datetime.date.today().replace(day=1) - datetime.timedelta(days=1)).month, 
-            datetime.date.today().year)})
+        nova_data = (datetime.date.today().replace(day=1) - datetime.timedelta(days=1))
+        response = self.client.post(reverse('fii:acompanhamento_fii'), {'mes_inicial': '%s/%s' % (nova_data.month, 
+            nova_data.year)})
         
         # TODO Testar contexto
         # Testar filtros
@@ -449,11 +450,11 @@ class ViewPainelTestCase(TestCase):
     def setUp(self):
         empresa = Empresa.objects.create(nome='BB Progressivo', nome_pregao='BBPO')
         self.fii_1 = FII.objects.create(ticker='BBPO11', empresa=empresa)
-        HistoricoFII.objects.create(data=datetime.date.today(), fii=self.fii_1, valor_unitario=Decimal('110'))
+        HistoricoFII.objects.create(data=datetime.date.today(), fii=self.fii_1, preco_unitario=Decimal('110'))
         
         empresa = Empresa.objects.create(nome='BB Regressivo', nome_pregao='BBRE')
         self.fii_2 = FII.objects.create(ticker='BBRE11', empresa=empresa)
-        HistoricoFII.objects.create(data=datetime.date.today(), fii=self.fii_2, valor_unitario=Decimal('105'))
+        HistoricoFII.objects.create(data=datetime.date.today(), fii=self.fii_2, preco_unitario=Decimal('105'))
         
     def test_acesso_deslogado(self):
         """Testa acesso a tela do painel de FII deslogado"""
@@ -462,8 +463,8 @@ class ViewPainelTestCase(TestCase):
         self.assertEquals(response.status_code, 200)
         
         # Contexto
-        self.assertEquals(response.context_data.keys(), 4)
-        self.assertEquals(response.context_data['fiis'], list())
+        self.assertEquals(len(response.context_data.keys()), 6)
+        self.assertEquals(response.context_data['fiis'], {})
         self.assertEquals(response.context_data['dados'], {})
         self.assertEquals(response.context_data['graf_composicao'], list())
         self.assertEquals(response.context_data['graf_valorizacao'], list())
@@ -478,9 +479,9 @@ class ViewPainelTestCase(TestCase):
         self.assertEquals(response.status_code, 200)
         
         # Contexto
-        self.assertEquals(response.context_data.keys(), 4)
-        self.assertEquals(response.context_data['fiis'], list())
-        self.assertEquals(response.context_data['dados'], {})
+        self.assertEquals(len(response.context_data.keys()), 6)
+        self.assertEquals(response.context_data['fiis'], {})
+        self.assertEquals(response.context_data['dados'], {'total_papeis': 0, 'total_valor': 0, 'valor_diario_mais_recente': datetime.date.today()})
         self.assertEquals(response.context_data['graf_composicao'], list())
         self.assertEquals(response.context_data['graf_valorizacao'], list())
         
@@ -504,7 +505,7 @@ class ViewPainelTestCase(TestCase):
         self.assertEquals(response.status_code, 200)
         
         # Contexto
-        self.assertEquals(response.context_data.keys(), 4)
+        self.assertEquals(len(response.context_data.keys()), 6)
         fiis = response.context_data['fiis']
         self.assertEquals(len(fiis), 2)
         # FII 1
@@ -512,8 +513,8 @@ class ViewPainelTestCase(TestCase):
         self.assertEquals(fiis[self.fii_1.ticker].preco_medio, (Decimal('1010.1') * 2 / fiis[self.fii_1.ticker].quantidade))
         self.assertEquals(fiis[self.fii_1.ticker].total_investido, Decimal('1010.1') * 2)
         self.assertEquals(fiis[self.fii_1.ticker].valor, 110)
-        self.assertEquals(fiis[self.fii_1.ticker].valor_total, self.fii_1.ticker].valor  *fiis[self.fii_1.ticker].quantidade)
-        self.assertEquals(fiis[self.fii_1.ticker].quantidade_percentual, Decimal(20)/30)
+        self.assertEquals(fiis[self.fii_1.ticker].valor_total, fiis[self.fii_1.ticker].valor * fiis[self.fii_1.ticker].quantidade)
+        self.assertEquals(fiis[self.fii_1.ticker].quantidade_percentual, Decimal(20)/30 * 100)
         self.assertEquals(fiis[self.fii_1.ticker].valor_total_percentual, 
             Decimal(fiis[self.fii_1.ticker].valor_total) * 100 / (fiis[self.fii_1.ticker].valor_total + fiis[self.fii_2.ticker].valor_total))
         # FII 2
@@ -521,8 +522,8 @@ class ViewPainelTestCase(TestCase):
         self.assertEquals(fiis[self.fii_2.ticker].preco_medio, (Decimal('1010.1') / fiis[self.fii_2.ticker].quantidade))
         self.assertEquals(fiis[self.fii_2.ticker].total_investido, Decimal('1010.1'))
         self.assertEquals(fiis[self.fii_2.ticker].valor, 105)
-        self.assertEquals(fiis[self.fii_2.ticker].valor_total, self.fii_2.ticker].valor  *fiis[self.fii_2.ticker].quantidade)
-        self.assertEquals(fiis[self.fii_2.ticker].quantidade_percentual, Decimal(10)/30)
+        self.assertEquals(fiis[self.fii_2.ticker].valor_total, fiis[self.fii_2.ticker].valor * fiis[self.fii_2.ticker].quantidade)
+        self.assertEquals(fiis[self.fii_2.ticker].quantidade_percentual, Decimal(10)/30 * 100)
         self.assertEquals(fiis[self.fii_2.ticker].valor_total_percentual, 
             Decimal(fiis[self.fii_2.ticker].valor_total) * 100 / (fiis[self.fii_1.ticker].valor_total + fiis[self.fii_2.ticker].valor_total))
         
@@ -557,8 +558,8 @@ class ViewPainelTestCase(TestCase):
         self.assertEquals(response.status_code, 200)
         
         # Contexto
-        self.assertEquals(response.context_data.keys(), 4)
-        self.assertEquals(response.context_data['fiis'], list())
-        self.assertEquals(response.context_data['dados'], {})
+        self.assertEquals(len(response.context_data.keys()), 6)
+        self.assertEquals(response.context_data['fiis'], {})
+        self.assertEquals(response.context_data['dados'], {'total_papeis': 0, 'total_valor': 0, 'valor_diario_mais_recente': datetime.date.today()})
         self.assertEquals(response.context_data['graf_composicao'], list())
         self.assertEquals(response.context_data['graf_valorizacao'], list())
