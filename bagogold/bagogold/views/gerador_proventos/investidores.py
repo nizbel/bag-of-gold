@@ -241,7 +241,7 @@ def listar_usuarios(request):
     # Carregar estatísticas
     estatisticas = {}
     estatisticas['total_documentos'] = DocumentoProventoBovespa.objects.all().count()
-    estatisticas['total_ref_30_dias'] = DocumentoProventoBovespa.objects.filter(data_referencia__gte=(datetime.date.today()-datetime.timedelta(days=30))).count()
+    estatisticas['total_ref_30_dias'] = DocumentoProventoBovespa.objects.filter(data_referencia__gte=(datetime.date.today() - datetime.timedelta(days=30))).count()
     
     # Validados
     estatisticas['total_validado'] = estatisticas['total_documentos'] - PendenciaDocumentoProvento.objects.all().count()
@@ -253,11 +253,16 @@ def listar_usuarios(request):
     estatisticas['percentual_validado_usuario'] = 100 * Decimal(estatisticas['total_validado_usuario']) / (estatisticas['total_validado'] or 1)
     estatisticas['total_validado_sistema'] = estatisticas['total_validado'] - estatisticas['total_validado_usuario']
     estatisticas['percentual_validado_sistema'] = 100 * Decimal(estatisticas['total_validado_sistema']) / (estatisticas['total_validado'] or 1)
-    if InvestidorValidacaoDocumento.objects.exists():
-        data_primeira_validacao = InvestidorValidacaoDocumento.objects.all().order_by('data_validacao')[0].data_validacao.date()
-    else:
-        data_primeira_validacao = datetime.date.today()
-    estatisticas['taxa_validacao_diaria'] =  Decimal(estatisticas['total_validado']) / ((datetime.date.today() - data_primeira_validacao).days or 1)
+#     if InvestidorValidacaoDocumento.objects.exists():
+#         data_primeira_validacao = InvestidorValidacaoDocumento.objects.all().order_by('data_validacao')[0].data_validacao.date()
+#     else:
+#         data_primeira_validacao = datetime.date.today()
+#     estatisticas['validacoes_30_dias'] =  Decimal(estatisticas['total_validado']) / ((datetime.date.today() - data_primeira_validacao).days or 1)
+    # Soma as validações dos últimas 30 dias feitas pelo sistema e feitos por usuários
+    estatisticas['validacoes_30_dias'] =  estatisticas['total_ref_30_dias'] \
+        - PendenciaDocumentoProvento.objects.filter(documento__data_referencia__gte=(datetime.date.today() - datetime.timedelta(days=30))).count() \
+        - InvestidorValidacaoDocumento.objects.filter(documento__data_referencia__gte=(datetime.date.today() - datetime.timedelta(days=30))).count() \
+        + InvestidorValidacaoDocumento.objects.filter(data_validacao__gte=(datetime.date.today() - datetime.timedelta(days=30))).count()
     
     # Apenas lidos
     estatisticas['total_a_validar'] = PendenciaDocumentoProvento.objects.filter(tipo='V').count()
@@ -268,16 +273,16 @@ def listar_usuarios(request):
     
     # Previsões
     estatisticas['previsao_total_documentos'] = estatisticas['total_documentos'] + estatisticas['total_ref_30_dias']
-    estatisticas['previsao_total_validado'] = estatisticas['total_validado'] + int(30 *  estatisticas['taxa_validacao_diaria'])
+    estatisticas['previsao_total_validado'] = estatisticas['total_validado'] + estatisticas['validacoes_30_dias']
     estatisticas['previsao_percentual_validado'] = 100 * Decimal(estatisticas['previsao_total_validado']) / (estatisticas['previsao_total_documentos'] or 1)
     estatisticas['previsao_percentual_validado_progress'] = str(estatisticas['previsao_percentual_validado']).replace(',', '.')
     estatisticas['previsao_percentual_validado_progress'] = estatisticas['previsao_percentual_validado_progress'][: min(len(estatisticas['previsao_percentual_validado_progress']),
                                                                                                       estatisticas['previsao_percentual_validado_progress'].find('.') + 4)]
     
     # Verifica se taxa validações está maior que taxa de geração de documentos
-    if estatisticas['taxa_validacao_diaria'] > Decimal(estatisticas['total_ref_30_dias'])/30:
+    if estatisticas['validacoes_30_dias'] > estatisticas['total_ref_30_dias']:
         dias_para_validacao_completa = (estatisticas['total_documentos'] - estatisticas['total_validado'])/ \
-            ((estatisticas['taxa_validacao_diaria'] - Decimal(estatisticas['total_ref_30_dias'])/30) or 1)
+            (Decimal(estatisticas['validacoes_30_dias'] - estatisticas['total_ref_30_dias']) / 1)
         anos_validacao_completa = int(floor(dias_para_validacao_completa/365))
         dias_validacao_completa = int(floor(dias_para_validacao_completa % 365))
         horas_validacao_completa = int(floor((Decimal(dias_para_validacao_completa) - Decimal(floor(dias_para_validacao_completa))) * 24))
