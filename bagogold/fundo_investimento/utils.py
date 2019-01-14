@@ -140,3 +140,10 @@ def criar_slug_fundo_investimento_valido(fundo_nome):
             slug_temp = '%s-%s' % (slug[: 100 - (len(string_final) + 1)], string_final)
     slug = slug_temp
     return slug
+
+
+def formatar_cnpj(string):
+    string = re.sub(r'\D', '', string)
+    while len(string) < 14:
+        string = '0' + string
+    return string[0:2] + '.' + string[2:5] + '.' + string[5:8] + '/' + string[8:12] + '-' + string[12:14]
