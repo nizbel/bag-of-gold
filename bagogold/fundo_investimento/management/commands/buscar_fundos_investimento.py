@@ -98,7 +98,7 @@ def buscar_arquivo_csv_cadastro(data):
     Busca o arquivo CSV de cadastro de fundos de investimento com base em uma data
     
     Parâmetros: Data
-    Retorno: (Link para arquivo, Arquivo CSV)
+    Retorno: (Link para arquivo, Nome do arquivo CSV, Arquivo CSV)
     """
     # FORMATO: http://dados.cvm.gov.br/dados/FI/CAD/DADOS/inf_cadastral_fi_YYYYMMDD.csv
     url_csv = 'http://dados.cvm.gov.br/dados/FI/CAD/DADOS/inf_cadastral_fi_%s.csv' % (data.strftime('%Y%m%d'))
