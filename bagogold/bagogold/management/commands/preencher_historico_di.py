@@ -33,7 +33,8 @@ class Command(BaseCommand):
                     if not err[0].startswith('530'):
                         raise
                 num_tentativa += 1
-                time.sleep(45)
+                if (num_tentativa <= 3):
+                    time.sleep(45)
         except:
             if settings.ENV == 'DEV':
                 print traceback.format_exc()
