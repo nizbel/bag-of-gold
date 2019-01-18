@@ -52,10 +52,15 @@ class OperacaoTituloForm(LocalizedModelForm):
             raise forms.ValidationError("Título não pode ter sido comprado após sua data de vencimento (%s)" % (dados.get('titulo').data_vencimento))
         # Testa se não se trata de uma edição de compra para venda
         if dados.get('tipo_operacao') == 'V':
-            if self.instance.tipo_operacao == 'C':
+
+            if self.instance and self.instance.tipo_operacao == 'C':
                 # Verificar se já há vendas registradas para essa compra, se sim, lançar erro
                 if quantidade_titulos_ate_dia_por_titulo(self.investidor, self.instance.titulo.id, datetime.date.today()) - self.instance.quantidade < 0:
                     raise forms.ValidationError('Não é possível alterar tipo de operação pois a quantidade atual para o título %s seria negativa' % (self.instance.titulo))
             # Verifica se é possível vender o título apontado
-            if quantidade_titulos_ate_dia_por_titulo(self.investidor, dados.get('titulo').id, data) + self.instance.quantidade < dados.get('quantidade'):
-                raise forms.ValidationError('Não é possível vender a quantidade informada para o título %s' % (dados.get('titulo')))
+            elif self.instance and self.instance.tipo_operacao == 'V':
+                if quantidade_titulos_ate_dia_por_titulo(self.investidor, dados.get('titulo').id, data) + self.instance.quantidade < dados.get('quantidade'):
+                    raise forms.ValidationError('Não é possível vender a quantidade informada para o título %s' % (dados.get('titulo')))
+            else:
+                if quantidade_titulos_ate_dia_por_titulo(self.investidor, dados.get('titulo').id, data) < dados.get('quantidade'):
+                    raise forms.ValidationError('Não é possível vender a quantidade informada para o título %s' % (dados.get('titulo')))
