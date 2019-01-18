@@ -31,34 +31,34 @@ class Command(BaseCommand):
         
     def handle(self, *args, **options):
         try:
-#             with transaction.atomic():
-#                 # Buscar arquivo CSV
-#                 if options['data']:
-#                     data_pesquisa = datetime.datetime.strptime(options['data'], '%d%m%Y').date()
-#                 else:
-#                     # Busca data do último dia útil
-#                     data_pesquisa = ultimo_dia_util()
-#                 
-#                 caminho_arquivo = CAMINHO_FUNDO_INVESTIMENTO_HISTORICO + 'inf_diario_fi_%s.csv' % (data_pesquisa.strftime('%Y%m'))
-#                 
-#                 if not verificar_arquivo_s3(caminho_arquivo):
-#                     # Caso o documento ainda não exista, baixar
-#                     _, _, arquivo_csv = buscar_arquivo_csv_historico(data_pesquisa)
-# 
-#                     # Salvar arquivo em media no bucket
-#                     boto3.client('s3').put_object(Body=arquivo_csv.fp.read(), Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho_arquivo)
-# 
-#                 # Preparar arquivo para processamento
-#                 arquivo_csv = boto3.client('s3').get_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho_arquivo)['Body'].read().splitlines(True)
+            with transaction.atomic():
+                # Buscar arquivo CSV
+                if options['data']:
+                    data_pesquisa = datetime.datetime.strptime(options['data'], '%d%m%Y').date()
+                else:
+                    # Busca data do último dia útil
+                    data_pesquisa = ultimo_dia_util()
+                 
+                caminho_arquivo = CAMINHO_FUNDO_INVESTIMENTO_HISTORICO + 'inf_diario_fi_%s.csv' % (data_pesquisa.strftime('%Y%m'))
+                 
+                if not verificar_arquivo_s3(caminho_arquivo):
+                    # Caso o documento ainda não exista, baixar
+                    _, _, arquivo_csv = buscar_arquivo_csv_historico(data_pesquisa)
+ 
+                    # Salvar arquivo em media no bucket
+                    boto3.client('s3').put_object(Body=arquivo_csv.fp.read(), Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho_arquivo)
+ 
+                # Preparar arquivo para processamento
+                arquivo_csv = boto3.client('s3').get_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho_arquivo)['Body'].read().splitlines(True)
                     
             with transaction.atomic():
                 # Processar arquivo
-#                 processar_arquivo_csv(arquivo_csv)
-                arquivo_csv = open('inf_diario_fi_201901.csv', 'r')
                 processar_arquivo_csv(arquivo_csv)
+#                 arquivo_csv = open('inf_diario_fi_201901.csv', 'r')
+#                 processar_arquivo_csv(arquivo_csv)
                     
             # Sem erros, apagar arquivo
-#             boto3.client('s3').delete_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho_arquivo)
+            boto3.client('s3').delete_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho_arquivo)
         except:
             if settings.ENV == 'DEV':
                 print traceback.format_exc()
@@ -98,7 +98,6 @@ def processar_arquivo_csv(dados_arquivo, codificacao='latin-1'):
         with transaction.atomic():
             csv_reader = csv.reader(dados_arquivo, delimiter=';')
             
-            inicio_geral = datetime.datetime.now()
             rows = list()
             for linha, row in enumerate(csv_reader):
                 if linha == 0:
@@ -121,21 +120,19 @@ def processar_arquivo_csv(dados_arquivo, codificacao='latin-1'):
                     # Formatar CNPJ
                     if len(row[campos['CNPJ_FUNDO']]) < 18:
                         row[campos['CNPJ_FUNDO']] = formatar_cnpj(row[campos['CNPJ_FUNDO']])
-                        
+                    
                     rows.append(row)
                     
                     if len(rows) == 750:
+                        # Converter em set para remover registros iguais
                         processar_linhas_documento_historico(rows, campos)
-                        rows = list()    
+                        rows = list()  
             
             # Verificar se terminou de iterar no arquivo mas ainda possui linhas a processar
             if len(rows) > 0:
                 processar_linhas_documento_historico(rows, campos)
                 rows = list()  
             
-            print 'Geral:', datetime.datetime.now() - inicio_geral
-            if 2 == 2:
-                raise ValueError('TESTE')
     except:
         print 'Linha', linha
         raise 
@@ -147,7 +144,6 @@ def processar_linhas_documento_historico(rows, campos):
     Parâmetros: Linhas do documento
                 Dicionário de campos
     """
-    inicio = datetime.datetime.now()
     # Descobrir mês/ano do arquivo de acordo com o primeiro registro
     ano, mes = rows[0][campos['DT_COMPTC']].split('-')[0:2]
 #     ano, mes = int(ano), int(mes)
@@ -164,14 +160,18 @@ def processar_linhas_documento_historico(rows, campos):
     rows.sort(key=lambda row: row[campos['CNPJ_FUNDO']])
     
     lista_historicos = list()
-    organizar =( datetime.datetime.now() - inicio)
     
-    inicio = datetime.datetime.now()
+    # Guarda datas já vistas
+    datas_passadas = list()  
     for row_atual in rows:
         # Verificar se o primeiro registro é menor que o cnpj atual, removê-lo para diminuir iterações
         while len(lista_fundos_existentes) > 0 and row_atual[campos['CNPJ_FUNDO']] > lista_fundos_existentes[0].cnpj:
             lista_fundos_existentes.pop(0)
-            
+            datas_passadas = list()  
+        
+        if row_atual[campos['DT_COMPTC']] in datas_passadas:
+            continue
+        
         for fundo_existente in lista_fundos_existentes:
             if row_atual[campos['CNPJ_FUNDO']] < fundo_existente.cnpj:
                 break
@@ -182,9 +182,7 @@ def processar_linhas_documento_historico(rows, campos):
                     historico_fundo = HistoricoValorCotas(data=row_atual[campos['DT_COMPTC']], fundo_investimento=fundo_existente, valor_cota=valor_cota)
                     lista_historicos.append(historico_fundo)
 #                     historico_fundo.save()
+                    datas_passadas.append(row_atual[campos['DT_COMPTC']])
                 break
     
     HistoricoValorCotas.objects.bulk_create(lista_historicos)
-    historico= ( datetime.datetime.now() - inicio)
-    
-    print organizar, historico, historico.total_seconds() / organizar.total_seconds()
