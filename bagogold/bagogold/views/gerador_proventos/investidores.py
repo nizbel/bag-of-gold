@@ -169,21 +169,25 @@ def detalhar_pendencias_usuario(request, id_usuario):
 #                                       + qtd_fii_proventos * PagamentoLeitura.TEMPO_LEITURA_PROVENTO_FII) / 3600
         tempo_total = Decimal(sum([leitura['tempo'] for leitura in leituras_acao] + [leitura['tempo'] for leitura in leituras_fii] + [historico_leitura['tempo'] for historico_leitura in historico_leituras_acao] \
                                   + [historico_leitura['tempo'] for historico_leitura in historico_leituras_fii])) / 3600
+        
+        # Calcular quanto deve ser recebido por todas as leituras feitas
         pagamento_total = Decimal(sum([leitura['tempo'] * leitura['valor_pagamento'] for leitura in leituras_acao] \
                                       + [leitura['tempo'] * leitura['valor_pagamento'] for leitura in leituras_fii] \
                                       + [historico_leitura['tempo'] * historico_leitura['valor_pagamento'] for historico_leitura in historico_leituras_acao] \
                                       + [historico_leitura['tempo'] * historico_leitura['valor_pagamento'] for historico_leitura in historico_leituras_fii])) / 3600
 #         usuario['tempo']_validado = Decimal((qtd_acao_exclusao_validado + qtd_fii_exclusao_validado) * PagamentoLeitura['tempo']_EXCLUSAO_DOCUMENTO \
 #                                          + qtd_acao_proventos_validado * PagamentoLeitura['tempo']_LEITURA_PROVENTO_ACAO + qtd_fii_proventos_validado * PagamentoLeitura['tempo']_LEITURA_PROVENTO_FII) / 3600
+        # Tempo e pagamento validados
         usuario.tempo_validado = Decimal(sum([leitura['tempo'] for leitura in leituras_acao.filter(validado=True)] + [leitura['tempo'] for leitura in leituras_fii.filter(validado=True)] \
                                              + [historico_leitura['tempo'] for historico_leitura in historico_leituras_acao] \
                                              + [historico_leitura['tempo'] for historico_leitura in historico_leituras_fii])) / 3600
-        pagamento_validado = Decimal(sum([leitura['tempo'] * leitura['valor_pagamento'] for leitura in leituras_acao.filter(validado=True)] \
+        usuario.pagamento_validado = Decimal(sum([leitura['tempo'] * leitura['valor_pagamento'] for leitura in leituras_acao.filter(validado=True)] \
                                                  + [leitura['tempo'] * leitura['valor_pagamento'] for leitura in leituras_fii.filter(validado=True)] \
                                                  + [historico_leitura['tempo'] * historico_leitura['valor_pagamento'] for historico_leitura in historico_leituras_acao] \
                                                  + [historico_leitura['tempo'] * historico_leitura['valor_pagamento'] for historico_leitura in historico_leituras_fii])) / 3600
+        # Tempo e pagamento a validar
         usuario.tempo_a_validar = tempo_total - usuario.tempo_validado
-        usuario.pagto_tempo_a_validar = (pagamento_total - pagamento_validado).quantize(Decimal('0.01'))
+        usuario.pagto_tempo_a_validar = (pagamento_total - usuario.pagamento_validado).quantize(Decimal('0.01'))
 #         usuario.pagto_tempo_a_validar = (usuario.tempo_a_validar * PagamentoLeitura.VALOR_HORA).quantize(Decimal('0.01'))
         
         # Usar novo modelo pagamento leitura
@@ -191,7 +195,7 @@ def detalhar_pendencias_usuario(request, id_usuario):
         usuario.pago = PagamentoLeitura.objects.filter(investidor=usuario.investidor).aggregate(total_pago=Sum('valor'))['total_pago'] or 0
         # Valor a pagar deve ser 0 para casos em que pagamentos foram feitos antes das validações
         
-        usuario.a_pagar = max(Decimal(floor(pagamento_validado)) - usuario.pago, 0)
+        usuario.a_pagar = max(Decimal(floor(usuario.pagamento_validado)) - usuario.pago, 0)
         
         # Parar popular a barra de acompanhamento
         # Tempo total deve ser 1 para casos em que pagamentos foram feitos antes das validações, excedendo tempo
@@ -201,7 +205,7 @@ def detalhar_pendencias_usuario(request, id_usuario):
         usuario.progresso_a_pagar = usuario.a_pagar
         usuario.percentual_progresso_a_pagar = usuario.progresso_a_pagar / usuario.progresso_tempo_total * 100
         # Tempo validado deve ser 0 para casos em que pagamentos foram feitos antes das validações, excedendo tempo
-        usuario.progresso_validado = max(pagamento_validado - usuario.a_pagar - usuario.pago, 0)
+        usuario.progresso_validado = max(usuario.pagamento_validado - usuario.a_pagar - usuario.pago, 0)
         usuario.percentual_progresso_validado = usuario.progresso_validado / usuario.progresso_tempo_total * 100
         
         # Adicionar lista de pagamentos feitos
