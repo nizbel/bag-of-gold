@@ -22,22 +22,10 @@ CSS_JANGO_THEME_FOLDER = STATIC_FOLDER + '/assets_jango/demos/default/css'
 IP_MAIN = '18.221.194.175'
 IP_SUPPORT = '18.219.213.179'
 
-# 23.253.149.64
 # Servers
-def prod():
-    env.config = 'PROD'
-    env.hosts = ['bagofgold.com.br']
-    env.path = 'bagogold'
-    env.repository = 'https://bitbucket.org/nizbel/bag-of-gold'
-    env.user = 'bagofgold'
-    env.virtualenv = 'bagogold'
-    env.virtualenv_path = '/home/bagofgold/.virtualenvs/bagogold'
-    env.forward_agent = True
-#     env.procs = ['nginx', 'site', 'winfinity']
-
 def prod_ec2():
     env.config = 'PROD_EC2'
-    env.hosts = [IP_MAIN] # 18.221.194.175    bagofgold.com.br
+    env.hosts = [IP_MAIN]
 #     env.path = 'bagogold'
 #     env.repository = 'https://bitbucket.org/nizbel/bag-of-gold'
     env.user = 'ubuntu'
