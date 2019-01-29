@@ -81,10 +81,10 @@ def detalhar_debenture(request, debenture_id):
 
 @login_required
 @adiciona_titulo_descricao('Editar operação em Debêntures', 'Alterar valores de uma operação de compra/venda em Debêntures')
-def editar_operacao_debenture(request, operacao_id):
+def editar_operacao_debenture(request, id_operacao):
     investidor = request.user.investidor
     
-    operacao_debenture = OperacaoDebenture.objects.get(pk=operacao_id)
+    operacao_debenture = OperacaoDebenture.objects.get(pk=id_operacao)
     
     # Verificar se a operação é do investidor logado
     if operacao_debenture.investidor != investidor:

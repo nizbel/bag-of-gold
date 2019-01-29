@@ -227,10 +227,10 @@ def acompanhamento_mensal(request):
     
 @login_required
 @adiciona_titulo_descricao('Editar operação de Trading em Ações', 'Altera dados de uma compra e venda de Ações')
-def editar_operacao(request, operacao_id):
+def editar_operacao(request, id_operacao):
     investidor = request.user.investidor
     
-    operacao = get_object_or_404(OperacaoCompraVenda, pk=operacao_id)
+    operacao = get_object_or_404(OperacaoCompraVenda, pk=id_operacao)
     # Checar se é o investidor da operação
     if investidor != operacao.compra.investidor:
         raise PermissionDenied
@@ -257,10 +257,10 @@ def editar_operacao(request, operacao_id):
     
 @login_required
 @adiciona_titulo_descricao('Editar operação em Ações para Trading', 'Altera valores de uma operação de compra/venda de Ações para Trading')
-def editar_operacao_acao(request, operacao_id):
+def editar_operacao_acao(request, id_operacao):
     investidor = request.user.investidor
     
-    operacao_acao = get_object_or_404(OperacaoAcao, pk=operacao_id, destinacao='T')
+    operacao_acao = get_object_or_404(OperacaoAcao, pk=id_operacao, destinacao='T')
     
     # Verifica se a operação é do investidor, senão, jogar erro de permissão
     if operacao_acao.investidor != investidor:

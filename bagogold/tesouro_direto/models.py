@@ -142,7 +142,7 @@ class OperacaoTitulo (models.Model):
     
     @property
     def link(self):
-        return reverse('tesouro_direto:editar_operacao_td', kwargs={'operacao_id': self.id})
+        return reverse('tesouro_direto:editar_operacao_td', kwargs={'id_operacao': self.id})
     
 class HistoricoTitulo (models.Model):
     titulo = models.ForeignKey('Titulo', unique_for_date='data')

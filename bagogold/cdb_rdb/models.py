@@ -134,7 +134,7 @@ class OperacaoCDB_RDB (models.Model):
     
     @property
     def link(self):
-        return reverse('cdb_rdb:editar_operacao_cdb_rdb', kwargs={'operacao_id': self.id})
+        return reverse('cdb_rdb:editar_operacao_cdb_rdb', kwargs={'id_operacao': self.id})
     
     def operacao_compra_relacionada(self):
         if self.tipo_operacao == 'V':

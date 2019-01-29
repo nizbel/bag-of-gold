@@ -35,7 +35,7 @@ class Investimento (models.Model):
     
     @property
     def link(self):
-        return reverse('outros_investimentos:editar_investimento', kwargs={'operacao_id': self.id})
+        return reverse('outros_investimentos:editar_investimento', kwargs={'id_investimento': self.id})
     
 class InvestimentoTaxa (models.Model):
     investimento = models.OneToOneField('Investimento')

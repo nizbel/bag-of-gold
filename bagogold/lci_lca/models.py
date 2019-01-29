@@ -98,7 +98,7 @@ class OperacaoLetraCredito (models.Model):
     
     @property
     def link(self):
-        return reverse('lci_lca:editar_operacao_lci_lca', kwargs={'operacao_id': self.id})
+        return reverse('lci_lca:editar_operacao_lci_lca', kwargs={'id_operacao': self.id})
     
     def data_inicial(self):
         if self.tipo_operacao == 'V':

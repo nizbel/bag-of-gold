@@ -8,7 +8,7 @@ urlpatterns = [
     url(r'^editar_historico_carencia/(?P<historico_carencia_id>\d+)/$', RedirectView.as_view(pattern_name='cdb_rdb:editar_historico_carencia', permanent=True)),
     url(r'^editar_historico_porcentagem/(?P<historico_porcentagem_id>\d+)/$', RedirectView.as_view(pattern_name='cdb_rdb:editar_historico_porcentagem', permanent=True)),
     url(r'^editar_historico_vencimento/(?P<historico_vencimento_id>\d+)/$', RedirectView.as_view(pattern_name='cdb_rdb:editar_historico_vencimento', permanent=True)),
-    url(r'^editar_operacao/(?P<operacao_id>\d+)/$', RedirectView.as_view(pattern_name='cdb_rdb:editar_operacao_cdb_rdb', permanent=True)),
+    url(r'^editar_operacao/(?P<id_operacao>\d+)/$', RedirectView.as_view(pattern_name='cdb_rdb:editar_operacao_cdb_rdb', permanent=True)),
     url(r'^historico/$', RedirectView.as_view(pattern_name='cdb_rdb:historico_cdb_rdb', permanent=True)),
     url(r'^inserir_cdb_rdb/$', RedirectView.as_view(pattern_name='cdb_rdb:inserir_cdb_rdb', permanent=True)),
     url(r'^inserir_operacao_cdb_rdb/$', RedirectView.as_view(pattern_name='cdb_rdb:inserir_operacao_cdb_rdb', permanent=True)),

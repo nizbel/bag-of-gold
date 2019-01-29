@@ -301,10 +301,10 @@ def editar_rendimento(request, id_rendimento):
                 
         elif request.POST.get("delete"):
             # Pegar investimento para o redirecionamento no caso de exclusão
-            investimento_id = rendimento.investimento.id
+            id_investimento = rendimento.investimento.id
             rendimento.delete()
             messages.success(request, 'Rendimento excluído com sucesso')
-            return HttpResponseRedirect(reverse('outros_investimentos:detalhar_investimento', kwargs={'id_investimento': investimento_id}))
+            return HttpResponseRedirect(reverse('outros_investimentos:detalhar_investimento', kwargs={'id_investimento': id_investimento}))
   
     else:
         form_rendimento = RendimentoForm(instance=rendimento, investimento=rendimento.investimento, investidor=investidor,

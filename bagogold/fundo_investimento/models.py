@@ -177,7 +177,7 @@ class OperacaoFundoInvestimento (models.Model):
     
     @property
     def link(self):
-        return reverse('fundo_investimento:editar_operacao_fundo_investimento', kwargs={'operacao_id': self.id})
+        return reverse('fundo_investimento:editar_operacao_fundo_investimento', kwargs={'id_operacao': self.id})
 
 class HistoricoValorCotas (models.Model):
     fundo_investimento = models.ForeignKey('FundoInvestimento')

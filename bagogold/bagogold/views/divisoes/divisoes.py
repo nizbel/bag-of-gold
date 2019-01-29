@@ -303,20 +303,20 @@ def detalhar_divisao(request, divisao_id):
     composicao['outros'].composicao = {}
     # Pegar outros investimentos contidos na divisão
     qtd_outros_investimentos = calcular_valor_outros_investimentos_ate_data_por_divisao(divisao)
-    for investimento_id in qtd_outros_investimentos.keys():
-        investimento = Investimento.objects.get(id=investimento_id)
-        composicao['outros'].patrimonio += qtd_outros_investimentos[investimento_id]
-        composicao['outros'].composicao[investimento_id] = Object()
-        composicao['outros'].composicao[investimento_id].nome = investimento.nome
-        composicao['outros'].composicao[investimento_id].patrimonio = qtd_outros_investimentos[investimento_id]
-        composicao['outros'].composicao[investimento_id].composicao = {}
+    for id_investimento in qtd_outros_investimentos.keys():
+        investimento = Investimento.objects.get(id=id_investimento)
+        composicao['outros'].patrimonio += qtd_outros_investimentos[id_investimento]
+        composicao['outros'].composicao[id_investimento] = Object()
+        composicao['outros'].composicao[id_investimento].nome = investimento.nome
+        composicao['outros'].composicao[id_investimento].patrimonio = qtd_outros_investimentos[id_investimento]
+        composicao['outros'].composicao[id_investimento].composicao = {}
         # Pegar dados do investimento
-        composicao['outros'].composicao[investimento_id].composicao[investimento_id] = Object()
-        composicao['outros'].composicao[investimento_id].composicao[investimento_id].nome = investimento.nome
-        composicao['outros'].composicao[investimento_id].composicao[investimento_id].data = investimento.data
-        composicao['outros'].composicao[investimento_id].composicao[investimento_id].quantidade = qtd_outros_investimentos[investimento_id]
-        composicao['outros'].composicao[investimento_id].composicao[investimento_id].valor_unitario = qtd_outros_investimentos[investimento_id]
-        composicao['outros'].composicao[investimento_id].composicao[investimento_id].patrimonio = qtd_outros_investimentos[investimento_id]
+        composicao['outros'].composicao[id_investimento].composicao[id_investimento] = Object()
+        composicao['outros'].composicao[id_investimento].composicao[id_investimento].nome = investimento.nome
+        composicao['outros'].composicao[id_investimento].composicao[id_investimento].data = investimento.data
+        composicao['outros'].composicao[id_investimento].composicao[id_investimento].quantidade = qtd_outros_investimentos[id_investimento]
+        composicao['outros'].composicao[id_investimento].composicao[id_investimento].valor_unitario = qtd_outros_investimentos[id_investimento]
+        composicao['outros'].composicao[id_investimento].composicao[id_investimento].patrimonio = qtd_outros_investimentos[id_investimento]
     
     # Calcular valor total da divisão
     for key, item in composicao.items():

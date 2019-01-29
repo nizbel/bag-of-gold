@@ -199,7 +199,7 @@ class OperacaoDebenture (models.Model):
     
     @property
     def link(self):
-        return reverse('debentures:editar_operacao_debenture', kwargs={'operacao_id': self.id})
+        return reverse('debentures:editar_operacao_debenture', kwargs={'id_operacao': self.id})
     
 class HistoricoValorDebenture (models.Model):
     debenture = models.ForeignKey('Debenture')

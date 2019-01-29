@@ -42,25 +42,25 @@ class EditarOperacaoLetraCreditoTestCase(TestCase):
     def test_usuario_deslogado(self):
         """Testa se redireciona ao receber usuário deslogado"""
         investidor = Investidor.objects.get(user__username='nizbel')
-        operacao_id = OperacaoLetraCredito.objects.get(investidor=investidor).id
-        response = self.client.get(reverse('lci_lca:editar_operacao_lci_lca', kwargs={'operacao_id': operacao_id}))
+        id_operacao = OperacaoLetraCredito.objects.get(investidor=investidor).id
+        response = self.client.get(reverse('lci_lca:editar_operacao_lci_lca', kwargs={'id_operacao': id_operacao}))
         self.assertEqual(response.status_code, 302)
         self.assertTrue('/login/' in response.url)
         
     def test_usuario_logado(self):
         """Testa se resposta da página está OK"""
         investidor = Investidor.objects.get(user__username='nizbel')
-        operacao_id = OperacaoLetraCredito.objects.get(investidor=investidor).id
+        id_operacao = OperacaoLetraCredito.objects.get(investidor=investidor).id
         self.client.login(username='nizbel', password='nizbel')
-        response = self.client.get(reverse('lci_lca:editar_operacao_lci_lca', kwargs={'operacao_id': operacao_id}))
+        response = self.client.get(reverse('lci_lca:editar_operacao_lci_lca', kwargs={'id_operacao': id_operacao}))
         self.assertEqual(response.status_code, 200)
     
     def test_outro_usuario_tentando_editar(self):
         """Testa um usuário que não seja o dono da operação"""
         investidor = Investidor.objects.get(user__username='nizbel')
-        operacao_id = OperacaoLetraCredito.objects.get(investidor=investidor).id
+        id_operacao = OperacaoLetraCredito.objects.get(investidor=investidor).id
         self.client.login(username='multi_div', password='multi_div')
-        response = self.client.get(reverse('lci_lca:editar_operacao_lci_lca', kwargs={'operacao_id': operacao_id}))
+        response = self.client.get(reverse('lci_lca:editar_operacao_lci_lca', kwargs={'id_operacao': id_operacao}))
         self.assertEqual(response.status_code, 403)
     
     def test_editar_operacao_sucesso_1_div(self):
@@ -74,7 +74,7 @@ class EditarOperacaoLetraCreditoTestCase(TestCase):
         self.assertFalse(DivisaoOperacaoLCI_LCA.objects.filter(divisao=Divisao.objects.get(investidor=investidor), quantidade=1100, 
                                                               operacao__id=operacao.id).exists())
         
-        response = self.client.post(reverse('lci_lca:editar_operacao_lci_lca', kwargs={'operacao_id': operacao.id}), {
+        response = self.client.post(reverse('lci_lca:editar_operacao_lci_lca', kwargs={'id_operacao': operacao.id}), {
             'letra_credito': operacao.letra_credito_id, 'save': 1, 'id_investidor': investidor.id, 'tipo_operacao': 'C',
             'data': datetime.date(2018, 4, 12), 'quantidade': 1100,
         })
@@ -179,7 +179,7 @@ class EditarOperacaoLetraCreditoTestCase(TestCase):
         operacao = OperacaoLetraCredito.objects.get(investidor=investidor)
         self.client.login(username='nizbel', password='nizbel')
         
-        response = self.client.post(reverse('lci_lca:editar_operacao_lci_lca', kwargs={'operacao_id': operacao.id}), {
+        response = self.client.post(reverse('lci_lca:editar_operacao_lci_lca', kwargs={'id_operacao': operacao.id}), {
             'letra_credito': operacao.letra_credito_id, 'save': 1, 'id_investidor': investidor.id, 'tipo_operacao': 'V',
             'data': operacao.data, 'quantidade': operacao.quantidade,
         })
@@ -189,49 +189,49 @@ class EditarOperacaoLetraCreditoTestCase(TestCase):
     def test_excluir_operacao_1_div_sucesso(self):
         """Testa a exclusão de operação com sucesso com 1 divisão"""
         investidor = Investidor.objects.get(user__username='nizbel')
-        operacao_id = OperacaoLetraCredito.objects.get(investidor=investidor).id
+        id_operacao = OperacaoLetraCredito.objects.get(investidor=investidor).id
         
         self.client.login(username='nizbel', password='nizbel')
         
-        self.assertTrue(OperacaoLetraCredito.objects.filter(id=operacao_id, investidor=investidor).exists())
+        self.assertTrue(OperacaoLetraCredito.objects.filter(id=id_operacao, investidor=investidor).exists())
         self.assertTrue(DivisaoOperacaoLCI_LCA.objects.filter(divisao=Divisao.objects.get(investidor=investidor), 
-                                                              operacao__id=operacao_id).exists())
+                                                              operacao__id=id_operacao).exists())
         
-        response = self.client.post(reverse('lci_lca:editar_operacao_lci_lca', kwargs={'operacao_id': operacao_id}), {
+        response = self.client.post(reverse('lci_lca:editar_operacao_lci_lca', kwargs={'id_operacao': id_operacao}), {
             'delete': 1,
         })
         
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse('lci_lca:historico_lci_lca'))
-        self.assertFalse(OperacaoLetraCredito.objects.filter(id=operacao_id, investidor=investidor).exists())
+        self.assertFalse(OperacaoLetraCredito.objects.filter(id=id_operacao, investidor=investidor).exists())
         self.assertFalse(DivisaoOperacaoLCI_LCA.objects.filter(divisao=Divisao.objects.get(investidor=investidor), 
-                                                              operacao__id=operacao_id).exists())
+                                                              operacao__id=id_operacao).exists())
                                                               
     def test_excluir_operacao_multi_div_sucesso(self):
         """Testa a exclusão de operação com sucesso com várias divisões"""
         investidor = Investidor.objects.get(user__username='multi_div')
-        operacao_id = OperacaoLetraCredito.objects.get(investidor=investidor).id
+        id_operacao = OperacaoLetraCredito.objects.get(investidor=investidor).id
         
         self.client.login(username='multi_div', password='multi_div')
         
-        self.assertTrue(OperacaoLetraCredito.objects.filter(id=operacao_id, investidor=investidor).exists())
-        self.assertTrue(DivisaoOperacaoLCI_LCA.objects.filter(operacao__id=operacao_id).count() > 0)
+        self.assertTrue(OperacaoLetraCredito.objects.filter(id=id_operacao, investidor=investidor).exists())
+        self.assertTrue(DivisaoOperacaoLCI_LCA.objects.filter(operacao__id=id_operacao).count() > 0)
         
         # Buscar dados das divisões para o formset
         div_geral = Divisao.objects.get(investidor=investidor, nome='Geral')
         div_nova = Divisao.objects.get(investidor=investidor, nome='Nova')
         
-        response = self.client.post(reverse('lci_lca:editar_operacao_lci_lca', kwargs={'operacao_id': operacao_id}), 
+        response = self.client.post(reverse('lci_lca:editar_operacao_lci_lca', kwargs={'id_operacao': id_operacao}), 
                                     {'delete': 1, 'divisaooperacaolci_lca_set-INITIAL_FORMS': '2', 'divisaooperacaolci_lca_set-TOTAL_FORMS': '3',
-                                     'divisaooperacaolci_lca_set-0-id': div_geral.id, 'divisaooperacaolci_lca_set-0-divisao': DivisaoOperacaoLCI_LCA.objects.get(operacao__id=operacao_id, divisao=div_geral), 
+                                     'divisaooperacaolci_lca_set-0-id': div_geral.id, 'divisaooperacaolci_lca_set-0-divisao': DivisaoOperacaoLCI_LCA.objects.get(operacao__id=id_operacao, divisao=div_geral), 
                                      'divisaooperacaolci_lca_set-0-quantidade': 600,
-                                     'divisaooperacaolci_lca_set-1-id': div_nova.id, 'divisaooperacaolci_lca_set-1-divisao': DivisaoOperacaoLCI_LCA.objects.get(operacao__id=operacao_id, divisao=div_nova), 
+                                     'divisaooperacaolci_lca_set-1-id': div_nova.id, 'divisaooperacaolci_lca_set-1-divisao': DivisaoOperacaoLCI_LCA.objects.get(operacao__id=id_operacao, divisao=div_nova), 
                                      'divisaooperacaolci_lca_set-1-quantidade': 400,})
         
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse('lci_lca:historico_lci_lca'))
-        self.assertFalse(OperacaoLetraCredito.objects.filter(id=operacao_id, investidor=investidor).exists())
-        self.assertFalse(DivisaoOperacaoLCI_LCA.objects.filter(operacao__id=operacao_id).exists())
+        self.assertFalse(OperacaoLetraCredito.objects.filter(id=id_operacao, investidor=investidor).exists())
+        self.assertFalse(DivisaoOperacaoLCI_LCA.objects.filter(operacao__id=id_operacao).exists())
         
     def test_nao_permitir_excluir_operacao_com_venda(self):
         """Testa o bloqueio de exclusao de uma operação de compra que já possua venda cadastrada"""
@@ -250,7 +250,7 @@ class EditarOperacaoLetraCreditoTestCase(TestCase):
         
         OperacaoVendaLetraCredito.objects.create(operacao_compra=operacao, operacao_venda=venda)
         
-        response = self.client.post(reverse('lci_lca:editar_operacao_lci_lca', kwargs={'operacao_id': operacao.id}),
+        response = self.client.post(reverse('lci_lca:editar_operacao_lci_lca', kwargs={'id_operacao': operacao.id}),
                                     form_operacao.initial)
         
         self.assertEqual(response.status_code, 200)

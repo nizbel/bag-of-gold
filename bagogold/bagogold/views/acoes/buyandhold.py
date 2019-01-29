@@ -46,10 +46,10 @@ def calcular_poupanca_proventos_na_data(request):
 
 @login_required
 @adiciona_titulo_descricao('Editar operação em Ações (Buy and Hold)', 'Altera valores de operação de compra/venda em Ações para Buy and Hold')
-def editar_operacao_acao(request, operacao_id):
+def editar_operacao_acao(request, id_operacao):
     investidor = request.user.investidor
     
-    operacao_acao = get_object_or_404(OperacaoAcao, pk=operacao_id, destinacao='B')
+    operacao_acao = get_object_or_404(OperacaoAcao, pk=id_operacao, destinacao='B')
     
     # Verifica se a operação é do investidor, senão, jogar erro de permissão
     if operacao_acao.investidor != investidor:
