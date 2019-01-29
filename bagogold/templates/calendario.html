@@ -111,6 +111,9 @@ $( document ).ready(function() {
                  },
          eventRender: function(event, element) {
              element.find('.fc-content').css('white-space', 'normal');
+             if (!$(element).attr('href')) {
+             	element.css('cursor', 'auto');
+             }
          }
     });
 });

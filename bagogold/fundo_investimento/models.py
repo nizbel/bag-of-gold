@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
+import datetime
 from decimal import Decimal
+
 from django.core.validators import MinValueValidator
 from django.db import models
-import datetime
+from django.urls.base import reverse
+
 
 class Administrador (models.Model):
     nome = models.CharField(u'Nome', max_length=100)
@@ -171,6 +174,10 @@ class OperacaoFundoInvestimento (models.Model):
     
     def valor_cota(self):
         return (self.valor/self.quantidade).quantize(Decimal('0.000000000001')) if self.quantidade > 0 else 0
+    
+    @property
+    def link(self):
+        return reverse('fundo_investimento:editar_operacao_fundo_investimento', kwargs={'operacao_id': self.id})
 
 class HistoricoValorCotas (models.Model):
     fundo_investimento = models.ForeignKey('FundoInvestimento')

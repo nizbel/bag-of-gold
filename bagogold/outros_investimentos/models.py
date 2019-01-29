@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
+import datetime
 from decimal import Decimal
+
 from django.core.validators import MinValueValidator
 from django.db import models
-import datetime
+from django.urls.base import reverse
+
 
 class Investimento (models.Model):
     nome = models.CharField(u'Nome', max_length=30)
@@ -29,6 +32,10 @@ class Investimento (models.Model):
         if hasattr(self, 'investimentotaxa'):
             return self.investimentotaxa.valor
         return Decimal(0)
+    
+    @property
+    def link(self):
+        return reverse('outros_investimentos:editar_investimento', kwargs={'operacao_id': self.id})
     
 class InvestimentoTaxa (models.Model):
     investimento = models.OneToOneField('Investimento')
