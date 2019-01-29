@@ -309,10 +309,10 @@ def editar_historico_vencimento(request, historico_vencimento_id):
 
 @login_required
 @adiciona_titulo_descricao('Editar operação em CDB/RDB', 'Alterar valores de uma operação de compra/venda em CDB/RDB')
-def editar_operacao_cdb_rdb(request, operacao_id):
+def editar_operacao_cdb_rdb(request, id_operacao):
     investidor = request.user.investidor
     
-    operacao_cdb_rdb = get_object_or_404(OperacaoCDB_RDB, id=operacao_id)
+    operacao_cdb_rdb = get_object_or_404(OperacaoCDB_RDB, id=id_operacao)
     if operacao_cdb_rdb.investidor != investidor:
         raise PermissionDenied
     

@@ -307,10 +307,10 @@ def editar_historico_vencimento(request, historico_vencimento_id):
 
 @login_required
 @adiciona_titulo_descricao('Editar operação em Letra de Câmbio', 'Alterar valores de uma operação de compra/venda em Letra de Câmbio')
-def editar_operacao_lc(request, operacao_id):
+def editar_operacao_lc(request, id_operacao):
     investidor = request.user.investidor
     
-    operacao_lc = get_object_or_404(OperacaoLetraCambio, id=operacao_id)
+    operacao_lc = get_object_or_404(OperacaoLetraCambio, id=id_operacao)
     if operacao_lc.investidor != investidor:
         raise PermissionDenied
     

@@ -91,7 +91,7 @@ class OperacaoFII (models.Model):
     
     @property
     def link(self):
-        return reverse('fii:editar_operacao_fii', kwargs={'operacao_id': self.id})
+        return reverse('fii:editar_operacao_fii', kwargs={'id_operacao': self.id})
 
 class UsoProventosOperacaoFII (models.Model):
     operacao = models.ForeignKey('OperacaoFII')

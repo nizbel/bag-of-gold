@@ -51,7 +51,7 @@ acoes_geral_patterns = [
 
 acoes_bh_patterns = [
     url(r'^calcular-poupanca-proventos-na-data/$', views.acoes.buyandhold.calcular_poupanca_proventos_na_data, name='calcular_poupanca_proventos_na_data'),
-    url(r'^editar-operacao-acao/(?P<operacao_id>\d+)/$', views.acoes.buyandhold.editar_operacao_acao, name='editar_operacao_bh'),
+    url(r'^editar-operacao-acao/(?P<id_operacao>\d+)/$', views.acoes.buyandhold.editar_operacao_acao, name='editar_operacao_bh'),
     url(r'^evolucao-posicao/$', views.acoes.buyandhold.evolucao_posicao, name='evolucao_posicao_bh'),
     url(r'^historico/$', views.acoes.buyandhold.historico, name='historico_bh'),
     url(r'^inserir-operacao-acao/$', views.acoes.buyandhold.inserir_operacao_acao, name='inserir_operacao_bh'),
@@ -65,8 +65,8 @@ acoes_trading_patterns = [
     url(r'^acompanhamento-mensal/$', views.acoes.trade.acompanhamento_mensal, name='acompanhamento_mensal'),
     # Redirecionamento
     url(r'^acompanhamento_mensal/$',  RedirectView.as_view(pattern_name='acoes:trading:acompanhamento_mensal', permanent=True)),
-    url(r'^editar-operacao/(?P<operacao_id>\d+)/$', views.acoes.trade.editar_operacao, name='editar_operacao_t'),
-    url(r'^editar-operacao-acao/(?P<operacao_id>\d+)/$', views.acoes.trade.editar_operacao_acao, name='editar_operacao_acao_t'),
+    url(r'^editar-operacao/(?P<id_operacao>\d+)/$', views.acoes.trade.editar_operacao, name='editar_operacao_t'),
+    url(r'^editar-operacao-acao/(?P<id_operacao>\d+)/$', views.acoes.trade.editar_operacao_acao, name='editar_operacao_acao_t'),
     url(r'^historico-operacoes/$', views.acoes.trade.historico_operacoes, name='historico_operacoes'),
     # Redirecionamento
     url(r'^historico_operacoes/$',  RedirectView.as_view(pattern_name='acoes:trading:historico_operacoes', permanent=True)),
@@ -86,7 +86,7 @@ acoes_patterns = [
 # Redirecionamento
 debentures_patterns = [
     url(r'^detalhar_debenture/(?P<debenture_id>\d+)/$', RedirectView.as_view(pattern_name='debentures:detalhar_debenture', permanent=True)),
-    url(r'^editar_operacao/(?P<operacao_id>\d+)/$', RedirectView.as_view(pattern_name='debentures:editar_operacao_debenture', permanent=True)),
+    url(r'^editar_operacao/(?P<id_operacao>\d+)/$', RedirectView.as_view(pattern_name='debentures:editar_operacao_debenture', permanent=True)),
 #     url(r'^historico/$', views.debentures.debentures.historico, name='historico_debenture'),
     url(r'^inserir_operacao_debenture/$', RedirectView.as_view(pattern_name='debentures:inserir_operacao_debenture', permanent=True)),
     url(r'^listar_debentures/$', RedirectView.as_view(pattern_name='debentures:listar_debentures', permanent=True)),
@@ -113,7 +113,7 @@ fiis_patterns = [
 #     url(r'^acompanhamento/$', views.fii.fii.acompanhamento_fii, name='acompanhamento_fii'),
     url(r'^calcular_resultado_corretagem/$', RedirectView.as_view(pattern_name='fii:calcular_resultado_corretagem', permanent=True)),
     url(r'^detalhar_provento/(?P<provento_id>\d+)/$', RedirectView.as_view(pattern_name='fii:detalhar_provento_fii', permanent=True)),
-    url(r'^editar_operacao/(?P<operacao_id>\d+)/$', RedirectView.as_view(pattern_name='fii:editar_operacao_fii', permanent=True)),
+    url(r'^editar_operacao/(?P<id_operacao>\d+)/$', RedirectView.as_view(pattern_name='fii:editar_operacao_fii', permanent=True)),
 #     url(r'^historico/$', views.fii.fii.historico_fii, name='historico_fii'),
     url(r'^inserir_operacao_fii/$', RedirectView.as_view(pattern_name='fii:inserir_operacao_fii', permanent=True)),
     url(r'^listar_proventos/$', RedirectView.as_view(pattern_name='fii:listar_proventos_fii', permanent=True)),
@@ -173,8 +173,8 @@ td_patterns = [
     url(r'^buscar_titulos_validos_na_data/$', RedirectView.as_view(pattern_name='tesouro_direto:buscar_titulos_validos_na_data', permanent=True)),
     url(r'^detalhar-titulo/(?P<titulo_id>\d+)/$', RedirectView.as_view(pattern_name='tesouro_direto:detalhar_titulo_td', permanent=True)),
     url(r'^detalhar_titulo/(?P<titulo_id>\d+)/$', RedirectView.as_view(pattern_name='tesouro_direto:detalhar_titulo_td', permanent=True)),
-    url(r'^editar-operacao/(?P<operacao_id>\d+)/$', RedirectView.as_view(pattern_name='tesouro_direto:editar_operacao_td', permanent=True)),
-    url(r'^editar_operacao/(?P<operacao_id>\d+)/$', RedirectView.as_view(pattern_name='tesouro_direto:editar_operacao_td', permanent=True)),
+    url(r'^editar-operacao/(?P<id_operacao>\d+)/$', RedirectView.as_view(pattern_name='tesouro_direto:editar_operacao_td', permanent=True)),
+    url(r'^editar_operacao/(?P<id_operacao>\d+)/$', RedirectView.as_view(pattern_name='tesouro_direto:editar_operacao_td', permanent=True)),
     url(r'^historico/$', RedirectView.as_view(pattern_name='tesouro_direto:historico_td', permanent=True)),
     url(r'^inserir-operacao-td/$', RedirectView.as_view(pattern_name='tesouro_direto:inserir_operacao_td', permanent=True)),
     url(r'^inserir_operacao_td/$', RedirectView.as_view(pattern_name='tesouro_direto:inserir_operacao_td', permanent=True)),

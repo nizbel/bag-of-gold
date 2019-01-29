@@ -1360,7 +1360,7 @@ def prox_vencimentos_painel_geral(request):
             if operacao.data_vencimento() >= data_atual:
                 operacao.tipo_investimento = u'CDB/RDB'
                 operacao.nome = operacao.cdb_rdb.nome
-#                 operacao.link = reverse('cdb_rdb:editar_operacao_cdb_rdb', kwargs={'operacao_id': operacao.id})
+#                 operacao.link = reverse('cdb_rdb:editar_operacao_cdb_rdb', kwargs={'id_operacao': operacao.id})
                 
                 # Valor inicial
                 operacao.valor_inicial = operacao.qtd_disponivel_venda 
@@ -1404,7 +1404,7 @@ def prox_vencimentos_painel_geral(request):
         .select_related('debenture'):
             operacao.tipo_investimento = u'Debênture'
             operacao.nome = operacao.debenture.nome
-#             operacao.link = reverse('debentures:editar_operacao_debenture', kwargs={'operacao_id': operacao.id})
+#             operacao.link = reverse('debentures:editar_operacao_debenture', kwargs={'id_operacao': operacao.id})
             
             # Valor inicial
             operacao.valor_inicial = operacao.quantidade * operacao.preco_unitario
@@ -1422,7 +1422,7 @@ def prox_vencimentos_painel_geral(request):
             if operacao.data_vencimento() >= data_atual:
                 operacao.tipo_investimento = u'Letra de Câmbio'
                 operacao.nome = operacao.lc.nome
-#                 operacao.link = reverse('lcambio:editar_operacao_lc', kwargs={'operacao_id': operacao.id})
+#                 operacao.link = reverse('lcambio:editar_operacao_lc', kwargs={'id_operacao': operacao.id})
                 
                 # Valor inicial
                 operacao.valor_inicial = operacao.qtd_disponivel_venda 
@@ -1453,7 +1453,7 @@ def prox_vencimentos_painel_geral(request):
             if operacao.data_vencimento() >= data_atual:
                 operacao.tipo_investimento = u'LCI/LCA'
                 operacao.nome = operacao.letra_credito.nome
-#                 operacao.link = reverse('lci_lca:editar_operacao_lci_lca', kwargs={'operacao_id': operacao.id})
+#                 operacao.link = reverse('lci_lca:editar_operacao_lci_lca', kwargs={'id_operacao': operacao.id})
                 
                 # Valor inicial
                 operacao.valor_inicial = operacao.qtd_disponivel_venda 
@@ -1481,7 +1481,7 @@ def prox_vencimentos_painel_geral(request):
         .select_related('titulo'):
             operacao.tipo_investimento = u'Tesouro Direto'
             operacao.nome = operacao.titulo.nome()
-#             operacao.link = reverse('tesouro_direto:editar_operacao_td', kwargs={'operacao_id': operacao.id})
+#             operacao.link = reverse('tesouro_direto:editar_operacao_td', kwargs={'id_operacao': operacao.id})
             
             # Valor inicial
             operacao.valor_inicial = operacao.quantidade * operacao.preco_unitario

@@ -293,10 +293,10 @@ def detalhar_provento(request, provento_id):
 
 @login_required
 @adiciona_titulo_descricao('Editar operação em FII', 'Alterar valores de uma operação de compra/venda em Fundos de Investimento Imobiliário')
-def editar_operacao_fii(request, operacao_id):
+def editar_operacao_fii(request, id_operacao):
     investidor = request.user.investidor
     
-    operacao_fii = get_object_or_404(OperacaoFII, pk=operacao_id)
+    operacao_fii = get_object_or_404(OperacaoFII, pk=id_operacao)
     
     # Verificar se a operação é do investidor logado
     if operacao_fii.investidor != investidor:

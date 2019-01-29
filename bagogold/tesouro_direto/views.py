@@ -249,10 +249,10 @@ def detalhar_titulo_td(request, titulo_tipo, titulo_data):
 
 @login_required
 @adiciona_titulo_descricao('Editar operação em Tesouro Direto', 'Editar valores de uma operação de compra/venda em Tesouro Direto')
-def editar_operacao_td(request, operacao_id):
+def editar_operacao_td(request, id_operacao):
     investidor = request.user.investidor
     
-    operacao_td = get_object_or_404(OperacaoTitulo, id=operacao_id)
+    operacao_td = get_object_or_404(OperacaoTitulo, id=id_operacao)
     # Verifica se a operação é do investidor, senão, jogar erro de permissão
     if operacao_td.investidor != investidor:
         raise PermissionDenied

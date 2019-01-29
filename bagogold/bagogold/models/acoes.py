@@ -174,9 +174,9 @@ class OperacaoAcao (models.Model):
     @property
     def link(self):
         if self.destinacao == 'B':
-            return reverse('acoes:bh:editar_operacao_bh', kwargs={'operacao_id': self.id})
+            return reverse('acoes:bh:editar_operacao_bh', kwargs={'id_operacao': self.id})
         else:
-            return reverse('acoes:trading:editar_operacao_acao_t', kwargs={'operacao_id': self.id})
+            return reverse('acoes:trading:editar_operacao_acao_t', kwargs={'id_operacao': self.id})
             
 
 class UsoProventosOperacaoAcao (models.Model):

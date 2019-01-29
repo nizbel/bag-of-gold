@@ -11,7 +11,7 @@ def calcular_valor_outros_investimentos_ate_data(investidor, data=datetime.date.
     Calcula o valor investido em outros investimentos até determinada data
     Parâmetros: Investidor
                 Data
-    Retorno: Valores por investimento {investimento_id: valor}
+    Retorno: Valores por investimento {id_investimento: valor}
     """
     investimentos = dict(Investimento.objects.filter(investidor=investidor, data__lte=data, data_encerramento__isnull=True).values_list('id', 'quantidade'))
 
@@ -39,7 +39,7 @@ def calcular_valor_outros_investimentos_ate_data_por_divisao(divisao, data=datet
     Calcula o valor dos invesimentos de uma divisão até determinada data
     Parâmetros: Divisão
                 Data
-    Retorno: Valores por investimento {investimento_id: valor}
+    Retorno: Valores por investimento {id_investimento: valor}
     """
     investimentos = DivisaoInvestimento.objects.filter(divisao=divisao, investimento__data__lte=data, 
                                                             investimento__data_encerramento__isnull=True) \

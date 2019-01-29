@@ -83,7 +83,7 @@ class OperacaoCRI_CRA (models.Model):
     
     @property
     def link(self):
-        return reverse('cri_cra:editar_operacao_cri_cra', kwargs={'operacao_id': self.id})
+        return reverse('cri_cra:editar_operacao_cri_cra', kwargs={'id_operacao': self.id})
     
 class DataRemuneracaoCRI_CRA (models.Model):
     data = models.DateField(u'Data de remuneração')

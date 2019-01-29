@@ -291,10 +291,10 @@ def editar_lci_lca(request, lci_lca_id):
     
 @login_required
 @adiciona_titulo_descricao('Editar operação em Letras de Crédito', 'Alterar valores de uma operação de compra/venda em Letras de Crédito')
-def editar_operacao_lci_lca(request, operacao_id):
+def editar_operacao_lci_lca(request, id_operacao):
     investidor = request.user.investidor
     
-    operacao_lci_lca = OperacaoLetraCredito.objects.get(pk=operacao_id)
+    operacao_lci_lca = OperacaoLetraCredito.objects.get(pk=id_operacao)
     
     # Verifica se a operação é do investidor, senão, jogar erro de permissão
     if operacao_lci_lca.investidor != investidor:

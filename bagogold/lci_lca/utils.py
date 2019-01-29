@@ -232,7 +232,7 @@ def calcular_valor_lci_lca_ate_dia_por_divisao(dia, divisao_id):
             # Remover quantidade da operação de compra
             operacao_compra_id = operacao.operacao.operacao_compra_relacionada().id
             for operacao_c in operacoes:
-                if (operacao_c.operacao_id == operacao_compra_id):
+                if (operacao_c.id_operacao == operacao_compra_id):
 #                     operacao.atual = DivisaoOperacaoLCI_LCA.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade
                     operacao_c.atual -= operacao.atual
                     break

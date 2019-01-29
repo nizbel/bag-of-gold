@@ -43,7 +43,7 @@ class OperacaoCriptomoeda (models.Model):
         
     @property
     def link(self):
-        return reverse('criptomoedas:editar_operacao_criptomoeda', kwargs={'operacao_id': self.id})
+        return reverse('criptomoedas:editar_operacao_criptomoeda', kwargs={'id_operacao': self.id})
     
 class OperacaoCriptomoedaTaxa (models.Model):
     valor = models.DecimalField(u'Taxa da operação', max_digits=21, decimal_places=12, validators=[MinValueValidator(Decimal('0'))])

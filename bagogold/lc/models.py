@@ -120,7 +120,7 @@ class OperacaoLetraCambio (models.Model):
     
     @property
     def link(self):
-        return reverse('lcambio:editar_operacao_lc', kwargs={'operacao_id': self.id})
+        return reverse('lcambio:editar_operacao_lc', kwargs={'id_operacao': self.id})
     
     def operacao_compra_relacionada(self):
         if self.tipo_operacao == 'V':
@@ -204,7 +204,7 @@ class OperacaoLetraCambio (models.Model):
         
     @property
     def link(self):
-        return reverse('lcambio:editar_operacao_lc', kwargs={'operacao_id': self.id})
+        return reverse('lcambio:editar_operacao_lc', kwargs={'id_operacao': self.id})
     
 class OperacaoVendaLetraCambio (models.Model):
     operacao_compra = models.ForeignKey('OperacaoLetraCambio', limit_choices_to={'tipo_operacao': 'C'}, related_name='operacao_compra')
