@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 from decimal import Decimal
+
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.urls.base import reverse
+
 
 class Criptomoeda (models.Model):
     nome = models.CharField(u'Nome', max_length=50)
@@ -37,6 +40,10 @@ class OperacaoCriptomoeda (models.Model):
             return self.operacaocriptomoedataxa 
         else:
             return None
+        
+    @property
+    def link(self):
+        return reverse('criptomoedas:editar_operacao_criptomoeda', kwargs={'operacao_id': self.id})
     
 class OperacaoCriptomoedaTaxa (models.Model):
     valor = models.DecimalField(u'Taxa da operação', max_digits=21, decimal_places=12, validators=[MinValueValidator(Decimal('0'))])

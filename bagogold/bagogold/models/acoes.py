@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao
-from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
+import datetime
 from decimal import Decimal
+
 from django.db import models
 from django.db.models.aggregates import Count, Sum
-import datetime
- 
+from django.urls.base import reverse
+
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao
+from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
+
+
 class Acao (models.Model):
     TIPOS_ACAO_NUMERO = {3: u'ON',
                   4: u'PN',
@@ -166,6 +170,14 @@ class OperacaoAcao (models.Model):
     def utilizou_proventos(self):
 #         return UsoProventosOperacaoAcao.objects.filter(operacao=self).exists()
         return self.usoproventosoperacaoacao_set.exists()
+    
+    @property
+    def link(self):
+        if self.destinacao == 'B':
+            return reverse('acoes:bh:editar_operacao_bh', kwargs={'operacao_id': self.id})
+        else:
+            return reverse('acoes:trading:editar_operacao_acao_t', kwargs={'operacao_id': self.id})
+            
 
 class UsoProventosOperacaoAcao (models.Model):
     operacao = models.ForeignKey('OperacaoAcao', verbose_name='Operação')

@@ -70,6 +70,7 @@ from bagogold.outros_investimentos.models import Rendimento, Amortizacao, \
 from bagogold.tesouro_direto.models import OperacaoTitulo, HistoricoTitulo, \
     ValorDiarioTitulo, Titulo
 from bagogold.tesouro_direto.utils import calcular_valor_td_ate_dia
+from django.shortcuts import resolve_url
 
 
 @adiciona_titulo_descricao('Cálculos de patrimônio e rendimento futuros', 'Permite calcular o patrimônio acumulado em um período, o rendimento alcançado e o ' \
@@ -97,29 +98,36 @@ def calendario(request):
         # Buscar eventos
         # Operações do investidor
         operacoes = buscar_operacoes_no_periodo(investidor, data_inicial, data_final)
-        calendario = [{'title': unicode(operacao), 'start': operacao.data.strftime('%Y-%m-%d')} for operacao in operacoes]
+        for operacao in operacoes:
+            operacao.url = operacao.link
+#             operacao.url = resolve_url('inicio:painel_geral')
+        calendario = [{'title': unicode(operacao), 'start': operacao.data.strftime('%Y-%m-%d'), 'url': operacao.url} for operacao in operacoes]
         
         # Proventos de ações
         # Busca ações que o investidor já tenha negociado
         lista_acoes_negociadas = OperacaoAcao.objects.filter(investidor=investidor).order_by('acao').values_list('acao', flat=True).distinct()
         proventos_acoes = Provento.objects.filter(data_ex__range=[data_inicial, data_final], tipo_provento__in=['D', 'J'], acao__in=lista_acoes_negociadas)
-        calendario.extend([{'title': u'Data EX para %s de %s, R$ %s por ação' % (provento.descricao_tipo_provento(), provento.acao.ticker, provento.valor_unitario), 
+        calendario.extend([{'title': u'Data EX para %s de %s, R$ %s por ação' % (provento.descricao_tipo_provento(), provento.acao.ticker, 
+                                                                                 formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario)), 
                             'start': provento.data_ex.strftime('%Y-%m-%d')} for provento in proventos_acoes])
         
         
         proventos_acoes = Provento.objects.filter(data_pagamento__range=[data_inicial, data_final], tipo_provento__in=['D', 'J'], acao__in=lista_acoes_negociadas)
-        calendario.extend([{'title': u'Data de pagamento para %s de %s, R$ %s por ação' % (provento.descricao_tipo_provento(), provento.acao.ticker, provento.valor_unitario), 
+        calendario.extend([{'title': u'Data de pagamento para %s de %s, R$ %s por ação' % (provento.descricao_tipo_provento(), provento.acao.ticker, 
+                                                                                           formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario)), 
                             'start': provento.data_pagamento.strftime('%Y-%m-%d')} for provento in proventos_acoes])
         
         # Proventos de FIIs
         # Busca fiis que o investidor já tenha negociado
         lista_fiis_negociadas = OperacaoFII.objects.filter(investidor=investidor).order_by('fii').values_list('fii', flat=True).distinct()
         proventos_fiis = ProventoFII.objects.filter(data_ex__range=[data_inicial, data_final], fii__in=lista_fiis_negociadas)
-        calendario.extend([{'title': u'Data EX para %s de %s, R$ %s por cota' % (provento.descricao_tipo_provento(), provento.fii.ticker, provento.valor_unitario), 
+        calendario.extend([{'title': u'Data EX para %s de %s, R$ %s por cota' % (provento.descricao_tipo_provento(), provento.fii.ticker, 
+                                                                                 formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario)), 
                             'start': provento.data_ex.strftime('%Y-%m-%d')} for provento in proventos_fiis])
         
         proventos_fiis = ProventoFII.objects.filter(data_pagamento__range=[data_inicial, data_final], fii__in=lista_fiis_negociadas)
-        calendario.extend([{'title': u'Data de pagamento para %s de %s, R$ %s por cota' % (provento.descricao_tipo_provento(), provento.fii.ticker, provento.valor_unitario), 
+        calendario.extend([{'title': u'Data de pagamento para %s de %s, R$ %s por cota' % (provento.descricao_tipo_provento(), provento.fii.ticker, 
+                                                                                           formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario)), 
                             'start': provento.data_pagamento.strftime('%Y-%m-%d')} for provento in proventos_fiis])
         
         # Carência e vencimento de CDB/RDB
@@ -157,10 +165,10 @@ def calendario(request):
         
         # Vencimento, amortizações e remunerações de CRI/CRA
         remuneracoes_cri_cra = DataRemuneracaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, data__range=[data_inicial, data_final])
-        calendario.extend([{'title': u'Pagamento de remuneração de R$ %s para %s' % (data_remuneracao.qtd_remuneracao(), data_remuneracao.cri_cra.nome), 
+        calendario.extend([{'title': u'Remuneração de R$ %s para %s' % (data_remuneracao.qtd_remuneracao(), data_remuneracao.cri_cra.nome), 
                             'start': data_remuneracao.data.strftime('%Y-%m-%d')} for data_remuneracao in remuneracoes_cri_cra])
         amortizacoes_cri_cra = DataAmortizacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, data__range=[data_inicial, data_final])
-        calendario.extend([{'title': u'Pagamento de amortização para %s' % (data_amortizacao.cri_cra.nome), 
+        calendario.extend([{'title': u'Amortização para %s' % (data_amortizacao.cri_cra.nome), 
                             'start': data_amortizacao.data.strftime('%Y-%m-%d')} for data_amortizacao in amortizacoes_cri_cra])
         vencimentos_cri_cra = CRI_CRA.objects.filter(investidor=investidor, data_vencimento__range=[data_inicial, data_final])
         calendario.extend([{'title': u'Vencimento de %s' % (cri_cra.nome), 

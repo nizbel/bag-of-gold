@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
+import datetime
 from decimal import Decimal
+
 from django.core.validators import MinValueValidator
 from django.db import models
-import datetime
+from django.urls.base import reverse
+
 
 class CRI_CRA (models.Model):
     TIPO_CRI = 'I'
@@ -77,6 +80,10 @@ class OperacaoCRI_CRA (models.Model):
     
     def data_vencimento(self):
         return self.cri_cra.data_vencimento
+    
+    @property
+    def link(self):
+        return reverse('cri_cra:editar_operacao_cri_cra', kwargs={'operacao_id': self.id})
     
 class DataRemuneracaoCRI_CRA (models.Model):
     data = models.DateField(u'Data de remuneração')

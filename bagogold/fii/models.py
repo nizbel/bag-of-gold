@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa
+import datetime
 from decimal import Decimal
+from math import floor
+
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models.aggregates import Sum
-from math import floor
-import datetime
- 
+from django.urls.base import reverse
+
+from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa
+
+
 class FII (models.Model):
     ticker = models.CharField(u'Ticker do FII', max_length=10, unique=True) 
     empresa = models.ForeignKey('bagogold.Empresa', blank=True, null=True) 
@@ -84,6 +88,10 @@ class OperacaoFII (models.Model):
     def utilizou_proventos(self):
 #         return UsoProventosOperacaoFII.objects.filter(operacao=self).exists()
         return self.usoproventosoperacaofii_set.exists()
+    
+    @property
+    def link(self):
+        return reverse('fii:editar_operacao_fii', kwargs={'operacao_id': self.id})
 
 class UsoProventosOperacaoFII (models.Model):
     operacao = models.ForeignKey('OperacaoFII')

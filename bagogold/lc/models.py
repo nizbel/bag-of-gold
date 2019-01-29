@@ -201,6 +201,10 @@ class OperacaoLetraCambio (models.Model):
                 return (carencia <= (data_venda - self.data).days)
         else:
             return False
+        
+    @property
+    def link(self):
+        return reverse('lcambio:editar_operacao_lc', kwargs={'operacao_id': self.id})
     
 class OperacaoVendaLetraCambio (models.Model):
     operacao_compra = models.ForeignKey('OperacaoLetraCambio', limit_choices_to={'tipo_operacao': 'C'}, related_name='operacao_compra')
