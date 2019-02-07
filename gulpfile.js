@@ -80,6 +80,8 @@ gulp.task('minify', function () {
     gulp.src(['./bagogold/static/assets/layouts/**/scripts/*.js','!./bagogold/static/assets/layouts/**/scripts/*.min.js']).pipe(uglify()).pipe(rename({suffix: '.min'})).pipe(gulp.dest('./bagogold/static/assets/layouts/'));
     
     gulp.src(['./bagogold/static/js/bagogold/*.js','!./bagogold/static/js/bagogold/*.min.js']).pipe(uglify()).pipe(rename({suffix: '.min'})).pipe(gulp.dest('./bagogold/static/js/bagogold/'));
+    
+    gulp.src(['./bagogold/static/assets/global/plugins/datatables/plugins/*.js','!./bagogold/static/assets/global/plugins/datatables/plugins/*.min.js']).pipe(uglify()).pipe(rename({suffix: '.min'})).pipe(gulp.dest('./bagogold/static/assets/global/plugins/datatables/plugins/'));
 
     gulp.src(['./bagogold/static/assets_jango/base/js/*.js','!./bagogold/static/assets_jango/base/js/*.min.js']).pipe(uglify()).pipe(rename({suffix: '.min'})).pipe(gulp.dest('./bagogold/static/assets_jango/base/js/'));
 //    gulp.src(['./bagogold/static/assets_jango/**/*.js','!./bagogold/static/assets_jango/**/*.min.js']).pipe(uglify()).pipe(rename({suffix: '.min'})).pipe(gulp.dest('./bagogold/static/assets_jango/'));
