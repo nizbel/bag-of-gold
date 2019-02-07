@@ -86,11 +86,16 @@ def calcular_valor_cri_cra_di(valor_inicial, percentual_di, data_inicial, data_f
         taxa_qtd_dias[Decimal(taxa['taxa'])] = taxa['qtd_dias']
     
     # Simular valores com última posição do DI
-    if simular_valores:
-        data_final_di, taxa_final_di = HistoricoTaxaDI.objects.filter(data__range=[data_inicial, data_final]).values_list('data', 'taxa').order_by('-data')[0]
+    ultimo_registro_di = HistoricoTaxaDI.objects.all().order_by('-data')[0]
+    if simular_valores and data_final >= ultimo_registro_di.data:
+#         data_final_di, taxa_final_di = HistoricoTaxaDI.objects.filter(data__range=[data_inicial, data_final]).values_list('data', 'taxa').order_by('-data')[0]
+        data_final_di, taxa_final_di = ultimo_registro_di.data, ultimo_registro_di.taxa
         qtd_dias_uteis_ate_data = qtd_dias_uteis_no_periodo(data_final_di + datetime.timedelta(days=1), data_final + datetime.timedelta(days=1))
         # Considerar rendimento do dia anterior
-        taxa_qtd_dias[taxa_final_di] += qtd_dias_uteis_ate_data
+        if taxa_final_di in taxa_qtd_dias:
+            taxa_qtd_dias[taxa_final_di] += qtd_dias_uteis_ate_data
+        else:
+            taxa_qtd_dias[taxa_final_di] = qtd_dias_uteis_ate_data
         
     # Calcular
     if (juros_adicional == 0):

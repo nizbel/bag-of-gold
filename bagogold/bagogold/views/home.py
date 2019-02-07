@@ -1349,13 +1349,15 @@ def prox_vencimentos_painel_geral(request):
         # Verificar próximos vencimentos de renda fixa
         prox_vencimentos = list()
         
+        limite_vencimentos = 10
+        
         # Taxa DI final
         data_final, taxa_final = HistoricoTaxaDI.objects.all().values_list('data', 'taxa').order_by('-data')[0]
         
         # CDB/RDB
         # Buscar cdbs vigentes
         operacoes_atuais = buscar_operacoes_vigentes_ate_data_cdb_rdb(investidor)
-        for operacao in operacoes_atuais:
+        for operacao in operacoes_atuais[:limite_vencimentos]:
 #             if operacao.data_vencimento() >= data_atual and operacao.data_vencimento() <= data_30_dias:
             if operacao.data_vencimento() >= data_atual:
                 operacao.tipo_investimento = u'CDB/RDB'
@@ -1383,8 +1385,8 @@ def prox_vencimentos_painel_geral(request):
                 
         # CRI/CRA
 #         for operacao in OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, cri_cra__data_vencimento__range=[data_atual, data_30_dias]) \
-        for operacao in OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, cri_cra__data_vencimento__gte=data_atual) \
-        .select_related('cri_cra'):
+        for operacao in OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, cri_cra__data_vencimento__gte=data_atual, tipo_operacao='C') \
+        .select_related('cri_cra').order_by('data')[:limite_vencimentos]:
             operacao.tipo_investimento = u'CRI/CRA'
             operacao.nome = operacao.cri_cra.nome
             
@@ -1398,8 +1400,8 @@ def prox_vencimentos_painel_geral(request):
                 
         # Debênture
 #         for operacao in OperacaoDebenture.objects.filter(investidor=investidor, debenture__data_vencimento__range=[data_atual, data_30_dias]) \
-        for operacao in OperacaoDebenture.objects.filter(investidor=investidor, debenture__data_vencimento__gte=data_atual) \
-        .select_related('debenture'):
+        for operacao in OperacaoDebenture.objects.filter(investidor=investidor, debenture__data_vencimento__gte=data_atual, tipo_operacao='C') \
+        .select_related('debenture').order_by('data')[:limite_vencimentos]:
             operacao.tipo_investimento = u'Debênture'
             operacao.nome = operacao.debenture.nome
             
@@ -1414,7 +1416,7 @@ def prox_vencimentos_painel_geral(request):
         # Buscar lcs vigentes
         operacoes_atuais = buscar_operacoes_vigentes_ate_data_lc(investidor)
         # Verificar datas de vencimento, pegar nos próximos 30 dias
-        for operacao in operacoes_atuais:
+        for operacao in operacoes_atuais[:limite_vencimentos]:
 #             if operacao.data_vencimento() >= data_atual and operacao.data_vencimento() <= data_30_dias:
             if operacao.data_vencimento() >= data_atual:
                 operacao.tipo_investimento = u'Letra de Câmbio'
@@ -1444,7 +1446,7 @@ def prox_vencimentos_painel_geral(request):
         # Buscar lcis vigentes
         operacoes_atuais = buscar_operacoes_vigentes_ate_data_lci_lca(investidor)
         # Verificar datas de vencimento, pegar nos próximos 30 dias
-        for operacao in operacoes_atuais:
+        for operacao in operacoes_atuais[:limite_vencimentos]:
 #             if operacao.data_vencimento() >= data_atual and operacao.data_vencimento() <= data_30_dias:
             if operacao.data_vencimento() >= data_atual:
                 operacao.tipo_investimento = u'LCI/LCA'
@@ -1472,8 +1474,8 @@ def prox_vencimentos_painel_geral(request):
                 
         # Título
 #         for operacao in OperacaoTitulo.objects.filter(investidor=investidor, titulo__data_vencimento__range=[data_atual, data_30_dias]) \
-        for operacao in OperacaoTitulo.objects.filter(investidor=investidor, titulo__data_vencimento__gte=data_atual) \
-        .select_related('titulo'):
+        for operacao in OperacaoTitulo.objects.filter(investidor=investidor, titulo__data_vencimento__gte=data_atual, tipo_operacao='C') \
+        .select_related('titulo').order_by('data')[:limite_vencimentos]:
             operacao.tipo_investimento = u'Tesouro Direto'
             operacao.nome = operacao.titulo.nome()
             
@@ -1488,11 +1490,12 @@ def prox_vencimentos_painel_geral(request):
         # Ordenar pela data de vencimento
         prox_vencimentos.sort(key=lambda x: x.data_vencimento())
         
-        # Filtrar apenas os 5 próximos
-        prox_vencimentos = prox_vencimentos[:10]
+        # Filtrar apenas os 10 próximos
+        prox_vencimentos = prox_vencimentos[:limite_vencimentos]
 
         # Preencher dados gerais para operações a serem mostradas        
         for operacao in prox_vencimentos:
+            print operacao.data_vencimento(), operacao.data
             operacao.decorrido_percentual = (float((data_atual - operacao.data).days) / (operacao.data_vencimento() - operacao.data).days) * 100
         
         print datetime.datetime.now() - inicio
