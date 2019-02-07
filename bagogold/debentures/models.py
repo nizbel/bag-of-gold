@@ -36,7 +36,8 @@ class Debenture (models.Model):
     padrao_snd = models.BooleanField(u'É padrão SND?')
     
     class Meta:
-        unique_together=('codigo', )
+        unique_together = ('codigo', )
+        ordering = ['codigo']
     
     def __unicode__(self):
         return self.codigo
