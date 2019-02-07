@@ -59,6 +59,7 @@ def detalhar_debenture(request, debenture_id):
     
     lista_historico = HistoricoValorDebenture.objects.filter(debenture=debenture).order_by('data')
     
+    # TODO melhorar forma de verificar amortizações para IPCA
     amortizacoes = [{'data': historico.data, 'valor': historico.valor_nominal} for historico in lista_historico]
     for indice, amortizacao in enumerate(amortizacoes):
         # Marcar primeira para remoção
@@ -70,7 +71,14 @@ def detalhar_debenture(request, debenture_id):
         # Guardar valor amortização
         else:
             amortizacao['novo_valor'] = amortizacoes[indice-1]['valor'] - amortizacao['valor']
-            amortizacao['remover'] = False
+            if debenture.indice != Debenture.IPCA:
+                amortizacao['remover'] = False
+            else:
+                # Para IPCA, será considerado amortização caso seja maior do que pelo menos 0,5% do valor de emissão
+                if amortizacao['novo_valor'] >= debenture.valor_emissao * Decimal('0.005'):
+                    amortizacao['remover'] = False
+                else:
+                    amortizacao['remover'] = True
     amortizacoes = [{'data': amortizacao['data'], 'valor': amortizacao['novo_valor']} for amortizacao in amortizacoes if not amortizacao['remover']]
     
     juros = [{'data': historico.data, 'valor': historico.juros} for historico in lista_historico]
