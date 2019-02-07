@@ -8,13 +8,18 @@ from django.db.models.expressions import F, Case, When
 from django.db.models.fields import DecimalField
 import datetime
 
-def quantidade_cri_cra_na_data_para_certificado(cri_cra, data=datetime.date.today()):
+def quantidade_cri_cra_na_data_para_certificado(cri_cra, data=None):
     """
     Traz a quantidade que o investidor possui de determinado CRI/CRA até data definida
+    
     Parâmetros: Data
                 CRI/CRA
     Retorno: Quantidade possuída
     """
+    # Preparar data
+    if data == None:
+        data = datetime.date.today()
+        
     qtd = OperacaoCRI_CRA.objects.filter(data__lte=data, cri_cra=cri_cra).values('cri_cra') \
         .annotate(qtd=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
                             When(tipo_operacao='V', then=F('quantidade')*-1),
@@ -22,14 +27,19 @@ def quantidade_cri_cra_na_data_para_certificado(cri_cra, data=datetime.date.toda
                             
     return qtd
 
-def qtd_cri_cra_ate_dia_para_divisao_para_certificado(divisao_id, cri_cra_id, dia=datetime.date.today()):
+def qtd_cri_cra_ate_dia_para_divisao_para_certificado(divisao_id, cri_cra_id, dia=None):
     """ 
     Calcula a quantidade de certificados de determinado CRI/CRA até dia determinado para uma divisão
+    
     Parâmetros: Dia final
                 ID da divisão
                 ID do certificado
     Retorno: Quantidade de títulos
     """
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
+        
     qtd_total = DivisaoOperacaoCRI_CRA.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id, operacao__cri_cra__id=cri_cra_id).annotate(cri_cra=F('operacao__cri_cra')) \
         .values('cri_cra').annotate(qtd=Sum(Case(When(operacao__tipo_operacao='C', then=F('quantidade')),
                             When(operacao__tipo_operacao='V', then=F('quantidade')*-1),
@@ -37,13 +47,18 @@ def qtd_cri_cra_ate_dia_para_divisao_para_certificado(divisao_id, cri_cra_id, di
         
     return qtd_total
 
-def qtd_cri_cra_ate_dia(investidor, dia=datetime.date.today()):
+def qtd_cri_cra_ate_dia(investidor, dia=None):
     """ 
     Calcula a quantidade de certificados até dia determinado para investidor
+    
     Parâmetros: Investidor
                 Dia final
     Retorno: Quantidade de certificados {cri_cra_id: qtd}
     """
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
+        
     qtd_cri_cra = dict(OperacaoCRI_CRA.objects.filter(data__lte=dia, cri_cra__investidor=investidor) \
         .values('cri_cra').annotate(qtd=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
                             When(tipo_operacao='V', then=F('quantidade')*-1),
@@ -51,13 +66,18 @@ def qtd_cri_cra_ate_dia(investidor, dia=datetime.date.today()):
 
     return qtd_cri_cra
 
-def qtd_cri_cra_ate_dia_para_certificado(cri_cra_id, dia=datetime.date.today()):
+def qtd_cri_cra_ate_dia_para_certificado(cri_cra_id, dia=None):
     """ 
     Calcula a quantidade de certificados de determinado CRI/CRA até dia determinado para investidor
+    
     Parâmetros: Dia final
                 ID do certificado
     Retorno: Quantidade de títulos
     """
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
+        
     qtd_total = OperacaoCRI_CRA.objects.filter(operacao__data__lte=dia, cri_cra__id=cri_cra_id) \
         .values('cri_cra').annotate(qtd=Sum(Case(When(operacao__tipo_operacao='C', then=F('quantidade')),
                             When(operacao__tipo_operacao='V', then=F('quantidade')*-1),
@@ -65,13 +85,18 @@ def qtd_cri_cra_ate_dia_para_certificado(cri_cra_id, dia=datetime.date.today()):
         
     return qtd_total
 
-def qtd_cri_cra_ate_dia_para_divisao(divisao_id, dia=datetime.date.today()):
+def qtd_cri_cra_ate_dia_para_divisao(divisao_id, dia=None):
     """ 
     Calcula a quantidade de certificados até dia determinado para uma divisão
+    
     Parâmetros: Dia final
                 ID da divisão
     Retorno: Quantidade de títulos {titulo_id: qtd}
     """
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
+        
     qtd_titulos = dict(list(DivisaoOperacaoCRI_CRA.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).annotate(cri_cra=F('operacao__cri_cra')) \
         .values('cri_cra').annotate(qtd_soma=Sum(Case(When(operacao__tipo_operacao='C', then=F('quantidade')),
                             When(operacao__tipo_operacao='V', then=F('quantidade')*-1),
@@ -79,13 +104,18 @@ def qtd_cri_cra_ate_dia_para_divisao(divisao_id, dia=datetime.date.today()):
         
     return qtd_titulos
 
-def calcular_valor_cri_cra_ate_dia(investidor, dia=datetime.date.today()):
+def calcular_valor_cri_cra_ate_dia(investidor, dia=None):
     """ 
     Calcula o valor dos certificados do investidor até dia determinado
+    
     Parâmetros: Investidor
                 Dia final
     Retorno: Valor dos certificados {cri_cra_id: valor_da_data}
     """
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
+        
     qtd_cri_cra = qtd_cri_cra_ate_dia(investidor, dia)
     
     for cri_cra in CRI_CRA.objects.filter(id__in=qtd_cri_cra.keys()):
@@ -93,13 +123,18 @@ def calcular_valor_cri_cra_ate_dia(investidor, dia=datetime.date.today()):
 
     return qtd_cri_cra
 
-def calcular_valor_cri_cra_ate_dia_para_divisao(divisao_id, dia=datetime.date.today()):
+def calcular_valor_cri_cra_ate_dia_para_divisao(divisao_id, dia=None):
     """ 
     Calcula o valor dos certificados do investidor até dia determinado por divisão
+    
     Parâmetros: Investidor
                 Dia final
     Retorno: Valor dos certificados {cri_cra_id: valor_da_data}
     """
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
+        
     qtd_cri_cra = qtd_cri_cra_ate_dia_para_divisao(divisao_id, dia)
     
     for cri_cra in CRI_CRA.objects.filter(id__in=qtd_cri_cra.keys()):
@@ -107,25 +142,36 @@ def calcular_valor_cri_cra_ate_dia_para_divisao(divisao_id, dia=datetime.date.to
 
     return qtd_cri_cra
 
-def calcular_rendimentos_cri_cra_ate_data_para_cri_cra(cri_cra, data=datetime.date.today()):
+def calcular_rendimentos_cri_cra_ate_data_para_cri_cra(cri_cra, data=None):
     """
     Calcula a quantidade de rendimentos recebida até data para um Certificado
+    
     Parâmetros: CRI/CRA
                 Dia final
     Retorno: Valor total dos rendimentos recebidos do certificado
     """
+    # Preparar data
+    if data == None:
+        data = datetime.date.today()
+        
     datas_rendimento = DataRemuneracaoCRI_CRA.objects.filter(cri_cra=cri_cra, data__lte=data)
     # Retorna a soma das quantidades de certificados nas datas pelo valor recebido nas datas
     return sum([(quantidade_cri_cra_na_data_para_certificado(cri_cra, data_rendimento.data - datetime.timedelta(days=1)) * data_rendimento.qtd_remuneracao()) \
                  for data_rendimento in datas_rendimento])
         
-def calcular_rendimentos_cri_cra_ate_data(investidor, data=datetime.date.today()):
+def calcular_rendimentos_cri_cra_ate_data(investidor, data=None):
     """
     Calcula a quantidade de rendimentos recebida até data
+    
     Parâmetros: Investidor
                 Dia final
     Retorno: Valor total dos rendimentos recebidos para todos os certificados
     """
+    # Preparar data
+    if data == None:
+        data = datetime.date.today()
+        
     datas_rendimento = DataRemuneracaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, data__lte=data).select_related('cri_cra')
     return sum([(quantidade_cri_cra_na_data_para_certificado(data_rendimento.cri_cra, data_rendimento.data - datetime.timedelta(days=1)) * data_rendimento.qtd_remuneracao()) \
                  for data_rendimento in datas_rendimento])
+    

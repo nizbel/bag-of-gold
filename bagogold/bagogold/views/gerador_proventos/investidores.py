@@ -169,21 +169,25 @@ def detalhar_pendencias_usuario(request, id_usuario):
 #                                       + qtd_fii_proventos * PagamentoLeitura.TEMPO_LEITURA_PROVENTO_FII) / 3600
         tempo_total = Decimal(sum([leitura['tempo'] for leitura in leituras_acao] + [leitura['tempo'] for leitura in leituras_fii] + [historico_leitura['tempo'] for historico_leitura in historico_leituras_acao] \
                                   + [historico_leitura['tempo'] for historico_leitura in historico_leituras_fii])) / 3600
+        
+        # Calcular quanto deve ser recebido por todas as leituras feitas
         pagamento_total = Decimal(sum([leitura['tempo'] * leitura['valor_pagamento'] for leitura in leituras_acao] \
                                       + [leitura['tempo'] * leitura['valor_pagamento'] for leitura in leituras_fii] \
                                       + [historico_leitura['tempo'] * historico_leitura['valor_pagamento'] for historico_leitura in historico_leituras_acao] \
                                       + [historico_leitura['tempo'] * historico_leitura['valor_pagamento'] for historico_leitura in historico_leituras_fii])) / 3600
 #         usuario['tempo']_validado = Decimal((qtd_acao_exclusao_validado + qtd_fii_exclusao_validado) * PagamentoLeitura['tempo']_EXCLUSAO_DOCUMENTO \
 #                                          + qtd_acao_proventos_validado * PagamentoLeitura['tempo']_LEITURA_PROVENTO_ACAO + qtd_fii_proventos_validado * PagamentoLeitura['tempo']_LEITURA_PROVENTO_FII) / 3600
+        # Tempo e pagamento validados
         usuario.tempo_validado = Decimal(sum([leitura['tempo'] for leitura in leituras_acao.filter(validado=True)] + [leitura['tempo'] for leitura in leituras_fii.filter(validado=True)] \
                                              + [historico_leitura['tempo'] for historico_leitura in historico_leituras_acao] \
                                              + [historico_leitura['tempo'] for historico_leitura in historico_leituras_fii])) / 3600
-        pagamento_validado = Decimal(sum([leitura['tempo'] * leitura['valor_pagamento'] for leitura in leituras_acao.filter(validado=True)] \
+        usuario.pagamento_validado = Decimal(sum([leitura['tempo'] * leitura['valor_pagamento'] for leitura in leituras_acao.filter(validado=True)] \
                                                  + [leitura['tempo'] * leitura['valor_pagamento'] for leitura in leituras_fii.filter(validado=True)] \
                                                  + [historico_leitura['tempo'] * historico_leitura['valor_pagamento'] for historico_leitura in historico_leituras_acao] \
                                                  + [historico_leitura['tempo'] * historico_leitura['valor_pagamento'] for historico_leitura in historico_leituras_fii])) / 3600
+        # Tempo e pagamento a validar
         usuario.tempo_a_validar = tempo_total - usuario.tempo_validado
-        usuario.pagto_tempo_a_validar = (pagamento_total - pagamento_validado).quantize(Decimal('0.01'))
+        usuario.pagto_tempo_a_validar = (pagamento_total - usuario.pagamento_validado).quantize(Decimal('0.01'))
 #         usuario.pagto_tempo_a_validar = (usuario.tempo_a_validar * PagamentoLeitura.VALOR_HORA).quantize(Decimal('0.01'))
         
         # Usar novo modelo pagamento leitura
@@ -191,7 +195,7 @@ def detalhar_pendencias_usuario(request, id_usuario):
         usuario.pago = PagamentoLeitura.objects.filter(investidor=usuario.investidor).aggregate(total_pago=Sum('valor'))['total_pago'] or 0
         # Valor a pagar deve ser 0 para casos em que pagamentos foram feitos antes das validações
         
-        usuario.a_pagar = max(Decimal(floor(pagamento_validado)) - usuario.pago, 0)
+        usuario.a_pagar = max(Decimal(floor(usuario.pagamento_validado)) - usuario.pago, 0)
         
         # Parar popular a barra de acompanhamento
         # Tempo total deve ser 1 para casos em que pagamentos foram feitos antes das validações, excedendo tempo
@@ -201,7 +205,7 @@ def detalhar_pendencias_usuario(request, id_usuario):
         usuario.progresso_a_pagar = usuario.a_pagar
         usuario.percentual_progresso_a_pagar = usuario.progresso_a_pagar / usuario.progresso_tempo_total * 100
         # Tempo validado deve ser 0 para casos em que pagamentos foram feitos antes das validações, excedendo tempo
-        usuario.progresso_validado = max(pagamento_validado - usuario.a_pagar - usuario.pago, 0)
+        usuario.progresso_validado = max(usuario.pagamento_validado - usuario.a_pagar - usuario.pago, 0)
         usuario.percentual_progresso_validado = usuario.progresso_validado / usuario.progresso_tempo_total * 100
         
         # Adicionar lista de pagamentos feitos
@@ -241,7 +245,7 @@ def listar_usuarios(request):
     # Carregar estatísticas
     estatisticas = {}
     estatisticas['total_documentos'] = DocumentoProventoBovespa.objects.all().count()
-    estatisticas['total_ref_30_dias'] = DocumentoProventoBovespa.objects.filter(data_referencia__gte=(datetime.date.today()-datetime.timedelta(days=30))).count()
+    estatisticas['total_ref_30_dias'] = DocumentoProventoBovespa.objects.filter(data_referencia__gte=(datetime.date.today() - datetime.timedelta(days=30))).count()
     
     # Validados
     estatisticas['total_validado'] = estatisticas['total_documentos'] - PendenciaDocumentoProvento.objects.all().count()
@@ -253,11 +257,16 @@ def listar_usuarios(request):
     estatisticas['percentual_validado_usuario'] = 100 * Decimal(estatisticas['total_validado_usuario']) / (estatisticas['total_validado'] or 1)
     estatisticas['total_validado_sistema'] = estatisticas['total_validado'] - estatisticas['total_validado_usuario']
     estatisticas['percentual_validado_sistema'] = 100 * Decimal(estatisticas['total_validado_sistema']) / (estatisticas['total_validado'] or 1)
-    if InvestidorValidacaoDocumento.objects.exists():
-        data_primeira_validacao = InvestidorValidacaoDocumento.objects.all().order_by('data_validacao')[0].data_validacao.date()
-    else:
-        data_primeira_validacao = datetime.date.today()
-    estatisticas['taxa_validacao_diaria'] =  Decimal(estatisticas['total_validado']) / ((datetime.date.today() - data_primeira_validacao).days or 1)
+#     if InvestidorValidacaoDocumento.objects.exists():
+#         data_primeira_validacao = InvestidorValidacaoDocumento.objects.all().order_by('data_validacao')[0].data_validacao.date()
+#     else:
+#         data_primeira_validacao = datetime.date.today()
+#     estatisticas['validacoes_30_dias'] =  Decimal(estatisticas['total_validado']) / ((datetime.date.today() - data_primeira_validacao).days or 1)
+    # Soma as validações dos últimas 30 dias feitas pelo sistema e feitos por usuários
+    estatisticas['validacoes_30_dias'] =  estatisticas['total_ref_30_dias'] \
+        - PendenciaDocumentoProvento.objects.filter(documento__data_referencia__gte=(datetime.date.today() - datetime.timedelta(days=30))).count() \
+        - InvestidorValidacaoDocumento.objects.filter(documento__data_referencia__gte=(datetime.date.today() - datetime.timedelta(days=30))).count() \
+        + InvestidorValidacaoDocumento.objects.filter(data_validacao__gte=(datetime.date.today() - datetime.timedelta(days=30))).count()
     
     # Apenas lidos
     estatisticas['total_a_validar'] = PendenciaDocumentoProvento.objects.filter(tipo='V').count()
@@ -268,16 +277,16 @@ def listar_usuarios(request):
     
     # Previsões
     estatisticas['previsao_total_documentos'] = estatisticas['total_documentos'] + estatisticas['total_ref_30_dias']
-    estatisticas['previsao_total_validado'] = estatisticas['total_validado'] + int(30 *  estatisticas['taxa_validacao_diaria'])
+    estatisticas['previsao_total_validado'] = estatisticas['total_validado'] + estatisticas['validacoes_30_dias']
     estatisticas['previsao_percentual_validado'] = 100 * Decimal(estatisticas['previsao_total_validado']) / (estatisticas['previsao_total_documentos'] or 1)
     estatisticas['previsao_percentual_validado_progress'] = str(estatisticas['previsao_percentual_validado']).replace(',', '.')
     estatisticas['previsao_percentual_validado_progress'] = estatisticas['previsao_percentual_validado_progress'][: min(len(estatisticas['previsao_percentual_validado_progress']),
                                                                                                       estatisticas['previsao_percentual_validado_progress'].find('.') + 4)]
     
     # Verifica se taxa validações está maior que taxa de geração de documentos
-    if estatisticas['taxa_validacao_diaria'] > Decimal(estatisticas['total_ref_30_dias'])/30:
+    if estatisticas['validacoes_30_dias'] > estatisticas['total_ref_30_dias']:
         dias_para_validacao_completa = (estatisticas['total_documentos'] - estatisticas['total_validado'])/ \
-            ((estatisticas['taxa_validacao_diaria'] - Decimal(estatisticas['total_ref_30_dias'])/30) or 1)
+            (Decimal(estatisticas['validacoes_30_dias'] - estatisticas['total_ref_30_dias']) / 1)
         anos_validacao_completa = int(floor(dias_para_validacao_completa/365))
         dias_validacao_completa = int(floor(dias_para_validacao_completa % 365))
         horas_validacao_completa = int(floor((Decimal(dias_para_validacao_completa) - Decimal(floor(dias_para_validacao_completa))) * 24))

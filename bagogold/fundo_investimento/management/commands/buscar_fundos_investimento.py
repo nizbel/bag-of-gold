@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+
+
+
+
 import csv
 import datetime
 import traceback
@@ -12,15 +16,13 @@ from django.db import transaction
 
 from bagogold import settings
 from bagogold.bagogold.utils.misc import ultimo_dia_util
-from bagogold.fundo_investimento.management.commands.preencher_historico_fundo_investimento import formatar_cnpj
 from bagogold.fundo_investimento.models import FundoInvestimento, Administrador, \
     DocumentoCadastro, LinkDocumentoCadastro, Auditor, Gestor, \
     GestorFundoInvestimento
 from bagogold.fundo_investimento.utils import \
-    criar_slug_fundo_investimento_valido
+    criar_slug_fundo_investimento_valido, formatar_cnpj
 from bagogold.settings import CAMINHO_FUNDO_INVESTIMENTO_CADASTRO
 from conf.settings_local import AWS_STORAGE_BUCKET_NAME
-
 
 class Command(BaseCommand):
     help = 'Buscar fundos de investimento na CVM'
@@ -96,7 +98,7 @@ def buscar_arquivo_csv_cadastro(data):
     Busca o arquivo CSV de cadastro de fundos de investimento com base em uma data
     
     Parâmetros: Data
-    Retorno: (Link para arquivo, Arquivo CSV)
+    Retorno: (Link para arquivo, Nome do arquivo CSV, Arquivo CSV)
     """
     # FORMATO: http://dados.cvm.gov.br/dados/FI/CAD/DADOS/inf_cadastral_fi_YYYYMMDD.csv
     url_csv = 'http://dados.cvm.gov.br/dados/FI/CAD/DADOS/inf_cadastral_fi_%s.csv' % (data.strftime('%Y%m%d'))
@@ -117,7 +119,7 @@ def processar_arquivo_csv(documento, dados_arquivo, codificacao='latin-1'):
     
     Parâmetros: Documento cadastral
                 Dados do arquivo CSV
-                Data do documento
+                Tipo de codificação
     """
     try:
         with transaction.atomic():

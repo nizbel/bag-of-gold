@@ -215,10 +215,9 @@ def detalhar_acumulados_mensais(request):
             
             qtd_meses = (data_atual.year - data_inicial.year) * 12 + (data_atual.month - data_inicial.month + 1)
             
-            if data_atual > datetime.datetime.now():
-                messages.error(request, 'Não é possível calcular o acumulado para meses futuros')
-            elif qtd_meses > 12 :
+            if qtd_meses > 12 :
                 messages.error(request, 'Insira um período de até 12 meses')
+                filtros = {'mes_inicial': '', 'mes_final': ''}
         except:
             messages.error(request, 'Filtros de data inválidos')
             filtros = {'mes_inicial': '', 'mes_final': ''}
@@ -230,7 +229,10 @@ def detalhar_acumulados_mensais(request):
         for _ in range(qtd_meses-1):
             data_inicial = (data_inicial - datetime.timedelta(days=1)).replace(day=1)
         filtros = {'mes_inicial': data_inicial.strftime('%m/%Y'), 'mes_final': data_atual.strftime('%m/%Y')}
-        
+    
+    # Guardar data final do período para o cálculo das taxas
+    data_fim_periodo = data_atual.date()
+    
     acumulados_mensais = list()
     acumulados_mensais.append([data_atual.date(), calcular_rendimentos_ate_data(investidor, data_atual.date())])
     
@@ -261,7 +263,7 @@ def detalhar_acumulados_mensais(request):
     graf_acumulados.reverse()
     
     taxas = {}
-    taxas['taxa_media_12_meses'] = sum([acumulado for _, _, acumulado in acumulados_mensais]) / (datetime.date.today() - data_atual.date()).days / 24 / 3600
+    taxas['taxa_media_12_meses'] = sum([acumulado for _, _, acumulado in acumulados_mensais]) / (data_fim_periodo - data_atual.date()).days / 24 / 3600
     
     if taxas['taxa_media_12_meses'] != 0:
         indice_primeiro_numero_valido = int(('%e' % taxas['taxa_media_12_meses']).partition('-')[2])

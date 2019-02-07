@@ -62,12 +62,16 @@ def is_superuser(user):
         return True
     raise PermissionDenied
 
-def atualizar_checkpoints(investidor):
+def atualizar_checkpoints(investidor, ano_maximo=None):
     """
     Atualiza os checkpoints para um investidor, buscando os últimos checkpoints registrados
     
     Parâmetros: Investidor
+                Último ano a partir do qual deve ser atualizado
     """
+    if ano_maximo == None:
+        ano_maximo = datetime.date.today().year
+    
     # FII
     # Verificar se usuário possui operações em FII
     if OperacaoFII.objects.filter(investidor=investidor).exists():
@@ -75,7 +79,7 @@ def atualizar_checkpoints(investidor):
         lista_fiis_anos = CheckpointFII.objects.filter(investidor=investidor).values('fii').annotate(ultimo_ano=Max('ano')) \
             .values('fii', 'ultimo_ano', 'quantidade').exclude(quantidade=0)
         for fii_ano in lista_fiis_anos:
-            ultimo_ano_checkpoint = fii_ano['ultimo_ano']
+            ultimo_ano_checkpoint = min(fii_ano['ultimo_ano'], ano_maximo)
             fii = FII.objects.get(id=fii_ano['fii'])
             # Repete o procedimento para o ano posterior ao último checkpoint, até o ano atual
             for ano in range(ultimo_ano_checkpoint+1, datetime.date.today().year+1):
@@ -97,7 +101,7 @@ def atualizar_checkpoints(investidor):
         lista_divisoes_anos = CheckpointDivisaoProventosFII.objects.filter(divisao__investidor=investidor).values('divisao').annotate(ultimo_ano=Max('ano')) \
             .values('divisao', 'ultimo_ano', 'valor').exclude(valor=0)
         for divisao_ano in lista_divisoes_anos:
-            ultimo_ano_checkpoint = divisao_ano['ultimo_ano']
+            ultimo_ano_checkpoint = min(divisao_ano['ultimo_ano'], ano_maximo)
             divisao = Divisao.objects.get(id=divisao_ano['divisao'])
             # Repete o procedimento ano a ano, até o ano atual
             for ano in range(ultimo_ano_checkpoint+1, datetime.date.today().year+1):
@@ -112,7 +116,8 @@ def atualizar_checkpoints(investidor):
         # Caso não haja checkpoint, buscar ano da primeira operação em cdb/rdb
         else:
             ano_mais_recente = OperacaoCDB_RDB.objects.filter(investidor=investidor).order_by('-data')[0].data.year
-            
+        
+        ano_mais_recente = min(ano_mais_recente, ano_maximo)
         # Gerar checkpoints a partir do ano seguinte a esse ano mais recente
         for ano in xrange(ano_mais_recente, datetime.date.today().year+1):
             # Para checkpoints no ano mais recente
@@ -129,6 +134,7 @@ def atualizar_checkpoints(investidor):
         else:
             ano_mais_recente = OperacaoCDB_RDB.objects.filter(investidor=investidor).order_by('-data')[0].data.year
             
+        ano_mais_recente = min(ano_mais_recente, ano_maximo)
         # Gerar checkpoints a partir do ano seguinte a esse ano mais recente
         for ano in xrange(ano_mais_recente, datetime.date.today().year+1):
             # Para checkpoints no ano mais recente
@@ -145,6 +151,7 @@ def atualizar_checkpoints(investidor):
         else:
             ano_mais_recente = OperacaoLetraCambio.objects.filter(investidor=investidor).order_by('-data')[0].data.year
             
+        ano_mais_recente = min(ano_mais_recente, ano_maximo)
         # Gerar checkpoints a partir do ano seguinte a esse ano mais recente
         for ano in xrange(ano_mais_recente, datetime.date.today().year+1):
             # Para checkpoints no ano mais recente
@@ -161,6 +168,7 @@ def atualizar_checkpoints(investidor):
         else:
             ano_mais_recente = OperacaoLetraCambio.objects.filter(investidor=investidor).order_by('-data')[0].data.year
             
+        ano_mais_recente = min(ano_mais_recente, ano_maximo)
         # Gerar checkpoints a partir do ano seguinte a esse ano mais recente
         for ano in xrange(ano_mais_recente, datetime.date.today().year+1):
             # Para checkpoints no ano mais recente
@@ -177,6 +185,7 @@ def atualizar_checkpoints(investidor):
         else:
             ano_mais_recente = OperacaoLetraCredito.objects.filter(investidor=investidor).order_by('-data')[0].data.year
             
+        ano_mais_recente = min(ano_mais_recente, ano_maximo)
         # Gerar checkpoints a partir do ano seguinte a esse ano mais recente
         for ano in xrange(ano_mais_recente, datetime.date.today().year+1):
             # Para checkpoints no ano mais recente
@@ -193,21 +202,26 @@ def atualizar_checkpoints(investidor):
         else:
             ano_mais_recente = OperacaoLetraCredito.objects.filter(investidor=investidor).order_by('-data')[0].data.year
             
+        ano_mais_recente = min(ano_mais_recente, ano_maximo)
         # Gerar checkpoints a partir do ano seguinte a esse ano mais recente
         for ano in xrange(ano_mais_recente, datetime.date.today().year+1):
             # Para checkpoints no ano mais recente
             for checkpoint in CheckpointDivisaoLCI_LCA.objects.filter(divisao_operacao__operacao__investidor=investidor, ano=ano_mais_recente):
                 gerar_checkpoint_divisao_lci_lca(checkpoint.divisao_operacao, ano)
                 
-def buscar_acoes_investidor_na_data(investidor, data=datetime.date.today(), destinacao=''):
+def buscar_acoes_investidor_na_data(investidor, data=None, destinacao=''):
     """
     Busca as ações que o investidor possui na da especificada
     
     Parâmetros: Investidor
                 Data da posição
-                DestinaçãO (Buy and Hold, Trading ou ambos)
+                Destinação (Buy and Hold, Trading ou ambos)
     Retorno: Lista com as ações que o investidor possui posição
     """
+    # Preparar data
+    if data == None:
+        data = datetime.date.today()
+        
     if destinacao not in ['', 'B', 'T']:
         raise ValueError
     # Buscar proventos em ações
@@ -249,7 +263,7 @@ def buscar_ultimas_operacoes(investidor, quantidade_operacoes):
     lista_operacoes = sorted(chain(operacoes_fii, operacoes_td, operacoes_acoes, operacoes_lci_lca, operacoes_cdb_rdb, 
                                    operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento, operacoes_criptomoedas, 
                                    outros_investimentos, operacoes_lc),
-                            key=attrgetter('data'), reverse=True)
+                             key=attrgetter('data'), reverse=True)
     
     ultimas_operacoes = lista_operacoes[:min(quantidade_operacoes, len(lista_operacoes))]
     
@@ -284,7 +298,7 @@ def buscar_operacoes_no_periodo(investidor, data_inicial, data_final):
     
     return lista_operacoes
 
-def buscar_totais_atuais_investimentos(investidor, data_atual=datetime.date.today()):
+def buscar_totais_atuais_investimentos(investidor, data_atual=None):
     """
     Traz os totais de investimento do investidor em data especificada
     
@@ -292,6 +306,10 @@ def buscar_totais_atuais_investimentos(investidor, data_atual=datetime.date.toda
                 Data
     Retorno: Totais atuais {investimento: total}
     """
+    # Preparar data
+    if data_atual == None:
+        data_atual = datetime.date.today()
+        
     totais_atuais = {'Ações': Decimal(0), 'CDB/RDB': Decimal(0), 'CRI/CRA': Decimal(0), 'Criptomoedas': Decimal(0), 'Debêntures': Decimal(0), 
                      'FII': Decimal(0), 'Fundos de Inv.': Decimal(0), 'LCI/LCA': Decimal(0), 'Outros inv.': Decimal(0), 
                      'Letras de Câmbio': Decimal(0),'Tesouro Direto': Decimal(0), }
@@ -486,3 +504,4 @@ def user_blocked(user):
     # Verifica se última tentativa foi feita a no máximo 10 minutos
     return (LoginIncorreto.objects.filter(user=user).count() >= 6 and 
         (timezone.now() - LoginIncorreto.objects.filter(user=user).order_by('-horario')[0].horario).total_seconds() < 10 * 60)
+    

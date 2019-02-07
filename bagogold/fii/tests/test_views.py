@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import calendar
 import datetime
 from decimal import Decimal
 
@@ -10,9 +11,10 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII, Divisao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.fii.models import FII, HistoricoFII, ProventoFII, \
     EventoAgrupamentoFII, OperacaoFII, UsoProventosOperacaoFII
+from django.test.utils import freeze_time
 
 
-class AcompanhamentoFIITestCase (TestCase):
+class ViewAcompanhamentoFIITestCase (TestCase):
     def setUp(self):
         nizbel = User.objects.create_user('nizbel', 'nizbel@teste.com', 'nizbel')
         
@@ -50,7 +52,9 @@ class AcompanhamentoFIITestCase (TestCase):
         # Testar filtros
         self.assertIn('filtros', response.context_data.keys())
         self.assertTrue(response.context_data['filtros']['ignorar_indisponiveis'])
-        self.assertEqual(response.context_data['filtros']['mes_inicial'], datetime.date.today().replace(day=1).replace(year=mes_inicial.year-1).replace(month=mes_inicial.month+1))
+        ultimo_dia_mes = calendar.monthrange(datetime.date.today().year, datetime.date.today().month)[1]
+        self.assertEqual(response.context_data['filtros']['mes_inicial'], datetime.date.today().replace(day=ultimo_dia_mes) \
+                         .replace(year=datetime.date.today().year-1) + datetime.timedelta(days=1))
         
         # Quantidade de meses verificado
         qtd_meses =  1 + datetime.date.today().month - response.context_data['filtros']['mes_inicial'].month \
@@ -62,36 +66,36 @@ class AcompanhamentoFIITestCase (TestCase):
         self.assertIn(self.fii_4.ticker, [fii.ticker for fii in response.context_data['fiis']])
         
         fii_2 = [fii for fii in response.context_data['fiis'] if fii.ticker == self.fii_2.ticker][0]
-        self.assertEqual(fii_2.valor_atual, 120)
+        self.assertEqual(fii_2.valor_atual, 1200)
         self.assertEqual(fii_2.data, datetime.date.today())
         self.assertEqual(fii_2.total_amortizacoes, 0)
-        self.assertEqual(fii_2.total_rendimentos, Decimal('6.30'))
-        self.assertEqual(fii_2.percentual_retorno, fii_2.total_rendimentos / fii_2.valor_atual)
-        self.assertEqual(fii_2.percentual_retorno_mensal, )
-        self.assertEqual(fii_2.percentual_retorno_anual, )
+        self.assertEqual(fii_2.total_rendimentos, Decimal('5.40'))
+        self.assertEqual(fii_2.percentual_retorno, fii_2.total_rendimentos / fii_2.valor_atual * 100)
+#         self.assertEqual(fii_2.percentual_retorno_mensal, )
+#         self.assertEqual(fii_2.percentual_retorno_anual, )
         self.assertEqual(fii_2.total_proventos, fii_2.total_amortizacoes + fii_2.total_rendimentos)
         
         fii_4 = [fii for fii in response.context_data['fiis'] if fii.ticker == self.fii_4.ticker][0]
-        self.assertEqual(fii_4.valor_atual, 120)
+        self.assertEqual(fii_4.valor_atual, 1200)
         self.assertEqual(fii_4.data, datetime.date.today())
         self.assertEqual(fii_4.total_amortizacoes, 0)
-        self.assertEqual(fii_4.total_rendimentos, Decimal('6.30'))
-        self.assertEqual(fii_4.percentual_retorno, fii_4.total_rendimentos / fii_4.valor_atual)
-        self.assertEqual(fii_4.percentual_retorno_mensal, )
-        self.assertEqual(fii_4.percentual_retorno_anual, )
+        self.assertEqual(fii_4.total_rendimentos, 0)
+        self.assertEqual(fii_4.percentual_retorno, fii_4.total_rendimentos / fii_4.valor_atual * 100)
+#         self.assertEqual(fii_4.percentual_retorno_mensal, )
+#         self.assertEqual(fii_4.percentual_retorno_anual, )
         self.assertEqual(fii_4.total_proventos, fii_4.total_amortizacoes + fii_4.total_rendimentos)
         
         # Testar alterar filtros
-        response = self.client.post(reverse('fii:acompanhamento_fii'), {'ignorar_indisponiveis': False, 'mes_inicial': '%s/%s' % ((datetime.date.today().replace(day=1) - datetime.timedelta(days=1)).month, 
-            datetime.date.today().year)})
+        nova_data = (datetime.date.today().replace(day=1) - datetime.timedelta(days=1))
+        response = self.client.post(reverse('fii:acompanhamento_fii'), {'mes_inicial': '%s/%s' % (nova_data.month, 
+            nova_data.year)})
         
         # TODO Testar contexto
         # Testar filtros
         self.assertIn('filtros', response.context_data.keys())
         self.assertFalse(response.context_data['filtros']['ignorar_indisponiveis'])
-        self.assertEqual(response.context_data['filtros']['mes_inicial'], '01/%s/%s' % ((datetime.date.today().replace(day=1) - datetime.timedelta(days=1)).month, 
-            datetime.date.today().year))
-        
+        self.assertEqual(response.context_data['filtros']['mes_inicial'], (datetime.date.today().replace(day=1) - datetime.timedelta(days=1)).replace(day=1))
+                         
         # Quantidade de meses verificado
         qtd_meses =  2
         
@@ -114,8 +118,18 @@ class AcompanhamentoFIITestCase (TestCase):
     def test_filtros(self):
         """Testa os filtros da pesquisa"""
         pass
+    
+    def test_acessar_em_dezembro(self):
+        """Testa o acesso no mês de Dezembro, erro encontrado em 01/12/2018, tentava criar data com mês 13"""
+        with freeze_time(float(1543699932)):
+            response = self.client.get(reverse('fii:acompanhamento_fii'))
+            self.assertEqual(response.status_code, 200)
 
-class DetalharFIITestCase (TestCase):
+            response = self.client.post(reverse('fii:acompanhamento_fii'), {'mes_inicial': '13/2018'})
+            self.assertEqual(response.status_code, 200)
+        
+
+class ViewDetalharFIITestCase (TestCase):
     def setUp(self):
         nizbel = User.objects.create_user('nizbel', 'nizbel@teste.com', 'nizbel')
         user_vendido = User.objects.create_user('vendido', 'vendido@teste.com', 'vendido')
@@ -218,7 +232,7 @@ class DetalharFIITestCase (TestCase):
         response = self.client.get(reverse('fii:detalhar_fii', kwargs={'fii_ticker': 'TSTS11'}))      
         self.assertEqual(response.status_code, 404)
         
-class HistoricoFIITestCase (TestCase):
+class ViewHistoricoFIITestCase (TestCase):
     def setUp(self):
         nizbel = User.objects.create_user('nizbel', 'nizbel@teste.com', 'nizbel')
         self.investidor_nizbel = nizbel.investidor
@@ -432,4 +446,120 @@ class ViewInserirOperacaoTestCase(TestCase):
         self.assertEquals(response.status_code, 200)
         self.assertTrue(len(response.context_data['formset_divisao'].errors) > 0)
         
+class ViewPainelTestCase(TestCase):
+    def setUp(self):
+        empresa = Empresa.objects.create(nome='BB Progressivo', nome_pregao='BBPO')
+        self.fii_1 = FII.objects.create(ticker='BBPO11', empresa=empresa)
+        HistoricoFII.objects.create(data=datetime.date.today(), fii=self.fii_1, preco_unitario=Decimal('110'))
         
+        empresa = Empresa.objects.create(nome='BB Regressivo', nome_pregao='BBRE')
+        self.fii_2 = FII.objects.create(ticker='BBRE11', empresa=empresa)
+        HistoricoFII.objects.create(data=datetime.date.today(), fii=self.fii_2, preco_unitario=Decimal('105'))
+        
+    def test_acesso_deslogado(self):
+        """Testa acesso a tela do painel de FII deslogado"""
+        # Sem logar, resposta deve ser página vazia
+        response = self.client.get(reverse('fii:painel_fii'))
+        self.assertEquals(response.status_code, 200)
+        
+        # Contexto
+        self.assertEquals(len(response.context_data.keys()), 6)
+        self.assertEquals(response.context_data['fiis'], {})
+        self.assertEquals(response.context_data['dados'], {})
+        self.assertEquals(response.context_data['graf_composicao'], list())
+        self.assertEquals(response.context_data['graf_valorizacao'], list())
+        
+    def test_acesso_logado_sem_op(self):
+        """Testa acesso a tela do painel de FII logado porém sem operações registradas"""
+        usuario = User.objects.create_user('teste', 'teste@teste.com', 'teste')
+        investidor_sem_operacoes = usuario.investidor
+        
+        self.client.login(username='teste', password='teste')
+        response = self.client.get(reverse('fii:painel_fii'))
+        self.assertEquals(response.status_code, 200)
+        
+        # Contexto
+        self.assertEquals(len(response.context_data.keys()), 6)
+        self.assertEquals(response.context_data['fiis'], {})
+        self.assertEquals(response.context_data['dados'], {'total_papeis': 0, 'total_valor': 0, 'valor_diario_mais_recente': datetime.date.today()})
+        self.assertEquals(response.context_data['graf_composicao'], list())
+        self.assertEquals(response.context_data['graf_valorizacao'], list())
+        
+    def test_acesso_logado_com_op(self):
+        """Testa acesso a tela do painel de FII logado com operações registradas"""
+        class Object(object):
+            pass
+        # Preparar investidor
+        usuario = User.objects.create_user('nizbel', 'nizbel@teste.com', 'nizbel')
+        investidor_com_operacoes = usuario.investidor
+        OperacaoFII.objects.create(fii=self.fii_1, investidor=investidor_com_operacoes, data=datetime.date.today() - datetime.timedelta(days=20),
+                                   quantidade=10, preco_unitario=100, corretagem=10, emolumentos=Decimal('0.1'), tipo_operacao='C')
+        OperacaoFII.objects.create(fii=self.fii_1, investidor=investidor_com_operacoes, data=datetime.date.today() - datetime.timedelta(days=60),
+                                   quantidade=10, preco_unitario=100, corretagem=10, emolumentos=Decimal('0.1'), tipo_operacao='C')
+        OperacaoFII.objects.create(fii=self.fii_2, investidor=investidor_com_operacoes, data=datetime.date.today() - datetime.timedelta(days=20),
+                                   quantidade=10, preco_unitario=100, corretagem=10, emolumentos=Decimal('0.1'), tipo_operacao='C')
+        
+        # Logar e acessar página
+        self.client.login(username='nizbel', password='nizbel')
+        response = self.client.get(reverse('fii:painel_fii'))
+        self.assertEquals(response.status_code, 200)
+        
+        # Contexto
+        self.assertEquals(len(response.context_data.keys()), 6)
+        fiis = response.context_data['fiis']
+        self.assertEquals(len(fiis), 2)
+        # FII 1
+        self.assertEquals(fiis[self.fii_1.ticker].quantidade, 20)
+        self.assertEquals(fiis[self.fii_1.ticker].preco_medio, (Decimal('1010.1') * 2 / fiis[self.fii_1.ticker].quantidade))
+        self.assertEquals(fiis[self.fii_1.ticker].total_investido, Decimal('1010.1') * 2)
+        self.assertEquals(fiis[self.fii_1.ticker].valor, 110)
+        self.assertEquals(fiis[self.fii_1.ticker].valor_total, fiis[self.fii_1.ticker].valor * fiis[self.fii_1.ticker].quantidade)
+        self.assertEquals(fiis[self.fii_1.ticker].quantidade_percentual, Decimal(20)/30 * 100)
+        self.assertEquals(fiis[self.fii_1.ticker].valor_total_percentual, 
+            Decimal(fiis[self.fii_1.ticker].valor_total) * 100 / (fiis[self.fii_1.ticker].valor_total + fiis[self.fii_2.ticker].valor_total))
+        # FII 2
+        self.assertEquals(fiis[self.fii_2.ticker].quantidade, 10)
+        self.assertEquals(fiis[self.fii_2.ticker].preco_medio, (Decimal('1010.1') / fiis[self.fii_2.ticker].quantidade))
+        self.assertEquals(fiis[self.fii_2.ticker].total_investido, Decimal('1010.1'))
+        self.assertEquals(fiis[self.fii_2.ticker].valor, 105)
+        self.assertEquals(fiis[self.fii_2.ticker].valor_total, fiis[self.fii_2.ticker].valor * fiis[self.fii_2.ticker].quantidade)
+        self.assertEquals(fiis[self.fii_2.ticker].quantidade_percentual, Decimal(10)/30 * 100)
+        self.assertEquals(fiis[self.fii_2.ticker].valor_total_percentual, 
+            Decimal(fiis[self.fii_2.ticker].valor_total) * 100 / (fiis[self.fii_1.ticker].valor_total + fiis[self.fii_2.ticker].valor_total))
+        
+        
+        dados = response.context_data['dados']
+        self.assertEquals(len(dados), 3)
+        self.assertEquals(dados['total_papeis'], 30)
+        self.assertEquals(dados['total_valor'], 20 * 110 + 10 * 105)
+        self.assertEquals(dados['valor_diario_mais_recente'], datetime.date.today())
+        
+        # TODO testar valores dos gráficox
+        self.assertEquals(len(response.context_data['graf_composicao']), 2)
+        self.assertEquals(len(response.context_data['graf_valorizacao']), 2)
+        
+    def test_acesso_logado_com_op_vendidas(self):
+        """Testa acesso a tela do painel de FII logado com operações registradas porém vendidas"""
+        # Preparar investidor
+        usuario = User.objects.create_user('vendido', 'vendido@teste.com', 'vendido')
+        investidor_com_operacoes_vendidas = usuario.investidor
+        OperacaoFII.objects.create(fii=self.fii_1, investidor=investidor_com_operacoes_vendidas, data=datetime.date.today() - datetime.timedelta(days=60),
+                                   quantidade=10, preco_unitario=100, corretagem=10, emolumentos=Decimal('0.1'), tipo_operacao='C')
+        OperacaoFII.objects.create(fii=self.fii_1, investidor=investidor_com_operacoes_vendidas, data=datetime.date.today() - datetime.timedelta(days=20),
+                                   quantidade=10, preco_unitario=100, corretagem=10, emolumentos=Decimal('0.1'), tipo_operacao='V')
+        OperacaoFII.objects.create(fii=self.fii_2, investidor=investidor_com_operacoes_vendidas, data=datetime.date.today() - datetime.timedelta(days=60),
+                                   quantidade=10, preco_unitario=100, corretagem=10, emolumentos=Decimal('0.1'), tipo_operacao='C')
+        OperacaoFII.objects.create(fii=self.fii_2, investidor=investidor_com_operacoes_vendidas, data=datetime.date.today() - datetime.timedelta(days=20),
+                                   quantidade=10, preco_unitario=100, corretagem=10, emolumentos=Decimal('0.1'), tipo_operacao='V')
+        
+        # Logar e acessar página
+        self.client.login(username='vendido', password='vendido')
+        response = self.client.get(reverse('fii:painel_fii'))
+        self.assertEquals(response.status_code, 200)
+        
+        # Contexto
+        self.assertEquals(len(response.context_data.keys()), 6)
+        self.assertEquals(response.context_data['fiis'], {})
+        self.assertEquals(response.context_data['dados'], {'total_papeis': 0, 'total_valor': 0, 'valor_diario_mais_recente': datetime.date.today()})
+        self.assertEquals(response.context_data['graf_composicao'], list())
+        self.assertEquals(response.context_data['graf_valorizacao'], list())

@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
-import ast
 import datetime
+from decimal import Decimal
+
+from django.contrib.auth.models import User
+from django.core.urlresolvers import reverse
 from django.test.testcases import TestCase
 
-from django.core.urlresolvers import reverse
-
-from bagogold.tesouro_direto.models import Titulo, HistoricoTitulo
+from bagogold.tesouro_direto.models import Titulo, HistoricoTitulo, \
+    OperacaoTitulo
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD
 
 
 class DetalharTituloTestCase(TestCase):
@@ -136,3 +139,123 @@ def criar_titulos_teste():
     Titulo.objects.create(data_vencimento=datetime.date(2020, 1, 1), tipo=u'LTN', data_inicio=datetime.date(2017, 2, 8))
     Titulo.objects.create(data_vencimento=datetime.date(2045, 5, 15), tipo=u'NTN-B Principal', data_inicio=datetime.date(2017, 2, 8))
     
+class ViewInserirOperacaoTDTestCase(TestCase):
+    """Testa a view inserir_operacao_td"""
+    def setUp(self):
+        nizbel = User.objects.create_user('nizbel', 'nizbel@teste.com', 'nizbel')
+        self.investidor = nizbel.investidor
+        
+        multi_divisoes = User.objects.create_user('teste', 'teste@teste.com', 'teste')
+        self.investidor_multi_div = multi_divisoes.investidor
+        
+        # Criar título
+        self.titulo = Titulo.objects.create(data_vencimento=datetime.date(2025, 1, 1), tipo=u'LTN', data_inicio=datetime.date(2018, 2, 7))
+        
+        self.url_inserir_operacao = 'tesouro_direto:inserir_operacao_td'
+    
+    def test_acesso_usuario_deslogado(self):
+        """Testa redirecionamento para tela de login caso usuário não esteja logado"""
+        response = self.client.get(reverse(self.url_inserir_operacao))
+        self.assertEquals(response.status_code, 302)
+        self.assertTrue('/login/' in response.url)
+        
+    def test_acesso_usuario_logado_1_div(self):
+        """Testa acesso de usuário logado com 1 divisão"""        
+        self.client.login(username='nizbel', password='nizbel')
+        response = self.client.get(reverse(self.url_inserir_operacao))
+        self.assertEquals(response.status_code, 200)
+        
+    def test_acesso_usuario_logado_multi_div(self):
+        """Testa acesso de usuário logado com várias divisões"""        
+        self.client.login(username='teste', password='teste')
+        response = self.client.get(reverse(self.url_inserir_operacao))
+        self.assertEquals(response.status_code, 200)
+    
+    def test_inserir_operacao_compra_1_div(self):
+        """Testa inserir uma operação de compra com sucesso, investidor com 1 divisão"""
+        self.client.login(username='nizbel', password='nizbel')
+        
+        self.assertEquals(OperacaoTitulo.objects.all().count(), 0)
+        self.assertEquals(DivisaoOperacaoTD.objects.all().count(), 0)
+        
+        response = self.client.post(reverse(self.url_inserir_operacao),
+                                    {'preco_unitario': 700, 'quantidade': 1, 'data': datetime.date(2018, 11, 9), 'taxa_bvmf': Decimal('0.1'), 
+                                     'taxa_custodia': Decimal('0.1'), 'tipo_operacao': 'C', 'titulo': self.titulo.id, 'consolidada': True})
+        
+        self.assertEquals(response.status_code, 302)
+        self.assertEquals(OperacaoTitulo.objects.all().count(), 1)
+        
+        operacao = OperacaoTitulo.objects.get(investidor=self.investidor)
+        self.assertEquals(operacao.preco_unitario, 700)
+        self.assertEquals(operacao.quantidade, 1)
+        self.assertEquals(operacao.data, datetime.date(2018, 11, 9))
+        self.assertEquals(operacao.taxa_bvmf, Decimal('0.1'))
+        self.assertEquals(operacao.taxa_custodia, Decimal('0.1'))
+        self.assertEquals(operacao.tipo_operacao, 'C')
+        self.assertEquals(operacao.titulo, self.titulo)
+        self.assertEquals(operacao.consolidada, True)
+        
+        # TODO testar operacao divisao
+        
+        
+                                     
+    
+    def test_inserir_operacao_compra_multi_div(self):
+        """Testa inserir uma operação de compra com sucesso, investidor com várias divisão"""
+        self.client.login(username='teste', password='teste')
+        
+        self.assertEquals(OperacaoTitulo.objects.all().count(), 0)
+        self.assertEquals(DivisaoOperacaoTD.objects.all().count(), 0)
+        
+        response = self.client.post(reverse(self.url_inserir_operacao),
+                                    {'preco_unitario': 700, 'quantidade': 1, 'data': datetime.date(2018, 11, 9), 'taxa_bvmf': Decimal('0.1'), 
+                                     'taxa_custodia': Decimal('0.1'), 'tipo_operacao': 'C', 'titulo': self.titulo.id, 'consolidada': True})
+        
+        self.assertEquals(response.status_code, 302)
+        self.assertEquals(OperacaoTitulo.objects.all().count(), 1)
+        
+        operacao = OperacaoTitulo.objects.get(investidor=self.investidor_multi_div)
+        self.assertEquals(operacao.preco_unitario, 700)
+        self.assertEquals(operacao.quantidade, 1)
+        self.assertEquals(operacao.data, datetime.date(2018, 11, 9))
+        self.assertEquals(operacao.taxa_bvmf, Decimal('0.1'))
+        self.assertEquals(operacao.taxa_custodia, Decimal('0.1'))
+        self.assertEquals(operacao.tipo_operacao, 'C')
+        self.assertEquals(operacao.titulo, self.titulo)
+        self.assertEquals(operacao.consolidada, True)
+    
+    def test_inserir_operacao_venda_1_div(self):
+        """Testa inserir uma operação de venda com sucesso, investidor com 1 divisões"""
+        OperacaoTitulo.objects.create(investidor=self.investidor, preco_unitario=700, quantidade=1, data=datetime.date(2018, 11, 2), taxa_bvmf=Decimal('0.1'), 
+                                     taxa_custodia=Decimal('0.1'), tipo_operacao='C', titulo=self.titulo, consolidada=True)
+        self.client.login(username='nizbel', password='nizbel')
+        response = self.client.post(reverse(self.url_inserir_operacao),
+                                    {'preco_unitario': 900, 'quantidade': 1, 'data': datetime.date(2018, 11, 9), 'taxa_bvmf': Decimal('0.1'), 
+                                     'taxa_custodia': Decimal('0.1'), 'tipo_operacao': 'V', 'titulo': self.titulo.id, 'consolidada': True})
+                                     
+        self.assertEquals(response.status_code, 302)
+        self.assertEquals(OperacaoTitulo.objects.all().count(), 2)
+        
+    def test_inserir_operacao_venda_1_sem_compras(self):
+        """Testa inserir uma operação de venda com erro, sem quantidade do título comprada anteriormente, investidor com 1 divisões"""
+        self.client.login(username='nizbel', password='nizbel')
+        response = self.client.post(reverse(self.url_inserir_operacao),
+                                    {'preco_unitario': 900, 'quantidade': 1, 'data': datetime.date(2018, 11, 9), 'taxa_bvmf': Decimal('0.1'), 
+                                     'taxa_custodia': Decimal('0.1'), 'tipo_operacao': 'V', 'titulo': self.titulo.id, 'consolidada': True})
+    
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(OperacaoTitulo.objects.all().count(), 0)
+        # TODO testar erros
+        
+    def test_inserir_operacao_venda_multi_div(self):
+        """Testa inserir uma operação de venda com sucesso, investidor com várias divisões"""
+        OperacaoTitulo.objects.create(investidor=self.investidor_multi_div, preco_unitario=700, quantidade=1, data=datetime.date(2018, 11, 2), taxa_bvmf=Decimal('0.1'), 
+                                     taxa_custodia=Decimal('0.1'), tipo_operacao='C', titulo=self.titulo, consolidada=True)
+        self.client.login(username='teste', password='teste')
+        response = self.client.post(reverse(self.url_inserir_operacao),
+                                    {'preco_unitario': 900, 'quantidade': 1, 'data': datetime.date(2018, 11, 9), 'taxa_bvmf': Decimal('0.1'), 
+                                     'taxa_custodia': Decimal('0.1'), 'tipo_operacao': 'V', 'titulo': self.titulo.id, 'consolidada': True})
+        
+        self.assertEquals(response.status_code, 302)
+        self.assertEquals(OperacaoTitulo.objects.all().count(), 2)
+        
