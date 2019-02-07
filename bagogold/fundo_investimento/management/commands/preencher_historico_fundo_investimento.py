@@ -26,39 +26,59 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--data', action='store_true')
+        parser.add_argument('--aws', action='store_true')
         
         
         
     def handle(self, *args, **options):
         try:
-            with transaction.atomic():
-                # Buscar arquivo CSV
-                if options['data']:
-                    data_pesquisa = datetime.datetime.strptime(options['data'], '%d%m%Y').date()
-                else:
-                    # Busca data do último dia útil
-                    data_pesquisa = ultimo_dia_util()
-                 
-                caminho_arquivo = CAMINHO_FUNDO_INVESTIMENTO_HISTORICO + 'inf_diario_fi_%s.csv' % (data_pesquisa.strftime('%Y%m'))
-                 
-                if not verificar_arquivo_s3(caminho_arquivo):
-                    # Caso o documento ainda não exista, baixar
-                    _, _, arquivo_csv = buscar_arquivo_csv_historico(data_pesquisa)
- 
-                    # Salvar arquivo em media no bucket
-                    boto3.client('s3').put_object(Body=arquivo_csv.fp.read(), Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho_arquivo)
- 
-                # Preparar arquivo para processamento
-                arquivo_csv = boto3.client('s3').get_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho_arquivo)['Body'].read().splitlines(True)
+            if not options['aws']:
+                with transaction.atomic():
+                    # Buscar arquivo CSV
+                    if options['data']:
+                        data_pesquisa = datetime.datetime.strptime(options['data'], '%d%m%Y').date()
+                    else:
+                        # Busca data do último dia útil
+                        data_pesquisa = ultimo_dia_util()
+                     
+                    caminho_arquivo = CAMINHO_FUNDO_INVESTIMENTO_HISTORICO + 'inf_diario_fi_%s.csv' % (data_pesquisa.strftime('%Y%m'))
+                     
+                    if not verificar_arquivo_s3(caminho_arquivo):
+                        # Caso o documento ainda não exista, baixar
+                        _, _, arquivo_csv = buscar_arquivo_csv_historico(data_pesquisa)
+     
+                        # Salvar arquivo em media no bucket
+                        boto3.client('s3').put_object(Body=arquivo_csv.fp.read(), Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho_arquivo)
+     
+                    # Preparar arquivo para processamento
+                    arquivo_csv = boto3.client('s3').get_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho_arquivo)['Body'].read().splitlines(True)
                     
-            with transaction.atomic():
-                # Processar arquivo
-                processar_arquivo_csv(arquivo_csv)
-#                 arquivo_csv = open('inf_diario_fi_201901.csv', 'r')
-#                 processar_arquivo_csv(arquivo_csv)
-                    
-            # Sem erros, apagar arquivo
-            boto3.client('s3').delete_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho_arquivo)
+                with transaction.atomic():
+                    # Processar arquivo
+                    processar_arquivo_csv(arquivo_csv)
+    #                 arquivo_csv = open('inf_diario_fi_201901.csv', 'r')
+    #                 processar_arquivo_csv(arquivo_csv)
+                        
+                # Sem erros, apagar arquivo
+                boto3.client('s3').delete_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho_arquivo)
+            
+            # Com a flag --aws, buscar arquivos no S3
+            else:
+                with transaction.atomic():
+                    resposta = boto3.client('s3').list_objects_v2(Bucket=AWS_STORAGE_BUCKET_NAME, Prefix=CAMINHO_FUNDO_INVESTIMENTO_HISTORICO)
+                    # Ler todos os arquivos csv
+                    for arquivo in resposta['Contents']:
+                        if arquivo['Key'].endswith('.csv'):
+#                             print arquivo['Key']
+                            # Preparar arquivo para processamento
+                            arquivo_csv = boto3.client('s3').get_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=arquivo['Key'])['Body'].read().splitlines(True)
+                            
+                            # Processar arquivo
+                            processar_arquivo_csv(arquivo_csv)
+                            
+                            # Sem erros, apagar arquivo
+                            boto3.client('s3').delete_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=arquivo['Key'])
+                
         except:
             if settings.ENV == 'DEV':
                 print traceback.format_exc()
@@ -107,8 +127,8 @@ def processar_arquivo_csv(dados_arquivo, codificacao='latin-1'):
                     campos = {nome_campo: indice for (indice, nome_campo) in enumerate(row)}
 #                     print row
                 else:
-                    if linha % 1000 == 0:
-                        print linha
+#                     if linha % 1000 == 0:
+#                         print linha
                                         
                     row = [campo.strip().decode(codificacao) for campo in row]
                     
