@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import datetime
+import ftplib
+import time
 import traceback
 
 from django.core.mail import mail_admins
@@ -10,20 +12,32 @@ from bagogold.bagogold.utils.taxas_indexacao import buscar_valores_diarios_di
 
 
 class Command(BaseCommand):
-    help = 'Preenche hist√≥rico para a taxa DI'
+    help = 'Preenche histÛrico para a taxa DI'
 
     def add_arguments(self, parser):
         parser.add_argument('-g', '--geral', action='store_true', dest='geral')
         
     def handle(self, *args, **options):
         try:
-            # Busca todas as datas se geral, se n√£o, busca √∫ltimo ano
-            if options['geral']:
-                buscar_valores_diarios_di()
-            else:
-                buscar_valores_diarios_di(datetime.date.today() - datetime.timedelta(days=365))
+            num_tentativa = 1
+            # 3 tentativas
+            while (num_tentativa <= 3):
+                try:
+                    # Busca todas as datas se geral, se n„o, busca ˙ltimo ano
+                    if options['geral']:
+                        buscar_valores_diarios_di()
+                    else:
+                        buscar_valores_diarios_di(datetime.date.today() - datetime.timedelta(days=365))
+                # Erro 530 indica que h· o m·ximo de usu·rios possÌvel no FTP, tentar novamente mais tarde
+                except ftplib.error_perm, err:
+                    if not err[0].startswith('530'):
+                        raise
+                num_tentativa += 1
+                if (num_tentativa <= 3):
+                    time.sleep(45)
         except:
             if settings.ENV == 'DEV':
                 print traceback.format_exc()
             elif settings.ENV == 'PROD':
-                mail_admins(u'Erro em Preencher hist√≥rico do DI', traceback.format_exc().decode('utf-8'))
+                mail_admins(u'Erro em Preencher histÛrico do DI', traceback.format_exc().decode('utf-8'))
+

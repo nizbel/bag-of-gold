@@ -6,13 +6,18 @@ from django.db.models.aggregates import Sum
 from django.db.models.expressions import F
 import datetime
 
-def calcular_valor_outros_investimentos_ate_data(investidor, data=datetime.date.today()):
+def calcular_valor_outros_investimentos_ate_data(investidor, data=None):
     """
     Calcula o valor investido em outros investimentos até determinada data
+    
     Parâmetros: Investidor
                 Data
     Retorno: Valores por investimento {id_investimento: valor}
     """
+    # Preparar data
+    if data == None:
+        data = datetime.date.today()
+        
     investimentos = dict(Investimento.objects.filter(investidor=investidor, data__lte=data, data_encerramento__isnull=True).values_list('id', 'quantidade'))
 
     amortizacoes = dict(Amortizacao.objects.filter(investimento__investidor=investidor, data__lte=data, investimento__data_encerramento__isnull=True) \
@@ -22,25 +27,35 @@ def calcular_valor_outros_investimentos_ate_data(investidor, data=datetime.date.
                          if investimentos.get(k, 0) - amortizacoes.get(k, 0) > 0 }
     return qtd_investimentos
 
-def calcular_valor_outros_investimentos_ate_data_por_investimento(investimento, data=datetime.date.today()):
+def calcular_valor_outros_investimentos_ate_data_por_investimento(investimento, data=None):
     """
     Calcula o valor investido em um investimento até determinada data
+    
     Parâmetros: Investimento
                 Data
     Retorno: Quantidade investida
     """
+    # Preparar data
+    if data == None:
+        data = datetime.date.today()
+        
     total_investido = investimento.quantidade - (Amortizacao.objects.filter(investimento=investimento, data__lte=data) \
         .aggregate(total_amortizado=Sum('valor'))['total_amortizado'] or 0)
         
     return total_investido
 
-def calcular_valor_outros_investimentos_ate_data_por_divisao(divisao, data=datetime.date.today()):
+def calcular_valor_outros_investimentos_ate_data_por_divisao(divisao, data=None):
     """
     Calcula o valor dos invesimentos de uma divisão até determinada data
+    
     Parâmetros: Divisão
                 Data
     Retorno: Valores por investimento {id_investimento: valor}
     """
+    # Preparar data
+    if data == None:
+        data = datetime.date.today()
+        
     investimentos = DivisaoInvestimento.objects.filter(divisao=divisao, investimento__data__lte=data, 
                                                             investimento__data_encerramento__isnull=True) \
                     .annotate(qtd_total=F('investimento__quantidade')).values_list('investimento__id', 'quantidade', 'qtd_total')

@@ -15,7 +15,7 @@ from bagogold.cri_cra.models.cri_cra import CRI_CRA, DataRemuneracaoCRI_CRA, \
     DataAmortizacaoCRI_CRA
 
 
-def calcular_valor_um_cri_cra_na_data(certificado, data=datetime.date.today(), simular_valores=False):
+def calcular_valor_um_cri_cra_na_data(certificado, data=None, simular_valores=False):
     """
     Calcula o valor de um certificado na data apontada
     
@@ -24,6 +24,10 @@ def calcular_valor_um_cri_cra_na_data(certificado, data=datetime.date.today(), s
                 Caso não existam valores até o momento, simular com últimos índices?
     Retorno:    Valor na data
     """
+    # Preparar data
+    if data == None:
+        data = datetime.date.today()
+        
     # Pegar último dia útil da data caso não seja útil
     while not verifica_se_dia_util(data):
         data = data - datetime.timedelta(days=1)

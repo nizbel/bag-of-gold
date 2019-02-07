@@ -80,14 +80,18 @@ def calcular_qtd_debentures_ate_dia_por_divisao(dia, divisao_id):
             
     return qtd_debenture
 
-def calcular_valor_debentures_ate_dia(investidor, dia=datetime.date.today()):
+def calcular_valor_debentures_ate_dia(investidor, dia=None):
     """ 
     Calcula o valor das debêntures do investidor até dia determinado
+    
     Parâmetros: Investidor
                 Dia final
     Retorno: Valor das debêntures {debenture_id: valor_da_data}
     """
-    
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
+        
     qtd_debentures = calcular_qtd_debentures_ate_dia(investidor, dia)
     
     for debenture_id in qtd_debentures.keys():
@@ -95,14 +99,18 @@ def calcular_valor_debentures_ate_dia(investidor, dia=datetime.date.today()):
         
     return qtd_debentures
 
-def calcular_valor_debentures_ate_dia_por_divisao(divisao_id, dia=datetime.date.today()):
+def calcular_valor_debentures_ate_dia_por_divisao(divisao_id, dia=None):
     """ 
     Calcula o valor das debêntures do investidor até dia determinado para uma divisão
+    
     Parâmetros: ID da divisão
                 Dia final
     Retorno: Valor das debêntures {debenture_id: valor_da_data}
     """
-    
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
+        
     qtd_debentures = calcular_qtd_debentures_ate_dia_por_divisao(dia, divisao_id)
     
     for debenture_codigo in qtd_debentures.keys():

@@ -84,18 +84,20 @@ def acompanhamento_fii(request):
     if request.method == 'POST':
         filtros['mes_inicial'] = request.POST.get('mes_inicial')
         try:
-            filtros['mes_inicial'] = datetime.datetime.strptime('01/%s' % (filtros['mes_inicial']), '%d/%m/%Y')
+            filtros['mes_inicial'] = datetime.datetime.strptime('01/%s' % (filtros['mes_inicial']), '%d/%m/%Y').date()
         except:
             messages.error(request, 'Mês inicial enviado é inválido')
             # Calcular a data de inicio, buscando o primeiro dia do próximo mês, no ano passado, a fim de completar um ciclo de 12 meses
             mes_inicial = datetime.date.today()
-            filtros['mes_inicial'] = mes_inicial.replace(day=1).replace(year=mes_inicial.year-1).replace(month=mes_inicial.month+1)
+            ultimo_dia_mes = calendar.monthrange(mes_inicial.year, mes_inicial.month)[1]
+            filtros['mes_inicial'] = mes_inicial.replace(day=ultimo_dia_mes).replace(year=mes_inicial.year-1) + datetime.timedelta(days=1)
             
         filtros['ignorar_indisponiveis'] = request.POST.get('ignorar_indisponiveis', False)
     else:
         # Calcular a data de inicio, buscando o primeiro dia do próximo mês, no ano passado, a fim de completar um ciclo de 12 meses
         mes_inicial = datetime.date.today()
-        filtros['mes_inicial'] = mes_inicial.replace(day=1).replace(year=mes_inicial.year-1).replace(month=mes_inicial.month+1)
+        ultimo_dia_mes = calendar.monthrange(mes_inicial.year, mes_inicial.month)[1]
+        filtros['mes_inicial'] = mes_inicial.replace(day=ultimo_dia_mes).replace(year=mes_inicial.year-1) + datetime.timedelta(days=1)
         filtros['ignorar_indisponiveis'] = True
         
     # Verificar o período em meses de diferença (se mesmo mês/ano, deve ser 1)
@@ -499,7 +501,8 @@ def historico_fii(request):
                 continue
             item.total = (qtd_papeis[item.fii_ticker] * item.valor_unitario).quantize(Decimal('0.01'), rounding=ROUND_FLOOR)
             item.quantidade = qtd_papeis[item.fii_ticker]
-            total_proventos += item.total
+            if item.data_pagamento <= datetime.date.today():
+                total_proventos += item.total
             
         elif item.tipo == 'Agrupamento':
             if qtd_papeis[item.fii_ticker] == 0:
@@ -742,7 +745,7 @@ def painel(request):
     if request.user.is_authenticated():
         investidor = request.user.investidor
     else:
-        return TemplateResponse(request, 'fii/painel.html', {'fiis': list(), 'dados': {}, 'graf_composicao': list(), 'graf_valorizacao': list()})
+        return TemplateResponse(request, 'fii/painel.html', {'fiis': {}, 'dados': {}, 'graf_composicao': list(), 'graf_valorizacao': list()})
         
     fiis = {}
      

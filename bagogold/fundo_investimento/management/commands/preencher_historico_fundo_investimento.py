@@ -1,145 +1,208 @@
 # -*- coding: utf-8 -*-
+import csv
 import datetime
 from decimal import Decimal
+import traceback
+from urllib2 import urlopen, Request, HTTPError
+
+import boto3
 from django.core.mail import mail_admins
 from django.core.management.base import BaseCommand
-import os
-import re
-import traceback
-from urllib2 import urlopen
-import zipfile
-
 from django.db import transaction
-from lxml import etree
-import zeep
+from django.db.models.query import Prefetch
 
 from bagogold import settings
+from bagogold.bagogold.utils.misc import ultimo_dia_util
+from bagogold.fundo_investimento.management.commands.buscar_fundos_investimento import verificar_arquivo_s3
 from bagogold.fundo_investimento.models import FundoInvestimento, \
     HistoricoValorCotas
+from bagogold.fundo_investimento.utils import formatar_cnpj
+from bagogold.settings import CAMINHO_FUNDO_INVESTIMENTO_HISTORICO
+from conf.settings_local import AWS_STORAGE_BUCKET_NAME
 
 
 class Command(BaseCommand):
     help = 'Preencher historico de fundos de investimento'
 
     def add_arguments(self, parser):
-        parser.add_argument('--anual', action='store_true')
-        parser.add_argument('--arquivo', action='store_true')
+        parser.add_argument('--data', action='store_true')
+        parser.add_argument('--aws', action='store_true')
+        
+        
         
     def handle(self, *args, **options):
-        if options['anual'] and options['arquivo']:
-            print 'Use apenas uma das opções, --anual ou --arquivo'
-            return
         try:
-            wsdl = 'http://sistemas.cvm.gov.br/webservices/Sistemas/SCW/CDocs/WsDownloadInfs.asmx?WSDL'
-            client = zeep.Client(wsdl=wsdl)
-#             resposta = client.service.Login(FI_LOGIN, FI_PASSWORD)
-            resposta = client.service.Login('FI_LOGIN', 'FI_PASSWORD')
-            headerSessao = resposta['header']
-#             print headerSessao
-
-            if options['anual']:
-                # Buscar arquivo anual
-                try:
-                    respostaCompetencias = client.service.solicAutorizDownloadArqAnual(209, 'Teste', _soapheaders=[headerSessao])
-#                     print respostaCompetencias
-                    download = urlopen(respostaCompetencias['body']['solicAutorizDownloadArqAnualResult'])
-                    if 'filename=' in download.info()['Content-Disposition']:
-                        nome_arquivo = re.findall('.*?filename\W*?([\d\w\.]+).*?', download.info()['Content-Disposition'])[0]
+            if not options['aws']:
+                with transaction.atomic():
+                    # Buscar arquivo CSV
+                    if options['data']:
+                        data_pesquisa = datetime.datetime.strptime(options['data'], '%d%m%Y').date()
                     else:
-                        nome_arquivo = datetime.date.today().strftime('anual%d-%m-%Y.zip')
-                    file(settings.CAMINHO_FUNDO_INVESTIMENTO_HISTORICO + nome_arquivo,'wb').write(download.read())
-                except:
-                    if settings.ENV == 'DEV':
-                        print traceback.format_exc()
-                    elif settings.ENV == 'PROD':
-                        mail_admins(u'Erro em Buscar historico anual de fundo de investimento', traceback.format_exc().decode('utf-8'))
-                
-            elif options['arquivo']:
-                # Ler da pasta específica para fundos de investimento
-                ver_arquivos_pasta()
-                
-            else:
-                # Buscar último dia útil
-                try:
-                    resposta_ultimo_dia_util = client.service.solicAutorizDownloadArqEntrega(209, 'Teste', _soapheaders=[headerSessao])
-#                     print resposta_ultimo_dia_util
-                    download = urlopen(resposta_ultimo_dia_util['body']['solicAutorizDownloadArqEntregaResult'])
-                    if 'filename=' in download.info()['Content-Disposition']:
-                        nome_arquivo = re.findall('.*?filename\W*?([\d\w\.]+).*?', download.info()['Content-Disposition'])[0]
-                    else:
-                        nome_arquivo = datetime.date.today().strftime('ultimodia-%d-%m-%Y.zip')
-                    file(settings.CAMINHO_FUNDO_INVESTIMENTO_HISTORICO + nome_arquivo,'wb').write(download.read())
-                    ver_arquivos_pasta()
-                except:
-                    if settings.ENV == 'DEV':
-                        print traceback.format_exc()
-                    elif settings.ENV == 'PROD':
-                        mail_admins(u'Erro em Buscar historico ultimo dia util de fundo de investimento', traceback.format_exc().decode('utf-8'))
-        except:
-            raise
-
-def ver_arquivos_pasta():
-    for arquivo in [os.path.join(settings.CAMINHO_FUNDO_INVESTIMENTO_HISTORICO, arquivo) for arquivo in os.listdir(settings.CAMINHO_FUNDO_INVESTIMENTO_HISTORICO) if os.path.isfile(os.path.join(settings.CAMINHO_FUNDO_INVESTIMENTO_HISTORICO, arquivo))]:
-        # Verifica se é zipado
-        if zipfile.is_zipfile(arquivo):
-            # Abrir e ler
-            unzipped = zipfile.ZipFile(arquivo)
-            # Guardar quantidade de erros
-            qtd_erros = 0
-            for libitem in unzipped.namelist():
-                nome_arquivo = settings.CAMINHO_FUNDO_INVESTIMENTO_HISTORICO + libitem
-                # Escrever arquivo no disco para leitura
-                file(nome_arquivo,'wb').write(re.sub('<INFORME_DIARIO>(?:(?!</INFORME_DIARIO>).)*<VL_QUOTA>[\s0,]*?</VL_QUOTA>.*?</INFORME_DIARIO>', '', unzipped.read(libitem), flags=re.DOTALL))
-                qtd_erros += ler_arquivo(nome_arquivo)
-            # Se quantidade de erros maior que 0, não apagar arquivo
-            if qtd_erros == 0:
-                os.remove(arquivo)
+                        # Busca data do último dia útil
+                        data_pesquisa = ultimo_dia_util()
+                     
+                    caminho_arquivo = CAMINHO_FUNDO_INVESTIMENTO_HISTORICO + 'inf_diario_fi_%s.csv' % (data_pesquisa.strftime('%Y%m'))
+                     
+                    if not verificar_arquivo_s3(caminho_arquivo):
+                        # Caso o documento ainda não exista, baixar
+                        _, _, arquivo_csv = buscar_arquivo_csv_historico(data_pesquisa)
+     
+                        # Salvar arquivo em media no bucket
+                        boto3.client('s3').put_object(Body=arquivo_csv.fp.read(), Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho_arquivo)
+     
+                    # Preparar arquivo para processamento
+                    arquivo_csv = boto3.client('s3').get_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho_arquivo)['Body'].read().splitlines(True)
                     
-        else:
-            ler_arquivo(arquivo)
+                with transaction.atomic():
+                    # Processar arquivo
+                    processar_arquivo_csv(arquivo_csv)
+    #                 arquivo_csv = open('inf_diario_fi_201901.csv', 'r')
+    #                 processar_arquivo_csv(arquivo_csv)
+                        
+                # Sem erros, apagar arquivo
+                boto3.client('s3').delete_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho_arquivo)
+            
+            # Com a flag --aws, buscar arquivos no S3
+            else:
+                with transaction.atomic():
+                    resposta = boto3.client('s3').list_objects_v2(Bucket=AWS_STORAGE_BUCKET_NAME, Prefix=CAMINHO_FUNDO_INVESTIMENTO_HISTORICO)
+                    # Ler todos os arquivos csv
+                    for arquivo in resposta['Contents']:
+                        if arquivo['Key'].endswith('.csv'):
+#                             print arquivo['Key']
+                            # Preparar arquivo para processamento
+                            arquivo_csv = boto3.client('s3').get_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=arquivo['Key'])['Body'].read().splitlines(True)
+                            
+                            # Processar arquivo
+                            processar_arquivo_csv(arquivo_csv)
+                            
+                            # Sem erros, apagar arquivo
+                            boto3.client('s3').delete_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=arquivo['Key'])
+                
+        except:
+            if settings.ENV == 'DEV':
+                print traceback.format_exc()
+            elif settings.ENV == 'PROD':
+                mail_admins(u'Erro em Preencher histórico fundos investimento', traceback.format_exc().decode('utf-8'))
+        
+
+
+def buscar_arquivo_csv_historico(data):
+    """
+    Busca o arquivo CSV de cadastro de fundos de investimento com base em uma data
     
-def ler_arquivo(libitem, apagar_caso_erro=True):
-    erros = 0
+    Parâmetros: Data
+    Retorno: (Link para arquivo, Nome do arquivo CSV, Arquivo CSV)
+    """
+    # FORMATO: http://dados.cvm.gov.br/dados/FI/DOC/INF_DIARIO/DADOS/inf_diario_fi_YYYYMM.csv
+    url_csv = 'http://dados.cvm.gov.br/dados/FI/DOC/INF_DIARIO/DADOS/inf_diario_fi_%s.csv' % (data.strftime('%Y%m'))
+    req = Request(url_csv)
     try:
-        # Ler arquivo
-        arquivo = file(libitem, 'r')
-        tree = etree.parse(arquivo)
-        # Guarda a quantidade a adicionar
-        historicos = list()
-        # Lê o arquivo procurando nós CADASTRO (1 para cada fundo)
-        for element in tree.getroot().iter('INFORME_DIARIO'):
-            try:
-                campos = {key: value for (key, value) in [(elemento.tag, elemento.text) for elemento in element.iter()]}
-                # Verificar se fundo existe
-                if FundoInvestimento.objects.filter(cnpj=formatar_cnpj(campos['CNPJ_FDO'])).exists():
-                    fundo = FundoInvestimento.objects.get(cnpj=formatar_cnpj(campos['CNPJ_FDO']))
-                    if not HistoricoValorCotas.objects.filter(data=campos['DT_COMPTC'].strip(), fundo_investimento=fundo).exists():
-                        valor_cota = Decimal(campos['VL_QUOTA'].strip().replace(',', '.'))
-                        historico_fundo = HistoricoValorCotas(data=campos['DT_COMPTC'].strip(), fundo_investimento=fundo, valor_cota=valor_cota)
-                        historicos.append(historico_fundo)
-            except:
-                erros += 1
+        response = urlopen(req, timeout=45)
+    except HTTPError as e:
+        raise ValueError('%s na url %s' % (e.code, url_csv))
+    
+    dados = response
+    nome_csv = url_csv.split('/')[-1]
+    
+    return (url_csv, nome_csv, dados)
 
+def processar_arquivo_csv(dados_arquivo, codificacao='latin-1'):
+    """
+    Ler o arquivo CSV com dados do valor histórico de fundos de investimento
+    
+    Parâmetros: Dados do arquivo CSV
+                Tipo de codificação
+    """
+    try:
         with transaction.atomic():
-            # Limitar tamanho do bulk create para evitar erro de memoria
-            limite_dados = 0
-            while limite_dados < len(historicos):
-                HistoricoValorCotas.objects.bulk_create(historicos[limite_dados:min(limite_dados+2000, len(historicos))])
-                limite_dados += 2000
-        os.remove(libitem)                                
+            csv_reader = csv.reader(dados_arquivo, delimiter=';')
+            
+            rows = list()
+            for linha, row in enumerate(csv_reader):
+                if linha == 0:
+                    # Preparar dicionário com os campos disponíveis
+                    # Campos disponíveis:
+                    # 'CNPJ_FUNDO', 'DT_COMPTC', 'VL_TOTAL', 'VL_QUOTA', 'VL_PATRIM_LIQ', 'CAPTC_DIA', 'RESG_DIA', 'NR_COTST'
+                    campos = {nome_campo: indice for (indice, nome_campo) in enumerate(row)}
+#                     print row
+                else:
+#                     if linha % 1000 == 0:
+#                         print linha
+                                        
+                    row = [campo.strip().decode(codificacao) for campo in row]
+                    
+                    # Se CNPJ não estiver preenchido, pular
+                    if row[campos['CNPJ_FUNDO']] == '':
+#                         print 'CNPJ NAO PREENCHIDO'
+                        continue
+                    
+                    # Formatar CNPJ
+                    if len(row[campos['CNPJ_FUNDO']]) < 18:
+                        row[campos['CNPJ_FUNDO']] = formatar_cnpj(row[campos['CNPJ_FUNDO']])
+                    
+                    rows.append(row)
+                    
+                    if len(rows) == 750:
+                        # Converter em set para remover registros iguais
+                        processar_linhas_documento_historico(rows, campos)
+                        rows = list()  
+            
+            # Verificar se terminou de iterar no arquivo mas ainda possui linhas a processar
+            if len(rows) > 0:
+                processar_linhas_documento_historico(rows, campos)
+                rows = list()  
+            
     except:
-        erros += 1
-        # Apagar arquivo caso haja erro, enviar mensagem para email
-        if apagar_caso_erro:
-            os.remove(libitem)
-        if settings.ENV == 'DEV':
-            print traceback.format_exc()
-        elif settings.ENV == 'PROD':
-            mail_admins(u'Erro em Preencher histórico de fundos de investimento. Arquivo %s' % (libitem), traceback.format_exc().decode('utf-8'))
-    return erros
+        print 'Linha', linha
+        raise 
 
-def formatar_cnpj(string):
-    string = re.sub(r'\D', '', string)
-    while len(string) < 14:
-        string = '0' + string
-    return string[0:2] + '.' + string[2:5] + '.' + string[5:8] + '/' + string[8:12] + '-' + string[12:14]
+def processar_linhas_documento_historico(rows, campos):
+    """
+    Processa linhas de um documento de valor histórico de fundos de investimento em CSV
+    
+    Parâmetros: Linhas do documento
+                Dicionário de campos
+    """
+    # Descobrir mês/ano do arquivo de acordo com o primeiro registro
+    ano, mes = rows[0][campos['DT_COMPTC']].split('-')[0:2]
+#     ano, mes = int(ano), int(mes)
+    
+    # Verificar fundos existentes
+    lista_fundos_existentes = list(FundoInvestimento.objects.filter(
+        cnpj__in=list(set([row_atual[campos['CNPJ_FUNDO']] for row_atual in rows]))) \
+            .prefetch_related(Prefetch('historicovalorcotas_set', queryset=HistoricoValorCotas.objects.filter(data__year=ano, data__month=mes))))
+    
+    # Ordenar fundos existentes
+    lista_fundos_existentes.sort(key=lambda fundo: fundo.cnpj)
+    
+    # Ordenar rows
+    rows.sort(key=lambda row: row[campos['CNPJ_FUNDO']])
+    
+    lista_historicos = list()
+    
+    # Guarda datas já vistas
+    datas_passadas = list()  
+    for row_atual in rows:
+        # Verificar se o primeiro registro é menor que o cnpj atual, removê-lo para diminuir iterações
+        while len(lista_fundos_existentes) > 0 and row_atual[campos['CNPJ_FUNDO']] > lista_fundos_existentes[0].cnpj:
+            lista_fundos_existentes.pop(0)
+            datas_passadas = list()  
+        
+        if row_atual[campos['DT_COMPTC']] in datas_passadas:
+            continue
+        
+        for fundo_existente in lista_fundos_existentes:
+            if row_atual[campos['CNPJ_FUNDO']] < fundo_existente.cnpj:
+                break
+            elif row_atual[campos['CNPJ_FUNDO']] == fundo_existente.cnpj:
+#                 if not HistoricoValorCotas.objects.filter(data=row_atual[campos['DT_COMPTC']], fundo_investimento=fundo_existente).exists():
+                if not datetime.datetime.strptime(row_atual[campos['DT_COMPTC']], '%Y-%m-%d').date() in [historico.data for historico in fundo_existente.historicovalorcotas_set.all()]:
+                    valor_cota = Decimal(row_atual[campos['VL_QUOTA']])
+                    historico_fundo = HistoricoValorCotas(data=row_atual[campos['DT_COMPTC']], fundo_investimento=fundo_existente, valor_cota=valor_cota)
+                    lista_historicos.append(historico_fundo)
+#                     historico_fundo.save()
+                    datas_passadas.append(row_atual[campos['DT_COMPTC']])
+                break
+    
+    HistoricoValorCotas.objects.bulk_create(lista_historicos)

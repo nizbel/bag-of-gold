@@ -13,7 +13,7 @@ from itertools import chain
 from operator import attrgetter
 import datetime
 
-def calcular_poupanca_prov_fii_ate_dia(investidor, dia=datetime.date.today()):
+def calcular_poupanca_prov_fii_ate_dia(investidor, dia=None):
     """
     Calcula a quantidade de proventos provisionada até dia determinado para FII
     
@@ -21,6 +21,10 @@ def calcular_poupanca_prov_fii_ate_dia(investidor, dia=datetime.date.today()):
                 Dia da posição de proventos
     Retorno: Quantidade provisionada no dia
     """
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
+        
     fiis = dict(CheckpointFII.objects.filter(investidor=investidor, ano=dia.year-1).values_list('fii__ticker', 'quantidade'))
     operacoes = OperacaoFII.objects.filter(investidor=investidor, data__range=[dia.replace(month=1).replace(day=1), dia]).order_by('data').annotate(fii_ticker=F('fii__ticker')) \
         .prefetch_related('usoproventosoperacaofii_set')
@@ -92,7 +96,7 @@ def calcular_poupanca_prov_fii_ate_dia(investidor, dia=datetime.date.today()):
            
     return total_proventos.quantize(Decimal('0.01'))
 
-def calcular_poupanca_prov_fii_ate_dia_por_divisao(divisao, dia=datetime.date.today()):
+def calcular_poupanca_prov_fii_ate_dia_por_divisao(divisao, dia=None):
     """
     Calcula a quantidade de proventos provisionada até dia determinado para uma divisão para FII
     
@@ -100,6 +104,10 @@ def calcular_poupanca_prov_fii_ate_dia_por_divisao(divisao, dia=datetime.date.to
                 Divisão escolhida
     Retorno: Quantidade provisionada no dia
     """
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
+        
     fiis = dict(CheckpointDivisaoFII.objects.filter(divisao=divisao, ano=dia.year-1).values_list('fii', 'quantidade'))
     operacoes = DivisaoOperacaoFII.objects.filter(divisao=divisao, operacao__data__range=[dia.replace(month=1).replace(day=1), dia]) \
         .annotate(data=F('operacao__data')).annotate(fii_ticker=F('operacao__fii__ticker')).order_by('operacao__data')
@@ -169,7 +177,7 @@ def calcular_poupanca_prov_fii_ate_dia_por_divisao(divisao, dia=datetime.date.to
                                
     return total_proventos.quantize(Decimal('0.01'))
 
-def calcular_qtd_fiis_ate_dia(investidor, dia=datetime.date.today()):
+def calcular_qtd_fiis_ate_dia(investidor, dia=None):
     """ 
     Calcula a quantidade de FIIs até dia determinado
     
@@ -177,6 +185,10 @@ def calcular_qtd_fiis_ate_dia(investidor, dia=datetime.date.today()):
                 Dia final
     Retorno: Quantidade de FIIs {ticker: qtd}
     """
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
+        
     fiis_operacoes = list(OperacaoFII.objects.filter(investidor=investidor, data__lte=dia).order_by('fii__id').distinct('fii__id').values_list('fii__ticker', flat=True))
     fiis_incorporados = list(EventoIncorporacaoFII.objects.filter(fii__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia) \
                                 .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True)) \
@@ -346,7 +358,7 @@ def calcular_qtd_fiis_ate_dia_por_ticker_por_divisao(dia, divisao_id, ticker, ig
         
     return qtd_fii
 
-def calcular_preco_medio_fiis_ate_dia(investidor, dia=datetime.date.today()):
+def calcular_preco_medio_fiis_ate_dia(investidor, dia=None):
     """
     Calcula o preço médio dos FIIs do investidor em dia determinado
     
@@ -357,6 +369,11 @@ def calcular_preco_medio_fiis_ate_dia(investidor, dia=datetime.date.today()):
     # Usado para criar objetos vazios
     class Object(object):
         pass
+    
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
+        
     
     if not any([verificar_se_existe_evento_para_fii_periodo(fii_ticker, dia.replace(month=1).replace(day=1), dia) for fii_ticker in \
                 OperacaoFII.objects.filter(investidor=investidor, data__lte=dia) \
@@ -488,7 +505,7 @@ def calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, dia, ticker, ignora
         
     return preco_medio_fii
 
-def calcular_preco_medio_fiis_ate_dia_por_divisao(divisao, dia=datetime.date.today()):
+def calcular_preco_medio_fiis_ate_dia_por_divisao(divisao, dia=None):
     """
     Calcula o preço médio dos FIIs da divisão em dia determinado
     
@@ -499,6 +516,10 @@ def calcular_preco_medio_fiis_ate_dia_por_divisao(divisao, dia=datetime.date.tod
     # Usado para criar objetos vazios
     class Object(object):
         pass
+    
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
     
     if not any([verificar_se_existe_evento_para_fii_periodo(fii_ticker, dia.replace(month=1).replace(day=1), dia) for fii_ticker in \
                 DivisaoOperacaoFII.objects.filter(divisao=divisao, operacao__data__lte=dia) \
@@ -648,7 +669,7 @@ def calcular_rendimento_proventos_fii_12_meses(fii):
     data_1_ano_atras = datetime.date.today() - datetime.timedelta(days=365)
     # Calcular media de proventos dos ultimos 6 recebimentos
     proventos = ProventoFII.objects.filter(fii=fii, data_ex__gt=data_1_ano_atras).order_by('data_ex')
-    if len(proventos) == 0:
+    if not proventos:
         return Decimal(0)
     for provento in proventos:
         total_proventos += provento.valor_unitario
@@ -696,7 +717,7 @@ def calcular_variacao_percentual_fii_por_periodo(fii, periodo_inicio, periodo_fi
     
     return (valor_final - valor_inicial) / valor_inicial * 100
 
-def calcular_valor_fii_ate_dia(investidor, dia=datetime.date.today()):
+def calcular_valor_fii_ate_dia(investidor, dia=None):
     """ 
     Calcula o valor das cotas do investidor até dia determinado
     
@@ -704,6 +725,9 @@ def calcular_valor_fii_ate_dia(investidor, dia=datetime.date.today()):
                 Dia final
     Retorno: Valor das cotas {ticker: valor_da_data}
     """
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
     
     qtd_fii = calcular_qtd_fiis_ate_dia(investidor, dia)
     
@@ -715,7 +739,7 @@ def calcular_valor_fii_ate_dia(investidor, dia=datetime.date.today()):
         
     return qtd_fii
 
-def verificar_se_existe_evento_para_fii(fii_ticker, data_limite=datetime.date.today()):
+def verificar_se_existe_evento_para_fii(fii_ticker, data_limite=None):
     """
     Verifica se existe evento para fii até data (data inclusive)
     
@@ -723,6 +747,10 @@ def verificar_se_existe_evento_para_fii(fii_ticker, data_limite=datetime.date.to
                 Data
     Retorno: True caso exista, senão False
     """
+    # Preparar data
+    if data_limite == None:
+        data_limite = datetime.date.today()
+        
     # Verificar se há evento ou se outro FII foi incorporado a este
     return any([classe.objects.filter(fii__ticker=fii_ticker, data__lte=data_limite).exists() for classe in EventoFII.__subclasses__()]) \
         or EventoIncorporacaoFII.objects.filter(novo_fii__ticker=fii_ticker, data__lte=data_limite).exists()
