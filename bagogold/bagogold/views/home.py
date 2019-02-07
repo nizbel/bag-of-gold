@@ -51,7 +51,8 @@ from bagogold.criptomoeda.models import OperacaoCriptomoeda, \
     TransferenciaCriptomoeda, ValorDiarioCriptomoeda
 from bagogold.debentures.models import OperacaoDebenture, \
     HistoricoValorDebenture
-from bagogold.debentures.utils import calcular_valor_debentures_ate_dia
+from bagogold.debentures.utils import calcular_valor_debentures_ate_dia,\
+    simular_valor_na_data
 from bagogold.fii.models import OperacaoFII, HistoricoFII, ProventoFII, \
     ValorDiarioFII
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
@@ -1341,7 +1342,6 @@ def grafico_renda_fixa_painel_geral(request):
 @login_required
 def prox_vencimentos_painel_geral(request):
     if request.is_ajax():
-        inicio = datetime.datetime.now()
         investidor = request.user.investidor
         data_atual = datetime.date.today()
 #         data_30_dias = data_atual + datetime.timedelta(days=3000)
@@ -1403,12 +1403,13 @@ def prox_vencimentos_painel_geral(request):
         for operacao in OperacaoDebenture.objects.filter(investidor=investidor, debenture__data_vencimento__gte=data_atual, tipo_operacao='C') \
         .select_related('debenture').order_by('data')[:limite_vencimentos]:
             operacao.tipo_investimento = u'Debênture'
-            operacao.nome = operacao.debenture.nome
+            operacao.nome = operacao.debenture.codigo
             
             # Valor inicial
             operacao.valor_inicial = operacao.quantidade * operacao.preco_unitario
             
             # TODO Valor vencimento
+            operacao.valor_vencimento = simular_valor_na_data(operacao.debenture_id, operacao.debenture.data_vencimento)
             
             prox_vencimentos.append(operacao)
                 
@@ -1495,10 +1496,8 @@ def prox_vencimentos_painel_geral(request):
 
         # Preencher dados gerais para operações a serem mostradas        
         for operacao in prox_vencimentos:
-            print operacao.data_vencimento(), operacao.data
             operacao.decorrido_percentual = (float((data_atual - operacao.data).days) / (operacao.data_vencimento() - operacao.data).days) * 100
         
-        print datetime.datetime.now() - inicio
         return HttpResponse(json.dumps(render_to_string('utils/prox_vencimentos_rf_painel_geral.html', {'prox_vencimentos': prox_vencimentos})), 
                             content_type = "application/json")   
     else:
