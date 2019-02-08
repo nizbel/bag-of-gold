@@ -15,7 +15,7 @@
 # Fundos de investimento
 # 40 23 * * * docker run --add-host=database:18.221.194.175 nizbel/bagofgold:cron python manage.py buscar_fundos_investimento --aleatorio
 50 23 * * * docker run --add-host=database:18.221.194.175 nizbel/bagofgold:cron python manage.py buscar_fundos_investimento
-# 55 23 * * * docker run --add-host=database:18.221.194.175 nizbel/bagofgold:cron python manage.py preencher_historico_fundo_investimento
+55 23 * * * docker run --add-host=database:18.221.194.175 nizbel/bagofgold:cron python manage.py preencher_historico_fundo_investimento
 # 0 5 1 * * docker run --add-host=database:18.221.194.175 nizbel/bagofgold:cron python manage.py preencher_historico_fundo_investimento --anual
 
 # Criptomoedas
