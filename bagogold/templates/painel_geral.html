@@ -142,7 +142,7 @@
 										<span class="badge badge-default pull-right bg-white font-grey-gallery bold">{{proventos_acoes_recebidos_hoje|length}}</span>
 									</div>
 								</a>
-								<div class="panel-collapse collapse in" id="acao_hoje">
+								<div class="panel-collapse collapse in lista-proventos" id="acao_hoje">
 									{% if proventos_acoes_recebidos_hoje %}
 									<div class="panel-body">
 										<div class="list-group no-space">
@@ -167,7 +167,7 @@
 										{% endif %}
 									</div>
 								</a>
-								<div class="panel-collapse collapse in" id="acao_ex_passado">
+								<div class="panel-collapse collapse in lista-proventos" id="acao_ex_passado">
 									{% if proventos_acoes_a_receber %}
 									<div class="panel-body">
 										<div class="list-group no-space">
@@ -191,7 +191,7 @@
 										{% endif %}
 									</div>
 								</a>
-								<div class="panel-collapse collapse" id="acao_ex_futuro">
+								<div class="panel-collapse collapse lista-proventos" id="acao_ex_futuro">
 									{% if proventos_acoes_futuros %}
 									<div class="panel-body">
 										<div class="list-group no-space">
@@ -218,7 +218,7 @@
 										<span class="badge badge-default pull-right bg-white font-grey-gallery bold">{{proventos_fiis_recebidos_hoje|length}}</span>
 									</div>
 								</a>
-								<div class="panel-collapse collapse in" id="fii_hoje">
+								<div class="panel-collapse collapse in lista-proventos" id="fii_hoje">
 									<div class="panel-body">
 										<div class="list-group no-space">
 											{% for provento in proventos_fiis_recebidos_hoje %}
@@ -241,7 +241,7 @@
 										{% endif %}
 									</div>
 								</a>
-								<div class="panel-collapse collapse in" id="fii_ex_passado">
+								<div class="panel-collapse collapse in lista-proventos" id="fii_ex_passado">
 									{% if proventos_fiis_a_receber %}
 									<div class="panel-body">
 										<div class="list-group no-space">
@@ -265,7 +265,7 @@
 										{% endif %}
 									</div>
 								</a>
-								<div class="panel-collapse collapse" id="fii_ex_futuro">
+								<div class="panel-collapse collapse lista-proventos" id="fii_ex_futuro">
 									{% if proventos_fiis_futuros %}
 									<div class="panel-body">
 										<div class="list-group no-space">
