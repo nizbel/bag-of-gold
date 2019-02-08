@@ -16,10 +16,15 @@ from bagogold.lci_lca.models import LetraCredito, \
     HistoricoVencimentoLetraCredito, OperacaoLetraCredito
 from bagogold.tesouro_direto.models import Titulo, OperacaoTitulo
 from bagogold.cri_cra.models.cri_cra import CRI_CRA, OperacaoCRI_CRA
-from bagogold.debentures.models import Debenture, OperacaoDebenture
+from bagogold.debentures.models import Debenture, OperacaoDebenture,\
+    HistoricoValorDebenture
+from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 
 
 class ProxVencimentosPainelGeralTestCase(TestCase):
+    def setUp(self):
+        HistoricoTaxaDI.objects.create(data=datetime.date.today(), taxa=10)
+    
     def test_investidor_deslogado(self):
         """Testa investidor deslogado"""
         response = self.client.get(reverse('inicio:proximos_vencimentos'), {}, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
@@ -107,11 +112,18 @@ class ProxVencimentosPainelGeralTestCase(TestCase):
                                                data_inicio_rendimento=(datetime.date.today() - datetime.timedelta(days=360)), 
                                                data_vencimento=(datetime.date.today() + datetime.timedelta(days=5)), incentivada=True, 
                                                padrao_snd=True)
+        HistoricoValorDebenture.objects.create(debenture=debenture_1, valor_nominal=1000, juros=35, premio=0, data=datetime.date.today())
+        HistoricoValorDebenture.objects.create(debenture=debenture_1, valor_nominal=1000, juros=Decimal('34.3'), premio=0, 
+                                               data=datetime.date.today() - datetime.timedelta(days=1))
+        
         debenture_2 = Debenture.objects.create(codigo='TESTE92', indice=Debenture.PREFIXADO, porcentagem=Decimal('6.5'), 
                                                data_emissao=(datetime.date.today() - datetime.timedelta(days=20)), valor_emissao=Decimal(1000),
                                                data_inicio_rendimento=(datetime.date.today() - datetime.timedelta(days=10)), 
                                                data_vencimento=(datetime.date.today() + datetime.timedelta(days=355)), incentivada=True, 
                                                padrao_snd=True)
+        HistoricoValorDebenture.objects.create(debenture=debenture_2, valor_nominal=1000, juros=3, premio=0, data=datetime.date.today())
+        HistoricoValorDebenture.objects.create(debenture=debenture_2, valor_nominal=1000, juros=Decimal('2.78'), premio=0, 
+                                               data=datetime.date.today() - datetime.timedelta(days=1))
         
         # Debenture 1
         # Vence em 5 dias
