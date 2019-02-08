@@ -37,6 +37,11 @@
 	font-size: 18px;
 }
 
+.lista-proventos {
+	max-height: 200px;
+	overflow-y: auto;
+}
+
 @media (max-width: 991px) {
   /* 991px */
   .page-header .page-header-menu {
