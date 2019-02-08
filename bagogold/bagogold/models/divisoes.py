@@ -488,7 +488,7 @@ class DivisaoOperacaoLetraCambio (models.Model):
         from bagogold.lc.models import OperacaoVendaLetraCambio
         if self.operacao.tipo_operacao != 'C':
             raise ValueError('Operação deve ser de compra')
-        vendas = OperacaoVendaLetraCambio.objects.filter(operacao_compra=self.id_operacao, operacao_venda__data__lte=data).exclude(operacao_venda=desconsiderar_operacao).values_list('operacao_venda__id', flat=True)
+        vendas = OperacaoVendaLetraCambio.objects.filter(operacao_compra=self.operacao_id, operacao_venda__data__lte=data).exclude(operacao_venda=desconsiderar_operacao).values_list('operacao_venda__id', flat=True)
         qtd_vendida = 0
         for venda in DivisaoOperacaoLetraCambio.objects.filter(operacao__id__in=vendas, divisao_id=self.divisao_id):
             qtd_vendida += venda.quantidade
