@@ -11,8 +11,8 @@ from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo, \
 from bagogold.bagogold.utils.taxas_indexacao import \
     calcular_valor_atualizado_com_taxas_di
 from bagogold.cri_cra.forms.cri_cra import CRI_CRAForm, \
-    DataRemuneracaoCRI_CRAForm, DataRemuneracaoCRI_CRAFormSet, \
-    DataAmortizacaoCRI_CRAFormSet, OperacaoCRI_CRAForm
+    DataRemuneracaoCRI_CRAFormSet, DataAmortizacaoCRI_CRAFormSet, \
+    OperacaoCRI_CRAForm
 from bagogold.cri_cra.models.cri_cra import CRI_CRA, DataRemuneracaoCRI_CRA, \
     DataAmortizacaoCRI_CRA, OperacaoCRI_CRA
 from bagogold.cri_cra.utils.utils import qtd_cri_cra_ate_dia_para_certificado, \
@@ -230,7 +230,7 @@ def editar_operacao_cri_cra(request, id_operacao):
                 except:
                     pass
                          
-            for erro in [erro for erro in form_operacao_cri_cra.non_field_errors()]:
+            for erro in form_operacao_cri_cra.non_field_errors():
                 messages.error(request, erro)
                   
         elif request.POST.get("delete"):
@@ -274,9 +274,6 @@ def historico(request):
     if not operacoes:
         return TemplateResponse(request, 'cri_cra/historico.html', {'dados': {}, 'operacoes': list(), 
                                                     'graf_investido_total': list(), 'graf_patrimonio': list()})
-     
-    # Pegar data inicial
-    historico_di = HistoricoTaxaDI.objects.filter(data__gte=operacoes[0].data)
      
     total_investido = 0
      
@@ -326,7 +323,7 @@ def historico(request):
         total_patrimonio = 0
         for cri_cra in qtd_certificados.keys():
             if qtd_certificados[cri_cra] > 0:
-                total_patrimonio += qtd_certificados[cri_cra] * calcular_valor_um_cri_cra_na_data(operacao.cri_cra, datetime.date.today()).quantize(Decimal('.01'))
+                total_patrimonio += qtd_certificados[cri_cra] * calcular_valor_um_cri_cra_na_data(cri_cra, datetime.date.today()).quantize(Decimal('.01'))
         
         graf_investido_total += [[data_atual_formatada, float(-total_investido)]]
         graf_patrimonio += [[data_atual_formatada, float(total_patrimonio)]]
@@ -447,7 +444,7 @@ def inserir_operacao_cri_cra(request):
             except:
                 pass
                      
-        for erro in [erro for erro in form_operacao_cri_cra.non_field_errors()]:
+        for erro in form_operacao_cri_cra.non_field_errors():
             messages.error(request, erro)
                   
     else:
