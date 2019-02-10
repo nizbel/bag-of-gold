@@ -16,6 +16,7 @@ from bagogold.bagogold.utils.taxas_indexacao import \
     calcular_valor_atualizado_com_taxa_prefixado
 from bagogold.lci_lca.models import OperacaoLetraCredito, \
     OperacaoVendaLetraCredito, CheckpointLetraCredito, LetraCredito
+from bagogold.bagogold.forms import operacao_acao
 
 
 def calcular_valor_venda_lci_lca(operacao_venda, arredondar=True, valor_liquido=False):
@@ -225,7 +226,7 @@ def calcular_valor_lci_lca_ate_dia_por_divisao(dia, divisao_id):
     operacoes = list(DivisaoOperacaoLCI_LCA.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).annotate(data=F('operacao__data')).exclude(data__isnull=True) \
                      .annotate(atual=F('quantidade')).annotate(tipo_operacao=F('operacao__tipo_operacao')).annotate(letra_credito_id=F('operacao__letra_credito')) \
                      .select_related('operacao').order_by('-tipo_operacao', 'data'))
-     
+    
     # Pegar data inicial
     data_inicial = operacoes[0].data
      
@@ -240,7 +241,7 @@ def calcular_valor_lci_lca_ate_dia_por_divisao(dia, divisao_id):
             # Remover quantidade da operação de compra
             operacao_compra_id = operacao.operacao.operacao_compra_relacionada().id
             for operacao_c in operacoes:
-                if (operacao_c.id_operacao == operacao_compra_id):
+                if (operacao_c.operacao_id == operacao_compra_id):
 #                     operacao.atual = DivisaoOperacaoLCI_LCA.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade
                     operacao_c.atual -= operacao.atual
                     break
