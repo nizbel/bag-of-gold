@@ -508,8 +508,12 @@ def painel(request):
                 + operacao.quantidade * operacao.preco_unitario + operacao.taxa)/(cri_cra[operacao.cri_cra.id].quantidade + operacao.quantidade)
             cri_cra[operacao.cri_cra.id].quantidade += operacao.quantidade
         else:
-            cri_cra[operacao.cri_cra.id].preco_medio = (cri_cra[operacao.cri_cra.id].preco_medio * cri_cra[operacao.cri_cra.id].quantidade \
-                - operacao.quantidade * operacao.preco_unitario + operacao.taxa)/(cri_cra[operacao.cri_cra.id].quantidade - operacao.quantidade)
+            # Se for vendida toda a posição em um certificado, zerar preço médio
+            if cri_cra[operacao.cri_cra.id].quantidade == operacao.quantidade:
+                cri_cra[operacao.cri_cra.id].preco_medio = 0
+            else:
+                cri_cra[operacao.cri_cra.id].preco_medio = (cri_cra[operacao.cri_cra.id].preco_medio * cri_cra[operacao.cri_cra.id].quantidade \
+                    - operacao.quantidade * operacao.preco_unitario + operacao.taxa)/(cri_cra[operacao.cri_cra.id].quantidade - operacao.quantidade)
             cri_cra[operacao.cri_cra.id].quantidade -= operacao.quantidade
     
     # Remover cri_cra com quantidade zerada
