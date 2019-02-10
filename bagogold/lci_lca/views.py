@@ -805,7 +805,6 @@ def painel(request):
                           
                 elif operacao.tipo_operacao == 'V':
                     if (operacao.data == data_iteracao.data):
-                        print operacao
                         operacao.total = operacao.quantidade
                         # Remover quantidade da operação de compra
                         operacao_compra_id = operacao.operacao_compra_relacionada().id
