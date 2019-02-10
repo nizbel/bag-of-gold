@@ -33,9 +33,9 @@ class PainelTestCase(TestCase):
         cri_cra2 = CRI_CRA.objects.create(investidor=vendido.investidor, nome='CRA', tipo_indexacao=CRI_CRA.TIPO_INDEXACAO_DI, porcentagem=100,
                                           data_emissao=datetime.date(2018, 2, 2), valor_emissao=1000, data_inicio_rendimento=datetime.date(2018, 2, 6),
                                           data_vencimento=datetime.date(2020, 2, 2))
-        OperacaoCRI_CRA.objects.create(cri_cra=cri_cra1, quantidade=3, preco_unitario=Decimal(1000), data=datetime.date(2018, 5, 15), 
+        OperacaoCRI_CRA.objects.create(cri_cra=cri_cra2, quantidade=3, preco_unitario=Decimal(1000), data=datetime.date(2018, 5, 15), 
                                        tipo_operacao='C', taxa=0)
-        OperacaoCRI_CRA.objects.create(cri_cra=cri_cra1, quantidade=3, preco_unitario=Decimal(1100), data=datetime.date(2018, 5, 25), 
+        OperacaoCRI_CRA.objects.create(cri_cra=cri_cra2, quantidade=3, preco_unitario=Decimal(1100), data=datetime.date(2018, 5, 25), 
                                        tipo_operacao='V', taxa=0)
         
         # Histórico de DI
@@ -76,7 +76,7 @@ class PainelTestCase(TestCase):
 #         """Testa usuário logado com operações"""
 #         self.client.login(username='nizbel', password='nizbel')
 #         response = self.client.get(reverse('cri_cra:painel_cri_cra'))
-#         
+#          
 #         self.assertEqual(response.status_code, 200)
 #         self.assertDictContainsSubset({'cri_cra': {}, 'dados': {}}, response.context_data)
         
