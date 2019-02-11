@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.conf.urls import url
-import views
+import bagogold.fii.views as views
 
 urlpatterns = [
 #     url(r'^acompanhamento-mensal/$', views.acompanhamento_mensal_fii, name='acompanhamento_mensal_fii'),
