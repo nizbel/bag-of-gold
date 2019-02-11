@@ -172,8 +172,4 @@ class ValorDiarioTitulo (models.Model):
         
     def __unicode__(self):
         return u'%s, C/V: R$ %s (%s%%) / R$ %s (%s%%)' % (self.titulo, self.preco_compra, self.taxa_compra, self.preco_venda, self.taxa_venda)
-    
-    def save(self, *args, **kw):
-        if not ValorDiarioTitulo.objects.filter(titulo=self.titulo, data_hora=self.data_hora).exists():
-            super(ValorDiarioTitulo, self).save(*args, **kw)
         
