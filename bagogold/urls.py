@@ -16,6 +16,8 @@ urlpatterns = [
     
     # App bagogold
     url(r'', include('bagogold.bagogold.urls')),
+    # App Ações
+#     url(r'^acoes/', include('bagogold.acoes.urls', namespace='acoes')),
     # App Blog
     url(r'^blog/', include('bagogold.blog.urls', namespace='blog')),
     # App CDB/RDB
