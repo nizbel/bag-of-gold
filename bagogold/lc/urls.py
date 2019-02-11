@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.conf.urls import url
-import views
+import bagogold.lc.views as views
 
 urlpatterns = [
     url(r'^detalhar-lc/(?P<lc_id>\d+)/$', views.detalhar_lc, name='detalhar_lc'),

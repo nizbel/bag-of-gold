@@ -9,7 +9,7 @@ from django.contrib.auth.views import PasswordChangeView, PasswordChangeDoneView
 from django.views.generic.base import RedirectView, TemplateView
 from registration import validators
 from registration.backends.hmac import views as registration_views
-import views
+import bagogold.bagogold.views as views
 
 # Altera valor para constante de email duplicado no Django-registration
 validators.DUPLICATE_EMAIL = 'Já existe um usuário cadastrado com esse email'
