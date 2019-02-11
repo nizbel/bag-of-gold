@@ -20,3 +20,6 @@ class BagofGoldConfig(AppConfig):
         if settings.ENV == 'DEV':
             print 'Current Bag of Gold version: ' + current_version
         settings.CURRENT_VERSION = current_version
+        
+        # Carregar sinais
+        import bagogold.bagogold.signals

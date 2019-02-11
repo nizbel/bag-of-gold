@@ -16,14 +16,14 @@
 		<thead>
 			<tr>
 				<th>Ano</th>
-				<th>Valor a pagar</th>
+<!-- 				<th>Valor a pagar</th> -->
 			</tr>
 		</thead>
 		<tbody>
 		{% for imposto_renda in impostos_renda %}
 		<tr>
 			<td><a href="{% url "imposto_renda:detalhar_imposto_renda" imposto_renda.ano %}">{{ imposto_renda.ano }}</a></td>
-			<td>R$ {{ imposto_renda.valor_a_pagar|default:"0,00" }}</td>
+<!-- 			<td>R$ {{ imposto_renda.valor_a_pagar|default:"0,00" }}</td> -->
 		</tr>
 		{% endfor %}
 		</tbody>

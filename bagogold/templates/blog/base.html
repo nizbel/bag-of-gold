@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block extra_head %}
+<link href={% static "assets/pages/css/blog.min.css" %} rel="stylesheet" type="text/css" />
+{% endblock %}
+
+{% block content %}
+<div class="portlet-body">
+    <div class="blog-page blog-content-2">
+        <div class="row">
+            {% if not sem_menu_lateral %}
+            <div class="col-md-10">
+                {% if tag_filtro %}
+                <div class="row">
+                    <div class="col-md-12 text-center">
+                        <h4>Posts com a tag <span style="color: #ffa91e"><b>{{tag_filtro}}</b></span></h4>
+                    </div>
+                </div>
+                {% endif %}
+            {% else %}
+            <div class="col-md-12">
+            {% endif %}
+                {% block blog_content %}
+                
+                {% endblock %}
+            {% if not sem_menu_lateral %}
+                {% if paginador %}
+                <div class="row text-center">
+                    <ul class="pagination">
+                        {% for pagina in paginador.page_range %}
+                        <li class="pagina {% if paginador.pagina == pagina %}active{% endif %}">
+                            <a href="javascript:;"> {{pagina}} </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+            <div class="col-md-2">
+                {% include "blog/utils/menu_lateral.html" %}
+            </div>
+            {% else %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

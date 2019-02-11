@@ -1,0 +1,1 @@
+[{% for fii in fiis %}{"label":"{{fii.ticker}}","title":"{{fii.ticker}}","value":"{{fii.id|stringformat:"s"}}"}{% if not forloop.last %},{% endif %}{% endfor %}]

@@ -58,7 +58,7 @@
 									<div id="graf_gasto" style="width:100%;height:50px"></div>
 								</div>
 								<div class="stat-number">
-									<div class="title"> Total gasto: </div>
+									<div class="title"> Total investido: </div>
 									<div class="number"> R${{ dados.total_gasto|default:'0'|floatformat:2 }} </div>
 								</div>
 							</div>
@@ -96,18 +96,18 @@
 							<th>Tipo</th>
 							<th>Data</th>
 							<th>Qtde.</th>
-							<th>Taxa (% do DI)</th>
+							<th>Taxa</th>
 							<th>Valor atual</th>
 						</tr>
 					</thead>
 					<tbody>
 					{% for item in operacoes %}
 					<tr>
-						<td><a href="{% url 'cdb_rdb:editar_operacao_cdb_rdb' item.id %}">{{item.investimento.nome}}</a></td>
+						<td><a href="{% url 'cdb_rdb:editar_operacao_cdb_rdb' item.id %}">{{item.cdb_rdb.nome}}</a></td>
 						<td>{{ item.tipo }}</td>
 						<td>{{ item.data|date:"d/m/Y" }}</td>
 						<td>R$ {{item.quantidade}}</td>
-						<td>{{ item.taxa }}%</td>
+						<td>{{ item.porcentagem }}%{% if item.cdb_rdb.eh_prefixado %} ao ano{% else %} do {{ item.cdb_rdb.indice }}{% endif %}</td>
 						<td>R$ {{item.atual|floatformat:2}}</td>
 					</tr>
 					{% endfor %}
@@ -128,7 +128,7 @@
 <script src={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.js" %} type="text/javascript"></script>
 <script src={% static "assets/pages/scripts/table-datatables-fixedheader.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/moment.min.js" %} type="text/javascript"></script>
-<script src="https://cdn.datatables.net/plug-ins/1.10.15/sorting/datetime-moment.js" type="text/javascript"></script>
+<script src={% static "assets/global/plugins/datatables/plugins/datetime-moment.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.axislabels.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.categories.min.js" %} type="text/javascript"></script>
@@ -136,7 +136,7 @@
 <script src={% static "assets/global/plugins/flot/jquery.flot.resize.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.stack.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.time.min.js" %} type="text/javascript"></script>
-<script>
+<script type="text/javascript">
 $.fn.dataTable.moment( 'DD/MM/YYYY' );
 $( document ).ready(function() {    
     $.plot($("#graf_valor"), [ {color: "#7D8C9D", lines: {show:true}, data: {{ graf_patrimonio|safe }} } 

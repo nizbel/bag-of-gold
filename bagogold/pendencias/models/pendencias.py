@@ -2,10 +2,9 @@
 from bagogold.bagogold.models.gerador_proventos import \
     PendenciaDocumentoProvento
 from bagogold.bagogold.models.investidores import Investidor
-from bagogold.bagogold.models.td import OperacaoTitulo, Titulo
-from bagogold.bagogold.utils.td import quantidade_titulos_ate_dia_por_titulo
+from bagogold.tesouro_direto.models import OperacaoTitulo
+from bagogold.tesouro_direto.utils import quantidade_titulos_ate_dia_por_titulo
 from django.db import models
-from django.db.models.aggregates import Sum
 from django.db.models.signals import post_save, post_delete
 from django.dispatch.dispatcher import receiver
 import datetime
@@ -28,7 +27,7 @@ def verificar_pendencias_primeiro_acesso_dia(sender, instance, **kwargs):
     verificar_pendencias_investidor(instance)
         
 class PendenciaVencimentoTesouroDireto (Pendencia):   
-    titulo = models.ForeignKey('bagogold.Titulo')
+    titulo = models.ForeignKey('tesouro_direto.Titulo')
     quantidade = models.DecimalField(u'Quantidade', max_digits=7, decimal_places=2)
 
     class Meta:

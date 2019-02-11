@@ -2,11 +2,11 @@
 from bagogold.bagogold.models.acoes import OperacaoAcao
 from bagogold.cdb_rdb.models import OperacaoCDB_RDB
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD, \
-    DivisaoPrincipal, DivisaoOperacaoLC, DivisaoOperacaoFII, DivisaoOperacaoAcao, \
+    DivisaoPrincipal, DivisaoOperacaoLCI_LCA, DivisaoOperacaoFII, DivisaoOperacaoAcao, \
     Divisao, DivisaoOperacaoFundoInvestimento, DivisaoOperacaoCDB_RDB
-from bagogold.bagogold.models.fii import OperacaoFII
-from bagogold.bagogold.models.lc import OperacaoLetraCredito
-from bagogold.bagogold.models.td import OperacaoTitulo
+from bagogold.fii.models import OperacaoFII
+from bagogold.lci_lca.models import OperacaoLetraCredito
+from bagogold.tesouro_direto.models import OperacaoTitulo
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
 from django.apps import apps
 
@@ -35,10 +35,10 @@ def preencher_operacoes_div_principal(operacao):
         modelo_operacao_div = apps.get_model('bagogold', 'DivisaoOperacaoFII')
         divisoes_operacao = DivisaoOperacaoFII.objects.filter(operacao=operacao)
         div_principal = DivisaoPrincipal.objects.get(investidor=operacao.investidor).divisao
-    # LC
+    # Letra de Crédito
     elif isinstance(operacao, OperacaoLetraCredito):
-        modelo_operacao_div = apps.get_model('bagogold', 'DivisaoOperacaoLC')
-        divisoes_operacao = DivisaoOperacaoLC.objects.filter(operacao=operacao)
+        modelo_operacao_div = apps.get_model('bagogold', 'DivisaoOperacaoLCI_LCA')
+        divisoes_operacao = DivisaoOperacaoLCI_LCA.objects.filter(operacao=operacao)
         div_principal = DivisaoPrincipal.objects.get(investidor=operacao.investidor).divisao
     # TD
     else:
@@ -122,9 +122,9 @@ def verificar_operacoes_nao_alocadas(investidor):
             operacao.quantidade_nao_alocada = operacao.quantidade - quantidade_alocada
             operacoes_nao_alocadas.append(operacao)
     
-    # LC
+    # Letra de Crédito
     for operacao in OperacaoLetraCredito.objects.filter(investidor=investidor):
-        divisoes_operacao = DivisaoOperacaoLC.objects.filter(operacao=operacao)
+        divisoes_operacao = DivisaoOperacaoLCI_LCA.objects.filter(operacao=operacao)
         quantidade_alocada = 0
         for divisao in divisoes_operacao:
             quantidade_alocada += divisao.quantidade

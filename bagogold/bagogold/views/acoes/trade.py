@@ -227,10 +227,10 @@ def acompanhamento_mensal(request):
     
 @login_required
 @adiciona_titulo_descricao('Editar operação de Trading em Ações', 'Altera dados de uma compra e venda de Ações')
-def editar_operacao(request, operacao_id):
+def editar_operacao(request, id_operacao):
     investidor = request.user.investidor
     
-    operacao = get_object_or_404(OperacaoCompraVenda, pk=operacao_id)
+    operacao = get_object_or_404(OperacaoCompraVenda, pk=id_operacao)
     # Checar se é o investidor da operação
     if investidor != operacao.compra.investidor:
         raise PermissionDenied
@@ -257,10 +257,10 @@ def editar_operacao(request, operacao_id):
     
 @login_required
 @adiciona_titulo_descricao('Editar operação em Ações para Trading', 'Altera valores de uma operação de compra/venda de Ações para Trading')
-def editar_operacao_acao(request, operacao_id):
+def editar_operacao_acao(request, id_operacao):
     investidor = request.user.investidor
     
-    operacao_acao = get_object_or_404(OperacaoAcao, pk=operacao_id, destinacao='T')
+    operacao_acao = get_object_or_404(OperacaoAcao, pk=id_operacao, destinacao='T')
     
     # Verifica se a operação é do investidor, senão, jogar erro de permissão
     if operacao_acao.investidor != investidor:
@@ -274,7 +274,7 @@ def editar_operacao_acao(request, operacao_id):
                                             extra=1, formset=DivisaoOperacaoAcaoFormSet)
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     # Busca as operações de compra/venda relativas a essa operação, se alguma envolver daytrade, marcar como daytrade
     # TODO preparar para muitas execuções em uma mesma operação
@@ -362,7 +362,7 @@ def editar_operacao_acao(request, operacao_id):
                     messages.success(request, 'Operação apagada com sucesso')
                     return HttpResponseRedirect(reverse('acoes:bh:historico_bh'))
             except:
-                messages.error('Houve um erro na exclusão da operação')
+                messages.error(request, 'Houve um erro na exclusão da operação')
 
     else:
         form_operacao_acao = OperacaoAcaoForm(instance=operacao_acao)
@@ -529,7 +529,7 @@ def inserir_operacao_acao(request):
     investidor = request.user.investidor
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'), can_delete=False,

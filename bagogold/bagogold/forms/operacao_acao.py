@@ -28,8 +28,8 @@ class OperacaoAcaoForm(LocalizedModelForm):
                  'consolidada': widgets.Select(choices=ESCOLHAS_CONSOLIDADO),}
         
     class Media:
-        js = ('js/bagogold/calculo_emolumentos.js', 
-              'js/bagogold/form_operacao_acao.js',)
+        js = ('js/bagogold/calculo_emolumentos.min.js', 
+              'js/bagogold/form_operacao_acao.min.js',)
     
     def clean_preco_unitario(self):
         preco_unitario = Decimal(self.cleaned_data['preco_unitario'])

@@ -1,21 +1,18 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao
-from bagogold.bagogold.models.fii import UsoProventosOperacaoFII
-from bagogold.bagogold.models.lc import OperacaoLetraCredito
-from bagogold.bagogold.models.td import HistoricoIPCA, OperacaoTitulo
+from bagogold.fii.models import UsoProventosOperacaoFII
+from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
 from bagogold.fundo_investimento.utils import \
     calcular_valor_fundos_investimento_ate_dia
+from bagogold.tesouro_direto.models import OperacaoTitulo
 from decimal import Decimal
 from django.db.models.aggregates import Sum
-from django.utils import timezone
-from urllib2 import Request, urlopen, URLError, HTTPError
 import datetime
+import json
 import math
 import random
-import re
+import requests
 import time
-from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
-from django.utils import timezone
 
 
 def calcular_iof_regressivo(dias):
@@ -36,46 +33,52 @@ def calcular_iof_e_ir_longo_prazo(lucro_bruto, qtd_dias):
     imposto_renda = calcular_imposto_renda_longo_prazo(lucro_bruto - iof, qtd_dias)
     return iof, imposto_renda
 
-def buscar_historico_ipca():
-    td_url = 'http://www.portalbrasil.net/ipca.htm'
-    req = Request(td_url)
-    try:
-        response = urlopen(req)
-    except HTTPError as e:
-        print 'The server couldn\'t fulfill the request.'
-        print 'Error code: ', e.code
-    except URLError as e:
-        print 'We failed to reach a server.'
-        print 'Reason: ', e.reason
-    else:
-#         print 'Host: %s' % (req.get_host())
-        data = response.read()
-#         print data
-        string_importante = (data[data.find('simplificada'):
-                                 data.find('FONTES')])
-#         print string_importante
-        linhas = re.findall('<tr.*?>.*?</tr>', string_importante, re.MULTILINE|re.DOTALL|re.IGNORECASE)
-        for linha in linhas[1:]:
-            linha = re.sub('<.*?>', '', linha, flags=re.MULTILINE|re.DOTALL|re.IGNORECASE)
-            linha = linha.replace(' ', '').replace('&nbsp;', '')
-            campos = re.findall('([\S]*)', linha, re.MULTILINE|re.DOTALL|re.IGNORECASE)
-            campos = filter(bool, campos)
-#             print campos
-            for mes in range(1,13):
-                try:
-#                     print 'Ano:', campos[0], 'Mes:', mes, 'Valor:', Decimal(campos[mes].replace(',', '.'))
-                    historico_ipca = HistoricoIPCA(ano=int(campos[0]), mes=mes, valor=Decimal(campos[mes].replace(',', '.')))
-                    historico_ipca.save()
-                except:
-                    print 'Não foi possível converter', campos[mes]
+# def buscar_historico_ipca():
+#     td_url = 'http://www.portalbrasil.net/ipca.htm'
+#     req = Request(td_url)
+#     try:
+#         response = urlopen(req)
+#     except HTTPError as e:
+#         print 'The server couldn\'t fulfill the request.'
+#         print 'Error code: ', e.code
+#     except URLError as e:
+#         print 'We failed to reach a server.'
+#         print 'Reason: ', e.reason
+#     else:
+# #         print 'Host: %s' % (req.get_host())
+#         data = response.read()
+# #         print data
+#         string_importante = (data[data.find('simplificada'):
+#                                  data.find('FONTES')])
+# #         print string_importante
+#         linhas = re.findall('<tr.*?>.*?</tr>', string_importante, re.MULTILINE|re.DOTALL|re.IGNORECASE)
+#         for linha in linhas[1:]:
+#             linha = re.sub('<.*?>', '', linha, flags=re.MULTILINE|re.DOTALL|re.IGNORECASE)
+#             linha = linha.replace(' ', '').replace('&nbsp;', '')
+#             campos = re.findall('([\S]*)', linha, re.MULTILINE|re.DOTALL|re.IGNORECASE)
+#             campos = filter(bool, campos)
+# #             print campos
+#             for mes in range(1,13):
+#                 try:
+# #                     print 'Ano:', campos[0], 'Mes:', mes, 'Valor:', Decimal(campos[mes].replace(',', '.'))
+#                     historico_ipca = HistoricoIPCA(ano=int(campos[0]), mes=mes, valor=Decimal(campos[mes].replace(',', '.')))
+#                     historico_ipca.save()
+#                 except:
+#                     print 'Não foi possível converter', campos[mes]
                
-def buscar_valores_diarios_selic(data_inicial=datetime.date.today() - datetime.timedelta(days=30), data_final=datetime.date.today()):
+def buscar_valores_diarios_selic(data_inicial=None, data_final=None):
     """
     Retorna os valores da taxa SELIC pelo site do Banco Central
     Parâmetros: Data inicial
                 Data final
     Retorno: Lista com tuplas (data, fator diário)
     """
+    # Preparar datas
+    if data_inicial == None:
+        data_inicial = datetime.date.today() - datetime.timedelta(days=30)
+    if data_final == None:
+        data_final = datetime.date.today()
+        
     if data_final < data_inicial:
         raise ValueError('Data final deve ser igual ou posterior a data inicial')
     # Verifica se o intervalo entre as datas inicial e final é menor do que 10 anos
@@ -88,60 +91,60 @@ def buscar_valores_diarios_selic(data_inicial=datetime.date.today() - datetime.t
             if data_final.day > data_inicial.day:
                 raise ValueError('Intervalo deve ser inferior a 10 anos')
     
-    # from bagogold.bagogold.utils.misc import buscar_valores_diarios_selic
-    # http://www3.bcb.gov.br/selic/consulta/taxaSelic.do?method=listarTaxaDiaria&dataInicial=11/11/2016&dataFinal=16/11/2016&tipoApresentacao=arquivo
-    td_url = 'http://www3.bcb.gov.br/selic/consulta/taxaSelic.do?method=listarTaxaDiaria&dataInicial=%s&dataFinal=%s&tipoApresentacao=arquivo' % (data_inicial.strftime('%d/%m/%Y'),
-                                                                                                                                                  data_final.strftime('%d/%m/%Y'))
-    req = Request(td_url)
-    try:
-        response = urlopen(req)
-    except HTTPError as e:
-        print 'The server couldn\'t fulfill the request.'
-        print 'Error code: ', e.code
-    except URLError as e:
-        print 'We failed to reach a server.'
-        print 'Reason: ', e.reason
-    else:
-        data = response.read()
-#         print data
+    selic_url = 'https://www3.bcb.gov.br/selic/rest/taxaSelicApurada/pub/search?parametrosOrdenacao=%5B%7B%22nome%22%3A%22dataCotacao%22%2C%22decrescente%22%3Atrue%7D%5D&page=1&pageSize=2513'
+    head = { 'Content-Type': 'application/json; charset=UTF-8',
+             'Accept': 'application/json, text/javascript, */*; q=0.01',
+             'X-Requested-With': 'XMLHttpRequest' }
+    data = {'dataInicial': data_inicial.strftime('%d/%m/%Y'), 'dataFinal': data_final.strftime('%d/%m/%Y')}
+    response = requests.post(selic_url, json.dumps(data), headers=head)
+    
+    retorno = json.loads(response.text)
+    if retorno['totalItems'] > 0:
         lista_datas_valores = list()
-        # data vem como um arquivo txt separado por linhas com \n e delimitado por ;
-        linhas = data.split('\n')
-        # ler a partir da terceira linha
-        for linha in linhas[2:]:
-            dados_linha = linha.split(';')
-            if len(dados_linha) > 2:
-                try:
-                    data = datetime.datetime.strptime(dados_linha[0], '%d/%m/%Y').date()
-                except:
-                    continue
-                fator_diario = Decimal(dados_linha[2].replace(',', '.'))
-                if fator_diario.is_zero():
-                    continue
-                lista_datas_valores.append((data, fator_diario))
+        # Ler registros do JSON
+        
+        for item in retorno['registros']:
+#             print item
+            data = datetime.datetime.strptime(item['dataCotacao'], '%d/%m/%Y').date()
+            fator_diario = Decimal(item['fatorDiario']).quantize(Decimal('0.000000000001'))
+            if fator_diario.is_zero():
+                continue
+            lista_datas_valores.append((data, fator_diario))
         return lista_datas_valores
+    else:
+        return list()
      
-def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDEFILORT'):
+def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='ABCDEFILORT'):
     """
     Calcula os rendimentos de operações até a data especificada, para os tipos de investimento definidos
     Parâmetros: Investidor
                 Data final (inclusive)
                 Tipo de investimento (seguindo o padrão
-    B = Buy and Hold; C = CDB/RDB; D = Tesouro Direto; E = Debêntures; F = FII; I = Fundo de investimento; L = Letra de Crédito;
+    A = Letras de Câmbio, B = Buy and Hold; C = CDB/RDB; D = Tesouro Direto; E = Debêntures; F = FII; I = Fundo de investimento; L = Letra de Crédito;
     O = Outros investimentos; R = CRI/CRA; T = Trading;)
     Retorno: Valores de rendimentos para cada tipo de investimento {Tipo: Valor}
     """
+    from bagogold.lc.models import OperacaoLetraCambio
+    from bagogold.lc.utils import calcular_valor_lc_ate_dia, calcular_valor_venda_lc
     from bagogold.cdb_rdb.models import OperacaoCDB_RDB
     from bagogold.bagogold.utils.acoes import calcular_poupanca_prov_acao_ate_dia
     from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, calcular_valor_venda_cdb_rdb
-    from bagogold.bagogold.utils.fii import calcular_poupanca_prov_fii_ate_dia
-    from bagogold.bagogold.utils.lc import calcular_valor_lc_ate_dia, calcular_valor_venda_lc
-    from bagogold.bagogold.utils.td import calcular_valor_td_ate_dia
+    from bagogold.fii.utils import calcular_poupanca_prov_fii_ate_dia
+    from bagogold.lci_lca.models import OperacaoLetraCredito
+    from bagogold.lci_lca.utils import calcular_valor_lci_lca_ate_dia, calcular_valor_venda_lci_lca
+    from bagogold.tesouro_direto.utils import calcular_valor_td_ate_dia
     from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA
     from bagogold.cri_cra.utils.utils import calcular_valor_cri_cra_ate_dia, calcular_rendimentos_cri_cra_ate_data
     from bagogold.outros_investimentos.models import Rendimento
     
     rendimentos = {}
+    
+    # Letras de Câmbio
+    if 'A' in tipo_investimentos:
+        rendimentos['A'] = sum(calcular_valor_lc_ate_dia(investidor, data).values()) \
+            - sum([operacao.quantidade for operacao in OperacaoLetraCambio.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='C')]) \
+            + sum([calcular_valor_venda_lc(operacao) for operacao in OperacaoLetraCambio.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='V').select_related('lc')])
+            
     # Ações (Buy and Hold)
     if 'B' in tipo_investimentos:
         rendimentos['B'] = calcular_poupanca_prov_acao_ate_dia(investidor, data) + sum(UsoProventosOperacaoAcao.objects.filter(operacao__investidor=investidor, operacao__data__lte=data).values_list('qtd_utilizada', flat=True))
@@ -150,7 +153,7 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDEFILO
     if 'C' in tipo_investimentos:
         rendimentos['C'] = sum(calcular_valor_cdb_rdb_ate_dia(investidor, data).values()) \
             - sum([operacao.quantidade for operacao in OperacaoCDB_RDB.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='C')]) \
-            + sum([calcular_valor_venda_cdb_rdb(operacao) for operacao in OperacaoCDB_RDB.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='V')])
+            + sum([calcular_valor_venda_cdb_rdb(operacao) for operacao in OperacaoCDB_RDB.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='V').select_related('cdb_rdb')])
     
     # Tesouro Direto
     if 'D' in tipo_investimentos:
@@ -170,9 +173,9 @@ def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='BCDEFILO
     
     # Letras de Crédito
     if 'L' in tipo_investimentos:
-        rendimentos['L'] = sum(calcular_valor_lc_ate_dia(investidor, data).values()) \
+        rendimentos['L'] = sum(calcular_valor_lci_lca_ate_dia(investidor, data).values()) \
             - sum([operacao.quantidade for operacao in OperacaoLetraCredito.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='C')]) \
-            + sum([calcular_valor_venda_lc(operacao) for operacao in OperacaoLetraCredito.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='V')])
+            + sum([calcular_valor_venda_lci_lca(operacao) for operacao in OperacaoLetraCredito.objects.filter(investidor=investidor, data__lte=data, tipo_operacao='V').select_related('letra_credito')])
     
     # CRI/CRA
     if 'R' in tipo_investimentos:
@@ -244,9 +247,11 @@ def verificar_feriado_bovespa(data):
     # Calcular feriados dependentes da páscoa
     domingo_pascoa = calcular_domingo_pascoa_no_ano(data.year)
     carnaval = domingo_pascoa - datetime.timedelta(days=47)
+    segunda_carnaval = carnaval - datetime.timedelta(days=1)
     sexta_santa = domingo_pascoa - datetime.timedelta(days=2)
     corpus_christi = domingo_pascoa + datetime.timedelta(days=60)
     lista_feriados = ((1, 1), # Confraternização Universal
+                      (segunda_carnaval.day, segunda_carnaval.month), # Segunda de Carnaval
                       (carnaval.day, carnaval.month), # Carnaval
                       (sexta_santa.day, sexta_santa.month), # Sexta-feira santa
                       (corpus_christi.day, corpus_christi.month), # Corpus Christi
@@ -309,6 +314,7 @@ def ultimo_dia_util():
 def verifica_se_dia_util(data):
     """
     Verifica se data passa é dia útil
+    
     Parâmetros: Data
     Retorno:    Se é ou não dia útil
     """

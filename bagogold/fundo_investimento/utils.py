@@ -1,19 +1,26 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoFundoInvestimento
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
-    HistoricoValorCotas
+    HistoricoValorCotas, FundoInvestimento
 from django.db.models.aggregates import Sum
 from django.db.models.expressions import F, Case, When
 from django.db.models.fields import DecimalField
+from django.utils.text import slugify
 import datetime
+import re
 
-def calcular_qtd_cotas_ate_dia(investidor, dia=datetime.date.today()):
+def calcular_qtd_cotas_ate_dia(investidor, dia=None):
     """ 
     Calcula a quantidade de cotas até dia determinado
+    
     Parâmetros: Investidor
                 Dia final
     Retorno: Quantidade de cotas por fundo {fundo_id: qtd}
     """
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
+        
     qtd_cotas = dict(OperacaoFundoInvestimento.objects.filter(investidor=investidor, data__lte=dia).exclude(data__isnull=True).values('fundo_investimento') \
         .annotate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
                             When(tipo_operacao='V', then=F('quantidade')*-1),
@@ -21,14 +28,18 @@ def calcular_qtd_cotas_ate_dia(investidor, dia=datetime.date.today()):
     
     return qtd_cotas
 
-def calcular_qtd_cotas_ate_dia_por_fundo(investidor, fundo_id, dia=datetime.date.today()):
+def calcular_qtd_cotas_ate_dia_por_fundo(investidor, fundo_id, dia=None):
     """ 
     Calcula a quantidade de cotas até dia determinado para um fundo determinado
+    
     Parâmetros: Investidor
                 ID do Fundo de investimento
                 Dia final
     Retorno: Quantidade de cotas para o fundo determinado
     """
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
     
     qtd_cotas = OperacaoFundoInvestimento.objects.filter(investidor=investidor, fundo_investimento__id=fundo_id, data__lte=dia).exclude(data__isnull=True) \
         .aggregate(qtd_cotas=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
@@ -78,13 +89,18 @@ def calcular_qtd_cotas_ate_dia_por_divisao(dia, divisao_id):
             
     return qtd_cotas
 
-def calcular_valor_fundos_investimento_ate_dia(investidor, dia=datetime.date.today()):
+def calcular_valor_fundos_investimento_ate_dia(investidor, dia=None):
     """ 
     Calcula a o valor das cotas do investidor até dia determinado
+    
     Parâmetros: Investidor
                 Dia final
     Retorno: Valor por fundo {fundo_id: valor (em reais)}
     """
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
+        
     fundos = calcular_qtd_cotas_ate_dia(investidor, dia)
     valor_fundos = {}
     for fundo_id in fundos.keys():
@@ -99,3 +115,35 @@ def calcular_valor_fundos_investimento_ate_dia(investidor, dia=datetime.date.tod
             valor_cota = OperacaoFundoInvestimento.objects.filter(fundo_investimento__id=fundo_id, investidor=investidor, data__lte=dia).order_by('-data')[0].valor_cota()
         valor_fundos[fundo_id] = valor_cota * fundos[fundo_id]
     return valor_fundos
+
+def criar_slug_fundo_investimento_valido(fundo_nome):
+    """
+    Gera um slug válido para um fundo de investimento a partir de seu nome
+    Parâmetros: Nome do fundo de investimento
+    Retorno: Slug válido
+    """
+    slug = slugify(fundo_nome.replace('.', '-').replace('/', '-'))
+
+    for string in ['de', 'no', 'em', 'com', 'da[s]?', 'do[s]?', 'na[s]?', 'sem', 'fi[i]?', 'fundo[s]?', 'fdo[s]?', 'investimento[s]?', 'invest', 'inv']:
+        slug = re.sub('-%s(?=-)' % (string), '-', re.sub('(^%s-|-%s$)' % (string, string), '', slug))
+    slug = re.sub('-$', '', re.sub('^-', '', re.sub('-+', '-', slug)))
+    
+    final = 0
+    slug_temp = slug
+    # Verifica se já existe o slug de Fundo de Investimento criado
+    while FundoInvestimento.objects.filter(slug=slug_temp).exists():
+        # Adicionar numeral ao final do slug, mantendo o limite de 100 caracteres
+        final += 1
+        slug_temp = '%s-%s' % (slug, final)
+        if slug_temp > 100:
+            string_final = str(final)
+            slug_temp = '%s-%s' % (slug[: 100 - (len(string_final) + 1)], string_final)
+    slug = slug_temp
+    return slug
+
+
+def formatar_cnpj(string):
+    string = re.sub(r'\D', '', string)
+    while len(string) < 14:
+        string = '0' + string
+    return string[0:2] + '.' + string[2:5] + '.' + string[5:8] + '/' + string[8:12] + '-' + string[12:14]

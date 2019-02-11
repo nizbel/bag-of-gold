@@ -93,7 +93,7 @@ Bootstrap Datepicker
 /***
 Bootstrap Daterangepicker
 ***/
-.modal-open .daterangepicker {
+/*.modal-open .daterangepicker {
   z-index: 10055 !important; }
 
 .daterangepicker {
@@ -151,15 +151,15 @@ Bootstrap Daterangepicker
   margin-bottom: 0 !important; }
 
 .daterangepicker .fa-angle-right:before {
-  content: ""/*rtl:""*/; }
+  content: ""; }
 
 .daterangepicker .fa-angle-left:before {
-  content: ""/*rtl:""*/; }
+  content: ""; } */
 
 /***
 Bootstrap  Datetimepicker
 ***/
-.datetimepicker table td {
+/*.datetimepicker table td {
   color: #000;
   font-weight: 300  !important;
   font-family: 'Open Sans' !important; }
@@ -182,14 +182,14 @@ Bootstrap  Datetimepicker
   filter: none !important; }
 
 .datetimepicker .fa-angle-left:before {
-  content: ""/*rtl:""*/; }
+  content: ""; }
 
 .datetimepicker .fa-angle-right:before {
-  content: ""/*rtl:""*/; }
+  content: ""; }
 
 /* change z-index when opened in modal */
 .modal-open .datetimepicker {
-  z-index: 10055; }
+  z-index: 10055; } */
 
 /***
 Bootstrap Editable
@@ -372,16 +372,16 @@ Bootstrap Select
 /***
 Bootstrap Switch 
 ***/
-.bootstrap-switch {
+/*.bootstrap-switch {
   border-color: #c2cad8; }
   .bootstrap-switch.bootstrap-switch-focused {
     box-shadow: none;
-    border-color: #c2cad8; }
+    border-color: #c2cad8; } */
 
 /***
 Color variants
 ***/
-.bootstrap-switch .bootstrap-switch-handle-on.bootstrap-switch-primary,
+/*.bootstrap-switch .bootstrap-switch-handle-on.bootstrap-switch-primary,
 .bootstrap-switch .bootstrap-switch-handle-off.bootstrap-switch-primary {
   color: #fff;
   background: #337ab7; }
@@ -409,12 +409,12 @@ Color variants
 .bootstrap-switch .bootstrap-switch-handle-on.bootstrap-switch-default,
 .bootstrap-switch .bootstrap-switch-handle-off.bootstrap-switch-default {
   color: #444;
-  background: #e8eaef; }
+  background: #e8eaef; } */
 
 /* Bootstrap switch on portlet headers */
-.portlet:not(.light) > .portlet-title > .actions > .bootstrap-switch {
+/*.portlet:not(.light) > .portlet-title > .actions > .bootstrap-switch {
   border-color: transparent;
-  margin-top: 0px; }
+  margin-top: 0px; } */
 
 /***
 Bootstrap Time Picker
@@ -437,7 +437,7 @@ Bootstrap Time Picker
 /***
 Toastr Notifications
 ***/
-.toast {
+/*.toast {
   -webkit-box-shadow: none !important;
   -moz-box-shadow: none !important;
   box-shadow: none !important; }
@@ -481,12 +481,12 @@ Toastr Notifications
   left: 50%;
   margin-left: -150px; }
   .toast-bottom-center .toast {
-    margin: 0 !important; }
+    margin: 0 !important; } */
 
 /***
 Bootstrap Wizard
 ***/
-.form-wizard .progress {
+/*.form-wizard .progress {
   margin-bottom: 30px; }
 
 .form-wizard .steps {
@@ -541,15 +541,13 @@ Bootstrap Wizard
       display: inline-block; }
 
 @media (min-width: 768px) and (max-width: 1200px) {
-  /* 768px & 1200px */
   .form-wizard .step .desc {
     margin-top: 10px;
     display: block; } }
 
 @media (max-width: 768px) {
-  /* 768px */
   .form-wizard .steps > li > a {
-    text-align: left; } }
+    text-align: left; } } */
 
 /*!
  * Tab drop for Bootstrap
@@ -647,7 +645,7 @@ Error state for WYSIWYG Editors
 /***
 Bootstrap GtreeTable
 ***/
-.gtreetable .dropdown-menu {
+/*.gtreetable .dropdown-menu {
   margin-top: 0px; }
   .gtreetable .dropdown-menu:after, .gtreetable .dropdown-menu:before {
     display: none !important; }
@@ -662,7 +660,7 @@ Bootstrap GtreeTable
 .gtreetable .node-icon-ce,
 .gtreetable .node-icon-type {
   opacity: 0.6 ;
-  filter: alpha(opacity=60) ; }
+  filter: alpha(opacity=60) ; } */
 
 /***
 Modify bootstrap-tagsinput plugin's css
@@ -1512,30 +1510,9 @@ Fullcalendar
   top: -47px; }
 
 /***
-Google Maps
-***/
-.gmaps {
-  height: 300px;
-  width: 100%;
-  /* important!  bootstrap sets max-width on img to 100% which conflicts with google map canvas*/ }
-  .gmaps img {
-    max-width: none; }
-
-#gmap_static div {
-  background-repeat: no-repeat;
-  background-position: 50% 50%;
-  height: 100%;
-  display: block;
-  height: 300px; }
-
-#gmap_routes_instructions {
-  margin-top: 10px;
-  margin-bottom: 0px; }
-
-/***
 Gritter notification modify
 ***/
-#gritter-notice-wrapper {
+/*#gritter-notice-wrapper {
   right: 1px !important; }
 
 .gritter-close {
@@ -1545,7 +1522,7 @@ Gritter notification modify
 .gritter-title {
   font-family: 'Open Sans';
   font-size: 18px;
-  font-weight: 300; }
+  font-weight: 300; } */
 
 /***
 Dashboard Charts(new in v1.2.1)
@@ -1640,7 +1617,7 @@ jQuery Multi Select
 /***
 jQuery Notific8 Plugin
 ***/
-.jquery-notific8-message {
+/*.jquery-notific8-message {
   font-size: 13px; }
 
 [class*="jquery-notific8"],
@@ -1656,7 +1633,7 @@ jQuery Notific8 Plugin
 
 .jquery-notific8-heading {
   font-weight: 300;
-  font-size: 16px; }
+  font-size: 16px; } */
 
 /***
 Password Strength(in v1.4)
@@ -1696,7 +1673,7 @@ jQuery Slimscroll
 /***
 jQuery Sparkline
 ***/
-.jqstooltip {
+/*.jqstooltip {
   width: auto !important;
   height: auto !important; }
 
@@ -1736,7 +1713,7 @@ jQuery Sparkline
 
 .sparkline-chart .title > i,
 .easy-pie-chart .title > i {
-  margin-top: 5px; }
+  margin-top: 5px; } */
 
 /***
 jQuery UI Sliders(new in v1.1.1)
@@ -1779,7 +1756,7 @@ JQVMAP Plugin
 /***
 Jstree
 ***/
-.jstree-default .jstree-clicked {
+/*.jstree-default .jstree-clicked {
   border: 0;
   background-color: #e1e1e1;
   box-shadow: none; }
@@ -1860,7 +1837,7 @@ Jstree
   border: 1px solid #e5e5e5 !important;
   outline: none !important;
   padding: 2px 6px !important;
-  margin-right: -4px !important; }
+  margin-right: -4px !important; } */
 
 /***
 NoUIRangeSlider
@@ -2051,7 +2028,7 @@ Morris Charts
 /***
 iCheck
 ***/
-.icheck-list > label {
+/*.icheck-list > label {
   display: block;
   margin-bottom: 8px; }
   .icheck-list > label:last-child {
@@ -2113,7 +2090,7 @@ div[class*='iradio_'] {
     .icheck-colors > li.pink {
       background: #ff66b5; }
     .icheck-colors > li.purple {
-      background: #6a5a8c; }
+      background: #6a5a8c; } */
 
 /***
 AngularJS UI-select

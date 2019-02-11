@@ -1,18 +1,20 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoCDB_RDB, Divisao
 from bagogold.bagogold.models.investidores import Investidor
-from bagogold.bagogold.models.lc import HistoricoTaxaDI
-from bagogold.bagogold.utils.lc import \
-    calcular_valor_atualizado_com_taxa_prefixado
+from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
 from bagogold.bagogold.utils.misc import verificar_feriado_bovespa, \
-    qtd_dias_uteis_no_periodo
+    qtd_dias_uteis_no_periodo, calcular_iof_regressivo, \
+    calcular_imposto_renda_longo_prazo
+from bagogold.bagogold.utils.taxas_indexacao import \
+    calcular_valor_atualizado_com_taxa_prefixado
 from bagogold.cdb_rdb.forms import HistoricoVencimentoCDB_RDBForm, \
     HistoricoCarenciaCDB_RDBForm
 from bagogold.cdb_rdb.models import CDB_RDB, HistoricoPorcentagemCDB_RDB, \
     OperacaoCDB_RDB, OperacaoVendaCDB_RDB, HistoricoCarenciaCDB_RDB, \
     HistoricoVencimentoCDB_RDB
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, \
-    buscar_operacoes_vigentes_ate_data, calcular_valor_cdb_rdb_ate_dia_por_divisao
+    buscar_operacoes_vigentes_ate_data, calcular_valor_cdb_rdb_ate_dia_por_divisao, \
+    calcular_valor_venda_cdb_rdb, calcular_valor_operacao_cdb_rdb_ate_dia
 from decimal import Decimal, ROUND_DOWN
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -29,31 +31,45 @@ class ValorCDB_RDBAteDiaTestCase(TestCase):
         
         # RDB
         rdb = CDB_RDB.objects.create(nome="RDB Teste", investidor=user.investidor, tipo='R', tipo_rendimento=CDB_RDB.CDB_RDB_DI)
-        rdb_porcentagem_di = HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=rdb, porcentagem=Decimal(110))
+        HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=rdb, porcentagem=Decimal(110))
+        HistoricoVencimentoCDB_RDB.objects.create(cdb_rdb=rdb, vencimento=2000)
         OperacaoCDB_RDB.objects.create(quantidade=Decimal(3000), data=datetime.date(2016, 10, 14), tipo_operacao='C', \
-                                            investimento=rdb, investidor=user.investidor)
+                                            cdb_rdb=rdb, investidor=user.investidor)
         
         # Histórico
         date_list = [data_atual - datetime.timedelta(days=x) for x in range(0, (data_atual - datetime.date(2016, 10, 14)).days+1)]
         date_list = [data for data in date_list if data.weekday() < 5 and not verificar_feriado_bovespa(data)]
         
         for data in date_list:
-            # Pular sexta-feira santa
-            if data == datetime.date(2016, 3, 25):
-                continue
-            # Pular corpus christi
-            if data == datetime.date(2016, 5, 26):
-                continue
-            
             if data >= datetime.date(2016, 10, 20):
                 HistoricoTaxaDI.objects.create(data=data, taxa=Decimal(13.88))
             else:
                 HistoricoTaxaDI.objects.create(data=data, taxa=Decimal(14.13))
             
     def test_valor_cdb_rdb_ate_dia(self):
-        """Testar valores das operações no dia 27/10/2016, permitindo erro de até 1 centavo"""
-        valor_cdb_rdb = calcular_valor_cdb_rdb_ate_dia(User.objects.get(username='tester').investidor, datetime.date(2016, 11, 10)).values()
+        """Testar valores das operações no dia 10/11/2016, permitindo erro de até 1 centavo"""
+        investidor = User.objects.get(username='tester').investidor
+        
+        valor_cdb_rdb = calcular_valor_cdb_rdb_ate_dia(investidor, datetime.date(2016, 11, 10)).values()
         self.assertAlmostEqual(valor_cdb_rdb[0], Decimal('3032.63'), delta=0.01)
+        self.assertEqual(valor_cdb_rdb[0], calcular_valor_operacao_cdb_rdb_ate_dia(OperacaoCDB_RDB.objects.get(investidor=investidor, tipo_operacao='C'), datetime.date(2016, 11, 10)))
+        
+    def test_valor_liquido_cdb_rdb_ate_dia(self):
+        """Testar valores líquidos das operações no dia 10/11/2016, permitindo erro de até 1 centavo"""
+        valor_cdb_rdb = calcular_valor_cdb_rdb_ate_dia(User.objects.get(username='tester').investidor, datetime.date(2016, 11, 10), True).values()
+        iof = Decimal('32.63') * calcular_iof_regressivo((datetime.date(2016, 11, 10) - datetime.date(2016, 10, 14)).days)
+        ir = calcular_imposto_renda_longo_prazo(Decimal('32.63') - iof, (datetime.date(2016, 11, 10) - datetime.date(2016, 10, 14)).days)
+        self.assertAlmostEqual(valor_cdb_rdb[0], Decimal('3032.63') - iof - ir, delta=0.01)
+        
+    def test_valor_venda_cdb_rdb_no_dia(self):
+        """Testar valor da operação de venda no dia 10/11/2016, permitindo erro de até 1 centavo"""
+        rdb = CDB_RDB.objects.get(nome="RDB Teste")
+        investidor = Investidor.objects.get(user__username='tester')
+        
+        operacao_venda = OperacaoCDB_RDB.objects.create(quantidade=Decimal(3000), data=datetime.date(2016, 11, 10), tipo_operacao='V', \
+                                            cdb_rdb=rdb, investidor=investidor)
+        OperacaoVendaCDB_RDB.objects.create(operacao_compra=OperacaoCDB_RDB.objects.get(investidor=investidor, cdb_rdb=rdb, tipo_operacao='C'), operacao_venda=operacao_venda)
+        self.assertAlmostEqual(calcular_valor_venda_cdb_rdb(operacao_venda), Decimal('3030.91'), delta=0.01)
 
 class CalcularValorCDB_RDBPrefixadoTestCase(TestCase):
     
@@ -61,18 +77,30 @@ class CalcularValorCDB_RDBPrefixadoTestCase(TestCase):
         # Usuário
         user = User.objects.create(username='tester')
         
-        # RDB
+        # CDB
         cdb = CDB_RDB.objects.create(nome="CDB Teste", investidor=user.investidor, tipo='C', tipo_rendimento=CDB_RDB.CDB_RDB_PREFIXADO)
-        cdb_porcentagem = HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cdb, porcentagem=Decimal('11.44'))
+        HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cdb, porcentagem=Decimal('11.44'))
+        HistoricoVencimentoCDB_RDB.objects.create(cdb_rdb=cdb, vencimento=2000)
         OperacaoCDB_RDB.objects.create(quantidade=Decimal(2000), data=datetime.date(2017, 5, 23), tipo_operacao='C', \
-                                            investimento=cdb, investidor=user.investidor)
+                                            cdb_rdb=cdb, investidor=user.investidor)
         
     def test_valor_prefixado_no_dia(self):
-        """Testar valor do CDB no dia 17/06/2017, permitindo erro de até 1 centavo"""
+        """Testar valor do CDB no dia 16/06/2017, permitindo erro de até 1 centavo"""
         qtd_dias = qtd_dias_uteis_no_periodo(datetime.date(2017, 5, 23), datetime.date(2017, 6, 16))
-        operacao = OperacaoCDB_RDB.objects.get(investimento=CDB_RDB.objects.get(nome="CDB Teste"))
+        operacao = OperacaoCDB_RDB.objects.get(cdb_rdb=CDB_RDB.objects.get(nome="CDB Teste"))
         valor = calcular_valor_atualizado_com_taxa_prefixado(operacao.quantidade, operacao.porcentagem(), qtd_dias)
         self.assertAlmostEqual(valor, Decimal('2014.67'), delta=0.01)
+        self.assertEqual(valor.quantize(Decimal('.01'), ROUND_DOWN), calcular_valor_operacao_cdb_rdb_ate_dia(operacao, datetime.date(2017, 6, 15)))
+        
+    def test_valor_venda_cdb_rdb_no_dia(self):
+        """Testar valor da operação de venda no dia 16/06/2017, permitindo erro de até 1 centavo"""
+        cdb = CDB_RDB.objects.get(nome="CDB Teste")
+        investidor = Investidor.objects.get(user__username='tester')
+        
+        operacao_venda = OperacaoCDB_RDB.objects.create(quantidade=Decimal(2000), data=datetime.date(2017, 6, 16), tipo_operacao='V', \
+                                            cdb_rdb=cdb, investidor=investidor)
+        OperacaoVendaCDB_RDB.objects.create(operacao_compra=OperacaoCDB_RDB.objects.get(investidor=investidor, cdb_rdb=cdb, tipo_operacao='C'), operacao_venda=operacao_venda)
+        self.assertAlmostEqual(calcular_valor_venda_cdb_rdb(operacao_venda), Decimal('2014.67'), delta=0.01)
         
 class CalcularQuantidadesCDB_RDBTestCase(TestCase):
     
@@ -82,20 +110,21 @@ class CalcularQuantidadesCDB_RDBTestCase(TestCase):
         
         # CDB
         cdb = CDB_RDB.objects.create(nome='CDB Teste', investidor=user.investidor, tipo='C', tipo_rendimento=CDB_RDB.CDB_RDB_DI)
-        cdb_porcentagem_di = HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cdb, porcentagem=Decimal(110))
+        HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cdb, porcentagem=Decimal(110))
+        HistoricoVencimentoCDB_RDB.objects.create(cdb_rdb=cdb, vencimento=2000)
         
         # Operações
         operacao_1 = OperacaoCDB_RDB.objects.create(quantidade=Decimal(2000), data=datetime.date(2017, 1, 23), tipo_operacao='C', \
-                                            investimento=cdb, investidor=user.investidor)
+                                            cdb_rdb=cdb, investidor=user.investidor)
         operacao_2 = OperacaoCDB_RDB.objects.create(quantidade=Decimal(1000), data=datetime.date(2017, 2, 23), tipo_operacao='C', \
-                                            investimento=cdb, investidor=user.investidor)
+                                            cdb_rdb=cdb, investidor=user.investidor)
         operacao_3 = OperacaoCDB_RDB.objects.create(quantidade=Decimal(1000), data=datetime.date(2017, 3, 23), tipo_operacao='V', \
-                                            investimento=cdb, investidor=user.investidor)
+                                            cdb_rdb=cdb, investidor=user.investidor)
         OperacaoVendaCDB_RDB.objects.create(operacao_compra=operacao_2, operacao_venda=operacao_3)
         operacao_4 = OperacaoCDB_RDB.objects.create(quantidade=Decimal(3000), data=datetime.date(2017, 3, 23), tipo_operacao='C', \
-                                            investimento=cdb, investidor=user.investidor)
+                                            cdb_rdb=cdb, investidor=user.investidor)
         operacao_5 = OperacaoCDB_RDB.objects.create(quantidade=Decimal(1000), data=datetime.date(2017, 5, 23), tipo_operacao='V', \
-                                            investimento=cdb, investidor=user.investidor)
+                                            cdb_rdb=cdb, investidor=user.investidor)
         OperacaoVendaCDB_RDB.objects.create(operacao_compra=operacao_4, operacao_venda=operacao_5)
         
         # Divisões
@@ -114,10 +143,10 @@ class CalcularQuantidadesCDB_RDBTestCase(TestCase):
         """Testa a quantidade vigente de CDB/RDB ao fim das operações"""
         operacoes_vigentes = buscar_operacoes_vigentes_ate_data(Investidor.objects.get(user__username='tester'), datetime.date(2017, 5, 25))
         self.assertEqual(len(operacoes_vigentes), 2)
-        self.assertIn(OperacaoCDB_RDB.objects.get(id=1), operacoes_vigentes)
-        self.assertEqual(operacoes_vigentes.get(id=1).qtd_disponivel_venda, Decimal(2000))
-        self.assertIn(OperacaoCDB_RDB.objects.get(id=4), operacoes_vigentes)
-        self.assertEqual(operacoes_vigentes.get(id=4).qtd_disponivel_venda, Decimal(2000))
+        self.assertIn(OperacaoCDB_RDB.objects.get(quantidade=2000), operacoes_vigentes)
+        self.assertEqual(operacoes_vigentes.get(quantidade=2000).qtd_disponivel_venda, Decimal(2000))
+        self.assertIn(OperacaoCDB_RDB.objects.get(quantidade=3000), operacoes_vigentes)
+        self.assertEqual(operacoes_vigentes.get(quantidade=3000).qtd_disponivel_venda, Decimal(2000))
         
     def test_verificar_qtds_por_divisao(self):
         """Testa a quantidade em cada divisão"""

@@ -1,15 +1,18 @@
 # -*- coding: utf-8 -*-
+import datetime
+from django.core.mail import mail_admins
+from django.core.management.base import BaseCommand
+import re
+from threading import Thread
+import time
+# import traceback
+from urllib2 import Request, urlopen, HTTPError, URLError
+
 from bagogold import settings
 from bagogold.bagogold.models.acoes import Acao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa
-from django.core.mail import mail_admins
-from django.core.management.base import BaseCommand
-from threading import Thread
-from urllib2 import Request, urlopen, HTTPError, URLError
-import datetime
-import re
-import time
+
 
 # A thread 'Principal' indica se ainda está rodando a thread principal
 threads_rodando = {'Principal': 1}
@@ -28,8 +31,8 @@ class CriarDocumentoThread(Thread):
                 
                 time.sleep(5)
         except Exception as e:
-                template = "An exception of type {0} occured. Arguments:\n{1!r}"
-                message = template.format(type(e).__name__, e.args)
+                template = "An exception of type {0} occured. Arguments:\n{1!r}\nURL: {2}, Empresa: {3}"
+                message = template.format(type(e).__name__, e.args, documento.url, documento.empresa)
                 if settings.ENV == 'PROD':
                     mail_admins(u'Erro na thread de criar documento de ação', message.decode('utf-8'))
                 elif settings.ENV == 'DEV':
@@ -44,7 +47,7 @@ class GeraInfoDocumentoProtocoloThread(Thread):
                     codigo_cvm = info['codigo_cvm']
                     data_referencia, protocolo, tipo_documento = info['info_doc']
 
-        #             print protocolo, Empresa.objects.get(codigo_cvm=codigo_cvm), ano
+#                     print protocolo, Empresa.objects.get(codigo_cvm=codigo_cvm)
                     # Apenas adiciona caso seja dos tipos válidos, decodificando de utf-8
                     if not DocumentoProventoBovespa.objects.filter(empresa__codigo_cvm=codigo_cvm, protocolo=protocolo).exists() \
                         and tipo_documento.decode('utf-8') in DocumentoProventoBovespa.TIPOS_DOCUMENTO_VALIDOS:
@@ -59,12 +62,12 @@ class GeraInfoDocumentoProtocoloThread(Thread):
                 
                 time.sleep(10)
         except Exception as e:
-                template = "An exception of type {0} occured. Arguments:\n{1!r}"
-                message = template.format(type(e).__name__, e.args)
-                if settings.ENV == 'PROD':
-                    mail_admins(u'Erro na thread de gerar infos do documento de ação', message.decode('utf-8'))
-                elif settings.ENV == 'DEV':
-                    print message
+            template = "An exception of type {0} occured. Arguments:\n{1!r}"
+            message = template.format(type(e).__name__, e.args)
+            if settings.ENV == 'PROD':
+                mail_admins(u'Erro na thread de gerar infos do documento de ação', message.decode('utf-8'))
+            elif settings.ENV == 'DEV':
+                print message
 
 class BuscaProventosAcaoThread(Thread):
     def __init__(self, codigo_cvm, ticker, ano_inicial):
@@ -80,6 +83,7 @@ class BuscaProventosAcaoThread(Thread):
         except Exception as e:
 #             template = "An exception of type {0} occured. Arguments:\n{1!r}"
 #             message = template.format(type(e).__name__, e.args)
+#             print message
             pass
         # Tenta remover seu código da listagem de threads até conseguir
         while self.codigo_cvm in threads_rodando:
@@ -113,7 +117,7 @@ class Command(BaseCommand):
         
         # Prepara threads de busca
         acoes = Acao.objects.filter(empresa__codigo_cvm__isnull=False).order_by('empresa__codigo_cvm').distinct('empresa__codigo_cvm')
-#         acoes = Acao.objects.filter(ticker__in=['CIEL3'])
+#         acoes = Acao.objects.filter(ticker__in=['BBAS3'])
         contador = 0
         try:
             while contador < len(acoes):
@@ -171,7 +175,7 @@ def buscar_proventos_acao(codigo_cvm, ano, num_tentativas):
         divisoes = re.findall('<div class="large-12 columns">(.*?)(?=<div class="large-12 columns">|$)', data, flags=re.IGNORECASE|re.DOTALL)
         for divisao in divisoes:
             # Pega as informações necessárias dentro da divisão, não há como existir mais de uma tupla (data, protocolo)
-            informacao_divisao = re.findall('Data Referência.*?(\d+/\d+/\d+).*?Assunto.*?(?:juro|dividendo|provento|capital social|remuneraç|agrupamento|desdobramento|orçamento de capital|bonus|bônus|bonificaç).*?<a href=".*?protocolo=(\d+).*?" target="_blank">(.*?)</a>', divisao, flags=re.IGNORECASE|re.DOTALL)
+            informacao_divisao = re.findall('Data Referência.*?(\d+/\d+/\d+).*?Assunto.*?(?:juro|jcp|jscp|dividendo|provento|capital social|remuneraç|agrupamento|desdobramento|orçamento de capital|bonus|bônus|bonificaç).*?<a href=".*?protocolo=(\d+).*?" target="_blank">(.*?)</a>', divisao, flags=re.IGNORECASE|re.DOTALL)
             if informacao_divisao:
                 informacoes_rendimentos.append({'info_doc': informacao_divisao[0], 'codigo_cvm': codigo_cvm})
 #         print 'Buscou', Empresa.objects.get(codigo_cvm=codigo_cvm), ano

@@ -103,7 +103,7 @@
                     <tbody>
                     {% for item in operacoes %}
                         <tr>
-                            <td><a class="tooltips" data-placement="top" data-original-title="Detalhar Fundo" href="{% url 'fundo_investimento:detalhar_fundo' item.fundo_investimento.id %}">{{item.fundo_investimento}}</a></td>
+                            <td><a class="tooltips" data-placement="top" data-original-title="Detalhar Fundo" href="{% url 'fundo_investimento:detalhar_fundo' item.fundo_investimento.slug %}">{{item.fundo_investimento}}</a></td>
                             <td><a class="tooltips" data-placement="top" data-original-title="Editar {{item.tipo}}" href="{% url 'fundo_investimento:editar_operacao_fundo_investimento' item.id %}">{{item.tipo}}</a></td>
                             <td>{{ item.data|date:"d/m/Y" }}</td>
                             <td>{{item.quantidade}}</td>
@@ -134,7 +134,7 @@
 <script src={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.js" %} type="text/javascript"></script>
 <script src={% static "assets/pages/scripts/table-datatables-fixedheader.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/moment.min.js" %} type="text/javascript"></script>
-<script src="https://cdn.datatables.net/plug-ins/1.10.15/sorting/datetime-moment.js" type="text/javascript"></script>
+<script src={% static "assets/global/plugins/datatables/plugins/datetime-moment.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.axislabels.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/flot/jquery.flot.categories.min.js" %} type="text/javascript"></script>

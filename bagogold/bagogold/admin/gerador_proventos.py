@@ -3,7 +3,8 @@ from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa,
     ProventoAcaoDocumento, ProventoFIIDocumento, PendenciaDocumentoProvento, \
     ProventoAcaoDescritoDocumentoBovespa, ProventoFIIDescritoDocumentoBovespa, \
     InvestidorLeituraDocumento, InvestidorRecusaDocumento, \
-    InvestidorResponsavelPendencia, InvestidorValidacaoDocumento
+    InvestidorResponsavelPendencia, InvestidorValidacaoDocumento, PagamentoLeitura
+from bagogold.bagogold.models.investidores import Investidor
 from django.contrib import admin
 
 
@@ -72,3 +73,14 @@ class PendenciaDocumentoProventoAdmin(admin.ModelAdmin):
     tipo_completo.short_description = 'Tipo de pendência'
     
 admin.site.register(PendenciaDocumentoProvento, PendenciaDocumentoProventoAdmin)
+
+class PagamentoLeituraAdmin(admin.ModelAdmin):
+    search_fields = ['investidor', 'data', 'valor']
+    list_display = ('investidor', 'valor', 'data')
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "investidor":
+            kwargs["queryset"] = Investidor.objects.filter(user__groups__name='Equipe de leitura')
+        return super(PagamentoLeituraAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+    
+admin.site.register(PagamentoLeitura, PagamentoLeituraAdmin)

@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 from decimal import Decimal
+
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.urls.base import reverse
+
 
 class Criptomoeda (models.Model):
     nome = models.CharField(u'Nome', max_length=50)
@@ -31,6 +34,16 @@ class OperacaoCriptomoeda (models.Model):
         if hasattr(self, 'operacaocriptomoedamoeda'):
             return self.operacaocriptomoedamoeda.criptomoeda.ticker
         return 'BRL'
+    
+    def taxa(self):
+        if hasattr(self, 'operacaocriptomoedataxa'):
+            return self.operacaocriptomoedataxa 
+        else:
+            return None
+        
+    @property
+    def link(self):
+        return reverse('criptomoedas:editar_operacao_criptomoeda', kwargs={'id_operacao': self.id})
     
 class OperacaoCriptomoedaTaxa (models.Model):
     valor = models.DecimalField(u'Taxa da operação', max_digits=21, decimal_places=12, validators=[MinValueValidator(Decimal('0'))])
@@ -85,7 +98,7 @@ class TransferenciaCriptomoeda (models.Model):
     taxa = models.DecimalField(u'Taxa da transferência', max_digits=21, decimal_places=12, validators=[MinValueValidator(Decimal('0.000000000001'))])
 
     def __unicode__(self):
-        return u'Transferência de %s %s entre %s e %s' % (self.valor, self.criptomoeda.ticker, self.origem, self.destino)
+        return u'Transferência de %s %s entre %s e %s' % (self.quantidade, self.moeda_utilizada(), self.origem, self.destino)
     
     def em_real(self):
         return self.moeda is None
@@ -94,6 +107,16 @@ class TransferenciaCriptomoeda (models.Model):
         if self.moeda is not None:
             return self.moeda.ticker
         return 'BRL'
+        
+class Fork (models.Model):
+    moeda_origem = models.ForeignKey('Criptomoeda', related_name='moeda_origem_fork')
+    moeda_recebida = models.ForeignKey('Criptomoeda', related_name='moeda_recebida_fork')
+    data = models.DateField(u'Data')
+    quantidade = models.DecimalField(u'Quantidade recebida', max_digits=21, decimal_places=12, validators=[MinValueValidator(Decimal('0.000000000001'))])
+    investidor = models.ForeignKey('bagogold.Investidor')
+     
+    def __unicode__(self):
+        return u'Fork de %s em %s %s no dia %s' % (self.moeda_origem, self.quantidade, self.moeda_recebida, self.data.strftime('%d/%m/%Y'))
     
 class TelegramInvestidor (models.Model):
     chat_id = models.IntegerField(u'ID do Telegram')

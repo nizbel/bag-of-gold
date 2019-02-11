@@ -14,9 +14,7 @@
 <div class="portlet-body">
     {% if request.user.is_authenticated %}
 		<div class="alert alert-warning">
-            <strong></strong> Data/Hora do valor mais recente: <b>{{ dados.valor_diario_mais_recente }}</b>
-			<br/>
-			<strong></strong> Última data carregada para valor de fechamento: <b>{{ dados.historico_mais_recente }}</b>
+			<strong></strong> Última data carregada para valor de fechamento: <b>{{ dados.valor_diario_mais_recente }}</b>
 		</div>
     {% endif %}
 	<table id="acoes" class="table table-striped table-bordered table-hover table-header-fixed">
@@ -33,7 +31,7 @@
 	<tbody>
 	{% for ticker, acao in acoes.items %}
 		<tr>
-			<td><a href="{% url 'acoes:bh:estatisticas_acao_bh' ticker %}" data-original-title="Estatísticas ação"
+			<td><a href="{% url 'acoes:geral:estatisticas_acao_bh' ticker %}" data-original-title="Estatísticas ação"
 				data-rel="tooltip" >{{ticker}}</a></td>
 			<td>{{acao.quantidade}} ({{acao.quantidade_percentual|floatformat:"2"}}%)</td>
 			<td>R${{acao.valor_dia_anterior}}</td>

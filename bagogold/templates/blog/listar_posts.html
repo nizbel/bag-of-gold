@@ -1,0 +1,59 @@
+{% extends "blog/base.html" %}
+{% load staticfiles %}
+
+{% block pagina_titulo_icone %}
+<i class="icon-docs font-yellow-crusta"></i>
+{% endblock %}
+
+{% block blog_content %}
+<div class="portlet box yellow-crusta" style="border-top: 1px solid #ffd327">
+    <div class="portlet-body" style="background-color: #f6f6f1">
+        <div id="blog_posts" class="blog-page blog-content-1" style="background-color: #f6f6f1">
+            {% include 'blog/utils/lista_posts.html' %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_footer %}
+<script type="text/javascript">
+$( document ).ready(function() {
+    $('.pagina').click(function() {
+    	$('.pagina.active').removeClass('active');
+        $(this).addClass('active');
+        
+        App.blockUI({
+            target: '#blog_posts',
+            iconOnly: true,
+            overlayColor: 'none'
+        });
+        
+        var pagina = parseInt($(this).text());
+        
+        $.ajax({
+        	{% if request.resolver_match.url_name == 'listar_posts' %}
+            url : "{% url 'blog:listar_posts' %}",
+            {% else %}
+            url : "{% url 'blog:listar_posts_por_tag' tag_filtro.slug %}",
+            {% endif %}
+            type : "GET",
+            data : { pagina: pagina },
+    
+            // handle a successful response
+            success : function(resultado) {
+                console.log(resultado);
+                $('#blog_posts').empty().html(resultado);
+                
+                App.unblockUI('#blog_posts');
+            },
+    
+            // handle a non-successful response
+            error : function(xhr,errmsg,err) {
+                App.unblockUI('#blog_posts');
+                console.log(xhr.status + ": " + xhr.responseText);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

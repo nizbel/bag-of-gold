@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.models.acoes import OperacaoAcao, Provento
-from bagogold.bagogold.models.fii import OperacaoFII, ProventoFII
-from bagogold.bagogold.models.lc import OperacaoLetraCredito, LetraCredito
-from bagogold.bagogold.models.td import OperacaoTitulo, Titulo, HistoricoTitulo
+from bagogold.fii.models import OperacaoFII, ProventoFII
+from bagogold.lci_lca.models import OperacaoLetraCredito, LetraCredito
+from bagogold.tesouro_direto.models import OperacaoTitulo, Titulo, HistoricoTitulo
 from bagogold.bagogold.utils.misc import trazer_primeiro_registro, \
     verificar_feriado_bovespa
 from bagogold.cdb_rdb.models import OperacaoCDB_RDB
@@ -201,12 +201,12 @@ def detalhar_imposto_renda(request, ano):
     cdb_rdb = {}
      
     for operacao in OperacaoCDB_RDB.objects.filter(data__lte='%s-12-31' % (ano), investidor=investidor).order_by('data'):
-        if operacao.investimento.nome not in cdb_rdb:
-            cdb_rdb[operacao.investimento.nome] = Decimal(0)
+        if operacao.cdb_rdb.nome not in cdb_rdb:
+            cdb_rdb[operacao.cdb_rdb.nome] = Decimal(0)
         if operacao.tipo_operacao == 'C':
-            cdb_rdb[operacao.investimento.nome] += operacao.quantidade
+            cdb_rdb[operacao.cdb_rdb.nome] += operacao.quantidade
         elif operacao.tipo_operacao == 'V':
-            cdb_rdb[operacao.investimento.nome] -= operacao.quantidade
+            cdb_rdb[operacao.cdb_rdb.nome] -= operacao.quantidade
             
     ############################################################
     ### CRI/CRA  ###############################################
@@ -306,7 +306,13 @@ def detalhar_imposto_renda(request, ano):
             letras_credito[operacao.letra_credito.nome] += operacao.quantidade
         elif operacao.tipo_operacao == 'V':
             letras_credito[operacao.letra_credito.nome] -= operacao.quantidade
+            
     
+    ############################################################
+    ### Letras de Câmbio ######################################
+    ############################################################
+    
+    letras_cambio = {}
             
     ############################################################
     ### Tesouro Direto #########################################

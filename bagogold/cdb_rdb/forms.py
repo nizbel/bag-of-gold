@@ -31,21 +31,22 @@ class OperacaoCDB_RDBForm(LocalizedModelForm):
     class Meta:
         model = OperacaoCDB_RDB
         fields = ('tipo_operacao', 'quantidade', 'data', 'operacao_compra',
-                  'investimento')
+                  'cdb_rdb')
         widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
                                             'placeholder':'Selecione uma data'}),
                  'tipo_operacao': widgets.Select(choices=ESCOLHAS_TIPO_OPERACAO),}
+        labels = {'cdb_rdb': 'CDB/RDB'}
         
     class Media:
-        js = ('js/bagogold/form_operacao_cdb_rdb.js',)
+        js = ('js/bagogold/form_operacao_cdb_rdb.min.js',)
         
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
         # first call parent's constructor
         super(OperacaoCDB_RDBForm, self).__init__(*args, **kwargs)
         # there's a `fields` property now
-        self.fields['investimento'].required = False
-        self.fields['investimento'].queryset = CDB_RDB.objects.filter(investidor=self.investidor)
+        self.fields['cdb_rdb'].required = False
+        self.fields['cdb_rdb'].queryset = CDB_RDB.objects.filter(investidor=self.investidor)
         self.fields['operacao_compra'].queryset = OperacaoCDB_RDB.objects.filter(tipo_operacao='C', investidor=self.investidor)
         # Remover operações que já tenham sido totalmente vendidas e a própria operação
         operacoes_compra_invalidas = [operacao_compra_invalida.id for operacao_compra_invalida in self.fields['operacao_compra'].queryset if operacao_compra_invalida.qtd_disponivel_venda() == 0] + \
@@ -66,24 +67,30 @@ class OperacaoCDB_RDBForm(LocalizedModelForm):
             if 'data' not in self.cleaned_data or self.cleaned_data['data'] == None:
                 return None
             else:
-                if self.cleaned_data["data"] < operacao_compra.data + datetime.timedelta(days=operacao_compra.carencia()):
+                if self.cleaned_data['data'] < operacao_compra.data_carencia():
                     raise forms.ValidationError('Data da venda deve ser posterior ao período de carência (%s)' % 
-                                                ((operacao_compra.data + datetime.timedelta(days=operacao_compra.carencia())).strftime("%d/%m/%Y")))
+                                                (operacao_compra.data_carencia().strftime("%d/%m/%Y")))
+                elif self.cleaned_data['data'] > operacao_compra.data_vencimento():
+                    raise forms.ValidationError('Data da venda não pode ser após o período de vencimento (%s)' %
+                                                (operacao_compra.data_vencimento().strftime("%d/%m/%Y")))
             # Testar quantidade
             quantidade = self.cleaned_data['quantidade']
-            if quantidade > operacao_compra.qtd_disponivel_venda(desconsiderar_vendas=[self.instance]):
+            registros_desconsiderar = list()
+            if self.instance.id != None:
+                registros_desconsiderar.append(self.instance.id)
+            if quantidade > operacao_compra.qtd_disponivel_venda(desconsiderar_vendas=registros_desconsiderar):
                 raise forms.ValidationError('Não é possível vender mais do que o disponível na operação de compra')
             return operacao_compra
         return None
 
-    def clean_investimento(self):
+    def clean_cdb_rdb(self):
         tipo_operacao = self.cleaned_data['tipo_operacao']
         if tipo_operacao == 'V':
             if self.cleaned_data.get('operacao_compra'):
-                cdb_rdb = self.cleaned_data.get('operacao_compra').investimento
+                cdb_rdb = self.cleaned_data.get('operacao_compra').cdb_rdb
                 return cdb_rdb
         else:
-            cdb = self.cleaned_data.get('investimento')
+            cdb = self.cleaned_data.get('cdb_rdb')
             if cdb is None:
                 raise forms.ValidationError('Insira CDB válido')
             return cdb

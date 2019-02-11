@@ -1,5 +1,5 @@
 $(document).ready(function() {
-	form_count = $("input[name=divisaooperacaolc_set-TOTAL_FORMS]").val();
+	form_count = $("input[name=divisaooperacaolci_lca_set-TOTAL_FORMS]").val();
     // get extra form count so we know what index to use for the next item.
      $("#add-another").click(function() {
          divisao_id = parseInt(form_count) + 1;
@@ -25,7 +25,7 @@ $(document).ready(function() {
          // increment form count so our view knows to populate 
          // that many fields for validation
          form_count ++;
-         $("[name=divisaooperacaolc_set-TOTAL_FORMS]").val(form_count);
+         $("[name=divisaooperacaolci_lca_set-TOTAL_FORMS]").val(form_count);
          // ready bootstrap elements
          row.find('.bootstrap-select').replaceWith(function() { return $('select', this); });
          row.find('select').selectpicker('refresh');
@@ -60,6 +60,7 @@ $(document).ready(function() {
  		prefix: 'R$'
  	});
  	$('.date-picker').datepicker({
+ 	   todayHighlight: true,
  	   language: 'pt-BR'
  	}).on('changeDate', function(e) {
  		verificarVendasPossiveis($(this).find('input').val());

@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 from cStringIO import StringIO
-from pdfminer.converter import TextConverter
-from pdfminer.layout import LAParams
-from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
-from pdfminer.pdfpage import PDFPage, PDFTextExtractionNotAllowed
-from subprocess import call
+# from pdfminer.converter import TextConverter
+# from pdfminer.layout import LAParams
+# from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
+# from pdfminer.pdfpage import PDFPage, PDFTextExtractionNotAllowed
+# from subprocess import call
 from urllib2 import Request, urlopen, URLError, HTTPError
-import os
+# import os
 
 def baixar_demonstrativo_rendimentos(arquivo_url):
     req = Request(arquivo_url)
     try:
-        response = urlopen(req, timeout=30)
+        response = urlopen(req, timeout=45)
     except HTTPError as e:
         print 'The server couldn\'t fulfill the request.'
         print 'Error code: ', e.code

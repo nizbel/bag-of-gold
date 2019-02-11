@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
-from bagogold.fundo_investimento.models import FundoInvestimento,\
-    OperacaoFundoInvestimento, Administrador, HistoricoValorCotas,\
-    DocumentoCadastro, LinkDocumentoCadastro
+
+from bagogold.fundo_investimento.models import FundoInvestimento, \
+    OperacaoFundoInvestimento, Administrador, HistoricoValorCotas, \
+    DocumentoCadastro, LinkDocumentoCadastro, Auditor
+
 
 class FundoInvestimentoAdmin(admin.ModelAdmin):
     search_fields = ['nome', 'cnpj']
-    list_display = ('nome', 'cnpj', 'administrador', 'data_constituicao', 'situacao', 'classe', 'exclusivo_qualificados', 'ultimo_registro')
+    list_display = ('nome', 'cnpj', 'administrador', 'data_constituicao', 'situacao', 'classe', 'exclusivo_qualificados')
     
 admin.site.register(FundoInvestimento, FundoInvestimentoAdmin)
     
@@ -17,6 +19,12 @@ class AdministradorAdmin(admin.ModelAdmin):
     list_display = ('nome', 'cnpj')
     
 admin.site.register(Administrador, AdministradorAdmin)
+
+class AuditorAdmin(admin.ModelAdmin):
+    search_fields = ['nome', 'cnpj']
+    list_display = ('nome', 'cnpj')
+    
+admin.site.register(Auditor, AuditorAdmin)
     
 class HistoricoValorCotasAdmin(admin.ModelAdmin):
     search_fields = ['fundo_investimento']

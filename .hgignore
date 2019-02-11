@@ -5,14 +5,19 @@ syntax: regexp
 doc proventos/*
 backups/teste-*
 templates/teste/*
+apache-conf/*
+node_modules/*
 syntax: glob
 .project
 .pydevproject
 .settings/org.eclipse.core.resources.prefs
+.vscode*
 README.md
 *.pyc
 *.orig
 COTAHIST_A.tar.gz
-conf/settings_local.py
+conf/*
 *~
 backups.tar.gz
+output_pylint.txt
+output_test.txt

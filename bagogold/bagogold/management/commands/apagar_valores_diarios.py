@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import ValorDiarioAcao, Acao, HistoricoAcao
-from bagogold.bagogold.models.fii import ValorDiarioFII, FII
-from bagogold.bagogold.models.td import ValorDiarioTitulo, HistoricoTitulo
+from bagogold.fii.models import ValorDiarioFII, FII
+from bagogold.tesouro_direto.models import ValorDiarioTitulo, HistoricoTitulo
 from django.core.management.base import BaseCommand
 import datetime
 

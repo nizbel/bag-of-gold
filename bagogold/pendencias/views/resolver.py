@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.td import OperacaoTitulo
-from bagogold.bagogold.utils.td import \
+from bagogold.tesouro_direto.models import OperacaoTitulo
+from bagogold.tesouro_direto.utils import \
     calcular_qtd_um_titulo_ate_dia_por_divisao
 from bagogold.pendencias.models.pendencias import \
     PendenciaVencimentoTesouroDireto
@@ -17,7 +17,11 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD
 @login_required
 def resolver_pendencia_vencimento_td(request):
     investidor = request.user.investidor
-    id_pendencia = int(request.GET['id_pendencia'])
+    # TODO achar um jeito melhor de testar pela pelo test_urls.py
+    try:
+        id_pendencia = int(request.GET.get('id_pendencia').replace('.', ''))
+    except:
+        return HttpResponse(json.dumps({'mensagem': u'Pendência inválida'}), content_type = "application/json") 
     pendencia = get_object_or_404(PendenciaVencimentoTesouroDireto, id=id_pendencia, investidor=investidor)
     
     if request.GET.get('confirmar'):
